@@ -20,6 +20,11 @@ type InputPacket struct {
 	} `json:"input"`
 }
 
+type Player struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
 func main() {
 	mux := http.NewServeMux()
 
@@ -37,6 +42,11 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
+	player := Player{
+		X: 400,
+		Y: 300,
+	}
+
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -68,12 +78,46 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		log.Printf("Decoded packet: %+v\n", packet)
+		returnMsg := packetHandler(packet, player)
 
-		err = conn.WriteMessage(messageType, msg)
+		err = conn.WriteMessage(messageType, returnMsg)
 		if err != nil {
 			log.Println(err)
 			break
 		}
 	}
+}
+
+func packetHandler(input InputPacket, player Player) []byte {
+	switch input.Type {
+	case "input":
+		if input.Input.Forward {
+			player.X -= 5
+		}
+
+		if input.Input.Back {
+			player.X += 5
+		}
+
+		if input.Input.Left {
+			player.Y -= 5
+		}
+
+		if input.Input.Right {
+			player.Y += 5
+		}
+
+		if input.Input.Shoot {
+			log.Println("shoot")
+		}
+	}
+
+	response, err := json.Marshal(player)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	return response
+
 }

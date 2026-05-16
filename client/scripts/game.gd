@@ -15,7 +15,7 @@ var packet := {
   "input": {
     "forward": true,
 	"back": false,
-	"right": false,
+	"right": true,
 	"left": false,
 	"shoot": false,
   }
@@ -43,6 +43,16 @@ func _process(_delta: float) -> void:
 		socket.send_text(JSON.stringify(packet))
 	elif state == WebSocketPeer.STATE_CLOSED:
 		print("Closed")
+
+	while socket.get_available_packet_count() > 0:
+		var text := socket.get_packet().get_string_from_utf8()
+		var data = JSON.parse_string(text)
+
+		if data == null:
+			print("bad json: ", text)
+			return
+
+		print(data)
 
 
 func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:
