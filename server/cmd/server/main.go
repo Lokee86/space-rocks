@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -47,13 +47,14 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			break
 		}
-		
+
 		log.Printf("Received: %s\n", msg)
 
-		err = conn.WriteMessage(messageType, []byte("Message received"))
+		err = conn.WriteMessage(messageType, msg)
 		if err != nil {
 			log.Println(err)
 			break
 		}
+		log.Printf("Received: %s\n", msg)
 	}
 }

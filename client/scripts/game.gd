@@ -10,6 +10,16 @@ extends Node2D
 
 var socket := WebSocketPeer.new()
 var connected := false
+var packet := {
+  "type": "input",
+  "input": {
+    "forward": true,
+	"back": false,
+	"right": false,
+	"left": false,
+	"shoot": false,
+  }
+}
 
 func _ready() -> void:
 	var err := socket.connect_to_url("ws://localhost:8080/ws")
@@ -30,7 +40,7 @@ func _process(_delta: float) -> void:
 	if state == WebSocketPeer.STATE_OPEN and !connected:
 		connected = true
 		print("Connected!")
-		socket.send_text("hello")
+		socket.send_text(JSON.stringify(packet))
 	elif state == WebSocketPeer.STATE_CLOSED:
 		print("Closed")
 
