@@ -13,7 +13,7 @@ config_version=5
 config/name="Space Rocks"
 run/main_scene="res://scenes/game.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://assets/yellow-v-wing.png"
 
 [dotnet]
 
