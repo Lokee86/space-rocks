@@ -25,7 +25,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
-	var upgrader = websocket.Upgrader{
+	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
@@ -48,9 +48,9 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		
-		log.Printf("Received: %s\n")
+		log.Printf("Received: %s\n", msg)
 
-		err = conn.WriteMessage(messageType, msg)
+		err = conn.WriteMessage(messageType, []byte("Message received"))
 		if err != nil {
 			log.Println(err)
 			break
