@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cw8ubidl86juw"
-path="res://.godot/imported/yellow-v-wing.png-c1030971e153b4634c0affe39a6eb312.ctex"
+uid="uid://elo2144mjlhs"
+path="res://.godot/imported/background-fore.png-e2b0dc69445cf34e129bc92e0c0c01d2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/yellow-v-wing.png"
-dest_files=["res://.godot/imported/yellow-v-wing.png-c1030971e153b4634c0affe39a6eb312.ctex"]
+source_file="res://assets/background-fore.png"
+dest_files=["res://.godot/imported/background-fore.png-e2b0dc69445cf34e129bc92e0c0c01d2.ctex"]
 
 [params]
 

@@ -1,0 +1,6 @@
+extends RefCounted
+
+const PLAYER_ROTATION_SPEED := 4.0
+const PLAYER_THRUST_FORCE := 1000.0
+const PLAYER_MAX_SPEED := 1500.0
+const PLAYER_DAMPING := 0.98

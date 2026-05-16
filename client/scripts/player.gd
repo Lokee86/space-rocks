@@ -1,9 +1,11 @@
 extends CharacterBody2D
 
-@export var rotation_speed := 4.0
-@export var thrust_force := 600.0
-@export var max_speed := 700.0
-@export var damping := 0.98
+const Constants = preload("res://scripts/constants.gd")
+
+@export var rotation_speed := Constants.PLAYER_ROTATION_SPEED
+@export var thrust_force := Constants.PLAYER_THRUST_FORCE
+@export var max_speed := Constants.PLAYER_MAX_SPEED
+@export var damping := Constants.PLAYER_DAMPING
 
 @export var rotate_left_action := &"ui_left"
 @export var rotate_right_action := &"ui_right"
