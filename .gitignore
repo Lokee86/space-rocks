@@ -8,12 +8,14 @@ keys/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-.import/
-.godot/
-.export/
+client/.import/
+client/.godot/
+client/.export/
 
 tmp/
+*/tmp/
 temp/
+*/temp/
 .cache/
 
 SourceAssets/
