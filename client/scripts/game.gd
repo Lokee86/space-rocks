@@ -15,8 +15,8 @@ func _process(_delta: float) -> void:
 
 
 func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:
-	var material := background.material as ShaderMaterial
-	if material == null:
+	var background_material := background.material as ShaderMaterial
+	if background_material == null:
 		return
 
 	material.set_shader_parameter(
