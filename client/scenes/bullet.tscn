@@ -3,14 +3,17 @@
 [ext_resource type="Texture2D" uid="uid://dhqslpwrweveb" path="res://assets/OrangeScale__000.png" id="1_pppl6"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_4wvvi"]
-radius = 12.0
-height = 58.0
+radius = 3.0
+height = 24.0
 
 [node name="Bullet" type="CharacterBody2D"]
+collision_layer = 0
+collision_mask = 0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+rotation = 1.5708
+scale = Vector2(0.43085, 0.263971)
 texture = ExtResource("1_pppl6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-rotation = 1.5708
 shape = SubResource("CapsuleShape2D_4wvvi")

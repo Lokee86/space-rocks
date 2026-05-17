@@ -71,7 +71,7 @@ func readClientInput(conn *websocket.Conn, room *game.Game, playerID string, rea
 			return
 		}
 
-		var packet game.InputPacket
+		var packet game.ClientPacket
 		if err := json.Unmarshal(msg, &packet); err != nil {
 			log.Println("bad packet:", err)
 			continue

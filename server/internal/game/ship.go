@@ -16,6 +16,8 @@ func (ship *Ship) State() ShipState {
 }
 
 func (ship *Ship) applyInput(delta float64) {
+	ship.ShootCooldown = max(0, ship.ShootCooldown-delta)
+
 	rotationInput := axis(ship.Input.Left, ship.Input.Right)
 	thrustInput := axis(ship.Input.Back, ship.Input.Forward)
 

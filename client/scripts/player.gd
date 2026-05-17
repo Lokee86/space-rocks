@@ -5,6 +5,7 @@ class_name Player
 @export var turn_right_action := &"turn_right"
 @export var move_forward_action := &"move_forward"
 @export var move_backward_action := &"move_backward"
+@export var shoot_action := &"shoot"
 
 
 func get_input_packet() -> Dictionary:
@@ -15,6 +16,6 @@ func get_input_packet() -> Dictionary:
 			"back": Input.is_action_pressed(move_backward_action),
 			"right": Input.is_action_pressed(turn_right_action),
 			"left": Input.is_action_pressed(turn_left_action),
-			"shoot": false,
+			"shoot": Input.is_action_pressed(shoot_action),
 		}
 	}

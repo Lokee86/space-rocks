@@ -1,19 +1,24 @@
 package game
 
 type Ship struct {
+	ID            string
+	X             float64
+	Y             float64
+	Rotation      float64
+	Velocity      Vector2
+	Input         InputState
+	Config        ClientConfig
+	ShootCooldown float64
+}
+
+type Bullet struct {
 	ID       string
+	OwnerID  string
 	X        float64
 	Y        float64
 	Rotation float64
 	Velocity Vector2
-	Input    InputState
-}
-
-type Bullet struct {
-	ID      string
-	OwnerID string
-	X       float64
-	Y       float64
+	Life     float64
 }
 
 type Asteroid struct {
