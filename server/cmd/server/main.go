@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/gorilla/websocket"
 )
@@ -13,6 +15,7 @@ import (
 func main() {
 	mux := http.NewServeMux()
 	room := game.New()
+	room.Start()
 
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /ws", wsHandler(room))
@@ -54,11 +57,18 @@ func handleConnection(conn *websocket.Conn, room *game.Game) {
 	log.Println("client connected:", playerID)
 	defer log.Println("client disconnected:", playerID)
 
+	readErr := make(chan error, 1)
+	go readClientInput(conn, room, playerID, readErr)
+
+	writeServerState(conn, room, playerID, readErr)
+}
+
+func readClientInput(conn *websocket.Conn, room *game.Game, playerID string, readErr chan<- error) {
 	for {
-		messageType, msg, err := conn.ReadMessage()
+		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			log.Println(err)
-			break
+			readErr <- err
+			return
 		}
 
 		var packet game.InputPacket
@@ -67,14 +77,29 @@ func handleConnection(conn *websocket.Conn, room *game.Game) {
 			continue
 		}
 
-		response := room.HandlePacket(playerID, packet)
-		if response == nil {
-			continue
-		}
+		room.HandlePacket(playerID, packet)
+	}
+}
 
-		if err := conn.WriteMessage(messageType, response); err != nil {
+func writeServerState(conn *websocket.Conn, room *game.Game, playerID string, readErr <-chan error) {
+	ticker := time.NewTicker(time.Second / time.Duration(constants.ServerTickRate))
+	defer ticker.Stop()
+
+	for {
+		select {
+		case err := <-readErr:
 			log.Println(err)
-			break
+			return
+		case <-ticker.C:
+			response := room.State(playerID)
+			if response == nil {
+				continue
+			}
+
+			if err := conn.WriteMessage(websocket.TextMessage, response); err != nil {
+				log.Println(err)
+				return
+			}
 		}
 	}
 }

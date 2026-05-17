@@ -2,7 +2,6 @@ package game
 
 import (
 	"math"
-	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 )
@@ -12,7 +11,7 @@ type Player struct {
 	Y        float64
 	Rotation float64
 	Velocity Vector2
-	LastTick time.Time
+	Input    InputState
 }
 
 func (player *Player) State() PlayerState {
@@ -23,10 +22,9 @@ func (player *Player) State() PlayerState {
 	}
 }
 
-func (player *Player) applyInput(input InputState) {
-	delta := player.nextDelta()
-	rotationInput := axis(input.Left, input.Right)
-	thrustInput := axis(input.Back, input.Forward)
+func (player *Player) applyInput(delta float64) {
+	rotationInput := axis(player.Input.Left, player.Input.Right)
+	thrustInput := axis(player.Input.Back, player.Input.Forward)
 
 	player.Rotation += rotationInput * constants.PlayerRotationSpeed * delta
 
@@ -42,19 +40,6 @@ func (player *Player) applyInput(input InputState) {
 
 	player.X += player.Velocity.X * delta
 	player.Y += player.Velocity.Y * delta
-}
-
-func (player *Player) nextDelta() float64 {
-	now := time.Now()
-	if player.LastTick.IsZero() {
-		player.LastTick = now
-		return 1.0 / 60.0
-	}
-
-	delta := now.Sub(player.LastTick).Seconds()
-	player.LastTick = now
-
-	return min(delta, 0.05)
 }
 
 func axis(negative bool, positive bool) float64 {
