@@ -4,25 +4,38 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
+	"time"
 
+	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/gorilla/websocket"
 )
 
 type InputPacket struct {
-	Type  string `json:"type"`
-	Input struct {
-		Forward bool `json:"forward"`
-		Back    bool `json:"back"`
-		Right   bool `json:"right"`
-		Left    bool `json:"left"`
-		Shoot   bool `json:"shoot"`
-	} `json:"input"`
+	Type  string     `json:"type"`
+	Input InputState `json:"input"`
+}
+
+type InputState struct {
+	Forward bool `json:"forward"`
+	Back    bool `json:"back"`
+	Right   bool `json:"right"`
+	Left    bool `json:"left"`
+	Shoot   bool `json:"shoot"`
 }
 
 type Player struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
+	X        float64   `json:"x"`
+	Y        float64   `json:"y"`
+	Rotation float64   `json:"rotation"`
+	Velocity Vector2   `json:"-"`
+	LastTick time.Time `json:"-"`
+}
+
+type Vector2 struct {
+	X float64
+	Y float64
 }
 
 func main() {
@@ -92,28 +105,12 @@ func (player *Player) wsHandler(w http.ResponseWriter, r *http.Request) {
 func packetHandler(input InputPacket, player *Player) []byte {
 	switch input.Type {
 	case "input":
-		if input.Input.Forward {
-			player.Y -= 100
-		}
-
-		if input.Input.Back {
-			player.Y += 100
-		}
-
-		if input.Input.Left {
-			player.X -= 100
-		}
-
-		if input.Input.Right {
-			player.X += 100
-		}
+		player.applyInput(input.Input)
 
 		if input.Input.Shoot {
 			log.Println("shoot")
 		}
 	}
-
-	log.Printf("input: %+v player: %+v\n", input.Input, player)
 
 	response, err := json.Marshal(player)
 	if err != nil {
@@ -123,4 +120,63 @@ func packetHandler(input InputPacket, player *Player) []byte {
 
 	return response
 
+}
+
+func (player *Player) applyInput(input InputState) {
+	delta := player.nextDelta()
+	rotationInput := axis(input.Left, input.Right)
+	thrustInput := axis(input.Back, input.Forward)
+
+	player.Rotation += rotationInput * constants.PlayerRotationSpeed * delta
+
+	if thrustInput != 0 {
+		player.Velocity.X += math.Sin(player.Rotation) * constants.PlayerThrustForce * thrustInput * delta
+		player.Velocity.Y += -math.Cos(player.Rotation) * constants.PlayerThrustForce * thrustInput * delta
+	}
+
+	damping := math.Pow(constants.PlayerDamping, delta/(1.0/60.0))
+	player.Velocity.X *= damping
+	player.Velocity.Y *= damping
+	player.Velocity = player.Velocity.limitLength(constants.PlayerMaxSpeed)
+
+	player.X += player.Velocity.X * delta
+	player.Y += player.Velocity.Y * delta
+}
+
+func (player *Player) nextDelta() float64 {
+	now := time.Now()
+	if player.LastTick.IsZero() {
+		player.LastTick = now
+		return 1.0 / 60.0
+	}
+
+	delta := now.Sub(player.LastTick).Seconds()
+	player.LastTick = now
+
+	return min(delta, 0.05)
+}
+
+func axis(negative bool, positive bool) float64 {
+	var value float64
+	if negative {
+		value -= 1
+	}
+	if positive {
+		value += 1
+	}
+
+	return max(-1, min(value, 1))
+}
+
+func (vector Vector2) limitLength(maxLength float64) Vector2 {
+	length := math.Hypot(vector.X, vector.Y)
+	if length <= maxLength {
+		return vector
+	}
+
+	scale := maxLength / length
+	return Vector2{
+		X: vector.X * scale,
+		Y: vector.Y * scale,
+	}
 }
