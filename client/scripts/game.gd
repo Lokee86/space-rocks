@@ -1,5 +1,7 @@
 extends Node2D
 
+const PLAYER_SCENE := preload("res://scenes/player.tscn")
+
 @export var background_parallax := 0.25
 @export var foreground_background_parallax := 0.45
 @export var foreground_background_offset := Vector2(480.0, 270.0)
@@ -11,14 +13,13 @@ extends Node2D
 
 var socket := WebSocketPeer.new()
 var connected := false
-var has_server_state := false
-var target_player_position := Vector2.ZERO
-var target_player_rotation := 0.0
+var self_id := ""
+var player_nodes := {}
+var initialized_players := {}
+var target_player_positions := {}
+var target_player_rotations := {}
 
 func _ready() -> void:
-	target_player_position = player.position
-	target_player_rotation = player.rotation
-
 	var err := socket.connect_to_url("ws://localhost:8080/ws")
 	if err != OK:
 		print("connection failede")
@@ -48,30 +49,74 @@ func _process(delta: float) -> void:
 			print("bad json: ", text)
 			return
 
-		_set_player_target(Vector2(data["x"], data["y"]), data["rotation"])
+		_apply_state(data)
 
 	_interpolate_player(delta)
 	_update_layer_shader(repeated_background, background_parallax, Vector2.ZERO)
 	_update_layer_shader(repeated_foreground_background, foreground_background_parallax, foreground_background_offset)
 
 
-func _set_player_target(server_position: Vector2, server_rotation: float) -> void:
-	target_player_position = server_position
-	target_player_rotation = server_rotation
+func _apply_state(data: Dictionary) -> void:
+	if data.get("type", "") != "state":
+		return
 
-	if !has_server_state:
-		has_server_state = true
-		player.position = target_player_position
-		player.rotation = target_player_rotation
+	self_id = data["self_id"]
+	var players: Dictionary = data["players"]
+	_remove_missing_players(players)
+
+	for player_id in players.keys():
+		var state: Dictionary = players[player_id]
+		var player_node = _get_player_node(player_id)
+		var server_position := Vector2(state["x"], state["y"])
+		var server_rotation: float = state["rotation"]
+
+		target_player_positions[player_id] = server_position
+		target_player_rotations[player_id] = server_rotation
+
+		if !initialized_players.has(player_id):
+			initialized_players[player_id] = true
+			player_node.position = server_position
+			player_node.rotation = server_rotation
+
+
+func _get_player_node(player_id):
+	if player_nodes.has(player_id):
+		return player_nodes[player_id]
+
+	if player_id == self_id:
+		player_nodes[player_id] = player
+		return player
+
+	var remote_player = PLAYER_SCENE.instantiate()
+	add_child(remote_player)
+	player_nodes[player_id] = remote_player
+
+	return remote_player
+
+
+func _remove_missing_players(server_players: Dictionary) -> void:
+	for player_id in player_nodes.keys():
+		if server_players.has(player_id):
+			continue
+
+		if player_nodes[player_id] != player:
+			player_nodes[player_id].queue_free()
+
+		player_nodes.erase(player_id)
+		initialized_players.erase(player_id)
+		target_player_positions.erase(player_id)
+		target_player_rotations.erase(player_id)
 
 
 func _interpolate_player(delta: float) -> void:
-	if !has_server_state:
-		return
-
 	var weight := 1.0 - exp(-player_interpolation_speed * delta)
-	player.position = player.position.lerp(target_player_position, weight)
-	player.rotation = lerp_angle(player.rotation, target_player_rotation, weight)
+	for player_id in player_nodes.keys():
+		if !target_player_positions.has(player_id):
+			continue
+
+		var player_node = player_nodes[player_id]
+		player_node.position = player_node.position.lerp(target_player_positions[player_id], weight)
+		player_node.rotation = lerp_angle(player_node.rotation, target_player_rotations[player_id], weight)
 
 
 func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:

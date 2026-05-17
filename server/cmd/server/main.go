@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
@@ -33,6 +34,24 @@ type Player struct {
 	LastTick time.Time `json:"-"`
 }
 
+type PlayerState struct {
+	X        float64 `json:"x"`
+	Y        float64 `json:"y"`
+	Rotation float64 `json:"rotation"`
+}
+
+type StatePacket struct {
+	Type    string                 `json:"type"`
+	SelfID  string                 `json:"self_id"`
+	Players map[string]PlayerState `json:"players"`
+}
+
+type Game struct {
+	mu      sync.Mutex
+	nextID  int
+	players map[string]*Player
+}
+
 type Vector2 struct {
 	X float64
 	Y float64
@@ -40,14 +59,10 @@ type Vector2 struct {
 
 func main() {
 	mux := http.NewServeMux()
-
-	player := Player{
-		X: 576,
-		Y: 320,
-	}
+	game := NewGame()
 
 	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /ws", player.wsHandler)
+	mux.HandleFunc("GET /ws", game.wsHandler)
 
 	fmt.Println("Server starting on :8080")
 
@@ -59,7 +74,13 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
-func (player *Player) wsHandler(w http.ResponseWriter, r *http.Request) {
+func NewGame() *Game {
+	return &Game{
+		players: make(map[string]*Player),
+	}
+}
+
+func (game *Game) wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -75,7 +96,10 @@ func (player *Player) wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer conn.Close()
 
-	log.Println("client connected")
+	playerID := game.addPlayer()
+	defer game.removePlayer(playerID)
+
+	log.Println("client connected:", playerID)
 
 	for {
 		messageType, msg, err := conn.ReadMessage()
@@ -92,7 +116,7 @@ func (player *Player) wsHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		returnMsg := packetHandler(packet, player)
+		returnMsg := game.packetHandler(playerID, packet)
 
 		err = conn.WriteMessage(messageType, returnMsg)
 		if err != nil {
@@ -102,7 +126,39 @@ func (player *Player) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func packetHandler(input InputPacket, player *Player) []byte {
+func (game *Game) addPlayer() string {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	playerIndex := game.nextID
+	game.nextID++
+
+	playerID := fmt.Sprintf("player-%d", game.nextID)
+	game.players[playerID] = &Player{
+		X: 576 + float64(playerIndex%4)*80,
+		Y: 320 + float64(playerIndex/4)*80,
+	}
+
+	return playerID
+}
+
+func (game *Game) removePlayer(playerID string) {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	delete(game.players, playerID)
+	log.Println("client disconnected:", playerID)
+}
+
+func (game *Game) packetHandler(playerID string, input InputPacket) []byte {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	player, ok := game.players[playerID]
+	if !ok {
+		return nil
+	}
+
 	switch input.Type {
 	case "input":
 		player.applyInput(input.Input)
@@ -112,7 +168,7 @@ func packetHandler(input InputPacket, player *Player) []byte {
 		}
 	}
 
-	response, err := json.Marshal(player)
+	response, err := json.Marshal(game.statePacket(playerID))
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -120,6 +176,27 @@ func packetHandler(input InputPacket, player *Player) []byte {
 
 	return response
 
+}
+
+func (game *Game) statePacket(playerID string) StatePacket {
+	players := make(map[string]PlayerState, len(game.players))
+	for id, player := range game.players {
+		players[id] = player.State()
+	}
+
+	return StatePacket{
+		Type:    "state",
+		SelfID:  playerID,
+		Players: players,
+	}
+}
+
+func (player *Player) State() PlayerState {
+	return PlayerState{
+		X:        player.X,
+		Y:        player.Y,
+		Rotation: player.Rotation,
+	}
 }
 
 func (player *Player) applyInput(input InputState) {
