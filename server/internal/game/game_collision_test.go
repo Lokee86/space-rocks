@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -27,24 +28,24 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 			},
 		},
 	}
-	game.state.Projectiles["bullet-1"] = &Bullet{
+	game.state.Projectiles["bullet-1"] = &entities.Bullet{
 		ID: "bullet-1",
 		X:  100,
 		Y:  100,
 	}
-	game.state.Asteroids["asteroid-1"] = &Asteroid{
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
 		ID:   "asteroid-1",
 		X:    100,
 		Y:    100,
 		Size: 1,
 	}
-	game.state.Asteroids["asteroid-2"] = &Asteroid{
+	game.state.Asteroids["asteroid-2"] = &entities.Asteroid{
 		ID:   "asteroid-2",
 		X:    1000,
 		Y:    1000,
 		Size: 1,
 	}
-	game.state.Players["player-1"] = &Ship{ID: "player-1"}
+	game.state.Players["player-1"] = &entities.Ship{ID: "player-1"}
 	game.pendingEvents["player-1"] = nil
 
 	game.handleBulletAsteroidCollisions()
@@ -70,7 +71,7 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 	if len(game.pendingEvents["player-1"]) != 1 {
 		t.Fatalf("expected 1 queued event, got %d", len(game.pendingEvents["player-1"]))
 	}
-	if game.pendingEvents["player-1"][0].Type != "bullet_blast" {
+	if game.pendingEvents["player-1"][0].Type != PacketTypeBulletBlast {
 		t.Fatalf("expected bullet_blast event, got %q", game.pendingEvents["player-1"][0].Type)
 	}
 
@@ -109,12 +110,12 @@ func TestHandleBulletAsteroidCollisionsSplitsLargerAsteroid(t *testing.T) {
 			},
 		},
 	}
-	game.state.Projectiles["bullet-1"] = &Bullet{
+	game.state.Projectiles["bullet-1"] = &entities.Bullet{
 		ID: "bullet-1",
 		X:  100,
 		Y:  100,
 	}
-	game.state.Asteroids["asteroid-1"] = &Asteroid{
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
 		ID:   "asteroid-1",
 		X:    100,
 		Y:    100,
@@ -152,8 +153,8 @@ func TestHandleBulletAsteroidCollisionsSplitsLargerAsteroid(t *testing.T) {
 
 func TestStateFlushesEventsForPlayer(t *testing.T) {
 	game := New()
-	game.state.Players["player-1"] = &Ship{ID: "player-1"}
-	game.pendingEvents["player-1"] = []EventState{{Type: "bullet_blast", X: 10, Y: 20}}
+	game.state.Players["player-1"] = &entities.Ship{ID: "player-1"}
+	game.pendingEvents["player-1"] = []EventState{{Type: PacketTypeBulletBlast, X: 10, Y: 20}}
 
 	first := game.State("player-1")
 	if first == nil {

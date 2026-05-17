@@ -1,4 +1,4 @@
-package game
+package entities
 
 import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 

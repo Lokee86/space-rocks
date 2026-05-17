@@ -4,10 +4,11 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
-func (game *Game) randomAsteroidSpawnPosition(target *Ship) physics.Vector2 {
+func (game *Game) randomAsteroidSpawnPosition(target *entities.Ship) physics.Vector2 {
 	margin := constants.AsteroidSpawnMargin
 	for attempts := 0; ; attempts++ {
 		spawn := randomOffscreenPosition(target, margin)
@@ -21,9 +22,9 @@ func (game *Game) randomAsteroidSpawnPosition(target *Ship) physics.Vector2 {
 	}
 }
 
-func randomOffscreenPosition(target *Ship, margin float64) physics.Vector2 {
-	width := target.visibleWorldWidth()
-	height := target.visibleWorldHeight()
+func randomOffscreenPosition(target *entities.Ship, margin float64) physics.Vector2 {
+	width := target.VisibleWorldWidth()
+	height := target.VisibleWorldHeight()
 	left := target.X - width*0.5
 	right := target.X + width*0.5
 	top := target.Y - height*0.5
@@ -49,7 +50,7 @@ func randomOffscreenPosition(target *Ship, margin float64) physics.Vector2 {
 
 func (game *Game) isOnscreenForAnyPlayer(position physics.Vector2) bool {
 	for _, player := range game.state.Players {
-		if player.isInsideView(position) {
+		if player.IsInsideView(position) {
 			return true
 		}
 	}
@@ -57,13 +58,13 @@ func (game *Game) isOnscreenForAnyPlayer(position physics.Vector2) bool {
 	return false
 }
 
-func (game *Game) isAsteroidFarFromAllPlayers(asteroid *Asteroid) bool {
+func (game *Game) isAsteroidFarFromAllPlayers(asteroid *entities.Asteroid) bool {
 	if len(game.state.Players) == 0 {
 		return true
 	}
 
 	for _, player := range game.state.Players {
-		if !player.isFarFromView(asteroid.Position()) {
+		if !player.IsFarFromView(asteroid.Position()) {
 			return false
 		}
 	}
@@ -71,62 +72,18 @@ func (game *Game) isAsteroidFarFromAllPlayers(asteroid *Asteroid) bool {
 	return true
 }
 
-func (game *Game) isBulletFarFromAllPlayers(bullet *Bullet) bool {
+func (game *Game) isBulletFarFromAllPlayers(bullet *entities.Bullet) bool {
 	if len(game.state.Players) == 0 {
 		return true
 	}
 
 	for _, player := range game.state.Players {
-		if !player.isFarFromView(bullet.Position()) {
+		if !player.IsFarFromView(bullet.Position()) {
 			return false
 		}
 	}
 
 	return true
-}
-
-func (ship *Ship) isInsideView(position physics.Vector2) bool {
-	width := ship.visibleWorldWidth()
-	height := ship.visibleWorldHeight()
-	left := ship.X - width*0.5
-	right := ship.X + width*0.5
-	top := ship.Y - height*0.5
-	bottom := ship.Y + height*0.5
-
-	return position.X >= left &&
-		position.X <= right &&
-		position.Y >= top &&
-		position.Y <= bottom
-}
-
-func (ship *Ship) isFarFromView(position physics.Vector2) bool {
-	width := ship.visibleWorldWidth()
-	height := ship.visibleWorldHeight()
-	left := ship.X - width*0.5 - constants.AsteroidDespawnMargin
-	right := ship.X + width*0.5 + constants.AsteroidDespawnMargin
-	top := ship.Y - height*0.5 - constants.AsteroidDespawnMargin
-	bottom := ship.Y + height*0.5 + constants.AsteroidDespawnMargin
-
-	return position.X < left ||
-		position.X > right ||
-		position.Y < top ||
-		position.Y > bottom
-}
-
-func (ship *Ship) visibleWorldWidth() float64 {
-	if ship.Config.VisibleWorldWidth > 0 {
-		return ship.Config.VisibleWorldWidth
-	}
-
-	return constants.WorldWidth
-}
-
-func (ship *Ship) visibleWorldHeight() float64 {
-	if ship.Config.VisibleWorldHeight > 0 {
-		return ship.Config.VisibleWorldHeight
-	}
-
-	return constants.WorldHeight
 }
 
 func randomRange(minValue float64, maxValue float64) float64 {

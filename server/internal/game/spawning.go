@@ -6,17 +6,18 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
-func (game *Game) spawnBullet(ship *Ship) {
+func (game *Game) spawnBullet(ship *entities.Ship) {
 	forward := ship.Forward()
 	spawnPosition := ship.Position().Add(forward.Multiply(constants.BulletSpawnOffset))
 	velocity := forward.Multiply(constants.BulletSpeed)
 
 	game.nextBulletID++
 	bulletID := fmt.Sprintf("bullet-%d", game.nextBulletID)
-	game.state.Projectiles[bulletID] = NewBullet(
+	game.state.Projectiles[bulletID] = entities.NewBullet(
 		bulletID,
 		ship.ID,
 		spawnPosition,
@@ -25,13 +26,13 @@ func (game *Game) spawnBullet(ship *Ship) {
 	)
 }
 
-func (game *Game) spawnAsteroidBatch(target *Ship) {
+func (game *Game) spawnAsteroidBatch(target *entities.Ship) {
 	for range constants.AsteroidSpawnBatchSize {
 		game.spawnAsteroid(target)
 	}
 }
 
-func (game *Game) spawnAsteroid(target *Ship) {
+func (game *Game) spawnAsteroid(target *entities.Ship) {
 	targetPosition := target.Position()
 	spawn := game.randomAsteroidSpawnPosition(target)
 	direction := spawn.DirectionTo(targetPosition).Rotated(randomRange(
@@ -45,7 +46,7 @@ func (game *Game) spawnAsteroid(target *Ship) {
 
 func (game *Game) addAsteroid(position physics.Vector2, velocity physics.Vector2, size int, variant int) {
 	asteroidID := game.nextAsteroidIDString()
-	game.state.Asteroids[asteroidID] = NewAsteroid(asteroidID, position, velocity, size, variant)
+	game.state.Asteroids[asteroidID] = entities.NewAsteroid(asteroidID, position, velocity, size, variant)
 }
 
 func (game *Game) nextAsteroidIDString() string {
@@ -58,7 +59,7 @@ func (game *Game) nextAsteroidIDString() string {
 	}
 }
 
-func (game *Game) spawnAsteroidFragments(asteroid *Asteroid) {
+func (game *Game) spawnAsteroidFragments(asteroid *entities.Asteroid) {
 	fragmentSize := asteroid.FragmentSize()
 	if fragmentSize <= 0 {
 		return

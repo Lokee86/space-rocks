@@ -1,6 +1,7 @@
 extends Node2D
 
 const Constants = preload("res://scripts/constants.gd")
+const Packets = preload("res://scripts/packets.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
@@ -81,15 +82,15 @@ func _process(delta: float) -> void:
 
 
 func _apply_state(data: Dictionary) -> void:
-	if data.get("type", "") != "state":
+	if data.get(Packets.FIELD_TYPE, "") != Packets.TYPE_STATE:
 		return
 
-	self_id = data["self_id"]
-	var server_players: Dictionary = data["players"]
-	var server_bullets: Dictionary = data.get("bullets", {})
-	var server_asteroids: Dictionary = data.get("asteroids", {})
+	self_id = data[Packets.FIELD_SELF_ID]
+	var server_players: Dictionary = data[Packets.FIELD_PLAYERS]
+	var server_bullets: Dictionary = data.get(Packets.FIELD_BULLETS, {})
+	var server_asteroids: Dictionary = data.get(Packets.FIELD_ASTEROIDS, {})
 	var server_events: Array = []
-	var events_data = data.get("events", [])
+	var events_data = data.get(Packets.FIELD_EVENTS, [])
 	if events_data is Array:
 		server_events = events_data
 
@@ -104,8 +105,8 @@ func _apply_state(data: Dictionary) -> void:
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
 		var player_node = _get_player_node(player_id)
-		var server_position := Vector2(state["x"], state["y"])
-		var server_rotation: float = state["rotation"]
+		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
+		var server_rotation: float = state[Packets.FIELD_ROTATION]
 
 		target_player_positions[player_id] = server_position
 		target_player_rotations[player_id] = server_rotation
@@ -184,8 +185,8 @@ func _apply_bullets(server_bullets: Dictionary, play_new_bullet_sounds: bool) ->
 		var state: Dictionary = server_bullets[bullet_id]
 		var is_new_bullet := !bullet_nodes.has(bullet_id)
 		var bullet_node = _get_bullet_node(bullet_id)
-		var server_position := Vector2(state["x"], state["y"])
-		var server_rotation: float = state["rotation"]
+		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
+		var server_rotation: float = state[Packets.FIELD_ROTATION]
 
 		target_bullet_positions[bullet_id] = server_position
 		target_bullet_rotations[bullet_id] = server_rotation
@@ -226,15 +227,15 @@ func _apply_asteroids(server_asteroids: Dictionary) -> void:
 	for asteroid_id in server_asteroids.keys():
 		var state: Dictionary = server_asteroids[asteroid_id]
 		var asteroid_node = _get_asteroid_node(asteroid_id)
-		var server_position := Vector2(state["x"], state["y"])
+		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
 
 		target_asteroid_positions[asteroid_id] = server_position
 
 		if !initialized_asteroids.has(asteroid_id):
 			initialized_asteroids[asteroid_id] = true
 			asteroid_node.global_position = server_position
-			asteroid_node.scale = Vector2.ONE * float(state["size"]) * Constants.ASTEROID_SIZE_SCALE
-			asteroid_node.set_asteroid_variant(state["variant"])
+			asteroid_node.scale = Vector2.ONE * float(state[Packets.FIELD_SIZE]) * Constants.ASTEROID_SIZE_SCALE
+			asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
 
 
 func _get_asteroid_node(asteroid_id):
@@ -261,9 +262,9 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 
 func _apply_events(server_events: Array) -> void:
 	for event in server_events:
-		if event.get("type", "") == "bullet_blast":
+		if event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_BULLET_BLAST:
 			player.play_asteroid_destroyed_sound()
-			_spawn_bullet_blast(Vector2(event["x"], event["y"]))
+			_spawn_bullet_blast(Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y]))
 
 
 func _spawn_bullet_blast(event_position: Vector2) -> void:
@@ -297,10 +298,7 @@ func _send_client_config() -> void:
 		return
 
 	var visible_size := get_viewport_rect().size
-	socket.send_text(JSON.stringify({
-		"type": "client_config",
-		"config": {
-			"visible_world_width": visible_size.x,
-			"visible_world_height": visible_size.y,
-		},
-	}))
+	socket.send_text(JSON.stringify(Packets.client_config_packet(
+		visible_size.x,
+		visible_size.y
+	)))

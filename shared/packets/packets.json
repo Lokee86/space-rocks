@@ -1,0 +1,156 @@
+{
+  "outputs": [
+    {
+      "language": "go",
+      "path": "server/internal/game/entities/packets_generated.go",
+      "package": "entities",
+      "structs": [
+        "ClientConfig",
+        "InputState",
+        "ShipState",
+        "AsteroidState",
+        "BulletState"
+      ]
+    },
+    {
+      "language": "go",
+      "path": "server/internal/game/packets.go",
+      "package": "game",
+      "imports": {
+        "entities": "github.com/Lokee86/space-rocks/server/internal/game/entities"
+      },
+      "packet_types": true,
+      "structs": [
+        "ClientPacket",
+        "EventState",
+        "StatePacket"
+      ]
+    },
+    {
+      "language": "gdscript",
+      "path": "client/scripts/packets.gd",
+      "base": "RefCounted",
+      "builders": [
+        "input_packet",
+        "client_config_packet"
+      ]
+    }
+  ],
+  "structs": [
+    {
+      "id": "ClientPacket",
+      "fields": [
+        { "name": "type", "json": "type", "type": "string" },
+        { "name": "input", "json": "input", "type": "InputState", "go_type": "entities.InputState" },
+        { "name": "config", "json": "config", "type": "ClientConfig", "go_type": "entities.ClientConfig" }
+      ]
+    },
+    {
+      "id": "ClientConfig",
+      "fields": [
+        { "name": "visible_world_width", "go_name": "VisibleWorldWidth", "json": "visible_world_width", "type": "float" },
+        { "name": "visible_world_height", "go_name": "VisibleWorldHeight", "json": "visible_world_height", "type": "float" }
+      ]
+    },
+    {
+      "id": "InputState",
+      "fields": [
+        { "name": "forward", "json": "forward", "type": "bool" },
+        { "name": "back", "json": "back", "type": "bool" },
+        { "name": "right", "json": "right", "type": "bool" },
+        { "name": "left", "json": "left", "type": "bool" },
+        { "name": "shoot", "json": "shoot", "type": "bool" }
+      ]
+    },
+    {
+      "id": "ShipState",
+      "fields": [
+        { "name": "id", "json": "id", "type": "string" },
+        { "name": "x", "json": "x", "type": "float" },
+        { "name": "y", "json": "y", "type": "float" },
+        { "name": "rotation", "json": "rotation", "type": "float" }
+      ]
+    },
+    {
+      "id": "AsteroidState",
+      "fields": [
+        { "name": "id", "json": "id", "type": "string" },
+        { "name": "x", "json": "x", "type": "float" },
+        { "name": "y", "json": "y", "type": "float" },
+        { "name": "size", "json": "size", "type": "int" },
+        { "name": "variant", "json": "variant", "type": "int" }
+      ]
+    },
+    {
+      "id": "BulletState",
+      "fields": [
+        { "name": "id", "json": "id", "type": "string" },
+        { "name": "owner_id", "go_name": "OwnerID", "json": "owner_id", "type": "string" },
+        { "name": "x", "json": "x", "type": "float" },
+        { "name": "y", "json": "y", "type": "float" },
+        { "name": "rotation", "json": "rotation", "type": "float" }
+      ]
+    },
+    {
+      "id": "EventState",
+      "fields": [
+        { "name": "type", "json": "type", "type": "string" },
+        { "name": "x", "json": "x", "type": "float" },
+        { "name": "y", "json": "y", "type": "float" }
+      ]
+    },
+    {
+      "id": "StatePacket",
+      "fields": [
+        { "name": "type", "json": "type", "type": "string" },
+        { "name": "self_id", "go_name": "SelfID", "json": "self_id", "type": "string" },
+        { "name": "players", "json": "players", "type": "map", "key_type": "string", "value_type": "ShipState", "go_value_type": "entities.ShipState" },
+        { "name": "bullets", "json": "bullets", "type": "map", "key_type": "string", "value_type": "BulletState", "go_value_type": "entities.BulletState" },
+        { "name": "asteroids", "json": "asteroids", "type": "map", "key_type": "string", "value_type": "AsteroidState", "go_value_type": "entities.AsteroidState" },
+        { "name": "events", "json": "events", "type": "array", "item_type": "EventState" }
+      ]
+    }
+  ],
+  "packet_types": [
+    { "id": "input", "value": "input" },
+    { "id": "client_config", "value": "client_config" },
+    { "id": "state", "value": "state" },
+    { "id": "bullet_blast", "value": "bullet_blast" }
+  ],
+  "builders": [
+    {
+      "id": "input_packet",
+      "args": [
+        "forward",
+        "back",
+        "right",
+        "left",
+        "shoot"
+      ],
+      "body": {
+        "type": "input",
+        "input": {
+          "forward": "$forward",
+          "back": "$back",
+          "right": "$right",
+          "left": "$left",
+          "shoot": "$shoot"
+        }
+      }
+    },
+    {
+      "id": "client_config_packet",
+      "args": [
+        "visible_world_width",
+        "visible_world_height"
+      ],
+      "body": {
+        "type": "client_config",
+        "config": {
+          "visible_world_width": "$visible_world_width",
+          "visible_world_height": "$visible_world_height"
+        }
+      }
+    }
+  ]
+}

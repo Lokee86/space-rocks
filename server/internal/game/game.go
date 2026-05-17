@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -18,7 +19,7 @@ type Game struct {
 	nextBulletID         int
 	asteroidSpawnElapsed float64
 	collisionShapes      physics.CollisionShapeCatalog
-	state                GameState
+	state                entities.GameState
 	pendingEvents        map[string][]EventState
 }
 
@@ -31,7 +32,7 @@ func New() *Game {
 	return &Game{
 		collisionShapes: collisionShapes,
 		pendingEvents:   make(map[string][]EventState),
-		state:           NewGameState(),
+		state:           entities.NewGameState(),
 	}
 }
 
@@ -47,11 +48,11 @@ func (game *Game) AddPlayer() string {
 	game.nextID++
 
 	playerID := fmt.Sprintf("player-%d", game.nextID)
-	game.state.Players[playerID] = &Ship{
+	game.state.Players[playerID] = &entities.Ship{
 		ID: playerID,
 		X:  576 + float64(playerIndex%4)*80,
 		Y:  320 + float64(playerIndex/4)*80,
-		Config: ClientConfig{
+		Config: entities.ClientConfig{
 			VisibleWorldWidth:  constants.WorldWidth,
 			VisibleWorldHeight: constants.WorldHeight,
 		},
@@ -79,9 +80,9 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	}
 
 	switch packet.Type {
-	case "input":
+	case PacketTypeInput:
 		player.SetInput(packet.Input)
-	case "client_config":
+	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)
 	}
 }
@@ -160,24 +161,24 @@ func (game *Game) Step(delta float64) {
 }
 
 func (game *Game) statePacket(playerID string) StatePacket {
-	players := make(map[string]ShipState, len(game.state.Players))
+	players := make(map[string]entities.ShipState, len(game.state.Players))
 	for id, player := range game.state.Players {
 		players[id] = player.State()
 	}
 
-	asteroids := make(map[string]AsteroidState, len(game.state.Asteroids))
+	asteroids := make(map[string]entities.AsteroidState, len(game.state.Asteroids))
 	for id, asteroid := range game.state.Asteroids {
 		asteroids[id] = asteroid.State()
 	}
 
-	bullets := make(map[string]BulletState, len(game.state.Projectiles))
+	bullets := make(map[string]entities.BulletState, len(game.state.Projectiles))
 	for id, bullet := range game.state.Projectiles {
 		bullets[id] = bullet.State()
 	}
 	events := append(make([]EventState, 0, len(game.pendingEvents[playerID])), game.pendingEvents[playerID]...)
 
 	return StatePacket{
-		Type:      "state",
+		Type:      PacketTypeState,
 		SelfID:    playerID,
 		Players:   players,
 		Bullets:   bullets,

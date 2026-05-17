@@ -1,4 +1,4 @@
-package game
+package entities
 
 import (
 	"math"
@@ -64,6 +64,50 @@ func (ship *Ship) Position() physics.Vector2 {
 
 func (ship *Ship) Forward() physics.Vector2 {
 	return physics.Vector2{X: 0, Y: -1}.Rotated(ship.Rotation)
+}
+
+func (ship *Ship) IsInsideView(position physics.Vector2) bool {
+	width := ship.VisibleWorldWidth()
+	height := ship.VisibleWorldHeight()
+	left := ship.X - width*0.5
+	right := ship.X + width*0.5
+	top := ship.Y - height*0.5
+	bottom := ship.Y + height*0.5
+
+	return position.X >= left &&
+		position.X <= right &&
+		position.Y >= top &&
+		position.Y <= bottom
+}
+
+func (ship *Ship) IsFarFromView(position physics.Vector2) bool {
+	width := ship.VisibleWorldWidth()
+	height := ship.VisibleWorldHeight()
+	left := ship.X - width*0.5 - constants.AsteroidDespawnMargin
+	right := ship.X + width*0.5 + constants.AsteroidDespawnMargin
+	top := ship.Y - height*0.5 - constants.AsteroidDespawnMargin
+	bottom := ship.Y + height*0.5 + constants.AsteroidDespawnMargin
+
+	return position.X < left ||
+		position.X > right ||
+		position.Y < top ||
+		position.Y > bottom
+}
+
+func (ship *Ship) VisibleWorldWidth() float64 {
+	if ship.Config.VisibleWorldWidth > 0 {
+		return ship.Config.VisibleWorldWidth
+	}
+
+	return constants.WorldWidth
+}
+
+func (ship *Ship) VisibleWorldHeight() float64 {
+	if ship.Config.VisibleWorldHeight > 0 {
+		return ship.Config.VisibleWorldHeight
+	}
+
+	return constants.WorldHeight
 }
 
 func axis(negative bool, positive bool) float64 {

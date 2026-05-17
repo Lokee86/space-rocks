@@ -2,12 +2,13 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func (game *Game) handleBulletAsteroidCollisions() {
 	hitBullets := map[string]bool{}
-	hitAsteroids := map[string]*Asteroid{}
+	hitAsteroids := map[string]*entities.Asteroid{}
 
 	for bulletID, bullet := range game.state.Projectiles {
 		if hitBullets[bulletID] {
@@ -43,7 +44,7 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			hitAsteroids[asteroidID] = asteroid
 			impactPosition := bullet.Position()
 			game.broadcastEvent(EventState{
-				Type: "bullet_blast",
+				Type: PacketTypeBulletBlast,
 				X:    impactPosition.X,
 				Y:    impactPosition.Y,
 			})
