@@ -9,6 +9,7 @@ const (
 	PacketTypeState        = "state"
 	PacketTypeBulletBlast  = "bullet_blast"
 	PacketTypeShipDeath    = "ship_death"
+	PacketTypeRespawn      = "respawn"
 )
 
 type ClientPacket struct {
@@ -18,15 +19,18 @@ type ClientPacket struct {
 }
 
 type EventState struct {
-	Type     string  `json:"type"`
-	PlayerID string  `json:"player_id"`
-	X        float64 `json:"x"`
-	Y        float64 `json:"y"`
+	Type         string  `json:"type"`
+	PlayerID     string  `json:"player_id"`
+	Lives        int     `json:"lives"`
+	RespawnDelay float64 `json:"respawn_delay"`
+	X            float64 `json:"x"`
+	Y            float64 `json:"y"`
 }
 
 type StatePacket struct {
 	Type      string                            `json:"type"`
 	SelfID    string                            `json:"self_id"`
+	Lives     int                               `json:"lives"`
 	Players   map[string]entities.ShipState     `json:"players"`
 	Bullets   map[string]entities.BulletState   `json:"bullets"`
 	Asteroids map[string]entities.AsteroidState `json:"asteroids"`

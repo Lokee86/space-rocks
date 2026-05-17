@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bitj32ykpehqc"
-path="res://.godot/imported/PixelatedEleganceRegular-ovawB.ttf-5cbc4cffdf01201a30e4286a069e25b9.fontdata"
+uid="uid://b4obamqu1qd0x"
+path="res://.godot/imported/GamepauseddemoRegular-RpmY6.otf-e47f715f4abe018deeed3374bb1c9e31.fontdata"
 
 [deps]
 
-source_file="res://assets/PixelatedEleganceRegular-ovawB.ttf"
-dest_files=["res://.godot/imported/PixelatedEleganceRegular-ovawB.ttf-5cbc4cffdf01201a30e4286a069e25b9.fontdata"]
+source_file="res://assets/GamepauseddemoRegular-RpmY6.otf"
+dest_files=["res://.godot/imported/GamepauseddemoRegular-RpmY6.otf-e47f715f4abe018deeed3374bb1c9e31.fontdata"]
 
 [params]
 

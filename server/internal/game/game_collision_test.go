@@ -29,9 +29,10 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 		},
 	}
 	game.state.Projectiles["bullet-1"] = &entities.Bullet{
-		ID: "bullet-1",
-		X:  100,
-		Y:  100,
+		ID:      "bullet-1",
+		OwnerID: "player-1",
+		X:       100,
+		Y:       100,
 	}
 	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
 		ID:   "asteroid-1",
@@ -73,6 +74,9 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 	}
 	if game.pendingEvents["player-1"][0].Type != PacketTypeBulletBlast {
 		t.Fatalf("expected bullet_blast event, got %q", game.pendingEvents["player-1"][0].Type)
+	}
+	if game.state.Players["player-1"].Score != constants.BaseScore {
+		t.Fatalf("expected player score %d, got %d", constants.BaseScore, game.state.Players["player-1"].Score)
 	}
 
 	packet := game.statePacket("player-1")
@@ -148,6 +152,48 @@ func TestHandleBulletAsteroidCollisionsSplitsLargerAsteroid(t *testing.T) {
 
 	if fragmentCount != 2 {
 		t.Fatalf("expected 2 fragments, got %d", fragmentCount)
+	}
+}
+
+func TestHandleBulletAsteroidCollisionsScoresByAsteroidSize(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Bullet: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 5,
+		},
+		Asteroids: []physics.ImportedCollisionShape{
+			{
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
+	}
+	game.state.Players["player-1"] = &entities.Ship{ID: "player-1"}
+	game.pendingEvents["player-1"] = nil
+	game.state.Projectiles["bullet-1"] = &entities.Bullet{
+		ID:      "bullet-1",
+		OwnerID: "player-1",
+		X:       100,
+		Y:       100,
+	}
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
+		ID:   "asteroid-1",
+		X:    100,
+		Y:    100,
+		Size: 3,
+	}
+
+	game.handleBulletAsteroidCollisions()
+
+	expectedScore := constants.BaseScore / 3
+	if game.state.Players["player-1"].Score != expectedScore {
+		t.Fatalf("expected player score %d, got %d", expectedScore, game.state.Players["player-1"].Score)
+	}
+
+	packet := game.statePacket("player-1")
+	if packet.Players["player-1"].Score != expectedScore {
+		t.Fatalf("expected state packet score %d, got %d", expectedScore, packet.Players["player-1"].Score)
 	}
 }
 

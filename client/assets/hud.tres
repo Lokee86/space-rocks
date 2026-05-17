@@ -1,0 +1,11 @@
+[gd_resource type="LabelSettings" load_steps=3 format=3 uid="uid://ck2uiws3xnfto"]
+
+[ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/PixelCaps-LOnE.ttf" id="1_ufclc"]
+
+[sub_resource type="FontVariation" id="FontVariation_pbrdo"]
+base_font = ExtResource("1_ufclc")
+variation_embolden = 1.0
+
+[resource]
+font = SubResource("FontVariation_pbrdo")
+font_size = 48

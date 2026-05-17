@@ -212,6 +212,8 @@ def gdscript_leaf(value: Any) -> str:
             "client_config": "TYPE_CLIENT_CONFIG",
             "state": "TYPE_STATE",
             "bullet_blast": "TYPE_BULLET_BLAST",
+            "ship_death": "TYPE_SHIP_DEATH",
+            "respawn": "TYPE_RESPAWN",
         }.get(value)
         if type_name is not None:
             return type_name

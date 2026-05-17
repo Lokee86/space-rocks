@@ -19,6 +19,8 @@ type ShipState struct {
 	X        float64 `json:"x"`
 	Y        float64 `json:"y"`
 	Rotation float64 `json:"rotation"`
+	Score    int     `json:"score"`
+	Lives    int     `json:"lives"`
 }
 
 type AsteroidState struct {

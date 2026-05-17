@@ -9,6 +9,7 @@ import (
 func (game *Game) handleBulletAsteroidCollisions() {
 	hitBullets := map[string]bool{}
 	hitAsteroids := map[string]*entities.Asteroid{}
+	scoreAwards := []ScoreAward{}
 
 	for bulletID, bullet := range game.state.Projectiles {
 		if hitBullets[bulletID] {
@@ -42,6 +43,7 @@ func (game *Game) handleBulletAsteroidCollisions() {
 
 			hitBullets[bulletID] = true
 			hitAsteroids[asteroidID] = asteroid
+			scoreAwards = append(scoreAwards, NewAsteroidHitScoreAward(bullet.OwnerID, asteroid))
 			impactPosition := bullet.Position()
 			game.broadcastEvent(EventState{
 				Type: PacketTypeBulletBlast,
@@ -50,6 +52,10 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			})
 			break
 		}
+	}
+
+	for _, award := range scoreAwards {
+		game.awardScore(award)
 	}
 
 	for bulletID := range hitBullets {
@@ -102,11 +108,22 @@ func (game *Game) handleShipAsteroidCollisions() {
 	for playerID, player := range hitPlayers {
 		position := player.Position()
 		player.MarkPendingDespawn(constants.CollisionDespawnDelay)
+		lives := 0
+		respawnDelay := 0.0
+		if session, ok := game.playerSessions[playerID]; ok {
+			session.Score = player.Score
+			session.RecordDeath()
+			player.Lives = session.Lives
+			lives = session.Lives
+			respawnDelay = session.RespawnCooldown
+		}
 		game.broadcastEvent(EventState{
-			Type:     PacketTypeShipDeath,
-			PlayerID: playerID,
-			X:        position.X,
-			Y:        position.Y,
+			Type:         PacketTypeShipDeath,
+			PlayerID:     playerID,
+			Lives:        lives,
+			RespawnDelay: respawnDelay,
+			X:            position.X,
+			Y:            position.Y,
 		})
 	}
 

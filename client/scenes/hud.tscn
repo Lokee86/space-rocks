@@ -1,40 +1,168 @@
-[gd_scene load_steps=4 format=3 uid="uid://cqjku4qxxcoxj"]
+[gd_scene load_steps=7 format=3 uid="uid://cqjku4qxxcoxj"]
 
-[ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/PixelCaps-LOnE.ttf" id="1_p2oth"]
+[ext_resource type="LabelSettings" uid="uid://ck2uiws3xnfto" path="res://assets/hud.tres" id="1_diql1"]
+[ext_resource type="Texture2D" uid="uid://cw8ubidl86juw" path="res://assets/yellow-v-wing.png" id="2_dcp08"]
+[ext_resource type="FontFile" uid="uid://b4obamqu1qd0x" path="res://assets/GamepauseddemoRegular-RpmY6.otf" id="3_ns4dw"]
+[ext_resource type="LabelSettings" uid="uid://drsllhvt10h1w" path="res://assets/death2.tres" id="4_m6ttb"]
+[ext_resource type="AudioStream" uid="uid://b6uqvxmbwwfsp" path="res://audio/gameover.mp3" id="5_a2ab3"]
 
-[sub_resource type="FontVariation" id="FontVariation_pbrdo"]
-base_font = ExtResource("1_p2oth")
-variation_embolden = 1.0
-
-[sub_resource type="LabelSettings" id="LabelSettings_pkpwa"]
-font = SubResource("FontVariation_pbrdo")
-font_size = 48
+[sub_resource type="LabelSettings" id="LabelSettings_smpjf"]
+font = ExtResource("3_ns4dw")
+font_size = 100
+font_color = Color(1, 0, 0, 1)
+outline_size = 10
+outline_color = Color(0, 0, 0, 1)
 
 [node name="HUD" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 313.0
-offset_top = 86.0
-offset_right = 313.0
-offset_bottom = 86.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Score" type="Label" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = -0.245
-anchor_top = -0.119
-anchor_right = -0.245
-anchor_bottom = -0.119
-offset_left = 5.60001
-offset_top = 7.68
-offset_right = 365.6
-offset_bottom = 66.68
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 106.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 15
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 4
+size_flags_stretch_ratio = 0.0
+
+[node name="Score" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
 text = "
 
 
 SCORE: 99999"
-label_settings = SubResource("LabelSettings_pkpwa")
+label_settings = ExtResource("1_diql1")
+
+[node name="Spacer" type="Control" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LivesContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="LivesCount" type="Label" parent="MarginContainer/HBoxContainer/LivesContainer"]
+layout_mode = 2
+text = "
+
+
+3 x "
+label_settings = ExtResource("1_diql1")
+
+[node name="LivesIcon" type="TextureRect" parent="MarginContainer/HBoxContainer/LivesContainer"]
+custom_minimum_size = Vector2(100, 80)
+layout_mode = 2
+texture = ExtResource("2_dcp08")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="DeathOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DeathMesseageContainer" type="VBoxContainer" parent="DeathOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -186.5
+offset_top = -50.5
+offset_right = 186.5
+offset_bottom = 50.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="YouDied" type="Label" parent="DeathOverlay/DeathMesseageContainer"]
+layout_mode = 2
+text = "You Died"
+label_settings = SubResource("LabelSettings_smpjf")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RespawnLine" type="Control" parent="DeathOverlay/DeathMesseageContainer"]
+layout_mode = 2
+
+[node name="RespawnTimer" type="Label" parent="DeathOverlay/DeathMesseageContainer/RespawnLine"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -88.5
+offset_top = -15.5
+offset_right = 88.5
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Respawn in X"
+label_settings = ExtResource("4_m6ttb")
+
+[node name="RespawnTell" type="Label" parent="DeathOverlay/DeathMesseageContainer/RespawnLine"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -135.5
+offset_top = -15.5
+offset_right = 135.5
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Press R to Respawn"
+label_settings = ExtResource("4_m6ttb")
+
+[node name="GameOverOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DeathMesseageContainer" type="VBoxContainer" parent="GameOverOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -186.5
+offset_top = -50.5
+offset_right = 186.5
+offset_bottom = 50.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="YouDied" type="Label" parent="GameOverOverlay/DeathMesseageContainer"]
+layout_mode = 2
+text = "Game Over"
+label_settings = SubResource("LabelSettings_smpjf")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GameOverSound" type="AudioStreamPlayer" parent="GameOverOverlay"]
+stream = ExtResource("5_a2ab3")
+volume_db = 5.0

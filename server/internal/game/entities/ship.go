@@ -13,6 +13,8 @@ func (ship *Ship) State() ShipState {
 		X:        ship.X,
 		Y:        ship.Y,
 		Rotation: ship.Rotation,
+		Score:    ship.Score,
+		Lives:    ship.Lives,
 	}
 }
 
@@ -61,6 +63,10 @@ func (ship *Ship) CanShoot() bool {
 
 func (ship *Ship) ResetShootCooldown() {
 	ship.ShootCooldown = constants.BulletCooldown
+}
+
+func (ship *Ship) AddScore(score int) {
+	ship.Score += score
 }
 
 func (ship *Ship) Position() physics.Vector2 {

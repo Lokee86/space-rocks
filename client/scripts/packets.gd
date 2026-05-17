@@ -6,6 +6,7 @@ const TYPE_CLIENT_CONFIG := "client_config"
 const TYPE_STATE := "state"
 const TYPE_BULLET_BLAST := "bullet_blast"
 const TYPE_SHIP_DEATH := "ship_death"
+const TYPE_RESPAWN := "respawn"
 
 const FIELD_ASTEROIDS := "asteroids"
 const FIELD_BACK := "back"
@@ -16,11 +17,14 @@ const FIELD_FORWARD := "forward"
 const FIELD_ID := "id"
 const FIELD_INPUT := "input"
 const FIELD_LEFT := "left"
+const FIELD_LIVES := "lives"
 const FIELD_OWNER_ID := "owner_id"
 const FIELD_PLAYER_ID := "player_id"
 const FIELD_PLAYERS := "players"
+const FIELD_RESPAWN_DELAY := "respawn_delay"
 const FIELD_RIGHT := "right"
 const FIELD_ROTATION := "rotation"
+const FIELD_SCORE := "score"
 const FIELD_SELF_ID := "self_id"
 const FIELD_SHOOT := "shoot"
 const FIELD_SIZE := "size"
@@ -41,6 +45,11 @@ static func input_packet(forward, back, right, left, shoot) -> Dictionary:
 	packet_input[FIELD_LEFT] = left
 	packet_input[FIELD_SHOOT] = shoot
 	packet[FIELD_INPUT] = packet_input
+	return packet
+
+static func respawn_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = TYPE_RESPAWN
 	return packet
 
 static func client_config_packet(visible_world_width, visible_world_height) -> Dictionary:

@@ -21,6 +21,7 @@ type Game struct {
 	collisionShapes      physics.CollisionShapeCatalog
 	state                entities.GameState
 	cameraViews          map[string]*entities.CameraView
+	playerSessions       map[string]*playerSession
 	pendingEvents        map[string][]EventState
 }
 
@@ -33,6 +34,7 @@ func New() *Game {
 	return &Game{
 		collisionShapes: collisionShapes,
 		cameraViews:     make(map[string]*entities.CameraView),
+		playerSessions:  make(map[string]*playerSession),
 		pendingEvents:   make(map[string][]EventState),
 		state:           entities.NewGameState(),
 	}
@@ -50,15 +52,13 @@ func (game *Game) AddPlayer() string {
 	game.nextID++
 
 	playerID := fmt.Sprintf("player-%d", game.nextID)
-	player := &entities.Ship{
-		ID: playerID,
-		X:  576 + float64(playerIndex%4)*80,
-		Y:  320 + float64(playerIndex/4)*80,
-		Config: entities.ClientConfig{
-			VisibleWorldWidth:  constants.WorldWidth,
-			VisibleWorldHeight: constants.WorldHeight,
-		},
+	spawnPosition := physics.Vector2{
+		X: 576 + float64(playerIndex%4)*80,
+		Y: 320 + float64(playerIndex/4)*80,
 	}
+	session := newPlayerSession(playerID, spawnPosition)
+	player := session.NewShip(spawnPosition)
+	game.playerSessions[playerID] = session
 	game.state.Players[playerID] = player
 	game.cameraViews[playerID] = &entities.CameraView{
 		X:      player.X,
@@ -76,12 +76,26 @@ func (game *Game) RemovePlayer(playerID string) {
 
 	delete(game.state.Players, playerID)
 	delete(game.cameraViews, playerID)
+	delete(game.playerSessions, playerID)
 	delete(game.pendingEvents, playerID)
 }
 
 func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+
+	if packet.Type == PacketTypeRespawn {
+		game.respawnPlayer(playerID)
+		return
+	}
+	if packet.Type == PacketTypeClientConfig {
+		if session, ok := game.playerSessions[playerID]; ok {
+			session.Config = packet.Config
+		}
+		if cameraView, ok := game.cameraViews[playerID]; ok {
+			cameraView.SetConfig(packet.Config)
+		}
+	}
 
 	player, ok := game.state.Players[playerID]
 	if !ok {
@@ -95,9 +109,6 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		player.SetInput(packet.Input)
 	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)
-		if cameraView, ok := game.cameraViews[playerID]; ok {
-			cameraView.SetConfig(packet.Config)
-		}
 	}
 }
 
@@ -129,6 +140,10 @@ func (game *Game) Step(delta float64) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	for _, session := range game.playerSessions {
+		session.Step(delta)
+	}
+
 	for _, player := range game.state.Players {
 		player.ApplyInput(delta)
 		if cameraView, ok := game.cameraViews[player.ID]; ok {
@@ -145,6 +160,9 @@ func (game *Game) Step(delta float64) {
 
 	for id, player := range game.state.Players {
 		if player.ReadyForRemoval() {
+			if session, ok := game.playerSessions[id]; ok {
+				session.Score = player.Score
+			}
 			delete(game.state.Players, id)
 		}
 	}
@@ -207,9 +225,21 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	return StatePacket{
 		Type:      PacketTypeState,
 		SelfID:    playerID,
+		Lives:     game.playerLives(playerID),
 		Players:   players,
 		Bullets:   bullets,
 		Asteroids: asteroids,
 		Events:    events,
 	}
+}
+
+func (game *Game) playerLives(playerID string) int {
+	if session, ok := game.playerSessions[playerID]; ok {
+		return session.Lives
+	}
+	if player, ok := game.state.Players[playerID]; ok {
+		return player.Lives
+	}
+
+	return 0
 }

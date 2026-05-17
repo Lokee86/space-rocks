@@ -32,6 +32,7 @@
       "base": "RefCounted",
       "builders": [
         "input_packet",
+        "respawn_packet",
         "client_config_packet"
       ]
     }
@@ -68,7 +69,9 @@
         { "name": "id", "json": "id", "type": "string" },
         { "name": "x", "json": "x", "type": "float" },
         { "name": "y", "json": "y", "type": "float" },
-        { "name": "rotation", "json": "rotation", "type": "float" }
+        { "name": "rotation", "json": "rotation", "type": "float" },
+        { "name": "score", "json": "score", "type": "int" },
+        { "name": "lives", "json": "lives", "type": "int" }
       ]
     },
     {
@@ -96,6 +99,8 @@
       "fields": [
         { "name": "type", "json": "type", "type": "string" },
         { "name": "player_id", "go_name": "PlayerID", "json": "player_id", "type": "string" },
+        { "name": "lives", "json": "lives", "type": "int" },
+        { "name": "respawn_delay", "go_name": "RespawnDelay", "json": "respawn_delay", "type": "float" },
         { "name": "x", "json": "x", "type": "float" },
         { "name": "y", "json": "y", "type": "float" }
       ]
@@ -105,6 +110,7 @@
       "fields": [
         { "name": "type", "json": "type", "type": "string" },
         { "name": "self_id", "go_name": "SelfID", "json": "self_id", "type": "string" },
+        { "name": "lives", "json": "lives", "type": "int" },
         { "name": "players", "json": "players", "type": "map", "key_type": "string", "value_type": "ShipState", "go_value_type": "entities.ShipState" },
         { "name": "bullets", "json": "bullets", "type": "map", "key_type": "string", "value_type": "BulletState", "go_value_type": "entities.BulletState" },
         { "name": "asteroids", "json": "asteroids", "type": "map", "key_type": "string", "value_type": "AsteroidState", "go_value_type": "entities.AsteroidState" },
@@ -117,7 +123,8 @@
     { "id": "client_config", "value": "client_config" },
     { "id": "state", "value": "state" },
     { "id": "bullet_blast", "value": "bullet_blast" },
-    { "id": "ship_death", "value": "ship_death" }
+    { "id": "ship_death", "value": "ship_death" },
+    { "id": "respawn", "value": "respawn" }
   ],
   "builders": [
     {
@@ -138,6 +145,13 @@
           "left": "$left",
           "shoot": "$shoot"
         }
+      }
+    },
+    {
+      "id": "respawn_packet",
+      "args": [],
+      "body": {
+        "type": "respawn"
       }
     },
     {

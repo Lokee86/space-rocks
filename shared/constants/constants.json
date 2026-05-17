@@ -7,6 +7,7 @@
       "groups": [
         "server",
         "player",
+        "scoring",
         "world",
         "asteroid",
         "bullet"
@@ -19,6 +20,7 @@
       "groups": [
         "server",
         "player",
+        "scoring",
         "world",
         "asteroid",
         "bullet"
@@ -96,6 +98,58 @@
             },
             "go": {
               "name": "PlayerDamping"
+            }
+          }
+        },
+        {
+          "id": "player_starting_lives",
+          "type": "int",
+          "value": 3,
+          "targets": {
+            "gdscript": {
+              "name": "PLAYER_STARTING_LIVES"
+            },
+            "go": {
+              "name": "PlayerStartingLives"
+            }
+          }
+        },
+        {
+          "id": "player_respawn_delay",
+          "type": "float",
+          "value": 3.0,
+          "targets": {
+            "gdscript": {
+              "name": "PLAYER_RESPAWN_DELAY"
+            },
+            "go": {
+              "name": "PlayerRespawnDelay"
+            }
+          }
+        },
+        {
+          "id": "player_respawn_search_radius",
+          "type": "float",
+          "value": 240.0,
+          "targets": {
+            "gdscript": {
+              "name": "PLAYER_RESPAWN_SEARCH_RADIUS"
+            },
+            "go": {
+              "name": "PlayerRespawnSearchRadius"
+            }
+          }
+        },
+        {
+          "id": "game_over_sound_delay",
+          "type": "float",
+          "value": 0.35,
+          "targets": {
+            "gdscript": {
+              "name": "GAME_OVER_SOUND_DELAY"
+            },
+            "go": {
+              "name": "GameOverSoundDelay"
             }
           }
         }
@@ -187,6 +241,24 @@
                 "component": "y"
               }
             ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "scoring",
+      "constants": [
+        {
+          "id": "base_score",
+          "type": "int",
+          "value": 120,
+          "targets": {
+            "gdscript": {
+              "name": "BASE_SCORE"
+            },
+            "go": {
+              "name": "BaseScore"
+            }
           }
         }
       ]
@@ -358,7 +430,7 @@
         {
           "id": "collision_despawn_delay",
           "type": "float",
-          "value": 0.5,
+          "value": 0.05,
           "targets": {
             "gdscript": {
               "name": "COLLISION_DESPAWN_DELAY"

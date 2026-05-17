@@ -11,6 +11,8 @@ type Ship struct {
 	Input          InputState
 	Config         ClientConfig
 	ShootCooldown  float64
+	Score          int
+	Lives          int
 	PendingDespawn bool
 	DespawnDelay   float64
 }
