@@ -1,6 +1,8 @@
 extends Node2D
 
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
+const BULLET_SCENE := preload("res://scenes/bullet.tscn")
+const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 
 @export var background_parallax := 0.25
 @export var foreground_background_parallax := 0.45
@@ -8,6 +10,8 @@ const PLAYER_SCENE := preload("res://scenes/player.tscn")
 @export var player_interpolation_speed := 18.0
 
 @onready var player = $Player
+@onready var bullets = $Bullets
+@onready var asteroids = $Asteroids
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
 
@@ -15,6 +19,8 @@ var socket := WebSocketPeer.new()
 var connected := false
 var self_id := ""
 var player_nodes := {}
+var bullet_nodes := {}
+var asteroid_nodes := {}
 var initialized_players := {}
 var target_player_positions := {}
 var target_player_rotations := {}
