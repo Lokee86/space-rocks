@@ -10,7 +10,6 @@ const Packets = preload("res://scripts/packets.gd")
 @export var shoot_action := &"shoot"
 
 @onready var laser_sound: AudioStreamPlayer2D = $LaserSound
-@onready var asteroid_destroyed_sound: AudioStreamPlayer2D = $AsteroidDestroyed
 
 
 func get_input_packet() -> Dictionary:
@@ -25,7 +24,3 @@ func get_input_packet() -> Dictionary:
 
 func play_laser_sound() -> void:
 	laser_sound.play()
-
-
-func play_asteroid_destroyed_sound() -> void:
-	asteroid_destroyed_sound.play()

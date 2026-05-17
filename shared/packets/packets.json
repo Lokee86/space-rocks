@@ -95,6 +95,7 @@
       "id": "EventState",
       "fields": [
         { "name": "type", "json": "type", "type": "string" },
+        { "name": "player_id", "go_name": "PlayerID", "json": "player_id", "type": "string" },
         { "name": "x", "json": "x", "type": "float" },
         { "name": "y", "json": "y", "type": "float" }
       ]
@@ -115,7 +116,8 @@
     { "id": "input", "value": "input" },
     { "id": "client_config", "value": "client_config" },
     { "id": "state", "value": "state" },
-    { "id": "bullet_blast", "value": "bullet_blast" }
+    { "id": "bullet_blast", "value": "bullet_blast" },
+    { "id": "ship_death", "value": "ship_death" }
   ],
   "builders": [
     {

@@ -1,0 +1,66 @@
+[gd_scene load_steps=14 format=3 uid="uid://dvehmf6q8kvgn"]
+
+[ext_resource type="Texture2D" uid="uid://baqx10m6bmnix" path="res://assets/ship_death/Explo__000.png" id="1_owsfv"]
+[ext_resource type="Texture2D" uid="uid://ds7vgr5xflej5" path="res://assets/ship_death/Explo__001.png" id="2_mlo3l"]
+[ext_resource type="Texture2D" uid="uid://cs8kychk40ra0" path="res://assets/ship_death/Explo__002.png" id="3_vexwe"]
+[ext_resource type="Texture2D" uid="uid://cxtnsg32oy3wk" path="res://assets/ship_death/Explo__003.png" id="4_5aeuj"]
+[ext_resource type="Texture2D" uid="uid://dej6j7j8n4p60" path="res://assets/ship_death/Explo__004.png" id="5_pfwq8"]
+[ext_resource type="Texture2D" uid="uid://707xa28bftkr" path="res://assets/ship_death/Explo__005.png" id="6_ssc3e"]
+[ext_resource type="Texture2D" uid="uid://bel2pyi5ag5fd" path="res://assets/ship_death/Explo__006.png" id="7_yly2w"]
+[ext_resource type="Texture2D" uid="uid://cfprxx8ov6nay" path="res://assets/ship_death/Explo__007.png" id="8_f4780"]
+[ext_resource type="Texture2D" uid="uid://b8etyu1i4sd05" path="res://assets/ship_death/Explo__008.png" id="9_og6ed"]
+[ext_resource type="Texture2D" uid="uid://dnjcwrivvvdlo" path="res://assets/ship_death/Explo__009.png" id="10_8hkoj"]
+[ext_resource type="Texture2D" uid="uid://1mruoau7leuw" path="res://assets/ship_death/Explo__0010.png" id="11_docy6"]
+[ext_resource type="AudioStream" uid="uid://cvmnrbtldv1bx" path="res://audio/ship_death.mp3" id="12_b63t3"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_10tnd"]
+animations = [{
+"frames": [{
+"duration": 2.0,
+"texture": ExtResource("1_owsfv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_mlo3l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_vexwe")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_5aeuj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_pfwq8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_ssc3e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_yly2w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_f4780")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_og6ed")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_8hkoj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_docy6")
+}],
+"loop": false,
+"name": &"default",
+"speed": 20.0
+}]
+
+[node name="ShipDeath" type="Node2D"]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_10tnd")
+frame = 10
+frame_progress = 1.0
+
+[node name="ShipDeath" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("12_b63t3")

@@ -67,6 +67,51 @@ func (game *Game) handleBulletAsteroidCollisions() {
 	}
 }
 
+func (game *Game) handleShipAsteroidCollisions() {
+	hitPlayers := map[string]*entities.Ship{}
+
+	for playerID, player := range game.state.Players {
+		if player.IsPendingDespawn() {
+			continue
+		}
+
+		playerBody, ok := player.CollisionBody(game.collisionShapes)
+		if !ok {
+			continue
+		}
+
+		for _, asteroid := range game.state.Asteroids {
+			if asteroid.IsPendingDespawn() {
+				continue
+			}
+
+			asteroidBody, ok := asteroid.CollisionBody(game.collisionShapes)
+			if !ok {
+				continue
+			}
+
+			if _, ok := physics.DetectCollision(playerBody, asteroidBody); !ok {
+				continue
+			}
+
+			hitPlayers[playerID] = player
+			break
+		}
+	}
+
+	for playerID, player := range hitPlayers {
+		position := player.Position()
+		player.MarkPendingDespawn(constants.CollisionDespawnDelay)
+		game.broadcastEvent(EventState{
+			Type:     PacketTypeShipDeath,
+			PlayerID: playerID,
+			X:        position.X,
+			Y:        position.Y,
+		})
+	}
+
+}
+
 func (game *Game) broadcastEvent(event EventState) {
 	for playerID := range game.state.Players {
 		game.pendingEvents[playerID] = append(game.pendingEvents[playerID], event)

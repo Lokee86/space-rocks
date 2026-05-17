@@ -5,7 +5,8 @@ const Packets = preload("res://scripts/packets.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
-const BULLET_BLAST_SCENE := preload("res://scenes/bullet_blast.tscn")
+const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
+const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
 const PLAYER_Z_INDEX := 30
@@ -122,6 +123,7 @@ func _get_player_node(player_id):
 		return player_nodes[player_id]
 
 	if player_id == self_id:
+		player.visible = true
 		player.z_index = PLAYER_Z_INDEX
 		player_nodes[player_id] = player
 		return player
@@ -139,13 +141,7 @@ func _remove_missing_players(server_players: Dictionary) -> void:
 		if server_players.has(player_id):
 			continue
 
-		if player_nodes[player_id] != player:
-			player_nodes[player_id].queue_free()
-
-		player_nodes.erase(player_id)
-		initialized_players.erase(player_id)
-		target_player_positions.erase(player_id)
-		target_player_rotations.erase(player_id)
+		_remove_player_node(player_id)
 
 
 func _interpolate_player(delta: float) -> void:
@@ -263,8 +259,27 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 func _apply_events(server_events: Array) -> void:
 	for event in server_events:
 		if event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_BULLET_BLAST:
-			player.play_asteroid_destroyed_sound()
 			_spawn_bullet_blast(Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y]))
+		elif event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_SHIP_DEATH:
+			_spawn_ship_death(Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y]))
+
+
+func _remove_player_node(player_id: String) -> void:
+	if !player_nodes.has(player_id):
+		if player_id == self_id:
+			player.visible = false
+		return
+
+	var player_node = player_nodes[player_id]
+	if player_node == player:
+		player.visible = false
+	else:
+		player_node.queue_free()
+
+	player_nodes.erase(player_id)
+	initialized_players.erase(player_id)
+	target_player_positions.erase(player_id)
+	target_player_rotations.erase(player_id)
 
 
 func _spawn_bullet_blast(event_position: Vector2) -> void:
@@ -274,12 +289,59 @@ func _spawn_bullet_blast(event_position: Vector2) -> void:
 	add_child(blast_node)
 
 	var sprite := blast_node.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
-	if sprite == null:
+	var sound := blast_node.get_node_or_null("AsteroidDestroyed") as AudioStreamPlayer2D
+	if sprite == null || sound == null:
 		blast_node.queue_free()
 		return
 
-	sprite.animation_finished.connect(blast_node.queue_free)
+	var free_blast := func() -> void:
+		if is_instance_valid(blast_node):
+			blast_node.queue_free()
+
+	sprite.animation_finished.connect(func() -> void:
+		sprite.visible = false
+	)
+	sound.finished.connect(free_blast)
+
 	sprite.play("bullet_blast")
+	sound.play()
+
+	var sound_length := 1.0
+	if sound.stream != null:
+		sound_length = max(sound.stream.get_length(), sound_length)
+	get_tree().create_timer(sound_length + 0.25).timeout.connect(free_blast)
+
+
+func _spawn_ship_death(event_position: Vector2) -> void:
+	var death_node := SHIP_DEATH_SCENE.instantiate()
+	death_node.global_position = event_position
+	death_node.z_index = EFFECT_Z_INDEX
+	add_child(death_node)
+
+	var sprite := death_node.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	var sound := death_node.get_node_or_null("ShipDeath") as AudioStreamPlayer2D
+	if sprite == null || sound == null:
+		death_node.queue_free()
+		return
+
+	var free_death := func() -> void:
+		if is_instance_valid(death_node):
+			death_node.queue_free()
+
+	sprite.animation_finished.connect(func() -> void:
+		sprite.visible = false
+	)
+	sound.finished.connect(free_death)
+
+	sprite.frame = 0
+	sprite.frame_progress = 0.0
+	sprite.play("default")
+	sound.play()
+
+	var sound_length := 1.0
+	if sound.stream != null:
+		sound_length = max(sound.stream.get_length(), sound_length)
+	get_tree().create_timer(sound_length + 0.25).timeout.connect(free_death)
 
 
 func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:

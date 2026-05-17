@@ -78,6 +78,9 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	if !ok {
 		return
 	}
+	if player.IsPendingDespawn() {
+		return
+	}
 
 	switch packet.Type {
 	case PacketTypeInput:
@@ -117,17 +120,29 @@ func (game *Game) Step(delta float64) {
 
 	for _, player := range game.state.Players {
 		player.ApplyInput(delta)
+		if player.IsPendingDespawn() {
+			continue
+		}
 		if player.WantsToShoot() && player.CanShoot() {
 			game.spawnBullet(player)
 			player.ResetShootCooldown()
 		}
 	}
 
-	if len(game.state.Players) > 0 {
+	for id, player := range game.state.Players {
+		if player.ReadyForRemoval() {
+			delete(game.state.Players, id)
+		}
+	}
+
+	if game.hasActivePlayers() {
 		game.asteroidSpawnElapsed += delta
 		if game.asteroidSpawnElapsed >= constants.AsteroidSpawnInterval {
 			game.asteroidSpawnElapsed = 0
 			for _, player := range game.state.Players {
+				if player.IsPendingDespawn() {
+					continue
+				}
 				game.spawnAsteroidBatch(player)
 			}
 		}
@@ -157,6 +172,7 @@ func (game *Game) Step(delta float64) {
 		}
 	}
 
+	game.handleShipAsteroidCollisions()
 	game.handleBulletAsteroidCollisions()
 }
 

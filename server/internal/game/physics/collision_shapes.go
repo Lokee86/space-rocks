@@ -11,6 +11,7 @@ import (
 
 type CollisionShapeCatalog struct {
 	Bullet    ImportedCollisionShape   `json:"bullet"`
+	Ship      ImportedCollisionShape   `json:"ship"`
 	Asteroids []ImportedCollisionShape `json:"asteroids"`
 }
 
@@ -44,6 +45,10 @@ func LoadCollisionShapeCatalog() (CollisionShapeCatalog, error) {
 
 func (catalog CollisionShapeCatalog) BulletShape() (CollisionShape, error) {
 	return catalog.Bullet.ToCollisionShape(1)
+}
+
+func (catalog CollisionShapeCatalog) ShipShape() (CollisionShape, error) {
+	return catalog.Ship.ToCollisionShape(1)
 }
 
 func (catalog CollisionShapeCatalog) AsteroidShape(variant int, size int) (CollisionShape, error) {

@@ -15,6 +15,9 @@ func TestLoadCollisionShapeCatalog(t *testing.T) {
 	if catalog.Bullet.Type != "capsule" {
 		t.Fatalf("expected bullet capsule shape, got %q", catalog.Bullet.Type)
 	}
+	if catalog.Ship.Type != "polygon" {
+		t.Fatalf("expected ship polygon shape, got %q", catalog.Ship.Type)
+	}
 
 	if len(catalog.Asteroids) != 4 {
 		t.Fatalf("expected 4 asteroid collision variants, got %d", len(catalog.Asteroids))

@@ -50,6 +50,9 @@ func randomOffscreenPosition(target *entities.Ship, margin float64) physics.Vect
 
 func (game *Game) isOnscreenForAnyPlayer(position physics.Vector2) bool {
 	for _, player := range game.state.Players {
+		if player.IsPendingDespawn() {
+			continue
+		}
 		if player.IsInsideView(position) {
 			return true
 		}
@@ -59,11 +62,14 @@ func (game *Game) isOnscreenForAnyPlayer(position physics.Vector2) bool {
 }
 
 func (game *Game) isAsteroidFarFromAllPlayers(asteroid *entities.Asteroid) bool {
-	if len(game.state.Players) == 0 {
+	if !game.hasActivePlayers() {
 		return true
 	}
 
 	for _, player := range game.state.Players {
+		if player.IsPendingDespawn() {
+			continue
+		}
 		if !player.IsFarFromView(asteroid.Position()) {
 			return false
 		}
@@ -73,17 +79,30 @@ func (game *Game) isAsteroidFarFromAllPlayers(asteroid *entities.Asteroid) bool 
 }
 
 func (game *Game) isBulletFarFromAllPlayers(bullet *entities.Bullet) bool {
-	if len(game.state.Players) == 0 {
+	if !game.hasActivePlayers() {
 		return true
 	}
 
 	for _, player := range game.state.Players {
+		if player.IsPendingDespawn() {
+			continue
+		}
 		if !player.IsFarFromView(bullet.Position()) {
 			return false
 		}
 	}
 
 	return true
+}
+
+func (game *Game) hasActivePlayers() bool {
+	for _, player := range game.state.Players {
+		if !player.IsPendingDespawn() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func randomRange(minValue float64, maxValue float64) float64 {
