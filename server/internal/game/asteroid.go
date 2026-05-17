@@ -1,5 +1,18 @@
 package game
 
+import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+
+func NewAsteroid(id string, position physics.Vector2, velocity physics.Vector2, size int, variant int) *Asteroid {
+	return &Asteroid{
+		ID:       id,
+		X:        position.X,
+		Y:        position.Y,
+		Velocity: velocity,
+		Size:     size,
+		Variant:  variant,
+	}
+}
+
 func (asteroid *Asteroid) State() AsteroidState {
 	return AsteroidState{
 		ID:      asteroid.ID,
@@ -10,7 +23,7 @@ func (asteroid *Asteroid) State() AsteroidState {
 	}
 }
 
-func (asteroid *Asteroid) step(delta float64) {
+func (asteroid *Asteroid) Step(delta float64) {
 	if asteroid.PendingDespawn {
 		asteroid.DespawnDelay -= delta
 		return
@@ -20,15 +33,37 @@ func (asteroid *Asteroid) step(delta float64) {
 	asteroid.Y += asteroid.Velocity.Y * delta
 }
 
-func (asteroid *Asteroid) collisionBody(catalog CollisionShapeCatalog) (CollisionBody, bool) {
+func (asteroid *Asteroid) Position() physics.Vector2 {
+	return physics.Vector2{X: asteroid.X, Y: asteroid.Y}
+}
+
+func (asteroid *Asteroid) IsPendingDespawn() bool {
+	return asteroid.PendingDespawn
+}
+
+func (asteroid *Asteroid) ReadyForRemoval() bool {
+	return asteroid.PendingDespawn && asteroid.DespawnDelay <= 0
+}
+
+func (asteroid *Asteroid) MarkPendingDespawn(delay float64) {
+	asteroid.PendingDespawn = true
+	asteroid.DespawnDelay = delay
+	asteroid.Velocity = physics.Vector2{}
+}
+
+func (asteroid *Asteroid) FragmentSize() int {
+	return asteroid.Size - 1
+}
+
+func (asteroid *Asteroid) CollisionBody(catalog physics.CollisionShapeCatalog) (physics.CollisionBody, bool) {
 	shape, err := catalog.AsteroidShape(asteroid.Variant, asteroid.Size)
 	if err != nil {
-		return CollisionBody{}, false
+		return physics.CollisionBody{}, false
 	}
 
-	return CollisionBody{
+	return physics.CollisionBody{
 		ID:       asteroid.ID,
-		Position: Vector2{X: asteroid.X, Y: asteroid.Y},
+		Position: asteroid.Position(),
 		Shape:    shape,
 	}, true
 }

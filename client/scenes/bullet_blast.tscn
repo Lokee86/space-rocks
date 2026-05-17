@@ -1,32 +1,32 @@
 [gd_scene load_steps=8 format=3 uid="uid://b8mpb010336ty"]
 
-[ext_resource type="Texture2D" uid="uid://bxwhk53xu5vyv" path="res://assets/bullet_blast/OrangeBulletExplo (1).png" id="1_nx4nd"]
-[ext_resource type="Texture2D" uid="uid://ccy01k6dx51j0" path="res://assets/bullet_blast/OrangeBulletExplo (2).png" id="2_010mo"]
-[ext_resource type="Texture2D" uid="uid://023krj1otf6x" path="res://assets/bullet_blast/OrangeBulletExplo (3).png" id="3_gpmr5"]
-[ext_resource type="Texture2D" uid="uid://32pp33jsigfb" path="res://assets/bullet_blast/OrangeBulletExplo (4).png" id="4_d3y0m"]
-[ext_resource type="Texture2D" uid="uid://bhnbj8u6gorj4" path="res://assets/bullet_blast/OrangeBulletExplo (5).png" id="5_6nu0i"]
-[ext_resource type="Texture2D" uid="uid://c7temlwdt50jd" path="res://assets/bullet_blast/OrangeBulletExplo (6).png" id="6_m2qp1"]
+[ext_resource type="Texture2D" uid="uid://bxwhk53xu5vyv" path="res://assets/bullet_blast/OrangeBulletExplo (1).png" id="1_j1csf"]
+[ext_resource type="Texture2D" uid="uid://ccy01k6dx51j0" path="res://assets/bullet_blast/OrangeBulletExplo (2).png" id="2_ibpxs"]
+[ext_resource type="Texture2D" uid="uid://023krj1otf6x" path="res://assets/bullet_blast/OrangeBulletExplo (3).png" id="3_ofjea"]
+[ext_resource type="Texture2D" uid="uid://32pp33jsigfb" path="res://assets/bullet_blast/OrangeBulletExplo (4).png" id="4_pwfn4"]
+[ext_resource type="Texture2D" uid="uid://bhnbj8u6gorj4" path="res://assets/bullet_blast/OrangeBulletExplo (5).png" id="5_lp5s1"]
+[ext_resource type="Texture2D" uid="uid://c7temlwdt50jd" path="res://assets/bullet_blast/OrangeBulletExplo (6).png" id="6_kg6o2"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_hftmn"]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("1_nx4nd")
+"texture": ExtResource("1_j1csf")
 }, {
 "duration": 1.0,
-"texture": ExtResource("2_010mo")
+"texture": ExtResource("2_ibpxs")
 }, {
 "duration": 1.0,
-"texture": ExtResource("3_gpmr5")
+"texture": ExtResource("3_ofjea")
 }, {
 "duration": 1.0,
-"texture": ExtResource("4_d3y0m")
+"texture": ExtResource("4_pwfn4")
 }, {
 "duration": 1.0,
-"texture": ExtResource("5_6nu0i")
+"texture": ExtResource("5_lp5s1")
 }, {
 "duration": 1.0,
-"texture": ExtResource("6_m2qp1")
+"texture": ExtResource("6_kg6o2")
 }],
 "loop": false,
 "name": &"bullet_blast",

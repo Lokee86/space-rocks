@@ -4,9 +4,10 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
-func (game *Game) randomAsteroidSpawnPosition(target *Ship) Vector2 {
+func (game *Game) randomAsteroidSpawnPosition(target *Ship) physics.Vector2 {
 	margin := constants.AsteroidSpawnMargin
 	for attempts := 0; ; attempts++ {
 		spawn := randomOffscreenPosition(target, margin)
@@ -20,7 +21,7 @@ func (game *Game) randomAsteroidSpawnPosition(target *Ship) Vector2 {
 	}
 }
 
-func randomOffscreenPosition(target *Ship, margin float64) Vector2 {
+func randomOffscreenPosition(target *Ship, margin float64) physics.Vector2 {
 	width := target.visibleWorldWidth()
 	height := target.visibleWorldHeight()
 	left := target.X - width*0.5
@@ -30,23 +31,23 @@ func randomOffscreenPosition(target *Ship, margin float64) Vector2 {
 
 	switch rand.Intn(4) {
 	case 0:
-		return Vector2{X: randomRange(left, right), Y: top - margin}
+		return physics.Vector2{X: randomRange(left, right), Y: top - margin}
 	case 1:
-		return Vector2{
+		return physics.Vector2{
 			X: right + margin,
 			Y: randomRange(top, bottom),
 		}
 	case 2:
-		return Vector2{
+		return physics.Vector2{
 			X: randomRange(left, right),
 			Y: bottom + margin,
 		}
 	default:
-		return Vector2{X: left - margin, Y: randomRange(top, bottom)}
+		return physics.Vector2{X: left - margin, Y: randomRange(top, bottom)}
 	}
 }
 
-func (game *Game) isOnscreenForAnyPlayer(position Vector2) bool {
+func (game *Game) isOnscreenForAnyPlayer(position physics.Vector2) bool {
 	for _, player := range game.state.Players {
 		if player.isInsideView(position) {
 			return true
@@ -62,7 +63,7 @@ func (game *Game) isAsteroidFarFromAllPlayers(asteroid *Asteroid) bool {
 	}
 
 	for _, player := range game.state.Players {
-		if !player.isFarFromView(Vector2{X: asteroid.X, Y: asteroid.Y}) {
+		if !player.isFarFromView(asteroid.Position()) {
 			return false
 		}
 	}
@@ -76,7 +77,7 @@ func (game *Game) isBulletFarFromAllPlayers(bullet *Bullet) bool {
 	}
 
 	for _, player := range game.state.Players {
-		if !player.isFarFromView(Vector2{X: bullet.X, Y: bullet.Y}) {
+		if !player.isFarFromView(bullet.Position()) {
 			return false
 		}
 	}
@@ -84,7 +85,7 @@ func (game *Game) isBulletFarFromAllPlayers(bullet *Bullet) bool {
 	return true
 }
 
-func (ship *Ship) isInsideView(position Vector2) bool {
+func (ship *Ship) isInsideView(position physics.Vector2) bool {
 	width := ship.visibleWorldWidth()
 	height := ship.visibleWorldHeight()
 	left := ship.X - width*0.5
@@ -98,7 +99,7 @@ func (ship *Ship) isInsideView(position Vector2) bool {
 		position.Y <= bottom
 }
 
-func (ship *Ship) isFarFromView(position Vector2) bool {
+func (ship *Ship) isFarFromView(position physics.Vector2) bool {
 	width := ship.visibleWorldWidth()
 	height := ship.visibleWorldHeight()
 	left := ship.X - width*0.5 - constants.AsteroidDespawnMargin

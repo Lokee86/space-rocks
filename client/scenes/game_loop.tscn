@@ -1,0 +1,61 @@
+[gd_scene load_steps=8 format=3 uid="uid://dsnj8xno50gep"]
+
+[ext_resource type="Script" path="res://scripts/game.gd" id="1_ha6w1"]
+[ext_resource type="Shader" path="res://shaders/repeating_background.gdshader" id="2_lsufd"]
+[ext_resource type="Texture2D" uid="uid://4dccc352w3p0" path="res://assets/background.png" id="3_o7sd8"]
+[ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="4_fdjx1"]
+[ext_resource type="PackedScene" uid="uid://2nhypjy0hv4h" path="res://scenes/player.tscn" id="5_ndhjv"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_atq1c"]
+shader = ExtResource("2_lsufd")
+shader_parameter/base_tile_size = Vector2(960, 540)
+shader_parameter/tile_scale = 1.0
+shader_parameter/scroll_offset = Vector2(0, 0)
+shader_parameter/opacity = 1.0
+shader_parameter/background_texture = ExtResource("3_o7sd8")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k88gw"]
+shader = ExtResource("2_lsufd")
+shader_parameter/base_tile_size = Vector2(960, 540)
+shader_parameter/tile_scale = 4.0
+shader_parameter/scroll_offset = Vector2(480, 270)
+shader_parameter/opacity = 1.0
+shader_parameter/background_texture = ExtResource("4_fdjx1")
+
+[node name="GameLoop" type="Node2D"]
+script = ExtResource("1_ha6w1")
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+layer = -10
+
+[node name="BackgroundLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0, 0)
+motion_mirroring = Vector2(960, 540)
+
+[node name="RepeatedBackground" type="TextureRect" parent="ParallaxBackground/BackgroundLayer"]
+material = SubResource("ShaderMaterial_atq1c")
+offset_left = -4096.0
+offset_top = -4096.0
+offset_right = 4096.0
+offset_bottom = 4096.0
+texture = ExtResource("3_o7sd8")
+
+[node name="ForegroundBackgroundLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0, 0)
+motion_mirroring = Vector2(960, 540)
+
+[node name="RepeatedBackground" type="TextureRect" parent="ParallaxBackground/ForegroundBackgroundLayer"]
+material = SubResource("ShaderMaterial_k88gw")
+offset_left = -8073.0
+offset_top = -7873.0
+offset_right = 7927.0
+offset_bottom = 8127.0
+texture = ExtResource("4_fdjx1")
+stretch_mode = 1
+
+[node name="Player" parent="." instance=ExtResource("5_ndhjv")]
+position = Vector2(640, 360)
+
+[node name="Bullets" type="Node2D" parent="."]
+
+[node name="Asteroids" type="Node2D" parent="."]

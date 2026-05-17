@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 type Game struct {
@@ -16,13 +17,13 @@ type Game struct {
 	nextAsteroidID       int
 	nextBulletID         int
 	asteroidSpawnElapsed float64
-	collisionShapes      CollisionShapeCatalog
+	collisionShapes      physics.CollisionShapeCatalog
 	state                GameState
 	pendingEvents        map[string][]EventState
 }
 
 func New() *Game {
-	collisionShapes, err := LoadCollisionShapeCatalog()
+	collisionShapes, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
 		log.Println("collision shapes unavailable:", err)
 	}
@@ -79,9 +80,9 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 
 	switch packet.Type {
 	case "input":
-		player.Input = packet.Input
+		player.SetInput(packet.Input)
 	case "client_config":
-		player.Config = packet.Config
+		player.SetConfig(packet.Config)
 	}
 }
 
@@ -114,10 +115,10 @@ func (game *Game) Step(delta float64) {
 	defer game.mu.Unlock()
 
 	for _, player := range game.state.Players {
-		player.applyInput(delta)
-		if player.Input.Shoot && player.ShootCooldown == 0 {
+		player.ApplyInput(delta)
+		if player.WantsToShoot() && player.CanShoot() {
 			game.spawnBullet(player)
-			player.ShootCooldown = constants.BulletCooldown
+			player.ResetShootCooldown()
 		}
 	}
 
@@ -134,8 +135,8 @@ func (game *Game) Step(delta float64) {
 	}
 
 	for id, asteroid := range game.state.Asteroids {
-		asteroid.step(delta)
-		if asteroid.PendingDespawn && asteroid.DespawnDelay <= 0 {
+		asteroid.Step(delta)
+		if asteroid.ReadyForRemoval() {
 			delete(game.state.Asteroids, id)
 			continue
 		}
@@ -145,12 +146,12 @@ func (game *Game) Step(delta float64) {
 	}
 
 	for id, bullet := range game.state.Projectiles {
-		bullet.step(delta)
-		if bullet.PendingDespawn && bullet.DespawnDelay <= 0 {
+		bullet.Step(delta)
+		if bullet.ReadyForRemoval() {
 			delete(game.state.Projectiles, id)
 			continue
 		}
-		if bullet.Life <= 0 || game.isBulletFarFromAllPlayers(bullet) {
+		if bullet.IsExpired() || game.isBulletFarFromAllPlayers(bullet) {
 			delete(game.state.Projectiles, id)
 		}
 	}

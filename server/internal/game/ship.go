@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func (ship *Ship) State() ShipState {
@@ -15,7 +16,15 @@ func (ship *Ship) State() ShipState {
 	}
 }
 
-func (ship *Ship) applyInput(delta float64) {
+func (ship *Ship) SetInput(input InputState) {
+	ship.Input = input
+}
+
+func (ship *Ship) SetConfig(config ClientConfig) {
+	ship.Config = config
+}
+
+func (ship *Ship) ApplyInput(delta float64) {
 	ship.ShootCooldown = max(0, ship.ShootCooldown-delta)
 
 	rotationInput := axis(ship.Input.Left, ship.Input.Right)
@@ -31,10 +40,30 @@ func (ship *Ship) applyInput(delta float64) {
 	damping := math.Pow(constants.PlayerDamping, delta/(1.0/60.0))
 	ship.Velocity.X *= damping
 	ship.Velocity.Y *= damping
-	ship.Velocity = ship.Velocity.limitLength(constants.PlayerMaxSpeed)
+	ship.Velocity = ship.Velocity.LimitLength(constants.PlayerMaxSpeed)
 
 	ship.X += ship.Velocity.X * delta
 	ship.Y += ship.Velocity.Y * delta
+}
+
+func (ship *Ship) WantsToShoot() bool {
+	return ship.Input.Shoot
+}
+
+func (ship *Ship) CanShoot() bool {
+	return ship.ShootCooldown == 0
+}
+
+func (ship *Ship) ResetShootCooldown() {
+	ship.ShootCooldown = constants.BulletCooldown
+}
+
+func (ship *Ship) Position() physics.Vector2 {
+	return physics.Vector2{X: ship.X, Y: ship.Y}
+}
+
+func (ship *Ship) Forward() physics.Vector2 {
+	return physics.Vector2{X: 0, Y: -1}.Rotated(ship.Rotation)
 }
 
 func axis(negative bool, positive bool) float64 {

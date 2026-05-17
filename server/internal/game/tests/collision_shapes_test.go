@@ -3,11 +3,11 @@ package tests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func TestLoadCollisionShapeCatalog(t *testing.T) {
-	catalog, err := game.LoadCollisionShapeCatalog()
+	catalog, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,8 +22,8 @@ func TestLoadCollisionShapeCatalog(t *testing.T) {
 }
 
 func TestAsteroidShapeScalesImportedPolygon(t *testing.T) {
-	catalog := game.CollisionShapeCatalog{
-		Asteroids: []game.ImportedCollisionShape{
+	catalog := physics.CollisionShapeCatalog{
+		Asteroids: []physics.ImportedCollisionShape{
 			{
 				Type: "polygon",
 				Points: [][]float64{
@@ -40,7 +40,7 @@ func TestAsteroidShapeScalesImportedPolygon(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if shape.Type != game.CollisionShapePolygon {
+	if shape.Type != physics.CollisionShapePolygon {
 		t.Fatalf("expected polygon shape, got %s", shape.Type)
 	}
 	if shape.Points[0].X != 2 {

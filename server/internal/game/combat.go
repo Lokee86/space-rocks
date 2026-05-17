@@ -1,6 +1,9 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/constants"
+import (
+	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+)
 
 func (game *Game) handleBulletAsteroidCollisions() {
 	hitBullets := map[string]bool{}
@@ -10,11 +13,11 @@ func (game *Game) handleBulletAsteroidCollisions() {
 		if hitBullets[bulletID] {
 			continue
 		}
-		if bullet.PendingDespawn {
+		if bullet.IsPendingDespawn() {
 			continue
 		}
 
-		bulletBody, ok := bullet.collisionBody(game.collisionShapes)
+		bulletBody, ok := bullet.CollisionBody(game.collisionShapes)
 		if !ok {
 			continue
 		}
@@ -23,25 +26,26 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			if _, ok := hitAsteroids[asteroidID]; ok {
 				continue
 			}
-			if asteroid.PendingDespawn {
+			if asteroid.IsPendingDespawn() {
 				continue
 			}
 
-			asteroidBody, ok := asteroid.collisionBody(game.collisionShapes)
+			asteroidBody, ok := asteroid.CollisionBody(game.collisionShapes)
 			if !ok {
 				continue
 			}
 
-			if _, ok := DetectCollision(bulletBody, asteroidBody); !ok {
+			if _, ok := physics.DetectCollision(bulletBody, asteroidBody); !ok {
 				continue
 			}
 
 			hitBullets[bulletID] = true
 			hitAsteroids[asteroidID] = asteroid
+			impactPosition := bullet.Position()
 			game.broadcastEvent(EventState{
 				Type: "bullet_blast",
-				X:    bullet.X,
-				Y:    bullet.Y,
+				X:    impactPosition.X,
+				Y:    impactPosition.Y,
 			})
 			break
 		}
@@ -49,16 +53,12 @@ func (game *Game) handleBulletAsteroidCollisions() {
 
 	for bulletID := range hitBullets {
 		bullet := game.state.Projectiles[bulletID]
-		bullet.PendingDespawn = true
-		bullet.DespawnDelay = constants.CollisionDespawnDelay
-		bullet.Velocity = Vector2{}
+		bullet.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	}
 
 	for asteroidID := range hitAsteroids {
 		asteroid := game.state.Asteroids[asteroidID]
-		asteroid.PendingDespawn = true
-		asteroid.DespawnDelay = constants.CollisionDespawnDelay
-		asteroid.Velocity = Vector2{}
+		asteroid.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	}
 
 	for _, asteroid := range hitAsteroids {

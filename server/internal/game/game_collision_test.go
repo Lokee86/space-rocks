@@ -4,17 +4,18 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 	game := New()
-	game.collisionShapes = CollisionShapeCatalog{
-		Bullet: ImportedCollisionShape{
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Bullet: physics.ImportedCollisionShape{
 			Type:   "capsule",
 			Radius: 3,
 			Height: 24,
 		},
-		Asteroids: []ImportedCollisionShape{
+		Asteroids: []physics.ImportedCollisionShape{
 			{
 				Type: "polygon",
 				Points: [][]float64{
@@ -90,13 +91,13 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 
 func TestHandleBulletAsteroidCollisionsSplitsLargerAsteroid(t *testing.T) {
 	game := New()
-	game.collisionShapes = CollisionShapeCatalog{
-		Bullet: ImportedCollisionShape{
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Bullet: physics.ImportedCollisionShape{
 			Type:   "capsule",
 			Radius: 3,
 			Height: 24,
 		},
-		Asteroids: []ImportedCollisionShape{
+		Asteroids: []physics.ImportedCollisionShape{
 			{
 				Type: "polygon",
 				Points: [][]float64{

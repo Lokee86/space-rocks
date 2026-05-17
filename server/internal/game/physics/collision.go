@@ -1,4 +1,4 @@
-package game
+package physics
 
 import "math"
 
@@ -57,7 +57,7 @@ func DetectCollision(a CollisionBody, b CollisionBody) (Collision, bool) {
 	return Collision{
 		A:            a,
 		B:            b,
-		ContactPoint: a.Position.add(b.Position).multiply(0.5),
+		ContactPoint: a.Position.Add(b.Position).Multiply(0.5),
 	}, true
 }
 
@@ -117,10 +117,10 @@ func circlePrimitive(body CollisionBody) collisionCircle {
 
 func capsulePrimitive(body CollisionBody) collisionCapsule {
 	segmentLength := math.Max(0, body.Shape.Height-2*body.Shape.Radius)
-	offset := Vector2{Y: segmentLength * 0.5}.rotated(body.Rotation)
+	offset := Vector2{Y: segmentLength * 0.5}.Rotated(body.Rotation)
 	return collisionCapsule{
-		Start:  body.Position.subtract(offset),
-		End:    body.Position.add(offset),
+		Start:  body.Position.Subtract(offset),
+		End:    body.Position.Add(offset),
 		Radius: body.Shape.Radius,
 	}
 }
@@ -128,7 +128,7 @@ func capsulePrimitive(body CollisionBody) collisionCapsule {
 func polygonPoints(body CollisionBody) []Vector2 {
 	var localPoints []Vector2
 	if body.Shape.Type == CollisionShapeRectangle {
-		half := body.Shape.Size.multiply(0.5)
+		half := body.Shape.Size.Multiply(0.5)
 		localPoints = []Vector2{
 			{X: -half.X, Y: -half.Y},
 			{X: half.X, Y: -half.Y},
@@ -141,7 +141,7 @@ func polygonPoints(body CollisionBody) []Vector2 {
 
 	points := make([]Vector2, 0, len(localPoints))
 	for _, point := range localPoints {
-		points = append(points, body.Position.add(point.rotated(body.Rotation)))
+		points = append(points, body.Position.Add(point.Rotated(body.Rotation)))
 	}
 
 	return points
@@ -149,7 +149,7 @@ func polygonPoints(body CollisionBody) []Vector2 {
 
 func circlesIntersect(a collisionCircle, b collisionCircle) bool {
 	radius := a.Radius + b.Radius
-	return a.Center.subtract(b.Center).lengthSquared() <= radius*radius
+	return a.Center.Subtract(b.Center).LengthSquared() <= radius*radius
 }
 
 func capsulesIntersect(a collisionCapsule, b collisionCapsule) bool {
@@ -235,7 +235,7 @@ func polygonsIntersect(a []Vector2, b []Vector2) bool {
 
 func pointSegmentDistanceSquared(point Vector2, start Vector2, end Vector2) float64 {
 	closest := closestPointOnSegment(point, start, end)
-	return point.subtract(closest).lengthSquared()
+	return point.Subtract(closest).LengthSquared()
 }
 
 func segmentSegmentDistanceSquared(aStart Vector2, aEnd Vector2, bStart Vector2, bEnd Vector2) float64 {
@@ -252,15 +252,15 @@ func segmentSegmentDistanceSquared(aStart Vector2, aEnd Vector2, bStart Vector2,
 }
 
 func closestPointOnSegment(point Vector2, start Vector2, end Vector2) Vector2 {
-	segment := end.subtract(start)
-	lengthSquared := segment.lengthSquared()
+	segment := end.Subtract(start)
+	lengthSquared := segment.LengthSquared()
 	if lengthSquared == 0 {
 		return start
 	}
 
-	t := point.subtract(start).dot(segment) / lengthSquared
+	t := point.Subtract(start).Dot(segment) / lengthSquared
 	t = math.Max(0, math.Min(1, t))
-	return start.add(segment.multiply(t))
+	return start.Add(segment.Multiply(t))
 }
 
 func pointInPolygon(point Vector2, polygon []Vector2) bool {

@@ -1,11 +1,13 @@
 package game
 
+import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+
 type Ship struct {
 	ID            string
 	X             float64
 	Y             float64
 	Rotation      float64
-	Velocity      Vector2
+	Velocity      physics.Vector2
 	Input         InputState
 	Config        ClientConfig
 	ShootCooldown float64
@@ -17,7 +19,7 @@ type Bullet struct {
 	X              float64
 	Y              float64
 	Rotation       float64
-	Velocity       Vector2
+	Velocity       physics.Vector2
 	Life           float64
 	PendingDespawn bool
 	DespawnDelay   float64
@@ -27,7 +29,7 @@ type Asteroid struct {
 	ID             string
 	X              float64
 	Y              float64
-	Velocity       Vector2
+	Velocity       physics.Vector2
 	Size           int
 	Variant        int
 	PendingDespawn bool

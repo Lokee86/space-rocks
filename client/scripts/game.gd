@@ -33,6 +33,7 @@ var target_bullet_rotations := {}
 var target_asteroid_positions := {}
 
 func _ready() -> void:
+	DisplayServer.window_set_min_size(Vector2i(1280, 720))
 	asteroids.z_index = ASTEROID_Z_INDEX
 	bullets.z_index = BULLET_Z_INDEX
 	player.z_index = PLAYER_Z_INDEX
