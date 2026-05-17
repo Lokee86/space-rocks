@@ -181,37 +181,26 @@ def render_gdscript_field_constants(schema: dict[str, Any]) -> list[str]:
 def render_gdscript_builder(builder: dict[str, Any]) -> list[str]:
     args = ", ".join(builder["args"])
     lines = [f"static func {builder['id']}({args}) -> Dictionary:"]
-    lines.extend(render_gdscript_value(builder["body"], indent=1))
+    lines.extend(render_gdscript_assignments("packet", builder["body"], indent=1))
+    lines.append("\treturn packet")
     return lines
 
 
-def render_gdscript_value(value: Any, indent: int) -> list[str]:
+def render_gdscript_assignments(variable_name: str, value: Any, indent: int) -> list[str]:
     prefix = "\t" * indent
     if isinstance(value, dict):
-        lines = [f"{prefix}return {{" if indent == 1 else f"{prefix}{{"]
-        items = list(value.items())
-        for index, (key, item) in enumerate(items):
-            comma = "," if index < len(items) - 1 else ""
-            lines.extend(render_gdscript_dict_item(key, item, indent + 1, comma))
-        lines.append(f"{prefix}}}")
+        lines = [f"{prefix}var {variable_name} := {{}}"]
+        for key, item in value.items():
+            key_expr = gdscript_field_constant(key)
+            if isinstance(item, dict):
+                child_name = f"{variable_name}_{key}"
+                lines.extend(render_gdscript_assignments(child_name, item, indent))
+                lines.append(f"{prefix}{variable_name}[{key_expr}] = {child_name}")
+            else:
+                lines.append(f"{prefix}{variable_name}[{key_expr}] = {gdscript_leaf(item)}")
         return lines
 
     raise ValueError("Top-level GDScript builder body must be a dictionary")
-
-
-def render_gdscript_dict_item(key: str, value: Any, indent: int, comma: str) -> list[str]:
-    prefix = "\t" * indent
-    key_expr = gdscript_field_constant(key)
-    if isinstance(value, dict):
-        lines = [f"{prefix}{key_expr}: {{"]
-        items = list(value.items())
-        for index, (child_key, child_value) in enumerate(items):
-            child_comma = "," if index < len(items) - 1 else ""
-            lines.extend(render_gdscript_dict_item(child_key, child_value, indent + 1, child_comma))
-        lines.append(f"{prefix}}}{comma}")
-        return lines
-
-    return [f"{prefix}{key_expr}: {gdscript_leaf(value)}{comma}"]
 
 
 def gdscript_leaf(value: Any) -> str:
@@ -235,7 +224,7 @@ def gdscript_leaf(value: Any) -> str:
 
 
 def gdscript_field_constant(field: str) -> str:
-    return f"[FIELD_{constant_name(field)}]"
+    return f"FIELD_{constant_name(field)}"
 
 
 def snake_to_go_name(value: str) -> str:

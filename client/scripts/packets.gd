@@ -30,22 +30,22 @@ const FIELD_X := "x"
 const FIELD_Y := "y"
 
 static func input_packet(forward, back, right, left, shoot) -> Dictionary:
-	return {
-		[FIELD_TYPE]: TYPE_INPUT,
-		[FIELD_INPUT]: {
-			[FIELD_FORWARD]: forward,
-			[FIELD_BACK]: back,
-			[FIELD_RIGHT]: right,
-			[FIELD_LEFT]: left,
-			[FIELD_SHOOT]: shoot
-		}
-	}
+	var packet := {}
+	packet[FIELD_TYPE] = TYPE_INPUT
+	var packet_input := {}
+	packet_input[FIELD_FORWARD] = forward
+	packet_input[FIELD_BACK] = back
+	packet_input[FIELD_RIGHT] = right
+	packet_input[FIELD_LEFT] = left
+	packet_input[FIELD_SHOOT] = shoot
+	packet[FIELD_INPUT] = packet_input
+	return packet
 
 static func client_config_packet(visible_world_width, visible_world_height) -> Dictionary:
-	return {
-		[FIELD_TYPE]: TYPE_CLIENT_CONFIG,
-		[FIELD_CONFIG]: {
-			[FIELD_VISIBLE_WORLD_WIDTH]: visible_world_width,
-			[FIELD_VISIBLE_WORLD_HEIGHT]: visible_world_height
-		}
-	}
+	var packet := {}
+	packet[FIELD_TYPE] = TYPE_CLIENT_CONFIG
+	var packet_config := {}
+	packet_config[FIELD_VISIBLE_WORLD_WIDTH] = visible_world_width
+	packet_config[FIELD_VISIBLE_WORLD_HEIGHT] = visible_world_height
+	packet[FIELD_CONFIG] = packet_config
+	return packet
