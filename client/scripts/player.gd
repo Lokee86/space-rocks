@@ -7,10 +7,10 @@ const Constants = preload("res://scripts/constants.gd")
 @export var max_speed := Constants.PLAYER_MAX_SPEED
 @export var damping := Constants.PLAYER_DAMPING
 
-@export var rotate_left_action := &"ui_left"
-@export var rotate_right_action := &"ui_right"
-@export var thrust_forward_action := &"ui_up"
-@export var thrust_reverse_action := &"ui_down"
+@export var turn_left_action := &"turn_left"
+@export var turn_right_action := &"turn_right"
+@export var move_forward_action := &"move_forward"
+@export var move_backward_action := &"move_backward"
 
 
 func _ready() -> void:
@@ -32,22 +32,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _get_rotation_input() -> float:
-	var input := Input.get_axis(rotate_left_action, rotate_right_action)
-
-	if Input.is_key_pressed(KEY_A):
-		input -= 1.0
-	if Input.is_key_pressed(KEY_D):
-		input += 1.0
-
-	return clampf(input, -1.0, 1.0)
+	return Input.get_axis(turn_left_action, turn_right_action)
 
 
 func _get_thrust_input() -> float:
-	var input := Input.get_axis(thrust_reverse_action, thrust_forward_action)
-
-	if Input.is_key_pressed(KEY_S):
-		input -= 1.0
-	if Input.is_key_pressed(KEY_W):
-		input += 1.0
-
-	return clampf(input, -1.0, 1.0)
+	return Input.get_axis(move_backward_action, move_forward_action)
