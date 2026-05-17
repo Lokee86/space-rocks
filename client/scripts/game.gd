@@ -4,9 +4,11 @@ const Constants = preload("res://scripts/constants.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
+const BULLET_BLAST_SCENE := preload("res://scenes/bullet_blast.tscn")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
 const PLAYER_Z_INDEX := 30
+const EFFECT_Z_INDEX := 40
 
 @onready var player = $Player
 @onready var bullets = $Bullets
@@ -84,12 +86,17 @@ func _apply_state(data: Dictionary) -> void:
 	var server_players: Dictionary = data["players"]
 	var server_bullets: Dictionary = data.get("bullets", {})
 	var server_asteroids: Dictionary = data.get("asteroids", {})
+	var server_events: Array = []
+	var events_data = data.get("events", [])
+	if events_data is Array:
+		server_events = events_data
 
 	_remove_missing_players(server_players)
 	_remove_missing_bullets(server_bullets)
 	_remove_missing_asteroids(server_asteroids)
 	_apply_bullets(server_bullets)
 	_apply_asteroids(server_asteroids)
+	_apply_events(server_events)
 
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
@@ -243,6 +250,27 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 		asteroid_nodes.erase(asteroid_id)
 		initialized_asteroids.erase(asteroid_id)
 		target_asteroid_positions.erase(asteroid_id)
+
+
+func _apply_events(server_events: Array) -> void:
+	for event in server_events:
+		if event.get("type", "") == "bullet_blast":
+			_spawn_bullet_blast(Vector2(event["x"], event["y"]))
+
+
+func _spawn_bullet_blast(event_position: Vector2) -> void:
+	var blast_node := BULLET_BLAST_SCENE.instantiate()
+	blast_node.global_position = event_position
+	blast_node.z_index = EFFECT_Z_INDEX
+	add_child(blast_node)
+
+	var sprite := blast_node.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if sprite == null:
+		blast_node.queue_free()
+		return
+
+	sprite.animation_finished.connect(blast_node.queue_free)
+	sprite.play("bullet_blast")
 
 
 func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:

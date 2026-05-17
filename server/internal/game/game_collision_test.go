@@ -43,6 +43,8 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 		Y:    1000,
 		Size: 1,
 	}
+	game.state.Players["player-1"] = &Ship{ID: "player-1"}
+	game.pendingEvents["player-1"] = nil
 
 	game.handleBulletAsteroidCollisions()
 
@@ -64,6 +66,17 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 	if _, ok := game.state.Asteroids["asteroid-2"]; !ok {
 		t.Fatal("expected untouched asteroid to remain")
 	}
+	if len(game.pendingEvents["player-1"]) != 1 {
+		t.Fatalf("expected 1 queued event, got %d", len(game.pendingEvents["player-1"]))
+	}
+	if game.pendingEvents["player-1"][0].Type != "bullet_blast" {
+		t.Fatalf("expected bullet_blast event, got %q", game.pendingEvents["player-1"][0].Type)
+	}
+
+	packet := game.statePacket("player-1")
+	if len(packet.Events) != 1 {
+		t.Fatalf("expected 1 event in state packet, got %d", len(packet.Events))
+	}
 
 	game.Step(constants.CollisionDespawnDelay)
 
@@ -72,5 +85,24 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 	}
 	if _, ok := game.state.Asteroids["asteroid-1"]; ok {
 		t.Fatal("expected hit asteroid to be removed after despawn delay")
+	}
+}
+
+func TestStateFlushesEventsForPlayer(t *testing.T) {
+	game := New()
+	game.state.Players["player-1"] = &Ship{ID: "player-1"}
+	game.pendingEvents["player-1"] = []EventState{{Type: "bullet_blast", X: 10, Y: 20}}
+
+	first := game.State("player-1")
+	if first == nil {
+		t.Fatal("expected first state response")
+	}
+	if len(game.pendingEvents["player-1"]) != 0 {
+		t.Fatal("expected State to flush queued events")
+	}
+
+	packet := game.statePacket("player-1")
+	if len(packet.Events) != 0 {
+		t.Fatalf("expected flushed state packet to have 0 events, got %d", len(packet.Events))
 	}
 }

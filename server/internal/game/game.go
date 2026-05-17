@@ -20,6 +20,7 @@ type Game struct {
 	asteroidSpawnElapsed float64
 	collisionShapes      CollisionShapeCatalog
 	state                GameState
+	pendingEvents        map[string][]EventState
 }
 
 func New() *Game {
@@ -30,6 +31,7 @@ func New() *Game {
 
 	return &Game{
 		collisionShapes: collisionShapes,
+		pendingEvents:   make(map[string][]EventState),
 		state:           NewGameState(),
 	}
 }
@@ -55,6 +57,7 @@ func (game *Game) AddPlayer() string {
 			VisibleWorldHeight: constants.WorldHeight,
 		},
 	}
+	game.pendingEvents[playerID] = nil
 
 	return playerID
 }
@@ -64,6 +67,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	defer game.mu.Unlock()
 
 	delete(game.state.Players, playerID)
+	delete(game.pendingEvents, playerID)
 }
 
 func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
@@ -92,6 +96,7 @@ func (game *Game) State(playerID string) []byte {
 		log.Println(err)
 		return nil
 	}
+	game.pendingEvents[playerID] = nil
 
 	return response
 }
@@ -170,6 +175,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	for id, bullet := range game.state.Projectiles {
 		bullets[id] = bullet.State()
 	}
+	events := append(make([]EventState, 0, len(game.pendingEvents[playerID])), game.pendingEvents[playerID]...)
 
 	return StatePacket{
 		Type:      "state",
@@ -177,6 +183,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 		Players:   players,
 		Bullets:   bullets,
 		Asteroids: asteroids,
+		Events:    events,
 	}
 }
 
@@ -265,6 +272,11 @@ func (game *Game) handleBulletAsteroidCollisions() {
 
 			hitBullets[bulletID] = true
 			hitAsteroids[asteroidID] = true
+			game.broadcastEvent(EventState{
+				Type: "bullet_blast",
+				X:    bullet.X,
+				Y:    bullet.Y,
+			})
 			break
 		}
 	}
@@ -281,6 +293,12 @@ func (game *Game) handleBulletAsteroidCollisions() {
 		asteroid.PendingDespawn = true
 		asteroid.DespawnDelay = constants.CollisionDespawnDelay
 		asteroid.Velocity = Vector2{}
+	}
+}
+
+func (game *Game) broadcastEvent(event EventState) {
+	for playerID := range game.state.Players {
+		game.pendingEvents[playerID] = append(game.pendingEvents[playerID], event)
 	}
 }
 
