@@ -17,10 +17,12 @@ type Bullet struct {
 }
 
 type Asteroid struct {
-	ID   string
-	X    float64
-	Y    float64
-	Size int
+	ID       string
+	X        float64
+	Y        float64
+	Velocity Vector2
+	Size     int
+	Variant  int
 }
 
 type GameState struct {

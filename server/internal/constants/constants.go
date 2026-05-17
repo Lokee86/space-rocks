@@ -13,6 +13,8 @@ const (
 	ForegroundBackgroundOffsetX  = 480.0
 	ForegroundBackgroundOffsetY  = 270.0
 	PlayerInterpolationSpeed     = 18.0
+	WorldWidth                   = 1152.0
+	WorldHeight                  = 640.0
 
 	AsteroidSpawnInterval        = 3.0
 	AsteroidSpawnMargin          = 160.0

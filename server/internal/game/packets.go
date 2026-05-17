@@ -20,8 +20,17 @@ type ShipState struct {
 	Rotation float64 `json:"rotation"`
 }
 
+type AsteroidState struct {
+	ID      string  `json:"id"`
+	X       float64 `json:"x"`
+	Y       float64 `json:"y"`
+	Size    int     `json:"size"`
+	Variant int     `json:"variant"`
+}
+
 type StatePacket struct {
-	Type    string               `json:"type"`
-	SelfID  string               `json:"self_id"`
-	Players map[string]ShipState `json:"players"`
+	Type      string                   `json:"type"`
+	SelfID    string                   `json:"self_id"`
+	Players   map[string]ShipState     `json:"players"`
+	Asteroids map[string]AsteroidState `json:"asteroids"`
 }

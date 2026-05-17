@@ -24,16 +24,6 @@ shader_parameter/background_texture = ExtResource("3_4v2hw")
 
 [node name="Game" type="Node2D"]
 script = ExtResource("4_a2pxp")
-background_parallax = null
-foreground_background_parallax = null
-foreground_background_offset = null
-player_interpolation_speed = null
-asteroid_spawn_interval = null
-asteroid_spawn_margin = null
-asteroid_despawn_margin = null
-asteroid_min_speed = null
-asteroid_max_speed = null
-asteroid_size_scale = null
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 layer = -10
