@@ -11,14 +11,14 @@ import (
 )
 
 type Game struct {
-	mu      sync.Mutex
-	nextID  int
-	players map[string]*Player
+	mu     sync.Mutex
+	nextID int
+	state  GameState
 }
 
 func New() *Game {
 	return &Game{
-		players: make(map[string]*Player),
+		state: NewGameState(),
 	}
 }
 
@@ -34,9 +34,10 @@ func (game *Game) AddPlayer() string {
 	game.nextID++
 
 	playerID := fmt.Sprintf("player-%d", game.nextID)
-	game.players[playerID] = &Player{
-		X: 576 + float64(playerIndex%4)*80,
-		Y: 320 + float64(playerIndex/4)*80,
+	game.state.Players[playerID] = &Ship{
+		ID: playerID,
+		X:  576 + float64(playerIndex%4)*80,
+		Y:  320 + float64(playerIndex/4)*80,
 	}
 
 	return playerID
@@ -46,14 +47,14 @@ func (game *Game) RemovePlayer(playerID string) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	delete(game.players, playerID)
+	delete(game.state.Players, playerID)
 }
 
 func (game *Game) HandlePacket(playerID string, packet InputPacket) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	player, ok := game.players[playerID]
+	player, ok := game.state.Players[playerID]
 	if !ok {
 		return
 	}
@@ -95,14 +96,14 @@ func (game *Game) Step(delta float64) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	for _, player := range game.players {
+	for _, player := range game.state.Players {
 		player.applyInput(delta)
 	}
 }
 
 func (game *Game) statePacket(playerID string) StatePacket {
-	players := make(map[string]PlayerState, len(game.players))
-	for id, player := range game.players {
+	players := make(map[string]ShipState, len(game.state.Players))
+	for id, player := range game.state.Players {
 		players[id] = player.State()
 	}
 
