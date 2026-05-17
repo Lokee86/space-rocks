@@ -193,6 +193,9 @@ func TestHandleShipAsteroidCollisionsDelaysPlayerRemovalAndBroadcastsDeath(t *te
 	if !player.PendingDespawn {
 		t.Fatal("expected hit player to be marked for delayed despawn")
 	}
+	if game.state.Asteroids["asteroid-1"].PendingDespawn {
+		t.Fatal("expected ship collision to leave asteroid active")
+	}
 	if _, ok := game.state.Players["player-2"]; !ok {
 		t.Fatal("expected untouched player to remain")
 	}
@@ -225,6 +228,27 @@ func TestHandleShipAsteroidCollisionsDelaysPlayerRemovalAndBroadcastsDeath(t *te
 	}
 	if _, ok := game.state.Players["player-2"]; !ok {
 		t.Fatal("expected untouched player to remain after despawn delay")
+	}
+}
+
+func TestAsteroidVisibilityUsesCameraViewsWithoutPlayer(t *testing.T) {
+	game := New()
+	game.cameraViews["player-1"] = &entities.CameraView{
+		X: 100,
+		Y: 100,
+		Config: entities.ClientConfig{
+			VisibleWorldWidth:  200,
+			VisibleWorldHeight: 200,
+		},
+	}
+	asteroid := &entities.Asteroid{
+		ID: "asteroid-1",
+		X:  100,
+		Y:  100,
+	}
+
+	if game.isAsteroidFarFromAllCameras(asteroid) {
+		t.Fatal("expected asteroid inside camera view to remain even without a player entity")
 	}
 }
 

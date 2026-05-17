@@ -15,6 +15,12 @@ type Ship struct {
 	DespawnDelay   float64
 }
 
+type CameraView struct {
+	X      float64
+	Y      float64
+	Config ClientConfig
+}
+
 type Bullet struct {
 	ID             string
 	OwnerID        string

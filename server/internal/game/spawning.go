@@ -26,15 +26,15 @@ func (game *Game) spawnBullet(ship *entities.Ship) {
 	)
 }
 
-func (game *Game) spawnAsteroidBatch(target *entities.Ship) {
+func (game *Game) spawnAsteroidBatch(view *entities.CameraView) {
 	for range constants.AsteroidSpawnBatchSize {
-		game.spawnAsteroid(target)
+		game.spawnAsteroid(view)
 	}
 }
 
-func (game *Game) spawnAsteroid(target *entities.Ship) {
-	targetPosition := target.Position()
-	spawn := game.randomAsteroidSpawnPosition(target)
+func (game *Game) spawnAsteroid(view *entities.CameraView) {
+	targetPosition := view.Position()
+	spawn := game.randomAsteroidSpawnPosition(view)
 	direction := spawn.DirectionTo(targetPosition).Rotated(randomRange(
 		-degreesToRadians(constants.AsteroidAimRandomnessDegrees),
 		degreesToRadians(constants.AsteroidAimRandomnessDegrees),

@@ -8,11 +8,11 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
-func (game *Game) randomAsteroidSpawnPosition(target *entities.Ship) physics.Vector2 {
+func (game *Game) randomAsteroidSpawnPosition(targetView *entities.CameraView) physics.Vector2 {
 	margin := constants.AsteroidSpawnMargin
 	for attempts := 0; ; attempts++ {
-		spawn := randomOffscreenPosition(target, margin)
-		if !game.isOnscreenForAnyPlayer(spawn) {
+		spawn := randomOffscreenPosition(targetView, margin)
+		if !game.isOnscreenForAnyCamera(spawn) {
 			return spawn
 		}
 
@@ -22,13 +22,13 @@ func (game *Game) randomAsteroidSpawnPosition(target *entities.Ship) physics.Vec
 	}
 }
 
-func randomOffscreenPosition(target *entities.Ship, margin float64) physics.Vector2 {
-	width := target.VisibleWorldWidth()
-	height := target.VisibleWorldHeight()
-	left := target.X - width*0.5
-	right := target.X + width*0.5
-	top := target.Y - height*0.5
-	bottom := target.Y + height*0.5
+func randomOffscreenPosition(view *entities.CameraView, margin float64) physics.Vector2 {
+	width := view.VisibleWorldWidth()
+	height := view.VisibleWorldHeight()
+	left := view.X - width*0.5
+	right := view.X + width*0.5
+	top := view.Y - height*0.5
+	bottom := view.Y + height*0.5
 
 	switch rand.Intn(4) {
 	case 0:
@@ -48,12 +48,9 @@ func randomOffscreenPosition(target *entities.Ship, margin float64) physics.Vect
 	}
 }
 
-func (game *Game) isOnscreenForAnyPlayer(position physics.Vector2) bool {
-	for _, player := range game.state.Players {
-		if player.IsPendingDespawn() {
-			continue
-		}
-		if player.IsInsideView(position) {
+func (game *Game) isOnscreenForAnyCamera(position physics.Vector2) bool {
+	for _, view := range game.cameraViews {
+		if view.IsInside(position) {
 			return true
 		}
 	}
@@ -61,16 +58,13 @@ func (game *Game) isOnscreenForAnyPlayer(position physics.Vector2) bool {
 	return false
 }
 
-func (game *Game) isAsteroidFarFromAllPlayers(asteroid *entities.Asteroid) bool {
-	if !game.hasActivePlayers() {
+func (game *Game) isAsteroidFarFromAllCameras(asteroid *entities.Asteroid) bool {
+	if !game.hasCameraViews() {
 		return true
 	}
 
-	for _, player := range game.state.Players {
-		if player.IsPendingDespawn() {
-			continue
-		}
-		if !player.IsFarFromView(asteroid.Position()) {
+	for _, view := range game.cameraViews {
+		if !view.IsFarFrom(asteroid.Position()) {
 			return false
 		}
 	}
@@ -78,16 +72,13 @@ func (game *Game) isAsteroidFarFromAllPlayers(asteroid *entities.Asteroid) bool 
 	return true
 }
 
-func (game *Game) isBulletFarFromAllPlayers(bullet *entities.Bullet) bool {
-	if !game.hasActivePlayers() {
+func (game *Game) isBulletFarFromAllCameras(bullet *entities.Bullet) bool {
+	if !game.hasCameraViews() {
 		return true
 	}
 
-	for _, player := range game.state.Players {
-		if player.IsPendingDespawn() {
-			continue
-		}
-		if !player.IsFarFromView(bullet.Position()) {
+	for _, view := range game.cameraViews {
+		if !view.IsFarFrom(bullet.Position()) {
 			return false
 		}
 	}
@@ -95,14 +86,8 @@ func (game *Game) isBulletFarFromAllPlayers(bullet *entities.Bullet) bool {
 	return true
 }
 
-func (game *Game) hasActivePlayers() bool {
-	for _, player := range game.state.Players {
-		if !player.IsPendingDespawn() {
-			return true
-		}
-	}
-
-	return false
+func (game *Game) hasCameraViews() bool {
+	return len(game.cameraViews) > 0
 }
 
 func randomRange(minValue float64, maxValue float64) float64 {

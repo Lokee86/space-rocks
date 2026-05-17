@@ -20,6 +20,7 @@ type Game struct {
 	asteroidSpawnElapsed float64
 	collisionShapes      physics.CollisionShapeCatalog
 	state                entities.GameState
+	cameraViews          map[string]*entities.CameraView
 	pendingEvents        map[string][]EventState
 }
 
@@ -31,6 +32,7 @@ func New() *Game {
 
 	return &Game{
 		collisionShapes: collisionShapes,
+		cameraViews:     make(map[string]*entities.CameraView),
 		pendingEvents:   make(map[string][]EventState),
 		state:           entities.NewGameState(),
 	}
@@ -48,7 +50,7 @@ func (game *Game) AddPlayer() string {
 	game.nextID++
 
 	playerID := fmt.Sprintf("player-%d", game.nextID)
-	game.state.Players[playerID] = &entities.Ship{
+	player := &entities.Ship{
 		ID: playerID,
 		X:  576 + float64(playerIndex%4)*80,
 		Y:  320 + float64(playerIndex/4)*80,
@@ -56,6 +58,12 @@ func (game *Game) AddPlayer() string {
 			VisibleWorldWidth:  constants.WorldWidth,
 			VisibleWorldHeight: constants.WorldHeight,
 		},
+	}
+	game.state.Players[playerID] = player
+	game.cameraViews[playerID] = &entities.CameraView{
+		X:      player.X,
+		Y:      player.Y,
+		Config: player.Config,
 	}
 	game.pendingEvents[playerID] = nil
 
@@ -67,6 +75,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	defer game.mu.Unlock()
 
 	delete(game.state.Players, playerID)
+	delete(game.cameraViews, playerID)
 	delete(game.pendingEvents, playerID)
 }
 
@@ -78,15 +87,17 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	if !ok {
 		return
 	}
-	if player.IsPendingDespawn() {
-		return
-	}
-
 	switch packet.Type {
 	case PacketTypeInput:
+		if player.IsPendingDespawn() {
+			return
+		}
 		player.SetInput(packet.Input)
 	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)
+		if cameraView, ok := game.cameraViews[playerID]; ok {
+			cameraView.SetConfig(packet.Config)
+		}
 	}
 }
 
@@ -120,6 +131,9 @@ func (game *Game) Step(delta float64) {
 
 	for _, player := range game.state.Players {
 		player.ApplyInput(delta)
+		if cameraView, ok := game.cameraViews[player.ID]; ok {
+			cameraView.SetPosition(player.Position())
+		}
 		if player.IsPendingDespawn() {
 			continue
 		}
@@ -135,15 +149,12 @@ func (game *Game) Step(delta float64) {
 		}
 	}
 
-	if game.hasActivePlayers() {
+	if game.hasCameraViews() {
 		game.asteroidSpawnElapsed += delta
 		if game.asteroidSpawnElapsed >= constants.AsteroidSpawnInterval {
 			game.asteroidSpawnElapsed = 0
-			for _, player := range game.state.Players {
-				if player.IsPendingDespawn() {
-					continue
-				}
-				game.spawnAsteroidBatch(player)
+			for _, cameraView := range game.cameraViews {
+				game.spawnAsteroidBatch(cameraView)
 			}
 		}
 	} else {
@@ -156,7 +167,7 @@ func (game *Game) Step(delta float64) {
 			delete(game.state.Asteroids, id)
 			continue
 		}
-		if game.isAsteroidFarFromAllPlayers(asteroid) {
+		if game.isAsteroidFarFromAllCameras(asteroid) {
 			delete(game.state.Asteroids, id)
 		}
 	}
@@ -167,7 +178,7 @@ func (game *Game) Step(delta float64) {
 			delete(game.state.Projectiles, id)
 			continue
 		}
-		if bullet.IsExpired() || game.isBulletFarFromAllPlayers(bullet) {
+		if bullet.IsExpired() || game.isBulletFarFromAllCameras(bullet) {
 			delete(game.state.Projectiles, id)
 		}
 	}
