@@ -13,11 +13,14 @@ const EFFECT_Z_INDEX := 40
 @onready var player = $Player
 @onready var bullets = $Bullets
 @onready var asteroids: Node2D = $Asteroids
+@onready var laser_sound: AudioStreamPlayer2D = $LaserSound
+@onready var asteroid_destroyed_sound: AudioStreamPlayer2D = $AsteroidDestroyed
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
 
 var socket := WebSocketPeer.new()
 var connected := false
+var has_received_state := false
 var self_id := ""
 var player_nodes := {}
 var bullet_nodes := {}
@@ -94,9 +97,10 @@ func _apply_state(data: Dictionary) -> void:
 	_remove_missing_players(server_players)
 	_remove_missing_bullets(server_bullets)
 	_remove_missing_asteroids(server_asteroids)
-	_apply_bullets(server_bullets)
+	_apply_bullets(server_bullets, has_received_state)
 	_apply_asteroids(server_asteroids)
 	_apply_events(server_events)
+	has_received_state = true
 
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
@@ -176,9 +180,10 @@ func _interpolate_player(delta: float) -> void:
 		)
 
 
-func _apply_bullets(server_bullets: Dictionary) -> void:
+func _apply_bullets(server_bullets: Dictionary, play_new_bullet_sounds: bool) -> void:
 	for bullet_id in server_bullets.keys():
 		var state: Dictionary = server_bullets[bullet_id]
+		var is_new_bullet := !bullet_nodes.has(bullet_id)
 		var bullet_node = _get_bullet_node(bullet_id)
 		var server_position := Vector2(state["x"], state["y"])
 		var server_rotation: float = state["rotation"]
@@ -190,6 +195,9 @@ func _apply_bullets(server_bullets: Dictionary) -> void:
 			initialized_bullets[bullet_id] = true
 			bullet_node.global_position = server_position
 			bullet_node.rotation = server_rotation
+
+		if is_new_bullet && play_new_bullet_sounds:
+			laser_sound.play()
 
 
 func _get_bullet_node(bullet_id):
@@ -255,6 +263,7 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 func _apply_events(server_events: Array) -> void:
 	for event in server_events:
 		if event.get("type", "") == "bullet_blast":
+			asteroid_destroyed_sound.play()
 			_spawn_bullet_blast(Vector2(event["x"], event["y"]))
 
 
