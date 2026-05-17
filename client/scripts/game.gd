@@ -1,17 +1,13 @@
 extends Node2D
 
+const Constants = preload("res://scripts/constants.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 
-@export var background_parallax := 0.25
-@export var foreground_background_parallax := 0.45
-@export var foreground_background_offset := Vector2(480.0, 270.0)
-@export var player_interpolation_speed := 18.0
-
 @onready var player = $Player
 @onready var bullets = $Bullets
-@onready var asteroids = $Asteroids
+@onready var asteroids: Node2D = $Asteroids
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
 
@@ -24,8 +20,12 @@ var asteroid_nodes := {}
 var initialized_players := {}
 var target_player_positions := {}
 var target_player_rotations := {}
+var asteroid_spawn_timer := Timer.new()
 
 func _ready() -> void:
+	randomize()
+	_setup_asteroid_spawner()
+
 	var err := socket.connect_to_url("ws://localhost:8080/ws")
 	if err != OK:
 		print("connection failede")
@@ -58,8 +58,12 @@ func _process(delta: float) -> void:
 		_apply_state(data)
 
 	_interpolate_player(delta)
-	_update_layer_shader(repeated_background, background_parallax, Vector2.ZERO)
-	_update_layer_shader(repeated_foreground_background, foreground_background_parallax, foreground_background_offset)
+	_update_layer_shader(repeated_background, Constants.BACKGROUND_PARALLAX, Vector2.ZERO)
+	_update_layer_shader(
+		repeated_foreground_background,
+		Constants.FOREGROUND_BACKGROUND_PARALLAX,
+		Constants.FOREGROUND_BACKGROUND_OFFSET
+	)
 
 
 func _apply_state(data: Dictionary) -> void:
@@ -67,11 +71,11 @@ func _apply_state(data: Dictionary) -> void:
 		return
 
 	self_id = data["self_id"]
-	var players: Dictionary = data["players"]
-	_remove_missing_players(players)
+	var server_players: Dictionary = data["players"]
+	_remove_missing_players(server_players)
 
-	for player_id in players.keys():
-		var state: Dictionary = players[player_id]
+	for player_id in server_players.keys():
+		var state: Dictionary = server_players[player_id]
 		var player_node = _get_player_node(player_id)
 		var server_position := Vector2(state["x"], state["y"])
 		var server_rotation: float = state["rotation"]
@@ -115,7 +119,7 @@ func _remove_missing_players(server_players: Dictionary) -> void:
 
 
 func _interpolate_player(delta: float) -> void:
-	var weight := 1.0 - exp(-player_interpolation_speed * delta)
+	var weight := 1.0 - exp(-Constants.PLAYER_INTERPOLATION_SPEED * delta)
 	for player_id in player_nodes.keys():
 		if !target_player_positions.has(player_id):
 			continue
@@ -123,6 +127,82 @@ func _interpolate_player(delta: float) -> void:
 		var player_node = player_nodes[player_id]
 		player_node.position = player_node.position.lerp(target_player_positions[player_id], weight)
 		player_node.rotation = lerp_angle(player_node.rotation, target_player_rotations[player_id], weight)
+
+
+func _physics_process(_delta: float) -> void:
+	_move_local_asteroids()
+
+
+func _setup_asteroid_spawner() -> void:
+	asteroid_spawn_timer.wait_time = Constants.ASTEROID_SPAWN_INTERVAL
+	asteroid_spawn_timer.one_shot = false
+	asteroid_spawn_timer.timeout.connect(_spawn_local_asteroid)
+	add_child(asteroid_spawn_timer)
+	asteroid_spawn_timer.start()
+
+
+func _spawn_local_asteroid() -> void:
+	var asteroid := ASTEROID_SCENE.instantiate() as CharacterBody2D
+	var asteroid_size := randi_range(1, 4)
+	var variant_index := randi_range(0, 3)
+	var spawn_position := _get_random_offscreen_position()
+	var target_position: Vector2 = player.global_position
+	var randomness_radians := deg_to_rad(Constants.ASTEROID_AIM_RANDOMNESS_DEGREES)
+	var direction := spawn_position.direction_to(target_position).rotated(
+		randf_range(-randomness_radians, randomness_radians)
+	)
+	var speed := randf_range(Constants.ASTEROID_MIN_SPEED, Constants.ASTEROID_MAX_SPEED)
+
+	asteroid.global_position = spawn_position
+	asteroid.scale = Vector2.ONE * float(asteroid_size) * Constants.ASTEROID_SIZE_SCALE
+	asteroid.velocity = direction * speed
+	asteroids.add_child(asteroid)
+	asteroid.set_asteroid_variant(variant_index)
+
+
+func _get_random_offscreen_position() -> Vector2:
+	var screen_size := get_viewport_rect().size
+	var edge := randi_range(0, 3)
+	var screen_position := Vector2.ZERO
+
+	match edge:
+		0:
+			screen_position = Vector2(randf_range(0.0, screen_size.x), -Constants.ASTEROID_SPAWN_MARGIN)
+		1:
+			screen_position = Vector2(
+				screen_size.x + Constants.ASTEROID_SPAWN_MARGIN,
+				randf_range(0.0, screen_size.y)
+			)
+		2:
+			screen_position = Vector2(
+				randf_range(0.0, screen_size.x),
+				screen_size.y + Constants.ASTEROID_SPAWN_MARGIN
+			)
+		_:
+			screen_position = Vector2(-Constants.ASTEROID_SPAWN_MARGIN, randf_range(0.0, screen_size.y))
+
+	return get_viewport().get_canvas_transform().affine_inverse() * screen_position
+
+
+func _move_local_asteroids() -> void:
+	for asteroid in asteroids.get_children():
+		if asteroid is CharacterBody2D:
+			asteroid.move_and_slide()
+
+		if _is_far_offscreen(asteroid.global_position):
+			asteroid.queue_free()
+
+
+func _is_far_offscreen(world_position: Vector2) -> bool:
+	var screen_size := get_viewport_rect().size
+	var screen_position := get_viewport().get_canvas_transform() * world_position
+
+	return (
+		screen_position.x < -Constants.ASTEROID_DESPAWN_MARGIN
+		or screen_position.x > screen_size.x + Constants.ASTEROID_DESPAWN_MARGIN
+		or screen_position.y < -Constants.ASTEROID_DESPAWN_MARGIN
+		or screen_position.y > screen_size.y + Constants.ASTEROID_DESPAWN_MARGIN
+	)
 
 
 func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:
