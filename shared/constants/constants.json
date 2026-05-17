@@ -354,6 +354,19 @@
               "name": "BulletSpawnOffset"
             }
           }
+        },
+        {
+          "id": "collision_despawn_delay",
+          "type": "float",
+          "value": 0.5,
+          "targets": {
+            "gdscript": {
+              "name": "COLLISION_DESPAWN_DELAY"
+            },
+            "go": {
+              "name": "CollisionDespawnDelay"
+            }
+          }
         }
       ]
     }

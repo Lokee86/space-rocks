@@ -12,22 +12,26 @@ type Ship struct {
 }
 
 type Bullet struct {
-	ID       string
-	OwnerID  string
-	X        float64
-	Y        float64
-	Rotation float64
-	Velocity Vector2
-	Life     float64
+	ID             string
+	OwnerID        string
+	X              float64
+	Y              float64
+	Rotation       float64
+	Velocity       Vector2
+	Life           float64
+	PendingDespawn bool
+	DespawnDelay   float64
 }
 
 type Asteroid struct {
-	ID       string
-	X        float64
-	Y        float64
-	Velocity Vector2
-	Size     int
-	Variant  int
+	ID             string
+	X              float64
+	Y              float64
+	Velocity       Vector2
+	Size           int
+	Variant        int
+	PendingDespawn bool
+	DespawnDelay   float64
 }
 
 type GameState struct {

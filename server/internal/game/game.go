@@ -18,12 +18,19 @@ type Game struct {
 	nextAsteroidID       int
 	nextBulletID         int
 	asteroidSpawnElapsed float64
+	collisionShapes      CollisionShapeCatalog
 	state                GameState
 }
 
 func New() *Game {
+	collisionShapes, err := LoadCollisionShapeCatalog()
+	if err != nil {
+		log.Println("collision shapes unavailable:", err)
+	}
+
 	return &Game{
-		state: NewGameState(),
+		collisionShapes: collisionShapes,
+		state:           NewGameState(),
 	}
 }
 
@@ -125,6 +132,10 @@ func (game *Game) Step(delta float64) {
 
 	for id, asteroid := range game.state.Asteroids {
 		asteroid.step(delta)
+		if asteroid.PendingDespawn && asteroid.DespawnDelay <= 0 {
+			delete(game.state.Asteroids, id)
+			continue
+		}
 		if game.isAsteroidFarFromAllPlayers(asteroid) {
 			delete(game.state.Asteroids, id)
 		}
@@ -132,10 +143,16 @@ func (game *Game) Step(delta float64) {
 
 	for id, bullet := range game.state.Projectiles {
 		bullet.step(delta)
+		if bullet.PendingDespawn && bullet.DespawnDelay <= 0 {
+			delete(game.state.Projectiles, id)
+			continue
+		}
 		if bullet.Life <= 0 || game.isBulletFarFromAllPlayers(bullet) {
 			delete(game.state.Projectiles, id)
 		}
 	}
+
+	game.handleBulletAsteroidCollisions()
 }
 
 func (game *Game) statePacket(playerID string) StatePacket {
@@ -209,6 +226,61 @@ func (game *Game) spawnAsteroid(target *Ship) {
 		},
 		Size:    rand.Intn(4) + 1,
 		Variant: rand.Intn(4),
+	}
+}
+
+func (game *Game) handleBulletAsteroidCollisions() {
+	hitBullets := map[string]bool{}
+	hitAsteroids := map[string]bool{}
+
+	for bulletID, bullet := range game.state.Projectiles {
+		if hitBullets[bulletID] {
+			continue
+		}
+		if bullet.PendingDespawn {
+			continue
+		}
+
+		bulletBody, ok := bullet.collisionBody(game.collisionShapes)
+		if !ok {
+			continue
+		}
+
+		for asteroidID, asteroid := range game.state.Asteroids {
+			if hitAsteroids[asteroidID] {
+				continue
+			}
+			if asteroid.PendingDespawn {
+				continue
+			}
+
+			asteroidBody, ok := asteroid.collisionBody(game.collisionShapes)
+			if !ok {
+				continue
+			}
+
+			if _, ok := DetectCollision(bulletBody, asteroidBody); !ok {
+				continue
+			}
+
+			hitBullets[bulletID] = true
+			hitAsteroids[asteroidID] = true
+			break
+		}
+	}
+
+	for bulletID := range hitBullets {
+		bullet := game.state.Projectiles[bulletID]
+		bullet.PendingDespawn = true
+		bullet.DespawnDelay = constants.CollisionDespawnDelay
+		bullet.Velocity = Vector2{}
+	}
+
+	for asteroidID := range hitAsteroids {
+		asteroid := game.state.Asteroids[asteroidID]
+		asteroid.PendingDespawn = true
+		asteroid.DespawnDelay = constants.CollisionDespawnDelay
+		asteroid.Velocity = Vector2{}
 	}
 }
 

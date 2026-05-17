@@ -26,8 +26,9 @@ const (
 	AsteroidSizeScale            = 0.125
 	AsteroidAimRandomnessDegrees = 30.0
 
-	BulletSpeed       = 900.0
-	BulletLifetime    = 1.25
-	BulletCooldown    = 0.2
-	BulletSpawnOffset = 42.0
+	BulletSpeed           = 900.0
+	BulletLifetime        = 1.25
+	BulletCooldown        = 0.2
+	BulletSpawnOffset     = 42.0
+	CollisionDespawnDelay = 0.05
 )

@@ -19,3 +19,6 @@ temp/
 .cache/
 
 SourceAssets/
+
+__pycache__/
+*.py[cod]
