@@ -1,14 +1,10 @@
-[gd_scene load_steps=12 format=3 uid="uid://dsnj8xno50gep"]
+[gd_scene load_steps=8 format=3 uid="uid://dsnj8xno50gep"]
 
 [ext_resource type="PackedScene" uid="uid://2nhypjy0hv4h" path="res://scenes/player.tscn" id="1_85q1p"]
 [ext_resource type="Texture2D" uid="uid://4dccc352w3p0" path="res://assets/background.png" id="2_6w0te"]
 [ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="3_4v2hw"]
 [ext_resource type="Shader" path="res://shaders/repeating_background.gdshader" id="3_xif6w"]
 [ext_resource type="Script" path="res://scripts/game.gd" id="4_a2pxp"]
-[ext_resource type="AudioStream" uid="uid://dnkdslro6ho5k" path="res://audio/explosion.mp3" id="6_1pyvs"]
-[ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="6_h0hdr"]
-[ext_resource type="AudioStream" uid="uid://cvmnrbtldv1bx" path="res://audio/ship_death.mp3" id="7_4rpvx"]
-[ext_resource type="AudioStream" uid="uid://b6uqvxmbwwfsp" path="res://audio/gameover.mp3" id="9_a2jj2"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_atq1c"]
 shader = ExtResource("3_xif6w")
@@ -63,16 +59,3 @@ position = Vector2(576, 320)
 [node name="Bullets" type="Node2D" parent="."]
 
 [node name="Asteroids" type="Node2D" parent="."]
-
-[node name="AsteroidDestroyed" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("6_1pyvs")
-volume_db = -5.0
-
-[node name="ShipDeath" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("7_4rpvx")
-
-[node name="LaserSound" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("6_h0hdr")
-
-[node name="GameOver" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("9_a2jj2")

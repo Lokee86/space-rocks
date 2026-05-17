@@ -10,11 +10,9 @@ const BULLET_Z_INDEX := 20
 const PLAYER_Z_INDEX := 30
 const EFFECT_Z_INDEX := 40
 
-@onready var player = $Player
+@onready var player: Player = $Player
 @onready var bullets = $Bullets
 @onready var asteroids: Node2D = $Asteroids
-@onready var laser_sound: AudioStreamPlayer2D = $LaserSound
-@onready var asteroid_destroyed_sound: AudioStreamPlayer2D = $AsteroidDestroyed
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
 
@@ -197,7 +195,7 @@ func _apply_bullets(server_bullets: Dictionary, play_new_bullet_sounds: bool) ->
 			bullet_node.rotation = server_rotation
 
 		if is_new_bullet && play_new_bullet_sounds:
-			laser_sound.play()
+			player.play_laser_sound()
 
 
 func _get_bullet_node(bullet_id):
@@ -263,7 +261,7 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 func _apply_events(server_events: Array) -> void:
 	for event in server_events:
 		if event.get("type", "") == "bullet_blast":
-			asteroid_destroyed_sound.play()
+			player.play_asteroid_destroyed_sound()
 			_spawn_bullet_blast(Vector2(event["x"], event["y"]))
 
 

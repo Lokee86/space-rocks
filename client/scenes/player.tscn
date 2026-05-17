@@ -1,7 +1,11 @@
-[gd_scene load_steps=3 format=3 uid="uid://2nhypjy0hv4h"]
+[gd_scene load_steps=7 format=3 uid="uid://2nhypjy0hv4h"]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_ct0fb"]
 [ext_resource type="Texture2D" uid="uid://cw8ubidl86juw" path="res://assets/yellow-v-wing.png" id="2_lcy76"]
+[ext_resource type="AudioStream" uid="uid://dnkdslro6ho5k" path="res://audio/explosion.mp3" id="3_31vbt"]
+[ext_resource type="AudioStream" uid="uid://cvmnrbtldv1bx" path="res://audio/ship_death.mp3" id="4_qm0j5"]
+[ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="5_fxgnq"]
+[ext_resource type="AudioStream" uid="uid://b6uqvxmbwwfsp" path="res://audio/gameover.mp3" id="6_fqq0p"]
 
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_ct0fb")
@@ -18,3 +22,16 @@ polygon = PackedVector2Array(12, -11, 20, -12, 23.4882, -16.8588, 47.6126, -19.5
 position = Vector2(-0.0202003, -37.7274)
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="AsteroidDestroyed" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_31vbt")
+volume_db = -5.0
+
+[node name="ShipDeath" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_qm0j5")
+
+[node name="LaserSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_fxgnq")
+
+[node name="GameOver" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("6_fqq0p")

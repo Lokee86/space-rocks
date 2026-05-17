@@ -88,6 +88,67 @@ func TestHandleBulletAsteroidCollisionsDelaysHitDespawns(t *testing.T) {
 	}
 }
 
+func TestHandleBulletAsteroidCollisionsSplitsLargerAsteroid(t *testing.T) {
+	game := New()
+	game.collisionShapes = CollisionShapeCatalog{
+		Bullet: ImportedCollisionShape{
+			Type:   "capsule",
+			Radius: 3,
+			Height: 24,
+		},
+		Asteroids: []ImportedCollisionShape{
+			{
+				Type: "polygon",
+				Points: [][]float64{
+					{-40, -40},
+					{40, -40},
+					{40, 40},
+					{-40, 40},
+				},
+			},
+		},
+	}
+	game.state.Projectiles["bullet-1"] = &Bullet{
+		ID: "bullet-1",
+		X:  100,
+		Y:  100,
+	}
+	game.state.Asteroids["asteroid-1"] = &Asteroid{
+		ID:   "asteroid-1",
+		X:    100,
+		Y:    100,
+		Size: 3,
+	}
+
+	game.handleBulletAsteroidCollisions()
+
+	if len(game.state.Asteroids) != 3 {
+		t.Fatalf("expected hit asteroid plus 2 fragments, got %d asteroids", len(game.state.Asteroids))
+	}
+
+	fragmentCount := 0
+	for asteroidID, asteroid := range game.state.Asteroids {
+		if asteroidID == "asteroid-1" {
+			continue
+		}
+
+		fragmentCount++
+		if asteroid.Size != 2 {
+			t.Fatalf("expected fragment size 2, got %d", asteroid.Size)
+		}
+		if asteroid.X != 100 || asteroid.Y != 100 {
+			t.Fatalf("expected fragment at impact position, got (%v, %v)", asteroid.X, asteroid.Y)
+		}
+		if asteroid.PendingDespawn {
+			t.Fatal("expected fragment to remain active")
+		}
+	}
+
+	if fragmentCount != 2 {
+		t.Fatalf("expected 2 fragments, got %d", fragmentCount)
+	}
+}
+
 func TestStateFlushesEventsForPlayer(t *testing.T) {
 	game := New()
 	game.state.Players["player-1"] = &Ship{ID: "player-1"}
