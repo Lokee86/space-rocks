@@ -53,6 +53,7 @@ func _process(_delta: float) -> void:
 			return
 
 		print(data)
+		player.position = Vector2(data["x"], data["y"])
 
 
 func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:

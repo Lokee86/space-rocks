@@ -28,8 +28,13 @@ type Player struct {
 func main() {
 	mux := http.NewServeMux()
 
+	player := Player{
+		X: 576,
+		Y: 320,
+	}
+
 	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /ws", wsHandler)
+	mux.HandleFunc("GET /ws", player.wsHandler)
 
 	fmt.Println("Server starting on :8080")
 
@@ -41,11 +46,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	player := Player{
-		X: 400,
-		Y: 300,
-	}
+func (player *Player) wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -88,29 +89,31 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func packetHandler(input InputPacket, player Player) []byte {
+func packetHandler(input InputPacket, player *Player) []byte {
 	switch input.Type {
 	case "input":
 		if input.Input.Forward {
-			player.X -= 5
+			player.Y -= 100
 		}
 
 		if input.Input.Back {
-			player.X += 5
+			player.Y += 100
 		}
 
 		if input.Input.Left {
-			player.Y -= 5
+			player.X -= 100
 		}
 
 		if input.Input.Right {
-			player.Y += 5
+			player.X += 100
 		}
 
 		if input.Input.Shoot {
 			log.Println("shoot")
 		}
 	}
+
+	log.Printf("input: %+v player: %+v\n", input.Input, player)
 
 	response, err := json.Marshal(player)
 	if err != nil {
