@@ -22,3 +22,5 @@ SourceAssets/
 
 __pycache__/
 *.py[cod]
+
+*.avi

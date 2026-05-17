@@ -8,10 +8,10 @@ const (
 	PlayerThrustForce         = 1000.0
 	PlayerMaxSpeed            = 1500.0
 	PlayerDamping             = 0.98
-	PlayerStartingLives       = 1
+	PlayerStartingLives       = 3
 	PlayerRespawnDelay        = 3.0
 	PlayerRespawnSearchRadius = 240.0
-	GameOverSoundDelay        = 0.35
+	GameOverSoundDelay        = 0.4
 
 	BaseScore = 120
 
