@@ -1,4 +1,4 @@
-[gd_resource type="LabelSettings" load_steps=3 format=3 uid="uid://ck2uiws3xnfto"]
+[gd_resource type="LabelSettings" format=3 uid="uid://ck2uiws3xnfto"]
 
 [ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="1_ufclc"]
 

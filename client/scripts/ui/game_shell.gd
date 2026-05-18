@@ -5,6 +5,7 @@ const GAME_LOOP_SCENE := preload("res://scenes/game_loop.tscn")
 const MAIN_MENU_SCENE := preload("res://scenes/ui/main_menu.tscn")
 const BACKGROUND_DRIFT := Vector2(18.0, 8.0)
 const FOREGROUND_DRIFT := Vector2(42.0, 18.0)
+const MIN_WINDOW_SIZE := Vector2i(1280, 720)
 
 @onready var background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
@@ -17,6 +18,7 @@ var drift_time := 0.0
 
 
 func _ready() -> void:
+	DisplayServer.window_set_min_size(MIN_WINDOW_SIZE)
 	_connect_main_menu()
 
 

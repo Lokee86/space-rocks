@@ -46,7 +46,6 @@ func _ready() -> void:
 	effects = EffectsScript.new()
 	effects.configure(self, hud_controller.game_over_sound)
 
-	DisplayServer.window_set_min_size(Vector2i(1280, 720))
 	get_viewport().size_changed.connect(_send_client_config)
 
 	network_client.connect_to_server(_websocket_url())
