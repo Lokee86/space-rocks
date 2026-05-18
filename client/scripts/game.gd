@@ -72,6 +72,7 @@ func _process(delta: float) -> void:
 			respawn_requested = true
 			network_client.send_packet(Packets.respawn_packet())
 
+	_update_player_afterburner()
 	world_sync.interpolate(delta)
 	_update_background_scroll_offset()
 
@@ -142,6 +143,15 @@ func _update_background_scroll_offset() -> void:
 		shell.set_gameplay_scroll_offset(player.global_position)
 
 
+func _update_player_afterburner() -> void:
+	player.set_afterburner_active(
+		network_client.is_connected_to_server() &&
+			has_initial_spawn &&
+			player.visible &&
+			Input.is_action_pressed(player.move_forward_action)
+	)
+
+
 func _clear_background_scroll_offset() -> void:
 	var shell := get_parent()
 	if shell != null && shell.has_method("clear_gameplay_scroll_offset"):
@@ -176,12 +186,14 @@ func _set_alive_state() -> void:
 
 func _set_dead_state(respawn_delay: float) -> void:
 	respawn_requested = false
+	player.set_afterburner_active(false)
 	hud_controller.set_dead(respawn_delay)
 	effects.stop_game_over_sound()
 
 
 func _set_game_over_state() -> void:
 	respawn_requested = false
+	player.set_afterburner_active(false)
 	hud_controller.set_game_over()
 	effects.play_game_over_sound_after_delay()
 
