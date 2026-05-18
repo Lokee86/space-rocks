@@ -12,6 +12,8 @@ client/.import/
 client/.godot/
 client/.export/
 
+*.tmp
+*.temp
 tmp/
 */tmp/
 temp/

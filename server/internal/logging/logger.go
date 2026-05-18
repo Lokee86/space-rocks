@@ -117,6 +117,8 @@ func Error(message string, err error, args ...any) {
 
 func parseLevel(configuredLevel string) slog.Level {
 	switch strings.ToLower(strings.TrimSpace(configuredLevel)) {
+	case "":
+		return slog.LevelWarn
 	case "debug":
 		return slog.LevelDebug
 	case "warn", "warning":

@@ -20,7 +20,7 @@ func connect_to_server(url: String) -> Error:
 	closed_notified = false
 	var err := socket.connect_to_url(url)
 	if err != OK:
-		print("connection failede")
+		print("connection failed")
 	else:
 		print("Connecting...")
 

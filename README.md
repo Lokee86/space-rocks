@@ -13,7 +13,7 @@ Expect incomplete docs and rough edges while systems are still moving.
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
 - `server/`: Go server module. The current game server entrypoint is `server/cmd/game-server`.
 - `shared/`: JSON sources shared by client/server generation, including constants, packets, and collision shape data.
-- `docs/`: Project documentation. Currently includes server logging docs.
+- `docs/`: Project documentation. Currently includes architecture and server logging docs.
 - `tools/`: Python scripts for generating shared constants and packet code.
 
 ## Run Locally
@@ -81,13 +81,12 @@ python3 tools/scripts/generate_packets.py
 
 ## Documentation
 
+- [Architecture](docs/design/architecture.md)
 - [Server logging](docs/server/logging.md)
-
-No design or networking docs are currently tracked in `docs/`.
 
 ## Assets And Git LFS
 
-Source assets and binary game assets are part of the repo workflow. `.gitattributes` configures Git LFS for asset patterns including PNG, WEBP, WAV, and the configured MP3 pattern.
+Source assets and binary game assets are part of the repo workflow. `.gitattributes` configures Git LFS for asset patterns including PNG, WEBP, WAV, and MP3.
 
 Generated recordings and build artifacts should not be committed. `.gitignore` excludes paths/patterns such as:
 
