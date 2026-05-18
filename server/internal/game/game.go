@@ -14,6 +14,8 @@ import (
 
 type Game struct {
 	mu                   sync.Mutex
+	stopSimulation       chan struct{}
+	stopSimulationOnce   sync.Once
 	nextID               int
 	nextAsteroidID       int
 	nextBulletID         int
@@ -33,6 +35,7 @@ func New() *Game {
 
 	return &Game{
 		collisionShapes: collisionShapes,
+		stopSimulation:  make(chan struct{}),
 		cameraViews:     make(map[string]*entities.CameraView),
 		playerSessions:  make(map[string]*playerSession),
 		pendingEvents:   make(map[string][]EventState),
@@ -42,6 +45,12 @@ func New() *Game {
 
 func (game *Game) Start() {
 	go game.runSimulation()
+}
+
+func (game *Game) Stop() {
+	game.stopSimulationOnce.Do(func() {
+		close(game.stopSimulation)
+	})
 }
 
 func (game *Game) AddPlayer() string {
@@ -131,8 +140,13 @@ func (game *Game) runSimulation() {
 	defer ticker.Stop()
 
 	delta := 1.0 / float64(constants.ServerTickRate)
-	for range ticker.C {
-		game.Step(delta)
+	for {
+		select {
+		case <-game.stopSimulation:
+			return
+		case <-ticker.C:
+			game.Step(delta)
+		}
 	}
 }
 
