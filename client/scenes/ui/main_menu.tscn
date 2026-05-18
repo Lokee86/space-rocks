@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://dcn0vbv2b3wfc"]
+[gd_scene load_steps=14 format=3 uid="uid://dcn0vbv2b3wfc"]
 
 [ext_resource type="FontFile" uid="uid://b4obamqu1qd0x" path="res://assets/GamepauseddemoRegular-RpmY6.otf" id="1_187wc"]
 [ext_resource type="Texture2D" uid="uid://ju4eixkfmmef" path="res://assets/ui_buttons/button.png" id="1_nucwh"]
@@ -9,6 +9,7 @@
 [ext_resource type="Shader" path="res://shaders/repeating_background.gdshader" id="7_0alg7"]
 [ext_resource type="Texture2D" uid="uid://4dccc352w3p0" path="res://assets/background.png" id="8_fw6fd"]
 [ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="9_nncy5"]
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="10_n3gqj"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_o88aq"]
 font = ExtResource("1_187wc")
@@ -39,6 +40,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("10_n3gqj")
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1

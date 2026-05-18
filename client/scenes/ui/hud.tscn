@@ -156,12 +156,28 @@ offset_bottom = 50.5
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="YouDied" type="Label" parent="GameOverOverlay/DeathMesseageContainer"]
+[node name="GameOver" type="Label" parent="GameOverOverlay/DeathMesseageContainer"]
 layout_mode = 2
 text = "Game Over"
 label_settings = SubResource("LabelSettings_smpjf")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="RespawnTell" type="Label" parent="GameOverOverlay/DeathMesseageContainer/GameOver"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -135.5
+offset_top = 53.0
+offset_right = 135.5
+offset_bottom = 84.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Esc for Main Menu"
+label_settings = ExtResource("4_m6ttb")
 
 [node name="GameOverSound" type="AudioStreamPlayer" parent="GameOverOverlay"]
 stream = ExtResource("5_a2ab3")

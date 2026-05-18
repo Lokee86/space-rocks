@@ -12,6 +12,7 @@ var respawn_timer_label: Label
 var respawn_tell_label: Label
 var respawn_timer_template := "Respawn in X"
 var is_dead := false
+var is_game_over := false
 var can_respawn := false
 var respawn_countdown_remaining := 0.0
 
@@ -62,6 +63,7 @@ func set_lives(lives: int) -> void:
 
 func set_alive() -> void:
 	is_dead = false
+	is_game_over = false
 	can_respawn = false
 	respawn_countdown_remaining = 0.0
 	if death_overlay != null:
@@ -72,6 +74,7 @@ func set_alive() -> void:
 
 func set_dead(respawn_delay: float) -> void:
 	is_dead = true
+	is_game_over = false
 	can_respawn = false
 	respawn_countdown_remaining = respawn_delay
 	if death_overlay != null:
@@ -87,6 +90,7 @@ func set_dead(respawn_delay: float) -> void:
 
 func set_game_over() -> void:
 	is_dead = true
+	is_game_over = true
 	can_respawn = false
 	respawn_countdown_remaining = 0.0
 	if death_overlay != null:

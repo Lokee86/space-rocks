@@ -3,6 +3,7 @@ extends Node2D
 const Constants = preload("res://scripts/constants.gd")
 const EffectsScript = preload("res://scripts/effects.gd")
 const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
+const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 const NetworkClientScript = preload("res://scripts/network_client.gd")
 const Packets = preload("res://scripts/packets.gd")
 const WorldSyncScript = preload("res://scripts/world_sync.gd")
@@ -48,6 +49,9 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	network_client.poll()
 	hud_controller.update(delta)
+	if hud_controller.is_game_over && Input.is_action_just_pressed("OpenMenu"):
+		get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+		return
 
 	if network_client.is_connected_to_server():
 		network_client.send_packet(player.get_input_packet())
