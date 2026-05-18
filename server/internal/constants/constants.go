@@ -13,7 +13,7 @@ const (
 	PlayerRespawnBuffer = 160.0
 	GameOverSoundDelay  = 0.4
 
-	BaseScore = 12
+	BaseScore = 120
 
 	BackgroundParallax           = 0.25
 	ForegroundBackgroundParallax = 0.45
@@ -22,6 +22,10 @@ const (
 	PlayerInterpolationSpeed     = 18.0
 	WorldWidth                   = 1152.0
 	WorldHeight                  = 640.0
+	WindowMinWidth               = 1280.0
+	WindowMinHeight              = 720.0
+	WindowMaxWidth               = 1920.0
+	WindowMaxHeight              = 1080.0
 
 	AsteroidSpawnInterval        = 3.0
 	AsteroidSpawnBatchSize       = 3

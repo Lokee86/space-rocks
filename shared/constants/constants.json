@@ -242,6 +242,52 @@
               }
             ]
           }
+        },
+        {
+          "id": "window_min_size",
+          "type": "vector2",
+          "value": [
+            1280.0,
+            720.0
+          ],
+          "targets": {
+            "gdscript": {
+              "name": "WINDOW_MIN_SIZE"
+            },
+            "go": [
+              {
+                "name": "WindowMinWidth",
+                "component": "x"
+              },
+              {
+                "name": "WindowMinHeight",
+                "component": "y"
+              }
+            ]
+          }
+        },
+        {
+          "id": "window_max_size",
+          "type": "vector2",
+          "value": [
+            1920.0,
+            1080.0
+          ],
+          "targets": {
+            "gdscript": {
+              "name": "WINDOW_MAX_SIZE"
+            },
+            "go": [
+              {
+                "name": "WindowMaxWidth",
+                "component": "x"
+              },
+              {
+                "name": "WindowMaxHeight",
+                "component": "y"
+              }
+            ]
+          }
         }
       ]
     },

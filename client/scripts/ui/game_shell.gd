@@ -5,7 +5,6 @@ const GAME_LOOP_SCENE := preload("res://scenes/game_loop.tscn")
 const MAIN_MENU_SCENE := preload("res://scenes/ui/main_menu.tscn")
 const BACKGROUND_DRIFT := Vector2(18.0, 8.0)
 const FOREGROUND_DRIFT := Vector2(42.0, 18.0)
-const MIN_WINDOW_SIZE := Vector2i(1280, 720)
 
 @onready var background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
@@ -18,7 +17,9 @@ var drift_time := 0.0
 
 
 func _ready() -> void:
-	DisplayServer.window_set_min_size(MIN_WINDOW_SIZE)
+	DisplayServer.window_set_min_size(Vector2i(Constants.WINDOW_MIN_SIZE))
+	DisplayServer.window_set_max_size(Vector2i(Constants.WINDOW_MAX_SIZE))
+	_clamp_window_size()
 	_connect_main_menu()
 
 
@@ -45,6 +46,16 @@ func _update_layer_shader(layer: TextureRect, scroll_offset: Vector2) -> void:
 		return
 
 	background_material.set_shader_parameter("scroll_offset", scroll_offset)
+
+
+func _clamp_window_size() -> void:
+	var current_size := DisplayServer.window_get_size()
+	var clamped_size := Vector2i(
+		clampi(current_size.x, int(Constants.WINDOW_MIN_SIZE.x), int(Constants.WINDOW_MAX_SIZE.x)),
+		clampi(current_size.y, int(Constants.WINDOW_MIN_SIZE.y), int(Constants.WINDOW_MAX_SIZE.y))
+	)
+	if clamped_size != current_size:
+		DisplayServer.window_set_size(clamped_size)
 
 
 func _start_single_player() -> void:
