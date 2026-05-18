@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://bswwicitkpnyl"]
+[gd_scene load_steps=7 format=3 uid="uid://bswwicitkpnyl"]
 
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/Window (1).png" id="1_38744"]
 [ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="2_3f630"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/button_long.tscn" id="3_k6nre"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://scenes/ui/button_font.tres" id="4_1eqhw"]
+[ext_resource type="Script" path="res://scripts/ui/multiplayer_dialog.gd" id="5_gwcn8"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_7yrwt"]
 font = ExtResource("2_3f630")
@@ -16,14 +17,21 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("5_gwcn8")
 
-[node name="TextureRect" type="TextureRect" parent="."]
-layout_mode = 0
-offset_right = 753.0
-offset_bottom = 435.0
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="CenterContainer"]
+layout_mode = 2
 texture = ExtResource("1_38744")
 
-[node name="CenterContainer" type="CenterContainer" parent="TextureRect"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/TextureRect"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,27 +39,31 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TextureRect/CenterContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/TextureRect/CenterContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="TextureRect/CenterContainer/VBoxContainer"]
+[node name="enterID" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Enter Room ID - Leave blank for NEW"
+text = "Enter Room ID"
 label_settings = SubResource("LabelSettings_7yrwt")
+horizontal_alignment = 1
 
-[node name="LineEdit" type="LineEdit" parent="TextureRect/CenterContainer/VBoxContainer"]
+[node name="IDentry" type="LineEdit" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer"]
 layout_mode = 2
 alignment = 1
-max_length = 10
+max_length = 9
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TextureRect/CenterContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer"]
 layout_mode = 2
 alignment = 1
 
-[node name="TextureButton" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_k6nre")]
+[node name="SubmitButton" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_k6nre")]
+custom_minimum_size = Vector2(220, 80)
 layout_mode = 2
+ignore_texture_size = true
+stretch_mode = 0
 
-[node name="CenterContainer" type="CenterContainer" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer/TextureButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer/SubmitButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -59,10 +71,42 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer/TextureButton/CenterContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer/SubmitButton/CenterContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_bottom = 6
+
+[node name="Submit" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer/SubmitButton/CenterContainer/MarginContainer"]
 layout_mode = 2
 text = "
 
 
 SUBMIT"
+label_settings = ExtResource("4_1eqhw")
+
+[node name="CancelButton" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_k6nre")]
+custom_minimum_size = Vector2(220, 80)
+layout_mode = 2
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer/CancelButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer/CancelButton/CenterContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="Cancel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/HBoxContainer/CancelButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "
+
+
+CANCEL"
 label_settings = ExtResource("4_1eqhw")

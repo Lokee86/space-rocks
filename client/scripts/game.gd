@@ -19,7 +19,12 @@ var self_id := ""
 var effects: Effects
 var hud_controller: HudController
 var network_client: NetworkClient
+var room_id := ""
 var world_sync: WorldSync
+
+
+func set_room_id(value: String) -> void:
+	room_id = value.strip_edges()
 
 func _ready() -> void:
 	network_client = NetworkClientScript.new()
@@ -35,6 +40,7 @@ func _ready() -> void:
 
 	hud_controller = HudControllerScript.new()
 	hud_controller.configure(get_tree().current_scene)
+	hud_controller.set_room_id(room_id)
 
 	effects = EffectsScript.new()
 	effects.configure(self, hud_controller.game_over_sound)
@@ -42,7 +48,7 @@ func _ready() -> void:
 	DisplayServer.window_set_min_size(Vector2i(1280, 720))
 	get_viewport().size_changed.connect(_send_client_config)
 
-	network_client.connect_to_server("ws://localhost:8080/ws")
+	network_client.connect_to_server(_websocket_url())
 
 
 func _exit_tree() -> void:
@@ -184,3 +190,10 @@ func _send_client_config() -> void:
 		visible_size.x,
 		visible_size.y
 	))
+
+
+func _websocket_url() -> String:
+	if room_id == "":
+		return "ws://localhost:8080/ws"
+
+	return "ws://localhost:8080/ws?room_id=%s" % room_id.uri_encode()

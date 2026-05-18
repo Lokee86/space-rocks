@@ -10,6 +10,7 @@ var game_over_overlay: Control
 var game_over_sound: AudioStreamPlayer
 var respawn_timer_label: Label
 var respawn_tell_label: Label
+var room_id_label: Label
 var respawn_timer_template := "Respawn in X"
 var is_dead := false
 var is_game_over := false
@@ -25,11 +26,13 @@ func configure(scene: Node) -> void:
 	game_over_sound = _find_game_over_sound()
 	respawn_timer_label = _find_label(scene, "RespawnTimer")
 	respawn_tell_label = _find_label(scene, "RespawnTell")
+	room_id_label = _find_label(scene, "RoomID")
 	if respawn_timer_label != null:
 		respawn_timer_template = respawn_timer_label.text
 
 	set_score(0)
 	set_lives(Constants.PLAYER_STARTING_LIVES)
+	set_room_id("")
 	set_alive()
 
 
@@ -59,6 +62,16 @@ func set_lives(lives: int) -> void:
 		return
 
 	lives_label.text = "%d x " % lives
+
+
+func set_room_id(room_id: String) -> void:
+	if room_id_label == null:
+		return
+
+	var normalized_room_id := room_id.strip_edges()
+	room_id_label.visible = normalized_room_id != ""
+	if normalized_room_id != "":
+		room_id_label.text = "ROOMID: %s" % normalized_room_id
 
 
 func set_alive() -> void:
