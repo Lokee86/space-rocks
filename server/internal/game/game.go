@@ -30,7 +30,7 @@ type Game struct {
 func New() *Game {
 	collisionShapes, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
-		logging.Warn("collision shapes unavailable", logging.FieldError, err)
+		logging.Game.Warn("collision shapes unavailable", logging.FieldError, err)
 	}
 
 	return &Game{
@@ -72,7 +72,7 @@ func (game *Game) AddPlayer() string {
 		Config: player.Config,
 	}
 	game.pendingEvents[playerID] = nil
-	logging.Info("player added",
+	logging.Game.Info("player added",
 		logging.FieldPlayerID, playerID,
 		"x", spawnPosition.X,
 		"y", spawnPosition.Y,
@@ -90,7 +90,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	delete(game.cameraViews, playerID)
 	delete(game.playerSessions, playerID)
 	delete(game.pendingEvents, playerID)
-	logging.Info("player removed", logging.FieldPlayerID, playerID)
+	logging.Game.Info("player removed", logging.FieldPlayerID, playerID)
 }
 
 func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
@@ -131,7 +131,7 @@ func (game *Game) State(playerID string) []byte {
 
 	response, err := json.Marshal(game.statePacket(playerID))
 	if err != nil {
-		logging.Error("state marshal failed", err, logging.FieldPlayerID, playerID)
+		logging.Game.Error("state marshal failed", err, logging.FieldPlayerID, playerID)
 		return nil
 	}
 	game.pendingEvents[playerID] = nil

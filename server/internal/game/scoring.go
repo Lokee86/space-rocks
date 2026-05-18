@@ -45,7 +45,7 @@ func (game *Game) awardScore(award ScoreAward) {
 	if session, ok := game.playerSessions[award.PlayerID]; ok {
 		session.Score = player.Score
 	}
-	logging.Info("score awarded",
+	logging.Game.Info("score awarded",
 		logging.FieldPlayerID, award.PlayerID,
 		"source", award.Source.String(),
 		"amount", award.Amount,

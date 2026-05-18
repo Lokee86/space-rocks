@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	logging.Configure(os.Getenv("LOG_LEVEL"))
+	logging.Configure(os.Getenv(logging.EnvGlobalLevel))
 
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()
@@ -18,9 +18,9 @@ func main() {
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /ws", networking.WebSocketHandler(rooms))
 
-	logging.Info("server starting", "addr", ":8080")
+	logging.Server.Info("server starting", "addr", ":8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
-		logging.Error("server stopped", err, "addr", ":8080")
+		logging.Server.Error("server stopped", err, "addr", ":8080")
 		os.Exit(1)
 	}
 }

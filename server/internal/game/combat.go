@@ -119,14 +119,14 @@ func (game *Game) handleShipAsteroidCollisions() {
 			respawnDelay = session.RespawnCooldown
 		}
 		if lives <= 0 {
-			logging.Info("player game over",
+			logging.Game.Info("player game over",
 				logging.FieldPlayerID, playerID,
 				"score", player.Score,
 				"x", position.X,
 				"y", position.Y,
 			)
 		} else {
-			logging.Info("player died",
+			logging.Game.Info("player died",
 				logging.FieldPlayerID, playerID,
 				"lives", lives,
 				"respawn_delay", respawnDelay,

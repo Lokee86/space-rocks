@@ -23,7 +23,7 @@ func WebSocketHandler(rooms *RoomManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			logging.Error("websocket upgrade failed", err, logging.FieldRemoteAddr, r.RemoteAddr)
+			logging.Network.Error("websocket upgrade failed", err, logging.FieldRemoteAddr, r.RemoteAddr)
 			return
 		}
 
@@ -39,12 +39,12 @@ func handleConnection(conn *websocket.Conn, room *Room, remoteAddr string) {
 	playerID := room.Game.AddPlayer()
 	defer room.Game.RemovePlayer(playerID)
 
-	logging.Info("websocket connected",
+	logging.Network.Info("websocket connected",
 		logging.FieldRoomID, room.ID,
 		logging.FieldPlayerID, playerID,
 		logging.FieldRemoteAddr, remoteAddr,
 	)
-	defer logging.Info("websocket disconnected",
+	defer logging.Network.Info("websocket disconnected",
 		logging.FieldRoomID, room.ID,
 		logging.FieldPlayerID, playerID,
 		logging.FieldRemoteAddr, remoteAddr,
@@ -73,7 +73,7 @@ func readClientInput(
 
 		var packet game.ClientPacket
 		if err := json.Unmarshal(msg, &packet); err != nil {
-			logging.Warn("websocket packet decode failed",
+			logging.Network.Warn("websocket packet decode failed",
 				logging.FieldError, err,
 				logging.FieldRoomID, roomID,
 				logging.FieldPlayerID, playerID,
@@ -118,7 +118,7 @@ func writeServerState(
 
 func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr string) {
 	if isExpectedWebSocketClose(err) {
-		logging.Info("websocket read closed",
+		logging.Network.Info("websocket read closed",
 			logging.FieldRoomID, roomID,
 			logging.FieldPlayerID, playerID,
 			logging.FieldRemoteAddr, remoteAddr,
@@ -126,7 +126,7 @@ func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr
 		return
 	}
 
-	logging.Warn("websocket read failed",
+	logging.Network.Warn("websocket read failed",
 		logging.FieldError, err,
 		logging.FieldRoomID, roomID,
 		logging.FieldPlayerID, playerID,
@@ -136,7 +136,7 @@ func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr
 
 func logWebSocketWriteClose(err error, roomID string, playerID string, remoteAddr string) {
 	if isExpectedWebSocketClose(err) {
-		logging.Info("websocket write closed",
+		logging.Network.Info("websocket write closed",
 			logging.FieldRoomID, roomID,
 			logging.FieldPlayerID, playerID,
 			logging.FieldRemoteAddr, remoteAddr,
@@ -144,7 +144,7 @@ func logWebSocketWriteClose(err error, roomID string, playerID string, remoteAdd
 		return
 	}
 
-	logging.Error("websocket write failed", err,
+	logging.Network.Error("websocket write failed", err,
 		logging.FieldRoomID, roomID,
 		logging.FieldPlayerID, playerID,
 		logging.FieldRemoteAddr, remoteAddr,
