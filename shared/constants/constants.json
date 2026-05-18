@@ -128,15 +128,15 @@
           }
         },
         {
-          "id": "player_respawn_search_radius",
+          "id": "player_respawn_buffer",
           "type": "float",
-          "value": 240.0,
+          "value": 160.0,
           "targets": {
             "gdscript": {
-              "name": "PLAYER_RESPAWN_SEARCH_RADIUS"
+              "name": "PLAYER_RESPAWN_BUFFER"
             },
             "go": {
-              "name": "PlayerRespawnSearchRadius"
+              "name": "PlayerRespawnBuffer"
             }
           }
         },

@@ -128,3 +128,35 @@ func TestPlayerWithNoLivesCannotRespawn(t *testing.T) {
 		t.Fatal("expected respawn to be blocked with no lives")
 	}
 }
+
+func TestRespawnSafetyUsesRespawnBuffer(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Ship: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 20,
+		},
+		Asteroids: []physics.ImportedCollisionShape{
+			{
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
+	}
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
+		ID:   "asteroid-1",
+		X:    0,
+		Y:    0,
+		Size: 1,
+	}
+
+	insideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 21, Y: 0}
+	if game.isSafeRespawnPosition(insideBuffer) {
+		t.Fatal("expected respawn position inside asteroid buffer to be unsafe")
+	}
+
+	outsideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 26, Y: 0}
+	if !game.isSafeRespawnPosition(outsideBuffer) {
+		t.Fatal("expected respawn position outside asteroid buffer to be safe")
+	}
+}

@@ -39,6 +39,7 @@ offset_top = -4096.0
 offset_right = 4096.0
 offset_bottom = 4096.0
 texture = ExtResource("3_o7sd8")
+metadata/_edit_use_anchors_ = true
 
 [node name="ForegroundBackgroundLayer" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0, 0)
@@ -52,6 +53,7 @@ offset_right = 7927.0
 offset_bottom = 8127.0
 texture = ExtResource("4_fdjx1")
 stretch_mode = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="Player" parent="." instance=ExtResource("5_ndhjv")]
 position = Vector2(640, 360)

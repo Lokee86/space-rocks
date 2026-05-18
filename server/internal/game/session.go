@@ -2,7 +2,6 @@ package game
 
 import (
 	"math"
-	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
@@ -84,15 +83,32 @@ func (game *Game) safeRespawnPosition(session *playerSession) physics.Vector2 {
 		return session.SpawnPosition
 	}
 
-	for attempt := 0; attempt < 32; attempt++ {
-		radius := constants.PlayerRespawnSearchRadius * (1 + float64(attempt/8))
-		position := session.SpawnPosition.Add(randomUnitVector().Multiply(rand.Float64() * radius))
-		if game.isSafeRespawnPosition(position) {
-			return position
+	spacing := respawnSearchSpacing()
+	for ring := 1; ; ring++ {
+		for x := -ring; x <= ring; x++ {
+			top := session.SpawnPosition.Add(physics.Vector2{X: float64(x) * spacing, Y: -float64(ring) * spacing})
+			if game.isSafeRespawnPosition(top) {
+				return top
+			}
+
+			bottom := session.SpawnPosition.Add(physics.Vector2{X: float64(x) * spacing, Y: float64(ring) * spacing})
+			if game.isSafeRespawnPosition(bottom) {
+				return bottom
+			}
+		}
+
+		for y := -ring + 1; y <= ring-1; y++ {
+			left := session.SpawnPosition.Add(physics.Vector2{X: -float64(ring) * spacing, Y: float64(y) * spacing})
+			if game.isSafeRespawnPosition(left) {
+				return left
+			}
+
+			right := session.SpawnPosition.Add(physics.Vector2{X: float64(ring) * spacing, Y: float64(y) * spacing})
+			if game.isSafeRespawnPosition(right) {
+				return right
+			}
 		}
 	}
-
-	return session.SpawnPosition.Add(physics.Vector2{X: constants.PlayerRespawnSearchRadius, Y: 0}.Rotated(rand.Float64() * math.Pi * 2))
 }
 
 func (game *Game) isSafeRespawnPosition(position physics.Vector2) bool {
@@ -115,10 +131,38 @@ func (game *Game) isSafeRespawnPosition(position physics.Vector2) bool {
 		if !ok {
 			continue
 		}
-		if _, ok := physics.DetectCollision(shipBody, asteroidBody); ok {
+		if !hasRespawnClearance(shipBody, asteroidBody, constants.PlayerRespawnBuffer) {
 			return false
 		}
 	}
 
 	return true
+}
+
+func respawnSearchSpacing() float64 {
+	return max(64, constants.PlayerRespawnBuffer)
+}
+
+func hasRespawnClearance(shipBody physics.CollisionBody, asteroidBody physics.CollisionBody, buffer float64) bool {
+	clearance := collisionShapeRadius(shipBody.Shape) + collisionShapeRadius(asteroidBody.Shape) + buffer
+	return shipBody.Position.Subtract(asteroidBody.Position).LengthSquared() > clearance*clearance
+}
+
+func collisionShapeRadius(shape physics.CollisionShape) float64 {
+	switch shape.Type {
+	case physics.CollisionShapeCircle:
+		return shape.Radius
+	case physics.CollisionShapeCapsule:
+		return shape.Height * 0.5
+	case physics.CollisionShapeRectangle:
+		return shape.Size.Multiply(0.5).Length()
+	case physics.CollisionShapePolygon:
+		var radius float64
+		for _, point := range shape.Points {
+			radius = math.Max(radius, point.Length())
+		}
+		return radius
+	default:
+		return 0
+	}
 }

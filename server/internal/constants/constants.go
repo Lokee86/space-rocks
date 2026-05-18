@@ -4,14 +4,14 @@ package constants
 const (
 	ServerTickRate = 60
 
-	PlayerRotationSpeed       = 4.0
-	PlayerThrustForce         = 1000.0
-	PlayerMaxSpeed            = 1500.0
-	PlayerDamping             = 0.98
-	PlayerStartingLives       = 3
-	PlayerRespawnDelay        = 3.0
-	PlayerRespawnSearchRadius = 240.0
-	GameOverSoundDelay        = 0.4
+	PlayerRotationSpeed = 4.0
+	PlayerThrustForce   = 1000.0
+	PlayerMaxSpeed      = 1500.0
+	PlayerDamping       = 0.98
+	PlayerStartingLives = 3
+	PlayerRespawnDelay  = 3.0
+	PlayerRespawnBuffer = 160.0
+	GameOverSoundDelay  = 0.4
 
 	BaseScore = 120
 
