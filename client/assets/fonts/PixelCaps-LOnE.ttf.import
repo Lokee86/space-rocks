@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://bhkhmrpqmo85i"
-path="res://.godot/imported/PixelCaps-LOnE.ttf-0ee062b16cf968025a7f13583eb9a486.fontdata"
+path="res://.godot/imported/PixelCaps-LOnE.ttf-0b6289cffc4841cc3363f0fcdf238c10.fontdata"
 
 [deps]
 
-source_file="res://assets/PixelCaps-LOnE.ttf"
-dest_files=["res://.godot/imported/PixelCaps-LOnE.ttf-0ee062b16cf968025a7f13583eb9a486.fontdata"]
+source_file="res://assets/fonts/PixelCaps-LOnE.ttf"
+dest_files=["res://.godot/imported/PixelCaps-LOnE.ttf-0b6289cffc4841cc3363f0fcdf238c10.fontdata"]
 
 [params]
 

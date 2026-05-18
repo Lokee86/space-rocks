@@ -1,0 +1,70 @@
+[gd_scene load_steps=6 format=3 uid="uid://bswwicitkpnyl"]
+
+[ext_resource type="Texture2D" path="res://assets/ui/Window (1).png" id="1_38744"]
+[ext_resource type="FontFile" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="2_3f630"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/button_long.tscn" id="3_k6nre"]
+[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://scenes/ui/button_font.tres" id="4_1eqhw"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_7yrwt"]
+font = ExtResource("2_3f630")
+font_size = 32
+
+[node name="MultiplayerDialog" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 753.0
+offset_bottom = 435.0
+texture = ExtResource("1_38744")
+
+[node name="CenterContainer" type="CenterContainer" parent="TextureRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TextureRect/CenterContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="TextureRect/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Enter Room ID - Leave blank for NEW"
+label_settings = SubResource("LabelSettings_7yrwt")
+
+[node name="LineEdit" type="LineEdit" parent="TextureRect/CenterContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+max_length = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TextureRect/CenterContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="TextureButton" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_k6nre")]
+custom_minimum_size = Vector2(220, 90)
+layout_mode = 2
+ignore_texture_size = true
+
+[node name="CenterContainer" type="CenterContainer" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer/TextureButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer/TextureButton/CenterContainer"]
+layout_mode = 2
+text = "
+
+
+SUBMIT"
+label_settings = ExtResource("4_1eqhw")

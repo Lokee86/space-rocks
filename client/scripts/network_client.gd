@@ -6,12 +6,17 @@ signal connection_closed
 signal packet_received(data: Dictionary)
 signal packet_parse_failed(text: String)
 
+const NORMAL_CLOSE_CODE := 1000
+const GRACEFUL_CLOSE_TIMEOUT_SECONDS := 0.25
+
 var socket := WebSocketPeer.new()
 var connected := false
 var closed_notified := false
+var closing_gracefully := false
 
 
 func connect_to_server(url: String) -> Error:
+	closing_gracefully = false
 	closed_notified = false
 	var err := socket.connect_to_url(url)
 	if err != OK:
@@ -32,7 +37,7 @@ func poll() -> void:
 			connected_to_server.emit()
 	elif state == WebSocketPeer.STATE_CLOSED:
 		connected = false
-		if !closed_notified:
+		if !closed_notified && !closing_gracefully:
 			closed_notified = true
 			connection_closed.emit()
 
@@ -51,6 +56,31 @@ func send_packet(packet: Dictionary) -> void:
 		return
 
 	socket.send_text(JSON.stringify(packet))
+
+
+func close_gracefully() -> void:
+	if !begin_graceful_close():
+		return
+
+	var elapsed := 0.0
+	while socket.get_ready_state() != WebSocketPeer.STATE_CLOSED && elapsed < GRACEFUL_CLOSE_TIMEOUT_SECONDS:
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+		socket.poll()
+
+
+func begin_graceful_close() -> bool:
+	var state := socket.get_ready_state()
+	if state != WebSocketPeer.STATE_OPEN && state != WebSocketPeer.STATE_CONNECTING:
+		return false
+
+	closing_gracefully = true
+	closed_notified = true
+	connected = false
+	socket.close(NORMAL_CLOSE_CODE, "client closed")
+	socket.poll()
+
+	return true
 
 
 func is_connected_to_server() -> bool:

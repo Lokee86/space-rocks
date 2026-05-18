@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://b4obamqu1qd0x"
-path="res://.godot/imported/GamepauseddemoRegular-RpmY6.otf-e47f715f4abe018deeed3374bb1c9e31.fontdata"
+uid="uid://bfm68hnrr05tl"
+path="res://.godot/imported/DigitalNormal-xO6j.otf-fec647cdc644c530b7964e2004a8037a.fontdata"
 
 [deps]
 
-source_file="res://assets/GamepauseddemoRegular-RpmY6.otf"
-dest_files=["res://.godot/imported/GamepauseddemoRegular-RpmY6.otf-e47f715f4abe018deeed3374bb1c9e31.fontdata"]
+source_file="res://assets/fonts/DigitalNormal-xO6j.otf"
+dest_files=["res://.godot/imported/DigitalNormal-xO6j.otf-fec647cdc644c530b7964e2004a8037a.fontdata"]
 
 [params]
 

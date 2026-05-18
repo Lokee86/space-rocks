@@ -46,10 +46,16 @@ func _ready() -> void:
 	network_client.connect_to_server("ws://localhost:8080/ws")
 
 
+func _exit_tree() -> void:
+	if network_client != null:
+		network_client.begin_graceful_close()
+
+
 func _process(delta: float) -> void:
 	network_client.poll()
 	hud_controller.update(delta)
 	if hud_controller.is_game_over && Input.is_action_just_pressed("OpenMenu"):
+		await _close_network_connection()
 		get_tree().change_scene_to_file(MAIN_MENU_SCENE)
 		return
 
@@ -117,6 +123,11 @@ func _on_network_packet_parse_failed(text: String) -> void:
 
 func _on_world_bullet_spawned() -> void:
 	player.play_laser_sound()
+
+
+func _close_network_connection() -> void:
+	if network_client != null:
+		await network_client.close_gracefully()
 
 
 func _apply_events(server_events: Array) -> void:

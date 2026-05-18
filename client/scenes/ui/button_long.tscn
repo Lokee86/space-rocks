@@ -1,10 +1,10 @@
 [gd_scene load_steps=6 format=3 uid="uid://b1dg3edtpymr3"]
 
-[ext_resource type="Texture2D" uid="uid://ju4eixkfmmef" path="res://assets/ui_buttons/button.png" id="1_jhv50"]
-[ext_resource type="Texture2D" uid="uid://c0g5f6uslxd6i" path="res://assets/ui_buttons/button_pressed.png" id="2_n7cme"]
+[ext_resource type="Texture2D" uid="uid://ju4eixkfmmef" path="res://assets/ui/ui_buttons/button.png" id="1_jhv50"]
+[ext_resource type="Texture2D" uid="uid://c0g5f6uslxd6i" path="res://assets/ui/ui_buttons/button_pressed.png" id="2_n7cme"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://scenes/ui/button_font.tres" id="2_pi4b6"]
-[ext_resource type="Texture2D" uid="uid://cdagbaojg3q0m" path="res://assets/ui_buttons/button_hover.png" id="3_2gwrj"]
-[ext_resource type="Texture2D" uid="uid://3d6hil2i2lel" path="res://assets/ui_buttons/button_disabled.png" id="4_2py1k"]
+[ext_resource type="Texture2D" uid="uid://cdagbaojg3q0m" path="res://assets/ui/ui_buttons/button_hover.png" id="3_2gwrj"]
+[ext_resource type="Texture2D" uid="uid://3d6hil2i2lel" path="res://assets/ui/ui_buttons/button_disabled.png" id="4_2py1k"]
 
 [node name="TextureButton" type="TextureButton"]
 texture_normal = ExtResource("1_jhv50")
