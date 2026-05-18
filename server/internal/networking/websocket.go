@@ -39,12 +39,12 @@ func handleConnection(conn *websocket.Conn, room *Room, remoteAddr string) {
 	playerID := room.Game.AddPlayer()
 	defer room.Game.RemovePlayer(playerID)
 
-	logging.Network.Info("websocket connected",
+	logging.Network.Debug("websocket connected",
 		logging.FieldRoomID, room.ID,
 		logging.FieldPlayerID, playerID,
 		logging.FieldRemoteAddr, remoteAddr,
 	)
-	defer logging.Network.Info("websocket disconnected",
+	defer logging.Network.Debug("websocket disconnected",
 		logging.FieldRoomID, room.ID,
 		logging.FieldPlayerID, playerID,
 		logging.FieldRemoteAddr, remoteAddr,
@@ -118,7 +118,7 @@ func writeServerState(
 
 func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr string) {
 	if isExpectedWebSocketClose(err) {
-		logging.Network.Info("websocket read closed",
+		logging.Network.Debug("websocket read closed",
 			logging.FieldRoomID, roomID,
 			logging.FieldPlayerID, playerID,
 			logging.FieldRemoteAddr, remoteAddr,
@@ -136,7 +136,7 @@ func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr
 
 func logWebSocketWriteClose(err error, roomID string, playerID string, remoteAddr string) {
 	if isExpectedWebSocketClose(err) {
-		logging.Network.Info("websocket write closed",
+		logging.Network.Debug("websocket write closed",
 			logging.FieldRoomID, roomID,
 			logging.FieldPlayerID, playerID,
 			logging.FieldRemoteAddr, remoteAddr,

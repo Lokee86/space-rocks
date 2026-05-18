@@ -85,8 +85,8 @@ func (logger CategoryLogger) args(args []any) []any {
 }
 
 func init() {
-	level.Set(slog.LevelInfo)
-	configureCategoryLevels(slog.LevelInfo)
+	level.Set(slog.LevelWarn)
+	configureCategoryLevels(slog.LevelWarn)
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: level,
 	})))

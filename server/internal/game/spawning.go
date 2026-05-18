@@ -67,7 +67,7 @@ func (game *Game) spawnAsteroidFragments(asteroid *entities.Asteroid) {
 	}
 
 	position := asteroid.Position()
-	logging.Game.Info("asteroid split",
+	logging.Game.Debug("asteroid split",
 		"asteroid_id", asteroid.ID,
 		"source_size", asteroid.Size,
 		"fragment_size", fragmentSize,

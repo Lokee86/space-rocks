@@ -56,12 +56,12 @@ func (manager *RoomManager) Join(roomID string) (*Room, func()) {
 	if room.cleanupTimer != nil {
 		room.cleanupTimer.Stop()
 		room.cleanupTimer = nil
-		logging.Rooms.Info("room cleanup canceled",
+		logging.Rooms.Debug("room cleanup canceled",
 			logging.FieldRoomID, roomID,
 			"active_players", room.activePlayers,
 		)
 	}
-	logging.Rooms.Info("room joined",
+	logging.Rooms.Debug("room joined",
 		logging.FieldRoomID, roomID,
 		"active_players", room.activePlayers,
 	)
@@ -90,7 +90,7 @@ func (manager *RoomManager) StopAll() {
 			room.cleanupTimer.Stop()
 			room.cleanupTimer = nil
 		}
-		logging.Rooms.Info("room stopped", logging.FieldRoomID, roomID)
+		logging.Rooms.Debug("room stopped", logging.FieldRoomID, roomID)
 		room.Game.Stop()
 		delete(manager.rooms, roomID)
 	}
@@ -114,7 +114,7 @@ func (manager *RoomManager) getOrCreateLocked(roomID string) *Room {
 	}
 	room.Game.Start()
 	manager.rooms[roomID] = room
-	logging.Rooms.Info("room created", logging.FieldRoomID, roomID)
+	logging.Rooms.Debug("room created", logging.FieldRoomID, roomID)
 
 	return room
 }
@@ -131,7 +131,7 @@ func (manager *RoomManager) leave(roomID string) {
 	if room.activePlayers > 0 {
 		room.activePlayers--
 	}
-	logging.Rooms.Info("room left",
+	logging.Rooms.Debug("room left",
 		logging.FieldRoomID, roomID,
 		"active_players", room.activePlayers,
 	)
@@ -147,7 +147,7 @@ func (manager *RoomManager) leave(roomID string) {
 	room.cleanupTimer = time.AfterFunc(manager.cleanupDelay, func() {
 		manager.cleanupEmptyRoom(roomID, cleanupVersion)
 	})
-	logging.Rooms.Info("room cleanup scheduled",
+	logging.Rooms.Debug("room cleanup scheduled",
 		logging.FieldRoomID, roomID,
 		"cleanup_delay", manager.cleanupDelay.String(),
 		"cleanup_version", cleanupVersion,
@@ -167,7 +167,7 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 		return
 	}
 	if room.activePlayers > 0 {
-		logging.Rooms.Info("room cleanup skipped; room active",
+		logging.Rooms.Debug("room cleanup skipped; room active",
 			logging.FieldRoomID, roomID,
 			"active_players", room.activePlayers,
 			"cleanup_version", cleanupVersion,
@@ -175,7 +175,7 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 		return
 	}
 	if room.cleanupVersion != cleanupVersion {
-		logging.Rooms.Info("room cleanup skipped; stale cleanup",
+		logging.Rooms.Debug("room cleanup skipped; stale cleanup",
 			logging.FieldRoomID, roomID,
 			"cleanup_version", cleanupVersion,
 			"current_cleanup_version", room.cleanupVersion,
@@ -185,7 +185,7 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 
 	room.Game.Stop()
 	delete(manager.rooms, roomID)
-	logging.Rooms.Info("room cleaned up",
+	logging.Rooms.Debug("room cleaned up",
 		logging.FieldRoomID, roomID,
 		"cleanup_version", cleanupVersion,
 	)
