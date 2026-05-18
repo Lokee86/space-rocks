@@ -78,7 +78,7 @@ func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {
 	if respawned.X == spawnPosition.X && respawned.Y == spawnPosition.Y {
 		t.Fatal("expected respawn to avoid asteroid on original spawn point")
 	}
-	if !game.isSafeRespawnPosition(respawned.Position()) {
+	if !game.isSafeRespawnPosition(respawned.Position(), playerID) {
 		t.Fatal("expected respawned player position to be safe")
 	}
 }
@@ -151,12 +151,68 @@ func TestRespawnSafetyUsesRespawnBuffer(t *testing.T) {
 	}
 
 	insideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 21, Y: 0}
-	if game.isSafeRespawnPosition(insideBuffer) {
+	if game.isSafeRespawnPosition(insideBuffer, "") {
 		t.Fatal("expected respawn position inside asteroid buffer to be unsafe")
 	}
 
 	outsideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 26, Y: 0}
-	if !game.isSafeRespawnPosition(outsideBuffer) {
+	if !game.isSafeRespawnPosition(outsideBuffer, "") {
 		t.Fatal("expected respawn position outside asteroid buffer to be safe")
+	}
+}
+
+func TestRespawnSafetyAvoidsExistingPlayers(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Ship: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 20,
+		},
+	}
+	game.state.Players["other-player"] = &entities.Ship{
+		ID: "other-player",
+		X:  0,
+		Y:  0,
+	}
+
+	insideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 39, Y: 0}
+	if game.isSafeRespawnPosition(insideBuffer, "") {
+		t.Fatal("expected respawn position inside player buffer to be unsafe")
+	}
+
+	outsideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 41, Y: 0}
+	if !game.isSafeRespawnPosition(outsideBuffer, "") {
+		t.Fatal("expected respawn position outside player buffer to be safe")
+	}
+	if !game.isSafeRespawnPosition(physics.Vector2{}, "other-player") {
+		t.Fatal("expected ignored player to be excluded from respawn safety")
+	}
+}
+
+func TestInitialSpawnAvoidsExistingPlayers(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Ship: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 20,
+		},
+	}
+
+	firstID := game.AddPlayer()
+	secondID := game.AddPlayer()
+	second := game.state.Players[secondID]
+	preferredSecondSpawn := preferredInitialSpawnPosition(1)
+
+	if firstID == secondID {
+		t.Fatal("expected unique player IDs")
+	}
+	if second.X == preferredSecondSpawn.X && second.Y == preferredSecondSpawn.Y {
+		t.Fatal("expected initial spawn to avoid existing player")
+	}
+	if !game.isSafeRespawnPosition(second.Position(), secondID) {
+		t.Fatal("expected initial spawn position to be safe")
+	}
+	if game.playerSessions[secondID].SpawnPosition != second.Position() {
+		t.Fatal("expected session spawn position to match safe initial spawn")
 	}
 }

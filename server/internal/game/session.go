@@ -78,40 +78,55 @@ func (game *Game) respawnPlayer(playerID string) {
 	}
 }
 
+func (game *Game) initialSpawnPosition(playerIndex int, playerID string) physics.Vector2 {
+	return game.safePlayerSpawnPosition(preferredInitialSpawnPosition(playerIndex), playerID)
+}
+
+func preferredInitialSpawnPosition(playerIndex int) physics.Vector2 {
+	return physics.Vector2{
+		X: 576 + float64(playerIndex%4)*80,
+		Y: 320 + float64(playerIndex/4)*80,
+	}
+}
+
 func (game *Game) safeRespawnPosition(session *playerSession) physics.Vector2 {
-	if game.isSafeRespawnPosition(session.SpawnPosition) {
-		return session.SpawnPosition
+	return game.safePlayerSpawnPosition(session.SpawnPosition, session.ID)
+}
+
+func (game *Game) safePlayerSpawnPosition(origin physics.Vector2, ignorePlayerID string) physics.Vector2 {
+	if game.isSafeRespawnPosition(origin, ignorePlayerID) {
+		return origin
 	}
 
 	spacing := respawnSearchSpacing()
 	for ring := 1; ; ring++ {
 		for x := -ring; x <= ring; x++ {
-			top := session.SpawnPosition.Add(physics.Vector2{X: float64(x) * spacing, Y: -float64(ring) * spacing})
-			if game.isSafeRespawnPosition(top) {
+			top := origin.Add(physics.Vector2{X: float64(x) * spacing, Y: -float64(ring) * spacing})
+			if game.isSafeRespawnPosition(top, ignorePlayerID) {
 				return top
 			}
 
-			bottom := session.SpawnPosition.Add(physics.Vector2{X: float64(x) * spacing, Y: float64(ring) * spacing})
-			if game.isSafeRespawnPosition(bottom) {
+			bottom := origin.Add(physics.Vector2{X: float64(x) * spacing, Y: float64(ring) * spacing})
+			if game.isSafeRespawnPosition(bottom, ignorePlayerID) {
 				return bottom
 			}
 		}
 
 		for y := -ring + 1; y <= ring-1; y++ {
-			left := session.SpawnPosition.Add(physics.Vector2{X: -float64(ring) * spacing, Y: float64(y) * spacing})
-			if game.isSafeRespawnPosition(left) {
+			left := origin.Add(physics.Vector2{X: -float64(ring) * spacing, Y: float64(y) * spacing})
+			if game.isSafeRespawnPosition(left, ignorePlayerID) {
 				return left
 			}
 
-			right := session.SpawnPosition.Add(physics.Vector2{X: float64(ring) * spacing, Y: float64(y) * spacing})
-			if game.isSafeRespawnPosition(right) {
+			right := origin.Add(physics.Vector2{X: float64(ring) * spacing, Y: float64(y) * spacing})
+			if game.isSafeRespawnPosition(right, ignorePlayerID) {
 				return right
 			}
 		}
 	}
 }
 
-func (game *Game) isSafeRespawnPosition(position physics.Vector2) bool {
+func (game *Game) isSafeRespawnPosition(position physics.Vector2, ignorePlayerID string) bool {
 	shape, err := game.collisionShapes.ShipShape()
 	if err != nil {
 		return true
@@ -132,6 +147,19 @@ func (game *Game) isSafeRespawnPosition(position physics.Vector2) bool {
 			continue
 		}
 		if !hasRespawnClearance(shipBody, asteroidBody, constants.PlayerRespawnBuffer) {
+			return false
+		}
+	}
+	for id, player := range game.state.Players {
+		if id == ignorePlayerID || player.IsPendingDespawn() {
+			continue
+		}
+
+		playerBody, ok := player.CollisionBody(game.collisionShapes)
+		if !ok {
+			continue
+		}
+		if !hasRespawnClearance(shipBody, playerBody, constants.PlayerRespawnBuffer) {
 			return false
 		}
 	}

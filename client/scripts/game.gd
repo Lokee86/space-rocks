@@ -15,6 +15,7 @@ const WorldSyncScript = preload("res://scripts/world_sync.gd")
 
 var respawn_requested := false
 var has_received_state := false
+var has_initial_spawn := false
 var self_id := ""
 var effects: Effects
 var hud_controller: HudController
@@ -100,6 +101,7 @@ func _apply_state(data: Dictionary) -> void:
 
 	hud_controller.set_lives(int(data.get(Packets.FIELD_LIVES, Constants.PLAYER_STARTING_LIVES)))
 	if server_players.has(self_id):
+		has_initial_spawn = true
 		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
 		if hud_controller.is_dead && respawn_requested:
 			_set_alive_state()
@@ -132,6 +134,9 @@ func _close_network_connection() -> void:
 
 
 func _update_background_scroll_offset() -> void:
+	if !has_initial_spawn:
+		return
+
 	var shell := get_parent()
 	if shell != null && shell.has_method("set_gameplay_scroll_offset"):
 		shell.set_gameplay_scroll_offset(player.global_position)

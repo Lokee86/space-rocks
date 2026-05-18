@@ -61,10 +61,7 @@ func (game *Game) AddPlayer() string {
 	game.nextID++
 
 	playerID := fmt.Sprintf("player-%d", game.nextID)
-	spawnPosition := physics.Vector2{
-		X: 576 + float64(playerIndex%4)*80,
-		Y: 320 + float64(playerIndex/4)*80,
-	}
+	spawnPosition := game.initialSpawnPosition(playerIndex, playerID)
 	session := newPlayerSession(playerID, spawnPosition)
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session

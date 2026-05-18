@@ -13,7 +13,7 @@ const (
 	PlayerRespawnBuffer = 160.0
 	GameOverSoundDelay  = 0.4
 
-	BaseScore = 120
+	BaseScore = 12
 
 	BackgroundParallax           = 0.25
 	ForegroundBackgroundParallax = 0.45
