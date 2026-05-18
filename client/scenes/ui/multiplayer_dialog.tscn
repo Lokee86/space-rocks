@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://bswwicitkpnyl"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/Window (1).png" id="1_38744"]
-[ext_resource type="FontFile" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="2_3f630"]
+[ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/Window (1).png" id="1_38744"]
+[ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="2_3f630"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/button_long.tscn" id="3_k6nre"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://scenes/ui/button_font.tres" id="4_1eqhw"]
 
@@ -49,9 +49,7 @@ layout_mode = 2
 alignment = 1
 
 [node name="TextureButton" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_k6nre")]
-custom_minimum_size = Vector2(220, 90)
 layout_mode = 2
-ignore_texture_size = true
 
 [node name="CenterContainer" type="CenterContainer" parent="TextureRect/CenterContainer/VBoxContainer/HBoxContainer/TextureButton"]
 layout_mode = 1

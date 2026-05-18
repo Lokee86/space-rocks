@@ -1,9 +1,10 @@
 extends Node2D
 
+signal return_to_menu_requested
+
 const Constants = preload("res://scripts/constants.gd")
 const EffectsScript = preload("res://scripts/effects.gd")
 const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
-const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 const NetworkClientScript = preload("res://scripts/network_client.gd")
 const Packets = preload("res://scripts/packets.gd")
 const WorldSyncScript = preload("res://scripts/world_sync.gd")
@@ -11,8 +12,6 @@ const WorldSyncScript = preload("res://scripts/world_sync.gd")
 @onready var player: Player = $Player
 @onready var bullets = $Bullets
 @onready var asteroids: Node2D = $Asteroids
-@onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
-@onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
 
 var respawn_requested := false
 var has_received_state := false
@@ -49,6 +48,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if network_client != null:
 		network_client.begin_graceful_close()
+	_clear_background_scroll_offset()
 
 
 func _process(delta: float) -> void:
@@ -56,7 +56,7 @@ func _process(delta: float) -> void:
 	hud_controller.update(delta)
 	if hud_controller.is_game_over && Input.is_action_just_pressed("OpenMenu"):
 		await _close_network_connection()
-		get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+		return_to_menu_requested.emit()
 		return
 
 	if network_client.is_connected_to_server():
@@ -66,12 +66,7 @@ func _process(delta: float) -> void:
 			network_client.send_packet(Packets.respawn_packet())
 
 	world_sync.interpolate(delta)
-	_update_layer_shader(repeated_background, Constants.BACKGROUND_PARALLAX, Vector2.ZERO)
-	_update_layer_shader(
-		repeated_foreground_background,
-		Constants.FOREGROUND_BACKGROUND_PARALLAX,
-		Constants.FOREGROUND_BACKGROUND_OFFSET
-	)
+	_update_background_scroll_offset()
 
 
 func _apply_state(data: Dictionary) -> void:
@@ -130,6 +125,18 @@ func _close_network_connection() -> void:
 		await network_client.close_gracefully()
 
 
+func _update_background_scroll_offset() -> void:
+	var shell := get_parent()
+	if shell != null && shell.has_method("set_gameplay_scroll_offset"):
+		shell.set_gameplay_scroll_offset(player.global_position)
+
+
+func _clear_background_scroll_offset() -> void:
+	var shell := get_parent()
+	if shell != null && shell.has_method("clear_gameplay_scroll_offset"):
+		shell.clear_gameplay_scroll_offset()
+
+
 func _apply_events(server_events: Array) -> void:
 	for event in server_events:
 		if event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_BULLET_BLAST:
@@ -166,17 +173,6 @@ func _set_game_over_state() -> void:
 	respawn_requested = false
 	hud_controller.set_game_over()
 	effects.play_game_over_sound_after_delay()
-
-
-func _update_layer_shader(background: TextureRect, parallax: float, offset: Vector2) -> void:
-	var background_material := background.material as ShaderMaterial
-	if background_material == null:
-		return
-	
-	background_material.set_shader_parameter(
-		"scroll_offset",
-		(player.global_position * parallax) + offset
-	)
 
 
 func _send_client_config() -> void:

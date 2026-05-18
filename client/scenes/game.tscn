@@ -1,12 +1,65 @@
-[gd_scene load_steps=3 format=3 uid="uid://bi8e3wyf81s4a"]
+[gd_scene load_steps=8 format=3 uid="uid://bi8e3wyf81s4a"]
 
-[ext_resource type="PackedScene" uid="uid://dsnj8xno50gep" path="res://scenes/game_loop.tscn" id="1_a3oob"]
-[ext_resource type="PackedScene" uid="uid://cqjku4qxxcoxj" path="res://scenes/ui/hud.tscn" id="2_qhmya"]
+[ext_resource type="PackedScene" uid="uid://dcn0vbv2b3wfc" path="res://scenes/ui/main_menu.tscn" id="1_wu7gp"]
+[ext_resource type="Script" path="res://scripts/ui/game_shell.gd" id="2_04i1g"]
+[ext_resource type="Shader" path="res://shaders/repeating_background.gdshader" id="3_xyiwq"]
+[ext_resource type="Texture2D" uid="uid://4dccc352w3p0" path="res://assets/background.png" id="4_geh66"]
+[ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="5_ny5dr"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_62kg4"]
+shader = ExtResource("3_xyiwq")
+shader_parameter/base_tile_size = Vector2(960, 540)
+shader_parameter/tile_scale = 1.0
+shader_parameter/scroll_offset = Vector2(0, 0)
+shader_parameter/opacity = 1.0
+shader_parameter/background_texture = ExtResource("4_geh66")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_se2r5"]
+shader = ExtResource("3_xyiwq")
+shader_parameter/base_tile_size = Vector2(960, 540)
+shader_parameter/tile_scale = 4.0
+shader_parameter/scroll_offset = Vector2(480, 270)
+shader_parameter/opacity = 1.0
+shader_parameter/background_texture = ExtResource("5_ny5dr")
 
 [node name="Game" type="Node2D"]
+script = ExtResource("2_04i1g")
 
-[node name="GameLoop" parent="." instance=ExtResource("1_a3oob")]
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+layer = -10
+
+[node name="BackgroundLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0, 0)
+motion_mirroring = Vector2(960, 540)
+
+[node name="RepeatedBackground" type="TextureRect" parent="ParallaxBackground/BackgroundLayer"]
+material = SubResource("ShaderMaterial_62kg4")
+offset_left = -3353.0
+offset_top = -4189.0
+offset_right = 4839.0
+offset_bottom = 4003.0
+texture = ExtResource("4_geh66")
+metadata/_edit_use_anchors_ = true
+
+[node name="ForegroundBackgroundLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0, 0)
+motion_mirroring = Vector2(960, 540)
+
+[node name="RepeatedBackground" type="TextureRect" parent="ParallaxBackground/ForegroundBackgroundLayer"]
+material = SubResource("ShaderMaterial_se2r5")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -1027.0
+offset_top = -662.0
+offset_right = 1373.0
+offset_bottom = 937.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_ny5dr")
+stretch_mode = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="HUD" parent="CanvasLayer" instance=ExtResource("2_qhmya")]
+[node name="MainMenu" parent="CanvasLayer" instance=ExtResource("1_wu7gp")]

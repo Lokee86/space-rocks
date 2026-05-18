@@ -1,40 +1,30 @@
 extends Control
 
-const GAME_SCENE := "res://scenes/game.tscn"
-const BACKGROUND_DRIFT := Vector2(18.0, 8.0)
-const FOREGROUND_DRIFT := Vector2(42.0, 18.0)
-const FOREGROUND_OFFSET := Vector2(480.0, 270.0)
+signal single_player_pressed
 
-@onready var new_game_button: TextureButton = $CenterContainer/VBoxContainer/HBoxContainer/NewGameButton
-@onready var quit_button: TextureButton = $CenterContainer/VBoxContainer/HBoxContainer/QuitButton
-@onready var background: TextureRect = $ParallaxBackground2/BackgroundLayer/RepeatedBackground
-@onready var foreground_background: TextureRect = $ParallaxBackground2/ForegroundBackgroundLayer/RepeatedBackground
-
-var drift_time := 0.0
+@onready var single_player_button: TextureButton = _find_texture_button("SinglePlayerButton")
+@onready var quit_button: TextureButton = _find_texture_button("QuitButton")
 
 
 func _ready() -> void:
-	new_game_button.pressed.connect(_start_new_game)
-	quit_button.pressed.connect(_quit)
+	if single_player_button != null:
+		single_player_button.pressed.connect(_start_new_game)
+	else:
+		push_error("Main menu is missing SinglePlayerButton.")
 
-
-func _process(delta: float) -> void:
-	drift_time += delta
-	_update_layer_shader(background, BACKGROUND_DRIFT * drift_time)
-	_update_layer_shader(foreground_background, FOREGROUND_OFFSET + (FOREGROUND_DRIFT * drift_time))
+	if quit_button != null:
+		quit_button.pressed.connect(_quit)
+	else:
+		push_error("Main menu is missing QuitButton.")
 
 
 func _start_new_game() -> void:
-	get_tree().change_scene_to_file(GAME_SCENE)
+	single_player_pressed.emit()
 
 
 func _quit() -> void:
 	get_tree().quit()
 
 
-func _update_layer_shader(layer: TextureRect, scroll_offset: Vector2) -> void:
-	var background_material := layer.material as ShaderMaterial
-	if background_material == null:
-		return
-
-	background_material.set_shader_parameter("scroll_offset", scroll_offset)
+func _find_texture_button(button_name: String) -> TextureButton:
+	return find_child(button_name, true, false) as TextureButton
