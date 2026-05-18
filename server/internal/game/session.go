@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 type playerSession struct {
@@ -60,11 +61,23 @@ func (session *playerSession) NewShip(position physics.Vector2) *entities.Ship {
 }
 
 func (game *Game) respawnPlayer(playerID string) {
+	logging.Info("respawn requested", logging.FieldPlayerID, playerID)
+
 	session, ok := game.playerSessions[playerID]
-	if !ok || !session.CanRespawn() {
+	if !ok {
+		logging.Warn("respawn blocked; session missing", logging.FieldPlayerID, playerID)
+		return
+	}
+	if !session.CanRespawn() {
+		logging.Info("respawn blocked",
+			logging.FieldPlayerID, playerID,
+			"lives", session.Lives,
+			"respawn_cooldown", session.RespawnCooldown,
+		)
 		return
 	}
 	if _, ok := game.state.Players[playerID]; ok {
+		logging.Info("respawn blocked; player already active", logging.FieldPlayerID, playerID)
 		return
 	}
 
@@ -76,6 +89,12 @@ func (game *Game) respawnPlayer(playerID string) {
 		Y:      player.Y,
 		Config: player.Config,
 	}
+	logging.Info("player respawned",
+		logging.FieldPlayerID, playerID,
+		"x", spawnPosition.X,
+		"y", spawnPosition.Y,
+		"lives", session.Lives,
+	)
 }
 
 func (game *Game) initialSpawnPosition(playerIndex int, playerID string) physics.Vector2 {

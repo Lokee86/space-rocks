@@ -8,6 +8,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) spawnBullet(ship *entities.Ship) {
@@ -66,6 +67,13 @@ func (game *Game) spawnAsteroidFragments(asteroid *entities.Asteroid) {
 	}
 
 	position := asteroid.Position()
+	logging.Info("asteroid split",
+		"asteroid_id", asteroid.ID,
+		"source_size", asteroid.Size,
+		"fragment_size", fragmentSize,
+		"x", position.X,
+		"y", position.Y,
+	)
 	for i := 0; i < 2; i++ {
 		direction := randomUnitVector()
 		game.addAsteroid(

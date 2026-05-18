@@ -2,12 +2,12 @@ package networking
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/gorilla/websocket"
 )
 
@@ -23,32 +23,47 @@ func WebSocketHandler(rooms *RoomManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Println(err)
+			logging.Error("websocket upgrade failed", err, logging.FieldRemoteAddr, r.RemoteAddr)
 			return
 		}
 
 		room, leaveRoom := rooms.Join(r.URL.Query().Get(RoomIDQueryParam))
 		defer leaveRoom()
-		handleConnection(conn, room.Game)
+		handleConnection(conn, room, r.RemoteAddr)
 	}
 }
 
-func handleConnection(conn *websocket.Conn, room *game.Game) {
+func handleConnection(conn *websocket.Conn, room *Room, remoteAddr string) {
 	defer conn.Close()
 
-	playerID := room.AddPlayer()
-	defer room.RemovePlayer(playerID)
+	playerID := room.Game.AddPlayer()
+	defer room.Game.RemovePlayer(playerID)
 
-	log.Println("client connected:", playerID)
-	defer log.Println("client disconnected:", playerID)
+	logging.Info("websocket connected",
+		logging.FieldRoomID, room.ID,
+		logging.FieldPlayerID, playerID,
+		logging.FieldRemoteAddr, remoteAddr,
+	)
+	defer logging.Info("websocket disconnected",
+		logging.FieldRoomID, room.ID,
+		logging.FieldPlayerID, playerID,
+		logging.FieldRemoteAddr, remoteAddr,
+	)
 
 	readErr := make(chan error, 1)
-	go readClientInput(conn, room, playerID, readErr)
+	go readClientInput(conn, room.Game, playerID, room.ID, remoteAddr, readErr)
 
-	writeServerState(conn, room, playerID, readErr)
+	writeServerState(conn, room.Game, playerID, room.ID, remoteAddr, readErr)
 }
 
-func readClientInput(conn *websocket.Conn, room *game.Game, playerID string, readErr chan<- error) {
+func readClientInput(
+	conn *websocket.Conn,
+	room *game.Game,
+	playerID string,
+	roomID string,
+	remoteAddr string,
+	readErr chan<- error,
+) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -58,7 +73,12 @@ func readClientInput(conn *websocket.Conn, room *game.Game, playerID string, rea
 
 		var packet game.ClientPacket
 		if err := json.Unmarshal(msg, &packet); err != nil {
-			log.Println("bad packet:", err)
+			logging.Warn("websocket packet decode failed",
+				logging.FieldError, err,
+				logging.FieldRoomID, roomID,
+				logging.FieldPlayerID, playerID,
+				logging.FieldRemoteAddr, remoteAddr,
+			)
 			continue
 		}
 
@@ -66,14 +86,21 @@ func readClientInput(conn *websocket.Conn, room *game.Game, playerID string, rea
 	}
 }
 
-func writeServerState(conn *websocket.Conn, room *game.Game, playerID string, readErr <-chan error) {
+func writeServerState(
+	conn *websocket.Conn,
+	room *game.Game,
+	playerID string,
+	roomID string,
+	remoteAddr string,
+	readErr <-chan error,
+) {
 	ticker := time.NewTicker(time.Second / time.Duration(constants.ServerTickRate))
 	defer ticker.Stop()
 
 	for {
 		select {
 		case err := <-readErr:
-			log.Println(err)
+			logWebSocketReadClose(err, roomID, playerID, remoteAddr)
 			return
 		case <-ticker.C:
 			response := room.State(playerID)
@@ -82,9 +109,53 @@ func writeServerState(conn *websocket.Conn, room *game.Game, playerID string, re
 			}
 
 			if err := conn.WriteMessage(websocket.TextMessage, response); err != nil {
-				log.Println(err)
+				logWebSocketWriteClose(err, roomID, playerID, remoteAddr)
 				return
 			}
 		}
 	}
+}
+
+func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr string) {
+	if isExpectedWebSocketClose(err) {
+		logging.Info("websocket read closed",
+			logging.FieldRoomID, roomID,
+			logging.FieldPlayerID, playerID,
+			logging.FieldRemoteAddr, remoteAddr,
+		)
+		return
+	}
+
+	logging.Warn("websocket read failed",
+		logging.FieldError, err,
+		logging.FieldRoomID, roomID,
+		logging.FieldPlayerID, playerID,
+		logging.FieldRemoteAddr, remoteAddr,
+	)
+}
+
+func logWebSocketWriteClose(err error, roomID string, playerID string, remoteAddr string) {
+	if isExpectedWebSocketClose(err) {
+		logging.Info("websocket write closed",
+			logging.FieldRoomID, roomID,
+			logging.FieldPlayerID, playerID,
+			logging.FieldRemoteAddr, remoteAddr,
+		)
+		return
+	}
+
+	logging.Error("websocket write failed", err,
+		logging.FieldRoomID, roomID,
+		logging.FieldPlayerID, playerID,
+		logging.FieldRemoteAddr, remoteAddr,
+	)
+}
+
+func isExpectedWebSocketClose(err error) bool {
+	return websocket.IsCloseError(
+		err,
+		websocket.CloseNormalClosure,
+		websocket.CloseGoingAway,
+		websocket.CloseNoStatusReceived,
+	)
 }

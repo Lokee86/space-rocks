@@ -4,6 +4,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) handleBulletAsteroidCollisions() {
@@ -116,6 +117,22 @@ func (game *Game) handleShipAsteroidCollisions() {
 			player.Lives = session.Lives
 			lives = session.Lives
 			respawnDelay = session.RespawnCooldown
+		}
+		if lives <= 0 {
+			logging.Info("player game over",
+				logging.FieldPlayerID, playerID,
+				"score", player.Score,
+				"x", position.X,
+				"y", position.Y,
+			)
+		} else {
+			logging.Info("player died",
+				logging.FieldPlayerID, playerID,
+				"lives", lives,
+				"respawn_delay", respawnDelay,
+				"x", position.X,
+				"y", position.Y,
+			)
 		}
 		game.broadcastEvent(EventState{
 			Type:         PacketTypeShipDeath,

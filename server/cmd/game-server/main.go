@@ -1,14 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
+	"os"
 
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/networking"
 )
 
 func main() {
+	logging.Configure(os.Getenv("LOG_LEVEL"))
+
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
@@ -16,10 +18,11 @@ func main() {
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /ws", networking.WebSocketHandler(rooms))
 
-	fmt.Println("Server starting on :8080")
-
-	log.Fatal(http.ListenAndServe(":8080", mux))
-
+	logging.Info("server starting", "addr", ":8080")
+	if err := http.ListenAndServe(":8080", mux); err != nil {
+		logging.Error("server stopped", err, "addr", ":8080")
+		os.Exit(1)
+	}
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

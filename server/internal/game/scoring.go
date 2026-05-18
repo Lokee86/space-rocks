@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 type ScoreSource int
@@ -43,5 +44,20 @@ func (game *Game) awardScore(award ScoreAward) {
 	player.AddScore(award.Amount)
 	if session, ok := game.playerSessions[award.PlayerID]; ok {
 		session.Score = player.Score
+	}
+	logging.Info("score awarded",
+		logging.FieldPlayerID, award.PlayerID,
+		"source", award.Source.String(),
+		"amount", award.Amount,
+		"score", player.Score,
+	)
+}
+
+func (source ScoreSource) String() string {
+	switch source {
+	case ScoreSourceAsteroid:
+		return "asteroid"
+	default:
+		return "unknown"
 	}
 }
