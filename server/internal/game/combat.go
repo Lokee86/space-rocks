@@ -116,7 +116,7 @@ func (game *Game) handleShipAsteroidCollisions() {
 		respawnDelay := 0.0
 		if session, ok := game.playerSessions[playerID]; ok {
 			session.Score = player.Score
-			session.RecordDeath()
+			session.RecordDeath(player.DevTools)
 			player.Lives = session.Lives
 			lives = session.Lives
 			respawnDelay = session.RespawnCooldown

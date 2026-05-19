@@ -194,6 +194,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - When changing server gameplay rules, add or update focused Go tests.
 - When changing Godot scenes, inspect `.tscn` diffs for accidental editor movement/offsets.
 - Avoid broad rewrites of `game.gd`; extract only when the boundary is clear.
+- Developer/debug toggles are documented in [docs/devtools/toggles.md](devtools/toggles.md).
 - For logging, use `server/internal/logging` category loggers. Do not add raw `log.Println`.
 - Before diagnosing gameplay/network issues, confirm the Go server is actually running and the client is connected.
 - Current server tests pass with:

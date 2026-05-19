@@ -138,7 +138,19 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		)
 	case PacketTypeToggleDebugInvincible:
 		enabled := player.DevTools.ToggleInvincible()
+		if session, ok := game.playerSessions[playerID]; ok {
+			session.DevTools = player.DevTools
+		}
 		logging.Game.Info("debug invincibility toggled",
+			logging.FieldPlayerID, playerID,
+			"enabled", enabled,
+		)
+	case PacketTypeToggleDebugInfiniteLives:
+		enabled := player.DevTools.ToggleInfiniteLives()
+		if session, ok := game.playerSessions[playerID]; ok {
+			session.DevTools = player.DevTools
+		}
+		logging.Game.Info("debug infinite lives toggled",
 			logging.FieldPlayerID, playerID,
 			"enabled", enabled,
 		)

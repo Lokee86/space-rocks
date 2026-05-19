@@ -36,6 +36,7 @@
         "pause_player_packet",
         "resume_player_packet",
         "toggle_debug_invincible_packet",
+        "toggle_debug_infinite_lives_packet",
         "client_config_packet"
       ]
     }
@@ -131,7 +132,8 @@
     { "id": "respawn", "value": "respawn" },
     { "id": "pause_player", "value": "pause_player" },
     { "id": "resume_player", "value": "resume_player" },
-    { "id": "toggle_debug_invincible", "value": "toggle_debug_invincible" }
+    { "id": "toggle_debug_invincible", "value": "toggle_debug_invincible" },
+    { "id": "toggle_debug_infinite_lives", "value": "toggle_debug_infinite_lives" }
   ],
   "builders": [
     {
@@ -180,6 +182,13 @@
       "args": [],
       "body": {
         "type": "toggle_debug_invincible"
+      }
+    },
+    {
+      "id": "toggle_debug_infinite_lives_packet",
+      "args": [],
+      "body": {
+        "type": "toggle_debug_infinite_lives"
       }
     },
     {

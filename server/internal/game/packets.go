@@ -4,15 +4,16 @@ package game
 import entities "github.com/Lokee86/space-rocks/server/internal/game/entities"
 
 const (
-	PacketTypeInput                 = "input"
-	PacketTypeClientConfig          = "client_config"
-	PacketTypeState                 = "state"
-	PacketTypeBulletBlast           = "bullet_blast"
-	PacketTypeShipDeath             = "ship_death"
-	PacketTypeRespawn               = "respawn"
-	PacketTypePausePlayer           = "pause_player"
-	PacketTypeResumePlayer          = "resume_player"
-	PacketTypeToggleDebugInvincible = "toggle_debug_invincible"
+	PacketTypeInput                    = "input"
+	PacketTypeClientConfig             = "client_config"
+	PacketTypeState                    = "state"
+	PacketTypeBulletBlast              = "bullet_blast"
+	PacketTypeShipDeath                = "ship_death"
+	PacketTypeRespawn                  = "respawn"
+	PacketTypePausePlayer              = "pause_player"
+	PacketTypeResumePlayer             = "resume_player"
+	PacketTypeToggleDebugInvincible    = "toggle_debug_invincible"
+	PacketTypeToggleDebugInfiniteLives = "toggle_debug_infinite_lives"
 )
 
 type ClientPacket struct {

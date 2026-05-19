@@ -21,6 +21,21 @@ Current behavior:
 
 There is no in-game developer console yet. This is currently a hardcoded client hotkey.
 
+### Infinite Lives
+
+Infinite lives lets the player die normally without reducing their lives count.
+
+Current behavior:
+
+- Triggered from the Godot client with `F2`.
+- The client sends a `toggle_debug_infinite_lives` packet.
+- The Go server toggles the flag for that player session.
+- Ship/asteroid collision still kills and despawns the player.
+- The death event still fires and the respawn delay still applies.
+- The player's lives count does not decrease while the toggle is enabled.
+- The toggle persists across respawns for the same connection/player session.
+- Pressing `F2` again disables infinite lives.
+
 ## Implementation
 
 The devtools state lives in:
@@ -84,12 +99,38 @@ When `F1` is pressed:
 5. The server toggles `player.DevTools.Invincible`.
 6. Collision handling checks `player.DevTools.CanTakeDamage()`.
 
+When `F2` is pressed:
+
+1. `client/scripts/game.gd` checks for `KEY_F2`.
+2. If connected, the client sends `Packets.toggle_debug_infinite_lives_packet()`.
+3. The generated packet builder emits:
+
+```gdscript
+{
+	"type": "toggle_debug_infinite_lives"
+}
+```
+
+4. The server receives `PacketTypeToggleDebugInfiniteLives`.
+5. The server toggles `player.DevTools.InfiniteLives`.
+6. The player session stores the updated devtools options so the toggle survives respawn.
+7. Death handling checks `player.DevTools.CanLoseLives()` before decrementing lives.
+
 ## Logging
 
 Toggling invincibility logs through the custom server logger:
 
 ```go
 logging.Game.Info("debug invincibility toggled",
+	logging.FieldPlayerID, playerID,
+	"enabled", enabled,
+)
+```
+
+Toggling infinite lives logs similarly:
+
+```go
+logging.Game.Info("debug infinite lives toggled",
 	logging.FieldPlayerID, playerID,
 	"enabled", enabled,
 )
@@ -117,6 +158,10 @@ Current coverage checks:
 - an invincible player does not die from asteroid collision
 - toggling invincibility once enables it
 - toggling invincibility twice disables it
+- an infinite-lives player dies without losing a life
+- infinite lives persists after respawn
+- toggling infinite lives once enables it
+- toggling infinite lives twice disables it
 
 ## Design Notes
 
@@ -130,7 +175,6 @@ Avoid scattering one-off debug booleans through core logic. Prefer small methods
 
 Likely future devtools:
 
-- infinite lives
 - collision polygon display
 - spawn asteroid near player
 - clear asteroids

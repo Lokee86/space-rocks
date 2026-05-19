@@ -10,6 +10,7 @@ const TYPE_RESPAWN := "respawn"
 const TYPE_PAUSE_PLAYER := "pause_player"
 const TYPE_RESUME_PLAYER := "resume_player"
 const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
+const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
 
 const FIELD_ASTEROIDS := "asteroids"
 const FIELD_BACK := "back"
@@ -69,6 +70,11 @@ static func resume_player_packet() -> Dictionary:
 static func toggle_debug_invincible_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "toggle_debug_invincible"
+	return packet
+
+static func toggle_debug_infinite_lives_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "toggle_debug_infinite_lives"
 	return packet
 
 static func client_config_packet(visible_world_width, visible_world_height) -> Dictionary:

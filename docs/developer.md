@@ -316,6 +316,7 @@ For docs:
 
 - [docs/design/architecture.md](design/architecture.md)
 - [docs/server/logging.md](server/logging.md)
+- [docs/devtools/toggles.md](devtools/toggles.md)
 - [docs/notes.md](notes.md)
 
 ## Known TODOs / Gaps

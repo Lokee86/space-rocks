@@ -83,6 +83,7 @@ python3 tools/scripts/generate_packets.py
 
 - [Architecture](docs/design/architecture.md)
 - [Server logging](docs/server/logging.md)
+- [Developer toggles](docs/devtools/toggles.md)
 
 ## Assets And Git LFS
 

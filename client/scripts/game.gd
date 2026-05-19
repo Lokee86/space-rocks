@@ -20,7 +20,8 @@ var has_received_state := false
 var has_initial_spawn := false
 var is_gameplay_paused := false
 var open_menu_input_armed := false
-var debug_invincible_input_armed := false
+var debug_invincible_input_armed := true
+var debug_infinite_lives_input_armed := true
 var self_id := ""
 var effects: Effects
 var game_menu: GameMenu
@@ -321,14 +322,18 @@ func _send_gameplay_input_if_active() -> void:
 
 
 func _handle_debug_input() -> void:
-	if !Input.is_key_pressed(KEY_F1):
+	if !Input.is_key_pressed(KEY_F1) && !Input.is_key_pressed(KEY_F2):
 		debug_invincible_input_armed = true
+		debug_infinite_lives_input_armed = true
 		return
-	if !debug_invincible_input_armed:
+	if !network_client.is_connected_to_server():
 		return
-	debug_invincible_input_armed = false
-	if network_client.is_connected_to_server():
+	if Input.is_key_pressed(KEY_F1) && debug_invincible_input_armed:
+		debug_invincible_input_armed = false
 		network_client.send_packet(Packets.toggle_debug_invincible_packet())
+	if Input.is_key_pressed(KEY_F2) && debug_infinite_lives_input_armed:
+		debug_infinite_lives_input_armed = false
+		network_client.send_packet(Packets.toggle_debug_infinite_lives_packet())
 
 
 func _send_client_config() -> void:
