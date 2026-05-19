@@ -36,6 +36,27 @@ Current behavior:
 - The toggle persists across respawns for the same connection/player session.
 - Pressing `F2` again disables infinite lives.
 
+### World Freeze
+
+World freeze pauses hostile/world simulation while leaving the player able to move.
+
+Current behavior:
+
+- Triggered from the Godot client with `F3`.
+- The client sends a `toggle_debug_freeze_world` packet.
+- The Go server toggles world-freeze state on the current game room.
+- The toggle is room-wide. Every player in that room is affected.
+- Asteroid spawning stops.
+- Existing asteroids stop moving.
+- New bullets do not spawn.
+- Existing bullets stop moving and their lifetime stops ticking down.
+- Ship/asteroid collisions stop running.
+- Bullet/asteroid collisions stop running, so bullet impacts, score awards, and asteroid splits are paused.
+- Player movement and input still work.
+- Player respawn/session timers still work.
+- Existing ready-for-removal cleanup can still run.
+- Pressing `F3` again resumes world simulation.
+
 ## Implementation
 
 The devtools state lives in:
@@ -81,6 +102,12 @@ The collision gate is in:
 server/internal/game/combat.go
 ```
 
+World-freeze gates are in:
+
+```text
+server/internal/game/game.go
+```
+
 ## Packet Flow
 
 When `F1` is pressed:
@@ -116,6 +143,22 @@ When `F2` is pressed:
 6. The player session stores the updated devtools options so the toggle survives respawn.
 7. Death handling checks `player.DevTools.CanLoseLives()` before decrementing lives.
 
+When `F3` is pressed:
+
+1. `client/scripts/game.gd` checks for `KEY_F3`.
+2. If connected, the client sends `Packets.toggle_debug_freeze_world_packet()`.
+3. The generated packet builder emits:
+
+```gdscript
+{
+	"type": "toggle_debug_freeze_world"
+}
+```
+
+4. The server receives `PacketTypeToggleDebugFreezeWorld`.
+5. The server toggles `game.worldDevTools`.
+6. `Game.Step()` checks `worldDevTools` before asteroid spawning, asteroid stepping, bullet stepping, and collision passes.
+
 ## Logging
 
 Toggling invincibility logs through the custom server logger:
@@ -131,6 +174,15 @@ Toggling infinite lives logs similarly:
 
 ```go
 logging.Game.Info("debug infinite lives toggled",
+	logging.FieldPlayerID, playerID,
+	"enabled", enabled,
+)
+```
+
+Toggling world freeze logs similarly:
+
+```go
+logging.Game.Info("debug world freeze toggled",
 	logging.FieldPlayerID, playerID,
 	"enabled", enabled,
 )
@@ -162,6 +214,15 @@ Current coverage checks:
 - infinite lives persists after respawn
 - toggling infinite lives once enables it
 - toggling infinite lives twice disables it
+
+TODO: add focused server tests for world freeze:
+
+- frozen world does not spawn asteroids
+- frozen world does not move asteroids
+- frozen world does not move or expire bullets
+- frozen world does not spawn bullets
+- frozen world does not run ship/asteroid collisions
+- frozen world does not run bullet/asteroid collisions, scoring, or asteroid splits
 
 ## Design Notes
 

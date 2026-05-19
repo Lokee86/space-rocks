@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
@@ -20,6 +21,7 @@ type Game struct {
 	nextAsteroidID       int
 	nextBulletID         int
 	asteroidSpawnElapsed float64
+	worldDevTools        devtools.WorldOptions
 	collisionShapes      physics.CollisionShapeCatalog
 	state                entities.GameState
 	cameraViews          map[string]*entities.CameraView
@@ -154,6 +156,12 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 			logging.FieldPlayerID, playerID,
 			"enabled", enabled,
 		)
+	case PacketTypeToggleDebugFreezeWorld:
+		enabled := game.worldDevTools.ToggleFreezeWorld()
+		logging.Game.Info("debug world freeze toggled",
+			logging.FieldPlayerID, playerID,
+			"enabled", enabled,
+		)
 	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)
 	}
@@ -204,7 +212,7 @@ func (game *Game) Step(delta float64) {
 		if player.IsPendingDespawn() {
 			continue
 		}
-		if player.WantsToShoot() && player.CanShoot() {
+		if game.worldDevTools.BulletsCanMove() && player.WantsToShoot() && player.CanShoot() {
 			game.spawnBullet(player)
 			player.ResetShootCooldown()
 		}
@@ -219,7 +227,7 @@ func (game *Game) Step(delta float64) {
 		}
 	}
 
-	if game.hasCameraViews() {
+	if game.worldDevTools.CanSpawnAsteroids() && game.hasCameraViews() {
 		game.asteroidSpawnElapsed += delta
 		if game.asteroidSpawnElapsed >= constants.AsteroidSpawnInterval {
 			game.asteroidSpawnElapsed = 0
@@ -227,12 +235,14 @@ func (game *Game) Step(delta float64) {
 				game.spawnAsteroidBatch(cameraView)
 			}
 		}
-	} else {
+	} else if !game.hasCameraViews() {
 		game.asteroidSpawnElapsed = 0
 	}
 
 	for id, asteroid := range game.state.Asteroids {
-		asteroid.Step(delta)
+		if game.worldDevTools.AsteroidsCanMove() {
+			asteroid.Step(delta)
+		}
 		if asteroid.ReadyForRemoval() {
 			delete(game.state.Asteroids, id)
 			continue
@@ -243,7 +253,9 @@ func (game *Game) Step(delta float64) {
 	}
 
 	for id, bullet := range game.state.Projectiles {
-		bullet.Step(delta)
+		if game.worldDevTools.BulletsCanMove() {
+			bullet.Step(delta)
+		}
 		if bullet.ReadyForRemoval() {
 			delete(game.state.Projectiles, id)
 			continue
@@ -253,8 +265,10 @@ func (game *Game) Step(delta float64) {
 		}
 	}
 
-	game.handleShipAsteroidCollisions()
-	game.handleBulletAsteroidCollisions()
+	if game.worldDevTools.CanRunCollisions() {
+		game.handleShipAsteroidCollisions()
+		game.handleBulletAsteroidCollisions()
+	}
 }
 
 func (game *Game) statePacket(playerID string) StatePacket {

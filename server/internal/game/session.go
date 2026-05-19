@@ -7,6 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -195,7 +196,7 @@ func respawnSearchSpacing() float64 {
 
 func hasRespawnClearance(shipBody physics.CollisionBody, asteroidBody physics.CollisionBody, buffer float64) bool {
 	clearance := collisionShapeRadius(shipBody.Shape) + collisionShapeRadius(asteroidBody.Shape) + buffer
-	return shipBody.Position.Subtract(asteroidBody.Position).LengthSquared() > clearance*clearance
+	return space.Distance(shipBody.Position, asteroidBody.Position) > clearance
 }
 
 func collisionShapeRadius(shape physics.CollisionShape) float64 {

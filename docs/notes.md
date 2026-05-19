@@ -2,6 +2,8 @@
 
 This file is project memory for future Codex sessions. It is not a full architecture document. For that, see [docs/design/architecture.md](design/architecture.md). For practical development commands and conventions, see [docs/developer.md](developer.md).
 
+Always prefer cleaner, scalable design choices.
+
 ## Current Development Status
 
 Space Rocks is playable in development form with:
@@ -192,6 +194,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - When asked to “answer” or “report,” do not edit files.
 - When changing generated constants or packets, edit `shared/...json` first and regenerate.
 - When changing server gameplay rules, add or update focused Go tests.
+- New server gameplay distance/position logic should go through `server/internal/game/space`; it is flat/infinite today, with no-op normalization, but keeps future wrapped-world work localized.
 - When changing Godot scenes, inspect `.tscn` diffs for accidental editor movement/offsets.
 - Avoid broad rewrites of `game.gd`; extract only when the boundary is clear.
 - Developer/debug toggles are documented in [docs/devtools/toggles.md](devtools/toggles.md).

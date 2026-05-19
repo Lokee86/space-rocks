@@ -14,6 +14,7 @@ const (
 	PacketTypeResumePlayer             = "resume_player"
 	PacketTypeToggleDebugInvincible    = "toggle_debug_invincible"
 	PacketTypeToggleDebugInfiniteLives = "toggle_debug_infinite_lives"
+	PacketTypeToggleDebugFreezeWorld   = "toggle_debug_freeze_world"
 )
 
 type ClientPacket struct {

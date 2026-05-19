@@ -271,6 +271,7 @@ See [docs/server/logging.md](server/logging.md) for usage, examples, field names
 - Keep rendering, local audio/effects, UI, and interpolation in the Godot client.
 - Keep websocket/room transport in `server/internal/networking`.
 - Keep game rules in `server/internal/game`.
+- Use `server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. The current implementation is flat/infinite and `NormalizePosition` is a no-op, but this keeps future wrapped-world support contained.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
 - Use `shared/` JSON plus generators when Go and Godot must agree on constants or packet structures.
 - Add focused Go tests for server gameplay rules that can regress: collisions, scoring, respawn, spawning, rooms, packet handling, and pause/safety states.

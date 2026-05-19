@@ -8,6 +8,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -36,7 +37,7 @@ func (game *Game) spawnAsteroidBatch(view *entities.CameraView) {
 func (game *Game) spawnAsteroid(view *entities.CameraView) {
 	targetPosition := view.Position()
 	spawn := game.randomAsteroidSpawnPosition(view)
-	direction := spawn.DirectionTo(targetPosition).Rotated(randomRange(
+	direction := space.Direction(spawn, targetPosition).Rotated(randomRange(
 		-degreesToRadians(constants.AsteroidAimRandomnessDegrees),
 		degreesToRadians(constants.AsteroidAimRandomnessDegrees),
 	))

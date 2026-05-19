@@ -1,9 +1,9 @@
-[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://drsllhvt10h1w"]
+[gd_resource type="LabelSettings" format=3 uid="uid://drsllhvt10h1w"]
 
-[ext_resource type="FontFile" uid="uid://b4obamqu1qd0x" path="res://assets/fonts/GamepauseddemoRegular-RpmY6.otf" id="1_ki4dp"]
+[ext_resource type="FontFile" uid="uid://d14cjabeaf5w1" path="res://assets/fonts/DigitalCaliper-9Y45B.ttf" id="1_ti0cm"]
 
 [resource]
-font = ExtResource("1_ki4dp")
+font = ExtResource("1_ti0cm")
 font_size = 30
 font_color = Color(1, 0, 0, 1)
 outline_size = 5
