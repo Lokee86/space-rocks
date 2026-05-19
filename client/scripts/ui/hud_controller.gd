@@ -14,6 +14,7 @@ var room_id_label: Label
 var respawn_timer_template := "Respawn in X"
 var is_dead := false
 var is_game_over := false
+var is_suspended := false
 var can_respawn := false
 var respawn_countdown_remaining := 0.0
 
@@ -37,6 +38,8 @@ func configure(scene: Node) -> void:
 
 
 func update(delta: float) -> void:
+	if is_suspended:
+		return
 	if !is_dead || can_respawn || respawn_countdown_remaining <= 0:
 		return
 
@@ -74,7 +77,12 @@ func set_room_id(room_id: String) -> void:
 		room_id_label.text = "ROOMID: %s" % normalized_room_id
 
 
+func set_suspended(suspended: bool) -> void:
+	is_suspended = suspended
+
+
 func set_alive() -> void:
+	is_suspended = false
 	is_dead = false
 	is_game_over = false
 	can_respawn = false
@@ -86,6 +94,7 @@ func set_alive() -> void:
 
 
 func set_dead(respawn_delay: float) -> void:
+	is_suspended = false
 	is_dead = true
 	is_game_over = false
 	can_respawn = false
@@ -102,6 +111,7 @@ func set_dead(respawn_delay: float) -> void:
 
 
 func set_game_over() -> void:
+	is_suspended = false
 	is_dead = true
 	is_game_over = true
 	can_respawn = false

@@ -116,10 +116,26 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	}
 	switch packet.Type {
 	case PacketTypeInput:
-		if player.IsPendingDespawn() {
+		if player.IsPendingDespawn() || player.Paused {
 			return
 		}
 		player.SetInput(packet.Input)
+	case PacketTypePausePlayer:
+		if player.IsPendingDespawn() {
+			return
+		}
+		player.Pause()
+		logging.Game.Debug("player paused", logging.FieldPlayerID, playerID)
+	case PacketTypeResumePlayer:
+		if player.IsPendingDespawn() {
+			logging.Game.Debug("resume ignored; player pending despawn", logging.FieldPlayerID, playerID)
+			return
+		}
+		player.Resume(constants.PlayerResumeInvulnerabilitySeconds)
+		logging.Game.Debug("player resumed",
+			logging.FieldPlayerID, playerID,
+			"invulnerability", constants.PlayerResumeInvulnerabilitySeconds,
+		)
 	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)
 	}

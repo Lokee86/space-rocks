@@ -15,6 +15,7 @@ func (ship *Ship) State() ShipState {
 		Rotation: ship.Rotation,
 		Score:    ship.Score,
 		Lives:    ship.Lives,
+		Paused:   ship.Paused,
 	}
 }
 
@@ -22,8 +23,23 @@ func (ship *Ship) SetInput(input InputState) {
 	ship.Input = input
 }
 
+func (ship *Ship) ClearInput() {
+	ship.Input = InputState{}
+}
+
 func (ship *Ship) SetConfig(config ClientConfig) {
 	ship.Config = config
+}
+
+func (ship *Ship) Pause() {
+	ship.Paused = true
+	ship.ClearInput()
+}
+
+func (ship *Ship) Resume(invulnerabilitySeconds float64) {
+	ship.Paused = false
+	ship.ClearInput()
+	ship.InvulnerabilityRemaining = invulnerabilitySeconds
 }
 
 func (ship *Ship) ApplyInput(delta float64) {
@@ -31,6 +47,12 @@ func (ship *Ship) ApplyInput(delta float64) {
 		ship.DespawnDelay -= delta
 		return
 	}
+	if ship.Paused {
+		ship.ClearInput()
+		return
+	}
+
+	ship.InvulnerabilityRemaining = max(0, ship.InvulnerabilityRemaining-delta)
 
 	ship.ShootCooldown = max(0, ship.ShootCooldown-delta)
 
@@ -54,11 +76,11 @@ func (ship *Ship) ApplyInput(delta float64) {
 }
 
 func (ship *Ship) WantsToShoot() bool {
-	return ship.Input.Shoot
+	return !ship.Paused && !ship.IsInvulnerable() && ship.Input.Shoot
 }
 
 func (ship *Ship) CanShoot() bool {
-	return ship.ShootCooldown == 0
+	return !ship.Paused && !ship.IsInvulnerable() && ship.ShootCooldown == 0
 }
 
 func (ship *Ship) ResetShootCooldown() {
@@ -75,6 +97,10 @@ func (ship *Ship) Position() physics.Vector2 {
 
 func (ship *Ship) IsPendingDespawn() bool {
 	return ship.PendingDespawn
+}
+
+func (ship *Ship) IsInvulnerable() bool {
+	return ship.InvulnerabilityRemaining > 0
 }
 
 func (ship *Ship) ReadyForRemoval() bool {

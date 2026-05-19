@@ -152,6 +152,19 @@
               "name": "GameOverSoundDelay"
             }
           }
+        },
+        {
+          "id": "player_resume_invulnerability_seconds",
+          "type": "float",
+          "value": 1.5,
+          "targets": {
+            "gdscript": {
+              "name": "PLAYER_RESUME_INVULNERABILITY_SECONDS"
+            },
+            "go": {
+              "name": "PlayerResumeInvulnerabilitySeconds"
+            }
+          }
         }
       ]
     },
@@ -270,8 +283,8 @@
           "id": "window_max_size",
           "type": "vector2",
           "value": [
-            1920.0,
-            1080.0
+            2875.0,
+            1500.0
           ],
           "targets": {
             "gdscript": {

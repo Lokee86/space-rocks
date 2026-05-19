@@ -33,6 +33,8 @@
       "builders": [
         "input_packet",
         "respawn_packet",
+        "pause_player_packet",
+        "resume_player_packet",
         "client_config_packet"
       ]
     }
@@ -71,7 +73,8 @@
         { "name": "y", "json": "y", "type": "float" },
         { "name": "rotation", "json": "rotation", "type": "float" },
         { "name": "score", "json": "score", "type": "int" },
-        { "name": "lives", "json": "lives", "type": "int" }
+        { "name": "lives", "json": "lives", "type": "int" },
+        { "name": "paused", "json": "paused", "type": "bool" }
       ]
     },
     {
@@ -124,7 +127,9 @@
     { "id": "state", "value": "state" },
     { "id": "bullet_blast", "value": "bullet_blast" },
     { "id": "ship_death", "value": "ship_death" },
-    { "id": "respawn", "value": "respawn" }
+    { "id": "respawn", "value": "respawn" },
+    { "id": "pause_player", "value": "pause_player" },
+    { "id": "resume_player", "value": "resume_player" }
   ],
   "builders": [
     {
@@ -152,6 +157,20 @@
       "args": [],
       "body": {
         "type": "respawn"
+      }
+    },
+    {
+      "id": "pause_player_packet",
+      "args": [],
+      "body": {
+        "type": "pause_player"
+      }
+    },
+    {
+      "id": "resume_player_packet",
+      "args": [],
+      "body": {
+        "type": "resume_player"
       }
     },
     {

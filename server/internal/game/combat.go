@@ -81,6 +81,9 @@ func (game *Game) handleShipAsteroidCollisions() {
 		if player.IsPendingDespawn() {
 			continue
 		}
+		if player.Paused || player.IsInvulnerable() {
+			continue
+		}
 
 		playerBody, ok := player.CollisionBody(game.collisionShapes)
 		if !ok {

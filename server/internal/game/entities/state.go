@@ -3,18 +3,20 @@ package entities
 import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 
 type Ship struct {
-	ID             string
-	X              float64
-	Y              float64
-	Rotation       float64
-	Velocity       physics.Vector2
-	Input          InputState
-	Config         ClientConfig
-	ShootCooldown  float64
-	Score          int
-	Lives          int
-	PendingDespawn bool
-	DespawnDelay   float64
+	ID                       string
+	X                        float64
+	Y                        float64
+	Rotation                 float64
+	Velocity                 physics.Vector2
+	Input                    InputState
+	Config                   ClientConfig
+	ShootCooldown            float64
+	Score                    int
+	Lives                    int
+	Paused                   bool
+	InvulnerabilityRemaining float64
+	PendingDespawn           bool
+	DespawnDelay             float64
 }
 
 type CameraView struct {

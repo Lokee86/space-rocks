@@ -4,14 +4,15 @@ package constants
 const (
 	ServerTickRate = 60
 
-	PlayerRotationSpeed = 4.0
-	PlayerThrustForce   = 1000.0
-	PlayerMaxSpeed      = 1500.0
-	PlayerDamping       = 0.98
-	PlayerStartingLives = 3
-	PlayerRespawnDelay  = 3.0
-	PlayerRespawnBuffer = 160.0
-	GameOverSoundDelay  = 0.4
+	PlayerRotationSpeed                = 4.0
+	PlayerThrustForce                  = 1000.0
+	PlayerMaxSpeed                     = 1500.0
+	PlayerDamping                      = 0.98
+	PlayerStartingLives                = 3
+	PlayerRespawnDelay                 = 3.0
+	PlayerRespawnBuffer                = 160.0
+	GameOverSoundDelay                 = 0.4
+	PlayerResumeInvulnerabilitySeconds = 1.5
 
 	BaseScore = 120
 
@@ -24,8 +25,8 @@ const (
 	WorldHeight                  = 640.0
 	WindowMinWidth               = 1280.0
 	WindowMinHeight              = 720.0
-	WindowMaxWidth               = 1920.0
-	WindowMaxHeight              = 1080.0
+	WindowMaxWidth               = 2875.0
+	WindowMaxHeight              = 1500.0
 
 	AsteroidSpawnInterval        = 3.0
 	AsteroidSpawnBatchSize       = 3

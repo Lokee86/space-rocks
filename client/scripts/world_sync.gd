@@ -98,9 +98,11 @@ func _apply_players(self_id: String, server_players: Dictionary) -> void:
 		var player_node = _get_player_node(self_id, player_id)
 		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
 		var server_rotation: float = state[Packets.FIELD_ROTATION]
+		var is_paused := bool(state.get(Packets.FIELD_PAUSED, false))
 
 		target_player_positions[player_id] = server_position
 		target_player_rotations[player_id] = server_rotation
+		player_node.visible = !is_paused
 
 		if !initialized_players.has(player_id):
 			initialized_players[player_id] = true

@@ -197,6 +197,81 @@ func TestHandleBulletAsteroidCollisionsScoresByAsteroidSize(t *testing.T) {
 	}
 }
 
+func TestPausedPlayerDoesNotScoreFromBulletAsteroidCollision(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Bullet: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 5,
+		},
+		Asteroids: []physics.ImportedCollisionShape{
+			{
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
+	}
+	game.state.Players["player-1"] = &entities.Ship{ID: "player-1", Paused: true}
+	game.pendingEvents["player-1"] = nil
+	game.state.Projectiles["bullet-1"] = &entities.Bullet{
+		ID:      "bullet-1",
+		OwnerID: "player-1",
+		X:       100,
+		Y:       100,
+	}
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
+		ID:   "asteroid-1",
+		X:    100,
+		Y:    100,
+		Size: 1,
+	}
+
+	game.handleBulletAsteroidCollisions()
+
+	if game.state.Players["player-1"].Score != 0 {
+		t.Fatalf("expected paused player score to remain 0, got %d", game.state.Players["player-1"].Score)
+	}
+}
+
+func TestInvulnerablePlayerDoesNotScoreFromBulletAsteroidCollision(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Bullet: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 5,
+		},
+		Asteroids: []physics.ImportedCollisionShape{
+			{
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
+	}
+	game.state.Players["player-1"] = &entities.Ship{
+		ID:                       "player-1",
+		InvulnerabilityRemaining: 1,
+	}
+	game.pendingEvents["player-1"] = nil
+	game.state.Projectiles["bullet-1"] = &entities.Bullet{
+		ID:      "bullet-1",
+		OwnerID: "player-1",
+		X:       100,
+		Y:       100,
+	}
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
+		ID:   "asteroid-1",
+		X:    100,
+		Y:    100,
+		Size: 1,
+	}
+
+	game.handleBulletAsteroidCollisions()
+
+	if game.state.Players["player-1"].Score != 0 {
+		t.Fatalf("expected invulnerable player score to remain 0, got %d", game.state.Players["player-1"].Score)
+	}
+}
+
 func TestHandleShipAsteroidCollisionsDelaysPlayerRemovalAndBroadcastsDeath(t *testing.T) {
 	game := New()
 	game.collisionShapes = physics.CollisionShapeCatalog{
@@ -274,6 +349,126 @@ func TestHandleShipAsteroidCollisionsDelaysPlayerRemovalAndBroadcastsDeath(t *te
 	}
 	if _, ok := game.state.Players["player-2"]; !ok {
 		t.Fatal("expected untouched player to remain after despawn delay")
+	}
+}
+
+func TestShipAsteroidCollisionSkipsPausedPlayer(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Ship: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 20,
+		},
+		Asteroids: []physics.ImportedCollisionShape{
+			{
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
+	}
+	game.state.Players["player-1"] = &entities.Ship{
+		ID:     "player-1",
+		X:      100,
+		Y:      100,
+		Paused: true,
+	}
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
+		ID:   "asteroid-1",
+		X:    100,
+		Y:    100,
+		Size: 1,
+	}
+	game.pendingEvents["player-1"] = nil
+
+	game.handleShipAsteroidCollisions()
+
+	if game.state.Players["player-1"].PendingDespawn {
+		t.Fatal("expected paused player to ignore asteroid collision")
+	}
+	if len(game.pendingEvents["player-1"]) != 0 {
+		t.Fatalf("expected no death event for paused player, got %d", len(game.pendingEvents["player-1"]))
+	}
+}
+
+func TestShipAsteroidCollisionSkipsInvulnerablePlayer(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Ship: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 20,
+		},
+		Asteroids: []physics.ImportedCollisionShape{
+			{
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
+	}
+	game.state.Players["player-1"] = &entities.Ship{
+		ID:                       "player-1",
+		X:                        100,
+		Y:                        100,
+		InvulnerabilityRemaining: 1,
+	}
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
+		ID:   "asteroid-1",
+		X:    100,
+		Y:    100,
+		Size: 1,
+	}
+	game.pendingEvents["player-1"] = nil
+
+	game.handleShipAsteroidCollisions()
+
+	if game.state.Players["player-1"].PendingDespawn {
+		t.Fatal("expected invulnerable player to ignore asteroid collision")
+	}
+	if len(game.pendingEvents["player-1"]) != 0 {
+		t.Fatalf("expected no death event for invulnerable player, got %d", len(game.pendingEvents["player-1"]))
+	}
+}
+
+func TestShipAsteroidCollisionKillsAfterInvulnerabilityExpires(t *testing.T) {
+	game := New()
+	game.collisionShapes = physics.CollisionShapeCatalog{
+		Ship: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 20,
+		},
+		Asteroids: []physics.ImportedCollisionShape{
+			{
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
+	}
+	game.state.Players["player-1"] = &entities.Ship{
+		ID:                       "player-1",
+		X:                        100,
+		Y:                        100,
+		InvulnerabilityRemaining: 0.1,
+	}
+	game.playerSessions["player-1"] = newPlayerSession("player-1", physics.Vector2{})
+	game.state.Asteroids["asteroid-1"] = &entities.Asteroid{
+		ID:   "asteroid-1",
+		X:    100,
+		Y:    100,
+		Size: 1,
+	}
+	game.pendingEvents["player-1"] = nil
+
+	game.state.Players["player-1"].ApplyInput(0.1)
+	game.handleShipAsteroidCollisions()
+
+	player := game.state.Players["player-1"]
+	if !player.PendingDespawn {
+		t.Fatal("expected player to die after invulnerability expires")
+	}
+	if len(game.pendingEvents["player-1"]) != 1 {
+		t.Fatalf("expected one death event after invulnerability expires, got %d", len(game.pendingEvents["player-1"]))
+	}
+	if game.pendingEvents["player-1"][0].Type != PacketTypeShipDeath {
+		t.Fatalf("expected ship_death event, got %q", game.pendingEvents["player-1"][0].Type)
 	}
 }
 

@@ -1,9 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://dcn0vbv2b3wfc"]
+[gd_scene format=3 uid="uid://dcn0vbv2b3wfc"]
 
 [ext_resource type="FontFile" uid="uid://b4obamqu1qd0x" path="res://assets/fonts/GamepauseddemoRegular-RpmY6.otf" id="1_187wc"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/button_long.tscn" id="3_5kvch"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://scenes/ui/button_font.tres" id="3_gy3bv"]
-[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="10_n3gqj"]
+[ext_resource type="Script" uid="uid://cyemkaej6joye" path="res://scripts/ui/main_menu.gd" id="10_n3gqj"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_o88aq"]
 font = ExtResource("1_187wc")
@@ -11,7 +11,7 @@ font_size = 250
 font_color = Color(1, 0, 0, 1)
 outline_size = 30
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=1598008480]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +20,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("10_n3gqj")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1943361113]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,11 +28,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=975268666]
 layout_mode = 2
 alignment = 1
 
-[node name="Title" type="Label" parent="CenterContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="CenterContainer/VBoxContainer" unique_id=2068428530]
 layout_mode = 2
 text = "SPACE
 ROCKS"
@@ -40,18 +40,17 @@ label_settings = SubResource("LabelSettings_o88aq")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer" unique_id=244198432]
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="SinglePlayerButton" parent="CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_5kvch")]
+[node name="SinglePlayerButton" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1128508508 instance=ExtResource("3_5kvch")]
 custom_minimum_size = Vector2(262, 140)
 layout_mode = 2
-ignore_texture_size = true
 
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/SinglePlayerButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/SinglePlayerButton" unique_id=1320428141]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -59,9 +58,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Singleplayer" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/SinglePlayerButton/CenterContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/SinglePlayerButton/CenterContainer" unique_id=826305694]
+layout_mode = 2
+theme_override_constants/margin_top = 5
+
+[node name="Singleplayer" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/SinglePlayerButton/CenterContainer/MarginContainer" unique_id=1881525549]
 layout_mode = 2
 text = "
+
 SINGLE
 
 
@@ -69,12 +73,11 @@ SINGLE
 PLAYER"
 label_settings = ExtResource("3_gy3bv")
 
-[node name="QuitButton" parent="CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_5kvch")]
+[node name="QuitButton" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1327979759 instance=ExtResource("3_5kvch")]
 custom_minimum_size = Vector2(262, 0)
 layout_mode = 2
-ignore_texture_size = true
 
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/QuitButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/QuitButton" unique_id=1995389417]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -82,18 +85,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Quit" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/QuitButton/CenterContainer"]
+[node name="Quit" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/QuitButton/CenterContainer" unique_id=537197900]
 layout_mode = 2
 text = "
 QUIT"
 label_settings = ExtResource("3_gy3bv")
 
-[node name="MultiplayerButton" parent="CenterContainer/VBoxContainer/HBoxContainer" instance=ExtResource("3_5kvch")]
+[node name="MultiplayerButton" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1689792738 instance=ExtResource("3_5kvch")]
 custom_minimum_size = Vector2(262, 0)
 layout_mode = 2
-ignore_texture_size = true
 
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/MultiplayerButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/MultiplayerButton" unique_id=341291976]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -101,9 +103,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Multi-player" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/MultiplayerButton/CenterContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/MultiplayerButton/CenterContainer" unique_id=737800171]
+layout_mode = 2
+theme_override_constants/margin_top = 5
+
+[node name="Multi-player" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/MultiplayerButton/CenterContainer/MarginContainer" unique_id=524064288]
 layout_mode = 2
 text = "
+
 MULTI-
 
 

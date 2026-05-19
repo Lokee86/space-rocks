@@ -7,6 +7,8 @@ const TYPE_STATE := "state"
 const TYPE_BULLET_BLAST := "bullet_blast"
 const TYPE_SHIP_DEATH := "ship_death"
 const TYPE_RESPAWN := "respawn"
+const TYPE_PAUSE_PLAYER := "pause_player"
+const TYPE_RESUME_PLAYER := "resume_player"
 
 const FIELD_ASTEROIDS := "asteroids"
 const FIELD_BACK := "back"
@@ -19,6 +21,7 @@ const FIELD_INPUT := "input"
 const FIELD_LEFT := "left"
 const FIELD_LIVES := "lives"
 const FIELD_OWNER_ID := "owner_id"
+const FIELD_PAUSED := "paused"
 const FIELD_PLAYER_ID := "player_id"
 const FIELD_PLAYERS := "players"
 const FIELD_RESPAWN_DELAY := "respawn_delay"
@@ -50,6 +53,16 @@ static func input_packet(forward, back, right, left, shoot) -> Dictionary:
 static func respawn_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = TYPE_RESPAWN
+	return packet
+
+static func pause_player_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "pause_player"
+	return packet
+
+static func resume_player_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "resume_player"
 	return packet
 
 static func client_config_packet(visible_world_width, visible_world_height) -> Dictionary:

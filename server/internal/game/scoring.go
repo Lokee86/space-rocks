@@ -40,6 +40,9 @@ func (game *Game) awardScore(award ScoreAward) {
 	if !ok {
 		return
 	}
+	if player.Paused || player.IsInvulnerable() {
+		return
+	}
 
 	player.AddScore(award.Amount)
 	if session, ok := game.playerSessions[award.PlayerID]; ok {

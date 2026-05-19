@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://cvvmd6ho6fl74"]
+
+[ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/Window (1).png" id="1_6jy2e"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/button_long.tscn" id="2_vtvlb"]
+[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://scenes/ui/button_font.tres" id="3_g8oa6"]
+[ext_resource type="Script" path="res://scripts/ui/game_menu.gd" id="4_j25ls"]
+
+[node name="GameMenu" type="Control" unique_id=1437660651]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_j25ls")
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1662064483]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="CenterContainer" unique_id=1763278672]
+custom_minimum_size = Vector2(550, 225)
+layout_mode = 2
+texture = ExtResource("1_6jy2e")
+expand_mode = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/TextureRect" unique_id=1024197516]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/TextureRect/CenterContainer" unique_id=278462265]
+layout_mode = 2
+theme_override_constants/separation = 13
+
+[node name="ResumeButton" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer" unique_id=216275255 instance=ExtResource("2_vtvlb")]
+custom_minimum_size = Vector2(220, 100)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer/ResumeButton" unique_id=1169733863]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer/ResumeButton/CenterContainer" unique_id=2031967233]
+layout_mode = 2
+
+[node name="Resume" type="Label" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer/ResumeButton/CenterContainer/MarginContainer" unique_id=1459573401]
+layout_mode = 2
+text = "
+
+RESUME"
+label_settings = ExtResource("3_g8oa6")
+
+[node name="QuitButton" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer" unique_id=1583084417 instance=ExtResource("2_vtvlb")]
+custom_minimum_size = Vector2(220, 100)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer/QuitButton" unique_id=525024962]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer/QuitButton/CenterContainer" unique_id=202467869]
+layout_mode = 2
+
+[node name="Quit" type="Label" parent="CenterContainer/TextureRect/CenterContainer/HBoxContainer/QuitButton/CenterContainer/MarginContainer" unique_id=107029700]
+layout_mode = 2
+text = "
+
+QUIT"
+label_settings = ExtResource("3_g8oa6")

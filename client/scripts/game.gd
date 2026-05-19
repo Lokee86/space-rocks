@@ -8,16 +8,21 @@ const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/network_client.gd")
 const Packets = preload("res://scripts/packets.gd")
 const WorldSyncScript = preload("res://scripts/world_sync.gd")
+const GAME_MENU_SCENE := preload("res://scenes/ui/game_menu.tscn")
 
 @onready var player: Player = $Player
 @onready var bullets = $Bullets
 @onready var asteroids: Node2D = $Asteroids
+@onready var canvas_layer: CanvasLayer = $CanvasLayer
 
 var respawn_requested := false
 var has_received_state := false
 var has_initial_spawn := false
+var is_gameplay_paused := false
+var open_menu_input_armed := false
 var self_id := ""
 var effects: Effects
+var game_menu: GameMenu
 var hud_controller: HudController
 var network_client: NetworkClient
 var room_id := ""
@@ -60,16 +65,12 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	network_client.poll()
 	hud_controller.update(delta)
-	if hud_controller.is_game_over && Input.is_action_just_pressed("OpenMenu"):
-		await _close_network_connection()
-		return_to_menu_requested.emit()
+	_update_open_menu_input_armed()
+	if _handle_open_menu_pressed():
 		return
 
 	if network_client.is_connected_to_server():
-		network_client.send_packet(player.get_input_packet())
-		if hud_controller.can_respawn && !respawn_requested && Input.is_key_pressed(KEY_R):
-			respawn_requested = true
-			network_client.send_packet(Packets.respawn_packet())
+		_send_gameplay_input_if_active()
 
 	_update_player_afterburner()
 	world_sync.interpolate(delta)
@@ -146,6 +147,7 @@ func _update_player_afterburner() -> void:
 	player.set_afterburner_active(
 		network_client.is_connected_to_server() &&
 			has_initial_spawn &&
+			!is_gameplay_paused &&
 			player.visible &&
 			Input.is_action_pressed(player.move_forward_action)
 	)
@@ -179,12 +181,18 @@ func _apply_self_death_event(event: Dictionary) -> void:
 
 func _set_alive_state() -> void:
 	respawn_requested = false
+	_resume_gameplay_pause_if_needed()
+	open_menu_input_armed = false
+	_free_game_menu()
 	hud_controller.set_alive()
 	effects.reset_game_over_sound()
 
 
 func _set_dead_state(respawn_delay: float) -> void:
 	respawn_requested = false
+	_resume_gameplay_pause_if_needed()
+	open_menu_input_armed = false
+	_free_game_menu()
 	player.set_afterburner_active(false)
 	hud_controller.set_dead(respawn_delay)
 	effects.stop_game_over_sound()
@@ -192,9 +200,122 @@ func _set_dead_state(respawn_delay: float) -> void:
 
 func _set_game_over_state() -> void:
 	respawn_requested = false
+	_resume_gameplay_pause_if_needed()
+	open_menu_input_armed = false
+	_free_game_menu()
 	player.set_afterburner_active(false)
 	hud_controller.set_game_over()
 	effects.play_game_over_sound_after_delay()
+
+
+func _handle_open_menu_pressed() -> bool:
+	if !Input.is_action_just_pressed("OpenMenu"):
+		return false
+	if !open_menu_input_armed && !hud_controller.is_game_over:
+		return false
+
+	if _is_game_menu_open():
+		_close_game_menu()
+	else:
+		_open_game_menu()
+	return true
+
+
+func _open_game_menu() -> void:
+	_show_game_menu()
+	if _can_pause_server_gameplay():
+		_set_gameplay_paused(true)
+
+
+func _close_game_menu() -> void:
+	if is_gameplay_paused:
+		_set_gameplay_paused(false)
+	else:
+		_free_game_menu()
+		hud_controller.set_suspended(false)
+
+
+func _can_pause_server_gameplay() -> bool:
+	return network_client.is_connected_to_server() && has_initial_spawn && !hud_controller.is_dead
+
+
+func _set_gameplay_paused(paused: bool) -> void:
+	if is_gameplay_paused == paused:
+		if !paused:
+			_free_game_menu()
+			hud_controller.set_suspended(false)
+		return
+
+	is_gameplay_paused = paused
+	hud_controller.set_suspended(paused)
+	if paused:
+		player.set_afterburner_active(false)
+		network_client.send_packet(Packets.pause_player_packet())
+	else:
+		_free_game_menu()
+		network_client.send_packet(Packets.resume_player_packet())
+
+
+func _resume_gameplay_pause_if_needed() -> void:
+	if is_gameplay_paused:
+		_set_gameplay_paused(false)
+	else:
+		hud_controller.set_suspended(false)
+
+
+func _update_open_menu_input_armed() -> void:
+	if open_menu_input_armed || !has_initial_spawn:
+		return
+	if !Input.is_action_pressed("OpenMenu"):
+		open_menu_input_armed = true
+
+
+func _return_to_menu_after_network_close() -> void:
+	_free_game_menu()
+	await _close_network_connection()
+	return_to_menu_requested.emit()
+
+
+func _show_game_menu() -> void:
+	if game_menu != null && is_instance_valid(game_menu):
+		return
+
+	game_menu = GAME_MENU_SCENE.instantiate() as GameMenu
+	game_menu.resume_requested.connect(_on_game_menu_resume_requested)
+	game_menu.quit_requested.connect(_on_game_menu_quit_requested)
+	canvas_layer.add_child(game_menu)
+
+
+func _is_game_menu_open() -> bool:
+	return game_menu != null && is_instance_valid(game_menu)
+
+
+func _free_game_menu() -> void:
+	if game_menu == null:
+		return
+	if is_instance_valid(game_menu):
+		game_menu.queue_free()
+	game_menu = null
+
+
+func _on_game_menu_resume_requested() -> void:
+	_close_game_menu()
+
+
+func _on_game_menu_quit_requested() -> void:
+	is_gameplay_paused = false
+	hud_controller.set_suspended(false)
+	_return_to_menu_after_network_close()
+
+
+func _send_gameplay_input_if_active() -> void:
+	if is_gameplay_paused:
+		return
+
+	network_client.send_packet(player.get_input_packet())
+	if hud_controller.can_respawn && !respawn_requested && Input.is_key_pressed(KEY_R):
+		respawn_requested = true
+		network_client.send_packet(Packets.respawn_packet())
 
 
 func _send_client_config() -> void:
