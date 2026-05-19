@@ -2,8 +2,8 @@
 
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/Window (1).png" id="1_6jy2e"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/button_long.tscn" id="2_vtvlb"]
-[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://scenes/ui/button_font.tres" id="3_g8oa6"]
-[ext_resource type="Script" path="res://scripts/ui/game_menu.gd" id="4_j25ls"]
+[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="3_g8oa6"]
+[ext_resource type="Script" uid="uid://bapux4mbnahk5" path="res://scripts/ui/game_menu.gd" id="4_j25ls"]
 
 [node name="GameMenu" type="Control" unique_id=1437660651]
 layout_mode = 3

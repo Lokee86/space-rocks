@@ -1,6 +1,9 @@
 package entities
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import (
+	"github.com/Lokee86/space-rocks/server/internal/game/devtools"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+)
 
 type Ship struct {
 	ID                       string
@@ -15,6 +18,7 @@ type Ship struct {
 	Lives                    int
 	Paused                   bool
 	InvulnerabilityRemaining float64
+	DevTools                 devtools.PlayerOptions
 	PendingDespawn           bool
 	DespawnDelay             float64
 }

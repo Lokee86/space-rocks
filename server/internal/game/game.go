@@ -136,6 +136,12 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 			logging.FieldPlayerID, playerID,
 			"invulnerability", constants.PlayerResumeInvulnerabilitySeconds,
 		)
+	case PacketTypeToggleDebugInvincible:
+		enabled := player.DevTools.ToggleInvincible()
+		logging.Game.Info("debug invincibility toggled",
+			logging.FieldPlayerID, playerID,
+			"enabled", enabled,
+		)
 	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)
 	}

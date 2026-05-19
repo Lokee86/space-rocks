@@ -22,11 +22,11 @@ var respawn_countdown_remaining := 0.0
 func configure(scene: Node) -> void:
 	score_label = _find_label(scene, "Score")
 	lives_label = _find_label(scene, "LivesCount")
-	death_overlay = _find_control(scene, "DeathOverlay")
-	game_over_overlay = _find_control(scene, "GameOverOverlay")
-	game_over_sound = _find_game_over_sound()
-	respawn_timer_label = _find_label(scene, "RespawnTimer")
-	respawn_tell_label = _find_label(scene, "RespawnTell")
+	death_overlay = _find_message_container(scene, "YouDied")
+	game_over_overlay = _find_message_container(scene, "GameOver")
+	game_over_sound = _find_audio_stream_player(scene, "GameOverSound")
+	respawn_timer_label = _find_label(death_overlay, "RespawnTimer")
+	respawn_tell_label = _find_label(death_overlay, "RespawnTell")
 	room_id_label = _find_label(scene, "RoomID")
 	if respawn_timer_label != null:
 		respawn_timer_template = respawn_timer_label.text
@@ -48,7 +48,10 @@ func update(delta: float) -> void:
 	if respawn_countdown_remaining == 0:
 		can_respawn = true
 		if respawn_timer_label != null:
-			respawn_timer_label.visible = false
+			if respawn_tell_label != null && respawn_timer_label.is_ancestor_of(respawn_tell_label):
+				respawn_timer_label.text = ""
+			else:
+				respawn_timer_label.visible = false
 		if respawn_tell_label != null:
 			respawn_tell_label.visible = true
 
@@ -104,6 +107,7 @@ func set_dead(respawn_delay: float) -> void:
 	if game_over_overlay != null:
 		game_over_overlay.visible = false
 	if respawn_timer_label != null:
+		respawn_timer_label.text = respawn_timer_template
 		respawn_timer_label.visible = true
 	if respawn_tell_label != null:
 		respawn_tell_label.visible = false
@@ -137,15 +141,27 @@ func _find_label(scene: Node, node_name: String) -> Label:
 	return scene.find_child(node_name, true, false) as Label
 
 
-func _find_control(scene: Node, node_name: String) -> Control:
+func _find_message_container(scene: Node, label_name: String) -> Control:
 	if scene == null:
 		return null
 
-	return scene.find_child(node_name, true, false) as Control
-
-
-func _find_game_over_sound() -> AudioStreamPlayer:
-	if game_over_overlay == null:
+	var label := scene.find_child(label_name, true, false) as Label
+	if label == null:
 		return null
 
-	return game_over_overlay.find_child("GameOverSound", true, false) as AudioStreamPlayer
+	var container := label.get_parent()
+	while container != null && container.get_parent() != null && container.get_parent().name != "CenterContainer":
+		container = container.get_parent()
+
+	return container as Control
+
+
+func _find_audio_stream_player(scene: Node, node_name: String) -> AudioStreamPlayer:
+	if scene == null:
+		return null
+
+	var audio := scene.find_child(node_name, true, false) as AudioStreamPlayer
+	if audio != null:
+		return audio
+
+	return null

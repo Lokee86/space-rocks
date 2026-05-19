@@ -35,6 +35,7 @@
         "respawn_packet",
         "pause_player_packet",
         "resume_player_packet",
+        "toggle_debug_invincible_packet",
         "client_config_packet"
       ]
     }
@@ -129,7 +130,8 @@
     { "id": "ship_death", "value": "ship_death" },
     { "id": "respawn", "value": "respawn" },
     { "id": "pause_player", "value": "pause_player" },
-    { "id": "resume_player", "value": "resume_player" }
+    { "id": "resume_player", "value": "resume_player" },
+    { "id": "toggle_debug_invincible", "value": "toggle_debug_invincible" }
   ],
   "builders": [
     {
@@ -171,6 +173,13 @@
       "args": [],
       "body": {
         "type": "resume_player"
+      }
+    },
+    {
+      "id": "toggle_debug_invincible_packet",
+      "args": [],
+      "body": {
+        "type": "toggle_debug_invincible"
       }
     },
     {
