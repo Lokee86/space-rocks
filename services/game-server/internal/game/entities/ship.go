@@ -42,12 +42,24 @@ func (ship *Ship) Resume(invulnerabilitySeconds float64) {
 	ship.InvulnerabilityRemaining = invulnerabilitySeconds
 }
 
+func (ship *Ship) IsSuspended() bool {
+	return ship.Paused || ship.DevTools.IsPlayerFrozen()
+}
+
+func (ship *Ship) CanReceiveInput() bool {
+	return !ship.IsPendingDespawn() && !ship.IsSuspended()
+}
+
+func (ship *Ship) CanMove() bool {
+	return !ship.IsPendingDespawn() && !ship.IsSuspended()
+}
+
 func (ship *Ship) ApplyInput(delta float64) {
 	if ship.PendingDespawn {
 		ship.DespawnDelay -= delta
 		return
 	}
-	if ship.Paused {
+	if !ship.CanMove() {
 		ship.ClearInput()
 		return
 	}
@@ -75,12 +87,22 @@ func (ship *Ship) ApplyInput(delta float64) {
 	ship.Y += ship.Velocity.Y * delta
 }
 
+func (ship *Ship) CanActivelyShoot() bool {
+	return !ship.IsSuspended() && !ship.IsInvulnerable()
+}
+
 func (ship *Ship) WantsToShoot() bool {
-	return !ship.Paused && !ship.IsInvulnerable() && ship.Input.Shoot
+	return ship.Input.Shoot && ship.CanActivelyShoot()
 }
 
 func (ship *Ship) CanShoot() bool {
-	return !ship.Paused && !ship.IsInvulnerable() && ship.ShootCooldown == 0
+	return ship.CanActivelyShoot() && ship.ShootCooldown == 0
+}
+
+func (ship *Ship) CanTakeCollisionDamage() bool {
+	return !ship.IsSuspended() &&
+		!ship.IsInvulnerable() &&
+		ship.DevTools.CanTakeDamage()
 }
 
 func (ship *Ship) ResetShootCooldown() {

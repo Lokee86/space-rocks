@@ -57,6 +57,21 @@ Current behavior:
 - Existing ready-for-removal cleanup can still run.
 - Pressing `F3` again resumes world simulation.
 
+### Player Freeze
+
+Player freeze suspends one player for debugging through the same ship capability path used by pause.
+
+Current behavior:
+
+- Triggered from the Godot client with `F4`.
+- The client sends a `toggle_debug_freeze_player` packet.
+- The Go server toggles the freeze flag for that player instance.
+- The toggle blocks input, movement, shooting, and asteroid collision damage through `Ship.IsSuspended()` and related capability helpers.
+- Pause and dev freeze are separate suspension causes. Dev freeze does not call `Pause()` or `Resume()`.
+- Calling `Resume()` does not unfreeze a dev-frozen player.
+- Unfreezing does not resume a paused player.
+- Pressing `F4` again disables player freeze.
+
 ## Implementation
 
 The devtools state lives in:
@@ -160,6 +175,22 @@ When `F3` is pressed:
 5. The server toggles `game.worldDevTools`.
 6. `Game.Step()` checks `worldDevTools` before asteroid spawning, asteroid stepping, bullet stepping, and collision passes.
 
+When `F4` is pressed:
+
+1. `client/scripts/game.gd` checks for `KEY_F4`.
+2. If connected, the client sends `Packets.toggle_debug_freeze_player_packet()`.
+3. The generated packet builder emits:
+
+```gdscript
+{
+	"type": "toggle_debug_freeze_player"
+}
+```
+
+4. The server receives `PacketTypeToggleDebugFreezePlayer`.
+5. The server toggles `player.DevTools.FreezePlayer`.
+6. Ship capability helpers check `Ship.IsSuspended()` before accepting input, moving, shooting, or taking asteroid collision damage.
+
 ## Logging
 
 Toggling invincibility logs through the custom server logger:
@@ -184,6 +215,15 @@ Toggling world freeze logs similarly:
 
 ```go
 logging.Game.Info("debug world freeze toggled",
+	logging.FieldPlayerID, playerID,
+	"enabled", enabled,
+)
+```
+
+Toggling player freeze logs similarly:
+
+```go
+logging.Game.Info("debug player freeze toggled",
 	logging.FieldPlayerID, playerID,
 	"enabled", enabled,
 )
@@ -217,6 +257,9 @@ Current coverage checks:
 - toggling infinite lives twice disables it
 - toggling world freeze once enables it
 - toggling world freeze twice disables it
+- player freeze contributes to `Ship.IsSuspended()`
+- player freeze blocks ship input and movement capabilities
+- paused and frozen players remain suspended until both causes are cleared
 
 TODO: add focused server tests for world freeze:
 

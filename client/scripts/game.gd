@@ -22,6 +22,7 @@ var open_menu_input_armed := false
 var debug_invincible_input_armed := true
 var debug_infinite_lives_input_armed := true
 var debug_freeze_world_input_armed := true
+var debug_freeze_player_input_armed := true
 var self_id := ""
 var effects: Effects
 var game_menu: GameMenu
@@ -329,10 +330,11 @@ func _send_gameplay_input_if_active() -> void:
 
 
 func _handle_debug_input() -> void:
-	if !Input.is_key_pressed(KEY_F1) && !Input.is_key_pressed(KEY_F2) && !Input.is_key_pressed(KEY_F3):
+	if !Input.is_key_pressed(KEY_F1) && !Input.is_key_pressed(KEY_F2) && !Input.is_key_pressed(KEY_F3) && !Input.is_key_pressed(KEY_F4):
 		debug_invincible_input_armed = true
 		debug_infinite_lives_input_armed = true
 		debug_freeze_world_input_armed = true
+		debug_freeze_player_input_armed = true
 		return
 	if !network_client.is_connected_to_server():
 		return
@@ -345,6 +347,9 @@ func _handle_debug_input() -> void:
 	if Input.is_key_pressed(KEY_F3) && debug_freeze_world_input_armed:
 		debug_freeze_world_input_armed = false
 		network_client.send_packet(Packets.toggle_debug_freeze_world_packet())
+	if Input.is_key_pressed(KEY_F4) && debug_freeze_player_input_armed:
+		debug_freeze_player_input_armed = false
+		network_client.send_packet(Packets.toggle_debug_freeze_player_packet())
 
 
 func _send_client_config() -> void:

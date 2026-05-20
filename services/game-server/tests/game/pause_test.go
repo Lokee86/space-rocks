@@ -8,6 +8,70 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 )
 
+func TestShipIsSuspendedReflectsPauseAndFreeze(t *testing.T) {
+	ship := entities.Ship{}
+	if ship.IsSuspended() {
+		t.Fatal("expected ship without pause or freeze to be active")
+	}
+
+	ship.Paused = true
+	if !ship.IsSuspended() {
+		t.Fatal("expected paused ship to be suspended")
+	}
+
+	ship.Paused = false
+	ship.DevTools.FreezePlayer = true
+	if !ship.IsSuspended() {
+		t.Fatal("expected frozen ship to be suspended")
+	}
+}
+
+func TestFrozenShipCannotReceiveInputOrMove(t *testing.T) {
+	ship := entities.Ship{}
+	if !ship.CanReceiveInput() {
+		t.Fatal("expected active ship to receive input")
+	}
+	if !ship.CanMove() {
+		t.Fatal("expected active ship to move")
+	}
+
+	ship.DevTools.FreezePlayer = true
+	if ship.CanReceiveInput() {
+		t.Fatal("expected frozen ship not to receive input")
+	}
+	if ship.CanMove() {
+		t.Fatal("expected frozen ship not to move")
+	}
+}
+
+func TestPausedAndFrozenShipRequiresBothCausesCleared(t *testing.T) {
+	ship := entities.Ship{}
+	ship.Pause()
+	ship.DevTools.ToggleFreezePlayer()
+
+	ship.Resume(0)
+	if !ship.DevTools.IsPlayerFrozen() {
+		t.Fatal("expected resume not to clear player freeze")
+	}
+	if !ship.IsSuspended() {
+		t.Fatal("expected resumed ship to remain suspended while frozen")
+	}
+
+	ship.Pause()
+	ship.DevTools.ToggleFreezePlayer()
+	if !ship.Paused {
+		t.Fatal("expected unfreeze not to clear pause")
+	}
+	if !ship.IsSuspended() {
+		t.Fatal("expected unfrozen ship to remain suspended while paused")
+	}
+
+	ship.Resume(0)
+	if ship.IsSuspended() {
+		t.Fatal("expected ship to be active after pause and freeze are cleared")
+	}
+}
+
 func TestPausePlayerPacketClearsInputAndIgnoresNewInput(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()

@@ -18,7 +18,7 @@ entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
 language = "gdscript"
 path = "client/scripts/networking/packets.gd"
 base = "RefCounted"
-builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "client_config_packet"]
+builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet"]
 
 [[structs]]
 id = "ClientPacket"
@@ -311,6 +311,10 @@ value = "toggle_debug_infinite_lives"
 id = "toggle_debug_freeze_world"
 value = "toggle_debug_freeze_world"
 
+[[packet_types]]
+id = "toggle_debug_freeze_player"
+value = "toggle_debug_freeze_player"
+
 [[builders]]
 id = "input_packet"
 args = ["forward", "back", "right", "left", "shoot"]
@@ -360,6 +364,12 @@ id = "toggle_debug_freeze_world_packet"
 
 [builders.body]
 type = "toggle_debug_freeze_world"
+
+[[builders]]
+id = "toggle_debug_freeze_player_packet"
+
+[builders.body]
+type = "toggle_debug_freeze_player"
 
 [[builders]]
 id = "client_config_packet"

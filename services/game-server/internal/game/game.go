@@ -118,7 +118,7 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	}
 	switch packet.Type {
 	case PacketTypeInput:
-		if player.IsPendingDespawn() || player.Paused {
+		if !player.CanReceiveInput() {
 			return
 		}
 		player.SetInput(packet.Input)
@@ -159,6 +159,16 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	case PacketTypeToggleDebugFreezeWorld:
 		enabled := game.worldDevTools.ToggleFreezeWorld()
 		logging.Game.Info("debug world freeze toggled",
+			logging.FieldPlayerID, playerID,
+			"enabled", enabled,
+		)
+	case PacketTypeToggleDebugFreezePlayer:
+		enabled := player.DevTools.ToggleFreezePlayer()
+		player.ClearInput()
+		if session, ok := game.playerSessions[playerID]; ok {
+			session.DevTools = player.DevTools
+		}
+		logging.Game.Info("debug player freeze toggled",
 			logging.FieldPlayerID, playerID,
 			"enabled", enabled,
 		)
