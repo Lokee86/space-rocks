@@ -10,6 +10,7 @@ Space Rocks is an Asteroids-inspired game with:
 - a Go game server in `services/game-server/`
 - a planned API server in `services/api-server/`
 - shared JSON sources in `shared/`
+- a new TOML data sync tool in `tools/data_sync/`
 - Python generation scripts in `tools/scripts/`
 
 The current direction is server-authoritative for gameplay state. The client collects input and renders/interpolates state; the server owns simulation outcomes such as movement, bullets, asteroid collisions, scoring, lives, death, respawn, room state, and pause safety rules.
@@ -172,6 +173,18 @@ Regenerate shared packets:
 python3 tools/scripts/generate_packets.py
 ```
 
+Validate the new TOML data sync source/config:
+
+```bash
+python3 tools/data_sync/main.py -validate
+```
+
+Preview new TOML data sync generated blocks:
+
+```bash
+python3 tools/data_sync/main.py -diff -constants -packets -go -gds -ts
+```
+
 ## Generated Files
 
 Do not hand-edit generated files unless there is a specific reason and the source/generator will be updated later.
@@ -201,6 +214,34 @@ Generated outputs:
 client/scripts/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
+```
+
+New TOML data sync path:
+
+```text
+shared/game_data.toml
+tools/data_sync/
+```
+
+`shared/game_data.toml` is the planned source of truth for constants and packet definitions during the data pipeline migration. The tool syncs only marked generated blocks and supports:
+
+```text
+-push
+-pull
+-diff
+-check
+-validate
+```
+
+Domains are `-constants` and `-packets`; languages are `-go`, `-gds`, and `-ts`. Full packet schema pull is not supported; edit packet schema in TOML and push out. See `tools/data_sync/README.md` for config format, markers, ownership rules, and migration details.
+
+One-time JSON to TOML migration:
+
+```bash
+python3 tools/migrations/json_to_toml.py \
+  --constants-input shared/constants/constants.json \
+  --packets-input shared/packets/packets.json \
+  --output shared/game_data.toml
 ```
 
 Collision shapes source:

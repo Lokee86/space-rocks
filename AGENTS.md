@@ -14,6 +14,7 @@ Space Rocks is an Asteroids-inspired game in active development.
 - Shared generated data sources: `shared/`
 - Project docs: `docs/`
 - Generation scripts: `tools/scripts/`
+- New TOML data sync tool: `tools/data_sync/`
 
 The current gameplay direction is server-authoritative. The Godot client handles rendering, UI, audio/effects, local input collection, and interpolation. The Go game server owns simulation outcomes: movement, bullets, collisions, scoring, lives, death, respawn, pause safety, rooms, and websocket state.
 
@@ -115,6 +116,18 @@ Regenerate shared packets:
 python3 tools/scripts/generate_packets.py
 ```
 
+Run the new TOML data sync validation:
+
+```bash
+python3 tools/data_sync/main.py -validate
+```
+
+Preview TOML data sync output:
+
+```bash
+python3 tools/data_sync/main.py -diff -constants -packets -go -gds -ts
+```
+
 Open the Godot project by opening/importing:
 
 ```text
@@ -170,6 +183,18 @@ Godot export helper:
 client/tools/export_collision_shapes.gd
 ```
 
+New data sync migration path:
+
+```text
+shared/game_data.toml
+tools/data_sync/
+tools/migrations/json_to_toml.py
+```
+
+`shared/game_data.toml` is the planned TOML source of truth for constants and packet definitions. The `tools/data_sync/` CLI syncs TOML to marked generated blocks in Go, GDScript, and TypeScript. See `tools/data_sync/README.md`.
+
+Packet pull is intentionally not supported beyond the current restricted behavior. Packet schema changes should be made in TOML and pushed out.
+
 ## Logging
 
 The server has a custom structured logging wrapper:
@@ -206,7 +231,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Keep websocket and room transport in `services/game-server/internal/networking`.
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
-- Use `shared/` JSON plus generators when Go and Godot must agree on constants or packet structures.
+- Use the documented shared data pipeline when Go, Godot, and TypeScript must agree on constants or packet structures. The old JSON generators still exist during migration; the new TOML pipeline lives in `tools/data_sync/` and uses `shared/game_data.toml`.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is flat/infinite today, but exists to contain future wrapped-world support.
 - Add focused Go tests for server gameplay rules that can regress.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
@@ -245,6 +270,10 @@ Shared schema/generation:
 - `shared/packets/packets.json`
 - `tools/scripts/generate_constants.py`
 - `tools/scripts/generate_packets.py`
+- `shared/game_data.toml`
+- `tools/data_sync/README.md`
+- `tools/data_sync/main.py`
+- `tools/migrations/json_to_toml.py`
 
 ## Critical Current Context
 

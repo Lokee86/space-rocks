@@ -1,0 +1,32 @@
+[sot]
+path = "shared/game_data.toml"
+
+[constants.go]
+files = ["services/game-server/internal/game/constants.go"]
+sections = ["constants.gameplay", "constants.network"]
+owns = ["constants.gameplay", "constants.network"]
+
+[constants.gds]
+files = ["client/scripts/constants.gd"]
+sections = ["constants.gameplay", "constants.client"]
+owns = ["constants.client"]
+
+[constants.ts]
+files = ["services/api-server/src/constants.ts"]
+sections = ["constants.network", "constants.api"]
+owns = ["constants.api"]
+
+[packets.go]
+files = ["services/game-server/internal/network/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+
+[packets.gds]
+files = ["client/scripts/packets.gd"]
+sections = ["packets"]
+owns = []
+
+[packets.ts]
+files = ["services/api-server/src/packets.ts"]
+sections = ["packets"]
+owns = []
