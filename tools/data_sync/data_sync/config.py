@@ -26,6 +26,7 @@ class DomainLanguageConfig:
     files: tuple[Path, ...]
     sections: tuple[str, ...]
     owns: tuple[str, ...]
+    enabled: bool = True
 
     def receives_section(self, section: str) -> bool:
         return section in self.sections
@@ -46,6 +47,13 @@ class DataSyncConfig:
             return self.targets[(domain, language)]
         except KeyError as exc:
             raise ConfigError(f"missing config for [{domain}.{language}]") from exc
+
+    def enabled_languages(self, domain: str) -> tuple[str, ...]:
+        return tuple(
+            language
+            for language in LANGUAGES
+            if self.target(domain, language).enabled
+        )
 
     def filter_targets(
         self,
@@ -210,13 +218,14 @@ def _load_domain_language_config(
     if missing:
         raise ConfigError(f"[{label}] missing required key(s): {', '.join(missing)}")
 
+    enabled = _read_bool(table.get("enabled", True), f"[{label}].enabled")
     files = _read_string_list(table["files"], f"[{label}].files")
     sections = _read_string_list(table["sections"], f"[{label}].sections")
     owns = _read_string_list(table["owns"], f"[{label}].owns")
 
-    if not files:
+    if enabled and not files:
         raise ConfigError(f"[{label}].files must not be empty")
-    if not sections:
+    if enabled and not sections:
         raise ConfigError(f"[{label}].sections must not be empty")
 
     unknown_owns = [section for section in owns if section not in sections]
@@ -231,6 +240,7 @@ def _load_domain_language_config(
         files=tuple(_resolve_path(root, value) for value in files),
         sections=tuple(sections),
         owns=tuple(owns),
+        enabled=enabled,
     )
 
 
@@ -239,6 +249,12 @@ def _read_string_list(value: Any, label: str) -> list[str]:
         raise ConfigError(f"{label} must be a list of strings")
     if not all(isinstance(item, str) and item for item in value):
         raise ConfigError(f"{label} must contain only non-empty strings")
+    return value
+
+
+def _read_bool(value: Any, label: str) -> bool:
+    if not isinstance(value, bool):
+        raise ConfigError(f"{label} must be a boolean")
     return value
 
 

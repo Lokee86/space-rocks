@@ -2,31 +2,59 @@
 path = "shared/game_data.toml"
 
 [constants.go]
-files = ["services/game-server/internal/game/constants.go"]
-sections = ["constants.gameplay", "constants.network"]
-owns = ["constants.gameplay", "constants.network"]
+files = ["services/game-server/internal/constants/constants.go"]
+sections = [
+  "constants.server.runtime",
+  "constants.server.player_movement",
+  "constants.shared.player_state",
+  "constants.server.player_session",
+  "constants.server.world",
+  "constants.server.scoring",
+  "constants.server.asteroids",
+  "constants.shared.asteroid_visual",
+  "constants.server.bullets",
+]
+owns = [
+  "constants.server.runtime",
+  "constants.server.player_movement",
+  "constants.shared.player_state",
+  "constants.server.player_session",
+  "constants.server.world",
+  "constants.server.scoring",
+  "constants.server.asteroids",
+  "constants.shared.asteroid_visual",
+  "constants.server.bullets",
+]
 
 [constants.gds]
 files = ["client/scripts/constants.gd"]
-sections = ["constants.gameplay", "constants.client"]
-owns = ["constants.client"]
+sections = [
+  "constants.shared.player_state",
+  "constants.client.presentation",
+  "constants.shared.asteroid_visual",
+]
+owns = ["constants.client.presentation"]
 
 [constants.ts]
-files = ["services/api-server/src/constants.ts"]
-sections = ["constants.network", "constants.api"]
-owns = ["constants.api"]
+enabled = false
+files = []
+sections = []
+owns = []
 
 [packets.go]
-files = ["services/game-server/internal/network/packets.go"]
-sections = ["packets"]
-owns = ["packets"]
+enabled = false
+files = []
+sections = []
+owns = []
 
 [packets.gds]
-files = ["client/scripts/packets.gd"]
-sections = ["packets"]
+enabled = false
+files = []
+sections = []
 owns = []
 
 [packets.ts]
-files = ["services/api-server/src/packets.ts"]
-sections = ["packets"]
+enabled = false
+files = []
+sections = []
 owns = []

@@ -27,6 +27,8 @@ CONSTANTS_PARSERS: dict[str, Parser] = {
 
 def pull_constants(config: DataSyncConfig, store: TomlStore, language: str) -> None:
     target = config.target("constants", language)
+    if not target.enabled:
+        raise PullError(f"[constants.{language}] is disabled in config")
     if not target.owns:
         return
     parser = CONSTANTS_PARSERS.get(language)

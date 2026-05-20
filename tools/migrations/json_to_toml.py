@@ -12,6 +12,39 @@ from typing import Any
 
 
 CONSTANT_TYPES = {"int", "float", "bool", "string", "vector2"}
+CONSTANT_SECTION_MAP = {
+    "server_tick_rate": "constants.server.runtime",
+    "player_rotation_speed": "constants.server.player_movement",
+    "player_thrust_force": "constants.server.player_movement",
+    "player_max_speed": "constants.server.player_movement",
+    "player_damping": "constants.server.player_movement",
+    "player_starting_lives": "constants.shared.player_state",
+    "player_respawn_delay": "constants.shared.player_state",
+    "player_respawn_buffer": "constants.server.player_session",
+    "game_over_sound_delay": "constants.client.presentation",
+    "player_resume_invulnerability_seconds": "constants.server.player_session",
+    "background_parallax": "constants.client.presentation",
+    "foreground_background_parallax": "constants.client.presentation",
+    "foreground_background_offset": "constants.client.presentation",
+    "player_interpolation_speed": "constants.client.presentation",
+    "world_size": "constants.server.world",
+    "window_min_size": "constants.client.presentation",
+    "window_max_size": "constants.client.presentation",
+    "base_score": "constants.server.scoring",
+    "asteroid_spawn_interval": "constants.server.asteroids",
+    "asteroid_spawn_batch_size": "constants.server.asteroids",
+    "asteroid_spawn_margin": "constants.server.asteroids",
+    "asteroid_despawn_margin": "constants.server.asteroids",
+    "asteroid_min_speed": "constants.server.asteroids",
+    "asteroid_max_speed": "constants.server.asteroids",
+    "asteroid_size_scale": "constants.shared.asteroid_visual",
+    "asteroid_aim_randomness_degrees": "constants.server.asteroids",
+    "bullet_speed": "constants.server.bullets",
+    "bullet_lifetime": "constants.server.bullets",
+    "bullet_cooldown": "constants.server.bullets",
+    "bullet_spawn_offset": "constants.server.bullets",
+    "collision_despawn_delay": "constants.server.bullets",
+}
 FIELD_TYPE_MAP = {
     "bool": "bool",
     "int": "int",
@@ -64,9 +97,9 @@ def run(argv: Sequence[str] | None = None) -> int:
 
         document = tomlkit.document()
         for section_name, table in constants_summary.sections.items():
-            document.add(section_name, table)
+            add_nested_table(tomlkit, document, section_name, table)
         for packet_name, table in packets_summary.packets.items():
-            document.add(f"packets.{packet_name}", table)
+            add_nested_table(tomlkit, document, f"packets.{packet_name}", table)
 
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(tomlkit.dumps(document), encoding="utf-8")
@@ -93,6 +126,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--packets-input", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     return parser
+
+
+def add_nested_table(tomlkit: Any, document: Any, section_name: str, table: Any) -> None:
+    parts = section_name.split(".")
+    current = document
+    for part in parts[:-1]:
+        if part not in current:
+            current.add(part, tomlkit.table())
+        current = current[part]
+    current.add(parts[-1], table)
 
 
 def load_json(path: Path) -> Mapping[str, Any]:
@@ -148,12 +191,34 @@ def convert_constants(tomlkit: Any, data: Mapping[str, Any]) -> ConstantsSummary
                 raise MigrationError(f"unsupported constant type for {constant_id}: {constant_type}")
             if "value" not in constant:
                 raise MigrationError(f"constant {constant_id} missing value")
-            table.add(constant_id, convert_constant_value(constant_id, constant_type, constant["value"]))
-            constant_count += 1
-
-        sections[f"constants.{group_id}"] = table
+            section_name = CONSTANT_SECTION_MAP.get(constant_id)
+            if section_name is None:
+                raise MigrationError(f"constant {constant_id} has no domain-specific section mapping")
+            section_table = sections.setdefault(section_name, tomlkit.table())
+            for output_name, output_type, output_value in convert_constant_entries(
+                constant_id,
+                constant_type,
+                constant["value"],
+            ):
+                section_table.add(output_name, convert_constant_value(output_name, output_type, output_value))
+                constant_count += 1
 
     return ConstantsSummary(sections, constant_count)
+
+
+def convert_constant_entries(
+    constant_id: str,
+    constant_type: str,
+    value: Any,
+) -> tuple[tuple[str, str, Any], ...]:
+    if constant_id == "world_size":
+        if not is_number_pair(value):
+            raise MigrationError("world_size must be a two-number vector2")
+        return (
+            ("world_width", "float", value[0]),
+            ("world_height", "float", value[1]),
+        )
+    return ((constant_id, constant_type, value),)
 
 
 def convert_constant_value(constant_id: str, constant_type: str, value: Any) -> Any:

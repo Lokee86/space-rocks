@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from data_sync.block_io import BlockIOError, find_block
-from data_sync.cli import DOMAINS, LANGUAGES
+from data_sync.cli import DOMAINS
 from data_sync.config import DataSyncConfig
 from data_sync.model.constants import ConstantValue
 from data_sync.model.packets import PacketDefinition
@@ -35,9 +35,10 @@ class ValidationRequest:
 
 
 def validate(config: DataSyncConfig, domains: tuple[str, ...], languages: tuple[str, ...]) -> None:
+    requested_domains = domains or _enabled_domains(config)
     request = ValidationRequest(
-        domains=domains or DOMAINS,
-        languages=languages or LANGUAGES,
+        domains=requested_domains,
+        languages=languages,
     )
     errors: list[str] = []
 
@@ -63,7 +64,11 @@ def _validate_constants(
     request: ValidationRequest,
     errors: list[str],
 ) -> None:
-    section_names = _requested_sections(config, "constants", request.languages)
+    section_names = _requested_sections(
+        config,
+        "constants",
+        _languages_for_domain(config, "constants", request.languages),
+    )
     for section_name in section_names:
         try:
             section = store.constants(section_name)
@@ -130,7 +135,7 @@ def _validate_configured_files_and_blocks(
     errors: list[str],
 ) -> None:
     for domain in request.domains:
-        for language in request.languages:
+        for language in _languages_for_domain(config, domain, request.languages):
             target = config.target(domain, language)
             for path in target.files:
                 text = _read_configured_file(path, errors)
@@ -159,6 +164,19 @@ def _requested_sections(
     return tuple(sections)
 
 
+def _languages_for_domain(
+    config: DataSyncConfig,
+    domain: str,
+    requested_languages: tuple[str, ...],
+) -> tuple[str, ...]:
+    languages = requested_languages or config.enabled_languages(domain)
+    return tuple(language for language in languages if config.target(domain, language).enabled)
+
+
+def _enabled_domains(config: DataSyncConfig) -> tuple[str, ...]:
+    return tuple(domain for domain in DOMAINS if config.enabled_languages(domain))
+
+
 def _read_configured_file(path: Path, errors: list[str]) -> str | None:
     try:
         return path.read_text(encoding="utf-8")
@@ -178,5 +196,11 @@ def _is_supported_constant_value(value: ConstantValue) -> bool:
     if isinstance(value, bool):
         return True
     if isinstance(value, (int, float, str)):
+        return True
+    if (
+        isinstance(value, list)
+        and len(value) == 2
+        and all(isinstance(item, (int, float)) and not isinstance(item, bool) for item in value)
+    ):
         return True
     return False

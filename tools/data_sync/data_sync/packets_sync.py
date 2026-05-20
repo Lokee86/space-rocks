@@ -42,6 +42,8 @@ def _plan_target_updates(store: TomlStore, target: DomainLanguageConfig) -> tupl
     generator = GENERATORS.get(target.language)
     if generator is None:
         raise PacketsSyncError(f"unsupported packets language: {target.language}")
+    if not target.enabled:
+        raise PacketsSyncError(f"[packets.{target.language}] is disabled in config")
 
     packets = store.packets()
     updates: list[FileUpdate] = []

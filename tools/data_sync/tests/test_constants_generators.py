@@ -36,6 +36,13 @@ def test_gds_constants_all_supported_value_types() -> None:
     )
 
 
+def test_gds_constants_support_vector2_values() -> None:
+    assert gds_constants.generate_constants(
+        "constants.client.presentation",
+        (("window_min_size", [1280.0, 720.0]),),
+    ) == "const WINDOW_MIN_SIZE := Vector2(1280.0, 720.0)"
+
+
 def test_ts_constants_all_supported_value_types() -> None:
     assert ts_constants.generate_constants("constants.gameplay", VALUES) == "\n".join(
         [
@@ -83,5 +90,7 @@ def test_invalid_constant_name_fails(generator) -> None:
     ],
 )
 def test_unsupported_value_type_fails(generator) -> None:
+    if generator is gds_constants.generate_constants:
+        pytest.skip("GDScript supports Vector2 list values")
     with pytest.raises(ConstantsGenerationError):
         generator("constants.bad", (("vector_value", [1.0, 2.0]),))

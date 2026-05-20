@@ -43,6 +43,12 @@ def _parse_value(value: str) -> Any:
         return False
     if value.startswith('"') and value.endswith('"'):
         return _parse_string(value)
+    vector_match = re.fullmatch(
+        r"Vector2\((-?(?:0|[1-9][0-9]*)\.[0-9]+), (-?(?:0|[1-9][0-9]*)\.[0-9]+)\)",
+        value,
+    )
+    if vector_match is not None:
+        return [float(vector_match.group(1)), float(vector_match.group(2))]
     if re.fullmatch(r"-?(0|[1-9][0-9]*)", value):
         return int(value)
     if re.fullmatch(r"-?(0|[1-9][0-9]*)\.[0-9]+", value):

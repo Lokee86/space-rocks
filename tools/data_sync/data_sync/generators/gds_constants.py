@@ -27,6 +27,8 @@ def _format_gds_value(value: Any) -> str:
         return repr(value)
     if isinstance(value, str):
         return _quote_string(value)
+    if _is_vector2(value):
+        return f"Vector2({repr(float(value[0]))}, {repr(float(value[1]))})"
     raise ConstantsGenerationError(f"unsupported constant value type: {type(value).__name__}")
 
 
@@ -40,3 +42,11 @@ def _validate_snake_case(name: str) -> None:
         raise ConstantsGenerationError(f"invalid snake_case constant name: {name!r}")
     if not all(part.isidentifier() and part.islower() for part in name.split("_")):
         raise ConstantsGenerationError(f"invalid snake_case constant name: {name!r}")
+
+
+def _is_vector2(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == 2
+        and all(isinstance(item, (int, float)) and not isinstance(item, bool) for item in value)
+    )

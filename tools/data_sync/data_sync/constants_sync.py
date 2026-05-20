@@ -80,6 +80,8 @@ def _plan_target_updates(store: TomlStore, target: DomainLanguageConfig) -> tupl
     generator = GENERATORS.get(target.language)
     if generator is None:
         raise ConstantsSyncError(f"unsupported constants language: {target.language}")
+    if not target.enabled:
+        raise ConstantsSyncError(f"[constants.{target.language}] is disabled in config")
 
     updates: list[FileUpdate] = []
     for path in target.files:
