@@ -21,7 +21,7 @@ def main() -> None:
         "input",
         type=Path,
         nargs="?",
-        help="Go constants file to read. Defaults to server/internal/constants/constants.go.",
+        help="Go constants file to read. Defaults to services/game-server/internal/constants/constants.go.",
     )
     parser.add_argument(
         "--output",
@@ -36,7 +36,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    input_path = args.input or root / "server/internal/constants/constants.go"
+    input_path = args.input or root / "services/game-server/internal/constants/constants.go"
     output_path = args.output
     if output_path is None:
         if args.input is None:

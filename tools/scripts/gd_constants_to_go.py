@@ -40,7 +40,7 @@ def main() -> None:
     output_path = args.output
     if output_path is None:
         if args.input is None:
-            output_path = root / "server/internal/constants/constants.go"
+            output_path = root / "services/game-server/internal/constants/constants.go"
         else:
             output_path = default_output_path(input_path, ".go")
 

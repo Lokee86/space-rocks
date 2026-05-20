@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cqjku4qxxcoxj"]
 
 [ext_resource type="LabelSettings" uid="uid://ck2uiws3xnfto" path="res://assets/ui/label_settings/hud.tres" id="1_diql1"]
-[ext_resource type="Texture2D" uid="uid://cw8ubidl86juw" path="res://assets/yellow-v-wing.png" id="2_dcp08"]
+[ext_resource type="Texture2D" uid="uid://cw8ubidl86juw" path="res://assets/units/yellow-v-wing.png" id="2_dcp08"]
 [ext_resource type="LabelSettings" uid="uid://lly3e1dkukxj" path="res://assets/ui/label_settings/death.tres" id="3_136eg"]
 [ext_resource type="LabelSettings" uid="uid://drsllhvt10h1w" path="res://assets/ui/label_settings/death2.tres" id="4_m6ttb"]
 [ext_resource type="AudioStream" uid="uid://b6uqvxmbwwfsp" path="res://audio/gameover.mp3" id="5_a2ab3"]
@@ -93,10 +93,9 @@ horizontal_alignment = 1
 
 [node name="RespawnTell" type="Label" parent="CenterContainer/VBoxContainer2/RespawnTimer" unique_id=1908245558]
 layout_mode = 0
-offset_left = 4.0
-offset_top = 2.0
-offset_right = 377.0
-offset_bottom = 33.0
+offset_left = 79.0
+offset_right = 403.0
+offset_bottom = 30.0
 text = "Press R to Respawn"
 label_settings = ExtResource("4_m6ttb")
 horizontal_alignment = 1

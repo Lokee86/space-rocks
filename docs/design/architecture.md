@@ -7,7 +7,8 @@ The project is still in development, so this document describes the architecture
 ## Repository Layout
 
 - `client/`: Godot project. Contains scenes, scripts, assets, audio, shaders, and client-side tools.
-- `server/`: Go module for the game server. The current entrypoint is `server/cmd/game-server`.
+- `services/game-server/`: Go module for the real-time game server. The current entrypoint is `services/game-server/cmd/game-server`.
+- `services/api-server/`: planned Node.js/TypeScript NestJS API server for business/backend systems. It is intentionally separate from real-time simulation.
 - `shared/`: JSON source data shared across client and server generation, including constants, packet definitions, and collision shape data.
 - `docs/`: Project documentation.
 - `tools/`: Python scripts used to generate constants and packet code from `shared/`.
@@ -44,14 +45,14 @@ Current limitations:
 - There is no implemented client-side prediction beyond interpolation/render smoothing.
 - Local server launch from the Godot client is not implemented in the inspected code.
 
-## Server Architecture
+## Game Server Architecture
 
-The server is a Go module under `server/`.
+The game server is a Go module under `services/game-server/`.
 
 The main entrypoint is:
 
 ```text
-server/cmd/game-server/main.go
+services/game-server/cmd/game-server/main.go
 ```
 
 `main.go` currently:
@@ -65,12 +66,13 @@ server/cmd/game-server/main.go
 
 Core server packages:
 
-- `server/internal/networking`: websocket handler and room manager.
-- `server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
-- `server/internal/game/entities`: game entities and generated packet state structs.
-- `server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
-- `server/internal/constants`: generated Go constants from `shared/constants/constants.json`.
-- `server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
+- `services/game-server/internal/networking`: websocket handler and room manager.
+- `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
+- `services/game-server/internal/game/entities`: game entities and generated packet state structs.
+- `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
+- `services/game-server/internal/game/space`: gameplay spatial helpers for distance, direction, and position normalization. Current behavior is flat/infinite; this package is the intended seam for future wrapped-world support.
+- `services/game-server/internal/constants`: generated Go constants from `shared/constants/constants.json`.
+- `services/game-server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
 
 ### Game Loop And Simulation
 
@@ -100,9 +102,9 @@ The server currently owns:
 
 ### Rooms And Networking
 
-`server/internal/networking/rooms.go` manages rooms. Each room owns its own `*game.Game`. Blank room IDs map to the default room. Non-blank room IDs create or join separate rooms. Empty rooms are cleaned up after a grace period.
+`services/game-server/internal/networking/rooms.go` manages rooms. Each room owns its own `*game.Game`. Blank room IDs map to the default room. Non-blank room IDs create or join separate rooms. Empty rooms are cleaned up after a grace period.
 
-`server/internal/networking/websocket.go` upgrades `/ws` connections. It accepts an optional query parameter:
+`services/game-server/internal/networking/websocket.go` upgrades `/ws` connections. It accepts an optional query parameter:
 
 ```text
 /ws?room_id=abc
@@ -136,7 +138,7 @@ The server uses imported collision shapes for ship, bullet, and asteroid collisi
 Server logging is implemented in:
 
 ```text
-server/internal/logging/logger.go
+services/game-server/internal/logging/logger.go
 ```
 
 It uses `log/slog`, logs to stderr, and supports category loggers:
@@ -147,6 +149,26 @@ It uses `log/slog`, logs to stderr, and supports category loggers:
 - `logging.Game`
 
 Configuration is environment-variable based. See [server logging](../server/logging.md).
+
+## API Server Plan
+
+`services/api-server/` is reserved for a separate business/backend API service. The intended stack is Node.js, TypeScript, and NestJS.
+
+This service is not implemented yet. The purpose of the separate service is to keep business logic physically and technically separate from the real-time Go game server.
+
+Planned API-owned concerns include:
+
+- accounts and authentication
+- profiles
+- matchmaking or room discovery metadata
+- leaderboards
+- unlocks/cosmetics
+- persistence and database-backed workflows
+- admin or moderation endpoints
+
+The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets.
+
+See [API server plan](../api/nestjs-api-server.md).
 
 ## Data Flow
 
@@ -169,8 +191,8 @@ shared/packets/packets.json
 
 Generated packet files include:
 
-- `server/internal/game/packets.go`
-- `server/internal/game/entities/packets_generated.go`
+- `services/game-server/internal/game/packets.go`
+- `services/game-server/internal/game/entities/packets_generated.go`
 - `client/scripts/packets.gd`
 
 Shared constants are sourced from:
@@ -181,7 +203,7 @@ shared/constants/constants.json
 
 Generated constants include:
 
-- `server/internal/constants/constants.go`
+- `services/game-server/internal/constants/constants.go`
 - `client/scripts/constants.gd`
 
 Authoritative today:
@@ -211,7 +233,7 @@ Current limitations:
 
 - Keep authoritative gameplay logic on the server unless client prediction/interpolation is explicitly being added.
 - Do not duplicate scoring, lives, respawn safety, collision outcomes, or asteroid split rules in the client.
-- Keep network transport separate from core game simulation. Websocket code should live in `server/internal/networking`; game rules should live in `server/internal/game`.
+- Keep network transport separate from core game simulation. Websocket code should live in `services/game-server/internal/networking`; game rules should live in `services/game-server/internal/game`.
 - Keep reusable simulation code out of `main.go`. The server entrypoint should register routes, configure dependencies, and start the process.
 - Use `shared/` JSON plus generation scripts for packet and constant data that must stay aligned across Go and Godot.
 - Do not hand-edit generated files unless the generator/source data is intentionally being bypassed.
@@ -228,3 +250,5 @@ These are possible directions, not implemented features.
 - A separate backend API server may be useful for non-gameplay systems such as accounts, matchmaking, leaderboards, persistence, or purchases.
 - Matchmaking/accounts/leaderboards are not current features. If added, they should stay separate from the real-time game simulation unless a clear shared boundary is needed.
 - If prediction/reconciliation is added, keep it explicitly separate from authoritative game rules so the client remains a presentation/prediction layer rather than the source of truth.
+- Invisible toroidal/wrapped playfield is planned as a future option. See [toroidal wrap plan](toroidal-wrap.md).
+- Ship variants with different client scenes and server collision maps are planned as a future option. See [ship variants plan](ship-variants.md).

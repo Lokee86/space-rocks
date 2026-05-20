@@ -17,7 +17,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="Space Rocks"
 run/main_scene="res://scenes/game.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-config/icon="res://assets/yellow-v-wing.png"
+config/icon="res://assets/units/yellow-v-wing.png"
 
 [display]
 

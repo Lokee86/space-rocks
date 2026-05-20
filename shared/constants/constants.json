@@ -15,7 +15,7 @@
     },
     {
       "language": "go",
-      "path": "server/internal/constants/constants.go",
+      "path": "services/game-server/internal/constants/constants.go",
       "package": "constants",
       "groups": [
         "server",

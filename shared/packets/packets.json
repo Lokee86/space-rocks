@@ -2,7 +2,7 @@
   "outputs": [
     {
       "language": "go",
-      "path": "server/internal/game/entities/packets_generated.go",
+      "path": "services/game-server/internal/game/entities/packets_generated.go",
       "package": "entities",
       "structs": [
         "ClientConfig",
@@ -14,7 +14,7 @@
     },
     {
       "language": "go",
-      "path": "server/internal/game/packets.go",
+      "path": "services/game-server/internal/game/packets.go",
       "package": "game",
       "imports": {
         "entities": "github.com/Lokee86/space-rocks/server/internal/game/entities"

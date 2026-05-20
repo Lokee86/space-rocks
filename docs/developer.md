@@ -7,7 +7,8 @@ This document is a practical handoff for future development sessions. It focuses
 Space Rocks is an Asteroids-inspired game with:
 
 - a Godot client in `client/`
-- a Go game server in `server/`
+- a Go game server in `services/game-server/`
+- a planned API server in `services/api-server/`
 - shared JSON sources in `shared/`
 - Python generation scripts in `tools/scripts/`
 
@@ -18,7 +19,8 @@ The project is in active development. Expect rough edges and incomplete UI aroun
 ## Repository Structure
 
 - `client/`: Godot project. Scenes, scripts, assets, audio, shaders, client tools, and generated client constants/packet helpers.
-- `server/`: Go module for the game server. Main entrypoint is `server/cmd/game-server/main.go`.
+- `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
+- `services/api-server/`: planned API server service for business/backend systems. Intended stack is Node.js/TypeScript with NestJS.
 - `shared/`: JSON source data used by both client and server:
   - `shared/constants/constants.json`
   - `shared/packets/packets.json`
@@ -48,7 +50,7 @@ Runtime flow:
 
 1. Godot collects input in `client/scripts/player.gd`.
 2. `client/scripts/game.gd` sends input/config/respawn/pause packets through `client/scripts/network_client.gd`.
-3. `server/internal/networking/websocket.go` reads client packets.
+3. `services/game-server/internal/networking/websocket.go` reads client packets.
 4. The room's `*game.Game` handles packets and advances simulation.
 5. The server sends state packets at the server tick rate.
 6. `client/scripts/world_sync.gd` applies/interpolates state to Godot nodes.
@@ -59,18 +61,18 @@ Runtime flow:
 From the repo root:
 
 ```bash
-cd server
+cd services/game-server
 go run ./cmd/game-server
 ```
 
 With Air hot reload, if installed:
 
 ```bash
-cd server
+cd services/game-server
 air
 ```
 
-The Air config is `server/.air.toml`. It builds:
+The Air config is `services/game-server/.air.toml`. It builds:
 
 ```bash
 go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
@@ -108,28 +110,28 @@ The client expects the Go server to already be running for gameplay.
 Run the server:
 
 ```bash
-cd server
+cd services/game-server
 go run ./cmd/game-server
 ```
 
 Run all server tests:
 
 ```bash
-cd server
+cd services/game-server
 go test -buildvcs=false ./...
 ```
 
 Use an explicit cache path when the shell environment has cache or permission issues:
 
 ```bash
-cd server
+cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
 Build the server binary:
 
 ```bash
-cd server
+cd services/game-server
 go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
@@ -159,7 +161,7 @@ Generated outputs:
 
 ```text
 client/scripts/constants.gd
-server/internal/constants/constants.go
+services/game-server/internal/constants/constants.go
 ```
 
 Packet source:
@@ -172,8 +174,8 @@ Generated outputs:
 
 ```text
 client/scripts/packets.gd
-server/internal/game/packets.go
-server/internal/game/entities/packets_generated.go
+services/game-server/internal/game/packets.go
+services/game-server/internal/game/entities/packets_generated.go
 ```
 
 Collision shapes source:
@@ -201,7 +203,7 @@ The current workspace path indicates WSL accessing a Windows drive:
 Useful notes:
 
 - Godot runs on Windows in the current workflow.
-- Go commands can run from WSL inside `server/`.
+- Go commands can run from WSL inside `services/game-server/`.
 - The Godot editor may rewrite `.tscn`, `.godot`, `.uid`, or import metadata when opened/upgraded.
 - Use `go test -buildvcs=false ./...` because the repo uses this consistently and it avoids build VCS stamping problems.
 - If shell startup prints read-only `envman` warnings, those have not prevented Go tests from passing.
@@ -234,14 +236,14 @@ Ignored or should-not-commit items include:
 - `space-rocks-(4.3)/`
 - secrets: `.env`, `secrets/`, `keys/`
 
-Known current cleanup note: generated recordings/build artifacts such as `client/game-clip.avi`, `server/tmp/game-server`, and old `server/cmd/.../tmp` outputs should not be committed.
+Known current cleanup note: generated recordings/build artifacts such as `client/game-clip.avi`, `services/game-server/tmp/game-server`, and old command `tmp` outputs should not be committed.
 
 ## Logging And Config
 
 The server has a custom structured logging package:
 
 ```text
-server/internal/logging/logger.go
+services/game-server/internal/logging/logger.go
 ```
 
 It wraps Go `log/slog` and exposes category loggers:
@@ -269,10 +271,11 @@ See [docs/server/logging.md](server/logging.md) for usage, examples, field names
 
 - Keep authoritative gameplay rules on the server.
 - Keep rendering, local audio/effects, UI, and interpolation in the Godot client.
-- Keep websocket/room transport in `server/internal/networking`.
-- Keep game rules in `server/internal/game`.
-- Use `server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. The current implementation is flat/infinite and `NormalizePosition` is a no-op, but this keeps future wrapped-world support contained.
+- Keep websocket/room transport in `services/game-server/internal/networking`.
+- Keep game rules in `services/game-server/internal/game`.
+- Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. The current implementation is flat/infinite and `NormalizePosition` is a no-op, but this keeps future wrapped-world support contained.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
+- Keep business/backend API logic out of the Go game server. The planned `services/api-server/` service should own accounts, persistence, matchmaking metadata, leaderboards, and other non-real-time concerns.
 - Use `shared/` JSON plus generators when Go and Godot must agree on constants or packet structures.
 - Add focused Go tests for server gameplay rules that can regress: collisions, scoring, respawn, spawning, rooms, packet handling, and pause/safety states.
 - Avoid per-tick logs. Prefer logs around state transitions, warnings, and real failures.
@@ -283,19 +286,19 @@ See [docs/server/logging.md](server/logging.md) for usage, examples, field names
 
 For a server gameplay bug:
 
-- `server/internal/game/game.go`
-- `server/internal/game/combat.go`
-- `server/internal/game/session.go`
-- `server/internal/game/spawning.go`
-- `server/internal/game/scoring.go`
-- `server/internal/game/entities/`
-- relevant tests under `server/internal/game/*_test.go`
+- `services/game-server/internal/game/game.go`
+- `services/game-server/internal/game/combat.go`
+- `services/game-server/internal/game/session.go`
+- `services/game-server/internal/game/spawning.go`
+- `services/game-server/internal/game/scoring.go`
+- `services/game-server/internal/game/entities/`
+- relevant tests under `services/game-server/internal/game/*_test.go`
 
 For rooms/networking:
 
-- `server/internal/networking/websocket.go`
-- `server/internal/networking/rooms.go`
-- `server/internal/networking/rooms_test.go`
+- `services/game-server/internal/networking/websocket.go`
+- `services/game-server/internal/networking/rooms.go`
+- `services/game-server/internal/networking/rooms_test.go`
 
 For client runtime flow:
 
@@ -316,6 +319,7 @@ For shared schema/code generation:
 For docs:
 
 - [docs/design/architecture.md](design/architecture.md)
+- [docs/api/nestjs-api-server.md](api/nestjs-api-server.md)
 - [docs/server/logging.md](server/logging.md)
 - [docs/devtools/toggles.md](devtools/toggles.md)
 - [docs/notes.md](notes.md)

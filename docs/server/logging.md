@@ -13,7 +13,7 @@ The goal is practical development visibility without flooding the terminal durin
 The logging package lives here:
 
 ```text
-server/internal/logging/logger.go
+services/game-server/internal/logging/logger.go
 ```
 
 The package is internal to the server module. Server code should import it as:
@@ -49,7 +49,7 @@ The logger uses Go's standard library `log/slog` package. It writes text logs to
 The default logger and category loggers are initialized when the logging package is loaded. The game server then applies environment configuration in:
 
 ```text
-server/cmd/game-server/main.go
+services/game-server/cmd/game-server/main.go
 ```
 
 ```go
@@ -75,17 +75,17 @@ If a category variable is empty or unset, that category uses `LOG_LEVEL`.
 Examples:
 
 ```bash
-cd server
+cd services/game-server
 LOG_LEVEL=warn go run ./cmd/game-server
 ```
 
 ```bash
-cd server
+cd services/game-server
 LOG_LEVEL=warn LOG_ROOMS=debug go run ./cmd/game-server
 ```
 
 ```bash
-cd server
+cd services/game-server
 LOG_LEVEL=off LOG_NETWORK=warn go run ./cmd/game-server
 ```
 
@@ -284,7 +284,7 @@ Prefer logging state transitions:
 Run the normal server tests:
 
 ```bash
-cd server
+cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
@@ -293,35 +293,35 @@ To manually check log levels, run the server with different environment variable
 Default quiet mode:
 
 ```bash
-cd server
+cd services/game-server
 go run ./cmd/game-server
 ```
 
 Show server startup info:
 
 ```bash
-cd server
+cd services/game-server
 LOG_SERVER=info go run ./cmd/game-server
 ```
 
 Debug room lifecycle only:
 
 ```bash
-cd server
+cd services/game-server
 LOG_LEVEL=warn LOG_ROOMS=debug go run ./cmd/game-server
 ```
 
 Debug websocket/network logs only:
 
 ```bash
-cd server
+cd services/game-server
 LOG_LEVEL=warn LOG_NETWORK=debug go run ./cmd/game-server
 ```
 
 Disable everything except network warnings/errors:
 
 ```bash
-cd server
+cd services/game-server
 LOG_LEVEL=off LOG_NETWORK=warn go run ./cmd/game-server
 ```
 

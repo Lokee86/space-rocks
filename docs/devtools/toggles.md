@@ -62,13 +62,13 @@ Current behavior:
 The devtools state lives in:
 
 ```text
-server/internal/game/devtools/player_options.go
+services/game-server/internal/game/devtools/player_options.go
 ```
 
 Player entities store their debug options here:
 
 ```text
-server/internal/game/entities/state.go
+services/game-server/internal/game/entities/state.go
 ```
 
 The packet source of truth is:
@@ -80,7 +80,7 @@ shared/packets/packets.json
 Generated packet files include:
 
 ```text
-server/internal/game/packets.go
+services/game-server/internal/game/packets.go
 client/scripts/packets.gd
 ```
 
@@ -93,19 +93,19 @@ client/scripts/game.gd
 The server toggle handling is in:
 
 ```text
-server/internal/game/game.go
+services/game-server/internal/game/game.go
 ```
 
 The collision gate is in:
 
 ```text
-server/internal/game/combat.go
+services/game-server/internal/game/combat.go
 ```
 
 World-freeze gates are in:
 
 ```text
-server/internal/game/game.go
+services/game-server/internal/game/game.go
 ```
 
 ## Packet Flow
@@ -195,13 +195,13 @@ See [server logging](../server/logging.md) for logging configuration.
 Server tests live in:
 
 ```text
-server/internal/game/game_devtools_test.go
+services/game-server/internal/game/game_devtools_test.go
 ```
 
 Run:
 
 ```bash
-cd server
+cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
@@ -228,7 +228,7 @@ TODO: add focused server tests for world freeze:
 
 Keep debug gameplay effects server-side. The client may request a toggle, but the server should own whether the toggle is active and how it affects simulation.
 
-Keep devtools isolated. New debug-only gameplay state should live behind `server/internal/game/devtools` where practical, so the game can ignore or remove it cleanly later.
+Keep devtools isolated. New debug-only gameplay state should live behind `services/game-server/internal/game/devtools` where practical, so the game can ignore or remove it cleanly later.
 
 Avoid scattering one-off debug booleans through core logic. Prefer small methods like `CanTakeDamage()` so collision/combat code only asks a simple gameplay question.
 

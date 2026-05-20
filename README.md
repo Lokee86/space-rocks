@@ -1,6 +1,6 @@
 # Space Rocks
 
-Space Rocks is an Asteroids-inspired game with a Godot client and a Go game server.
+Space Rocks is an Asteroids-inspired game with a Godot client and a Go game server. A separate API server is planned for business/backend concerns.
 
 ## Status
 
@@ -11,7 +11,8 @@ Expect incomplete docs and rough edges while systems are still moving.
 ## Repository Structure
 
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
-- `server/`: Go server module. The current game server entrypoint is `server/cmd/game-server`.
+- `services/game-server/`: Go game server module. The current game server entrypoint is `services/game-server/cmd/game-server`.
+- `services/api-server/`: planned API server service for business/backend concerns. It is intended to be separate from real-time game simulation.
 - `shared/`: JSON sources shared by client/server generation, including constants, packets, and collision shape data.
 - `docs/`: Project documentation. Currently includes architecture and server logging docs.
 - `tools/`: Python scripts for generating shared constants and packet code.
@@ -21,14 +22,14 @@ Expect incomplete docs and rough edges while systems are still moving.
 Start the Go game server:
 
 ```bash
-cd server
+cd services/game-server
 go run ./cmd/game-server
 ```
 
 Or use Air hot reload if `air` is installed:
 
 ```bash
-cd server
+cd services/game-server
 air
 ```
 
@@ -49,21 +50,21 @@ godot --path client
 Run the game server:
 
 ```bash
-cd server
+cd services/game-server
 go run ./cmd/game-server
 ```
 
 Run server tests:
 
 ```bash
-cd server
+cd services/game-server
 go test -buildvcs=false ./...
 ```
 
 Build the game server binary:
 
 ```bash
-cd server
+cd services/game-server
 go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
@@ -82,6 +83,7 @@ python3 tools/scripts/generate_packets.py
 ## Documentation
 
 - [Architecture](docs/design/architecture.md)
+- [API server plan](docs/api/nestjs-api-server.md)
 - [Server logging](docs/server/logging.md)
 - [Developer toggles](docs/devtools/toggles.md)
 

@@ -29,7 +29,7 @@ The project is still moving quickly. Treat recent systems as subject to refineme
 
 Generated outputs:
 
-- `server/internal/constants/constants.go`
+- `services/game-server/internal/constants/constants.go`
 - `client/scripts/constants.gd`
 
 Recent additions include:
@@ -49,8 +49,8 @@ Note: regeneration overwrites generated files. Do not hand-edit generated consta
 
 Generated outputs:
 
-- `server/internal/game/packets.go`
-- `server/internal/game/entities/packets_generated.go`
+- `services/game-server/internal/game/packets.go`
+- `services/game-server/internal/game/entities/packets_generated.go`
 - `client/scripts/packets.gd`
 
 Recent packet additions:
@@ -60,7 +60,7 @@ Recent packet additions:
 
 ### Server Rooms
 
-`server/internal/networking` owns websocket handling and rooms.
+`services/game-server/internal/networking` owns websocket handling and rooms.
 
 Current behavior:
 
@@ -113,7 +113,7 @@ The root `game.tscn` owns the always-visible parallax background. `game_shell.gd
 
 ### Logging
 
-The server has a custom structured logging wrapper in `server/internal/logging`.
+The server has a custom structured logging wrapper in `services/game-server/internal/logging`.
 
 Categories:
 
@@ -128,7 +128,8 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 
 - The server is authoritative for game rules.
 - The client is responsible for presentation, UI, audio/effects, interpolation, and input collection.
-- Network transport belongs in `server/internal/networking`, not `cmd/game-server/main.go`.
+- Network transport belongs in `services/game-server/internal/networking`, not `cmd/game-server/main.go`.
+- Business/API concerns belong in the planned `services/api-server/` service, not in the Go game server.
 - Room state owns a separate `*game.Game` per room.
 - Shared constants/packets should be generated from JSON, not copied by hand between Go and GDScript.
 - Collision shapes are shared through JSON and used by the server physics package.
@@ -140,10 +141,13 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - A real pause menu scene/overlay. Current pause support is functional plumbing without UI.
 - Moving `client/scripts/constants.gd` into a dedicated generated/constants folder.
 - A separate API server for accounts, matchmaking, leaderboards, persistence, or other non-gameplay backend concerns.
+- Node.js/TypeScript with NestJS is the current planned stack for `services/api-server/`; see [docs/api/nestjs-api-server.md](api/nestjs-api-server.md).
 - Packaging or launching the Go game server from the Godot client for local play.
 - Client-side prediction/reconciliation beyond interpolation.
 - More granular/documented collision shape export workflow.
 - Logical gameplay viewport cap instead of raw OS window max size for balance.
+- Invisible toroidal/wrapped playfield; see [docs/design/toroidal-wrap.md](design/toroidal-wrap.md).
+- Ship variants with different client scenes and server collision maps; see [docs/design/ship-variants.md](design/ship-variants.md).
 
 ## Current Short-Term Priorities
 
@@ -164,6 +168,8 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - More robust client prediction/reconciliation if networking latency becomes visible.
 - Better tooling around collision shape generation and validation.
 - More formal docs around packet/schema generation if shared protocol grows.
+- Invisible toroidal world wrapping to keep multiplayer players in one arena while preserving endless-feeling flight.
+- Ship type variants with server-selected collision maps and client scene mapping.
 
 ## Risks / Likely Messy Areas
 
@@ -186,6 +192,8 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Should the packet/constants generated client files move under `client/scripts/generated/` or a similar folder?
 - How should the eventual API server share code, if at all, with the game server?
 - Is `client/game-clip.avi` tracked or just present locally? It should not be committed.
+- What final world wrap dimensions should be used? Proposed planning values are currently `1062 x 5250`, but width should be confirmed.
+- Should ship variants eventually affect only collision/visuals, or also movement stats, weapons, and gameplay rules?
 
 ## Notes For Future Codex Sessions
 
@@ -194,16 +202,17 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - When asked to “answer” or “report,” do not edit files.
 - When changing generated constants or packets, edit `shared/...json` first and regenerate.
 - When changing server gameplay rules, add or update focused Go tests.
-- New server gameplay distance/position logic should go through `server/internal/game/space`; it is flat/infinite today, with no-op normalization, but keeps future wrapped-world work localized.
+- New server gameplay distance/position logic should go through `services/game-server/internal/game/space`; it is flat/infinite today, with no-op normalization, but keeps future wrapped-world work localized.
 - When changing Godot scenes, inspect `.tscn` diffs for accidental editor movement/offsets.
 - Avoid broad rewrites of `game.gd`; extract only when the boundary is clear.
 - Developer/debug toggles are documented in [docs/devtools/toggles.md](devtools/toggles.md).
-- For logging, use `server/internal/logging` category loggers. Do not add raw `log.Println`.
+- Future toroidal wrap and ship-variant plans are documented in [docs/design/toroidal-wrap.md](design/toroidal-wrap.md) and [docs/design/ship-variants.md](design/ship-variants.md).
+- For logging, use `services/game-server/internal/logging` category loggers. Do not add raw `log.Println`.
 - Before diagnosing gameplay/network issues, confirm the Go server is actually running and the client is connected.
 - Current server tests pass with:
 
 ```bash
-cd server
+cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
