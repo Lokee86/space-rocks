@@ -1,12 +1,14 @@
-package networking
+package networkingtests
 
 import (
 	"testing"
 	"time"
+
+	"github.com/Lokee86/space-rocks/server/internal/networking"
 )
 
 func TestRoomManagerUsesDefaultRoomForBlankID(t *testing.T) {
-	manager := NewRoomManager()
+	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
 	defaultRoom := manager.DefaultRoom()
@@ -22,7 +24,7 @@ func TestRoomManagerUsesDefaultRoomForBlankID(t *testing.T) {
 }
 
 func TestRoomManagerCreatesSeparateRoomsByID(t *testing.T) {
-	manager := NewRoomManager()
+	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
 	first := manager.GetOrCreate("abc")
@@ -41,7 +43,7 @@ func TestRoomManagerCreatesSeparateRoomsByID(t *testing.T) {
 }
 
 func TestRoomManagerCleansUpEmptyRoomAfterGracePeriod(t *testing.T) {
-	manager := NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
+	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
 	room, leave := manager.Join("abc")
@@ -58,7 +60,7 @@ func TestRoomManagerCleansUpEmptyRoomAfterGracePeriod(t *testing.T) {
 }
 
 func TestRoomManagerDoesNotCleanUpActiveRoom(t *testing.T) {
-	manager := NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
+	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
 	room, leave := manager.Join("abc")
@@ -71,7 +73,7 @@ func TestRoomManagerDoesNotCleanUpActiveRoom(t *testing.T) {
 }
 
 func TestRoomManagerCancelsCleanupWhenRoomIsRejoined(t *testing.T) {
-	manager := NewRoomManagerWithCleanupDelay(30 * time.Millisecond)
+	manager := networking.NewRoomManagerWithCleanupDelay(30 * time.Millisecond)
 	defer manager.StopAll()
 
 	room, leave := manager.Join("abc")

@@ -23,6 +23,31 @@ The project is still moving quickly. Treat recent systems as subject to refineme
 
 ## Recently Implemented Systems
 
+### Server Test Layout
+
+Go server tests have been moved out of production package folders and now live under:
+
+```text
+services/game-server/tests/
+```
+
+Current subareas:
+
+- `game`
+- `networking`
+- `physics`
+- `space`
+
+Future server tests should stay under `services/game-server/tests/<area>/`, not beside production packages under `services/game-server/internal/`.
+
+Game simulation tests use the shared harness in:
+
+```text
+services/game-server/tests/game/helpers_test.go
+```
+
+The harness exists to keep tests readable while still allowing precise server-authoritative setup for collisions, respawn, devtools, pause, scoring, spawning, and similar behavior. Keep new harness helpers intent-level and avoid exposing raw private maps directly to tests.
+
 ### Shared Constants
 
 `shared/constants/constants.json` is the source of truth for generated Go and GDScript constants.
@@ -201,7 +226,8 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Prefer small, reversible changes. The user is sensitive to unnecessary code growth and wants scalable structure without bloat.
 - When asked to “answer” or “report,” do not edit files.
 - When changing generated constants or packets, edit `shared/...json` first and regenerate.
-- When changing server gameplay rules, add or update focused Go tests.
+- When changing server gameplay rules, add or update focused Go tests under `services/game-server/tests/<area>/`.
+- Do not add new Go server `*_test.go` files beside production packages under `services/game-server/internal/`.
 - New server gameplay distance/position logic should go through `services/game-server/internal/game/space`; it is flat/infinite today, with no-op normalization, but keeps future wrapped-world work localized.
 - When changing Godot scenes, inspect `.tscn` diffs for accidental editor movement/offsets.
 - Avoid broad rewrites of `game.gd`; extract only when the boundary is clear.

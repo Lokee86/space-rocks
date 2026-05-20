@@ -300,6 +300,14 @@ API server:
 
 ## Testing Expectations
 
+Go server tests live under:
+
+```text
+services/game-server/tests/<area>/
+```
+
+Current areas include `game`, `networking`, `physics`, and `space`. Do not add new `*_test.go` files beside production packages under `services/game-server/internal/`. For game simulation setup, use the shared harness in `services/game-server/tests/game/helpers_test.go`; keep new helpers intent-level, such as placing entities or sending packets, instead of exposing raw private maps.
+
 For server gameplay changes, run:
 
 ```bash

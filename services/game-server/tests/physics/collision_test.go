@@ -1,4 +1,4 @@
-package tests
+package physicstests
 
 import (
 	"testing"

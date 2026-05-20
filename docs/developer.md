@@ -128,6 +128,31 @@ cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
+## Server Test Layout
+
+Go server tests are kept out of production package folders. Put server tests under:
+
+```text
+services/game-server/tests/<area>/
+```
+
+Current areas:
+
+- `services/game-server/tests/game/`
+- `services/game-server/tests/networking/`
+- `services/game-server/tests/physics/`
+- `services/game-server/tests/space/`
+
+Do not add new `*_test.go` files beside production code under `services/game-server/internal/`.
+
+Game simulation tests should use the shared harness:
+
+```text
+services/game-server/tests/game/helpers_test.go
+```
+
+Keep harness helpers gameplay-oriented and deliberate: create a scenario, add players, send packets, step simulation, decode state, place entities, set collision presets, or adjust session state needed for precise behavior tests. Avoid exposing raw private maps directly to individual tests.
+
 Build the server binary:
 
 ```bash
@@ -292,13 +317,13 @@ For a server gameplay bug:
 - `services/game-server/internal/game/spawning.go`
 - `services/game-server/internal/game/scoring.go`
 - `services/game-server/internal/game/entities/`
-- relevant tests under `services/game-server/internal/game/*_test.go`
+- relevant tests under `services/game-server/tests/game/`
 
 For rooms/networking:
 
 - `services/game-server/internal/networking/websocket.go`
 - `services/game-server/internal/networking/rooms.go`
-- `services/game-server/internal/networking/rooms_test.go`
+- relevant tests under `services/game-server/tests/networking/`
 
 For client runtime flow:
 
