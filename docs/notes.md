@@ -55,7 +55,7 @@ The harness exists to keep tests readable while still allowing precise server-au
 Generated outputs:
 
 - `services/game-server/internal/constants/constants.go`
-- `client/scripts/constants.gd`
+- `client/scripts/constants/constants.gd`
 
 Constants are synced through:
 
@@ -82,7 +82,7 @@ Generated outputs:
 
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/entities/packets_generated.go`
-- `client/scripts/packets.gd`
+- `client/scripts/networking/packets.gd`
 
 The packet TOML schema preserves the old rich JSON behavior:
 
@@ -222,7 +222,6 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 ## Considered But Deferred
 
 - A real pause menu scene/overlay. Current pause support is functional plumbing without UI.
-- Moving `client/scripts/constants.gd` into a dedicated generated/constants folder.
 - A separate API server for accounts, matchmaking, leaderboards, persistence, or other non-gameplay backend concerns.
 - Node.js/TypeScript with NestJS is the current planned stack for `services/api-server/`; see [docs/api/nestjs-api-server.md](api/nestjs-api-server.md).
 - Packaging or launching the Go game server from the Godot client for local play.

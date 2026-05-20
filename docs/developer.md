@@ -49,12 +49,12 @@ Blank room IDs map to the default room. Non-blank room IDs create or join separa
 
 Runtime flow:
 
-1. Godot collects input in `client/scripts/player.gd`.
-2. `client/scripts/game.gd` sends input/config/respawn/pause packets through `client/scripts/network_client.gd`.
+1. Godot collects input in `client/scripts/entities/player.gd`.
+2. `client/scripts/game.gd` sends input/config/respawn/pause packets through `client/scripts/networking/network_client.gd`.
 3. `services/game-server/internal/networking/websocket.go` reads client packets.
 4. The room's `*game.Game` handles packets and advances simulation.
 5. The server sends state packets at the server tick rate.
-6. `client/scripts/world_sync.gd` applies/interpolates state to Godot nodes.
+6. `client/scripts/networking/world_sync.gd` applies/interpolates state to Godot nodes.
 7. HUD and effects update from state/events.
 
 ## Run The Server
@@ -210,7 +210,7 @@ shared/game_data.toml
 Generated outputs:
 
 ```text
-client/scripts/constants.gd
+client/scripts/constants/constants.gd
 services/game-server/internal/constants/constants.go
 ```
 
@@ -225,7 +225,7 @@ shared/packets/packets.toml
 Generated outputs:
 
 ```text
-client/scripts/packets.gd
+client/scripts/networking/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
 ```
@@ -384,9 +384,9 @@ For client runtime flow:
 
 - `client/scripts/ui/game_shell.gd`
 - `client/scripts/game.gd`
-- `client/scripts/network_client.gd`
-- `client/scripts/world_sync.gd`
-- `client/scripts/player.gd`
+- `client/scripts/networking/network_client.gd`
+- `client/scripts/networking/world_sync.gd`
+- `client/scripts/entities/player.gd`
 - `client/scripts/ui/hud_controller.gd`
 
 For shared schema/code generation:
@@ -412,8 +412,6 @@ TODO: manually smoke test the pause flow in Godot with the server actually runni
 TODO: revisit max window sizing. OS window pixels are not a reliable balance boundary across monitors/DPI; gameplay balance should use a logical/capped viewport size rather than raw window max size.
 
 TODO: clean up generated/recorded artifacts if they are present in Git status, especially `*.avi` and server `tmp` binaries.
-
-TODO: decide whether `client/scripts/constants.gd` should move into a generated/constants folder. This was considered low effort but has not been done.
 
 TODO: verify collision shape export covers the ship shape before relying on exported collision data after Godot upgrades.
 

@@ -82,7 +82,7 @@ Generated packet files include:
 ```text
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
-client/scripts/packets.gd
+client/scripts/networking/packets.gd
 ```
 
 The client hotkey is currently handled in:

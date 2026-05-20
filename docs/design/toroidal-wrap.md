@@ -234,7 +234,7 @@ static func visual_position_relative_to(reference: Vector2, target: Vector2) -> 
 Use generated constants from:
 
 ```text
-client/scripts/constants.gd
+client/scripts/constants/constants.gd
 ```
 
 ### 11. Track Local Visual Continuity
@@ -243,7 +243,7 @@ Touch:
 
 ```text
 client/scripts/game.gd
-client/scripts/world_sync.gd
+client/scripts/networking/world_sync.gd
 ```
 
 Maintain separate server and visual positions:
@@ -268,7 +268,7 @@ This prevents the camera/background from snapping when the server position wraps
 Touch:
 
 ```text
-client/scripts/world_sync.gd
+client/scripts/networking/world_sync.gd
 ```
 
 For remote players, asteroids, and bullets:

@@ -28,12 +28,12 @@ Key client pieces:
 - `client/scripts/ui/game_shell.gd`: top-level shell for menu/game-loop scene switching and always-on parallax background scrolling.
 - `client/scenes/ui/main_menu.tscn` and `client/scripts/ui/main_menu.gd`: main menu controls for single-player, multiplayer dialog launch, and quit.
 - `client/scenes/game_loop.tscn` and `client/scripts/game.gd`: active gameplay scene/controller. Creates the network client, world sync, HUD controller, and effects controller.
-- `client/scripts/network_client.gd`: wraps Godot `WebSocketPeer`, handles connect, poll, send, graceful close, and packet parsing.
-- `client/scripts/world_sync.gd`: applies server state to local/remote player, bullet, and asteroid nodes. It also interpolates rendered nodes toward server positions.
-- `client/scripts/player.gd`: collects input into packet data, plays local laser audio, and toggles local afterburner visuals.
+- `client/scripts/networking/network_client.gd`: wraps Godot `WebSocketPeer`, handles connect, poll, send, graceful close, and packet parsing.
+- `client/scripts/networking/world_sync.gd`: applies server state to local/remote player, bullet, and asteroid nodes. It also interpolates rendered nodes toward server positions.
+- `client/scripts/entities/player.gd`: collects input into packet data, plays local laser audio, and toggles local afterburner visuals.
 - `client/scripts/effects.gd`: spawns local visual/audio effects for bullet impacts, ship death, and game over sound timing.
 - `client/scripts/ui/hud_controller.gd`: updates score, lives, room ID, death overlay, respawn state, and game-over UI.
-- `client/scripts/packets.gd` and `client/scripts/constants.gd`: generated/shared client packet helpers and constants.
+- `client/scripts/networking/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
 
 Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. The background has local auto-scroll in `game_shell.gd`; gameplay scroll offset follows the local player after initial spawn.
 
@@ -193,7 +193,7 @@ Generated packet files include:
 
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/entities/packets_generated.go`
-- `client/scripts/packets.gd`
+- `client/scripts/networking/packets.gd`
 
 Shared constants are sourced from:
 
@@ -204,7 +204,7 @@ shared/game_data.toml
 Generated constants include:
 
 - `services/game-server/internal/constants/constants.go`
-- `client/scripts/constants.gd`
+- `client/scripts/constants/constants.gd`
 
 Authoritative today:
 

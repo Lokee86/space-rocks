@@ -29,7 +29,7 @@ Relevant areas:
 services/game-server/internal/game/entities/ship.go
 services/game-server/internal/game/physics/collision_shapes.go
 shared/collisions/collision_shapes.json
-client/scripts/world_sync.gd
+client/scripts/networking/world_sync.gd
 shared/packets/packets.toml
 ```
 
@@ -97,7 +97,7 @@ Generated outputs:
 ```text
 services/game-server/internal/game/entities/packets_generated.go
 services/game-server/internal/game/packets.go
-client/scripts/packets.gd
+client/scripts/networking/packets.gd
 ```
 
 ### 4. Expand Collision Shape Catalog
@@ -152,7 +152,7 @@ If the type is empty or unknown, fall back to the default ship type so malformed
 Update:
 
 ```text
-client/scripts/world_sync.gd
+client/scripts/networking/world_sync.gd
 ```
 
 Add a mapping from `ship_type` to scene path or preload.
