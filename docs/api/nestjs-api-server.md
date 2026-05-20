@@ -1,6 +1,6 @@
-# API Server Plan
+# NestJS API Server Plan
 
-This is a future service plan. The API server is not implemented yet beyond the repository placeholder:
+This is a future service plan. The API server is not implemented yet beyond the empty repository placeholder directory:
 
 ```text
 services/api-server/

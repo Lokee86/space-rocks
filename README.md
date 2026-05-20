@@ -12,9 +12,9 @@ Expect incomplete docs and rough edges while systems are still moving.
 
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go game server module. The current game server entrypoint is `services/game-server/cmd/game-server`.
-- `services/api-server/`: planned API server service for business/backend concerns. It is intended to be separate from real-time game simulation.
+- `services/api-server/`: empty placeholder for a planned API server service for business/backend concerns. It is intended to be separate from real-time game simulation.
 - `shared/`: JSON sources shared by client/server generation, including constants, packets, and collision shape data.
-- `docs/`: Project documentation. Currently includes architecture and server logging docs.
+- `docs/`: Project documentation, including architecture, developer workflow, API plans, devtools, notes, and server logging docs.
 - `tools/`: Python scripts for generating shared constants and packet code.
 
 ## Run Locally
@@ -83,7 +83,7 @@ python3 tools/scripts/generate_packets.py
 ## Documentation
 
 - [Architecture](docs/design/architecture.md)
-- [API server plan](docs/api/nestjs-api-server.md)
+- [NestJS API server plan](docs/api/nestjs-api-server.md)
 - [Server logging](docs/server/logging.md)
 - [Developer toggles](docs/devtools/toggles.md)
 

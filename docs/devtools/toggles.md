@@ -81,6 +81,7 @@ Generated packet files include:
 
 ```text
 services/game-server/internal/game/packets.go
+services/game-server/internal/game/entities/packets_generated.go
 client/scripts/packets.gd
 ```
 
@@ -195,7 +196,7 @@ See [server logging](../server/logging.md) for logging configuration.
 Server tests live in:
 
 ```text
-services/game-server/internal/game/game_devtools_test.go
+services/game-server/tests/game/devtools_test.go
 ```
 
 Run:
@@ -214,6 +215,8 @@ Current coverage checks:
 - infinite lives persists after respawn
 - toggling infinite lives once enables it
 - toggling infinite lives twice disables it
+- toggling world freeze once enables it
+- toggling world freeze twice disables it
 
 TODO: add focused server tests for world freeze:
 

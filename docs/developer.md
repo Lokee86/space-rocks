@@ -20,7 +20,7 @@ The project is in active development. Expect rough edges and incomplete UI aroun
 
 - `client/`: Godot project. Scenes, scripts, assets, audio, shaders, client tools, and generated client constants/packet helpers.
 - `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
-- `services/api-server/`: planned API server service for business/backend systems. Intended stack is Node.js/TypeScript with NestJS.
+- `services/api-server/`: empty placeholder for a planned API server service for business/backend systems. Intended stack is Node.js/TypeScript with NestJS.
 - `shared/`: JSON source data used by both client and server:
   - `shared/constants/constants.json`
   - `shared/packets/packets.json`

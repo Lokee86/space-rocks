@@ -8,7 +8,7 @@ The project is still in development, so this document describes the architecture
 
 - `client/`: Godot project. Contains scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go module for the real-time game server. The current entrypoint is `services/game-server/cmd/game-server`.
-- `services/api-server/`: planned Node.js/TypeScript NestJS API server for business/backend systems. It is intentionally separate from real-time simulation.
+- `services/api-server/`: empty placeholder for a planned Node.js/TypeScript NestJS API server for business/backend systems. It is intentionally separate from real-time simulation.
 - `shared/`: JSON source data shared across client and server generation, including constants, packet definitions, and collision shape data.
 - `docs/`: Project documentation.
 - `tools/`: Python scripts used to generate constants and packet code from `shared/`.
@@ -150,9 +150,9 @@ It uses `log/slog`, logs to stderr, and supports category loggers:
 
 Configuration is environment-variable based. See [server logging](../server/logging.md).
 
-## API Server Plan
+## NestJS API Server Plan
 
-`services/api-server/` is reserved for a separate business/backend API service. The intended stack is Node.js, TypeScript, and NestJS.
+`services/api-server/` is currently an empty placeholder reserved for a separate business/backend API service. The intended stack is Node.js, TypeScript, and NestJS.
 
 This service is not implemented yet. The purpose of the separate service is to keep business logic physically and technically separate from the real-time Go game server.
 
@@ -168,7 +168,7 @@ Planned API-owned concerns include:
 
 The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets.
 
-See [API server plan](../api/nestjs-api-server.md).
+See [NestJS API server plan](../api/nestjs-api-server.md).
 
 ## Data Flow
 

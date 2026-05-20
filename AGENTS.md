@@ -10,7 +10,7 @@ Space Rocks is an Asteroids-inspired game in active development.
 
 - Godot client: `client/`
 - Go real-time game server: `services/game-server/`
-- Planned API/business server: `services/api-server/`
+- Planned API/business server placeholder: `services/api-server/`
 - Shared generated data sources: `shared/`
 - Project docs: `docs/`
 - Generation scripts: `tools/scripts/`
@@ -64,7 +64,7 @@ github.com/Lokee86/space-rocks/server
 
 That mismatch is currently intentional. Import paths inside the Go server still use `github.com/Lokee86/space-rocks/server/...`.
 
-`services/api-server/` exists as a placeholder for a future Node.js/TypeScript NestJS API service. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
+`services/api-server/` exists as an empty placeholder directory for a future Node.js/TypeScript NestJS API service. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
 
 ## Commands
 
