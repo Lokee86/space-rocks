@@ -42,7 +42,7 @@ Existing code has started moving coordinate-sensitive logic through this package
 Add constants to:
 
 ```text
-shared/constants/constants.json
+shared/game_data.toml
 ```
 
 Proposed values:
@@ -55,7 +55,7 @@ WORLD_WRAP_HEIGHT: 5250
 Then regenerate:
 
 ```bash
-python3 tools/scripts/generate_constants.py
+python3 tools/data_sync/main.py -push -constants -go -gds
 ```
 
 TODO: confirm `1062` width is intentional. It is very narrow compared to `5250`.

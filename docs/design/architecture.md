@@ -71,7 +71,7 @@ Core server packages:
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for distance, direction, and position normalization. Current behavior is flat/infinite; this package is the intended seam for future wrapped-world support.
-- `services/game-server/internal/constants`: generated Go constants from `shared/constants/constants.json`.
+- `services/game-server/internal/constants`: generated Go constants from `shared/game_data.toml`.
 - `services/game-server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
 
 ### Game Loop And Simulation
@@ -198,7 +198,7 @@ Generated packet files include:
 Shared constants are sourced from:
 
 ```text
-shared/constants/constants.json
+shared/game_data.toml
 ```
 
 Generated constants include:

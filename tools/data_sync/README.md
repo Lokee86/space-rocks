@@ -2,18 +2,33 @@
 
 `tools/data_sync/` is a reusable Python CLI for syncing shared game data between:
 
-- TOML source of truth: `shared/game_data.toml`
+- TOML source of truth for active constants: `shared/game_data.toml`
 - Go game server files
 - GDScript Godot client files
-- TypeScript API server files
+- TypeScript API server files, later
 
 The tool updates only marked generated blocks. It never rewrites whole source files.
 
+Current active scope:
+
+```text
+constants -> Go and GDScript
+```
+
+Deferred scope:
+
+```text
+packets -> Go/GDScript
+TypeScript output
+```
+
 ## Source Of Truth
 
-`shared/game_data.toml` is the canonical source for constants and packet definitions during the new pipeline. TOML is used because it is readable for hand-edited values, supports ordered sections, and can preserve practical round-trip formatting through `tomlkit`.
+`shared/game_data.toml` is the canonical source for active constants. It also contains packet data copied during migration for future work, but packet sync is disabled in the default config. TOML is used because it is readable for hand-edited values, supports ordered sections, and can preserve practical round-trip formatting through `tomlkit`.
 
-Schema additions, packet shape changes, and new constants should be made in TOML. Language files are generated from TOML through `-push`.
+New constants should be made in TOML. Language files are generated from TOML through `-push`.
+
+Packet schema changes should still be made in `shared/packets/packets.json` and regenerated with `tools/scripts/generate_packets.py`.
 
 ## Commands
 
@@ -53,12 +68,12 @@ Examples:
 
 ```bash
 python tools/data_sync/main.py -push -constants -go
-python tools/data_sync/main.py -push -constants -packets -go -gds -ts
+python tools/data_sync/main.py -push -constants -go -gds
 python tools/data_sync/main.py -pull -constants -go
-python tools/data_sync/main.py -diff -constants -packets -go
-python tools/data_sync/main.py -check -constants -packets -go -gds -ts
+python tools/data_sync/main.py -diff -constants -go -gds
+python tools/data_sync/main.py -check -constants -go -gds
 python tools/data_sync/main.py -validate
-python tools/data_sync/main.py -validate -packets -ts
+python tools/data_sync/main.py -validate -constants
 ```
 
 `-push`, `-pull`, `-diff`, and `-check` require at least one domain and one language. `-pull` accepts only one language at a time.
@@ -74,6 +89,8 @@ python tools/data_sync/main.py -validate -packets -ts
 `-validate` checks config, TOML integrity, supported values/types, ownership rules, configured file existence, and required managed blocks.
 
 `-pull` is intentionally restricted. Constants pull reads owned generated blocks and updates existing TOML values only.
+
+Packet sync and TypeScript output are disabled in the default config.
 
 ## Config Format
 
@@ -100,14 +117,16 @@ sections = ["constants.gameplay", "constants.client"]
 owns = ["constants.client"]
 
 [constants.ts]
-files = ["services/api-server/src/constants.ts"]
-sections = ["constants.network", "constants.api"]
-owns = ["constants.api"]
+enabled = false
+files = []
+sections = []
+owns = []
 
 [packets.go]
-files = ["services/game-server/internal/network/packets.go"]
-sections = ["packets"]
-owns = ["packets"]
+enabled = false
+files = []
+sections = []
+owns = []
 ```
 
 `sections` controls what a language receives during `-push`, `-diff`, and `-check`.
@@ -190,40 +209,24 @@ For pull, parsers are strict and accept only canonical generated constants. Adde
 
 ## Packet Pull Policy
 
-Full packet schema pull is not supported. Packet schema changes should be edited in `shared/game_data.toml`, then pushed to language files.
+Full packet schema pull is not supported. Packet schema changes should be edited in `shared/packets/packets.json`, then regenerated through the existing packet generator.
 
 `-pull -packets ...` returns a clear refusal instead of attempting fragile packet parsing.
 
 ## JSON Migration
 
-A disposable migration script seeds the TOML source from the old JSON sources:
+A disposable migration script seeded the TOML source from the old JSON constants source and the active packet JSON source. The old constants JSON source has been retired, so the script is kept only as historical migration scaffolding.
 
-```bash
-python tools/migrations/json_to_toml.py \
-  --constants-input shared/constants/constants.json \
-  --packets-input shared/packets/packets.json \
-  --output shared/game_data.toml
-```
-
-This script is not part of the reusable `data_sync` package. It exists only to migrate from:
-
-```text
-shared/constants/constants.json
-shared/packets/packets.json
-```
-
-to:
+The migration produced:
 
 ```text
 shared/game_data.toml
 ```
 
-## Recommended Migration Workflow
+## Active Constants Workflow
 
-1. Run the JSON to TOML migration once.
-2. Edit `shared/game_data.toml`.
-3. Run `python tools/data_sync/main.py -validate`.
-4. Run `python tools/data_sync/main.py -diff -constants -packets -go -gds -ts`.
-5. Run `python tools/data_sync/main.py -push -constants -packets -go -gds -ts`.
-6. Run `python tools/data_sync/main.py -check -constants -packets -go -gds -ts`.
-7. Delete the old JSON pipeline after successful adoption.
+1. Edit `shared/game_data.toml`.
+2. Run `python tools/data_sync/main.py -validate -constants`.
+3. Run `python tools/data_sync/main.py -diff -constants -go -gds`.
+4. Run `python tools/data_sync/main.py -push -constants -go -gds`.
+5. Run `python tools/data_sync/main.py -check -constants -go -gds`.

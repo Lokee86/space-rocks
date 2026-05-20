@@ -1,0 +1,128 @@
+[constants.server.runtime]
+server_tick_rate = 60
+
+[constants.server.player_movement]
+player_rotation_speed = 4.0
+player_thrust_force = 1000.0
+player_max_speed = 1500.0
+player_damping = 0.98
+
+[constants.server.player_session]
+player_respawn_buffer = 160.0
+player_resume_invulnerability_seconds = 1.5
+
+[constants.server.world]
+world_width = 1152.0
+world_height = 640.0
+
+[constants.server.scoring]
+base_score = 120
+
+[constants.server.asteroids]
+asteroid_spawn_interval = 3.0
+asteroid_spawn_batch_size = 3
+asteroid_spawn_margin = 160.0
+asteroid_despawn_margin = 320.0
+asteroid_min_speed = 90.0
+asteroid_max_speed = 170.0
+asteroid_aim_randomness_degrees = 30.0
+
+[constants.server.bullets]
+bullet_speed = 900.0
+bullet_lifetime = 1.25
+bullet_cooldown = 0.2
+bullet_spawn_offset = 42.0
+collision_despawn_delay = 0.05
+
+[constants.shared.player_state]
+player_starting_lives = 3
+player_respawn_delay = 3.0
+
+[constants.shared.asteroid_visual]
+asteroid_size_scale = 0.125
+
+[constants.client.presentation]
+game_over_sound_delay = 0.4
+background_parallax = 0.25
+foreground_background_parallax = 0.45
+foreground_background_offset = [480.0, 270.0]
+player_interpolation_speed = 18.0
+window_min_size = [1280.0, 720.0]
+window_max_size = [2875.0, 1500.0]
+
+[packets.input]
+id = "input"
+direction = "client_to_server"
+
+[packets.input.fields]
+forward = "bool"
+back = "bool"
+right = "bool"
+left = "bool"
+shoot = "bool"
+
+[packets.client_config]
+id = "client_config"
+direction = "client_to_server"
+
+[packets.client_config.fields]
+visible_world_width = "float64"
+visible_world_height = "float64"
+
+[packets.state]
+id = "state"
+direction = "server_to_client"
+
+[packets.state.fields]
+self_id = "string"
+lives = "int"
+players = "map<string,ShipState>"
+bullets = "map<string,BulletState>"
+asteroids = "map<string,AsteroidState>"
+events = "array<EventState>"
+
+[packets.bullet_blast]
+id = "bullet_blast"
+direction = "server_to_client"
+
+[packets.bullet_blast.fields]
+player_id = "string"
+lives = "int"
+respawn_delay = "float64"
+x = "float64"
+y = "float64"
+
+[packets.ship_death]
+id = "ship_death"
+direction = "server_to_client"
+
+[packets.ship_death.fields]
+player_id = "string"
+lives = "int"
+respawn_delay = "float64"
+x = "float64"
+y = "float64"
+
+[packets.respawn]
+id = "respawn"
+direction = "client_to_server"
+
+[packets.pause_player]
+id = "pause_player"
+direction = "client_to_server"
+
+[packets.resume_player]
+id = "resume_player"
+direction = "client_to_server"
+
+[packets.toggle_debug_invincible]
+id = "toggle_debug_invincible"
+direction = "client_to_server"
+
+[packets.toggle_debug_infinite_lives]
+id = "toggle_debug_infinite_lives"
+direction = "client_to_server"
+
+[packets.toggle_debug_freeze_world]
+id = "toggle_debug_freeze_world"
+direction = "client_to_server"

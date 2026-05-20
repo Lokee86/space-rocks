@@ -9,9 +9,9 @@ Space Rocks is an Asteroids-inspired game with:
 - a Godot client in `client/`
 - a Go game server in `services/game-server/`
 - a planned API server in `services/api-server/`
-- shared JSON sources in `shared/`
-- a new TOML data sync tool in `tools/data_sync/`
-- Python generation scripts in `tools/scripts/`
+- shared data sources in `shared/`
+- the active constants sync tool in `tools/data_sync/`
+- packet generation scripts in `tools/scripts/`
 
 The current direction is server-authoritative for gameplay state. The client collects input and renders/interpolates state; the server owns simulation outcomes such as movement, bullets, asteroid collisions, scoring, lives, death, respawn, room state, and pause safety rules.
 
@@ -22,8 +22,8 @@ The project is in active development. Expect rough edges and incomplete UI aroun
 - `client/`: Godot project. Scenes, scripts, assets, audio, shaders, client tools, and generated client constants/packet helpers.
 - `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
 - `services/api-server/`: empty placeholder for a planned API server service for business/backend systems. Intended stack is Node.js/TypeScript with NestJS.
-- `shared/`: JSON source data used by both client and server:
-  - `shared/constants/constants.json`
+- `shared/`: source data used by both client and server:
+  - `shared/game_data.toml` for active constants
   - `shared/packets/packets.json`
   - `shared/collisions/collision_shapes.json`
 - `tools/scripts/`: Python generators and conversion helpers.
@@ -161,28 +161,28 @@ cd services/game-server
 go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
-Regenerate shared constants:
+Validate active shared constants:
 
 ```bash
-python3 tools/scripts/generate_constants.py
+python3 tools/data_sync/main.py -validate -constants
+```
+
+Preview active shared constants:
+
+```bash
+python3 tools/data_sync/main.py -diff -constants -go -gds
+```
+
+Apply active shared constants:
+
+```bash
+python3 tools/data_sync/main.py -push -constants -go -gds
 ```
 
 Regenerate shared packets:
 
 ```bash
 python3 tools/scripts/generate_packets.py
-```
-
-Validate the new TOML data sync source/config:
-
-```bash
-python3 tools/data_sync/main.py -validate
-```
-
-Preview new TOML data sync generated blocks:
-
-```bash
-python3 tools/data_sync/main.py -diff -constants -packets -go -gds -ts
 ```
 
 ## Generated Files
@@ -192,7 +192,7 @@ Do not hand-edit generated files unless there is a specific reason and the sourc
 Constants source:
 
 ```text
-shared/constants/constants.json
+shared/game_data.toml
 ```
 
 Generated outputs:
@@ -201,6 +201,8 @@ Generated outputs:
 client/scripts/constants.gd
 services/game-server/internal/constants/constants.go
 ```
+
+Constants are managed by `tools/data_sync/` using marked `data-sync` blocks. Do not use `tools/scripts/generate_constants.py` for active constants changes.
 
 Packet source:
 
@@ -223,7 +225,7 @@ shared/game_data.toml
 tools/data_sync/
 ```
 
-`shared/game_data.toml` is the planned source of truth for constants and packet definitions during the data pipeline migration. The tool syncs only marked generated blocks and supports:
+`shared/game_data.toml` is active for constants. The `tools/data_sync/` tool syncs only marked generated blocks and supports:
 
 ```text
 -push
@@ -233,16 +235,9 @@ tools/data_sync/
 -validate
 ```
 
-Domains are `-constants` and `-packets`; languages are `-go`, `-gds`, and `-ts`. Full packet schema pull is not supported; edit packet schema in TOML and push out. See `tools/data_sync/README.md` for config format, markers, ownership rules, and migration details.
+The active constants path uses `-constants -go -gds`. Packet sync and TypeScript output are future/deferred in the default config. Full packet schema pull is not supported; edit packet schema in `shared/packets/packets.json` and regenerate with `tools/scripts/generate_packets.py`. See `tools/data_sync/README.md` for config format, markers, ownership rules, and migration details.
 
-One-time JSON to TOML migration:
-
-```bash
-python3 tools/migrations/json_to_toml.py \
-  --constants-input shared/constants/constants.json \
-  --packets-input shared/packets/packets.json \
-  --output shared/game_data.toml
-```
+The one-time JSON to TOML migration has already seeded `shared/game_data.toml`. The old constants JSON source has been retired.
 
 Collision shapes source:
 
@@ -342,7 +337,7 @@ See [docs/server/logging.md](server/logging.md) for usage, examples, field names
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. The current implementation is flat/infinite and `NormalizePosition` is a no-op, but this keeps future wrapped-world support contained.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
 - Keep business/backend API logic out of the Go game server. The planned `services/api-server/` service should own accounts, persistence, matchmaking metadata, leaderboards, and other non-real-time concerns.
-- Use `shared/` JSON plus generators when Go and Godot must agree on constants or packet structures.
+- Use `shared/game_data.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.json` plus `tools/scripts/generate_packets.py` for active packets.
 - Add focused Go tests for server gameplay rules that can regress: collisions, scoring, respawn, spawning, rooms, packet handling, and pause/safety states.
 - Avoid per-tick logs. Prefer logs around state transitions, warnings, and real failures.
 - Be careful with Godot scene diffs. Godot may add `uid` or `unique_id` fields; do not remove unrelated scene changes casually.
@@ -377,9 +372,9 @@ For client runtime flow:
 
 For shared schema/code generation:
 
-- `shared/constants/constants.json`
+- `shared/game_data.toml`
 - `shared/packets/packets.json`
-- `tools/scripts/generate_constants.py`
+- `tools/data_sync/main.py`
 - `tools/scripts/generate_packets.py`
 
 For docs:

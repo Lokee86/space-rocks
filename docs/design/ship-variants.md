@@ -42,7 +42,7 @@ Add stable ship type IDs.
 Possible location:
 
 ```text
-shared/constants/constants.json
+shared/game_data.toml
 ```
 
 Example:
@@ -56,7 +56,7 @@ If ship types grow beyond a few constants, consider a dedicated shared ship conf
 Regenerate constants after changes:
 
 ```bash
-python3 tools/scripts/generate_constants.py
+python3 tools/data_sync/main.py -push -constants -go -gds
 ```
 
 ### 2. Add Ship Type To Server State
