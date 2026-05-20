@@ -11,7 +11,10 @@ from data_sync.cli import DOMAINS, LANGUAGES
 
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.toml"
-DEFAULT_SOT_PATH = "shared/game_data.toml"
+DEFAULT_SOT_PATHS = {
+    "constants": "shared/game_data.toml",
+    "packets": "shared/packets/packets.toml",
+}
 REQUIRED_DOMAIN_KEYS = ("files", "sections", "owns")
 
 
@@ -39,8 +42,14 @@ class DomainLanguageConfig:
 class DataSyncConfig:
     path: Path
     root: Path
-    sot_path: Path
+    sot_paths: Mapping[str, Path]
     targets: Mapping[tuple[str, str], DomainLanguageConfig]
+
+    def sot_path(self, domain: str) -> Path:
+        try:
+            return self.sot_paths[domain]
+        except KeyError as exc:
+            raise ConfigError(f"missing SoT path for domain: {domain}") from exc
 
     def target(self, domain: str, language: str) -> DomainLanguageConfig:
         try:
@@ -68,9 +77,9 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
     raw = _load_toml_file(resolved_config_path)
     root = _resolve_config_root(resolved_config_path)
 
-    sot_value = _read_sot_path(raw)
+    sot_values = _read_sot_paths(raw)
     if sot_override is not None:
-        sot_value = str(sot_override)
+        sot_values = {domain: str(sot_override) for domain in DOMAINS}
 
     targets: dict[tuple[str, str], DomainLanguageConfig] = {}
     for domain in DOMAINS:
@@ -84,7 +93,7 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
     return DataSyncConfig(
         path=resolved_config_path,
         root=root,
-        sot_path=_resolve_path(root, sot_value),
+        sot_paths={domain: _resolve_path(root, value) for domain, value in sot_values.items()},
         targets=targets,
     )
 
@@ -187,16 +196,31 @@ def _find_repo_root(start: Path) -> Path | None:
     return None
 
 
-def _read_sot_path(raw: Mapping[str, Any]) -> str:
+def _read_sot_paths(raw: Mapping[str, Any]) -> dict[str, str]:
     sot_table = raw.get("sot", {})
     if sot_table is None:
-        return DEFAULT_SOT_PATH
+        return dict(DEFAULT_SOT_PATHS)
     if not isinstance(sot_table, Mapping):
         raise ConfigError("[sot] must be a table")
-    value = sot_table.get("path", DEFAULT_SOT_PATH)
-    if not isinstance(value, str) or not value:
-        raise ConfigError("[sot].path must be a non-empty string")
-    return value
+
+    legacy_value = sot_table.get("path")
+    if legacy_value is not None:
+        if not isinstance(legacy_value, str) or not legacy_value:
+            raise ConfigError("[sot].path must be a non-empty string")
+        return {domain: legacy_value for domain in DOMAINS}
+
+    paths: dict[str, str] = {}
+    for domain in DOMAINS:
+        domain_table = sot_table.get(domain, {})
+        if domain_table is None:
+            domain_table = {}
+        if not isinstance(domain_table, Mapping):
+            raise ConfigError(f"[sot.{domain}] must be a table")
+        value = domain_table.get("path", DEFAULT_SOT_PATHS[domain])
+        if not isinstance(value, str) or not value:
+            raise ConfigError(f"[sot.{domain}].path must be a non-empty string")
+        paths[domain] = value
+    return paths
 
 
 def _require_table(raw: Mapping[str, Any], key: str, label: str | None = None) -> Mapping[str, Any]:

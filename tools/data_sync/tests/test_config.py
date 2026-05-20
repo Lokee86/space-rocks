@@ -57,7 +57,8 @@ def test_loads_valid_config(tmp_path: Path) -> None:
 
     assert config.path == config_path.resolve()
     assert config.root == tmp_path.resolve()
-    assert config.sot_path == tmp_path / "shared/game_data.toml"
+    assert config.sot_path("constants") == tmp_path / "shared/game_data.toml"
+    assert config.sot_path("packets") == tmp_path / "shared/game_data.toml"
 
     go_constants = config.target("constants", "go")
     assert go_constants.sections == ("constants.gameplay", "constants.network")
@@ -70,7 +71,30 @@ def test_sot_override(tmp_path: Path) -> None:
 
     config = load_config(config_path, "custom/source.toml")
 
-    assert config.sot_path == tmp_path / "custom/source.toml"
+    assert config.sot_path("constants") == tmp_path / "custom/source.toml"
+    assert config.sot_path("packets") == tmp_path / "custom/source.toml"
+
+
+def test_loads_per_domain_sot_paths(tmp_path: Path) -> None:
+    config_text = valid_config().replace(
+        """
+[sot]
+path = "shared/game_data.toml"
+""".strip(),
+        """
+[sot.constants]
+path = "shared/game_data.toml"
+
+[sot.packets]
+path = "shared/packets/packets.toml"
+""".strip(),
+    )
+    config_path = write_config(tmp_path, config_text)
+
+    config = load_config(config_path)
+
+    assert config.sot_path("constants") == tmp_path / "shared/game_data.toml"
+    assert config.sot_path("packets") == tmp_path / "shared/packets/packets.toml"
 
 
 def test_missing_config_raises_clear_error(tmp_path: Path) -> None:

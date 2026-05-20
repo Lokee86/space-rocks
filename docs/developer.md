@@ -24,7 +24,7 @@ The project is in active development. Expect rough edges and incomplete UI aroun
 - `services/api-server/`: empty placeholder for a planned API server service for business/backend systems. Intended stack is Node.js/TypeScript with NestJS.
 - `shared/`: source data used by both client and server:
   - `shared/game_data.toml` for active constants
-  - `shared/packets/packets.json`
+  - `shared/packets/packets.toml` for active packets
   - `shared/collisions/collision_shapes.json`
 - `tools/scripts/`: Python generators and conversion helpers.
 - `docs/`: Documentation.
@@ -179,10 +179,22 @@ Apply active shared constants:
 python3 tools/data_sync/main.py -push -constants -go -gds
 ```
 
-Regenerate shared packets:
+Validate shared packets:
 
 ```bash
-python3 tools/scripts/generate_packets.py
+python3 tools/data_sync/main.py -validate -packets
+```
+
+Preview shared packet generation:
+
+```bash
+python3 tools/data_sync/main.py -diff -packets -go -gds
+```
+
+Apply shared packets:
+
+```bash
+python3 tools/data_sync/main.py -push -packets -go -gds
 ```
 
 ## Generated Files
@@ -207,7 +219,7 @@ Constants are managed by `tools/data_sync/` using marked `data-sync` blocks. Do 
 Packet source:
 
 ```text
-shared/packets/packets.json
+shared/packets/packets.toml
 ```
 
 Generated outputs:
@@ -218,14 +230,21 @@ services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
 ```
 
-New TOML data sync path:
+TOML data sync paths:
 
 ```text
 shared/game_data.toml
+shared/packets/packets.toml
 tools/data_sync/
 ```
 
-`shared/game_data.toml` is active for constants. The `tools/data_sync/` tool syncs only marked generated blocks and supports:
+`shared/game_data.toml` is active for constants. `shared/packets/packets.toml` is active for packets.
+
+The packet TOML schema preserves the old rich JSON behavior: outputs, structs, packet_types, builders, imports, Go package mappings, GDScript builders, arrays/maps, custom struct references, Go type overrides, and rich type strings such as `map<string,ShipState>` and `array<EventState>`.
+
+`shared/game_data.toml` contains constants only. Obsolete packet reference sections were removed when the packet TOML pipeline was adopted.
+
+The `tools/data_sync/` tool supports:
 
 ```text
 -push
@@ -235,9 +254,9 @@ tools/data_sync/
 -validate
 ```
 
-The active constants path uses `-constants -go -gds`. Packet sync and TypeScript output are future/deferred in the default config. Full packet schema pull is not supported; edit packet schema in `shared/packets/packets.json` and regenerate with `tools/scripts/generate_packets.py`. See `tools/data_sync/README.md` for config format, markers, ownership rules, and migration details.
+The active constants path uses `-constants -go -gds`. The active packet path uses `-packets -go -gds`. TypeScript output is future/deferred. Full packet schema pull is not supported; edit packet schema in `shared/packets/packets.toml` and push from TOML. See `tools/data_sync/README.md` for config format, markers, ownership rules, and migration details.
 
-The one-time JSON to TOML migration has already seeded `shared/game_data.toml`. The old constants JSON source has been retired.
+The one-time JSON to TOML migrations seeded `shared/game_data.toml` and `shared/packets/packets.toml`. The old constants and packet JSON sources have been retired.
 
 Collision shapes source:
 
@@ -337,7 +356,7 @@ See [docs/server/logging.md](server/logging.md) for usage, examples, field names
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. The current implementation is flat/infinite and `NormalizePosition` is a no-op, but this keeps future wrapped-world support contained.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
 - Keep business/backend API logic out of the Go game server. The planned `services/api-server/` service should own accounts, persistence, matchmaking metadata, leaderboards, and other non-real-time concerns.
-- Use `shared/game_data.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.json` plus `tools/scripts/generate_packets.py` for active packets.
+- Use `shared/game_data.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets.
 - Add focused Go tests for server gameplay rules that can regress: collisions, scoring, respawn, spawning, rooms, packet handling, and pause/safety states.
 - Avoid per-tick logs. Prefer logs around state transitions, warnings, and real failures.
 - Be careful with Godot scene diffs. Godot may add `uid` or `unique_id` fields; do not remove unrelated scene changes casually.
@@ -373,9 +392,8 @@ For client runtime flow:
 For shared schema/code generation:
 
 - `shared/game_data.toml`
-- `shared/packets/packets.json`
+- `shared/packets/packets.toml`
 - `tools/data_sync/main.py`
-- `tools/scripts/generate_packets.py`
 
 For docs:
 

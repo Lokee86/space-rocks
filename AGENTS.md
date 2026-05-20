@@ -122,10 +122,22 @@ Apply active shared constants:
 python3 tools/data_sync/main.py -push -constants -go -gds
 ```
 
-Regenerate shared packets:
+Validate shared packets:
 
 ```bash
-python3 tools/scripts/generate_packets.py
+python3 tools/data_sync/main.py -validate -packets
+```
+
+Preview shared packets:
+
+```bash
+python3 tools/data_sync/main.py -diff -packets -go -gds
+```
+
+Apply shared packets:
+
+```bash
+python3 tools/data_sync/main.py -push -packets -go -gds
 ```
 
 Open the Godot project by opening/importing:
@@ -162,7 +174,7 @@ Constants are managed by `tools/data_sync/` using `data-sync` blocks. Do not use
 Packet source of truth:
 
 ```text
-shared/packets/packets.json
+shared/packets/packets.toml
 ```
 
 Generated packets:
@@ -189,13 +201,15 @@ Data sync tool:
 
 ```text
 shared/game_data.toml
+shared/packets/packets.toml
 tools/data_sync/
-tools/migrations/json_to_toml.py
 ```
 
-`shared/game_data.toml` is active for constants. The packet sections inside it are migrated reference data only for now; packet JSON remains the active packet source. TypeScript output is future/deferred until the API service exists.
+`shared/game_data.toml` is active for constants. `shared/packets/packets.toml` is active for packets. TypeScript output is future/deferred until the API service exists.
 
-Packet pull is intentionally unsupported. Packet schema changes should still be made in `shared/packets/packets.json` and regenerated with `tools/scripts/generate_packets.py`.
+The packet TOML schema preserves outputs, structs, packet_types, builders, imports, Go package mappings, GDScript builders, arrays/maps/custom struct refs, and rich type strings such as `map<string,ShipState>` and `array<EventState>`. `shared/game_data.toml` should contain constants only; obsolete packet reference data was removed when the packet TOML pipeline was adopted.
+
+Packet pull is intentionally unsupported. Packet schema changes should be made in `shared/packets/packets.toml` and pushed with `tools/data_sync`.
 
 ## Logging
 
@@ -233,7 +247,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Keep websocket and room transport in `services/game-server/internal/networking`.
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
-- Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants. Use `shared/packets/packets.json` plus `tools/scripts/generate_packets.py` for active packets. TypeScript output is future/deferred.
+- Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is flat/infinite today, but exists to contain future wrapped-world support.
 - Add focused Go tests for server gameplay rules that can regress.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
@@ -269,11 +283,9 @@ Client runtime:
 Shared schema/generation:
 
 - `shared/game_data.toml`
-- `shared/packets/packets.json`
+- `shared/packets/packets.toml`
 - `tools/data_sync/README.md`
 - `tools/data_sync/main.py`
-- `tools/scripts/generate_packets.py`
-- `tools/migrations/json_to_toml.py`
 
 ## Critical Current Context
 

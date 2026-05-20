@@ -1,5 +1,8 @@
-[sot]
+[sot.constants]
 path = "shared/game_data.toml"
+
+[sot.packets]
+path = "shared/packets/packets.toml"
 
 [constants.go]
 files = ["services/game-server/internal/constants/constants.go"]
@@ -42,15 +45,16 @@ sections = []
 owns = []
 
 [packets.go]
-enabled = false
-files = []
-sections = []
+files = [
+  "services/game-server/internal/game/entities/packets_generated.go",
+  "services/game-server/internal/game/packets.go",
+]
+sections = ["packets"]
 owns = []
 
 [packets.gds]
-enabled = false
-files = []
-sections = []
+files = ["client/scripts/packets.gd"]
+sections = ["packets"]
 owns = []
 
 [packets.ts]

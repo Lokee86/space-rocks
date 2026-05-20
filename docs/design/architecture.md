@@ -186,7 +186,7 @@ The current runtime data flow is:
 Shared packet structures are sourced from:
 
 ```text
-shared/packets/packets.json
+shared/packets/packets.toml
 ```
 
 Generated packet files include:

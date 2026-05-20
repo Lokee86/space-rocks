@@ -13,7 +13,7 @@ Expect incomplete docs and rough edges while systems are still moving.
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go game server module. The current game server entrypoint is `services/game-server/cmd/game-server`.
 - `services/api-server/`: empty placeholder for a planned API server service for business/backend concerns. It is intended to be separate from real-time game simulation.
-- `shared/`: sources shared by client/server generation, including TOML constants, JSON packets, and collision shape data.
+- `shared/`: sources shared by client/server generation, including TOML constants, TOML packets, and collision shape data.
 - `docs/`: Project documentation, including architecture, developer workflow, API plans, devtools, notes, and server logging docs.
 - `tools/`: Python tools for syncing shared constants and generating packet code.
 
@@ -86,10 +86,22 @@ Apply shared constants:
 python3 tools/data_sync/main.py -push -constants -go -gds
 ```
 
-Regenerate shared packets:
+Validate shared packets:
 
 ```bash
-python3 tools/scripts/generate_packets.py
+python3 tools/data_sync/main.py -validate -packets
+```
+
+Preview shared packets:
+
+```bash
+python3 tools/data_sync/main.py -diff -packets -go -gds
+```
+
+Apply shared packets:
+
+```bash
+python3 tools/data_sync/main.py -push -packets -go -gds
 ```
 
 ## Documentation

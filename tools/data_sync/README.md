@@ -3,32 +3,37 @@
 `tools/data_sync/` is a reusable Python CLI for syncing shared game data between:
 
 - TOML source of truth for active constants: `shared/game_data.toml`
+- TOML source of truth for active packets: `shared/packets/packets.toml`
 - Go game server files
 - GDScript Godot client files
 - TypeScript API server files, later
 
-The tool updates only marked generated blocks. It never rewrites whole source files.
+For constants, the tool updates only marked generated blocks. For packet files,
+the current generated outputs are fully generated files, so packet push rewrites
+the configured packet files as whole files.
 
 Current active scope:
 
 ```text
 constants -> Go and GDScript
+packets -> Go and GDScript
 ```
 
 Deferred scope:
 
 ```text
-packets -> Go/GDScript
 TypeScript output
 ```
 
 ## Source Of Truth
 
-`shared/game_data.toml` is the canonical source for active constants. It also contains packet data copied during migration for future work, but packet sync is disabled in the default config. TOML is used because it is readable for hand-edited values, supports ordered sections, and can preserve practical round-trip formatting through `tomlkit`.
+`shared/game_data.toml` is the canonical source for active constants.
 
-New constants should be made in TOML. Language files are generated from TOML through `-push`.
+`shared/packets/packets.toml` is the canonical source for active packets.
 
-Packet schema changes should still be made in `shared/packets/packets.json` and regenerated with `tools/scripts/generate_packets.py`.
+`shared/game_data.toml` contains constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet changes should be made in `shared/packets/packets.toml`.
+
+New constants and packet schema changes should be made in TOML. Language files are generated from TOML through `-push`.
 
 ## Commands
 
@@ -72,6 +77,10 @@ python tools/data_sync/main.py -push -constants -go -gds
 python tools/data_sync/main.py -pull -constants -go
 python tools/data_sync/main.py -diff -constants -go -gds
 python tools/data_sync/main.py -check -constants -go -gds
+python tools/data_sync/main.py -validate -packets
+python tools/data_sync/main.py -diff -packets -go -gds
+python tools/data_sync/main.py -push -packets -go -gds
+python tools/data_sync/main.py -check -packets -go -gds
 python tools/data_sync/main.py -validate
 python tools/data_sync/main.py -validate -constants
 ```
@@ -80,7 +89,7 @@ python tools/data_sync/main.py -validate -constants
 
 ## Operation Behavior
 
-`-push` reads TOML, generates canonical language output, and replaces configured `data-sync` blocks.
+`-push` reads TOML and generates canonical language output. Constants replace configured `data-sync` blocks. Packets rewrite configured generated packet files.
 
 `-diff` does the same generation as `-push`, prints a unified diff, and writes nothing.
 
@@ -90,7 +99,7 @@ python tools/data_sync/main.py -validate -constants
 
 `-pull` is intentionally restricted. Constants pull reads owned generated blocks and updates existing TOML values only.
 
-Packet sync and TypeScript output are disabled in the default config.
+TypeScript output is disabled in the default config.
 
 ## Config Format
 
@@ -103,8 +112,11 @@ tools/data_sync/config.toml
 Shape:
 
 ```toml
-[sot]
+[sot.constants]
 path = "shared/game_data.toml"
+
+[sot.packets]
+path = "shared/packets/packets.toml"
 
 [constants.go]
 files = ["services/game-server/internal/game/constants.go"]
@@ -123,11 +135,20 @@ sections = []
 owns = []
 
 [packets.go]
-enabled = false
-files = []
-sections = []
+files = [
+  "services/game-server/internal/game/entities/packets_generated.go",
+  "services/game-server/internal/game/packets.go",
+]
+sections = ["packets"]
+owns = []
+
+[packets.gds]
+files = ["client/scripts/packets.gd"]
+sections = ["packets"]
 owns = []
 ```
+
+Constants and packets have separate SoT paths. `-constants` commands read/write only the constants SoT, and `-packets` commands read/write only the packet SoT.
 
 `sections` controls what a language receives during `-push`, `-diff`, and `-check`.
 
@@ -153,34 +174,63 @@ max_players_per_room = 2
 Packets:
 
 ```toml
-[packets.player_input]
-id = 100
-direction = "client_to_server"
+[[outputs]]
+language = "go"
+path = "services/game-server/internal/game/packets.go"
+package = "game"
+packet_types = true
+structs = ["ClientPacket", "EventState", "StatePacket"]
 
-[packets.player_input.fields]
-sequence = "uint32"
-turn = "float32"
-thrust = "bool"
-shoot = "bool"
+[outputs.imports]
+entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
+
+[[structs]]
+id = "StatePacket"
+
+[[structs.fields]]
+name = "players"
+json = "players"
+type = "map"
+key_type = "string"
+value_type = "ShipState"
+go_value_type = "entities.ShipState"
+
+[[structs.fields]]
+name = "events"
+json = "events"
+type = "array"
+item_type = "EventState"
+
+[[packet_types]]
+id = "state"
+value = "state"
+
+[[builders]]
+id = "input_packet"
+args = ["forward", "back", "right", "left", "shoot"]
+
+[builders.body]
+type = "input"
 ```
 
-Packet directions:
+The packet schema preserves the old rich JSON behavior:
 
 ```text
-client_to_server
-server_to_client
-bidirectional
+outputs       generated file targets, language, package/base, imports, selected structs/builders
+structs       Go/GDScript packet/state shapes and field metadata
+packet_types  packet type constant names and values
+builders      GDScript packet builder functions and argument references
 ```
 
-Supported packet field types:
+Supported field shapes include primitives, arrays, maps, custom struct references, Go type overrides, and rich type strings where needed:
 
 ```text
 bool
 int
-uint32
-float32
-float64
+float
 string
+map<string,ShipState>
+array<EventState>
 ```
 
 ## Generated Blocks
@@ -195,11 +245,13 @@ Go and TypeScript markers:
 GDScript markers:
 
 ```gdscript
-# data-sync:start packets
-# data-sync:end packets
+# data-sync:start constants.client.presentation
+# data-sync:end constants.client.presentation
 ```
 
-Only content between matching markers is replaced. Missing or duplicate markers are hard failures.
+Only content between matching markers is replaced for constants. Missing or duplicate markers are hard failures.
+
+Packet files are fully generated outputs and do not require data-sync block markers.
 
 ## Formatting Policy
 
@@ -209,18 +261,19 @@ For pull, parsers are strict and accept only canonical generated constants. Adde
 
 ## Packet Pull Policy
 
-Full packet schema pull is not supported. Packet schema changes should be edited in `shared/packets/packets.json`, then regenerated through the existing packet generator.
+Full packet schema pull is not supported. Packet schema changes should be edited in `shared/packets/packets.toml`, then pushed from TOML.
 
 `-pull -packets ...` returns a clear refusal instead of attempting fragile packet parsing.
 
 ## JSON Migration
 
-A disposable migration script seeded the TOML source from the old JSON constants source and the active packet JSON source. The old constants JSON source has been retired, so the script is kept only as historical migration scaffolding.
+Disposable migration scripts seeded TOML from the old JSON sources. The old constants and packet JSON sources have been retired.
 
-The migration produced:
+The active TOML sources are:
 
 ```text
 shared/game_data.toml
+shared/packets/packets.toml
 ```
 
 ## Active Constants Workflow
@@ -230,3 +283,12 @@ shared/game_data.toml
 3. Run `python tools/data_sync/main.py -diff -constants -go -gds`.
 4. Run `python tools/data_sync/main.py -push -constants -go -gds`.
 5. Run `python tools/data_sync/main.py -check -constants -go -gds`.
+
+## Active Packet Workflow
+
+1. Edit `shared/packets/packets.toml`.
+2. Run `python tools/data_sync/main.py -validate -packets`.
+3. Run `python tools/data_sync/main.py -diff -packets -go -gds`.
+4. Review the diff.
+5. Run `python tools/data_sync/main.py -push -packets -go -gds`.
+6. Run `python tools/data_sync/main.py -check -packets -go -gds`.

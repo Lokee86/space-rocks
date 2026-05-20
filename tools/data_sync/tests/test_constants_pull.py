@@ -149,10 +149,12 @@ const WelcomeText = "hi"
     assert run(["-pull", "-constants", "-go", "-config", str(config_path)]) == 1
 
 
-def test_packet_pull_is_refused(tmp_path: Path) -> None:
+def test_packet_pull_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     config_path = write_pull_project(tmp_path)
 
     assert run(["-pull", "-packets", "-go", "-config", str(config_path)]) == 2
+    captured = capsys.readouterr()
+    assert "Packet pull is not supported. Edit shared/packets/packets.toml directly." in captured.err
 
 
 def test_pull_does_not_rewrite_language_file(tmp_path: Path) -> None:

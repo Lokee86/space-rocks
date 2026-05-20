@@ -76,7 +76,7 @@ Note: `tools/data_sync/` updates only marked `data-sync` blocks. Do not use the 
 
 ### Shared Packets
 
-`shared/packets/packets.json` is the source of truth for packet constants, Go structs, and GDScript packet builders.
+`shared/packets/packets.toml` is the active source of truth for packet constants, Go structs, and GDScript packet builders.
 
 Generated outputs:
 
@@ -84,39 +84,45 @@ Generated outputs:
 - `services/game-server/internal/game/entities/packets_generated.go`
 - `client/scripts/packets.gd`
 
+The packet TOML schema preserves the old rich JSON behavior:
+
+- `outputs`: generated file targets, Go package mapping, imports, base class, and selected structs/builders
+- `structs`: packet/state structs and field metadata
+- `packet_types`: generated packet type constants
+- `builders`: GDScript packet builder functions and `$arg` references
+- arrays/maps/custom struct refs and overrides such as `go_type`, `go_item_type`, and `go_value_type`
+- rich type strings such as `map<string,ShipState>` and `array<EventState>`
+
+`shared/game_data.toml` contains constants only. Obsolete packet reference sections were removed when the packet TOML pipeline was adopted; packet schema edits belong in `shared/packets/packets.toml`.
+
 Recent packet additions:
 
 - `pause_player`
 - `resume_player`
 
-### Data Sync Constants Pipeline
+### Data Sync Pipeline
 
-A TOML-based sync tool is active for constants:
+A TOML-based sync tool is active for constants and packets:
 
 ```text
 tools/data_sync/
 ```
 
-The active constants source of truth is:
+The active sources of truth are:
 
 ```text
 shared/game_data.toml
+shared/packets/packets.toml
 ```
 
-The tool supports `-push`, `-pull`, `-diff`, `-check`, and `-validate`. The active path is `-constants -go -gds`. Packet sync and TypeScript output are future/deferred.
+The tool supports `-push`, `-pull`, `-diff`, `-check`, and `-validate`. The active paths are `-constants -go -gds` and `-packets -go -gds`. TypeScript output is future/deferred.
 
 Output filtering is controlled by `tools/data_sync/config.toml`:
 
 - `sections`: TOML sections a language receives during push/diff/check.
 - `owns`: TOML sections a language may update during pull.
 
-Constants pull is strict and updates existing owned values only. Full packet schema pull is intentionally unsupported; packet schema should still be edited in `shared/packets/packets.json`.
-
-The disposable migration script is:
-
-```text
-tools/migrations/json_to_toml.py
-```
+Constants pull is strict and updates existing owned values only. Full packet schema pull is intentionally unsupported; packet schema should be edited directly in `shared/packets/packets.toml`.
 
 Current constants workflow:
 
@@ -125,6 +131,15 @@ Current constants workflow:
 3. Preview with `python3 tools/data_sync/main.py -diff -constants -go -gds`.
 4. Apply with `python3 tools/data_sync/main.py -push -constants -go -gds`.
 5. Check with `python3 tools/data_sync/main.py -check -constants -go -gds`.
+
+Current packet workflow:
+
+1. Edit `shared/packets/packets.toml`.
+2. Validate with `python3 tools/data_sync/main.py -validate -packets`.
+3. Preview with `python3 tools/data_sync/main.py -diff -packets -go -gds`.
+4. Review the diff.
+5. Apply with `python3 tools/data_sync/main.py -push -packets -go -gds`.
+6. Check with `python3 tools/data_sync/main.py -check -packets -go -gds`.
 
 ### Server Rooms
 
@@ -199,7 +214,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Network transport belongs in `services/game-server/internal/networking`, not `cmd/game-server/main.go`.
 - Business/API concerns belong in the planned `services/api-server/` service, not in the Go game server.
 - Room state owns a separate `*game.Game` per room.
-- Shared constants/packets should be generated, not copied by hand. Constants use `shared/game_data.toml` and `tools/data_sync/`; packets still use `shared/packets/packets.json` and `tools/scripts/generate_packets.py`.
+- Shared constants/packets should be generated, not copied by hand. Constants use `shared/game_data.toml` and `tools/data_sync/`; packets use `shared/packets/packets.toml` and `tools/data_sync/`.
 - Collision shapes are shared through JSON and used by the server physics package.
 - Score, lives, respawn, and collision outcomes should not be duplicated as authoritative client logic.
 - Normal lifecycle logs should usually be debug-level; warnings/errors should be reserved for unusual or failed behavior.
@@ -235,9 +250,6 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Enemy and pickup systems integrated with the scoring framework.
 - More robust client prediction/reconciliation if networking latency becomes visible.
 - Better tooling around collision shape generation and validation.
-- More formal docs around packet/schema generation if shared protocol grows.
-- Split `shared/game_data.toml` into separate constants and packets TOML SoTs later if/when desired.
-- Plan a separate packet TOML migration that preserves the current richer packet generator behavior.
 - Invisible toroidal world wrapping to keep multiplayer players in one arena while preserving endless-feeling flight.
 - Ship type variants with server-selected collision maps and client scene mapping.
 
@@ -248,7 +260,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Window/viewport sizing: raw window pixel limits are not reliable across monitors, DPI, title bars, taskbars, and Godot editor/debug behavior.
 - Godot scene diffs: editor upgrades can add `uid`/`unique_id`/offset changes. Inspect scene diffs carefully before reverting.
 - Collision shape freshness: server physics depends on shared JSON. Ensure client scene collision changes are reflected in shared collision data.
-- Generated files: modifying generated files without changing the JSON source will be overwritten.
+- Generated files: modifying generated files without changing the TOML source will be overwritten.
 - Room cleanup/reconnect timing: room cleanup exists with grace time, but reconnect flows should be tested when multiplayer UX grows.
 - Audio positioning: some sounds are 2D and can be inaudible if attached to the wrong world-space node. Past fixes moved sounds to player/effect-local nodes.
 
@@ -270,7 +282,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Always inspect current files first. The project has been refactored often, and stale assumptions are easy.
 - Prefer small, reversible changes. The user is sensitive to unnecessary code growth and wants scalable structure without bloat.
 - When asked to “answer” or “report,” do not edit files.
-- When changing generated constants, edit `shared/game_data.toml` and run `tools/data_sync`. When changing packets, edit `shared/packets/packets.json` and run `tools/scripts/generate_packets.py`.
+- When changing generated constants, edit `shared/game_data.toml` and run `tools/data_sync`. When changing packets, edit `shared/packets/packets.toml` and run `tools/data_sync`.
 - When changing server gameplay rules, add or update focused Go tests under `services/game-server/tests/<area>/`.
 - Do not add new Go server `*_test.go` files beside production packages under `services/game-server/internal/`.
 - New server gameplay distance/position logic should go through `services/game-server/internal/game/space`; it is flat/infinite today, with no-op normalization, but keeps future wrapped-world work localized.

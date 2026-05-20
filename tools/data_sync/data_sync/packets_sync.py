@@ -1,51 +1,56 @@
-"""Packet push/diff/check support."""
+"""Packet diff/check support for rich TOML packet schemas."""
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Callable
 
-from data_sync.block_io import BlockIOError, replace_block
 from data_sync.config import DataSyncConfig, DomainLanguageConfig
 from data_sync.constants_sync import FileUpdate
-from data_sync.generators import gds_packets, go_packets, ts_packets
-from data_sync.model.packets import PacketDefinition
-from data_sync.toml_store import TomlStore
+from data_sync.generators.rich_gds_packets import (
+    RichGdsPacketGenerationError,
+    render_gdscript_output,
+)
+from data_sync.generators.rich_go_packets import RichGoPacketGenerationError, render_go_output
+from data_sync.model.packets import PacketOutput, PacketSchema
 
 
 class PacketsSyncError(Exception):
     """Raised when packet sync cannot complete."""
 
 
-Generator = Callable[[str, tuple[PacketDefinition, ...]], str]
+Renderer = Callable[[PacketSchema, PacketOutput], str]
 
 
-GENERATORS: dict[str, Generator] = {
-    "go": go_packets.generate_packets,
-    "gds": gds_packets.generate_packets,
-    "ts": ts_packets.generate_packets,
+RENDERERS: dict[str, Renderer] = {
+    "go": render_go_output,
+    "gds": render_gdscript_output,
 }
 
 
 def plan_packets_updates(
     config: DataSyncConfig,
-    store: TomlStore,
+    schema: PacketSchema,
     languages: tuple[str, ...],
 ) -> tuple[FileUpdate, ...]:
     updates: list[FileUpdate] = []
     for language in languages:
         target = config.target("packets", language)
-        updates.extend(_plan_target_updates(store, target))
+        updates.extend(_plan_target_updates(config, schema, target))
     return tuple(updates)
 
 
-def _plan_target_updates(store: TomlStore, target: DomainLanguageConfig) -> tuple[FileUpdate, ...]:
-    generator = GENERATORS.get(target.language)
-    if generator is None:
-        raise PacketsSyncError(f"unsupported packets language: {target.language}")
+def _plan_target_updates(
+    config: DataSyncConfig,
+    schema: PacketSchema,
+    target: DomainLanguageConfig,
+) -> tuple[FileUpdate, ...]:
     if not target.enabled:
         raise PacketsSyncError(f"[packets.{target.language}] is disabled in config")
+    renderer = RENDERERS.get(target.language)
+    if renderer is None:
+        raise PacketsSyncError(f"unsupported packets language: {target.language}")
 
-    packets = store.packets()
     updates: list[FileUpdate] = []
     for path in target.files:
         try:
@@ -55,15 +60,21 @@ def _plan_target_updates(store: TomlStore, target: DomainLanguageConfig) -> tupl
         except OSError as exc:
             raise PacketsSyncError(f"failed to read packets file {path}: {exc}") from exc
 
-        updated = text
-        for section_name in target.sections:
-            if section_name != "packets":
-                raise PacketsSyncError(f"unsupported packets section: {section_name}")
-            generated = generator(section_name, packets)
-            try:
-                updated = replace_block(updated, section_name, generated)
-            except BlockIOError as exc:
-                raise PacketsSyncError(f"{path}: {exc}") from exc
+        output_path = _relative_output_path(config, path)
+        try:
+            output = schema.output_for_path(output_path)
+            generated = renderer(schema, output)
+        except KeyError as exc:
+            raise PacketsSyncError(f"packet TOML has no output for configured file: {output_path}") from exc
+        except (RichGoPacketGenerationError, RichGdsPacketGenerationError) as exc:
+            raise PacketsSyncError(str(exc)) from exc
 
-        updates.append(FileUpdate(path=path, before=text, after=updated))
+        updates.append(FileUpdate(path=path, before=text, after=generated))
     return tuple(updates)
+
+
+def _relative_output_path(config: DataSyncConfig, path: Path) -> str:
+    try:
+        return path.resolve().relative_to(config.root).as_posix()
+    except ValueError:
+        return path.as_posix()

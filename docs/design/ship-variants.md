@@ -30,7 +30,7 @@ services/game-server/internal/game/entities/ship.go
 services/game-server/internal/game/physics/collision_shapes.go
 shared/collisions/collision_shapes.json
 client/scripts/world_sync.gd
-shared/packets/packets.json
+shared/packets/packets.toml
 ```
 
 ## Execution Plan
@@ -81,7 +81,7 @@ New sessions should default to the current ship type.
 Update:
 
 ```text
-shared/packets/packets.json
+shared/packets/packets.toml
 ```
 
 Add `ship_type` to `ShipState`.
@@ -89,7 +89,7 @@ Add `ship_type` to `ShipState`.
 Regenerate packets:
 
 ```bash
-python3 tools/scripts/generate_packets.py
+python3 tools/data_sync/main.py -push -packets -go -gds
 ```
 
 Generated outputs:

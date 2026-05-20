@@ -6,9 +6,10 @@ from __future__ import annotations
 import sys
 
 from data_sync.cli import parse_args
-from data_sync.config import ConfigError, load_config
+from data_sync.config import ConfigError, DataSyncConfig, load_config
 from data_sync.constants_sync import ConstantsSyncError, apply_updates, plan_constants_updates, unified_diff
 from data_sync.packets_sync import PacketsSyncError, plan_packets_updates
+from data_sync.packet_toml import PacketTomlError, load_packet_schema
 from data_sync.pull import PullError, pull_constants
 from data_sync.toml_store import TomlStore, TomlStoreError
 from data_sync.validate import ValidationError, validate
@@ -36,12 +37,12 @@ def run(argv: list[str] | None = None) -> int:
     if args.operation == "pull":
         if "packets" in args.domains:
             print(
-                "pull error: packet pull is not supported yet; edit packet schema in the TOML SoT",
+                "pull error: Packet pull is not supported. Edit shared/packets/packets.toml directly.",
                 file=sys.stderr,
             )
             return 2
         try:
-            store = TomlStore.load(config.sot_path)
+            store = TomlStore.load(config.sot_path("constants"))
             pull_constants(config, store, args.languages[0])
             store.write()
         except (PullError, TomlStoreError) as exc:
@@ -50,13 +51,15 @@ def run(argv: list[str] | None = None) -> int:
         return 0
 
     try:
-        store = TomlStore.load(config.sot_path)
         updates = []
         if "constants" in args.domains:
-            updates.extend(plan_constants_updates(config, store, args.languages))
+            constants_store = TomlStore.load(config.sot_path("constants"))
+            updates.extend(plan_constants_updates(config, constants_store, args.languages))
         if "packets" in args.domains:
-            updates.extend(plan_packets_updates(config, store, args.languages))
-    except (ConstantsSyncError, PacketsSyncError, TomlStoreError) as exc:
+            _ensure_enabled_packet_targets(config, args.languages)
+            packet_schema = load_packet_schema(config.sot_path("packets"))
+            updates.extend(plan_packets_updates(config, packet_schema, args.languages))
+    except (ConstantsSyncError, PacketsSyncError, PacketTomlError, TomlStoreError) as exc:
         print(f"{args.operation} error: {exc}", file=sys.stderr)
         return 1
 
@@ -79,6 +82,13 @@ def run(argv: list[str] | None = None) -> int:
 
     print(f"{args.operation}: not implemented yet", file=sys.stderr)
     return 2
+
+
+def _ensure_enabled_packet_targets(config: DataSyncConfig, languages: tuple[str, ...]) -> None:
+    for language in languages:
+        target = config.target("packets", language)
+        if not target.enabled:
+            raise PacketsSyncError(f"[packets.{language}] is disabled in config")
 
 
 def main() -> None:

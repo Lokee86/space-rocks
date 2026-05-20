@@ -74,7 +74,7 @@ services/game-server/internal/game/entities/state.go
 The packet source of truth is:
 
 ```text
-shared/packets/packets.json
+shared/packets/packets.toml
 ```
 
 Generated packet files include:
