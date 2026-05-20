@@ -1,6 +1,9 @@
 package entities
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import (
+	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+)
 
 func NewAsteroid(id string, position physics.Vector2, velocity physics.Vector2, size int, variant int) *Asteroid {
 	return &Asteroid{
@@ -19,6 +22,7 @@ func (asteroid *Asteroid) State() AsteroidState {
 		X:       asteroid.X,
 		Y:       asteroid.Y,
 		Size:    asteroid.Size,
+		Scale:   float64(asteroid.Size) * constants.AsteroidSizeScale,
 		Variant: asteroid.Variant,
 	}
 }

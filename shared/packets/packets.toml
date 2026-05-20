@@ -145,6 +145,11 @@ json = "size"
 type = "int"
 
 [[structs.fields]]
+name = "scale"
+json = "scale"
+type = "float"
+
+[[structs.fields]]
 name = "variant"
 json = "variant"
 type = "int"

@@ -1,8 +1,6 @@
 extends RefCounted
 class_name HudController
 
-const Constants = preload("res://scripts/constants/constants.gd")
-
 var score_label: Label
 var lives_label: Label
 var death_overlay: Control
@@ -32,7 +30,7 @@ func configure(scene: Node) -> void:
 		respawn_timer_template = respawn_timer_label.text
 
 	set_score(0)
-	set_lives(Constants.PLAYER_STARTING_LIVES)
+	set_lives(0)
 	set_room_id("")
 	set_alive()
 

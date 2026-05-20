@@ -22,6 +22,7 @@ var asteroid_nodes := {}
 var initialized_players := {}
 var initialized_bullets := {}
 var initialized_asteroids := {}
+var warned_missing_asteroid_scale := {}
 var target_player_positions := {}
 var target_player_rotations := {}
 var target_bullet_positions := {}
@@ -204,12 +205,24 @@ func _apply_asteroids(server_asteroids: Dictionary) -> void:
 		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
 
 		target_asteroid_positions[asteroid_id] = server_position
+		_apply_asteroid_scale(asteroid_id, asteroid_node, state)
 
 		if !initialized_asteroids.has(asteroid_id):
 			initialized_asteroids[asteroid_id] = true
 			asteroid_node.global_position = server_position
-			asteroid_node.scale = Vector2.ONE * float(state[Packets.FIELD_SIZE]) * Constants.ASTEROID_SIZE_SCALE
 			asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
+
+
+func _apply_asteroid_scale(asteroid_id: String, asteroid_node: Node2D, state: Dictionary) -> void:
+	if state.has(Packets.FIELD_SCALE):
+		asteroid_node.scale = Vector2.ONE * float(state[Packets.FIELD_SCALE])
+		return
+
+	if warned_missing_asteroid_scale.has(asteroid_id):
+		return
+
+	warned_missing_asteroid_scale[asteroid_id] = true
+	push_warning("Asteroid state missing scale for %s" % asteroid_id)
 
 
 func _get_asteroid_node(asteroid_id):
@@ -231,4 +244,5 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 		asteroid_nodes[asteroid_id].queue_free()
 		asteroid_nodes.erase(asteroid_id)
 		initialized_asteroids.erase(asteroid_id)
+		warned_missing_asteroid_scale.erase(asteroid_id)
 		target_asteroid_positions.erase(asteroid_id)

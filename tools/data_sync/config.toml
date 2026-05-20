@@ -32,9 +32,7 @@ owns = [
 [constants.gds]
 files = ["client/scripts/constants/constants.gd"]
 sections = [
-  "constants.shared.player_state",
   "constants.client.presentation",
-  "constants.shared.asteroid_visual",
 ]
 owns = ["constants.client.presentation"]
 

@@ -74,6 +74,8 @@ Recent additions include:
 
 Note: `tools/data_sync/` updates only marked `data-sync` blocks. Do not use the old `tools/scripts/generate_constants.py` path for active constants changes.
 
+Boundary note: `player_starting_lives`, `player_respawn_delay`, and `asteroid_size_scale` are server-owned. They remain in `shared/game_data.toml` for Go generation, but are filtered out of client constants output. The client should receive lives through player/state data, respawn delay through death events, and asteroid scale through asteroid state instead of importing those constants.
+
 ### Shared Packets
 
 `shared/packets/packets.toml` is the active source of truth for packet constants, Go structs, and GDScript packet builders.
@@ -214,7 +216,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Network transport belongs in `services/game-server/internal/networking`, not `cmd/game-server/main.go`.
 - Business/API concerns belong in the planned `services/api-server/` service, not in the Go game server.
 - Room state owns a separate `*game.Game` per room.
-- Shared constants/packets should be generated, not copied by hand. Constants use `shared/game_data.toml` and `tools/data_sync/`; packets use `shared/packets/packets.toml` and `tools/data_sync/`.
+- Shared constants/packets should be generated, not copied by hand. Constants use `shared/game_data.toml` and `tools/data_sync/`; packets use `shared/packets/packets.toml` and `tools/data_sync/`. Output filtering may keep server-owned constants out of client generated files even when they remain in the constants source of truth.
 - Collision shapes are shared through JSON and used by the server physics package.
 - Score, lives, respawn, and collision outcomes should not be duplicated as authoritative client logic.
 - Normal lifecycle logs should usually be debug-level; warnings/errors should be reserved for unusual or failed behavior.

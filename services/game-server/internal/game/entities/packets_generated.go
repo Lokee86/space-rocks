@@ -29,6 +29,7 @@ type AsteroidState struct {
 	X       float64 `json:"x"`
 	Y       float64 `json:"y"`
 	Size    int     `json:"size"`
+	Scale   float64 `json:"scale"`
 	Variant int     `json:"variant"`
 }
 

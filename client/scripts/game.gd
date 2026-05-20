@@ -2,7 +2,6 @@ extends Node2D
 
 signal return_to_menu_requested
 
-const Constants = preload("res://scripts/constants/constants.gd")
 const EffectsScript = preload("res://scripts/effects.gd")
 const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
@@ -104,7 +103,10 @@ func _apply_state(data: Dictionary) -> void:
 	_apply_events(server_events)
 	has_received_state = true
 
-	hud_controller.set_lives(int(data.get(Packets.FIELD_LIVES, Constants.PLAYER_STARTING_LIVES)))
+	if data.has(Packets.FIELD_LIVES):
+		hud_controller.set_lives(int(data[Packets.FIELD_LIVES]))
+	else:
+		push_warning("State packet missing lives")
 	if server_players.has(self_id):
 		has_initial_spawn = true
 		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
@@ -180,7 +182,11 @@ func _apply_self_death_event(event: Dictionary) -> void:
 		_set_game_over_state()
 		return
 
-	_set_dead_state(float(event.get(Packets.FIELD_RESPAWN_DELAY, Constants.PLAYER_RESPAWN_DELAY)))
+	if event.has(Packets.FIELD_RESPAWN_DELAY):
+		_set_dead_state(float(event[Packets.FIELD_RESPAWN_DELAY]))
+	else:
+		push_warning("Ship death event missing respawn delay")
+		_set_dead_state(0.0)
 
 
 func _set_alive_state() -> void:
