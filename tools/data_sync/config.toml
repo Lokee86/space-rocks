@@ -9,23 +9,21 @@ files = ["services/game-server/internal/constants/constants.go"]
 sections = [
   "constants.server.runtime",
   "constants.server.player_movement",
-  "constants.shared.player_state",
+  "constants.server.player_lifecycle",
   "constants.server.player_session",
   "constants.server.world",
   "constants.server.scoring",
   "constants.server.asteroids",
-  "constants.shared.asteroid_visual",
   "constants.server.bullets",
 ]
 owns = [
   "constants.server.runtime",
   "constants.server.player_movement",
-  "constants.shared.player_state",
+  "constants.server.player_lifecycle",
   "constants.server.player_session",
   "constants.server.world",
   "constants.server.scoring",
   "constants.server.asteroids",
-  "constants.shared.asteroid_visual",
   "constants.server.bullets",
 ]
 

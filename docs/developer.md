@@ -216,7 +216,7 @@ services/game-server/internal/constants/constants.go
 
 Constants are managed by `tools/data_sync/` using marked `data-sync` blocks. Do not use `tools/scripts/generate_constants.py` for active constants changes.
 
-Some constants are server-owned even though they remain in `shared/game_data.toml` as the source of truth. `player_starting_lives`, `player_respawn_delay`, and `asteroid_size_scale` must stay available to the Go server output, but should not be imported by client runtime code. The client receives lives through player/state packets, respawn delay through death events, and asteroid visual scale through asteroid state.
+Server-owned constants live under `constants.server.*` in `shared/game_data.toml`. `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`; `asteroid_size_scale` lives under `constants.server.asteroids`. The client must not import these constants directly: it receives lives through player/state packets, respawn delay through death events, and asteroid visual scale through asteroid state.
 
 Client constants output is filtered by `tools/data_sync/config.toml`; a constant may remain in the source of truth while being intentionally omitted from `client/scripts/constants/constants.gd`.
 

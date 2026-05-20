@@ -26,6 +26,7 @@ asteroid_despawn_margin = 320.0
 asteroid_min_speed = 90.0
 asteroid_max_speed = 170.0
 asteroid_aim_randomness_degrees = 30.0
+asteroid_size_scale = 0.125
 
 [constants.server.bullets]
 bullet_speed = 900.0
@@ -34,12 +35,9 @@ bullet_cooldown = 0.2
 bullet_spawn_offset = 42.0
 collision_despawn_delay = 0.05
 
-[constants.shared.player_state]
+[constants.server.player_lifecycle]
 player_starting_lives = 3
 player_respawn_delay = 3.0
-
-[constants.shared.asteroid_visual]
-asteroid_size_scale = 0.125
 
 [constants.client.presentation]
 game_over_sound_delay = 0.4

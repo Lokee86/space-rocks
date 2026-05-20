@@ -206,6 +206,8 @@ Generated constants include:
 - `services/game-server/internal/constants/constants.go`
 - `client/scripts/constants/constants.gd`
 
+Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. In particular, `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`, while `asteroid_size_scale` lives under `constants.server.asteroids`. The client receives lives through player state, respawn delay through death events, and asteroid scale through asteroid state instead of importing those constants.
+
 Authoritative today:
 
 - server simulation state

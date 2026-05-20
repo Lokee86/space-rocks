@@ -12,10 +12,10 @@ const PlayerMaxSpeed = 1500.0
 const PlayerDamping = 0.98
 // data-sync:end constants.server.player_movement
 
-// data-sync:start constants.shared.player_state
+// data-sync:start constants.server.player_lifecycle
 const PlayerStartingLives = 3
 const PlayerRespawnDelay = 3.0
-// data-sync:end constants.shared.player_state
+// data-sync:end constants.server.player_lifecycle
 
 // data-sync:start constants.server.player_session
 const PlayerRespawnBuffer = 160.0
@@ -39,11 +39,8 @@ const AsteroidDespawnMargin = 320.0
 const AsteroidMinSpeed = 90.0
 const AsteroidMaxSpeed = 170.0
 const AsteroidAimRandomnessDegrees = 30.0
-// data-sync:end constants.server.asteroids
-
-// data-sync:start constants.shared.asteroid_visual
 const AsteroidSizeScale = 0.125
-// data-sync:end constants.shared.asteroid_visual
+// data-sync:end constants.server.asteroids
 
 // data-sync:start constants.server.bullets
 const BulletSpeed = 900.0
