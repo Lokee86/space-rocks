@@ -1,7 +1,7 @@
 extends RefCounted
 class_name HudController
 
-const Constants = preload("res://scripts/constants.gd")
+const Constants = preload("res://scripts/constants/constants.gd")
 
 var score_label: Label
 var lives_label: Label

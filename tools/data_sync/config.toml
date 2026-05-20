@@ -30,7 +30,7 @@ owns = [
 ]
 
 [constants.gds]
-files = ["client/scripts/constants.gd"]
+files = ["client/scripts/constants/constants.gd"]
 sections = [
   "constants.shared.player_state",
   "constants.client.presentation",
@@ -53,7 +53,7 @@ sections = ["packets"]
 owns = []
 
 [packets.gds]
-files = ["client/scripts/packets.gd"]
+files = ["client/scripts/networking/packets.gd"]
 sections = ["packets"]
 owns = []
 

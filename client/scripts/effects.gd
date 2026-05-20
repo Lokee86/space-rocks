@@ -1,7 +1,7 @@
 extends RefCounted
 class_name Effects
 
-const Constants = preload("res://scripts/constants.gd")
+const Constants = preload("res://scripts/constants/constants.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const EFFECT_Z_INDEX := 40

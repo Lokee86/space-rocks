@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://2nhypjy0hv4h"]
 
-[ext_resource type="Script" uid="uid://t08j0gmt7ntp" path="res://scripts/player.gd" id="1_ct0fb"]
+[ext_resource type="Script" uid="uid://t08j0gmt7ntp" path="res://scripts/entities/player.gd" id="1_ct0fb"]
 [ext_resource type="Texture2D" uid="uid://cw8ubidl86juw" path="res://assets/units/yellow-v-wing.png" id="2_lcy76"]
 [ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="5_fxgnq"]
 

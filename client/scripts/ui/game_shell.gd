@@ -1,6 +1,6 @@
 extends Node2D
 
-const Constants = preload("res://scripts/constants.gd")
+const Constants = preload("res://scripts/constants/constants.gd")
 const GAME_LOOP_SCENE := preload("res://scenes/game_loop.tscn")
 const MAIN_MENU_SCENE := preload("res://scenes/ui/main_menu.tscn")
 const BACKGROUND_DRIFT := Vector2(18.0, 8.0)

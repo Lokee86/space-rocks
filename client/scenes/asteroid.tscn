@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://daircltkhadt1"]
 
-[ext_resource type="Script" path="res://scripts/asteroid.gd" id="1_rigo0"]
+[ext_resource type="Script" path="res://scripts/entities/asteroid.gd" id="1_rigo0"]
 
 [node name="Asteroid" type="CharacterBody2D"]
 collision_mask = 0

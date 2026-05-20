@@ -1,7 +1,7 @@
 extends CharacterBody2D
 class_name Player
 
-const Packets = preload("res://scripts/packets.gd")
+const Packets = preload("res://scripts/networking/packets.gd")
 const AFTERBURNER_SCENE := preload("res://scenes/animations/blue_afterburner.tscn")
 
 @export var turn_left_action := &"turn_left"
