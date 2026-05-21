@@ -1,6 +1,7 @@
 extends Control
 
-const SCREEN_MARGIN: float = 32.0
+const INDICATOR_EDGE_MARGIN: float = 32.0
+const TARGET_VISIBILITY_PADDING: float = 64.0
 
 @export var indicator_scene: PackedScene
 
@@ -26,12 +27,16 @@ func update_indicators(remote_visual_positions: Dictionary, camera: Camera2D) ->
 		if indicator != null:
 			indicator.call("hide_indicator")
 			var screen_position: Vector2 = camera.get_canvas_transform() * remote_visual_positions[player_id]
-			if _is_inside_screen(screen_position, screen_size, SCREEN_MARGIN):
+			if _is_target_still_visible(screen_position, screen_size, TARGET_VISIBILITY_PADDING):
 				indicator.call("hide_indicator")
 				continue
 
 			var direction: Vector2 = (screen_position - screen_center).normalized()
-			var edge_position: Vector2 = edge_position_from_direction(direction, screen_size, SCREEN_MARGIN)
+			var edge_position: Vector2 = edge_position_from_direction(
+				direction,
+				screen_size,
+				INDICATOR_EDGE_MARGIN
+			)
 			indicator.call("set_indicator", edge_position, direction)
 
 
@@ -65,12 +70,12 @@ func _hide_all_indicators() -> void:
 			indicator.call("hide_indicator")
 
 
-func _is_inside_screen(screen_position: Vector2, screen_size: Vector2, margin: float) -> bool:
+func _is_target_still_visible(screen_position: Vector2, screen_size: Vector2, padding: float) -> bool:
 	return (
-		screen_position.x >= margin &&
-		screen_position.x <= screen_size.x - margin &&
-		screen_position.y >= margin &&
-		screen_position.y <= screen_size.y - margin
+		screen_position.x >= -padding &&
+		screen_position.x <= screen_size.x + padding &&
+		screen_position.y >= -padding &&
+		screen_position.y <= screen_size.y + padding
 	)
 
 
