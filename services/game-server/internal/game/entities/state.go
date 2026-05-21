@@ -5,8 +5,12 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
+const DefaultShipTypeID = "v_wing"
+
 type Ship struct {
 	ID                       string
+	ShipTypeID               string
+	Stats                    ShipStats
 	X                        float64
 	Y                        float64
 	Rotation                 float64

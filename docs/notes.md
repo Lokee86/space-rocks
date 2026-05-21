@@ -23,6 +23,38 @@ The project is still moving quickly. Treat recent systems as subject to refineme
 
 ## Recently Implemented Systems
 
+### Client GUT Test Suite
+
+A lightweight Godot client test suite now lives under:
+
+```text
+client/tests/
+```
+
+Current layout:
+
+- `client/tests/unit/` for focused GUT unit-style tests.
+- `client/tests/fixtures/` for small world-state and scene/data fixtures.
+- `client/tests/helpers/` for reusable test-only helpers.
+
+The current suite covers smoke testing, generated packet builders and field constants, HUD lives/death/respawn behavior, `world_sync` create/update/remove behavior, asteroid packet scale handling, and missing-field safety for current client behavior.
+
+Run GUT with:
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
+
+Expected warnings may appear for tests that intentionally verify safe missing-field handling. The run should still end with all tests passing.
+
+Keep test-only fixtures/helpers out of `client/scripts/`. Full gameplay/network smoke testing is still manual for now: opening the game scene, websocket connection, spawning asteroids, shooting/effects, pause/debug flow, and the full gameplay loop.
+
+There is also a Python static boundary scan for forbidden client references to server-owned constants:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
+```
+
 ### Server Test Layout
 
 Go server tests have been moved out of production package folders and now live under:
@@ -231,7 +263,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - More granular/documented collision shape export workflow.
 - Logical gameplay viewport cap instead of raw OS window max size for balance.
 - Invisible toroidal/wrapped playfield; see [docs/design/toroidal-wrap.md](design/toroidal-wrap.md).
-- Ship variants with different client scenes and server collision maps; see [docs/design/ship-variants.md](design/ship-variants.md).
+- Ship variant foundation exists server-side: runtime ship type, `ship_type` state, resolved ship stats/modifiers, and collision shape ID lookup. Client scene mapping, real keyed collision catalogs, selection, and acquisition remain future work; see [docs/design/ship-variants.md](design/ship-variants.md).
 
 ## Current Short-Term Priorities
 
@@ -241,6 +273,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 4. Check current Git status for generated recordings or tmp binaries before committing.
 5. Verify collision shape export/import after the Godot 4.6 upgrade.
 6. Keep `game.gd` from growing again; move new UI behavior into `client/scripts/ui/` where possible.
+7. Add focused client GUT coverage alongside packet, HUD, or `world_sync` changes instead of relying only on manual smoke testing.
 
 ## Longer-Term Ideas
 
@@ -252,7 +285,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - More robust client prediction/reconciliation if networking latency becomes visible.
 - Better tooling around collision shape generation and validation.
 - Invisible toroidal world wrapping to keep multiplayer players in one arena while preserving endless-feeling flight.
-- Ship type variants with server-selected collision maps and client scene mapping.
+- Complete ship type variants with real alternate definitions, client scene mapping, and keyed server collision maps.
 
 ## Risks / Likely Messy Areas
 
@@ -276,7 +309,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - How should the eventual API server share code, if at all, with the game server?
 - Is `client/game-clip.avi` tracked or just present locally? It should not be committed.
 - What final world wrap dimensions should be used? Proposed planning values are currently `1062 x 5250`, but width should be confirmed.
-- Should ship variants eventually affect only collision/visuals, or also movement stats, weapons, and gameplay rules?
+- Ship variants now have a server-side stats modifier seam. Future work should decide which concrete stats/weapons/rules are allowed to vary for real ship definitions.
 
 ## Notes For Future Codex Sessions
 
@@ -286,6 +319,8 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - When changing generated constants, edit `shared/game_data.toml` and run `tools/data_sync`. When changing packets, edit `shared/packets/packets.toml` and run `tools/data_sync`.
 - When changing server gameplay rules, add or update focused Go tests under `services/game-server/tests/<area>/`.
 - Do not add new Go server `*_test.go` files beside production packages under `services/game-server/internal/`.
+- When changing generated packets, HUD behavior, `world_sync`, or pure client logic, add or update focused GUT tests under `client/tests/unit/`.
+- Keep client test fixtures/helpers under `client/tests/fixtures/` and `client/tests/helpers/`, not under production `client/scripts/`.
 - New server gameplay distance/position logic should go through `services/game-server/internal/game/space`; it is flat/infinite today, with no-op normalization, but keeps future wrapped-world work localized.
 - When changing Godot scenes, inspect `.tscn` diffs for accidental editor movement/offsets.
 - Avoid broad rewrites of `game.gd`; extract only when the boundary is clear.
@@ -298,6 +333,18 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 ```bash
 cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
+```
+
+- Current client GUT tests pass with:
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
+
+- Current client constants-boundary scan passes with:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
 ```
 
 ## TODO Snapshot

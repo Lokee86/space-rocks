@@ -13,6 +13,8 @@ import (
 
 type playerSession struct {
 	ID              string
+	ShipTypeID      string
+	Stats           entities.ShipStats
 	SpawnPosition   physics.Vector2
 	Config          entities.ClientConfig
 	Score           int
@@ -24,6 +26,8 @@ type playerSession struct {
 func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
 	return &playerSession{
 		ID:            id,
+		ShipTypeID:    entities.DefaultShipTypeID,
+		Stats:         entities.ResolveShipStats(entities.DefaultShipTypeID),
 		SpawnPosition: spawnPosition,
 		Config: entities.ClientConfig{
 			VisibleWorldWidth:  constants.WorldWidth,
@@ -54,13 +58,15 @@ func (session *playerSession) RecordDeath(options devtools.PlayerOptions) {
 
 func (session *playerSession) NewShip(position physics.Vector2) *entities.Ship {
 	return &entities.Ship{
-		ID:       session.ID,
-		X:        position.X,
-		Y:        position.Y,
-		Config:   session.Config,
-		Score:    session.Score,
-		Lives:    session.Lives,
-		DevTools: session.DevTools,
+		ID:         session.ID,
+		ShipTypeID: session.ShipTypeID,
+		Stats:      session.Stats,
+		X:          position.X,
+		Y:          position.Y,
+		Config:     session.Config,
+		Score:      session.Score,
+		Lives:      session.Lives,
+		DevTools:   session.DevTools,
 	}
 }
 
@@ -102,7 +108,8 @@ func (game *Game) respawnPlayer(playerID string) {
 }
 
 func (game *Game) initialSpawnPosition(playerIndex int, playerID string) physics.Vector2 {
-	return game.safePlayerSpawnPosition(preferredInitialSpawnPosition(playerIndex), playerID)
+	shapeID := entities.ResolveShipStats(entities.DefaultShipTypeID).CollisionShapeID
+	return game.safePlayerSpawnPosition(preferredInitialSpawnPosition(playerIndex), playerID, shapeID)
 }
 
 func preferredInitialSpawnPosition(playerIndex int) physics.Vector2 {
@@ -113,11 +120,11 @@ func preferredInitialSpawnPosition(playerIndex int) physics.Vector2 {
 }
 
 func (game *Game) safeRespawnPosition(session *playerSession) physics.Vector2 {
-	return game.safePlayerSpawnPosition(session.SpawnPosition, session.ID)
+	return game.safePlayerSpawnPosition(session.SpawnPosition, session.ID, session.Stats.CollisionShapeID)
 }
 
-func (game *Game) safePlayerSpawnPosition(origin physics.Vector2, ignorePlayerID string) physics.Vector2 {
-	if game.isSafeRespawnPosition(origin, ignorePlayerID) {
+func (game *Game) safePlayerSpawnPosition(origin physics.Vector2, ignorePlayerID string, collisionShapeID string) physics.Vector2 {
+	if game.isSafeRespawnPosition(origin, ignorePlayerID, collisionShapeID) {
 		return origin
 	}
 
@@ -125,32 +132,32 @@ func (game *Game) safePlayerSpawnPosition(origin physics.Vector2, ignorePlayerID
 	for ring := 1; ; ring++ {
 		for x := -ring; x <= ring; x++ {
 			top := origin.Add(physics.Vector2{X: float64(x) * spacing, Y: -float64(ring) * spacing})
-			if game.isSafeRespawnPosition(top, ignorePlayerID) {
+			if game.isSafeRespawnPosition(top, ignorePlayerID, collisionShapeID) {
 				return top
 			}
 
 			bottom := origin.Add(physics.Vector2{X: float64(x) * spacing, Y: float64(ring) * spacing})
-			if game.isSafeRespawnPosition(bottom, ignorePlayerID) {
+			if game.isSafeRespawnPosition(bottom, ignorePlayerID, collisionShapeID) {
 				return bottom
 			}
 		}
 
 		for y := -ring + 1; y <= ring-1; y++ {
 			left := origin.Add(physics.Vector2{X: -float64(ring) * spacing, Y: float64(y) * spacing})
-			if game.isSafeRespawnPosition(left, ignorePlayerID) {
+			if game.isSafeRespawnPosition(left, ignorePlayerID, collisionShapeID) {
 				return left
 			}
 
 			right := origin.Add(physics.Vector2{X: float64(ring) * spacing, Y: float64(y) * spacing})
-			if game.isSafeRespawnPosition(right, ignorePlayerID) {
+			if game.isSafeRespawnPosition(right, ignorePlayerID, collisionShapeID) {
 				return right
 			}
 		}
 	}
 }
 
-func (game *Game) isSafeRespawnPosition(position physics.Vector2, ignorePlayerID string) bool {
-	shape, err := game.collisionShapes.ShipShape()
+func (game *Game) isSafeRespawnPosition(position physics.Vector2, ignorePlayerID string, collisionShapeID string) bool {
+	shape, err := game.collisionShapes.ShipShapeByID(collisionShapeID)
 	if err != nil {
 		return true
 	}

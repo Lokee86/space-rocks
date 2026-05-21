@@ -92,6 +92,11 @@ json = "id"
 type = "string"
 
 [[structs.fields]]
+name = "ship_type"
+json = "ship_type"
+type = "string"
+
+[[structs.fields]]
 name = "x"
 json = "x"
 type = "float"

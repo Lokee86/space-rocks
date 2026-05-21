@@ -253,4 +253,4 @@ These are possible directions, not implemented features.
 - Matchmaking/accounts/leaderboards are not current features. If added, they should stay separate from the real-time game simulation unless a clear shared boundary is needed.
 - If prediction/reconciliation is added, keep it explicitly separate from authoritative game rules so the client remains a presentation/prediction layer rather than the source of truth.
 - Invisible toroidal/wrapped playfield is planned as a future option. See [toroidal wrap plan](toroidal-wrap.md).
-- Ship variants with different client scenes and server collision maps are planned as a future option. See [ship variants plan](ship-variants.md).
+- A thin server-side ship variant foundation exists: runtime ship type, resolved ship stats/modifiers, `ship_type` snapshots, and collision shape ID lookup. Full variants with client scene mapping and keyed collision catalogs remain future work. See [ship variants plan](ship-variants.md).

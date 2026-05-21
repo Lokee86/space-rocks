@@ -3,13 +3,13 @@ package entities
 import (
 	"math"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func (ship *Ship) State() ShipState {
 	return ShipState{
 		ID:       ship.ID,
+		ShipType: ship.ShipTypeID,
 		X:        ship.X,
 		Y:        ship.Y,
 		Rotation: ship.Rotation,
@@ -71,17 +71,17 @@ func (ship *Ship) ApplyInput(delta float64) {
 	rotationInput := axis(ship.Input.Left, ship.Input.Right)
 	thrustInput := axis(ship.Input.Back, ship.Input.Forward)
 
-	ship.Rotation += rotationInput * constants.PlayerRotationSpeed * delta
+	ship.Rotation += rotationInput * ship.Stats.RotationSpeed * delta
 
 	if thrustInput != 0 {
-		ship.Velocity.X += math.Sin(ship.Rotation) * constants.PlayerThrustForce * thrustInput * delta
-		ship.Velocity.Y += -math.Cos(ship.Rotation) * constants.PlayerThrustForce * thrustInput * delta
+		ship.Velocity.X += math.Sin(ship.Rotation) * ship.Stats.ThrustForce * thrustInput * delta
+		ship.Velocity.Y += -math.Cos(ship.Rotation) * ship.Stats.ThrustForce * thrustInput * delta
 	}
 
-	damping := math.Pow(constants.PlayerDamping, delta/(1.0/60.0))
+	damping := math.Pow(ship.Stats.Damping, delta/(1.0/60.0))
 	ship.Velocity.X *= damping
 	ship.Velocity.Y *= damping
-	ship.Velocity = ship.Velocity.LimitLength(constants.PlayerMaxSpeed)
+	ship.Velocity = ship.Velocity.LimitLength(ship.Stats.MaxSpeed)
 
 	ship.X += ship.Velocity.X * delta
 	ship.Y += ship.Velocity.Y * delta
@@ -106,7 +106,7 @@ func (ship *Ship) CanTakeCollisionDamage() bool {
 }
 
 func (ship *Ship) ResetShootCooldown() {
-	ship.ShootCooldown = constants.BulletCooldown
+	ship.ShootCooldown = ship.Stats.BulletCooldown
 }
 
 func (ship *Ship) AddScore(score int) {
@@ -141,7 +141,7 @@ func (ship *Ship) Forward() physics.Vector2 {
 }
 
 func (ship *Ship) CollisionBody(catalog physics.CollisionShapeCatalog) (physics.CollisionBody, bool) {
-	shape, err := catalog.ShipShape()
+	shape, err := catalog.ShipShapeByID(ship.Stats.CollisionShapeID)
 	if err != nil {
 		return physics.CollisionBody{}, false
 	}

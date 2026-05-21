@@ -161,7 +161,7 @@ func (scenario *scenario) addCameraView(id string, position physics.Vector2, con
 func (scenario *scenario) placeBullet(id string, ownerID string, position physics.Vector2, velocity physics.Vector2) {
 	scenario.t.Helper()
 
-	bullet := entities.NewBullet(id, ownerID, position, 0, velocity)
+	bullet := entities.NewBullet(id, ownerID, position, 0, velocity, entities.DefaultShipStats().BulletLifetime)
 	scenario.bullets().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(bullet))
 }
 
@@ -279,15 +279,16 @@ func (scenario *scenario) asteroidExists(id string) bool {
 func (scenario *scenario) bulletPendingDespawn(id string) bool {
 	scenario.t.Helper()
 
-	bullet := scenario.bullets().MapIndex(reflect.ValueOf(id))
-	if !bullet.IsValid() || bullet.IsNil() {
-		scenario.t.Fatalf("expected bullet %q", id)
-	}
-
-	return bullet.Interface().(*entities.Bullet).PendingDespawn
+	return scenario.bullet(id).PendingDespawn
 }
 
 func (scenario *scenario) bulletLife(id string) float64 {
+	scenario.t.Helper()
+
+	return scenario.bullet(id).Life
+}
+
+func (scenario *scenario) bullet(id string) *entities.Bullet {
 	scenario.t.Helper()
 
 	bullet := scenario.bullets().MapIndex(reflect.ValueOf(id))
@@ -295,7 +296,7 @@ func (scenario *scenario) bulletLife(id string) float64 {
 		scenario.t.Fatalf("expected bullet %q", id)
 	}
 
-	return bullet.Interface().(*entities.Bullet).Life
+	return bullet.Interface().(*entities.Bullet)
 }
 
 func (scenario *scenario) playerDebugBool(playerID string, fieldName string) bool {

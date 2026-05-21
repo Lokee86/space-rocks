@@ -50,3 +50,50 @@ func TestAsteroidShapeScalesImportedPolygon(t *testing.T) {
 		t.Fatalf("expected first point X to scale to 2, got %v", shape.Points[0].X)
 	}
 }
+
+func TestShipShapeByIDReturnsDefaultShipShape(t *testing.T) {
+	catalog := testShipShapeCatalog()
+
+	defaultShape, err := catalog.ShipShape()
+	if err != nil {
+		t.Fatal(err)
+	}
+	shape, err := catalog.ShipShapeByID(physics.DefaultShipCollisionShapeID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertSameCircleShape(t, shape, defaultShape)
+}
+
+func TestShipShapeByIDFallsBackForUnknownID(t *testing.T) {
+	catalog := testShipShapeCatalog()
+
+	defaultShape, err := catalog.ShipShape()
+	if err != nil {
+		t.Fatal(err)
+	}
+	shape, err := catalog.ShipShapeByID("unknown_ship")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertSameCircleShape(t, shape, defaultShape)
+}
+
+func testShipShapeCatalog() physics.CollisionShapeCatalog {
+	return physics.CollisionShapeCatalog{
+		Ship: physics.ImportedCollisionShape{
+			Type:   "circle",
+			Radius: 20,
+		},
+	}
+}
+
+func assertSameCircleShape(t *testing.T, shape physics.CollisionShape, expected physics.CollisionShape) {
+	t.Helper()
+
+	if shape.Type != expected.Type || shape.Radius != expected.Radius {
+		t.Fatalf("expected circle shape %#v, got %#v", expected, shape)
+	}
+}

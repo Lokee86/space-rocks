@@ -14,8 +14,8 @@ import (
 
 func (game *Game) spawnBullet(ship *entities.Ship) {
 	forward := ship.Forward()
-	spawnPosition := ship.Position().Add(forward.Multiply(constants.BulletSpawnOffset))
-	velocity := forward.Multiply(constants.BulletSpeed)
+	spawnPosition := ship.Position().Add(forward.Multiply(ship.Stats.BulletSpawnOffset))
+	velocity := forward.Multiply(ship.Stats.BulletSpeed)
 
 	game.nextBulletID++
 	bulletID := fmt.Sprintf("bullet-%d", game.nextBulletID)
@@ -25,6 +25,7 @@ func (game *Game) spawnBullet(ship *entities.Ship) {
 		spawnPosition,
 		ship.Rotation,
 		velocity,
+		ship.Stats.BulletLifetime,
 	)
 }
 

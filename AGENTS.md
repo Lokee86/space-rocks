@@ -97,6 +97,18 @@ cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
+Run client GUT tests, if the `godot` CLI is available:
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
+
+Run the client constants boundary scan:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
+```
+
 Build the game server:
 
 ```bash
@@ -180,7 +192,7 @@ shared/packets/packets.toml
 Generated packets:
 
 ```text
-client/scripts/packets.gd
+client/scripts/networking/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
 ```
@@ -250,6 +262,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is flat/infinite today, but exists to contain future wrapped-world support.
 - Add focused Go tests for server gameplay rules that can regress.
+- Add focused GUT tests for client packet, HUD, `world_sync`, and pure client logic regressions. Keep test-only helpers under `client/tests/`, not `client/scripts/`.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
 - Do not revert user/editor changes unless explicitly requested.
 - When the user asks to "answer" or "report", do not edit files.
@@ -275,10 +288,17 @@ Client runtime:
 
 - `client/scripts/ui/game_shell.gd`
 - `client/scripts/game.gd`
-- `client/scripts/network_client.gd`
-- `client/scripts/world_sync.gd`
-- `client/scripts/player.gd`
+- `client/scripts/networking/network_client.gd`
+- `client/scripts/networking/world_sync.gd`
+- `client/scripts/entities/player.gd`
 - `client/scripts/ui/hud_controller.gd`
+
+Client tests:
+
+- `client/tests/README.md`
+- `client/tests/unit/`
+- `client/tests/fixtures/`
+- `client/tests/helpers/`
 
 Shared schema/generation:
 
@@ -358,7 +378,21 @@ env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 
 If the command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
 
-For Godot/client changes, there is no established automated test command. Prefer careful file inspection, then tell the user what needs manual smoke testing in Godot.
+Godot client tests use GUT and live under `client/tests/`. Unit tests go under `client/tests/unit/`; fixtures go under `client/tests/fixtures/`; reusable test-only helpers go under `client/tests/helpers/`. Keep client tests focused on generated packets, HUD behavior, `world_sync`, and pure client logic. Do not put test helpers in `client/scripts/`.
+
+For client changes, run GUT when the `godot` CLI is available:
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
+
+For client constants-boundary changes, run:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
+```
+
+Full gameplay/network smoke testing remains manual for now: opening the game scene, websocket connection, asteroid spawning, shooting/effects, pause/debug flow, and the full gameplay loop.
 
 ## Known Gaps / TODOs
 

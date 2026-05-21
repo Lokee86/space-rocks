@@ -129,6 +129,18 @@ cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
+Run client GUT tests, if the `godot` CLI is available:
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
+
+Run the client constants-boundary scan:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
+```
+
 ## Server Test Layout
 
 Go server tests are kept out of production package folders. Put server tests under:
@@ -153,6 +165,44 @@ services/game-server/tests/game/helpers_test.go
 ```
 
 Keep harness helpers gameplay-oriented and deliberate: create a scenario, add players, send packets, step simulation, decode state, place entities, set collision presets, or adjust session state needed for precise behavior tests. Avoid exposing raw private maps directly to individual tests.
+
+## Client Test Layout
+
+Godot client tests use GUT and live under:
+
+```text
+client/tests/
+```
+
+Current layout:
+
+- `client/tests/unit/`: focused unit-style GUT tests.
+- `client/tests/fixtures/`: small test data and scene fixtures.
+- `client/tests/helpers/`: reusable test-only helpers.
+
+Keep test-only helpers out of `client/scripts/`. Client tests should focus on generated packets, HUD behavior, `world_sync`, missing server-field safety, constants-boundary assumptions, and pure client logic. Do not turn these into full gameplay/network integration tests.
+
+Run the GUT suite with:
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
+
+Expected missing-field warnings may appear in tests that intentionally verify safe behavior for missing `lives`, `respawn_delay`, or asteroid `scale`; those warnings are fine when the suite passes.
+
+The static client constants-boundary test lives at:
+
+```text
+tools/tests/test_client_constants_boundary.py
+```
+
+Run it with:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
+```
+
+Manual smoke testing remains the boundary for opening the game scene, websocket connection, asteroid spawning, shooting/effects, pause/debug flow, and the full gameplay loop.
 
 Build the server binary:
 
@@ -392,6 +442,7 @@ For client runtime flow:
 - `client/scripts/networking/world_sync.gd`
 - `client/scripts/entities/player.gd`
 - `client/scripts/ui/hud_controller.gd`
+- relevant GUT tests under `client/tests/unit/`
 
 For shared schema/code generation:
 

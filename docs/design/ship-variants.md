@@ -1,6 +1,6 @@
-# Ship Variants Plan
+# Ship Variants
 
-This is a future implementation plan for supporting different ship scenes with different server collision maps.
+This page tracks the thin ship-variant foundation that exists today and the remaining work for full ship variants.
 
 ## Goal
 
@@ -19,9 +19,28 @@ The client can render different scenes fairly easily, but the server currently o
 
 To make ship variants real, the server must know which collision shape each player is using.
 
-## Current Assumption
+## Current State
 
-The server currently treats ships as one collision shape through the collision catalog.
+The server now has a thin runtime foundation:
+
+- `ShipTypeID` on runtime ships
+- session-level `ShipTypeID` for respawn continuity
+- `ship_type` in `ShipState`
+- resolved `ShipStats` on sessions and ships
+- `ShipStatModifiers` as neutral per-ship modifiers over base game constants
+- stats-driven movement, shooting cooldown, bullet speed, bullet lifetime, and bullet spawn offset
+- `CollisionShapeID` in resolved stats
+- `ShipShapeByID` with safe fallback to the current default ship shape
+
+The default ship type and collision shape ID are currently:
+
+```text
+v_wing
+```
+
+The server still has only one imported ship collision shape in `shared/collisions/collision_shapes.json`. The ID seam exists, but a keyed multi-ship collision catalog has not been added yet.
+
+The client still renders all players with the current player scene/sprite. It receives `ship_type`, but does not select visuals from it yet.
 
 Relevant areas:
 
@@ -33,74 +52,78 @@ client/scripts/networking/world_sync.gd
 shared/packets/packets.toml
 ```
 
-## Execution Plan
+## Implemented Foundation
 
-### 1. Define Ship Type IDs
+### Ship Type Identity
 
-Add stable ship type IDs.
+Runtime ships and player sessions carry the current ship type.
 
-Possible location:
+Current default:
 
 ```text
-shared/game_data.toml
+entities.DefaultShipTypeID = "v_wing"
 ```
 
-Example:
+`ShipState` includes:
 
-```json
-DEFAULT_SHIP_TYPE: "v_wing"
+```text
+ship_type
 ```
 
-If ship types grow beyond a few constants, consider a dedicated shared ship config later.
+This field is passive on the client today.
 
-Regenerate constants after changes:
+### Stats
 
-```bash
-python3 tools/data_sync/main.py -push -constants -go -gds
+`ShipStats` is the resolved effective runtime value used by movement, shooting, bullets, and collision lookup.
+
+`ShipStatModifiers` is the per-ship profile layer over base constants. The default modifiers are neutral `1.0` values, so current gameplay is unchanged.
+
+Resolution flow:
+
+```text
+ship_type
+-> ResolveShipStatModifiers
+-> ResolveShipStats
+-> playerSession.Stats
+-> Ship.Stats
+-> movement/shooting/collision
 ```
 
-### 2. Add Ship Type To Server State
+### Collision Shape ID
 
-Add a field to the server ship/session state:
+Resolved stats include a `CollisionShapeID`. Live ship collision and respawn safety use that ID through `ShipShapeByID`.
+
+Runtime fallback policy:
+
+- the default ID returns the current single ship shape
+- unknown IDs safely fall back to the current default ship shape
+
+## Remaining Work
+
+### 1. Add Real Ship Definitions
+
+When a second ship is needed, add a new modifier profile in `ResolveShipStatModifiers`.
+
+Example shape:
 
 ```go
-ShipType string
+case "heavy":
+	return ShipStatModifiers{
+		RotationSpeed:     0.75,
+		ThrustForce:       0.85,
+		MaxSpeed:          0.8,
+		Damping:           1.0,
+		BulletCooldown:    1.25,
+		BulletSpeed:       1.0,
+		BulletLifetime:    1.0,
+		BulletSpawnOffset: 1.0,
+		CollisionShapeID:  "heavy",
+	}
 ```
 
-Likely touch:
+Do not add variant-specific conditionals in movement, shooting, or collision code.
 
-```text
-services/game-server/internal/game/entities/state.go
-services/game-server/internal/game/session.go
-```
-
-New sessions should default to the current ship type.
-
-### 3. Add Ship Type To Shared Snapshots
-
-Update:
-
-```text
-shared/packets/packets.toml
-```
-
-Add `ship_type` to `ShipState`.
-
-Regenerate packets:
-
-```bash
-python3 tools/data_sync/main.py -push -packets -go -gds
-```
-
-Generated outputs:
-
-```text
-services/game-server/internal/game/entities/packets_generated.go
-services/game-server/internal/game/packets.go
-client/scripts/networking/packets.gd
-```
-
-### 4. Expand Collision Shape Catalog
+### 2. Expand Collision Shape Catalog
 
 Change the collision shape data/model from one ship shape to keyed ship shapes.
 
@@ -125,29 +148,9 @@ Keep backward compatibility or migrate the current single ship shape into:
 }
 ```
 
-### 5. Select Ship Collision Shape By Type
+`ShipShapeByID` already exists and should become the lookup point for the keyed catalog. Preserve safe fallback for malformed or unknown IDs.
 
-Update:
-
-```text
-services/game-server/internal/game/entities/ship.go
-```
-
-Instead of always using the one ship shape, use:
-
-```go
-catalog.ShipShape(ship.ShipType)
-```
-
-or:
-
-```go
-catalog.ShipShapeForType(ship.ShipType)
-```
-
-If the type is empty or unknown, fall back to the default ship type so malformed state does not crash gameplay.
-
-### 6. Add Client Scene Mapping
+### 3. Add Client Scene Mapping
 
 Update:
 
@@ -169,9 +172,9 @@ When a player appears, instantiate the scene for that player's `ship_type`.
 
 If the type is missing or unknown, use the default scene.
 
-### 7. Add Selection Later
+### 4. Add Selection Later
 
-Do not build ship selection until the variant plumbing works.
+Do not build acquisition or inventory until the variant plumbing works.
 
 Possible future selection inputs:
 
@@ -180,16 +183,23 @@ Possible future selection inputs:
 - room option
 - debug packet
 
-The first implementation can hardcode every player to the default ship type.
+The current implementation hardcodes every player to the default ship type.
 
-### 8. Add Tests
+### 5. Add Tests For Real Variants
 
-Server tests should cover:
+Existing server tests cover the foundation:
 
 - default player gets default ship type
 - `ShipState` includes ship type
-- collision catalog returns the right shape for a known ship type
-- unknown ship type falls back safely
+- default modifiers are neutral
+- default ship resolves to baseline effective stats
+- unknown ship type and collision shape ID fall back safely
+- live collision and respawn safety use the collision shape ID seam
+
+When a real second ship is added, add tests for:
+
+- the new ship type resolves different modifiers
+- the new collision shape ID resolves through the keyed catalog
 - two ship types can produce different collision bodies
 
 Run:
@@ -199,12 +209,13 @@ cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
-### 9. Smoke Test In Godot
+### 6. Smoke Test In Godot
 
 Manual checks:
 
 - default ship still renders correctly
-- remote players render the correct ship scene
+- remote players still render
+- player movement and shooting feel unchanged
 - collision shape matches the selected ship type
 - existing gameplay works when no explicit ship selection is present
 
@@ -220,8 +231,8 @@ The basic version should stay moderate in scope. It gets harder if ship variants
 - unlock/account ownership
 - client prediction with different physics per ship
 
-For now, keep the first pass to scene selection plus collision shape selection.
+Keep acquisition, ownership, unlocks, purchases, and persistence outside the real-time `Ship` entity. Those belong to a future account/API layer.
 
 ## Design Rule
 
-Do not let the client decide collision behavior. The client can request or display a ship type, but the server must own the selected type and collision map used for gameplay.
+Do not let the client decide collision behavior. The client can request or display a ship type, but the server must own the selected type, resolved stats, and collision map used for gameplay.

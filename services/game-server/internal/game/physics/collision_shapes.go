@@ -9,6 +9,8 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 )
 
+const DefaultShipCollisionShapeID = "v_wing"
+
 type CollisionShapeCatalog struct {
 	Bullet    ImportedCollisionShape   `json:"bullet"`
 	Ship      ImportedCollisionShape   `json:"ship"`
@@ -49,6 +51,15 @@ func (catalog CollisionShapeCatalog) BulletShape() (CollisionShape, error) {
 
 func (catalog CollisionShapeCatalog) ShipShape() (CollisionShape, error) {
 	return catalog.Ship.ToCollisionShape(1)
+}
+
+func (catalog CollisionShapeCatalog) ShipShapeByID(shapeID string) (CollisionShape, error) {
+	switch shapeID {
+	case "", DefaultShipCollisionShapeID:
+		return catalog.ShipShape()
+	default:
+		return catalog.ShipShape()
+	}
 }
 
 func (catalog CollisionShapeCatalog) AsteroidShape(variant int, size int) (CollisionShape, error) {
