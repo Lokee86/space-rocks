@@ -5,6 +5,7 @@ signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
+const WorldViewScript = preload("res://scripts/world_view.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
@@ -28,6 +29,10 @@ var target_player_rotations := {}
 var target_bullet_positions := {}
 var target_bullet_rotations := {}
 var target_asteroid_positions := {}
+var local_server_position := Vector2.ZERO
+var local_visual_position := Vector2.ZERO
+var remote_player_visual_positions := {}
+var current_self_id := ""
 
 
 func configure(
@@ -53,6 +58,7 @@ func apply_state(
 	server_asteroids: Dictionary,
 	play_new_bullet_sounds: bool
 ) -> void:
+	current_self_id = self_id
 	_remove_missing_players(server_players, self_id)
 	_remove_missing_bullets(server_bullets)
 	_remove_missing_asteroids(server_asteroids)
@@ -70,6 +76,10 @@ func interpolate(delta: float) -> void:
 		var player_node = player_nodes[player_id]
 		player_node.position = player_node.position.lerp(target_player_positions[player_id], weight)
 		player_node.rotation = lerp_angle(player_node.rotation, target_player_rotations[player_id], weight)
+		if player_id == current_self_id:
+			remote_player_visual_positions.erase(player_id)
+		else:
+			remote_player_visual_positions[player_id] = player_node.position
 
 	for bullet_id in bullet_nodes.keys():
 		if !target_bullet_positions.has(bullet_id):
@@ -94,20 +104,33 @@ func interpolate(delta: float) -> void:
 
 
 func _apply_players(self_id: String, server_players: Dictionary) -> void:
+	if server_players.has(self_id):
+		var local_state: Dictionary = server_players[self_id]
+		local_server_position = Vector2(local_state[Packets.FIELD_X], local_state[Packets.FIELD_Y])
+		local_visual_position = local_server_position
+
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
 		var player_node = _get_player_node(self_id, player_id)
 		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
+		var visual_position := server_position
 		var server_rotation: float = state[Packets.FIELD_ROTATION]
 		var is_paused := bool(state.get(Packets.FIELD_PAUSED, false))
 
-		target_player_positions[player_id] = server_position
+		if player_id != self_id:
+			visual_position = WorldViewScript.visual_position_relative_to_local(
+				local_server_position,
+				local_visual_position,
+				server_position
+			)
+
+		target_player_positions[player_id] = visual_position
 		target_player_rotations[player_id] = server_rotation
 		player_node.visible = !is_paused
 
 		if !initialized_players.has(player_id):
 			initialized_players[player_id] = true
-			player_node.position = server_position
+			player_node.position = visual_position
 			player_node.rotation = server_rotation
 
 
@@ -153,6 +176,7 @@ func _remove_player_node(self_id: String, player_id: String) -> void:
 	initialized_players.erase(player_id)
 	target_player_positions.erase(player_id)
 	target_player_rotations.erase(player_id)
+	remote_player_visual_positions.erase(player_id)
 
 
 func _apply_bullets(server_bullets: Dictionary, play_new_bullet_sounds: bool) -> void:
@@ -246,3 +270,9 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 		initialized_asteroids.erase(asteroid_id)
 		warned_missing_asteroid_scale.erase(asteroid_id)
 		target_asteroid_positions.erase(asteroid_id)
+
+
+func get_remote_player_visual_positions() -> Dictionary:
+	var positions := remote_player_visual_positions.duplicate()
+	positions.erase(current_self_id)
+	return positions

@@ -13,6 +13,8 @@ const GAME_MENU_SCENE := preload("res://scenes/ui/game_menu.tscn")
 @onready var bullets = $Bullets
 @onready var asteroids: Node2D = $Asteroids
 @onready var canvas_layer: CanvasLayer = $CanvasLayer
+@onready var offscreen_indicators = get_node_or_null("CanvasLayer/HUD/OffscreenIndicators")
+@onready var gameplay_camera := player.get_node_or_null("Camera2D") as Camera2D
 
 var respawn_requested := false
 var has_received_state := false
@@ -78,6 +80,7 @@ func _process(delta: float) -> void:
 
 	_update_player_afterburner()
 	world_sync.interpolate(delta)
+	_update_offscreen_indicators()
 	_update_background_scroll_offset()
 
 
@@ -157,6 +160,16 @@ func _update_player_afterburner() -> void:
 			!is_gameplay_paused &&
 			player.visible &&
 			Input.is_action_pressed(player.move_forward_action)
+	)
+
+
+func _update_offscreen_indicators() -> void:
+	if offscreen_indicators == null || gameplay_camera == null:
+		return
+
+	offscreen_indicators.update_indicators(
+		world_sync.get_remote_player_visual_positions(),
+		gameplay_camera
 	)
 
 

@@ -412,3 +412,4 @@ Full gameplay/network smoke testing remains manual for now: opening the game sce
 - Do not create broad refactors when a small change solves the request.
 - If a task starts to balloon, stop and report why before adding large amounts of code.
 - Preserve current behavior unless the user explicitly asks to change it.
+- When completing a numbered prompt, announce completion using the exact format `**COMPLETED PROMPT X**`, replacing `X` with the prompt number.
