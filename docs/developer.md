@@ -266,9 +266,9 @@ services/game-server/internal/constants/constants.go
 
 Constants are managed by `tools/data_sync/` using marked `data-sync` blocks. Do not use `tools/scripts/generate_constants.py` for active constants changes.
 
-Server-owned constants live under `constants.server.*` in `shared/game_data.toml`. `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`; `asteroid_size_scale` lives under `constants.server.asteroids`. The client must not import these constants directly: it receives lives through player/state packets, respawn delay through death events, and asteroid visual scale through asteroid state.
+Server-owned constants live under `constants.server.*` in `shared/game_data.toml`. World size is an intentional exception to the usual server-only filtering: `constants.server.world` is generated to both Go and GDScript because client visual wrapping must use the same bounds as server simulation. `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`; `asteroid_size_scale` lives under `constants.server.asteroids`. The client must not import those gameplay-rule constants directly: it receives lives through player/state packets, respawn delay through death events, and asteroid visual scale through asteroid state.
 
-Client constants output is filtered by `tools/data_sync/config.toml`; a constant may remain in the source of truth while being intentionally omitted from `client/scripts/constants/constants.gd`.
+Client constants output is filtered by `tools/data_sync/config.toml`; a constant may remain in the source of truth while being intentionally omitted from `client/scripts/constants/constants.gd`. If world size changes, run `python3 tools/data_sync/main.py -push -constants -go -gds` so both server and client wrap bounds update together.
 
 Packet source:
 
@@ -407,7 +407,7 @@ See [docs/server/logging.md](server/logging.md) for usage, examples, field names
 - Keep rendering, local audio/effects, UI, and interpolation in the Godot client.
 - Keep websocket/room transport in `services/game-server/internal/networking`.
 - Keep game rules in `services/game-server/internal/game`.
-- Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. The current implementation is flat/infinite and `NormalizePosition` is a no-op, but this keeps future wrapped-world support contained.
+- Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is the wrap-aware server spatial layer for toroidal world behavior.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
 - Keep business/backend API logic out of the Go game server. The planned `services/api-server/` service should own accounts, persistence, matchmaking metadata, leaderboards, and other non-real-time concerns.
 - Use `shared/game_data.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets.

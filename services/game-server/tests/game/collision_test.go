@@ -115,6 +115,40 @@ func TestBulletAsteroidCollisionsScoreByAsteroidSize(t *testing.T) {
 	}
 }
 
+func TestBulletAsteroidCollisionWorksAcrossHorizontalBoundary(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	scenario.placeBullet("bullet-1", playerID, physics.Vector2{X: 5, Y: 100}, physics.Vector2{})
+	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: constants.WorldWidth - 5, Y: 100}, 3)
+
+	scenario.step(0)
+
+	if !scenario.bulletPendingDespawn("bullet-1") {
+		t.Fatal("expected cross-boundary bullet to collide with asteroid")
+	}
+	if !scenario.asteroidPendingDespawn("asteroid-1") {
+		t.Fatal("expected cross-boundary asteroid to be hit by bullet")
+	}
+}
+
+func TestBulletAsteroidCollisionWorksAcrossVerticalBoundary(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	scenario.placeBullet("bullet-1", playerID, physics.Vector2{X: 100, Y: 5}, physics.Vector2{})
+	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: 100, Y: constants.WorldHeight - 5}, 3)
+
+	scenario.step(0)
+
+	if !scenario.bulletPendingDespawn("bullet-1") {
+		t.Fatal("expected cross-boundary bullet to collide with asteroid")
+	}
+	if !scenario.asteroidPendingDespawn("asteroid-1") {
+		t.Fatal("expected cross-boundary asteroid to be hit by bullet")
+	}
+}
+
 func TestPausedPlayerDoesNotScoreFromBulletAsteroidCollision(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()
@@ -200,6 +234,34 @@ func TestShipAsteroidCollisionsDelayPlayerRemovalAndBroadcastDeath(t *testing.T)
 	}
 	if !scenario.playerEntityExists(otherPlayerID) {
 		t.Fatal("expected untouched player to remain after despawn delay")
+	}
+}
+
+func TestShipAsteroidCollisionWorksAcrossHorizontalBoundary(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	scenario.setPlayerPosition(playerID, physics.Vector2{X: 5, Y: 100})
+	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: constants.WorldWidth - 5, Y: 100}, 1)
+
+	scenario.step(0)
+
+	if !scenario.playerPendingDespawn(playerID) {
+		t.Fatal("expected cross-boundary asteroid to collide with player")
+	}
+}
+
+func TestShipAsteroidCollisionWorksAcrossVerticalBoundary(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	scenario.setPlayerPosition(playerID, physics.Vector2{X: 100, Y: 5})
+	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: 100, Y: constants.WorldHeight - 5}, 1)
+
+	scenario.step(0)
+
+	if !scenario.playerPendingDespawn(playerID) {
+		t.Fatal("expected cross-boundary asteroid to collide with player")
 	}
 }
 

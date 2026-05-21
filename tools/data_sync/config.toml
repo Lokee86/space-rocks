@@ -30,6 +30,7 @@ owns = [
 [constants.gds]
 files = ["client/scripts/constants/constants.gd"]
 sections = [
+  "constants.server.world",
   "constants.client.presentation",
 ]
 owns = ["constants.client.presentation"]

@@ -10,6 +10,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -216,6 +217,9 @@ func (game *Game) Step(delta float64) {
 
 	for _, player := range game.state.Players {
 		player.ApplyInput(delta)
+		wrapped := space.NormalizePosition(player.Position())
+		player.X = wrapped.X
+		player.Y = wrapped.Y
 		if cameraView, ok := game.cameraViews[player.ID]; ok {
 			cameraView.SetPosition(player.Position())
 		}
@@ -252,6 +256,9 @@ func (game *Game) Step(delta float64) {
 	for id, asteroid := range game.state.Asteroids {
 		if game.worldDevTools.AsteroidsCanMove() {
 			asteroid.Step(delta)
+			wrapped := space.NormalizePosition(asteroid.Position())
+			asteroid.X = wrapped.X
+			asteroid.Y = wrapped.Y
 		}
 		if asteroid.ReadyForRemoval() {
 			delete(game.state.Asteroids, id)
@@ -265,6 +272,9 @@ func (game *Game) Step(delta float64) {
 	for id, bullet := range game.state.Projectiles {
 		if game.worldDevTools.BulletsCanMove() {
 			bullet.Step(delta)
+			wrapped := space.NormalizePosition(bullet.Position())
+			bullet.X = wrapped.X
+			bullet.Y = wrapped.Y
 		}
 		if bullet.ReadyForRemoval() {
 			delete(game.state.Projectiles, id)

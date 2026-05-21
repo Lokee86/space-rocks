@@ -182,11 +182,13 @@ func _clear_background_scroll_offset() -> void:
 func _apply_events(server_events: Array) -> void:
 	for event in server_events:
 		if event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_BULLET_BLAST:
-			effects.spawn_bullet_blast(Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y]))
+			var event_position := Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y])
+			effects.spawn_bullet_blast(world_sync.visual_position_for_server_position(event_position))
 		elif event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_SHIP_DEATH:
 			if event[Packets.FIELD_PLAYER_ID] == self_id:
 				_apply_self_death_event(event)
-			effects.spawn_ship_death(Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y]))
+			var event_position := Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y])
+			effects.spawn_ship_death(world_sync.visual_position_for_server_position(event_position))
 
 
 func _apply_self_death_event(event: Dictionary) -> void:

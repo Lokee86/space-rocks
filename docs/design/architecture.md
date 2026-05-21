@@ -29,13 +29,14 @@ Key client pieces:
 - `client/scenes/ui/main_menu.tscn` and `client/scripts/ui/main_menu.gd`: main menu controls for single-player, multiplayer dialog launch, and quit.
 - `client/scenes/game_loop.tscn` and `client/scripts/game.gd`: active gameplay scene/controller. Creates the network client, world sync, HUD controller, and effects controller.
 - `client/scripts/networking/network_client.gd`: wraps Godot `WebSocketPeer`, handles connect, poll, send, graceful close, and packet parsing.
-- `client/scripts/networking/world_sync.gd`: applies server state to local/remote player, bullet, and asteroid nodes. It also interpolates rendered nodes toward server positions.
+- `client/scripts/networking/world_sync.gd`: applies server state to local/remote player, bullet, and asteroid nodes. It tracks local server coordinates separately from continuous visual coordinates so rendering can cross wrapped world edges without snapping.
+- `client/scripts/world_wrap.gd`: client-side toroidal wrap math using generated world-size constants.
 - `client/scripts/entities/player.gd`: collects input into packet data, plays local laser audio, and toggles local afterburner visuals.
 - `client/scripts/effects.gd`: spawns local visual/audio effects for bullet impacts, ship death, and game over sound timing.
 - `client/scripts/ui/hud_controller.gd`: updates score, lives, room ID, death overlay, respawn state, and game-over UI.
 - `client/scripts/networking/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
 
-Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. The background has local auto-scroll in `game_shell.gd`; gameplay scroll offset follows the local player after initial spawn.
+Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. The background has local auto-scroll in `game_shell.gd`; gameplay scroll offset follows the local player's continuous visual position after initial spawn.
 
 Input is collected locally every frame and sent to the server as an input packet when connected. Respawn requests are sent as explicit packets. The client also sends visible viewport configuration so the server can tie spawning/visibility to the player's camera view.
 
@@ -70,7 +71,7 @@ Core server packages:
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
-- `services/game-server/internal/game/space`: gameplay spatial helpers for distance, direction, and position normalization. Current behavior is flat/infinite; this package is the intended seam for future wrapped-world support.
+- `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
 - `services/game-server/internal/constants`: generated Go constants from `shared/game_data.toml`.
 - `services/game-server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
 
@@ -85,7 +86,7 @@ Each `game.Game` owns its own simulation state:
 - camera views
 - pending events
 
-`Game.Start()` launches a simulation loop at `constants.ServerTickRate`. Each tick applies player input, moves entities, handles cooldowns, spawns asteroids, removes expired/far objects, and resolves collisions.
+`Game.Start()` launches a simulation loop at `constants.ServerTickRate`. Each tick applies player input, moves entities, wraps moving entities into world bounds, handles cooldowns, spawns asteroids, removes expired/far objects, and resolves collisions.
 
 The server currently owns:
 
@@ -99,6 +100,21 @@ The server currently owns:
 - lives, death, game-over, and respawn rules
 - safe initial spawn/respawn placement
 - state packet generation
+
+### Toroidal World Wrap
+
+The server stores bounded wrapped world coordinates using `constants.WorldWidth` and `constants.WorldHeight`. `Game.Step()` centrally normalizes moving players, asteroids, and bullets after movement.
+
+Spatial rules flow through `services/game-server/internal/game/space`:
+
+- spawning aim uses wrapped direction
+- visibility/despawn uses wrapped delta
+- respawn safety uses wrapped distance
+- ship/asteroid and bullet/asteroid collisions place temporary asteroid bodies in wrapped-local space before collision checks
+
+The client renders continuous visual coordinates. `world_sync.gd` tracks `local_server_position` and `local_visual_position`; remote players, asteroids, bullets, and server-driven effects render relative to the local player with shortest wrapped deltas. The camera and background follow the local player node, so they inherit the continuous visual position.
+
+See [toroidal wrap](toroidal-wrap.md).
 
 ### Rooms And Networking
 
@@ -206,7 +222,7 @@ Generated constants include:
 - `services/game-server/internal/constants/constants.go`
 - `client/scripts/constants/constants.gd`
 
-Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. In particular, `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`, while `asteroid_size_scale` lives under `constants.server.asteroids`. The client receives lives through player state, respawn delay through death events, and asteroid scale through asteroid state instead of importing those constants.
+Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. World size is intentionally generated to both Go and GDScript because client visual wrapping must use the same bounds as the server. In particular, `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`, while `asteroid_size_scale` lives under `constants.server.asteroids`. The client receives lives through player state, respawn delay through death events, and asteroid scale through asteroid state instead of importing those constants.
 
 Authoritative today:
 
@@ -252,5 +268,5 @@ These are possible directions, not implemented features.
 - A separate backend API server may be useful for non-gameplay systems such as accounts, matchmaking, leaderboards, persistence, or purchases.
 - Matchmaking/accounts/leaderboards are not current features. If added, they should stay separate from the real-time game simulation unless a clear shared boundary is needed.
 - If prediction/reconciliation is added, keep it explicitly separate from authoritative game rules so the client remains a presentation/prediction layer rather than the source of truth.
-- Invisible toroidal/wrapped playfield is planned as a future option. See [toroidal wrap plan](toroidal-wrap.md).
+- Invisible toroidal/wrapped playfield is implemented. See [toroidal wrap](toroidal-wrap.md).
 - A thin server-side ship variant foundation exists: runtime ship type, resolved ship stats/modifiers, `ship_type` snapshots, and collision shape ID lookup. Full variants with client scene mapping and keyed collision catalogs remain future work. See [ship variants plan](ship-variants.md).

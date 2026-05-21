@@ -12,8 +12,8 @@ player_respawn_buffer = 160.0
 player_resume_invulnerability_seconds = 1.5
 
 [constants.server.world]
-world_width = 1152.0
-world_height = 640.0
+world_width = 8625.0
+world_height = 4500.0
 
 [constants.server.scoring]
 base_score = 120
@@ -47,3 +47,5 @@ foreground_background_offset = [480.0, 270.0]
 player_interpolation_speed = 18.0
 window_min_size = [1280.0, 720.0]
 window_max_size = [2875.0, 1500.0]
+osindicator_edge_margin = 32.0
+osindicator_target_visibility_padding = 64.0

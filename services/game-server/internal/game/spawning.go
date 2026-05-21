@@ -38,6 +38,7 @@ func (game *Game) spawnAsteroidBatch(view *entities.CameraView) {
 func (game *Game) spawnAsteroid(view *entities.CameraView) {
 	targetPosition := view.Position()
 	spawn := game.randomAsteroidSpawnPosition(view)
+	spawn = space.NormalizePosition(spawn)
 	direction := space.Direction(spawn, targetPosition).Rotated(randomRange(
 		-degreesToRadians(constants.AsteroidAimRandomnessDegrees),
 		degreesToRadians(constants.AsteroidAimRandomnessDegrees),

@@ -1,339 +1,150 @@
-# Toroidal Wrap Plan
+# Toroidal World Wrap
 
-This is a future implementation plan. The current game still behaves as a flat/infinite coordinate space, but recent prep work added `services/game-server/internal/game/space` so future spatial behavior can be centralized.
+Space Rocks now uses a bounded toroidal playfield on the server and continuous visual coordinates on the client.
 
-## Goal
+The design goal is simple: server coordinates stay inside one shared arena, while the client renders motion across edges without an obvious seam.
 
-Keep server coordinates bounded while making the world feel visually endless.
+## World Bounds
 
-Desired behavior:
-
-- server stores positions inside a wrapped playfield
-- players can fly continuously without obvious edge transitions
-- multiplayer players remain in one shared arena instead of drifting infinitely apart
-- spawning, visibility, respawn safety, and collisions work across wrapped edges
-- the client can render a camera that visually straddles the edge with no seam
-
-## Current Prep Already Done
-
-Server spatial helpers now live in:
-
-```text
-services/game-server/internal/game/space/space.go
-```
-
-Current behavior is still flat:
-
-- `Delta` uses normal flat delta
-- `Distance` uses flat distance
-- `Direction` uses normalized flat delta
-- `NormalizePosition` is a no-op
-
-Existing code has started moving coordinate-sensitive logic through this package:
-
-- asteroid spawn direction uses `space.Direction`
-- visibility checks use `space.Delta`
-- respawn clearance uses `space.Distance`
-
-## Execution Plan
-
-### 1. Add Shared World Bounds
-
-Add constants to:
+World size is sourced from:
 
 ```text
 shared/game_data.toml
 ```
 
-Proposed values:
+Current generated Go constants:
 
-```json
-WORLD_WRAP_WIDTH: 1062
-WORLD_WRAP_HEIGHT: 5250
+```go
+constants.WorldWidth
+constants.WorldHeight
 ```
 
-Then regenerate:
+Current generated GDScript constants:
+
+```gdscript
+Constants.WORLD_WIDTH
+Constants.WORLD_HEIGHT
+```
+
+When world size changes, regenerate both Go and GDScript outputs:
 
 ```bash
 python3 tools/data_sync/main.py -push -constants -go -gds
 ```
 
-TODO: confirm `1062` width is intentional. It is very narrow compared to `5250`.
+The client wrap helper depends on generated GDScript world constants. If only Go constants are regenerated, the server and client can disagree about wrap size.
 
-### 2. Extend `services/game-server/internal/game/space`
+## Server Model
 
-Add:
-
-```go
-type Bounds struct {
-	Width  float64
-	Height float64
-}
-
-func DefaultBounds() Bounds
-func WrapPosition(pos physics.Vector2, bounds Bounds) physics.Vector2
-func ShortestDelta(from physics.Vector2, to physics.Vector2, bounds Bounds) physics.Vector2
-func WrappedDistance(from physics.Vector2, to physics.Vector2, bounds Bounds) float64
-```
-
-Then update the existing helpers to route through the wrapped implementation when ready:
-
-```go
-func Delta(from, to physics.Vector2) physics.Vector2
-func Distance(from, to physics.Vector2) float64
-func Direction(from, to physics.Vector2) physics.Vector2
-func NormalizePosition(position physics.Vector2) physics.Vector2
-```
-
-### 3. Add Wrap Math Tests
-
-Extend:
+Server simulation stores bounded wrapped positions. Gameplay spatial math is centralized in:
 
 ```text
-services/game-server/internal/game/space/space_test.go
+services/game-server/internal/game/space/space.go
 ```
 
-Test cases:
+The package owns:
 
-- position wraps right to left
-- position wraps left to right
-- position wraps top to bottom
-- position wraps bottom to top
-- shortest delta crosses horizontal edge
-- shortest delta crosses vertical edge
-- shortest delta stays direct when direct path is shorter
-- `NormalizePosition` wraps into bounds once wrapping is enabled
+- `Bounds`
+- `DefaultBounds`
+- `WrapPosition`
+- `ShortestDelta`
+- `WrappedDistance`
+- `Delta`
+- `Distance`
+- `Direction`
+- `NormalizePosition`
 
-### 4. Wrap Moving Entities Centrally
+`Game.Step` centrally normalizes moving players, asteroids, and bullets after movement. This keeps entity methods simple and makes wrapping behavior easy to audit.
 
-Prefer central wrapping in:
+Server systems that rely on spatial relationships use the `space` package:
 
-```text
-services/game-server/internal/game/game.go
-```
+- asteroid aim direction uses wrapped `space.Direction`
+- visibility/despawn uses wrapped `space.Delta`
+- respawn safety uses wrapped `space.Distance`
+- collision checks place temporary collision bodies in wrapped-local space before testing
 
-After movement, normalize positions for:
+Stored entity coordinates are not duplicated as ghost bodies. For collision checks, the server moves only the temporary collision body near the actor being tested.
 
-- players
-- asteroids
-- bullets
+## Client Model
 
-Central wrapping is less invasive than putting wrapping directly inside each entity method at first.
+The Godot client keeps two coordinate layers:
 
-### 5. Make Spawning Wrap-Aware
+- server positions: bounded authoritative coordinates from state packets
+- visual positions: continuous positions used for rendering and camera/background continuity
 
-Touch:
-
-```text
-services/game-server/internal/game/spawning.go
-services/game-server/internal/game/visibility.go
-```
-
-Behavior:
-
-- generate spawn position around the camera as today
-- call `space.NormalizePosition(spawn)` before storing the asteroid
-- ensure `space.Direction(spawn, targetPosition)` uses shortest wrapped delta once wrapping is active
-- allow an asteroid spawned past one edge to be stored on the opposite side
-
-### 6. Make Visibility And Despawn Wrap-Aware
-
-Touch:
-
-```text
-services/game-server/internal/game/visibility.go
-```
-
-The visibility code already uses `space.Delta`. Once `space.Delta` becomes wrap-aware, camera checks should naturally support wrapped edges.
-
-Required behavior:
-
-- asteroid across world edge is still near a camera if it is visually nearby
-- bullet across world edge is still near a camera if it is visually nearby
-- objects far from all cameras still despawn
-
-### 7. Make Respawn Safety Wrap-Aware
-
-Touch:
-
-```text
-services/game-server/internal/game/session.go
-```
-
-Respawn clearance already uses `space.Distance`. Once `space.Distance` becomes wrapped, respawn safety should treat objects across the edge as nearby.
-
-Add tests for:
-
-- spawn point near opposite edge is unsafe if an asteroid is close across the wrap
-- spawn point near opposite edge is unsafe if a player is close across the wrap
-- spawn search still finds a safe point
-
-### 8. Make Collisions Wrap-Aware
-
-Touch:
-
-```text
-services/game-server/internal/game/combat.go
-```
-
-Build temporary collision bodies in local wrapped space.
-
-For ship/asteroid:
-
-```go
-delta := space.Delta(ship.Position(), asteroid.Position())
-asteroidBody.Position = ship.Position().Add(delta)
-```
-
-For bullet/asteroid:
-
-```go
-delta := space.Delta(bullet.Position(), asteroid.Position())
-asteroidBody.Position = bullet.Position().Add(delta)
-```
-
-This avoids needing duplicate ghost bodies at first.
-
-### 9. Add Server Gameplay Tests
-
-Add focused tests for:
-
-- player crossing right edge wraps to left server coordinate
-- player crossing left edge wraps to right server coordinate
-- asteroid crossing edge wraps
-- bullet crossing edge wraps
-- asteroid near opposite edge does not despawn if camera is near boundary
-- bullet near opposite edge does not despawn if camera is near boundary
-- bullet/asteroid collision works across boundary
-- ship/asteroid collision works across boundary
-- asteroid spawning near boundary wraps into world bounds
-
-Run:
-
-```bash
-cd services/game-server
-env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
-```
-
-### 10. Add Client Wrap Math
-
-Create:
+Client wrap math lives in:
 
 ```text
 client/scripts/world_wrap.gd
 ```
 
-Add helpers matching server behavior:
+`world_sync.gd` tracks:
 
 ```gdscript
-static func wrap_position(pos: Vector2) -> Vector2
-static func shortest_delta(from: Vector2, to: Vector2) -> Vector2
-static func visual_position_relative_to(reference: Vector2, target: Vector2) -> Vector2
+local_server_position
+local_visual_position
 ```
 
-Use generated constants from:
+On each local-player state update, the client advances visual position by the shortest wrapped delta from the previous server position to the new server position. This prevents the local player, camera, and background from snapping when the server coordinate wraps.
 
-```text
-client/scripts/constants/constants.gd
-```
-
-### 11. Track Local Visual Continuity
-
-Touch:
-
-```text
-client/scripts/game.gd
-client/scripts/networking/world_sync.gd
-```
-
-Maintain separate server and visual positions:
+Remote players, asteroids, bullets, and server-driven effects render relative to the local player:
 
 ```gdscript
-var local_server_position: Vector2
-var local_visual_position: Vector2
+visual_position = local_visual_position + WorldWrap.shortest_delta(
+	local_server_position,
+	entity_server_position
+)
 ```
 
-On state update:
+The camera is a child of the local player node, so it follows the continuous local visual position. Background scroll follows the local player node as well.
 
-```gdscript
-var new_server_position := Vector2(...)
-local_visual_position += WorldWrap.shortest_delta(local_server_position, new_server_position)
-local_server_position = new_server_position
-```
+## Tests
 
-This prevents the camera/background from snapping when the server position wraps.
-
-### 12. Render Objects Relative To Local Player
-
-Touch:
+Server tests live under:
 
 ```text
-client/scripts/networking/world_sync.gd
+services/game-server/tests/
 ```
 
-For remote players, asteroids, and bullets:
+Relevant areas:
 
-```gdscript
-visual_position = local_visual_position + WorldWrap.shortest_delta(local_server_position, entity_server_position)
-```
+- `tests/space`: wrap math helpers
+- `tests/game`: movement wrapping, spawning, visibility/despawn, respawn safety, and cross-edge collisions
 
-This lets the camera visually straddle the invisible edge.
-
-### 13. Preserve Background Continuity
-
-Touch:
+Client tests live under:
 
 ```text
-client/scripts/game.gd
-client/scripts/ui/game_shell.gd
+client/tests/unit/
 ```
 
-Background and camera offset should use the client visual position, not raw wrapped server position.
+Relevant coverage:
 
-### 14. Document Final Architecture
+- `test_world_wrap.gd`: client wrap math
+- `test_world_sync.gd`: visual-relative state application
 
-Update:
+## Manual Smoke Checklist
 
-```text
-docs/design/architecture.md
-docs/notes.md
-docs/developer.md
-```
+Before calling wrap behavior complete after a visual or balance change, manually verify:
 
-Document:
-
-- `services/game-server/internal/game/space` owns gameplay spatial math
-- server stores bounded wrapped coordinates
-- client renders continuous visual coordinates
-- camera can straddle world edges invisibly
-- spawning, visibility, respawn safety, and collisions use wrap-aware helpers
-
-### 15. Smoke Test
-
-Manual checks:
-
-- fly straight for several minutes
-- cross all four edges without visual snap
-- shoot across an edge
-- asteroid crosses edge naturally
-- asteroid spawns near edge naturally
-- collide with asteroid across boundary
-- multiplayer clients near opposite server edges see each other nearby
+- fly across right edge
+- fly across left edge
+- fly across top edge
+- fly across bottom edge
+- camera does not snap
 - background does not jump
+- bullets cross edges naturally
+- asteroids cross edges naturally
+- asteroids spawn near edges naturally
+- visibility/despawn behaves near edges
+- bullet/asteroid collision works across edges
+- ship/asteroid collision works across edges
+- respawn safety detects danger across edges
+- multiplayer clients near opposite server edges see each other nearby
+- bullet blast and ship death effects spawn near visible entity positions
 
-## Preferred Implementation Order
+## Known Follow-Ups
 
-1. Constants.
-2. Extend `services/game-server/internal/game/space`.
-3. Add/expand `space` tests.
-4. Server movement wrapping in `Game.Step()`.
-5. Server visibility/spawning tests.
-6. Server collision wrap changes.
-7. Client `world_wrap.gd`.
-8. Client visual-relative world sync.
-9. Client camera/background continuity.
-10. Docs and smoke testing.
-
-## Design Caution
-
-The risky part is not the wrap math by itself. The risky part is keeping server authoritative wrapped positions separate from client visual continuity. Treat those as two different coordinate layers.
+- Full gameplay/network smoke testing is still manual.
+- Consider whether current world dimensions are final for gameplay balance.
+- Vertical despawn behavior is limited by the relationship between world height, visible viewport height, and despawn margin.
+- `client/scripts/world_view.gd` may be obsolete after visual wrapping moved into `world_wrap.gd` and `world_sync.gd`.

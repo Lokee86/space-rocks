@@ -260,7 +260,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
 - Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred.
-- Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is flat/infinite today, but exists to contain future wrapped-world support.
+- Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It owns wrap-aware spatial math for the toroidal world.
 - Add focused Go tests for server gameplay rules that can regress.
 - Add focused GUT tests for client packet, HUD, `world_sync`, and pure client logic regressions. Keep test-only helpers under `client/tests/`, not `client/scripts/`.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
@@ -401,7 +401,7 @@ Full gameplay/network smoke testing remains manual for now: opening the game sce
 - Collision shape export/import should be verified after the Godot 4.6 upgrade.
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
 - API server is planned but not scaffolded.
-- Toroidal wrapping and ship variants are planned but not implemented.
+- Ship variants are planned but not implemented. Toroidal wrapping is implemented and still needs manual gameplay smoke testing after related changes.
 
 ## Agent Behavior Notes
 

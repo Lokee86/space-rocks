@@ -118,6 +118,69 @@ func TestRespawnSafetyUsesRespawnBuffer(t *testing.T) {
 	}
 }
 
+func TestRespawnSafetySeesAsteroidAcrossWrapBoundary(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	scenario.removePlayerEntity(playerID)
+	spawnPosition := physics.Vector2{X: 5, Y: 100}
+	scenario.setSessionSpawnPosition(playerID, spawnPosition)
+	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: constants.WorldWidth - 5, Y: 100}, 1)
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
+
+	respawned := scenario.playerState(playerID, playerID)
+	if respawned.X == spawnPosition.X && respawned.Y == spawnPosition.Y {
+		t.Fatal("expected respawn position near cross-edge asteroid to be avoided")
+	}
+}
+
+func TestRespawnSafetySeesPlayerAcrossWrapBoundary(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	respawningPlayerID := scenario.addPlayer()
+	otherPlayerID := scenario.addPlayer()
+	spawnPosition := physics.Vector2{X: 5, Y: 100}
+	scenario.setSessionSpawnPosition(respawningPlayerID, spawnPosition)
+	scenario.setPlayerPosition(otherPlayerID, physics.Vector2{X: constants.WorldWidth - 5, Y: 100})
+	scenario.removePlayerEntity(respawningPlayerID)
+
+	scenario.send(respawningPlayerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
+
+	respawned := scenario.playerState(respawningPlayerID, respawningPlayerID)
+	if respawned.X == spawnPosition.X && respawned.Y == spawnPosition.Y {
+		t.Fatal("expected respawn position near cross-edge player to be avoided")
+	}
+}
+
+func TestRespawnSearchFindsSafePointAfterWrappedUnsafeCandidates(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	scenario.removePlayerEntity(playerID)
+	spawnPosition := physics.Vector2{X: 5, Y: 100}
+	firstSearchCandidate := physics.Vector2{
+		X: spawnPosition.X - constants.PlayerRespawnBuffer,
+		Y: spawnPosition.Y - constants.PlayerRespawnBuffer,
+	}
+	scenario.setSessionSpawnPosition(playerID, spawnPosition)
+	scenario.placeAsteroid("asteroid-origin", physics.Vector2{X: constants.WorldWidth - 5, Y: 100}, 1)
+	scenario.placeAsteroid("asteroid-first-candidate", physics.Vector2{
+		X: constants.WorldWidth - constants.PlayerRespawnBuffer + spawnPosition.X,
+		Y: constants.WorldHeight - constants.PlayerRespawnBuffer + spawnPosition.Y,
+	}, 1)
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
+
+	respawned := scenario.playerState(playerID, playerID)
+	if respawned.X == spawnPosition.X && respawned.Y == spawnPosition.Y {
+		t.Fatal("expected wrapped-unsafe origin to be avoided")
+	}
+	if respawned.X == firstSearchCandidate.X && respawned.Y == firstSearchCandidate.Y {
+		t.Fatal("expected wrapped-unsafe first search candidate to be avoided")
+	}
+}
+
 func TestRespawnSafetyAvoidsExistingPlayers(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()

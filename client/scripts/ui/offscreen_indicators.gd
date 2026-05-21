@@ -1,7 +1,6 @@
 extends Control
 
-const INDICATOR_EDGE_MARGIN: float = 32.0
-const TARGET_VISIBILITY_PADDING: float = 64.0
+const Constants = preload("res://scripts/constants/constants.gd")
 
 @export var indicator_scene: PackedScene
 
@@ -27,7 +26,7 @@ func update_indicators(remote_visual_positions: Dictionary, camera: Camera2D) ->
 		if indicator != null:
 			indicator.call("hide_indicator")
 			var screen_position: Vector2 = camera.get_canvas_transform() * remote_visual_positions[player_id]
-			if _is_target_still_visible(screen_position, screen_size, TARGET_VISIBILITY_PADDING):
+			if _is_target_still_visible(screen_position, screen_size, Constants.OSINDICATOR_TARGET_VISIBILITY_PADDING):
 				indicator.call("hide_indicator")
 				continue
 
@@ -35,7 +34,7 @@ func update_indicators(remote_visual_positions: Dictionary, camera: Camera2D) ->
 			var edge_position: Vector2 = edge_position_from_direction(
 				direction,
 				screen_size,
-				INDICATOR_EDGE_MARGIN
+				Constants.OSINDICATOR_EDGE_MARGIN
 			)
 			indicator.call("set_indicator", edge_position, direction)
 

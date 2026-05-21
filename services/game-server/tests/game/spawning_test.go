@@ -1,6 +1,7 @@
 package gametests
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
@@ -25,6 +26,32 @@ func TestAsteroidSpawningUsesClientCameraView(t *testing.T) {
 	packet := scenario.state(playerID)
 	if len(packet.Asteroids) != constants.AsteroidSpawnBatchSize {
 		t.Fatalf("expected %d asteroids spawned for camera view, got %d", constants.AsteroidSpawnBatchSize, len(packet.Asteroids))
+	}
+}
+
+func TestAsteroidSpawningNearBoundaryStoresWrappedPosition(t *testing.T) {
+	rand.Seed(1)
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+	scenario.setPlayerPosition(playerID, physics.Vector2{
+		X: constants.WorldWidth - 1,
+		Y: constants.WorldHeight - 1,
+	})
+	scenario.send(playerID, servergame.ClientPacket{
+		Type: servergame.PacketTypeClientConfig,
+		Config: entities.ClientConfig{
+			VisibleWorldWidth:  200,
+			VisibleWorldHeight: 200,
+		},
+	})
+
+	scenario.step(constants.AsteroidSpawnInterval)
+
+	for id, asteroid := range scenario.state(playerID).Asteroids {
+		if asteroid.X < 0 || asteroid.X >= constants.WorldWidth ||
+			asteroid.Y < 0 || asteroid.Y >= constants.WorldHeight {
+			t.Fatalf("expected asteroid %s to be stored inside world bounds, got (%v, %v)", id, asteroid.X, asteroid.Y)
+		}
 	}
 }
 

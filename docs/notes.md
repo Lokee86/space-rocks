@@ -18,6 +18,7 @@ Space Rocks is playable in development form with:
 - HUD score/lives/room/death/game-over display
 - audio/effects for shooting, asteroid impacts, ship death, and game over
 - pause-state server plumbing and client toggle plumbing, but no real pause menu scene yet
+- bounded toroidal world wrapping with continuous client visual coordinates
 
 The project is still moving quickly. Treat recent systems as subject to refinement.
 
@@ -106,7 +107,33 @@ Recent additions include:
 
 Note: `tools/data_sync/` updates only marked `data-sync` blocks. Do not use the old `tools/scripts/generate_constants.py` path for active constants changes.
 
-Boundary note: server-owned constants live under `constants.server.*`. `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`; `asteroid_size_scale` lives under `constants.server.asteroids`. The client should receive lives through player/state data, respawn delay through death events, and asteroid scale through asteroid state instead of importing those constants.
+Boundary note: server-owned constants live under `constants.server.*`. World size is generated to both Go and GDScript because client visual wrapping must match server bounds. `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`; `asteroid_size_scale` lives under `constants.server.asteroids`. The client should receive lives through player/state data, respawn delay through death events, and asteroid scale through asteroid state instead of importing those constants.
+
+### Toroidal World Wrap
+
+World wrapping is implemented.
+
+Server behavior:
+
+- world bounds come from `constants.WorldWidth` and `constants.WorldHeight`
+- `services/game-server/internal/game/space` owns wrapped delta, distance, direction, and normalization
+- `Game.Step()` centrally wraps players, asteroids, and bullets after movement
+- spawning, visibility/despawn, respawn safety, and collision checks use wrap-aware spatial helpers
+
+Client behavior:
+
+- `client/scripts/world_wrap.gd` uses generated `Constants.WORLD_WIDTH` and `Constants.WORLD_HEIGHT`
+- `client/scripts/networking/world_sync.gd` tracks `local_server_position` and continuous `local_visual_position`
+- remote players, asteroids, bullets, and server-driven effects render relative to the local player's visual position
+- camera/background follow the continuous local player node
+
+Important maintenance note: after changing world size in `shared/game_data.toml`, run:
+
+```bash
+python3 tools/data_sync/main.py -push -constants -go -gds
+```
+
+Running only `-go` can leave the client using stale wrap bounds.
 
 ### Shared Packets
 
@@ -262,7 +289,6 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Client-side prediction/reconciliation beyond interpolation.
 - More granular/documented collision shape export workflow.
 - Logical gameplay viewport cap instead of raw OS window max size for balance.
-- Invisible toroidal/wrapped playfield; see [docs/design/toroidal-wrap.md](design/toroidal-wrap.md).
 - Ship variant foundation exists server-side: runtime ship type, `ship_type` state, resolved ship stats/modifiers, and collision shape ID lookup. Client scene mapping, real keyed collision catalogs, selection, and acquisition remain future work; see [docs/design/ship-variants.md](design/ship-variants.md).
 
 ## Current Short-Term Priorities
@@ -284,7 +310,6 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Enemy and pickup systems integrated with the scoring framework.
 - More robust client prediction/reconciliation if networking latency becomes visible.
 - Better tooling around collision shape generation and validation.
-- Invisible toroidal world wrapping to keep multiplayer players in one arena while preserving endless-feeling flight.
 - Complete ship type variants with real alternate definitions, client scene mapping, and keyed server collision maps.
 
 ## Risks / Likely Messy Areas
@@ -308,7 +333,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Should the packet/constants generated client files move under `client/scripts/generated/` or a similar folder?
 - How should the eventual API server share code, if at all, with the game server?
 - Is `client/game-clip.avi` tracked or just present locally? It should not be committed.
-- What final world wrap dimensions should be used? Proposed planning values are currently `1062 x 5250`, but width should be confirmed.
+- What final world wrap dimensions should be used for balance? Current values are in `shared/game_data.toml`.
 - Ship variants now have a server-side stats modifier seam. Future work should decide which concrete stats/weapons/rules are allowed to vary for real ship definitions.
 
 ## Notes For Future Codex Sessions
@@ -321,11 +346,11 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Do not add new Go server `*_test.go` files beside production packages under `services/game-server/internal/`.
 - When changing generated packets, HUD behavior, `world_sync`, or pure client logic, add or update focused GUT tests under `client/tests/unit/`.
 - Keep client test fixtures/helpers under `client/tests/fixtures/` and `client/tests/helpers/`, not under production `client/scripts/`.
-- New server gameplay distance/position logic should go through `services/game-server/internal/game/space`; it is flat/infinite today, with no-op normalization, but keeps future wrapped-world work localized.
+- New server gameplay distance/position logic should go through `services/game-server/internal/game/space`; it is wrap-aware and keeps toroidal world behavior centralized.
 - When changing Godot scenes, inspect `.tscn` diffs for accidental editor movement/offsets.
 - Avoid broad rewrites of `game.gd`; extract only when the boundary is clear.
 - Developer/debug toggles are documented in [docs/devtools/toggles.md](devtools/toggles.md).
-- Future toroidal wrap and ship-variant plans are documented in [docs/design/toroidal-wrap.md](design/toroidal-wrap.md) and [docs/design/ship-variants.md](design/ship-variants.md).
+- Toroidal wrap behavior and ship-variant plans are documented in [docs/design/toroidal-wrap.md](design/toroidal-wrap.md) and [docs/design/ship-variants.md](design/ship-variants.md).
 - For logging, use `services/game-server/internal/logging` category loggers. Do not add raw `log.Println`.
 - Before diagnosing gameplay/network issues, confirm the Go server is actually running and the client is connected.
 - Current server tests pass with:

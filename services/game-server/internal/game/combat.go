@@ -4,6 +4,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -37,6 +38,8 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			if !ok {
 				continue
 			}
+			delta := space.Delta(bullet.Position(), asteroid.Position())
+			asteroidBody.Position = bullet.Position().Add(delta)
 
 			if _, ok := physics.DetectCollision(bulletBody, asteroidBody); !ok {
 				continue
@@ -99,6 +102,8 @@ func (game *Game) handleShipAsteroidCollisions() {
 			if !ok {
 				continue
 			}
+			delta := space.Delta(player.Position(), asteroid.Position())
+			asteroidBody.Position = player.Position().Add(delta)
 
 			if _, ok := physics.DetectCollision(playerBody, asteroidBody); !ok {
 				continue
