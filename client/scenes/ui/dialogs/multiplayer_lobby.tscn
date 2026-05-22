@@ -1,13 +1,12 @@
 [gd_scene format=3 uid="uid://bplexs5a86e6h"]
 
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_l4dux"]
-[ext_resource type="LabelSettings" path="res://assets/ui/label_settings/interface_label.tres" id="2_6rt4v"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_6rt4v"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_6lf8k"]
 [ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="3_6rt4v"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="4_0vxb0"]
 
-[node name="MultiplayerLobby" type="Control" unique_id=1210042666]
-layout_mode = 3
+[node name="CenterContainer2" type="CenterContainer" unique_id=862692582]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -15,12 +14,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1773938725]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="CenterContainer" unique_id=507778275]
 custom_minimum_size = Vector2(0, 650)
