@@ -15,9 +15,15 @@ var asteroid_textures := [
 func set_asteroid_variant(index: int) -> void:
 	var variant_index := wrapi(index, 0, asteroid_textures.size())
 	sprite.texture = asteroid_textures[variant_index]
+	collision.disabled = false
 
 	if collision_variants.get_child_count() == 0:
 		return
+
+	for child in collision_variants.get_children():
+		var variant_collision := child as CollisionPolygon2D
+		if variant_collision != null:
+			variant_collision.disabled = true
 
 	var shape_node := collision_variants.get_child(
 		min(variant_index, collision_variants.get_child_count() - 1)

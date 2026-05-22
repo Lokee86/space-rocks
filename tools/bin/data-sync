@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -n "${SPACE_ROCKS_ROOT:-}" ]]; then
+	repo_root="$SPACE_ROCKS_ROOT"
+else
+	script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+	repo_root="$(cd -- "$script_dir/../.." && pwd)"
+fi
+
+cd "$repo_root"
+exec python3 tools/data_sync/main.py "$@"

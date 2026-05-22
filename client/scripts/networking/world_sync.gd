@@ -29,6 +29,8 @@ var target_player_rotations := {}
 var target_bullet_positions := {}
 var target_bullet_rotations := {}
 var target_asteroid_positions := {}
+var asteroid_server_positions := {}
+var asteroid_visual_positions := {}
 var local_server_position := Vector2.ZERO
 var local_visual_position := Vector2.ZERO
 var has_local_visual_position := false
@@ -243,13 +245,23 @@ func _apply_asteroids(server_asteroids: Dictionary) -> void:
 	for asteroid_id in server_asteroids.keys():
 		var state: Dictionary = server_asteroids[asteroid_id]
 		var asteroid_node = _get_asteroid_node(asteroid_id)
-		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
-		var visual_position := local_visual_position + WorldWrapScript.shortest_delta(
-			local_server_position,
-			server_position
-		)
+		var server_position := WorldWrapScript.wrap_position(Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y]))
+		var visual_position: Vector2
+
+		if asteroid_server_positions.has(asteroid_id):
+			visual_position = asteroid_visual_positions[asteroid_id] + WorldWrapScript.shortest_delta(
+				asteroid_server_positions[asteroid_id],
+				server_position
+			)
+		else:
+			visual_position = local_visual_position + WorldWrapScript.shortest_delta(
+				local_server_position,
+				server_position
+			)
 
 		target_asteroid_positions[asteroid_id] = visual_position
+		asteroid_server_positions[asteroid_id] = server_position
+		asteroid_visual_positions[asteroid_id] = visual_position
 		_apply_asteroid_scale(asteroid_id, asteroid_node, state)
 
 		if !initialized_asteroids.has(asteroid_id):
@@ -291,6 +303,8 @@ func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
 		initialized_asteroids.erase(asteroid_id)
 		warned_missing_asteroid_scale.erase(asteroid_id)
 		target_asteroid_positions.erase(asteroid_id)
+		asteroid_server_positions.erase(asteroid_id)
+		asteroid_visual_positions.erase(asteroid_id)
 
 
 func get_remote_player_visual_positions() -> Dictionary:

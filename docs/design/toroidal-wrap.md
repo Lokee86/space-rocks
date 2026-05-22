@@ -147,4 +147,3 @@ Before calling wrap behavior complete after a visual or balance change, manually
 - Full gameplay/network smoke testing is still manual.
 - Consider whether current world dimensions are final for gameplay balance.
 - Vertical despawn behavior is limited by the relationship between world height, visible viewport height, and despawn margin.
-- `client/scripts/world_view.gd` may be obsolete after visual wrapping moved into `world_wrap.gd` and `world_sync.gd`.

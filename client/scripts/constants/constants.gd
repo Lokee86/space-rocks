@@ -3,7 +3,7 @@ extends RefCounted
 
 # data-sync:start constants.server.world
 const WORLD_WIDTH := 8625.0
-const WORLD_HEIGHT := 4500.0
+const WORLD_HEIGHT := 6750.0
 # data-sync:end constants.server.world
 
 # data-sync:start constants.client.presentation
