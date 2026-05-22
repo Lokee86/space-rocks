@@ -7,7 +7,7 @@ const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
-const GAME_MENU_SCENE := preload("res://scenes/ui/game_menu.tscn")
+const GAME_MENU_SCENE := preload("res://scenes/ui/dialogs/game_menu.tscn")
 
 @onready var player: Player = $Player
 @onready var bullets = $Bullets

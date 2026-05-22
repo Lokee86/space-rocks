@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://bswwicitkpnyl"]
+
+[ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_10utc"]
+[ext_resource type="Script" uid="uid://caswbdicv3nr8" path="res://scripts/ui/multiplayer_dialog.gd" id="2_o86b4"]
+[ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="3_yb1at"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="4_n0hg6"]
+[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="5_aallj"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_7yrwt"]
+font = ExtResource("3_yb1at")
+font_size = 32
+
+[node name="MultiplayerDialog" type="TextureRect" unique_id=292150501]
+custom_minimum_size = Vector2(550, 325)
+offset_left = 365.0
+offset_top = 197.0
+offset_right = 915.0
+offset_bottom = 522.0
+texture = ExtResource("1_10utc")
+expand_mode = 1
+script = ExtResource("2_o86b4")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1329670556]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_bottom = 15
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer" unique_id=2108395624]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/CenterContainer" unique_id=2006584329]
+layout_mode = 2
+
+[node name="enterID" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=1660372445]
+layout_mode = 2
+text = "Enter Room ID"
+label_settings = SubResource("LabelSettings_7yrwt")
+horizontal_alignment = 1
+
+[node name="IDentry" type="LineEdit" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=535104702]
+layout_mode = 2
+alignment = 1
+max_length = 9
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=998535331]
+layout_mode = 2
+alignment = 1
+
+[node name="SubmitButton" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer" unique_id=334073375 instance=ExtResource("4_n0hg6")]
+custom_minimum_size = Vector2(220, 80)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer/SubmitButton" unique_id=992512128]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer/SubmitButton/CenterContainer" unique_id=1323240994]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_bottom = 6
+
+[node name="Submit" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer/SubmitButton/CenterContainer/MarginContainer" unique_id=1222865199]
+layout_mode = 2
+text = "
+
+
+SUBMIT"
+label_settings = ExtResource("5_aallj")
+
+[node name="CancelButton" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer" unique_id=449798243 instance=ExtResource("4_n0hg6")]
+custom_minimum_size = Vector2(220, 80)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer/CancelButton" unique_id=1109250174]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer/CancelButton/CenterContainer" unique_id=127693459]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="Cancel" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer/CancelButton/CenterContainer/MarginContainer" unique_id=438916337]
+layout_mode = 2
+text = "
+
+
+CANCEL"
+label_settings = ExtResource("5_aallj")

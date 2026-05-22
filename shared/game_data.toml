@@ -13,7 +13,7 @@ player_resume_invulnerability_seconds = 1.5
 
 [constants.server.world]
 world_width = 8625.0
-world_height = 4500.0
+world_height = 6750.0
 
 [constants.server.scoring]
 base_score = 120

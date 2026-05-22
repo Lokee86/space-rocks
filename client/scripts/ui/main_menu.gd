@@ -3,7 +3,7 @@ extends Control
 signal single_player_pressed
 signal multiplayer_room_requested(room_id: String)
 
-const MULTIPLAYER_DIALOG_SCENE := preload("res://scenes/ui/multiplayer_dialog.tscn")
+const MULTIPLAYER_DIALOG_SCENE := preload("res://scenes/ui/dialogs/multiplayer_dialog.tscn")
 
 @onready var single_player_button: TextureButton = _find_texture_button("SinglePlayerButton")
 @onready var multiplayer_button: TextureButton = _find_texture_button("MultiplayerButton")

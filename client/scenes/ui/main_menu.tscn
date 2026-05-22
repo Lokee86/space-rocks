@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dcn0vbv2b3wfc"]
 
 [ext_resource type="FontFile" uid="uid://b4obamqu1qd0x" path="res://assets/fonts/GamepauseddemoRegular-RpmY6.otf" id="1_187wc"]
-[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/button_long.tscn" id="3_5kvch"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_5kvch"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="3_gy3bv"]
 [ext_resource type="Script" uid="uid://cyemkaej6joye" path="res://scripts/ui/main_menu.gd" id="10_n3gqj"]
 
