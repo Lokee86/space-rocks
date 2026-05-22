@@ -40,6 +40,8 @@ func test_apply_state_creates_player_nodes() -> void:
 
 	assert_true(world_sync.player_nodes.has(WorldStateFixture.LOCAL_PLAYER_ID))
 	assert_true(world_sync.player_nodes.has(WorldStateFixture.REMOTE_PLAYER_ID))
+	assert_false(world_sync.get_remote_player_hues().has(WorldStateFixture.LOCAL_PLAYER_ID))
+	assert_true(world_sync.get_remote_player_hues().has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_eq(world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID], local_player)
 	assert_eq(
 		world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID].position,
@@ -52,6 +54,15 @@ func test_apply_state_creates_player_nodes() -> void:
 	assert_eq(
 		world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].get_parent(),
 		game_owner
+	)
+
+
+func test_local_player_draws_above_remote_players() -> void:
+	_apply_fixture_state()
+
+	assert_gt(
+		world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID].z_index,
+		world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].z_index
 	)
 
 
@@ -168,6 +179,7 @@ func test_apply_state_removes_stale_remote_player_node() -> void:
 	assert_false(world_sync.initialized_players.has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_false(world_sync.target_player_positions.has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_false(world_sync.target_player_rotations.has(WorldStateFixture.REMOTE_PLAYER_ID))
+	assert_false(world_sync.get_remote_player_hues().has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_true(remote_node.is_queued_for_deletion())
 
 

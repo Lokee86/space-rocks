@@ -169,7 +169,8 @@ func _update_offscreen_indicators() -> void:
 
 	offscreen_indicators.update_indicators(
 		world_sync.get_remote_player_visual_positions(),
-		gameplay_camera
+		gameplay_camera,
+		world_sync.get_remote_player_hues()
 	)
 
 

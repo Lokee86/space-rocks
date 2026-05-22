@@ -3,22 +3,30 @@ class_name Player
 
 const Packets = preload("res://scripts/networking/packets.gd")
 const AFTERBURNER_SCENE := preload("res://scenes/animations/blue_afterburner.tscn")
+const PLAYER_HUE_SHIFT_SHADER := preload("res://shaders/player_hue_shift.gdshader")
 
 @export var turn_left_action := &"turn_left"
 @export var turn_right_action := &"turn_right"
 @export var move_forward_action := &"move_forward"
 @export var move_backward_action := &"move_backward"
 @export var shoot_action := &"shoot"
+@export var ship_visual_path: NodePath = ^"Sprite2D"
 
+@onready var ship_visual: CanvasItem = get_node_or_null(ship_visual_path) as CanvasItem
 @onready var laser_sound: AudioStreamPlayer2D = $LaserSound
 @onready var afterburner_marker: Marker2D = $AfterburnerMarker
 
 var afterburner: Node2D
 var afterburner_sprite: AnimatedSprite2D
 var afterburner_active := false
+var ship_hue_material: ShaderMaterial
+var player_hue := 0.0
 
 
 func _ready() -> void:
+	_ensure_unique_ship_hue_material()
+	set_player_hue(player_hue)
+
 	afterburner = AFTERBURNER_SCENE.instantiate()
 	afterburner.rotation_degrees = -90.0
 	afterburner.scale = Vector2(0.45, 0.45)
@@ -42,6 +50,14 @@ func play_laser_sound() -> void:
 	laser_sound.play()
 
 
+func set_player_hue(hue: float) -> void:
+	player_hue = fposmod(hue, 1.0)
+	if _ensure_unique_ship_hue_material() == null:
+		return
+
+	ship_hue_material.set_shader_parameter("hue_shift", player_hue)
+
+
 func set_afterburner_active(active: bool) -> void:
 	if afterburner == null || afterburner_active == active:
 		return
@@ -55,3 +71,20 @@ func set_afterburner_active(active: bool) -> void:
 		afterburner_sprite.play("default")
 	else:
 		afterburner_sprite.stop()
+
+
+func _ensure_unique_ship_hue_material() -> ShaderMaterial:
+	if ship_hue_material != null:
+		return ship_hue_material
+	if ship_visual == null:
+		return null
+
+	var existing_material := ship_visual.material as ShaderMaterial
+	if existing_material != null && existing_material.shader == PLAYER_HUE_SHIFT_SHADER:
+		ship_hue_material = existing_material.duplicate() as ShaderMaterial
+	else:
+		ship_hue_material = ShaderMaterial.new()
+		ship_hue_material.shader = PLAYER_HUE_SHIFT_SHADER
+
+	ship_visual.material = ship_hue_material
+	return ship_hue_material

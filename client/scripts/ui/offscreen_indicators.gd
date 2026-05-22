@@ -7,7 +7,11 @@ const Constants = preload("res://scripts/constants/constants.gd")
 var indicators: Dictionary = {}
 
 
-func update_indicators(remote_visual_positions: Dictionary, camera: Camera2D) -> void:
+func update_indicators(
+	remote_visual_positions: Dictionary,
+	camera: Camera2D,
+	remote_player_hues := {}
+) -> void:
 	_remove_stale_indicators(remote_visual_positions)
 	if remote_visual_positions.is_empty():
 		return
@@ -36,7 +40,20 @@ func update_indicators(remote_visual_positions: Dictionary, camera: Camera2D) ->
 				screen_size,
 				Constants.OSINDICATOR_EDGE_MARGIN
 			)
-			indicator.call("set_indicator", edge_position, direction)
+			var indicator_hue := _indicator_hue_for_player(player_id, remote_player_hues)
+			indicator.call("set_indicator", edge_position, direction, indicator_hue)
+
+
+func _indicator_hue_for_player(player_id, remote_player_hues: Dictionary) -> float:
+	var hue_value = remote_player_hues.get(player_id, 0.0)
+	if typeof(hue_value) == TYPE_FLOAT || typeof(hue_value) == TYPE_INT:
+		return fposmod(float(hue_value), 1.0)
+
+	hue_value = remote_player_hues.get(str(player_id), 0.0)
+	if typeof(hue_value) == TYPE_FLOAT || typeof(hue_value) == TYPE_INT:
+		return fposmod(float(hue_value), 1.0)
+
+	return 0.0
 
 
 func _get_or_create_indicator(player_id: String) -> Control:

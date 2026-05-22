@@ -11,7 +11,19 @@ const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
-const PLAYER_Z_INDEX := 30
+const REMOTE_PLAYER_Z_INDEX := 30
+const LOCAL_PLAYER_Z_INDEX := 31
+const LOCAL_PLAYER_DEFAULT_HUE := 0.0
+const REMOTE_PLAYER_HUES := [
+	0.58,
+	0.33,
+	0.10,
+	0.76,
+	0.50,
+	0.18,
+	0.67,
+	0.88,
+]
 
 var owner_node: Node2D
 var local_player: Player
@@ -35,6 +47,7 @@ var local_server_position := Vector2.ZERO
 var local_visual_position := Vector2.ZERO
 var has_local_visual_position := false
 var remote_player_visual_positions := {}
+var remote_player_hues := {}
 var current_self_id := ""
 
 
@@ -51,7 +64,7 @@ func configure(
 
 	asteroids_layer.z_index = ASTEROID_Z_INDEX
 	bullets_layer.z_index = BULLET_Z_INDEX
-	local_player.z_index = PLAYER_Z_INDEX
+	local_player.z_index = LOCAL_PLAYER_Z_INDEX
 
 
 func apply_state(
@@ -126,6 +139,7 @@ func _apply_players(self_id: String, server_players: Dictionary) -> void:
 				local_server_position,
 				server_position
 			)
+			_apply_remote_player_hue(player_id, player_node)
 
 		target_player_positions[player_id] = visual_position
 		target_player_rotations[player_id] = server_rotation
@@ -155,16 +169,47 @@ func _get_player_node(self_id: String, player_id: String):
 
 	if player_id == self_id:
 		local_player.visible = true
-		local_player.z_index = PLAYER_Z_INDEX
+		local_player.z_index = LOCAL_PLAYER_Z_INDEX
+		local_player.set_player_hue(LOCAL_PLAYER_DEFAULT_HUE)
 		player_nodes[player_id] = local_player
 		return local_player
 
 	var remote_player = PLAYER_SCENE.instantiate()
-	remote_player.z_index = PLAYER_Z_INDEX
+	remote_player.z_index = REMOTE_PLAYER_Z_INDEX
+	_apply_remote_player_hue(player_id, remote_player)
 	owner_node.add_child(remote_player)
 	player_nodes[player_id] = remote_player
 
 	return remote_player
+
+
+func _apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
+	var remote_hue := _remote_hue_for_player(player_id)
+	remote_player_hues[player_id] = remote_hue
+	remote_player.set_player_hue(remote_hue)
+
+
+func _remote_hue_for_player(player_id: String) -> float:
+	var start_index := _player_id_hash(player_id) % REMOTE_PLAYER_HUES.size()
+	for offset in range(REMOTE_PLAYER_HUES.size()):
+		var hue: float = REMOTE_PLAYER_HUES[(start_index + offset) % REMOTE_PLAYER_HUES.size()]
+		if !_hues_similar(hue, LOCAL_PLAYER_DEFAULT_HUE):
+			return hue
+
+	return 0.5
+
+
+func _hues_similar(a: float, b: float, tolerance := 0.08) -> bool:
+	var distance: float = abs(fposmod(a, 1.0) - fposmod(b, 1.0))
+	return min(distance, 1.0 - distance) < tolerance
+
+
+func _player_id_hash(player_id: String) -> int:
+	var hash_value: int = 2166136261
+	for index in range(player_id.length()):
+		hash_value = int((hash_value ^ player_id.unicode_at(index)) * 16777619) & 0x7fffffff
+
+	return hash_value
 
 
 func _remove_missing_players(server_players: Dictionary, self_id: String) -> void:
@@ -192,6 +237,7 @@ func _remove_player_node(self_id: String, player_id: String) -> void:
 	target_player_positions.erase(player_id)
 	target_player_rotations.erase(player_id)
 	remote_player_visual_positions.erase(player_id)
+	remote_player_hues.erase(player_id)
 
 
 func _apply_bullets(server_bullets: Dictionary, play_new_bullet_sounds: bool) -> void:
@@ -311,6 +357,12 @@ func get_remote_player_visual_positions() -> Dictionary:
 	var positions := remote_player_visual_positions.duplicate()
 	positions.erase(current_self_id)
 	return positions
+
+
+func get_remote_player_hues() -> Dictionary:
+	var hues := remote_player_hues.duplicate()
+	hues.erase(current_self_id)
+	return hues
 
 
 func visual_position_for_server_position(server_position: Vector2) -> Vector2:
