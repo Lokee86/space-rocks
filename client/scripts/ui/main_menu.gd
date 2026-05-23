@@ -1,6 +1,8 @@
 extends Control
 
 signal single_player_pressed
+signal multiplayer_create_requested
+signal multiplayer_join_requested(room_code: String)
 signal multiplayer_room_requested(room_id: String)
 
 const MULTIPLAYER_DIALOG_SCENE := preload("res://scenes/ui/dialogs/multiplayer_dialog.tscn")
@@ -38,12 +40,44 @@ func _open_multiplayer_dialog() -> void:
 		return
 
 	multiplayer_dialog = MULTIPLAYER_DIALOG_SCENE.instantiate()
-	multiplayer_dialog.connect("submitted", _submit_multiplayer_room)
+	if multiplayer_dialog.has_signal("create_room_requested"):
+		multiplayer_dialog.create_room_requested.connect(_request_multiplayer_create)
+	if multiplayer_dialog.has_signal("join_room_requested"):
+		multiplayer_dialog.join_room_requested.connect(_request_multiplayer_join)
+	if multiplayer_dialog.has_signal("canceled"):
+		multiplayer_dialog.canceled.connect(_clear_multiplayer_dialog)
+	if multiplayer_dialog.has_signal("submitted"):
+		multiplayer_dialog.submitted.connect(_submit_legacy_multiplayer_room)
 	add_child(multiplayer_dialog)
 
 
-func _submit_multiplayer_room(room_id: String) -> void:
+func _request_multiplayer_create() -> void:
 	multiplayer_dialog = null
+	multiplayer_create_requested.emit()
+
+
+func _request_multiplayer_join(room_code: String) -> void:
+	print("[main_menu] join requested room_code=", room_code)
+	multiplayer_dialog = null
+	multiplayer_join_requested.emit(room_code)
+
+
+func _clear_multiplayer_dialog() -> void:
+	multiplayer_dialog = null
+
+
+func show_multiplayer_error(message: String) -> bool:
+	if multiplayer_dialog == null || !is_instance_valid(multiplayer_dialog):
+		return false
+	if !multiplayer_dialog.has_method("set_status"):
+		return false
+
+	multiplayer_dialog.set_status(message)
+	return true
+
+
+func _submit_legacy_multiplayer_room(room_id: String) -> void:
+	_clear_multiplayer_dialog()
 	multiplayer_room_requested.emit(room_id)
 
 

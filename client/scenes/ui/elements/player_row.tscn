@@ -3,11 +3,13 @@
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_1jkif"]
 [ext_resource type="Texture2D" uid="uid://bpdd158jrrcux" path="res://assets/ui/ready_green.png" id="2_opmrn"]
 [ext_resource type="Texture2D" uid="uid://hsqpl3j0l31" path="res://assets/ui/ready_red.png" id="2_tyt3a"]
+[ext_resource type="Script" path="res://scripts/ui/player_row.gd" id="4_iw0ft"]
 
 [node name="PlayerRow" type="HBoxContainer" unique_id=1723963623]
 offset_right = 40.0
 offset_bottom = 40.0
 size_flags_horizontal = 3
+script = ExtResource("4_iw0ft")
 
 [node name="PlayerNameLabel" type="Label" parent="." unique_id=1699343605]
 layout_mode = 2

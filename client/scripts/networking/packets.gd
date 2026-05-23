@@ -13,23 +13,42 @@ const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
 const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
 const TYPE_TOGGLE_DEBUG_FREEZE_WORLD := "toggle_debug_freeze_world"
 const TYPE_TOGGLE_DEBUG_FREEZE_PLAYER := "toggle_debug_freeze_player"
+const TYPE_CREATE_ROOM_REQUEST := "create_room_request"
+const TYPE_JOIN_ROOM_REQUEST := "join_room_request"
+const TYPE_LEAVE_ROOM_REQUEST := "leave_room_request"
+const TYPE_SET_READY_REQUEST := "set_ready_request"
+const TYPE_START_GAME_REQUEST := "start_game_request"
+const TYPE_RETURN_TO_LOBBY_REQUEST := "return_to_lobby_request"
+const TYPE_ROOM_SNAPSHOT := "room_snapshot"
+const TYPE_ROOM_STATE_CHANGED := "room_state_changed"
+const TYPE_ROOM_ERROR := "room_error"
 
 const FIELD_ASTEROIDS := "asteroids"
 const FIELD_BACK := "back"
 const FIELD_BULLETS := "bullets"
 const FIELD_CONFIG := "config"
+const FIELD_CONNECTED := "connected"
+const FIELD_ERROR_CODE := "error_code"
 const FIELD_EVENTS := "events"
 const FIELD_FORWARD := "forward"
 const FIELD_ID := "id"
 const FIELD_INPUT := "input"
 const FIELD_LEFT := "left"
 const FIELD_LIVES := "lives"
+const FIELD_LOCAL_MEMBER_ID := "local_member_id"
+const FIELD_MAX_PLAYERS := "max_players"
+const FIELD_MEMBER_ID := "member_id"
+const FIELD_MEMBERS := "members"
+const FIELD_MESSAGE := "message"
 const FIELD_OWNER_ID := "owner_id"
 const FIELD_PAUSED := "paused"
 const FIELD_PLAYER_ID := "player_id"
 const FIELD_PLAYERS := "players"
+const FIELD_READY := "ready"
 const FIELD_RESPAWN_DELAY := "respawn_delay"
 const FIELD_RIGHT := "right"
+const FIELD_ROOM_CODE := "room_code"
+const FIELD_ROOM_STATE := "room_state"
 const FIELD_ROTATION := "rotation"
 const FIELD_SCALE := "scale"
 const FIELD_SCORE := "score"
@@ -98,4 +117,36 @@ static func client_config_packet(visible_world_width, visible_world_height) -> D
 	packet_config[FIELD_VISIBLE_WORLD_WIDTH] = visible_world_width
 	packet_config[FIELD_VISIBLE_WORLD_HEIGHT] = visible_world_height
 	packet[FIELD_CONFIG] = packet_config
+	return packet
+
+static func create_room_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "create_room_request"
+	return packet
+
+static func join_room_request_packet(room_code) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "join_room_request"
+	packet[FIELD_ROOM_CODE] = room_code
+	return packet
+
+static func leave_room_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "leave_room_request"
+	return packet
+
+static func set_ready_request_packet(ready) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "set_ready_request"
+	packet[FIELD_READY] = ready
+	return packet
+
+static func start_game_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "start_game_request"
+	return packet
+
+static func return_to_lobby_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "return_to_lobby_request"
 	return packet

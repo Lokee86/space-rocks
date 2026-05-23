@@ -8,6 +8,7 @@ signal packet_parse_failed(text: String)
 
 const NORMAL_CLOSE_CODE := 1000
 const GRACEFUL_CLOSE_TIMEOUT_SECONDS := 0.25
+const Packets = preload("res://scripts/networking/packets.gd")
 
 var socket := WebSocketPeer.new()
 var connected := false
@@ -56,6 +57,22 @@ func send_packet(packet: Dictionary) -> void:
 		return
 
 	socket.send_text(JSON.stringify(packet))
+
+
+func send_create_room_request() -> void:
+	send_packet(Packets.create_room_request_packet())
+
+
+func send_join_room_request(room_code: String) -> void:
+	send_packet(Packets.join_room_request_packet(room_code))
+
+
+func send_set_ready_request(ready: bool) -> void:
+	send_packet(Packets.set_ready_request_packet(ready))
+
+
+func send_start_game_request() -> void:
+	send_packet(Packets.start_game_request_packet())
 
 
 func close_gracefully() -> void:

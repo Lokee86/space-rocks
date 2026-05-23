@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_6lf8k"]
 [ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="3_6rt4v"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="4_0vxb0"]
+[ext_resource type="Script" path="res://scripts/ui/multiplayer_lobby.gd" id="5_75w2v"]
 
 [node name="CenterContainer2" type="CenterContainer" unique_id=862692582]
 anchors_preset = 15
@@ -12,6 +13,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("5_75w2v")
+room_code_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer/RoomCodeValueLabel")
+room_status_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer/RoomStatusValueLabel")
+player_list_container_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/PlayerListContainer")
+ready_button_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton")
+start_game_button_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/StartGameButton")
+leave_button_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/LeaveButton")
+player_row_scene = ExtResource("3_6rt4v")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1773938725]
 layout_mode = 2

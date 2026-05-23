@@ -16,12 +16,76 @@ const (
 	PacketTypeToggleDebugInfiniteLives = "toggle_debug_infinite_lives"
 	PacketTypeToggleDebugFreezeWorld   = "toggle_debug_freeze_world"
 	PacketTypeToggleDebugFreezePlayer  = "toggle_debug_freeze_player"
+	PacketTypeCreateRoomRequest        = "create_room_request"
+	PacketTypeJoinRoomRequest          = "join_room_request"
+	PacketTypeLeaveRoomRequest         = "leave_room_request"
+	PacketTypeSetReadyRequest          = "set_ready_request"
+	PacketTypeStartGameRequest         = "start_game_request"
+	PacketTypeReturnToLobbyRequest     = "return_to_lobby_request"
+	PacketTypeRoomSnapshot             = "room_snapshot"
+	PacketTypeRoomStateChanged         = "room_state_changed"
+	PacketTypeRoomError                = "room_error"
 )
 
 type ClientPacket struct {
-	Type   string                `json:"type"`
-	Input  entities.InputState   `json:"input"`
-	Config entities.ClientConfig `json:"config"`
+	Type     string                `json:"type"`
+	Input    entities.InputState   `json:"input"`
+	Config   entities.ClientConfig `json:"config"`
+	RoomCode string                `json:"room_code"`
+	Ready    bool                  `json:"ready"`
+}
+
+type CreateRoomRequest struct {
+	Type string `json:"type"`
+}
+
+type JoinRoomRequest struct {
+	Type     string `json:"type"`
+	RoomCode string `json:"room_code"`
+}
+
+type LeaveRoomRequest struct {
+	Type string `json:"type"`
+}
+
+type SetReadyRequest struct {
+	Type  string `json:"type"`
+	Ready bool   `json:"ready"`
+}
+
+type StartGameRequest struct {
+	Type string `json:"type"`
+}
+
+type ReturnToLobbyRequest struct {
+	Type string `json:"type"`
+}
+
+type RoomMemberState struct {
+	MemberID  string `json:"member_id"`
+	Ready     bool   `json:"ready"`
+	Connected bool   `json:"connected"`
+}
+
+type RoomSnapshot struct {
+	Type          string            `json:"type"`
+	RoomCode      string            `json:"room_code"`
+	RoomState     string            `json:"room_state"`
+	Members       []RoomMemberState `json:"members"`
+	LocalMemberID string            `json:"local_member_id"`
+	MaxPlayers    int               `json:"max_players"`
+}
+
+type RoomStateChanged struct {
+	Type      string `json:"type"`
+	RoomCode  string `json:"room_code"`
+	RoomState string `json:"room_state"`
+}
+
+type RoomError struct {
+	Type      string `json:"type"`
+	ErrorCode string `json:"error_code"`
+	Message   string `json:"message"`
 }
 
 type EventState struct {

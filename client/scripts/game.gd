@@ -30,6 +30,7 @@ var debug_freeze_player_input_armed := true
 var self_id := ""
 var effects: Effects
 var game_menu: GameMenu
+var injected_network_client: NetworkClient
 var hud_controller: HudController
 var network_client: NetworkClient
 var room_id := ""
@@ -39,7 +40,15 @@ var world_sync: WorldSync
 func set_room_id(value: String) -> void:
 	room_id = value.strip_edges()
 
+
+func set_network_client(existing_network_client: NetworkClient) -> void:
+	injected_network_client = existing_network_client
+
+
 func _ready() -> void:
+	# Multiplayer lobby injection is intentionally stored but not consumed yet.
+	# Until the lobby-to-gameplay transition is wired, preserve the existing
+	# game-loop-owned websocket startup path.
 	network_client = NetworkClientScript.new()
 	add_child(network_client)
 	network_client.connected_to_server.connect(_on_network_connected)
@@ -131,6 +140,12 @@ func _on_network_closed() -> void:
 
 
 func _on_network_packet_received(data: Dictionary) -> void:
+	if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_ERROR || data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_SNAPSHOT:
+		var shell := get_parent()
+		if shell != null && shell.has_method("handle_network_packet"):
+			shell.handle_network_packet(data)
+		return
+
 	_apply_state(data)
 
 
