@@ -5,6 +5,7 @@
 [ext_resource type="LabelSettings" uid="uid://lly3e1dkukxj" path="res://assets/ui/label_settings/death.tres" id="3_136eg"]
 [ext_resource type="LabelSettings" uid="uid://drsllhvt10h1w" path="res://assets/ui/label_settings/death2.tres" id="4_m6ttb"]
 [ext_resource type="AudioStream" uid="uid://b6uqvxmbwwfsp" path="res://audio/gameover.mp3" id="5_a2ab3"]
+[ext_resource type="PackedScene" uid="uid://cvvmd6ho6fl74" path="res://scenes/ui/dialogs/game_menu.tscn" id="6_oj5la"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_faiu6"]
 font_size = 25
@@ -75,6 +76,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="CenterContainer" unique_id=2096841942]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = -14
 
@@ -102,24 +104,25 @@ horizontal_alignment = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1619962020]
 layout_mode = 2
-theme_override_constants/separation = -12
+theme_override_constants/separation = 117
 
-[node name="GameOver" type="Label" parent="CenterContainer/VBoxContainer" unique_id=835900150]
+[node name="GameOverSound" type="AudioStreamPlayer" parent="CenterContainer/VBoxContainer" unique_id=2014825901]
+stream = ExtResource("5_a2ab3")
+volume_db = 5.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/VBoxContainer" unique_id=1531772139]
+layout_mode = 2
+theme_override_constants/margin_left = 55
+
+[node name="GameOver" type="Label" parent="CenterContainer/VBoxContainer/MarginContainer" unique_id=835900150]
 layout_mode = 2
 text = "Game Over "
 label_settings = ExtResource("3_136eg")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RespawnTell" type="Label" parent="CenterContainer/VBoxContainer" unique_id=1732920005]
+[node name="GameMenu" parent="CenterContainer/VBoxContainer" unique_id=1437660651 instance=ExtResource("6_oj5la")]
 layout_mode = 2
-text = "Esc for Menu"
-label_settings = ExtResource("4_m6ttb")
-horizontal_alignment = 1
-
-[node name="GameOverSound" type="AudioStreamPlayer" parent="CenterContainer/VBoxContainer" unique_id=2014825901]
-stream = ExtResource("5_a2ab3")
-volume_db = 5.0
 
 [node name="RoomID" type="Label" parent="." unique_id=1769209780]
 visible = false

@@ -4,6 +4,7 @@ const EffectsScript := preload("res://scripts/effects.gd")
 const GameScript := preload("res://scripts/game.gd")
 const HudControllerScript := preload("res://scripts/ui/hud_controller.gd")
 const HudScene := preload("res://scenes/ui/hud.tscn")
+const NetworkClientScript := preload("res://scripts/networking/network_client.gd")
 const Packets := preload("res://scripts/networking/packets.gd")
 const PlayerScene := preload("res://scenes/player.tscn")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
@@ -12,6 +13,7 @@ const WorldSyncScript := preload("res://scripts/networking/world_sync.gd")
 var game
 var hud_scene: Control
 var hud_controller: HudController
+var effects_owner: Node2D
 
 
 func before_each() -> void:
@@ -24,14 +26,19 @@ func before_each() -> void:
 	game.add_child(game.asteroids)
 
 	hud_scene = HudScene.instantiate()
+	add_child(hud_scene)
 	hud_controller = HudControllerScript.new()
 	hud_controller.configure(hud_scene)
 	game.hud_controller = hud_controller
 
 	game.world_sync = WorldSyncScript.new()
 	game.world_sync.configure(game, game.player, game.bullets, game.asteroids)
+	game.network_client = NetworkClientScript.new()
+	game.add_child(game.network_client)
+	effects_owner = Node2D.new()
+	add_child(effects_owner)
 	game.effects = EffectsScript.new()
-	game.effects.configure(game, null)
+	game.effects.configure(effects_owner, null)
 
 
 func after_each() -> void:
@@ -39,6 +46,9 @@ func after_each() -> void:
 	if hud_scene != null:
 		hud_scene.free()
 		hud_scene = null
+	if effects_owner != null:
+		effects_owner.free()
+		effects_owner = null
 	if game != null:
 		game.free()
 		game = null
@@ -75,5 +85,58 @@ func test_self_death_event_missing_respawn_delay_uses_safe_zero_delay() -> void:
 	assert_eq(hud_controller.respawn_countdown_remaining, 0.0)
 
 
+func test_open_game_menu_during_gameplay_shows_menu_without_game_over() -> void:
+	game._open_game_menu()
+
+	assert_true(hud_controller.is_game_menu_visible())
+	assert_false(hud_controller.game_over_overlay.visible)
+	assert_true(_primary_label("Resume").visible)
+	assert_false(_primary_label("Lobby").visible)
+
+
+func test_resume_hides_game_menu_and_clears_paused_state() -> void:
+	game.is_gameplay_paused = true
+	hud_controller.show_game_menu()
+
+	game._on_game_menu_resume_requested()
+
+	assert_false(game.is_gameplay_paused)
+	assert_false(hud_controller.is_game_menu_visible())
+
+
+func test_single_player_game_over_shows_game_over_and_disabled_resume_menu() -> void:
+	game.session_mode = "SinglePlayer"
+
+	game._set_game_over_state()
+
+	assert_true(hud_controller.game_over_overlay.visible)
+	assert_true(hud_controller.is_game_menu_visible())
+	assert_true(_primary_label("Resume").visible)
+	assert_false(_primary_label("Lobby").visible)
+	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_eq(_game_menu_nodes().size(), 1)
+
+
+func test_multiplayer_game_over_shows_game_over_and_enabled_lobby_menu() -> void:
+	game.session_mode = "Multiplayer"
+
+	game._set_game_over_state()
+
+	assert_true(hud_controller.game_over_overlay.visible)
+	assert_true(hud_controller.is_game_menu_visible())
+	assert_false(_primary_label("Resume").visible)
+	assert_true(_primary_label("Lobby").visible)
+	assert_false(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_eq(_game_menu_nodes().size(), 1)
+
+
 func _lives_label() -> Label:
 	return hud_scene.find_child("LivesCount", true, false) as Label
+
+
+func _primary_label(label_name: String) -> Label:
+	return hud_controller.get_game_menu().primary_action_button.find_child(label_name, true, false) as Label
+
+
+func _game_menu_nodes() -> Array[Node]:
+	return hud_scene.find_children("GameMenu", "", true, false)

@@ -59,6 +59,20 @@ func test_set_alive_hides_death_overlay() -> void:
 	assert_false(hud_controller.can_respawn)
 
 
+func test_configure_finds_and_hides_hud_owned_game_menu() -> void:
+	assert_not_null(hud_controller.get_game_menu())
+	assert_false(hud_controller.is_game_menu_visible())
+
+
+func test_game_over_overlay_can_hide_without_hiding_game_menu_parent() -> void:
+	hud_controller.set_alive()
+	hud_controller.show_game_menu()
+
+	assert_false(hud_controller.game_over_overlay.visible)
+	assert_true(hud_controller.is_game_menu_visible())
+	assert_true(hud_controller.get_game_menu().is_visible_in_tree())
+
+
 func test_update_shows_manual_respawn_prompt_when_countdown_finishes() -> void:
 	hud_controller.set_dead(1.0)
 	hud_controller.update(1.0)

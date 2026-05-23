@@ -158,12 +158,12 @@ grow_vertical = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton/CenterContainer" unique_id=2099170406]
 layout_mode = 2
+theme_override_constants/margin_left = 7
+theme_override_constants/margin_top = 27
 
 [node name="Ready" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton/CenterContainer/MarginContainer" unique_id=1204919309]
 layout_mode = 2
-text = "
-
-READY"
+text = "READY"
 label_settings = ExtResource("4_0vxb0")
 
 [node name="StartGameButton" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel" unique_id=53282095 instance=ExtResource("3_6lf8k")]

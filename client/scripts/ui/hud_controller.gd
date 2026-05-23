@@ -5,6 +5,7 @@ var score_label: Label
 var lives_label: Label
 var death_overlay: Control
 var game_over_overlay: Control
+var game_menu: GameMenu
 var game_over_sound: AudioStreamPlayer
 var respawn_timer_label: Label
 var respawn_tell_label: Label
@@ -23,7 +24,8 @@ func configure(scene: Node) -> void:
 	score_label = _find_label(scene, "Score")
 	lives_label = _find_label(scene, "LivesCount")
 	death_overlay = _find_message_container(scene, "YouDied")
-	game_over_overlay = _find_message_container(scene, "GameOver")
+	game_over_overlay = _find_label_container(scene, "GameOver")
+	game_menu = _find_game_menu(scene)
 	game_over_sound = _find_audio_stream_player(scene, "GameOverSound")
 	respawn_timer_label = _find_label(death_overlay, "RespawnTimer")
 	respawn_tell_label = _find_label(death_overlay, "RespawnTell")
@@ -93,6 +95,28 @@ func set_suspended(suspended: bool) -> void:
 	is_suspended = suspended
 
 
+func get_game_menu() -> GameMenu:
+	return game_menu
+
+
+func show_game_menu() -> void:
+	if game_menu == null:
+		return
+
+	game_menu.visible = true
+
+
+func hide_game_menu() -> void:
+	if game_menu == null:
+		return
+
+	game_menu.visible = false
+
+
+func is_game_menu_visible() -> bool:
+	return game_menu != null && game_menu.visible
+
+
 func set_alive() -> void:
 	is_suspended = false
 	is_dead = false
@@ -103,6 +127,7 @@ func set_alive() -> void:
 		death_overlay.visible = false
 	if game_over_overlay != null:
 		game_over_overlay.visible = false
+	hide_game_menu()
 
 
 func set_dead(respawn_delay: float) -> void:
@@ -115,6 +140,7 @@ func set_dead(respawn_delay: float) -> void:
 		death_overlay.visible = true
 	if game_over_overlay != null:
 		game_over_overlay.visible = false
+	hide_game_menu()
 	if respawn_timer_label != null:
 		respawn_timer_label.text = respawn_timer_template
 		respawn_timer_label.visible = true
@@ -163,6 +189,24 @@ func _find_message_container(scene: Node, label_name: String) -> Control:
 		container = container.get_parent()
 
 	return container as Control
+
+
+func _find_label_container(scene: Node, label_name: String) -> Control:
+	if scene == null:
+		return null
+
+	var label := scene.find_child(label_name, true, false) as Label
+	if label == null:
+		return null
+
+	return label.get_parent() as Control
+
+
+func _find_game_menu(scene: Node) -> GameMenu:
+	if scene == null:
+		return null
+
+	return scene.find_child("GameMenu", true, false) as GameMenu
 
 
 func _find_audio_stream_player(scene: Node, node_name: String) -> AudioStreamPlayer:

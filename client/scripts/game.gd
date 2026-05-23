@@ -7,13 +7,11 @@ const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
-const GAME_MENU_SCENE := preload("res://scenes/ui/dialogs/game_menu.tscn")
 const RESPAWN_RETRY_SECONDS := 0.25
 
 @onready var player: Player = $Player
 @onready var bullets = $Bullets
 @onready var asteroids: Node2D = $Asteroids
-@onready var canvas_layer: CanvasLayer = $CanvasLayer
 @onready var offscreen_indicators = get_node_or_null("CanvasLayer/HUD/OffscreenIndicators")
 @onready var gameplay_camera := player.get_node_or_null("Camera2D") as Camera2D
 
@@ -63,6 +61,8 @@ func _ready() -> void:
 	hud_controller.configure(get_tree().current_scene)
 	hud_controller.set_session_mode(session_mode)
 	hud_controller.set_room_id(room_id)
+	game_menu = hud_controller.get_game_menu()
+	_connect_game_menu_signals()
 
 	effects = EffectsScript.new()
 	effects.configure(self, hud_controller.game_over_sound)
@@ -299,7 +299,7 @@ func _set_alive_state() -> void:
 	awaiting_respawn_confirmation = false
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
-	_free_game_menu()
+	_hide_game_menu()
 	hud_controller.set_alive()
 	effects.reset_game_over_sound()
 
@@ -308,7 +308,7 @@ func _set_dead_state(respawn_delay: float) -> void:
 	awaiting_respawn_confirmation = false
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
-	_free_game_menu()
+	_hide_game_menu()
 	player.set_afterburner_active(false)
 	hud_controller.set_dead(respawn_delay)
 	effects.stop_game_over_sound()
@@ -318,14 +318,17 @@ func _set_game_over_state() -> void:
 	awaiting_respawn_confirmation = false
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
-	_free_game_menu()
+	_hide_game_menu()
 	player.set_afterburner_active(false)
 	hud_controller.set_game_over()
+	_show_game_menu()
 	effects.play_game_over_sound_after_delay()
 
 
 func _handle_open_menu_pressed() -> bool:
 	if !Input.is_action_just_pressed("OpenMenu"):
+		return false
+	if _is_game_over():
 		return false
 	if !open_menu_input_armed && !hud_controller.is_game_over:
 		return false
@@ -347,7 +350,7 @@ func _close_game_menu() -> void:
 	if is_gameplay_paused:
 		_set_gameplay_paused(false)
 	else:
-		_free_game_menu()
+		_hide_game_menu()
 		hud_controller.set_suspended(false)
 
 
@@ -358,7 +361,7 @@ func _can_pause_server_gameplay() -> bool:
 func _set_gameplay_paused(paused: bool) -> void:
 	if is_gameplay_paused == paused:
 		if !paused:
-			_free_game_menu()
+			_hide_game_menu()
 			hud_controller.set_suspended(false)
 		return
 
@@ -368,7 +371,7 @@ func _set_gameplay_paused(paused: bool) -> void:
 		player.set_afterburner_active(false)
 		network_client.send_packet(Packets.pause_player_packet())
 	else:
-		_free_game_menu()
+		_hide_game_menu()
 		network_client.send_packet(Packets.resume_player_packet())
 
 
@@ -387,35 +390,44 @@ func _update_open_menu_input_armed() -> void:
 
 
 func _return_to_menu_after_network_close() -> void:
-	_free_game_menu()
+	_hide_game_menu()
 	await _close_network_connection()
 	return_to_menu_requested.emit()
 
 
 func _show_game_menu() -> void:
-	if game_menu != null && is_instance_valid(game_menu):
+	game_menu = hud_controller.get_game_menu()
+	if game_menu == null:
 		return
 
-	game_menu = GAME_MENU_SCENE.instantiate() as GameMenu
-	canvas_layer.add_child(game_menu)
 	if game_menu.has_method("configure_for_state"):
 		game_menu.configure_for_state(session_mode, _is_game_over(), current_room_state)
+	_connect_game_menu_signals()
+	hud_controller.show_game_menu()
+
+
+func _connect_game_menu_signals() -> void:
+	if game_menu == null:
+		return
+
 	if game_menu.has_signal("lobby_requested"):
-		game_menu.lobby_requested.connect(_on_game_menu_lobby_requested)
-	game_menu.resume_requested.connect(_on_game_menu_resume_requested)
-	game_menu.quit_requested.connect(_on_game_menu_quit_requested)
+		if !game_menu.lobby_requested.is_connected(_on_game_menu_lobby_requested):
+			game_menu.lobby_requested.connect(_on_game_menu_lobby_requested)
+	if !game_menu.resume_requested.is_connected(_on_game_menu_resume_requested):
+		game_menu.resume_requested.connect(_on_game_menu_resume_requested)
+	if !game_menu.quit_requested.is_connected(_on_game_menu_quit_requested):
+		game_menu.quit_requested.connect(_on_game_menu_quit_requested)
 
 
 func _is_game_menu_open() -> bool:
-	return game_menu != null && is_instance_valid(game_menu)
+	return hud_controller != null && hud_controller.is_game_menu_visible()
 
 
-func _free_game_menu() -> void:
-	if game_menu == null:
+func _hide_game_menu() -> void:
+	if hud_controller == null:
 		return
-	if is_instance_valid(game_menu):
-		game_menu.queue_free()
-	game_menu = null
+
+	hud_controller.hide_game_menu()
 
 
 func _on_game_menu_resume_requested() -> void:
