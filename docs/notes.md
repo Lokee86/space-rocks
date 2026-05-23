@@ -11,7 +11,7 @@ Space Rocks is playable in development form with:
 - Godot client
 - Go websocket game server
 - main menu and game loop scene shell
-- room support through `/ws?room_id=...`
+- packet-based multiplayer room lifecycle over `/ws`
 - server-authoritative player movement, bullets, asteroid collisions, scoring, lives, death, respawn, and safe spawn placement
 - generated shared constants and packet helpers
 - structured server logging
@@ -202,16 +202,38 @@ Current packet workflow:
 5. Apply with `python3 tools/data_sync/main.py -push -packets -go -gds`.
 6. Check with `python3 tools/data_sync/main.py -check -packets -go -gds`.
 
-### Server Rooms
+### Multiplayer Lifecycle And Server Rooms
 
-`services/game-server/internal/networking` owns websocket handling and rooms.
+Multiplayer lifecycle v1 is now packet-based:
 
-Current behavior:
+```text
+Main Menu -> Multiplayer Dialog -> /ws session -> Create/Join packets -> Lobby -> Ready -> Start -> InGame -> GameOver -> Lobby or Leave
+```
 
-- `/ws` joins the default room.
-- `/ws?room_id=abc` creates or joins a separate room.
-- each room owns its own `*game.Game`.
-- empty rooms schedule cleanup after a grace period.
+Important lifecycle boundaries:
+
+- websocket connection is only a session; it does not imply room membership
+- room membership is separate from active game players
+- ships/game players are created only when `StartGameRequest` succeeds
+- `/ws?room_id=...` no longer creates or joins rooms
+- `CreateRoomRequest` creates private code rooms
+- `JoinRoomRequest` only joins existing Lobby rooms
+- all connected members must be ready before start; one ready player can start alone
+- `LeaveRoomRequest` and disconnect remove the member and schedule cleanup when rooms become empty
+- `ReturnToLobbyRequest` resets GameOver rooms back to Lobby and clears ready/game state
+
+Server package ownership:
+
+- `services/game-server/internal/rooms` owns `Room`, `RoomManager`, `RoomMember`, room states, room error constants, room capacity, room code/default-room helpers, and pure join/leave/ready/start/reset/cleanup decisions.
+- `services/game-server/internal/networking` owns websocket/session/outbound queue transport, packet handlers, and sending/broadcasting `RoomSnapshot`/`RoomError`.
+- `services/game-server/internal/game` owns simulation/gameplay rules.
+
+Client lifecycle notes:
+
+- `client/scripts/ui/game_shell.gd` owns explicit session mode and lobby/gameplay transitions.
+- `client/scripts/networking/network_client.gd` owns generated packet send helpers.
+- `client/scripts/game.gd` can receive an injected `NetworkClient` for multiplayer gameplay and returns it to the shell when a GameOver room returns to Lobby.
+- Gameplay packets are ignored/deferred unless the multiplayer room state is `InGame`; single-player and legacy empty-room-state behavior still work.
 
 ### Pause / Resume Plumbing
 
@@ -268,6 +290,21 @@ Categories:
 
 Default is warn-level. Category overrides exist. See [docs/server/logging.md](server/logging.md).
 
+The Godot client has a lightweight logger in `client/scripts/logging/logger.gd`.
+
+Client categories include:
+
+- shell
+- lobby
+- network
+- game
+- world_sync
+- hud
+- input
+- packets
+
+Use `ClientLogger` for new client lifecycle/network/UI diagnostics instead of adding raw `print()` calls. See [docs/client/logging.md](client/logging.md).
+
 ## Important Design Decisions
 
 - The server is authoritative for game rules.
@@ -293,13 +330,14 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 
 ## Current Short-Term Priorities
 
-1. Smoke test pause/resume in Godot with the server running.
-2. Add a real pause/menu overlay scene and wire resume/menu options to the existing pause packets.
-3. Revisit window/gameplay balance sizing so large monitors do not change gameplay difficulty.
-4. Check current Git status for generated recordings or tmp binaries before committing.
-5. Verify collision shape export/import after the Godot 4.6 upgrade.
-6. Keep `game.gd` from growing again; move new UI behavior into `client/scripts/ui/` where possible.
-7. Add focused client GUT coverage alongside packet, HUD, or `world_sync` changes instead of relying only on manual smoke testing.
+1. Manual two-client multiplayer smoke test: create room, join by code, ready both clients, start, enter gameplay, reach GameOver, return to lobby, leave, and verify empty-room cleanup.
+2. Smoke test pause/resume in Godot with the server running.
+3. Add a real pause/menu overlay scene and wire resume/menu options to the existing pause packets.
+4. Revisit window/gameplay balance sizing so large monitors do not change gameplay difficulty.
+5. Check current Git status for generated recordings or tmp binaries before committing.
+6. Verify collision shape export/import after the Godot 4.6 upgrade.
+7. Keep `game.gd` from growing again; move new UI behavior into `client/scripts/ui/` where possible.
+8. Add focused client GUT coverage alongside packet, HUD, or `world_sync` changes instead of relying only on manual smoke testing.
 
 ## Longer-Term Ideas
 
@@ -320,7 +358,7 @@ Default is warn-level. Category overrides exist. See [docs/server/logging.md](se
 - Godot scene diffs: editor upgrades can add `uid`/`unique_id`/offset changes. Inspect scene diffs carefully before reverting.
 - Collision shape freshness: server physics depends on shared JSON. Ensure client scene collision changes are reflected in shared collision data.
 - Generated files: modifying generated files without changing the TOML source will be overwritten.
-- Room cleanup/reconnect timing: room cleanup exists with grace time, but reconnect flows should be tested when multiplayer UX grows.
+- Room cleanup timing: empty Lobby/InGame/GameOver rooms clean up through the rooms-domain cleanup helper. Reconnect is intentionally not implemented.
 - Audio positioning: some sounds are 2D and can be inaudible if attached to the wrong world-space node. Past fixes moved sounds to player/effect-local nodes.
 
 ## Unresolved Questions

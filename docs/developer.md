@@ -39,23 +39,24 @@ The Godot client connects to the Go server over websocket:
 ws://localhost:8080/ws
 ```
 
-Multiplayer rooms use an optional query parameter:
+Websocket connection is session-only. Multiplayer rooms are created and joined with generated packets after connecting to `/ws`; the old `room_id` query path is not used by the real UI.
+
+Current multiplayer lifecycle:
 
 ```text
-ws://localhost:8080/ws?room_id=ROOM_ID
+Main Menu -> Multiplayer Dialog -> /ws session -> CreateRoomRequest/JoinRoomRequest -> Lobby -> SetReadyRequest -> StartGameRequest -> InGame -> GameOver -> ReturnToLobbyRequest or LeaveRoomRequest
 ```
-
-Blank room IDs map to the default room. Non-blank room IDs create or join separate server rooms.
 
 Runtime flow:
 
 1. Godot collects input in `client/scripts/entities/player.gd`.
 2. `client/scripts/game.gd` sends input/config/respawn/pause packets through `client/scripts/networking/network_client.gd`.
 3. `services/game-server/internal/networking/websocket.go` reads client packets.
-4. The room's `*game.Game` handles packets and advances simulation.
-5. The server sends state packets at the server tick rate.
-6. `client/scripts/networking/world_sync.gd` applies/interpolates state to Godot nodes.
-7. HUD and effects update from state/events.
+4. Lobby/lifecycle packets call `services/game-server/internal/rooms` for domain decisions and networking sends snapshots/errors.
+5. After a room reaches `InGame`, the room's `*game.Game` handles gameplay packets and advances simulation.
+6. The server sends state packets at the server tick rate.
+7. `client/scripts/networking/world_sync.gd` applies/interpolates state to Godot nodes.
+8. HUD and effects update from state/events.
 
 ## Run The Server
 
@@ -401,11 +402,20 @@ Supported levels include `debug`, `info`, `warn`, `warning`, `error`, and `off`.
 
 See [docs/server/logging.md](server/logging.md) for usage, examples, field names, and troubleshooting.
 
+The client has a lightweight GDScript logger:
+
+```text
+client/scripts/logging/logger.gd
+```
+
+Prefer `ClientLogger` over raw `print()` for new client lifecycle, UI, networking, packet, HUD, input, and world-sync diagnostics. See [docs/client/logging.md](client/logging.md).
+
 ## Important Conventions
 
 - Keep authoritative gameplay rules on the server.
 - Keep rendering, local audio/effects, UI, and interpolation in the Godot client.
-- Keep websocket/room transport in `services/game-server/internal/networking`.
+- Keep room/domain ownership in `services/game-server/internal/rooms`.
+- Keep websocket/session/packet transport in `services/game-server/internal/networking`.
 - Keep game rules in `services/game-server/internal/game`.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is the wrap-aware server spatial layer for toroidal world behavior.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
@@ -430,9 +440,11 @@ For a server gameplay bug:
 
 For rooms/networking:
 
+- `services/game-server/internal/rooms/`
 - `services/game-server/internal/networking/websocket.go`
 - `services/game-server/internal/networking/rooms.go`
 - relevant tests under `services/game-server/tests/networking/`
+- room-domain tests under `services/game-server/tests/rooms/`
 
 For client runtime flow:
 

@@ -118,25 +118,45 @@ See [toroidal wrap](toroidal-wrap.md).
 
 ### Rooms And Networking
 
-`services/game-server/internal/networking/rooms.go` manages rooms. Each room owns its own `*game.Game`. Blank room IDs map to the default room. Non-blank room IDs create or join separate rooms. Empty rooms are cleaned up after a grace period.
+Room/domain ownership lives in `services/game-server/internal/rooms`. That package owns:
 
-`services/game-server/internal/networking/websocket.go` upgrades `/ws` connections. It accepts an optional query parameter:
+- `Room`
+- `RoomManager`
+- `RoomMember`
+- room state and error-code constants
+- max room capacity and room-code/default-room helpers
+- pure join, leave, ready, start-validation, return-to-lobby, and cleanup decisions
 
-```text
-/ws?room_id=abc
-```
+`services/game-server/internal/networking` owns websocket/session/packet transport. It upgrades `/ws`, reads generated packets, calls room-domain methods, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
 
-On connect:
+The websocket connection itself is session-only. Room membership happens through packets:
 
-- the connection joins a room
-- the room's game adds a player
+- `CreateRoomRequest`
+- `JoinRoomRequest`
+- `LeaveRoomRequest`
+- `SetReadyRequest`
+- `StartGameRequest`
+- `ReturnToLobbyRequest`
+
+Important lifecycle rules:
+
+- connection does not imply room membership
+- room membership does not imply an active game player
+- active ships/game players are created only when `StartGameRequest` succeeds
+- `/ws?room_id=...` no longer creates or joins rooms
+- empty rooms schedule cleanup after members/active players leave
+
+On websocket connect:
+
+- the server creates a session identity
 - one goroutine reads client input packets
-- the write loop sends server state packets at the server tick rate
+- one write path sends queued packets/state
 
 On disconnect:
 
-- the player is removed from the room's game
-- the room leave function runs
+- disconnect routes through leave-room behavior when the session is in a room
+- active game players are removed when needed
+- remaining members receive `RoomSnapshot`
 - empty rooms schedule cleanup
 
 ### Physics
@@ -165,6 +185,14 @@ It uses `log/slog`, logs to stderr, and supports category loggers:
 - `logging.Game`
 
 Configuration is environment-variable based. See [server logging](../server/logging.md).
+
+Client logging is implemented in:
+
+```text
+client/scripts/logging/logger.gd
+```
+
+Use `ClientLogger` for new client lifecycle, UI, networking, packet, HUD, input, and world-sync diagnostics. See [client logging](../client/logging.md).
 
 ## NestJS API Server Plan
 

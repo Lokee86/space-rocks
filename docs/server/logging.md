@@ -345,7 +345,7 @@ LOG_SERVER=info go run ./cmd/game-server
 
 ### I enabled `LOG_ROOMS=debug` but still do not see room logs
 
-Room logs only appear when room events happen. Connect a client to `/ws` or `/ws?room_id=some-room`, then disconnect and wait for cleanup behavior.
+Room logs only appear when room events happen. Connect a client to `/ws`, send `CreateRoomRequest` or `JoinRoomRequest`, then leave/disconnect and wait for cleanup behavior.
 
 ### I set `LOG_LEVEL=off` and nothing appears
 
