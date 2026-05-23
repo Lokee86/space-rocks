@@ -273,6 +273,12 @@ func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
 	if memberID != "" {
 		if leaveResult, roomErr := session.rooms.LeaveRoom(roomID, memberID); roomErr == nil {
 			room = leaveResult.Room
+			logging.Rooms.Debug("room member left",
+				logging.FieldRoomID, roomID,
+				"member_id", memberID,
+				"session_id", session.sessionID,
+				"remaining_members", leaveResult.RemainingMembers,
+			)
 		}
 		detachRoomSession(room, memberID)
 	}
@@ -297,6 +303,11 @@ func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
 	session.legacyLeaveRoom = nil
 
 	if room.MemberCount() > 0 {
+		logging.Rooms.Debug("broadcasting room snapshot after member left",
+			logging.FieldRoomID, roomID,
+			"member_id", memberID,
+			"remaining_members", room.MemberCount(),
+		)
 		BroadcastRoomSnapshot(room)
 	}
 }

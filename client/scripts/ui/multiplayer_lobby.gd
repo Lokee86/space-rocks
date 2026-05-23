@@ -4,6 +4,8 @@ signal ready_requested
 signal start_game_requested
 signal leave_requested
 
+const ClientLogger = preload("res://scripts/logging/logger.gd")
+
 @export_node_path("Label") var room_code_label_path: NodePath
 @export_node_path("Label") var room_status_label_path: NodePath
 @export_node_path("Container") var player_list_container_path: NodePath
@@ -51,6 +53,7 @@ func set_members(members) -> void:
 		return
 
 	for child in player_list_container.get_children():
+		player_list_container.remove_child(child)
 		child.queue_free()
 
 	for member in members:
@@ -194,6 +197,6 @@ func _on_start_game_pressed() -> void:
 
 
 func _on_leave_pressed() -> void:
-	print("[lobby] LeaveButton pressed")
+	ClientLogger.lobby_debug("LeaveButton pressed")
 	leave_requested.emit()
 	set_status("Leave requested...")

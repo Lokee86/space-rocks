@@ -9,6 +9,7 @@ signal packet_parse_failed(text: String)
 const NORMAL_CLOSE_CODE := 1000
 const GRACEFUL_CLOSE_TIMEOUT_SECONDS := 0.25
 const Packets = preload("res://scripts/networking/packets.gd")
+const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 var socket := WebSocketPeer.new()
 var connected := false
@@ -65,6 +66,11 @@ func send_create_room_request() -> void:
 
 func send_join_room_request(room_code: String) -> void:
 	send_packet(Packets.join_room_request_packet(room_code))
+
+
+func send_leave_room_request() -> void:
+	ClientLogger.network_debug("LeaveRoomRequest sent")
+	send_packet(Packets.leave_room_request_packet())
 
 
 func send_set_ready_request(ready: bool) -> void:

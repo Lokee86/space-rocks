@@ -500,6 +500,9 @@ func TestLeaveRoomRequestRemovesMemberAndBroadcastsSnapshot(t *testing.T) {
 	if leaveSnapshot.Members[0].MemberID != createdSnapshot.LocalMemberID {
 		t.Fatalf("expected remaining member %q, got %q", createdSnapshot.LocalMemberID, leaveSnapshot.Members[0].MemberID)
 	}
+	if leaveSnapshot.Members[0].MemberID == joinedJoinerSnapshot.LocalMemberID {
+		t.Fatalf("expected leaving member %q to be excluded from leave broadcast", joinedJoinerSnapshot.LocalMemberID)
+	}
 
 	room, ok := manager.Find(createdSnapshot.RoomCode)
 	if !ok {
@@ -537,6 +540,89 @@ func TestLeaveRoomRequestSchedulesEmptyRoomCleanup(t *testing.T) {
 		return !ok
 	}) {
 		t.Fatalf("expected empty room %q to be cleaned up", snapshot.RoomCode)
+	}
+}
+
+func TestJoinAfterEmptyRoomCleanupFails(t *testing.T) {
+	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeLeaveRoomRequest}); err != nil {
+		t.Fatalf("write leave room request: %v", err)
+	}
+	if !waitUntil(200*time.Millisecond, func() bool {
+		_, ok := manager.Find(snapshot.RoomCode)
+		return !ok
+	}) {
+		t.Fatalf("expected empty room %q to be cleaned up", snapshot.RoomCode)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:     servergame.PacketTypeJoinRoomRequest,
+		RoomCode: snapshot.RoomCode,
+	}); err != nil {
+		t.Fatalf("write join room request after cleanup: %v", err)
+	}
+
+	var roomError servergame.RoomError
+	readJSON(t, conn, &roomError)
+	if roomError.ErrorCode != networking.RoomErrorRoomNotFound {
+		t.Fatalf("expected error code %q, got %q", networking.RoomErrorRoomNotFound, roomError.ErrorCode)
+	}
+}
+
+func TestLeaveRoomRequestClearsSessionRoomAssociation(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeLeaveRoomRequest}); err != nil {
+		t.Fatalf("write first leave room request: %v", err)
+	}
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeLeaveRoomRequest}); err != nil {
+		t.Fatalf("write second leave room request: %v", err)
+	}
+
+	var roomError servergame.RoomError
+	readJSON(t, conn, &roomError)
+	if roomError.ErrorCode != networking.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", networking.RoomErrorNotInRoom, roomError.ErrorCode)
+	}
+
+	room, ok := manager.Find(snapshot.RoomCode)
+	if !ok {
+		t.Fatalf("expected room %q to remain until cleanup", snapshot.RoomCode)
+	}
+	if count := room.MemberCount(); count != 0 {
+		t.Fatalf("expected room member count 0 after leave, got %d", count)
 	}
 }
 

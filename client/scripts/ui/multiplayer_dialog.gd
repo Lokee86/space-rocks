@@ -4,7 +4,8 @@ signal create_room_requested
 signal join_room_requested(room_code: String)
 signal canceled
 
-const EMPTY_ROOM_CODE_MESSAGE := "Enter a room code to join."
+const EMPTY_ROOM_CODE_MESSAGE := "Enter a room\ncode to join."
+const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 @onready var dialog_window: Control = find_child("MultiplayerDialogWindow", true, false) as Control
 @onready var room_code_input: LineEdit = _find_line_edit(["RoomCodeInput", "IDentry"])
@@ -40,7 +41,7 @@ func _ready() -> void:
 
 
 func _request_create_room() -> void:
-	print("[multiplayer] CreateButton pressed")
+	ClientLogger.lobby_debug("CreateButton pressed")
 	create_room_requested.emit()
 	queue_free()
 
@@ -51,17 +52,16 @@ func _request_join_room() -> void:
 
 	var room_code := room_code_input.text.strip_edges()
 	if room_code == "":
-		print("[multiplayer] JoinButton pressed empty room code")
+		ClientLogger.lobby_debug("JoinButton pressed empty room code")
 		_set_status(EMPTY_ROOM_CODE_MESSAGE)
 		return
 
-	print("[multiplayer] JoinButton pressed room_code=", room_code)
+	ClientLogger.lobby_debug("JoinButton pressed room_code=%s" % room_code)
 	join_room_requested.emit(room_code)
 	queue_free()
 
 
 func _cancel() -> void:
-	print("[multiplayer] CancelButton pressed")
 	canceled.emit()
 	queue_free()
 

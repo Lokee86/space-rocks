@@ -6,6 +6,7 @@ const MAIN_MENU_SCENE := preload("res://scenes/ui/main_menu.tscn")
 const MULTIPLAYER_LOBBY_SCENE := preload("res://scenes/ui/dialogs/multiplayer_lobby.tscn")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
+const ClientLogger = preload("res://scripts/logging/logger.gd")
 const BACKGROUND_DRIFT := Vector2(18.0, 8.0)
 const FOREGROUND_DRIFT := Vector2(42.0, 18.0)
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
@@ -104,14 +105,14 @@ func _start_multiplayer(room_id: String) -> void:
 
 
 func _create_multiplayer_room() -> void:
-	print("[game_shell] create room requested")
+	ClientLogger.shell_debug("create room requested")
 	session_mode = SessionMode.MULTIPLAYER
 	_show_multiplayer_lobby()
 	_begin_create_room_flow()
 
 
 func _join_multiplayer_room(room_code: String) -> void:
-	print("[game_shell] join requested room_code=", room_code)
+	ClientLogger.shell_debug("join requested room_code=%s" % room_code)
 	session_mode = SessionMode.MULTIPLAYER
 	_show_multiplayer_lobby()
 	_begin_join_room_flow(room_code)
@@ -148,7 +149,7 @@ func _create_multiplayer_game_loop() -> void:
 
 
 func _return_to_main_menu() -> void:
-	print("[game_shell] returning to main menu")
+	ClientLogger.shell_debug("returning to main menu")
 	clear_gameplay_scroll_offset()
 	if game_loop != null:
 		game_loop.queue_free()
@@ -243,7 +244,7 @@ func _begin_create_room_flow() -> void:
 
 
 func _begin_join_room_flow(room_code: String) -> void:
-	print("[game_shell] begin join flow room_code=", room_code)
+	ClientLogger.shell_debug("begin join flow room_code=%s" % room_code)
 	pending_join_room_code = room_code.strip_edges()
 	create_room_request_pending = false
 	_set_lobby_status("Connecting...")
@@ -276,7 +277,7 @@ func _ensure_lobby_network_client() -> void:
 
 
 func _on_lobby_network_connected() -> void:
-	print("[multiplayer] websocket connected/open")
+	ClientLogger.network_debug("websocket connected/open")
 	_send_pending_create_room_request()
 	_send_pending_join_room_request()
 
@@ -299,7 +300,7 @@ func _send_pending_create_room_request() -> void:
 	if !create_room_request_pending:
 		return
 	create_room_request_pending = false
-	print("[multiplayer] CreateRoomRequest sent")
+	ClientLogger.network_debug("CreateRoomRequest sent")
 	lobby_network_client.send_create_room_request()
 
 
@@ -308,7 +309,7 @@ func _send_pending_join_room_request() -> void:
 		return
 	var room_code := pending_join_room_code
 	pending_join_room_code = ""
-	print("[multiplayer] JoinRoomRequest sent room_code=", room_code)
+	ClientLogger.network_debug("JoinRoomRequest sent room_code=%s" % room_code)
 	lobby_network_client.send_join_room_request(room_code)
 
 
@@ -334,18 +335,27 @@ func _request_start_game() -> void:
 
 
 func _request_leave_room() -> void:
-	print("[game_shell] leave requested")
+	ClientLogger.shell_debug("leave_requested received")
 
-	if lobby_network_client == null || !lobby_network_client.is_connected_to_server():
-		print("[game_shell] leave requested without connected lobby network")
-		_return_to_main_menu()
-		return
-
-	print("[game_shell] sending LeaveRoomRequest")
-	if lobby_network_client.has_method("send_leave_room_request"):
+	if lobby_network_client != null && lobby_network_client.is_connected_to_server():
+		ClientLogger.shell_debug("sending LeaveRoomRequest")
 		lobby_network_client.send_leave_room_request()
 	else:
-		push_error("NetworkClient is missing send_leave_room_request().")
+		ClientLogger.shell_debug("leave requested without connected lobby network")
+
+	_close_lobby_network_client()
+	_return_to_main_menu()
+
+
+func _close_lobby_network_client() -> void:
+	create_room_request_pending = false
+	pending_join_room_code = ""
+	if lobby_network_client == null:
+		return
+
+	lobby_network_client.begin_graceful_close()
+	lobby_network_client.queue_free()
+	lobby_network_client = null
 
 
 func _handle_room_error_packet(data: Dictionary) -> void:
