@@ -75,6 +75,7 @@ custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
 [node name="StatusLabel" type="Label" parent="MultiplayerDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=2040638848]
+custom_minimum_size = Vector2(225, 80)
 layout_mode = 2
 text = "Create a room or 
 enter an ID to

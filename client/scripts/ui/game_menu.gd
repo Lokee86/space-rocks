@@ -12,8 +12,6 @@ signal quit_requested
 
 
 const SESSION_MODE_MULTIPLAYER := "multiplayer"
-const GAME_STATE_GAME_OVER := "gameover"
-const ROOM_STATE_GAME_OVER := "gameover"
 const PRIMARY_ACTION_RESUME := "resume"
 const PRIMARY_ACTION_LOBBY := "lobby"
 
@@ -33,7 +31,8 @@ func _ready() -> void:
 
 
 func set_primary_text(text) -> void:
-	_set_button_text(primary_action_button, str(text))
+	var button_text := str(text)
+	_set_button_label_visible(primary_action_button, _primary_label_name(button_text))
 
 
 func set_primary_enabled(enabled) -> void:
@@ -43,31 +42,29 @@ func set_primary_enabled(enabled) -> void:
 	primary_action_button.disabled = !bool(enabled)
 
 
-func set_menu_text(text) -> void:
-	_set_button_text(menu_button, str(text))
+func set_menu_text(_text) -> void:
+	_set_button_label_visible(menu_button, "Menu")
 
 
-func configure_for_state(session_mode, game_state, room_state) -> void:
+func configure_for_state(session_mode: String, game_over: bool, _room_state: String) -> void:
 	var normalized_session_mode := _normalized_state(session_mode)
-	var normalized_game_state := _normalized_state(game_state)
-	var normalized_room_state := _normalized_state(room_state)
 
 	if normalized_session_mode == SESSION_MODE_MULTIPLAYER:
-		if normalized_room_state == ROOM_STATE_GAME_OVER:
+		if game_over:
 			primary_action = PRIMARY_ACTION_LOBBY
-			set_primary_text("LOBBY")
+			set_primary_text("Lobby")
 			set_primary_enabled(true)
 		else:
 			primary_action = PRIMARY_ACTION_RESUME
-			set_primary_text("RESUME")
+			set_primary_text("Resume")
 			set_primary_enabled(true)
-		set_menu_text("MENU")
+		set_menu_text("Main Menu")
 		return
 
 	primary_action = PRIMARY_ACTION_RESUME
-	set_primary_text("RESUME")
-	set_primary_enabled(normalized_game_state != GAME_STATE_GAME_OVER)
-	set_menu_text("MENU")
+	set_primary_text("Resume")
+	set_primary_enabled(!game_over)
+	set_menu_text("Main Menu")
 
 
 func _on_primary_action_pressed() -> void:
@@ -97,13 +94,27 @@ func _normalized_state(value) -> String:
 	return str(value).strip_edges().replace("_", "").to_lower()
 
 
-func _set_button_text(button: BaseButton, text: String) -> void:
+func _primary_label_name(text: String) -> String:
+	if _normalized_state(text) == PRIMARY_ACTION_LOBBY:
+		return "Lobby"
+
+	return "Resume"
+
+
+func _set_button_label_visible(button: BaseButton, label_name: String) -> void:
 	if button == null:
 		return
 
-	var first_label := true
+	var fallback_label: Label = null
+	var found_target := false
 	for child in button.find_children("*", "Label", true, false):
 		var label := child as Label
-		label.text = "\n\n%s" % text
-		label.visible = first_label
-		first_label = false
+		if fallback_label == null:
+			fallback_label = label
+		var is_target := str(label.name) == label_name
+		label.visible = is_target
+		if is_target:
+			found_target = true
+
+	if !found_target && fallback_label != null:
+		fallback_label.visible = true

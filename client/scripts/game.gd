@@ -397,13 +397,13 @@ func _show_game_menu() -> void:
 		return
 
 	game_menu = GAME_MENU_SCENE.instantiate() as GameMenu
+	canvas_layer.add_child(game_menu)
 	if game_menu.has_method("configure_for_state"):
-		game_menu.configure_for_state(session_mode, _game_menu_state(), current_room_state)
+		game_menu.configure_for_state(session_mode, _is_game_over(), current_room_state)
 	if game_menu.has_signal("lobby_requested"):
 		game_menu.lobby_requested.connect(_on_game_menu_lobby_requested)
 	game_menu.resume_requested.connect(_on_game_menu_resume_requested)
 	game_menu.quit_requested.connect(_on_game_menu_quit_requested)
-	canvas_layer.add_child(game_menu)
 
 
 func _is_game_menu_open() -> bool:
@@ -443,11 +443,15 @@ func _is_multiplayer_session() -> bool:
 	return session_mode.strip_edges().to_lower() == "multiplayer"
 
 
-func _game_menu_state() -> String:
+func _is_game_over() -> bool:
 	if hud_controller != null && hud_controller.is_game_over:
-		return "GameOver"
+		return true
 
-	return "InProgress"
+	return _is_multiplayer_session() && _is_room_game_over()
+
+
+func _is_room_game_over() -> bool:
+	return current_room_state.strip_edges().replace("_", "").to_lower() == "gameover"
 
 
 func _send_gameplay_input_if_active() -> void:

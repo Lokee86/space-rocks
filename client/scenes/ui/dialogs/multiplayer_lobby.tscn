@@ -14,8 +14,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("5_75w2v")
-room_code_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer/RoomCodeValueLabel")
-room_status_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer/RoomStatusValueLabel")
+room_code_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2/RoomCodeValueLabel")
+room_status_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer/RoomStatusValueLabel")
 player_list_container_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/PlayerListContainer")
 ready_button_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton")
 start_game_button_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/StartGameButton")
@@ -26,7 +26,7 @@ player_row_scene = ExtResource("3_6rt4v")
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="CenterContainer" unique_id=507778275]
-custom_minimum_size = Vector2(0, 650)
+custom_minimum_size = Vector2(825, 650)
 layout_mode = 2
 texture = ExtResource("1_l4dux")
 
@@ -55,11 +55,12 @@ label_settings = ExtResource("2_6rt4v")
 
 [node name="MarginContainer2" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer" unique_id=1529338571]
 layout_mode = 2
+theme_override_constants/margin_left = 18
 theme_override_constants/margin_bottom = 100
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2" unique_id=1242989710]
 layout_mode = 2
-theme_override_constants/separation = 22
+theme_override_constants/separation = 10
 
 [node name="InfoPanel" type="VBoxContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer" unique_id=1548855281]
 custom_minimum_size = Vector2(350, 0)
@@ -70,40 +71,54 @@ size_flags_horizontal = 3
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="GridContainer" type="GridContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1709481773]
+[node name="HBoxContainer2" type="HBoxContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1051401515]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/h_separation = 120
-columns = 2
 
-[node name="RoomCodeLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=517237563]
+[node name="RoomCodeLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2" unique_id=517237563]
 layout_mode = 2
 text = "Room Code:"
 label_settings = ExtResource("2_6rt4v")
 
-[node name="RoomCodeValueLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=829320041]
+[node name="Spacer" type="Control" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2" unique_id=99414255]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RoomCodeValueLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2" unique_id=829320041]
 layout_mode = 2
 text = "RoomID"
 label_settings = ExtResource("2_6rt4v")
 horizontal_alignment = 2
 
-[node name="RoomStatusLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=1528537327]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1379801544]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer" unique_id=1657078065]
+layout_mode = 2
+theme_override_constants/margin_bottom = 21
+
+[node name="RoomStatusLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer/MarginContainer" unique_id=1528537327]
 layout_mode = 2
 text = "Status:"
 label_settings = ExtResource("2_6rt4v")
 
-[node name="RoomStatusValueLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=1565001618]
+[node name="Spacer" type="Control" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer" unique_id=1574057390]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RoomStatusValueLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer" unique_id=1565001618]
+custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 text = "Pending"
 label_settings = ExtResource("2_6rt4v")
 horizontal_alignment = 2
+autowrap_mode = 2
+max_lines_visible = 2
 
-[node name="GridSpacer1" type="Control" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=871195404]
+[node name="GridContainer" type="GridContainer" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1709481773]
 layout_mode = 2
-
-[node name="GridSpacer2" type="Control" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=935634336]
-custom_minimum_size = Vector2(0, 10)
-layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 225
+columns = 2
 
 [node name="PlayerListLabel" type="Label" parent="CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=1310388455]
 layout_mode = 2
