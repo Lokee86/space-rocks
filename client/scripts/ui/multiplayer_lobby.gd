@@ -98,9 +98,10 @@ func _update_ready_button_text() -> void:
 func _apply_member_to_row(row: Node, member) -> void:
 	var member_name := _member_name(member)
 	var member_ready := _member_ready(member)
+	var member_connected := _member_connected(member)
 
 	if row.has_method("set_member"):
-		row.set_member(member_name, member_ready)
+		row.set_member(member_name, member_ready, member_connected)
 		return
 
 	var name_label := row.find_child("PlayerNameLabel", true, false) as Label
@@ -109,15 +110,15 @@ func _apply_member_to_row(row: Node, member) -> void:
 
 	var ready_label := row.find_child("PlayerReadyLabel", true, false) as Label
 	if ready_label != null:
-		ready_label.text = "READY" if member_ready else "NOT READY"
+		ready_label.text = _member_ready_text(member_ready, member_connected)
 
 	var ready_green := row.find_child("ReadyGreen", true, false) as CanvasItem
 	if ready_green != null:
-		ready_green.visible = member_ready
+		ready_green.visible = member_connected && member_ready
 
 	var ready_red := row.find_child("ReadyRed", true, false) as CanvasItem
 	if ready_red != null:
-		ready_red.visible = !member_ready
+		ready_red.visible = !member_connected || !member_ready
 
 
 func _member_name(member) -> String:
@@ -132,6 +133,22 @@ func _member_ready(member) -> bool:
 		return bool(member.get("ready", member.get("is_ready", false)))
 
 	return false
+
+
+func _member_connected(member) -> bool:
+	if member is Dictionary:
+		return bool(member.get("connected", true))
+
+	return true
+
+
+func _member_ready_text(is_ready: bool, is_connected: bool) -> String:
+	if !is_connected:
+		return "Joining"
+	if is_ready:
+		return "Ready"
+
+	return "Not Ready"
 
 
 func _validate_required_nodes() -> void:

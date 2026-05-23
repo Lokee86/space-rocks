@@ -15,17 +15,24 @@ func _ready() -> void:
 		push_error("Player row is missing ReadyRed.")
 
 
-func set_member(member_name, is_ready) -> void:
+func set_member(member_name, is_ready, is_connected := true) -> void:
 	var ready := bool(is_ready)
+	var connected := bool(is_connected)
+	var is_ready_visible := connected && ready
 
 	if player_name_label != null:
 		player_name_label.text = str(member_name)
 
 	if ready_green != null:
-		ready_green.visible = ready
+		ready_green.visible = is_ready_visible
 	if ready_red != null:
-		ready_red.visible = !ready
+		ready_red.visible = !is_ready_visible
 
 	if player_ready_label != null:
-		player_ready_label.text = "READY" if ready else "NOT READY"
-		player_ready_label.visible = ready_green == null || ready_red == null
+		if !connected:
+			player_ready_label.text = "Joining"
+		elif ready:
+			player_ready_label.text = "Ready"
+		else:
+			player_ready_label.text = "Not Ready"
+		player_ready_label.visible = true
