@@ -288,6 +288,7 @@ func (session *webSocketSession) handleReturnToLobbyRequest() {
 		return
 	}
 
+	deactivateRoomPlayers(session.room)
 	BroadcastRoomSnapshot(session.room)
 }
 
@@ -361,6 +362,26 @@ func activateRoomPlayers(room *rooms.Room) {
 		session.currentPlayerID = playerID
 		room.ActivePlayers++
 	}
+}
+
+func deactivateRoomPlayers(room *rooms.Room) {
+	memberSnapshot := room.MembersSnapshot()
+	memberIDs := make([]string, 0, len(memberSnapshot))
+	for _, member := range memberSnapshot {
+		if !member.Connected {
+			continue
+		}
+		memberIDs = append(memberIDs, member.SessionID)
+	}
+
+	sessions := snapshotRoomSessions(room, memberIDs)
+	for _, session := range sessions {
+		if session == nil {
+			continue
+		}
+		session.currentPlayerID = ""
+	}
+	room.ActivePlayers = 0
 }
 
 func writeServerMessages(

@@ -179,6 +179,9 @@ func (room *Room) ResetToLobby(memberID string) *RoomDomainError {
 	for _, member := range room.Members {
 		member.SetReady(false)
 	}
+	if room.Game != nil {
+		room.Game.Stop()
+	}
 	room.Game = nil
 	room.State = RoomStateLobby
 	return nil
@@ -201,10 +204,7 @@ func (room *Room) IsGameOver() bool {
 		return false
 	}
 
-	// TODO: Delegate to game.Game once it exposes match-over state for all
-	// active room players. The current lives/respawn data needed for an exact
-	// multiplayer room game-over check is private to the game package.
-	return false
+	return room.Game.IsGameOver()
 }
 
 func (room *Room) MembersSnapshot() []RoomMember {

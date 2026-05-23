@@ -1,7 +1,9 @@
 package roomstests
 
 import (
+	"reflect"
 	"testing"
+	"unsafe"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
@@ -200,7 +202,8 @@ func TestRoomMarkGameOverRejectsInvalidState(t *testing.T) {
 }
 
 func TestRoomResetToLobbyClearsGameAndReadyStates(t *testing.T) {
-	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, game.New())
+	oldGame := game.New()
+	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, oldGame)
 	first := room.AddMemberID("session-1")
 	second := room.AddMemberID("session-2")
 	first.SetReady(true)
@@ -214,6 +217,9 @@ func TestRoomResetToLobbyClearsGameAndReadyStates(t *testing.T) {
 	}
 	if room.Game != nil {
 		t.Fatal("expected old game instance to be cleared")
+	}
+	if !gameStopped(t, oldGame) {
+		t.Fatal("expected old game instance to be stopped before being cleared")
 	}
 
 	members := room.MembersSnapshot()
@@ -336,7 +342,7 @@ func TestNilRoomShouldNotCleanup(t *testing.T) {
 	}
 }
 
-func TestRoomIsGameOverReturnsFalseWithoutExactGameState(t *testing.T) {
+func TestRoomIsGameOverReturnsFalseForLobbyOrMissingGame(t *testing.T) {
 	var missingRoom *rooms.Room
 	if missingRoom.IsGameOver() {
 		t.Fatal("expected nil room not to be game over")
@@ -347,8 +353,71 @@ func TestRoomIsGameOverReturnsFalseWithoutExactGameState(t *testing.T) {
 		t.Fatal("expected lobby room not to be game over")
 	}
 
-	gameRoom := rooms.NewRoom("TEST", rooms.RoomStateInGame, game.New())
-	if gameRoom.IsGameOver() {
-		t.Fatal("expected game-over seam to default false until game state is exposed")
+	inGameWithoutGame := rooms.NewRoom("TEST", rooms.RoomStateInGame, nil)
+	if inGameWithoutGame.IsGameOver() {
+		t.Fatal("expected in-game room without game not to be game over")
+	}
+}
+
+func TestRoomIsGameOverDelegatesToInGameGame(t *testing.T) {
+	activeGame := game.New()
+	activeGame.AddPlayer()
+	activeRoom := rooms.NewRoom("TEST", rooms.RoomStateInGame, activeGame)
+	if activeRoom.IsGameOver() {
+		t.Fatal("expected in-game room to reflect active game as not game over")
+	}
+
+	finishedGame := game.New()
+	markGameOver(t, finishedGame)
+	finishedRoom := rooms.NewRoom("TEST", rooms.RoomStateInGame, finishedGame)
+	if !finishedRoom.IsGameOver() {
+		t.Fatal("expected in-game room to delegate finished game-over state")
+	}
+}
+
+func TestRoomIsGameOverIgnoresFinishedGameOutsideInGameState(t *testing.T) {
+	finishedGame := game.New()
+	markGameOver(t, finishedGame)
+	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, finishedGame)
+
+	if room.IsGameOver() {
+		t.Fatal("expected game-over room not to report game-over detection outside in-game state")
+	}
+	if room.State != rooms.RoomStateGameOver {
+		t.Fatalf("expected room state to remain %q, got %q", rooms.RoomStateGameOver, room.State)
+	}
+}
+
+func markGameOver(t *testing.T, gameInstance *game.Game) {
+	t.Helper()
+
+	playerID := gameInstance.AddPlayer()
+	value := reflect.ValueOf(gameInstance).Elem()
+	session := exportRoomTestValue(value.FieldByName("playerSessions")).
+		MapIndex(reflect.ValueOf(playerID))
+	exportRoomTestValue(session.Elem().FieldByName("Lives")).SetInt(0)
+	players := exportRoomTestValue(value.FieldByName("state").FieldByName("Players"))
+	players.SetMapIndex(reflect.ValueOf(playerID), reflect.Value{})
+}
+
+func exportRoomTestValue(value reflect.Value) reflect.Value {
+	if value.CanSet() {
+		return value
+	}
+
+	return reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
+}
+
+func gameStopped(t *testing.T, gameInstance *game.Game) bool {
+	t.Helper()
+
+	stopSimulation := exportRoomTestValue(
+		reflect.ValueOf(gameInstance).Elem().FieldByName("stopSimulation"),
+	).Interface().(chan struct{})
+	select {
+	case <-stopSimulation:
+		return true
+	default:
+		return false
 	}
 }

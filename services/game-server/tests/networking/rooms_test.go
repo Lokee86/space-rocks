@@ -1028,13 +1028,40 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	var createdSnapshot servergame.RoomSnapshot
 	readJSON(t, conn, &createdSnapshot)
 
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:  servergame.PacketTypeSetReadyRequest,
+		Ready: true,
+	}); err != nil {
+		t.Fatalf("write first set ready request: %v", err)
+	}
+	var firstReadySnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &firstReadySnapshot)
+	if firstReadySnapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("expected first ready room state %q, got %q", rooms.RoomStateLobby, firstReadySnapshot.RoomState)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartGameRequest}); err != nil {
+		t.Fatalf("write first start game request: %v", err)
+	}
+	var firstInGameSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &firstInGameSnapshot)
+	if firstInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
+		t.Fatalf("expected first start room state %q, got %q", rooms.RoomStateInGame, firstInGameSnapshot.RoomState)
+	}
+	var firstState servergame.StatePacket
+	readJSON(t, conn, &firstState)
+	if len(firstState.Players) != 1 {
+		t.Fatalf("expected first match to spawn 1 player, got %d", len(firstState.Players))
+	}
+
 	room, ok := manager.Find(createdSnapshot.RoomCode)
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
 	}
-	room.Game = servergame.New()
+	if room.ActivePlayers != 1 {
+		t.Fatalf("expected first match active players 1, got %d", room.ActivePlayers)
+	}
 	room.State = rooms.RoomStateGameOver
-	room.SetMemberReady(createdSnapshot.LocalMemberID, true)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeReturnToLobbyRequest}); err != nil {
 		t.Fatalf("write return to lobby request: %v", err)
@@ -1061,12 +1088,161 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	if room.Game != nil {
 		t.Fatal("expected return to lobby to clear game")
 	}
+	if room.ActivePlayers != 0 {
+		t.Fatalf("expected return to lobby to clear active players, got %d", room.ActivePlayers)
+	}
 	members := room.MembersSnapshot()
 	if len(members) != 1 {
 		t.Fatalf("expected 1 member, got %d", len(members))
 	}
 	if members[0].Ready {
 		t.Fatal("expected return to lobby to clear ready state")
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:  servergame.PacketTypeSetReadyRequest,
+		Ready: true,
+	}); err != nil {
+		t.Fatalf("write second set ready request: %v", err)
+	}
+	var secondReadySnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &secondReadySnapshot)
+	if secondReadySnapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("expected second ready room state %q, got %q", rooms.RoomStateLobby, secondReadySnapshot.RoomState)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartGameRequest}); err != nil {
+		t.Fatalf("write second start game request: %v", err)
+	}
+	var secondInGameSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &secondInGameSnapshot)
+	if secondInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
+		t.Fatalf("expected second start room state %q, got %q", rooms.RoomStateInGame, secondInGameSnapshot.RoomState)
+	}
+	var secondState servergame.StatePacket
+	readJSON(t, conn, &secondState)
+	if secondState.SelfID == "" {
+		t.Fatal("expected second match self id")
+	}
+	if len(secondState.Players) != 1 {
+		t.Fatalf("expected second match to spawn 1 fresh player, got %d", len(secondState.Players))
+	}
+	if _, ok := secondState.Players[secondState.SelfID]; !ok {
+		t.Fatalf("expected second match state to include self player %q", secondState.SelfID)
+	}
+	if room.ActivePlayers != 1 {
+		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayers)
+	}
+	if room.MemberCount() != 1 {
+		t.Fatalf("expected room membership to remain intact, got %d", room.MemberCount())
+	}
+}
+
+func TestReturnToLobbyAllowsFreshSecondMatch(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+	var createdSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &createdSnapshot)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:  servergame.PacketTypeSetReadyRequest,
+		Ready: true,
+	}); err != nil {
+		t.Fatalf("write first ready request: %v", err)
+	}
+	var firstReadySnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &firstReadySnapshot)
+	if firstReadySnapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("expected first ready room state %q, got %q", rooms.RoomStateLobby, firstReadySnapshot.RoomState)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartGameRequest}); err != nil {
+		t.Fatalf("write first start request: %v", err)
+	}
+	var firstInGameSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &firstInGameSnapshot)
+	if firstInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
+		t.Fatalf("expected first start room state %q, got %q", rooms.RoomStateInGame, firstInGameSnapshot.RoomState)
+	}
+	var firstState servergame.StatePacket
+	readJSON(t, conn, &firstState)
+	if firstState.SelfID == "" {
+		t.Fatal("expected first match self id")
+	}
+	if firstState.SelfID != "player-1" {
+		t.Fatalf("expected first fresh game player id %q, got %q", "player-1", firstState.SelfID)
+	}
+	if _, ok := firstState.Players[firstState.SelfID]; !ok {
+		t.Fatalf("expected first match state to include self player %q", firstState.SelfID)
+	}
+
+	room, ok := manager.Find(createdSnapshot.RoomCode)
+	if !ok {
+		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
+	}
+	room.State = rooms.RoomStateGameOver
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeReturnToLobbyRequest}); err != nil {
+		t.Fatalf("write return to lobby request: %v", err)
+	}
+	var lobbySnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &lobbySnapshot)
+	if lobbySnapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("expected return snapshot room state %q, got %q", rooms.RoomStateLobby, lobbySnapshot.RoomState)
+	}
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected room state %q after return, got %q", rooms.RoomStateLobby, room.State)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:  servergame.PacketTypeSetReadyRequest,
+		Ready: true,
+	}); err != nil {
+		t.Fatalf("write second ready request: %v", err)
+	}
+	var secondReadySnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &secondReadySnapshot)
+	if secondReadySnapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("expected second ready room state %q, got %q", rooms.RoomStateLobby, secondReadySnapshot.RoomState)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartGameRequest}); err != nil {
+		t.Fatalf("write second start request: %v", err)
+	}
+	var secondInGameSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &secondInGameSnapshot)
+	if secondInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
+		t.Fatalf("expected second start room state %q, got %q", rooms.RoomStateInGame, secondInGameSnapshot.RoomState)
+	}
+	var secondState servergame.StatePacket
+	readJSON(t, conn, &secondState)
+	if secondState.SelfID == "" {
+		t.Fatal("expected second match self id")
+	}
+	if secondState.SelfID != "player-1" {
+		t.Fatalf("expected second fresh game player id %q, got %q", "player-1", secondState.SelfID)
+	}
+	if _, ok := secondState.Players[secondState.SelfID]; !ok {
+		t.Fatalf("expected second match state to include self player %q", secondState.SelfID)
+	}
+	if len(secondState.Players) != 1 {
+		t.Fatalf("expected second match to create 1 active player, got %d", len(secondState.Players))
+	}
+	if room.ActivePlayers != 1 {
+		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayers)
 	}
 }
 

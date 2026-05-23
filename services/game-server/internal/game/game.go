@@ -56,6 +56,25 @@ func (game *Game) Stop() {
 	})
 }
 
+func (game *Game) IsGameOver() bool {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	if len(game.playerSessions) == 0 {
+		return false
+	}
+	for _, session := range game.playerSessions {
+		if session.Lives > 0 {
+			return false
+		}
+	}
+	if len(game.state.Players) > 0 {
+		return false
+	}
+
+	return true
+}
+
 func (game *Game) AddPlayer() string {
 	game.mu.Lock()
 	defer game.mu.Unlock()

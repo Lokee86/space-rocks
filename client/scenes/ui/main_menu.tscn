@@ -3,19 +3,13 @@
 [ext_resource type="FontFile" uid="uid://b4obamqu1qd0x" path="res://assets/fonts/GamepauseddemoRegular-RpmY6.otf" id="1_187wc"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_5kvch"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="3_gy3bv"]
-[ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="5_x2yvf"]
+[ext_resource type="Texture2D" uid="uid://bjfpt5avmrn30" path="res://assets/ui/title!.png" id="3_x2yvf"]
 [ext_resource type="Script" uid="uid://cyemkaej6joye" path="res://scripts/ui/main_menu.gd" id="10_n3gqj"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_o88aq"]
 line_spacing = -50.0
 font = ExtResource("1_187wc")
 font_size = 250
-font_color = Color(1, 0, 0, 1)
-outline_size = 30
-
-[sub_resource type="LabelSettings" id="LabelSettings_uhagc"]
-font = ExtResource("5_x2yvf")
-font_size = 240
 font_color = Color(1, 0, 0, 1)
 outline_size = 30
 
@@ -44,13 +38,34 @@ alignment = 1
 layout_mode = 2
 theme_override_constants/margin_right = 45
 
-[node name="Title" type="Label" parent="CenterContainer/VBoxContainer/MarginContainer" unique_id=2068428530]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer/MarginContainer" unique_id=116747240]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CenterContainer/VBoxContainer/MarginContainer/HBoxContainer" unique_id=2068428530]
 layout_mode = 2
 text = " SPACE
 ROCKS"
 label_settings = SubResource("LabelSettings_o88aq")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/VBoxContainer/MarginContainer/HBoxContainer" unique_id=1255335692]
+layout_mode = 2
+theme_override_constants/margin_left = 51
+theme_override_constants/margin_top = 180
+
+[node name="Control" type="Control" parent="CenterContainer/VBoxContainer/MarginContainer/HBoxContainer/MarginContainer" unique_id=454003820]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="CenterContainer/VBoxContainer/MarginContainer/HBoxContainer/MarginContainer/Control" unique_id=269508230]
+layout_mode = 0
+offset_left = -136.99997
+offset_top = -5.000001
+offset_right = 1117.0
+offset_bottom = 1249.0
+rotation = 0.17453292
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("3_x2yvf")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer" unique_id=244198432]
 custom_minimum_size = Vector2(0, 140)
@@ -129,16 +144,3 @@ MULTI-
 
 PLAYER"
 label_settings = ExtResource("3_gy3bv")
-
-[node name="Label" type="Label" parent="." unique_id=990566362]
-layout_mode = 1
-anchors_preset = -1
-anchor_right = 0.039
-anchor_bottom = 0.062000003
-offset_left = 983.0001
-offset_top = 435.0
-offset_right = 993.08014
-offset_bottom = 444.36
-rotation = 0.13613568
-text = "!"
-label_settings = SubResource("LabelSettings_uhagc")

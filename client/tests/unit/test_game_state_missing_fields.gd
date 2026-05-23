@@ -117,8 +117,23 @@ func test_single_player_game_over_shows_game_over_and_disabled_resume_menu() -> 
 	assert_eq(_game_menu_nodes().size(), 1)
 
 
-func test_multiplayer_game_over_shows_game_over_and_enabled_lobby_menu() -> void:
+func test_multiplayer_local_game_over_keeps_lobby_disabled_until_room_game_over() -> void:
 	game.session_mode = "Multiplayer"
+	game.current_room_state = "InGame"
+
+	game._set_game_over_state()
+
+	assert_true(hud_controller.game_over_overlay.visible)
+	assert_true(hud_controller.is_game_menu_visible())
+	assert_false(_primary_label("Resume").visible)
+	assert_true(_primary_label("Lobby").visible)
+	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_eq(_game_menu_nodes().size(), 1)
+
+
+func test_multiplayer_room_game_over_enables_lobby_menu() -> void:
+	game.session_mode = "Multiplayer"
+	game.current_room_state = "GameOver"
 
 	game._set_game_over_state()
 
@@ -128,6 +143,21 @@ func test_multiplayer_game_over_shows_game_over_and_enabled_lobby_menu() -> void
 	assert_true(_primary_label("Lobby").visible)
 	assert_false(hud_controller.get_game_menu().primary_action_button.disabled)
 	assert_eq(_game_menu_nodes().size(), 1)
+
+
+func test_multiplayer_room_game_over_packet_enables_open_lobby_menu() -> void:
+	game.session_mode = "Multiplayer"
+	game.current_room_state = "InGame"
+	game._set_game_over_state()
+	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
+
+	game._store_room_state({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: "GameOver",
+	})
+
+	assert_false(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_true(_primary_label("Lobby").visible)
 
 
 func _lives_label() -> Label:

@@ -46,14 +46,15 @@ func set_menu_text(_text) -> void:
 	_set_button_label_visible(menu_button, "Menu")
 
 
-func configure_for_state(session_mode: String, game_over: bool, _room_state: String) -> void:
+func configure_for_state(session_mode: String, game_over: bool, room_state: String) -> void:
 	var normalized_session_mode := _normalized_state(session_mode)
+	var room_game_over := _normalized_state(room_state) == "gameover"
 
 	if normalized_session_mode == SESSION_MODE_MULTIPLAYER:
 		if game_over:
 			primary_action = PRIMARY_ACTION_LOBBY
 			set_primary_text("Lobby")
-			set_primary_enabled(true)
+			set_primary_enabled(room_game_over)
 		else:
 			primary_action = PRIMARY_ACTION_RESUME
 			set_primary_text("Resume")

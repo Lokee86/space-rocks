@@ -84,6 +84,8 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	if network_client != null:
 		network_client.poll()
+	if network_client == null:
+		return
 	hud_controller.update(delta)
 	respawn_retry_remaining = max(0.0, respawn_retry_remaining - delta)
 	_update_open_menu_input_armed()
@@ -169,6 +171,7 @@ func _on_network_packet_parse_failed(text: String) -> void:
 
 func _store_room_state(data: Dictionary) -> void:
 	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, current_room_state)).strip_edges()
+	_refresh_game_menu_state()
 
 
 func _is_room_in_game() -> bool:
@@ -217,6 +220,7 @@ func release_network_client_for_lobby() -> NetworkClient:
 
 	var released_client := network_client
 	preserve_network_on_exit = true
+	set_process(false)
 	network_client = null
 	if released_client.get_parent() == self && get_parent() != null:
 		released_client.reparent(get_parent())
@@ -400,10 +404,16 @@ func _show_game_menu() -> void:
 	if game_menu == null:
 		return
 
-	if game_menu.has_method("configure_for_state"):
-		game_menu.configure_for_state(session_mode, _is_game_over(), current_room_state)
+	_refresh_game_menu_state()
 	_connect_game_menu_signals()
 	hud_controller.show_game_menu()
+
+
+func _refresh_game_menu_state() -> void:
+	if game_menu == null:
+		return
+	if game_menu.has_method("configure_for_state"):
+		game_menu.configure_for_state(session_mode, _is_game_over(), current_room_state)
 
 
 func _connect_game_menu_signals() -> void:

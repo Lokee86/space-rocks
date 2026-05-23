@@ -34,9 +34,13 @@ func play_game_over_sound_after_delay() -> void:
 		return
 
 	var token := game_over_sound_token
+	var effects_ref: WeakRef = weakref(self)
 	owner_node.get_tree().create_timer(Constants.GAME_OVER_SOUND_DELAY).timeout.connect(func() -> void:
-		if token == game_over_sound_token:
-			_play_game_over_sound()
+		var effects := effects_ref.get_ref() as Effects
+		if effects == null:
+			return
+		if token == effects.game_over_sound_token:
+			effects._play_game_over_sound()
 	)
 
 
@@ -108,6 +112,6 @@ func spawn_ship_death(event_position: Vector2) -> void:
 
 
 func _play_game_over_sound() -> void:
-	if game_over_sound != null && !game_over_sound_played:
+	if is_instance_valid(game_over_sound) && !game_over_sound_played:
 		game_over_sound_played = true
 		game_over_sound.play()
