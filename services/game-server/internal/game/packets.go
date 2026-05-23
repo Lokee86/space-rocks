@@ -21,6 +21,7 @@ const (
 	PacketTypeLeaveRoomRequest         = "leave_room_request"
 	PacketTypeSetReadyRequest          = "set_ready_request"
 	PacketTypeStartGameRequest         = "start_game_request"
+	PacketTypeStartSinglePlayerRequest = "start_single_player_request"
 	PacketTypeReturnToLobbyRequest     = "return_to_lobby_request"
 	PacketTypeRoomSnapshot             = "room_snapshot"
 	PacketTypeRoomStateChanged         = "room_state_changed"
@@ -54,6 +55,10 @@ type SetReadyRequest struct {
 }
 
 type StartGameRequest struct {
+	Type string `json:"type"`
+}
+
+type StartSinglePlayerRequest struct {
 	Type string `json:"type"`
 }
 

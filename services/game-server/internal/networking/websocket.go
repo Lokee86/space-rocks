@@ -129,6 +129,10 @@ func readClientInput(
 			session.handleStartGameRequest()
 			continue
 		}
+		if packet.Type == game.PacketTypeStartSinglePlayerRequest {
+			session.handleStartSinglePlayerRequest()
+			continue
+		}
 		if packet.Type == game.PacketTypeReturnToLobbyRequest {
 			session.handleReturnToLobbyRequest()
 			continue
@@ -238,6 +242,39 @@ func (session *webSocketSession) handleStartGameRequest() {
 	activateRoomPlayers(session.room)
 	session.room.State = rooms.RoomStateInGame
 	BroadcastRoomSnapshot(session.room)
+}
+
+func (session *webSocketSession) handleStartSinglePlayerRequest() {
+	logging.Network.Debug("StartSinglePlayerRequest received",
+		logging.FieldRoomID, session.currentRoomID,
+		logging.FieldPlayerID, session.currentPlayerID,
+		"session_id", session.sessionID,
+		"current_room_id", session.currentRoomID,
+	)
+
+	if session.currentRoomID != "" {
+		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
+		return
+	}
+
+	room, err := session.rooms.CreateSinglePlayerRoom(session.sessionID)
+	if err != nil {
+		logging.Rooms.Error("create single-player room failed", err, "session_id", session.sessionID)
+		session.EnqueueRoomError(rooms.RoomErrorInvalidRoomState, "Could not create room.")
+		return
+	}
+
+	attachRoomSession(room, session.sessionID, session)
+	session.room = room
+	session.currentRoomID = room.ID
+	session.currentMemberID = session.sessionID
+	session.currentPlayerID = ""
+
+	room.Game = game.New()
+	room.Game.Start()
+	activateRoomPlayers(room)
+	room.State = rooms.RoomStateInGame
+	BroadcastRoomSnapshot(room)
 }
 
 func (session *webSocketSession) handleReturnToLobbyRequest() {

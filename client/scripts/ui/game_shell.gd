@@ -39,6 +39,7 @@ var gameplay_scroll_offset := Vector2.ZERO
 var drift_time := 0.0
 var session_mode: SessionMode = SessionMode.SINGLE_PLAYER
 var create_room_request_pending := false
+var start_single_player_request_pending := false
 var pending_join_room_code := ""
 var latest_room_snapshot: Dictionary = {}
 var current_room_code := ""
@@ -95,8 +96,9 @@ func _clamp_window_size() -> void:
 
 
 func _start_single_player() -> void:
+	ClientLogger.shell_debug("single-player requested")
 	session_mode = SessionMode.SINGLE_PLAYER
-	_start_game("")
+	_begin_single_player_flow()
 
 
 func _start_multiplayer(room_id: String) -> void:
@@ -137,6 +139,19 @@ func _start_game(room_id: String) -> void:
 
 
 func _create_multiplayer_game_loop() -> void:
+	_hide_multiplayer_lobby()
+	_create_networked_game_loop()
+
+
+func _create_single_player_game_loop() -> void:
+	_create_networked_game_loop()
+
+	if main_menu != null:
+		main_menu.queue_free()
+		main_menu = null
+
+
+func _create_networked_game_loop() -> void:
 	if game_loop != null:
 		return
 
@@ -150,7 +165,6 @@ func _create_multiplayer_game_loop() -> void:
 		lobby_network_client = null
 	if game_loop.has_signal("return_to_menu_requested"):
 		game_loop.return_to_menu_requested.connect(_return_to_main_menu)
-	_hide_multiplayer_lobby()
 	add_child(game_loop)
 
 
@@ -238,6 +252,7 @@ func handle_network_packet(data: Dictionary) -> bool:
 
 func _begin_create_room_flow() -> void:
 	create_room_request_pending = true
+	start_single_player_request_pending = false
 	pending_join_room_code = ""
 	_set_lobby_status("Connecting...")
 	_ensure_lobby_network_client()
@@ -256,6 +271,7 @@ func _begin_join_room_flow(room_code: String) -> void:
 	ClientLogger.shell_debug("begin join flow room_code=%s" % room_code)
 	pending_join_room_code = room_code.strip_edges()
 	create_room_request_pending = false
+	start_single_player_request_pending = false
 	_set_lobby_status("Connecting...")
 	_ensure_lobby_network_client()
 
@@ -273,6 +289,22 @@ func _begin_join_room_flow(room_code: String) -> void:
 		_set_lobby_status("Could not connect to server.")
 
 
+func _begin_single_player_flow() -> void:
+	start_single_player_request_pending = true
+	create_room_request_pending = false
+	pending_join_room_code = ""
+	_ensure_lobby_network_client()
+
+	if lobby_network_client.is_connected_to_server():
+		_send_pending_start_single_player_request()
+		return
+
+	var err := lobby_network_client.connect_to_server(MULTIPLAYER_WS_URL)
+	if err != OK:
+		start_single_player_request_pending = false
+		ClientLogger.network_debug("single-player websocket connect failed")
+
+
 func _ensure_lobby_network_client() -> void:
 	if lobby_network_client != null:
 		return
@@ -287,12 +319,14 @@ func _ensure_lobby_network_client() -> void:
 
 func _on_lobby_network_connected() -> void:
 	ClientLogger.network_debug("websocket connected/open")
+	_send_pending_start_single_player_request()
 	_send_pending_create_room_request()
 	_send_pending_join_room_request()
 
 
 func _on_lobby_network_closed() -> void:
 	create_room_request_pending = false
+	start_single_player_request_pending = false
 	pending_join_room_code = ""
 	_set_lobby_status("Connection closed.")
 
@@ -311,6 +345,13 @@ func _send_pending_create_room_request() -> void:
 	create_room_request_pending = false
 	ClientLogger.network_debug("CreateRoomRequest sent")
 	lobby_network_client.send_create_room_request()
+
+
+func _send_pending_start_single_player_request() -> void:
+	if !start_single_player_request_pending:
+		return
+	start_single_player_request_pending = false
+	lobby_network_client.send_start_single_player_request()
 
 
 func _send_pending_join_room_request() -> void:
@@ -358,6 +399,7 @@ func _request_leave_room() -> void:
 
 func _close_lobby_network_client() -> void:
 	create_room_request_pending = false
+	start_single_player_request_pending = false
 	pending_join_room_code = ""
 	if lobby_network_client == null:
 		return
@@ -422,6 +464,7 @@ func _store_room_snapshot(data: Dictionary) -> void:
 	_update_lobby_room_labels()
 	_update_lobby_member_rows()
 	_update_lobby_control_state()
+	_enter_single_player_gameplay_if_ready()
 	_enter_multiplayer_gameplay_if_ready()
 
 
@@ -432,6 +475,7 @@ func _store_room_state_changed(data: Dictionary) -> void:
 	latest_room_snapshot[Packets.FIELD_ROOM_STATE] = current_room_state
 	_update_lobby_room_labels()
 	_update_lobby_control_state()
+	_enter_single_player_gameplay_if_ready()
 	_enter_multiplayer_gameplay_if_ready()
 
 
@@ -526,6 +570,18 @@ func _enter_multiplayer_gameplay_if_ready() -> void:
 
 	ClientLogger.shell_debug("room entered InGame; showing multiplayer game loop")
 	_create_multiplayer_game_loop()
+
+
+func _enter_single_player_gameplay_if_ready() -> void:
+	if session_mode != SessionMode.SINGLE_PLAYER:
+		return
+	if !_room_state_is_in_game():
+		return
+	if game_loop != null:
+		return
+
+	ClientLogger.shell_debug("room entered InGame; showing single-player game loop")
+	_create_single_player_game_loop()
 
 
 func _return_to_multiplayer_lobby_if_ready(previous_room_state: String) -> void:

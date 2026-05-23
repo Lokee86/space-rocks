@@ -80,6 +80,70 @@ func TestRoomManagerCreateLobbyRoom(t *testing.T) {
 	}
 }
 
+func TestRoomManagerCreateSinglePlayerRoom(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateSinglePlayerRoom("session-1")
+	if err != nil {
+		t.Fatalf("create single-player room: %v", err)
+	}
+
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected single-player room state %q, got %q", rooms.RoomStateLobby, room.State)
+	}
+	if room.Game != nil {
+		t.Fatal("expected single-player room not to create a game")
+	}
+	if room.IsJoinable() {
+		t.Fatal("expected single-player room not to be joinable")
+	}
+	if !rooms.IsValidRoomCode(room.ID) {
+		t.Fatalf("expected generated room code, got %q", room.ID)
+	}
+	if count := room.MemberCount(); count != 1 {
+		t.Fatalf("expected single-player room member count 1, got %d", count)
+	}
+	if !room.HasMember("session-1") {
+		t.Fatal("expected requesting session to be the only room member")
+	}
+
+	found, ok := manager.Find(room.ID)
+	if !ok {
+		t.Fatal("expected created single-player room to be found")
+	}
+	if found != room {
+		t.Fatal("expected found single-player room to match created room")
+	}
+}
+
+func TestRoomManagerCreateSinglePlayerRoomRejectsJoinRoom(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateSinglePlayerRoom("session-1")
+	if err != nil {
+		t.Fatalf("create single-player room: %v", err)
+	}
+
+	joinedRoom, roomErr := manager.JoinRoom("session-2", room.ID)
+	if roomErr == nil {
+		t.Fatal("expected invalid_room_state error")
+	}
+	if joinedRoom != nil {
+		t.Fatal("expected no joined room")
+	}
+	if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomErr.Code)
+	}
+	if room.HasMember("session-2") {
+		t.Fatal("expected rejected join not to add member")
+	}
+	if count := room.MemberCount(); count != 1 {
+		t.Fatalf("expected single-player room member count to remain 1, got %d", count)
+	}
+}
+
 func TestRoomManagerJoinRoomAddsMember(t *testing.T) {
 	manager := rooms.NewRoomManager()
 	defer manager.StopAll()
@@ -101,6 +165,52 @@ func TestRoomManagerJoinRoomAddsMember(t *testing.T) {
 	}
 	if count := room.MemberCount(); count != 1 {
 		t.Fatalf("expected member count 1, got %d", count)
+	}
+}
+
+func TestRoomManagerMultiplayerLobbyRoomRemainsJoinable(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+
+	joinedRoom, roomErr := manager.JoinRoom("session-1", room.ID)
+	if roomErr != nil {
+		t.Fatalf("join lobby room: %v", roomErr)
+	}
+	if joinedRoom != room {
+		t.Fatal("expected joined room to match lobby room")
+	}
+	if !room.HasMember("session-1") {
+		t.Fatal("expected joined member to be added")
+	}
+}
+
+func TestRoomManagerJoinRoomRejectsUnjoinableRoom(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	room.SetJoinable(false)
+
+	joinedRoom, roomErr := manager.JoinRoom("session-1", room.ID)
+	if roomErr == nil {
+		t.Fatal("expected invalid_room_state error")
+	}
+	if joinedRoom != nil {
+		t.Fatal("expected no joined room")
+	}
+	if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomErr.Code)
+	}
+	if room.HasMember("session-1") {
+		t.Fatal("expected rejected join not to add member")
 	}
 }
 

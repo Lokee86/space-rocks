@@ -18,6 +18,7 @@ const TYPE_JOIN_ROOM_REQUEST := "join_room_request"
 const TYPE_LEAVE_ROOM_REQUEST := "leave_room_request"
 const TYPE_SET_READY_REQUEST := "set_ready_request"
 const TYPE_START_GAME_REQUEST := "start_game_request"
+const TYPE_START_SINGLE_PLAYER_REQUEST := "start_single_player_request"
 const TYPE_RETURN_TO_LOBBY_REQUEST := "return_to_lobby_request"
 const TYPE_ROOM_SNAPSHOT := "room_snapshot"
 const TYPE_ROOM_STATE_CHANGED := "room_state_changed"
@@ -144,6 +145,11 @@ static func set_ready_request_packet(ready) -> Dictionary:
 static func start_game_request_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "start_game_request"
+	return packet
+
+static func start_single_player_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "start_single_player_request"
 	return packet
 
 static func return_to_lobby_request_packet() -> Dictionary:

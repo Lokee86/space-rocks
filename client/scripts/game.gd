@@ -61,6 +61,7 @@ func _ready() -> void:
 
 	hud_controller = HudControllerScript.new()
 	hud_controller.configure(get_tree().current_scene)
+	hud_controller.set_session_mode(session_mode)
 	hud_controller.set_room_id(room_id)
 
 	effects = EffectsScript.new()

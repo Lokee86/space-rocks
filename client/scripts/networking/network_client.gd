@@ -81,6 +81,11 @@ func send_start_game_request() -> void:
 	send_packet(Packets.start_game_request_packet())
 
 
+func send_start_single_player_request() -> void:
+	ClientLogger.network_debug("StartSinglePlayerRequest sent")
+	send_packet(Packets.start_single_player_request_packet())
+
+
 func send_return_to_lobby_request() -> void:
 	ClientLogger.network_debug("ReturnToLobbyRequest sent")
 	send_packet(Packets.return_to_lobby_request_packet())

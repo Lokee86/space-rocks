@@ -122,6 +122,7 @@ stream = ExtResource("5_a2ab3")
 volume_db = 5.0
 
 [node name="RoomID" type="Label" parent="." unique_id=1769209780]
+visible = false
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0

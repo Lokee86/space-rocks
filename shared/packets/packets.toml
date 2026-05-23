@@ -9,7 +9,7 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "StatePacket"]
+structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "StatePacket"]
 
 [outputs.imports]
 entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
@@ -18,7 +18,7 @@ entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
 language = "gdscript"
 path = "client/scripts/networking/packets.gd"
 base = "RefCounted"
-builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "return_to_lobby_request_packet"]
+builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
 
 [[structs]]
 id = "ClientPacket"
@@ -96,6 +96,14 @@ type = "bool"
 
 [[structs]]
 id = "StartGameRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs]]
+id = "StartSinglePlayerRequest"
 
 [[structs.fields]]
 name = "type"
@@ -503,6 +511,10 @@ id = "start_game_request"
 value = "start_game_request"
 
 [[packet_types]]
+id = "start_single_player_request"
+value = "start_single_player_request"
+
+[[packet_types]]
 id = "return_to_lobby_request"
 value = "return_to_lobby_request"
 
@@ -618,6 +630,12 @@ id = "start_game_request_packet"
 
 [builders.body]
 type = "start_game_request"
+
+[[builders]]
+id = "start_single_player_request_packet"
+
+[builders.body]
+type = "start_single_player_request"
 
 [[builders]]
 id = "return_to_lobby_request_packet"

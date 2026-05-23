@@ -15,6 +15,8 @@ var is_game_over := false
 var is_suspended := false
 var can_respawn := false
 var respawn_countdown_remaining := 0.0
+var room_id := ""
+var is_multiplayer_session := false
 
 
 func configure(scene: Node) -> void:
@@ -69,13 +71,22 @@ func set_lives(lives: int) -> void:
 
 
 func set_room_id(room_id: String) -> void:
+	self.room_id = room_id.strip_edges()
+	_update_room_id_label()
+
+
+func set_session_mode(value) -> void:
+	is_multiplayer_session = str(value).strip_edges().to_lower() == "multiplayer"
+	_update_room_id_label()
+
+
+func _update_room_id_label() -> void:
 	if room_id_label == null:
 		return
 
-	var normalized_room_id := room_id.strip_edges()
-	room_id_label.visible = normalized_room_id != ""
-	if normalized_room_id != "":
-		room_id_label.text = "ROOMID: %s" % normalized_room_id
+	room_id_label.visible = is_multiplayer_session && room_id != ""
+	if room_id != "":
+		room_id_label.text = "ROOMID: %s" % room_id
 
 
 func set_suspended(suspended: bool) -> void:

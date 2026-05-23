@@ -12,6 +12,7 @@ type Room struct {
 	State          RoomState
 	Game           *game.Game
 	Members        map[string]*RoomMember
+	Joinable       bool
 	ActivePlayers  int
 	CleanupTimer   *time.Timer
 	CleanupVersion int
@@ -20,10 +21,11 @@ type Room struct {
 
 func NewRoom(roomID string, state RoomState, gameInstance *game.Game) *Room {
 	return &Room{
-		ID:      roomID,
-		State:   state,
-		Game:    gameInstance,
-		Members: make(map[string]*RoomMember),
+		ID:       roomID,
+		State:    state,
+		Game:     gameInstance,
+		Members:  make(map[string]*RoomMember),
+		Joinable: true,
 	}
 }
 
@@ -73,6 +75,20 @@ func (room *Room) SetMemberReady(sessionID string, ready bool) bool {
 
 	member.SetReady(ready)
 	return true
+}
+
+func (room *Room) SetJoinable(joinable bool) {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	room.Joinable = joinable
+}
+
+func (room *Room) IsJoinable() bool {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	return room.Joinable
 }
 
 func (room *Room) ValidateStart(memberID string) *RoomDomainError {

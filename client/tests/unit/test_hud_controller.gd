@@ -69,5 +69,32 @@ func test_update_shows_manual_respawn_prompt_when_countdown_finishes() -> void:
 	assert_true(hud_controller.respawn_tell_label.visible)
 
 
+func test_room_id_hidden_for_single_player_even_when_room_id_exists() -> void:
+	hud_controller.set_session_mode("SinglePlayer")
+	hud_controller.set_room_id("ABC123")
+
+	assert_false(_room_id_label().visible)
+	assert_eq(_room_id_label().text, "ROOMID: ABC123")
+
+
+func test_room_id_visible_for_multiplayer_when_room_id_exists() -> void:
+	hud_controller.set_session_mode("Multiplayer")
+	hud_controller.set_room_id("ABC123")
+
+	assert_true(_room_id_label().visible)
+	assert_eq(_room_id_label().text, "ROOMID: ABC123")
+
+
+func test_room_id_hidden_for_multiplayer_when_room_id_is_empty() -> void:
+	hud_controller.set_session_mode("Multiplayer")
+	hud_controller.set_room_id("")
+
+	assert_false(_room_id_label().visible)
+
+
 func _lives_label() -> Label:
 	return hud_scene.find_child("LivesCount", true, false) as Label
+
+
+func _room_id_label() -> Label:
+	return hud_scene.find_child("RoomID", true, false) as Label

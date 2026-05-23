@@ -117,6 +117,31 @@ func (manager *RoomManager) CreateLobbyRoom() (*Room, error) {
 	return nil, fmt.Errorf("generate unique room code")
 }
 
+func (manager *RoomManager) CreateSinglePlayerRoom(memberID string) (*Room, error) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	for attempts := 0; attempts < 16; attempts++ {
+		roomID, err := GenerateRoomCode()
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := manager.rooms[roomID]; ok {
+			continue
+		}
+
+		room := NewRoom(roomID, RoomStateLobby, nil)
+		room.SetJoinable(false)
+		room.AddMemberID(memberID)
+		manager.rooms[roomID] = room
+		logging.Rooms.Debug("single-player room created", logging.FieldRoomID, roomID)
+
+		return room, nil
+	}
+
+	return nil, fmt.Errorf("generate unique room code")
+}
+
 func (manager *RoomManager) JoinRoom(memberID string, roomCode string) (*Room, *RoomDomainError) {
 	roomCode = NormalizeRoomCode(roomCode)
 	if !IsValidRoomCode(roomCode) {
@@ -149,6 +174,13 @@ func (manager *RoomManager) JoinRoom(memberID string, roomCode string) (*Room, *
 			Message: "Room is closed.",
 		}
 	default:
+		return nil, &RoomDomainError{
+			Code:    RoomErrorInvalidRoomState,
+			Message: "Room is not joinable.",
+		}
+	}
+
+	if !room.IsJoinable() {
 		return nil, &RoomDomainError{
 			Code:    RoomErrorInvalidRoomState,
 			Message: "Room is not joinable.",
