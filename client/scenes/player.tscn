@@ -6,13 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://bo5yq5da1hqoo" path="res://assets/units/viewport.png" id="4_qlg0r"]
 [ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="5_fxgnq"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_qlg0r"]
-shader = ExtResource("2_dqkch")
-shader_parameter/hue_shift = 0.0
-shader_parameter/saturation_mult = 1.0000000475
-shader_parameter/value_mult = 1.0000000475
-shader_parameter/strength = 1.0
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tuyoq"]
 shader = ExtResource("2_dqkch")
 shader_parameter/hue_shift = 0.0
@@ -20,18 +13,26 @@ shader_parameter/saturation_mult = 1.0
 shader_parameter/value_mult = 1.0
 shader_parameter/strength = 1.0
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qlg0r"]
+shader = ExtResource("2_dqkch")
+shader_parameter/hue_shift = 0.0
+shader_parameter/saturation_mult = 1.0000000475
+shader_parameter/value_mult = 1.0000000475
+shader_parameter/strength = 1.0
+
 [node name="Player" type="CharacterBody2D" unique_id=1299284420]
 script = ExtResource("1_ct0fb")
 ship_visual_path = NodePath("ShipBody")
+
+[node name="ViewportMask" type="Sprite2D" parent="." unique_id=1088284126]
+material = SubResource("ShaderMaterial_tuyoq")
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("4_qlg0r")
 
 [node name="ShipBody" type="Sprite2D" parent="." unique_id=422355348]
 material = SubResource("ShaderMaterial_qlg0r")
 scale = Vector2(0.3, 0.3)
 texture = ExtResource("2_lcy76")
-
-[node name="ViewportMask" type="Sprite2D" parent="ShipBody" unique_id=1088284126]
-material = SubResource("ShaderMaterial_tuyoq")
-texture = ExtResource("4_qlg0r")
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=1927001819]
 visible = false
