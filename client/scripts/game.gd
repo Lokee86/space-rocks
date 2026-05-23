@@ -8,6 +8,7 @@ const NetworkClientScript = preload("res://scripts/networking/network_client.gd"
 const Packets = preload("res://scripts/networking/packets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
 const GAME_MENU_SCENE := preload("res://scenes/ui/dialogs/game_menu.tscn")
+const RESPAWN_RETRY_SECONDS := 0.25
 
 @onready var player: Player = $Player
 @onready var bullets = $Bullets
@@ -16,7 +17,8 @@ const GAME_MENU_SCENE := preload("res://scenes/ui/dialogs/game_menu.tscn")
 @onready var offscreen_indicators = get_node_or_null("CanvasLayer/HUD/OffscreenIndicators")
 @onready var gameplay_camera := player.get_node_or_null("Camera2D") as Camera2D
 
-var respawn_requested := false
+var respawn_retry_remaining := 0.0
+var awaiting_respawn_confirmation := false
 var has_received_state := false
 var has_initial_spawn := false
 var is_gameplay_paused := false
@@ -70,6 +72,7 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	network_client.poll()
 	hud_controller.update(delta)
+	respawn_retry_remaining = max(0.0, respawn_retry_remaining - delta)
 	_update_open_menu_input_armed()
 	_handle_debug_input()
 	if _handle_open_menu_pressed():
@@ -114,7 +117,7 @@ func _apply_state(data: Dictionary) -> void:
 	if server_players.has(self_id):
 		has_initial_spawn = true
 		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
-		if hud_controller.is_dead && respawn_requested:
+		if hud_controller.is_dead && awaiting_respawn_confirmation:
 			_set_alive_state()
 
 
@@ -207,7 +210,7 @@ func _apply_self_death_event(event: Dictionary) -> void:
 
 
 func _set_alive_state() -> void:
-	respawn_requested = false
+	awaiting_respawn_confirmation = false
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
 	_free_game_menu()
@@ -216,7 +219,7 @@ func _set_alive_state() -> void:
 
 
 func _set_dead_state(respawn_delay: float) -> void:
-	respawn_requested = false
+	awaiting_respawn_confirmation = false
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
 	_free_game_menu()
@@ -226,7 +229,7 @@ func _set_dead_state(respawn_delay: float) -> void:
 
 
 func _set_game_over_state() -> void:
-	respawn_requested = false
+	awaiting_respawn_confirmation = false
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
 	_free_game_menu()
@@ -340,8 +343,9 @@ func _send_gameplay_input_if_active() -> void:
 		return
 
 	network_client.send_packet(player.get_input_packet())
-	if hud_controller.can_respawn && !respawn_requested && Input.is_key_pressed(KEY_R):
-		respawn_requested = true
+	if hud_controller.can_respawn && Input.is_key_pressed(KEY_R) && respawn_retry_remaining <= 0.0:
+		respawn_retry_remaining = RESPAWN_RETRY_SECONDS
+		awaiting_respawn_confirmation = true
 		network_client.send_packet(Packets.respawn_packet())
 
 
