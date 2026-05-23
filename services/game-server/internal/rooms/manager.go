@@ -250,7 +250,7 @@ func (manager *RoomManager) ScheduleCleanupIfEmpty(roomID string) {
 	defer manager.mu.Unlock()
 
 	room, ok := manager.rooms[roomID]
-	if !ok || !room.IsEmpty() {
+	if !ok || !room.ShouldCleanup() {
 		return
 	}
 
@@ -289,7 +289,7 @@ func (manager *RoomManager) leave(roomID string) {
 	if room.ActivePlayers > 0 {
 		return
 	}
-	if !room.IsEmpty() {
+	if !room.ShouldCleanup() {
 		return
 	}
 
@@ -316,7 +316,7 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 		)
 		return
 	}
-	if !room.IsEmpty() {
+	if !room.ShouldCleanup() {
 		logging.Rooms.Debug("room cleanup skipped; room has members",
 			logging.FieldRoomID, roomID,
 			"members", room.MemberCount(),

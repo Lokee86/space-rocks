@@ -5,19 +5,6 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
-	roomdomain "github.com/Lokee86/space-rocks/server/internal/rooms"
-)
-
-const (
-	RoomErrorRoomNotFound     = roomdomain.RoomErrorRoomNotFound
-	RoomErrorRoomClosed       = roomdomain.RoomErrorRoomClosed
-	RoomErrorRoomInGame       = roomdomain.RoomErrorRoomInGame
-	RoomErrorRoomFull         = roomdomain.RoomErrorRoomFull
-	RoomErrorAlreadyInRoom    = roomdomain.RoomErrorAlreadyInRoom
-	RoomErrorNotInRoom        = roomdomain.RoomErrorNotInRoom
-	RoomErrorInvalidRoomCode  = roomdomain.RoomErrorInvalidRoomCode
-	RoomErrorNotReady         = roomdomain.RoomErrorNotReady
-	RoomErrorInvalidRoomState = roomdomain.RoomErrorInvalidRoomState
 )
 
 func (session *webSocketSession) EnqueueRoomError(errorCode string, message string) {

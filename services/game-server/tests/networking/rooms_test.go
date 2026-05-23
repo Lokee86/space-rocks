@@ -8,6 +8,7 @@ import (
 
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/networking"
+	"github.com/Lokee86/space-rocks/server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
 
@@ -52,8 +53,8 @@ func TestCompatibilityRoomsStartInGame(t *testing.T) {
 
 	room := manager.GetOrCreate("abc")
 
-	if room.State != networking.RoomStateInGame {
-		t.Fatalf("expected compatibility room state %q, got %q", networking.RoomStateInGame, room.State)
+	if room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected compatibility room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
 	if room.Game == nil {
 		t.Fatal("expected compatibility room to create a game")
@@ -109,26 +110,26 @@ func TestRoomMemberCountAndFullCapacity(t *testing.T) {
 		t.Fatal("expected empty room not to be full")
 	}
 
-	for index := 0; index < networking.MaxPlayersPerRoom-1; index++ {
+	for index := 0; index < rooms.MaxPlayersPerRoom-1; index++ {
 		room.AddMemberID(string(rune('a' + index)))
 	}
-	if count := room.MemberCount(); count != networking.MaxPlayersPerRoom-1 {
-		t.Fatalf("expected member count %d, got %d", networking.MaxPlayersPerRoom-1, count)
+	if count := room.MemberCount(); count != rooms.MaxPlayersPerRoom-1 {
+		t.Fatalf("expected member count %d, got %d", rooms.MaxPlayersPerRoom-1, count)
 	}
 	if room.IsFull() {
 		t.Fatal("expected room below capacity not to be full")
 	}
 
 	room.AddMemberID("last")
-	if count := room.MemberCount(); count != networking.MaxPlayersPerRoom {
-		t.Fatalf("expected full room member count %d, got %d", networking.MaxPlayersPerRoom, count)
+	if count := room.MemberCount(); count != rooms.MaxPlayersPerRoom {
+		t.Fatalf("expected full room member count %d, got %d", rooms.MaxPlayersPerRoom, count)
 	}
 	if !room.IsFull() {
 		t.Fatal("expected room at capacity to be full")
 	}
 }
 
-func TestWebSocketJoinTracksRoomMemberUntilDisconnect(t *testing.T) {
+func TestWebSocketRoomIDQueryDoesNotJoinOrSpawn(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
@@ -140,20 +141,14 @@ func TestWebSocketJoinTracksRoomMemberUntilDisconnect(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
+	defer conn.Close()
 
-	if !waitUntil(200*time.Millisecond, func() bool {
-		return room.MemberCount() == 1
-	}) {
-		t.Fatalf("expected websocket connect to add room member, got %d", room.MemberCount())
+	time.Sleep(30 * time.Millisecond)
+	if count := room.MemberCount(); count != 0 {
+		t.Fatalf("expected room_id query websocket not to add room member, got %d", count)
 	}
-
-	if err := conn.Close(); err != nil {
-		t.Fatalf("close websocket: %v", err)
-	}
-	if !waitUntil(200*time.Millisecond, func() bool {
-		return room.MemberCount() == 0
-	}) {
-		t.Fatalf("expected websocket disconnect to remove room member, got %d", room.MemberCount())
+	if room.ActivePlayers != 0 {
+		t.Fatalf("expected room_id query websocket not to spawn active player, got %d", room.ActivePlayers)
 	}
 }
 
@@ -210,8 +205,8 @@ func TestCreateRoomRequestCreatesLobbyRoomWithoutGame(t *testing.T) {
 	if snapshot.RoomCode == "" {
 		t.Fatal("expected generated room code")
 	}
-	if snapshot.RoomState != string(networking.RoomStateLobby) {
-		t.Fatalf("expected room state %q, got %q", networking.RoomStateLobby, snapshot.RoomState)
+	if snapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, snapshot.RoomState)
 	}
 	if snapshot.LocalMemberID == "" {
 		t.Fatal("expected local member id")
@@ -225,16 +220,16 @@ func TestCreateRoomRequestCreatesLobbyRoomWithoutGame(t *testing.T) {
 	if snapshot.Members[0].Ready {
 		t.Fatal("expected new room member not to be ready")
 	}
-	if snapshot.MaxPlayers != networking.MaxPlayersPerRoom {
-		t.Fatalf("expected max players %d, got %d", networking.MaxPlayersPerRoom, snapshot.MaxPlayers)
+	if snapshot.MaxPlayers != rooms.MaxPlayersPerRoom {
+		t.Fatalf("expected max players %d, got %d", rooms.MaxPlayersPerRoom, snapshot.MaxPlayers)
 	}
 
 	room, ok := manager.Find(snapshot.RoomCode)
 	if !ok {
 		t.Fatalf("expected generated room %q to exist", snapshot.RoomCode)
 	}
-	if room.State != networking.RoomStateLobby {
-		t.Fatalf("expected created room state %q, got %q", networking.RoomStateLobby, room.State)
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected created room state %q, got %q", rooms.RoomStateLobby, room.State)
 	}
 	if room.Game != nil {
 		t.Fatal("expected lobby room not to create game simulation")
@@ -275,8 +270,8 @@ func TestCreateRoomRequestRejectsSessionAlreadyInRoom(t *testing.T) {
 	if roomError.Type != servergame.PacketTypeRoomError {
 		t.Fatalf("expected room error packet, got %q", roomError.Type)
 	}
-	if roomError.ErrorCode != networking.RoomErrorAlreadyInRoom {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorAlreadyInRoom, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorAlreadyInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorAlreadyInRoom, roomError.ErrorCode)
 	}
 }
 
@@ -359,8 +354,8 @@ func TestJoinRoomRequestRejectsNonexistentRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorRoomNotFound {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorRoomNotFound, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorRoomNotFound {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorRoomNotFound, roomError.ErrorCode)
 	}
 }
 
@@ -387,8 +382,8 @@ func TestJoinRoomRequestRejectsInGameRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorRoomInGame {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorRoomInGame, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorRoomInGame {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorRoomInGame, roomError.ErrorCode)
 	}
 }
 
@@ -400,7 +395,7 @@ func TestJoinRoomRequestRejectsFullRoom(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	for index := 0; index < networking.MaxPlayersPerRoom; index++ {
+	for index := 0; index < rooms.MaxPlayersPerRoom; index++ {
 		room.AddMemberID(string(rune('a' + index)))
 	}
 
@@ -422,8 +417,8 @@ func TestJoinRoomRequestRejectsFullRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorRoomFull {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorRoomFull, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorRoomFull {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorRoomFull, roomError.ErrorCode)
 	}
 }
 
@@ -446,8 +441,8 @@ func TestLeaveRoomRequestRejectsSessionNotInRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorNotInRoom {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorNotInRoom, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomError.ErrorCode)
 	}
 }
 
@@ -580,8 +575,8 @@ func TestJoinAfterEmptyRoomCleanupFails(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorRoomNotFound {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorRoomNotFound, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorRoomNotFound {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorRoomNotFound, roomError.ErrorCode)
 	}
 }
 
@@ -613,8 +608,8 @@ func TestLeaveRoomRequestClearsSessionRoomAssociation(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorNotInRoom {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorNotInRoom, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomError.ErrorCode)
 	}
 
 	room, ok := manager.Find(snapshot.RoomCode)
@@ -705,8 +700,8 @@ func TestSetReadyRequestRejectsSessionNotInRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorNotInRoom {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorNotInRoom, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomError.ErrorCode)
 	}
 }
 
@@ -733,7 +728,7 @@ func TestSetReadyRequestRejectsNonLobbyRoom(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
 	}
-	room.State = networking.RoomStateInGame
+	room.State = rooms.RoomStateInGame
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:  servergame.PacketTypeSetReadyRequest,
@@ -744,8 +739,8 @@ func TestSetReadyRequestRejectsNonLobbyRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorInvalidRoomState {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorInvalidRoomState, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorInvalidRoomState {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomError.ErrorCode)
 	}
 }
 
@@ -768,8 +763,8 @@ func TestStartGameRequestRejectsSessionNotInRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorNotInRoom {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorNotInRoom, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomError.ErrorCode)
 	}
 }
 
@@ -798,8 +793,8 @@ func TestStartGameRequestRejectsNotReadyRoom(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorNotReady {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorNotReady, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorNotReady {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotReady, roomError.ErrorCode)
 	}
 }
 
@@ -827,7 +822,7 @@ func TestStartGameRequestRejectsDoubleStartState(t *testing.T) {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
 	}
 	room.SetMemberReady(createdSnapshot.LocalMemberID, true)
-	room.State = networking.RoomStateInGame
+	room.State = rooms.RoomStateInGame
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartGameRequest}); err != nil {
 		t.Fatalf("write start game request: %v", err)
@@ -835,8 +830,8 @@ func TestStartGameRequestRejectsDoubleStartState(t *testing.T) {
 
 	var roomError servergame.RoomError
 	readJSON(t, conn, &roomError)
-	if roomError.ErrorCode != networking.RoomErrorRoomInGame {
-		t.Fatalf("expected error code %q, got %q", networking.RoomErrorRoomInGame, roomError.ErrorCode)
+	if roomError.ErrorCode != rooms.RoomErrorRoomInGame {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorRoomInGame, roomError.ErrorCode)
 	}
 }
 
@@ -877,8 +872,8 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 	if inGameSnapshot.Type != servergame.PacketTypeRoomSnapshot {
 		t.Fatalf("expected room snapshot packet, got %q", inGameSnapshot.Type)
 	}
-	if inGameSnapshot.RoomState != string(networking.RoomStateInGame) {
-		t.Fatalf("expected room state %q, got %q", networking.RoomStateInGame, inGameSnapshot.RoomState)
+	if inGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, inGameSnapshot.RoomState)
 	}
 
 	var state servergame.StatePacket
@@ -897,8 +892,8 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
 	}
-	if room.State != networking.RoomStateInGame {
-		t.Fatalf("expected room state %q, got %q", networking.RoomStateInGame, room.State)
+	if room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
 	if room.Game == nil {
 		t.Fatal("expected valid start request to create game")
@@ -906,13 +901,128 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 	if room.ActivePlayers != 1 {
 		t.Fatalf("expected 1 active game player, got %d", room.ActivePlayers)
 	}
-	if readySnapshot.RoomState != string(networking.RoomStateLobby) {
+	if readySnapshot.RoomState != string(rooms.RoomStateLobby) {
 		t.Fatalf("expected ready snapshot to remain lobby, got %q", readySnapshot.RoomState)
 	}
 }
 
-func TestDisconnectLeavesLobbyAndBroadcastsSnapshot(t *testing.T) {
+func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+	var createdSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &createdSnapshot)
+
+	room, ok := manager.Find(createdSnapshot.RoomCode)
+	if !ok {
+		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
+	}
+	room.Game = servergame.New()
+	room.State = rooms.RoomStateGameOver
+	room.SetMemberReady(createdSnapshot.LocalMemberID, true)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeReturnToLobbyRequest}); err != nil {
+		t.Fatalf("write return to lobby request: %v", err)
+	}
+
+	var lobbySnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &lobbySnapshot)
+	if lobbySnapshot.Type != servergame.PacketTypeRoomSnapshot {
+		t.Fatalf("expected room snapshot packet, got %q", lobbySnapshot.Type)
+	}
+	if lobbySnapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("expected snapshot room state %q, got %q", rooms.RoomStateLobby, lobbySnapshot.RoomState)
+	}
+	if len(lobbySnapshot.Members) != 1 {
+		t.Fatalf("expected snapshot with 1 member, got %d", len(lobbySnapshot.Members))
+	}
+	if lobbySnapshot.Members[0].Ready {
+		t.Fatal("expected snapshot ready state to be cleared")
+	}
+
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, room.State)
+	}
+	if room.Game != nil {
+		t.Fatal("expected return to lobby to clear game")
+	}
+	members := room.MembersSnapshot()
+	if len(members) != 1 {
+		t.Fatalf("expected 1 member, got %d", len(members))
+	}
+	if members[0].Ready {
+		t.Fatal("expected return to lobby to clear ready state")
+	}
+}
+
+func TestReturnToLobbyRequestRejectsSessionNotInRoom(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeReturnToLobbyRequest}); err != nil {
+		t.Fatalf("write return to lobby request: %v", err)
+	}
+
+	var roomError servergame.RoomError
+	readJSON(t, conn, &roomError)
+	if roomError.ErrorCode != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomError.ErrorCode)
+	}
+}
+
+func TestReturnToLobbyRequestRejectsNonGameOverRoom(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+	var createdSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &createdSnapshot)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeReturnToLobbyRequest}); err != nil {
+		t.Fatalf("write return to lobby request: %v", err)
+	}
+
+	var roomError servergame.RoomError
+	readJSON(t, conn, &roomError)
+	if roomError.ErrorCode != rooms.RoomErrorInvalidRoomState {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomError.ErrorCode)
+	}
+}
+
+func TestDisconnectLeavesLobbyAndBroadcastsSnapshot(t *testing.T) {
+	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
@@ -955,6 +1065,12 @@ func TestDisconnectLeavesLobbyAndBroadcastsSnapshot(t *testing.T) {
 	}
 	if disconnectSnapshot.Members[0].MemberID != createdSnapshot.LocalMemberID {
 		t.Fatalf("expected remaining member %q, got %q", createdSnapshot.LocalMemberID, disconnectSnapshot.Members[0].MemberID)
+	}
+	if !waitUntil(100*time.Millisecond, func() bool {
+		room, ok := manager.Find(createdSnapshot.RoomCode)
+		return ok && room.MemberCount() == 1
+	}) {
+		t.Fatalf("expected non-empty room %q to survive disconnect cleanup", createdSnapshot.RoomCode)
 	}
 }
 
@@ -1007,7 +1123,7 @@ func TestDisconnectCleansEmptyGameOverRoom(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected room %q to exist", snapshot.RoomCode)
 	}
-	room.State = networking.RoomStateGameOver
+	room.State = rooms.RoomStateGameOver
 
 	if err := conn.Close(); err != nil {
 		t.Fatalf("close websocket: %v", err)
@@ -1017,6 +1133,55 @@ func TestDisconnectCleansEmptyGameOverRoom(t *testing.T) {
 		return !ok
 	}) {
 		t.Fatalf("expected empty game-over room %q to be cleaned up after disconnect", snapshot.RoomCode)
+	}
+}
+
+func TestDisconnectCleansEmptyInGameRoom(t *testing.T) {
+	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+	var createdSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &createdSnapshot)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:  servergame.PacketTypeSetReadyRequest,
+		Ready: true,
+	}); err != nil {
+		t.Fatalf("write set ready request: %v", err)
+	}
+	var readySnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &readySnapshot)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartGameRequest}); err != nil {
+		t.Fatalf("write start game request: %v", err)
+	}
+	var inGameSnapshot servergame.RoomSnapshot
+	readJSON(t, conn, &inGameSnapshot)
+	if inGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, inGameSnapshot.RoomState)
+	}
+	if readySnapshot.RoomCode != createdSnapshot.RoomCode {
+		t.Fatalf("expected ready snapshot room %q, got %q", createdSnapshot.RoomCode, readySnapshot.RoomCode)
+	}
+
+	if err := conn.Close(); err != nil {
+		t.Fatalf("close websocket: %v", err)
+	}
+	if !waitUntil(200*time.Millisecond, func() bool {
+		_, ok := manager.Find(createdSnapshot.RoomCode)
+		return !ok
+	}) {
+		t.Fatalf("expected empty in-game room %q to be cleaned up after disconnect", createdSnapshot.RoomCode)
 	}
 }
 

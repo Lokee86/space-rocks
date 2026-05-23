@@ -34,6 +34,9 @@ var injected_network_client: NetworkClient
 var hud_controller: HudController
 var network_client: NetworkClient
 var room_id := ""
+var current_room_state := ""
+var session_mode := "SinglePlayer"
+var preserve_network_on_exit := false
 var world_sync: WorldSync
 
 
@@ -45,16 +48,12 @@ func set_network_client(existing_network_client: NetworkClient) -> void:
 	injected_network_client = existing_network_client
 
 
+func set_session_mode(value) -> void:
+	session_mode = str(value)
+
+
 func _ready() -> void:
-	# Multiplayer lobby injection is intentionally stored but not consumed yet.
-	# Until the lobby-to-gameplay transition is wired, preserve the existing
-	# game-loop-owned websocket startup path.
-	network_client = NetworkClientScript.new()
-	add_child(network_client)
-	network_client.connected_to_server.connect(_on_network_connected)
-	network_client.connection_closed.connect(_on_network_closed)
-	network_client.packet_received.connect(_on_network_packet_received)
-	network_client.packet_parse_failed.connect(_on_network_packet_parse_failed)
+	_setup_network_client()
 
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(self, player, bullets, asteroids)
@@ -69,17 +68,21 @@ func _ready() -> void:
 
 	get_viewport().size_changed.connect(_send_client_config)
 
-	network_client.connect_to_server(_websocket_url())
+	if injected_network_client == null:
+		network_client.connect_to_server(_websocket_url())
+	elif network_client.is_connected_to_server():
+		_send_client_config()
 
 
 func _exit_tree() -> void:
-	if network_client != null:
+	if network_client != null && !preserve_network_on_exit:
 		network_client.begin_graceful_close()
 	_clear_background_scroll_offset()
 
 
 func _process(delta: float) -> void:
-	network_client.poll()
+	if network_client != null:
+		network_client.poll()
 	hud_controller.update(delta)
 	respawn_retry_remaining = max(0.0, respawn_retry_remaining - delta)
 	_update_open_menu_input_armed()
@@ -98,6 +101,8 @@ func _process(delta: float) -> void:
 
 func _apply_state(data: Dictionary) -> void:
 	if data.get(Packets.FIELD_TYPE, "") != Packets.TYPE_STATE:
+		return
+	if !_can_process_gameplay_packets():
 		return
 
 	self_id = data[Packets.FIELD_SELF_ID]
@@ -140,7 +145,15 @@ func _on_network_closed() -> void:
 
 
 func _on_network_packet_received(data: Dictionary) -> void:
-	if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_ERROR || data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_SNAPSHOT:
+	var packet_type := str(data.get(Packets.FIELD_TYPE, ""))
+	if packet_type == Packets.TYPE_ROOM_SNAPSHOT || packet_type == Packets.TYPE_ROOM_STATE_CHANGED:
+		_store_room_state(data)
+		var shell := get_parent()
+		if shell != null && shell.has_method("handle_network_packet"):
+			shell.handle_network_packet(data)
+		return
+
+	if packet_type == Packets.TYPE_ROOM_ERROR:
 		var shell := get_parent()
 		if shell != null && shell.has_method("handle_network_packet"):
 			shell.handle_network_packet(data)
@@ -151,6 +164,63 @@ func _on_network_packet_received(data: Dictionary) -> void:
 
 func _on_network_packet_parse_failed(text: String) -> void:
 	print("bad json: ", text)
+
+
+func _store_room_state(data: Dictionary) -> void:
+	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, current_room_state)).strip_edges()
+
+
+func _is_room_in_game() -> bool:
+	return current_room_state == "InGame" || current_room_state == "in_game"
+
+
+func _can_process_gameplay_packets() -> bool:
+	if current_room_state == "":
+		return true
+
+	return _is_room_in_game()
+
+
+func _setup_network_client() -> void:
+	if injected_network_client != null:
+		network_client = injected_network_client
+		preserve_network_on_exit = true
+		if network_client.get_parent() != self:
+			network_client.reparent(self)
+	else:
+		network_client = NetworkClientScript.new()
+		add_child(network_client)
+
+	if !network_client.connected_to_server.is_connected(_on_network_connected):
+		network_client.connected_to_server.connect(_on_network_connected)
+	if !network_client.connection_closed.is_connected(_on_network_closed):
+		network_client.connection_closed.connect(_on_network_closed)
+	if !network_client.packet_received.is_connected(_on_network_packet_received):
+		network_client.packet_received.connect(_on_network_packet_received)
+	if !network_client.packet_parse_failed.is_connected(_on_network_packet_parse_failed):
+		network_client.packet_parse_failed.connect(_on_network_packet_parse_failed)
+
+
+func release_network_client_for_lobby() -> NetworkClient:
+	if network_client == null:
+		return null
+
+	if network_client.connected_to_server.is_connected(_on_network_connected):
+		network_client.connected_to_server.disconnect(_on_network_connected)
+	if network_client.connection_closed.is_connected(_on_network_closed):
+		network_client.connection_closed.disconnect(_on_network_closed)
+	if network_client.packet_received.is_connected(_on_network_packet_received):
+		network_client.packet_received.disconnect(_on_network_packet_received)
+	if network_client.packet_parse_failed.is_connected(_on_network_packet_parse_failed):
+		network_client.packet_parse_failed.disconnect(_on_network_packet_parse_failed)
+
+	var released_client := network_client
+	preserve_network_on_exit = true
+	network_client = null
+	if released_client.get_parent() == self && get_parent() != null:
+		released_client.reparent(get_parent())
+
+	return released_client
 
 
 func _on_world_bullet_spawned() -> void:
@@ -326,6 +396,10 @@ func _show_game_menu() -> void:
 		return
 
 	game_menu = GAME_MENU_SCENE.instantiate() as GameMenu
+	if game_menu.has_method("configure_for_state"):
+		game_menu.configure_for_state(session_mode, _game_menu_state(), current_room_state)
+	if game_menu.has_signal("lobby_requested"):
+		game_menu.lobby_requested.connect(_on_game_menu_lobby_requested)
 	game_menu.resume_requested.connect(_on_game_menu_resume_requested)
 	game_menu.quit_requested.connect(_on_game_menu_quit_requested)
 	canvas_layer.add_child(game_menu)
@@ -347,10 +421,32 @@ func _on_game_menu_resume_requested() -> void:
 	_close_game_menu()
 
 
+func _on_game_menu_lobby_requested() -> void:
+	if !_is_multiplayer_session():
+		return
+	if network_client == null || !network_client.is_connected_to_server():
+		return
+
+	network_client.send_return_to_lobby_request()
+
+
 func _on_game_menu_quit_requested() -> void:
 	is_gameplay_paused = false
 	hud_controller.set_suspended(false)
+	if _is_multiplayer_session() && network_client != null && network_client.is_connected_to_server():
+		network_client.send_leave_room_request()
 	_return_to_menu_after_network_close()
+
+
+func _is_multiplayer_session() -> bool:
+	return session_mode.strip_edges().to_lower() == "multiplayer"
+
+
+func _game_menu_state() -> String:
+	if hud_controller != null && hud_controller.is_game_over:
+		return "GameOver"
+
+	return "InProgress"
 
 
 func _send_gameplay_input_if_active() -> void:
@@ -399,7 +495,4 @@ func _send_client_config() -> void:
 
 
 func _websocket_url() -> String:
-	if room_id == "":
-		return "ws://localhost:8080/ws"
-
-	return "ws://localhost:8080/ws?room_id=%s" % room_id.uri_encode()
+	return "ws://localhost:8080/ws"

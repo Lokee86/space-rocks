@@ -163,6 +163,119 @@ func TestRoomMarkStartingRejectsInvalidState(t *testing.T) {
 	}
 }
 
+func TestRoomMarkGameOverMovesInGameToGameOver(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateInGame, game.New())
+
+	if roomErr := room.MarkGameOver(); roomErr != nil {
+		t.Fatalf("expected in-game room to mark game over, got %s", roomErr.Code)
+	}
+	if room.State != rooms.RoomStateGameOver {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateGameOver, room.State)
+	}
+	if room.Game == nil {
+		t.Fatal("expected game instance to remain after game-over transition")
+	}
+}
+
+func TestRoomMarkGameOverRejectsInvalidState(t *testing.T) {
+	for _, state := range []rooms.RoomState{
+		rooms.RoomStateLobby,
+		rooms.RoomStateStarting,
+		rooms.RoomStateGameOver,
+		rooms.RoomStateClosed,
+	} {
+		room := rooms.NewRoom("TEST", state, nil)
+
+		roomErr := room.MarkGameOver()
+		if roomErr == nil {
+			t.Fatalf("expected state %q to reject mark game over", state)
+		}
+		if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+			t.Fatalf("expected error code %q for state %q, got %q", rooms.RoomErrorInvalidRoomState, state, roomErr.Code)
+		}
+		if room.State != state {
+			t.Fatalf("expected rejected room to stay %q, got %q", state, room.State)
+		}
+	}
+}
+
+func TestRoomResetToLobbyClearsGameAndReadyStates(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, game.New())
+	first := room.AddMemberID("session-1")
+	second := room.AddMemberID("session-2")
+	first.SetReady(true)
+	second.SetReady(true)
+
+	if roomErr := room.ResetToLobby("session-1"); roomErr != nil {
+		t.Fatalf("expected game-over room to reset to lobby, got %s", roomErr.Code)
+	}
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, room.State)
+	}
+	if room.Game != nil {
+		t.Fatal("expected old game instance to be cleared")
+	}
+
+	members := room.MembersSnapshot()
+	if len(members) != 2 {
+		t.Fatalf("expected connected members to remain, got %d", len(members))
+	}
+	for _, member := range members {
+		if member.Ready {
+			t.Fatalf("expected member %q ready state to reset", member.SessionID)
+		}
+		if !member.Connected {
+			t.Fatalf("expected member %q to remain connected", member.SessionID)
+		}
+	}
+}
+
+func TestRoomResetToLobbyRequiresRequesterMember(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, game.New())
+	room.AddMemberID("session-1")
+
+	roomErr := room.ResetToLobby("missing")
+	if roomErr == nil {
+		t.Fatal("expected missing member to be rejected")
+	}
+	if roomErr.Code != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomErr.Code)
+	}
+	if room.State != rooms.RoomStateGameOver {
+		t.Fatalf("expected room state to remain %q, got %q", rooms.RoomStateGameOver, room.State)
+	}
+}
+
+func TestRoomResetToLobbyRequiresGameOverState(t *testing.T) {
+	for _, state := range []rooms.RoomState{
+		rooms.RoomStateLobby,
+		rooms.RoomStateStarting,
+		rooms.RoomStateInGame,
+		rooms.RoomStateClosed,
+	} {
+		room := rooms.NewRoom("TEST", state, game.New())
+		member := room.AddMemberID("session-1")
+		member.SetReady(true)
+
+		roomErr := room.ResetToLobby("session-1")
+		if roomErr == nil {
+			t.Fatalf("expected state %q to reject reset to lobby", state)
+		}
+		if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+			t.Fatalf("expected error code %q for state %q, got %q", rooms.RoomErrorInvalidRoomState, state, roomErr.Code)
+		}
+		if room.State != state {
+			t.Fatalf("expected rejected room to stay %q, got %q", state, room.State)
+		}
+		if !room.MembersSnapshot()[0].Ready {
+			t.Fatalf("expected rejected reset to preserve ready state for %q", state)
+		}
+		if room.Game == nil {
+			t.Fatalf("expected rejected reset to preserve game for %q", state)
+		}
+	}
+}
+
 func TestRoomMembersSnapshotIsCopy(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
 	room.AddMemberID("session-1")
@@ -173,6 +286,53 @@ func TestRoomMembersSnapshotIsCopy(t *testing.T) {
 	freshMembers := room.MembersSnapshot()
 	if freshMembers[0].Ready {
 		t.Fatal("expected member snapshot mutation not to mutate room")
+	}
+}
+
+func TestRoomShouldCleanupWhenEmptyAcrossLifecycleStates(t *testing.T) {
+	for _, state := range []rooms.RoomState{
+		rooms.RoomStateLobby,
+		rooms.RoomStateInGame,
+		rooms.RoomStateGameOver,
+	} {
+		room := rooms.NewRoom("TEST", state, nil)
+
+		if !room.IsEmpty() {
+			t.Fatalf("expected empty %q room to be empty", state)
+		}
+		if !room.ShouldCleanup() {
+			t.Fatalf("expected empty %q room to be cleanup-eligible", state)
+		}
+	}
+}
+
+func TestRoomShouldCleanupRejectsNonEmptyRooms(t *testing.T) {
+	memberRoom := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	memberRoom.AddMemberID("session-1")
+
+	if memberRoom.IsEmpty() {
+		t.Fatal("expected room with member not to be empty")
+	}
+	if memberRoom.ShouldCleanup() {
+		t.Fatal("expected room with member not to be cleanup-eligible")
+	}
+
+	activeRoom := rooms.NewRoom("TEST", rooms.RoomStateInGame, game.New())
+	activeRoom.ActivePlayers = 1
+
+	if activeRoom.IsEmpty() {
+		t.Fatal("expected room with active player not to be empty")
+	}
+	if activeRoom.ShouldCleanup() {
+		t.Fatal("expected room with active player not to be cleanup-eligible")
+	}
+}
+
+func TestNilRoomShouldNotCleanup(t *testing.T) {
+	var room *rooms.Room
+
+	if room.ShouldCleanup() {
+		t.Fatal("expected nil room not to be cleanup-eligible")
 	}
 }
 

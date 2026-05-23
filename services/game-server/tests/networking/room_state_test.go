@@ -3,16 +3,16 @@ package networkingtests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/networking"
+	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
 func TestRoomLifecycleStateNames(t *testing.T) {
-	tests := map[networking.RoomState]string{
-		networking.RoomStateLobby:    "Lobby",
-		networking.RoomStateStarting: "Starting",
-		networking.RoomStateInGame:   "InGame",
-		networking.RoomStateGameOver: "GameOver",
-		networking.RoomStateClosed:   "Closed",
+	tests := map[rooms.RoomState]string{
+		rooms.RoomStateLobby:    "Lobby",
+		rooms.RoomStateStarting: "Starting",
+		rooms.RoomStateInGame:   "InGame",
+		rooms.RoomStateGameOver: "GameOver",
+		rooms.RoomStateClosed:   "Closed",
 	}
 
 	for state, expected := range tests {

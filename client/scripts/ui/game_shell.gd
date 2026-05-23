@@ -123,6 +123,8 @@ func _start_game(room_id: String) -> void:
 		return
 
 	game_loop = GAME_LOOP_SCENE.instantiate()
+	if game_loop.has_method("set_session_mode"):
+		game_loop.set_session_mode(_session_mode_name())
 	if game_loop.has_method("set_room_id"):
 		game_loop.set_room_id(room_id)
 	if game_loop.has_signal("return_to_menu_requested"):
@@ -139,12 +141,16 @@ func _create_multiplayer_game_loop() -> void:
 		return
 
 	game_loop = GAME_LOOP_SCENE.instantiate()
+	if game_loop.has_method("set_session_mode"):
+		game_loop.set_session_mode(_session_mode_name())
 	if game_loop.has_method("set_room_id"):
 		game_loop.set_room_id(current_room_code)
 	if lobby_network_client != null && game_loop.has_method("set_network_client"):
 		game_loop.set_network_client(lobby_network_client)
+		lobby_network_client = null
 	if game_loop.has_signal("return_to_menu_requested"):
 		game_loop.return_to_menu_requested.connect(_return_to_main_menu)
+	_hide_multiplayer_lobby()
 	add_child(game_loop)
 
 
@@ -222,6 +228,9 @@ func handle_network_packet(data: Dictionary) -> bool:
 		return true
 	if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_SNAPSHOT:
 		_store_room_snapshot(data)
+		return true
+	if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_STATE_CHANGED:
+		_store_room_state_changed(data)
 		return true
 
 	return false
@@ -394,6 +403,7 @@ func _set_lobby_status(text: String) -> void:
 
 
 func _store_room_snapshot(data: Dictionary) -> void:
+	var previous_room_state := current_room_state
 	current_room_code = str(data.get(Packets.FIELD_ROOM_CODE, "")).strip_edges()
 	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, "")).strip_edges()
 	local_room_member_id = str(data.get(Packets.FIELD_LOCAL_MEMBER_ID, "")).strip_edges()
@@ -408,9 +418,21 @@ func _store_room_snapshot(data: Dictionary) -> void:
 		"ready_states": room_ready_states.duplicate(true),
 		Packets.FIELD_MAX_PLAYERS: room_max_players,
 	}
+	_return_to_multiplayer_lobby_if_ready(previous_room_state)
 	_update_lobby_room_labels()
 	_update_lobby_member_rows()
 	_update_lobby_control_state()
+	_enter_multiplayer_gameplay_if_ready()
+
+
+func _store_room_state_changed(data: Dictionary) -> void:
+	current_room_code = str(data.get(Packets.FIELD_ROOM_CODE, current_room_code)).strip_edges()
+	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, current_room_state)).strip_edges()
+	latest_room_snapshot[Packets.FIELD_ROOM_CODE] = current_room_code
+	latest_room_snapshot[Packets.FIELD_ROOM_STATE] = current_room_state
+	_update_lobby_room_labels()
+	_update_lobby_control_state()
+	_enter_multiplayer_gameplay_if_ready()
 
 
 func _room_snapshot_members(raw_members: Variant) -> Array:
@@ -481,6 +503,47 @@ func _local_member_ready() -> bool:
 
 func _room_state_is_lobby() -> bool:
 	return current_room_state == "Lobby" || current_room_state == "lobby"
+
+
+func _session_mode_name() -> String:
+	if session_mode == SessionMode.MULTIPLAYER:
+		return "Multiplayer"
+
+	return "SinglePlayer"
+
+
+func _room_state_is_in_game() -> bool:
+	return current_room_state == "InGame" || current_room_state == "in_game"
+
+
+func _enter_multiplayer_gameplay_if_ready() -> void:
+	if session_mode != SessionMode.MULTIPLAYER:
+		return
+	if !_room_state_is_in_game():
+		return
+	if game_loop != null:
+		return
+
+	ClientLogger.shell_debug("room entered InGame; showing multiplayer game loop")
+	_create_multiplayer_game_loop()
+
+
+func _return_to_multiplayer_lobby_if_ready(previous_room_state: String) -> void:
+	if session_mode != SessionMode.MULTIPLAYER:
+		return
+	if game_loop == null:
+		return
+	if !_room_state_is_lobby():
+		return
+	if previous_room_state != "GameOver" && previous_room_state != "game_over" && previous_room_state != "gameover":
+		return
+
+	ClientLogger.shell_debug("room returned to Lobby; showing multiplayer lobby")
+	if game_loop.has_method("release_network_client_for_lobby"):
+		lobby_network_client = game_loop.release_network_client_for_lobby()
+	game_loop.queue_free()
+	game_loop = null
+	_show_multiplayer_lobby()
 
 
 func _room_status_text() -> String:

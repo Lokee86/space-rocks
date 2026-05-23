@@ -127,12 +127,57 @@ func (room *Room) MarkStarting() *RoomDomainError {
 	return nil
 }
 
+func (room *Room) MarkGameOver() *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	if room.State != RoomStateInGame {
+		return &RoomDomainError{
+			Code:    RoomErrorInvalidRoomState,
+			Message: "Room can only move to game over from in-game.",
+		}
+	}
+
+	room.State = RoomStateGameOver
+	return nil
+}
+
+func (room *Room) ResetToLobby(memberID string) *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	if _, ok := room.Members[memberID]; !ok {
+		return &RoomDomainError{
+			Code:    RoomErrorNotInRoom,
+			Message: "Member is not in the room.",
+		}
+	}
+
+	if room.State != RoomStateGameOver {
+		return &RoomDomainError{
+			Code:    RoomErrorInvalidRoomState,
+			Message: "Room can only return to lobby from game over.",
+		}
+	}
+
+	for _, member := range room.Members {
+		member.SetReady(false)
+	}
+	room.Game = nil
+	room.State = RoomStateLobby
+	return nil
+}
+
 func (room *Room) IsFull() bool {
 	return room.MemberCount() >= MaxPlayersPerRoom
 }
 
 func (room *Room) IsEmpty() bool {
 	return room.ActivePlayers == 0 && room.MemberCount() == 0
+}
+
+func (room *Room) ShouldCleanup() bool {
+	return room != nil && room.IsEmpty()
 }
 
 func (room *Room) IsGameOver() bool {

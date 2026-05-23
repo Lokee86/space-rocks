@@ -14,8 +14,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const RoomIDQueryParam = "room_id"
-
 var nextSessionID atomic.Uint64
 
 type webSocketSession struct {
@@ -25,12 +23,11 @@ type webSocketSession struct {
 	currentMemberID string
 	currentPlayerID string
 	room            *rooms.Room
-	rooms           *RoomManager
+	rooms           *rooms.RoomManager
 	outbound        chan []byte
-	legacyLeaveRoom func()
 }
 
-func WebSocketHandler(rooms *RoomManager) http.HandlerFunc {
+func WebSocketHandler(rooms *rooms.RoomManager) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -45,17 +42,11 @@ func WebSocketHandler(rooms *RoomManager) http.HandlerFunc {
 		}
 
 		session := newWebSocketSession(conn, rooms)
-		roomID := r.URL.Query().Get(RoomIDQueryParam)
-		if roomID != "" {
-			// Legacy/dev compatibility path. New multiplayer clients connect to
-			// /ws only and join rooms with packets after the session exists.
-			attachLegacyRoomSession(rooms, session, roomID)
-		}
 		handleConnection(session, r.RemoteAddr)
 	}
 }
 
-func newWebSocketSession(conn *websocket.Conn, rooms *RoomManager) *webSocketSession {
+func newWebSocketSession(conn *websocket.Conn, rooms *rooms.RoomManager) *webSocketSession {
 	sessionNumber := nextSessionID.Add(1)
 
 	return &webSocketSession{
@@ -64,18 +55,6 @@ func newWebSocketSession(conn *websocket.Conn, rooms *RoomManager) *webSocketSes
 		rooms:     rooms,
 		outbound:  make(chan []byte, 16),
 	}
-}
-
-func attachLegacyRoomSession(rooms *RoomManager, session *webSocketSession, roomID string) {
-	room, leaveRoom := rooms.Join(roomID)
-	playerID := room.Game.AddPlayer()
-	room.AddMemberID(playerID)
-
-	session.room = room
-	session.currentRoomID = room.ID
-	session.currentMemberID = playerID
-	session.currentPlayerID = playerID
-	session.legacyLeaveRoom = leaveRoom
 }
 
 func handleConnection(session *webSocketSession, remoteAddr string) {
@@ -150,6 +129,10 @@ func readClientInput(
 			session.handleStartGameRequest()
 			continue
 		}
+		if packet.Type == game.PacketTypeReturnToLobbyRequest {
+			session.handleReturnToLobbyRequest()
+			continue
+		}
 
 		if session.room == nil || session.currentPlayerID == "" {
 			continue
@@ -175,14 +158,14 @@ func (session *webSocketSession) logLobbyPacketReceived(message string, roomCode
 
 func (session *webSocketSession) handleCreateRoomRequest() {
 	if session.currentRoomID != "" {
-		session.EnqueueRoomError(RoomErrorAlreadyInRoom, "Session is already in a room.")
+		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
 		return
 	}
 
 	room, err := session.rooms.CreateLobbyRoom()
 	if err != nil {
 		logging.Rooms.Error("create lobby room failed", err, "session_id", session.sessionID)
-		session.EnqueueRoomError(RoomErrorInvalidRoomState, "Could not create room.")
+		session.EnqueueRoomError(rooms.RoomErrorInvalidRoomState, "Could not create room.")
 		return
 	}
 
@@ -196,7 +179,7 @@ func (session *webSocketSession) handleCreateRoomRequest() {
 
 func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
 	if session.currentRoomID != "" {
-		session.EnqueueRoomError(RoomErrorAlreadyInRoom, "Session is already in a room.")
+		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
 		return
 	}
 
@@ -220,7 +203,7 @@ func (session *webSocketSession) handleLeaveRoomRequest() {
 
 func (session *webSocketSession) handleSetReadyRequest(ready bool) {
 	if session.currentRoomID == "" || session.currentMemberID == "" {
-		session.EnqueueRoomError(RoomErrorNotInRoom, "Session is not in a room.")
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
@@ -235,7 +218,7 @@ func (session *webSocketSession) handleSetReadyRequest(ready bool) {
 
 func (session *webSocketSession) handleStartGameRequest() {
 	if session.room == nil || session.currentMemberID == "" {
-		session.EnqueueRoomError(RoomErrorNotInRoom, "Session is not in a room.")
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
@@ -257,10 +240,24 @@ func (session *webSocketSession) handleStartGameRequest() {
 	BroadcastRoomSnapshot(session.room)
 }
 
+func (session *webSocketSession) handleReturnToLobbyRequest() {
+	if session.room == nil || session.currentMemberID == "" {
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
+		return
+	}
+
+	if roomErr := session.room.ResetToLobby(session.currentMemberID); roomErr != nil {
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+		return
+	}
+
+	BroadcastRoomSnapshot(session.room)
+}
+
 func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
 	if session.currentRoomID == "" || session.room == nil {
 		if reportNotInRoom {
-			session.EnqueueRoomError(RoomErrorNotInRoom, "Session is not in a room.")
+			session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		}
 		return
 	}
@@ -284,14 +281,10 @@ func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
 	}
 	if playerID != "" && room.Game != nil {
 		room.Game.RemovePlayer(playerID)
-		if session.legacyLeaveRoom == nil && room.ActivePlayers > 0 {
+		if room.ActivePlayers > 0 {
 			room.ActivePlayers--
 		}
-		if session.legacyLeaveRoom != nil {
-			session.legacyLeaveRoom()
-		} else {
-			session.rooms.ScheduleCleanupIfEmpty(roomID)
-		}
+		session.rooms.ScheduleCleanupIfEmpty(roomID)
 	} else {
 		session.rooms.ScheduleCleanupIfEmpty(roomID)
 	}
@@ -300,7 +293,6 @@ func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
 	session.currentRoomID = ""
 	session.currentMemberID = ""
 	session.currentPlayerID = ""
-	session.legacyLeaveRoom = nil
 
 	if room.MemberCount() > 0 {
 		logging.Rooms.Debug("broadcasting room snapshot after member left",
@@ -357,6 +349,8 @@ func writeServerMessages(
 				continue
 			}
 
+			checkRoomGameOver(session.room)
+
 			response := session.room.Game.State(session.currentPlayerID)
 			if response == nil {
 				continue
@@ -368,6 +362,30 @@ func writeServerMessages(
 			}
 		}
 	}
+}
+
+func checkRoomGameOver(room *rooms.Room) bool {
+	if room == nil || room.State != rooms.RoomStateInGame {
+		return false
+	}
+	if !room.IsGameOver() {
+		return false
+	}
+
+	if roomErr := room.MarkGameOver(); roomErr != nil {
+		logging.Rooms.Warn("room game over transition failed",
+			logging.FieldRoomID, room.ID,
+			"error_code", roomErr.Code,
+			"message", roomErr.Message,
+		)
+		return false
+	}
+
+	logging.Rooms.Debug("room game over detected",
+		logging.FieldRoomID, room.ID,
+	)
+	BroadcastRoomSnapshot(room)
+	return true
 }
 
 func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr string) {

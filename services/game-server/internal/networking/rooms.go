@@ -9,15 +9,12 @@ import (
 const (
 	DefaultRoomID        = rooms.DefaultRoomID
 	RoomCleanupGraceTime = rooms.RoomCleanupGraceTime
-	MaxPlayersPerRoom    = rooms.MaxPlayersPerRoom
 )
 
-type RoomManager = rooms.RoomManager
-
-func NewRoomManager() *RoomManager {
+func NewRoomManager() *rooms.RoomManager {
 	return rooms.NewRoomManager()
 }
 
-func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *RoomManager {
+func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *rooms.RoomManager {
 	return rooms.NewRoomManagerWithCleanupDelay(cleanupDelay)
 }
