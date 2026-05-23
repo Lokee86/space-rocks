@@ -143,6 +143,21 @@ func (room *Room) MarkStarting() *RoomDomainError {
 	return nil
 }
 
+func (room *Room) MarkInGame() *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	if room.State != RoomStateStarting {
+		return &RoomDomainError{
+			Code:    RoomErrorInvalidRoomState,
+			Message: "Room can only enter in-game from starting.",
+		}
+	}
+
+	room.State = RoomStateInGame
+	return nil
+}
+
 func (room *Room) MarkGameOver() *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()

@@ -165,6 +165,42 @@ func TestRoomMarkStartingRejectsInvalidState(t *testing.T) {
 	}
 }
 
+func TestRoomMarkInGameMovesStartingToInGame(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateStarting, game.New())
+
+	if roomErr := room.MarkInGame(); roomErr != nil {
+		t.Fatalf("expected starting room to mark in-game, got %s", roomErr.Code)
+	}
+	if room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
+	}
+	if room.Game == nil {
+		t.Fatal("expected game instance to remain after in-game transition")
+	}
+}
+
+func TestRoomMarkInGameRejectsInvalidState(t *testing.T) {
+	for _, state := range []rooms.RoomState{
+		rooms.RoomStateLobby,
+		rooms.RoomStateInGame,
+		rooms.RoomStateGameOver,
+		rooms.RoomStateClosed,
+	} {
+		room := rooms.NewRoom("TEST", state, nil)
+
+		roomErr := room.MarkInGame()
+		if roomErr == nil {
+			t.Fatalf("expected state %q to reject mark in-game", state)
+		}
+		if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+			t.Fatalf("expected error code %q for state %q, got %q", rooms.RoomErrorInvalidRoomState, state, roomErr.Code)
+		}
+		if room.State != state {
+			t.Fatalf("expected rejected room to stay %q, got %q", state, room.State)
+		}
+	}
+}
+
 func TestRoomMarkGameOverMovesInGameToGameOver(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateInGame, game.New())
 

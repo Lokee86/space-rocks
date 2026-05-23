@@ -240,7 +240,10 @@ func (session *webSocketSession) handleStartGameRequest() {
 	}
 	session.room.Game.Start()
 	activateRoomPlayers(session.room)
-	session.room.State = rooms.RoomStateInGame
+	if roomErr := session.room.MarkInGame(); roomErr != nil {
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+		return
+	}
 	BroadcastRoomSnapshot(session.room)
 }
 
