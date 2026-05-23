@@ -139,6 +139,7 @@ func _apply_players(self_id: String, server_players: Dictionary) -> void:
 				local_server_position,
 				server_position
 			)
+			_correct_remote_visual_copy_mismatch(player_id, player_node, visual_position)
 			_apply_remote_player_hue(player_id, player_node)
 
 		target_player_positions[player_id] = visual_position
@@ -161,6 +162,31 @@ func _initialize_local_visual_position(server_position: Vector2) -> void:
 	local_server_position = wrapped_server_position
 	local_visual_position = local_server_position
 	has_local_visual_position = true
+
+
+func _correct_remote_visual_copy_mismatch(
+	player_id: String,
+	player_node: Node2D,
+	visual_position: Vector2
+) -> void:
+	# Remote targets are local-relative, but rendered remotes can briefly stay in
+	# an old visual copy; snap cache/render state before interpolation crosses it.
+	if !initialized_players.has(player_id):
+		return
+	if !_is_world_copy_mismatch(player_node.position, visual_position):
+		return
+
+	player_node.position = visual_position
+	target_player_positions[player_id] = visual_position
+	remote_player_visual_positions[player_id] = visual_position
+
+
+func _is_world_copy_mismatch(current_position: Vector2, target_position: Vector2) -> bool:
+	var delta := target_position - current_position
+	return (
+		abs(delta.x) > Constants.WORLD_WIDTH * 0.5 ||
+		abs(delta.y) > Constants.WORLD_HEIGHT * 0.5
+	)
 
 
 func _get_player_node(self_id: String, player_id: String):

@@ -1,6 +1,7 @@
 extends GutTest
 
 const Packets := preload("res://scripts/networking/packets.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
 const WorldSyncScript := preload("res://scripts/networking/world_sync.gd")
 const PlayerScene := preload("res://scenes/player.tscn")
@@ -141,6 +142,32 @@ func test_apply_state_updates_existing_entity_targets() -> void:
 		Vector2(460.0, 480.0)
 	)
 	assert_eq(world_sync.target_bullet_rotations[WorldStateFixture.BULLET_ID], 1.25)
+
+
+func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation() -> void:
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_PLAYERS] = {
+		WorldStateFixture.LOCAL_PLAYER_ID: WorldStateFixture.player_state(656.0, 320.0, 0.0),
+		WorldStateFixture.REMOTE_PLAYER_ID: WorldStateFixture.player_state(656.0, 320.0, 0.0),
+	}
+	state[Packets.FIELD_ASTEROIDS] = {}
+	state[Packets.FIELD_BULLETS] = {}
+
+	_apply_state(state)
+	world_sync.interpolate(999.0)
+
+	var rendered_snapshot_a: Vector2 = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].position
+	world_sync.local_visual_position = Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
+
+	_apply_state(state)
+	var expected_target := Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
+	var rendered_snapshot_b: Vector2 = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].position
+	var remote_visual_positions := world_sync.get_remote_player_visual_positions()
+
+	assert_eq(world_sync.target_player_positions[WorldStateFixture.REMOTE_PLAYER_ID], expected_target)
+	assert_eq(rendered_snapshot_b, expected_target)
+	assert_eq(remote_visual_positions[WorldStateFixture.REMOTE_PLAYER_ID], expected_target)
+	assert_gt(abs(expected_target.y - rendered_snapshot_a.y), Constants.WORLD_HEIGHT * 0.5)
 
 
 func test_interpolate_moves_existing_entities_toward_updated_state() -> void:
