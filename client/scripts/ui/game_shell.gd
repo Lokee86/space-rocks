@@ -104,6 +104,7 @@ func _start_multiplayer(room_id: String) -> void:
 
 
 func _create_multiplayer_room() -> void:
+	print("[game_shell] create room requested")
 	session_mode = SessionMode.MULTIPLAYER
 	_show_multiplayer_lobby()
 	_begin_create_room_flow()
@@ -147,6 +148,7 @@ func _create_multiplayer_game_loop() -> void:
 
 
 func _return_to_main_menu() -> void:
+	print("[game_shell] returning to main menu")
 	clear_gameplay_scroll_offset()
 	if game_loop != null:
 		game_loop.queue_free()
@@ -161,13 +163,17 @@ func _return_to_main_menu() -> void:
 
 func _connect_main_menu() -> void:
 	if main_menu != null && main_menu.has_signal("single_player_pressed"):
-		main_menu.single_player_pressed.connect(_start_single_player)
+		if !main_menu.single_player_pressed.is_connected(_start_single_player):
+			main_menu.single_player_pressed.connect(_start_single_player)
 	if main_menu != null && main_menu.has_signal("multiplayer_create_requested"):
-		main_menu.multiplayer_create_requested.connect(_create_multiplayer_room)
+		if !main_menu.multiplayer_create_requested.is_connected(_create_multiplayer_room):
+			main_menu.multiplayer_create_requested.connect(_create_multiplayer_room)
 	if main_menu != null && main_menu.has_signal("multiplayer_join_requested"):
-		main_menu.multiplayer_join_requested.connect(_join_multiplayer_room)
+		if !main_menu.multiplayer_join_requested.is_connected(_join_multiplayer_room):
+			main_menu.multiplayer_join_requested.connect(_join_multiplayer_room)
 	if main_menu != null && main_menu.has_signal("multiplayer_room_requested"):
-		main_menu.multiplayer_room_requested.connect(_start_multiplayer)
+		if !main_menu.multiplayer_room_requested.is_connected(_start_multiplayer):
+			main_menu.multiplayer_room_requested.connect(_start_multiplayer)
 
 
 func _show_multiplayer_lobby() -> void:
@@ -178,10 +184,21 @@ func _show_multiplayer_lobby() -> void:
 	if multiplayer_lobby.has_method("set_fake_data_enabled"):
 		multiplayer_lobby.set_fake_data_enabled(false)
 	canvas_layer.add_child(multiplayer_lobby)
+
 	if multiplayer_lobby.has_signal("ready_requested"):
-		multiplayer_lobby.ready_requested.connect(_request_ready_toggle)
+		if !multiplayer_lobby.ready_requested.is_connected(_request_ready_toggle):
+			multiplayer_lobby.ready_requested.connect(_request_ready_toggle)
+
 	if multiplayer_lobby.has_signal("start_game_requested"):
-		multiplayer_lobby.start_game_requested.connect(_request_start_game)
+		if !multiplayer_lobby.start_game_requested.is_connected(_request_start_game):
+			multiplayer_lobby.start_game_requested.connect(_request_start_game)
+
+	if multiplayer_lobby.has_signal("leave_requested"):
+		if !multiplayer_lobby.leave_requested.is_connected(_request_leave_room):
+			multiplayer_lobby.leave_requested.connect(_request_leave_room)
+	else:
+		push_error("Multiplayer lobby is missing leave_requested signal.")
+
 	if multiplayer_lobby.has_method("set_status"):
 		multiplayer_lobby.set_status("Connecting...")
 
@@ -296,6 +313,7 @@ func _send_pending_join_room_request() -> void:
 
 
 func _request_ready_toggle() -> void:
+	print("[game_shell] ready requested")
 	if lobby_network_client == null || !lobby_network_client.is_connected_to_server():
 		_set_lobby_status("Not connected to server.")
 		return
@@ -304,6 +322,7 @@ func _request_ready_toggle() -> void:
 
 
 func _request_start_game() -> void:
+	print("[game_shell] start game requested")
 	if lobby_network_client == null || !lobby_network_client.is_connected_to_server():
 		_set_lobby_status("Not connected to server.")
 		return
@@ -312,6 +331,21 @@ func _request_start_game() -> void:
 		return
 
 	lobby_network_client.send_start_game_request()
+
+
+func _request_leave_room() -> void:
+	print("[game_shell] leave requested")
+
+	if lobby_network_client == null || !lobby_network_client.is_connected_to_server():
+		print("[game_shell] leave requested without connected lobby network")
+		_return_to_main_menu()
+		return
+
+	print("[game_shell] sending LeaveRoomRequest")
+	if lobby_network_client.has_method("send_leave_room_request"):
+		lobby_network_client.send_leave_room_request()
+	else:
+		push_error("NetworkClient is missing send_leave_room_request().")
 
 
 func _handle_room_error_packet(data: Dictionary) -> void:

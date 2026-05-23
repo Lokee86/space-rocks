@@ -11,6 +11,7 @@ signal leave_requested
 @export_node_path("BaseButton") var start_game_button_path: NodePath
 @export_node_path("BaseButton") var leave_button_path: NodePath
 @export var player_row_scene: PackedScene
+@export var fake_data_enabled := false
 
 @onready var room_code_label: Label = get_node_or_null(room_code_label_path) as Label
 @onready var room_status_label: Label = get_node_or_null(room_status_label_path) as Label
@@ -21,14 +22,14 @@ signal leave_requested
 
 var local_ready := false
 var fake_members := []
-var fake_data_enabled := true
 
 
 func _ready() -> void:
 	_validate_required_nodes()
+	_connect_lobby_buttons()
+
 	if fake_data_enabled:
 		_show_fake_lobby_data()
-	_connect_lobby_buttons()
 
 
 func set_room_code(room_code) -> void:
@@ -72,6 +73,9 @@ func set_start_enabled(enabled) -> void:
 
 func set_fake_data_enabled(enabled: bool) -> void:
 	fake_data_enabled = enabled
+
+	if fake_data_enabled:
+		_show_fake_lobby_data()
 
 
 func _update_ready_button_text() -> void:
@@ -166,7 +170,9 @@ func _connect_lobby_buttons() -> void:
 
 
 func _on_ready_pressed() -> void:
+	print("[lobby] ReadyButton pressed")
 	ready_requested.emit()
+
 	if !fake_data_enabled:
 		return
 
@@ -178,7 +184,9 @@ func _on_ready_pressed() -> void:
 
 
 func _on_start_game_pressed() -> void:
+	print("[lobby] StartGameButton pressed")
 	start_game_requested.emit()
+
 	if !fake_data_enabled:
 		return
 
@@ -186,8 +194,6 @@ func _on_start_game_pressed() -> void:
 
 
 func _on_leave_pressed() -> void:
+	print("[lobby] LeaveButton pressed")
 	leave_requested.emit()
-	if !fake_data_enabled:
-		return
-
 	set_status("Leave requested...")
