@@ -421,6 +421,14 @@ value_type = "ShipState"
 go_value_type = "entities.ShipState"
 
 [[structs.fields]]
+name = "player_lifecycle"
+go_name = "PlayerLifecycle"
+json = "player_lifecycle"
+type = "map"
+key_type = "string"
+value_type = "string"
+
+[[structs.fields]]
 name = "bullets"
 json = "bullets"
 type = "map"

@@ -103,11 +103,12 @@ type EventState struct {
 }
 
 type StatePacket struct {
-	Type      string                            `json:"type"`
-	SelfID    string                            `json:"self_id"`
-	Lives     int                               `json:"lives"`
-	Players   map[string]entities.ShipState     `json:"players"`
-	Bullets   map[string]entities.BulletState   `json:"bullets"`
-	Asteroids map[string]entities.AsteroidState `json:"asteroids"`
-	Events    []EventState                      `json:"events"`
+	Type            string                            `json:"type"`
+	SelfID          string                            `json:"self_id"`
+	Lives           int                               `json:"lives"`
+	Players         map[string]entities.ShipState     `json:"players"`
+	PlayerLifecycle map[string]string                 `json:"player_lifecycle"`
+	Bullets         map[string]entities.BulletState   `json:"bullets"`
+	Asteroids       map[string]entities.AsteroidState `json:"asteroids"`
+	Events          []EventState                      `json:"events"`
 }
