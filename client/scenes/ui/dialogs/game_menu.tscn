@@ -4,6 +4,12 @@
 [ext_resource type="Texture2D" uid="uid://mwwqwts1iy0t" path="res://assets/ui/windows/Window (2).png" id="2_fcfrx"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_1b0xy"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="4_x2hll"]
+[ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="5_fcfrx"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_1b0xy"]
+font = ExtResource("5_fcfrx")
+font_size = 32
+font_color = Color(0, 0, 0, 1)
 
 [node name="GameMenu" type="Control" unique_id=1437660651]
 layout_mode = 3
@@ -88,7 +94,7 @@ layout_mode = 2
 text = "
 
 WAITING"
-label_settings = ExtResource("4_x2hll")
+label_settings = SubResource("LabelSettings_1b0xy")
 horizontal_alignment = 1
 
 [node name="MenuButton" parent="CenterContainer/TextureRect/CenterContainer/MarginContainer/HBoxContainer" unique_id=1583084417 instance=ExtResource("3_1b0xy")]

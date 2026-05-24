@@ -62,6 +62,7 @@ func test_set_alive_hides_death_overlay() -> void:
 func test_configure_finds_and_hides_hud_owned_game_menu() -> void:
 	assert_not_null(hud_controller.get_game_menu())
 	assert_false(hud_controller.is_game_menu_visible())
+	assert_false(_cycle_view_label().visible)
 
 
 func test_game_over_overlay_can_hide_without_hiding_game_menu_parent() -> void:
@@ -106,9 +107,53 @@ func test_room_id_hidden_for_multiplayer_when_room_id_is_empty() -> void:
 	assert_false(_room_id_label().visible)
 
 
+func test_cycle_view_hidden_for_single_player_even_when_available() -> void:
+	hud_controller.set_session_mode("SinglePlayer")
+	hud_controller.set_game_over()
+	hud_controller.hide_game_menu()
+	hud_controller.set_cycle_view_available(true)
+
+	assert_false(_cycle_view_label().visible)
+
+
+func test_cycle_view_visible_for_multiplayer_game_over_when_menu_hidden() -> void:
+	hud_controller.set_session_mode("Multiplayer")
+	hud_controller.set_game_over()
+	hud_controller.hide_game_menu()
+	hud_controller.set_cycle_view_available(true)
+
+	assert_true(_cycle_view_label().visible)
+
+
+func test_cycle_view_hidden_when_game_menu_visible() -> void:
+	hud_controller.set_session_mode("Multiplayer")
+	hud_controller.set_game_over()
+	hud_controller.hide_game_menu()
+	hud_controller.set_cycle_view_available(true)
+
+	hud_controller.show_game_menu()
+
+	assert_false(_cycle_view_label().visible)
+
+
+func test_cycle_view_hidden_for_alive_gameplay() -> void:
+	hud_controller.set_session_mode("Multiplayer")
+	hud_controller.set_game_over()
+	hud_controller.hide_game_menu()
+	hud_controller.set_cycle_view_available(true)
+
+	hud_controller.set_alive()
+
+	assert_false(_cycle_view_label().visible)
+
+
 func _lives_label() -> Label:
 	return hud_scene.find_child("LivesCount", true, false) as Label
 
 
 func _room_id_label() -> Label:
 	return hud_scene.find_child("RoomID", true, false) as Label
+
+
+func _cycle_view_label() -> Label:
+	return hud_scene.find_child("CycleView", true, false) as Label

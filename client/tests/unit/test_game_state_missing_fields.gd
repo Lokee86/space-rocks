@@ -118,6 +118,7 @@ func test_single_player_game_over_shows_game_over_and_disabled_resume_menu() -> 
 	assert_true(_primary_label("Resume").visible)
 	assert_false(_primary_label("Lobby").visible)
 	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_false(_cycle_view_label().visible)
 	assert_eq(_game_menu_nodes().size(), 1)
 
 
@@ -134,6 +135,7 @@ func test_multiplayer_local_game_over_without_targets_shows_disabled_waiting_unt
 	assert_false(_primary_label("Spectate").visible)
 	assert_true(_primary_label("Waiting").visible)
 	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_false(_cycle_view_label().visible)
 	assert_eq(_game_menu_nodes().size(), 1)
 
 
@@ -231,7 +233,37 @@ func test_multiplayer_spectate_action_hides_menu_and_follows_remote_player() -> 
 	assert_true(game.is_spectating)
 	assert_eq(game.current_spectate_target_id, "remote-player")
 	assert_false(hud_controller.is_game_menu_visible())
+	assert_true(_cycle_view_label().visible)
 	assert_eq(game.gameplay_camera.global_position, Vector2(42.0, 24.0))
+
+
+func test_multiplayer_open_menu_while_spectating_hides_cycle_view() -> void:
+	game.session_mode = "Multiplayer"
+	game.current_room_state = "InGame"
+	_add_spectate_target("remote-player", Vector2(42.0, 24.0))
+	game._set_game_over_state()
+	hud_controller.get_game_menu()._on_primary_action_pressed()
+	assert_true(_cycle_view_label().visible)
+
+	game._open_game_menu()
+
+	assert_true(hud_controller.is_game_menu_visible())
+	assert_false(_cycle_view_label().visible)
+
+
+func test_multiplayer_closing_menu_while_spectating_shows_cycle_view() -> void:
+	game.session_mode = "Multiplayer"
+	game.current_room_state = "InGame"
+	_add_spectate_target("remote-player", Vector2(42.0, 24.0))
+	game._set_game_over_state()
+	hud_controller.get_game_menu()._on_primary_action_pressed()
+	game._open_game_menu()
+	assert_false(_cycle_view_label().visible)
+
+	game._close_game_menu()
+
+	assert_false(hud_controller.is_game_menu_visible())
+	assert_true(_cycle_view_label().visible)
 
 
 func test_multiplayer_spectate_selects_another_target_when_current_disappears() -> void:
@@ -349,6 +381,7 @@ func test_multiplayer_spectate_falls_back_to_waiting_menu_when_targets_disappear
 	assert_true(hud_controller.is_game_menu_visible())
 	assert_true(_primary_label("Waiting").visible)
 	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_false(_cycle_view_label().visible)
 
 
 func test_multiplayer_room_game_over_exits_spectate_and_shows_lobby() -> void:
@@ -368,6 +401,7 @@ func test_multiplayer_room_game_over_exits_spectate_and_shows_lobby() -> void:
 	assert_true(hud_controller.is_game_menu_visible())
 	assert_true(_primary_label("Lobby").visible)
 	assert_false(hud_controller.get_game_menu().primary_action_button.disabled)
+	assert_false(_cycle_view_label().visible)
 
 
 func test_multiplayer_room_game_over_primary_action_still_emits_lobby_signal() -> void:
@@ -408,6 +442,10 @@ func _lives_label() -> Label:
 
 func _primary_label(label_name: String) -> Label:
 	return hud_controller.get_game_menu().primary_action_button.find_child(label_name, true, false) as Label
+
+
+func _cycle_view_label() -> Label:
+	return hud_scene.find_child("CycleView", true, false) as Label
 
 
 func _game_menu_nodes() -> Array[Node]:

@@ -184,6 +184,7 @@ func _store_room_state(data: Dictionary) -> void:
 	if _is_room_game_over():
 		_stop_spectating(true)
 	_refresh_game_menu_state()
+	_refresh_cycle_view_hint()
 
 
 func _is_room_in_game() -> bool:
@@ -321,16 +322,19 @@ func _set_alive_state() -> void:
 	open_menu_input_armed = false
 	_hide_game_menu()
 	hud_controller.set_alive()
+	_refresh_cycle_view_hint()
 	effects.reset_game_over_sound()
 
 
 func _set_dead_state(respawn_delay: float) -> void:
 	awaiting_respawn_confirmation = false
+	_stop_spectating(false)
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
 	_hide_game_menu()
 	player.set_afterburner_active(false)
 	hud_controller.set_dead(respawn_delay)
+	_refresh_cycle_view_hint()
 	effects.stop_game_over_sound()
 
 
@@ -342,6 +346,7 @@ func _set_game_over_state() -> void:
 	player.set_afterburner_active(false)
 	hud_controller.set_game_over()
 	_show_game_menu()
+	_refresh_cycle_view_hint()
 	effects.play_game_over_sound_after_delay()
 
 
@@ -525,6 +530,7 @@ func _start_spectating() -> bool:
 	is_spectating = true
 	_hide_game_menu()
 	_update_spectate_camera()
+	_refresh_cycle_view_hint()
 	return true
 
 
@@ -538,6 +544,7 @@ func _stop_spectating(show_game_over_menu: bool) -> void:
 		camera_follow.follow_local_player()
 	if show_game_over_menu && hud_controller != null && hud_controller.is_game_over:
 		_show_game_menu()
+	_refresh_cycle_view_hint()
 
 
 func _update_spectate_camera() -> void:
@@ -590,6 +597,19 @@ func _remote_player_visual_positions() -> Dictionary:
 		return {}
 
 	return world_sync.get_remote_player_visual_positions()
+
+
+func _refresh_cycle_view_hint() -> void:
+	if hud_controller == null:
+		return
+
+	hud_controller.set_session_mode(session_mode)
+	hud_controller.set_cycle_view_available(
+		_is_multiplayer_session() &&
+		hud_controller.is_game_over &&
+		is_spectating &&
+		!_is_room_game_over()
+	)
 
 
 func _should_block_open_menu_for_game_over() -> bool:

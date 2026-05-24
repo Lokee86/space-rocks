@@ -7,6 +7,7 @@ var death_overlay: Control
 var game_over_overlay: Control
 var game_menu: GameMenu
 var game_over_sound: AudioStreamPlayer
+var cycle_view_label: Label
 var respawn_timer_label: Label
 var respawn_tell_label: Label
 var room_id_label: Label
@@ -18,6 +19,7 @@ var can_respawn := false
 var respawn_countdown_remaining := 0.0
 var room_id := ""
 var is_multiplayer_session := false
+var cycle_view_available := false
 
 
 func configure(scene: Node) -> void:
@@ -27,6 +29,7 @@ func configure(scene: Node) -> void:
 	game_over_overlay = _find_label_container(scene, "GameOver")
 	game_menu = _find_game_menu(scene)
 	game_over_sound = _find_audio_stream_player(scene, "GameOverSound")
+	cycle_view_label = _find_label(scene, "CycleView")
 	respawn_timer_label = _find_label(death_overlay, "RespawnTimer")
 	respawn_tell_label = _find_label(death_overlay, "RespawnTell")
 	room_id_label = _find_label(scene, "RoomID")
@@ -104,6 +107,7 @@ func show_game_menu() -> void:
 		return
 
 	game_menu.visible = true
+	_update_cycle_view_visibility()
 
 
 func hide_game_menu() -> void:
@@ -111,6 +115,7 @@ func hide_game_menu() -> void:
 		return
 
 	game_menu.visible = false
+	_update_cycle_view_visibility()
 
 
 func is_game_menu_visible() -> bool:
@@ -122,6 +127,7 @@ func set_alive() -> void:
 	is_dead = false
 	is_game_over = false
 	can_respawn = false
+	cycle_view_available = false
 	respawn_countdown_remaining = 0.0
 	if death_overlay != null:
 		death_overlay.visible = false
@@ -135,6 +141,7 @@ func set_dead(respawn_delay: float) -> void:
 	is_dead = true
 	is_game_over = false
 	can_respawn = false
+	cycle_view_available = false
 	respawn_countdown_remaining = respawn_delay
 	if death_overlay != null:
 		death_overlay.visible = true
@@ -159,6 +166,12 @@ func set_game_over() -> void:
 		death_overlay.visible = false
 	if game_over_overlay != null:
 		game_over_overlay.visible = true
+	_update_cycle_view_visibility()
+
+
+func set_cycle_view_available(available: bool) -> void:
+	cycle_view_available = available
+	_update_cycle_view_visibility()
 
 
 func _update_respawn_timer_label() -> void:
@@ -167,6 +180,18 @@ func _update_respawn_timer_label() -> void:
 
 	var seconds_remaining := int(ceil(respawn_countdown_remaining))
 	respawn_timer_label.text = respawn_timer_template.replace("X", str(seconds_remaining))
+
+
+func _update_cycle_view_visibility() -> void:
+	if cycle_view_label == null:
+		return
+
+	cycle_view_label.visible = (
+		is_multiplayer_session &&
+		is_game_over &&
+		cycle_view_available &&
+		!is_game_menu_visible()
+	)
 
 
 func _find_label(scene: Node, node_name: String) -> Label:
