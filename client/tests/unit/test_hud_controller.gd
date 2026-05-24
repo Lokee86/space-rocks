@@ -1,6 +1,6 @@
 extends GutTest
 
-const HudControllerScript := preload("res://scripts/ui/hud_controller.gd")
+const HudControllerScript := preload("res://scripts/ui/hud/hud_controller.gd")
 const HudScene := preload("res://scenes/ui/hud.tscn")
 
 var hud_scene: Control

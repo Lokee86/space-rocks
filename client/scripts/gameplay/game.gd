@@ -4,7 +4,7 @@ signal return_to_menu_requested
 
 const EffectsScript = preload("res://scripts/effects.gd")
 const CameraFollowScript = preload("res://scripts/camera_follow.gd")
-const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
+const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const SpectateTargetsScript = preload("res://scripts/spectate_targets.gd")

@@ -1,6 +1,6 @@
 extends GutTest
 
-const OffscreenIndicatorsScript := preload("res://scripts/ui/offscreen_indicators.gd")
+const OffscreenIndicatorsScript := preload("res://scripts/ui/indicators/offscreen_indicators.gd")
 const IndicatorScene := preload("res://scenes/ui/elements/osindicator.tscn")
 
 
