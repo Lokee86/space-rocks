@@ -71,7 +71,7 @@ Core server packages:
 - `services/game-server/internal/rooms`: room state, room membership, lifecycle orchestration, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
-- `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation.
+- `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation and per-player participation classification.
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
@@ -169,7 +169,15 @@ Game/session state
 - `HasRemainingLives` from `session.Lives > 0`
 - `HasActiveShip` from whether `game.state.Players` contains that session ID
 
-`Game.IsGameOver()` remains the public game-facing API used by rooms. It locks the game, evaluates the rules snapshot, and returns `MatchDecision.IsOver`.
+`Game.MatchDecision()` is the public game-facing API for richer match decisions. It locks the game, evaluates the rules snapshot, and returns `rules.MatchDecision`. `Game.IsGameOver()` remains available for existing callers and delegates through the same locked decision path.
+
+`MatchDecision` currently reports:
+
+- `IsOver`
+- one player decision per session
+- `PlayerActive` for players with an active ship
+- `PlayerPendingRespawn` for players with remaining lives and no active ship
+- `PlayerEliminated` for players with no active ship and no remaining lives
 
 Current match-over behavior is preserved:
 
@@ -178,7 +186,9 @@ Current match-over behavior is preserved:
 - any active ship means not game over
 - otherwise the match is over
 
-This policy is based on remaining lives, not `session.CanRespawn()`. `CanRespawn()` includes respawn cooldown eligibility and remains a session/player-lifecycle gate for respawn requests, not a match outcome rule. Rooms still own room lifecycle transitions such as `InGame` to `GameOver`; they should continue calling `Game.IsGameOver()` rather than importing rules.
+This policy is based on remaining lives, not `session.CanRespawn()`. `CanRespawn()` includes respawn cooldown eligibility and remains a session/player-lifecycle gate for respawn requests, not a match outcome rule. Rooms still own room lifecycle transitions such as `InGame` to `GameOver`; they should use game-facing APIs such as `Game.MatchDecision().IsOver` or `Game.IsGameOver()` rather than importing rules.
+
+`Game.statePacket()` projects `MatchDecision.Players` into `StatePacket.player_lifecycle`, a map from player ID to lifecycle status string. This field sits beside `StatePacket.players`; it is not part of `ShipState` because pending-respawn and eliminated players may have no active ship. `StatePacket.players` remains active ship/render state only.
 
 ### Entity Damage Resolution
 
@@ -348,7 +358,7 @@ The current runtime data flow is:
 3. The Go websocket handler reads packets and passes them to the room's `game.Game`.
 4. The game simulation applies input and advances authoritative state.
 5. The server writes `StatePacket` JSON back to the client.
-6. `game.gd` receives the packet and passes state to `world_sync.gd`.
+6. `game.gd` receives the packet, stores packet-level player lifecycle status, and passes renderable state to `world_sync.gd`.
 7. `world_sync.gd` creates/removes/interpolates rendered nodes.
 8. HUD/effects/audio update from state and events.
 
@@ -381,6 +391,7 @@ Authoritative today:
 
 - server simulation state
 - player lives/death/game-over state
+- per-player match lifecycle status through `StatePacket.player_lifecycle`
 - score
 - asteroid splits and despawns
 - safe spawn/respawn placement
@@ -404,6 +415,7 @@ Current limitations:
 
 - Keep authoritative gameplay logic on the server unless client prediction/interpolation is explicitly being added.
 - Do not duplicate scoring, lives, respawn safety, collision outcomes, or asteroid split rules in the client.
+- Do not infer player lifecycle from `StatePacket.players` or client-side ship presence. Use `StatePacket.player_lifecycle`; pending-respawn and eliminated players can be absent from active ship state.
 - Keep network transport separate from core game simulation. Websocket code should live in `services/game-server/internal/networking`; reusable simulation should live in `services/game-server/internal/game`; match/mode policy evaluation should live in `services/game-server/internal/game/rules`.
 - Keep reusable simulation code out of `main.go`. The server entrypoint should register routes, configure dependencies, and start the process.
 - Use `shared/game_data.toml`, `shared/packets/packets.toml`, and `tools/data_sync/` for packet and constant data that must stay aligned across Go and Godot.

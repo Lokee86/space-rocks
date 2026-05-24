@@ -260,6 +260,8 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
 - Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred.
+- Keep packet-facing player lifecycle status in `StatePacket.player_lifecycle`, beside `players`. Do not put match lifecycle on `ShipState`; pending-respawn and eliminated players may not have active ship state.
+- Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability. Do not infer active eligibility solely from remote player positions or ship presence.
 - Use `services/game-server/internal/game/motion` for per-entity movement integration and advance-with-wrap behavior.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and wrap-aware spatial math for the toroidal world.
 - Add focused Go tests for server gameplay rules that can regress.
@@ -318,6 +320,7 @@ Client runtime:
 
 - `client/scripts/ui/game_shell.gd`
 - `client/scripts/game.gd`
+- `client/scripts/spectate_targets.gd`
 - `client/scripts/networking/network_client.gd`
 - `client/scripts/networking/world_sync.gd`
 - `client/scripts/entities/player.gd`

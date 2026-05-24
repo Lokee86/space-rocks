@@ -230,13 +230,15 @@ Server package ownership:
 - `services/game-server/internal/rooms` owns `Room`, `RoomManager`, `RoomMember`, room states, room error constants, room capacity, room code/default-room helpers, room `*game.Game` ownership, and room lifecycle decisions for create/join/leave/ready/start, single-player startup, return-to-lobby, game-over transition, and cleanup.
 - `services/game-server/internal/networking` owns websocket/session/outbound queue transport, packet handlers, per-connection player activation/deactivation, and sending/broadcasting `RoomSnapshot`/`RoomError`.
 - `services/game-server/internal/game` owns simulation, gameplay state mutation, and adapters from game storage to narrower gameplay seams.
-- `services/game-server/internal/game/rules` owns match/mode policy evaluation from plain snapshots. It currently evaluates match-over status through `MatchSnapshot -> EvaluateMatch -> MatchDecision`.
+- `services/game-server/internal/game/rules` owns match/mode policy evaluation from plain snapshots. It currently evaluates match-over status and per-player participation through `MatchSnapshot -> EvaluateMatch -> MatchDecision`.
 
 Client lifecycle notes:
 
 - `client/scripts/ui/game_shell.gd` owns explicit session mode and lobby/gameplay transitions.
 - `client/scripts/networking/network_client.gd` owns generated packet send helpers.
 - `client/scripts/game.gd` can receive an injected `NetworkClient` for multiplayer gameplay and returns it to the shell when a GameOver room returns to Lobby.
+- `client/scripts/game.gd` stores authoritative `StatePacket.player_lifecycle` status by player ID.
+- `client/scripts/spectate_targets.gd` selects view-cycle targets from players that have both a visual position and authoritative lifecycle status `active`; pending-respawn, eliminated, and missing lifecycle entries are not eligible targets.
 - Gameplay packets are ignored/deferred unless the multiplayer room state is `InGame`; single-player and legacy empty-room-state behavior still work.
 
 ### Pause / Resume Plumbing
@@ -274,9 +276,11 @@ Game/session state
   -> rules.MatchDecision
 ```
 
-`Game.IsGameOver()` remains the room-facing API. Rooms continue to own `InGame` to `GameOver` lifecycle transitions and should not import rules directly.
+`Game.MatchDecision()` is the public game-facing API for match decisions. `Game.IsGameOver()` remains available and delegates through the same locked decision path. Rooms continue to own `InGame` to `GameOver` lifecycle transitions and should not import rules directly.
 
 Current behavior is unchanged: no player sessions means not over, any session with remaining lives means not over, any active ship means not over, and otherwise the match is over. This is intentionally based on `session.Lives > 0` mapped to `HasRemainingLives`, not `session.CanRespawn()`. `CanRespawn()` still includes respawn cooldown eligibility and remains part of session/player lifecycle.
+
+`MatchDecision.Players` classifies each session as `active`, `pending_respawn`, or `eliminated`. `Game.statePacket()` projects those decisions into `StatePacket.player_lifecycle`, a packet-level map beside `StatePacket.players`. Active ship state remains in `StatePacket.players`; pending-respawn and eliminated players can still be represented in `player_lifecycle` even when they have no active ship.
 
 ### Spawn Planning Seam
 

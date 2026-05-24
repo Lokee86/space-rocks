@@ -302,6 +302,8 @@ tools/data_sync/
 
 The packet TOML schema preserves the old rich JSON behavior: outputs, structs, packet_types, builders, imports, Go package mappings, GDScript builders, arrays/maps, custom struct references, Go type overrides, and rich type strings such as `map<string,ShipState>` and `array<EventState>`.
 
+Packet-facing player lifecycle status lives on `StatePacket.player_lifecycle`, beside `players`. Do not put lifecycle status on `ShipState`: pending-respawn and eliminated players may not have active ship state.
+
 `shared/game_data.toml` contains constants only. Obsolete packet reference sections were removed when the packet TOML pipeline was adopted.
 
 The `tools/data_sync/` tool supports:
@@ -423,6 +425,8 @@ Prefer `ClientLogger` over raw `print()` for new client lifecycle, UI, networkin
 - Keep websocket/session/packet transport in `services/game-server/internal/networking`: websocket upgrade/read/write loops, packet dispatch, per-connection session fields, player activation/deactivation, snapshots, and errors.
 - Keep reusable simulation and gameplay state mutation in `services/game-server/internal/game`.
 - Keep match/mode policy decisions in `services/game-server/internal/game/rules`. Rules should receive plain snapshots/facts and return decisions/status; they should not import `game` or `rooms`.
+- Keep packet-facing player lifecycle status sourced from `Game.MatchDecision()` or the same game-owned projection seam. The client should consume `StatePacket.player_lifecycle`, not infer lifecycle from `StatePacket.players` or rendered ship presence.
+- Keep client spectate/view-cycle eligibility based on authoritative lifecycle status plus visual availability. Eligible targets should be `active`; `pending_respawn`, `eliminated`, and missing lifecycle status should not be treated as active targets.
 - Keep per-entity movement integration and advance-with-wrap behavior in `services/game-server/internal/game/motion`. `Game.Step()` should call the motion seam for individual entities while retaining map iteration, gates, deletion, spawning, collision, scoring, and lifecycle order.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is the wrap-aware server spatial layer for toroidal world behavior.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
@@ -464,6 +468,7 @@ For client runtime flow:
 
 - `client/scripts/ui/game_shell.gd`
 - `client/scripts/game.gd`
+- `client/scripts/spectate_targets.gd`
 - `client/scripts/networking/network_client.gd`
 - `client/scripts/networking/world_sync.gd`
 - `client/scripts/entities/player.gd`
