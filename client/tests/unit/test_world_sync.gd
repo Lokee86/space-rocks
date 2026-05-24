@@ -70,13 +70,13 @@ func test_local_player_draws_above_remote_players() -> void:
 func test_apply_state_creates_asteroid_nodes() -> void:
 	_apply_fixture_state()
 
-	assert_true(world_sync.asteroid_nodes.has(WorldStateFixture.ASTEROID_ID))
+	assert_true(_asteroid_nodes().has(WorldStateFixture.ASTEROID_ID))
 	assert_eq(
-		world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID].get_parent(),
+		_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].get_parent(),
 		asteroids_layer
 	)
 	assert_eq(
-		world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID].global_position,
+		_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].global_position,
 		Vector2(320.0, 340.0)
 	)
 
@@ -99,7 +99,7 @@ func test_apply_state_reuses_existing_entity_nodes() -> void:
 	_apply_fixture_state()
 	var local_node = world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID]
 	var remote_node = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID]
-	var asteroid_node = world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID]
+	var asteroid_node = _asteroid_nodes()[WorldStateFixture.ASTEROID_ID]
 	var bullet_node = _bullet_nodes()[WorldStateFixture.BULLET_ID]
 	var owner_child_count := game_owner.get_child_count()
 	var asteroid_child_count := asteroids_layer.get_child_count()
@@ -108,11 +108,11 @@ func test_apply_state_reuses_existing_entity_nodes() -> void:
 	_apply_state(_updated_state())
 
 	assert_eq(world_sync.player_nodes.size(), 2)
-	assert_eq(world_sync.asteroid_nodes.size(), 1)
+	assert_eq(_asteroid_nodes().size(), 1)
 	assert_eq(_bullet_nodes().size(), 1)
 	assert_eq(world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID], local_node)
 	assert_eq(world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID], remote_node)
-	assert_eq(world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID], asteroid_node)
+	assert_eq(_asteroid_nodes()[WorldStateFixture.ASTEROID_ID], asteroid_node)
 	assert_eq(_bullet_nodes()[WorldStateFixture.BULLET_ID], bullet_node)
 	assert_eq(game_owner.get_child_count(), owner_child_count)
 	assert_eq(asteroids_layer.get_child_count(), asteroid_child_count)
@@ -134,7 +134,7 @@ func test_apply_state_updates_existing_entity_targets() -> void:
 	)
 	assert_eq(world_sync.target_player_rotations[WorldStateFixture.REMOTE_PLAYER_ID], 1.75)
 	assert_eq(
-		world_sync.target_asteroid_positions[WorldStateFixture.ASTEROID_ID],
+		_asteroid_sync().get("target_asteroid_positions")[WorldStateFixture.ASTEROID_ID],
 		Vector2(360.0, 380.0)
 	)
 	assert_eq(
@@ -186,7 +186,7 @@ func test_interpolate_moves_existing_entities_toward_updated_state() -> void:
 	)
 	assert_eq(world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].rotation, 1.75)
 	assert_eq(
-		world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID].global_position,
+		_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].global_position,
 		Vector2(360.0, 380.0)
 	)
 	assert_eq(
@@ -212,13 +212,13 @@ func test_apply_state_removes_stale_remote_player_node() -> void:
 
 func test_apply_state_removes_stale_asteroid_node() -> void:
 	_apply_fixture_state()
-	var asteroid_node = world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID]
+	var asteroid_node = _asteroid_nodes()[WorldStateFixture.ASTEROID_ID]
 
 	_apply_state(_state_without_asteroid())
 
-	assert_false(world_sync.asteroid_nodes.has(WorldStateFixture.ASTEROID_ID))
-	assert_false(world_sync.initialized_asteroids.has(WorldStateFixture.ASTEROID_ID))
-	assert_false(world_sync.target_asteroid_positions.has(WorldStateFixture.ASTEROID_ID))
+	assert_false(_asteroid_nodes().has(WorldStateFixture.ASTEROID_ID))
+	assert_false(_asteroid_sync().get("initialized_asteroids").has(WorldStateFixture.ASTEROID_ID))
+	assert_false(_asteroid_sync().get("target_asteroid_positions").has(WorldStateFixture.ASTEROID_ID))
 	assert_true(asteroid_node.is_queued_for_deletion())
 
 
@@ -244,8 +244,10 @@ func test_apply_state_missing_asteroid_scale_warns_once_and_does_not_crash() -> 
 	_apply_state(state)
 	_apply_state(state)
 
-	assert_true(world_sync.asteroid_nodes.has(WorldStateFixture.ASTEROID_ID))
-	assert_true(world_sync.warned_missing_asteroid_scale.has(WorldStateFixture.ASTEROID_ID))
+	assert_true(_asteroid_nodes().has(WorldStateFixture.ASTEROID_ID))
+	assert_true(
+		_asteroid_sync().get("warned_missing_asteroid_scale").has(WorldStateFixture.ASTEROID_ID)
+	)
 
 
 func test_apply_state_applies_asteroid_packet_scale() -> void:
@@ -256,7 +258,7 @@ func test_apply_state_applies_asteroid_packet_scale() -> void:
 	_apply_state(state)
 
 	assert_eq(
-		world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID].scale,
+		_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].scale,
 		Vector2.ONE * 1.25
 	)
 
@@ -266,7 +268,7 @@ func test_apply_state_applies_asteroid_packet_scale() -> void:
 	_apply_state(state)
 
 	assert_eq(
-		world_sync.asteroid_nodes[WorldStateFixture.ASTEROID_ID].scale,
+		_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].scale,
 		Vector2.ONE * 1.75
 	)
 
@@ -277,6 +279,14 @@ func _apply_fixture_state() -> void:
 
 func _bullet_nodes() -> Dictionary:
 	return _bullet_sync().get("bullet_nodes")
+
+
+func _asteroid_nodes() -> Dictionary:
+	return _asteroid_sync().get("asteroid_nodes")
+
+
+func _asteroid_sync():
+	return world_sync.get("asteroid_sync")
 
 
 func _bullet_sync():

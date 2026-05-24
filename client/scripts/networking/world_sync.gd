@@ -5,14 +5,12 @@ signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const AsteroidSyncScript = preload("res://scripts/networking/asteroid_sync.gd")
-const AsteroidSyncState = preload("res://scripts/networking/asteroid_sync_state.gd")
 const BulletSyncScript = preload("res://scripts/networking/bullet_sync.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const PlayerSyncState = preload("res://scripts/networking/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
-const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
 const REMOTE_PLAYER_Z_INDEX := 30
@@ -36,15 +34,9 @@ var asteroids_layer: Node2D
 var asteroid_sync
 var bullet_sync
 var player_nodes := {}
-var asteroid_nodes := {}
 var initialized_players := {}
-var initialized_asteroids := {}
-var warned_missing_asteroid_scale := {}
 var target_player_positions := {}
 var target_player_rotations := {}
-var target_asteroid_positions := {}
-var asteroid_server_positions := {}
-var asteroid_visual_positions := {}
 var local_server_position := Vector2.ZERO
 var local_visual_position := Vector2.ZERO
 var has_local_visual_position := false
@@ -86,7 +78,7 @@ func apply_state(
 	current_self_id = self_id
 	_remove_missing_players(server_players, self_id)
 	bullet_sync.remove_missing(server_bullets)
-	_remove_missing_asteroids(server_asteroids)
+	asteroid_sync.remove_missing(server_asteroids)
 	_apply_players(self_id, server_players)
 	bullet_sync.apply(
 		server_bullets,
@@ -94,7 +86,11 @@ func apply_state(
 		local_visual_position,
 		local_server_position
 	)
-	_apply_asteroids(server_asteroids)
+	asteroid_sync.apply(
+		server_asteroids,
+		local_visual_position,
+		local_server_position
+	)
 
 
 func interpolate(delta: float) -> void:
@@ -112,16 +108,7 @@ func interpolate(delta: float) -> void:
 			remote_player_visual_positions[player_id] = player_node.position
 
 	bullet_sync.interpolate(weight)
-
-	for asteroid_id in asteroid_nodes.keys():
-		if !target_asteroid_positions.has(asteroid_id):
-			continue
-
-		var asteroid_node = asteroid_nodes[asteroid_id]
-		asteroid_node.global_position = asteroid_node.global_position.lerp(
-			target_asteroid_positions[asteroid_id],
-			weight
-		)
+	asteroid_sync.interpolate(weight)
 
 
 func _apply_players(self_id: String, server_players: Dictionary) -> void:
@@ -266,76 +253,6 @@ func _remove_player_node(self_id: String, player_id: String) -> void:
 	target_player_rotations.erase(player_id)
 	remote_player_visual_positions.erase(player_id)
 	remote_player_hues.erase(player_id)
-
-
-func _apply_asteroids(server_asteroids: Dictionary) -> void:
-	for asteroid_id in server_asteroids.keys():
-		var state: Dictionary = server_asteroids[asteroid_id]
-		var asteroid_node = _get_asteroid_node(asteroid_id)
-		var raw_server_position := AsteroidSyncState.server_position(state)
-		var visual_position: Vector2
-
-		if asteroid_server_positions.has(asteroid_id):
-			visual_position = asteroid_visual_positions[asteroid_id] + WorldWrapScript.shortest_delta(
-				asteroid_server_positions[asteroid_id],
-				raw_server_position
-			)
-			target_asteroid_positions[asteroid_id] = visual_position
-			asteroid_server_positions[asteroid_id] = raw_server_position
-			asteroid_visual_positions[asteroid_id] = visual_position
-		else:
-			# First-seen asteroid positions may intentionally be outside wrapped world bounds for offscreen spawns.
-			visual_position = local_visual_position + WorldWrapScript.shortest_delta(
-				local_server_position,
-				raw_server_position
-			)
-			target_asteroid_positions[asteroid_id] = visual_position
-			asteroid_server_positions[asteroid_id] = raw_server_position
-			asteroid_visual_positions[asteroid_id] = visual_position
-
-		_apply_asteroid_scale(asteroid_id, asteroid_node, state)
-
-		if !initialized_asteroids.has(asteroid_id):
-			initialized_asteroids[asteroid_id] = true
-			asteroid_node.global_position = visual_position
-			asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
-
-
-func _apply_asteroid_scale(asteroid_id: String, asteroid_node: Node2D, state: Dictionary) -> void:
-	if state.has(Packets.FIELD_SCALE):
-		asteroid_node.scale = Vector2.ONE * float(state[Packets.FIELD_SCALE])
-		return
-
-	if warned_missing_asteroid_scale.has(asteroid_id):
-		return
-
-	warned_missing_asteroid_scale[asteroid_id] = true
-	push_warning("Asteroid state missing scale for %s" % asteroid_id)
-
-
-func _get_asteroid_node(asteroid_id):
-	if asteroid_nodes.has(asteroid_id):
-		return asteroid_nodes[asteroid_id]
-
-	var asteroid_node = ASTEROID_SCENE.instantiate()
-	asteroids_layer.add_child(asteroid_node)
-	asteroid_nodes[asteroid_id] = asteroid_node
-
-	return asteroid_node
-
-
-func _remove_missing_asteroids(server_asteroids: Dictionary) -> void:
-	for asteroid_id in asteroid_nodes.keys():
-		if server_asteroids.has(asteroid_id):
-			continue
-
-		asteroid_nodes[asteroid_id].queue_free()
-		asteroid_nodes.erase(asteroid_id)
-		initialized_asteroids.erase(asteroid_id)
-		warned_missing_asteroid_scale.erase(asteroid_id)
-		target_asteroid_positions.erase(asteroid_id)
-		asteroid_server_positions.erase(asteroid_id)
-		asteroid_visual_positions.erase(asteroid_id)
 
 
 func get_remote_player_visual_positions() -> Dictionary:
