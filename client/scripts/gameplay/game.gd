@@ -9,6 +9,7 @@ const NetworkClientScript = preload("res://scripts/networking/network_client.gd"
 const Packets = preload("res://scripts/networking/packets.gd")
 const SpectateTargetsScript = preload("res://scripts/spectate_targets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
+const RoomState = preload("res://scripts/session/room_state.gd")
 const RESPAWN_RETRY_SECONDS := 0.25
 
 @onready var player: Player = $Player
@@ -201,7 +202,7 @@ func _store_room_state(data: Dictionary) -> void:
 
 
 func _is_room_in_game() -> bool:
-	return current_room_state == "InGame" || current_room_state == "in_game"
+	return RoomState.is_in_game(current_room_state)
 
 
 func _can_process_gameplay_packets() -> bool:
@@ -522,7 +523,7 @@ func _is_game_over() -> bool:
 
 
 func _is_room_game_over() -> bool:
-	return current_room_state.strip_edges().replace("_", "").to_lower() == "gameover"
+	return RoomState.is_game_over(current_room_state)
 
 
 func _has_spectate_targets() -> bool:

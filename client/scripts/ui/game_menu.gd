@@ -8,6 +8,8 @@ signal menu_requested
 signal resume_requested
 signal quit_requested
 
+const RoomState = preload("res://scripts/session/room_state.gd")
+
 @onready var primary_action_button: BaseButton = _find_button(["PrimaryActionButton", "ResumeButton", "LeftButton"])
 @onready var menu_button: BaseButton = _find_button(["MenuButton", "QuitButton"])
 
@@ -51,7 +53,7 @@ func set_menu_text(_text) -> void:
 
 func configure_for_state(session_mode: String, game_over: bool, room_state: String, has_spectate_targets := false) -> void:
 	var normalized_session_mode := _normalized_state(session_mode)
-	var room_game_over := _normalized_state(room_state) == "gameover"
+	var room_game_over := RoomState.is_game_over(room_state)
 
 	if normalized_session_mode == SESSION_MODE_MULTIPLAYER:
 		if game_over:

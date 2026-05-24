@@ -2,7 +2,7 @@ extends GutTest
 
 const EffectsScript := preload("res://scripts/effects.gd")
 const CameraFollowScript := preload("res://scripts/camera_follow.gd")
-const GameScript := preload("res://scripts/game.gd")
+const GameScript := preload("res://scripts/gameplay/game.gd")
 const HudControllerScript := preload("res://scripts/ui/hud_controller.gd")
 const HudScene := preload("res://scenes/ui/hud.tscn")
 const NetworkClientScript := preload("res://scripts/networking/network_client.gd")
