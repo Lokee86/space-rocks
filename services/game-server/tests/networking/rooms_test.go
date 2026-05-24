@@ -159,7 +159,6 @@ func TestWebSocketWithoutRoomIDDoesNotJoinOrSpawn(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	defaultRoom := manager.DefaultRoom()
 	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
@@ -170,10 +169,7 @@ func TestWebSocketWithoutRoomIDDoesNotJoinOrSpawn(t *testing.T) {
 		t.Fatalf("write session-only packet: %v", err)
 	}
 	time.Sleep(30 * time.Millisecond)
-	if count := defaultRoom.MemberCount(); count != 0 {
-		t.Fatalf("expected session-only websocket not to add default room member, got %d", count)
-	}
-	if count := manager.RoomCount(); count != 1 {
+	if count := manager.RoomCount(); count != 0 {
 		t.Fatalf("expected session-only websocket not to create rooms, got %d rooms", count)
 	}
 }

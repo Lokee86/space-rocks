@@ -40,7 +40,6 @@ func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *RoomManager {
 		rooms:        make(map[string]*Room),
 		cleanupDelay: cleanupDelay,
 	}
-	manager.GetOrCreate(DefaultRoomID)
 
 	return manager
 }
