@@ -227,7 +227,7 @@ func (room *Room) IsGameOver() bool {
 		return false
 	}
 
-	return room.Game.IsGameOver()
+	return room.Game.MatchDecision().IsOver
 }
 
 func (room *Room) MembersSnapshot() []RoomMember {
