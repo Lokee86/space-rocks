@@ -260,7 +260,8 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
 - Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred.
-- Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It owns wrap-aware spatial math for the toroidal world.
+- Use `services/game-server/internal/game/motion` for per-entity movement integration and advance-with-wrap behavior.
+- Use `services/game-server/internal/game/space` for new gameplay distance, direction, and wrap-aware spatial math for the toroidal world.
 - Add focused Go tests for server gameplay rules that can regress.
 - Add focused GUT tests for client packet, HUD, `world_sync`, and pure client logic regressions. Keep test-only helpers under `client/tests/`, not `client/scripts/`.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
@@ -298,6 +299,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 Server gameplay:
 
 - `services/game-server/internal/game/game.go`
+- `services/game-server/internal/game/motion/`
 - `services/game-server/internal/game/combat.go`
 - `services/game-server/internal/game/session.go`
 - `services/game-server/internal/game/spawning.go`

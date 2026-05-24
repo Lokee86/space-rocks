@@ -175,7 +175,7 @@ When `F3` is pressed:
 
 4. The server receives `PacketTypeToggleDebugFreezeWorld`.
 5. The server toggles `game.worldDevTools`.
-6. `Game.Step()` checks `worldDevTools` before asteroid spawning, asteroid stepping, bullet stepping, and collision passes.
+6. `Game.Step()` checks `worldDevTools` before asteroid spawning, asteroid advancing, bullet advancing, and collision passes.
 
 When `F4` is pressed:
 

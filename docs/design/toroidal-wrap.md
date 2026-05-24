@@ -54,7 +54,7 @@ The package owns:
 - `Direction`
 - `NormalizePosition`
 
-`Game.Step` centrally normalizes moving players, asteroids, and bullets after movement. This keeps entity methods simple and makes wrapping behavior easy to audit.
+`Game.Step` chooses the active world bounds with `space.DefaultBounds()`, but per-entity step-and-wrap behavior lives in `services/game-server/internal/game/motion`. `motion.AdvanceShip`, `motion.AdvanceAsteroid`, and `motion.AdvanceBullet` each step one entity and wrap it with `space.WrapPosition`. `Game.Step` still owns the entity map loops, world-devtool gates, camera updates, deletion/despawn checks, spawning, collisions, scoring, and lifecycle order.
 
 Server systems that rely on spatial relationships use the `space` package:
 

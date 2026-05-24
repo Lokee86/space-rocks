@@ -70,6 +70,7 @@ Core server packages:
 - `services/game-server/internal/networking`: websocket transport, packet dispatch, session registry, and outbound writes.
 - `services/game-server/internal/rooms`: room state, room membership, lifecycle orchestration, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
+- `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
@@ -87,7 +88,7 @@ Each `game.Game` owns its own simulation state:
 - camera views
 - pending events
 
-`Game.Start()` launches a simulation loop at `constants.ServerTickRate`. Each tick applies player input, moves entities, wraps moving entities into world bounds, handles cooldowns, spawns asteroids, removes expired/far objects, and resolves collisions.
+`Game.Start()` launches a simulation loop at `constants.ServerTickRate`. Each tick advances player sessions, advances moving entities through the motion seam, updates camera views, spawns asteroids, removes expired/far objects, and resolves collisions.
 
 The server currently owns:
 
@@ -102,6 +103,17 @@ The server currently owns:
 - lives, death, game-over, and respawn rules
 - safe initial spawn/respawn placement
 - state packet generation
+
+`Game.Step()` still owns state-map iteration, world-devtool gates, camera view updates, deletion/despawn loops, spawning calls, collision order, scoring, and lifecycle flow. Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`:
+
+```text
+Game.Step()
+  -> motion.AdvanceShip / AdvanceAsteroid / AdvanceBullet
+  -> motion.StepShip / StepAsteroid / StepBullet
+  -> space.WrapPosition through motion's bounds-aware helper
+```
+
+The motion package imports entity types and spatial helpers, but it does not import `internal/game`, mutate `game.state` maps, spawn entities, delete entities, award score, resolve collisions, or write packets. `entities` remains the home for entity state, pause/resume/input capability methods, collision bodies, and packet-facing state conversion.
 
 ### Spawn Planning
 
@@ -180,7 +192,7 @@ The seam should stay narrow. It is not an achievements system, stats system, API
 
 ### Toroidal World Wrap
 
-The server stores bounded wrapped world coordinates using `constants.WorldWidth` and `constants.WorldHeight`. `Game.Step()` centrally normalizes moving players, asteroids, and bullets after movement.
+The server stores bounded wrapped world coordinates using `constants.WorldWidth` and `constants.WorldHeight`. `Game.Step()` chooses the world bounds with `space.DefaultBounds()` and passes them to `motion.AdvanceShip`, `motion.AdvanceAsteroid`, and `motion.AdvanceBullet`. Those advance helpers step one entity and wrap its position with `space.WrapPosition`.
 
 Spatial rules flow through `services/game-server/internal/game/space`:
 

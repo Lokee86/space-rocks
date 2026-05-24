@@ -32,33 +32,68 @@ func (game *Game) handleBulletAsteroidCollisions() {
 				continue
 			}
 
-			damage := resolveDamage(DamageRequest{
-				TargetEntityID:   collision.AsteroidID,
-				TargetEntityType: EntityTypeAsteroid,
-				SourceEntityID:   collision.ProjectileID,
-				SourceEntityType: EntityTypeProjectile,
-				Amount:           1,
-				Type:             DamageTypeProjectile,
-				Flags: DamageFlags{
-					Lethal: true,
-				},
-			})
+			damageRequest := projectileAsteroidDamageRequest(collision)
+			damage := resolveDamage(damageRequest)
 			if !damage.Destroyed {
 				continue
 			}
 
-			hitBullets[bulletID] = true
-			hitAsteroids[asteroidID] = asteroid
-			scoreAwards = append(scoreAwards, NewAsteroidHitScoreAward(bullet.OwnerID, asteroid))
-			game.recordDomainEvent(gameEvent{
-				Type: gameEventBulletBlast,
-				X:    collision.ImpactPosition.X,
-				Y:    collision.ImpactPosition.Y,
-			})
+			game.recordProjectileAsteroidHit(
+				collision,
+				bulletID,
+				bullet,
+				asteroidID,
+				asteroid,
+				hitBullets,
+				hitAsteroids,
+				&scoreAwards,
+			)
 			break
 		}
 	}
 
+	game.applyProjectileAsteroidHitConsequences(hitBullets, hitAsteroids, scoreAwards)
+}
+
+func projectileAsteroidDamageRequest(collision ProjectileAsteroidCollision) DamageRequest {
+	return DamageRequest{
+		TargetEntityID:   collision.AsteroidID,
+		TargetEntityType: EntityTypeAsteroid,
+		SourceEntityID:   collision.ProjectileID,
+		SourceEntityType: EntityTypeProjectile,
+		Amount:           1,
+		Type:             DamageTypeProjectile,
+		Flags: DamageFlags{
+			Lethal: true,
+		},
+	}
+}
+
+func (game *Game) recordProjectileAsteroidHit(
+	collision ProjectileAsteroidCollision,
+	bulletID string,
+	bullet *entities.Bullet,
+	asteroidID string,
+	asteroid *entities.Asteroid,
+	hitBullets map[string]bool,
+	hitAsteroids map[string]*entities.Asteroid,
+	scoreAwards *[]ScoreAward,
+) {
+	hitBullets[bulletID] = true
+	hitAsteroids[asteroidID] = asteroid
+	*scoreAwards = append(*scoreAwards, NewAsteroidHitScoreAward(bullet.OwnerID, asteroid))
+	game.recordDomainEvent(gameEvent{
+		Type: gameEventBulletBlast,
+		X:    collision.ImpactPosition.X,
+		Y:    collision.ImpactPosition.Y,
+	})
+}
+
+func (game *Game) applyProjectileAsteroidHitConsequences(
+	hitBullets map[string]bool,
+	hitAsteroids map[string]*entities.Asteroid,
+	scoreAwards []ScoreAward,
+) {
 	for _, award := range scoreAwards {
 		game.awardScore(award)
 	}
@@ -99,17 +134,8 @@ func (game *Game) handleShipAsteroidCollisions() {
 				continue
 			}
 
-			damage := resolveDamage(DamageRequest{
-				TargetEntityID:   collision.PlayerID,
-				TargetEntityType: EntityTypePlayer,
-				SourceEntityID:   asteroidID,
-				SourceEntityType: EntityTypeAsteroid,
-				Amount:           1,
-				Type:             DamageTypeCollision,
-				Flags: DamageFlags{
-					Lethal: true,
-				},
-			})
+			damageRequest := playerAsteroidDamageRequest(collision, asteroidID)
+			damage := resolveDamage(damageRequest)
 			if !damage.Fatal || damage.TargetEntityType != EntityTypePlayer {
 				continue
 			}
@@ -120,43 +146,61 @@ func (game *Game) handleShipAsteroidCollisions() {
 	}
 
 	for playerID, player := range hitPlayers {
-		position := player.Position()
-		player.MarkPendingDespawn(constants.CollisionDespawnDelay)
-		lives := 0
-		respawnDelay := 0.0
-		if session, ok := game.playerSessions[playerID]; ok {
-			session.Score = player.Score
-			session.RecordDeath(player.DevTools)
-			player.Lives = session.Lives
-			lives = session.Lives
-			respawnDelay = session.RespawnCooldown
-		}
-		if lives <= 0 {
-			logging.Game.Info("player game over",
-				logging.FieldPlayerID, playerID,
-				"score", player.Score,
-				"x", position.X,
-				"y", position.Y,
-			)
-		} else {
-			logging.Game.Info("player died",
-				logging.FieldPlayerID, playerID,
-				"lives", lives,
-				"respawn_delay", respawnDelay,
-				"x", position.X,
-				"y", position.Y,
-			)
-		}
-		game.recordDomainEvent(gameEvent{
-			Type:         gameEventShipDeath,
-			PlayerID:     playerID,
-			Lives:        lives,
-			RespawnDelay: respawnDelay,
-			X:            position.X,
-			Y:            position.Y,
-		})
+		game.applyPlayerFatalAsteroidHit(playerID, player)
 	}
 
+}
+
+func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.Ship) {
+	position := player.Position()
+	player.MarkPendingDespawn(constants.CollisionDespawnDelay)
+	lives := 0
+	respawnDelay := 0.0
+	if session, ok := game.playerSessions[playerID]; ok {
+		session.Score = player.Score
+		session.RecordDeath(player.DevTools)
+		player.Lives = session.Lives
+		lives = session.Lives
+		respawnDelay = session.RespawnCooldown
+	}
+	if lives <= 0 {
+		logging.Game.Info("player game over",
+			logging.FieldPlayerID, playerID,
+			"score", player.Score,
+			"x", position.X,
+			"y", position.Y,
+		)
+	} else {
+		logging.Game.Info("player died",
+			logging.FieldPlayerID, playerID,
+			"lives", lives,
+			"respawn_delay", respawnDelay,
+			"x", position.X,
+			"y", position.Y,
+		)
+	}
+	game.recordDomainEvent(gameEvent{
+		Type:         gameEventShipDeath,
+		PlayerID:     playerID,
+		Lives:        lives,
+		RespawnDelay: respawnDelay,
+		X:            position.X,
+		Y:            position.Y,
+	})
+}
+
+func playerAsteroidDamageRequest(collision PlayerAsteroidCollision, asteroidID string) DamageRequest {
+	return DamageRequest{
+		TargetEntityID:   collision.PlayerID,
+		TargetEntityType: EntityTypePlayer,
+		SourceEntityID:   asteroidID,
+		SourceEntityType: EntityTypeAsteroid,
+		Amount:           1,
+		Type:             DamageTypeCollision,
+		Flags: DamageFlags{
+			Lethal: true,
+		},
+	}
 }
 
 func (game *Game) broadcastEvent(event EventState) {

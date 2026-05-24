@@ -118,7 +118,8 @@ Server behavior:
 
 - world bounds come from `constants.WorldWidth` and `constants.WorldHeight`
 - `services/game-server/internal/game/space` owns wrapped delta, distance, direction, and normalization
-- `Game.Step()` centrally wraps players, asteroids, and bullets after movement
+- `services/game-server/internal/game/motion` owns per-entity advance behavior for ships, asteroids, and bullets: movement integration plus bounds-aware wrapping through `space.WrapPosition`
+- `Game.Step()` still owns state-map iteration, world-devtool gates, camera view updates, deletion/despawn loops, spawning, collisions, scoring, and lifecycle order
 - spawning, visibility/despawn, respawn safety, and collision checks use wrap-aware spatial helpers
 
 Client behavior:
