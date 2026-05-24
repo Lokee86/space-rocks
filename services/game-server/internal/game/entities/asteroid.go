@@ -27,16 +27,6 @@ func (asteroid *Asteroid) State() AsteroidState {
 	}
 }
 
-func (asteroid *Asteroid) Step(delta float64) {
-	if asteroid.PendingDespawn {
-		asteroid.DespawnDelay -= delta
-		return
-	}
-
-	asteroid.X += asteroid.Velocity.X * delta
-	asteroid.Y += asteroid.Velocity.Y * delta
-}
-
 func (asteroid *Asteroid) Position() physics.Vector2 {
 	return physics.Vector2{X: asteroid.X, Y: asteroid.Y}
 }

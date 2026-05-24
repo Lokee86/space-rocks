@@ -233,15 +233,14 @@ func (game *Game) Step(delta float64) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	bounds := space.DefaultBounds()
+
 	for _, session := range game.playerSessions {
 		session.Step(delta)
 	}
 
 	for _, player := range game.state.Players {
-		motion.StepShip(player, delta)
-		wrapped := space.NormalizePosition(player.Position())
-		player.X = wrapped.X
-		player.Y = wrapped.Y
+		motion.AdvanceShip(player, delta, bounds)
 		if cameraView, ok := game.cameraViews[player.ID]; ok {
 			cameraView.SetPosition(player.Position())
 		}
@@ -277,10 +276,7 @@ func (game *Game) Step(delta float64) {
 
 	for id, asteroid := range game.state.Asteroids {
 		if game.worldDevTools.AsteroidsCanMove() {
-			motion.StepAsteroid(asteroid, delta)
-			wrapped := space.NormalizePosition(asteroid.Position())
-			asteroid.X = wrapped.X
-			asteroid.Y = wrapped.Y
+			motion.AdvanceAsteroid(asteroid, delta, bounds)
 		}
 		if asteroid.ReadyForRemoval() {
 			delete(game.state.Asteroids, id)
@@ -293,10 +289,7 @@ func (game *Game) Step(delta float64) {
 
 	for id, bullet := range game.state.Projectiles {
 		if game.worldDevTools.BulletsCanMove() {
-			motion.StepBullet(bullet, delta)
-			wrapped := space.NormalizePosition(bullet.Position())
-			bullet.X = wrapped.X
-			bullet.Y = wrapped.Y
+			motion.AdvanceBullet(bullet, delta, bounds)
 		}
 		if bullet.ReadyForRemoval() {
 			delete(game.state.Projectiles, id)

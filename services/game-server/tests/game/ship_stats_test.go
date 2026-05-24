@@ -8,6 +8,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -137,7 +138,7 @@ func TestShipMovementUsesShipStatsValues(t *testing.T) {
 		},
 	}
 
-	ship.ApplyInput(0.5)
+	motion.StepShip(&ship, 0.5)
 
 	expectedRotation := 1.5
 	expectedVelocity := physics.Vector2{

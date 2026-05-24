@@ -31,17 +31,6 @@ func (bullet *Bullet) State() BulletState {
 	}
 }
 
-func (bullet *Bullet) Step(delta float64) {
-	if bullet.PendingDespawn {
-		bullet.DespawnDelay -= delta
-		return
-	}
-
-	bullet.X += bullet.Velocity.X * delta
-	bullet.Y += bullet.Velocity.Y * delta
-	bullet.Life -= delta
-}
-
 func (bullet *Bullet) Position() physics.Vector2 {
 	return physics.Vector2{X: bullet.X, Y: bullet.Y}
 }

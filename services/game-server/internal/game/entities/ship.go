@@ -1,10 +1,6 @@
 package entities
 
-import (
-	"math"
-
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-)
+import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 
 func (ship *Ship) State() ShipState {
 	return ShipState{
@@ -53,39 +49,6 @@ func (ship *Ship) CanReceiveInput() bool {
 
 func (ship *Ship) CanMove() bool {
 	return !ship.IsPendingDespawn() && !ship.IsSuspended()
-}
-
-func (ship *Ship) ApplyInput(delta float64) {
-	if ship.PendingDespawn {
-		ship.DespawnDelay -= delta
-		return
-	}
-	if !ship.CanMove() {
-		ship.ClearInput()
-		return
-	}
-
-	ship.InvulnerabilityRemaining = max(0, ship.InvulnerabilityRemaining-delta)
-
-	ship.ShootCooldown = max(0, ship.ShootCooldown-delta)
-
-	rotationInput := axis(ship.Input.Left, ship.Input.Right)
-	thrustInput := axis(ship.Input.Back, ship.Input.Forward)
-
-	ship.Rotation += rotationInput * ship.Stats.RotationSpeed * delta
-
-	if thrustInput != 0 {
-		ship.Velocity.X += math.Sin(ship.Rotation) * ship.Stats.ThrustForce * thrustInput * delta
-		ship.Velocity.Y += -math.Cos(ship.Rotation) * ship.Stats.ThrustForce * thrustInput * delta
-	}
-
-	damping := math.Pow(ship.Stats.Damping, delta/(1.0/60.0))
-	ship.Velocity.X *= damping
-	ship.Velocity.Y *= damping
-	ship.Velocity = ship.Velocity.LimitLength(ship.Stats.MaxSpeed)
-
-	ship.X += ship.Velocity.X * delta
-	ship.Y += ship.Velocity.Y * delta
 }
 
 func (ship *Ship) CanActivelyShoot() bool {
@@ -153,16 +116,4 @@ func (ship *Ship) CollisionBody(catalog physics.CollisionShapeCatalog) (physics.
 		Rotation: ship.Rotation,
 		Shape:    shape,
 	}, true
-}
-
-func axis(negative bool, positive bool) float64 {
-	var value float64
-	if negative {
-		value -= 1
-	}
-	if positive {
-		value += 1
-	}
-
-	return max(-1, min(value, 1))
 }
