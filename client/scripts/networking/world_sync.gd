@@ -5,6 +5,7 @@ signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
+const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
@@ -135,7 +136,8 @@ func _apply_players(self_id: String, server_players: Dictionary) -> void:
 		if player_id == self_id:
 			visual_position = local_visual_position
 		else:
-			visual_position = local_visual_position + WorldWrapScript.shortest_delta(
+			visual_position = VisualSyncPositions.relative_to_local_visual(
+				local_visual_position,
 				local_server_position,
 				server_position
 			)
@@ -182,11 +184,7 @@ func _correct_remote_visual_copy_mismatch(
 
 
 func _is_world_copy_mismatch(current_position: Vector2, target_position: Vector2) -> bool:
-	var delta := target_position - current_position
-	return (
-		abs(delta.x) > Constants.WORLD_WIDTH * 0.5 ||
-		abs(delta.y) > Constants.WORLD_HEIGHT * 0.5
-	)
+	return VisualSyncPositions.is_world_copy_mismatch(current_position, target_position)
 
 
 func _get_player_node(self_id: String, player_id: String):
