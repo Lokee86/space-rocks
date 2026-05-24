@@ -11,10 +11,10 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/rules"
+	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 )
 
 type Game struct {
@@ -23,6 +23,7 @@ type Game struct {
 	stopSimulationOnce   sync.Once
 	nextID               int
 	spawner              *spawning.Spawner
+	scoringPolicy        scoring.Policy
 	asteroidSpawnElapsed float64
 	worldDevTools        devtools.WorldOptions
 	collisionShapes      physics.CollisionShapeCatalog
@@ -45,6 +46,7 @@ func New() *Game {
 		playerSessions:  make(map[string]*playerSession),
 		pendingEvents:   make(map[string][]EventState),
 		spawner:         spawning.New(),
+		scoringPolicy:   scoring.NewDefaultPolicy(),
 		state:           entities.NewGameState(),
 	}
 }
@@ -200,15 +202,11 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	}
 }
 
-func (game *Game) State(playerID string) []byte {
+func (game *Game) StatePacket(playerID string) StatePacket {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	response, err := packetcodec.Encode(game.statePacket(playerID))
-	if err != nil {
-		logging.Game.Error("state marshal failed", err, logging.FieldPlayerID, playerID)
-		return nil
-	}
+	response := game.statePacket(playerID)
 	game.pendingEvents[playerID] = nil
 
 	return response

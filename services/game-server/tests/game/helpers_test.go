@@ -1,7 +1,6 @@
 package gametests
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -46,17 +45,7 @@ func (scenario *scenario) step(delta float64) {
 func (scenario *scenario) state(playerID string) servergame.StatePacket {
 	scenario.t.Helper()
 
-	rawState := scenario.game.State(playerID)
-	if rawState == nil {
-		scenario.t.Fatalf("expected state packet for %q, got nil", playerID)
-	}
-
-	var packet servergame.StatePacket
-	if err := json.Unmarshal(rawState, &packet); err != nil {
-		scenario.t.Fatalf("decode state packet for %q: %v", playerID, err)
-	}
-
-	return packet
+	return scenario.game.StatePacket(playerID)
 }
 
 func (scenario *scenario) playerState(viewerID string, playerID string) entities.ShipState {

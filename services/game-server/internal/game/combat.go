@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
@@ -34,8 +35,8 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			}
 
 			damageRequest := projectileAsteroidDamageRequest(collision)
-			damage := resolveDamage(damageRequest)
-			if !damage.Destroyed {
+			damageResult := damage.Resolve(damageRequest)
+			if !damageResult.Destroyed {
 				continue
 			}
 
@@ -56,15 +57,15 @@ func (game *Game) handleBulletAsteroidCollisions() {
 	game.applyProjectileAsteroidHitConsequences(hitBullets, hitAsteroids, scoreAwards)
 }
 
-func projectileAsteroidDamageRequest(collision ProjectileAsteroidCollision) DamageRequest {
-	return DamageRequest{
+func projectileAsteroidDamageRequest(collision ProjectileAsteroidCollision) damage.DamageRequest {
+	return damage.DamageRequest{
 		TargetEntityID:   collision.AsteroidID,
-		TargetEntityType: EntityTypeAsteroid,
+		TargetEntityType: damage.EntityTypeAsteroid,
 		SourceEntityID:   collision.ProjectileID,
-		SourceEntityType: EntityTypeProjectile,
+		SourceEntityType: damage.EntityTypeProjectile,
 		Amount:           1,
-		Type:             DamageTypeProjectile,
-		Flags: DamageFlags{
+		Type:             damage.DamageTypeProjectile,
+		Flags: damage.DamageFlags{
 			Lethal: true,
 		},
 	}
@@ -82,7 +83,7 @@ func (game *Game) recordProjectileAsteroidHit(
 ) {
 	hitBullets[bulletID] = true
 	hitAsteroids[asteroidID] = asteroid
-	awards := scoring.NewDefaultPolicy().Evaluate(scoring.Event{
+	awards := game.scoringPolicy.Evaluate(scoring.Event{
 		Kind:         scoring.EventAsteroidDestroyed,
 		PlayerID:     bullet.OwnerID,
 		TargetID:     asteroid.ID,
@@ -142,8 +143,8 @@ func (game *Game) handleShipAsteroidCollisions() {
 			}
 
 			damageRequest := playerAsteroidDamageRequest(collision, asteroidID)
-			damage := resolveDamage(damageRequest)
-			if !damage.Fatal || damage.TargetEntityType != EntityTypePlayer {
+			damageResult := damage.Resolve(damageRequest)
+			if !damageResult.Fatal || damageResult.TargetEntityType != damage.EntityTypePlayer {
 				continue
 			}
 
@@ -196,15 +197,15 @@ func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.
 	})
 }
 
-func playerAsteroidDamageRequest(collision PlayerAsteroidCollision, asteroidID string) DamageRequest {
-	return DamageRequest{
+func playerAsteroidDamageRequest(collision PlayerAsteroidCollision, asteroidID string) damage.DamageRequest {
+	return damage.DamageRequest{
 		TargetEntityID:   collision.PlayerID,
-		TargetEntityType: EntityTypePlayer,
+		TargetEntityType: damage.EntityTypePlayer,
 		SourceEntityID:   asteroidID,
-		SourceEntityType: EntityTypeAsteroid,
+		SourceEntityType: damage.EntityTypeAsteroid,
 		Amount:           1,
-		Type:             DamageTypeCollision,
-		Flags: DamageFlags{
+		Type:             damage.DamageTypeCollision,
+		Flags: damage.DamageFlags{
 			Lethal: true,
 		},
 	}

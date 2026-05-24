@@ -1,4 +1,4 @@
-package game
+package damage
 
 type EntityType string
 
@@ -46,7 +46,7 @@ type DamageResult struct {
 	Reason           string
 }
 
-func resolveDamage(req DamageRequest) DamageResult {
+func Resolve(req DamageRequest) DamageResult {
 	result := DamageResult{
 		TargetEntityID:   req.TargetEntityID,
 		TargetEntityType: req.TargetEntityType,

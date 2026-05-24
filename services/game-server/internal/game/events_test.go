@@ -1,9 +1,6 @@
 package game
 
-import (
-	"encoding/json"
-	"testing"
-)
+import "testing"
 
 func TestEventStateForDomainEventConvertsBulletBlast(t *testing.T) {
 	event := eventStateForDomainEvent(gameEvent{
@@ -114,7 +111,7 @@ func TestStateDrainsDomainEventPacketEvents(t *testing.T) {
 		Y:    34.75,
 	})
 
-	packet := decodeStatePacket(t, game.State(playerID))
+	packet := game.StatePacket(playerID)
 	if len(packet.Events) != 1 {
 		t.Fatalf("expected first state packet to include 1 event, got %d", len(packet.Events))
 	}
@@ -122,19 +119,8 @@ func TestStateDrainsDomainEventPacketEvents(t *testing.T) {
 		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, packet.Events[0].Type)
 	}
 
-	flushed := decodeStatePacket(t, game.State(playerID))
+	flushed := game.StatePacket(playerID)
 	if len(flushed.Events) != 0 {
 		t.Fatalf("expected later state packet to include 0 events, got %d", len(flushed.Events))
 	}
-}
-
-func decodeStatePacket(t *testing.T, raw []byte) StatePacket {
-	t.Helper()
-
-	var packet StatePacket
-	if err := json.Unmarshal(raw, &packet); err != nil {
-		t.Fatalf("decode state packet: %v", err)
-	}
-
-	return packet
 }
