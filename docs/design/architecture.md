@@ -67,7 +67,8 @@ services/game-server/cmd/game-server/main.go
 
 Core server packages:
 
-- `services/game-server/internal/networking`: websocket handler and room manager.
+- `services/game-server/internal/networking`: websocket transport, packet dispatch, session registry, and outbound writes.
+- `services/game-server/internal/rooms`: room state, room membership, lifecycle orchestration, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
@@ -125,9 +126,10 @@ Room/domain ownership lives in `services/game-server/internal/rooms`. That packa
 - `RoomMember`
 - room state and error-code constants
 - max room capacity and room-code/default-room helpers
-- pure join, leave, ready, start-validation, return-to-lobby, and cleanup decisions
+- create, join, leave, ready, start-game, single-player startup, return-to-lobby, game-over transition, and cleanup decisions
+- ownership of each room's `*game.Game` lifecycle, while simulation rules stay in `internal/game`
 
-`services/game-server/internal/networking` owns websocket/session/packet transport. It upgrades `/ws`, reads generated packets, calls room-domain methods, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
+`services/game-server/internal/networking` owns websocket/session/packet transport. It upgrades `/ws`, reads generated packets, calls room-domain methods, attaches or clears websocket session player IDs, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
 
 The websocket connection itself is session-only. Room membership happens through packets:
 
@@ -143,6 +145,7 @@ Important lifecycle rules:
 - connection does not imply room membership
 - room membership does not imply an active game player
 - active ships/game players are created only when `StartGameRequest` succeeds
+- websocket session activation/deactivation stays in networking because it mutates per-connection session fields
 - `/ws?room_id=...` no longer creates or joins rooms
 - empty rooms schedule cleanup after members/active players leave
 

@@ -173,6 +173,14 @@ func (room *Room) MarkGameOver() *RoomDomainError {
 	return nil
 }
 
+func (room *Room) MarkGameOverIfComplete() bool {
+	if room == nil || room.State != RoomStateInGame || !room.IsGameOver() {
+		return false
+	}
+
+	return room.MarkGameOver() == nil
+}
+
 func (room *Room) ResetToLobby(memberID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()

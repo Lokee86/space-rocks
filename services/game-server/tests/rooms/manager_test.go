@@ -1,8 +1,10 @@
 package roomstests
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
@@ -117,6 +119,32 @@ func TestRoomManagerCreateSinglePlayerRoom(t *testing.T) {
 	}
 }
 
+func TestRoomManagerCreateStartedSinglePlayerRoomCreatesInGameRoom(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, roomErr := manager.CreateStartedSinglePlayerRoom("session-1")
+	if roomErr != nil {
+		t.Fatalf("create started single-player room: %v", roomErr)
+	}
+
+	if room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
+	}
+	if room.Game == nil {
+		t.Fatal("expected started single-player room to create a game")
+	}
+	if room.IsJoinable() {
+		t.Fatal("expected started single-player room not to be joinable")
+	}
+	if count := room.MemberCount(); count != 1 {
+		t.Fatalf("expected single-player room member count 1, got %d", count)
+	}
+	if !room.HasMember("session-1") {
+		t.Fatal("expected requesting session to be the room member")
+	}
+}
+
 func TestRoomManagerCreateSinglePlayerRoomRejectsJoinRoom(t *testing.T) {
 	manager := rooms.NewRoomManager()
 	defer manager.StopAll()
@@ -141,6 +169,46 @@ func TestRoomManagerCreateSinglePlayerRoomRejectsJoinRoom(t *testing.T) {
 	}
 	if count := room.MemberCount(); count != 1 {
 		t.Fatalf("expected single-player room member count to remain 1, got %d", count)
+	}
+}
+
+func TestRoomManagerReturnRoomToLobbyResetsGameAndReadiness(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	room.AddMemberID("session-1")
+	room.AddMemberID("session-2")
+	room.SetMemberReady("session-1", true)
+	room.SetMemberReady("session-2", true)
+	oldGame := game.New()
+	room.Game = oldGame
+	room.State = rooms.RoomStateGameOver
+
+	returnedRoom, roomErr := manager.ReturnRoomToLobby(room.ID, "session-1")
+	if roomErr != nil {
+		t.Fatalf("return room to lobby: %v", roomErr)
+	}
+	if returnedRoom != room {
+		t.Fatal("expected returned room to match lobby room")
+	}
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, room.State)
+	}
+	if room.Game != nil {
+		t.Fatal("expected return to lobby to clear game")
+	}
+	if !gameStopped(t, oldGame) {
+		t.Fatal("expected return to lobby to stop old game")
+	}
+
+	for _, member := range room.MembersSnapshot() {
+		if member.Ready {
+			t.Fatalf("expected member %q ready state to reset", member.SessionID)
+		}
 	}
 }
 
@@ -301,6 +369,93 @@ func TestRoomManagerLeaveRoomRemovesMember(t *testing.T) {
 	}
 }
 
+func TestRoomManagerLeaveMemberRemovesMemberAndReportsBroadcast(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	room.AddMemberID("session-1")
+	room.AddMemberID("session-2")
+
+	result, roomErr := manager.LeaveMember(room.ID, "session-1", "")
+	if roomErr != nil {
+		t.Fatalf("leave member: %v", roomErr)
+	}
+	if result.Room != room {
+		t.Fatal("expected leave member result room to match lobby room")
+	}
+	if result.MemberID != "session-1" {
+		t.Fatalf("expected member id %q, got %q", "session-1", result.MemberID)
+	}
+	if result.RemainingMembers != 1 {
+		t.Fatalf("expected remaining members 1, got %d", result.RemainingMembers)
+	}
+	if result.PlayerRemoved {
+		t.Fatal("expected no player to be removed")
+	}
+	if result.CleanupScheduled {
+		t.Fatal("expected cleanup not to be scheduled while room still has a member")
+	}
+	if !result.ShouldBroadcastSnapshot {
+		t.Fatal("expected leave member result to request snapshot broadcast")
+	}
+	if room.HasMember("session-1") {
+		t.Fatal("expected leaving member to be removed")
+	}
+	if !room.HasMember("session-2") {
+		t.Fatal("expected remaining member to stay in room")
+	}
+	if room.CleanupTimer != nil {
+		t.Fatal("expected cleanup timer not to be scheduled")
+	}
+}
+
+func TestRoomManagerLeaveMemberRemovesPlayerAndSchedulesCleanupWhenEmpty(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	room.AddMemberID("session-1")
+	room.Game = game.New()
+	playerID := room.Game.AddPlayer()
+	room.ActivePlayers = 1
+
+	result, roomErr := manager.LeaveMember(room.ID, "session-1", playerID)
+	if roomErr != nil {
+		t.Fatalf("leave member: %v", roomErr)
+	}
+	if room.HasMember("session-1") {
+		t.Fatal("expected leaving member to be removed")
+	}
+	if gameTracksPlayer(t, room.Game, playerID) {
+		t.Fatal("expected leaving player to be removed from game")
+	}
+	if !result.PlayerRemoved {
+		t.Fatal("expected leave member result to report player removal")
+	}
+	if result.ActivePlayers != 0 {
+		t.Fatalf("expected active players 0, got %d", result.ActivePlayers)
+	}
+	if result.RemainingMembers != 0 {
+		t.Fatalf("expected remaining members 0, got %d", result.RemainingMembers)
+	}
+	if result.ShouldBroadcastSnapshot {
+		t.Fatal("expected empty room not to request snapshot broadcast")
+	}
+	if !result.CleanupScheduled {
+		t.Fatal("expected empty room cleanup to be scheduled")
+	}
+	if room.CleanupTimer == nil {
+		t.Fatal("expected cleanup timer to be scheduled")
+	}
+}
+
 func TestRoomManagerSetReadyUpdatesLobbyMember(t *testing.T) {
 	manager := rooms.NewRoomManager()
 	defer manager.StopAll()
@@ -368,4 +523,116 @@ func TestRoomManagerSetReadyRejectsNonLobbyRoom(t *testing.T) {
 	if roomErr.Code != rooms.RoomErrorInvalidRoomState {
 		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomErr.Code)
 	}
+}
+
+func TestRoomManagerStartRoomGameRejectsMissingRoom(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	startedRoom, roomErr := manager.StartRoomGame("MISSING", "session-1")
+	if roomErr == nil {
+		t.Fatal("expected room_not_found error")
+	}
+	if startedRoom != nil {
+		t.Fatal("expected no started room")
+	}
+	if roomErr.Code != rooms.RoomErrorRoomNotFound {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorRoomNotFound, roomErr.Code)
+	}
+}
+
+func TestRoomManagerStartRoomGameRejectsNonMember(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	room.AddMemberID("session-1")
+	room.SetMemberReady("session-1", true)
+
+	startedRoom, roomErr := manager.StartRoomGame(room.ID, "missing")
+	if roomErr == nil {
+		t.Fatal("expected not_in_room error")
+	}
+	if startedRoom != nil {
+		t.Fatal("expected no started room")
+	}
+	if roomErr.Code != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomErr.Code)
+	}
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected room state to remain %q, got %q", rooms.RoomStateLobby, room.State)
+	}
+	if room.Game != nil {
+		t.Fatal("expected rejected start not to create a game")
+	}
+}
+
+func TestRoomManagerStartRoomGameRejectsNotReadyMembers(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	room.AddMemberID("session-1")
+	room.AddMemberID("session-2")
+	room.SetMemberReady("session-1", true)
+
+	startedRoom, roomErr := manager.StartRoomGame(room.ID, "session-1")
+	if roomErr == nil {
+		t.Fatal("expected not_ready error")
+	}
+	if startedRoom != nil {
+		t.Fatal("expected no started room")
+	}
+	if roomErr.Code != rooms.RoomErrorNotReady {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotReady, roomErr.Code)
+	}
+	if room.State != rooms.RoomStateLobby {
+		t.Fatalf("expected room state to remain %q, got %q", rooms.RoomStateLobby, room.State)
+	}
+	if room.Game != nil {
+		t.Fatal("expected rejected start not to create a game")
+	}
+}
+
+func TestRoomManagerStartRoomGameTransitionsLobbyToInGame(t *testing.T) {
+	manager := rooms.NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	room.AddMemberID("session-1")
+	room.AddMemberID("session-2")
+	room.SetMemberReady("session-1", true)
+	room.SetMemberReady("session-2", true)
+
+	startedRoom, roomErr := manager.StartRoomGame(room.ID, "session-1")
+	if roomErr != nil {
+		t.Fatalf("start room game: %v", roomErr)
+	}
+	if startedRoom != room {
+		t.Fatal("expected started room to match lobby room")
+	}
+	if room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
+	}
+	if room.Game == nil {
+		t.Fatal("expected started room to create a game")
+	}
+}
+
+func gameTracksPlayer(t *testing.T, gameInstance *game.Game, playerID string) bool {
+	t.Helper()
+
+	playerSessions := exportRoomTestValue(
+		reflect.ValueOf(gameInstance).Elem().FieldByName("playerSessions"),
+	)
+	return playerSessions.MapIndex(reflect.ValueOf(playerID)).IsValid()
 }

@@ -155,6 +155,7 @@ Current areas:
 - `services/game-server/tests/game/`
 - `services/game-server/tests/networking/`
 - `services/game-server/tests/physics/`
+- `services/game-server/tests/rooms/`
 - `services/game-server/tests/space/`
 
 Do not add new `*_test.go` files beside production code under `services/game-server/internal/`.
@@ -414,8 +415,8 @@ Prefer `ClientLogger` over raw `print()` for new client lifecycle, UI, networkin
 
 - Keep authoritative gameplay rules on the server.
 - Keep rendering, local audio/effects, UI, and interpolation in the Godot client.
-- Keep room/domain ownership in `services/game-server/internal/rooms`.
-- Keep websocket/session/packet transport in `services/game-server/internal/networking`.
+- Keep room/domain lifecycle ownership in `services/game-server/internal/rooms`: create/join/leave, readiness, start-game, single-player startup, return-to-lobby, game-over transition, game ownership, and cleanup policy.
+- Keep websocket/session/packet transport in `services/game-server/internal/networking`: websocket upgrade/read/write loops, packet dispatch, per-connection session fields, player activation/deactivation, snapshots, and errors.
 - Keep game rules in `services/game-server/internal/game`.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is the wrap-aware server spatial layer for toroidal world behavior.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.

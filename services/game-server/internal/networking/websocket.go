@@ -59,7 +59,7 @@ func newWebSocketSession(conn *websocket.Conn, rooms *rooms.RoomManager) *webSoc
 
 func handleConnection(session *webSocketSession, remoteAddr string) {
 	defer session.conn.Close()
-	defer session.leaveCurrentRoom(false)
+	defer session.leaveDisconnectedRoom()
 
 	roomID := session.currentRoomID
 	playerID := session.currentPlayerID
@@ -202,7 +202,7 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
 }
 
 func (session *webSocketSession) handleLeaveRoomRequest() {
-	session.leaveCurrentRoom(true)
+	session.leaveRequestedRoom()
 }
 
 func (session *webSocketSession) handleSetReadyRequest(ready bool) {
@@ -226,25 +226,15 @@ func (session *webSocketSession) handleStartGameRequest() {
 		return
 	}
 
-	if roomErr := session.room.ValidateStart(session.currentMemberID); roomErr != nil {
+	room, roomErr := session.rooms.StartRoomGame(session.currentRoomID, session.currentMemberID)
+	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
 	}
 
-	if roomErr := session.room.MarkStarting(); roomErr != nil {
-		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
-		return
-	}
-	if session.room.Game == nil {
-		session.room.Game = game.New()
-	}
-	session.room.Game.Start()
-	activateRoomPlayers(session.room)
-	if roomErr := session.room.MarkInGame(); roomErr != nil {
-		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
-		return
-	}
-	BroadcastRoomSnapshot(session.room)
+	session.room = room
+	activateRoomPlayers(room)
+	BroadcastRoomSnapshot(room)
 }
 
 func (session *webSocketSession) handleStartSinglePlayerRequest() {
@@ -260,10 +250,10 @@ func (session *webSocketSession) handleStartSinglePlayerRequest() {
 		return
 	}
 
-	room, err := session.rooms.CreateSinglePlayerRoom(session.sessionID)
-	if err != nil {
-		logging.Rooms.Error("create single-player room failed", err, "session_id", session.sessionID)
-		session.EnqueueRoomError(rooms.RoomErrorInvalidRoomState, "Could not create room.")
+	room, roomErr := session.rooms.CreateStartedSinglePlayerRoom(session.sessionID)
+	if roomErr != nil {
+		logging.Rooms.Error("create single-player room failed", roomErr, "session_id", session.sessionID)
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
 	}
 
@@ -273,10 +263,7 @@ func (session *webSocketSession) handleStartSinglePlayerRequest() {
 	session.currentMemberID = session.sessionID
 	session.currentPlayerID = ""
 
-	room.Game = game.New()
-	room.Game.Start()
 	activateRoomPlayers(room)
-	room.State = rooms.RoomStateInGame
 	BroadcastRoomSnapshot(room)
 }
 
@@ -286,20 +273,20 @@ func (session *webSocketSession) handleReturnToLobbyRequest() {
 		return
 	}
 
-	if roomErr := session.room.ResetToLobby(session.currentMemberID); roomErr != nil {
+	room, roomErr := session.rooms.ReturnRoomToLobby(session.currentRoomID, session.currentMemberID)
+	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
 	}
 
-	deactivateRoomPlayers(session.room)
-	BroadcastRoomSnapshot(session.room)
+	session.room = room
+	deactivateRoomPlayers(room)
+	BroadcastRoomSnapshot(room)
 }
 
-func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
+func (session *webSocketSession) leaveRequestedRoom() {
 	if session.currentRoomID == "" || session.room == nil {
-		if reportNotInRoom {
-			session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
-		}
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
@@ -308,26 +295,57 @@ func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
 	memberID := session.currentMemberID
 	playerID := session.currentPlayerID
 
+	leaveResult, roomErr := session.rooms.LeaveMember(roomID, memberID, playerID)
+	if roomErr == nil {
+		room = leaveResult.Room
+		logging.Rooms.Debug("room member left",
+			logging.FieldRoomID, roomID,
+			"member_id", memberID,
+			"session_id", session.sessionID,
+			"remaining_members", leaveResult.RemainingMembers,
+		)
+	}
 	if memberID != "" {
-		if leaveResult, roomErr := session.rooms.LeaveRoom(roomID, memberID); roomErr == nil {
-			room = leaveResult.Room
-			logging.Rooms.Debug("room member left",
-				logging.FieldRoomID, roomID,
-				"member_id", memberID,
-				"session_id", session.sessionID,
-				"remaining_members", leaveResult.RemainingMembers,
-			)
-		}
 		detachRoomSession(room, memberID)
 	}
-	if playerID != "" && room.Game != nil {
-		room.Game.RemovePlayer(playerID)
-		if room.ActivePlayers > 0 {
-			room.ActivePlayers--
-		}
-		session.rooms.ScheduleCleanupIfEmpty(roomID)
-	} else {
-		session.rooms.ScheduleCleanupIfEmpty(roomID)
+
+	session.room = nil
+	session.currentRoomID = ""
+	session.currentMemberID = ""
+	session.currentPlayerID = ""
+
+	if room.MemberCount() > 0 {
+		logging.Rooms.Debug("broadcasting room snapshot after member left",
+			logging.FieldRoomID, roomID,
+			"member_id", memberID,
+			"remaining_members", room.MemberCount(),
+		)
+		BroadcastRoomSnapshot(room)
+	}
+}
+
+func (session *webSocketSession) leaveDisconnectedRoom() {
+	if session.currentRoomID == "" || session.room == nil {
+		return
+	}
+
+	room := session.room
+	roomID := session.currentRoomID
+	memberID := session.currentMemberID
+	playerID := session.currentPlayerID
+
+	leaveResult, roomErr := session.rooms.LeaveMember(roomID, memberID, playerID)
+	if roomErr == nil {
+		room = leaveResult.Room
+		logging.Rooms.Debug("room member left",
+			logging.FieldRoomID, roomID,
+			"member_id", memberID,
+			"session_id", session.sessionID,
+			"remaining_members", leaveResult.RemainingMembers,
+		)
+	}
+	if memberID != "" {
+		detachRoomSession(room, memberID)
 	}
 
 	session.room = nil
@@ -346,6 +364,7 @@ func (session *webSocketSession) leaveCurrentRoom(reportNotInRoom bool) {
 }
 
 func activateRoomPlayers(room *rooms.Room) {
+	// Websocket sessions keep the per-connection player ID, so activation stays in networking.
 	memberSnapshot := room.MembersSnapshot()
 	memberIDs := make([]string, 0, len(memberSnapshot))
 	for _, member := range memberSnapshot {
@@ -426,19 +445,7 @@ func writeServerMessages(
 }
 
 func checkRoomGameOver(room *rooms.Room) bool {
-	if room == nil || room.State != rooms.RoomStateInGame {
-		return false
-	}
-	if !room.IsGameOver() {
-		return false
-	}
-
-	if roomErr := room.MarkGameOver(); roomErr != nil {
-		logging.Rooms.Warn("room game over transition failed",
-			logging.FieldRoomID, room.ID,
-			"error_code", roomErr.Code,
-			"message", roomErr.Message,
-		)
+	if !room.MarkGameOverIfComplete() {
 		return false
 	}
 

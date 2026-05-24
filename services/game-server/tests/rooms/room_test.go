@@ -237,6 +237,52 @@ func TestRoomMarkGameOverRejectsInvalidState(t *testing.T) {
 	}
 }
 
+func TestRoomMarkGameOverIfCompleteSkipsIncompleteRooms(t *testing.T) {
+	var missingRoom *rooms.Room
+	if missingRoom.MarkGameOverIfComplete() {
+		t.Fatal("expected nil room not to transition")
+	}
+
+	lobbyRoom := rooms.NewRoom("TEST", rooms.RoomStateLobby, game.New())
+	if lobbyRoom.MarkGameOverIfComplete() {
+		t.Fatal("expected lobby room not to transition")
+	}
+	if lobbyRoom.State != rooms.RoomStateLobby {
+		t.Fatalf("expected lobby room state to remain %q, got %q", rooms.RoomStateLobby, lobbyRoom.State)
+	}
+
+	inGameWithoutGame := rooms.NewRoom("TEST", rooms.RoomStateInGame, nil)
+	if inGameWithoutGame.MarkGameOverIfComplete() {
+		t.Fatal("expected in-game room without game not to transition")
+	}
+	if inGameWithoutGame.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state to remain %q, got %q", rooms.RoomStateInGame, inGameWithoutGame.State)
+	}
+
+	activeGame := game.New()
+	activeGame.AddPlayer()
+	activeRoom := rooms.NewRoom("TEST", rooms.RoomStateInGame, activeGame)
+	if activeRoom.MarkGameOverIfComplete() {
+		t.Fatal("expected active game not to transition")
+	}
+	if activeRoom.State != rooms.RoomStateInGame {
+		t.Fatalf("expected active room state to remain %q, got %q", rooms.RoomStateInGame, activeRoom.State)
+	}
+}
+
+func TestRoomMarkGameOverIfCompleteTransitionsFinishedGame(t *testing.T) {
+	finishedGame := game.New()
+	markGameOver(t, finishedGame)
+	room := rooms.NewRoom("TEST", rooms.RoomStateInGame, finishedGame)
+
+	if !room.MarkGameOverIfComplete() {
+		t.Fatal("expected finished game to transition")
+	}
+	if room.State != rooms.RoomStateGameOver {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateGameOver, room.State)
+	}
+}
+
 func TestRoomResetToLobbyClearsGameAndReadyStates(t *testing.T) {
 	oldGame := game.New()
 	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, oldGame)

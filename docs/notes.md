@@ -69,6 +69,7 @@ Current subareas:
 - `game`
 - `networking`
 - `physics`
+- `rooms`
 - `space`
 
 Future server tests should stay under `services/game-server/tests/<area>/`, not beside production packages under `services/game-server/internal/`.
@@ -224,8 +225,8 @@ Important lifecycle boundaries:
 
 Server package ownership:
 
-- `services/game-server/internal/rooms` owns `Room`, `RoomManager`, `RoomMember`, room states, room error constants, room capacity, room code/default-room helpers, and pure join/leave/ready/start/reset/cleanup decisions.
-- `services/game-server/internal/networking` owns websocket/session/outbound queue transport, packet handlers, and sending/broadcasting `RoomSnapshot`/`RoomError`.
+- `services/game-server/internal/rooms` owns `Room`, `RoomManager`, `RoomMember`, room states, room error constants, room capacity, room code/default-room helpers, room `*game.Game` ownership, and room lifecycle decisions for create/join/leave/ready/start, single-player startup, return-to-lobby, game-over transition, and cleanup.
+- `services/game-server/internal/networking` owns websocket/session/outbound queue transport, packet handlers, per-connection player activation/deactivation, and sending/broadcasting `RoomSnapshot`/`RoomError`.
 - `services/game-server/internal/game` owns simulation/gameplay rules.
 
 Client lifecycle notes:
