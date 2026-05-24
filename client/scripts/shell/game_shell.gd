@@ -7,20 +7,11 @@ const MULTIPLAYER_LOBBY_SCENE := preload("res://scenes/ui/dialogs/multiplayer_lo
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const RoomState = preload("res://scripts/session/room_state.gd")
+const RoomErrors = preload("res://scripts/session/room_errors.gd")
 const BACKGROUND_DRIFT := Vector2(18.0, 8.0)
 const FOREGROUND_DRIFT := Vector2(42.0, 18.0)
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
-const ROOM_ERROR_MESSAGES := {
-	"room_not_found": "Room was not found.",
-	"room_closed": "Room is closed.",
-	"room_in_game": "Room is already in game.",
-	"room_full": "Room is full.",
-	"already_in_room": "Already in a room.",
-	"not_in_room": "Not in a room.",
-	"invalid_room_code": "Room code is invalid.",
-	"not_ready": "Not all players are ready.",
-	"invalid_room_state": "Room is not available.",
-}
 
 enum SessionMode {
 	SINGLE_PLAYER,
@@ -429,12 +420,7 @@ func _show_multiplayer_dialog_error(message: String) -> bool:
 
 
 func _room_error_message(data: Dictionary) -> String:
-	var message := str(data.get(Packets.FIELD_MESSAGE, "")).strip_edges()
-	if message != "":
-		return message
-
-	var error_code := str(data.get(Packets.FIELD_ERROR_CODE, "")).strip_edges()
-	return str(ROOM_ERROR_MESSAGES.get(error_code, "Room request failed."))
+	return RoomErrors.message_for_packet(data)
 
 
 func _set_lobby_status(text: String) -> void:
@@ -563,7 +549,7 @@ func _all_connected_room_members_ready() -> bool:
 
 
 func _room_state_is_lobby() -> bool:
-	return current_room_state == "Lobby" || current_room_state == "lobby"
+	return RoomState.is_lobby(current_room_state)
 
 
 func _session_mode_name() -> String:
@@ -574,7 +560,7 @@ func _session_mode_name() -> String:
 
 
 func _room_state_is_in_game() -> bool:
-	return current_room_state == "InGame" || current_room_state == "in_game"
+	return RoomState.is_in_game(current_room_state)
 
 
 func _enter_multiplayer_gameplay_if_ready() -> void:
@@ -608,7 +594,7 @@ func _return_to_multiplayer_lobby_if_ready(previous_room_state: String) -> void:
 		return
 	if !_room_state_is_lobby():
 		return
-	if previous_room_state != "GameOver" && previous_room_state != "game_over" && previous_room_state != "gameover":
+	if !RoomState.is_game_over(previous_room_state):
 		return
 
 	ClientLogger.shell_debug("room returned to Lobby; showing multiplayer lobby")
