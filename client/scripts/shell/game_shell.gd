@@ -494,7 +494,7 @@ func _update_lobby_control_state() -> void:
 		multiplayer_lobby.set_local_ready(local_ready)
 	if multiplayer_lobby.has_method("set_start_enabled"):
 		multiplayer_lobby.set_start_enabled(
-			_room_state_is_lobby() && local_ready && _all_connected_room_members_ready()
+			_room_state_is_lobby() && local_ready && RoomSnapshot.all_connected_members_ready(room_members)
 		)
 
 
@@ -503,21 +503,6 @@ func _local_member_ready() -> bool:
 		return false
 
 	return bool(room_ready_states.get(local_room_member_id, false))
-
-
-func _all_connected_room_members_ready() -> bool:
-	if room_members.is_empty():
-		return false
-
-	for member in room_members:
-		if !(member is Dictionary):
-			return false
-		if member.has(Packets.FIELD_CONNECTED) && !bool(member.get(Packets.FIELD_CONNECTED, true)):
-			continue
-		if !bool(member.get(Packets.FIELD_READY, false)):
-			return false
-
-	return true
 
 
 func _room_state_is_lobby() -> bool:

@@ -10,6 +10,7 @@ const Packets = preload("res://scripts/networking/packets.gd")
 const SpectateTargetsScript = preload("res://scripts/spectate_targets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
+const PlayerLifecycle = preload("res://scripts/gameplay/player_lifecycle.gd")
 const RESPAWN_RETRY_SECONDS := 0.25
 
 @onready var player: Player = $Player
@@ -122,7 +123,7 @@ func _apply_state(data: Dictionary) -> void:
 
 	self_id = data[Packets.FIELD_SELF_ID]
 	var server_players: Dictionary = data[Packets.FIELD_PLAYERS]
-	player_lifecycle = _player_lifecycle_from_state(data)
+	player_lifecycle = PlayerLifecycle.from_state(data)
 	var server_bullets: Dictionary = data.get(Packets.FIELD_BULLETS, {})
 	var server_asteroids: Dictionary = data.get(Packets.FIELD_ASTEROIDS, {})
 	var server_events: Array = []
@@ -149,17 +150,6 @@ func _apply_state(data: Dictionary) -> void:
 		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
 		if hud_controller.is_dead && awaiting_respawn_confirmation:
 			_set_alive_state()
-
-
-func _player_lifecycle_from_state(data: Dictionary) -> Dictionary:
-	var lifecycle_data = data.get(Packets.FIELD_PLAYER_LIFECYCLE, {})
-	if !(lifecycle_data is Dictionary):
-		return {}
-
-	var lifecycle := {}
-	for player_id in lifecycle_data.keys():
-		lifecycle[str(player_id)] = str(lifecycle_data[player_id])
-	return lifecycle
 
 
 func _on_network_connected() -> void:

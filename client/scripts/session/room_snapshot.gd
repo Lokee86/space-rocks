@@ -30,3 +30,18 @@ static func ready_states(members: Array) -> Dictionary:
 		states[member_id] = bool(member.get(Packets.FIELD_READY, false))
 
 	return states
+
+
+static func all_connected_members_ready(members: Array) -> bool:
+	if members.is_empty():
+		return false
+
+	for member in members:
+		if !(member is Dictionary):
+			return false
+		if member.has(Packets.FIELD_CONNECTED) && !bool(member.get(Packets.FIELD_CONNECTED, true)):
+			continue
+		if !bool(member.get(Packets.FIELD_READY, false)):
+			return false
+
+	return true
