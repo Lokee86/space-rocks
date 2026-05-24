@@ -282,9 +282,9 @@ The seam is general entity damage, not player-only health. Requests carry target
 
 ### Collision Detection Seam
 
-Server combat now routes current bullet/asteroid and player/asteroid pair overlap checks through `services/game-server/internal/game/collisions.go`.
+Server combat now routes current projectile/asteroid and player/asteroid pair overlap checks through `services/game-server/internal/game/collisions.go`. Bullets are still the only projectile implementation.
 
-The seam returns concrete facts: `BulletAsteroidCollision` and `PlayerAsteroidCollision`. It preserves current event positions by using the source entity position: bullet position for bullet blasts, player position for ship deaths. It intentionally does not use `physics.Collision.ContactPoint` for those event positions.
+The seam returns concrete facts: `ProjectileAsteroidCollision` and `PlayerAsteroidCollision`. It preserves current event positions by using the source entity position: bullet position for bullet blasts, player position for ship deaths. It intentionally does not use `physics.Collision.ContactPoint` for those event positions.
 
 The helpers are unexported and side-effect-free. They do not despawn entities, build or resolve damage requests, award score, spawn fragments, decrement lives, set respawn cooldowns, record events, or touch packets/client code. Combat still owns the deferred ordering for scoring, despawn, fragments, death/session updates, game-over logging, and domain event recording.
 

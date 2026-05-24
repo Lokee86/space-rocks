@@ -94,7 +94,7 @@ The server currently owns:
 - player movement simulation from input
 - bullet spawning
 - asteroid spawn scheduling, planning, application, and visibility removal
-- bullet/asteroid collision
+- projectile/asteroid collision facts for current bullet hits
 - ship/asteroid collision
 - entity damage/destruction resolution
 - asteroid splitting
@@ -132,10 +132,10 @@ This is still a partial seam. Bullet spawning remains a projectile/weapon concer
 
 `services/game-server/internal/game/collisions.go` defines a narrow collision detection seam for the destructive collision pairs currently used by combat. It reports concrete collision facts:
 
-- `BulletAsteroidCollision`
+- `ProjectileAsteroidCollision`
 - `PlayerAsteroidCollision`
 
-The helpers answer only which pair collided and which impact position preserves the current event behavior. Bullet/asteroid impact position remains the bullet position. Player/asteroid impact position remains the player position. The seam intentionally does not use `physics.Collision.ContactPoint` for these event positions.
+The helpers answer only which pair collided and which impact position preserves the current event behavior. Current projectile/asteroid impact position remains the bullet position because bullets are the only projectile implementation. Player/asteroid impact position remains the player position. The seam intentionally does not use `physics.Collision.ContactPoint` for these event positions.
 
 `services/game-server/internal/game/damage.go` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat consumes collision facts, builds a `DamageRequest`, calls `resolveDamage`, and then existing systems consume the `DamageResult`.
 
@@ -146,7 +146,7 @@ bullet hits asteroid -> projectile damage resolves Destroyed -> existing asteroi
 ship hits asteroid -> collision damage resolves Fatal for player -> existing death, lives, respawn cooldown, logging, and ship death flow
 ```
 
-The collision helpers only answer whether a bullet/asteroid or player/asteroid pair overlapped in the current wrapped world, plus the preserved impact position. They do not mutate entities, build damage requests, resolve damage, award score, spawn fragments, decrement lives, set respawn cooldowns, emit events, log, or write packets.
+The collision helpers only answer whether a projectile/asteroid or player/asteroid pair overlapped in the current wrapped world, plus the preserved impact position. The projectile helper still accepts `*entities.Bullet` because bullets are the current projectile entity. They do not mutate entities, build damage requests, resolve damage, award score, spawn fragments, decrement lives, set respawn cooldowns, emit events, log, or write packets.
 
 The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
 
@@ -179,7 +179,7 @@ Spatial rules flow through `services/game-server/internal/game/space`:
 - spawning aim uses wrapped direction
 - visibility/despawn uses wrapped delta
 - respawn safety uses wrapped distance
-- ship/asteroid and bullet/asteroid collision helpers place temporary asteroid bodies in wrapped-local space before collision checks
+- ship/asteroid and projectile/asteroid collision helpers place temporary asteroid bodies in wrapped-local space before collision checks
 
 The client renders continuous visual coordinates. `world_sync.gd` tracks `local_server_position` and `local_visual_position`; remote players, asteroids, bullets, and server-driven effects render relative to the local player with shortest wrapped deltas. The camera and background follow the local player node, so they inherit the continuous visual position.
 

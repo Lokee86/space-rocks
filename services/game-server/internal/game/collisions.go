@@ -6,8 +6,8 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
 
-type BulletAsteroidCollision struct {
-	BulletID       string
+type ProjectileAsteroidCollision struct {
+	ProjectileID   string
 	AsteroidID     string
 	ImpactPosition physics.Vector2
 }
@@ -18,29 +18,29 @@ type PlayerAsteroidCollision struct {
 	ImpactPosition physics.Vector2
 }
 
-func detectBulletAsteroidCollision(
+func detectProjectileAsteroidCollision(
 	bullet *entities.Bullet,
 	asteroid *entities.Asteroid,
 	catalog physics.CollisionShapeCatalog,
-) (BulletAsteroidCollision, bool) {
+) (ProjectileAsteroidCollision, bool) {
 	bulletBody, ok := bullet.CollisionBody(catalog)
 	if !ok {
-		return BulletAsteroidCollision{}, false
+		return ProjectileAsteroidCollision{}, false
 	}
 
 	asteroidBody, ok := asteroid.CollisionBody(catalog)
 	if !ok {
-		return BulletAsteroidCollision{}, false
+		return ProjectileAsteroidCollision{}, false
 	}
 	delta := space.Delta(bullet.Position(), asteroid.Position())
 	asteroidBody.Position = bullet.Position().Add(delta)
 
 	if _, ok := physics.DetectCollision(bulletBody, asteroidBody); !ok {
-		return BulletAsteroidCollision{}, false
+		return ProjectileAsteroidCollision{}, false
 	}
 
-	return BulletAsteroidCollision{
-		BulletID:       bullet.ID,
+	return ProjectileAsteroidCollision{
+		ProjectileID:   bullet.ID,
 		AsteroidID:     asteroid.ID,
 		ImpactPosition: bullet.Position(),
 	}, true

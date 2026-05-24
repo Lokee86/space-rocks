@@ -27,15 +27,15 @@ func (game *Game) handleBulletAsteroidCollisions() {
 				continue
 			}
 
-			collision, ok := detectBulletAsteroidCollision(bullet, asteroid, game.collisionShapes)
+			collision, ok := detectProjectileAsteroidCollision(bullet, asteroid, game.collisionShapes)
 			if !ok {
 				continue
 			}
 
 			damage := resolveDamage(DamageRequest{
-				TargetEntityID:   asteroidID,
+				TargetEntityID:   collision.AsteroidID,
 				TargetEntityType: EntityTypeAsteroid,
-				SourceEntityID:   bulletID,
+				SourceEntityID:   collision.ProjectileID,
 				SourceEntityType: EntityTypeProjectile,
 				Amount:           1,
 				Type:             DamageTypeProjectile,
