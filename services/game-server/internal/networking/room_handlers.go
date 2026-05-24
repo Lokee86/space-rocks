@@ -1,0 +1,130 @@
+package networking
+
+import (
+	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/server/internal/rooms"
+)
+
+func (session *webSocketSession) handleCreateRoomRequest() {
+	if session.currentRoomID != "" {
+		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
+		return
+	}
+
+	room, err := session.rooms.CreateLobbyRoom()
+	if err != nil {
+		logging.Rooms.Error("create lobby room failed", err, "session_id", session.sessionID)
+		session.EnqueueRoomError(rooms.RoomErrorInvalidRoomState, "Could not create room.")
+		return
+	}
+
+	addSessionMember(room, session.sessionID, session)
+	session.room = room
+	session.currentRoomID = room.ID
+	session.currentMemberID = session.sessionID
+	session.currentPlayerID = ""
+	session.EnqueueRoomSnapshot(room)
+}
+
+func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
+	if session.currentRoomID != "" {
+		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
+		return
+	}
+
+	room, roomErr := session.rooms.JoinRoom(session.sessionID, roomCode)
+	if roomErr != nil {
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+		return
+	}
+
+	attachRoomSession(room, session.sessionID, session)
+	session.room = room
+	session.currentRoomID = room.ID
+	session.currentMemberID = session.sessionID
+	session.currentPlayerID = ""
+	BroadcastRoomSnapshot(room)
+}
+
+func (session *webSocketSession) handleLeaveRoomRequest() {
+	session.leaveRequestedRoom()
+}
+
+func (session *webSocketSession) handleSetReadyRequest(ready bool) {
+	if session.currentRoomID == "" || session.currentMemberID == "" {
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
+		return
+	}
+
+	room, roomErr := session.rooms.SetReady(session.currentRoomID, session.currentMemberID, ready)
+	if roomErr != nil {
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+		return
+	}
+
+	BroadcastRoomSnapshot(room)
+}
+
+func (session *webSocketSession) handleStartGameRequest() {
+	if session.room == nil || session.currentMemberID == "" {
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
+		return
+	}
+
+	room, roomErr := session.rooms.StartRoomGame(session.currentRoomID, session.currentMemberID)
+	if roomErr != nil {
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+		return
+	}
+
+	session.room = room
+	activateRoomPlayers(room)
+	BroadcastRoomSnapshot(room)
+}
+
+func (session *webSocketSession) handleStartSinglePlayerRequest() {
+	logging.Network.Debug("StartSinglePlayerRequest received",
+		logging.FieldRoomID, session.currentRoomID,
+		logging.FieldPlayerID, session.currentPlayerID,
+		"session_id", session.sessionID,
+		"current_room_id", session.currentRoomID,
+	)
+
+	if session.currentRoomID != "" {
+		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
+		return
+	}
+
+	room, roomErr := session.rooms.CreateStartedSinglePlayerRoom(session.sessionID)
+	if roomErr != nil {
+		logging.Rooms.Error("create single-player room failed", roomErr, "session_id", session.sessionID)
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+		return
+	}
+
+	attachRoomSession(room, session.sessionID, session)
+	session.room = room
+	session.currentRoomID = room.ID
+	session.currentMemberID = session.sessionID
+	session.currentPlayerID = ""
+
+	activateRoomPlayers(room)
+	BroadcastRoomSnapshot(room)
+}
+
+func (session *webSocketSession) handleReturnToLobbyRequest() {
+	if session.room == nil || session.currentMemberID == "" {
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
+		return
+	}
+
+	room, roomErr := session.rooms.ReturnRoomToLobby(session.currentRoomID, session.currentMemberID)
+	if roomErr != nil {
+		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+		return
+	}
+
+	session.room = room
+	deactivateRoomPlayers(room)
+	BroadcastRoomSnapshot(room)
+}
