@@ -74,8 +74,8 @@ func send_leave_room_request() -> void:
 	send_packet(Packets.leave_room_request_packet())
 
 
-func send_set_ready_request(ready: bool) -> void:
-	send_packet(Packets.set_ready_request_packet(ready))
+func send_set_ready_request(is_ready: bool) -> void:
+	send_packet(Packets.set_ready_request_packet(is_ready))
 
 
 func send_start_game_request() -> void:

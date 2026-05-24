@@ -106,5 +106,5 @@ func edge_position_from_direction(direction: Vector2, screen_size: Vector2, marg
 	if abs(direction.y) > 0.001:
 		scale_y = half.y / abs(direction.y)
 
-	var scale: float = min(scale_x, scale_y)
-	return center + direction * scale
+	var indicator_scale: float = min(scale_x, scale_y)
+	return center + direction * indicator_scale

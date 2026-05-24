@@ -28,11 +28,11 @@ func hide_indicator() -> void:
 
 
 func set_indicator_hue(hue_shift: float) -> void:
-	var material := _ensure_unique_indicator_hue_material()
-	if material == null:
+	var indicator_material := _ensure_unique_indicator_hue_material()
+	if indicator_material == null:
 		return
 
-	material.set_shader_parameter("hue_shift", fposmod(hue_shift, 1.0))
+	indicator_material.set_shader_parameter("hue_shift", fposmod(hue_shift, 1.0))
 
 
 func _ensure_unique_indicator_hue_material() -> ShaderMaterial:

@@ -142,8 +142,8 @@ func _member_connected(member) -> bool:
 	return true
 
 
-func _member_ready_text(is_ready: bool, is_connected: bool) -> String:
-	if !is_connected:
+func _member_ready_text(is_ready: bool, member_connected: bool) -> String:
+	if !member_connected:
 		return "Joining"
 	if is_ready:
 		return "Ready"

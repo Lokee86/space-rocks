@@ -75,8 +75,8 @@ func set_lives(lives: int) -> void:
 	lives_label.text = "%d x " % lives
 
 
-func set_room_id(room_id: String) -> void:
-	self.room_id = room_id.strip_edges()
+func set_room_id(new_room_id: String) -> void:
+	self.room_id = new_room_id.strip_edges()
 	_update_room_id_label()
 
 

@@ -18,8 +18,8 @@ static func shortest_delta(from: Vector2, to: Vector2) -> Vector2:
 	)
 
 
-static func visual_position_relative_to(reference: Vector2, target: Vector2) -> Vector2:
-	return reference + shortest_delta(reference, target)
+static func visual_position_relative_to(reference_position: Vector2, target: Vector2) -> Vector2:
+	return reference_position + shortest_delta(reference_position, target)
 
 
 static func _wrap_coordinate(value: float, size: float) -> float:
