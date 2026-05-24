@@ -110,20 +110,23 @@ The server currently owns:
 - `SpawnEntityType`
 - `SpawnReason`
 - `AsteroidSpawnPlan`
+- `PlayerSpawnPlan`
 
 The vocabulary is intentionally generic, while plans and application stay entity-specific. There is no universal optional-field spawn request/plan object.
 
 Current implemented seam:
 
 ```text
-Game.Step/combat decides when asteroid spawn is needed
-  -> asteroid-specific planner selects spawn facts
-  -> asteroid-specific apply helper mutates game state
+Game.Step/combat/session decides when spawn is needed
+  -> entity-specific planner selects spawn facts
+  -> entity-specific apply/lifecycle code mutates game state
 ```
 
 Timed asteroid scheduling still belongs to `Game.Step()`, and `spawnAsteroidBatch()` still owns the timed batch count. `planTimedAsteroidSpawn()` selects the same offscreen wrapped position, aim, speed, size, and variant facts as before. `planAsteroidFragmentSpawns()` selects the same fragment facts for asteroid splits. `applyAsteroidSpawn()` owns asteroid ID allocation and `game.state.Asteroids` mutation.
 
-This is a partial seam. Player initial spawn and respawn still use the existing session/safe-spawn functions, and bullet spawning remains a projectile/weapon concern in `spawnBullet()`. Do not add enemies, powerups, waves, spawn packets, or client behavior through this seam until those systems exist.
+Player initial spawn and respawn planning now use `PlayerSpawnPlan`. `planInitialPlayerSpawn()` preserves the existing `playerIndex`-based preferred position plus safe-spawn fallback. `planPlayerRespawn()` receives the already-gated `*playerSession` and preserves the existing `safeRespawnPosition()` behavior. Player lifecycle still owns session lookup, `CanRespawn()` gating, lives, death, respawn cooldowns, ship creation, camera view attachment, and game-over/session state.
+
+This is still a partial seam. Bullet spawning remains a projectile/weapon concern in `spawnBullet()`. Do not add enemies, powerups, waves, spawn packets, or client behavior through this seam until those systems exist.
 
 ### Entity Damage Resolution
 

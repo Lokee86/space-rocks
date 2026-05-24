@@ -91,7 +91,8 @@ func (game *Game) respawnPlayer(playerID string) {
 		return
 	}
 
-	spawnPosition := game.safeRespawnPosition(session)
+	spawnPlan := game.planPlayerRespawn(session)
+	spawnPosition := spawnPlan.Position
 	player := session.NewShip(spawnPosition)
 	game.state.Players[playerID] = player
 	game.cameraViews[playerID] = &entities.CameraView{
@@ -107,9 +108,14 @@ func (game *Game) respawnPlayer(playerID string) {
 	)
 }
 
-func (game *Game) initialSpawnPosition(playerIndex int, playerID string) physics.Vector2 {
+func (game *Game) planInitialPlayerSpawn(playerIndex int, playerID string) PlayerSpawnPlan {
 	shapeID := entities.ResolveShipStats(entities.DefaultShipTypeID).CollisionShapeID
-	return game.safePlayerSpawnPosition(preferredInitialSpawnPosition(playerIndex), playerID, shapeID)
+	return PlayerSpawnPlan{
+		EntityType: SpawnEntityTypePlayer,
+		Reason:     SpawnReasonInitialPlayer,
+		PlayerID:   playerID,
+		Position:   game.safePlayerSpawnPosition(preferredInitialSpawnPosition(playerIndex), playerID, shapeID),
+	}
 }
 
 func preferredInitialSpawnPosition(playerIndex int) physics.Vector2 {
@@ -121,6 +127,15 @@ func preferredInitialSpawnPosition(playerIndex int) physics.Vector2 {
 
 func (game *Game) safeRespawnPosition(session *playerSession) physics.Vector2 {
 	return game.safePlayerSpawnPosition(session.SpawnPosition, session.ID, session.Stats.CollisionShapeID)
+}
+
+func (game *Game) planPlayerRespawn(session *playerSession) PlayerSpawnPlan {
+	return PlayerSpawnPlan{
+		EntityType: SpawnEntityTypePlayer,
+		Reason:     SpawnReasonPlayerRespawn,
+		PlayerID:   session.ID,
+		Position:   game.safeRespawnPosition(session),
+	}
 }
 
 func (game *Game) safePlayerSpawnPosition(origin physics.Vector2, ignorePlayerID string, collisionShapeID string) physics.Vector2 {

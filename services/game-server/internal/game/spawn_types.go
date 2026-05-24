@@ -26,3 +26,10 @@ type AsteroidSpawnPlan struct {
 	Size       int
 	Variant    int
 }
+
+type PlayerSpawnPlan struct {
+	EntityType SpawnEntityType
+	Reason     SpawnReason
+	PlayerID   string
+	Position   physics.Vector2
+}

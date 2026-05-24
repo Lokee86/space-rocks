@@ -83,7 +83,8 @@ func (game *Game) AddPlayer() string {
 	game.nextID++
 
 	playerID := fmt.Sprintf("player-%d", game.nextID)
-	spawnPosition := game.initialSpawnPosition(playerIndex, playerID)
+	spawnPlan := game.planInitialPlayerSpawn(playerIndex, playerID)
+	spawnPosition := spawnPlan.Position
 	session := newPlayerSession(playerID, spawnPosition)
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session

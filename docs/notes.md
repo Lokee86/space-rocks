@@ -258,17 +258,19 @@ Respawn logic is server controlled. Players start with shared constant lives. De
 
 Initial spawning has been adjusted to reuse safe spawn logic while staying a separate concern so future initial-spawn-specific rules can be added.
 
-### Asteroid Spawn Planning Seam
+### Spawn Planning Seam
 
-Asteroid spawning now has a partial ownership seam in `services/game-server/internal/game`:
+Spawning now has a partial ownership seam in `services/game-server/internal/game`:
 
-- `spawn_types.go` defines generic spawn vocabulary plus `AsteroidSpawnPlan`.
+- `spawn_types.go` defines generic spawn vocabulary plus `AsteroidSpawnPlan` and `PlayerSpawnPlan`.
 - `spawning.go` keeps timed asteroid orchestration in `spawnAsteroid()` and fragment orchestration in `spawnAsteroidFragments()`.
 - `planTimedAsteroidSpawn()` chooses timed asteroid spawn facts.
 - `planAsteroidFragmentSpawns()` chooses fragment spawn facts.
 - `applyAsteroidSpawn()` allocates asteroid IDs and mutates `game.state.Asteroids`.
+- `planInitialPlayerSpawn()` chooses the player initial spawn position while preserving `playerIndex` behavior and safe-spawn fallback.
+- `planPlayerRespawn()` chooses the player respawn position from the already-gated `*playerSession`.
 
-Current behavior is intended to remain unchanged. `Game.Step()` still owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, combat still decides when fragments are needed, player initial/respawn placement still lives in session safe-spawn code, and bullet spawning is still separate projectile logic.
+Current behavior is intended to remain unchanged. `Game.Step()` still owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, combat still decides when fragments are needed, and player lifecycle still owns session lookup, lives, death, respawn cooldowns, ship creation, camera attachment, and game-over/session state. Bullet spawning is still separate projectile logic.
 
 ### Entity Damage Resolution
 
