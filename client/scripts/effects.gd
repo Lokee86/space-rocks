@@ -5,6 +5,7 @@ const Constants = preload("res://scripts/constants/constants.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const EFFECT_Z_INDEX := 40
+const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"
 
 var owner_node: Node2D
 var game_over_sound: AudioStreamPlayer
@@ -34,13 +35,8 @@ func play_game_over_sound_after_delay() -> void:
 		return
 
 	var token := game_over_sound_token
-	var effects_ref: WeakRef = weakref(self)
-	owner_node.get_tree().create_timer(Constants.GAME_OVER_SOUND_DELAY).timeout.connect(func() -> void:
-		var effects := effects_ref.get_ref() as Effects
-		if effects == null:
-			return
-		if token == effects.game_over_sound_token:
-			effects._play_game_over_sound()
+	owner_node.get_tree().create_timer(Constants.GAME_OVER_SOUND_DELAY).timeout.connect(
+		_on_game_over_sound_delay_timeout.bind(token)
 	)
 
 
@@ -56,14 +52,8 @@ func spawn_bullet_blast(event_position: Vector2) -> void:
 		blast_node.queue_free()
 		return
 
-	var free_blast := func() -> void:
-		if is_instance_valid(blast_node):
-			blast_node.queue_free()
-
-	sprite.animation_finished.connect(func() -> void:
-		sprite.visible = false
-	)
-	sound.finished.connect(free_blast)
+	sprite.animation_finished.connect(_hide_effect_sprite.bind(sprite))
+	sound.finished.connect(_queue_free_effect_node.bind(blast_node))
 
 	sprite.play("bullet_blast")
 	sound.play()
@@ -71,7 +61,9 @@ func spawn_bullet_blast(event_position: Vector2) -> void:
 	var sound_length := 1.0
 	if sound.stream != null:
 		sound_length = max(sound.stream.get_length(), sound_length)
-	owner_node.get_tree().create_timer(sound_length + 0.25).timeout.connect(free_blast)
+	owner_node.get_tree().create_timer(sound_length + 0.25).timeout.connect(
+		_queue_free_effect_node.bind(blast_node)
+	)
 
 
 func spawn_ship_death(event_position: Vector2) -> void:
@@ -86,18 +78,8 @@ func spawn_ship_death(event_position: Vector2) -> void:
 		death_node.queue_free()
 		return
 
-	var death_finished := false
-	var free_death := func() -> void:
-		if death_finished:
-			return
-		death_finished = true
-		if is_instance_valid(death_node):
-			death_node.queue_free()
-
-	sprite.animation_finished.connect(func() -> void:
-		sprite.visible = false
-	)
-	sound.finished.connect(free_death)
+	sprite.animation_finished.connect(_hide_effect_sprite.bind(sprite))
+	sound.finished.connect(_queue_free_effect_node_once.bind(death_node))
 
 	sprite.frame = 0
 	sprite.frame_progress = 0.0
@@ -108,10 +90,36 @@ func spawn_ship_death(event_position: Vector2) -> void:
 	if sound.stream != null:
 		sound_length = sound.stream.get_length()
 	if sound_length > 0:
-		owner_node.get_tree().create_timer(sound_length + 0.05).timeout.connect(free_death)
+		owner_node.get_tree().create_timer(sound_length + 0.05).timeout.connect(
+			_queue_free_effect_node_once.bind(death_node)
+		)
 
 
 func _play_game_over_sound() -> void:
 	if is_instance_valid(game_over_sound) && !game_over_sound_played:
 		game_over_sound_played = true
 		game_over_sound.play()
+
+
+func _hide_effect_sprite(sprite: AnimatedSprite2D) -> void:
+	if is_instance_valid(sprite):
+		sprite.visible = false
+
+
+func _queue_free_effect_node(effect_node: Node) -> void:
+	if is_instance_valid(effect_node):
+		effect_node.queue_free()
+
+
+func _queue_free_effect_node_once(effect_node: Node) -> void:
+	if !is_instance_valid(effect_node):
+		return
+	if effect_node.get_meta(EFFECT_CLEANUP_STARTED_META, false):
+		return
+	effect_node.set_meta(EFFECT_CLEANUP_STARTED_META, true)
+	effect_node.queue_free()
+
+
+func _on_game_over_sound_delay_timeout(token: int) -> void:
+	if token == game_over_sound_token:
+		_play_game_over_sound()
