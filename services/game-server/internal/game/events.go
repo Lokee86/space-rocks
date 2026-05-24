@@ -1,34 +1,20 @@
 package game
 
-type gameEventType string
+import "github.com/Lokee86/space-rocks/server/internal/game/events"
 
-const (
-	gameEventBulletBlast gameEventType = "bullet_blast"
-	gameEventShipDeath   gameEventType = "ship_death"
-)
-
-type gameEvent struct {
-	Type         gameEventType
-	PlayerID     string
-	Lives        int
-	RespawnDelay float64
-	X            float64
-	Y            float64
-}
-
-func (game *Game) recordDomainEvent(event gameEvent) {
+func (game *Game) recordDomainEvent(event events.Event) {
 	game.broadcastEvent(eventStateForDomainEvent(event))
 }
 
-func eventStateForDomainEvent(event gameEvent) EventState {
+func eventStateForDomainEvent(event events.Event) EventState {
 	switch event.Type {
-	case gameEventBulletBlast:
+	case events.EventBulletBlast:
 		return EventState{
 			Type: PacketTypeBulletBlast,
 			X:    event.X,
 			Y:    event.Y,
 		}
-	case gameEventShipDeath:
+	case events.EventShipDeath:
 		return EventState{
 			Type:         PacketTypeShipDeath,
 			PlayerID:     event.PlayerID,
@@ -39,5 +25,11 @@ func eventStateForDomainEvent(event gameEvent) EventState {
 		}
 	default:
 		return EventState{}
+	}
+}
+
+func (game *Game) broadcastEvent(event EventState) {
+	for playerID := range game.state.Players {
+		game.pendingPresentationEvents[playerID] = append(game.pendingPresentationEvents[playerID], event)
 	}
 }

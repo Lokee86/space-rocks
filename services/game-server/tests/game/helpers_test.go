@@ -234,7 +234,7 @@ func (scenario *scenario) asteroidSpawnElapsed() float64 {
 func (scenario *scenario) pendingEventCount(playerID string) int {
 	scenario.t.Helper()
 
-	events := scenario.pendingEvents().MapIndex(reflect.ValueOf(playerID))
+	events := scenario.pendingPresentationEvents().MapIndex(reflect.ValueOf(playerID))
 	if !events.IsValid() {
 		return 0
 	}
@@ -338,10 +338,10 @@ func (scenario *scenario) asteroids() reflect.Value {
 	return scenario.stateField("Asteroids")
 }
 
-func (scenario *scenario) pendingEvents() reflect.Value {
+func (scenario *scenario) pendingPresentationEvents() reflect.Value {
 	scenario.t.Helper()
 
-	return scenario.gameField("pendingEvents")
+	return scenario.gameField("pendingPresentationEvents")
 }
 
 func (scenario *scenario) sessionField(playerID string, fieldName string) reflect.Value {

@@ -4,6 +4,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/events"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
@@ -90,8 +91,8 @@ func (game *Game) recordProjectileAsteroidHit(
 		AsteroidSize: asteroid.Size,
 	})
 	*scoreAwards = append(*scoreAwards, awards...)
-	game.recordDomainEvent(gameEvent{
-		Type: gameEventBulletBlast,
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
 		X:    collision.ImpactPosition.X,
 		Y:    collision.ImpactPosition.Y,
 	})
@@ -187,8 +188,8 @@ func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.
 			"y", position.Y,
 		)
 	}
-	game.recordDomainEvent(gameEvent{
-		Type:         gameEventShipDeath,
+	game.recordDomainEvent(events.Event{
+		Type:         events.EventShipDeath,
 		PlayerID:     playerID,
 		Lives:        lives,
 		RespawnDelay: respawnDelay,
@@ -208,11 +209,5 @@ func playerAsteroidDamageRequest(collision PlayerAsteroidCollision, asteroidID s
 		Flags: damage.DamageFlags{
 			Lethal: true,
 		},
-	}
-}
-
-func (game *Game) broadcastEvent(event EventState) {
-	for playerID := range game.state.Players {
-		game.pendingEvents[playerID] = append(game.pendingEvents[playerID], event)
 	}
 }

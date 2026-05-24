@@ -1,10 +1,14 @@
 package game
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Lokee86/space-rocks/server/internal/game/events"
+)
 
 func TestEventStateForDomainEventConvertsBulletBlast(t *testing.T) {
-	event := eventStateForDomainEvent(gameEvent{
-		Type: gameEventBulletBlast,
+	event := eventStateForDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
 		X:    12.5,
 		Y:    34.75,
 	})
@@ -18,8 +22,8 @@ func TestEventStateForDomainEventConvertsBulletBlast(t *testing.T) {
 }
 
 func TestEventStateForDomainEventConvertsShipDeath(t *testing.T) {
-	event := eventStateForDomainEvent(gameEvent{
-		Type:         gameEventShipDeath,
+	event := eventStateForDomainEvent(events.Event{
+		Type:         events.EventShipDeath,
 		PlayerID:     "player-1",
 		Lives:        2,
 		RespawnDelay: 1.25,
@@ -48,17 +52,17 @@ func TestRecordDomainEventQueuesBulletBlastPacketEvent(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()
 
-	game.recordDomainEvent(gameEvent{
-		Type: gameEventBulletBlast,
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
 		X:    12.5,
 		Y:    34.75,
 	})
 
-	events := game.pendingEvents[playerID]
-	if len(events) != 1 {
-		t.Fatalf("expected 1 queued event, got %d", len(events))
+	queuedEvents := game.pendingPresentationEvents[playerID]
+	if len(queuedEvents) != 1 {
+		t.Fatalf("expected 1 queued event, got %d", len(queuedEvents))
 	}
-	event := events[0]
+	event := queuedEvents[0]
 	if event.Type != PacketTypeBulletBlast {
 		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, event.Type)
 	}
@@ -71,8 +75,8 @@ func TestRecordDomainEventQueuesShipDeathPacketEvent(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()
 
-	game.recordDomainEvent(gameEvent{
-		Type:         gameEventShipDeath,
+	game.recordDomainEvent(events.Event{
+		Type:         events.EventShipDeath,
 		PlayerID:     "player-1",
 		Lives:        2,
 		RespawnDelay: 1.25,
@@ -80,11 +84,11 @@ func TestRecordDomainEventQueuesShipDeathPacketEvent(t *testing.T) {
 		Y:            67.75,
 	})
 
-	events := game.pendingEvents[playerID]
-	if len(events) != 1 {
-		t.Fatalf("expected 1 queued event, got %d", len(events))
+	queuedEvents := game.pendingPresentationEvents[playerID]
+	if len(queuedEvents) != 1 {
+		t.Fatalf("expected 1 queued event, got %d", len(queuedEvents))
 	}
-	event := events[0]
+	event := queuedEvents[0]
 	if event.Type != PacketTypeShipDeath {
 		t.Fatalf("expected event type %q, got %q", PacketTypeShipDeath, event.Type)
 	}
@@ -105,8 +109,8 @@ func TestRecordDomainEventQueuesShipDeathPacketEvent(t *testing.T) {
 func TestStateDrainsDomainEventPacketEvents(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()
-	game.recordDomainEvent(gameEvent{
-		Type: gameEventBulletBlast,
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
 		X:    12.5,
 		Y:    34.75,
 	})

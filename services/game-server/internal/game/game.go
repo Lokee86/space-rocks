@@ -18,19 +18,19 @@ import (
 )
 
 type Game struct {
-	mu                   sync.Mutex
-	stopSimulation       chan struct{}
-	stopSimulationOnce   sync.Once
-	nextID               int
-	spawner              *spawning.Spawner
-	scoringPolicy        scoring.Policy
-	asteroidSpawnElapsed float64
-	worldDevTools        devtools.WorldOptions
-	collisionShapes      physics.CollisionShapeCatalog
-	state                entities.GameState
-	cameraViews          map[string]*entities.CameraView
-	playerSessions       map[string]*playerSession
-	pendingEvents        map[string][]EventState
+	mu                        sync.Mutex
+	stopSimulation            chan struct{}
+	stopSimulationOnce        sync.Once
+	nextID                    int
+	spawner                   *spawning.Spawner
+	scoringPolicy             scoring.Policy
+	asteroidSpawnElapsed      float64
+	worldDevTools             devtools.WorldOptions
+	collisionShapes           physics.CollisionShapeCatalog
+	state                     entities.GameState
+	cameraViews               map[string]*entities.CameraView
+	playerSessions            map[string]*playerSession
+	pendingPresentationEvents map[string][]EventState
 }
 
 func New() *Game {
@@ -40,14 +40,14 @@ func New() *Game {
 	}
 
 	return &Game{
-		collisionShapes: collisionShapes,
-		stopSimulation:  make(chan struct{}),
-		cameraViews:     make(map[string]*entities.CameraView),
-		playerSessions:  make(map[string]*playerSession),
-		pendingEvents:   make(map[string][]EventState),
-		spawner:         spawning.New(),
-		scoringPolicy:   scoring.NewDefaultPolicy(),
-		state:           entities.NewGameState(),
+		collisionShapes:           collisionShapes,
+		stopSimulation:            make(chan struct{}),
+		cameraViews:               make(map[string]*entities.CameraView),
+		playerSessions:            make(map[string]*playerSession),
+		pendingPresentationEvents: make(map[string][]EventState),
+		spawner:                   spawning.New(),
+		scoringPolicy:             scoring.NewDefaultPolicy(),
+		state:                     entities.NewGameState(),
 	}
 }
 
@@ -98,7 +98,7 @@ func (game *Game) AddPlayer() string {
 		Y:      player.Y,
 		Config: player.Config,
 	}
-	game.pendingEvents[playerID] = nil
+	game.pendingPresentationEvents[playerID] = nil
 	logging.Game.Debug("player added",
 		logging.FieldPlayerID, playerID,
 		"x", spawnPosition.X,
@@ -116,7 +116,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	delete(game.state.Players, playerID)
 	delete(game.cameraViews, playerID)
 	delete(game.playerSessions, playerID)
-	delete(game.pendingEvents, playerID)
+	delete(game.pendingPresentationEvents, playerID)
 	logging.Game.Debug("player removed", logging.FieldPlayerID, playerID)
 }
 
@@ -207,7 +207,7 @@ func (game *Game) StatePacket(playerID string) StatePacket {
 	defer game.mu.Unlock()
 
 	response := game.statePacket(playerID)
-	game.pendingEvents[playerID] = nil
+	game.pendingPresentationEvents[playerID] = nil
 
 	return response
 }
@@ -324,7 +324,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	for id, bullet := range game.state.Projectiles {
 		bullets[id] = bullet.State()
 	}
-	events := append(make([]EventState, 0, len(game.pendingEvents[playerID])), game.pendingEvents[playerID]...)
+	events := append(make([]EventState, 0, len(game.pendingPresentationEvents[playerID])), game.pendingPresentationEvents[playerID]...)
 
 	return StatePacket{
 		Type:            PacketTypeState,

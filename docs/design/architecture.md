@@ -90,7 +90,7 @@ Each `game.Game` owns its own simulation state:
 - asteroids
 - player sessions
 - camera views
-- pending events
+- pending presentation events
 
 `Game.Start()` launches a simulation loop at `constants.ServerTickRate`. Each tick advances player sessions, advances moving entities through the motion seam, updates camera views, spawns asteroids, removes expired/far objects, and resolves collisions.
 
@@ -244,21 +244,23 @@ constants.BaseScore / asteroid.Size
 
 ### Domain Gameplay Events
 
-`services/game-server/internal/game/events.go` defines a small internal domain event seam for gameplay facts that already produce client-visible packet events. The first supported facts are bullet blasts and ship deaths.
+`services/game-server/internal/game/events` defines the small domain event vocabulary for gameplay facts that already produce client-visible packet events. The first supported facts are bullet blasts and ship deaths.
 
-Gameplay systems such as combat still own gameplay decisions: collision outcomes, scoring, lives, death, respawn, and spawning rules remain in their existing files. The event seam records internal facts and translates them to the current packet-facing `EventState` output where needed.
+Gameplay systems such as combat still own gameplay decisions: collision outcomes, scoring, lives, death, respawn, and spawning rules remain in their existing files. Current producers record `events.Event` values. Root `services/game-server/internal/game/events.go` remains the package-local presentation adapter that translates domain events to the generated packet-facing `EventState` output where needed.
 
 Current event flow:
 
 ```text
 combat/scoring/spawning/lives code
-  -> internal domain event
-  -> packet-facing EventState
-  -> per-player pending event queue
+  -> events.Event
+  -> game/events.go packet-facing EventState adapter
+  -> per-player pendingPresentationEvents queue
   -> StatePacket.Events
 ```
 
-The seam should stay narrow. It is not an achievements system, stats system, API integration point, persistence layer, logging policy, or replacement home for gameplay rules. Future systems may consume richer domain facts, but the event seam itself should only define, record, drain, and translate events needed by existing behavior.
+The packet queue is intentionally named `pendingPresentationEvents` because it stores generated packet `EventState` values for client effects. It is not a domain event queue.
+
+The seam should stay narrow. It is not an achievements system, stats system, API integration point, persistence layer, logging policy, pub/sub system, listener registry, async dispatcher, match history, or replacement home for gameplay rules. Future systems may consume `events.Event` or richer domain facts, but the event seam itself should only define, record, drain, and translate events needed by existing behavior.
 
 ### Toroidal World Wrap
 

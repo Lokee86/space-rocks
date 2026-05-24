@@ -351,6 +351,18 @@ The seam returns concrete facts: `ProjectileAsteroidCollision` and `PlayerAstero
 
 The helpers are unexported and side-effect-free. They do not despawn entities, build or resolve damage requests, award score, spawn fragments, decrement lives, set respawn cooldowns, record events, or touch packets/client code. Combat still owns the deferred ordering for scoring, despawn, fragments, death/session updates, game-over logging, and domain event recording.
 
+### Domain Gameplay Events
+
+Domain event types now live in:
+
+```text
+services/game-server/internal/game/events/
+```
+
+Current producers record `events.Event` values for bullet blasts and ship deaths. Root `services/game-server/internal/game/events.go` remains the package-local presentation adapter that converts those domain events into generated packet `EventState` values for client effects. The per-player packet queue is named `pendingPresentationEvents` to make clear that it stores presentation-shaped packet events, not domain events.
+
+No pub/sub, listener registry, async dispatch, achievements, stats, match history, or API persistence was added. Future systems should depend on the domain event package instead of generated packet `EventState`.
+
 ### Scoring
 
 Scoring is server controlled and tied to player instances. Asteroid hit score is:
