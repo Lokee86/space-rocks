@@ -4,14 +4,14 @@ class_name WorldSync
 signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
+const AsteroidSyncScript = preload("res://scripts/networking/asteroid_sync.gd")
 const AsteroidSyncState = preload("res://scripts/networking/asteroid_sync_state.gd")
-const BulletSyncState = preload("res://scripts/networking/bullet_sync_state.gd")
+const BulletSyncScript = preload("res://scripts/networking/bullet_sync.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const PlayerSyncState = preload("res://scripts/networking/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
-const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
@@ -33,17 +33,15 @@ var owner_node: Node2D
 var local_player: Player
 var bullets_layer: Node2D
 var asteroids_layer: Node2D
+var asteroid_sync
+var bullet_sync
 var player_nodes := {}
-var bullet_nodes := {}
 var asteroid_nodes := {}
 var initialized_players := {}
-var initialized_bullets := {}
 var initialized_asteroids := {}
 var warned_missing_asteroid_scale := {}
 var target_player_positions := {}
 var target_player_rotations := {}
-var target_bullet_positions := {}
-var target_bullet_rotations := {}
 var target_asteroid_positions := {}
 var asteroid_server_positions := {}
 var asteroid_visual_positions := {}
@@ -65,6 +63,13 @@ func configure(
 	local_player = player
 	bullets_layer = bullets
 	asteroids_layer = asteroids
+	asteroid_sync = AsteroidSyncScript.new()
+	asteroid_sync.configure(asteroids_layer)
+	bullet_sync = BulletSyncScript.new()
+	bullet_sync.configure(bullets_layer)
+	bullet_sync.bullet_spawned.connect(func() -> void:
+		bullet_spawned.emit()
+	)
 
 	asteroids_layer.z_index = ASTEROID_Z_INDEX
 	bullets_layer.z_index = BULLET_Z_INDEX
@@ -80,10 +85,15 @@ func apply_state(
 ) -> void:
 	current_self_id = self_id
 	_remove_missing_players(server_players, self_id)
-	_remove_missing_bullets(server_bullets)
+	bullet_sync.remove_missing(server_bullets)
 	_remove_missing_asteroids(server_asteroids)
 	_apply_players(self_id, server_players)
-	_apply_bullets(server_bullets, play_new_bullet_sounds)
+	bullet_sync.apply(
+		server_bullets,
+		play_new_bullet_sounds,
+		local_visual_position,
+		local_server_position
+	)
 	_apply_asteroids(server_asteroids)
 
 
@@ -101,16 +111,7 @@ func interpolate(delta: float) -> void:
 		else:
 			remote_player_visual_positions[player_id] = player_node.position
 
-	for bullet_id in bullet_nodes.keys():
-		if !target_bullet_positions.has(bullet_id):
-			continue
-
-		var bullet_node = bullet_nodes[bullet_id]
-		bullet_node.global_position = bullet_node.global_position.lerp(
-			target_bullet_positions[bullet_id],
-			weight
-		)
-		bullet_node.rotation = lerp_angle(bullet_node.rotation, target_bullet_rotations[bullet_id], weight)
+	bullet_sync.interpolate(weight)
 
 	for asteroid_id in asteroid_nodes.keys():
 		if !target_asteroid_positions.has(asteroid_id):
@@ -265,53 +266,6 @@ func _remove_player_node(self_id: String, player_id: String) -> void:
 	target_player_rotations.erase(player_id)
 	remote_player_visual_positions.erase(player_id)
 	remote_player_hues.erase(player_id)
-
-
-func _apply_bullets(server_bullets: Dictionary, play_new_bullet_sounds: bool) -> void:
-	for bullet_id in server_bullets.keys():
-		var state: Dictionary = server_bullets[bullet_id]
-		var is_new_bullet := !bullet_nodes.has(bullet_id)
-		var bullet_node = _get_bullet_node(bullet_id)
-		var server_position := BulletSyncState.server_position(state)
-		var visual_position := local_visual_position + WorldWrapScript.shortest_delta(
-			local_server_position,
-			server_position
-		)
-		var server_rotation: float = state[Packets.FIELD_ROTATION]
-
-		target_bullet_positions[bullet_id] = visual_position
-		target_bullet_rotations[bullet_id] = server_rotation
-
-		if !initialized_bullets.has(bullet_id):
-			initialized_bullets[bullet_id] = true
-			bullet_node.global_position = visual_position
-			bullet_node.rotation = server_rotation
-
-		if is_new_bullet && play_new_bullet_sounds:
-			bullet_spawned.emit()
-
-
-func _get_bullet_node(bullet_id):
-	if bullet_nodes.has(bullet_id):
-		return bullet_nodes[bullet_id]
-
-	var bullet_node = BULLET_SCENE.instantiate()
-	bullets_layer.add_child(bullet_node)
-	bullet_nodes[bullet_id] = bullet_node
-
-	return bullet_node
-
-
-func _remove_missing_bullets(server_bullets: Dictionary) -> void:
-	for bullet_id in bullet_nodes.keys():
-		if server_bullets.has(bullet_id):
-			continue
-
-		bullet_nodes[bullet_id].queue_free()
-		bullet_nodes.erase(bullet_id)
-		initialized_bullets.erase(bullet_id)
-		target_bullet_positions.erase(bullet_id)
-		target_bullet_rotations.erase(bullet_id)
 
 
 func _apply_asteroids(server_asteroids: Dictionary) -> void:
