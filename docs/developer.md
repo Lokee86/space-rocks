@@ -437,6 +437,7 @@ For a server gameplay bug:
 
 - `services/game-server/internal/game/game.go`
 - `services/game-server/internal/game/combat.go`
+- `services/game-server/internal/game/damage.go`
 - `services/game-server/internal/game/session.go`
 - `services/game-server/internal/game/spawning.go`
 - `services/game-server/internal/game/scoring.go`

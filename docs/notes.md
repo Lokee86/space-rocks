@@ -258,6 +258,14 @@ Respawn logic is server controlled. Players start with shared constant lives. De
 
 Initial spawning has been adjusted to reuse safe spawn logic while staying a separate concern so future initial-spawn-specific rules can be added.
 
+### Entity Damage Resolution
+
+Server combat now routes current destructive collision outcomes through a small internal damage seam in `services/game-server/internal/game/damage.go`.
+
+Current behavior is unchanged: bullet/asteroid hits still destroy and fragment asteroids, award score, despawn bullets, and record bullet blast events; ship/asteroid hits still kill the player, decrement lives, set respawn cooldown, and record ship death events. The resolver is intentionally side-effect-free: it returns `DamageResult` facts such as `Destroyed` or `Fatal`, while combat/session/scoring/spawning continue to own lifecycle effects.
+
+The seam is general entity damage, not player-only health. Requests carry target/source IDs and entity types for players, asteroids, and projectiles, plus future no-op shape for shield and invulnerability bypass concepts. No client packets, packet schemas, health storage, shield UI, or balance rules were added in this slice.
+
 ### Scoring
 
 Scoring is server controlled and tied to player instances. Asteroid hit score is:

@@ -96,11 +96,27 @@ The server currently owns:
 - asteroid spawning and visibility removal
 - bullet/asteroid collision
 - ship/asteroid collision
+- entity damage/destruction resolution
 - asteroid splitting
 - scoring
 - lives, death, game-over, and respawn rules
 - safe initial spawn/respawn placement
 - state packet generation
+
+### Entity Damage Resolution
+
+`services/game-server/internal/game/damage.go` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat detects collisions, builds a `DamageRequest`, calls `resolveDamage`, and then existing systems consume the `DamageResult`.
+
+Current behavior is intentionally unchanged:
+
+```text
+bullet hits asteroid -> projectile damage resolves Destroyed -> existing asteroid despawn, fragmentation, scoring, and bullet blast flow
+ship hits asteroid -> collision damage resolves Fatal for player -> existing death, lives, respawn cooldown, logging, and ship death flow
+```
+
+The resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
+
+The initial model already carries general target/source identity and future fields for shields, invulnerability bypass, health, and shield absorption, but no shield or health storage mechanics are active yet. Keep future durability work routed through this seam without moving scoring, spawning, or player lifecycle ownership into the resolver.
 
 ### Domain Gameplay Events
 
