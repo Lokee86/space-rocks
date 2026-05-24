@@ -3,8 +3,6 @@ package game
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -21,11 +19,6 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			continue
 		}
 
-		bulletBody, ok := bullet.CollisionBody(game.collisionShapes)
-		if !ok {
-			continue
-		}
-
 		for asteroidID, asteroid := range game.state.Asteroids {
 			if _, ok := hitAsteroids[asteroidID]; ok {
 				continue
@@ -34,14 +27,8 @@ func (game *Game) handleBulletAsteroidCollisions() {
 				continue
 			}
 
-			asteroidBody, ok := asteroid.CollisionBody(game.collisionShapes)
+			collision, ok := detectBulletAsteroidCollision(bullet, asteroid, game.collisionShapes)
 			if !ok {
-				continue
-			}
-			delta := space.Delta(bullet.Position(), asteroid.Position())
-			asteroidBody.Position = bullet.Position().Add(delta)
-
-			if _, ok := physics.DetectCollision(bulletBody, asteroidBody); !ok {
 				continue
 			}
 
@@ -63,11 +50,10 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			hitBullets[bulletID] = true
 			hitAsteroids[asteroidID] = asteroid
 			scoreAwards = append(scoreAwards, NewAsteroidHitScoreAward(bullet.OwnerID, asteroid))
-			impactPosition := bullet.Position()
 			game.recordDomainEvent(gameEvent{
 				Type: gameEventBulletBlast,
-				X:    impactPosition.X,
-				Y:    impactPosition.Y,
+				X:    collision.ImpactPosition.X,
+				Y:    collision.ImpactPosition.Y,
 			})
 			break
 		}
@@ -103,29 +89,18 @@ func (game *Game) handleShipAsteroidCollisions() {
 			continue
 		}
 
-		playerBody, ok := player.CollisionBody(game.collisionShapes)
-		if !ok {
-			continue
-		}
-
 		for asteroidID, asteroid := range game.state.Asteroids {
 			if asteroid.IsPendingDespawn() {
 				continue
 			}
 
-			asteroidBody, ok := asteroid.CollisionBody(game.collisionShapes)
+			collision, ok := detectPlayerAsteroidCollision(playerID, player, asteroid, game.collisionShapes)
 			if !ok {
-				continue
-			}
-			delta := space.Delta(player.Position(), asteroid.Position())
-			asteroidBody.Position = player.Position().Add(delta)
-
-			if _, ok := physics.DetectCollision(playerBody, asteroidBody); !ok {
 				continue
 			}
 
 			damage := resolveDamage(DamageRequest{
-				TargetEntityID:   playerID,
+				TargetEntityID:   collision.PlayerID,
 				TargetEntityType: EntityTypePlayer,
 				SourceEntityID:   asteroidID,
 				SourceEntityType: EntityTypeAsteroid,
