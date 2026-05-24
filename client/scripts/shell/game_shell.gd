@@ -9,6 +9,7 @@ const Packets = preload("res://scripts/networking/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
 const RoomErrors = preload("res://scripts/session/room_errors.gd")
+const RoomSnapshot = preload("res://scripts/session/room_snapshot.gd")
 const BACKGROUND_DRIFT := Vector2(18.0, 8.0)
 const FOREGROUND_DRIFT := Vector2(42.0, 18.0)
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
@@ -435,8 +436,8 @@ func _store_room_snapshot(data: Dictionary) -> void:
 	current_room_code = str(data.get(Packets.FIELD_ROOM_CODE, "")).strip_edges()
 	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, "")).strip_edges()
 	local_room_member_id = str(data.get(Packets.FIELD_LOCAL_MEMBER_ID, "")).strip_edges()
-	room_members = _room_snapshot_members(data.get(Packets.FIELD_MEMBERS, []))
-	room_ready_states = _room_snapshot_ready_states(room_members)
+	room_members = RoomSnapshot.members(data.get(Packets.FIELD_MEMBERS, []))
+	room_ready_states = RoomSnapshot.ready_states(room_members)
 	room_max_players = int(data.get(Packets.FIELD_MAX_PLAYERS, 0))
 	latest_room_snapshot = {
 		Packets.FIELD_ROOM_CODE: current_room_code,
@@ -463,35 +464,6 @@ func _store_room_state_changed(data: Dictionary) -> void:
 	_update_lobby_control_state()
 	_enter_single_player_gameplay_if_ready()
 	_enter_multiplayer_gameplay_if_ready()
-
-
-func _room_snapshot_members(raw_members: Variant) -> Array:
-	var stored_members := []
-	if !(raw_members is Array):
-		return stored_members
-
-	for raw_member in raw_members:
-		if raw_member is Dictionary:
-			stored_members.append(raw_member.duplicate(true))
-		else:
-			stored_members.append(raw_member)
-
-	return stored_members
-
-
-func _room_snapshot_ready_states(members: Array) -> Dictionary:
-	var ready_states := {}
-	for member in members:
-		if !(member is Dictionary):
-			continue
-
-		var member_id := str(member.get(Packets.FIELD_MEMBER_ID, member.get(Packets.FIELD_ID, ""))).strip_edges()
-		if member_id == "":
-			continue
-
-		ready_states[member_id] = bool(member.get(Packets.FIELD_READY, false))
-
-	return ready_states
 
 
 func _update_lobby_room_labels() -> void:
