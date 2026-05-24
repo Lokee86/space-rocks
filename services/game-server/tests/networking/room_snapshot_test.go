@@ -9,11 +9,7 @@ import (
 )
 
 func TestBuildRoomSnapshotIncludesRoomStateAndCapacity(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	room := manager.GetOrCreate("TEST")
-	room.State = rooms.RoomStateLobby
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
 
 	snapshot := networking.BuildRoomSnapshot(room, "player-1")
 
@@ -35,10 +31,7 @@ func TestBuildRoomSnapshotIncludesRoomStateAndCapacity(t *testing.T) {
 }
 
 func TestBuildRoomSnapshotIncludesMembersAndReadyStates(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	room := manager.GetOrCreate("TEST")
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
 	room.AddMemberID("player-2")
 	room.SetMemberReady("player-2", false)
 	room.AddMemberID("player-1")

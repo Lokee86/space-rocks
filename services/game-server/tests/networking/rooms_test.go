@@ -12,56 +12,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func TestRoomManagerUsesDefaultRoomForBlankID(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	blankRoom := manager.GetOrCreate("")
-	spaceRoom := manager.GetOrCreate("   ")
-
-	if spaceRoom != blankRoom {
-		t.Fatal("expected blank and whitespace room ids to use the same default room")
-	}
-}
-
-func TestRoomManagerCreatesSeparateRoomsByID(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	first := manager.GetOrCreate("abc")
-	again := manager.GetOrCreate("abc")
-	second := manager.GetOrCreate("xyz")
-
-	if first != again {
-		t.Fatal("expected same room id to return same room")
-	}
-	if first == second {
-		t.Fatal("expected different room ids to return different rooms")
-	}
-	if first.Game == second.Game {
-		t.Fatal("expected different rooms to own different games")
-	}
-}
-
-func TestCompatibilityRoomsStartInGame(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	room := manager.GetOrCreate("abc")
-
-	if room.State != rooms.RoomStateInGame {
-		t.Fatalf("expected compatibility room state %q, got %q", rooms.RoomStateInGame, room.State)
-	}
-	if room.Game == nil {
-		t.Fatal("expected compatibility room to create a game")
-	}
-}
-
 func TestRoomInitializesMemberStorage(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	room := manager.GetOrCreate("abc")
+	room := rooms.NewRoom("abc", rooms.RoomStateLobby, nil)
 
 	if members := room.MembersSnapshot(); len(members) != 0 {
 		t.Fatalf("expected no initial room members, got %d", len(members))
@@ -69,10 +21,7 @@ func TestRoomInitializesMemberStorage(t *testing.T) {
 }
 
 func TestRoomAddAndRemoveMember(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	room := manager.GetOrCreate("abc")
+	room := rooms.NewRoom("abc", rooms.RoomStateLobby, nil)
 	member := room.AddMemberID("session-1")
 
 	if member.SessionID != "session-1" {
@@ -95,10 +44,7 @@ func TestRoomAddAndRemoveMember(t *testing.T) {
 }
 
 func TestRoomMemberCountAndFullCapacity(t *testing.T) {
-	manager := networking.NewRoomManager()
-	defer manager.StopAll()
-
-	room := manager.GetOrCreate("abc")
+	room := rooms.NewRoom("abc", rooms.RoomStateLobby, nil)
 	if count := room.MemberCount(); count != 0 {
 		t.Fatalf("expected empty room member count 0, got %d", count)
 	}
@@ -132,8 +78,11 @@ func TestWebSocketRoomIDQueryDoesNotJoinOrSpawn(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	room := manager.GetOrCreate("abc")
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL)+"/?room_id=abc", nil)
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create lobby room: %v", err)
+	}
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL)+"/?room_id="+room.ID, nil)
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -461,7 +410,10 @@ func TestJoinRoomRequestRejectsInGameRoom(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	manager.GetOrCreate("ABCDEF")
+	room, roomErr := manager.CreateStartedSinglePlayerRoom("session-owner")
+	if roomErr != nil {
+		t.Fatalf("create started single-player room: %v", roomErr)
+	}
 	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
@@ -470,7 +422,7 @@ func TestJoinRoomRequestRejectsInGameRoom(t *testing.T) {
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:     servergame.PacketTypeJoinRoomRequest,
-		RoomCode: "ABCDEF",
+		RoomCode: room.ID,
 	}); err != nil {
 		t.Fatalf("write join room request: %v", err)
 	}
@@ -1453,55 +1405,6 @@ func TestDisconnectCleansEmptyInGameRoom(t *testing.T) {
 		return !ok
 	}) {
 		t.Fatalf("expected empty in-game room %q to be cleaned up after disconnect", createdSnapshot.RoomCode)
-	}
-}
-
-func TestRoomManagerCleansUpEmptyRoomAfterGracePeriod(t *testing.T) {
-	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
-	defer manager.StopAll()
-
-	room, leave := manager.Join("abc")
-	if room == nil {
-		t.Fatal("expected room")
-	}
-	leave()
-
-	if !waitUntil(200*time.Millisecond, func() bool {
-		return manager.GetOrCreate("abc") != room
-	}) {
-		t.Fatal("expected empty room to be cleaned up after grace period")
-	}
-}
-
-func TestRoomManagerDoesNotCleanUpActiveRoom(t *testing.T) {
-	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
-	defer manager.StopAll()
-
-	room, leave := manager.Join("abc")
-	defer leave()
-
-	time.Sleep(30 * time.Millisecond)
-	if manager.GetOrCreate("abc") != room {
-		t.Fatal("expected active room to stay alive")
-	}
-}
-
-func TestRoomManagerCancelsCleanupWhenRoomIsRejoined(t *testing.T) {
-	manager := networking.NewRoomManagerWithCleanupDelay(30 * time.Millisecond)
-	defer manager.StopAll()
-
-	room, leave := manager.Join("abc")
-	leave()
-
-	rejoined, leaveRejoined := manager.Join("abc")
-	defer leaveRejoined()
-	if rejoined != room {
-		t.Fatal("expected reconnect during grace period to reuse room")
-	}
-
-	time.Sleep(60 * time.Millisecond)
-	if manager.GetOrCreate("abc") != room {
-		t.Fatal("expected rejoined room to survive canceled cleanup")
 	}
 }
 

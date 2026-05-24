@@ -8,48 +8,6 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
-func TestRoomManagerUsesDefaultRoomForBlankID(t *testing.T) {
-	manager := rooms.NewRoomManager()
-	defer manager.StopAll()
-
-	blankRoom := manager.GetOrCreate("")
-	spaceRoom := manager.GetOrCreate("   ")
-
-	if spaceRoom != blankRoom {
-		t.Fatal("expected blank and whitespace room ids to use the same default room")
-	}
-}
-
-func TestRoomManagerCreatesAndFindsCompatibilityRooms(t *testing.T) {
-	manager := rooms.NewRoomManager()
-	defer manager.StopAll()
-
-	first := manager.GetOrCreate("abc")
-	again := manager.GetOrCreate("abc")
-	second := manager.GetOrCreate("xyz")
-
-	if first != again {
-		t.Fatal("expected same room for same id")
-	}
-	if first == second {
-		t.Fatal("expected different room for different id")
-	}
-	if first.State != rooms.RoomStateInGame {
-		t.Fatalf("expected compatibility room state %q, got %q", rooms.RoomStateInGame, first.State)
-	}
-	if first.Game == nil {
-		t.Fatal("expected compatibility room to create a game")
-	}
-
-	found, ok := manager.Find("abc")
-	if !ok {
-		t.Fatal("expected room to be found")
-	}
-	if found != first {
-		t.Fatal("expected found room to match created room")
-	}
-}
-
 func TestRoomManagerCreateLobbyRoom(t *testing.T) {
 	manager := rooms.NewRoomManager()
 	defer manager.StopAll()
@@ -506,8 +464,10 @@ func TestRoomManagerSetReadyRejectsNonLobbyRoom(t *testing.T) {
 	manager := rooms.NewRoomManager()
 	defer manager.StopAll()
 
-	room := manager.GetOrCreate("ABCDEF")
-	room.AddMemberID("session-1")
+	room, createErr := manager.CreateStartedSinglePlayerRoom("session-1")
+	if createErr != nil {
+		t.Fatalf("create started single-player room: %v", createErr)
+	}
 
 	updatedRoom, roomErr := manager.SetReady(room.ID, "session-1", true)
 	if roomErr == nil {

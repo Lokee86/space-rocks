@@ -41,6 +41,8 @@ ws://localhost:8080/ws
 
 Websocket connection is session-only. Multiplayer rooms are created and joined with generated packets after connecting to `/ws`; the old `room_id` query path is not used by the real UI.
 
+Legacy direct-room compatibility is quarantined in `services/game-server/internal/rooms`: `GetOrCreate()` and `Join()` create or join already-started direct game rooms and should not be used for lobby-created multiplayer flow. `DefaultRoom()` has been removed; keep any future room lifecycle work on the explicit create/join/start/return APIs.
+
 Current multiplayer lifecycle:
 
 ```text

@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -42,49 +41,6 @@ func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *RoomManager {
 	}
 
 	return manager
-}
-
-// Join is a legacy direct-game compatibility path. It joins or creates an
-// already-started direct game room and should not be used for lobby-created
-// multiplayer flow. New websocket lifecycle code should use CreateLobbyRoom,
-// JoinRoom, CreateStartedSinglePlayerRoom, StartRoomGame, and ReturnSessionToLobby instead.
-func (manager *RoomManager) Join(roomID string) (*Room, func()) {
-	roomID = NormalizeRoomID(roomID)
-
-	manager.mu.Lock()
-	room := manager.getOrCreateLocked(roomID)
-	room.ActivePlayers++
-	room.CleanupVersion++
-	if room.CleanupTimer != nil {
-		room.CleanupTimer.Stop()
-		room.CleanupTimer = nil
-		logging.Rooms.Debug("room cleanup canceled",
-			logging.FieldRoomID, roomID,
-			"active_players", room.ActivePlayers,
-		)
-	}
-	logging.Rooms.Debug("room joined",
-		logging.FieldRoomID, roomID,
-		"active_players", room.ActivePlayers,
-	)
-	manager.mu.Unlock()
-
-	return room, func() {
-		manager.leave(roomID)
-	}
-}
-
-// GetOrCreate is a legacy direct-game compatibility path. It creates
-// already-started direct game rooms and should not be used for lobby-created
-// multiplayer flow. New websocket lifecycle code should use CreateLobbyRoom,
-// JoinRoom, CreateStartedSinglePlayerRoom, StartRoomGame, and ReturnSessionToLobby instead.
-func (manager *RoomManager) GetOrCreate(roomID string) *Room {
-	roomID = NormalizeRoomID(roomID)
-
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	return manager.getOrCreateLocked(roomID)
 }
 
 func (manager *RoomManager) Find(roomID string) (*Room, bool) {
@@ -286,45 +242,6 @@ func (manager *RoomManager) ScheduleCleanupIfEmpty(roomID string) {
 
 	room, ok := manager.rooms[roomID]
 	if !ok || !room.ShouldCleanup() {
-		return
-	}
-
-	manager.scheduleCleanupLocked(roomID, room)
-}
-
-func (manager *RoomManager) getOrCreateLocked(roomID string) *Room {
-	if room, ok := manager.rooms[roomID]; ok {
-		return room
-	}
-
-	room := NewRoom(roomID, RoomStateInGame, game.New())
-	room.Game.Start()
-	manager.rooms[roomID] = room
-	logging.Rooms.Debug("room created", logging.FieldRoomID, roomID)
-
-	return room
-}
-
-func (manager *RoomManager) leave(roomID string) {
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	room, ok := manager.rooms[roomID]
-	if !ok {
-		return
-	}
-
-	if room.ActivePlayers > 0 {
-		room.ActivePlayers--
-	}
-	logging.Rooms.Debug("room left",
-		logging.FieldRoomID, roomID,
-		"active_players", room.ActivePlayers,
-	)
-	if room.ActivePlayers > 0 {
-		return
-	}
-	if !room.ShouldCleanup() {
 		return
 	}
 

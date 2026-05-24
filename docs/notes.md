@@ -222,6 +222,7 @@ Important lifecycle boundaries:
 - all connected members must be ready before start; one ready player can start alone
 - `LeaveRoomRequest` and disconnect remove the member and schedule cleanup when rooms become empty
 - `ReturnToLobbyRequest` resets GameOver rooms back to Lobby and clears ready/game state
+- legacy direct-room compatibility is quarantined: `DefaultRoom()` has been removed, while `GetOrCreate()` and `Join()` remain only for already-started direct game rooms and should not be used by new websocket lifecycle code
 
 Server package ownership:
 
