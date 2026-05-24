@@ -83,6 +83,14 @@ WATCH"
 label_settings = ExtResource("4_x2hll")
 horizontal_alignment = 1
 
+[node name="Waiting" type="Label" parent="CenterContainer/TextureRect/CenterContainer/MarginContainer/HBoxContainer/PrimaryActionButton/CenterContainer/MarginContainer" unique_id=477527522]
+layout_mode = 2
+text = "
+
+WAITING"
+label_settings = ExtResource("4_x2hll")
+horizontal_alignment = 1
+
 [node name="MenuButton" parent="CenterContainer/TextureRect/CenterContainer/MarginContainer/HBoxContainer" unique_id=1583084417 instance=ExtResource("3_1b0xy")]
 custom_minimum_size = Vector2(220, 100)
 layout_mode = 2

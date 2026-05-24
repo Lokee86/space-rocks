@@ -3,9 +3,11 @@ extends Node2D
 signal return_to_menu_requested
 
 const EffectsScript = preload("res://scripts/effects.gd")
+const CameraFollowScript = preload("res://scripts/camera_follow.gd")
 const HudControllerScript = preload("res://scripts/ui/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
+const SpectateTargetsScript = preload("res://scripts/spectate_targets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
 const RESPAWN_RETRY_SECONDS := 0.25
 
@@ -26,10 +28,13 @@ var debug_infinite_lives_input_armed := true
 var debug_freeze_world_input_armed := true
 var debug_freeze_player_input_armed := true
 var self_id := ""
+var current_spectate_target_id := ""
 var effects: Effects
+var camera_follow
 var game_menu: GameMenu
 var injected_network_client: NetworkClient
 var hud_controller: HudController
+var is_spectating := false
 var network_client: NetworkClient
 var room_id := ""
 var current_room_state := ""
@@ -56,6 +61,9 @@ func _ready() -> void:
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(self, player, bullets, asteroids)
 	world_sync.bullet_spawned.connect(_on_world_bullet_spawned)
+
+	camera_follow = CameraFollowScript.new()
+	camera_follow.configure(gameplay_camera)
 
 	hud_controller = HudControllerScript.new()
 	hud_controller.configure(get_tree().current_scene)
@@ -90,6 +98,7 @@ func _process(delta: float) -> void:
 	respawn_retry_remaining = max(0.0, respawn_retry_remaining - delta)
 	_update_open_menu_input_armed()
 	_handle_debug_input()
+	_handle_spectate_input()
 	if _handle_open_menu_pressed():
 		return
 
@@ -98,6 +107,7 @@ func _process(delta: float) -> void:
 
 	_update_player_afterburner()
 	world_sync.interpolate(delta)
+	_update_spectate_camera()
 	_update_offscreen_indicators()
 	_update_background_scroll_offset()
 
@@ -171,6 +181,8 @@ func _on_network_packet_parse_failed(text: String) -> void:
 
 func _store_room_state(data: Dictionary) -> void:
 	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, current_room_state)).strip_edges()
+	if _is_room_game_over():
+		_stop_spectating(true)
 	_refresh_game_menu_state()
 
 
@@ -243,7 +255,10 @@ func _update_background_scroll_offset() -> void:
 
 	var shell := get_parent()
 	if shell != null && shell.has_method("set_gameplay_scroll_offset"):
-		shell.set_gameplay_scroll_offset(player.global_position)
+		if is_spectating && camera_follow != null && camera_follow.camera != null:
+			shell.set_gameplay_scroll_offset(camera_follow.camera.global_position)
+		else:
+			shell.set_gameplay_scroll_offset(player.global_position)
 
 
 func _update_player_afterburner() -> void:
@@ -301,6 +316,7 @@ func _apply_self_death_event(event: Dictionary) -> void:
 
 func _set_alive_state() -> void:
 	awaiting_respawn_confirmation = false
+	_stop_spectating(false)
 	_resume_gameplay_pause_if_needed()
 	open_menu_input_armed = false
 	_hide_game_menu()
@@ -332,7 +348,7 @@ func _set_game_over_state() -> void:
 func _handle_open_menu_pressed() -> bool:
 	if !Input.is_action_just_pressed("OpenMenu"):
 		return false
-	if _is_game_over():
+	if _should_block_open_menu_for_game_over():
 		return false
 	if !open_menu_input_armed && !hud_controller.is_game_over:
 		return false
@@ -413,7 +429,12 @@ func _refresh_game_menu_state() -> void:
 	if game_menu == null:
 		return
 	if game_menu.has_method("configure_for_state"):
-		game_menu.configure_for_state(session_mode, _is_game_over(), current_room_state)
+		game_menu.configure_for_state(
+			session_mode,
+			_is_game_over(),
+			current_room_state,
+			_has_spectate_targets()
+		)
 
 
 func _connect_game_menu_signals() -> void:
@@ -423,6 +444,9 @@ func _connect_game_menu_signals() -> void:
 	if game_menu.has_signal("lobby_requested"):
 		if !game_menu.lobby_requested.is_connected(_on_game_menu_lobby_requested):
 			game_menu.lobby_requested.connect(_on_game_menu_lobby_requested)
+	if game_menu.has_signal("spectate_requested"):
+		if !game_menu.spectate_requested.is_connected(_on_game_menu_spectate_requested):
+			game_menu.spectate_requested.connect(_on_game_menu_spectate_requested)
 	if !game_menu.resume_requested.is_connected(_on_game_menu_resume_requested):
 		game_menu.resume_requested.connect(_on_game_menu_resume_requested)
 	if !game_menu.quit_requested.is_connected(_on_game_menu_quit_requested):
@@ -453,6 +477,13 @@ func _on_game_menu_lobby_requested() -> void:
 	network_client.send_return_to_lobby_request()
 
 
+func _on_game_menu_spectate_requested() -> void:
+	if !_is_multiplayer_session() || _is_room_game_over():
+		return
+	if !_start_spectating():
+		_show_game_menu()
+
+
 func _on_game_menu_quit_requested() -> void:
 	is_gameplay_paused = false
 	hud_controller.set_suspended(false)
@@ -474,6 +505,95 @@ func _is_game_over() -> bool:
 
 func _is_room_game_over() -> bool:
 	return current_room_state.strip_edges().replace("_", "").to_lower() == "gameover"
+
+
+func _has_spectate_targets() -> bool:
+	return world_sync != null && !world_sync.get_remote_player_visual_positions().is_empty()
+
+
+func _start_spectating() -> bool:
+	var remote_positions := _remote_player_visual_positions()
+	current_spectate_target_id = SpectateTargetsScript.select_target(
+		self_id,
+		current_spectate_target_id,
+		remote_positions
+	)
+	if current_spectate_target_id == "":
+		is_spectating = false
+		return false
+
+	is_spectating = true
+	_hide_game_menu()
+	_update_spectate_camera()
+	return true
+
+
+func _stop_spectating(show_game_over_menu: bool) -> void:
+	if !is_spectating && current_spectate_target_id == "":
+		return
+
+	is_spectating = false
+	current_spectate_target_id = ""
+	if camera_follow != null:
+		camera_follow.follow_local_player()
+	if show_game_over_menu && hud_controller != null && hud_controller.is_game_over:
+		_show_game_menu()
+
+
+func _update_spectate_camera() -> void:
+	if !is_spectating:
+		return
+
+	var remote_positions := _remote_player_visual_positions()
+	current_spectate_target_id = SpectateTargetsScript.select_target(
+		self_id,
+		current_spectate_target_id,
+		remote_positions
+	)
+	if current_spectate_target_id == "":
+		_stop_spectating(true)
+		return
+
+	if camera_follow != null:
+		camera_follow.follow_visual_position(remote_positions[current_spectate_target_id])
+
+
+func _handle_spectate_input() -> void:
+	if !is_spectating:
+		return
+	if !Input.is_action_just_pressed("SwitchCamera"):
+		return
+
+	_cycle_spectate_target()
+
+
+func _cycle_spectate_target() -> void:
+	if !is_spectating:
+		return
+
+	var remote_positions := _remote_player_visual_positions()
+	current_spectate_target_id = SpectateTargetsScript.cycle_target(
+		self_id,
+		current_spectate_target_id,
+		remote_positions
+	)
+	if current_spectate_target_id == "":
+		_stop_spectating(true)
+		return
+
+	if camera_follow != null:
+		camera_follow.follow_visual_position(remote_positions[current_spectate_target_id])
+
+
+func _remote_player_visual_positions() -> Dictionary:
+	if world_sync == null:
+		return {}
+
+	return world_sync.get_remote_player_visual_positions()
+
+
+func _should_block_open_menu_for_game_over() -> bool:
+	return !_is_multiplayer_session() && _is_game_over()
 
 
 func _send_gameplay_input_if_active() -> void:

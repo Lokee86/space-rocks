@@ -3,6 +3,7 @@ class_name GameMenu
 
 signal primary_action_requested
 signal lobby_requested
+signal spectate_requested
 signal menu_requested
 signal resume_requested
 signal quit_requested
@@ -14,6 +15,8 @@ signal quit_requested
 const SESSION_MODE_MULTIPLAYER := "multiplayer"
 const PRIMARY_ACTION_RESUME := "resume"
 const PRIMARY_ACTION_LOBBY := "lobby"
+const PRIMARY_ACTION_SPECTATE := "spectate"
+const PRIMARY_ACTION_WAITING := "waiting"
 
 var primary_action := PRIMARY_ACTION_RESUME
 
@@ -46,15 +49,24 @@ func set_menu_text(_text) -> void:
 	_set_button_label_visible(menu_button, "Menu")
 
 
-func configure_for_state(session_mode: String, game_over: bool, room_state: String) -> void:
+func configure_for_state(session_mode: String, game_over: bool, room_state: String, has_spectate_targets := false) -> void:
 	var normalized_session_mode := _normalized_state(session_mode)
 	var room_game_over := _normalized_state(room_state) == "gameover"
 
 	if normalized_session_mode == SESSION_MODE_MULTIPLAYER:
 		if game_over:
-			primary_action = PRIMARY_ACTION_LOBBY
-			set_primary_text("Lobby")
-			set_primary_enabled(room_game_over)
+			if room_game_over:
+				primary_action = PRIMARY_ACTION_LOBBY
+				set_primary_text("Lobby")
+				set_primary_enabled(true)
+			elif has_spectate_targets:
+				primary_action = PRIMARY_ACTION_SPECTATE
+				set_primary_text("Spectate")
+				set_primary_enabled(true)
+			else:
+				primary_action = PRIMARY_ACTION_WAITING
+				set_primary_text("Waiting")
+				set_primary_enabled(false)
 		else:
 			primary_action = PRIMARY_ACTION_RESUME
 			set_primary_text("Resume")
@@ -72,6 +84,9 @@ func _on_primary_action_pressed() -> void:
 	primary_action_requested.emit()
 	if primary_action == PRIMARY_ACTION_LOBBY:
 		lobby_requested.emit()
+		return
+	if primary_action == PRIMARY_ACTION_SPECTATE:
+		spectate_requested.emit()
 		return
 
 	resume_requested.emit()
@@ -98,6 +113,10 @@ func _normalized_state(value) -> String:
 func _primary_label_name(text: String) -> String:
 	if _normalized_state(text) == PRIMARY_ACTION_LOBBY:
 		return "Lobby"
+	if _normalized_state(text) == PRIMARY_ACTION_SPECTATE:
+		return "Spectate"
+	if _normalized_state(text) == PRIMARY_ACTION_WAITING:
+		return "Waiting"
 
 	return "Resume"
 
