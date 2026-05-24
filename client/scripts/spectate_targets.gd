@@ -1,9 +1,16 @@
 extends RefCounted
 class_name SpectateTargets
 
+const PLAYER_ACTIVE := "active"
 
-static func select_target(local_player_id: String, current_target_id: String, remote_player_positions: Dictionary) -> String:
-	var target_ids := _valid_target_ids(local_player_id, remote_player_positions)
+
+static func select_target(
+	local_player_id: String,
+	current_target_id: String,
+	remote_player_positions: Dictionary,
+	player_lifecycle := {}
+) -> String:
+	var target_ids := _valid_target_ids(local_player_id, remote_player_positions, player_lifecycle)
 	if target_ids.is_empty():
 		return ""
 	if target_ids.has(current_target_id):
@@ -12,8 +19,13 @@ static func select_target(local_player_id: String, current_target_id: String, re
 	return target_ids[0]
 
 
-static func cycle_target(local_player_id: String, current_target_id: String, remote_player_positions: Dictionary) -> String:
-	var target_ids := _valid_target_ids(local_player_id, remote_player_positions)
+static func cycle_target(
+	local_player_id: String,
+	current_target_id: String,
+	remote_player_positions: Dictionary,
+	player_lifecycle := {}
+) -> String:
+	var target_ids := _valid_target_ids(local_player_id, remote_player_positions, player_lifecycle)
 	if target_ids.is_empty():
 		return ""
 
@@ -24,11 +36,17 @@ static func cycle_target(local_player_id: String, current_target_id: String, rem
 	return target_ids[(current_index + 1) % target_ids.size()]
 
 
-static func _valid_target_ids(local_player_id: String, remote_player_positions: Dictionary) -> Array[String]:
+static func _valid_target_ids(
+	local_player_id: String,
+	remote_player_positions: Dictionary,
+	player_lifecycle: Dictionary
+) -> Array[String]:
 	var target_ids: Array[String] = []
 	for player_id in remote_player_positions.keys():
 		var target_id := str(player_id)
 		if target_id == "" || target_id == local_player_id:
+			continue
+		if str(player_lifecycle.get(target_id, "")) != PLAYER_ACTIVE:
 			continue
 		target_ids.append(target_id)
 

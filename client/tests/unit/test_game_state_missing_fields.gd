@@ -71,6 +71,45 @@ func test_apply_state_missing_lives_keeps_current_hud_lives_and_does_not_crash()
 	assert_true(game.has_received_state)
 
 
+func test_apply_state_stores_player_lifecycle() -> void:
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_PLAYER_LIFECYCLE] = {
+		WorldStateFixture.LOCAL_PLAYER_ID: "active",
+		WorldStateFixture.REMOTE_PLAYER_ID: "unexpected_status",
+	}
+	state[Packets.FIELD_ASTEROIDS] = {}
+	state[Packets.FIELD_BULLETS] = {}
+
+	game._apply_state(state)
+
+	assert_eq(game.player_lifecycle[WorldStateFixture.LOCAL_PLAYER_ID], "active")
+	assert_eq(game.player_lifecycle[WorldStateFixture.REMOTE_PLAYER_ID], "unexpected_status")
+
+
+func test_apply_state_missing_player_lifecycle_uses_empty_dictionary() -> void:
+	game.player_lifecycle = {"stale-player": "active"}
+	var state := WorldStateFixture.state()
+	state.erase(Packets.FIELD_PLAYER_LIFECYCLE)
+	state[Packets.FIELD_ASTEROIDS] = {}
+	state[Packets.FIELD_BULLETS] = {}
+
+	game._apply_state(state)
+
+	assert_true(game.player_lifecycle.is_empty())
+
+
+func test_apply_state_invalid_player_lifecycle_uses_empty_dictionary() -> void:
+	game.player_lifecycle = {"stale-player": "active"}
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_PLAYER_LIFECYCLE] = "active"
+	state[Packets.FIELD_ASTEROIDS] = {}
+	state[Packets.FIELD_BULLETS] = {}
+
+	game._apply_state(state)
+
+	assert_true(game.player_lifecycle.is_empty())
+
+
 func test_self_death_event_missing_respawn_delay_uses_safe_zero_delay() -> void:
 	game.self_id = WorldStateFixture.LOCAL_PLAYER_ID
 	hud_controller.set_lives(2)
@@ -152,6 +191,18 @@ func test_multiplayer_local_game_over_with_targets_shows_spectate() -> void:
 	assert_true(_primary_label("Spectate").visible)
 	assert_false(_primary_label("Waiting").visible)
 	assert_false(hud_controller.get_game_menu().primary_action_button.disabled)
+
+
+func test_multiplayer_local_game_over_with_pending_target_shows_waiting() -> void:
+	game.session_mode = "Multiplayer"
+	game.current_room_state = "InGame"
+	_add_spectate_target("remote-player", Vector2(42.0, 24.0), "pending_respawn")
+
+	game._set_game_over_state()
+
+	assert_false(_primary_label("Spectate").visible)
+	assert_true(_primary_label("Waiting").visible)
+	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
 
 
 func test_multiplayer_room_game_over_enables_lobby_menu() -> void:
@@ -312,6 +363,23 @@ func test_switch_camera_cycles_to_next_spectate_target() -> void:
 	assert_eq(game.gameplay_camera.global_position, Vector2(30.0, 40.0))
 
 
+func test_switch_camera_skips_eliminated_spectate_target() -> void:
+	game.session_mode = "Multiplayer"
+	game.current_room_state = "InGame"
+	_add_spectate_target("remote-a", Vector2(10.0, 20.0))
+	_add_spectate_target("remote-b", Vector2(30.0, 40.0), "eliminated")
+	_add_spectate_target("remote-c", Vector2(50.0, 60.0))
+	game._set_game_over_state()
+	hud_controller.get_game_menu()._on_primary_action_pressed()
+	assert_eq(game.current_spectate_target_id, "remote-a")
+
+	game._cycle_spectate_target()
+
+	assert_true(game.is_spectating)
+	assert_eq(game.current_spectate_target_id, "remote-c")
+	assert_eq(game.gameplay_camera.global_position, Vector2(50.0, 60.0))
+
+
 func test_switch_camera_wraps_to_first_spectate_target() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
@@ -452,5 +520,10 @@ func _game_menu_nodes() -> Array[Node]:
 	return hud_scene.find_children("GameMenu", "", true, false)
 
 
-func _add_spectate_target(player_id := "remote-player", position := Vector2(42.0, 24.0)) -> void:
+func _add_spectate_target(
+	player_id := "remote-player",
+	position := Vector2(42.0, 24.0),
+	lifecycle_status := "active"
+) -> void:
 	game.world_sync.remote_player_visual_positions[player_id] = position
+	game.player_lifecycle[player_id] = lifecycle_status

@@ -311,6 +311,11 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	for id, player := range game.state.Players {
 		players[id] = player.State()
 	}
+	matchDecision := game.matchDecisionLocked()
+	playerLifecycle := make(map[string]string, len(matchDecision.Players))
+	for _, player := range matchDecision.Players {
+		playerLifecycle[player.ID] = string(player.Status)
+	}
 
 	asteroids := make(map[string]entities.AsteroidState, len(game.state.Asteroids))
 	for id, asteroid := range game.state.Asteroids {
@@ -324,13 +329,14 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	events := append(make([]EventState, 0, len(game.pendingEvents[playerID])), game.pendingEvents[playerID]...)
 
 	return StatePacket{
-		Type:      PacketTypeState,
-		SelfID:    playerID,
-		Lives:     game.playerLives(playerID),
-		Players:   players,
-		Bullets:   bullets,
-		Asteroids: asteroids,
-		Events:    events,
+		Type:            PacketTypeState,
+		SelfID:          playerID,
+		Lives:           game.playerLives(playerID),
+		Players:         players,
+		PlayerLifecycle: playerLifecycle,
+		Bullets:         bullets,
+		Asteroids:       asteroids,
+		Events:          events,
 	}
 }
 

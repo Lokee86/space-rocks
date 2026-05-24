@@ -40,6 +40,7 @@ var room_id := ""
 var current_room_state := ""
 var session_mode := "SinglePlayer"
 var preserve_network_on_exit := false
+var player_lifecycle := {}
 var world_sync: WorldSync
 
 
@@ -120,6 +121,7 @@ func _apply_state(data: Dictionary) -> void:
 
 	self_id = data[Packets.FIELD_SELF_ID]
 	var server_players: Dictionary = data[Packets.FIELD_PLAYERS]
+	player_lifecycle = _player_lifecycle_from_state(data)
 	var server_bullets: Dictionary = data.get(Packets.FIELD_BULLETS, {})
 	var server_asteroids: Dictionary = data.get(Packets.FIELD_ASTEROIDS, {})
 	var server_events: Array = []
@@ -146,6 +148,17 @@ func _apply_state(data: Dictionary) -> void:
 		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
 		if hud_controller.is_dead && awaiting_respawn_confirmation:
 			_set_alive_state()
+
+
+func _player_lifecycle_from_state(data: Dictionary) -> Dictionary:
+	var lifecycle_data = data.get(Packets.FIELD_PLAYER_LIFECYCLE, {})
+	if !(lifecycle_data is Dictionary):
+		return {}
+
+	var lifecycle := {}
+	for player_id in lifecycle_data.keys():
+		lifecycle[str(player_id)] = str(lifecycle_data[player_id])
+	return lifecycle
 
 
 func _on_network_connected() -> void:
@@ -513,7 +526,15 @@ func _is_room_game_over() -> bool:
 
 
 func _has_spectate_targets() -> bool:
-	return world_sync != null && !world_sync.get_remote_player_visual_positions().is_empty()
+	if world_sync == null:
+		return false
+
+	return SpectateTargetsScript.select_target(
+		self_id,
+		"",
+		world_sync.get_remote_player_visual_positions(),
+		player_lifecycle
+	) != ""
 
 
 func _start_spectating() -> bool:
@@ -521,7 +542,8 @@ func _start_spectating() -> bool:
 	current_spectate_target_id = SpectateTargetsScript.select_target(
 		self_id,
 		current_spectate_target_id,
-		remote_positions
+		remote_positions,
+		player_lifecycle
 	)
 	if current_spectate_target_id == "":
 		is_spectating = false
@@ -555,7 +577,8 @@ func _update_spectate_camera() -> void:
 	current_spectate_target_id = SpectateTargetsScript.select_target(
 		self_id,
 		current_spectate_target_id,
-		remote_positions
+		remote_positions,
+		player_lifecycle
 	)
 	if current_spectate_target_id == "":
 		_stop_spectating(true)
@@ -582,7 +605,8 @@ func _cycle_spectate_target() -> void:
 	current_spectate_target_id = SpectateTargetsScript.cycle_target(
 		self_id,
 		current_spectate_target_id,
-		remote_positions
+		remote_positions,
+		player_lifecycle
 	)
 	if current_spectate_target_id == "":
 		_stop_spectating(true)
