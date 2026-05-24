@@ -421,7 +421,8 @@ Prefer `ClientLogger` over raw `print()` for new client lifecycle, UI, networkin
 - Keep rendering, local audio/effects, UI, and interpolation in the Godot client.
 - Keep room/domain lifecycle ownership in `services/game-server/internal/rooms`: create/join/leave, readiness, start-game, single-player startup, return-to-lobby, game-over transition, game ownership, and cleanup policy.
 - Keep websocket/session/packet transport in `services/game-server/internal/networking`: websocket upgrade/read/write loops, packet dispatch, per-connection session fields, player activation/deactivation, snapshots, and errors.
-- Keep game rules in `services/game-server/internal/game`.
+- Keep reusable simulation and gameplay state mutation in `services/game-server/internal/game`.
+- Keep match/mode policy decisions in `services/game-server/internal/game/rules`. Rules should receive plain snapshots/facts and return decisions/status; they should not import `game` or `rooms`.
 - Keep per-entity movement integration and advance-with-wrap behavior in `services/game-server/internal/game/motion`. `Game.Step()` should call the motion seam for individual entities while retaining map iteration, gates, deletion, spawning, collision, scoring, and lifecycle order.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is the wrap-aware server spatial layer for toroidal world behavior.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
@@ -440,7 +441,9 @@ For a server gameplay bug:
 - `services/game-server/internal/game/combat.go`
 - `services/game-server/internal/game/collisions.go`
 - `services/game-server/internal/game/damage.go`
+- `services/game-server/internal/game/match.go`
 - `services/game-server/internal/game/motion/`
+- `services/game-server/internal/game/rules/`
 - `services/game-server/internal/game/session.go`
 - `services/game-server/internal/game/spawn_types.go`
 - `services/game-server/internal/game/spawning.go`

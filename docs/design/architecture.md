@@ -71,6 +71,7 @@ Core server packages:
 - `services/game-server/internal/rooms`: room state, room membership, lifecycle orchestration, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
+- `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation.
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
@@ -100,7 +101,8 @@ The server currently owns:
 - entity damage/destruction resolution
 - asteroid splitting
 - scoring
-- lives, death, game-over, and respawn rules
+- lives, death, and respawn state
+- match-over policy evaluation
 - safe initial spawn/respawn placement
 - state packet generation
 
@@ -144,9 +146,39 @@ Game.Step/combat/session decides when spawn is needed
 
 Timed asteroid scheduling still belongs to `Game.Step()`, and `spawnAsteroidBatch()` still owns the timed batch count. `spawnAsteroid()` still selects the target camera position and offscreen wrapped spawn position, then asks `spawning.Spawner` to build the timed `AsteroidSpawnPlan`. Combat still decides when fragments are needed; `spawnAsteroidFragments()` keeps the split log in `Game` and asks `spawning.Spawner` for fragment plans. `applyAsteroidSpawn()` remains in `Game` as the bridge that requests an asteroid ID from `spawning.Spawner`, constructs the entity, and mutates `game.state.Asteroids`.
 
-Player initial spawn and respawn planning now use `PlayerSpawnPlan`. `planInitialPlayerSpawn()` preserves the existing `playerIndex`-based preferred position plus safe-spawn fallback. `planPlayerRespawn()` receives the already-gated `*playerSession` and preserves the existing `safeRespawnPosition()` behavior. Player lifecycle still owns session lookup, `CanRespawn()` gating, lives, death, respawn cooldowns, ship creation, camera view attachment, and game-over/session state.
+Player initial spawn and respawn planning now use `PlayerSpawnPlan`. `planInitialPlayerSpawn()` preserves the existing `playerIndex`-based preferred position plus safe-spawn fallback. `planPlayerRespawn()` receives the already-gated `*playerSession` and preserves the existing `safeRespawnPosition()` behavior. Player lifecycle still owns session lookup, `CanRespawn()` gating, lives, death, respawn cooldowns, ship creation, and camera view attachment. Match-over policy is evaluated through `services/game-server/internal/game/rules`.
 
 This is still a partial seam. Bullet construction now lives in `spawning.Spawner`, but `spawnBullet()` remains the `Game` adapter that inserts the projectile into `game.state.Projectiles`. Do not add enemies, powerups, waves, spawn packets, or client behavior through this seam until those systems exist.
+
+### Match Rules
+
+`services/game-server/internal/game/rules` owns match/mode policy decisions from plain facts. It does not import `internal/game` or `internal/rooms`, does not mutate `Game`, and does not inspect game storage directly.
+
+The current seam is intentionally small:
+
+```text
+Game/session state
+  -> rules.MatchSnapshot
+  -> rules.EvaluateMatch
+  -> rules.MatchDecision
+```
+
+`Game.matchSnapshot()` is the adapter from `Game` internals to rules facts. It creates one `rules.PlayerSnapshot` per player session and maps:
+
+- `ID`
+- `HasRemainingLives` from `session.Lives > 0`
+- `HasActiveShip` from whether `game.state.Players` contains that session ID
+
+`Game.IsGameOver()` remains the public game-facing API used by rooms. It locks the game, evaluates the rules snapshot, and returns `MatchDecision.IsOver`.
+
+Current match-over behavior is preserved:
+
+- no player sessions means not game over
+- any session with remaining lives means not game over
+- any active ship means not game over
+- otherwise the match is over
+
+This policy is based on remaining lives, not `session.CanRespawn()`. `CanRespawn()` includes respawn cooldown eligibility and remains a session/player-lifecycle gate for respawn requests, not a match outcome rule. Rooms still own room lifecycle transitions such as `InGame` to `GameOver`; they should continue calling `Game.IsGameOver()` rather than importing rules.
 
 ### Entity Damage Resolution
 
@@ -372,7 +404,7 @@ Current limitations:
 
 - Keep authoritative gameplay logic on the server unless client prediction/interpolation is explicitly being added.
 - Do not duplicate scoring, lives, respawn safety, collision outcomes, or asteroid split rules in the client.
-- Keep network transport separate from core game simulation. Websocket code should live in `services/game-server/internal/networking`; game rules should live in `services/game-server/internal/game`.
+- Keep network transport separate from core game simulation. Websocket code should live in `services/game-server/internal/networking`; reusable simulation should live in `services/game-server/internal/game`; match/mode policy evaluation should live in `services/game-server/internal/game/rules`.
 - Keep reusable simulation code out of `main.go`. The server entrypoint should register routes, configure dependencies, and start the process.
 - Use `shared/game_data.toml`, `shared/packets/packets.toml`, and `tools/data_sync/` for packet and constant data that must stay aligned across Go and Godot.
 - Do not hand-edit generated files unless the generator/source data is intentionally being bypassed.

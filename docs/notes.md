@@ -229,7 +229,8 @@ Server package ownership:
 
 - `services/game-server/internal/rooms` owns `Room`, `RoomManager`, `RoomMember`, room states, room error constants, room capacity, room code/default-room helpers, room `*game.Game` ownership, and room lifecycle decisions for create/join/leave/ready/start, single-player startup, return-to-lobby, game-over transition, and cleanup.
 - `services/game-server/internal/networking` owns websocket/session/outbound queue transport, packet handlers, per-connection player activation/deactivation, and sending/broadcasting `RoomSnapshot`/`RoomError`.
-- `services/game-server/internal/game` owns simulation/gameplay rules.
+- `services/game-server/internal/game` owns simulation, gameplay state mutation, and adapters from game storage to narrower gameplay seams.
+- `services/game-server/internal/game/rules` owns match/mode policy evaluation from plain snapshots. It currently evaluates match-over status through `MatchSnapshot -> EvaluateMatch -> MatchDecision`.
 
 Client lifecycle notes:
 
@@ -259,6 +260,24 @@ Respawn logic is server controlled. Players start with shared constant lives. De
 
 Initial spawning has been adjusted to reuse safe spawn logic while staying a separate concern so future initial-spawn-specific rules can be added.
 
+### Match Rules Seam
+
+Match-over policy now has a package boundary at `services/game-server/internal/game/rules`.
+
+Current flow:
+
+```text
+Game/session state
+  -> Game.matchSnapshot()
+  -> rules.MatchSnapshot
+  -> rules.EvaluateMatch()
+  -> rules.MatchDecision
+```
+
+`Game.IsGameOver()` remains the room-facing API. Rooms continue to own `InGame` to `GameOver` lifecycle transitions and should not import rules directly.
+
+Current behavior is unchanged: no player sessions means not over, any session with remaining lives means not over, any active ship means not over, and otherwise the match is over. This is intentionally based on `session.Lives > 0` mapped to `HasRemainingLives`, not `session.CanRespawn()`. `CanRespawn()` still includes respawn cooldown eligibility and remains part of session/player lifecycle.
+
 ### Spawn Planning Seam
 
 Spawning now has a partial ownership seam split between `services/game-server/internal/game` and `services/game-server/internal/game/spawning`:
@@ -270,7 +289,7 @@ Spawning now has a partial ownership seam split between `services/game-server/in
 - `planInitialPlayerSpawn()` chooses the player initial spawn position while preserving `playerIndex` behavior and safe-spawn fallback.
 - `planPlayerRespawn()` chooses the player respawn position from the already-gated `*playerSession`.
 
-Current behavior is intended to remain unchanged. `Game.Step()` still owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, `spawnAsteroid()` still owns camera target/spawn-position selection, combat still decides when fragments are needed, and player lifecycle still owns session lookup, lives, death, respawn cooldowns, ship creation, camera attachment, and game-over/session state. `spawnBullet()` still inserts bullets into `game.state.Projectiles`; construction and ID allocation live in `Spawner`.
+Current behavior is intended to remain unchanged. `Game.Step()` still owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, `spawnAsteroid()` still owns camera target/spawn-position selection, combat still decides when fragments are needed, and player lifecycle still owns session lookup, lives, death, respawn cooldowns, ship creation, and camera attachment. Match-over policy is evaluated through `services/game-server/internal/game/rules`. `spawnBullet()` still inserts bullets into `game.state.Projectiles`; construction and ID allocation live in `Spawner`.
 
 ### Entity Damage Resolution
 

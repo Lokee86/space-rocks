@@ -291,7 +291,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Domain gameplay events should be emitted by owning systems and consumed later by achievements, stats, API summaries, logs, or notifications. Do not hardwire those future consumers into combat/scoring/spawning/lives code.
 - Networking should transport, decode/route packets, manage websocket session state, and write responses. Room lifecycle policy belongs in rooms. Gameplay simulation belongs in game.
 - `rooms` owns room creation, joining, leaving, readiness, lifecycle transitions, cleanup policy, and game instance ownership. `networking` may retain websocket session activation/deactivation when it mutates websocket session fields.
-- `game` owns authoritative gameplay simulation and gameplay rules. It should not own websocket transport, API persistence, account/auth concerns, or lobby UI flow.
+- `game` owns authoritative gameplay simulation, gameplay state mutation, and adapters from game storage into narrower gameplay seams. Match/mode policy evaluation belongs in `services/game-server/internal/game/rules`, which should receive plain snapshots/facts and return decisions/status. `game` should not own websocket transport, API persistence, account/auth concerns, or lobby UI flow.
 - Before adding code to a large file, check whether an existing seam already owns the behavior. If it does, add the behavior there. If not, propose the seam first.
 
 ## Where To Look First
@@ -302,6 +302,8 @@ Server gameplay:
 - `services/game-server/internal/game/motion/`
 - `services/game-server/internal/game/combat.go`
 - `services/game-server/internal/game/session.go`
+- `services/game-server/internal/game/match.go`
+- `services/game-server/internal/game/rules/`
 - `services/game-server/internal/game/spawning.go`
 - `services/game-server/internal/game/spawning/`
 - `services/game-server/internal/game/scoring.go`

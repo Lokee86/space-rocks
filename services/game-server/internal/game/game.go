@@ -11,6 +11,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/rules"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
@@ -62,19 +63,8 @@ func (game *Game) IsGameOver() bool {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	if len(game.playerSessions) == 0 {
-		return false
-	}
-	for _, session := range game.playerSessions {
-		if session.Lives > 0 {
-			return false
-		}
-	}
-	if len(game.state.Players) > 0 {
-		return false
-	}
-
-	return true
+	decision := rules.EvaluateMatch(game.matchSnapshot())
+	return decision.IsOver
 }
 
 func (game *Game) AddPlayer() string {
