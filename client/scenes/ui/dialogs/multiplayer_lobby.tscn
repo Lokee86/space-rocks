@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_6lf8k"]
 [ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="3_6rt4v"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="4_0vxb0"]
-[ext_resource type="Script" uid="uid://qo4tawcg5244" path="res://scripts/ui/multiplayer_lobby.gd" id="5_75w2v"]
+[ext_resource type="Script" uid="uid://qo4tawcg5244" path="res://scripts/ui/lobby/multiplayer_lobby.gd" id="5_75w2v"]
 
 [node name="CenterContainer2" type="CenterContainer" unique_id=862692582]
 anchors_preset = 15
