@@ -5,6 +5,7 @@ signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
+const PlayerSyncState = preload("res://scripts/networking/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
@@ -131,7 +132,7 @@ func _apply_players(self_id: String, server_players: Dictionary) -> void:
 		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
 		var visual_position := server_position
 		var server_rotation: float = state[Packets.FIELD_ROTATION]
-		var is_paused := bool(state.get(Packets.FIELD_PAUSED, false))
+		var is_paused := PlayerSyncState.is_paused(state)
 
 		if player_id == self_id:
 			visual_position = local_visual_position
