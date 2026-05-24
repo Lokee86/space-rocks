@@ -170,7 +170,7 @@ services/game-server/tests/game/helpers_test.go
 
 Keep harness helpers gameplay-oriented and deliberate: create a scenario, add players, send packets, step simulation, decode state, place entities, set collision presets, or adjust session state needed for precise behavior tests. Avoid exposing raw private maps directly to individual tests.
 
-Use same-package tests under `services/game-server/internal/` only for tiny unexported seams that should not become production API just to make tests compile. Keep those exceptions focused on pure conversion or helper behavior.
+Use same-package tests under `services/game-server/internal/` only for tiny unexported seams that should not become production API just to make tests compile. Keep those exceptions focused on pure conversion or helper behavior. The current collision detection seam is covered by existing game behavior tests; do not export its helpers only to test them directly.
 
 ## Client Test Layout
 
@@ -437,6 +437,7 @@ For a server gameplay bug:
 
 - `services/game-server/internal/game/game.go`
 - `services/game-server/internal/game/combat.go`
+- `services/game-server/internal/game/collisions.go`
 - `services/game-server/internal/game/damage.go`
 - `services/game-server/internal/game/session.go`
 - `services/game-server/internal/game/spawning.go`

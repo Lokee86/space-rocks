@@ -266,6 +266,14 @@ Current behavior is unchanged: bullet/asteroid hits still destroy and fragment a
 
 The seam is general entity damage, not player-only health. Requests carry target/source IDs and entity types for players, asteroids, and projectiles, plus future no-op shape for shield and invulnerability bypass concepts. No client packets, packet schemas, health storage, shield UI, or balance rules were added in this slice.
 
+### Collision Detection Seam
+
+Server combat now routes current bullet/asteroid and player/asteroid pair overlap checks through `services/game-server/internal/game/collisions.go`.
+
+The seam returns concrete facts: `BulletAsteroidCollision` and `PlayerAsteroidCollision`. It preserves current event positions by using the source entity position: bullet position for bullet blasts, player position for ship deaths. It intentionally does not use `physics.Collision.ContactPoint` for those event positions.
+
+The helpers are unexported and side-effect-free. They do not despawn entities, build or resolve damage requests, award score, spawn fragments, decrement lives, set respawn cooldowns, record events, or touch packets/client code. Combat still owns the deferred ordering for scoring, despawn, fragments, death/session updates, game-over logging, and domain event recording.
+
 ### Scoring
 
 Scoring is server controlled and tied to player instances. Asteroid hit score is:
@@ -323,7 +331,7 @@ Use `ClientLogger` for new client lifecycle/network/UI diagnostics instead of ad
 - Business/API concerns belong in the planned `services/api-server/` service, not in the Go game server.
 - Room state owns a separate `*game.Game` per room.
 - Shared constants/packets should be generated, not copied by hand. Constants use `shared/game_data.toml` and `tools/data_sync/`; packets use `shared/packets/packets.toml` and `tools/data_sync/`. Output filtering may keep server-owned constants out of client generated files even when they remain in the constants source of truth.
-- Collision shapes are shared through JSON and used by the server physics package.
+- Collision shapes are shared through JSON and used by the server physics package. Current combat pair checks route through the server collision detection seam in `internal/game/collisions.go`.
 - Score, lives, respawn, and collision outcomes should not be duplicated as authoritative client logic.
 - Normal lifecycle logs should usually be debug-level; warnings/errors should be reserved for unusual or failed behavior.
 

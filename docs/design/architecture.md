@@ -105,7 +105,14 @@ The server currently owns:
 
 ### Entity Damage Resolution
 
-`services/game-server/internal/game/damage.go` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat detects collisions, builds a `DamageRequest`, calls `resolveDamage`, and then existing systems consume the `DamageResult`.
+`services/game-server/internal/game/collisions.go` defines a narrow collision detection seam for the destructive collision pairs currently used by combat. It reports concrete collision facts:
+
+- `BulletAsteroidCollision`
+- `PlayerAsteroidCollision`
+
+The helpers answer only which pair collided and which impact position preserves the current event behavior. Bullet/asteroid impact position remains the bullet position. Player/asteroid impact position remains the player position. The seam intentionally does not use `physics.Collision.ContactPoint` for these event positions.
+
+`services/game-server/internal/game/damage.go` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat consumes collision facts, builds a `DamageRequest`, calls `resolveDamage`, and then existing systems consume the `DamageResult`.
 
 Current behavior is intentionally unchanged:
 
@@ -114,7 +121,9 @@ bullet hits asteroid -> projectile damage resolves Destroyed -> existing asteroi
 ship hits asteroid -> collision damage resolves Fatal for player -> existing death, lives, respawn cooldown, logging, and ship death flow
 ```
 
-The resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
+The collision helpers only answer whether a bullet/asteroid or player/asteroid pair overlapped in the current wrapped world, plus the preserved impact position. They do not mutate entities, build damage requests, resolve damage, award score, spawn fragments, decrement lives, set respawn cooldowns, emit events, log, or write packets.
+
+The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
 
 The initial model already carries general target/source identity and future fields for shields, invulnerability bypass, health, and shield absorption, but no shield or health storage mechanics are active yet. Keep future durability work routed through this seam without moving scoring, spawning, or player lifecycle ownership into the resolver.
 
@@ -145,7 +154,7 @@ Spatial rules flow through `services/game-server/internal/game/space`:
 - spawning aim uses wrapped direction
 - visibility/despawn uses wrapped delta
 - respawn safety uses wrapped distance
-- ship/asteroid and bullet/asteroid collisions place temporary asteroid bodies in wrapped-local space before collision checks
+- ship/asteroid and bullet/asteroid collision helpers place temporary asteroid bodies in wrapped-local space before collision checks
 
 The client renders continuous visual coordinates. `world_sync.gd` tracks `local_server_position` and `local_visual_position`; remote players, asteroids, bullets, and server-driven effects render relative to the local player with shortest wrapped deltas. The camera and background follow the local player node, so they inherit the continuous visual position.
 
@@ -204,7 +213,7 @@ The physics package provides collision primitives and collision detection for ci
 shared/collisions/collision_shapes.json
 ```
 
-The server uses imported collision shapes for ship, bullet, and asteroid collision bodies.
+The server uses imported collision shapes for ship, bullet, and asteroid collision bodies. Gameplay collision ownership is split deliberately: `physics` owns primitive overlap math, `collisions.go` owns current game-pair collision facts, and `combat.go` owns damage/death/destruction/scoring/event orchestration.
 
 ### Logging And Config
 

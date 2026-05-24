@@ -112,11 +112,13 @@ The server toggle handling is in:
 services/game-server/internal/game/game.go
 ```
 
-The collision gate is in:
+The world-freeze collision pass gate is in:
 
 ```text
-services/game-server/internal/game/combat.go
+services/game-server/internal/game/game.go
 ```
+
+Pair collision fact helpers are in `services/game-server/internal/game/collisions.go`, and combat consumes those facts in `services/game-server/internal/game/combat.go`.
 
 World-freeze gates are in:
 
