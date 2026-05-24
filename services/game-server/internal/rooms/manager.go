@@ -44,14 +44,6 @@ func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *RoomManager {
 	return manager
 }
 
-// DefaultRoom returns the legacy direct-game room. It creates an already-started
-// direct game room and should not be used for lobby-created multiplayer flow.
-// New websocket lifecycle code should use CreateLobbyRoom, JoinRoom,
-// CreateStartedSinglePlayerRoom, StartRoomGame, and ReturnSessionToLobby instead.
-func (manager *RoomManager) DefaultRoom() *Room {
-	return manager.GetOrCreate(DefaultRoomID)
-}
-
 // Join is a legacy direct-game compatibility path. It joins or creates an
 // already-started direct game room and should not be used for lobby-created
 // multiplayer flow. New websocket lifecycle code should use CreateLobbyRoom,

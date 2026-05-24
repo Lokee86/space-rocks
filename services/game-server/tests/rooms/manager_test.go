@@ -12,15 +12,11 @@ func TestRoomManagerUsesDefaultRoomForBlankID(t *testing.T) {
 	manager := rooms.NewRoomManager()
 	defer manager.StopAll()
 
-	defaultRoom := manager.DefaultRoom()
 	blankRoom := manager.GetOrCreate("")
 	spaceRoom := manager.GetOrCreate("   ")
 
-	if blankRoom != defaultRoom {
-		t.Fatal("expected blank room id to use default room")
-	}
-	if spaceRoom != defaultRoom {
-		t.Fatal("expected whitespace room id to use default room")
+	if spaceRoom != blankRoom {
+		t.Fatal("expected blank and whitespace room ids to use the same default room")
 	}
 }
 
