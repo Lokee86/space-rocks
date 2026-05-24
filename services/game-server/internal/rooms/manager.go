@@ -44,10 +44,18 @@ func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *RoomManager {
 	return manager
 }
 
+// DefaultRoom returns the legacy direct-game room. It creates an already-started
+// direct game room and should not be used for lobby-created multiplayer flow.
+// New websocket lifecycle code should use CreateLobbyRoom, JoinRoom,
+// CreateStartedSinglePlayerRoom, StartRoomGame, and ReturnSessionToLobby instead.
 func (manager *RoomManager) DefaultRoom() *Room {
 	return manager.GetOrCreate(DefaultRoomID)
 }
 
+// Join is a legacy direct-game compatibility path. It joins or creates an
+// already-started direct game room and should not be used for lobby-created
+// multiplayer flow. New websocket lifecycle code should use CreateLobbyRoom,
+// JoinRoom, CreateStartedSinglePlayerRoom, StartRoomGame, and ReturnSessionToLobby instead.
 func (manager *RoomManager) Join(roomID string) (*Room, func()) {
 	roomID = NormalizeRoomID(roomID)
 
@@ -74,6 +82,10 @@ func (manager *RoomManager) Join(roomID string) (*Room, func()) {
 	}
 }
 
+// GetOrCreate is a legacy direct-game compatibility path. It creates
+// already-started direct game rooms and should not be used for lobby-created
+// multiplayer flow. New websocket lifecycle code should use CreateLobbyRoom,
+// JoinRoom, CreateStartedSinglePlayerRoom, StartRoomGame, and ReturnSessionToLobby instead.
 func (manager *RoomManager) GetOrCreate(roomID string) *Room {
 	roomID = NormalizeRoomID(roomID)
 
