@@ -5,7 +5,7 @@ signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
-const WorldWrapScript = preload("res://scripts/world_wrap.gd")
+const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")

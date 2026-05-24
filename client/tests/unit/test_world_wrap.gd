@@ -1,7 +1,7 @@
 extends GutTest
 
 const Constants := preload("res://scripts/constants/constants.gd")
-const WorldWrap := preload("res://scripts/world_wrap.gd")
+const WorldWrap := preload("res://scripts/world/world_wrap.gd")
 
 
 func test_wrap_position_wraps_right_to_left() -> void:

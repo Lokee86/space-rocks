@@ -1,6 +1,6 @@
 extends GutTest
 
-const CameraFollowScript := preload("res://scripts/camera_follow.gd")
+const CameraFollowScript := preload("res://scripts/camera/camera_follow.gd")
 
 var player: Node2D
 var camera: Camera2D

@@ -2,12 +2,12 @@ extends Node2D
 
 signal return_to_menu_requested
 
-const EffectsScript = preload("res://scripts/effects.gd")
-const CameraFollowScript = preload("res://scripts/camera_follow.gd")
+const EffectsScript = preload("res://scripts/gameplay/effects.gd")
+const CameraFollowScript = preload("res://scripts/camera/camera_follow.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
-const SpectateTargetsScript = preload("res://scripts/spectate_targets.gd")
+const SpectateTargetsScript = preload("res://scripts/gameplay/spectate_targets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
 const PlayerLifecycle = preload("res://scripts/gameplay/player_lifecycle.gd")
