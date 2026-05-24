@@ -195,7 +195,7 @@ func _can_process_gameplay_packets() -> bool:
 	if current_room_state == "":
 		return true
 
-	return _is_room_in_game()
+	return _is_room_in_game() || _is_room_game_over()
 
 
 func _setup_network_client() -> void:

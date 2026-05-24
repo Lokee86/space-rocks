@@ -28,7 +28,7 @@ func writeServerMessages(
 				return
 			}
 		case <-ticker.C:
-			if session.room == nil || session.currentPlayerID == "" || session.room.State != rooms.RoomStateInGame {
+			if session.currentPlayerID == "" || !canSendGameplayPresentationState(session.room) {
 				continue
 			}
 
@@ -45,6 +45,12 @@ func writeServerMessages(
 			}
 		}
 	}
+}
+
+func canSendGameplayPresentationState(room *rooms.Room) bool {
+	return room != nil &&
+		room.Game != nil &&
+		(room.State == rooms.RoomStateInGame || room.State == rooms.RoomStateGameOver)
 }
 
 func checkRoomGameOver(room *rooms.Room) bool {
