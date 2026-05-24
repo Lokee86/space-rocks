@@ -63,8 +63,18 @@ func (game *Game) IsGameOver() bool {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	decision := rules.EvaluateMatch(game.matchSnapshot())
-	return decision.IsOver
+	return game.matchDecisionLocked().IsOver
+}
+
+func (game *Game) MatchDecision() rules.MatchDecision {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	return game.matchDecisionLocked()
+}
+
+func (game *Game) matchDecisionLocked() rules.MatchDecision {
+	return rules.EvaluateMatch(game.matchSnapshot())
 }
 
 func (game *Game) AddPlayer() string {
