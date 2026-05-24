@@ -184,6 +184,23 @@ Current routed production paths:
 
 Generated packet structs remain where they are, and packet schema edits still belong in `shared/packets/packets.toml`. Do not add protobuf references, codec interfaces, or format switching unless a future prompt explicitly starts that migration. Remaining direct JSON usage is acceptable for non-packet data such as collision-shape loading and for tests that inspect generated JSON tags or packet shape.
 
+### Client Packet Codec
+
+Client packet wire JSON now routes through:
+
+```text
+client/scripts/networking/packet_codec/packet_codec.gd
+```
+
+The codec is deliberately small and JSON-only. It wraps `JSON.stringify(packet)` and `JSON.parse_string(text)` with static `encode(packet: Dictionary)` and `decode(text: String)` helpers.
+
+Current routed production paths:
+
+- inbound websocket packet text decode in `client/scripts/networking/network_client.gd`
+- outbound websocket packet dictionary encode in `client/scripts/networking/network_client.gd`
+
+`network_client.gd` remains the websocket owner for polling, signals, connection state, graceful close, and `send_text`. Generated packet builders remain in `client/scripts/networking/packets.gd`, and packet schema edits still belong in `shared/packets/packets.toml`. Do not add packet validation, typed packet objects, protobuf references, codec interfaces, or format switching unless a future prompt explicitly starts that migration. Remaining direct client JSON usage is acceptable in `packet_codec.gd` itself and in focused tests that inspect codec JSON shape.
+
 ### Data Sync Pipeline
 
 A TOML-based sync tool is active for constants and packets:

@@ -28,7 +28,8 @@ Key client pieces:
 - `client/scripts/ui/game_shell.gd`: top-level shell for menu/game-loop scene switching and always-on parallax background scrolling.
 - `client/scenes/ui/main_menu.tscn` and `client/scripts/ui/main_menu.gd`: main menu controls for single-player, multiplayer dialog launch, and quit.
 - `client/scenes/game_loop.tscn` and `client/scripts/game.gd`: active gameplay scene/controller. Creates the network client, world sync, HUD controller, and effects controller.
-- `client/scripts/networking/network_client.gd`: wraps Godot `WebSocketPeer`, handles connect, poll, send, graceful close, and packet parsing.
+- `client/scripts/networking/network_client.gd`: wraps Godot `WebSocketPeer`, handles connect, poll, send, graceful close, and packet signals.
+- `client/scripts/networking/packet_codec/packet_codec.gd`: JSON-only client packet wire encode/decode wrapper around `JSON.stringify` and `JSON.parse_string`.
 - `client/scripts/networking/world_sync.gd`: applies server state to local/remote player, bullet, and asteroid nodes. It tracks local server coordinates separately from continuous visual coordinates so rendering can cross wrapped world edges without snapping.
 - `client/scripts/world_wrap.gd`: client-side toroidal wrap math using generated world-size constants.
 - `client/scripts/entities/player.gd`: collects input into packet data, plays local laser audio, and toggles local afterburner visuals.
@@ -290,6 +291,8 @@ Room/domain ownership lives in `services/game-server/internal/rooms`. That packa
 
 Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. The seam is intentionally JSON-only for now and exposes generic `Encode(packet any)` and `Decode(data []byte, packet any)` helpers. It must not import `internal/game`; generated packet structs stay in their current packages. Networking uses it for websocket client packet decode plus room snapshot/error encode, and `game.Game.State()` uses it for state packet encode. Collision-shape JSON loading and tests that inspect generated JSON tags are not packet wire serialization.
 
+Client packet wire serialization goes through `client/scripts/networking/packet_codec/packet_codec.gd`. It is also intentionally JSON-only and only wraps `JSON.stringify`/`JSON.parse_string`; `network_client.gd` remains the websocket owner for polling, signals, and `send_text`. Generated GDScript packet builders remain in `client/scripts/networking/packets.gd`, and the codec should not grow packet validation, typed packet objects, protobuf references, or format switching without an explicit migration.
+
 The websocket connection itself is session-only. Room membership happens through packets:
 
 - `CreateRoomRequest`
@@ -381,11 +384,11 @@ See [NestJS API server plan](../api/nestjs-api-server.md).
 The current runtime data flow is:
 
 1. Godot collects input in `player.gd`.
-2. `game.gd` sends input/client-config/respawn packets through `network_client.gd`.
-3. The Go websocket read path decodes client packet JSON through `packetcodec` and passes packets to room/game handlers.
+2. `game.gd` sends input/client-config/respawn packets through `network_client.gd`; outbound packet dictionaries are JSON-encoded through the client packet codec.
+3. The Go websocket read path decodes client packet JSON through the server `packetcodec` and passes packets to room/game handlers.
 4. The game simulation applies input and advances authoritative state.
 5. The server encodes `StatePacket` JSON through `packetcodec` and writes it back to the client.
-6. `game.gd` receives the packet, stores packet-level player lifecycle status, and passes renderable state to `world_sync.gd`.
+6. `network_client.gd` decodes inbound websocket text through the client packet codec, then `game.gd` receives the packet, stores packet-level player lifecycle status, and passes renderable state to `world_sync.gd`.
 7. `world_sync.gd` creates/removes/interpolates rendered nodes.
 8. HUD/effects/audio update from state and events.
 

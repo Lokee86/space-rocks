@@ -52,7 +52,7 @@ Main Menu -> Multiplayer Dialog -> /ws session -> CreateRoomRequest/JoinRoomRequ
 Runtime flow:
 
 1. Godot collects input in `client/scripts/entities/player.gd`.
-2. `client/scripts/game.gd` sends input/config/respawn/pause packets through `client/scripts/networking/network_client.gd`.
+2. `client/scripts/game.gd` sends input/config/respawn/pause packets through `client/scripts/networking/network_client.gd`, which encodes packet JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
 3. `services/game-server/internal/networking/websocket_read.go` reads client packets and decodes packet JSON through `services/game-server/internal/protocol/packetcodec`.
 4. Lobby/lifecycle packets call `services/game-server/internal/rooms` for domain decisions and networking sends snapshots/errors.
 5. After a room reaches `InGame`, the room's `*game.Game` handles gameplay packets and advances simulation.
@@ -313,6 +313,14 @@ services/game-server/internal/protocol/packetcodec
 ```
 
 `packetcodec` is intentionally JSON-only for now. It exposes generic `Encode(packet any)` and `Decode(data []byte, packet any)` helpers and must not import `internal/game`. Do not add codec interfaces, protobuf references, or format switching until there is a concrete migration. Generated packet structs stay in `internal/game` and `internal/game/entities`; schema changes still belong in `shared/packets/packets.toml`.
+
+Client packet wire JSON is centralized in:
+
+```text
+client/scripts/networking/packet_codec/packet_codec.gd
+```
+
+The client codec is intentionally JSON-only for now. It wraps `JSON.stringify(packet)` and `JSON.parse_string(text)` with static `encode(packet: Dictionary)` and `decode(text: String)` helpers. `network_client.gd` still owns websocket polling, signals, and send helpers; the codec must not know about sockets, rooms, gameplay, packet validation, protobuf, or alternate formats. Generated packet builders stay in `client/scripts/networking/packets.gd`.
 
 `shared/game_data.toml` contains constants only. Obsolete packet reference sections were removed when the packet TOML pipeline was adopted.
 

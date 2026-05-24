@@ -9,6 +9,7 @@ signal packet_parse_failed(text: String)
 const NORMAL_CLOSE_CODE := 1000
 const GRACEFUL_CLOSE_TIMEOUT_SECONDS := 0.25
 const Packets = preload("res://scripts/networking/packets.gd")
+const PacketCodec = preload("res://scripts/networking/packet_codec/packet_codec.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 var socket := WebSocketPeer.new()
@@ -45,7 +46,7 @@ func poll() -> void:
 
 	while socket.get_available_packet_count() > 0:
 		var text := socket.get_packet().get_string_from_utf8()
-		var data = JSON.parse_string(text)
+		var data = PacketCodec.decode(text)
 		if data == null:
 			packet_parse_failed.emit(text)
 			continue
@@ -57,7 +58,7 @@ func send_packet(packet: Dictionary) -> void:
 	if !is_connected_to_server():
 		return
 
-	socket.send_text(JSON.stringify(packet))
+	socket.send_text(PacketCodec.encode(packet))
 
 
 func send_create_room_request() -> void:
