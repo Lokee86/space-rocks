@@ -1,10 +1,9 @@
 package networking
 
 import (
-	"encoding/json"
-
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 )
 
 func readClientInput(
@@ -20,7 +19,7 @@ func readClientInput(
 		}
 
 		var packet game.ClientPacket
-		if err := json.Unmarshal(msg, &packet); err != nil {
+		if err := packetcodec.Decode(msg, &packet); err != nil {
 			logging.Network.Warn("websocket packet decode failed",
 				logging.FieldError, err,
 				logging.FieldRoomID, session.currentRoomID,

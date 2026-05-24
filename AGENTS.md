@@ -260,6 +260,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
 - Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred.
+- Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec` instead of direct `encoding/json` calls. The codec is intentionally JSON-only and generic; do not add format switching, protobuf references, or an interface unless explicitly requested. Non-packet JSON such as collision-shape data-file parsing may still use `encoding/json` directly.
 - Keep packet-facing player lifecycle status in `StatePacket.player_lifecycle`, beside `players`. Do not put match lifecycle on `ShipState`; pending-respawn and eliminated players may not have active ship state.
 - Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability. Do not infer active eligibility solely from remote player positions or ship presence.
 - Use `services/game-server/internal/game/motion` for per-entity movement integration and advance-with-wrap behavior.
@@ -338,6 +339,7 @@ Shared schema/generation:
 
 - `shared/game_data.toml`
 - `shared/packets/packets.toml`
+- `services/game-server/internal/protocol/packetcodec/`
 - `tools/data_sync/README.md`
 - `tools/data_sync/main.py`
 

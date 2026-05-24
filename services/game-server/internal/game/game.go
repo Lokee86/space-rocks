@@ -1,7 +1,6 @@
 package game
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 )
 
 type Game struct {
@@ -204,7 +204,7 @@ func (game *Game) State(playerID string) []byte {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	response, err := json.Marshal(game.statePacket(playerID))
+	response, err := packetcodec.Encode(game.statePacket(playerID))
 	if err != nil {
 		logging.Game.Error("state marshal failed", err, logging.FieldPlayerID, playerID)
 		return nil

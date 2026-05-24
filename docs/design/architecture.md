@@ -78,6 +78,7 @@ Core server packages:
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
 - `services/game-server/internal/constants`: generated Go constants from `shared/game_data.toml`.
 - `services/game-server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
+- `services/game-server/internal/protocol/packetcodec`: JSON-only packet wire encode/decode helpers for server packets.
 
 ### Game Loop And Simulation
 
@@ -287,6 +288,8 @@ Room/domain ownership lives in `services/game-server/internal/rooms`. That packa
 
 `services/game-server/internal/networking` owns websocket/session/packet transport. It upgrades `/ws`, reads generated packets, calls room-domain methods, attaches or clears websocket session player IDs, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
 
+Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. The seam is intentionally JSON-only for now and exposes generic `Encode(packet any)` and `Decode(data []byte, packet any)` helpers. It must not import `internal/game`; generated packet structs stay in their current packages. Networking uses it for websocket client packet decode plus room snapshot/error encode, and `game.Game.State()` uses it for state packet encode. Collision-shape JSON loading and tests that inspect generated JSON tags are not packet wire serialization.
+
 The websocket connection itself is session-only. Room membership happens through packets:
 
 - `CreateRoomRequest`
@@ -379,9 +382,9 @@ The current runtime data flow is:
 
 1. Godot collects input in `player.gd`.
 2. `game.gd` sends input/client-config/respawn packets through `network_client.gd`.
-3. The Go websocket handler reads packets and passes them to the room's `game.Game`.
+3. The Go websocket read path decodes client packet JSON through `packetcodec` and passes packets to room/game handlers.
 4. The game simulation applies input and advances authoritative state.
-5. The server writes `StatePacket` JSON back to the client.
+5. The server encodes `StatePacket` JSON through `packetcodec` and writes it back to the client.
 6. `game.gd` receives the packet, stores packet-level player lifecycle status, and passes renderable state to `world_sync.gd`.
 7. `world_sync.gd` creates/removes/interpolates rendered nodes.
 8. HUD/effects/audio update from state and events.

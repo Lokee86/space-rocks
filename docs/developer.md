@@ -53,10 +53,10 @@ Runtime flow:
 
 1. Godot collects input in `client/scripts/entities/player.gd`.
 2. `client/scripts/game.gd` sends input/config/respawn/pause packets through `client/scripts/networking/network_client.gd`.
-3. `services/game-server/internal/networking/websocket.go` reads client packets.
+3. `services/game-server/internal/networking/websocket_read.go` reads client packets and decodes packet JSON through `services/game-server/internal/protocol/packetcodec`.
 4. Lobby/lifecycle packets call `services/game-server/internal/rooms` for domain decisions and networking sends snapshots/errors.
 5. After a room reaches `InGame`, the room's `*game.Game` handles gameplay packets and advances simulation.
-6. The server sends state packets at the server tick rate.
+6. The server encodes state packets through `packetcodec` and sends them at the server tick rate.
 7. `client/scripts/networking/world_sync.gd` applies/interpolates state to Godot nodes.
 8. HUD and effects update from state/events.
 
@@ -157,6 +157,7 @@ Current areas:
 - `services/game-server/tests/game/`
 - `services/game-server/tests/networking/`
 - `services/game-server/tests/physics/`
+- `services/game-server/tests/protocol/`
 - `services/game-server/tests/rooms/`
 - `services/game-server/tests/scoring/`
 - `services/game-server/tests/space/`
@@ -304,6 +305,14 @@ tools/data_sync/
 The packet TOML schema preserves the old rich JSON behavior: outputs, structs, packet_types, builders, imports, Go package mappings, GDScript builders, arrays/maps, custom struct references, Go type overrides, and rich type strings such as `map<string,ShipState>` and `array<EventState>`.
 
 Packet-facing player lifecycle status lives on `StatePacket.player_lifecycle`, beside `players`. Do not put lifecycle status on `ShipState`: pending-respawn and eliminated players may not have active ship state.
+
+Server packet wire JSON is centralized in:
+
+```text
+services/game-server/internal/protocol/packetcodec
+```
+
+`packetcodec` is intentionally JSON-only for now. It exposes generic `Encode(packet any)` and `Decode(data []byte, packet any)` helpers and must not import `internal/game`. Do not add codec interfaces, protobuf references, or format switching until there is a concrete migration. Generated packet structs stay in `internal/game` and `internal/game/entities`; schema changes still belong in `shared/packets/packets.toml`.
 
 `shared/game_data.toml` contains constants only. Obsolete packet reference sections were removed when the packet TOML pipeline was adopted.
 

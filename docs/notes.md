@@ -69,6 +69,7 @@ Current subareas:
 - `game`
 - `networking`
 - `physics`
+- `protocol`
 - `rooms`
 - `scoring`
 - `space`
@@ -163,6 +164,25 @@ Recent packet additions:
 
 - `pause_player`
 - `resume_player`
+
+### Server Packet Codec
+
+Server packet wire JSON now routes through:
+
+```text
+services/game-server/internal/protocol/packetcodec
+```
+
+The package is deliberately small and JSON-only. It wraps `encoding/json` with generic `Encode(packet any)` and `Decode(data []byte, packet any)` helpers, and it does not import `internal/game`.
+
+Current routed production paths:
+
+- websocket client packet decode in `services/game-server/internal/networking/websocket_read.go`
+- gameplay `StatePacket` encode in `services/game-server/internal/game/game.go`
+- room snapshot encode in `services/game-server/internal/networking/room_snapshot.go`
+- room error encode in `services/game-server/internal/networking/room_error.go`
+
+Generated packet structs remain where they are, and packet schema edits still belong in `shared/packets/packets.toml`. Do not add protobuf references, codec interfaces, or format switching unless a future prompt explicitly starts that migration. Remaining direct JSON usage is acceptable for non-packet data such as collision-shape loading and for tests that inspect generated JSON tags or packet shape.
 
 ### Data Sync Pipeline
 

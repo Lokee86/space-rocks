@@ -1,11 +1,11 @@
 package networking
 
 import (
-	"encoding/json"
 	"sort"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
@@ -36,7 +36,7 @@ func BuildRoomSnapshot(room *rooms.Room, localMemberID string) game.RoomSnapshot
 
 func (session *webSocketSession) EnqueueRoomSnapshot(room *rooms.Room) {
 	packet := BuildRoomSnapshot(room, session.currentMemberID)
-	payload, err := json.Marshal(packet)
+	payload, err := packetcodec.Encode(packet)
 	if err != nil {
 		logging.Network.Error("room snapshot marshal failed", err,
 			logging.FieldRoomID, room.ID,
