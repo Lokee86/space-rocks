@@ -1,32 +1,16 @@
 package game
 
 import (
-	"fmt"
-	"math"
-	"math/rand"
-
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
+	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) spawnBullet(ship *entities.Ship) {
-	forward := ship.Forward()
-	spawnPosition := ship.Position().Add(forward.Multiply(ship.Stats.BulletSpawnOffset))
-	velocity := forward.Multiply(ship.Stats.BulletSpeed)
-
-	game.nextBulletID++
-	bulletID := fmt.Sprintf("bullet-%d", game.nextBulletID)
-	game.state.Projectiles[bulletID] = entities.NewBullet(
-		bulletID,
-		ship.ID,
-		spawnPosition,
-		ship.Rotation,
-		velocity,
-		ship.Stats.BulletLifetime,
-	)
+	bullet := game.spawner.BuildBullet(ship)
+	game.state.Projectiles[bullet.ID] = bullet
 }
 
 func (game *Game) spawnAsteroidBatch(view *entities.CameraView) {
@@ -36,58 +20,24 @@ func (game *Game) spawnAsteroidBatch(view *entities.CameraView) {
 }
 
 func (game *Game) spawnAsteroid(view *entities.CameraView) {
-	plan := game.planTimedAsteroidSpawn(view)
-	game.applyAsteroidSpawn(plan)
-}
-
-func (game *Game) planTimedAsteroidSpawn(view *entities.CameraView) AsteroidSpawnPlan {
 	targetPosition := view.Position()
 	spawn := game.randomAsteroidSpawnPosition(view)
 	spawn = space.NormalizePosition(spawn)
-	direction := space.Direction(spawn, targetPosition).Rotated(randomRange(
-		-degreesToRadians(constants.AsteroidAimRandomnessDegrees),
-		degreesToRadians(constants.AsteroidAimRandomnessDegrees),
-	))
-	velocity := direction.Multiply(randomAsteroidSpeed())
-
-	return AsteroidSpawnPlan{
-		EntityType: SpawnEntityTypeAsteroid,
-		Reason:     SpawnReasonTimedAsteroid,
-		Position:   spawn,
-		Velocity:   velocity,
-		Size:       rand.Intn(4) + 1,
-		Variant:    rand.Intn(4),
-	}
+	plan := game.spawner.PlanTimedAsteroidSpawn(spawn, targetPosition)
+	game.applyAsteroidSpawn(plan)
 }
 
-func (game *Game) applyAsteroidSpawn(plan AsteroidSpawnPlan) *entities.Asteroid {
-	asteroidID := game.nextAsteroidIDString()
+func (game *Game) applyAsteroidSpawn(plan spawning.AsteroidSpawnPlan) *entities.Asteroid {
+	asteroidID := game.spawner.NextAsteroidID(game.state.Asteroids)
 	asteroid := entities.NewAsteroid(asteroidID, plan.Position, plan.Velocity, plan.Size, plan.Variant)
 	game.state.Asteroids[asteroidID] = asteroid
 	return asteroid
 }
 
-func (game *Game) nextAsteroidIDString() string {
-	for {
-		game.nextAsteroidID++
-		asteroidID := fmt.Sprintf("asteroid-%d", game.nextAsteroidID)
-		if _, exists := game.state.Asteroids[asteroidID]; !exists {
-			return asteroidID
-		}
-	}
-}
-
 func (game *Game) spawnAsteroidFragments(asteroid *entities.Asteroid) {
-	plans := game.planAsteroidFragmentSpawns(asteroid)
-	for _, plan := range plans {
-		game.applyAsteroidSpawn(plan)
-	}
-}
-
-func (game *Game) planAsteroidFragmentSpawns(asteroid *entities.Asteroid) []AsteroidSpawnPlan {
 	fragmentSize := asteroid.FragmentSize()
 	if fragmentSize <= 0 {
-		return nil
+		return
 	}
 
 	position := asteroid.Position()
@@ -98,29 +48,8 @@ func (game *Game) planAsteroidFragmentSpawns(asteroid *entities.Asteroid) []Aste
 		"x", position.X,
 		"y", position.Y,
 	)
-	plans := make([]AsteroidSpawnPlan, 0, 2)
-	for i := 0; i < 2; i++ {
-		direction := randomUnitVector()
-		plans = append(plans, AsteroidSpawnPlan{
-			EntityType: SpawnEntityTypeAsteroid,
-			Reason:     SpawnReasonAsteroidFragment,
-			Position:   position,
-			Velocity:   direction.Multiply(randomAsteroidSpeed()),
-			Size:       fragmentSize,
-			Variant:    rand.Intn(4),
-		})
+	plans := game.spawner.PlanAsteroidFragmentSpawns(asteroid)
+	for _, plan := range plans {
+		game.applyAsteroidSpawn(plan)
 	}
-	return plans
-}
-
-func randomAsteroidSpeed() float64 {
-	return randomRange(constants.AsteroidMinSpeed, constants.AsteroidMaxSpeed)
-}
-
-func randomUnitVector() physics.Vector2 {
-	return physics.Vector2{X: 0, Y: -1}.Rotated(randomRange(0, math.Pi*2))
-}
-
-func degreesToRadians(degrees float64) float64 {
-	return degrees * math.Pi / 180
 }

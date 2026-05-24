@@ -11,6 +11,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
+	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -19,8 +20,7 @@ type Game struct {
 	stopSimulation       chan struct{}
 	stopSimulationOnce   sync.Once
 	nextID               int
-	nextAsteroidID       int
-	nextBulletID         int
+	spawner              *spawning.Spawner
 	asteroidSpawnElapsed float64
 	worldDevTools        devtools.WorldOptions
 	collisionShapes      physics.CollisionShapeCatalog
@@ -42,6 +42,7 @@ func New() *Game {
 		cameraViews:     make(map[string]*entities.CameraView),
 		playerSessions:  make(map[string]*playerSession),
 		pendingEvents:   make(map[string][]EventState),
+		spawner:         spawning.New(),
 		state:           entities.NewGameState(),
 	}
 }

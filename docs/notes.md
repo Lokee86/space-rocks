@@ -260,17 +260,16 @@ Initial spawning has been adjusted to reuse safe spawn logic while staying a sep
 
 ### Spawn Planning Seam
 
-Spawning now has a partial ownership seam in `services/game-server/internal/game`:
+Spawning now has a partial ownership seam split between `services/game-server/internal/game` and `services/game-server/internal/game/spawning`:
 
-- `spawn_types.go` defines generic spawn vocabulary plus `AsteroidSpawnPlan` and `PlayerSpawnPlan`.
+- `spawn_types.go` defines player spawn vocabulary plus `PlayerSpawnPlan`.
+- `spawning/spawner.go` defines `Spawner`, `AsteroidSpawnPlan`, asteroid ID allocation, bullet ID allocation, bullet construction, timed asteroid plan construction, and asteroid fragment plan construction.
 - `spawning.go` keeps timed asteroid orchestration in `spawnAsteroid()` and fragment orchestration in `spawnAsteroidFragments()`.
-- `planTimedAsteroidSpawn()` chooses timed asteroid spawn facts.
-- `planAsteroidFragmentSpawns()` chooses fragment spawn facts.
-- `applyAsteroidSpawn()` allocates asteroid IDs and mutates `game.state.Asteroids`.
+- `applyAsteroidSpawn()` remains in `Game`; it requests asteroid IDs from `Spawner`, constructs asteroids, and mutates `game.state.Asteroids`.
 - `planInitialPlayerSpawn()` chooses the player initial spawn position while preserving `playerIndex` behavior and safe-spawn fallback.
 - `planPlayerRespawn()` chooses the player respawn position from the already-gated `*playerSession`.
 
-Current behavior is intended to remain unchanged. `Game.Step()` still owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, combat still decides when fragments are needed, and player lifecycle still owns session lookup, lives, death, respawn cooldowns, ship creation, camera attachment, and game-over/session state. Bullet spawning is still separate projectile logic.
+Current behavior is intended to remain unchanged. `Game.Step()` still owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, `spawnAsteroid()` still owns camera target/spawn-position selection, combat still decides when fragments are needed, and player lifecycle still owns session lookup, lives, death, respawn cooldowns, ship creation, camera attachment, and game-over/session state. `spawnBullet()` still inserts bullets into `game.state.Projectiles`; construction and ID allocation live in `Spawner`.
 
 ### Entity Damage Resolution
 

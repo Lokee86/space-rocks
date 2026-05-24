@@ -442,6 +442,7 @@ For a server gameplay bug:
 - `services/game-server/internal/game/session.go`
 - `services/game-server/internal/game/spawn_types.go`
 - `services/game-server/internal/game/spawning.go`
+- `services/game-server/internal/game/spawning/`
 - `services/game-server/internal/game/scoring.go`
 - `services/game-server/internal/game/entities/`
 - relevant tests under `services/game-server/tests/game/`

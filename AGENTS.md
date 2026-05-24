@@ -301,6 +301,7 @@ Server gameplay:
 - `services/game-server/internal/game/combat.go`
 - `services/game-server/internal/game/session.go`
 - `services/game-server/internal/game/spawning.go`
+- `services/game-server/internal/game/spawning/`
 - `services/game-server/internal/game/scoring.go`
 - `services/game-server/internal/game/entities/`
 
@@ -442,4 +443,4 @@ Full gameplay/network smoke testing remains manual for now: opening the game sce
 - If tests fail, stop and report the failure. Do not continue piling changes onto a failing state unless the prompt explicitly asks for a focused fix.
 - Read-only prompts must not edit files, run formatters, or perform cleanup.
 - Implementation prompts must not broaden scope beyond the named target. If broader work appears necessary, stop and propose a follow-up prompt.
-- When completing a numbered prompt, announce completion using the exact format `**COMPLETED PROMPT X**`, replacing `X` with the prompt number.
+- When completing a numbered prompt, announce completion at the bottom of the response/report using the exact format `**COMPLETED PROMPT X**`, replacing `X` with the prompt number.

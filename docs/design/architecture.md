@@ -105,14 +105,22 @@ The server currently owns:
 
 ### Spawn Planning
 
-`services/game-server/internal/game/spawn_types.go` defines the shared spawn vocabulary currently used by the game package:
+`services/game-server/internal/game/spawn_types.go` defines the player spawn vocabulary currently used by the game package:
 
 - `SpawnEntityType`
 - `SpawnReason`
-- `AsteroidSpawnPlan`
 - `PlayerSpawnPlan`
 
-The vocabulary is intentionally generic, while plans and application stay entity-specific. There is no universal optional-field spawn request/plan object.
+`services/game-server/internal/game/spawning` owns asteroid/projectile spawning policy:
+
+- `Spawner`
+- `AsteroidSpawnPlan`
+- bullet ID allocation and bullet construction
+- asteroid ID allocation
+- timed asteroid plan construction
+- asteroid fragment plan construction
+
+The vocabulary and plans stay entity-specific. There is no universal optional-field spawn request/plan object.
 
 Current implemented seam:
 
@@ -122,11 +130,11 @@ Game.Step/combat/session decides when spawn is needed
   -> entity-specific apply/lifecycle code mutates game state
 ```
 
-Timed asteroid scheduling still belongs to `Game.Step()`, and `spawnAsteroidBatch()` still owns the timed batch count. `planTimedAsteroidSpawn()` selects the same offscreen wrapped position, aim, speed, size, and variant facts as before. `planAsteroidFragmentSpawns()` selects the same fragment facts for asteroid splits. `applyAsteroidSpawn()` owns asteroid ID allocation and `game.state.Asteroids` mutation.
+Timed asteroid scheduling still belongs to `Game.Step()`, and `spawnAsteroidBatch()` still owns the timed batch count. `spawnAsteroid()` still selects the target camera position and offscreen wrapped spawn position, then asks `spawning.Spawner` to build the timed `AsteroidSpawnPlan`. Combat still decides when fragments are needed; `spawnAsteroidFragments()` keeps the split log in `Game` and asks `spawning.Spawner` for fragment plans. `applyAsteroidSpawn()` remains in `Game` as the bridge that requests an asteroid ID from `spawning.Spawner`, constructs the entity, and mutates `game.state.Asteroids`.
 
 Player initial spawn and respawn planning now use `PlayerSpawnPlan`. `planInitialPlayerSpawn()` preserves the existing `playerIndex`-based preferred position plus safe-spawn fallback. `planPlayerRespawn()` receives the already-gated `*playerSession` and preserves the existing `safeRespawnPosition()` behavior. Player lifecycle still owns session lookup, `CanRespawn()` gating, lives, death, respawn cooldowns, ship creation, camera view attachment, and game-over/session state.
 
-This is still a partial seam. Bullet spawning remains a projectile/weapon concern in `spawnBullet()`. Do not add enemies, powerups, waves, spawn packets, or client behavior through this seam until those systems exist.
+This is still a partial seam. Bullet construction now lives in `spawning.Spawner`, but `spawnBullet()` remains the `Game` adapter that inserts the projectile into `game.state.Projectiles`. Do not add enemies, powerups, waves, spawn packets, or client behavior through this seam until those systems exist.
 
 ### Entity Damage Resolution
 
