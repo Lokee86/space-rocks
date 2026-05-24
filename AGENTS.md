@@ -268,6 +268,31 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 - When the user asks to "answer" or "report", do not edit files.
 - Keep changes scoped. The user strongly prefers scalable structure without unnecessary code growth.
 
+## Architecture / Seam Discipline
+
+- Prefer small, explicit ownership seams over broad god files. If a change would add a new responsibility to an already-large file, stop and propose the smallest seam or same-package split first.
+- Do not add new behavior to gravity-well files unless the prompt explicitly allows it. Known gravity-well candidates include broad lifecycle, networking, sync, shell, and game-loop files.
+- A seam must have a concrete responsibility. Good seams include rooms, scoring, spawning, damage, player lifecycle, codec, domain events, session flow, logging, and presentation controllers. Avoid vague buckets like `utils`, `common`, `manager`, or `helpers` unless the responsibility is specific.
+- Keep systems self-contained. A system may emit facts/events, expose narrow methods, or accept policy/config, but it should not reach into unrelated systems to make their decisions.
+- Do not let integration seams become god objects. Domain events may define, queue, drain, and translate events, but must not decide scoring, damage, spawning, lives, achievements, API persistence, or other gameplay/business rules.
+- When adding a feature, first identify the owning system. If no obvious owner exists, stop and report the missing seam instead of placing code in the nearest working file.
+- Defer mechanics, not ownership. If a near-future feature clearly needs a home, add the minimal owning seam early even if the first behavior remains unchanged.
+- Prefer behavior-preserving extraction before behavior change. First move or route existing behavior through the correct seam, then add new behavior in a later prompt.
+- Same-package Go file splits are preferred for reducing god files when no new package boundary is needed. New Go packages/folders are architecture decisions and require a clear domain boundary.
+- In Godot/GDScript, folder moves are less important than scene wiring. Avoid risky scene/node/path/signal changes unless required. Prefer extracting pure/helper/controller logic before changing scene ownership.
+- Do not mix unrelated seams in one prompt. Codec, rooms, scoring, spawning, health, domain events, devtools, and client lifecycle should be changed in separate slices unless explicitly instructed otherwise.
+- If a prompt cannot be completed with a small reviewable diff, stop and report the smallest next prompt instead.
+- If implementation touches more than the named lifecycle/system path, stop and report why before continuing.
+- Every architecture/refactor prompt must preserve current behavior unless it explicitly says behavior may change.
+- Do not add broad cleanup, formatting-only churn, or opportunistic refactors while implementing a seam.
+- Devtools must route through real gameplay seams. Do not create parallel debug-only gameplay logic that bypasses damage, lives, spawning, scoring, movement, room/session, or modifier systems.
+- Constants/config should live with the smallest system that owns the decision. Do not globalize local presentation defaults unnecessarily, but do not bury gameplay, protocol, lifecycle, or environment policy in random files.
+- Domain gameplay events should be emitted by owning systems and consumed later by achievements, stats, API summaries, logs, or notifications. Do not hardwire those future consumers into combat/scoring/spawning/lives code.
+- Networking should transport, decode/route packets, manage websocket session state, and write responses. Room lifecycle policy belongs in rooms. Gameplay simulation belongs in game.
+- `rooms` owns room creation, joining, leaving, readiness, lifecycle transitions, cleanup policy, and game instance ownership. `networking` may retain websocket session activation/deactivation when it mutates websocket session fields.
+- `game` owns authoritative gameplay simulation and gameplay rules. It should not own websocket transport, API persistence, account/auth concerns, or lobby UI flow.
+- Before adding code to a large file, check whether an existing seam already owns the behavior. If it does, add the behavior there. If not, propose the seam first.
+
 ## Where To Look First
 
 Server gameplay:
@@ -412,4 +437,9 @@ Full gameplay/network smoke testing remains manual for now: opening the game sce
 - Do not create broad refactors when a small change solves the request.
 - If a task starts to balloon, stop and report why before adding large amounts of code.
 - Preserve current behavior unless the user explicitly asks to change it.
+- Keep implementation slices small enough for quick review. Verification commands may run longer, but the code diff should remain small.
+- After each implementation prompt, run the requested validation command and report the exact command, result, and `git status --short`.
+- If tests fail, stop and report the failure. Do not continue piling changes onto a failing state unless the prompt explicitly asks for a focused fix.
+- Read-only prompts must not edit files, run formatters, or perform cleanup.
+- Implementation prompts must not broaden scope beyond the named target. If broader work appears necessary, stop and propose a follow-up prompt.
 - When completing a numbered prompt, announce completion using the exact format `**COMPLETED PROMPT X**`, replacing `X` with the prompt number.

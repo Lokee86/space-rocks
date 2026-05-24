@@ -49,8 +49,8 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			hitAsteroids[asteroidID] = asteroid
 			scoreAwards = append(scoreAwards, NewAsteroidHitScoreAward(bullet.OwnerID, asteroid))
 			impactPosition := bullet.Position()
-			game.broadcastEvent(EventState{
-				Type: PacketTypeBulletBlast,
+			game.recordDomainEvent(gameEvent{
+				Type: gameEventBulletBlast,
 				X:    impactPosition.X,
 				Y:    impactPosition.Y,
 			})
@@ -142,8 +142,8 @@ func (game *Game) handleShipAsteroidCollisions() {
 				"y", position.Y,
 			)
 		}
-		game.broadcastEvent(EventState{
-			Type:         PacketTypeShipDeath,
+		game.recordDomainEvent(gameEvent{
+			Type:         gameEventShipDeath,
 			PlayerID:     playerID,
 			Lives:        lives,
 			RespawnDelay: respawnDelay,

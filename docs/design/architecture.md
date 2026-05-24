@@ -102,6 +102,24 @@ The server currently owns:
 - safe initial spawn/respawn placement
 - state packet generation
 
+### Domain Gameplay Events
+
+`services/game-server/internal/game/events.go` defines a small internal domain event seam for gameplay facts that already produce client-visible packet events. The first supported facts are bullet blasts and ship deaths.
+
+Gameplay systems such as combat still own gameplay decisions: collision outcomes, scoring, lives, death, respawn, and spawning rules remain in their existing files. The event seam records internal facts and translates them to the current packet-facing `EventState` output where needed.
+
+Current event flow:
+
+```text
+combat/scoring/spawning/lives code
+  -> internal domain event
+  -> packet-facing EventState
+  -> per-player pending event queue
+  -> StatePacket.Events
+```
+
+The seam should stay narrow. It is not an achievements system, stats system, API integration point, persistence layer, logging policy, or replacement home for gameplay rules. Future systems may consume richer domain facts, but the event seam itself should only define, record, drain, and translate events needed by existing behavior.
+
 ### Toroidal World Wrap
 
 The server stores bounded wrapped world coordinates using `constants.WorldWidth` and `constants.WorldHeight`. `Game.Step()` centrally normalizes moving players, asteroids, and bullets after movement.

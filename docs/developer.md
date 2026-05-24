@@ -168,6 +168,8 @@ services/game-server/tests/game/helpers_test.go
 
 Keep harness helpers gameplay-oriented and deliberate: create a scenario, add players, send packets, step simulation, decode state, place entities, set collision presets, or adjust session state needed for precise behavior tests. Avoid exposing raw private maps directly to individual tests.
 
+Use same-package tests under `services/game-server/internal/` only for tiny unexported seams that should not become production API just to make tests compile. Keep those exceptions focused on pure conversion or helper behavior.
+
 ## Client Test Layout
 
 Godot client tests use GUT and live under:
