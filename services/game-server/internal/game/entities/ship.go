@@ -34,6 +34,7 @@ func (ship *Ship) SetConfig(config ClientConfig) {
 func (ship *Ship) Pause() {
 	ship.Paused = true
 	ship.ClearInput()
+	ship.Velocity = physics.Vector2{}
 }
 
 func (ship *Ship) Resume(invulnerabilitySeconds float64) {

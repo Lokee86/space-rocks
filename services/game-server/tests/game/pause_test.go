@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func TestShipIsSuspendedReflectsPauseAndFreeze(t *testing.T) {
@@ -101,6 +102,26 @@ func TestPausePlayerPacketClearsInputAndIgnoresNewInput(t *testing.T) {
 	}
 	if len(packet.Bullets) != 0 {
 		t.Fatalf("expected paused player not to shoot, got %d bullets", len(packet.Bullets))
+	}
+}
+
+func TestPausePlayerPacketClearsVelocityBeforeResume(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+	ship := scenario.player(playerID)
+	start := ship.Position()
+	ship.Velocity = physics.Vector2{X: 25, Y: -10}
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
+	if ship.Velocity.X != 0 || ship.Velocity.Y != 0 {
+		t.Fatalf("expected pause to clear velocity, got (%v, %v)", ship.Velocity.X, ship.Velocity.Y)
+	}
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeResumePlayer})
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	if ship.X != start.X || ship.Y != start.Y {
+		t.Fatalf("expected resumed player not to drift from (%v, %v), got (%v, %v)", start.X, start.Y, ship.X, ship.Y)
 	}
 }
 
