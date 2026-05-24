@@ -440,6 +440,7 @@ For a server gameplay bug:
 - `services/game-server/internal/game/collisions.go`
 - `services/game-server/internal/game/damage.go`
 - `services/game-server/internal/game/session.go`
+- `services/game-server/internal/game/spawn_types.go`
 - `services/game-server/internal/game/spawning.go`
 - `services/game-server/internal/game/scoring.go`
 - `services/game-server/internal/game/entities/`

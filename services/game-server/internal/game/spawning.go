@@ -36,6 +36,11 @@ func (game *Game) spawnAsteroidBatch(view *entities.CameraView) {
 }
 
 func (game *Game) spawnAsteroid(view *entities.CameraView) {
+	plan := game.planTimedAsteroidSpawn(view)
+	game.applyAsteroidSpawn(plan)
+}
+
+func (game *Game) planTimedAsteroidSpawn(view *entities.CameraView) AsteroidSpawnPlan {
 	targetPosition := view.Position()
 	spawn := game.randomAsteroidSpawnPosition(view)
 	spawn = space.NormalizePosition(spawn)
@@ -45,12 +50,21 @@ func (game *Game) spawnAsteroid(view *entities.CameraView) {
 	))
 	velocity := direction.Multiply(randomAsteroidSpeed())
 
-	game.addAsteroid(spawn, velocity, rand.Intn(4)+1, rand.Intn(4))
+	return AsteroidSpawnPlan{
+		EntityType: SpawnEntityTypeAsteroid,
+		Reason:     SpawnReasonTimedAsteroid,
+		Position:   spawn,
+		Velocity:   velocity,
+		Size:       rand.Intn(4) + 1,
+		Variant:    rand.Intn(4),
+	}
 }
 
-func (game *Game) addAsteroid(position physics.Vector2, velocity physics.Vector2, size int, variant int) {
+func (game *Game) applyAsteroidSpawn(plan AsteroidSpawnPlan) *entities.Asteroid {
 	asteroidID := game.nextAsteroidIDString()
-	game.state.Asteroids[asteroidID] = entities.NewAsteroid(asteroidID, position, velocity, size, variant)
+	asteroid := entities.NewAsteroid(asteroidID, plan.Position, plan.Velocity, plan.Size, plan.Variant)
+	game.state.Asteroids[asteroidID] = asteroid
+	return asteroid
 }
 
 func (game *Game) nextAsteroidIDString() string {
@@ -64,9 +78,16 @@ func (game *Game) nextAsteroidIDString() string {
 }
 
 func (game *Game) spawnAsteroidFragments(asteroid *entities.Asteroid) {
+	plans := game.planAsteroidFragmentSpawns(asteroid)
+	for _, plan := range plans {
+		game.applyAsteroidSpawn(plan)
+	}
+}
+
+func (game *Game) planAsteroidFragmentSpawns(asteroid *entities.Asteroid) []AsteroidSpawnPlan {
 	fragmentSize := asteroid.FragmentSize()
 	if fragmentSize <= 0 {
-		return
+		return nil
 	}
 
 	position := asteroid.Position()
@@ -77,15 +98,19 @@ func (game *Game) spawnAsteroidFragments(asteroid *entities.Asteroid) {
 		"x", position.X,
 		"y", position.Y,
 	)
+	plans := make([]AsteroidSpawnPlan, 0, 2)
 	for i := 0; i < 2; i++ {
 		direction := randomUnitVector()
-		game.addAsteroid(
-			position,
-			direction.Multiply(randomAsteroidSpeed()),
-			fragmentSize,
-			rand.Intn(4),
-		)
+		plans = append(plans, AsteroidSpawnPlan{
+			EntityType: SpawnEntityTypeAsteroid,
+			Reason:     SpawnReasonAsteroidFragment,
+			Position:   position,
+			Velocity:   direction.Multiply(randomAsteroidSpeed()),
+			Size:       fragmentSize,
+			Variant:    rand.Intn(4),
+		})
 	}
+	return plans
 }
 
 func randomAsteroidSpeed() float64 {

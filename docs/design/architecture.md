@@ -9,7 +9,7 @@ The project is still in development, so this document describes the architecture
 - `client/`: Godot project. Contains scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go module for the real-time game server. The current entrypoint is `services/game-server/cmd/game-server`.
 - `services/api-server/`: empty placeholder for a planned Node.js/TypeScript NestJS API server for business/backend systems. It is intentionally separate from real-time simulation.
-- `shared/`: JSON source data shared across client and server generation, including constants, packet definitions, and collision shape data.
+- `shared/`: source data shared across client and server generation, including TOML constants, TOML packet definitions, and JSON collision shape data.
 - `docs/`: Project documentation.
 - `tools/`: Python scripts used to generate constants and packet code from `shared/`.
 
@@ -93,7 +93,7 @@ The server currently owns:
 
 - player movement simulation from input
 - bullet spawning
-- asteroid spawning and visibility removal
+- asteroid spawn scheduling, planning, application, and visibility removal
 - bullet/asteroid collision
 - ship/asteroid collision
 - entity damage/destruction resolution
@@ -102,6 +102,28 @@ The server currently owns:
 - lives, death, game-over, and respawn rules
 - safe initial spawn/respawn placement
 - state packet generation
+
+### Spawn Planning
+
+`services/game-server/internal/game/spawn_types.go` defines the shared spawn vocabulary currently used by the game package:
+
+- `SpawnEntityType`
+- `SpawnReason`
+- `AsteroidSpawnPlan`
+
+The vocabulary is intentionally generic, while plans and application stay entity-specific. There is no universal optional-field spawn request/plan object.
+
+Current implemented seam:
+
+```text
+Game.Step/combat decides when asteroid spawn is needed
+  -> asteroid-specific planner selects spawn facts
+  -> asteroid-specific apply helper mutates game state
+```
+
+Timed asteroid scheduling still belongs to `Game.Step()`, and `spawnAsteroidBatch()` still owns the timed batch count. `planTimedAsteroidSpawn()` selects the same offscreen wrapped position, aim, speed, size, and variant facts as before. `planAsteroidFragmentSpawns()` selects the same fragment facts for asteroid splits. `applyAsteroidSpawn()` owns asteroid ID allocation and `game.state.Asteroids` mutation.
+
+This is a partial seam. Player initial spawn and respawn still use the existing session/safe-spawn functions, and bullet spawning remains a projectile/weapon concern in `spawnBullet()`. Do not add enemies, powerups, waves, spawn packets, or client behavior through this seam until those systems exist.
 
 ### Entity Damage Resolution
 
@@ -327,7 +349,7 @@ Current limitations:
 - Do not duplicate scoring, lives, respawn safety, collision outcomes, or asteroid split rules in the client.
 - Keep network transport separate from core game simulation. Websocket code should live in `services/game-server/internal/networking`; game rules should live in `services/game-server/internal/game`.
 - Keep reusable simulation code out of `main.go`. The server entrypoint should register routes, configure dependencies, and start the process.
-- Use `shared/` JSON plus generation scripts for packet and constant data that must stay aligned across Go and Godot.
+- Use `shared/game_data.toml`, `shared/packets/packets.toml`, and `tools/data_sync/` for packet and constant data that must stay aligned across Go and Godot.
 - Do not hand-edit generated files unless the generator/source data is intentionally being bypassed.
 - Do not commit generated recordings or build artifacts. `.gitignore` excludes `tmp/`, Godot export/import state, and `*.avi`.
 - Do not put secrets in client code. The client should be treated as inspectable.
