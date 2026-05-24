@@ -61,8 +61,12 @@ func spawn_bullet_blast(event_position: Vector2) -> void:
 	var sound_length := 1.0
 	if sound.stream != null:
 		sound_length = max(sound.stream.get_length(), sound_length)
+	var blast_ref: WeakRef = weakref(blast_node)
 	owner_node.get_tree().create_timer(sound_length + 0.25).timeout.connect(
-		_queue_free_effect_node.bind(blast_node)
+		func() -> void:
+			var node := blast_ref.get_ref() as Node
+			if node != null and is_instance_valid(node):
+				node.queue_free()
 	)
 
 
@@ -90,8 +94,12 @@ func spawn_ship_death(event_position: Vector2) -> void:
 	if sound.stream != null:
 		sound_length = sound.stream.get_length()
 	if sound_length > 0:
+		var death_ref: WeakRef = weakref(death_node)
 		owner_node.get_tree().create_timer(sound_length + 0.05).timeout.connect(
-			_queue_free_effect_node_once.bind(death_node)
+			func() -> void:
+				var node := death_ref.get_ref() as Node
+				if node != null and is_instance_valid(node):
+					_queue_free_effect_node_once(node)
 		)
 
 
