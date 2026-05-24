@@ -45,6 +45,21 @@ func (game *Game) handleBulletAsteroidCollisions() {
 				continue
 			}
 
+			damage := resolveDamage(DamageRequest{
+				TargetEntityID:   asteroidID,
+				TargetEntityType: EntityTypeAsteroid,
+				SourceEntityID:   bulletID,
+				SourceEntityType: EntityTypeProjectile,
+				Amount:           1,
+				Type:             DamageTypeProjectile,
+				Flags: DamageFlags{
+					Lethal: true,
+				},
+			})
+			if !damage.Destroyed {
+				continue
+			}
+
 			hitBullets[bulletID] = true
 			hitAsteroids[asteroidID] = asteroid
 			scoreAwards = append(scoreAwards, NewAsteroidHitScoreAward(bullet.OwnerID, asteroid))
@@ -93,7 +108,7 @@ func (game *Game) handleShipAsteroidCollisions() {
 			continue
 		}
 
-		for _, asteroid := range game.state.Asteroids {
+		for asteroidID, asteroid := range game.state.Asteroids {
 			if asteroid.IsPendingDespawn() {
 				continue
 			}
@@ -106,6 +121,21 @@ func (game *Game) handleShipAsteroidCollisions() {
 			asteroidBody.Position = player.Position().Add(delta)
 
 			if _, ok := physics.DetectCollision(playerBody, asteroidBody); !ok {
+				continue
+			}
+
+			damage := resolveDamage(DamageRequest{
+				TargetEntityID:   playerID,
+				TargetEntityType: EntityTypePlayer,
+				SourceEntityID:   asteroidID,
+				SourceEntityType: EntityTypeAsteroid,
+				Amount:           1,
+				Type:             DamageTypeCollision,
+				Flags: DamageFlags{
+					Lethal: true,
+				},
+			})
+			if !damage.Fatal || damage.TargetEntityType != EntityTypePlayer {
 				continue
 			}
 
