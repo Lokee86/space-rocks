@@ -166,6 +166,8 @@ bullet hits asteroid -> projectile damage resolves Destroyed -> existing asteroi
 ship hits asteroid -> collision damage resolves Fatal for player -> existing death, lives, respawn cooldown, logging, and ship death flow
 ```
 
+`combat.go` keeps the scan and consequence phases explicit. Projectile/asteroid handling scans projectile and asteroid maps, detects overlap, builds a projectile damage request, resolves damage, and records confirmed hits during the scan. It applies consequences only after the nested scan: score awards, bullet despawn marking, asteroid despawn marking, then fragment spawning. Player/asteroid handling likewise scans player and asteroid maps, gates with `CanTakeCollisionDamage()`, detects overlap, builds a collision damage request, resolves damage, records fatal players in `hitPlayers`, and applies death/session/event consequences only after the nested scan.
+
 The collision helpers only answer whether a projectile/asteroid or player/asteroid pair overlapped in the current wrapped world, plus the preserved impact position. The projectile helper still accepts `*entities.Bullet` because bullets are the current projectile entity. They do not mutate entities, build damage requests, resolve damage, award score, spawn fragments, decrement lives, set respawn cooldowns, emit events, log, or write packets.
 
 The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.

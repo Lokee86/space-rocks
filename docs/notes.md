@@ -278,6 +278,8 @@ Server combat now routes current destructive collision outcomes through a small 
 
 Current behavior is unchanged: bullet/asteroid hits still destroy and fragment asteroids, award score, despawn bullets, and record bullet blast events; ship/asteroid hits still kill the player, decrement lives, set respawn cooldown, and record ship death events. The resolver is intentionally side-effect-free: it returns `DamageResult` facts such as `Destroyed` or `Fatal`, while combat/session/scoring/spawning continue to own lifecycle effects.
 
+Combat now routes the existing flow through named helpers without a new package. `handleBulletAsteroidCollisions()` reads as scan, detect, build projectile damage request, resolve damage, record confirmed hit, then apply consequences after the nested scan. The post-scan projectile consequence order remains score awards, bullet despawn marking, asteroid despawn marking, then fragment spawning. `handleShipAsteroidCollisions()` reads as scan, gate, detect, build player collision damage request, resolve damage, record fatal players, then apply fatal consequences from the post-scan `hitPlayers` loop.
+
 The seam is general entity damage, not player-only health. Requests carry target/source IDs and entity types for players, asteroids, and projectiles, plus future no-op shape for shield and invulnerability bypass concepts. No client packets, packet schemas, health storage, shield UI, or balance rules were added in this slice.
 
 ### Collision Detection Seam
