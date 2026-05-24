@@ -447,7 +447,7 @@ Prefer `ClientLogger` over raw `print()` for new client lifecycle, UI, networkin
 - Keep domain gameplay event types in `services/game-server/internal/game/events`. Gameplay producers should record `events.Event`; root `game/events.go` is the package-local adapter to generated packet `EventState`, and `pendingPresentationEvents` is packet/presentation state only.
 - Keep packet-facing player lifecycle status sourced from `Game.MatchDecision()` or the same game-owned projection seam. The client should consume `StatePacket.player_lifecycle`, not infer lifecycle from `StatePacket.players` or rendered ship presence.
 - Keep client spectate/view-cycle eligibility based on authoritative lifecycle status plus visual availability. Eligible targets should be `active`; `pending_respawn`, `eliminated`, and missing lifecycle status should not be treated as active targets.
-- Keep per-entity movement integration and advance-with-wrap behavior in `services/game-server/internal/game/motion`. `Game.Step()` should call the motion seam for individual entities while retaining map iteration, gates, deletion, spawning, collision, scoring, and lifecycle order.
+- Keep per-entity movement integration and advance-with-wrap behavior in `services/game-server/internal/game/motion`. `Game.Step()` should remain a small phase coordinator in `services/game-server/internal/game/simulation.go`; focused same-package helpers should retain map iteration, gates, deletion, spawning, collision, scoring, and lifecycle order.
 - Use `services/game-server/internal/game/space` for new gameplay distance, direction, and position-normalization logic. It is the wrap-aware server spatial layer for toroidal world behavior.
 - Keep reusable simulation code out of `cmd/game-server/main.go`.
 - Keep business/backend API logic out of the Go game server. The planned `services/api-server/` service should own accounts, persistence, matchmaking metadata, leaderboards, and other non-real-time concerns.
@@ -462,6 +462,13 @@ Prefer `ClientLogger` over raw `print()` for new client lifecycle, UI, networkin
 For a server gameplay bug:
 
 - `services/game-server/internal/game/game.go`
+- `services/game-server/internal/game/input.go`
+- `services/game-server/internal/game/players.go`
+- `services/game-server/internal/game/state_packet.go`
+- `services/game-server/internal/game/simulation.go`
+- `services/game-server/internal/game/simulation_players.go`
+- `services/game-server/internal/game/simulation_asteroids.go`
+- `services/game-server/internal/game/simulation_bullets.go`
 - `services/game-server/internal/game/combat.go`
 - `services/game-server/internal/game/collisions.go`
 - `services/game-server/internal/game/damage.go`

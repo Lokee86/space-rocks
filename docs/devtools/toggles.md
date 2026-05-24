@@ -109,13 +109,13 @@ client/scripts/game.gd
 The server toggle handling is in:
 
 ```text
-services/game-server/internal/game/game.go
+services/game-server/internal/game/input.go
 ```
 
 The world-freeze collision pass gate is in:
 
 ```text
-services/game-server/internal/game/game.go
+services/game-server/internal/game/simulation.go
 ```
 
 Pair collision fact helpers are in `services/game-server/internal/game/collisions.go`, and combat consumes those facts in `services/game-server/internal/game/combat.go`.
@@ -123,7 +123,10 @@ Pair collision fact helpers are in `services/game-server/internal/game/collision
 World-freeze gates are in:
 
 ```text
-services/game-server/internal/game/game.go
+services/game-server/internal/game/simulation.go
+services/game-server/internal/game/simulation_asteroids.go
+services/game-server/internal/game/simulation_bullets.go
+services/game-server/internal/game/simulation_players.go
 ```
 
 ## Packet Flow

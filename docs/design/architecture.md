@@ -109,7 +109,20 @@ The server currently owns:
 - safe initial spawn/respawn placement
 - state packet generation
 
-`Game.Step()` still owns state-map iteration, world-devtool gates, camera view updates, deletion/despawn loops, spawning calls, collision order, scoring, and lifecycle flow. Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`:
+`Game.Step()` is now a small same-package simulation coordinator in `services/game-server/internal/game/simulation.go`. It preserves the authoritative phase order while routing player/session, asteroid, bullet, and collision phases through focused same-package helpers:
+
+```text
+Game.Step()
+  -> stepPlayerSessions
+  -> stepPlayers
+  -> removeReadyPlayers
+  -> stepAsteroidSpawning
+  -> stepAsteroids
+  -> stepBullets
+  -> stepCollisions
+```
+
+The focused simulation helpers still mutate `Game` state under the `Game` mutex; mutex ownership has not moved out of `Game`. Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`:
 
 ```text
 Game.Step()
@@ -147,7 +160,7 @@ Game.Step/combat/session decides when spawn is needed
   -> entity-specific apply/lifecycle code mutates game state
 ```
 
-Timed asteroid scheduling still belongs to `Game.Step()`, and `spawnAsteroidBatch()` still owns the timed batch count. `spawnAsteroid()` still selects the target camera position and offscreen wrapped spawn position, then asks `spawning.Spawner` to build the timed `AsteroidSpawnPlan`. Combat still decides when fragments are needed; `spawnAsteroidFragments()` keeps the split log in `Game` and asks `spawning.Spawner` for fragment plans. `applyAsteroidSpawn()` remains in `Game` as the bridge that requests an asteroid ID from `spawning.Spawner`, constructs the entity, and mutates `game.state.Asteroids`.
+Timed asteroid scheduling belongs to the same-package `stepAsteroidSpawning()` helper in `simulation_asteroids.go`, and `spawnAsteroidBatch()` still owns the timed batch count. `spawnAsteroid()` still selects the target camera position and offscreen wrapped spawn position, then asks `spawning.Spawner` to build the timed `AsteroidSpawnPlan`. Combat still decides when fragments are needed; `spawnAsteroidFragments()` keeps the split log in `Game` and asks `spawning.Spawner` for fragment plans. `applyAsteroidSpawn()` remains in `Game` as the bridge that requests an asteroid ID from `spawning.Spawner`, constructs the entity, and mutates `game.state.Asteroids`.
 
 Player initial spawn and respawn planning now use `PlayerSpawnPlan`. `planInitialPlayerSpawn()` preserves the existing `playerIndex`-based preferred position plus safe-spawn fallback. `planPlayerRespawn()` receives the already-gated `*playerSession` and preserves the existing `safeRespawnPosition()` behavior. Player lifecycle still owns session lookup, `CanRespawn()` gating, lives, death, respawn cooldowns, ship creation, and camera view attachment. Match-over policy is evaluated through `services/game-server/internal/game/rules`.
 
@@ -291,7 +304,7 @@ Room/domain ownership lives in `services/game-server/internal/rooms`. That packa
 
 `services/game-server/internal/networking` owns websocket/session/packet transport. It upgrades `/ws`, reads generated packets, calls room-domain methods, attaches or clears websocket session player IDs, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
 
-Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. The seam is intentionally JSON-only for now and exposes generic `Encode(packet any)` and `Decode(data []byte, packet any)` helpers. It must not import `internal/game`; generated packet structs stay in their current packages. Networking uses it for websocket client packet decode plus room snapshot/error encode, and `game.Game.State()` uses it for state packet encode. Collision-shape JSON loading and tests that inspect generated JSON tags are not packet wire serialization.
+Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. The seam is intentionally JSON-only for now and exposes generic `Encode(packet any)` and `Decode(data []byte, packet any)` helpers. It must not import `internal/game`; generated packet structs stay in their current packages. Networking uses it for websocket client packet decode, state packet encode, and room snapshot/error encode. Collision-shape JSON loading and tests that inspect generated JSON tags are not packet wire serialization.
 
 Client packet wire serialization goes through `client/scripts/networking/packet_codec/packet_codec.gd`. It is also intentionally JSON-only and only wraps `JSON.stringify`/`JSON.parse_string`; `network_client.gd` remains the websocket owner for polling, signals, and `send_text`. Generated GDScript packet builders remain in `client/scripts/networking/packets.gd`, and the codec should not grow packet validation, typed packet objects, protobuf references, or format switching without an explicit migration.
 

@@ -121,7 +121,7 @@ Server behavior:
 - world bounds come from `constants.WorldWidth` and `constants.WorldHeight`
 - `services/game-server/internal/game/space` owns wrapped delta, distance, direction, and normalization
 - `services/game-server/internal/game/motion` owns per-entity advance behavior for ships, asteroids, and bullets: movement integration plus bounds-aware wrapping through `space.WrapPosition`
-- `Game.Step()` still owns state-map iteration, world-devtool gates, camera view updates, deletion/despawn loops, spawning, collisions, scoring, and lifecycle order
+- `Game.Step()` is a small same-package phase coordinator; focused simulation helpers own player/session stepping, asteroid spawn/move cleanup, bullet cleanup, and collision dispatch while preserving state-map iteration, gates, deletion, spawning, collisions, scoring, and lifecycle order
 - spawning, visibility/despawn, respawn safety, and collision checks use wrap-aware spatial helpers
 
 Client behavior:
@@ -178,7 +178,7 @@ The package is deliberately small and JSON-only. It wraps `encoding/json` with g
 Current routed production paths:
 
 - websocket client packet decode in `services/game-server/internal/networking/websocket_read.go`
-- gameplay `StatePacket` encode in `services/game-server/internal/game/game.go`
+- gameplay `StatePacket` encode in `services/game-server/internal/networking/websocket_write.go` after construction by `services/game-server/internal/game/state_packet.go`
 - room snapshot encode in `services/game-server/internal/networking/room_snapshot.go`
 - room error encode in `services/game-server/internal/networking/room_error.go`
 
@@ -331,7 +331,7 @@ Spawning now has a partial ownership seam split between `services/game-server/in
 - `planInitialPlayerSpawn()` chooses the player initial spawn position while preserving `playerIndex` behavior and safe-spawn fallback.
 - `planPlayerRespawn()` chooses the player respawn position from the already-gated `*playerSession`.
 
-Current behavior is intended to remain unchanged. `Game.Step()` still owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, `spawnAsteroid()` still owns camera target/spawn-position selection, combat still decides when fragments are needed, and player lifecycle still owns session lookup, lives, death, respawn cooldowns, ship creation, and camera attachment. Match-over policy is evaluated through `services/game-server/internal/game/rules`. `spawnBullet()` still inserts bullets into `game.state.Projectiles`; construction and ID allocation live in `Spawner`.
+Current behavior is intended to remain unchanged. `stepAsteroidSpawning()` owns timed asteroid scheduling, `spawnAsteroidBatch()` still owns batch count, `spawnAsteroid()` still owns camera target/spawn-position selection, combat still decides when fragments are needed, and player lifecycle still owns session lookup, lives, death, respawn cooldowns, ship creation, and camera attachment. Match-over policy is evaluated through `services/game-server/internal/game/rules`. `spawnBullet()` still inserts bullets into `game.state.Projectiles`; construction and ID allocation live in `Spawner`.
 
 ### Entity Damage Resolution
 
