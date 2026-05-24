@@ -177,7 +177,7 @@ shared/game_data.toml
 Generated constants:
 
 ```text
-client/scripts/constants.gd
+client/scripts/constants/constants.gd
 services/game-server/internal/constants/constants.go
 ```
 
@@ -308,6 +308,7 @@ Server gameplay:
 - `services/game-server/internal/game/rules/`
 - `services/game-server/internal/game/spawning.go`
 - `services/game-server/internal/game/spawning/`
+- `services/game-server/internal/game/scoring/`
 - `services/game-server/internal/game/scoring.go`
 - `services/game-server/internal/game/entities/`
 
@@ -400,7 +401,7 @@ Go server tests live under:
 services/game-server/tests/<area>/
 ```
 
-Current areas include `game`, `networking`, `physics`, and `space`. Do not add new `*_test.go` files beside production packages under `services/game-server/internal/`. For game simulation setup, use the shared harness in `services/game-server/tests/game/helpers_test.go`; keep new helpers intent-level, such as placing entities or sending packets, instead of exposing raw private maps.
+Current areas include `game`, `networking`, `physics`, `rooms`, `scoring`, and `space`. Do not add new `*_test.go` files beside production packages under `services/game-server/internal/`. For game simulation setup, use the shared harness in `services/game-server/tests/game/helpers_test.go`; keep new helpers intent-level, such as placing entities or sending packets, instead of exposing raw private maps.
 
 For server gameplay changes, run:
 

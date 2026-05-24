@@ -70,6 +70,7 @@ Current subareas:
 - `networking`
 - `physics`
 - `rooms`
+- `scoring`
 - `space`
 
 Future server tests should stay under `services/game-server/tests/<area>/`, not beside production packages under `services/game-server/internal/`.
@@ -321,7 +322,18 @@ Scoring is server controlled and tied to player instances. Asteroid hit score is
 BASE_SCORE / asteroid size
 ```
 
-The scoring code is intentionally modular enough to add future enemies or item pickups.
+Score policy now lives in `services/game-server/internal/game/scoring`. The package is pure: it evaluates `scoring.Event` facts into `scoring.Award` values and does not mutate players, sessions, packets, or logs.
+
+Current flow:
+
+```text
+combat asteroid hit
+  -> scoring.Event{PlayerID, TargetID, AsteroidSize}
+  -> scoring.Policy.Evaluate()
+  -> game.awardScore()
+```
+
+`game.awardScore` remains the game-owned application seam for adding points to player/session state and preserving pause, invulnerability, missing-player, and logging behavior. The scoring package is intentionally modular enough to add future enemies or item pickups.
 
 ### Background / Game Shell
 

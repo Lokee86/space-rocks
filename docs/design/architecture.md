@@ -72,6 +72,7 @@ Core server packages:
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
 - `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation and per-player participation classification.
+- `services/game-server/internal/game/scoring`: pure score policy evaluation. It converts scoring events into awards without mutating game sessions.
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
@@ -215,6 +216,29 @@ The collision helpers only answer whether a projectile/asteroid or player/astero
 The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
 
 The initial model already carries general target/source identity and future fields for shields, invulnerability bypass, health, and shield absorption, but no shield or health storage mechanics are active yet. Keep future durability work routed through this seam without moving scoring, spawning, or player lifecycle ownership into the resolver.
+
+### Scoring Policy
+
+`services/game-server/internal/game/scoring` owns pure score policy. It receives scoring facts as `scoring.Event` values and returns `scoring.Award` values. It does not import `internal/game`, inspect game storage, mutate players or sessions, check pause/invulnerability state, log, emit packets, or write events.
+
+Current scoring flow:
+
+```text
+combat confirms asteroid destroyed by projectile
+  -> scoring.Event{PlayerID, TargetID, AsteroidSize}
+  -> scoring.Policy.Evaluate()
+  -> []scoring.Award
+  -> game.awardScore()
+  -> player/session score mutation and logging
+```
+
+Asteroid score behavior is unchanged:
+
+```text
+constants.BaseScore / asteroid.Size
+```
+
+`game.awardScore` remains the game-owned application seam. It applies awards to active game state and keeps missing-player, paused-player, invulnerable-player, session sync, and score logging behavior outside the scoring policy package.
 
 ### Domain Gameplay Events
 

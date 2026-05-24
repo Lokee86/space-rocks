@@ -3,13 +3,14 @@ package game
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) handleBulletAsteroidCollisions() {
 	hitBullets := map[string]bool{}
 	hitAsteroids := map[string]*entities.Asteroid{}
-	scoreAwards := []ScoreAward{}
+	scoreAwards := []scoring.Award{}
 
 	for bulletID, bullet := range game.state.Projectiles {
 		if hitBullets[bulletID] {
@@ -77,11 +78,17 @@ func (game *Game) recordProjectileAsteroidHit(
 	asteroid *entities.Asteroid,
 	hitBullets map[string]bool,
 	hitAsteroids map[string]*entities.Asteroid,
-	scoreAwards *[]ScoreAward,
+	scoreAwards *[]scoring.Award,
 ) {
 	hitBullets[bulletID] = true
 	hitAsteroids[asteroidID] = asteroid
-	*scoreAwards = append(*scoreAwards, NewAsteroidHitScoreAward(bullet.OwnerID, asteroid))
+	awards := scoring.NewDefaultPolicy().Evaluate(scoring.Event{
+		Kind:         scoring.EventAsteroidDestroyed,
+		PlayerID:     bullet.OwnerID,
+		TargetID:     asteroid.ID,
+		AsteroidSize: asteroid.Size,
+	})
+	*scoreAwards = append(*scoreAwards, awards...)
 	game.recordDomainEvent(gameEvent{
 		Type: gameEventBulletBlast,
 		X:    collision.ImpactPosition.X,
@@ -92,7 +99,7 @@ func (game *Game) recordProjectileAsteroidHit(
 func (game *Game) applyProjectileAsteroidHitConsequences(
 	hitBullets map[string]bool,
 	hitAsteroids map[string]*entities.Asteroid,
-	scoreAwards []ScoreAward,
+	scoreAwards []scoring.Award,
 ) {
 	for _, award := range scoreAwards {
 		game.awardScore(award)

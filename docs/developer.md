@@ -158,6 +158,7 @@ Current areas:
 - `services/game-server/tests/networking/`
 - `services/game-server/tests/physics/`
 - `services/game-server/tests/rooms/`
+- `services/game-server/tests/scoring/`
 - `services/game-server/tests/space/`
 
 Do not add new `*_test.go` files beside production code under `services/game-server/internal/`.
@@ -425,6 +426,7 @@ Prefer `ClientLogger` over raw `print()` for new client lifecycle, UI, networkin
 - Keep websocket/session/packet transport in `services/game-server/internal/networking`: websocket upgrade/read/write loops, packet dispatch, per-connection session fields, player activation/deactivation, snapshots, and errors.
 - Keep reusable simulation and gameplay state mutation in `services/game-server/internal/game`.
 - Keep match/mode policy decisions in `services/game-server/internal/game/rules`. Rules should receive plain snapshots/facts and return decisions/status; they should not import `game` or `rooms`.
+- Keep pure score policy in `services/game-server/internal/game/scoring`. Game code should create scoring events and apply returned awards through game-owned state/session seams.
 - Keep packet-facing player lifecycle status sourced from `Game.MatchDecision()` or the same game-owned projection seam. The client should consume `StatePacket.player_lifecycle`, not infer lifecycle from `StatePacket.players` or rendered ship presence.
 - Keep client spectate/view-cycle eligibility based on authoritative lifecycle status plus visual availability. Eligible targets should be `active`; `pending_respawn`, `eliminated`, and missing lifecycle status should not be treated as active targets.
 - Keep per-entity movement integration and advance-with-wrap behavior in `services/game-server/internal/game/motion`. `Game.Step()` should call the motion seam for individual entities while retaining map iteration, gates, deletion, spawning, collision, scoring, and lifecycle order.
@@ -452,6 +454,7 @@ For a server gameplay bug:
 - `services/game-server/internal/game/spawn_types.go`
 - `services/game-server/internal/game/spawning.go`
 - `services/game-server/internal/game/spawning/`
+- `services/game-server/internal/game/scoring/`
 - `services/game-server/internal/game/scoring.go`
 - `services/game-server/internal/game/entities/`
 - relevant tests under `services/game-server/tests/game/`
