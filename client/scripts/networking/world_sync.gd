@@ -4,6 +4,7 @@ class_name WorldSync
 signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
+const AsteroidSyncState = preload("res://scripts/networking/asteroid_sync_state.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const PlayerSyncState = preload("res://scripts/networking/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
@@ -316,7 +317,7 @@ func _apply_asteroids(server_asteroids: Dictionary) -> void:
 	for asteroid_id in server_asteroids.keys():
 		var state: Dictionary = server_asteroids[asteroid_id]
 		var asteroid_node = _get_asteroid_node(asteroid_id)
-		var raw_server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
+		var raw_server_position := AsteroidSyncState.server_position(state)
 		var visual_position: Vector2
 
 		if asteroid_server_positions.has(asteroid_id):
