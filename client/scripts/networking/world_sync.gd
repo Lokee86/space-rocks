@@ -5,6 +5,7 @@ signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const AsteroidSyncState = preload("res://scripts/networking/asteroid_sync_state.gd")
+const BulletSyncState = preload("res://scripts/networking/bullet_sync_state.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const PlayerSyncState = preload("res://scripts/networking/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
@@ -271,7 +272,7 @@ func _apply_bullets(server_bullets: Dictionary, play_new_bullet_sounds: bool) ->
 		var state: Dictionary = server_bullets[bullet_id]
 		var is_new_bullet := !bullet_nodes.has(bullet_id)
 		var bullet_node = _get_bullet_node(bullet_id)
-		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
+		var server_position := BulletSyncState.server_position(state)
 		var visual_position := local_visual_position + WorldWrapScript.shortest_delta(
 			local_server_position,
 			server_position
