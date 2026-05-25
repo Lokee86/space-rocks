@@ -155,7 +155,7 @@ Keep backward compatibility or migrate the current single ship shape into:
 Update:
 
 ```text
-client/scripts/networking/world_sync.gd
+client/scripts/networking/player_sync.gd
 ```
 
 Add a mapping from `ship_type` to scene path or preload.

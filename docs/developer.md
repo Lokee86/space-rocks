@@ -57,7 +57,7 @@ Runtime flow:
 4. Lobby/lifecycle packets call `services/game-server/internal/rooms` for domain decisions and networking sends snapshots/errors.
 5. After a room reaches `InGame`, the room's `*game.Game` handles gameplay packets and advances simulation.
 6. The server encodes state packets through `packetcodec` and sends them at the server tick rate.
-7. `client/scripts/networking/world_sync.gd` applies/interpolates state to Godot nodes.
+7. `client/scripts/networking/world_sync.gd` coordinates sync ordering and delegates node ownership, packet application, and interpolation to the player, bullet, asteroid, and local-visual sync owners.
 8. HUD and effects update from state/events.
 
 ## Run The Server

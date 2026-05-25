@@ -12,9 +12,6 @@ const PlayerSyncScript = preload("res://scripts/networking/player_sync.gd")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
 
-var owner_node: Node2D
-var bullets_layer: Node2D
-var asteroids_layer: Node2D
 var asteroid_sync
 var bullet_sync
 var local_visual_sync
@@ -28,22 +25,19 @@ func configure(
 	bullets: Node2D,
 	asteroids: Node2D
 ) -> void:
-	owner_node = game_owner
-	bullets_layer = bullets
-	asteroids_layer = asteroids
 	asteroid_sync = AsteroidSyncScript.new()
-	asteroid_sync.configure(asteroids_layer)
+	asteroid_sync.configure(asteroids)
 	bullet_sync = BulletSyncScript.new()
-	bullet_sync.configure(bullets_layer)
+	bullet_sync.configure(bullets)
 	bullet_sync.bullet_spawned.connect(func() -> void:
 		bullet_spawned.emit()
 	)
 	local_visual_sync = LocalVisualSyncScript.new()
 	player_sync = PlayerSyncScript.new()
-	player_sync.configure(owner_node, player)
+	player_sync.configure(game_owner, player)
 
-	asteroids_layer.z_index = ASTEROID_Z_INDEX
-	bullets_layer.z_index = BULLET_Z_INDEX
+	asteroids.z_index = ASTEROID_Z_INDEX
+	bullets.z_index = BULLET_Z_INDEX
 
 
 func apply_state(

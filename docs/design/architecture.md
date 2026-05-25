@@ -30,7 +30,11 @@ Key client pieces:
 - `client/scenes/game_loop.tscn` and `client/scripts/game.gd`: active gameplay scene/controller. Creates the network client, world sync, HUD controller, and effects controller.
 - `client/scripts/networking/network_client.gd`: wraps Godot `WebSocketPeer`, handles connect, poll, send, graceful close, and packet signals.
 - `client/scripts/networking/packet_codec/packet_codec.gd`: JSON-only client packet wire encode/decode wrapper around `JSON.stringify` and `JSON.parse_string`.
-- `client/scripts/networking/world_sync.gd`: applies server state to local/remote player, bullet, and asteroid nodes. It tracks local server coordinates separately from continuous visual coordinates so rendering can cross wrapped world edges without snapping.
+- `client/scripts/networking/world_sync.gd`: thin coordinator for server-state rendering. It configures sync dependencies, preserves apply/interpolation ordering, forwards bullet-spawn signals, and exposes compatibility accessors to `game.gd`.
+- `client/scripts/networking/local_visual_sync.gd`: owns local server position, continuous local visual position, and server-position-to-visual-position conversion for wrapped rendering.
+- `client/scripts/networking/player_sync.gd`: owns player nodes, remote hues, target positions/rotations, pause visibility, remote visual positions, cleanup, packet application, and interpolation.
+- `client/scripts/networking/bullet_sync.gd`: owns bullet nodes, target positions/rotations, cleanup, packet application, interpolation, and bullet-spawn signal decisions.
+- `client/scripts/networking/asteroid_sync.gd`: owns asteroid nodes, scale warning state, target/server/visual positions, visual continuity, cleanup, packet application, and interpolation.
 - `client/scripts/world_wrap.gd`: client-side toroidal wrap math using generated world-size constants.
 - `client/scripts/entities/player.gd`: collects input into packet data, plays local laser audio, and toggles local afterburner visuals.
 - `client/scripts/effects.gd`: spawns local visual/audio effects for bullet impacts, ship death, and game over sound timing.
@@ -286,7 +290,7 @@ Spatial rules flow through `services/game-server/internal/game/space`:
 - respawn safety uses wrapped distance
 - ship/asteroid and projectile/asteroid collision helpers place temporary asteroid bodies in wrapped-local space before collision checks
 
-The client renders continuous visual coordinates. `world_sync.gd` tracks `local_server_position` and `local_visual_position`; remote players, asteroids, bullets, and server-driven effects render relative to the local player with shortest wrapped deltas. The camera and background follow the local player node, so they inherit the continuous visual position.
+The client renders continuous visual coordinates. `local_visual_sync.gd` tracks the local server position and continuous local visual position; `player_sync.gd`, `asteroid_sync.gd`, and `bullet_sync.gd` render entities relative to the local player with shortest wrapped deltas. `world_sync.gd` coordinates the update order and exposes visual-position conversion for server-driven effects. The camera and background follow the local player node, so they inherit the continuous visual position.
 
 See [toroidal wrap](toroidal-wrap.md).
 
@@ -404,7 +408,7 @@ The current runtime data flow is:
 4. The game simulation applies input and advances authoritative state.
 5. The server encodes `StatePacket` JSON through `packetcodec` and writes it back to the client.
 6. `network_client.gd` decodes inbound websocket text through the client packet codec, then `game.gd` receives the packet, stores packet-level player lifecycle status, and passes renderable state to `world_sync.gd`.
-7. `world_sync.gd` creates/removes/interpolates rendered nodes.
+7. `world_sync.gd` delegates rendered node creation, removal, packet application, and interpolation to `PlayerSync`, `BulletSync`, `AsteroidSync`, and `LocalVisualSync`.
 8. HUD/effects/audio update from state and events.
 
 Shared packet structures are sourced from:

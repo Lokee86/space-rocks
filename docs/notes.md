@@ -38,7 +38,7 @@ Current layout:
 - `client/tests/fixtures/` for small world-state and scene/data fixtures.
 - `client/tests/helpers/` for reusable test-only helpers.
 
-The current suite covers smoke testing, generated packet builders and field constants, HUD lives/death/respawn behavior, `world_sync` create/update/remove behavior, asteroid packet scale handling, and missing-field safety for current client behavior.
+The current suite covers smoke testing, generated packet builders and field constants, HUD lives/death/respawn behavior, `world_sync` coordination, extracted player/bullet/asteroid/local-visual sync behavior, asteroid packet scale handling, and missing-field safety for current client behavior.
 
 Run GUT with:
 
@@ -127,7 +127,8 @@ Server behavior:
 Client behavior:
 
 - `client/scripts/world_wrap.gd` uses generated `Constants.WORLD_WIDTH` and `Constants.WORLD_HEIGHT`
-- `client/scripts/networking/world_sync.gd` tracks `local_server_position` and continuous `local_visual_position`
+- `client/scripts/networking/local_visual_sync.gd` tracks local server position and continuous local visual position
+- `client/scripts/networking/world_sync.gd` coordinates apply/interpolation order and delegates entity ownership to `player_sync.gd`, `bullet_sync.gd`, and `asteroid_sync.gd`
 - remote players, asteroids, bullets, and server-driven effects render relative to the local player's visual position
 - camera/background follow the continuous local player node
 
