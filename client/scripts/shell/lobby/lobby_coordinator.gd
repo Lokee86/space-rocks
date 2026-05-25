@@ -76,6 +76,39 @@ func take_pending_join_room_code() -> String:
 	return room_code
 
 
+func handle_lobby_packet(data: Dictionary) -> Dictionary:
+	var packet_type := str(data.get(Packets.FIELD_TYPE, ""))
+	if packet_type == Packets.TYPE_ROOM_ERROR:
+		return {
+			"handled": true,
+			"kind": "room_error",
+			"message": room_error_message(data),
+		}
+	if packet_type == Packets.TYPE_ROOM_SNAPSHOT:
+		var snapshot_result: Dictionary = apply_room_snapshot_result(data)
+		update_room_labels()
+		update_member_rows()
+		update_control_state()
+		return {
+			"handled": true,
+			"kind": "room_snapshot",
+			"previous_room_state": snapshot_result.get("previous_room_state", ""),
+		}
+	if packet_type == Packets.TYPE_ROOM_STATE_CHANGED:
+		apply_room_state_changed_result(data)
+		update_room_labels()
+		update_control_state()
+		return {
+			"handled": true,
+			"kind": "room_state_changed",
+		}
+
+	return {
+		"handled": false,
+		"kind": "",
+	}
+
+
 func apply_room_snapshot(data: Dictionary) -> String:
 	var previous_room_state := current_room_state
 	current_room_code = str(data.get(Packets.FIELD_ROOM_CODE, "")).strip_edges()

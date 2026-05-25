@@ -235,14 +235,39 @@ func _hide_multiplayer_lobby() -> void:
 
 
 func handle_network_packet(data: Dictionary) -> bool:
-	if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_ERROR:
-		_handle_room_error_packet(data)
+	if lobby_coordinator == null:
+		if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_ERROR:
+			_handle_room_error_packet(data)
+			return true
+		if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_SNAPSHOT:
+			_store_room_snapshot(data)
+			return true
+		if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_STATE_CHANGED:
+			_store_room_state_changed(data)
+			return true
+
+		return false
+
+	var result: Dictionary = lobby_coordinator.handle_lobby_packet(data)
+	if !bool(result.get("handled", false)):
+		return false
+
+	var kind := str(result.get("kind", ""))
+	if kind == "room_error":
+		var message := str(result.get("message", ""))
+		if !_show_multiplayer_dialog_error(message):
+			lobby_coordinator.show_room_error_status(message)
 		return true
-	if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_SNAPSHOT:
-		_store_room_snapshot(data)
+	if kind == "room_snapshot":
+		_sync_lobby_state_from_coordinator()
+		_return_to_multiplayer_lobby_if_ready(str(result.get("previous_room_state", "")))
+		_enter_single_player_gameplay_if_ready()
+		_enter_multiplayer_gameplay_if_ready()
 		return true
-	if data.get(Packets.FIELD_TYPE, "") == Packets.TYPE_ROOM_STATE_CHANGED:
-		_store_room_state_changed(data)
+	if kind == "room_state_changed":
+		_sync_lobby_state_from_coordinator()
+		_enter_single_player_gameplay_if_ready()
+		_enter_multiplayer_gameplay_if_ready()
 		return true
 
 	return false
@@ -631,20 +656,6 @@ func _return_to_multiplayer_lobby_if_ready(previous_room_state: String) -> void:
 	game_loop.queue_free()
 	game_loop = null
 	_show_multiplayer_lobby()
-
-
-func _room_status_text() -> String:
-	if lobby_coordinator != null:
-		return lobby_coordinator.room_status_text()
-
-	var status := current_room_state
-	if status == "":
-		status = "Unknown"
-
-	if room_max_players > 0:
-		return "%s (%d/%d)" % [status, room_members.size(), room_max_players]
-
-	return status
 
 
 func set_gameplay_scroll_offset(offset: Vector2) -> void:
