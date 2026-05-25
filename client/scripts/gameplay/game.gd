@@ -16,8 +16,8 @@ const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gamepl
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
-const SpectateCycleViewPolicy = preload("res://scripts/gameplay/spectate/spectate_cycle_view_policy.gd")
 const SpectateControllerScript = preload("res://scripts/gameplay/spectate/spectate_controller.gd")
+const SpectatePresentationControllerScript = preload("res://scripts/gameplay/spectate/spectate_presentation_controller.gd")
 
 @onready var player: Player = $Player
 @onready var bullets = $Bullets
@@ -40,6 +40,7 @@ var game_menu: GameMenu
 var injected_network_client: NetworkClient
 var hud_controller: HudController
 var spectate_controller
+var spectate_presentation_controller
 var network_client: NetworkClient
 var room_id := ""
 var current_room_state := ""
@@ -101,6 +102,8 @@ func _ready() -> void:
 	hud_controller.configure(get_tree().current_scene)
 	hud_controller.set_session_mode(session_mode)
 	hud_controller.set_room_id(room_id)
+	spectate_presentation_controller = SpectatePresentationControllerScript.new()
+	spectate_presentation_controller.configure(hud_controller, camera_follow, world_sync)
 	game_menu = hud_controller.get_game_menu()
 	_gameplay_menu_controller()
 	_gameplay_menu_controller().connect_game_menu_signals(game_menu)
@@ -357,17 +360,17 @@ func _is_room_game_over() -> bool:
 
 
 func _has_spectate_targets() -> bool:
-	return _spectate_controller().has_targets(
+	return _spectate_presentation_controller().has_spectate_targets(
+		_spectate_controller(),
 		self_id,
-		_remote_player_visual_positions(),
 		_player_lifecycle()
 	)
 
 
 func _start_spectating() -> bool:
-	return _spectate_controller().start_spectating(
+	return _spectate_presentation_controller().start_spectating(
+		_spectate_controller(),
 		self_id,
-		_remote_player_visual_positions(),
 		_player_lifecycle(),
 		Callable(self, "_hide_game_menu"),
 		Callable(self, "_update_spectate_camera"),
@@ -376,26 +379,23 @@ func _start_spectating() -> bool:
 
 
 func _stop_spectating(show_game_over_menu: bool) -> void:
-	_spectate_controller().stop_spectating(
+	_spectate_presentation_controller().stop_spectating(
+		_spectate_controller(),
 		show_game_over_menu,
-		hud_controller != null && hud_controller.is_game_over,
-		Callable(self, "_follow_local_player"),
 		Callable(self, "_show_game_menu"),
 		Callable(self, "_refresh_cycle_view_hint")
 	)
 
 
 func _follow_local_player() -> void:
-	if camera_follow != null:
-		camera_follow.follow_local_player()
+	_spectate_presentation_controller().follow_local_player()
 
 
 func _update_spectate_camera() -> void:
-	_spectate_controller().update_camera(
+	_spectate_presentation_controller().update_spectate_camera(
+		_spectate_controller(),
 		self_id,
-		_remote_player_visual_positions(),
 		_player_lifecycle(),
-		camera_follow,
 		Callable(self, "_stop_spectating")
 	)
 
@@ -410,9 +410,9 @@ func _handle_spectate_input() -> void:
 
 
 func _cycle_spectate_target() -> void:
-	_spectate_controller().cycle_target(
+	_spectate_presentation_controller().cycle_spectate_target(
+		_spectate_controller(),
 		self_id,
-		_remote_player_visual_positions(),
 		_player_lifecycle(),
 		Callable(self, "_stop_spectating"),
 		Callable(self, "_follow_visual_position")
@@ -420,29 +420,31 @@ func _cycle_spectate_target() -> void:
 
 
 func _follow_visual_position(visual_position: Vector2) -> void:
-	if camera_follow != null:
-		camera_follow.follow_visual_position(visual_position)
+	_spectate_presentation_controller().follow_visual_position(visual_position)
 
 
 func _remote_player_visual_positions() -> Dictionary:
-	if world_sync == null:
-		return {}
-
-	return world_sync.get_remote_player_visual_positions()
+	return _spectate_presentation_controller().remote_player_visual_positions()
 
 
 func _refresh_cycle_view_hint() -> void:
 	if hud_controller == null:
 		return
 
-	hud_controller.set_session_mode(session_mode)
-	var cycle_view_available := SpectateCycleViewPolicy.is_cycle_view_available(
+	_spectate_presentation_controller().set_cycle_view_hint(
 		session_mode,
 		current_room_state,
 		hud_controller.is_game_over,
 		_spectate_controller().is_active()
 	)
-	hud_controller.set_cycle_view_available(cycle_view_available)
+
+
+func _spectate_presentation_controller():
+	if spectate_presentation_controller == null:
+		spectate_presentation_controller = SpectatePresentationControllerScript.new()
+		spectate_presentation_controller.configure(hud_controller, camera_follow, world_sync)
+
+	return spectate_presentation_controller
 
 
 func _send_gameplay_input_if_active() -> void:

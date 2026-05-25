@@ -58,17 +58,11 @@ Report only useful execution evidence:
 Changed files:
 - ...
 
-Verification:
-- command: ...
-- result: pass/fail
-- relevant output: ...
-
-Git status:
-- ...
+Unexpected files touched:
+- none / ...
 
 Notes:
-- no unrelated edits / list any unrelated edits
-```
+- ...
 
 When completing a numbered prompt, put this exact heading at the bottom of the report, replacing `X`:
 
