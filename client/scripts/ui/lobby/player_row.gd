@@ -7,6 +7,14 @@ extends HBoxContainer
 
 
 func _ready() -> void:
+	if player_name_label == null:
+		player_name_label = find_child("PlayerNameLabel", true, false) as Label
+	if player_ready_label == null:
+		player_ready_label = find_child("PlayerReadyLabel", true, false) as Label
+	if ready_green == null:
+		ready_green = find_child("ReadyGreen", true, false) as CanvasItem
+	if ready_red == null:
+		ready_red = find_child("ReadyRed", true, false) as CanvasItem
 	_report_missing_node(player_name_label, "PlayerNameLabel")
 	_report_missing_node(player_ready_label, "PlayerReadyLabel")
 	_report_missing_node(ready_green, "ReadyGreen")
@@ -14,6 +22,15 @@ func _ready() -> void:
 
 
 func set_member(member_name, is_ready, member_connected := true) -> void:
+	if player_name_label == null:
+		player_name_label = find_child("PlayerNameLabel", true, false) as Label
+	if player_ready_label == null:
+		player_ready_label = find_child("PlayerReadyLabel", true, false) as Label
+	if ready_green == null:
+		ready_green = find_child("ReadyGreen", true, false) as CanvasItem
+	if ready_red == null:
+		ready_red = find_child("ReadyRed", true, false) as CanvasItem
+
 	var ready := bool(is_ready)
 	var connected := bool(member_connected)
 

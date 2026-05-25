@@ -51,6 +51,14 @@ func (room *Room) RemoveMember(sessionID string) {
 	defer room.mu.Unlock()
 
 	delete(room.Members, sessionID)
+	if room.OwnerID == sessionID {
+		room.OwnerID = ""
+		for memberID := range room.Members {
+			if room.OwnerID == "" || memberID < room.OwnerID {
+				room.OwnerID = memberID
+			}
+		}
+	}
 }
 
 func (room *Room) HasMember(sessionID string) bool {
