@@ -244,15 +244,17 @@ Rooms/networking:
 
 Client runtime:
 
-- `client/scripts/ui/game_shell.gd`
+- `client/scripts/shell/game_shell.gd`
 - `client/scripts/gameplay/game.gd`
 - `client/scripts/gameplay/session/`
 - `client/scripts/gameplay/spectate/`
+- `client/scripts/gameplay/support/`
 - `client/scripts/networking/network_client.gd`
 - `client/scripts/networking/packet_codec/packet_codec.gd`
 - `client/scripts/networking/world_sync.gd`
 - `client/scripts/entities/player.gd`
 - `client/scripts/ui/hud/hud_controller.gd`
+- `client/scripts/ui/menus/`
 
 Client tests:
 
