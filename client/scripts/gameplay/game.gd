@@ -7,6 +7,7 @@ const CameraFollowScript = preload("res://scripts/camera/camera_follow.gd")
 const DebugInputControllerScript = preload("res://scripts/gameplay/support/debug_input_controller.gd")
 const GameBackgroundScrollScript = preload("res://scripts/gameplay/support/game_background_scroll.gd")
 const GameplayEventControllerScript = preload("res://scripts/gameplay/events/gameplay_event_controller.gd")
+const GameplayLifecycleControllerScript = preload("res://scripts/gameplay/gameplay_lifecycle_controller.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const OffscreenIndicatorControllerScript = preload("res://scripts/gameplay/support/offscreen_indicator_controller.gd")
@@ -16,7 +17,6 @@ const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
 const PlayerLifecycle = preload("res://scripts/gameplay/player_lifecycle.gd")
 const SpectateControllerScript = preload("res://scripts/gameplay/spectate/spectate_controller.gd")
-const RESPAWN_RETRY_SECONDS := 0.25
 
 @onready var player: Player = $Player
 @onready var bullets = $Bullets
@@ -24,8 +24,16 @@ const RESPAWN_RETRY_SECONDS := 0.25
 @onready var offscreen_indicators = get_node_or_null("CanvasLayer/HUD/OffscreenIndicators")
 @onready var gameplay_camera := player.get_node_or_null("Camera2D") as Camera2D
 
-var respawn_retry_remaining := 0.0
-var awaiting_respawn_confirmation := false
+var respawn_retry_remaining: float:
+	get:
+		return _gameplay_lifecycle_controller().respawn_retry_remaining
+	set(value):
+		_gameplay_lifecycle_controller().respawn_retry_remaining = value
+var awaiting_respawn_confirmation: bool:
+	get:
+		return _gameplay_lifecycle_controller().is_awaiting_respawn_confirmation()
+	set(value):
+		_gameplay_lifecycle_controller().set_awaiting_respawn_confirmation(value)
 var has_received_state := false
 var has_initial_spawn := false
 var is_gameplay_paused := false
@@ -39,6 +47,7 @@ var current_spectate_target_id: String:
 var debug_input_controller
 var background_scroll
 var gameplay_event_controller
+var gameplay_lifecycle_controller
 var offscreen_indicator_controller
 var effects: Effects
 var camera_follow
@@ -102,6 +111,7 @@ func _ready() -> void:
 		effects,
 		Callable(world_sync, "visual_position_for_server_position")
 	)
+	_gameplay_lifecycle_controller()
 
 	get_viewport().size_changed.connect(_send_client_config)
 
@@ -123,7 +133,7 @@ func _process(delta: float) -> void:
 	if network_client == null:
 		return
 	hud_controller.update(delta)
-	respawn_retry_remaining = max(0.0, respawn_retry_remaining - delta)
+	_gameplay_lifecycle_controller().tick_respawn_retry(delta)
 	_update_open_menu_input_armed()
 	debug_input_controller.handle_input(network_client)
 	_handle_spectate_input()
@@ -281,6 +291,26 @@ func _spectate_controller():
 	return spectate_controller
 
 
+func _gameplay_lifecycle_controller():
+	if gameplay_lifecycle_controller == null:
+		gameplay_lifecycle_controller = GameplayLifecycleControllerScript.new()
+		gameplay_lifecycle_controller.configure(
+			hud_controller,
+			effects,
+			player,
+			Callable(self, "_stop_spectating"),
+			Callable(self, "_resume_gameplay_pause_if_needed"),
+			Callable(self, "_hide_game_menu"),
+			Callable(self, "_show_game_menu"),
+			Callable(self, "_refresh_cycle_view_hint"),
+			Callable(self, "_disarm_open_menu_input"),
+			Callable(self, "_set_dead_state"),
+			Callable(self, "_set_game_over_state")
+		)
+
+	return gameplay_lifecycle_controller
+
+
 func _close_network_connection() -> void:
 	if network_client != null:
 		await network_client.close_gracefully()
@@ -328,52 +358,27 @@ func _apply_events(server_events: Array) -> void:
 
 
 func _apply_self_death_event(event: Dictionary) -> void:
-	var lives := int(event.get(Packets.FIELD_LIVES, 0))
-	hud_controller.set_lives(lives)
-	if lives <= 0:
-		_set_game_over_state()
-		return
-
-	if event.has(Packets.FIELD_RESPAWN_DELAY):
-		_set_dead_state(float(event[Packets.FIELD_RESPAWN_DELAY]))
-	else:
-		push_warning("Ship death event missing respawn delay")
-		_set_dead_state(0.0)
+	_gameplay_lifecycle_controller().apply_self_death_event(event)
 
 
 func _set_alive_state() -> void:
-	awaiting_respawn_confirmation = false
-	_stop_spectating(false)
-	_resume_gameplay_pause_if_needed()
+	_gameplay_lifecycle_controller().set_alive_state()
+
+
+func _clear_awaiting_respawn_confirmation() -> void:
+	_gameplay_lifecycle_controller().clear_awaiting_respawn_confirmation()
+
+
+func _disarm_open_menu_input() -> void:
 	open_menu_input_armed = false
-	_hide_game_menu()
-	hud_controller.set_alive()
-	_refresh_cycle_view_hint()
-	effects.reset_game_over_sound()
 
 
 func _set_dead_state(respawn_delay: float) -> void:
-	awaiting_respawn_confirmation = false
-	_stop_spectating(false)
-	_resume_gameplay_pause_if_needed()
-	open_menu_input_armed = false
-	_hide_game_menu()
-	player.set_afterburner_active(false)
-	hud_controller.set_dead(respawn_delay)
-	_refresh_cycle_view_hint()
-	effects.stop_game_over_sound()
+	_gameplay_lifecycle_controller().set_dead_state(respawn_delay)
 
 
 func _set_game_over_state() -> void:
-	awaiting_respawn_confirmation = false
-	_resume_gameplay_pause_if_needed()
-	open_menu_input_armed = false
-	_hide_game_menu()
-	player.set_afterburner_active(false)
-	hud_controller.set_game_over()
-	_show_game_menu()
-	_refresh_cycle_view_hint()
-	effects.play_game_over_sound_after_delay()
+	_gameplay_lifecycle_controller().set_game_over_state()
 
 
 func _handle_open_menu_pressed() -> bool:
@@ -635,10 +640,7 @@ func _send_gameplay_input_if_active() -> void:
 		return
 
 	network_client.send_packet(player.get_input_packet())
-	if hud_controller.can_respawn && Input.is_key_pressed(KEY_R) && respawn_retry_remaining <= 0.0:
-		respawn_retry_remaining = RESPAWN_RETRY_SECONDS
-		awaiting_respawn_confirmation = true
-		network_client.send_packet(Packets.respawn_packet())
+	_gameplay_lifecycle_controller().send_respawn_request_if_ready(network_client)
 
 
 func _send_client_config() -> void:
