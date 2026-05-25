@@ -44,10 +44,69 @@ func begin_single_player_flow() -> void:
 	pending_join_room_code = ""
 
 
+func begin_create_room_connection_flow(network_connected: bool) -> Dictionary:
+	begin_create_room_flow()
+	var result := _connection_flow_result()
+	result["status"] = "Connecting..."
+	if network_connected:
+		result["should_send_create_room"] = true
+	else:
+		result["should_connect"] = true
+	return result
+
+
+func begin_join_room_connection_flow(room_code: String, network_connected: bool) -> Dictionary:
+	begin_join_room_flow(room_code)
+	var result := _connection_flow_result()
+	result["status"] = "Connecting..."
+	if pending_join_room_code == "":
+		result["status"] = "Enter a room code to join."
+		return result
+	if network_connected:
+		result["should_send_join_room"] = true
+	else:
+		result["should_connect"] = true
+	return result
+
+
+func begin_single_player_connection_flow(network_connected: bool) -> Dictionary:
+	begin_single_player_flow()
+	var result := _connection_flow_result()
+	if network_connected:
+		result["should_send_single_player"] = true
+	else:
+		result["should_connect"] = true
+	return result
+
+
+func _connection_flow_result() -> Dictionary:
+	return {
+		"status": "",
+		"should_connect": false,
+		"should_send_create_room": false,
+		"should_send_join_room": false,
+		"should_send_single_player": false,
+	}
+
+
 func clear_pending_requests() -> void:
 	create_room_request_pending = false
 	start_single_player_request_pending = false
 	pending_join_room_code = ""
+
+
+func handle_create_room_connection_failed() -> void:
+	create_room_request_pending = false
+	set_status("Could not connect to server.")
+
+
+func handle_join_room_connection_failed() -> void:
+	pending_join_room_code = ""
+	set_status("Could not connect to server.")
+
+
+func handle_single_player_connection_failed() -> void:
+	start_single_player_request_pending = false
 
 
 func take_pending_create_room_request() -> bool:
