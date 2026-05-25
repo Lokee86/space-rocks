@@ -40,6 +40,14 @@ Exemptions: generated files, Godot `.tscn` scenes, `.tres` resources, vendored a
 4. Do not run shell/terminal verification unless the prompt explicitly requests it.
 5. If verification is not requested, report what changed and whether any unexpected scope was needed.
 
+## File reading policy
+
+- Reading files is allowed and expected.
+- Always read the named files needed for the edit.
+- Reading a directly referenced file is allowed when a named file points to it through a preload, import, scene attachment, helper, or obvious call site.
+- Do not turn a small edit into a repo-wide audit.
+- Do not use terminal search commands such as `rg` unless the prompt explicitly allows terminal commands.
+
 ## Shell / verification policy
 
 - Opening and reading named files in the editor is allowed and expected.
