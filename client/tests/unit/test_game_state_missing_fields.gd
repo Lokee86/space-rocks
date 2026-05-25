@@ -121,7 +121,7 @@ func test_self_death_event_missing_respawn_delay_uses_safe_zero_delay() -> void:
 		Packets.FIELD_LIVES: 1,
 	}
 
-	game._apply_self_death_event(event)
+	game._gameplay_lifecycle_controller().apply_self_death_event(event)
 
 	assert_eq(_lives_label().text, "1 x ")
 	assert_true(hud_controller.is_dead)

@@ -5,17 +5,18 @@ signal return_to_menu_requested
 const EffectsScript = preload("res://scripts/gameplay/effects.gd")
 const CameraFollowScript = preload("res://scripts/camera/camera_follow.gd")
 const DebugInputControllerScript = preload("res://scripts/gameplay/support/debug_input_controller.gd")
-const GameBackgroundScrollScript = preload("res://scripts/gameplay/support/game_background_scroll.gd")
 const GameplayEventControllerScript = preload("res://scripts/gameplay/events/gameplay_event_controller.gd")
 const GameplayLifecycleControllerScript = preload("res://scripts/gameplay/lifecycle/gameplay_lifecycle_controller.gd")
 const GameplayMenuControllerScript = preload("res://scripts/gameplay/menu/gameplay_menu_controller.gd")
 const GameplayNetworkSessionScript = preload("res://scripts/networking/gameplay_network_session.gd")
+const GameplayPresentationControllerScript = preload("res://scripts/gameplay/support/gameplay_presentation_controller.gd")
+const GameplayRoomStateFlow = preload("res://scripts/gameplay/session/gameplay_room_state_flow.gd")
+const GameplaySessionState = preload("res://scripts/gameplay/session/gameplay_session_state.gd")
+const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
-const OffscreenIndicatorControllerScript = preload("res://scripts/gameplay/support/offscreen_indicator_controller.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
-const RoomState = preload("res://scripts/session/room_state.gd")
-const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
+const SpectateCycleViewPolicy = preload("res://scripts/gameplay/spectate/spectate_cycle_view_policy.gd")
 const SpectateControllerScript = preload("res://scripts/gameplay/spectate/spectate_controller.gd")
 
 @onready var player: Player = $Player
@@ -24,16 +25,6 @@ const SpectateControllerScript = preload("res://scripts/gameplay/spectate/specta
 @onready var offscreen_indicators = get_node_or_null("CanvasLayer/HUD/OffscreenIndicators")
 @onready var gameplay_camera := player.get_node_or_null("Camera2D") as Camera2D
 
-var respawn_retry_remaining: float:
-	get:
-		return _gameplay_lifecycle_controller().respawn_retry_remaining
-	set(value):
-		_gameplay_lifecycle_controller().respawn_retry_remaining = value
-var awaiting_respawn_confirmation: bool:
-	get:
-		return _gameplay_lifecycle_controller().is_awaiting_respawn_confirmation()
-	set(value):
-		_gameplay_lifecycle_controller().set_awaiting_respawn_confirmation(value)
 var has_received_state := false
 var has_initial_spawn := false
 var is_gameplay_paused: bool:
@@ -53,12 +44,11 @@ var current_spectate_target_id: String:
 	set(value):
 		_spectate_controller().set_current_target_id(value)
 var debug_input_controller
-var background_scroll
 var gameplay_event_controller
 var gameplay_lifecycle_controller
 var gameplay_menu_controller
 var gameplay_network_session
-var offscreen_indicator_controller
+var gameplay_presentation_controller
 var effects: Effects
 var camera_follow
 var game_menu: GameMenu
@@ -104,9 +94,8 @@ func _ready() -> void:
 	_setup_network_client()
 
 	debug_input_controller = DebugInputControllerScript.new()
-	background_scroll = GameBackgroundScrollScript.new()
-	offscreen_indicator_controller = OffscreenIndicatorControllerScript.new()
-	offscreen_indicator_controller.configure(offscreen_indicators, gameplay_camera)
+	gameplay_presentation_controller = GameplayPresentationControllerScript.new()
+	gameplay_presentation_controller.configure(offscreen_indicators, gameplay_camera)
 	_spectate_controller()
 
 	world_sync = WorldSyncScript.new()
@@ -122,7 +111,7 @@ func _ready() -> void:
 	hud_controller.set_room_id(room_id)
 	game_menu = hud_controller.get_game_menu()
 	_gameplay_menu_controller()
-	_connect_game_menu_signals()
+	_gameplay_menu_controller().connect_game_menu_signals(game_menu)
 
 	effects = EffectsScript.new()
 	effects.configure(self, hud_controller.game_over_sound)
@@ -144,7 +133,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if network_client != null && !preserve_network_on_exit:
 		network_client.begin_graceful_close()
-	_clear_background_scroll_offset()
+	gameplay_presentation_controller.clear_background_scroll(get_parent())
 
 
 func _process(delta: float) -> void:
@@ -166,44 +155,54 @@ func _process(delta: float) -> void:
 	_update_player_afterburner()
 	world_sync.interpolate(delta)
 	_update_spectate_camera()
-	_update_offscreen_indicators()
-	_update_background_scroll_offset()
+	gameplay_presentation_controller.update_offscreen_indicators(
+		world_sync.get_remote_player_visual_positions(),
+		world_sync.get_remote_player_hues()
+	)
+	gameplay_presentation_controller.update_background_scroll(
+		get_parent(),
+		has_initial_spawn,
+		is_spectating,
+		camera_follow,
+		player
+	)
 
 
 func _apply_state(data: Dictionary) -> void:
 	if data.get(Packets.FIELD_TYPE, "") != Packets.TYPE_STATE:
 		return
-	if !_can_process_gameplay_packets():
+	if !GameplaySessionState.can_process_gameplay_packets(current_room_state):
 		return
 
-	self_id = data[Packets.FIELD_SELF_ID]
-	var server_players: Dictionary = data[Packets.FIELD_PLAYERS]
-	player_lifecycle = PlayerLifecycle.from_state(data)
-	var server_bullets: Dictionary = data.get(Packets.FIELD_BULLETS, {})
-	var server_asteroids: Dictionary = data.get(Packets.FIELD_ASTEROIDS, {})
-	var server_events: Array = []
-	var events_data = data.get(Packets.FIELD_EVENTS, [])
-	if events_data is Array:
-		server_events = events_data
+	var state := GameplayStatePacketReader.read(data)
+	self_id = state["self_id"]
+	var server_players: Dictionary = state["server_players"]
+	player_lifecycle = state["player_lifecycle"]
 
 	world_sync.apply_state(
 		self_id,
 		server_players,
-		server_bullets,
-		server_asteroids,
+		state["server_bullets"],
+		state["server_asteroids"],
 		has_received_state
 	)
-	_apply_events(server_events)
+	var server_events: Array = state["server_events"]
+	if !server_events.is_empty():
+		gameplay_event_controller.apply_server_events(
+			server_events,
+			self_id,
+			Callable(_gameplay_lifecycle_controller(), "apply_self_death_event")
+		)
 	has_received_state = true
 
-	if data.has(Packets.FIELD_LIVES):
-		hud_controller.set_lives(int(data[Packets.FIELD_LIVES]))
+	if state["has_lives"]:
+		hud_controller.set_lives(state["lives"])
 	else:
 		push_warning("State packet missing lives")
 	if server_players.has(self_id):
 		has_initial_spawn = true
 		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
-		if hud_controller.is_dead && awaiting_respawn_confirmation:
+		if hud_controller.is_dead && _gameplay_lifecycle_controller().is_awaiting_respawn_confirmation():
 			_set_alive_state()
 
 
@@ -224,8 +223,8 @@ func _on_network_packet_parse_failed(text: String) -> void:
 
 
 func _store_room_state(data: Dictionary) -> void:
-	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, current_room_state)).strip_edges()
-	if _is_room_game_over():
+	current_room_state = GameplayRoomStateFlow.room_state_from_packet(data, current_room_state)
+	if GameplayRoomStateFlow.should_stop_spectating_for_room_state(current_room_state):
 		_stop_spectating(true)
 	_refresh_game_menu_state()
 	_refresh_cycle_view_hint()
@@ -235,17 +234,6 @@ func _forward_packet_to_shell(data: Dictionary) -> void:
 	var shell := get_parent()
 	if shell != null && shell.has_method("handle_network_packet"):
 		shell.handle_network_packet(data)
-
-
-func _is_room_in_game() -> bool:
-	return RoomState.is_in_game(current_room_state)
-
-
-func _can_process_gameplay_packets() -> bool:
-	if current_room_state == "":
-		return true
-
-	return _is_room_in_game() || _is_room_game_over()
 
 
 func _setup_network_client() -> void:
@@ -284,9 +272,9 @@ func _gameplay_lifecycle_controller():
 			Callable(self, "_hide_game_menu"),
 			Callable(self, "_show_game_menu"),
 			Callable(self, "_refresh_cycle_view_hint"),
-			Callable(self, "_disarm_open_menu_input"),
-			Callable(self, "_set_dead_state"),
-			Callable(self, "_set_game_over_state")
+			Callable(_gameplay_menu_controller(), "disarm_open_menu_input"),
+			Callable(gameplay_lifecycle_controller, "set_dead_state"),
+			Callable(gameplay_lifecycle_controller, "set_game_over_state")
 		)
 
 	return gameplay_lifecycle_controller
@@ -333,16 +321,6 @@ func _close_network_connection() -> void:
 	await _gameplay_network_session().close_network_connection(network_client)
 
 
-func _update_background_scroll_offset() -> void:
-	background_scroll.update_scroll_offset(
-		get_parent(),
-		has_initial_spawn,
-		is_spectating,
-		camera_follow,
-		player
-	)
-
-
 func _update_player_afterburner() -> void:
 	player.set_afterburner_active(
 		network_client.is_connected_to_server() &&
@@ -353,41 +331,8 @@ func _update_player_afterburner() -> void:
 	)
 
 
-func _update_offscreen_indicators() -> void:
-	offscreen_indicator_controller.update_indicators(
-		world_sync.get_remote_player_visual_positions(),
-		world_sync.get_remote_player_hues()
-	)
-
-
-func _clear_background_scroll_offset() -> void:
-	background_scroll.clear_scroll_offset(get_parent())
-
-
-func _apply_events(server_events: Array) -> void:
-	for event in server_events:
-		if event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_BULLET_BLAST:
-			gameplay_event_controller.apply_bullet_blast(event)
-		elif event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_SHIP_DEATH:
-			if event[Packets.FIELD_PLAYER_ID] == self_id:
-				_apply_self_death_event(event)
-			gameplay_event_controller.apply_ship_death(event)
-
-
-func _apply_self_death_event(event: Dictionary) -> void:
-	_gameplay_lifecycle_controller().apply_self_death_event(event)
-
-
 func _set_alive_state() -> void:
 	_gameplay_lifecycle_controller().set_alive_state()
-
-
-func _disarm_open_menu_input() -> void:
-	_gameplay_menu_controller().disarm_open_menu_input()
-
-
-func _set_dead_state(respawn_delay: float) -> void:
-	_gameplay_lifecycle_controller().set_dead_state(respawn_delay)
 
 
 func _set_game_over_state() -> void:
@@ -436,10 +381,6 @@ func _refresh_game_menu_state() -> void:
 	_gameplay_menu_controller().refresh_game_menu_state(game_menu)
 
 
-func _connect_game_menu_signals() -> void:
-	_gameplay_menu_controller().connect_game_menu_signals(game_menu)
-
-
 func _hide_game_menu() -> void:
 	_gameplay_menu_controller().hide_game_menu()
 
@@ -460,19 +401,13 @@ func _on_game_menu_quit_requested() -> void:
 	_gameplay_menu_controller().on_quit_requested()
 
 
-func _is_multiplayer_session() -> bool:
-	return session_mode.strip_edges().to_lower() == "multiplayer"
-
-
 func _is_game_over() -> bool:
-	if hud_controller != null && hud_controller.is_game_over:
-		return true
-
-	return _is_multiplayer_session() && _is_room_game_over()
+	var hud_is_game_over := hud_controller != null && hud_controller.is_game_over
+	return GameplaySessionState.is_game_over(session_mode, current_room_state, hud_is_game_over)
 
 
 func _is_room_game_over() -> bool:
-	return RoomState.is_game_over(current_room_state)
+	return GameplaySessionState.is_room_game_over(current_room_state)
 
 
 func _has_spectate_targets() -> bool:
@@ -555,12 +490,13 @@ func _refresh_cycle_view_hint() -> void:
 		return
 
 	hud_controller.set_session_mode(session_mode)
-	hud_controller.set_cycle_view_available(
-		_is_multiplayer_session() &&
-		hud_controller.is_game_over &&
-		_spectate_controller().is_active() &&
-		!_is_room_game_over()
+	var cycle_view_available := SpectateCycleViewPolicy.is_cycle_view_available(
+		session_mode,
+		current_room_state,
+		hud_controller.is_game_over,
+		_spectate_controller().is_active()
 	)
+	hud_controller.set_cycle_view_available(cycle_view_available)
 
 
 func _should_block_open_menu_for_game_over() -> bool:
