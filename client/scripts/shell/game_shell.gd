@@ -5,6 +5,9 @@ const ClientSessionContext := preload("res://scripts/shell/client_session_contex
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const LobbyFlow := preload("res://scripts/lobby/lobby_flow.gd")
+const LobbyNetworkActions := preload("res://scripts/shell/lobby_network_actions.gd")
+const LobbyPacketReader := preload("res://scripts/lobby/lobby_packet_reader.gd")
+const LobbyReturnFlow := preload("res://scripts/shell/lobby_return_flow.gd")
 const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
 const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
@@ -22,6 +25,8 @@ var shell_state: ShellState
 var session_context: ClientSessionContext
 var connection_service: ClientConnectionService
 var lobby_flow: LobbyFlow
+var lobby_network_actions: LobbyNetworkActions
+var lobby_return_flow: LobbyReturnFlow
 var multiplayer_dialog_status_presenter: MultiplayerDialogStatusPresenter
 var multiplayer_lobby_presenter: MultiplayerLobbyPresenter
 var shell_boot_flow: ShellBootFlow
@@ -33,18 +38,25 @@ func _ready() -> void:
 	session_context = ClientSessionContext.new()
 	connection_service = ClientConnectionService.new()
 	lobby_flow = LobbyFlow.new()
+	lobby_network_actions = LobbyNetworkActions.new(connection_service, Callable(self, "_log_v2_status"))
 	multiplayer_dialog_status_presenter = MultiplayerDialogStatusPresenter.new()
 	multiplayer_lobby_presenter = MultiplayerLobbyPresenter.new()
+	lobby_return_flow = LobbyReturnFlow.new(
+		lobby_flow,
+		multiplayer_lobby_presenter,
+		main_menu,
+		Callable(self, "_on_lobby_returned_to_main_menu")
+	)
 	shell_boot_flow = ShellBootFlow.new(connection_service, MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
 	lobby_shell_flow = LobbyShellFlow.new(
 		lobby_flow,
 		session_context,
-		connection_service,
+		lobby_network_actions,
+		lobby_return_flow,
 		multiplayer_lobby_presenter,
 		main_menu,
 		canvas_layer,
-		Callable(self, "_log_v2_status"),
-		Callable(self, "_on_lobby_returned_to_main_menu")
+		Callable(self, "_log_v2_status")
 	)
 	add_child(connection_service)
 	_connect_connection_service()
@@ -124,7 +136,7 @@ func _on_packet_parse_failed(text: String) -> void:
 
 
 func _on_room_snapshot_received(_packet: Dictionary) -> void:
-	var room_state := str(_packet.get("room_state", ""))
+	var room_state := LobbyPacketReader.room_state(_packet)
 	shell_state.set_state(RoomSnapshotShellState.from_room_state(room_state))
 	lobby_shell_flow.apply_room_snapshot(_packet)
 
