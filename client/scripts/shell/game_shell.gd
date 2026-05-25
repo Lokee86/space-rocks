@@ -190,28 +190,14 @@ func _show_multiplayer_lobby() -> void:
 		return
 
 	multiplayer_lobby = MULTIPLAYER_LOBBY_SCENE.instantiate() as Control
-	if multiplayer_lobby.has_method("set_fake_data_enabled"):
-		multiplayer_lobby.set_fake_data_enabled(false)
 	canvas_layer.add_child(multiplayer_lobby)
 	if lobby_coordinator != null:
-		lobby_coordinator.configure(multiplayer_lobby)
-
-	if multiplayer_lobby.has_signal("ready_requested"):
-		if !multiplayer_lobby.ready_requested.is_connected(_request_ready_toggle):
-			multiplayer_lobby.ready_requested.connect(_request_ready_toggle)
-
-	if multiplayer_lobby.has_signal("start_game_requested"):
-		if !multiplayer_lobby.start_game_requested.is_connected(_request_start_game):
-			multiplayer_lobby.start_game_requested.connect(_request_start_game)
-
-	if multiplayer_lobby.has_signal("leave_requested"):
-		if !multiplayer_lobby.leave_requested.is_connected(_request_leave_room):
-			multiplayer_lobby.leave_requested.connect(_request_leave_room)
-	else:
-		push_error("Multiplayer lobby is missing leave_requested signal.")
-
-	if multiplayer_lobby.has_method("set_status"):
-		multiplayer_lobby.set_status("Connecting...")
+		lobby_coordinator.initialize_lobby_presentation(multiplayer_lobby)
+		lobby_coordinator.connect_lobby_signals(
+			_request_ready_toggle,
+			_request_start_game,
+			_request_leave_room
+		)
 
 	if main_menu != null:
 		main_menu.queue_free()

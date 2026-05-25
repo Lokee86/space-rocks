@@ -22,6 +22,34 @@ func configure(lobby_control) -> void:
 	multiplayer_lobby = lobby_control
 
 
+func initialize_lobby_presentation(lobby_control) -> void:
+	configure(lobby_control)
+	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
+		return
+	if multiplayer_lobby.has_method("set_fake_data_enabled"):
+		multiplayer_lobby.set_fake_data_enabled(false)
+	set_status("Connecting...")
+
+
+func connect_lobby_signals(ready_callback: Callable, start_callback: Callable, leave_callback: Callable) -> void:
+	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
+		return
+
+	if multiplayer_lobby.has_signal("ready_requested"):
+		if !multiplayer_lobby.ready_requested.is_connected(ready_callback):
+			multiplayer_lobby.ready_requested.connect(ready_callback)
+
+	if multiplayer_lobby.has_signal("start_game_requested"):
+		if !multiplayer_lobby.start_game_requested.is_connected(start_callback):
+			multiplayer_lobby.start_game_requested.connect(start_callback)
+
+	if multiplayer_lobby.has_signal("leave_requested"):
+		if !multiplayer_lobby.leave_requested.is_connected(leave_callback):
+			multiplayer_lobby.leave_requested.connect(leave_callback)
+	else:
+		push_error("Multiplayer lobby is missing leave_requested signal.")
+
+
 func set_lobby(lobby_control) -> void:
 	configure(lobby_control)
 
