@@ -4,11 +4,11 @@ class_name WorldSync
 signal bullet_spawned
 
 const Constants = preload("res://scripts/constants/constants.gd")
-const AsteroidSyncScript = preload("res://scripts/networking/asteroid_sync.gd")
-const BulletSyncScript = preload("res://scripts/networking/bullet_sync.gd")
-const LocalVisualSyncScript = preload("res://scripts/networking/local_visual_sync.gd")
-const Packets = preload("res://scripts/networking/packets.gd")
-const PlayerSyncScript = preload("res://scripts/networking/player_sync.gd")
+const AsteroidSyncScript = preload("res://scripts/world/asteroid_sync.gd")
+const BulletSyncScript = preload("res://scripts/world/bullet_sync.gd")
+const LocalVisualSyncScript = preload("res://scripts/world/local_visual_sync.gd")
+const Packets = preload("res://scripts/networking/packets/packets.gd")
+const PlayerSyncScript = preload("res://scripts/world/player_sync.gd")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
 

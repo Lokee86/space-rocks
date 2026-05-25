@@ -3,9 +3,9 @@ class_name BulletSync
 
 signal bullet_spawned
 
-const BulletSyncState = preload("res://scripts/networking/bullet_sync_state.gd")
+const BulletSyncState = preload("res://scripts/world/bullet_sync_state.gd")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
-const Packets = preload("res://scripts/networking/packets.gd")
+const Packets = preload("res://scripts/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var bullets_layer: Node2D

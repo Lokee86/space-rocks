@@ -1,9 +1,9 @@
 extends RefCounted
 class_name AsteroidSync
 
-const AsteroidSyncState = preload("res://scripts/networking/asteroid_sync_state.gd")
+const AsteroidSyncState = preload("res://scripts/world/asteroid_sync_state.gd")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
-const Packets = preload("res://scripts/networking/packets.gd")
+const Packets = preload("res://scripts/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var asteroids_layer: Node2D

@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets.gd")
+const Packets = preload("res://scripts/networking/packets/packets.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
 
 

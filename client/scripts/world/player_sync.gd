@@ -2,11 +2,11 @@ extends RefCounted
 class_name PlayerSync
 
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
-const Packets = preload("res://scripts/networking/packets.gd")
-const PlayerSyncState = preload("res://scripts/networking/player_sync_state.gd")
+const Packets = preload("res://scripts/networking/packets/packets.gd")
+const PlayerSyncState = preload("res://scripts/world/player_sync_state.gd")
 const REMOTE_PLAYER_Z_INDEX := 30
 const LOCAL_PLAYER_Z_INDEX := 31
-const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
+const VisualSyncPositions = preload("res://scripts/world/visual_sync_positions.gd")
 const LOCAL_PLAYER_DEFAULT_HUE := 0.0
 const REMOTE_PLAYER_HUES := [
 	0.58,
