@@ -7,16 +7,15 @@ const CameraFollowScript = preload("res://scripts/camera/camera_follow.gd")
 const DebugInputControllerScript = preload("res://scripts/gameplay/support/debug_input_controller.gd")
 const GameBackgroundScrollScript = preload("res://scripts/gameplay/support/game_background_scroll.gd")
 const GameplayEventControllerScript = preload("res://scripts/gameplay/events/gameplay_event_controller.gd")
-const GameplayLifecycleControllerScript = preload("res://scripts/gameplay/gameplay_lifecycle_controller.gd")
+const GameplayLifecycleControllerScript = preload("res://scripts/gameplay/lifecycle/gameplay_lifecycle_controller.gd")
 const GameplayMenuControllerScript = preload("res://scripts/gameplay/menu/gameplay_menu_controller.gd")
 const GameplayNetworkSessionScript = preload("res://scripts/networking/gameplay_network_session.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const OffscreenIndicatorControllerScript = preload("res://scripts/gameplay/support/offscreen_indicator_controller.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
-const SpectateTargetsScript = preload("res://scripts/gameplay/spectate_targets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
-const PlayerLifecycle = preload("res://scripts/gameplay/player_lifecycle.gd")
+const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
 const SpectateControllerScript = preload("res://scripts/gameplay/spectate/spectate_controller.gd")
 
 @onready var player: Player = $Player
@@ -383,10 +382,6 @@ func _set_alive_state() -> void:
 	_gameplay_lifecycle_controller().set_alive_state()
 
 
-func _clear_awaiting_respawn_confirmation() -> void:
-	_gameplay_lifecycle_controller().clear_awaiting_respawn_confirmation()
-
-
 func _disarm_open_menu_input() -> void:
 	_gameplay_menu_controller().disarm_open_menu_input()
 
@@ -409,10 +404,6 @@ func _open_game_menu() -> void:
 
 func _close_game_menu() -> void:
 	_gameplay_menu_controller().close_game_menu()
-
-
-func _can_pause_server_gameplay() -> bool:
-	return _gameplay_menu_controller().can_pause_server_gameplay(has_initial_spawn)
 
 
 func _set_gameplay_paused(paused: bool) -> void:
@@ -447,10 +438,6 @@ func _refresh_game_menu_state() -> void:
 
 func _connect_game_menu_signals() -> void:
 	_gameplay_menu_controller().connect_game_menu_signals(game_menu)
-
-
-func _is_game_menu_open() -> bool:
-	return _gameplay_menu_controller().is_game_menu_open()
 
 
 func _hide_game_menu() -> void:

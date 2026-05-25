@@ -1,6 +1,6 @@
 extends GutTest
 
-const SpectateTargetsScript := preload("res://scripts/gameplay/spectate_targets.gd")
+const SpectateTargetsScript := preload("res://scripts/gameplay/spectate/spectate_targets.gd")
 
 
 func test_select_target_keeps_current_active_target() -> void:

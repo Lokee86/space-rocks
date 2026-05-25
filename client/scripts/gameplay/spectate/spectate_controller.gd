@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SpectateTargetsScript = preload("res://scripts/gameplay/spectate_targets.gd")
+const SpectateTargetsScript = preload("res://scripts/gameplay/spectate/spectate_targets.gd")
 
 var is_spectating := false
 var current_spectate_target_id := ""
