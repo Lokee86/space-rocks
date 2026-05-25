@@ -3,6 +3,8 @@ extends Node2D
 const ShellState := preload("res://scripts/shell/shell_state.gd")
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const LobbyFlow := preload("res://scripts/lobby/lobby_flow.gd")
+const MultiplayerLobbyScene := preload("res://scenes/ui/dialogs/multiplayer_lobby.tscn")
 
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
 const BOOT_REQUEST_NONE := "none"
@@ -17,6 +19,8 @@ const BOOT_REQUEST_JOIN_ROOM := "join_room"
 
 var shell_state: ShellState
 var connection_service: ClientConnectionService
+var lobby_flow: LobbyFlow
+var multiplayer_lobby: Control
 var pending_boot_request := BOOT_REQUEST_NONE
 var pending_join_room_code := ""
 
@@ -24,6 +28,7 @@ var pending_join_room_code := ""
 func _ready() -> void:
 	shell_state = ShellState.new()
 	connection_service = ClientConnectionService.new()
+	lobby_flow = LobbyFlow.new()
 	add_child(connection_service)
 	_connect_connection_service()
 	_connect_main_menu()
@@ -124,7 +129,30 @@ func _on_packet_parse_failed(text: String) -> void:
 
 
 func _on_room_snapshot_received(_packet: Dictionary) -> void:
-	_log_v2_status("V2 room snapshot received")
+	shell_state.set_state(ShellState.LOBBY)
+	var summary := lobby_flow.apply_room_snapshot(_packet)
+	_log_v2_status("V2 lobby updated: %s" % summary)
+	_show_multiplayer_lobby()
+
+
+func _show_multiplayer_lobby() -> void:
+	if main_menu != null:
+		main_menu.hide()
+	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
+		multiplayer_lobby = MultiplayerLobbyScene.instantiate()
+		canvas_layer.add_child(multiplayer_lobby)
+
+	var state = lobby_flow.current_state()
+	multiplayer_lobby.apply_lobby_state(
+		state.room_code,
+		state.room_state,
+		state.local_member_id,
+		state.max_players,
+		state.members
+	)
+	if multiplayer_lobby.has_method("set_start_enabled"):
+		multiplayer_lobby.set_start_enabled(state.can_start_game())
+	multiplayer_lobby.show()
 
 
 func _on_room_state_changed(_packet: Dictionary) -> void:
