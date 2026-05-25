@@ -4,8 +4,11 @@ signal return_to_menu_requested
 
 const EffectsScript = preload("res://scripts/gameplay/effects.gd")
 const CameraFollowScript = preload("res://scripts/camera/camera_follow.gd")
+const DebugInputControllerScript = preload("res://scripts/gameplay/support/debug_input_controller.gd")
+const GameBackgroundScrollScript = preload("res://scripts/gameplay/support/game_background_scroll.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
+const OffscreenIndicatorControllerScript = preload("res://scripts/gameplay/support/offscreen_indicator_controller.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const SpectateTargetsScript = preload("res://scripts/gameplay/spectate_targets.gd")
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
@@ -25,12 +28,11 @@ var has_received_state := false
 var has_initial_spawn := false
 var is_gameplay_paused := false
 var open_menu_input_armed := false
-var debug_invincible_input_armed := true
-var debug_infinite_lives_input_armed := true
-var debug_freeze_world_input_armed := true
-var debug_freeze_player_input_armed := true
 var self_id := ""
 var current_spectate_target_id := ""
+var debug_input_controller
+var background_scroll
+var offscreen_indicator_controller
 var effects: Effects
 var camera_follow
 var game_menu: GameMenu
@@ -60,6 +62,11 @@ func set_session_mode(value) -> void:
 
 func _ready() -> void:
 	_setup_network_client()
+
+	debug_input_controller = DebugInputControllerScript.new()
+	background_scroll = GameBackgroundScrollScript.new()
+	offscreen_indicator_controller = OffscreenIndicatorControllerScript.new()
+	offscreen_indicator_controller.configure(offscreen_indicators, gameplay_camera)
 
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(self, player, bullets, asteroids)
@@ -100,7 +107,7 @@ func _process(delta: float) -> void:
 	hud_controller.update(delta)
 	respawn_retry_remaining = max(0.0, respawn_retry_remaining - delta)
 	_update_open_menu_input_armed()
-	_handle_debug_input()
+	debug_input_controller.handle_input(network_client)
 	_handle_spectate_input()
 	if _handle_open_menu_pressed():
 		return
@@ -255,15 +262,13 @@ func _close_network_connection() -> void:
 
 
 func _update_background_scroll_offset() -> void:
-	if !has_initial_spawn:
-		return
-
-	var shell := get_parent()
-	if shell != null && shell.has_method("set_gameplay_scroll_offset"):
-		if is_spectating && camera_follow != null && camera_follow.camera != null:
-			shell.set_gameplay_scroll_offset(camera_follow.camera.global_position)
-		else:
-			shell.set_gameplay_scroll_offset(player.global_position)
+	background_scroll.update_scroll_offset(
+		get_parent(),
+		has_initial_spawn,
+		is_spectating,
+		camera_follow,
+		player
+	)
 
 
 func _update_player_afterburner() -> void:
@@ -277,20 +282,14 @@ func _update_player_afterburner() -> void:
 
 
 func _update_offscreen_indicators() -> void:
-	if offscreen_indicators == null || gameplay_camera == null:
-		return
-
-	offscreen_indicators.update_indicators(
+	offscreen_indicator_controller.update_indicators(
 		world_sync.get_remote_player_visual_positions(),
-		gameplay_camera,
 		world_sync.get_remote_player_hues()
 	)
 
 
 func _clear_background_scroll_offset() -> void:
-	var shell := get_parent()
-	if shell != null && shell.has_method("clear_gameplay_scroll_offset"):
-		shell.clear_gameplay_scroll_offset()
+	background_scroll.clear_scroll_offset(get_parent())
 
 
 func _apply_events(server_events: Array) -> void:
@@ -640,29 +639,6 @@ func _send_gameplay_input_if_active() -> void:
 		respawn_retry_remaining = RESPAWN_RETRY_SECONDS
 		awaiting_respawn_confirmation = true
 		network_client.send_packet(Packets.respawn_packet())
-
-
-func _handle_debug_input() -> void:
-	if !Input.is_key_pressed(KEY_F1) && !Input.is_key_pressed(KEY_F2) && !Input.is_key_pressed(KEY_F3) && !Input.is_key_pressed(KEY_F4):
-		debug_invincible_input_armed = true
-		debug_infinite_lives_input_armed = true
-		debug_freeze_world_input_armed = true
-		debug_freeze_player_input_armed = true
-		return
-	if !network_client.is_connected_to_server():
-		return
-	if Input.is_key_pressed(KEY_F1) && debug_invincible_input_armed:
-		debug_invincible_input_armed = false
-		network_client.send_packet(Packets.toggle_debug_invincible_packet())
-	if Input.is_key_pressed(KEY_F2) && debug_infinite_lives_input_armed:
-		debug_infinite_lives_input_armed = false
-		network_client.send_packet(Packets.toggle_debug_infinite_lives_packet())
-	if Input.is_key_pressed(KEY_F3) && debug_freeze_world_input_armed:
-		debug_freeze_world_input_armed = false
-		network_client.send_packet(Packets.toggle_debug_freeze_world_packet())
-	if Input.is_key_pressed(KEY_F4) && debug_freeze_player_input_armed:
-		debug_freeze_player_input_armed = false
-		network_client.send_packet(Packets.toggle_debug_freeze_player_packet())
 
 
 func _send_client_config() -> void:
