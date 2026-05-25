@@ -6,6 +6,7 @@ const EffectsScript = preload("res://scripts/gameplay/effects.gd")
 const CameraFollowScript = preload("res://scripts/camera/camera_follow.gd")
 const DebugInputControllerScript = preload("res://scripts/gameplay/support/debug_input_controller.gd")
 const GameBackgroundScrollScript = preload("res://scripts/gameplay/support/game_background_scroll.gd")
+const GameplayEventControllerScript = preload("res://scripts/gameplay/events/gameplay_event_controller.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const OffscreenIndicatorControllerScript = preload("res://scripts/gameplay/support/offscreen_indicator_controller.gd")
@@ -37,6 +38,7 @@ var current_spectate_target_id: String:
 		_spectate_controller().set_current_target_id(value)
 var debug_input_controller
 var background_scroll
+var gameplay_event_controller
 var offscreen_indicator_controller
 var effects: Effects
 var camera_follow
@@ -95,6 +97,11 @@ func _ready() -> void:
 
 	effects = EffectsScript.new()
 	effects.configure(self, hud_controller.game_over_sound)
+	gameplay_event_controller = GameplayEventControllerScript.new()
+	gameplay_event_controller.configure(
+		effects,
+		Callable(world_sync, "visual_position_for_server_position")
+	)
 
 	get_viewport().size_changed.connect(_send_client_config)
 
@@ -313,13 +320,11 @@ func _clear_background_scroll_offset() -> void:
 func _apply_events(server_events: Array) -> void:
 	for event in server_events:
 		if event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_BULLET_BLAST:
-			var event_position := Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y])
-			effects.spawn_bullet_blast(world_sync.visual_position_for_server_position(event_position))
+			gameplay_event_controller.apply_bullet_blast(event)
 		elif event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_SHIP_DEATH:
 			if event[Packets.FIELD_PLAYER_ID] == self_id:
 				_apply_self_death_event(event)
-			var event_position := Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y])
-			effects.spawn_ship_death(world_sync.visual_position_for_server_position(event_position))
+			gameplay_event_controller.apply_ship_death(event)
 
 
 func _apply_self_death_event(event: Dictionary) -> void:
