@@ -326,7 +326,7 @@ func test_multiplayer_spectate_selects_another_target_when_current_disappears() 
 	hud_controller.get_game_menu()._on_primary_action_pressed()
 	assert_eq(game.current_spectate_target_id, "remote-a")
 
-	game.world_sync.remote_player_visual_positions.erase("remote-a")
+	game.world_sync.player_sync.remote_player_visual_positions.erase("remote-a")
 	game._update_spectate_camera()
 
 	assert_true(game.is_spectating)
@@ -405,7 +405,7 @@ func test_switch_camera_recovers_when_current_target_disappeared() -> void:
 	hud_controller.get_game_menu()._on_primary_action_pressed()
 	assert_eq(game.current_spectate_target_id, "remote-a")
 
-	game.world_sync.remote_player_visual_positions.erase("remote-a")
+	game.world_sync.player_sync.remote_player_visual_positions.erase("remote-a")
 	game._cycle_spectate_target()
 
 	assert_true(game.is_spectating)
@@ -441,7 +441,7 @@ func test_multiplayer_spectate_falls_back_to_waiting_menu_when_targets_disappear
 	hud_controller.get_game_menu()._on_primary_action_pressed()
 	assert_true(game.is_spectating)
 
-	game.world_sync.remote_player_visual_positions.clear()
+	game.world_sync.player_sync.remote_player_visual_positions.clear()
 	game._update_spectate_camera()
 
 	assert_false(game.is_spectating)
@@ -525,5 +525,5 @@ func _add_spectate_target(
 	position := Vector2(42.0, 24.0),
 	lifecycle_status := "active"
 ) -> void:
-	game.world_sync.remote_player_visual_positions[player_id] = position
+	game.world_sync.player_sync.remote_player_visual_positions[player_id] = position
 	game.player_lifecycle[player_id] = lifecycle_status

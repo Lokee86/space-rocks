@@ -39,21 +39,21 @@ func after_each() -> void:
 func test_apply_state_creates_player_nodes() -> void:
 	_apply_fixture_state()
 
-	assert_true(world_sync.player_nodes.has(WorldStateFixture.LOCAL_PLAYER_ID))
-	assert_true(world_sync.player_nodes.has(WorldStateFixture.REMOTE_PLAYER_ID))
+	assert_true(_player_nodes().has(WorldStateFixture.LOCAL_PLAYER_ID))
+	assert_true(_player_nodes().has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_false(world_sync.get_remote_player_hues().has(WorldStateFixture.LOCAL_PLAYER_ID))
 	assert_true(world_sync.get_remote_player_hues().has(WorldStateFixture.REMOTE_PLAYER_ID))
-	assert_eq(world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID], local_player)
+	assert_eq(_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID], local_player)
 	assert_eq(
-		world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID].position,
+		_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID].position,
 		Vector2(100.0, 120.0)
 	)
 	assert_eq(
-		world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].position,
+		_player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].position,
 		Vector2(220.0, 240.0)
 	)
 	assert_eq(
-		world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].get_parent(),
+		_player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].get_parent(),
 		game_owner
 	)
 
@@ -62,8 +62,8 @@ func test_local_player_draws_above_remote_players() -> void:
 	_apply_fixture_state()
 
 	assert_gt(
-		world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID].z_index,
-		world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].z_index
+		_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID].z_index,
+		_player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].z_index
 	)
 
 
@@ -97,8 +97,8 @@ func test_apply_state_creates_bullet_nodes() -> void:
 
 func test_apply_state_reuses_existing_entity_nodes() -> void:
 	_apply_fixture_state()
-	var local_node = world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID]
-	var remote_node = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID]
+	var local_node = _player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID]
+	var remote_node = _player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID]
 	var asteroid_node = _asteroid_nodes()[WorldStateFixture.ASTEROID_ID]
 	var bullet_node = _bullet_nodes()[WorldStateFixture.BULLET_ID]
 	var owner_child_count := game_owner.get_child_count()
@@ -107,11 +107,11 @@ func test_apply_state_reuses_existing_entity_nodes() -> void:
 
 	_apply_state(_updated_state())
 
-	assert_eq(world_sync.player_nodes.size(), 2)
+	assert_eq(_player_nodes().size(), 2)
 	assert_eq(_asteroid_nodes().size(), 1)
 	assert_eq(_bullet_nodes().size(), 1)
-	assert_eq(world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID], local_node)
-	assert_eq(world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID], remote_node)
+	assert_eq(_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID], local_node)
+	assert_eq(_player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID], remote_node)
 	assert_eq(_asteroid_nodes()[WorldStateFixture.ASTEROID_ID], asteroid_node)
 	assert_eq(_bullet_nodes()[WorldStateFixture.BULLET_ID], bullet_node)
 	assert_eq(game_owner.get_child_count(), owner_child_count)
@@ -124,15 +124,15 @@ func test_apply_state_updates_existing_entity_targets() -> void:
 	_apply_state(_updated_state())
 
 	assert_eq(
-		world_sync.target_player_positions[WorldStateFixture.LOCAL_PLAYER_ID],
+		_player_sync().get("target_player_positions")[WorldStateFixture.LOCAL_PLAYER_ID],
 		Vector2(150.0, 170.0)
 	)
-	assert_eq(world_sync.target_player_rotations[WorldStateFixture.LOCAL_PLAYER_ID], 0.5)
+	assert_eq(_player_sync().get("target_player_rotations")[WorldStateFixture.LOCAL_PLAYER_ID], 0.5)
 	assert_eq(
-		world_sync.target_player_positions[WorldStateFixture.REMOTE_PLAYER_ID],
+		_player_sync().get("target_player_positions")[WorldStateFixture.REMOTE_PLAYER_ID],
 		Vector2(260.0, 280.0)
 	)
-	assert_eq(world_sync.target_player_rotations[WorldStateFixture.REMOTE_PLAYER_ID], 1.75)
+	assert_eq(_player_sync().get("target_player_rotations")[WorldStateFixture.REMOTE_PLAYER_ID], 1.75)
 	assert_eq(
 		_asteroid_sync().get("target_asteroid_positions")[WorldStateFixture.ASTEROID_ID],
 		Vector2(360.0, 380.0)
@@ -156,7 +156,7 @@ func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation(
 	_apply_state(state)
 	world_sync.interpolate(999.0)
 
-	var rendered_snapshot_a: Vector2 = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].position
+	var rendered_snapshot_a: Vector2 = _player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].position
 	_local_visual_sync().set(
 		"local_visual_position",
 		Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
@@ -164,10 +164,10 @@ func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation(
 
 	_apply_state(state)
 	var expected_target := Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
-	var rendered_snapshot_b: Vector2 = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].position
+	var rendered_snapshot_b: Vector2 = _player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].position
 	var remote_visual_positions := world_sync.get_remote_player_visual_positions()
 
-	assert_eq(world_sync.target_player_positions[WorldStateFixture.REMOTE_PLAYER_ID], expected_target)
+	assert_eq(_player_sync().get("target_player_positions")[WorldStateFixture.REMOTE_PLAYER_ID], expected_target)
 	assert_eq(rendered_snapshot_b, expected_target)
 	assert_eq(remote_visual_positions[WorldStateFixture.REMOTE_PLAYER_ID], expected_target)
 	assert_gt(abs(expected_target.y - rendered_snapshot_a.y), Constants.WORLD_HEIGHT * 0.5)
@@ -179,15 +179,15 @@ func test_interpolate_moves_existing_entities_toward_updated_state() -> void:
 	world_sync.interpolate(999.0)
 
 	assert_eq(
-		world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID].position,
+		_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID].position,
 		Vector2(150.0, 170.0)
 	)
-	assert_eq(world_sync.player_nodes[WorldStateFixture.LOCAL_PLAYER_ID].rotation, 0.5)
+	assert_eq(_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID].rotation, 0.5)
 	assert_eq(
-		world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].position,
+		_player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].position,
 		Vector2(260.0, 280.0)
 	)
-	assert_eq(world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].rotation, 1.75)
+	assert_eq(_player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].rotation, 1.75)
 	assert_eq(
 		_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].global_position,
 		Vector2(360.0, 380.0)
@@ -201,14 +201,14 @@ func test_interpolate_moves_existing_entities_toward_updated_state() -> void:
 
 func test_apply_state_removes_stale_remote_player_node() -> void:
 	_apply_fixture_state()
-	var remote_node = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID]
+	var remote_node = _player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID]
 
 	_apply_state(_state_without_remote_player())
 
-	assert_false(world_sync.player_nodes.has(WorldStateFixture.REMOTE_PLAYER_ID))
-	assert_false(world_sync.initialized_players.has(WorldStateFixture.REMOTE_PLAYER_ID))
-	assert_false(world_sync.target_player_positions.has(WorldStateFixture.REMOTE_PLAYER_ID))
-	assert_false(world_sync.target_player_rotations.has(WorldStateFixture.REMOTE_PLAYER_ID))
+	assert_false(_player_nodes().has(WorldStateFixture.REMOTE_PLAYER_ID))
+	assert_false(_player_sync().get("initialized_players").has(WorldStateFixture.REMOTE_PLAYER_ID))
+	assert_false(_player_sync().get("target_player_positions").has(WorldStateFixture.REMOTE_PLAYER_ID))
+	assert_false(_player_sync().get("target_player_rotations").has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_false(world_sync.get_remote_player_hues().has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_true(remote_node.is_queued_for_deletion())
 
@@ -282,6 +282,14 @@ func _apply_fixture_state() -> void:
 
 func _bullet_nodes() -> Dictionary:
 	return _bullet_sync().get("bullet_nodes")
+
+
+func _player_nodes() -> Dictionary:
+	return _player_sync().get("player_nodes")
+
+
+func _player_sync():
+	return world_sync.get("player_sync")
 
 
 func _local_visual_sync():
