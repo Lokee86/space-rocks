@@ -5,6 +5,7 @@ const GAME_LOOP_SCENE := preload("res://scenes/game_loop.tscn")
 const MAIN_MENU_SCENE := preload("res://scenes/ui/main_menu.tscn")
 const MULTIPLAYER_LOBBY_SCENE := preload("res://scenes/ui/dialogs/multiplayer_lobby.tscn")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
+const LobbyCoordinatorScript = preload("res://scripts/shell/lobby/lobby_coordinator.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
@@ -26,6 +27,7 @@ enum SessionMode {
 
 var game_loop: Node
 var lobby_network_client: NetworkClient
+var lobby_coordinator
 var multiplayer_lobby: Control
 var gameplay_scroll_offset := Vector2.ZERO
 var drift_time := 0.0
@@ -43,6 +45,7 @@ var room_max_players := 0
 
 
 func _ready() -> void:
+	lobby_coordinator = LobbyCoordinatorScript.new()
 	DisplayServer.window_set_min_size(Vector2i(Constants.WINDOW_MIN_SIZE))
 	DisplayServer.window_set_max_size(Vector2i(Constants.WINDOW_MAX_SIZE))
 	_clamp_window_size()
@@ -197,6 +200,8 @@ func _show_multiplayer_lobby() -> void:
 	if multiplayer_lobby.has_method("set_fake_data_enabled"):
 		multiplayer_lobby.set_fake_data_enabled(false)
 	canvas_layer.add_child(multiplayer_lobby)
+	if lobby_coordinator != null:
+		lobby_coordinator.configure(multiplayer_lobby)
 
 	if multiplayer_lobby.has_signal("ready_requested"):
 		if !multiplayer_lobby.ready_requested.is_connected(_request_ready_toggle):
@@ -223,6 +228,8 @@ func _show_multiplayer_lobby() -> void:
 func _hide_multiplayer_lobby() -> void:
 	if multiplayer_lobby == null:
 		return
+	if lobby_coordinator != null && lobby_coordinator.has_method("set_lobby"):
+		lobby_coordinator.set_lobby(null)
 	if is_instance_valid(multiplayer_lobby):
 		multiplayer_lobby.queue_free()
 	multiplayer_lobby = null
@@ -425,28 +432,15 @@ func _room_error_message(data: Dictionary) -> String:
 
 
 func _set_lobby_status(text: String) -> void:
-	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
+	if lobby_coordinator == null:
 		return
-	if multiplayer_lobby.has_method("set_status"):
-		multiplayer_lobby.set_status(text)
+
+	lobby_coordinator.set_status(text)
 
 
 func _store_room_snapshot(data: Dictionary) -> void:
-	var previous_room_state := current_room_state
-	current_room_code = str(data.get(Packets.FIELD_ROOM_CODE, "")).strip_edges()
-	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, "")).strip_edges()
-	local_room_member_id = str(data.get(Packets.FIELD_LOCAL_MEMBER_ID, "")).strip_edges()
-	room_members = RoomSnapshot.members(data.get(Packets.FIELD_MEMBERS, []))
-	room_ready_states = RoomSnapshot.ready_states(room_members)
-	room_max_players = int(data.get(Packets.FIELD_MAX_PLAYERS, 0))
-	latest_room_snapshot = {
-		Packets.FIELD_ROOM_CODE: current_room_code,
-		Packets.FIELD_ROOM_STATE: current_room_state,
-		Packets.FIELD_LOCAL_MEMBER_ID: local_room_member_id,
-		Packets.FIELD_MEMBERS: room_members.duplicate(true),
-		"ready_states": room_ready_states.duplicate(true),
-		Packets.FIELD_MAX_PLAYERS: room_max_players,
-	}
+	var previous_room_state: String = lobby_coordinator.apply_room_snapshot(data)
+	_sync_lobby_state_from_coordinator()
 	_return_to_multiplayer_lobby_if_ready(previous_room_state)
 	_update_lobby_room_labels()
 	_update_lobby_member_rows()
@@ -456,49 +450,49 @@ func _store_room_snapshot(data: Dictionary) -> void:
 
 
 func _store_room_state_changed(data: Dictionary) -> void:
-	current_room_code = str(data.get(Packets.FIELD_ROOM_CODE, current_room_code)).strip_edges()
-	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, current_room_state)).strip_edges()
-	latest_room_snapshot[Packets.FIELD_ROOM_CODE] = current_room_code
-	latest_room_snapshot[Packets.FIELD_ROOM_STATE] = current_room_state
+	lobby_coordinator.apply_room_state_changed(data)
+	_sync_lobby_state_from_coordinator()
 	_update_lobby_room_labels()
 	_update_lobby_control_state()
 	_enter_single_player_gameplay_if_ready()
 	_enter_multiplayer_gameplay_if_ready()
 
 
+func _sync_lobby_state_from_coordinator() -> void:
+	current_room_code = lobby_coordinator.current_room_code
+	current_room_state = lobby_coordinator.current_room_state
+	local_room_member_id = lobby_coordinator.local_room_member_id
+	room_members = lobby_coordinator.room_members
+	room_ready_states = lobby_coordinator.room_ready_states
+	room_max_players = lobby_coordinator.room_max_players
+	latest_room_snapshot = lobby_coordinator.latest_room_snapshot
+
+
 func _update_lobby_room_labels() -> void:
-	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
+	if lobby_coordinator == null:
 		return
 
-	if multiplayer_lobby.has_method("set_room_code"):
-		multiplayer_lobby.set_room_code(current_room_code)
-	if multiplayer_lobby.has_method("set_status"):
-		multiplayer_lobby.set_status(_room_status_text())
+	lobby_coordinator.update_room_labels()
 
 
 func _update_lobby_member_rows() -> void:
-	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
-		return
-	if !multiplayer_lobby.has_method("set_members"):
+	if lobby_coordinator == null:
 		return
 
-	multiplayer_lobby.set_members(room_members)
+	lobby_coordinator.update_member_rows()
 
 
 func _update_lobby_control_state() -> void:
-	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
+	if lobby_coordinator == null:
 		return
 
-	var local_ready := _local_member_ready()
-	if multiplayer_lobby.has_method("set_local_ready"):
-		multiplayer_lobby.set_local_ready(local_ready)
-	if multiplayer_lobby.has_method("set_start_enabled"):
-		multiplayer_lobby.set_start_enabled(
-			_room_state_is_lobby() && local_ready && RoomSnapshot.all_connected_members_ready(room_members)
-		)
+	lobby_coordinator.update_control_state()
 
 
 func _local_member_ready() -> bool:
+	if lobby_coordinator != null:
+		return lobby_coordinator.local_member_ready()
+
 	if local_room_member_id == "":
 		return false
 
@@ -506,6 +500,9 @@ func _local_member_ready() -> bool:
 
 
 func _room_state_is_lobby() -> bool:
+	if lobby_coordinator != null:
+		return lobby_coordinator.room_state_is_lobby()
+
 	return RoomState.is_lobby(current_room_state)
 
 
@@ -517,6 +514,9 @@ func _session_mode_name() -> String:
 
 
 func _room_state_is_in_game() -> bool:
+	if lobby_coordinator != null:
+		return lobby_coordinator.room_state_is_in_game()
+
 	return RoomState.is_in_game(current_room_state)
 
 
@@ -563,6 +563,9 @@ func _return_to_multiplayer_lobby_if_ready(previous_room_state: String) -> void:
 
 
 func _room_status_text() -> String:
+	if lobby_coordinator != null:
+		return lobby_coordinator.room_status_text()
+
 	var status := current_room_state
 	if status == "":
 		status = "Unknown"
