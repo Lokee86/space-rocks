@@ -141,6 +141,7 @@ func _show_multiplayer_lobby() -> void:
 	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
 		multiplayer_lobby = MultiplayerLobbyScene.instantiate()
 		canvas_layer.add_child(multiplayer_lobby)
+		_connect_multiplayer_lobby_signals()
 
 	var state = lobby_flow.current_state()
 	multiplayer_lobby.apply_lobby_state(
@@ -155,12 +156,55 @@ func _show_multiplayer_lobby() -> void:
 	multiplayer_lobby.show()
 
 
+func _connect_multiplayer_lobby_signals() -> void:
+	_connect_lobby_signal("ready_requested", Callable(self, "_on_lobby_ready_requested"))
+	_connect_lobby_signal("start_game_requested", Callable(self, "_on_lobby_start_game_requested"))
+	_connect_lobby_signal("leave_requested", Callable(self, "_on_lobby_leave_requested"))
+
+
+func _connect_lobby_signal(signal_name: StringName, handler: Callable) -> void:
+	if multiplayer_lobby.has_signal(signal_name) && !multiplayer_lobby.is_connected(signal_name, handler):
+		multiplayer_lobby.connect(signal_name, handler)
+
+
+func _on_lobby_ready_requested(ready: bool) -> void:
+	connection_service.send_set_ready_request(ready)
+	_log_v2_status("V2 lobby ready requested: %s" % ready)
+
+
+func _on_lobby_start_game_requested() -> void:
+	connection_service.send_start_game_request()
+	_log_v2_status("V2 lobby start game requested")
+
+
+func _on_lobby_leave_requested() -> void:
+	connection_service.send_leave_room_request()
+	_log_v2_status("V2 lobby leave requested")
+	_return_to_main_menu_from_lobby()
+
+
+func _return_to_main_menu_from_lobby() -> void:
+	if lobby_flow != null:
+		lobby_flow.clear()
+	if multiplayer_lobby != null && is_instance_valid(multiplayer_lobby):
+		multiplayer_lobby.queue_free()
+		multiplayer_lobby = null
+	if main_menu != null:
+		main_menu.show()
+	if shell_state != null:
+		shell_state.set_state(ShellState.MAIN_MENU)
+	pending_boot_request = BOOT_REQUEST_NONE
+	pending_join_room_code = ""
+
+
 func _on_room_state_changed(_packet: Dictionary) -> void:
 	_log_v2_status("V2 room state changed")
 
 
-func _on_room_error_received(_packet: Dictionary) -> void:
-	_log_v2_status("V2 room error received")
+func _on_room_error_received(packet: Dictionary) -> void:
+	var error_code := str(packet.get("error_code", ""))
+	var message := str(packet.get("message", ""))
+	_log_v2_status("V2 room error received: code=%s message=%s" % [error_code, message])
 
 
 func _on_gameplay_state_received(_packet: Dictionary) -> void:

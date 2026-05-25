@@ -38,17 +38,32 @@ func is_server_connected() -> bool:
 
 func send_start_single_player_request() -> void:
 	if network_client != null:
-		network_client.send_packet(Packets.start_single_player_request_packet())
+		network_client.send_start_single_player_request()
 
 
 func send_create_room_request() -> void:
 	if network_client != null:
-		network_client.send_packet(Packets.create_room_request_packet())
+		network_client.send_create_room_request()
 
 
 func send_join_room_request(room_code: String) -> void:
 	if network_client != null:
-		network_client.send_packet(Packets.join_room_request_packet(room_code))
+		network_client.send_join_room_request(room_code)
+
+
+func send_set_ready_request(ready: bool) -> void:
+	if network_client != null:
+		network_client.send_set_ready_request(ready)
+
+
+func send_start_game_request() -> void:
+	if network_client != null:
+		network_client.send_start_game_request()
+
+
+func send_leave_room_request() -> void:
+	if network_client != null:
+		network_client.send_leave_room_request()
 
 
 func _connect_network_client_signals() -> void:
