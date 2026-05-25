@@ -8,6 +8,7 @@ const DebugInputControllerScript = preload("res://scripts/gameplay/support/debug
 const GameBackgroundScrollScript = preload("res://scripts/gameplay/support/game_background_scroll.gd")
 const GameplayEventControllerScript = preload("res://scripts/gameplay/events/gameplay_event_controller.gd")
 const GameplayLifecycleControllerScript = preload("res://scripts/gameplay/gameplay_lifecycle_controller.gd")
+const GameplayMenuControllerScript = preload("res://scripts/gameplay/menu/gameplay_menu_controller.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
 const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const OffscreenIndicatorControllerScript = preload("res://scripts/gameplay/support/offscreen_indicator_controller.gd")
@@ -36,8 +37,16 @@ var awaiting_respawn_confirmation: bool:
 		_gameplay_lifecycle_controller().set_awaiting_respawn_confirmation(value)
 var has_received_state := false
 var has_initial_spawn := false
-var is_gameplay_paused := false
-var open_menu_input_armed := false
+var is_gameplay_paused: bool:
+	get:
+		return _gameplay_menu_controller().is_gameplay_paused
+	set(value):
+		_gameplay_menu_controller().is_gameplay_paused = value
+var open_menu_input_armed: bool:
+	get:
+		return _gameplay_menu_controller().open_menu_input_armed
+	set(value):
+		_gameplay_menu_controller().open_menu_input_armed = value
 var self_id := ""
 var current_spectate_target_id: String:
 	get:
@@ -48,6 +57,7 @@ var debug_input_controller
 var background_scroll
 var gameplay_event_controller
 var gameplay_lifecycle_controller
+var gameplay_menu_controller
 var offscreen_indicator_controller
 var effects: Effects
 var camera_follow
@@ -81,6 +91,14 @@ func set_session_mode(value) -> void:
 	session_mode = str(value)
 
 
+func _session_mode() -> String:
+	return session_mode
+
+
+func _current_room_state() -> String:
+	return current_room_state
+
+
 func _ready() -> void:
 	_setup_network_client()
 
@@ -102,6 +120,7 @@ func _ready() -> void:
 	hud_controller.set_session_mode(session_mode)
 	hud_controller.set_room_id(room_id)
 	game_menu = hud_controller.get_game_menu()
+	_gameplay_menu_controller()
 	_connect_game_menu_signals()
 
 	effects = EffectsScript.new()
@@ -311,6 +330,25 @@ func _gameplay_lifecycle_controller():
 	return gameplay_lifecycle_controller
 
 
+func _gameplay_menu_controller():
+	if gameplay_menu_controller == null:
+		gameplay_menu_controller = GameplayMenuControllerScript.new()
+		gameplay_menu_controller.configure(
+			hud_controller,
+			network_client,
+			player,
+			Callable(self, "_session_mode"),
+			Callable(self, "_is_game_over"),
+			Callable(self, "_current_room_state"),
+			Callable(self, "_is_room_game_over"),
+			Callable(self, "_has_spectate_targets"),
+			Callable(self, "_return_to_menu_after_network_close"),
+			Callable(self, "_start_spectating")
+		)
+
+	return gameplay_menu_controller
+
+
 func _close_network_connection() -> void:
 	if network_client != null:
 		await network_client.close_gracefully()
@@ -370,7 +408,7 @@ func _clear_awaiting_respawn_confirmation() -> void:
 
 
 func _disarm_open_menu_input() -> void:
-	open_menu_input_armed = false
+	_gameplay_menu_controller().disarm_open_menu_input()
 
 
 func _set_dead_state(respawn_delay: float) -> void:
@@ -382,53 +420,23 @@ func _set_game_over_state() -> void:
 
 
 func _handle_open_menu_pressed() -> bool:
-	if !Input.is_action_just_pressed("OpenMenu"):
-		return false
-	if _should_block_open_menu_for_game_over():
-		return false
-	if !open_menu_input_armed && !hud_controller.is_game_over:
-		return false
-
-	if _is_game_menu_open():
-		_close_game_menu()
-	else:
-		_open_game_menu()
-	return true
+	return _gameplay_menu_controller().handle_open_menu_pressed(has_initial_spawn)
 
 
 func _open_game_menu() -> void:
-	_show_game_menu()
-	if _can_pause_server_gameplay():
-		_set_gameplay_paused(true)
+	_gameplay_menu_controller().open_game_menu(has_initial_spawn)
 
 
 func _close_game_menu() -> void:
-	if is_gameplay_paused:
-		_set_gameplay_paused(false)
-	else:
-		_hide_game_menu()
-		hud_controller.set_suspended(false)
+	_gameplay_menu_controller().close_game_menu()
 
 
 func _can_pause_server_gameplay() -> bool:
-	return network_client.is_connected_to_server() && has_initial_spawn && !hud_controller.is_dead
+	return _gameplay_menu_controller().can_pause_server_gameplay(has_initial_spawn)
 
 
 func _set_gameplay_paused(paused: bool) -> void:
-	if is_gameplay_paused == paused:
-		if !paused:
-			_hide_game_menu()
-			hud_controller.set_suspended(false)
-		return
-
-	is_gameplay_paused = paused
-	hud_controller.set_suspended(paused)
-	if paused:
-		player.set_afterburner_active(false)
-		network_client.send_packet(Packets.pause_player_packet())
-	else:
-		_hide_game_menu()
-		network_client.send_packet(Packets.resume_player_packet())
+	_gameplay_menu_controller().set_gameplay_paused(paused)
 
 
 func _resume_gameplay_pause_if_needed() -> void:
@@ -439,10 +447,7 @@ func _resume_gameplay_pause_if_needed() -> void:
 
 
 func _update_open_menu_input_armed() -> void:
-	if open_menu_input_armed || !has_initial_spawn:
-		return
-	if !Input.is_action_pressed("OpenMenu"):
-		open_menu_input_armed = true
+	_gameplay_menu_controller().update_open_menu_input_armed(has_initial_spawn)
 
 
 func _return_to_menu_after_network_close() -> void:
@@ -453,79 +458,39 @@ func _return_to_menu_after_network_close() -> void:
 
 func _show_game_menu() -> void:
 	game_menu = hud_controller.get_game_menu()
-	if game_menu == null:
-		return
-
-	_refresh_game_menu_state()
-	_connect_game_menu_signals()
-	hud_controller.show_game_menu()
+	_gameplay_menu_controller().show_game_menu()
 
 
 func _refresh_game_menu_state() -> void:
-	if game_menu == null:
-		return
-	if game_menu.has_method("configure_for_state"):
-		game_menu.configure_for_state(
-			session_mode,
-			_is_game_over(),
-			current_room_state,
-			_has_spectate_targets()
-		)
+	_gameplay_menu_controller().refresh_game_menu_state(game_menu)
 
 
 func _connect_game_menu_signals() -> void:
-	if game_menu == null:
-		return
-
-	if game_menu.has_signal("lobby_requested"):
-		if !game_menu.lobby_requested.is_connected(_on_game_menu_lobby_requested):
-			game_menu.lobby_requested.connect(_on_game_menu_lobby_requested)
-	if game_menu.has_signal("spectate_requested"):
-		if !game_menu.spectate_requested.is_connected(_on_game_menu_spectate_requested):
-			game_menu.spectate_requested.connect(_on_game_menu_spectate_requested)
-	if !game_menu.resume_requested.is_connected(_on_game_menu_resume_requested):
-		game_menu.resume_requested.connect(_on_game_menu_resume_requested)
-	if !game_menu.quit_requested.is_connected(_on_game_menu_quit_requested):
-		game_menu.quit_requested.connect(_on_game_menu_quit_requested)
+	_gameplay_menu_controller().connect_game_menu_signals(game_menu)
 
 
 func _is_game_menu_open() -> bool:
-	return hud_controller != null && hud_controller.is_game_menu_visible()
+	return _gameplay_menu_controller().is_game_menu_open()
 
 
 func _hide_game_menu() -> void:
-	if hud_controller == null:
-		return
-
-	hud_controller.hide_game_menu()
+	_gameplay_menu_controller().hide_game_menu()
 
 
 func _on_game_menu_resume_requested() -> void:
-	_close_game_menu()
+	_gameplay_menu_controller().on_resume_requested()
 
 
 func _on_game_menu_lobby_requested() -> void:
-	if !_is_multiplayer_session():
-		return
-	if network_client == null || !network_client.is_connected_to_server():
-		return
-
-	network_client.send_return_to_lobby_request()
+	_gameplay_menu_controller().on_lobby_requested()
 
 
 func _on_game_menu_spectate_requested() -> void:
-	if !_is_multiplayer_session() || _is_room_game_over():
-		return
-	if !_start_spectating():
-		_show_game_menu()
+	_gameplay_menu_controller().on_spectate_requested()
 
 
 func _on_game_menu_quit_requested() -> void:
-	is_gameplay_paused = false
-	hud_controller.set_suspended(false)
-	if _is_multiplayer_session() && network_client != null && network_client.is_connected_to_server():
-		network_client.send_leave_room_request()
-	_return_to_menu_after_network_close()
+	_gameplay_menu_controller().on_quit_requested()
 
 
 func _is_multiplayer_session() -> bool:
@@ -632,7 +597,7 @@ func _refresh_cycle_view_hint() -> void:
 
 
 func _should_block_open_menu_for_game_over() -> bool:
-	return !_is_multiplayer_session() && _is_game_over()
+	return _gameplay_menu_controller().should_block_open_menu_for_game_over()
 
 
 func _send_gameplay_input_if_active() -> void:
