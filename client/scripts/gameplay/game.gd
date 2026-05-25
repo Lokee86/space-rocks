@@ -11,6 +11,7 @@ const GameplayMenuControllerScript = preload("res://scripts/gameplay/menu/gamepl
 const GameplayNetworkSessionScript = preload("res://scripts/networking/gameplay_network_session.gd")
 const GameplayPresentationControllerScript = preload("res://scripts/gameplay/support/gameplay_presentation_controller.gd")
 const GameplayRoomStateFlow = preload("res://scripts/gameplay/session/gameplay_room_state_flow.gd")
+const GameplayStateApplyResult = preload("res://scripts/gameplay/session/gameplay_state_apply_result.gd")
 const GameplaySessionState = preload("res://scripts/gameplay/session/gameplay_session_state.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
@@ -170,35 +171,30 @@ func _apply_state(data: Dictionary) -> void:
 		return
 
 	var state := GameplayStatePacketReader.read(data)
-	self_id = state["self_id"]
-	var server_players: Dictionary = state["server_players"]
-	_set_player_lifecycle(state["player_lifecycle"])
-
-	world_sync.apply_state(
-		self_id,
-		server_players,
-		state["server_bullets"],
-		state["server_asteroids"],
-		has_received_state
+	var apply_result := GameplayStateApplyResult.from_packet_state(
+		state,
+		has_received_state,
+		has_initial_spawn
 	)
-	var server_events: Array = state["server_events"]
-	if !server_events.is_empty():
-		gameplay_event_controller.apply_server_events(
-			server_events,
-			self_id,
-			Callable(_gameplay_lifecycle_controller(), "apply_self_death_event")
-		)
-	has_received_state = true
+	self_id = apply_result["self_id"]
+	_set_player_lifecycle(apply_result["player_lifecycle"])
 
-	if state["has_lives"]:
-		hud_controller.set_lives(state["lives"])
-	else:
-		push_warning("State packet missing lives")
-	if server_players.has(self_id):
-		has_initial_spawn = true
-		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
-		if hud_controller.is_dead && _gameplay_lifecycle_controller().is_awaiting_respawn_confirmation():
-			_gameplay_lifecycle_controller().set_alive_state()
+	GameplayStateApplyResult.apply_world_sync(apply_result, world_sync, has_received_state)
+	GameplayStateApplyResult.apply_server_events(
+		apply_result,
+		gameplay_event_controller,
+		Callable(_gameplay_lifecycle_controller(), "apply_self_death_event")
+	)
+	has_received_state = bool(apply_result["has_received_state"])
+	has_initial_spawn = apply_result["has_initial_spawn"]
+
+	GameplayStateApplyResult.apply_lives_to_hud(apply_result, hud_controller)
+	GameplayStateApplyResult.apply_score_to_hud(apply_result, hud_controller)
+	GameplayStateApplyResult.confirm_alive_if_spawned(
+		apply_result,
+		hud_controller,
+		_gameplay_lifecycle_controller()
+	)
 
 
 func _on_network_connected() -> void:
