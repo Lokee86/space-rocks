@@ -1,6 +1,7 @@
 extends Node2D
 
 const ShellState := preload("res://scripts/shell/shell_state.gd")
+const ClientSessionContext := preload("res://scripts/shell/client_session_context.gd")
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const LobbyFlow := preload("res://scripts/lobby/lobby_flow.gd")
@@ -18,6 +19,7 @@ const BOOT_REQUEST_JOIN_ROOM := "join_room"
 @onready var main_menu: Control = $CanvasLayer/MainMenu
 
 var shell_state: ShellState
+var session_context: ClientSessionContext
 var connection_service: ClientConnectionService
 var lobby_flow: LobbyFlow
 var multiplayer_lobby: Control
@@ -27,6 +29,7 @@ var pending_join_room_code := ""
 
 func _ready() -> void:
 	shell_state = ShellState.new()
+	session_context = ClientSessionContext.new()
 	connection_service = ClientConnectionService.new()
 	lobby_flow = LobbyFlow.new()
 	add_child(connection_service)
@@ -66,12 +69,14 @@ func _connect_main_menu() -> void:
 
 
 func _on_single_player_pressed() -> void:
+	session_context.request_single_player()
 	pending_boot_request = BOOT_REQUEST_SINGLE_PLAYER
 	pending_join_room_code = ""
 	_connect_to_game_server("single player")
 
 
 func _on_multiplayer_create_requested() -> void:
+	session_context.request_multiplayer()
 	pending_boot_request = BOOT_REQUEST_CREATE_ROOM
 	pending_join_room_code = ""
 	_connect_to_game_server("multiplayer create")
@@ -82,6 +87,7 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 	if stripped_room_code.is_empty():
 		_log_v2_status("V2 multiplayer join rejected: empty room code")
 		return
+	session_context.request_multiplayer()
 	pending_boot_request = BOOT_REQUEST_JOIN_ROOM
 	pending_join_room_code = stripped_room_code
 	_connect_to_game_server("multiplayer join: %s" % stripped_room_code)
@@ -132,7 +138,12 @@ func _on_room_snapshot_received(_packet: Dictionary) -> void:
 	shell_state.set_state(ShellState.LOBBY)
 	var summary := lobby_flow.apply_room_snapshot(_packet)
 	_log_v2_status("V2 lobby updated: %s" % summary)
-	_show_multiplayer_lobby()
+	var state = lobby_flow.current_state()
+	session_context.activate_requested_mode()
+	if session_context.should_show_multiplayer_lobby(state.room_state):
+		_show_multiplayer_lobby()
+	else:
+		_log_v2_status("V2 room snapshot received; multiplayer lobby mount skipped for session mode")
 
 
 func _show_multiplayer_lobby() -> void:

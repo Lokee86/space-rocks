@@ -15,6 +15,7 @@ signal gameplay_state_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
 
 var network_client: NetworkClient
+var has_started_connection := false
 
 
 func _ready() -> void:
@@ -24,11 +25,12 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if network_client != null:
+	if has_started_connection && network_client != null:
 		network_client.poll()
 
 
 func connect_to_server(url: String) -> Error:
+	has_started_connection = true
 	return network_client.connect_to_server(url)
 
 
