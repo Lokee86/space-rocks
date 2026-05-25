@@ -13,6 +13,9 @@ var room_members := []
 var room_ready_states := {}
 var room_max_players := 0
 var latest_room_snapshot := {}
+var create_room_request_pending := false
+var start_single_player_request_pending := false
+var pending_join_room_code := ""
 
 
 func configure(lobby_control) -> void:
@@ -21,6 +24,56 @@ func configure(lobby_control) -> void:
 
 func set_lobby(lobby_control) -> void:
 	configure(lobby_control)
+
+
+func begin_create_room_flow() -> void:
+	create_room_request_pending = true
+	start_single_player_request_pending = false
+	pending_join_room_code = ""
+
+
+func begin_join_room_flow(room_code: String) -> void:
+	pending_join_room_code = room_code.strip_edges()
+	create_room_request_pending = false
+	start_single_player_request_pending = false
+
+
+func begin_single_player_flow() -> void:
+	start_single_player_request_pending = true
+	create_room_request_pending = false
+	pending_join_room_code = ""
+
+
+func clear_pending_requests() -> void:
+	create_room_request_pending = false
+	start_single_player_request_pending = false
+	pending_join_room_code = ""
+
+
+func take_pending_create_room_request() -> bool:
+	if !create_room_request_pending:
+		return false
+
+	create_room_request_pending = false
+	return true
+
+
+func take_pending_start_single_player_request() -> bool:
+	if !start_single_player_request_pending:
+		return false
+
+	start_single_player_request_pending = false
+	return true
+
+
+func has_pending_join_room_code() -> bool:
+	return pending_join_room_code != ""
+
+
+func take_pending_join_room_code() -> String:
+	var room_code := pending_join_room_code
+	pending_join_room_code = ""
+	return room_code
 
 
 func apply_room_snapshot(data: Dictionary) -> String:
