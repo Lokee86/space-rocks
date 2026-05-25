@@ -5,13 +5,13 @@ const ClientSessionContext := preload("res://scripts/shell/client_session_contex
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const LobbyFlow := preload("res://scripts/lobby/lobby_flow.gd")
-const MultiplayerLobbyScene := preload("res://scenes/ui/dialogs/multiplayer_lobby.tscn")
+const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
+const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
+const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
+const RoomSnapshotShellState := preload("res://scripts/shell/room_snapshot_shell_state.gd")
+const ShellBootFlow := preload("res://scripts/shell/shell_boot_flow.gd")
 
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
-const BOOT_REQUEST_NONE := "none"
-const BOOT_REQUEST_SINGLE_PLAYER := "single_player"
-const BOOT_REQUEST_CREATE_ROOM := "create_room"
-const BOOT_REQUEST_JOIN_ROOM := "join_room"
 
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
@@ -22,9 +22,10 @@ var shell_state: ShellState
 var session_context: ClientSessionContext
 var connection_service: ClientConnectionService
 var lobby_flow: LobbyFlow
-var multiplayer_lobby: Control
-var pending_boot_request := BOOT_REQUEST_NONE
-var pending_join_room_code := ""
+var multiplayer_dialog_status_presenter: MultiplayerDialogStatusPresenter
+var multiplayer_lobby_presenter: MultiplayerLobbyPresenter
+var shell_boot_flow: ShellBootFlow
+var lobby_shell_flow: LobbyShellFlow
 
 
 func _ready() -> void:
@@ -32,6 +33,19 @@ func _ready() -> void:
 	session_context = ClientSessionContext.new()
 	connection_service = ClientConnectionService.new()
 	lobby_flow = LobbyFlow.new()
+	multiplayer_dialog_status_presenter = MultiplayerDialogStatusPresenter.new()
+	multiplayer_lobby_presenter = MultiplayerLobbyPresenter.new()
+	shell_boot_flow = ShellBootFlow.new(connection_service, MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
+	lobby_shell_flow = LobbyShellFlow.new(
+		lobby_flow,
+		session_context,
+		connection_service,
+		multiplayer_lobby_presenter,
+		main_menu,
+		canvas_layer,
+		Callable(self, "_log_v2_status"),
+		Callable(self, "_on_lobby_returned_to_main_menu")
+	)
 	add_child(connection_service)
 	_connect_connection_service()
 	_connect_main_menu()
@@ -70,15 +84,13 @@ func _connect_main_menu() -> void:
 
 func _on_single_player_pressed() -> void:
 	session_context.request_single_player()
-	pending_boot_request = BOOT_REQUEST_SINGLE_PLAYER
-	pending_join_room_code = ""
+	shell_boot_flow.request_single_player()
 	_connect_to_game_server("single player")
 
 
 func _on_multiplayer_create_requested() -> void:
 	session_context.request_multiplayer()
-	pending_boot_request = BOOT_REQUEST_CREATE_ROOM
-	pending_join_room_code = ""
+	shell_boot_flow.request_create_room()
 	_connect_to_game_server("multiplayer create")
 
 
@@ -86,45 +98,21 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 	var stripped_room_code := room_code.strip_edges()
 	if stripped_room_code.is_empty():
 		_log_v2_status("V2 multiplayer join rejected: empty room code")
-		_show_multiplayer_dialog_status("Must enter an ID to join.")
+		multiplayer_dialog_status_presenter.show_status(main_menu, "Must enter an ID to join.")
 		return
 	session_context.request_multiplayer()
-	pending_boot_request = BOOT_REQUEST_JOIN_ROOM
-	pending_join_room_code = stripped_room_code
+	shell_boot_flow.request_join_room(stripped_room_code)
 	_connect_to_game_server("multiplayer join: %s" % stripped_room_code)
 
 
 func _connect_to_game_server(reason: String) -> void:
-	if connection_service.is_server_connected():
-		_log_v2_status("V2 already connected for %s" % reason)
-		_send_pending_boot_request()
-		return
-	shell_state.set_state(ShellState.CONNECTING)
-	var result := connection_service.connect_to_server(MULTIPLAYER_WS_URL)
-	_log_v2_status("V2 connecting to server for %s: %s" % [reason, error_string(result)])
-
-
-func _send_pending_boot_request() -> void:
-	if pending_boot_request == BOOT_REQUEST_NONE:
-		return
-
-	if pending_boot_request == BOOT_REQUEST_SINGLE_PLAYER:
-		connection_service.send_start_single_player_request()
-		_log_v2_status("V2 sent single player request")
-	elif pending_boot_request == BOOT_REQUEST_CREATE_ROOM:
-		connection_service.send_create_room_request()
-		_log_v2_status("V2 sent create room request")
-	elif pending_boot_request == BOOT_REQUEST_JOIN_ROOM:
-		connection_service.send_join_room_request(pending_join_room_code)
-		_log_v2_status("V2 sent join room request: %s" % pending_join_room_code)
-
-	pending_boot_request = BOOT_REQUEST_NONE
-	pending_join_room_code = ""
+	if shell_boot_flow.connect_to_game_server(reason):
+		shell_state.set_state(ShellState.CONNECTING)
 
 
 func _on_connection_connected() -> void:
 	_log_v2_status("V2 connection connected")
-	_send_pending_boot_request()
+	shell_boot_flow.send_pending_boot_request()
 
 
 func _on_connection_closed() -> void:
@@ -136,78 +124,15 @@ func _on_packet_parse_failed(text: String) -> void:
 
 
 func _on_room_snapshot_received(_packet: Dictionary) -> void:
-	shell_state.set_state(ShellState.LOBBY)
-	var summary := lobby_flow.apply_room_snapshot(_packet)
-	_log_v2_status("V2 lobby updated: %s" % summary)
-	var state = lobby_flow.current_state()
-	session_context.activate_requested_mode()
-	if session_context.should_show_multiplayer_lobby(state.room_state):
-		_show_multiplayer_lobby()
-	else:
-		_log_v2_status("V2 room snapshot received; multiplayer lobby mount skipped for session mode")
+	var room_state := str(_packet.get("room_state", ""))
+	shell_state.set_state(RoomSnapshotShellState.from_room_state(room_state))
+	lobby_shell_flow.apply_room_snapshot(_packet)
 
 
-func _show_multiplayer_lobby() -> void:
-	if main_menu != null:
-		main_menu.hide()
-	if multiplayer_lobby == null || !is_instance_valid(multiplayer_lobby):
-		multiplayer_lobby = MultiplayerLobbyScene.instantiate()
-		canvas_layer.add_child(multiplayer_lobby)
-		_connect_multiplayer_lobby_signals()
-
-	var state = lobby_flow.current_state()
-	multiplayer_lobby.apply_lobby_state(
-		state.room_code,
-		state.room_state,
-		state.local_member_id,
-		state.owner_id,
-		state.max_players,
-		state.members
-	)
-	if multiplayer_lobby.has_method("set_start_enabled"):
-		multiplayer_lobby.set_start_enabled(state.can_start_game())
-	multiplayer_lobby.show()
-
-
-func _connect_multiplayer_lobby_signals() -> void:
-	_connect_lobby_signal("ready_requested", Callable(self, "_on_lobby_ready_requested"))
-	_connect_lobby_signal("start_game_requested", Callable(self, "_on_lobby_start_game_requested"))
-	_connect_lobby_signal("leave_requested", Callable(self, "_on_lobby_leave_requested"))
-
-
-func _connect_lobby_signal(signal_name: StringName, handler: Callable) -> void:
-	if multiplayer_lobby.has_signal(signal_name) && !multiplayer_lobby.is_connected(signal_name, handler):
-		multiplayer_lobby.connect(signal_name, handler)
-
-
-func _on_lobby_ready_requested(ready: bool) -> void:
-	connection_service.send_set_ready_request(ready)
-	_log_v2_status("V2 lobby ready requested: %s" % ready)
-
-
-func _on_lobby_start_game_requested() -> void:
-	connection_service.send_start_game_request()
-	_log_v2_status("V2 lobby start game requested")
-
-
-func _on_lobby_leave_requested() -> void:
-	connection_service.send_leave_room_request()
-	_log_v2_status("V2 lobby leave requested")
-	_return_to_main_menu_from_lobby()
-
-
-func _return_to_main_menu_from_lobby() -> void:
-	if lobby_flow != null:
-		lobby_flow.clear()
-	if multiplayer_lobby != null && is_instance_valid(multiplayer_lobby):
-		multiplayer_lobby.queue_free()
-		multiplayer_lobby = null
-	if main_menu != null:
-		main_menu.show()
+func _on_lobby_returned_to_main_menu() -> void:
 	if shell_state != null:
 		shell_state.set_state(ShellState.MAIN_MENU)
-	pending_boot_request = BOOT_REQUEST_NONE
-	pending_join_room_code = ""
+	shell_boot_flow.clear()
 
 
 func _on_room_state_changed(_packet: Dictionary) -> void:
@@ -218,7 +143,7 @@ func _on_room_error_received(packet: Dictionary) -> void:
 	var error_code := str(packet.get("error_code", ""))
 	var message := str(packet.get("message", ""))
 	_log_v2_status("V2 room error received: code=%s message=%s" % [error_code, message])
-	_show_multiplayer_dialog_status(_friendly_room_error_message(error_code, message))
+	multiplayer_dialog_status_presenter.show_room_error(main_menu, packet)
 
 
 func _on_gameplay_state_received(_packet: Dictionary) -> void:
@@ -231,28 +156,3 @@ func _on_unknown_packet_received(_packet: Dictionary) -> void:
 
 func _log_v2_status(message: String) -> void:
 	ClientLogger.shell_info(message)
-
-
-func _show_multiplayer_dialog_status(message: String) -> void:
-	if main_menu != null && is_instance_valid(main_menu) && main_menu.has_method("show_multiplayer_dialog_status"):
-		main_menu.show_multiplayer_dialog_status(message)
-
-
-func _friendly_room_error_message(error_code: String, message: String) -> String:
-	match error_code:
-		"invalid_room_code":
-			return "Invalid room ID."
-		"room_not_found":
-			return "Room not found."
-		"room_full":
-			return "Room is full."
-		"room_in_game":
-			return "Room is already in game."
-		"already_in_room":
-			return "Already in a room."
-		"invalid_room_state":
-			return "Room is not joinable."
-
-	if !message.is_empty():
-		return message
-	return "Could not join room."
