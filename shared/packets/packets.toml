@@ -16,7 +16,7 @@ entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
 
 [[outputs]]
 language = "gdscript"
-path = "client/scripts/networking/packets.gd"
+path = "client/scripts/networking/packets/packets.gd"
 base = "RefCounted"
 builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
 
@@ -181,6 +181,12 @@ item_type = "RoomMemberState"
 name = "local_member_id"
 go_name = "LocalMemberID"
 json = "local_member_id"
+type = "string"
+
+[[structs.fields]]
+name = "owner_id"
+go_name = "OwnerID"
+json = "owner_id"
 type = "string"
 
 [[structs.fields]]

@@ -29,5 +29,6 @@ const (
 	RoomErrorNotInRoom        = "not_in_room"
 	RoomErrorInvalidRoomCode  = "invalid_room_code"
 	RoomErrorNotReady         = "not_ready"
+	RoomErrorNotRoomOwner     = "not_room_owner"
 	RoomErrorInvalidRoomState = "invalid_room_state"
 )

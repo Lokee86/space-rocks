@@ -12,6 +12,7 @@ type Room struct {
 	State          RoomState
 	Game           *game.Game
 	Members        map[string]*RoomMember
+	OwnerID        string
 	Joinable       bool
 	ActivePlayers  int
 	CleanupTimer   *time.Timer
@@ -34,6 +35,9 @@ func (room *Room) AddMember(member *RoomMember) *RoomMember {
 	defer room.mu.Unlock()
 
 	room.Members[member.SessionID] = member
+	if room.OwnerID == "" {
+		room.OwnerID = member.SessionID
+	}
 
 	return member
 }
@@ -99,6 +103,13 @@ func (room *Room) ValidateStart(memberID string) *RoomDomainError {
 		return &RoomDomainError{
 			Code:    RoomErrorNotInRoom,
 			Message: "Member is not in the room.",
+		}
+	}
+
+	if memberID != room.OwnerID {
+		return &RoomDomainError{
+			Code:    RoomErrorNotRoomOwner,
+			Message: "Only the room owner can start the game.",
 		}
 	}
 

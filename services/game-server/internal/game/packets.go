@@ -78,6 +78,7 @@ type RoomSnapshot struct {
 	RoomState     string            `json:"room_state"`
 	Members       []RoomMemberState `json:"members"`
 	LocalMemberID string            `json:"local_member_id"`
+	OwnerID       string            `json:"owner_id"`
 	MaxPlayers    int               `json:"max_players"`
 }
 

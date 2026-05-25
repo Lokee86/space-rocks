@@ -227,4 +227,4 @@ func _on_unknown_packet_received(_packet: Dictionary) -> void:
 
 
 func _log_v2_status(message: String) -> void:
-	print(message)
+	ClientLogger.shell_info(message)
