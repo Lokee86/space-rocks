@@ -157,7 +157,10 @@ func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation(
 	world_sync.interpolate(999.0)
 
 	var rendered_snapshot_a: Vector2 = world_sync.player_nodes[WorldStateFixture.REMOTE_PLAYER_ID].position
-	world_sync.local_visual_position = Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
+	_local_visual_sync().set(
+		"local_visual_position",
+		Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
+	)
 
 	_apply_state(state)
 	var expected_target := Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
@@ -279,6 +282,10 @@ func _apply_fixture_state() -> void:
 
 func _bullet_nodes() -> Dictionary:
 	return _bullet_sync().get("bullet_nodes")
+
+
+func _local_visual_sync():
+	return world_sync.get("local_visual_sync")
 
 
 func _asteroid_nodes() -> Dictionary:

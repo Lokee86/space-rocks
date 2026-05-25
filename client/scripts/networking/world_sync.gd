@@ -6,10 +6,10 @@ signal bullet_spawned
 const Constants = preload("res://scripts/constants/constants.gd")
 const AsteroidSyncScript = preload("res://scripts/networking/asteroid_sync.gd")
 const BulletSyncScript = preload("res://scripts/networking/bullet_sync.gd")
+const LocalVisualSyncScript = preload("res://scripts/networking/local_visual_sync.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const PlayerSyncState = preload("res://scripts/networking/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/networking/visual_sync_positions.gd")
-const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
@@ -33,13 +33,11 @@ var bullets_layer: Node2D
 var asteroids_layer: Node2D
 var asteroid_sync
 var bullet_sync
+var local_visual_sync
 var player_nodes := {}
 var initialized_players := {}
 var target_player_positions := {}
 var target_player_rotations := {}
-var local_server_position := Vector2.ZERO
-var local_visual_position := Vector2.ZERO
-var has_local_visual_position := false
 var remote_player_visual_positions := {}
 var remote_player_hues := {}
 var current_self_id := ""
@@ -62,6 +60,7 @@ func configure(
 	bullet_sync.bullet_spawned.connect(func() -> void:
 		bullet_spawned.emit()
 	)
+	local_visual_sync = LocalVisualSyncScript.new()
 
 	asteroids_layer.z_index = ASTEROID_Z_INDEX
 	bullets_layer.z_index = BULLET_Z_INDEX
@@ -83,13 +82,13 @@ func apply_state(
 	bullet_sync.apply(
 		server_bullets,
 		play_new_bullet_sounds,
-		local_visual_position,
-		local_server_position
+		local_visual_sync.visual_position(),
+		local_visual_sync.server_position()
 	)
 	asteroid_sync.apply(
 		server_asteroids,
-		local_visual_position,
-		local_server_position
+		local_visual_sync.visual_position(),
+		local_visual_sync.server_position()
 	)
 
 
@@ -114,7 +113,9 @@ func interpolate(delta: float) -> void:
 func _apply_players(self_id: String, server_players: Dictionary) -> void:
 	if server_players.has(self_id):
 		var local_state: Dictionary = server_players[self_id]
-		_initialize_local_visual_position(Vector2(local_state[Packets.FIELD_X], local_state[Packets.FIELD_Y]))
+		local_visual_sync.update_from_server_position(
+			Vector2(local_state[Packets.FIELD_X], local_state[Packets.FIELD_Y])
+		)
 
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
@@ -125,11 +126,11 @@ func _apply_players(self_id: String, server_players: Dictionary) -> void:
 		var is_paused := PlayerSyncState.is_paused(state)
 
 		if player_id == self_id:
-			visual_position = local_visual_position
+			visual_position = local_visual_sync.visual_position()
 		else:
 			visual_position = VisualSyncPositions.relative_to_local_visual(
-				local_visual_position,
-				local_server_position,
+				local_visual_sync.visual_position(),
+				local_visual_sync.server_position(),
 				server_position
 			)
 			_correct_remote_visual_copy_mismatch(player_id, player_node, visual_position)
@@ -143,18 +144,6 @@ func _apply_players(self_id: String, server_players: Dictionary) -> void:
 			initialized_players[player_id] = true
 			player_node.position = visual_position
 			player_node.rotation = server_rotation
-
-
-func _initialize_local_visual_position(server_position: Vector2) -> void:
-	var wrapped_server_position := WorldWrapScript.wrap_position(server_position)
-	if has_local_visual_position:
-		local_visual_position += WorldWrapScript.shortest_delta(local_server_position, wrapped_server_position)
-		local_server_position = wrapped_server_position
-		return
-
-	local_server_position = wrapped_server_position
-	local_visual_position = local_server_position
-	has_local_visual_position = true
 
 
 func _correct_remote_visual_copy_mismatch(
@@ -268,10 +257,4 @@ func get_remote_player_hues() -> Dictionary:
 
 
 func visual_position_for_server_position(server_position: Vector2) -> Vector2:
-	if !has_local_visual_position:
-		return server_position
-
-	return local_visual_position + WorldWrapScript.shortest_delta(
-		local_server_position,
-		server_position
-	)
+	return local_visual_sync.visual_position_for_server_position(server_position)

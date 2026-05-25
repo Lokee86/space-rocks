@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_5kvch"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="3_gy3bv"]
 [ext_resource type="Texture2D" uid="uid://bjfpt5avmrn30" path="res://assets/ui/title!.png" id="3_x2yvf"]
+[ext_resource type="Texture2D" uid="uid://dext0jx4eaxel" path="res://assets/ui/title.png" id="4_uhagc"]
 [ext_resource type="Script" uid="uid://cyemkaej6joye" path="res://scripts/ui/menus/main_menu.gd" id="10_n3gqj"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_o88aq"]
@@ -42,6 +43,7 @@ theme_override_constants/margin_right = 45
 layout_mode = 2
 
 [node name="Title" type="Label" parent="CenterContainer/VBoxContainer/MarginContainer/HBoxContainer" unique_id=2068428530]
+visible = false
 layout_mode = 2
 text = " SPACE
 ROCKS"
@@ -50,6 +52,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/VBoxContainer/MarginContainer/HBoxContainer" unique_id=1255335692]
+visible = false
 layout_mode = 2
 theme_override_constants/margin_left = 51
 theme_override_constants/margin_top = 180
@@ -66,6 +69,12 @@ offset_bottom = 1251.0
 rotation = 0.17453292
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("3_x2yvf")
+
+[node name="TextureRect" type="TextureRect" parent="CenterContainer/VBoxContainer/MarginContainer/HBoxContainer" unique_id=516982525]
+custom_minimum_size = Vector2(755, 452)
+layout_mode = 2
+texture = ExtResource("4_uhagc")
+expand_mode = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer" unique_id=244198432]
 custom_minimum_size = Vector2(0, 140)
