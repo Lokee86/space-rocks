@@ -46,10 +46,10 @@ func begin_single_player_flow() -> void:
 
 func begin_create_room_connection_flow(network_connected: bool) -> Dictionary:
 	begin_create_room_flow()
-	var result := _connection_flow_result()
-	result["status"] = "Connecting..."
+	var result: Dictionary = _connection_flow_result()
+	set_status("Connecting...")
 	if network_connected:
-		result["should_send_create_room"] = true
+		result["should_send_create_room"] = take_pending_create_room_request()
 	else:
 		result["should_connect"] = true
 	return result
@@ -57,13 +57,16 @@ func begin_create_room_connection_flow(network_connected: bool) -> Dictionary:
 
 func begin_join_room_connection_flow(room_code: String, network_connected: bool) -> Dictionary:
 	begin_join_room_flow(room_code)
-	var result := _connection_flow_result()
-	result["status"] = "Connecting..."
+	var result: Dictionary = _connection_flow_result()
+	set_status("Connecting...")
 	if pending_join_room_code == "":
-		result["status"] = "Enter a room code to join."
+		set_status("Enter a room code to join.")
 		return result
 	if network_connected:
-		result["should_send_join_room"] = true
+		var pending_room_code := take_pending_join_room_code()
+		if pending_room_code != "":
+			result["should_send_join_room"] = true
+			result["join_room_code"] = pending_room_code
 	else:
 		result["should_connect"] = true
 	return result
@@ -71,9 +74,9 @@ func begin_join_room_connection_flow(room_code: String, network_connected: bool)
 
 func begin_single_player_connection_flow(network_connected: bool) -> Dictionary:
 	begin_single_player_flow()
-	var result := _connection_flow_result()
+	var result: Dictionary = _connection_flow_result()
 	if network_connected:
-		result["should_send_single_player"] = true
+		result["should_send_single_player"] = take_pending_start_single_player_request()
 	else:
 		result["should_connect"] = true
 	return result
@@ -86,6 +89,7 @@ func _connection_flow_result() -> Dictionary:
 		"should_send_create_room": false,
 		"should_send_join_room": false,
 		"should_send_single_player": false,
+		"join_room_code": "",
 	}
 
 
@@ -107,6 +111,29 @@ func handle_join_room_connection_failed() -> void:
 
 func handle_single_player_connection_failed() -> void:
 	start_single_player_request_pending = false
+
+
+func handle_lobby_network_closed() -> void:
+	clear_pending_requests()
+	set_status("Connection closed.")
+
+
+func lobby_connected_result() -> Dictionary:
+	var result: Dictionary = {
+		"should_send_single_player": false,
+		"should_send_create_room": false,
+		"should_send_join_room": false,
+		"join_room_code": "",
+	}
+	if take_pending_start_single_player_request():
+		result["should_send_single_player"] = true
+	if take_pending_create_room_request():
+		result["should_send_create_room"] = true
+	var room_code := take_pending_join_room_code()
+	if room_code != "":
+		result["should_send_join_room"] = true
+		result["join_room_code"] = room_code
+	return result
 
 
 func take_pending_create_room_request() -> bool:
@@ -244,6 +271,19 @@ func should_send_ready_toggle(network_connected: bool) -> bool:
 	return true
 
 
+func ready_toggle_result(network_connected: bool) -> Dictionary:
+	if !should_send_ready_toggle(network_connected):
+		return {
+			"should_send_ready": false,
+			"ready_value": false,
+		}
+
+	return {
+		"should_send_ready": true,
+		"ready_value": next_ready_value(),
+	}
+
+
 func next_ready_value() -> bool:
 	return !local_member_ready()
 
@@ -257,6 +297,12 @@ func should_send_start_game(network_connected: bool) -> bool:
 		return false
 
 	return true
+
+
+func start_game_request_result(network_connected: bool) -> Dictionary:
+	return {
+		"should_send_start_game": should_send_start_game(network_connected),
+	}
 
 
 func room_code() -> String:

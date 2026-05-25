@@ -10,7 +10,6 @@ const Packets = preload("res://scripts/networking/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
 const RoomErrors = preload("res://scripts/session/room_errors.gd")
-const RoomSnapshot = preload("res://scripts/session/room_snapshot.gd")
 const BACKGROUND_DRIFT := Vector2(18.0, 8.0)
 const FOREGROUND_DRIFT := Vector2(42.0, 18.0)
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
@@ -32,14 +31,9 @@ var multiplayer_lobby: Control
 var gameplay_scroll_offset := Vector2.ZERO
 var drift_time := 0.0
 var session_mode: SessionMode = SessionMode.SINGLE_PLAYER
-var create_room_request_pending := false
-var start_single_player_request_pending := false
-var pending_join_room_code := ""
 var current_room_code := ""
 var current_room_state := ""
-var local_room_member_id := ""
 var room_members: Array = []
-var room_ready_states: Dictionary = {}
 var room_max_players := 0
 
 
@@ -278,12 +272,9 @@ func _begin_create_room_flow() -> void:
 	var flow: Dictionary = lobby_coordinator.begin_create_room_connection_flow(
 		lobby_network_client.is_connected_to_server()
 	)
-	_sync_pending_request_state_from_coordinator()
-	if str(flow.get("status", "")) != "":
-		lobby_coordinator.set_status(str(flow.get("status", "")))
-
 	if bool(flow.get("should_send_create_room", false)):
-		_send_pending_create_room_request()
+		ClientLogger.network_debug("CreateRoomRequest sent")
+		lobby_network_client.send_create_room_request()
 		return
 	if !bool(flow.get("should_connect", false)):
 		return
@@ -291,7 +282,6 @@ func _begin_create_room_flow() -> void:
 	var err := lobby_network_client.connect_to_server(MULTIPLAYER_WS_URL)
 	if err != OK:
 		lobby_coordinator.handle_create_room_connection_failed()
-		_sync_pending_request_state_from_coordinator()
 
 
 func _begin_join_room_flow(room_code: String) -> void:
@@ -301,12 +291,11 @@ func _begin_join_room_flow(room_code: String) -> void:
 		room_code,
 		lobby_network_client.is_connected_to_server()
 	)
-	_sync_pending_request_state_from_coordinator()
-	if str(flow.get("status", "")) != "":
-		lobby_coordinator.set_status(str(flow.get("status", "")))
-
 	if bool(flow.get("should_send_join_room", false)):
-		_send_pending_join_room_request()
+		var pending_room_code := str(flow.get("join_room_code", ""))
+		if pending_room_code != "":
+			ClientLogger.network_debug("JoinRoomRequest sent room_code=%s" % pending_room_code)
+			lobby_network_client.send_join_room_request(pending_room_code)
 		return
 	if !bool(flow.get("should_connect", false)):
 		return
@@ -314,7 +303,6 @@ func _begin_join_room_flow(room_code: String) -> void:
 	var err := lobby_network_client.connect_to_server(MULTIPLAYER_WS_URL)
 	if err != OK:
 		lobby_coordinator.handle_join_room_connection_failed()
-		_sync_pending_request_state_from_coordinator()
 
 
 func _begin_single_player_flow() -> void:
@@ -322,10 +310,9 @@ func _begin_single_player_flow() -> void:
 	var flow: Dictionary = lobby_coordinator.begin_single_player_connection_flow(
 		lobby_network_client.is_connected_to_server()
 	)
-	_sync_pending_request_state_from_coordinator()
 
 	if bool(flow.get("should_send_single_player", false)):
-		_send_pending_start_single_player_request()
+		lobby_network_client.send_start_single_player_request()
 		return
 	if !bool(flow.get("should_connect", false)):
 		return
@@ -333,14 +320,7 @@ func _begin_single_player_flow() -> void:
 	var err := lobby_network_client.connect_to_server(MULTIPLAYER_WS_URL)
 	if err != OK:
 		lobby_coordinator.handle_single_player_connection_failed()
-		_sync_pending_request_state_from_coordinator()
 		ClientLogger.network_debug("single-player websocket connect failed")
-
-
-func _sync_pending_request_state_from_coordinator() -> void:
-	create_room_request_pending = lobby_coordinator.create_room_request_pending
-	start_single_player_request_pending = lobby_coordinator.start_single_player_request_pending
-	pending_join_room_code = lobby_coordinator.pending_join_room_code
 
 
 func _ensure_lobby_network_client() -> void:
@@ -357,16 +337,21 @@ func _ensure_lobby_network_client() -> void:
 
 func _on_lobby_network_connected() -> void:
 	ClientLogger.network_debug("websocket connected/open")
-	_send_pending_start_single_player_request()
-	_send_pending_create_room_request()
-	_send_pending_join_room_request()
+	var result: Dictionary = lobby_coordinator.lobby_connected_result()
+	if bool(result.get("should_send_single_player", false)):
+		lobby_network_client.send_start_single_player_request()
+	if bool(result.get("should_send_create_room", false)):
+		ClientLogger.network_debug("CreateRoomRequest sent")
+		lobby_network_client.send_create_room_request()
+	if bool(result.get("should_send_join_room", false)):
+		var room_code := str(result.get("join_room_code", ""))
+		ClientLogger.network_debug("JoinRoomRequest sent room_code=%s" % room_code)
+		lobby_network_client.send_join_room_request(room_code)
 
 
 func _on_lobby_network_closed() -> void:
 	if lobby_coordinator != null:
-		lobby_coordinator.clear_pending_requests()
-		_sync_pending_request_state_from_coordinator()
-	_set_lobby_status("Connection closed.")
+		lobby_coordinator.handle_lobby_network_closed()
 
 
 func _on_lobby_network_packet_received(data: Dictionary) -> void:
@@ -377,78 +362,20 @@ func _on_lobby_network_packet_parse_failed(_text: String) -> void:
 	_set_lobby_status("Received invalid server data.")
 
 
-func _send_pending_create_room_request() -> void:
-	if lobby_coordinator != null:
-		if !lobby_coordinator.take_pending_create_room_request():
-			return
-		_sync_pending_request_state_from_coordinator()
-	else:
-		if !create_room_request_pending:
-			return
-		create_room_request_pending = false
-	ClientLogger.network_debug("CreateRoomRequest sent")
-	lobby_network_client.send_create_room_request()
-
-
-func _send_pending_start_single_player_request() -> void:
-	if lobby_coordinator != null:
-		if !lobby_coordinator.take_pending_start_single_player_request():
-			return
-		_sync_pending_request_state_from_coordinator()
-	else:
-		if !start_single_player_request_pending:
-			return
-		start_single_player_request_pending = false
-	lobby_network_client.send_start_single_player_request()
-
-
-func _send_pending_join_room_request() -> void:
-	var room_code := ""
-	if lobby_coordinator != null:
-		room_code = lobby_coordinator.take_pending_join_room_code()
-		_sync_pending_request_state_from_coordinator()
-	else:
-		if pending_join_room_code == "":
-			return
-		room_code = pending_join_room_code
-		pending_join_room_code = ""
-	if room_code == "":
-		return
-	ClientLogger.network_debug("JoinRoomRequest sent room_code=%s" % room_code)
-	lobby_network_client.send_join_room_request(room_code)
-
-
 func _request_ready_toggle() -> void:
 	print("[game_shell] ready requested")
 	var network_connected := lobby_network_client != null && lobby_network_client.is_connected_to_server()
-	var next_ready := !_local_member_ready()
-	if lobby_coordinator != null:
-		if !lobby_coordinator.should_send_ready_toggle(network_connected):
-			return
-		next_ready = lobby_coordinator.next_ready_value()
-	else:
-		if !network_connected:
-			_set_lobby_status("Not connected to server.")
-			return
-
-	lobby_network_client.send_set_ready_request(next_ready)
+	var result: Dictionary = lobby_coordinator.ready_toggle_result(network_connected)
+	if bool(result.get("should_send_ready", false)):
+		lobby_network_client.send_set_ready_request(bool(result.get("ready_value", false)))
 
 
 func _request_start_game() -> void:
 	print("[game_shell] start game requested")
 	var network_connected := lobby_network_client != null && lobby_network_client.is_connected_to_server()
-	if lobby_coordinator != null:
-		if !lobby_coordinator.should_send_start_game(network_connected):
-			return
-	else:
-		if !network_connected:
-			_set_lobby_status("Not connected to server.")
-			return
-		if !_room_state_is_lobby() || !_local_member_ready():
-			_set_lobby_status("Ready up before starting.")
-			return
-
-	lobby_network_client.send_start_game_request()
+	var result: Dictionary = lobby_coordinator.start_game_request_result(network_connected)
+	if bool(result.get("should_send_start_game", false)):
+		lobby_network_client.send_start_game_request()
 
 
 func _request_leave_room() -> void:
@@ -467,7 +394,6 @@ func _request_leave_room() -> void:
 func _close_lobby_network_client() -> void:
 	if lobby_coordinator != null:
 		lobby_coordinator.clear_pending_requests()
-		_sync_pending_request_state_from_coordinator()
 	if lobby_network_client == null:
 		return
 
@@ -536,9 +462,7 @@ func _store_room_state_changed(data: Dictionary) -> void:
 func _sync_lobby_state_from_coordinator() -> void:
 	current_room_code = lobby_coordinator.room_code()
 	current_room_state = lobby_coordinator.room_state()
-	local_room_member_id = lobby_coordinator.local_room_member_id
 	room_members = lobby_coordinator.room_members
-	room_ready_states = lobby_coordinator.room_ready_states
 	room_max_players = lobby_coordinator.room_max_players
 
 
@@ -561,16 +485,6 @@ func _update_lobby_control_state() -> void:
 		return
 
 	lobby_coordinator.update_control_state()
-
-
-func _local_member_ready() -> bool:
-	if lobby_coordinator != null:
-		return lobby_coordinator.local_member_ready()
-
-	if local_room_member_id == "":
-		return false
-
-	return bool(room_ready_states.get(local_room_member_id, false))
 
 
 func _room_code() -> String:
