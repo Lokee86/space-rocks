@@ -1,0 +1,10 @@
+[gd_resource type="LabelSettings" format=3 uid="uid://lly3e1dkukxj"]
+
+[ext_resource type="FontFile" uid="uid://blox2yqbjs6n8" path="res://assets/fonts/Modeseven-L3n5.ttf" id="1_oy1ts"]
+
+[resource]
+font = ExtResource("1_oy1ts")
+font_size = 100
+font_color = Color(1, 0, 0, 1)
+outline_size = 10
+outline_color = Color(0, 0, 0, 1)

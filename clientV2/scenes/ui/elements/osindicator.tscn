@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://bj2ylwn2vljso"]
+
+[ext_resource type="Texture2D" uid="uid://clkc3vojcm4uo" path="res://assets/ui/indicator.png" id="1_8meba"]
+[ext_resource type="Script" uid="uid://b61y73rlsqdtd" path="res://scripts/ui/indicators/offscreen_player_indicator.gd" id="2_lcdgs"]
+
+[node name="Control" type="Control" unique_id=399446384]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 64.0
+offset_bottom = 64.0
+pivot_offset = Vector2(32, 32)
+mouse_filter = 2
+script = ExtResource("2_lcdgs")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1516489860]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("1_8meba")
+expand_mode = 1
+stretch_mode = 5

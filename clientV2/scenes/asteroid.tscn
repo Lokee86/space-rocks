@@ -1,0 +1,33 @@
+[gd_scene load_steps=2 format=3 uid="uid://daircltkhadt1"]
+
+[ext_resource type="Script" path="res://scripts/entities/asteroid.gd" id="1_rigo0"]
+
+[node name="Asteroid" type="CharacterBody2D"]
+collision_mask = 0
+script = ExtResource("1_rigo0")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="."]
+
+[node name="CollisionVariants" type="Node2D" parent="."]
+
+[node name="AsteroidCollision1" type="CollisionPolygon2D" parent="CollisionVariants"]
+visible = false
+disabled = true
+polygon = PackedVector2Array(184, -77, 223, -54, 252, -11, 241, 32, 228, 71, 189, 105, 168, 137, 163, 193, 164, 194, 155, 210, 127, 229, 114, 244, 96, 247, 77, 230, 56, 206, 20, 209, -15, 218, -42, 236, -59, 235, -74, 225, -98, 224, -113, 180, -141, 144, -138, 120, -164, 106, -168, 81, -236, 71, -242, 47, -246, -16, -224, -52, -174, -81, -171, -124, -155, -135, -127, -175, -109, -232, -75, -252, -38, -244, -18, -225, 8, -232, 73, -228, 104, -215, 129, -195, 156, -180, 169, -154, 169, -114, 183, -98)
+
+[node name="AsteroidCollision2" type="CollisionPolygon2D" parent="CollisionVariants"]
+visible = false
+disabled = true
+polygon = PackedVector2Array(-35, -240, 19, -240, 84, -246, 146, -201, 182, -129, 217, -104, 228, -62, 247, -41, 244, 5, 228, 55, 222, 80, 167, 133, 144, 166, 139, 186, 122, 206, 102, 216, 55, 222, 11, 225, -36, 249, -55, 244, -80, 249, -122, 229, -139, 228, -175, 194, -188, 164, -220, 128, -219, 95, -242, 54, -243, 29, -251, 17, -243, -26, -227, -47, -230, -111, -205, -132, -187, -170, -155, -193, -144, -197, -116, -228, -81, -239, -52, -246)
+
+[node name="AsteroidCollision3" type="CollisionPolygon2D" parent="CollisionVariants"]
+visible = false
+disabled = true
+polygon = PackedVector2Array(58, -229, 109, -212, 118, -190, 121, -121, 138, -102, 148, -71, 171, -53, 244, 16, 247, 40, 244, 53, 244, 80, 199, 166, 118, 202, 88, 201, 53, 189, 15, 211, -24, 226, -85, 249, -109, 249, -135, 228, -151, 227, -177, 206, -183, 159, -202, 151, -236, 114, -241, 93, -227, 50, -250, 24, -250, -4, -236, -36, -199, -69, -135, -100, -100, -169, -79, -180, -70, -205, -27, -227, -5, -244, 33, -251)
+
+[node name="AsteroidCollision4" type="CollisionPolygon2D" parent="CollisionVariants"]
+visible = false
+disabled = true
+polygon = PackedVector2Array(-46, -213, -9, -231, 60, -251, 102, -220, 119, -222, 202, -174, 209, -152, 213, -71, 221, -60, 220, -45, 244, 1, 247, 35, 242, 61, 224, 93, 202, 118, 150, 156, 129, 183, 88, 193, 71, 219, 12, 246, -24, 251, -74, 233, -125, 182, -154, 175, -192, 129, -193, 85, -200, 58, -222, 20, -223, 1, -246, -29, -249, -88, -207, -140, -177, -191, -77, -234, -62, -232)

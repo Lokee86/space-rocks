@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://bq77w6h3620nv"]
+
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_1jkif"]
+[ext_resource type="Texture2D" uid="uid://bpdd158jrrcux" path="res://assets/ui/ready_green.png" id="2_opmrn"]
+[ext_resource type="Texture2D" uid="uid://hsqpl3j0l31" path="res://assets/ui/ready_red.png" id="2_tyt3a"]
+[ext_resource type="Script" path="res://scripts/ui/lobby/player_row.gd" id="4_iw0ft"]
+
+[node name="PlayerRow" type="HBoxContainer" unique_id=1723963623]
+offset_right = 40.0
+offset_bottom = 40.0
+size_flags_horizontal = 3
+script = ExtResource("4_iw0ft")
+
+[node name="PlayerNameLabel" type="Label" parent="." unique_id=1699343605]
+layout_mode = 2
+text = "Player X"
+label_settings = ExtResource("1_1jkif")
+
+[node name="Spacer" type="Control" parent="." unique_id=1544892259]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayerReadyLabel" type="Label" parent="." unique_id=1214345410]
+layout_mode = 2
+text = "STATUS"
+label_settings = ExtResource("1_1jkif")
+horizontal_alignment = 2
+
+[node name="ReadyIndicatorContainer" type="MarginContainer" parent="." unique_id=1006691543]
+layout_mode = 2
+
+[node name="ReadyGreen" type="TextureRect" parent="ReadyIndicatorContainer" unique_id=229938993]
+layout_mode = 2
+texture = ExtResource("2_opmrn")
+
+[node name="ReadyRed" type="TextureRect" parent="ReadyIndicatorContainer" unique_id=914629872]
+layout_mode = 2
+texture = ExtResource("2_tyt3a")

@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://2nhypjy0hv4h"]
+
+[ext_resource type="Script" uid="uid://t08j0gmt7ntp" path="res://scripts/entities/player.gd" id="1_ct0fb"]
+[ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="2_dqkch"]
+[ext_resource type="Texture2D" uid="uid://cw8ubidl86juw" path="res://assets/units/yellow-v-wing.png" id="2_lcy76"]
+[ext_resource type="Texture2D" uid="uid://bo5yq5da1hqoo" path="res://assets/units/viewport.png" id="4_qlg0r"]
+[ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="5_fxgnq"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tuyoq"]
+shader = ExtResource("2_dqkch")
+shader_parameter/hue_shift = 0.0
+shader_parameter/saturation_mult = 1.0
+shader_parameter/value_mult = 1.0
+shader_parameter/strength = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qlg0r"]
+shader = ExtResource("2_dqkch")
+shader_parameter/hue_shift = 0.0
+shader_parameter/saturation_mult = 1.0000000475
+shader_parameter/value_mult = 1.0000000475
+shader_parameter/strength = 1.0
+
+[node name="Player" type="CharacterBody2D" unique_id=1299284420]
+script = ExtResource("1_ct0fb")
+ship_visual_path = NodePath("ShipBody")
+
+[node name="ViewportMask" type="Sprite2D" parent="." unique_id=1088284126]
+material = SubResource("ShaderMaterial_tuyoq")
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("4_qlg0r")
+
+[node name="ShipBody" type="Sprite2D" parent="." unique_id=422355348]
+material = SubResource("ShaderMaterial_qlg0r")
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("2_lcy76")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=1927001819]
+visible = false
+polygon = PackedVector2Array(12, -11, 20, -12, 23.4882, -16.8588, 47.6126, -19.598, 59.5844, -23.2132, 57.9646, -8.72011, 21.819, 15.7946, 17.7634, 16.0253, 16.9697, 20.4072, 4.45025, 35.3909, 2.44678, 32.1794, -2.41458, 32.15, -4.38859, 35.5971, -16.6016, 20.6641, -17.5253, 16.0656, -21.9167, 15.4375, -57, -8, -59, -23, -47.2117, -19.646, -23.437, -17.1398, -19, -12, -11.7461, -10.8938, -6.99677, -32.9767, -0.0234375, -42.3281, 6.95913, -32.894)
+
+[node name="WeaponMarker" type="Marker2D" parent="." unique_id=1544338404]
+position = Vector2(-0.0202003, -37.7274)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=562647492]
+
+[node name="LaserSound" type="AudioStreamPlayer2D" parent="." unique_id=1062667136]
+stream = ExtResource("5_fxgnq")
+
+[node name="AfterburnerMarker" type="Marker2D" parent="." unique_id=648800397]
+position = Vector2(0, 36)

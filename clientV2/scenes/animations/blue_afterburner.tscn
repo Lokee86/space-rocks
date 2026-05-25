@@ -1,0 +1,54 @@
+[gd_scene load_steps=8 format=3 uid="uid://b87mice1sciou"]
+
+[ext_resource type="Texture2D" uid="uid://c1rdiljl1froi" path="res://assets/afterburner.png" id="1_sc821"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d2fr4"]
+atlas = ExtResource("1_sc821")
+region = Rect2(0, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x5vty"]
+atlas = ExtResource("1_sc821")
+region = Rect2(100, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4qeht"]
+atlas = ExtResource("1_sc821")
+region = Rect2(200, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_15g0l"]
+atlas = ExtResource("1_sc821")
+region = Rect2(300, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_86g8g"]
+atlas = ExtResource("1_sc821")
+region = Rect2(400, 0, 100, 100)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_0kbw1"]
+animations = [{
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_d2fr4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x5vty")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4qeht")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_15g0l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_86g8g")
+}],
+"loop": true,
+"name": &"default",
+"speed": 30.0
+}]
+
+[node name="BlueAfterburner" type="Node2D"]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(-40, 0)
+rotation = 3.14159
+sprite_frames = SubResource("SpriteFrames_0kbw1")
+frame_progress = 0.779062
