@@ -52,14 +52,14 @@ func send_join_room_request(room_code: String) -> void:
 
 
 func _connect_network_client_signals() -> void:
-	_connect_network_signal("connected", Callable(self, "_on_connected"))
-	_connect_network_signal("closed", Callable(self, "_on_closed"))
+	_connect_network_signal("connected_to_server", Callable(self, "_on_connected"))
+	_connect_network_signal("connection_closed", Callable(self, "_on_closed"))
 	_connect_network_signal("packet_parse_failed", Callable(self, "_on_packet_parse_failed"))
 	_connect_network_signal("packet_received", Callable(self, "_on_packet_received"))
 
 
 func _connect_network_signal(signal_name: StringName, handler: Callable) -> void:
-	if network_client.has_signal(signal_name) && !network_client.is_connected(signal_name, handler):
+	if network_client.has_signal(signal_name):
 		network_client.connect(signal_name, handler)
 
 

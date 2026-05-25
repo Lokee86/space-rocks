@@ -5,6 +5,10 @@ const ClientConnectionService := preload("res://scripts/networking/client_connec
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
+const BOOT_REQUEST_NONE := "none"
+const BOOT_REQUEST_SINGLE_PLAYER := "single_player"
+const BOOT_REQUEST_CREATE_ROOM := "create_room"
+const BOOT_REQUEST_JOIN_ROOM := "join_room"
 
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
@@ -13,6 +17,8 @@ const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
 
 var shell_state: ShellState
 var connection_service: ClientConnectionService
+var pending_boot_request := BOOT_REQUEST_NONE
+var pending_join_room_code := ""
 
 
 func _ready() -> void:
@@ -55,10 +61,14 @@ func _connect_main_menu() -> void:
 
 
 func _on_single_player_pressed() -> void:
+	pending_boot_request = BOOT_REQUEST_SINGLE_PLAYER
+	pending_join_room_code = ""
 	_connect_to_game_server("single player")
 
 
 func _on_multiplayer_create_requested() -> void:
+	pending_boot_request = BOOT_REQUEST_CREATE_ROOM
+	pending_join_room_code = ""
 	_connect_to_game_server("multiplayer create")
 
 
@@ -67,17 +77,42 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 	if stripped_room_code.is_empty():
 		_log_v2_status("V2 multiplayer join rejected: empty room code")
 		return
+	pending_boot_request = BOOT_REQUEST_JOIN_ROOM
+	pending_join_room_code = stripped_room_code
 	_connect_to_game_server("multiplayer join: %s" % stripped_room_code)
 
 
 func _connect_to_game_server(reason: String) -> void:
+	if connection_service.is_server_connected():
+		_log_v2_status("V2 already connected for %s" % reason)
+		_send_pending_boot_request()
+		return
 	shell_state.set_state(ShellState.CONNECTING)
 	var result := connection_service.connect_to_server(MULTIPLAYER_WS_URL)
 	_log_v2_status("V2 connecting to server for %s: %s" % [reason, error_string(result)])
 
 
+func _send_pending_boot_request() -> void:
+	if pending_boot_request == BOOT_REQUEST_NONE:
+		return
+
+	if pending_boot_request == BOOT_REQUEST_SINGLE_PLAYER:
+		connection_service.send_start_single_player_request()
+		_log_v2_status("V2 sent single player request")
+	elif pending_boot_request == BOOT_REQUEST_CREATE_ROOM:
+		connection_service.send_create_room_request()
+		_log_v2_status("V2 sent create room request")
+	elif pending_boot_request == BOOT_REQUEST_JOIN_ROOM:
+		connection_service.send_join_room_request(pending_join_room_code)
+		_log_v2_status("V2 sent join room request: %s" % pending_join_room_code)
+
+	pending_boot_request = BOOT_REQUEST_NONE
+	pending_join_room_code = ""
+
+
 func _on_connection_connected() -> void:
 	_log_v2_status("V2 connection connected")
+	_send_pending_boot_request()
 
 
 func _on_connection_closed() -> void:
