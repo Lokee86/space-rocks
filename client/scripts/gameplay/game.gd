@@ -9,8 +9,8 @@ const GameBackgroundScrollScript = preload("res://scripts/gameplay/support/game_
 const GameplayEventControllerScript = preload("res://scripts/gameplay/events/gameplay_event_controller.gd")
 const GameplayLifecycleControllerScript = preload("res://scripts/gameplay/gameplay_lifecycle_controller.gd")
 const GameplayMenuControllerScript = preload("res://scripts/gameplay/menu/gameplay_menu_controller.gd")
+const GameplayNetworkSessionScript = preload("res://scripts/networking/gameplay_network_session.gd")
 const HudControllerScript = preload("res://scripts/ui/hud/hud_controller.gd")
-const NetworkClientScript = preload("res://scripts/networking/network_client.gd")
 const OffscreenIndicatorControllerScript = preload("res://scripts/gameplay/support/offscreen_indicator_controller.gd")
 const Packets = preload("res://scripts/networking/packets.gd")
 const SpectateTargetsScript = preload("res://scripts/gameplay/spectate_targets.gd")
@@ -58,6 +58,7 @@ var background_scroll
 var gameplay_event_controller
 var gameplay_lifecycle_controller
 var gameplay_menu_controller
+var gameplay_network_session
 var offscreen_indicator_controller
 var effects: Effects
 var camera_follow
@@ -100,6 +101,7 @@ func _current_room_state() -> String:
 
 
 func _ready() -> void:
+	_gameplay_network_session()
 	_setup_network_client()
 
 	debug_input_controller = DebugInputControllerScript.new()
@@ -207,34 +209,19 @@ func _apply_state(data: Dictionary) -> void:
 
 
 func _on_network_connected() -> void:
-	print("Connected!")
-	_send_client_config()
+	_gameplay_network_session().handle_connected(network_client)
 
 
 func _on_network_closed() -> void:
-	print("Closed")
+	_gameplay_network_session().handle_closed()
 
 
 func _on_network_packet_received(data: Dictionary) -> void:
-	var packet_type := str(data.get(Packets.FIELD_TYPE, ""))
-	if packet_type == Packets.TYPE_ROOM_SNAPSHOT || packet_type == Packets.TYPE_ROOM_STATE_CHANGED:
-		_store_room_state(data)
-		var shell := get_parent()
-		if shell != null && shell.has_method("handle_network_packet"):
-			shell.handle_network_packet(data)
-		return
-
-	if packet_type == Packets.TYPE_ROOM_ERROR:
-		var shell := get_parent()
-		if shell != null && shell.has_method("handle_network_packet"):
-			shell.handle_network_packet(data)
-		return
-
-	_apply_state(data)
+	_gameplay_network_session().handle_packet_received(data)
 
 
 func _on_network_packet_parse_failed(text: String) -> void:
-	print("bad json: ", text)
+	_gameplay_network_session().handle_packet_parse_failed(text)
 
 
 func _store_room_state(data: Dictionary) -> void:
@@ -243,6 +230,12 @@ func _store_room_state(data: Dictionary) -> void:
 		_stop_spectating(true)
 	_refresh_game_menu_state()
 	_refresh_cycle_view_hint()
+
+
+func _forward_packet_to_shell(data: Dictionary) -> void:
+	var shell := get_parent()
+	if shell != null && shell.has_method("handle_network_packet"):
+		shell.handle_network_packet(data)
 
 
 func _is_room_in_game() -> bool:
@@ -257,46 +250,16 @@ func _can_process_gameplay_packets() -> bool:
 
 
 func _setup_network_client() -> void:
-	if injected_network_client != null:
-		network_client = injected_network_client
-		preserve_network_on_exit = true
-		if network_client.get_parent() != self:
-			network_client.reparent(self)
-	else:
-		network_client = NetworkClientScript.new()
-		add_child(network_client)
-
-	if !network_client.connected_to_server.is_connected(_on_network_connected):
-		network_client.connected_to_server.connect(_on_network_connected)
-	if !network_client.connection_closed.is_connected(_on_network_closed):
-		network_client.connection_closed.connect(_on_network_closed)
-	if !network_client.packet_received.is_connected(_on_network_packet_received):
-		network_client.packet_received.connect(_on_network_packet_received)
-	if !network_client.packet_parse_failed.is_connected(_on_network_packet_parse_failed):
-		network_client.packet_parse_failed.connect(_on_network_packet_parse_failed)
+	var setup_result: Dictionary = _gameplay_network_session().setup_network_client()
+	network_client = setup_result["network_client"]
+	preserve_network_on_exit = bool(setup_result["preserve_network_on_exit"])
 
 
 func release_network_client_for_lobby() -> NetworkClient:
-	if network_client == null:
-		return null
-
-	if network_client.connected_to_server.is_connected(_on_network_connected):
-		network_client.connected_to_server.disconnect(_on_network_connected)
-	if network_client.connection_closed.is_connected(_on_network_closed):
-		network_client.connection_closed.disconnect(_on_network_closed)
-	if network_client.packet_received.is_connected(_on_network_packet_received):
-		network_client.packet_received.disconnect(_on_network_packet_received)
-	if network_client.packet_parse_failed.is_connected(_on_network_packet_parse_failed):
-		network_client.packet_parse_failed.disconnect(_on_network_packet_parse_failed)
-
-	var released_client := network_client
-	preserve_network_on_exit = true
-	set_process(false)
-	network_client = null
-	if released_client.get_parent() == self && get_parent() != null:
-		released_client.reparent(get_parent())
-
-	return released_client
+	var release_result: Dictionary = _gameplay_network_session().release_network_client_for_lobby(network_client)
+	network_client = release_result["network_client"]
+	preserve_network_on_exit = bool(release_result["preserve_network_on_exit"])
+	return release_result["released_client"]
 
 
 func _on_world_bullet_spawned() -> void:
@@ -349,9 +312,26 @@ func _gameplay_menu_controller():
 	return gameplay_menu_controller
 
 
+func _gameplay_network_session():
+	if gameplay_network_session == null:
+		gameplay_network_session = GameplayNetworkSessionScript.new()
+		gameplay_network_session.configure(
+			self,
+			injected_network_client,
+			Callable(self, "_on_network_connected"),
+			Callable(self, "_on_network_closed"),
+			Callable(self, "_on_network_packet_received"),
+			Callable(self, "_on_network_packet_parse_failed"),
+			Callable(self, "_store_room_state"),
+			Callable(self, "_forward_packet_to_shell"),
+			Callable(self, "_apply_state")
+		)
+
+	return gameplay_network_session
+
+
 func _close_network_connection() -> void:
-	if network_client != null:
-		await network_client.close_gracefully()
+	await _gameplay_network_session().close_network_connection(network_client)
 
 
 func _update_background_scroll_offset() -> void:
@@ -609,15 +589,8 @@ func _send_gameplay_input_if_active() -> void:
 
 
 func _send_client_config() -> void:
-	if network_client == null || !network_client.is_connected_to_server():
-		return
-
-	var visible_size := get_viewport_rect().size
-	network_client.send_packet(Packets.client_config_packet(
-		visible_size.x,
-		visible_size.y
-	))
+	_gameplay_network_session().send_client_config(network_client)
 
 
 func _websocket_url() -> String:
-	return "ws://localhost:8080/ws"
+	return _gameplay_network_session().websocket_url()
