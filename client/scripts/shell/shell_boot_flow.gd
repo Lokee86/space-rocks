@@ -2,6 +2,10 @@ extends RefCounted
 
 const PendingBootRequest := preload("res://scripts/shell/pending_boot_request.gd")
 
+const CONNECT_RESULT_STARTED_CONNECTING := "started_connecting"
+const CONNECT_RESULT_ALREADY_CONNECTED := "already_connected"
+const CONNECT_RESULT_FAILED := "failed"
+
 var connection_service
 var pending_boot_request: PendingBootRequest
 var websocket_url := ""
@@ -31,15 +35,17 @@ func request_join_room(room_code: String) -> void:
 	pending_boot_request.request_join_room(room_code)
 
 
-func connect_to_game_server(reason: String) -> bool:
+func connect_to_game_server(reason: String) -> String:
 	if connection_service.is_server_connected():
 		_log("V2 already connected for %s" % reason)
 		send_pending_boot_request()
-		return false
+		return CONNECT_RESULT_ALREADY_CONNECTED
 
 	var result = connection_service.connect_to_server(websocket_url)
 	_log("V2 connecting to server for %s: %s" % [reason, error_string(result)])
-	return true
+	if result == OK:
+		return CONNECT_RESULT_STARTED_CONNECTING
+	return CONNECT_RESULT_FAILED
 
 
 func send_pending_boot_request() -> void:

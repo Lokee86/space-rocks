@@ -17,7 +17,8 @@ func show_lobby(canvas_layer: CanvasLayer, state, callbacks: Dictionary) -> Cont
 		state.local_member_id,
 		state.owner_id,
 		state.max_players,
-		state.members
+		state.members,
+		state.can_start_game()
 	)
 	if multiplayer_lobby.has_method("set_start_enabled"):
 		multiplayer_lobby.set_start_enabled(state.can_start_game())

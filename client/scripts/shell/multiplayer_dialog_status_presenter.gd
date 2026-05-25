@@ -1,5 +1,7 @@
 extends RefCounted
 
+const LobbyConstants := preload("res://scripts/ui/lobby/constants.gd")
+
 
 func show_status(main_menu: Control, message: String) -> void:
 	if main_menu != null && is_instance_valid(main_menu) && main_menu.has_method("show_multiplayer_dialog_status"):
@@ -16,18 +18,18 @@ func show_room_error(main_menu: Control, packet: Dictionary) -> void:
 func friendly_room_error_message(error_code: String, message: String) -> String:
 	match error_code:
 		"invalid_room_code":
-			return "Invalid room ID."
+			return LobbyConstants.DIALOG_STATUS_INVALID_ROOM_ID
 		"room_not_found":
-			return "Room not found."
+			return LobbyConstants.DIALOG_STATUS_ROOM_NOT_FOUND
 		"room_full":
-			return "Room is full."
+			return LobbyConstants.DIALOG_STATUS_ROOM_FULL
 		"room_in_game":
-			return "Room is already in game."
+			return LobbyConstants.DIALOG_STATUS_ROOM_IN_GAME
 		"already_in_room":
-			return "Already in a room."
+			return LobbyConstants.DIALOG_STATUS_ALREADY_IN_ROOM
 		"invalid_room_state":
-			return "Room is not joinable."
+			return LobbyConstants.DIALOG_STATUS_ROOM_NOT_JOINABLE
 
 	if !message.is_empty():
 		return message
-	return "Could not join room."
+	return LobbyConstants.DIALOG_STATUS_COULD_NOT_JOIN

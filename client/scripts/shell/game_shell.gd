@@ -13,8 +13,7 @@ const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplay
 const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
 const RoomSnapshotShellState := preload("res://scripts/shell/room_snapshot_shell_state.gd")
 const ShellBootFlow := preload("res://scripts/shell/shell_boot_flow.gd")
-
-const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
+const ShellConstants := preload("res://scripts/shell/constants.gd")
 
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
@@ -47,7 +46,11 @@ func _ready() -> void:
 		main_menu,
 		Callable(self, "_on_lobby_returned_to_main_menu")
 	)
-	shell_boot_flow = ShellBootFlow.new(connection_service, MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
+	shell_boot_flow = ShellBootFlow.new(
+		connection_service,
+		ShellConstants.MULTIPLAYER_WS_URL,
+		Callable(self, "_log_v2_status")
+	)
 	lobby_shell_flow = LobbyShellFlow.new(
 		lobby_flow,
 		session_context,
@@ -118,7 +121,8 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 
 
 func _connect_to_game_server(reason: String) -> void:
-	if shell_boot_flow.connect_to_game_server(reason):
+	var connect_result := shell_boot_flow.connect_to_game_server(reason)
+	if connect_result == ShellBootFlow.CONNECT_RESULT_STARTED_CONNECTING:
 		shell_state.set_state(ShellState.CONNECTING)
 
 

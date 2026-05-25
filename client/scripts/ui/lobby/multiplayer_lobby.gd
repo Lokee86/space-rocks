@@ -2,6 +2,7 @@ extends Control
 
 const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_model.gd")
 const LobbyPlayerListView := preload("res://scripts/ui/lobby/lobby_player_list_view.gd")
+const LobbyStatusViewModel := preload("res://scripts/ui/lobby/lobby_status_view_model.gd")
 
 signal ready_requested(ready: bool)
 signal start_game_requested
@@ -42,12 +43,19 @@ func apply_lobby_state(
 	local_member_id: String,
 	owner_id: String,
 	_max_players: int,
-	members: Array
+	members: Array,
+	can_start := false
 ) -> void:
 	if room_code_label != null:
 		room_code_label.text = room_code
 	if room_status_label != null:
-		room_status_label.text = room_state
+		room_status_label.text = LobbyStatusViewModel.status_text(
+			room_state,
+			local_member_id,
+			owner_id,
+			members,
+			can_start
+		)
 	local_ready = LobbyMemberViewModel.is_local_ready(local_member_id, members)
 	_update_ready_button_text()
 	LobbyPlayerListView.render(player_list_container, player_row_scene, local_member_id, owner_id, members)
