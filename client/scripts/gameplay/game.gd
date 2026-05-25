@@ -27,22 +27,7 @@ const SpectateControllerScript = preload("res://scripts/gameplay/spectate/specta
 
 var has_received_state := false
 var has_initial_spawn := false
-var is_gameplay_paused: bool:
-	get:
-		return _gameplay_menu_controller().is_gameplay_paused
-	set(value):
-		_gameplay_menu_controller().is_gameplay_paused = value
-var open_menu_input_armed: bool:
-	get:
-		return _gameplay_menu_controller().open_menu_input_armed
-	set(value):
-		_gameplay_menu_controller().open_menu_input_armed = value
 var self_id := ""
-var current_spectate_target_id: String:
-	get:
-		return _spectate_controller().current_target_id()
-	set(value):
-		_spectate_controller().set_current_target_id(value)
 var debug_input_controller
 var gameplay_event_controller
 var gameplay_lifecycle_controller
@@ -54,11 +39,6 @@ var camera_follow
 var game_menu: GameMenu
 var injected_network_client: NetworkClient
 var hud_controller: HudController
-var is_spectating: bool:
-	get:
-		return _spectate_controller().is_active()
-	set(value):
-		_spectate_controller().set_active(value)
 var spectate_controller
 var network_client: NetworkClient
 var room_id := ""
@@ -67,6 +47,18 @@ var session_mode := "SinglePlayer"
 var preserve_network_on_exit := false
 var player_lifecycle := {}
 var world_sync: WorldSync
+
+
+func _player_lifecycle() -> Dictionary:
+	return player_lifecycle
+
+
+func _set_player_lifecycle(value: Dictionary) -> void:
+	player_lifecycle = value
+
+
+func set_player_lifecycle_status(player_id, status) -> void:
+	player_lifecycle[str(player_id)] = str(status)
 
 
 func set_room_id(value: String) -> void:
@@ -143,7 +135,7 @@ func _process(delta: float) -> void:
 		return
 	hud_controller.update(delta)
 	_gameplay_lifecycle_controller().tick_respawn_retry(delta)
-	_update_open_menu_input_armed()
+	_gameplay_menu_controller().update_open_menu_input_armed(has_initial_spawn)
 	debug_input_controller.handle_input(network_client)
 	_handle_spectate_input()
 	if _handle_open_menu_pressed():
@@ -162,7 +154,7 @@ func _process(delta: float) -> void:
 	gameplay_presentation_controller.update_background_scroll(
 		get_parent(),
 		has_initial_spawn,
-		is_spectating,
+		_spectate_controller().is_active(),
 		camera_follow,
 		player
 	)
@@ -177,7 +169,7 @@ func _apply_state(data: Dictionary) -> void:
 	var state := GameplayStatePacketReader.read(data)
 	self_id = state["self_id"]
 	var server_players: Dictionary = state["server_players"]
-	player_lifecycle = state["player_lifecycle"]
+	_set_player_lifecycle(state["player_lifecycle"])
 
 	world_sync.apply_state(
 		self_id,
@@ -317,39 +309,23 @@ func _gameplay_network_session():
 
 func _update_player_afterburner() -> void:
 	player.set_afterburner_active(
-		network_client.is_connected_to_server() &&
+			network_client.is_connected_to_server() &&
 			has_initial_spawn &&
-			!is_gameplay_paused &&
+			!_gameplay_menu_controller().is_gameplay_paused &&
 			player.visible &&
 			Input.is_action_pressed(player.move_forward_action)
 	)
-
-
-func _set_game_over_state() -> void:
-	_gameplay_lifecycle_controller().set_game_over_state()
 
 
 func _handle_open_menu_pressed() -> bool:
 	return _gameplay_menu_controller().handle_open_menu_pressed(has_initial_spawn)
 
 
-func _open_game_menu() -> void:
-	_gameplay_menu_controller().open_game_menu(has_initial_spawn)
-
-
-func _close_game_menu() -> void:
-	_gameplay_menu_controller().close_game_menu()
-
-
 func _resume_gameplay_pause_if_needed() -> void:
-	if is_gameplay_paused:
+	if _gameplay_menu_controller().is_gameplay_paused:
 		_gameplay_menu_controller().set_gameplay_paused(false)
 	else:
 		hud_controller.set_suspended(false)
-
-
-func _update_open_menu_input_armed() -> void:
-	_gameplay_menu_controller().update_open_menu_input_armed(has_initial_spawn)
 
 
 func _return_to_menu_after_network_close() -> void:
@@ -371,10 +347,6 @@ func _hide_game_menu() -> void:
 	_gameplay_menu_controller().hide_game_menu()
 
 
-func _on_game_menu_resume_requested() -> void:
-	_gameplay_menu_controller().on_resume_requested()
-
-
 func _is_game_over() -> bool:
 	var hud_is_game_over := hud_controller != null && hud_controller.is_game_over
 	return GameplaySessionState.is_game_over(session_mode, current_room_state, hud_is_game_over)
@@ -388,7 +360,7 @@ func _has_spectate_targets() -> bool:
 	return _spectate_controller().has_targets(
 		self_id,
 		_remote_player_visual_positions(),
-		player_lifecycle
+		_player_lifecycle()
 	)
 
 
@@ -396,7 +368,7 @@ func _start_spectating() -> bool:
 	return _spectate_controller().start_spectating(
 		self_id,
 		_remote_player_visual_positions(),
-		player_lifecycle,
+		_player_lifecycle(),
 		Callable(self, "_hide_game_menu"),
 		Callable(self, "_update_spectate_camera"),
 		Callable(self, "_refresh_cycle_view_hint")
@@ -422,14 +394,14 @@ func _update_spectate_camera() -> void:
 	_spectate_controller().update_camera(
 		self_id,
 		_remote_player_visual_positions(),
-		player_lifecycle,
+		_player_lifecycle(),
 		camera_follow,
 		Callable(self, "_stop_spectating")
 	)
 
 
 func _handle_spectate_input() -> void:
-	if !is_spectating:
+	if !_spectate_controller().is_active():
 		return
 	if !Input.is_action_just_pressed("SwitchCamera"):
 		return
@@ -441,7 +413,7 @@ func _cycle_spectate_target() -> void:
 	_spectate_controller().cycle_target(
 		self_id,
 		_remote_player_visual_positions(),
-		player_lifecycle,
+		_player_lifecycle(),
 		Callable(self, "_stop_spectating"),
 		Callable(self, "_follow_visual_position")
 	)
@@ -473,12 +445,8 @@ func _refresh_cycle_view_hint() -> void:
 	hud_controller.set_cycle_view_available(cycle_view_available)
 
 
-func _should_block_open_menu_for_game_over() -> bool:
-	return _gameplay_menu_controller().should_block_open_menu_for_game_over()
-
-
 func _send_gameplay_input_if_active() -> void:
-	if is_gameplay_paused:
+	if _gameplay_menu_controller().is_gameplay_paused:
 		return
 
 	network_client.send_packet(player.get_input_packet())

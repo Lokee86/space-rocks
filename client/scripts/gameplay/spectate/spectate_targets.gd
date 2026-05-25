@@ -1,7 +1,7 @@
 extends RefCounted
 class_name SpectateTargets
 
-const PLAYER_ACTIVE := "active"
+const PlayerLifecycleState = preload("res://scripts/gameplay/session/player_lifecycle_state.gd")
 
 
 static func select_target(
@@ -46,7 +46,7 @@ static func _valid_target_ids(
 		var target_id := str(player_id)
 		if target_id == "" || target_id == local_player_id:
 			continue
-		if str(player_lifecycle.get(target_id, "")) != PLAYER_ACTIVE:
+		if !PlayerLifecycleState.is_active(player_lifecycle.get(target_id, "")):
 			continue
 		target_ids.append(target_id)
 

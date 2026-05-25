@@ -82,12 +82,12 @@ func test_apply_state_stores_player_lifecycle() -> void:
 
 	game._apply_state(state)
 
-	assert_eq(game.player_lifecycle[WorldStateFixture.LOCAL_PLAYER_ID], "active")
-	assert_eq(game.player_lifecycle[WorldStateFixture.REMOTE_PLAYER_ID], "unexpected_status")
+	assert_eq(game._player_lifecycle()[WorldStateFixture.LOCAL_PLAYER_ID], "active")
+	assert_eq(game._player_lifecycle()[WorldStateFixture.REMOTE_PLAYER_ID], "unexpected_status")
 
 
 func test_apply_state_missing_player_lifecycle_uses_empty_dictionary() -> void:
-	game.player_lifecycle = {"stale-player": "active"}
+	game._set_player_lifecycle({"stale-player": "active"})
 	var state := WorldStateFixture.state()
 	state.erase(Packets.FIELD_PLAYER_LIFECYCLE)
 	state[Packets.FIELD_ASTEROIDS] = {}
@@ -95,11 +95,11 @@ func test_apply_state_missing_player_lifecycle_uses_empty_dictionary() -> void:
 
 	game._apply_state(state)
 
-	assert_true(game.player_lifecycle.is_empty())
+	assert_true(game._player_lifecycle().is_empty())
 
 
 func test_apply_state_invalid_player_lifecycle_uses_empty_dictionary() -> void:
-	game.player_lifecycle = {"stale-player": "active"}
+	game._set_player_lifecycle({"stale-player": "active"})
 	var state := WorldStateFixture.state()
 	state[Packets.FIELD_PLAYER_LIFECYCLE] = "active"
 	state[Packets.FIELD_ASTEROIDS] = {}
@@ -107,7 +107,7 @@ func test_apply_state_invalid_player_lifecycle_uses_empty_dictionary() -> void:
 
 	game._apply_state(state)
 
-	assert_true(game.player_lifecycle.is_empty())
+	assert_true(game._player_lifecycle().is_empty())
 
 
 func test_self_death_event_missing_respawn_delay_uses_safe_zero_delay() -> void:
@@ -129,7 +129,7 @@ func test_self_death_event_missing_respawn_delay_uses_safe_zero_delay() -> void:
 
 
 func test_open_game_menu_during_gameplay_shows_menu_without_game_over() -> void:
-	game._open_game_menu()
+	game._gameplay_menu_controller().open_game_menu(game.has_initial_spawn)
 
 	assert_true(hud_controller.is_game_menu_visible())
 	assert_false(hud_controller.game_over_overlay.visible)
@@ -138,19 +138,19 @@ func test_open_game_menu_during_gameplay_shows_menu_without_game_over() -> void:
 
 
 func test_resume_hides_game_menu_and_clears_paused_state() -> void:
-	game.is_gameplay_paused = true
+	game._gameplay_menu_controller().is_gameplay_paused = true
 	hud_controller.show_game_menu()
 
-	game._on_game_menu_resume_requested()
+	game._gameplay_menu_controller().on_resume_requested()
 
-	assert_false(game.is_gameplay_paused)
+	assert_false(game._gameplay_menu_controller().is_gameplay_paused)
 	assert_false(hud_controller.is_game_menu_visible())
 
 
 func test_single_player_game_over_shows_game_over_and_disabled_resume_menu() -> void:
 	game.session_mode = "SinglePlayer"
 
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 
 	assert_true(hud_controller.game_over_overlay.visible)
 	assert_true(hud_controller.is_game_menu_visible())
@@ -165,7 +165,7 @@ func test_multiplayer_local_game_over_without_targets_shows_disabled_waiting_unt
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
 
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 
 	assert_true(hud_controller.game_over_overlay.visible)
 	assert_true(hud_controller.is_game_menu_visible())
@@ -183,7 +183,7 @@ func test_multiplayer_local_game_over_with_targets_shows_spectate() -> void:
 	game.current_room_state = "InGame"
 	_add_spectate_target()
 
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 
 	assert_true(hud_controller.game_over_overlay.visible)
 	assert_true(hud_controller.is_game_menu_visible())
@@ -198,7 +198,7 @@ func test_multiplayer_local_game_over_with_pending_target_shows_waiting() -> voi
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-player", Vector2(42.0, 24.0), "pending_respawn")
 
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 
 	assert_false(_primary_label("Spectate").visible)
 	assert_true(_primary_label("Waiting").visible)
@@ -209,7 +209,7 @@ func test_multiplayer_room_game_over_enables_lobby_menu() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "GameOver"
 
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 
 	assert_true(hud_controller.game_over_overlay.visible)
 	assert_true(hud_controller.is_game_menu_visible())
@@ -222,7 +222,7 @@ func test_multiplayer_room_game_over_enables_lobby_menu() -> void:
 func test_multiplayer_room_game_over_packet_enables_open_lobby_menu() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
 	assert_true(_primary_label("Waiting").visible)
 
@@ -238,13 +238,13 @@ func test_multiplayer_room_game_over_packet_enables_open_lobby_menu() -> void:
 func test_multiplayer_local_game_over_allows_open_menu_while_room_in_game() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
-	game.open_menu_input_armed = true
+	game._gameplay_menu_controller().open_menu_input_armed = true
 	_add_spectate_target()
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.hide_game_menu()
 
-	assert_false(game._should_block_open_menu_for_game_over())
-	game._open_game_menu()
+	assert_false(game._gameplay_menu_controller().should_block_open_menu_for_game_over())
+	game._gameplay_menu_controller().open_game_menu(game.has_initial_spawn)
 	assert_true(hud_controller.is_game_menu_visible())
 	assert_true(_primary_label("Spectate").visible)
 	assert_false(hud_controller.get_game_menu().primary_action_button.disabled)
@@ -254,7 +254,7 @@ func test_multiplayer_spectate_primary_action_emits_only_spectate_signal() -> vo
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
 	_add_spectate_target()
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	var menu := hud_controller.get_game_menu()
 	var emitted := {
 		"lobby": false,
@@ -277,12 +277,12 @@ func test_multiplayer_spectate_action_hides_menu_and_follows_remote_player() -> 
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-player", Vector2(42.0, 24.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 
 	hud_controller.get_game_menu()._on_primary_action_pressed()
 
-	assert_true(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "remote-player")
+	assert_true(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "remote-player")
 	assert_false(hud_controller.is_game_menu_visible())
 	assert_true(_cycle_view_label().visible)
 	assert_eq(game.gameplay_camera.global_position, Vector2(42.0, 24.0))
@@ -292,11 +292,11 @@ func test_multiplayer_open_menu_while_spectating_hides_cycle_view() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-player", Vector2(42.0, 24.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
 	assert_true(_cycle_view_label().visible)
 
-	game._open_game_menu()
+	game._gameplay_menu_controller().open_game_menu(game.has_initial_spawn)
 
 	assert_true(hud_controller.is_game_menu_visible())
 	assert_false(_cycle_view_label().visible)
@@ -306,12 +306,12 @@ func test_multiplayer_closing_menu_while_spectating_shows_cycle_view() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-player", Vector2(42.0, 24.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
-	game._open_game_menu()
+	game._gameplay_menu_controller().open_game_menu(game.has_initial_spawn)
 	assert_false(_cycle_view_label().visible)
 
-	game._close_game_menu()
+	game._gameplay_menu_controller().close_game_menu()
 
 	assert_false(hud_controller.is_game_menu_visible())
 	assert_true(_cycle_view_label().visible)
@@ -322,15 +322,15 @@ func test_multiplayer_spectate_selects_another_target_when_current_disappears() 
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-a", Vector2(10.0, 20.0))
 	_add_spectate_target("remote-b", Vector2(30.0, 40.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
-	assert_eq(game.current_spectate_target_id, "remote-a")
+	assert_eq(game._spectate_controller().current_target_id(), "remote-a")
 
 	game.world_sync.player_sync.remote_player_visual_positions.erase("remote-a")
 	game._update_spectate_camera()
 
-	assert_true(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "remote-b")
+	assert_true(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "remote-b")
 	assert_eq(game.gameplay_camera.global_position, Vector2(30.0, 40.0))
 
 
@@ -342,8 +342,8 @@ func test_switch_camera_does_nothing_before_spectating() -> void:
 
 	game._cycle_spectate_target()
 
-	assert_false(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "")
+	assert_false(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "")
 	assert_eq(game.gameplay_camera.global_position, game.player.global_position)
 
 
@@ -352,14 +352,14 @@ func test_switch_camera_cycles_to_next_spectate_target() -> void:
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-a", Vector2(10.0, 20.0))
 	_add_spectate_target("remote-b", Vector2(30.0, 40.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
-	assert_eq(game.current_spectate_target_id, "remote-a")
+	assert_eq(game._spectate_controller().current_target_id(), "remote-a")
 
 	game._cycle_spectate_target()
 
-	assert_true(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "remote-b")
+	assert_true(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "remote-b")
 	assert_eq(game.gameplay_camera.global_position, Vector2(30.0, 40.0))
 
 
@@ -369,14 +369,14 @@ func test_switch_camera_skips_eliminated_spectate_target() -> void:
 	_add_spectate_target("remote-a", Vector2(10.0, 20.0))
 	_add_spectate_target("remote-b", Vector2(30.0, 40.0), "eliminated")
 	_add_spectate_target("remote-c", Vector2(50.0, 60.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
-	assert_eq(game.current_spectate_target_id, "remote-a")
+	assert_eq(game._spectate_controller().current_target_id(), "remote-a")
 
 	game._cycle_spectate_target()
 
-	assert_true(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "remote-c")
+	assert_true(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "remote-c")
 	assert_eq(game.gameplay_camera.global_position, Vector2(50.0, 60.0))
 
 
@@ -385,14 +385,14 @@ func test_switch_camera_wraps_to_first_spectate_target() -> void:
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-a", Vector2(10.0, 20.0))
 	_add_spectate_target("remote-b", Vector2(30.0, 40.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
 	game._cycle_spectate_target()
-	assert_eq(game.current_spectate_target_id, "remote-b")
+	assert_eq(game._spectate_controller().current_target_id(), "remote-b")
 
 	game._cycle_spectate_target()
 
-	assert_eq(game.current_spectate_target_id, "remote-a")
+	assert_eq(game._spectate_controller().current_target_id(), "remote-a")
 	assert_eq(game.gameplay_camera.global_position, Vector2(10.0, 20.0))
 
 
@@ -401,15 +401,15 @@ func test_switch_camera_recovers_when_current_target_disappeared() -> void:
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-a", Vector2(10.0, 20.0))
 	_add_spectate_target("remote-b", Vector2(30.0, 40.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
-	assert_eq(game.current_spectate_target_id, "remote-a")
+	assert_eq(game._spectate_controller().current_target_id(), "remote-a")
 
 	game.world_sync.player_sync.remote_player_visual_positions.erase("remote-a")
 	game._cycle_spectate_target()
 
-	assert_true(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "remote-b")
+	assert_true(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "remote-b")
 	assert_eq(game.gameplay_camera.global_position, Vector2(30.0, 40.0))
 
 
@@ -418,18 +418,18 @@ func test_switch_camera_does_nothing_after_room_game_over_exits_spectate() -> vo
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-a", Vector2(10.0, 20.0))
 	_add_spectate_target("remote-b", Vector2(30.0, 40.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
 	game._store_room_state({
 		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
 		Packets.FIELD_ROOM_STATE: "GameOver",
 	})
-	assert_false(game.is_spectating)
+	assert_false(game._spectate_controller().is_active())
 
 	game._cycle_spectate_target()
 
-	assert_false(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "")
+	assert_false(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "")
 	assert_true(_primary_label("Lobby").visible)
 
 
@@ -437,15 +437,15 @@ func test_multiplayer_spectate_falls_back_to_waiting_menu_when_targets_disappear
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-player", Vector2(42.0, 24.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
-	assert_true(game.is_spectating)
+	assert_true(game._spectate_controller().is_active())
 
 	game.world_sync.player_sync.remote_player_visual_positions.clear()
 	game._update_spectate_camera()
 
-	assert_false(game.is_spectating)
-	assert_eq(game.current_spectate_target_id, "")
+	assert_false(game._spectate_controller().is_active())
+	assert_eq(game._spectate_controller().current_target_id(), "")
 	assert_true(hud_controller.is_game_menu_visible())
 	assert_true(_primary_label("Waiting").visible)
 	assert_true(hud_controller.get_game_menu().primary_action_button.disabled)
@@ -456,16 +456,16 @@ func test_multiplayer_room_game_over_exits_spectate_and_shows_lobby() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "InGame"
 	_add_spectate_target("remote-player", Vector2(42.0, 24.0))
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.get_game_menu()._on_primary_action_pressed()
-	assert_true(game.is_spectating)
+	assert_true(game._spectate_controller().is_active())
 
 	game._store_room_state({
 		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
 		Packets.FIELD_ROOM_STATE: "GameOver",
 	})
 
-	assert_false(game.is_spectating)
+	assert_false(game._spectate_controller().is_active())
 	assert_true(hud_controller.is_game_menu_visible())
 	assert_true(_primary_label("Lobby").visible)
 	assert_false(hud_controller.get_game_menu().primary_action_button.disabled)
@@ -475,7 +475,7 @@ func test_multiplayer_room_game_over_exits_spectate_and_shows_lobby() -> void:
 func test_multiplayer_room_game_over_primary_action_still_emits_lobby_signal() -> void:
 	game.session_mode = "Multiplayer"
 	game.current_room_state = "GameOver"
-	game._set_game_over_state()
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	var menu := hud_controller.get_game_menu()
 	var emitted := {
 		"lobby": false,
@@ -496,11 +496,11 @@ func test_multiplayer_room_game_over_primary_action_still_emits_lobby_signal() -
 
 func test_single_player_game_over_still_blocks_open_menu_toggle() -> void:
 	game.session_mode = "SinglePlayer"
-	game.open_menu_input_armed = true
-	game._set_game_over_state()
+	game._gameplay_menu_controller().open_menu_input_armed = true
+	game._gameplay_lifecycle_controller().set_game_over_state()
 	hud_controller.hide_game_menu()
 
-	assert_true(game._should_block_open_menu_for_game_over())
+	assert_true(game._gameplay_menu_controller().should_block_open_menu_for_game_over())
 	assert_false(hud_controller.is_game_menu_visible())
 
 
@@ -526,4 +526,4 @@ func _add_spectate_target(
 	lifecycle_status := "active"
 ) -> void:
 	game.world_sync.player_sync.remote_player_visual_positions[player_id] = position
-	game.player_lifecycle[player_id] = lifecycle_status
+	game.set_player_lifecycle_status(player_id, lifecycle_status)

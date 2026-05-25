@@ -35,19 +35,16 @@ Exemptions: generated files, Godot `.tscn` scenes, `.tres` resources, vendored a
 
 ## Workflow
 
-1. Inspect only the files needed for the requested edit.
+1. Open/read only the files needed for the requested edit.
 2. Identify the smallest concrete change that satisfies the prompt.
 3. Make the edit without unrelated cleanup.
-4. Run the exact requested verification command.
-5. If no command was requested, run the smallest relevant command:
-   - Go server change: `cd services/game-server && env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...`
-   - Godot client logic change: GUT if `godot` CLI is available.
-   - Search/path move: a focused `rg` check for old and new paths.
-6. Run `git status --short`.
+4. Do not run shell/terminal verification unless the prompt explicitly requests it.
+5. If verification is not requested, report what changed and whether any unexpected scope was needed.
 
-## Terminal / verification policy
+## Shell / verification policy
 
-- Do not run terminal commands unless the prompt explicitly says to.
+- Opening and reading named files in the editor is allowed and expected.
+- Do not run shell/terminal commands unless the prompt explicitly says to.
 - Do not run `rg`, tests, formatters, generators, or git commands by default.
 - The default agent job is editing only.
 - Report changed files and unexpected scope changes.
