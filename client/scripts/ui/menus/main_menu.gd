@@ -59,11 +59,13 @@ func _open_multiplayer_dialog() -> void:
 
 
 func _on_dialog_create_room_requested() -> void:
+	print("V2 main menu relaying dialog create room requested")
 	multiplayer_create_requested.emit()
 	_clear_multiplayer_dialog()
 
 
 func _on_dialog_join_room_requested(room_code: String) -> void:
+	print("V2 main menu relaying dialog join room requested: %s" % room_code)
 	multiplayer_join_requested.emit(room_code)
 	_clear_multiplayer_dialog()
 
