@@ -203,7 +203,7 @@ func _apply_state(data: Dictionary) -> void:
 		has_initial_spawn = true
 		hud_controller.set_score(int(server_players[self_id].get(Packets.FIELD_SCORE, 0)))
 		if hud_controller.is_dead && _gameplay_lifecycle_controller().is_awaiting_respawn_confirmation():
-			_set_alive_state()
+			_gameplay_lifecycle_controller().set_alive_state()
 
 
 func _on_network_connected() -> void:
@@ -272,9 +272,7 @@ func _gameplay_lifecycle_controller():
 			Callable(self, "_hide_game_menu"),
 			Callable(self, "_show_game_menu"),
 			Callable(self, "_refresh_cycle_view_hint"),
-			Callable(_gameplay_menu_controller(), "disarm_open_menu_input"),
-			Callable(gameplay_lifecycle_controller, "set_dead_state"),
-			Callable(gameplay_lifecycle_controller, "set_game_over_state")
+			Callable(_gameplay_menu_controller(), "disarm_open_menu_input")
 		)
 
 	return gameplay_lifecycle_controller
@@ -317,10 +315,6 @@ func _gameplay_network_session():
 	return gameplay_network_session
 
 
-func _close_network_connection() -> void:
-	await _gameplay_network_session().close_network_connection(network_client)
-
-
 func _update_player_afterburner() -> void:
 	player.set_afterburner_active(
 		network_client.is_connected_to_server() &&
@@ -329,10 +323,6 @@ func _update_player_afterburner() -> void:
 			player.visible &&
 			Input.is_action_pressed(player.move_forward_action)
 	)
-
-
-func _set_alive_state() -> void:
-	_gameplay_lifecycle_controller().set_alive_state()
 
 
 func _set_game_over_state() -> void:
@@ -351,13 +341,9 @@ func _close_game_menu() -> void:
 	_gameplay_menu_controller().close_game_menu()
 
 
-func _set_gameplay_paused(paused: bool) -> void:
-	_gameplay_menu_controller().set_gameplay_paused(paused)
-
-
 func _resume_gameplay_pause_if_needed() -> void:
 	if is_gameplay_paused:
-		_set_gameplay_paused(false)
+		_gameplay_menu_controller().set_gameplay_paused(false)
 	else:
 		hud_controller.set_suspended(false)
 
@@ -368,7 +354,7 @@ func _update_open_menu_input_armed() -> void:
 
 func _return_to_menu_after_network_close() -> void:
 	_hide_game_menu()
-	await _close_network_connection()
+	await _gameplay_network_session().close_network_connection(network_client)
 	return_to_menu_requested.emit()
 
 
@@ -387,18 +373,6 @@ func _hide_game_menu() -> void:
 
 func _on_game_menu_resume_requested() -> void:
 	_gameplay_menu_controller().on_resume_requested()
-
-
-func _on_game_menu_lobby_requested() -> void:
-	_gameplay_menu_controller().on_lobby_requested()
-
-
-func _on_game_menu_spectate_requested() -> void:
-	_gameplay_menu_controller().on_spectate_requested()
-
-
-func _on_game_menu_quit_requested() -> void:
-	_gameplay_menu_controller().on_quit_requested()
 
 
 func _is_game_over() -> bool:

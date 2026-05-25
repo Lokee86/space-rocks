@@ -155,6 +155,20 @@ Use `shared/game_data.toml` plus `tools/data_sync/` for active constants. Use `s
 
 Packet schema changes should be made in `shared/packets/packets.toml` and pushed with `tools/data_sync`. Packet pull is intentionally unsupported.
 
+## Skills
+
+Task-specific workflows live under `skills/*/SKILL.md`.
+
+Use the relevant skill before doing that kind of work:
+
+- `skills/agent-micro-refactor/SKILL.md` for normal tiny implementation prompts.
+- `skills/godot-seam-refactor/SKILL.md` for splitting or shrinking Godot scripts.
+- `skills/go-gameplay-seam/SKILL.md` for server gameplay ownership changes.
+- `skills/packet-schema-change/SKILL.md` for packet/schema/codec changes.
+- `skills/godot-ui-scene-edit/SKILL.md` for Godot scene, HUD, menu, and layout changes.
+
+Do not load every skill for every task. Load only the one that matches the current prompt.
+
 ## Important Conventions
 
 - Keep authoritative gameplay logic on the Go game server.

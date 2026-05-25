@@ -12,8 +12,6 @@ var hide_game_menu: Callable
 var show_game_menu: Callable
 var refresh_cycle_view_hint: Callable
 var disarm_open_menu_input: Callable
-var transition_to_dead: Callable
-var transition_to_game_over: Callable
 var respawn_retry_remaining := 0.0
 var awaiting_respawn_confirmation := false
 
@@ -27,9 +25,7 @@ func configure(
 	hide_game_menu_callback: Callable,
 	show_game_menu_callback: Callable,
 	refresh_cycle_view_hint_callback: Callable,
-	disarm_open_menu_input_callback: Callable,
-	set_dead_state_callback: Callable,
-	set_game_over_state_callback: Callable
+	disarm_open_menu_input_callback: Callable
 ) -> void:
 	hud_controller = hud_controller_object
 	effects = effects_object
@@ -40,8 +36,6 @@ func configure(
 	show_game_menu = show_game_menu_callback
 	refresh_cycle_view_hint = refresh_cycle_view_hint_callback
 	disarm_open_menu_input = disarm_open_menu_input_callback
-	transition_to_dead = set_dead_state_callback
-	transition_to_game_over = set_game_over_state_callback
 
 
 func tick_respawn_retry(delta: float) -> void:
@@ -79,14 +73,14 @@ func apply_self_death_event(event: Dictionary) -> void:
 	var lives := int(event.get(Packets.FIELD_LIVES, 0))
 	hud_controller.set_lives(lives)
 	if lives <= 0:
-		transition_to_game_over.call()
+		set_game_over_state()
 		return
 
 	if event.has(Packets.FIELD_RESPAWN_DELAY):
-		transition_to_dead.call(float(event[Packets.FIELD_RESPAWN_DELAY]))
+		set_dead_state(float(event[Packets.FIELD_RESPAWN_DELAY]))
 	else:
 		push_warning("Ship death event missing respawn delay")
-		transition_to_dead.call(0.0)
+		set_dead_state(0.0)
 
 
 func set_alive_state() -> void:
