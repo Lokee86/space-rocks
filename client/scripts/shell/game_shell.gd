@@ -86,6 +86,7 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 	var stripped_room_code := room_code.strip_edges()
 	if stripped_room_code.is_empty():
 		_log_v2_status("V2 multiplayer join rejected: empty room code")
+		_show_multiplayer_dialog_status("Must enter an ID to join.")
 		return
 	session_context.request_multiplayer()
 	pending_boot_request = BOOT_REQUEST_JOIN_ROOM
@@ -217,6 +218,7 @@ func _on_room_error_received(packet: Dictionary) -> void:
 	var error_code := str(packet.get("error_code", ""))
 	var message := str(packet.get("message", ""))
 	_log_v2_status("V2 room error received: code=%s message=%s" % [error_code, message])
+	_show_multiplayer_dialog_status(_friendly_room_error_message(error_code, message))
 
 
 func _on_gameplay_state_received(_packet: Dictionary) -> void:
@@ -229,3 +231,28 @@ func _on_unknown_packet_received(_packet: Dictionary) -> void:
 
 func _log_v2_status(message: String) -> void:
 	ClientLogger.shell_info(message)
+
+
+func _show_multiplayer_dialog_status(message: String) -> void:
+	if main_menu != null && is_instance_valid(main_menu) && main_menu.has_method("show_multiplayer_dialog_status"):
+		main_menu.show_multiplayer_dialog_status(message)
+
+
+func _friendly_room_error_message(error_code: String, message: String) -> String:
+	match error_code:
+		"invalid_room_code":
+			return "Invalid room ID."
+		"room_not_found":
+			return "Room not found."
+		"room_full":
+			return "Room is full."
+		"room_in_game":
+			return "Room is already in game."
+		"already_in_room":
+			return "Already in a room."
+		"invalid_room_state":
+			return "Room is not joinable."
+
+	if !message.is_empty():
+		return message
+	return "Could not join room."

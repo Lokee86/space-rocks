@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bswwicitkpnyl"]
 
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_10utc"]
-[ext_resource type="Script" uid="uid://caswbdicv3nr8" path="res://scripts/ui/lobby/multiplayer_dialog.gd" id="2_o86b4"]
+[ext_resource type="Script" uid="uid://ddpnqwgdmfo5t" path="res://scripts/ui/lobby/multiplayer_dialog.gd" id="2_o86b4"]
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="3_o86b4"]
 [ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="3_yb1at"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="4_n0hg6"]
@@ -81,6 +81,7 @@ text = "Create a room or
 enter an ID to
 join."
 label_settings = ExtResource("3_o86b4")
+autowrap_mode = 2
 
 [node name="ButtonPanel" type="VBoxContainer" parent="MultiplayerDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1091220375]
 layout_mode = 2

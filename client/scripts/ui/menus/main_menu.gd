@@ -67,11 +67,18 @@ func _on_dialog_create_room_requested() -> void:
 func _on_dialog_join_room_requested(room_code: String) -> void:
 	print("V2 main menu relaying dialog join room requested: %s" % room_code)
 	multiplayer_join_requested.emit(room_code)
-	_clear_multiplayer_dialog()
 
 
 func _on_dialog_canceled() -> void:
 	_clear_multiplayer_dialog()
+
+
+func show_multiplayer_dialog_status(message: String) -> void:
+	if multiplayer_dialog != null && is_instance_valid(multiplayer_dialog):
+		if multiplayer_dialog.has_method("show_join_error"):
+			multiplayer_dialog.show_join_error(message)
+		elif multiplayer_dialog.has_method("set_status"):
+			multiplayer_dialog.set_status(message)
 
 
 func _clear_multiplayer_dialog() -> void:
