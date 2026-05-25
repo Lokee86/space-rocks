@@ -14,6 +14,7 @@ const SpectateTargetsScript = preload("res://scripts/gameplay/spectate_targets.g
 const WorldSyncScript = preload("res://scripts/networking/world_sync.gd")
 const RoomState = preload("res://scripts/session/room_state.gd")
 const PlayerLifecycle = preload("res://scripts/gameplay/player_lifecycle.gd")
+const SpectateControllerScript = preload("res://scripts/gameplay/spectate/spectate_controller.gd")
 const RESPAWN_RETRY_SECONDS := 0.25
 
 @onready var player: Player = $Player
@@ -29,7 +30,11 @@ var has_initial_spawn := false
 var is_gameplay_paused := false
 var open_menu_input_armed := false
 var self_id := ""
-var current_spectate_target_id := ""
+var current_spectate_target_id: String:
+	get:
+		return _spectate_controller().current_target_id()
+	set(value):
+		_spectate_controller().set_current_target_id(value)
 var debug_input_controller
 var background_scroll
 var offscreen_indicator_controller
@@ -38,7 +43,12 @@ var camera_follow
 var game_menu: GameMenu
 var injected_network_client: NetworkClient
 var hud_controller: HudController
-var is_spectating := false
+var is_spectating: bool:
+	get:
+		return _spectate_controller().is_active()
+	set(value):
+		_spectate_controller().set_active(value)
+var spectate_controller
 var network_client: NetworkClient
 var room_id := ""
 var current_room_state := ""
@@ -67,6 +77,7 @@ func _ready() -> void:
 	background_scroll = GameBackgroundScrollScript.new()
 	offscreen_indicator_controller = OffscreenIndicatorControllerScript.new()
 	offscreen_indicator_controller.configure(offscreen_indicators, gameplay_camera)
+	_spectate_controller()
 
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(self, player, bullets, asteroids)
@@ -254,6 +265,13 @@ func release_network_client_for_lobby() -> NetworkClient:
 
 func _on_world_bullet_spawned() -> void:
 	player.play_laser_sound()
+
+
+func _spectate_controller():
+	if spectate_controller == null:
+		spectate_controller = SpectateControllerScript.new()
+
+	return spectate_controller
 
 
 func _close_network_connection() -> void:
@@ -516,66 +534,47 @@ func _is_room_game_over() -> bool:
 
 
 func _has_spectate_targets() -> bool:
-	if world_sync == null:
-		return false
-
-	return SpectateTargetsScript.select_target(
+	return _spectate_controller().has_targets(
 		self_id,
-		"",
-		world_sync.get_remote_player_visual_positions(),
+		_remote_player_visual_positions(),
 		player_lifecycle
-	) != ""
+	)
 
 
 func _start_spectating() -> bool:
-	var remote_positions := _remote_player_visual_positions()
-	current_spectate_target_id = SpectateTargetsScript.select_target(
+	return _spectate_controller().start_spectating(
 		self_id,
-		current_spectate_target_id,
-		remote_positions,
-		player_lifecycle
+		_remote_player_visual_positions(),
+		player_lifecycle,
+		Callable(self, "_hide_game_menu"),
+		Callable(self, "_update_spectate_camera"),
+		Callable(self, "_refresh_cycle_view_hint")
 	)
-	if current_spectate_target_id == "":
-		is_spectating = false
-		return false
-
-	is_spectating = true
-	_hide_game_menu()
-	_update_spectate_camera()
-	_refresh_cycle_view_hint()
-	return true
 
 
 func _stop_spectating(show_game_over_menu: bool) -> void:
-	if !is_spectating && current_spectate_target_id == "":
-		return
+	_spectate_controller().stop_spectating(
+		show_game_over_menu,
+		hud_controller != null && hud_controller.is_game_over,
+		Callable(self, "_follow_local_player"),
+		Callable(self, "_show_game_menu"),
+		Callable(self, "_refresh_cycle_view_hint")
+	)
 
-	is_spectating = false
-	current_spectate_target_id = ""
+
+func _follow_local_player() -> void:
 	if camera_follow != null:
 		camera_follow.follow_local_player()
-	if show_game_over_menu && hud_controller != null && hud_controller.is_game_over:
-		_show_game_menu()
-	_refresh_cycle_view_hint()
 
 
 func _update_spectate_camera() -> void:
-	if !is_spectating:
-		return
-
-	var remote_positions := _remote_player_visual_positions()
-	current_spectate_target_id = SpectateTargetsScript.select_target(
+	_spectate_controller().update_camera(
 		self_id,
-		current_spectate_target_id,
-		remote_positions,
-		player_lifecycle
+		_remote_player_visual_positions(),
+		player_lifecycle,
+		camera_follow,
+		Callable(self, "_stop_spectating")
 	)
-	if current_spectate_target_id == "":
-		_stop_spectating(true)
-		return
-
-	if camera_follow != null:
-		camera_follow.follow_visual_position(remote_positions[current_spectate_target_id])
 
 
 func _handle_spectate_input() -> void:
@@ -588,22 +587,18 @@ func _handle_spectate_input() -> void:
 
 
 func _cycle_spectate_target() -> void:
-	if !is_spectating:
-		return
-
-	var remote_positions := _remote_player_visual_positions()
-	current_spectate_target_id = SpectateTargetsScript.cycle_target(
+	_spectate_controller().cycle_target(
 		self_id,
-		current_spectate_target_id,
-		remote_positions,
-		player_lifecycle
+		_remote_player_visual_positions(),
+		player_lifecycle,
+		Callable(self, "_stop_spectating"),
+		Callable(self, "_follow_visual_position")
 	)
-	if current_spectate_target_id == "":
-		_stop_spectating(true)
-		return
 
+
+func _follow_visual_position(visual_position: Vector2) -> void:
 	if camera_follow != null:
-		camera_follow.follow_visual_position(remote_positions[current_spectate_target_id])
+		camera_follow.follow_visual_position(visual_position)
 
 
 func _remote_player_visual_positions() -> Dictionary:
@@ -621,7 +616,7 @@ func _refresh_cycle_view_hint() -> void:
 	hud_controller.set_cycle_view_available(
 		_is_multiplayer_session() &&
 		hud_controller.is_game_over &&
-		is_spectating &&
+		_spectate_controller().is_active() &&
 		!_is_room_game_over()
 	)
 
