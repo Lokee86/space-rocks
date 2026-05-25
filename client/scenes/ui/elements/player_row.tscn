@@ -4,18 +4,24 @@
 [ext_resource type="Texture2D" uid="uid://clkc3vojcm4uo" path="res://assets/ui/indicator.png" id="1_l4s7f"]
 [ext_resource type="Texture2D" uid="uid://bpdd158jrrcux" path="res://assets/ui/ready_green.png" id="2_opmrn"]
 [ext_resource type="Texture2D" uid="uid://hsqpl3j0l31" path="res://assets/ui/ready_red.png" id="2_tyt3a"]
+[ext_resource type="Script" uid="uid://q1x3ko43d4l7" path="res://scripts/ui/lobby/player_row.gd" id="4_iw0ft"]
 
 [node name="PlayerRow" type="HBoxContainer" unique_id=1723963623]
 offset_right = 40.0
 offset_bottom = 40.0
 size_flags_horizontal = 3
+script = ExtResource("4_iw0ft")
 
 [node name="PlayerNameLabel" type="Label" parent="." unique_id=1699343605]
 layout_mode = 2
 text = "Player X"
 label_settings = ExtResource("1_1jkif")
 
-[node name="OwnerIndicator" type="TextureRect" parent="." unique_id=395536353]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1370028491]
+layout_mode = 2
+theme_override_constants/margin_bottom = 3
+
+[node name="OwnerIndicator" type="TextureRect" parent="MarginContainer" unique_id=395536353]
 custom_minimum_size = Vector2(25, 0)
 layout_mode = 2
 texture = ExtResource("1_l4s7f")

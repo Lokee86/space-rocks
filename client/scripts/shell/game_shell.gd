@@ -159,6 +159,7 @@ func _show_multiplayer_lobby() -> void:
 		state.room_code,
 		state.room_state,
 		state.local_member_id,
+		state.owner_id,
 		state.max_players,
 		state.members
 	)

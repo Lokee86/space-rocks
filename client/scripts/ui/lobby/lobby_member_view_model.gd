@@ -24,6 +24,12 @@ static func member_connected(member) -> bool:
 	return true
 
 
+static func is_owner(member, owner_id: String) -> bool:
+	if owner_id.is_empty() || !(member is Dictionary):
+		return false
+	return member_id(member) == owner_id
+
+
 static func is_local_ready(local_member_id: String, members: Array) -> bool:
 	if local_member_id.is_empty():
 		return false

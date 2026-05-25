@@ -7,6 +7,7 @@ static func render(
 	container: Container,
 	row_scene: PackedScene,
 	local_member_id: String,
+	owner_id: String,
 	members: Array
 ) -> void:
 	if container == null:
@@ -26,5 +27,6 @@ static func render(
 			row.set_member(
 				LobbyMemberViewModel.display_name(member, local_member_id),
 				LobbyMemberViewModel.member_ready(member),
-				LobbyMemberViewModel.member_connected(member)
+				LobbyMemberViewModel.member_connected(member),
+				LobbyMemberViewModel.is_owner(member, owner_id)
 			)
