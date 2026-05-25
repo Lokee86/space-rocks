@@ -96,11 +96,30 @@ func apply_room_snapshot(data: Dictionary) -> String:
 	return previous_room_state
 
 
+func apply_room_snapshot_result(data: Dictionary) -> Dictionary:
+	var previous_room_state := apply_room_snapshot(data)
+	return _room_update_result(previous_room_state)
+
+
 func apply_room_state_changed(data: Dictionary) -> void:
 	current_room_code = str(data.get(Packets.FIELD_ROOM_CODE, current_room_code)).strip_edges()
 	current_room_state = str(data.get(Packets.FIELD_ROOM_STATE, current_room_state)).strip_edges()
 	latest_room_snapshot[Packets.FIELD_ROOM_CODE] = current_room_code
 	latest_room_snapshot[Packets.FIELD_ROOM_STATE] = current_room_state
+
+
+func apply_room_state_changed_result(data: Dictionary) -> Dictionary:
+	var previous_room_state := current_room_state
+	apply_room_state_changed(data)
+	return _room_update_result(previous_room_state)
+
+
+func _room_update_result(previous_room_state: String) -> Dictionary:
+	return {
+		"previous_room_state": previous_room_state,
+		"room_state_is_lobby": room_state_is_lobby(),
+		"room_state_is_in_game": room_state_is_in_game(),
+	}
 
 
 func set_status(text: String) -> void:
@@ -110,11 +129,54 @@ func set_status(text: String) -> void:
 		multiplayer_lobby.set_status(text)
 
 
+func room_error_message(data: Dictionary) -> String:
+	return RoomErrors.message_for_packet(data)
+
+
+func show_room_error_status(message: String) -> void:
+	set_status(message)
+
+
 func local_member_ready() -> bool:
 	if local_room_member_id == "":
 		return false
 
 	return bool(room_ready_states.get(local_room_member_id, false))
+
+
+func should_send_ready_toggle(network_connected: bool) -> bool:
+	if !network_connected:
+		set_status("Not connected to server.")
+		return false
+
+	return true
+
+
+func next_ready_value() -> bool:
+	return !local_member_ready()
+
+
+func should_send_start_game(network_connected: bool) -> bool:
+	if !network_connected:
+		set_status("Not connected to server.")
+		return false
+	if !room_state_is_lobby() || !local_member_ready():
+		set_status("Ready up before starting.")
+		return false
+
+	return true
+
+
+func room_code() -> String:
+	return current_room_code
+
+
+func room_state() -> String:
+	return current_room_state
+
+
+func latest_snapshot() -> Dictionary:
+	return latest_room_snapshot
 
 
 func room_state_is_lobby() -> bool:
