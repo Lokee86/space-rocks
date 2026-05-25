@@ -50,7 +50,7 @@ sections = ["packets"]
 owns = []
 
 [packets.gds]
-files = ["client/scripts/networking/packets.gd"]
+files = ["client/scripts/networking/packets/packets.gd"]
 sections = ["packets"]
 owns = []
 

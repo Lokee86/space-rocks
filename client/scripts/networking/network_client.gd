@@ -8,8 +8,8 @@ signal packet_parse_failed(text: String)
 
 const NORMAL_CLOSE_CODE := 1000
 const GRACEFUL_CLOSE_TIMEOUT_SECONDS := 0.25
-const Packets = preload("res://scripts/networking/packets.gd")
-const PacketCodec = preload("res://scripts/networking/packet_codec/packet_codec.gd")
+const Packets = preload("res://scripts/networking/packets/packets.gd")
+const PacketCodec = preload("res://scripts/networking/packets/packet_codec.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 var socket := WebSocketPeer.new()
