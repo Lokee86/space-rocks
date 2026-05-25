@@ -1,6 +1,6 @@
 # Agent Micro Refactor Skill
 
-Use this skill for the default Space Rocks implementation workflow: one small, bounded agent task that makes a reviewable edit and proves it with focused verification.
+Use this skill for the default Space Rocks implementation workflow: one small, bounded agent task that makes a reviewable edit.
 
 ## When to use
 
@@ -16,7 +16,6 @@ Do not use this skill for broad planning-only work, large architectural redesign
 - Do not do opportunistic cleanup, formatting churn, dependency upgrades, or unrelated renames.
 - Do not edit generated files unless the prompt explicitly asks for a temporary/manual intervention.
 - If the task balloons, stop and report the smallest next prompt instead of continuing.
-- If tests fail, stop and report the failure. Do not pile additional changes onto a failing state unless the prompt asks for a focused fix.
 - If the prompt says read-only, do not edit files, run formatters, or perform cleanup.
 
 ## Line-count guardrails
@@ -64,8 +63,7 @@ Unexpected files touched:
 Notes:
 - ...
 
-When completing a numbered prompt, put this exact heading at the bottom of the report, replacing `X`:
-
-```text
 **COMPLETED PROMPT X**
 ```
+
+When completing a numbered prompt, put the exact completion heading at the bottom of the report, replacing `X` with the prompt number.
