@@ -68,7 +68,7 @@ func configure(
 	spectate_menu_state = SpectateMenuState.new()
 	gameplay_menu_flow.configure_spectate_menu_state(spectate_menu_state)
 	gameplay_background_flow = GameplayBackgroundFlow.new()
-	gameplay_background_flow.configure(repeated_background, repeated_foreground_background)
+	gameplay_background_flow.configure(repeated_background, repeated_foreground_background, player)
 	gameplay_shell_flow = GameplayShellFlow.new()
 	gameplay_shell_flow.configure(
 		connection_service,
