@@ -1,22 +1,18 @@
 # Agent Testing Rules
 
-Use this when changing tests, verification commands, generated data, packet/schema code, or anything that needs a validation report.
+Use this document for verification commands, generated data checks, and validation planning.
+
+## Terminal Policy
+
+Agents should not run terminal commands by default.
+
+- Commands in this document are normally human-run by the user.
+- An agent may run a command only when the prompt explicitly says it may.
+- Prompt reports should not include command results unless the prompt explicitly allowed the agent to run the command.
+- After an agent edit, the user may run the relevant command and paste output back into ChatGPT.
+- If a human-run command fails, stop and diagnose that failure before piling on more changes.
 
 ## Server Commands
-
-Run the Go game server:
-
-```bash
-cd services/game-server
-go run ./cmd/game-server
-```
-
-Run with Air, if installed:
-
-```bash
-cd services/game-server
-air
-```
 
 Run server tests:
 
@@ -134,13 +130,6 @@ services/game-server/tests/game/helpers_test.go
 
 Keep new helpers intent-level, such as placing entities or sending packets, instead of exposing raw private maps.
 
-For server gameplay changes, run:
-
-```bash
-cd services/game-server
-env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
-```
-
 ## Client Test Layout
 
 Godot client tests use GUT and live under:
@@ -176,22 +165,36 @@ Keep client tests focused on:
 
 Do not put test helpers in `client/scripts/`.
 
+## Human-Run Checkpoint Guidance
+
+Use broad verification at checkpoints, usually after a small batch of prompts or before a commit.
+
+For server changes, run:
+
+```bash
+cd services/game-server
+env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
+```
+
 For client changes, run GUT when the `godot` CLI is available:
 
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
 
+For packet/schema changes, run the relevant `tools/data_sync` validation/diff/push command.
+
+For path moves, renames, deleted APIs, or preload cleanup, use focused `rg` checks. Do not make the agent run those checks unless the prompt explicitly allows terminal commands.
+
 ## Reporting Expectations
 
-After each implementation prompt, report:
+Default agent reports should include:
 
 - changed files
-- exact validation command
-- pass/fail result
-- relevant failure output, if any
-- `git status --short`
+- unexpected files touched
+- short notes about scope or compatibility wrappers
+- numbered completion heading, when applicable
 
-If tests fail, stop and report the failure. Do not continue piling changes onto a failing state unless the prompt explicitly asks for a focused fix.
+Do not require the agent to report validation commands, test output, or `git status --short` unless the prompt explicitly allowed terminal commands.
 
 Read-only prompts must not edit files, run formatters, or perform cleanup.

@@ -55,15 +55,14 @@ Packet pull is intentionally unsupported. Packet schema changes should be made i
 
 ## Workflow
 
-1. Edit `shared/packets/packets.toml`.
-2. Preview generated changes.
-3. Apply generated Go/GDS outputs together.
-4. Inspect generated diffs for unexpected churn.
-5. Update packet codec or call sites only if required.
-6. Add/update focused Go or GUT tests for packet regressions.
-7. Run validation and relevant tests.
+1. Edit `shared/packets/packets.toml` when the schema changes.
+2. Do not hand-edit generated packet files unless explicitly requested.
+3. Keep generated Go/GDS outputs together when applying generation.
+4. Update packet codec or call sites only if required.
+5. Add/update focused Go or GUT tests only when the prompt asks for test edits.
+6. Leave broad validation and generated diff checks for human-run checkpoint commands unless the prompt explicitly allows terminal commands.
 
-## Commands
+## Human-run commands
 
 Validate shared packets:
 
@@ -95,6 +94,8 @@ Run client GUT tests when Godot CLI is available:
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
+
+Do not run these commands by default as the agent.
 
 ## Stop conditions
 

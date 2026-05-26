@@ -58,13 +58,24 @@ The client codec is intentionally JSON-only and thin. Do not add validation, for
 
 Common starting points:
 
-- `client/scripts/ui/game_shell.gd`
-- `client/scripts/game.gd`
+- `client/scripts/shell/game_shell.gd`
+- `client/scripts/gameplay/game.gd`
+- `client/scripts/gameplay/session/`
+- `client/scripts/gameplay/spectate/`
+- `client/scripts/gameplay/support/`
 - `client/scripts/networking/network_client.gd`
 - `client/scripts/networking/packet_codec/packet_codec.gd`
 - `client/scripts/networking/world_sync.gd`
 - `client/scripts/entities/player.gd`
-- `client/scripts/ui/hud_controller.gd`
+- `client/scripts/ui/hud/hud_controller.gd`
+- `client/scripts/ui/menus/`
+
+Other recently moved client helpers:
+
+- `client/scripts/world/world_wrap.gd`
+- `client/scripts/gameplay/effects.gd`
+- `client/scripts/camera/camera_follow.gd`
+- `client/scripts/gameplay/spectate/spectate_targets.gd`
 
 ## Spectate / Lifecycle Rules
 
@@ -83,12 +94,13 @@ Current hardcoded Godot hotkeys:
 - `F1`: toggle debug invincibility for the player
 - `F2`: toggle debug infinite lives for the player
 - `F3`: toggle room-wide debug world freeze
+- `F4`: toggle the player's paused state
 
-These are server-authoritative toggles sent through generated packets. See `docs/devtools/toggles.md`.
+These are server-authoritative toggles sent through generated packets where applicable. See `docs/devtools/toggles.md`.
 
 Devtools must route through real gameplay seams. Do not create parallel debug-only gameplay logic that bypasses damage, lives, spawning, scoring, movement, room/session, or modifier systems.
 
-## Pause State Context
+## Pause / Menu Context
 
 Pause plumbing exists:
 
@@ -96,7 +108,9 @@ Pause plumbing exists:
 - server player fields include paused/invulnerability state
 - paused players should ignore input, not shoot/score, not take asteroid damage, and be hidden by client world sync
 - resume starts a short invulnerability window
-- menu UI has been in flux
+- pause/menu UI exists but is still evolving
+
+Pause/menu behavior still needs smoke testing, especially active-game pause, GameOver menu behavior, ReturnToLobby, and websocket preservation.
 
 If pause behavior seems wrong, inspect current Godot scenes/scripts before changing code. The HUD/menu scenes have been changed multiple times.
 
@@ -106,7 +120,7 @@ If gameplay or input looks broken, first confirm the Go server is running and th
 
 Client wrap math lives under the Godot client and should align with server world rules.
 
-Future client rendering should use unwrapped visual positions relative to the local player so border crossing is invisible.
+Future/current client rendering should use unwrapped visual positions relative to the local player so border crossing is invisible.
 
 See:
 
@@ -149,13 +163,13 @@ client/tests/helpers/
 
 Do not put test helpers in `client/scripts/`.
 
-Run GUT when the `godot` CLI is available:
+The GUT command is normally human-run unless the prompt explicitly allows terminal commands:
 
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
 
-For client constants-boundary changes, run:
+For client constants-boundary changes, the pytest boundary scan is normally human-run unless the prompt explicitly allows terminal commands:
 
 ```bash
 python3 -m pytest tools/tests/test_client_constants_boundary.py

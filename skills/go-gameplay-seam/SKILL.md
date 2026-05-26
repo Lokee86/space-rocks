@@ -56,7 +56,7 @@ Generated files and tests are exempt from strict line-count rules, though tests 
 
 ## Testing rules
 
-For gameplay rule changes, add or update focused Go tests.
+For gameplay rule changes, add or update focused Go tests when the prompt asks for test changes.
 
 Server tests live under:
 
@@ -74,13 +74,15 @@ services/game-server/tests/game/helpers_test.go
 
 Keep new helpers intent-level, such as placing entities or sending packets, instead of exposing raw private maps.
 
-## Verification
+## Human-run verification
 
-Run:
+Suggested human-run server verification:
 
 ```bash
 cd services/game-server
 env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
-If read-only `envman` warnings appear but tests pass, report them as warnings, not failures.
+If read-only `envman` warnings appear but tests pass, treat them as warnings, not failures.
+
+Do not run this command by default as the agent.

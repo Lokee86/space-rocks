@@ -14,12 +14,13 @@ Space Rocks is an Asteroids-inspired game in active development.
 - Shared generated data sources: `shared/`
 - Project docs: `docs/`
 - Packet/constants sync tool: `tools/data_sync/`
+- Task-specific agent workflows: `skills/`
 
 The current gameplay direction is server-authoritative. The Godot client handles rendering, UI, audio/effects, local input collection, and interpolation. The Go game server owns simulation outcomes: movement, bullets, collisions, scoring, lives, death, respawn, pause safety, rooms, and websocket state.
 
 ## Read First
 
-For normal workflow and commands:
+For normal workflow and verification commands:
 
 - `docs/developer.md`
 - `docs/agent/testing.md`
@@ -65,7 +66,18 @@ That mismatch is intentional for now. Import paths inside the Go server still us
 
 `services/api-server/` exists as an empty placeholder for a future Node.js/TypeScript/NestJS API service. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
 
-## Core Commands
+## Terminal / Verification Policy
+
+Agents should not run terminal commands by default.
+
+- Do not run `rg`, tests, formatters, generators, git commands, or shell commands unless the prompt explicitly allows it.
+- The default agent job is editing only: make the requested small change and report changed files plus unexpected scope.
+- Verification commands are usually human-run by the user after the agent edit.
+- Docs and skills may list useful commands, but those commands are guidance for human-run checkpoints unless the prompt explicitly says the agent should run them.
+- Read-only prompts must not edit files, run formatters, or perform cleanup.
+- When the user asks to "answer" or "report", do not edit files.
+
+## Common Human-Run Commands
 
 Run server tests:
 
@@ -85,13 +97,6 @@ Run client GUT tests, if the `godot` CLI is available:
 
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
-```
-
-Build the game server:
-
-```bash
-cd services/game-server
-go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
 Validate active shared constants:
@@ -161,15 +166,14 @@ Packet schema changes should be made in `shared/packets/packets.toml` and pushed
 
 Task-specific workflows live under `skills/*/SKILL.md`.
 
-Use the relevant skill before doing that kind of work:
+Use only the relevant skill for the current task. Do not load every skill for every prompt.
 
 - `skills/agent-micro-refactor/SKILL.md` for normal tiny implementation prompts.
+- `skills/seam-first-feature/SKILL.md` for adding new behavior/features without growing gravity-well files.
 - `skills/godot-seam-refactor/SKILL.md` for splitting or shrinking Godot scripts.
 - `skills/go-gameplay-seam/SKILL.md` for server gameplay ownership changes.
 - `skills/packet-schema-change/SKILL.md` for packet/schema/codec changes.
 - `skills/godot-ui-scene-edit/SKILL.md` for Godot scene, HUD, menu, and layout changes.
-
-Do not load every skill for every task. Load only the one that matches the current prompt.
 
 ## Important Conventions
 
@@ -191,7 +195,6 @@ Do not load every skill for every task. Load only the one that matches the curre
 - Keep test-only helpers under `client/tests/`, not `client/scripts/`.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
 - Do not revert user/editor changes unless explicitly requested.
-- When the user asks to "answer" or "report", do not edit files.
 - Keep changes scoped. The user strongly prefers scalable structure without unnecessary code growth.
 
 ## Architecture / Seam Discipline
@@ -244,13 +247,17 @@ Rooms/networking:
 
 Client runtime:
 
-- `client/scripts/ui/game_shell.gd`
-- `client/scripts/game.gd`
+- `client/scripts/shell/game_shell.gd`
+- `client/scripts/gameplay/game.gd`
+- `client/scripts/gameplay/session/`
+- `client/scripts/gameplay/spectate/`
+- `client/scripts/gameplay/support/`
 - `client/scripts/networking/network_client.gd`
 - `client/scripts/networking/packet_codec/packet_codec.gd`
 - `client/scripts/networking/world_sync.gd`
 - `client/scripts/entities/player.gd`
-- `client/scripts/ui/hud_controller.gd`
+- `client/scripts/ui/hud/hud_controller.gd`
+- `client/scripts/ui/menus/`
 
 Client tests:
 
@@ -267,30 +274,33 @@ Shared schema/generation:
 - `tools/data_sync/README.md`
 - `tools/data_sync/main.py`
 
-## Testing Expectations
-
-For detailed testing rules and commands, read `docs/agent/testing.md`.
-
-Minimum expectation after implementation prompts:
-
-- Run the requested validation command.
-- Report the exact command, result, and `git status --short`.
-- If tests fail, stop and report the failure. Do not continue piling changes onto a failing state unless the prompt explicitly asks for a focused fix.
-
 ## Agent Behavior Notes
 
-- Inspect before editing. This repo changes quickly.
-- Prefer `rg`/`rg --files` for searches.
+- Open/read only the files needed for the requested edit.
+- Do not inspect broadly unless the prompt explicitly asks for a scan or the named file directly points to a needed file.
+- Do not run terminal commands unless explicitly allowed by the prompt.
 - Use `apply_patch` for manual edits.
 - Do not use destructive git commands unless explicitly asked.
 - Do not create broad refactors when a small change solves the request.
 - If a task starts to balloon, stop and report why before adding large amounts of code.
 - Preserve current behavior unless the user explicitly asks to change it.
-- Keep implementation slices small enough for quick review. Verification commands may run longer, but the code diff should remain small.
-- Before editing a known gravity-well file, check its approximate size with `wc -l`.
-- If a file is already over 350 lines, avoid adding new responsibility there.
-- If a file is over 500 lines, prefer extracting/routing through an owning seam unless the prompt explicitly says to edit that file.
-- Read-only prompts must not edit files, run formatters, or perform cleanup.
+- Keep implementation slices small enough for quick review.
+- Before editing a known gravity-well file, use the line-count guardrails above as judgment, but do not run `wc -l` unless the prompt allows terminal commands.
 - Implementation prompts must not broaden scope beyond the named target.
 - If broader work appears necessary, stop and propose a follow-up prompt.
 - When completing a numbered prompt, announce completion at the bottom of the response/report using the exact format `**COMPLETED PROMPT X**`, replacing `X` with the prompt number.
+
+## Default Agent Report
+
+```text
+Changed files:
+- ...
+
+Unexpected files touched:
+- none / ...
+
+Notes:
+- ...
+
+**COMPLETED PROMPT X**
+```

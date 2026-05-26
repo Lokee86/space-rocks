@@ -21,7 +21,9 @@ Keep this file shorter than the permanent architecture docs. Remove stale notes 
 - The user strongly prefers small implementation prompts and quick reviewable diffs.
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
 - The user prefers files under roughly 200 lines when practical and treats roughly 500 lines as a refactor trigger for actively changing production files.
-- Agent reports should focus on changed files, exact commands run, exact test results, and `git status --short`.
+- Agent prompts should be short work orders, not mini-policy documents.
+- Agents should not run terminal commands by default. Verification commands are usually human-run checkpoints.
+- Agent reports should focus on changed files, unexpected files touched, and concise notes. Include command/test/git output only when the prompt explicitly allowed terminal commands.
 
 ## Implemented Developer Toggles
 
@@ -30,10 +32,27 @@ Current hardcoded Godot hotkeys:
 - `F1`: toggle debug invincibility for the player
 - `F2`: toggle debug infinite lives for the player
 - `F3`: toggle room-wide debug world freeze
+- `F4`: toggle the player's paused state
 
-These are server-authoritative toggles sent through generated packets. See `docs/devtools/toggles.md`.
+These are server-authoritative toggles sent through generated packets where applicable. See `docs/devtools/toggles.md`.
 
-## Pause State Context
+## Current Client Runtime Areas
+
+Common starting points:
+
+- `client/scripts/shell/game_shell.gd`
+- `client/scripts/gameplay/game.gd`
+- `client/scripts/gameplay/session/`
+- `client/scripts/gameplay/spectate/`
+- `client/scripts/gameplay/support/`
+- `client/scripts/networking/network_client.gd`
+- `client/scripts/networking/packet_codec/packet_codec.gd`
+- `client/scripts/networking/world_sync.gd`
+- `client/scripts/entities/player.gd`
+- `client/scripts/ui/hud/hud_controller.gd`
+- `client/scripts/ui/menus/`
+
+## Pause / Menu Context
 
 Pause plumbing exists:
 
@@ -41,7 +60,9 @@ Pause plumbing exists:
 - server player fields include paused/invulnerability state
 - paused players should ignore input, not shoot/score, not take asteroid damage, and be hidden by client world sync
 - resume starts a short invulnerability window
-- menu UI has been in flux
+- pause/menu UI exists but is still evolving
+
+Pause/menu behavior still needs smoke testing, especially active-game pause, GameOver menu behavior, ReturnToLobby, and websocket preservation.
 
 If pause behavior seems wrong, inspect current Godot scenes/scripts before changing code. The HUD/menu scenes have been changed multiple times.
 

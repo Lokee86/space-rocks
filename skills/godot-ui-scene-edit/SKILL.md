@@ -44,7 +44,7 @@ Before editing:
 3. Check whether a controller script already owns the behavior.
 4. Prefer changing the controller if scene data does not need to change.
 
-After editing, check:
+After editing, check relevant code/diff for:
 
 - node names
 - `%UniqueName` references
@@ -69,15 +69,19 @@ For attached hand-written UI scripts:
 
 ## Testing
 
-For UI behavior changes, add or update focused GUT tests where practical.
+For UI behavior changes, add or update focused GUT tests where practical when the prompt asks for test edits.
 
-Run GUT when Godot CLI is available:
+For pure layout-only changes, report that manual smoke testing is still needed.
+
+## Human-run verification
+
+Suggested human-run GUT command:
 
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
 
-For pure layout-only changes, report that manual smoke testing is still needed.
+Do not run this command by default as the agent.
 
 ## Stop conditions
 
