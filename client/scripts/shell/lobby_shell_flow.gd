@@ -38,6 +38,8 @@ func apply_room_snapshot(packet: Dictionary) -> void:
 	if session_context.should_show_multiplayer_lobby(state.room_state):
 		_show_multiplayer_lobby(state)
 	else:
+		if multiplayer_lobby_presenter != null:
+			multiplayer_lobby_presenter.clear_lobby()
 		_log("V2 room snapshot received; multiplayer lobby mount skipped for session mode")
 
 
