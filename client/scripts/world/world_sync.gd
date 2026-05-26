@@ -39,6 +39,9 @@ func configure(
 
 
 func reset() -> void:
+	current_self_id = ""
+	if player_sync != null:
+		player_sync.reset()
 	if asteroid_sync != null:
 		asteroid_sync.reset()
 
