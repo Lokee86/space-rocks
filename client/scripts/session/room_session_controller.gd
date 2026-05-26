@@ -6,12 +6,14 @@ const LobbyReturnFlow := preload("res://scripts/shell/lobby_return_flow.gd")
 const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
 const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 
 var main_menu: Control
 var canvas_layer: CanvasLayer
 var session_context
 var connection_service
 var shell_boot_flow
+var client_config_sender: Callable
 var logger: Callable
 
 var lobby_flow
@@ -59,8 +61,15 @@ func configure(
 	)
 
 
+func configure_client_config_sender(sender: Callable) -> void:
+	client_config_sender = sender
+
+
 func handle_room_snapshot(packet: Dictionary) -> void:
 	lobby_shell_flow.apply_room_snapshot(packet)
+	var state = lobby_flow.current_state()
+	if state.room_state == Constants.ROOM_STATE_IN_GAME && !client_config_sender.is_null():
+		client_config_sender.call()
 
 
 func handle_room_state_changed(_packet: Dictionary) -> void:
