@@ -22,6 +22,7 @@ var connection_service
 var player: Player
 var spectate_menu_state
 var session_context
+var room_state_provider: Callable
 var is_gameplay_paused := false
 var is_game_over := false
 
@@ -67,6 +68,10 @@ func configure(
 
 func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 	spectate_menu_state = spectate_menu_state_ref
+
+
+func configure_room_state_provider(provider: Callable) -> void:
+	room_state_provider = provider
 
 
 func hide_menu() -> void:
@@ -122,7 +127,28 @@ func show_single_player_game_over_menu() -> void:
 	game_over_margin_container.show()
 	cycle_view.hide()
 	game_menu.show()
-	game_menu.configure_for_state(_current_session_mode(), true, "", _has_spectate_targets())
+	game_menu.configure_for_state(
+		_current_session_mode(),
+		true,
+		_current_room_state(),
+		_has_spectate_targets()
+	)
+
+
+func show_spectating_menu() -> void:
+	if !_has_live_pause_paths():
+		return
+
+	game_over_container.show()
+	game_over_margin_container.show()
+	cycle_view.hide()
+	game_menu.show()
+	game_menu.configure_for_state(
+		_current_session_mode(),
+		true,
+		_current_room_state(),
+		_has_spectate_targets()
+	)
 
 
 func hide_live_pause_menu() -> void:
@@ -199,6 +225,12 @@ func _current_session_mode() -> String:
 	if session_context != null && !str(session_context.active_mode).is_empty():
 		return session_context.active_mode
 	return Constants.SESSION_MODE_SINGLE_PLAYER
+
+
+func _current_room_state() -> String:
+	if !room_state_provider.is_null():
+		return str(room_state_provider.call())
+	return ""
 
 
 func _has_live_pause_paths() -> bool:

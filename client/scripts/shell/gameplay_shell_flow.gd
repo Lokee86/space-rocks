@@ -9,6 +9,7 @@ const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 const GameplayEventFlow = preload("res://scripts/shell/gameplay_event_flow.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
+const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 var world_sync
 var connection_service
@@ -22,6 +23,8 @@ var has_received_state := false
 var awaiting_respawn_confirmation := false
 var pending_open_menu_before_spawn := false
 var is_spectating := false
+var debug_invincible_enabled := false
+var debug_invincible_toggle_was_pressed := false
 
 
 func configure(
@@ -138,11 +141,19 @@ func process(delta: float) -> void:
 
 	_update_local_player_presentation()
 
+	if is_spectating && Input.is_action_just_pressed("OpenMenu"):
+		if menu_flow != null:
+			menu_flow.show_spectating_menu()
+		_handle_debug_invincible_toggle()
+		return
+
 	if menu_flow != null:
 		if !has_received_state && Input.is_action_just_pressed("OpenMenu"):
 			pending_open_menu_before_spawn = true
 		elif has_received_state:
 			menu_flow.handle_open_menu_pressed(has_received_state)
+
+	_handle_debug_invincible_toggle()
 
 	if (
 		is_spectating
@@ -174,6 +185,23 @@ func _on_quit_to_main_menu_requested() -> void:
 
 func _on_return_to_lobby_requested() -> void:
 	return_to_lobby_requested.emit()
+
+
+func _handle_debug_invincible_toggle() -> void:
+	var toggle_pressed := Input.is_key_pressed(KEY_1)
+	if !has_received_state || connection_service == null:
+		debug_invincible_toggle_was_pressed = toggle_pressed
+		return
+	if !toggle_pressed:
+		debug_invincible_toggle_was_pressed = false
+		return
+	if debug_invincible_toggle_was_pressed:
+		return
+
+	debug_invincible_toggle_was_pressed = true
+	debug_invincible_enabled = !debug_invincible_enabled
+	connection_service.send_packet(Packets.toggle_debug_invincible_packet())
+	ClientLogger.game_debug("Debug invincibility toggled: %s" % debug_invincible_enabled)
 
 
 func _on_spectate_requested() -> void:

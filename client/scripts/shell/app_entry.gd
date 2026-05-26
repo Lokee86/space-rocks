@@ -75,6 +75,9 @@ func _ready() -> void:
 	room_session_controller.configure_client_config_sender(
 		Callable(client_config_controller, "send_client_config")
 	)
+	gameplay_session_controller.configure_room_state_provider(
+		Callable(room_session_controller, "current_room_state")
+	)
 	session_network_controller.configure_room_session_controller(room_session_controller)
 	session_network_controller.connect_room_signals()
 	main_menu_session_controller = MainMenuSessionController.new()
