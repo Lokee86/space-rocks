@@ -3,6 +3,7 @@ extends RefCounted
 var connection_service
 var shell_boot_flow
 var room_session_controller
+var gameplay_session_controller
 var logger: Callable
 var handlers := {}
 
@@ -23,6 +24,10 @@ func configure_room_session_controller(room_session_controller_ref) -> void:
 	room_session_controller = room_session_controller_ref
 
 
+func configure_gameplay_session_controller(gameplay_session_controller_ref) -> void:
+	gameplay_session_controller = gameplay_session_controller_ref
+
+
 func connect_connection_signals() -> void:
 	_connect_connection_signal("connected", Callable(self, "_on_connection_connected"))
 	_connect_connection_signal("closed", Callable(self, "_on_connection_closed"))
@@ -34,6 +39,10 @@ func connect_room_signals() -> void:
 	_connect_connection_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
 	_connect_connection_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_connection_signal("room_error_received", Callable(self, "_on_room_error_received"))
+
+
+func connect_gameplay_signals() -> void:
+	_connect_connection_signal("gameplay_state_received", Callable(self, "_on_gameplay_state_received"))
 
 
 func _connect_connection_signal(signal_name: StringName, handler: Callable) -> void:
@@ -80,6 +89,12 @@ func _on_room_error_received(packet: Dictionary) -> void:
 	if room_session_controller == null:
 		return
 	room_session_controller.handle_room_error(packet)
+
+
+func _on_gameplay_state_received(packet: Dictionary) -> void:
+	if gameplay_session_controller == null:
+		return
+	gameplay_session_controller.handle_gameplay_state(packet)
 
 
 func _log(message: String) -> void:
