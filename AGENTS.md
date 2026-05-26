@@ -167,6 +167,7 @@ Task-specific workflows live under `skills/*/SKILL.md`.
 Use only the relevant skill for the current task. Do not load every skill for every prompt.
 
 - `skills/agent-micro-refactor/SKILL.md` for normal tiny implementation prompts.
+- `skills/seam-first-feature/SKILL.md` for adding new behavior/features without growing gravity-well files.
 - `skills/godot-seam-refactor/SKILL.md` for splitting or shrinking Godot scripts.
 - `skills/go-gameplay-seam/SKILL.md` for server gameplay ownership changes.
 - `skills/packet-schema-change/SKILL.md` for packet/schema/codec changes.
