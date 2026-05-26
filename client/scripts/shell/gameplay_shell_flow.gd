@@ -12,9 +12,11 @@ var world_sync
 var connection_service
 var player
 var hud_flow
+var menu_flow
 var background_flow
 var event_flow
 var has_received_state := false
+var awaiting_respawn_confirmation := false
 
 
 func configure(
@@ -24,12 +26,14 @@ func configure(
 	bullets: Node2D,
 	asteroids: Node2D,
 	hud_flow_ref,
+	menu_flow_ref,
 	background_flow_ref,
 	game_over_sound: AudioStreamPlayer
 ) -> void:
 	connection_service = connection_service_ref
 	player = player_ref
 	hud_flow = hud_flow_ref
+	menu_flow = menu_flow_ref
 	background_flow = background_flow_ref
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(game_owner, player_ref, bullets, asteroids)
@@ -45,6 +49,7 @@ func configure(
 
 func reset() -> void:
 	has_received_state = false
+	awaiting_respawn_confirmation = false
 	if player != null:
 		player.hide()
 	if hud_flow != null:
@@ -76,6 +81,7 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	)
 	if hud_flow != null && _should_restore_alive_hud(state):
 		hud_flow.set_alive()
+		awaiting_respawn_confirmation = false
 	if event_flow != null:
 		event_flow.apply_server_events(state["server_events"], state["self_id"])
 	has_received_state = true
@@ -97,6 +103,9 @@ func process(delta: float) -> void:
 			&& Input.is_action_just_pressed("Respawn")
 		):
 			connection_service.send_respawn_request()
+			awaiting_respawn_confirmation = true
+
+	_update_local_player_presentation()
 
 	if has_received_state && player != null && connection_service != null:
 		connection_service.send_input_packet(player.get_input_packet())
@@ -107,7 +116,15 @@ func _on_bullet_spawned() -> void:
 		player.play_laser_sound()
 
 
+func _update_local_player_presentation() -> void:
+	if !has_received_state || player == null || !player.visible:
+		return
+
+	player.set_afterburner_active(Input.is_action_pressed(player.move_forward_action))
+
+
 func _on_self_death_event(event: Dictionary) -> void:
+	awaiting_respawn_confirmation = false
 	if hud_flow == null:
 		return
 
@@ -124,6 +141,9 @@ func _on_self_death_event(event: Dictionary) -> void:
 
 
 func _should_restore_alive_hud(state: Dictionary) -> bool:
+	if !awaiting_respawn_confirmation:
+		return false
+
 	if state["has_lives"] && int(state["lives"]) <= 0:
 		return false
 

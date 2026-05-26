@@ -65,6 +65,7 @@ const SESSION_MODE_MULTIPLAYER := "multiplayer"
 const CONNECT_RESULT_STARTED_CONNECTING := "started_connecting"
 const CONNECT_RESULT_ALREADY_CONNECTED := "already_connected"
 const CONNECT_RESULT_FAILED := "failed"
+const NETWORK_POLL_PROCESS_PRIORITY := -100
 # data-sync:end constants.client.shell
 
 # data-sync:start constants.client.lobby

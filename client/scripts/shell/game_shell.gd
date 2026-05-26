@@ -11,6 +11,7 @@ const LobbyReturnFlow := preload("res://scripts/shell/lobby_return_flow.gd")
 const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
 const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
 const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
+const GameplayMenuFlow := preload("res://scripts/shell/gameplay_menu_flow.gd")
 const GameplayBackgroundFlow := preload("res://scripts/shell/gameplay_background_flow.gd")
 const ClientViewportConfigFlow := preload("res://scripts/shell/client_viewport_config_flow.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
@@ -41,6 +42,7 @@ var shell_boot_flow: ShellBootFlow
 var lobby_shell_flow: LobbyShellFlow
 var gameplay_shell_flow: GameplayShellFlow
 var gameplay_hud_flow: GameplayHudFlow
+var gameplay_menu_flow: GameplayMenuFlow
 var gameplay_background_flow: GameplayBackgroundFlow
 var client_viewport_config_flow: ClientViewportConfigFlow
 
@@ -76,6 +78,8 @@ func _ready() -> void:
 	)
 	gameplay_hud_flow = GameplayHudFlow.new()
 	gameplay_hud_flow.configure(hud)
+	gameplay_menu_flow = GameplayMenuFlow.new()
+	gameplay_menu_flow.configure(hud)
 	gameplay_background_flow = GameplayBackgroundFlow.new()
 	gameplay_background_flow.configure(repeated_background, repeated_foreground_background)
 	client_viewport_config_flow = ClientViewportConfigFlow.new()
@@ -89,6 +93,7 @@ func _ready() -> void:
 		bullets,
 		asteroids,
 		gameplay_hud_flow,
+		gameplay_menu_flow,
 		gameplay_background_flow,
 		game_over_sound
 	)
@@ -203,7 +208,6 @@ func _on_room_error_received(packet: Dictionary) -> void:
 
 
 func _on_gameplay_state_received(_packet: Dictionary) -> void:
-	_log_v2_status("V2 gameplay state received")
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.apply_gameplay_state(_packet)
 

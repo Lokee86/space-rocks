@@ -97,6 +97,7 @@ session_mode_multiplayer = "multiplayer"
 connect_result_started_connecting = "started_connecting"
 connect_result_already_connected = "already_connected"
 connect_result_failed = "failed"
+network_poll_process_priority = -100
 
 [constants.client.lobby]
 status_starting_game = "Starting game..."
