@@ -3,14 +3,17 @@ extends Node2D
 const SessionBootController := preload("res://scripts/boot/session_boot_controller.gd")
 const MainMenuSessionController := preload("res://scripts/main_menu/main_menu_session_controller.gd")
 const SessionNetworkController := preload("res://scripts/session/session_network_controller.gd")
+const RoomSessionController := preload("res://scripts/session/room_session_controller.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 @onready var main_menu: Control = $CanvasLayer/MainMenu
+@onready var canvas_layer: CanvasLayer = $CanvasLayer
 
 var session_boot_controller
 var main_menu_session_controller
 var session_network_controller
+var room_session_controller
 
 
 func _ready() -> void:
@@ -26,6 +29,17 @@ func _ready() -> void:
 		{}
 	)
 	session_network_controller.connect_connection_signals()
+	room_session_controller = RoomSessionController.new()
+	room_session_controller.configure(
+		main_menu,
+		canvas_layer,
+		session_boot_controller.get_session_context(),
+		session_boot_controller.get_connection_service(),
+		session_boot_controller.get_shell_boot_flow(),
+		Callable(self, "_log_v2_status")
+	)
+	session_network_controller.configure_room_session_controller(room_session_controller)
+	session_network_controller.connect_room_signals()
 	main_menu_session_controller = MainMenuSessionController.new()
 	main_menu_session_controller.configure(
 		main_menu,
