@@ -2,12 +2,14 @@ extends RefCounted
 class_name Effects
 
 const Constants = preload("res://scripts/constants/constants.gd")
+const GameplayAudioFlow = preload("res://scripts/gameplay/audio/gameplay_audio_flow.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"
 
 var owner_node: Node2D
 var game_over_sound: AudioStreamPlayer
+var audio_flow := GameplayAudioFlow.new()
 var game_over_sound_played := false
 var game_over_sound_token := 0
 
@@ -55,7 +57,7 @@ func spawn_bullet_blast(event_position: Vector2) -> void:
 	sound.finished.connect(_queue_free_effect_node.bind(blast_node))
 
 	sprite.play("bullet_blast")
-	sound.play()
+	audio_flow.play_bullet_blast_sound(sound)
 
 	var sound_length := Constants.BULLET_BLAST_MIN_SOUND_LENGTH
 	if sound.stream != null:
@@ -87,7 +89,7 @@ func spawn_ship_death(event_position: Vector2) -> void:
 	sprite.frame = 0
 	sprite.frame_progress = 0.0
 	sprite.play("default")
-	sound.play()
+	audio_flow.play_ship_death_sound(sound)
 
 	var sound_length := 0.0
 	if sound.stream != null:

@@ -14,6 +14,7 @@ var asteroid_sync
 var bullet_sync
 var local_visual_sync
 var player_sync
+var local_player: Player
 var current_self_id := ""
 
 
@@ -27,7 +28,10 @@ func configure(
 	asteroid_sync.configure(asteroids)
 	bullet_sync = BulletSyncScript.new()
 	bullet_sync.configure(bullets)
+	local_player = player
 	bullet_sync.bullet_spawned.connect(func() -> void:
+		if local_player != null:
+			local_player.play_laser_sound()
 		bullet_spawned.emit()
 	)
 	local_visual_sync = LocalVisualSyncScript.new()
