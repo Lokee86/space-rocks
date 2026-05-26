@@ -1,5 +1,7 @@
 extends RefCounted
 
+signal boot_request_sent
+
 const PendingBootRequest := preload("res://scripts/shell/pending_boot_request.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 
@@ -52,6 +54,7 @@ func send_pending_boot_request() -> void:
 	var request := pending_boot_request.consume_request()
 	var request_type := str(request.get("type", Constants.BOOT_REQUEST_NONE))
 	var room_code := str(request.get("room_code", ""))
+	var request_sent := true
 
 	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
 		connection_service.send_start_single_player_request()
@@ -62,6 +65,11 @@ func send_pending_boot_request() -> void:
 	elif request_type == Constants.BOOT_REQUEST_JOIN_ROOM:
 		connection_service.send_join_room_request(room_code)
 		_log("V2 sent join room request: %s" % room_code)
+	else:
+		request_sent = false
+
+	if request_sent:
+		boot_request_sent.emit()
 
 
 func clear() -> void:
