@@ -40,6 +40,11 @@ func is_server_connected() -> bool:
 	return network_client != null && network_client.is_connected_to_server()
 
 
+func begin_graceful_close() -> void:
+	if network_client != null:
+		network_client.begin_graceful_close()
+
+
 func send_start_single_player_request() -> void:
 	if network_client != null:
 		network_client.send_start_single_player_request()
@@ -78,6 +83,14 @@ func send_packet(packet: Dictionary) -> void:
 func send_respawn_request() -> void:
 	if network_client != null:
 		network_client.send_packet(Packets.respawn_packet())
+
+
+func send_pause_player_request() -> void:
+	send_packet(Packets.pause_player_packet())
+
+
+func send_resume_player_request() -> void:
+	send_packet(Packets.resume_player_packet())
 
 
 func send_leave_room_request() -> void:
