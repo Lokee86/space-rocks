@@ -3,12 +3,14 @@ class_name OSIndicatorController
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const OS_INDICATOR_SCENE = preload("res://scenes/ui/elements/osindicator.tscn")
+const PlayerHuePresenter = preload("res://scripts/gameplay/presentation/player_hue_presenter.gd")
 
 const INDICATOR_SIZE := Vector2(14.0, 14.0)
 const INDICATOR_ROTATION_OFFSET := PI * 0.5
 
 var hud: Control
 var indicator_nodes := {}
+var player_hue_presenter := PlayerHuePresenter.new()
 
 
 func configure(hud_ref: Control) -> void:
@@ -24,8 +26,7 @@ func reset() -> void:
 
 func update_indicators(
 	camera: Camera2D,
-	target_positions: Dictionary,
-	target_hues: Dictionary
+	target_positions: Dictionary
 ) -> void:
 	if hud == null || camera == null:
 		for indicator in indicator_nodes.values():
@@ -41,10 +42,7 @@ func update_indicators(
 			indicator.hide()
 			continue
 
-		var hue := Constants.REMOTE_PLAYER_FALLBACK_HUE
-		if target_hues.has(target_id):
-			hue = target_hues[target_id]
-		_apply_indicator_hue(indicator, float(hue))
+		player_hue_presenter.apply_os_indicator_hue(str(target_id), indicator)
 		var indicator_size := _indicator_size(indicator)
 		var clamped_center := _clamp_to_indicator_bounds(screen_position, indicator_size)
 		indicator.position = clamped_center - (indicator_size * 0.5)
@@ -110,14 +108,3 @@ func _indicator_for_target(target_id: String) -> Control:
 	hud.add_child(indicator)
 	indicator_nodes[target_id] = indicator
 	return indicator
-
-
-func _apply_indicator_hue(indicator: Control, hue: float) -> void:
-	var graphic := indicator.get_node_or_null("TextureRect") as CanvasItem
-	if graphic == null:
-		return
-	var shader_material := graphic.material as ShaderMaterial
-	if shader_material == null:
-		return
-	graphic.material = shader_material.duplicate() as ShaderMaterial
-	(graphic.material as ShaderMaterial).set_shader_parameter("hue_shift", fposmod(hue, 1.0))
