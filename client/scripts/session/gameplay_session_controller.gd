@@ -84,6 +84,10 @@ func configure(
 		"quit_to_main_menu_requested",
 		Callable(self, "_on_gameplay_quit_to_main_menu_requested")
 	)
+	_connect_gameplay_shell_signal(
+		"return_to_lobby_requested",
+		Callable(self, "_on_gameplay_return_to_lobby_requested")
+	)
 
 
 func handle_gameplay_state(packet: Dictionary) -> void:
@@ -111,6 +115,11 @@ func configure_room_state_provider(provider: Callable) -> void:
 		gameplay_menu_flow.configure_room_state_provider(provider)
 
 
+func refresh_game_over_menu_state() -> void:
+	if gameplay_menu_flow != null && gameplay_menu_flow.has_method("refresh_game_over_menu_state"):
+		gameplay_menu_flow.refresh_game_over_menu_state()
+
+
 func _connect_gameplay_shell_signal(signal_name: StringName, handler: Callable) -> void:
 	if gameplay_shell_flow.has_signal(signal_name) && !gameplay_shell_flow.is_connected(signal_name, handler):
 		gameplay_shell_flow.connect(signal_name, handler)
@@ -132,6 +141,13 @@ func _on_gameplay_quit_to_main_menu_requested() -> void:
 		shell_boot_flow.clear()
 	if main_menu != null:
 		main_menu.show()
+
+
+func _on_gameplay_return_to_lobby_requested() -> void:
+	_log("V2 gameplay return to lobby requested")
+	if connection_service != null:
+		connection_service.send_return_to_lobby_request()
+	reset()
 
 
 func _log(message: String) -> void:
