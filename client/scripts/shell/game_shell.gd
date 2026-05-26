@@ -11,6 +11,8 @@ const LobbyReturnFlow := preload("res://scripts/shell/lobby_return_flow.gd")
 const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
 const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
 const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
+const GameplayBackgroundFlow := preload("res://scripts/shell/gameplay_background_flow.gd")
+const ClientViewportConfigFlow := preload("res://scripts/shell/client_viewport_config_flow.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
 const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
 const RoomSnapshotShellState := preload("res://scripts/shell/room_snapshot_shell_state.gd")
@@ -39,6 +41,8 @@ var shell_boot_flow: ShellBootFlow
 var lobby_shell_flow: LobbyShellFlow
 var gameplay_shell_flow: GameplayShellFlow
 var gameplay_hud_flow: GameplayHudFlow
+var gameplay_background_flow: GameplayBackgroundFlow
+var client_viewport_config_flow: ClientViewportConfigFlow
 
 
 func _ready() -> void:
@@ -72,6 +76,11 @@ func _ready() -> void:
 	)
 	gameplay_hud_flow = GameplayHudFlow.new()
 	gameplay_hud_flow.configure(hud)
+	gameplay_background_flow = GameplayBackgroundFlow.new()
+	gameplay_background_flow.configure(repeated_background, repeated_foreground_background)
+	client_viewport_config_flow = ClientViewportConfigFlow.new()
+	client_viewport_config_flow.configure(connection_service, get_viewport())
+	shell_boot_flow.boot_request_sent.connect(client_viewport_config_flow.send_client_config)
 	gameplay_shell_flow = GameplayShellFlow.new()
 	gameplay_shell_flow.configure(
 		connection_service,
@@ -80,6 +89,7 @@ func _ready() -> void:
 		bullets,
 		asteroids,
 		gameplay_hud_flow,
+		gameplay_background_flow,
 		game_over_sound
 	)
 	gameplay_shell_flow.gameplay_started.connect(Callable(self, "_on_gameplay_started"))

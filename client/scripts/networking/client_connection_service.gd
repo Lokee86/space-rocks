@@ -68,6 +68,16 @@ func send_input_packet(packet: Dictionary) -> void:
 		network_client.send_packet(packet)
 
 
+func send_packet(packet: Dictionary) -> void:
+	if network_client != null:
+		network_client.send_packet(packet)
+
+
+func send_respawn_request() -> void:
+	if network_client != null:
+		network_client.send_packet(Packets.respawn_packet())
+
+
 func send_leave_room_request() -> void:
 	if network_client != null:
 		network_client.send_leave_room_request()

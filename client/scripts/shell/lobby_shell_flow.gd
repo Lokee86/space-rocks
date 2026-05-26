@@ -31,7 +31,7 @@ func _init(
 
 
 func apply_room_snapshot(packet: Dictionary) -> void:
-	var summary := lobby_flow.apply_room_snapshot(packet)
+	var summary: String = lobby_flow.apply_room_snapshot(packet)
 	_log("V2 lobby updated: %s" % summary)
 	var state = lobby_flow.current_state()
 	session_context.activate_requested_mode()
