@@ -119,6 +119,8 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 
 	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
+	if background_flow != null:
+		background_flow.mark_gameplay_state_received()
 	if hud_flow != null:
 		hud_flow.show_gameplay()
 		if state["has_lives"]:
@@ -176,8 +178,8 @@ func process(_delta: float) -> void:
 		debug_flow.process(has_received_state)
 	if spectate_flow != null:
 		spectate_flow.process()
-	if background_flow != null && has_received_state && player != null && player.visible:
-		background_flow.set_scroll_reference(player.global_position)
+	if background_flow != null:
+		background_flow.process()
 	if respawn_flow != null:
 		respawn_flow.process(has_received_state)
 	if (

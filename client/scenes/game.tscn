@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bi8e3wyf81s4a"]
 
 [ext_resource type="PackedScene" uid="uid://dcn0vbv2b3wfc" path="res://scenes/ui/main_menu.tscn" id="1_wu7gp"]
-[ext_resource type="Script" path="res://scripts/shell/app_entry.gd" id="2_04i1g"]
+[ext_resource type="Script" uid="uid://bhupn562tedxo" path="res://scripts/shell/app_entry.gd" id="2_04i1g"]
 [ext_resource type="Shader" uid="uid://d4gd4qbnce18a" path="res://shaders/repeating_background.gdshader" id="3_xyiwq"]
 [ext_resource type="Texture2D" uid="uid://4dccc352w3p0" path="res://assets/background.png" id="4_geh66"]
 [ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="5_ny5dr"]
@@ -54,23 +54,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -1365.0
 offset_top = -705.0
-offset_right = 2935.0
-offset_bottom = 1595.0
+offset_right = 1035.0
+offset_bottom = 894.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("5_ny5dr")
 stretch_mode = 1
 
-[node name="Player" parent="." instance=ExtResource("6_a3nuj")]
+[node name="Player" parent="." unique_id=956579809 instance=ExtResource("6_a3nuj")]
 visible = false
 
-[node name="Bullets" type="Node2D" parent="."]
+[node name="Bullets" type="Node2D" parent="." unique_id=1112238744]
 
-[node name="Asteroids" type="Node2D" parent="."]
+[node name="Asteroids" type="Node2D" parent="." unique_id=570542828]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1725241940]
 
 [node name="MainMenu" parent="CanvasLayer" unique_id=1939259662 instance=ExtResource("1_wu7gp")]
 
-[node name="HUD" parent="CanvasLayer" instance=ExtResource("7_mdqg4")]
+[node name="HUD" parent="CanvasLayer" unique_id=229965824 instance=ExtResource("7_mdqg4")]
 visible = false
