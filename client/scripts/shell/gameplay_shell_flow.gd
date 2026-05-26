@@ -9,6 +9,7 @@ const GameplayRespawnFlow = preload("res://scripts/shell/gameplay_respawn_flow.g
 const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
 const GameplayPauseInputFlow = preload("res://scripts/shell/gameplay_pause_input_flow.gd")
 const GameplayDebugFlow = preload("res://scripts/devtools/gameplay_debug_flow.gd")
+const GameplaySpectateFlow = preload("res://scripts/gameplay/spectate/gameplay_spectate_flow.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 
 signal gameplay_started
@@ -27,6 +28,7 @@ var respawn_flow
 var runtime_tick_flow
 var pause_input_flow
 var debug_flow
+var spectate_flow
 var spectate_menu_state
 var has_received_state := false
 
@@ -54,6 +56,10 @@ func configure(
 		var return_to_lobby_callable := Callable(self, "_on_return_to_lobby_requested")
 		if !menu_flow.return_to_lobby_requested.is_connected(return_to_lobby_callable):
 			menu_flow.return_to_lobby_requested.connect(return_to_lobby_callable)
+	if menu_flow != null && menu_flow.has_signal("spectate_requested"):
+		var spectate_callable := Callable(self, "_on_spectate_requested")
+		if !menu_flow.spectate_requested.is_connected(spectate_callable):
+			menu_flow.spectate_requested.connect(spectate_callable)
 	background_flow = background_flow_ref
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(game_owner, player_ref, bullets, asteroids)
@@ -75,6 +81,8 @@ func configure(
 	pause_input_flow.configure(menu_flow)
 	debug_flow = GameplayDebugFlow.new()
 	debug_flow.configure(connection_service)
+	spectate_flow = GameplaySpectateFlow.new()
+	spectate_flow.configure(menu_flow, spectate_menu_state, world_sync)
 
 
 func reset() -> void:
@@ -101,6 +109,8 @@ func reset() -> void:
 		pause_input_flow.reset()
 	if debug_flow != null:
 		debug_flow.reset()
+	if spectate_flow != null:
+		spectate_flow.reset()
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
@@ -139,6 +149,8 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 
 func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 	spectate_menu_state = spectate_menu_state_ref
+	if spectate_flow != null:
+		spectate_flow.configure(menu_flow, spectate_menu_state, world_sync)
 
 
 func current_camera() -> Camera2D:
@@ -162,6 +174,8 @@ func process(_delta: float) -> void:
 		pause_input_flow.process(has_received_state)
 	if debug_flow != null:
 		debug_flow.process(has_received_state)
+	if spectate_flow != null:
+		spectate_flow.process()
 	if background_flow != null && has_received_state && player != null && player.visible:
 		background_flow.set_scroll_reference(player.global_position)
 	if respawn_flow != null:
@@ -186,3 +200,8 @@ func _on_quit_to_main_menu_requested() -> void:
 
 func _on_return_to_lobby_requested() -> void:
 	return_to_lobby_requested.emit()
+
+
+func _on_spectate_requested() -> void:
+	if spectate_flow != null:
+		spectate_flow.begin_spectating()
