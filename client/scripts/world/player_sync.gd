@@ -2,20 +2,11 @@ extends RefCounted
 class_name PlayerSync
 
 const Constants = preload("res://scripts/constants/constants.gd")
+const PlayerHuePresenter = preload("res://scripts/gameplay/presentation/player_hue_presenter.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 const PlayerSyncState = preload("res://scripts/world/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/world/visual_sync_positions.gd")
-const REMOTE_PLAYER_HUES := [
-	Constants.REMOTE_PLAYER_HUE_ZERO,
-	Constants.REMOTE_PLAYER_HUE_ONE,
-	Constants.REMOTE_PLAYER_HUE_TWO,
-	Constants.REMOTE_PLAYER_HUE_THREE,
-	Constants.REMOTE_PLAYER_HUE_FOUR,
-	Constants.REMOTE_PLAYER_HUE_FIVE,
-	Constants.REMOTE_PLAYER_HUE_SIX,
-	Constants.REMOTE_PLAYER_HUE_SEVEN,
-]
 
 var owner_node: Node2D
 var local_player: Player
@@ -24,7 +15,7 @@ var initialized_players := {}
 var target_player_positions := {}
 var target_player_rotations := {}
 var remote_player_visual_positions := {}
-var remote_player_hues := {}
+var player_hue_presenter := PlayerHuePresenter.new()
 
 
 func configure(game_owner: Node2D, player: Player) -> void:
@@ -34,6 +25,7 @@ func configure(game_owner: Node2D, player: Player) -> void:
 
 
 func reset() -> void:
+	player_hue_presenter.reset()
 	if local_player != null:
 		local_player.hide()
 
@@ -46,7 +38,6 @@ func reset() -> void:
 	target_player_positions.clear()
 	target_player_rotations.clear()
 	remote_player_visual_positions.clear()
-	remote_player_hues.clear()
 
 
 func focus_camera_on_player(player_id: String) -> bool:
@@ -69,7 +60,7 @@ func get_player_node(self_id: String, player_id: String):
 	if player_id == self_id:
 		local_player.visible = true
 		local_player.z_index = Constants.LOCAL_PLAYER_Z_INDEX
-		local_player.set_player_hue(Constants.LOCAL_PLAYER_DEFAULT_HUE)
+		player_hue_presenter.apply_local_player_hue(local_player)
 		player_nodes[player_id] = local_player
 		return local_player
 
@@ -136,9 +127,7 @@ func correct_remote_visual_copy_mismatch(
 
 
 func apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
-	var remote_hue := remote_hue_for_player(player_id)
-	remote_player_hues[player_id] = remote_hue
-	remote_player.set_player_hue(remote_hue)
+	player_hue_presenter.apply_remote_player_hue(player_id, remote_player)
 
 
 func remove_missing(server_players: Dictionary, self_id: String) -> void:
@@ -166,7 +155,7 @@ func remove_player_node(self_id: String, player_id: String) -> void:
 	target_player_positions.erase(player_id)
 	target_player_rotations.erase(player_id)
 	remote_player_visual_positions.erase(player_id)
-	remote_player_hues.erase(player_id)
+	player_hue_presenter.remove_player(player_id)
 
 
 func interpolate(weight: float, current_self_id: String) -> void:
@@ -191,9 +180,7 @@ func interpolate(weight: float, current_self_id: String) -> void:
 
 
 func get_remote_player_hues(current_self_id: String) -> Dictionary:
-	var hues := remote_player_hues.duplicate()
-	hues.erase(current_self_id)
-	return hues
+	return player_hue_presenter.remote_player_hues_without(current_self_id)
 
 
 func get_remote_player_visual_positions(current_self_id: String) -> Dictionary:
@@ -201,29 +188,3 @@ func get_remote_player_visual_positions(current_self_id: String) -> Dictionary:
 	positions.erase(current_self_id)
 	return positions
 
-
-func remote_hue_for_player(player_id: String) -> float:
-	var start_index := player_id_hash(player_id) % REMOTE_PLAYER_HUES.size()
-	for offset in range(REMOTE_PLAYER_HUES.size()):
-		var hue: float = REMOTE_PLAYER_HUES[(start_index + offset) % REMOTE_PLAYER_HUES.size()]
-		if !hues_similar(hue, Constants.LOCAL_PLAYER_DEFAULT_HUE):
-			return hue
-
-	return Constants.REMOTE_PLAYER_FALLBACK_HUE
-
-
-func hues_similar(
-	a: float,
-	b: float,
-	tolerance := Constants.REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE
-) -> bool:
-	var distance: float = abs(fposmod(a, 1.0) - fposmod(b, 1.0))
-	return min(distance, 1.0 - distance) < tolerance
-
-
-func player_id_hash(player_id: String) -> int:
-	var hash_value: int = 2166136261
-	for index in range(player_id.length()):
-		hash_value = int((hash_value ^ player_id.unicode_at(index)) * 16777619) & 0x7fffffff
-
-	return hash_value
