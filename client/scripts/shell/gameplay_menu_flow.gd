@@ -74,6 +74,19 @@ func configure_room_state_provider(provider: Callable) -> void:
 	room_state_provider = provider
 
 
+func reset() -> void:
+	is_gameplay_paused = false
+	is_game_over = false
+	if game_menu != null:
+		game_menu.hide()
+	if game_over_container != null:
+		game_over_container.hide()
+	if game_over_margin_container != null:
+		game_over_margin_container.hide()
+	if cycle_view != null:
+		cycle_view.hide()
+
+
 func hide_menu() -> void:
 	close_menu()
 

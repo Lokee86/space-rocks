@@ -78,6 +78,8 @@ func reset() -> void:
 		world_sync.reset()
 	if hud_flow != null:
 		hud_flow.reset()
+	if menu_flow != null && menu_flow.has_method("reset"):
+		menu_flow.reset()
 	if background_flow != null:
 		background_flow.clear()
 	if event_flow != null:
