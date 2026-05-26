@@ -4,6 +4,12 @@ class_name GameplayMenuFlow
 signal quit_to_main_menu_requested
 
 const Constants = preload("res://scripts/constants/constants.gd")
+const ClientLogger = preload("res://scripts/logging/logger.gd")
+
+const GAME_OVER_CONTAINER_PATH := "CenterContainer/GameOverContainer"
+const GAME_OVER_MARGIN_CONTAINER_PATH := "CenterContainer/GameOverContainer/MarginContainer"
+const CYCLE_VIEW_PATH := "CenterContainer/GameOverContainer/MarginContainer2/CycleView"
+const GAME_MENU_PATH := "CenterContainer/GameOverContainer/MarginContainer2/GameMenu"
 
 var hud: Control
 var game_over_container
@@ -21,10 +27,11 @@ func configure(hud_ref: Control, connection_service_ref = null, player_ref: Play
 	connection_service = connection_service_ref
 	player = player_ref
 	if hud != null:
-		game_over_container = hud.get_node_or_null("CenterContainer/GameOverContainer")
-		game_over_margin_container = hud.get_node_or_null("CenterContainer/GameOverContainer/MarginContainer")
-		cycle_view = hud.get_node_or_null("CenterContainer/GameOverContainer/MarginContainer2/CycleView")
-		game_menu = hud.get_node_or_null("CenterContainer/GameOverContainer/MarginContainer2/GameMenu")
+		game_over_container = hud.get_node_or_null(GAME_OVER_CONTAINER_PATH)
+		game_over_margin_container = hud.get_node_or_null(GAME_OVER_MARGIN_CONTAINER_PATH)
+		cycle_view = hud.get_node_or_null(CYCLE_VIEW_PATH)
+		game_menu = hud.get_node_or_null(GAME_MENU_PATH)
+		_log_missing_live_pause_paths()
 	if game_menu == null:
 		return
 
@@ -46,11 +53,15 @@ func close_menu() -> void:
 	is_gameplay_paused = false
 
 
-func show_menu() -> void:
-	if game_menu != null:
-		game_menu.configure_for_state(Constants.SESSION_MODE_SINGLE_PLAYER, false, "", false)
-		show_live_pause_menu()
+func show_menu() -> bool:
+	if game_menu == null:
+		return false
+
+	game_menu.configure_for_state(Constants.SESSION_MODE_SINGLE_PLAYER, false, "", false)
+	if !show_live_pause_menu():
+		return false
 	is_gameplay_paused = true
+	return true
 
 
 func set_game_over() -> void:
@@ -68,15 +79,15 @@ func can_open_live_pause_menu() -> bool:
 	return !is_game_over
 
 
-func show_live_pause_menu() -> void:
-	if game_over_container != null:
-		game_over_container.show()
-	if game_over_margin_container != null:
-		game_over_margin_container.hide()
-	if cycle_view != null:
-		cycle_view.hide()
-	if game_menu != null:
-		game_menu.show()
+func show_live_pause_menu() -> bool:
+	if !_has_live_pause_paths():
+		return false
+
+	game_over_container.show()
+	game_over_margin_container.hide()
+	cycle_view.hide()
+	game_menu.show()
+	return true
 
 
 func hide_live_pause_menu() -> void:
@@ -98,7 +109,8 @@ func handle_open_menu_pressed(has_initial_spawn: bool) -> bool:
 			connection_service.send_resume_player_request()
 		return true
 
-	show_menu()
+	if !show_menu():
+		return false
 	if player != null:
 		player.set_afterburner_active(false)
 	if connection_service != null:
@@ -119,3 +131,24 @@ func _on_resume_requested() -> void:
 func _on_quit_requested() -> void:
 	close_menu()
 	quit_to_main_menu_requested.emit()
+
+
+func _has_live_pause_paths() -> bool:
+	return (
+		game_over_container != null
+		&& game_over_margin_container != null
+		&& cycle_view != null
+		&& game_menu != null
+	)
+
+
+func _log_missing_live_pause_paths() -> void:
+	_log_missing_path(GAME_OVER_CONTAINER_PATH, game_over_container)
+	_log_missing_path(GAME_OVER_MARGIN_CONTAINER_PATH, game_over_margin_container)
+	_log_missing_path(CYCLE_VIEW_PATH, cycle_view)
+	_log_missing_path(GAME_MENU_PATH, game_menu)
+
+
+func _log_missing_path(path: String, node) -> void:
+	if node == null:
+		ClientLogger.shell_error("GameplayMenuFlow missing expected HUD path: %s" % path)

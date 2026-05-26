@@ -80,7 +80,8 @@ func apply(
 
 		target_player_positions[player_id] = visual_position
 		target_player_rotations[player_id] = server_rotation
-		player_node.visible = !is_paused
+		if player_id != self_id:
+			player_node.visible = !is_paused
 
 		if !initialized_players.has(player_id):
 			initialized_players[player_id] = true
