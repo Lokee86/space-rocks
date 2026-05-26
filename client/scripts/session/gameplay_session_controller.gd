@@ -1,5 +1,7 @@
 extends Node
 
+const GameplayPresentationFlow = preload("res://scripts/gameplay/presentation/gameplay_presentation_flow.gd")
+
 const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
 const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
 const GameplayMenuFlow := preload("res://scripts/shell/gameplay_menu_flow.gd")
@@ -22,6 +24,7 @@ var shell_boot_flow
 var logger: Callable
 
 var gameplay_shell_flow
+var gameplay_presentation_flow
 var gameplay_hud_flow
 var gameplay_menu_flow
 var gameplay_background_flow
@@ -39,9 +42,9 @@ func configure(
 	main_menu_ref: Control,
 	repeated_background_ref: TextureRect,
 	repeated_foreground_background_ref: TextureRect,
+	session_context_ref,
 	shell_boot_flow_ref,
-	logger_callable: Callable,
-	session_context_ref = null
+	logger_callable: Callable
 ) -> void:
 	connection_service = connection_service_ref
 	scene_root = scene_root_ref
@@ -79,6 +82,7 @@ func configure(
 	)
 	if gameplay_shell_flow.has_method("configure_spectate_menu_state"):
 		gameplay_shell_flow.configure_spectate_menu_state(spectate_menu_state)
+	_configure_gameplay_presentation_flow()
 	_connect_gameplay_shell_signal("gameplay_started", Callable(self, "_on_gameplay_started"))
 	_connect_gameplay_shell_signal(
 		"quit_to_main_menu_requested",
@@ -101,11 +105,25 @@ func handle_gameplay_state(packet: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.process(delta)
+	if gameplay_presentation_flow != null:
+		gameplay_presentation_flow.process(delta)
+
+
+func _configure_gameplay_presentation_flow() -> void:
+	gameplay_presentation_flow = GameplayPresentationFlow.new()
+	gameplay_presentation_flow.configure(
+		hud,
+		Callable(gameplay_shell_flow, "current_camera"),
+		Callable(gameplay_shell_flow, "remote_player_visual_positions"),
+		Callable(gameplay_shell_flow, "remote_player_hues")
+	)
 
 
 func reset() -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.reset()
+	if gameplay_presentation_flow != null:
+		gameplay_presentation_flow.reset()
 	if spectate_menu_state != null:
 		spectate_menu_state.reset()
 
