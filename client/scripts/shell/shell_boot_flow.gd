@@ -1,10 +1,7 @@
 extends RefCounted
 
 const PendingBootRequest := preload("res://scripts/shell/pending_boot_request.gd")
-
-const CONNECT_RESULT_STARTED_CONNECTING := "started_connecting"
-const CONNECT_RESULT_ALREADY_CONNECTED := "already_connected"
-const CONNECT_RESULT_FAILED := "failed"
+const Constants := preload("res://scripts/constants/constants.gd")
 
 var connection_service
 var pending_boot_request: PendingBootRequest
@@ -39,13 +36,13 @@ func connect_to_game_server(reason: String) -> String:
 	if connection_service.is_server_connected():
 		_log("V2 already connected for %s" % reason)
 		send_pending_boot_request()
-		return CONNECT_RESULT_ALREADY_CONNECTED
+		return Constants.CONNECT_RESULT_ALREADY_CONNECTED
 
 	var result = connection_service.connect_to_server(websocket_url)
 	_log("V2 connecting to server for %s: %s" % [reason, error_string(result)])
 	if result == OK:
-		return CONNECT_RESULT_STARTED_CONNECTING
-	return CONNECT_RESULT_FAILED
+		return Constants.CONNECT_RESULT_STARTED_CONNECTING
+	return Constants.CONNECT_RESULT_FAILED
 
 
 func send_pending_boot_request() -> void:
@@ -53,16 +50,16 @@ func send_pending_boot_request() -> void:
 		return
 
 	var request := pending_boot_request.consume_request()
-	var request_type := str(request.get("type", PendingBootRequest.BOOT_REQUEST_NONE))
+	var request_type := str(request.get("type", Constants.BOOT_REQUEST_NONE))
 	var room_code := str(request.get("room_code", ""))
 
-	if request_type == PendingBootRequest.BOOT_REQUEST_SINGLE_PLAYER:
+	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
 		connection_service.send_start_single_player_request()
 		_log("V2 sent single player request")
-	elif request_type == PendingBootRequest.BOOT_REQUEST_CREATE_ROOM:
+	elif request_type == Constants.BOOT_REQUEST_CREATE_ROOM:
 		connection_service.send_create_room_request()
 		_log("V2 sent create room request")
-	elif request_type == PendingBootRequest.BOOT_REQUEST_JOIN_ROOM:
+	elif request_type == Constants.BOOT_REQUEST_JOIN_ROOM:
 		connection_service.send_join_room_request(room_code)
 		_log("V2 sent join room request: %s" % room_code)
 

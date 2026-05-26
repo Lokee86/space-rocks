@@ -1,6 +1,6 @@
 extends Control
 
-const LobbyConstants := preload("res://scripts/ui/lobby/constants.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 
 signal create_room_requested
 signal join_room_requested(room_code: String)
@@ -49,9 +49,9 @@ func _on_join_room_pressed() -> void:
 		room_code = room_code_input.text.strip_edges()
 	print("V2 multiplayer dialog join pressed: %s" % room_code)
 	if room_code.is_empty():
-		set_status(LobbyConstants.DIALOG_STATUS_MUST_ENTER_ID)
+		set_status(Constants.DIALOG_STATUS_MUST_ENTER_ID)
 		return
-	set_status(LobbyConstants.DIALOG_STATUS_JOINING_ROOM)
+	set_status(Constants.DIALOG_STATUS_JOINING_ROOM)
 	join_room_requested.emit(room_code)
 
 

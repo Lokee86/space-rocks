@@ -32,8 +32,14 @@ files = ["client/scripts/constants/constants.gd"]
 sections = [
   "constants.server.world",
   "constants.client.presentation",
+  "constants.client.shell",
+  "constants.client.lobby",
 ]
-owns = ["constants.client.presentation"]
+owns = [
+  "constants.client.presentation",
+  "constants.client.shell",
+  "constants.client.lobby",
+]
 
 [constants.ts]
 enabled = false

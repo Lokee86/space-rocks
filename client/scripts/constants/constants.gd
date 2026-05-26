@@ -39,3 +39,51 @@ const WINDOW_MAX_SIZE := Vector2(2875.0, 1500.0)
 const OSINDICATOR_EDGE_MARGIN := 32.0
 const OSINDICATOR_TARGET_VISIBILITY_PADDING := 64.0
 # data-sync:end constants.client.presentation
+
+# data-sync:start constants.client.shell
+const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
+const ROOM_STATE_LOBBY := "Lobby"
+const ROOM_STATE_STARTING := "Starting"
+const ROOM_STATE_IN_GAME := "InGame"
+const ROOM_STATE_GAME_OVER := "GameOver"
+const ROOM_STATE_CLOSED := "Closed"
+const SHELL_STATE_MAIN_MENU := "main_menu"
+const SHELL_STATE_CONNECTING := "connecting"
+const SHELL_STATE_LOBBY := "lobby"
+const SHELL_STATE_GAMEPLAY := "gameplay"
+const SHELL_STATE_GAME_OVER := "game_over"
+const SHELL_STATE_RETURNING_TO_LOBBY := "returning_to_lobby"
+const SHELL_STATE_DISCONNECTED := "disconnected"
+const SHELL_STATE_ERROR := "error"
+const BOOT_REQUEST_NONE := "none"
+const BOOT_REQUEST_SINGLE_PLAYER := "single_player"
+const BOOT_REQUEST_CREATE_ROOM := "create_room"
+const BOOT_REQUEST_JOIN_ROOM := "join_room"
+const SESSION_MODE_NONE := "none"
+const SESSION_MODE_SINGLE_PLAYER := "single_player"
+const SESSION_MODE_MULTIPLAYER := "multiplayer"
+const CONNECT_RESULT_STARTED_CONNECTING := "started_connecting"
+const CONNECT_RESULT_ALREADY_CONNECTED := "already_connected"
+const CONNECT_RESULT_FAILED := "failed"
+# data-sync:end constants.client.shell
+
+# data-sync:start constants.client.lobby
+const STATUS_STARTING_GAME := "Starting game..."
+const STATUS_GAME_IN_PROGRESS := "Game in progress."
+const STATUS_GAME_OVER := "Game over."
+const STATUS_READY_TO_START := "Ready to start."
+const STATUS_WAITING_FOR_PLAYERS_READY := "Waiting for players to ready."
+const STATUS_WAITING_FOR_HOST_START := "Waiting for host to start."
+const STATUS_PRESS_READY_WHEN_READY := "Press READY when ready."
+const DIALOG_STATUS_MUST_ENTER_ID := "Must enter an ID to join."
+const DIALOG_STATUS_JOINING_ROOM := "Joining room..."
+const DIALOG_STATUS_INVALID_ROOM_ID := "Invalid room ID."
+const DIALOG_STATUS_ROOM_NOT_FOUND := "Room not found."
+const DIALOG_STATUS_ROOM_FULL := "Room is full."
+const DIALOG_STATUS_ROOM_IN_GAME := "Room is already in game."
+const DIALOG_STATUS_ALREADY_IN_ROOM := "Already in a room."
+const DIALOG_STATUS_ROOM_NOT_JOINABLE := "Room is not joinable."
+const DIALOG_STATUS_COULD_NOT_JOIN := "Could not join room."
+const READY_BUTTON_TEXT_READY := "READY"
+const READY_BUTTON_TEXT_UNREADY := "UNREADY"
+# data-sync:end constants.client.lobby

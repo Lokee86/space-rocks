@@ -1,15 +1,8 @@
 extends RefCounted
 
-const MAIN_MENU := "main_menu"
-const CONNECTING := "connecting"
-const LOBBY := "lobby"
-const GAMEPLAY := "gameplay"
-const GAME_OVER := "game_over"
-const RETURNING_TO_LOBBY := "returning_to_lobby"
-const DISCONNECTED := "disconnected"
-const ERROR := "error"
+const Constants := preload("res://scripts/constants/constants.gd")
 
-var current_state := MAIN_MENU
+var current_state := Constants.SHELL_STATE_MAIN_MENU
 
 
 func set_state(value: String) -> void:

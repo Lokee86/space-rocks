@@ -1,20 +1,19 @@
 extends RefCounted
 
-const ShellState := preload("res://scripts/shell/shell_state.gd")
-const ShellConstants := preload("res://scripts/shell/constants.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 
 
 static func from_room_state(room_state: String) -> String:
 	match room_state:
-		ShellConstants.ROOM_STATE_LOBBY:
-			return ShellState.LOBBY
-		ShellConstants.ROOM_STATE_STARTING:
-			return ShellState.LOBBY
-		ShellConstants.ROOM_STATE_IN_GAME:
-			return ShellState.GAMEPLAY
-		ShellConstants.ROOM_STATE_GAME_OVER:
-			return ShellState.GAME_OVER
-		ShellConstants.ROOM_STATE_CLOSED:
-			return ShellState.MAIN_MENU
+		Constants.ROOM_STATE_LOBBY:
+			return Constants.SHELL_STATE_LOBBY
+		Constants.ROOM_STATE_STARTING:
+			return Constants.SHELL_STATE_LOBBY
+		Constants.ROOM_STATE_IN_GAME:
+			return Constants.SHELL_STATE_GAMEPLAY
+		Constants.ROOM_STATE_GAME_OVER:
+			return Constants.SHELL_STATE_GAME_OVER
+		Constants.ROOM_STATE_CLOSED:
+			return Constants.SHELL_STATE_MAIN_MENU
 		_:
-			return ShellState.LOBBY
+			return Constants.SHELL_STATE_LOBBY

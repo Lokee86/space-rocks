@@ -1,12 +1,14 @@
 extends RefCounted
 
+const Packets := preload("res://scripts/networking/packets/packets.gd")
+
 
 static func display_name(member, local_member_id: String) -> String:
 	if !(member is Dictionary):
 		return str(member)
 
 	var id := member_id(member)
-	var member_name := str(member.get("name", member.get("member_name", id)))
+	var member_name := str(member.get(Packets.FIELD_NAME, member.get(Packets.FIELD_MEMBER_NAME, id)))
 	if !local_member_id.is_empty() && id == local_member_id:
 		return "%s (You)" % member_name
 	return member_name
@@ -14,13 +16,13 @@ static func display_name(member, local_member_id: String) -> String:
 
 static func member_ready(member) -> bool:
 	if member is Dictionary:
-		return bool(member.get("ready", member.get("is_ready", false)))
+		return bool(member.get(Packets.FIELD_READY, member.get(Packets.FIELD_IS_READY, false)))
 	return false
 
 
 static func member_connected(member) -> bool:
 	if member is Dictionary:
-		return bool(member.get("connected", member.get("is_connected", true)))
+		return bool(member.get(Packets.FIELD_CONNECTED, member.get(Packets.FIELD_IS_CONNECTED, true)))
 	return true
 
 
@@ -41,4 +43,4 @@ static func is_local_ready(local_member_id: String, members: Array) -> bool:
 
 
 static func member_id(member: Dictionary) -> String:
-	return str(member.get("member_id", member.get("id", member.get("player_id", ""))))
+	return str(member.get(Packets.FIELD_MEMBER_ID, member.get(Packets.FIELD_ID, member.get(Packets.FIELD_PLAYER_ID, ""))))

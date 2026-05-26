@@ -1,6 +1,6 @@
 extends RefCounted
 
-const LobbyConstants := preload("res://scripts/ui/lobby/constants.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 
 
 func show_status(main_menu: Control, message: String) -> void:
@@ -18,18 +18,18 @@ func show_room_error(main_menu: Control, packet: Dictionary) -> void:
 func friendly_room_error_message(error_code: String, message: String) -> String:
 	match error_code:
 		"invalid_room_code":
-			return LobbyConstants.DIALOG_STATUS_INVALID_ROOM_ID
+			return Constants.DIALOG_STATUS_INVALID_ROOM_ID
 		"room_not_found":
-			return LobbyConstants.DIALOG_STATUS_ROOM_NOT_FOUND
+			return Constants.DIALOG_STATUS_ROOM_NOT_FOUND
 		"room_full":
-			return LobbyConstants.DIALOG_STATUS_ROOM_FULL
+			return Constants.DIALOG_STATUS_ROOM_FULL
 		"room_in_game":
-			return LobbyConstants.DIALOG_STATUS_ROOM_IN_GAME
+			return Constants.DIALOG_STATUS_ROOM_IN_GAME
 		"already_in_room":
-			return LobbyConstants.DIALOG_STATUS_ALREADY_IN_ROOM
+			return Constants.DIALOG_STATUS_ALREADY_IN_ROOM
 		"invalid_room_state":
-			return LobbyConstants.DIALOG_STATUS_ROOM_NOT_JOINABLE
+			return Constants.DIALOG_STATUS_ROOM_NOT_JOINABLE
 
 	if !message.is_empty():
 		return message
-	return LobbyConstants.DIALOG_STATUS_COULD_NOT_JOIN
+	return Constants.DIALOG_STATUS_COULD_NOT_JOIN

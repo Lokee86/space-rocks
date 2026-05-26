@@ -1,5 +1,7 @@
 extends RefCounted
 
+const Packets := preload("res://scripts/networking/packets/packets.gd")
+
 var room_code := ""
 var room_state := ""
 var local_member_id := ""
@@ -52,7 +54,7 @@ func all_members_ready() -> bool:
 	for member in members:
 		if !(member is Dictionary):
 			return false
-		if !bool(member.get("ready", member.get("is_ready", false))):
+		if !bool(member.get(Packets.FIELD_READY, member.get(Packets.FIELD_IS_READY, false))):
 			return false
 	return !members.is_empty()
 

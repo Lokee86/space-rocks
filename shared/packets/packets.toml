@@ -153,6 +153,29 @@ json = "connected"
 type = "bool"
 
 [[structs]]
+id = "LobbyMemberFieldAliases"
+
+[[structs.fields]]
+name = "is_ready"
+json = "is_ready"
+type = "bool"
+
+[[structs.fields]]
+name = "is_connected"
+json = "is_connected"
+type = "bool"
+
+[[structs.fields]]
+name = "name"
+json = "name"
+type = "string"
+
+[[structs.fields]]
+name = "member_name"
+json = "member_name"
+type = "string"
+
+[[structs]]
 id = "RoomSnapshot"
 
 [[structs.fields]]

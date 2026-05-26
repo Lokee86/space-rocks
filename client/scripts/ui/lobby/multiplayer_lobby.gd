@@ -3,6 +3,7 @@ extends Control
 const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_model.gd")
 const LobbyPlayerListView := preload("res://scripts/ui/lobby/lobby_player_list_view.gd")
 const LobbyStatusViewModel := preload("res://scripts/ui/lobby/lobby_status_view_model.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 
 signal ready_requested(ready: bool)
 signal start_game_requested
@@ -70,7 +71,7 @@ func _update_ready_button_text() -> void:
 	if ready_button == null:
 		return
 
-	var button_text := "UNREADY" if local_ready else "READY"
+	var button_text := Constants.READY_BUTTON_TEXT_UNREADY if local_ready else Constants.READY_BUTTON_TEXT_READY
 	var ready_label := ready_button.find_child("Ready", true, false) as Label
 	if ready_label != null:
 		ready_label.text = button_text

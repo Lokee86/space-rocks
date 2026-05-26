@@ -15,7 +15,7 @@ const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplay
 const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
 const RoomSnapshotShellState := preload("res://scripts/shell/room_snapshot_shell_state.gd")
 const ShellBootFlow := preload("res://scripts/shell/shell_boot_flow.gd")
-const ShellConstants := preload("res://scripts/shell/constants.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 
 @onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
@@ -57,7 +57,7 @@ func _ready() -> void:
 	)
 	shell_boot_flow = ShellBootFlow.new(
 		connection_service,
-		ShellConstants.MULTIPLAYER_WS_URL,
+		Constants.MULTIPLAYER_WS_URL,
 		Callable(self, "_log_v2_status")
 	)
 	lobby_shell_flow = LobbyShellFlow.new(
@@ -140,7 +140,7 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 	var stripped_room_code := room_code.strip_edges()
 	if stripped_room_code.is_empty():
 		_log_v2_status("V2 multiplayer join rejected: empty room code")
-		multiplayer_dialog_status_presenter.show_status(main_menu, "Must enter an ID to join.")
+		multiplayer_dialog_status_presenter.show_status(main_menu, Constants.DIALOG_STATUS_MUST_ENTER_ID)
 		return
 	session_context.request_multiplayer()
 	shell_boot_flow.request_join_room(stripped_room_code)
@@ -149,8 +149,8 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 
 func _connect_to_game_server(reason: String) -> void:
 	var connect_result := shell_boot_flow.connect_to_game_server(reason)
-	if connect_result == ShellBootFlow.CONNECT_RESULT_STARTED_CONNECTING:
-		shell_state.set_state(ShellState.CONNECTING)
+	if connect_result == Constants.CONNECT_RESULT_STARTED_CONNECTING:
+		shell_state.set_state(Constants.SHELL_STATE_CONNECTING)
 
 
 func _on_connection_connected() -> void:
@@ -174,7 +174,7 @@ func _on_room_snapshot_received(_packet: Dictionary) -> void:
 
 func _on_lobby_returned_to_main_menu() -> void:
 	if shell_state != null:
-		shell_state.set_state(ShellState.MAIN_MENU)
+		shell_state.set_state(Constants.SHELL_STATE_MAIN_MENU)
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.reset()
 	main_menu.show()
