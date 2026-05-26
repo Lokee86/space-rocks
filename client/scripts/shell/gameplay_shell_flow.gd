@@ -10,6 +10,7 @@ const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_ti
 const GameplayPauseInputFlow = preload("res://scripts/shell/gameplay_pause_input_flow.gd")
 const GameplayDebugFlow = preload("res://scripts/devtools/gameplay_debug_flow.gd")
 const GameplaySpectateFlow = preload("res://scripts/gameplay/spectate/gameplay_spectate_flow.gd")
+const GameplayInputFlow = preload("res://scripts/gameplay/input/gameplay_input_flow.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 
 signal gameplay_started
@@ -29,6 +30,7 @@ var runtime_tick_flow
 var pause_input_flow
 var debug_flow
 var spectate_flow
+var input_flow
 var spectate_menu_state
 var has_received_state := false
 
@@ -63,7 +65,6 @@ func configure(
 	background_flow = background_flow_ref
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(game_owner, player_ref, bullets, asteroids)
-	world_sync.bullet_spawned.connect(_on_bullet_spawned)
 	event_flow = GameplayEventFlow.new()
 	event_flow.configure(
 		game_owner,
@@ -83,6 +84,8 @@ func configure(
 	debug_flow.configure(connection_service)
 	spectate_flow = GameplaySpectateFlow.new()
 	spectate_flow.configure(menu_flow, spectate_menu_state, world_sync)
+	input_flow = GameplayInputFlow.new()
+	input_flow.configure(connection_service, player, menu_flow)
 
 
 func reset() -> void:
@@ -111,6 +114,8 @@ func reset() -> void:
 		debug_flow.reset()
 	if spectate_flow != null:
 		spectate_flow.reset()
+	if input_flow != null:
+		input_flow.reset()
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
@@ -119,6 +124,8 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 
 	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
+	if input_flow != null:
+		input_flow.mark_gameplay_state_received()
 	if background_flow != null:
 		background_flow.mark_gameplay_state_received()
 	if hud_flow != null:
@@ -182,18 +189,8 @@ func process(_delta: float) -> void:
 		background_flow.process()
 	if respawn_flow != null:
 		respawn_flow.process(has_received_state)
-	if (
-		has_received_state
-		&& player != null
-		&& connection_service != null
-		&& (menu_flow == null || !menu_flow.is_gameplay_paused)
-	):
-		connection_service.send_input_packet(player.get_input_packet())
-
-
-func _on_bullet_spawned() -> void:
-	if player != null:
-		player.play_laser_sound()
+	if input_flow != null:
+		input_flow.process()
 
 
 func _on_quit_to_main_menu_requested() -> void:
