@@ -3,6 +3,7 @@ class_name GameplayShellFlow
 
 signal gameplay_started
 signal quit_to_main_menu_requested
+signal return_to_lobby_requested
 
 const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
@@ -40,6 +41,10 @@ func configure(
 		var quit_callable := Callable(self, "_on_quit_to_main_menu_requested")
 		if !menu_flow.quit_to_main_menu_requested.is_connected(quit_callable):
 			menu_flow.quit_to_main_menu_requested.connect(quit_callable)
+	if menu_flow != null && menu_flow.has_signal("return_to_lobby_requested"):
+		var return_to_lobby_callable := Callable(self, "_on_return_to_lobby_requested")
+		if !menu_flow.return_to_lobby_requested.is_connected(return_to_lobby_callable):
+			menu_flow.return_to_lobby_requested.connect(return_to_lobby_callable)
 	background_flow = background_flow_ref
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(game_owner, player_ref, bullets, asteroids)
@@ -59,6 +64,8 @@ func reset() -> void:
 	pending_open_menu_before_spawn = false
 	if player != null:
 		player.hide()
+	if world_sync != null:
+		world_sync.reset()
 	if hud_flow != null:
 		hud_flow.reset()
 	if background_flow != null:
@@ -142,6 +149,10 @@ func _on_bullet_spawned() -> void:
 
 func _on_quit_to_main_menu_requested() -> void:
 	quit_to_main_menu_requested.emit()
+
+
+func _on_return_to_lobby_requested() -> void:
+	return_to_lobby_requested.emit()
 
 
 func _update_local_player_presentation() -> void:

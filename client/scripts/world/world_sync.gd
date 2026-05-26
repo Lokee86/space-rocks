@@ -38,6 +38,11 @@ func configure(
 	bullets.z_index = Constants.BULLET_Z_INDEX
 
 
+func reset() -> void:
+	if asteroid_sync != null:
+		asteroid_sync.reset()
+
+
 func apply_state(
 	self_id: String,
 	server_players: Dictionary,

@@ -99,6 +99,7 @@ func _ready() -> void:
 	)
 	gameplay_shell_flow.gameplay_started.connect(Callable(self, "_on_gameplay_started"))
 	gameplay_shell_flow.quit_to_main_menu_requested.connect(Callable(self, "_on_gameplay_quit_to_main_menu_requested"))
+	gameplay_shell_flow.return_to_lobby_requested.connect(Callable(self, "_on_gameplay_return_to_lobby_requested"))
 	add_child(connection_service)
 	_connect_connection_service()
 	_connect_main_menu()
@@ -212,6 +213,16 @@ func _on_gameplay_quit_to_main_menu_requested() -> void:
 	main_menu.show()
 	if shell_boot_flow != null:
 		shell_boot_flow.clear()
+
+
+func _on_gameplay_return_to_lobby_requested() -> void:
+	if connection_service != null:
+		connection_service.send_leave_room_request()
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.reset()
+	if shell_state != null:
+		shell_state.set_state(RoomSnapshotShellState.from_room_state(Constants.ROOM_STATE_LOBBY))
+	main_menu.hide()
 
 
 func _on_room_state_changed(_packet: Dictionary) -> void:
