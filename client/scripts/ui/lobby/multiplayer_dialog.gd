@@ -48,9 +48,6 @@ func _on_join_room_pressed() -> void:
 	if room_code_input != null:
 		room_code = room_code_input.text.strip_edges()
 	print("V2 multiplayer dialog join pressed: %s" % room_code)
-	if room_code.is_empty():
-		set_status(Constants.DIALOG_STATUS_MUST_ENTER_ID)
-		return
 	set_status(Constants.DIALOG_STATUS_JOINING_ROOM)
 	join_room_requested.emit(room_code)
 
