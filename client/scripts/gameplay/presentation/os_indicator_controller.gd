@@ -45,7 +45,9 @@ func update_indicators(
 		if target_hues.has(target_id):
 			hue = target_hues[target_id]
 		_apply_indicator_hue(indicator, float(hue))
-		indicator.position = _clamp_to_indicator_bounds(screen_position) - (INDICATOR_SIZE * 0.5)
+		var indicator_size := _indicator_size(indicator)
+		var clamped_center := _clamp_to_indicator_bounds(screen_position, indicator_size)
+		indicator.position = clamped_center - (indicator_size * 0.5)
 		var viewport_center := hud.get_viewport_rect().size * 0.5
 		var direction := screen_position - viewport_center
 		indicator.rotation = direction.angle() + INDICATOR_ROTATION_OFFSET
@@ -82,12 +84,21 @@ func _is_inside_visible_area(screen_position: Vector2) -> bool:
 	).has_point(screen_position)
 
 
-func _clamp_to_indicator_bounds(screen_position: Vector2) -> Vector2:
+func _clamp_to_indicator_bounds(screen_position: Vector2, indicator_size: Vector2) -> Vector2:
 	var bounds := _indicator_bounds()
+	var half_size := indicator_size * 0.5
 	return Vector2(
-		clamp(screen_position.x, bounds.position.x, bounds.end.x),
-		clamp(screen_position.y, bounds.position.y, bounds.end.y)
+		clamp(screen_position.x, bounds.position.x + half_size.x, bounds.end.x - half_size.x),
+		clamp(screen_position.y, bounds.position.y + half_size.y, bounds.end.y - half_size.y)
 	)
+
+
+func _indicator_size(indicator: Control) -> Vector2:
+	if indicator.size != Vector2.ZERO:
+		return indicator.size
+	if indicator.custom_minimum_size != Vector2.ZERO:
+		return indicator.custom_minimum_size
+	return INDICATOR_SIZE
 
 
 func _indicator_for_target(target_id: String) -> Control:
