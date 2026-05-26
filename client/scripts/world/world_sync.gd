@@ -9,8 +9,6 @@ const BulletSyncScript = preload("res://scripts/world/bullet_sync.gd")
 const LocalVisualSyncScript = preload("res://scripts/world/local_visual_sync.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 const PlayerSyncScript = preload("res://scripts/world/player_sync.gd")
-const ASTEROID_Z_INDEX := 10
-const BULLET_Z_INDEX := 20
 
 var asteroid_sync
 var bullet_sync
@@ -36,8 +34,8 @@ func configure(
 	player_sync = PlayerSyncScript.new()
 	player_sync.configure(game_owner, player)
 
-	asteroids.z_index = ASTEROID_Z_INDEX
-	bullets.z_index = BULLET_Z_INDEX
+	asteroids.z_index = Constants.ASTEROID_Z_INDEX
+	bullets.z_index = Constants.BULLET_Z_INDEX
 
 
 func apply_state(

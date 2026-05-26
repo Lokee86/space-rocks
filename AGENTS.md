@@ -153,6 +153,8 @@ tools/data_sync/
 
 Use `shared/game_data.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred until the API service exists.
 
+Tunable/game-data constants belong in `shared/game_data.toml` and generated scripts under `client/scripts/constants/`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
+
 Packet schema changes should be made in `shared/packets/packets.toml` and pushed with `tools/data_sync`. Packet pull is intentionally unsupported.
 
 ## Skills

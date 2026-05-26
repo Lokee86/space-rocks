@@ -5,6 +5,8 @@
 [ext_resource type="Shader" uid="uid://d4gd4qbnce18a" path="res://shaders/repeating_background.gdshader" id="3_xyiwq"]
 [ext_resource type="Texture2D" uid="uid://4dccc352w3p0" path="res://assets/background.png" id="4_geh66"]
 [ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="5_ny5dr"]
+[ext_resource type="PackedScene" uid="uid://2nhypjy0hv4h" path="res://scenes/player.tscn" id="6_a3nuj"]
+[ext_resource type="PackedScene" uid="uid://cqjku4qxxcoxj" path="res://scenes/ui/hud.tscn" id="7_mdqg4"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_62kg4"]
 shader = ExtResource("3_xyiwq")
@@ -59,6 +61,16 @@ grow_vertical = 2
 texture = ExtResource("5_ny5dr")
 stretch_mode = 1
 
+[node name="Player" parent="." instance=ExtResource("6_a3nuj")]
+visible = false
+
+[node name="Bullets" type="Node2D" parent="."]
+
+[node name="Asteroids" type="Node2D" parent="."]
+
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1725241940]
 
 [node name="MainMenu" parent="CanvasLayer" unique_id=1939259662 instance=ExtResource("1_wu7gp")]
+
+[node name="HUD" parent="CanvasLayer" instance=ExtResource("7_mdqg4")]
+visible = false

@@ -9,6 +9,8 @@ const LobbyNetworkActions := preload("res://scripts/shell/lobby_network_actions.
 const LobbyPacketReader := preload("res://scripts/lobby/lobby_packet_reader.gd")
 const LobbyReturnFlow := preload("res://scripts/shell/lobby_return_flow.gd")
 const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
+const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
+const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
 const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
 const RoomSnapshotShellState := preload("res://scripts/shell/room_snapshot_shell_state.gd")
@@ -19,6 +21,11 @@ const ShellConstants := preload("res://scripts/shell/constants.gd")
 @onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
 @onready var canvas_layer: CanvasLayer = $CanvasLayer
 @onready var main_menu: Control = $CanvasLayer/MainMenu
+@onready var hud: Control = $CanvasLayer/HUD
+@onready var game_over_sound: AudioStreamPlayer = $CanvasLayer/HUD/CenterContainer/GameOverContainer/GameOverSound
+@onready var player: Player = $Player
+@onready var bullets: Node2D = $Bullets
+@onready var asteroids: Node2D = $Asteroids
 
 var shell_state: ShellState
 var session_context: ClientSessionContext
@@ -30,6 +37,8 @@ var multiplayer_dialog_status_presenter: MultiplayerDialogStatusPresenter
 var multiplayer_lobby_presenter: MultiplayerLobbyPresenter
 var shell_boot_flow: ShellBootFlow
 var lobby_shell_flow: LobbyShellFlow
+var gameplay_shell_flow: GameplayShellFlow
+var gameplay_hud_flow: GameplayHudFlow
 
 
 func _ready() -> void:
@@ -61,10 +70,28 @@ func _ready() -> void:
 		canvas_layer,
 		Callable(self, "_log_v2_status")
 	)
+	gameplay_hud_flow = GameplayHudFlow.new()
+	gameplay_hud_flow.configure(hud)
+	gameplay_shell_flow = GameplayShellFlow.new()
+	gameplay_shell_flow.configure(
+		connection_service,
+		self,
+		player,
+		bullets,
+		asteroids,
+		gameplay_hud_flow,
+		game_over_sound
+	)
+	gameplay_shell_flow.gameplay_started.connect(Callable(self, "_on_gameplay_started"))
 	add_child(connection_service)
 	_connect_connection_service()
 	_connect_main_menu()
 	print("V2 game shell booted: %s" % shell_state.current())
+
+
+func _process(delta: float) -> void:
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.process(delta)
 
 
 func _connect_connection_service() -> void:
@@ -148,6 +175,9 @@ func _on_room_snapshot_received(_packet: Dictionary) -> void:
 func _on_lobby_returned_to_main_menu() -> void:
 	if shell_state != null:
 		shell_state.set_state(ShellState.MAIN_MENU)
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.reset()
+	main_menu.show()
 	shell_boot_flow.clear()
 
 
@@ -164,6 +194,12 @@ func _on_room_error_received(packet: Dictionary) -> void:
 
 func _on_gameplay_state_received(_packet: Dictionary) -> void:
 	_log_v2_status("V2 gameplay state received")
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.apply_gameplay_state(_packet)
+
+
+func _on_gameplay_started() -> void:
+	main_menu.hide()
 
 
 func _on_unknown_packet_received(_packet: Dictionary) -> void:

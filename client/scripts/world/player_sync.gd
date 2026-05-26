@@ -1,22 +1,20 @@
 extends RefCounted
 class_name PlayerSync
 
+const Constants = preload("res://scripts/constants/constants.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 const PlayerSyncState = preload("res://scripts/world/player_sync_state.gd")
-const REMOTE_PLAYER_Z_INDEX := 30
-const LOCAL_PLAYER_Z_INDEX := 31
 const VisualSyncPositions = preload("res://scripts/world/visual_sync_positions.gd")
-const LOCAL_PLAYER_DEFAULT_HUE := 0.0
 const REMOTE_PLAYER_HUES := [
-	0.58,
-	0.33,
-	0.10,
-	0.76,
-	0.50,
-	0.18,
-	0.67,
-	0.88,
+	Constants.REMOTE_PLAYER_HUE_ZERO,
+	Constants.REMOTE_PLAYER_HUE_ONE,
+	Constants.REMOTE_PLAYER_HUE_TWO,
+	Constants.REMOTE_PLAYER_HUE_THREE,
+	Constants.REMOTE_PLAYER_HUE_FOUR,
+	Constants.REMOTE_PLAYER_HUE_FIVE,
+	Constants.REMOTE_PLAYER_HUE_SIX,
+	Constants.REMOTE_PLAYER_HUE_SEVEN,
 ]
 
 var owner_node: Node2D
@@ -32,7 +30,7 @@ var remote_player_hues := {}
 func configure(game_owner: Node2D, player: Player) -> void:
 	owner_node = game_owner
 	local_player = player
-	local_player.z_index = LOCAL_PLAYER_Z_INDEX
+	local_player.z_index = Constants.LOCAL_PLAYER_Z_INDEX
 
 
 func get_player_node(self_id: String, player_id: String):
@@ -41,13 +39,13 @@ func get_player_node(self_id: String, player_id: String):
 
 	if player_id == self_id:
 		local_player.visible = true
-		local_player.z_index = LOCAL_PLAYER_Z_INDEX
-		local_player.set_player_hue(LOCAL_PLAYER_DEFAULT_HUE)
+		local_player.z_index = Constants.LOCAL_PLAYER_Z_INDEX
+		local_player.set_player_hue(Constants.LOCAL_PLAYER_DEFAULT_HUE)
 		player_nodes[player_id] = local_player
 		return local_player
 
 	var remote_player = PLAYER_SCENE.instantiate()
-	remote_player.z_index = REMOTE_PLAYER_Z_INDEX
+	remote_player.z_index = Constants.REMOTE_PLAYER_Z_INDEX
 	apply_remote_player_hue(player_id, remote_player)
 	owner_node.add_child(remote_player)
 	player_nodes[player_id] = remote_player
@@ -178,13 +176,17 @@ func remote_hue_for_player(player_id: String) -> float:
 	var start_index := player_id_hash(player_id) % REMOTE_PLAYER_HUES.size()
 	for offset in range(REMOTE_PLAYER_HUES.size()):
 		var hue: float = REMOTE_PLAYER_HUES[(start_index + offset) % REMOTE_PLAYER_HUES.size()]
-		if !hues_similar(hue, LOCAL_PLAYER_DEFAULT_HUE):
+		if !hues_similar(hue, Constants.LOCAL_PLAYER_DEFAULT_HUE):
 			return hue
 
-	return 0.5
+	return Constants.REMOTE_PLAYER_FALLBACK_HUE
 
 
-func hues_similar(a: float, b: float, tolerance := 0.08) -> bool:
+func hues_similar(
+	a: float,
+	b: float,
+	tolerance := Constants.REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE
+) -> bool:
 	var distance: float = abs(fposmod(a, 1.0) - fposmod(b, 1.0))
 	return min(distance, 1.0 - distance) < tolerance
 
