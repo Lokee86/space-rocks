@@ -4,6 +4,7 @@ const NetworkClient := preload("res://scripts/networking/network_client.gd")
 const ServerPacketRouter := preload("res://scripts/networking/packets/server_packet_router.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Constants := preload("res://scripts/constants/constants.gd")
 
 signal connected
 signal closed
@@ -19,6 +20,7 @@ var has_started_connection := false
 
 
 func _ready() -> void:
+	process_priority = Constants.NETWORK_POLL_PROCESS_PRIORITY
 	network_client = NetworkClient.new()
 	add_child(network_client)
 	_connect_network_client_signals()
