@@ -7,6 +7,7 @@ const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
 const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
 
 var main_menu: Control
 var canvas_layer: CanvasLayer
@@ -15,6 +16,7 @@ var connection_service
 var shell_boot_flow
 var client_config_sender: Callable
 var logger: Callable
+var latest_room_state := ""
 
 var lobby_flow
 var lobby_network_actions
@@ -68,12 +70,24 @@ func configure_client_config_sender(sender: Callable) -> void:
 func handle_room_snapshot(packet: Dictionary) -> void:
 	lobby_shell_flow.apply_room_snapshot(packet)
 	var state = lobby_flow.current_state()
+	latest_room_state = state.room_state
 	if state.room_state == Constants.ROOM_STATE_IN_GAME && !client_config_sender.is_null():
 		client_config_sender.call()
 
 
-func handle_room_state_changed(_packet: Dictionary) -> void:
-	_log("V2 room state changed")
+func handle_room_state_changed(packet: Dictionary) -> void:
+	var room_state := str(packet.get(Packets.FIELD_ROOM_STATE, ""))
+	if !room_state.is_empty():
+		latest_room_state = room_state
+	_log("V2 room state changed: %s" % latest_room_state)
+
+
+func current_room_state() -> String:
+	if !latest_room_state.is_empty():
+		return latest_room_state
+	if lobby_flow == null:
+		return ""
+	return lobby_flow.current_state().room_state
 
 
 func handle_room_error(packet: Dictionary) -> void:

@@ -106,6 +106,11 @@ func reset() -> void:
 		spectate_menu_state.reset()
 
 
+func configure_room_state_provider(provider: Callable) -> void:
+	if gameplay_menu_flow != null:
+		gameplay_menu_flow.configure_room_state_provider(provider)
+
+
 func _connect_gameplay_shell_signal(signal_name: StringName, handler: Callable) -> void:
 	if gameplay_shell_flow.has_signal(signal_name) && !gameplay_shell_flow.is_connected(signal_name, handler):
 		gameplay_shell_flow.connect(signal_name, handler)
