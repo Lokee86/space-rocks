@@ -29,6 +29,7 @@ var gameplay_hud_flow
 var gameplay_menu_flow
 var gameplay_background_flow
 var spectate_menu_state
+var has_received_gameplay_state := false
 
 
 func configure(
@@ -95,6 +96,7 @@ func configure(
 
 
 func handle_gameplay_state(packet: Dictionary) -> void:
+	has_received_gameplay_state = true
 	var state := GameplayStatePacketReader.read(packet)
 	if spectate_menu_state != null:
 		spectate_menu_state.apply_gameplay_state(state)
@@ -106,13 +108,14 @@ func _process(delta: float) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.process(delta)
 	if gameplay_presentation_flow != null:
-		gameplay_presentation_flow.process(delta)
+		gameplay_presentation_flow.process(delta, has_received_gameplay_state)
 
 
 func _configure_gameplay_presentation_flow() -> void:
 	gameplay_presentation_flow = GameplayPresentationFlow.new()
 	gameplay_presentation_flow.configure(
 		hud,
+		player,
 		Callable(gameplay_shell_flow, "current_camera"),
 		Callable(gameplay_shell_flow, "remote_player_visual_positions"),
 		Callable(gameplay_shell_flow, "remote_player_hues")
@@ -120,6 +123,7 @@ func _configure_gameplay_presentation_flow() -> void:
 
 
 func reset() -> void:
+	has_received_gameplay_state = false
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.reset()
 	if gameplay_presentation_flow != null:

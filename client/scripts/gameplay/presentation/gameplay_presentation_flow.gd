@@ -2,16 +2,19 @@ extends RefCounted
 class_name GameplayPresentationFlow
 
 const OSIndicatorController = preload("res://scripts/gameplay/presentation/os_indicator_controller.gd")
+const LocalPlayerPresentationController = preload("res://scripts/gameplay/presentation/local_player_presentation_controller.gd")
 
 var hud: Control
 var camera_provider: Callable
 var remote_positions_provider: Callable
 var remote_hues_provider: Callable
 var os_indicator_controller := OSIndicatorController.new()
+var local_player_presentation_controller := LocalPlayerPresentationController.new()
 
 
 func configure(
 	hud_ref: Control,
+	player_ref,
 	camera_provider_ref: Callable,
 	remote_positions_provider_ref: Callable,
 	remote_hues_provider_ref: Callable
@@ -21,13 +24,16 @@ func configure(
 	remote_positions_provider = remote_positions_provider_ref
 	remote_hues_provider = remote_hues_provider_ref
 	os_indicator_controller.configure(hud)
+	local_player_presentation_controller.configure(player_ref)
 
 
 func reset() -> void:
 	os_indicator_controller.reset()
+	local_player_presentation_controller.reset()
 
 
-func process(_delta: float) -> void:
+func process(_delta: float, has_received_state: bool) -> void:
+	local_player_presentation_controller.process(has_received_state)
 	if (
 		camera_provider.is_null()
 		|| remote_positions_provider.is_null()
