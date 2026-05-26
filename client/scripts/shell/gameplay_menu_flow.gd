@@ -87,7 +87,12 @@ func show_menu() -> bool:
 	if game_menu == null:
 		return false
 
-	game_menu.configure_for_state(_current_session_mode(), false, "", false)
+	var session_mode := _current_session_mode()
+	var is_game_over_menu := false
+	var room_state := ""
+	var has_spectate_targets := false
+	_log_configure_for_state("show_menu", session_mode, is_game_over_menu, room_state, has_spectate_targets)
+	game_menu.configure_for_state(session_mode, is_game_over_menu, room_state, has_spectate_targets)
 	if !show_live_pause_menu():
 		return false
 	is_gameplay_paused = true
@@ -97,6 +102,14 @@ func show_menu() -> bool:
 func set_game_over() -> void:
 	is_game_over = true
 	is_gameplay_paused = false
+	show_single_player_game_over_menu()
+
+
+func refresh_game_over_menu_state() -> void:
+	if !is_game_over:
+		return
+	if game_menu == null:
+		return
 	show_single_player_game_over_menu()
 
 
@@ -127,11 +140,22 @@ func show_single_player_game_over_menu() -> void:
 	game_over_margin_container.show()
 	cycle_view.hide()
 	game_menu.show()
+	var session_mode := _current_session_mode()
+	var is_game_over_menu := true
+	var room_state := _current_room_state()
+	var has_spectate_targets := _has_spectate_targets()
+	_log_configure_for_state(
+		"show_single_player_game_over_menu",
+		session_mode,
+		is_game_over_menu,
+		room_state,
+		has_spectate_targets
+	)
 	game_menu.configure_for_state(
-		_current_session_mode(),
-		true,
-		_current_room_state(),
-		_has_spectate_targets()
+		session_mode,
+		is_game_over_menu,
+		room_state,
+		has_spectate_targets
 	)
 
 
@@ -143,11 +167,22 @@ func show_spectating_menu() -> void:
 	game_over_margin_container.show()
 	cycle_view.hide()
 	game_menu.show()
+	var session_mode := _current_session_mode()
+	var is_game_over_menu := true
+	var room_state := _current_room_state()
+	var has_spectate_targets := _has_spectate_targets()
+	_log_configure_for_state(
+		"show_spectating_menu",
+		session_mode,
+		is_game_over_menu,
+		room_state,
+		has_spectate_targets
+	)
 	game_menu.configure_for_state(
-		_current_session_mode(),
-		true,
-		_current_room_state(),
-		_has_spectate_targets()
+		session_mode,
+		is_game_over_menu,
+		room_state,
+		has_spectate_targets
 	)
 
 
@@ -231,6 +266,19 @@ func _current_room_state() -> String:
 	if !room_state_provider.is_null():
 		return str(room_state_provider.call())
 	return ""
+
+
+func _log_configure_for_state(
+	path: String,
+	session_mode: String,
+	is_game_over_menu: bool,
+	room_state: String,
+	has_spectate_targets: bool
+) -> void:
+	ClientLogger.shell_debug(
+		"V2 gameplay menu configure trace: path=%s session_mode=%s game_over=%s room_state=%s has_spectate_targets=%s"
+		% [path, session_mode, is_game_over_menu, room_state, has_spectate_targets]
+	)
 
 
 func _has_live_pause_paths() -> bool:

@@ -100,6 +100,12 @@ func send_leave_room_request() -> void:
 		network_client.send_leave_room_request()
 
 
+func send_return_to_lobby_request() -> void:
+	if network_client != null:
+		network_client.send_packet(Packets.return_to_lobby_request_packet())
+	ClientLogger.network_debug("ReturnToLobbyRequest sent")
+
+
 func _connect_network_client_signals() -> void:
 	_connect_network_signal("connected_to_server", Callable(self, "_on_connected"))
 	_connect_network_signal("connection_closed", Callable(self, "_on_closed"))

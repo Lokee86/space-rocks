@@ -77,12 +77,14 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 	if room_session_controller == null:
 		return
 	room_session_controller.handle_room_snapshot(packet)
+	_refresh_game_over_menu_state()
 
 
 func _on_room_state_changed(packet: Dictionary) -> void:
 	if room_session_controller == null:
 		return
 	room_session_controller.handle_room_state_changed(packet)
+	_refresh_game_over_menu_state()
 
 
 func _on_room_error_received(packet: Dictionary) -> void:
@@ -95,6 +97,11 @@ func _on_gameplay_state_received(packet: Dictionary) -> void:
 	if gameplay_session_controller == null:
 		return
 	gameplay_session_controller.handle_gameplay_state(packet)
+
+
+func _refresh_game_over_menu_state() -> void:
+	if gameplay_session_controller != null && gameplay_session_controller.has_method("refresh_game_over_menu_state"):
+		gameplay_session_controller.refresh_game_over_menu_state()
 
 
 func _log(message: String) -> void:
