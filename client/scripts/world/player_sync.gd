@@ -2,7 +2,6 @@ extends RefCounted
 class_name PlayerSync
 
 const Constants = preload("res://scripts/constants/constants.gd")
-const PlayerHuePresenter = preload("res://scripts/gameplay/presentation/player_hue_presenter.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 const PlayerSyncState = preload("res://scripts/world/player_sync_state.gd")
@@ -179,12 +178,7 @@ func interpolate(weight: float, current_self_id: String) -> void:
 			remote_player_visual_positions[player_id] = player_node.position
 
 
-func get_remote_player_hues(current_self_id: String) -> Dictionary:
-	return player_hue_presenter.remote_player_hues_without(current_self_id)
-
-
 func get_remote_player_visual_positions(current_self_id: String) -> Dictionary:
 	var positions := remote_player_visual_positions.duplicate()
 	positions.erase(current_self_id)
 	return positions
-

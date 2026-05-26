@@ -117,8 +117,7 @@ func _configure_gameplay_presentation_flow() -> void:
 		hud,
 		player,
 		Callable(gameplay_shell_flow, "current_camera"),
-		Callable(gameplay_shell_flow, "remote_player_visual_positions"),
-		Callable(gameplay_shell_flow, "remote_player_hues")
+		Callable(gameplay_shell_flow, "remote_player_visual_positions")
 	)
 
 

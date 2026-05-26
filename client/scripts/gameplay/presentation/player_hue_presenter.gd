@@ -36,6 +36,22 @@ func apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
 	remote_player.set_player_hue(hue)
 
 
+func apply_os_indicator_hue(player_id: String, indicator: Control) -> void:
+	if indicator == null:
+		return
+
+	var graphic := indicator.get_node_or_null("TextureRect") as CanvasItem
+	if graphic == null:
+		return
+
+	var shader_material := graphic.material as ShaderMaterial
+	if shader_material == null:
+		return
+
+	graphic.material = shader_material.duplicate() as ShaderMaterial
+	(graphic.material as ShaderMaterial).set_shader_parameter("hue_shift", remote_hue_for_player(player_id))
+
+
 func remove_player(player_id: String) -> void:
 	remote_player_hues.erase(player_id)
 
@@ -54,7 +70,7 @@ func remote_hue_for_player(player_id: String) -> float:
 		return Constants.REMOTE_PLAYER_FALLBACK_HUE
 
 	var start_index := player_id_hash(player_id) % REMOTE_PLAYER_HUES.size()
-	for offset in REMOTE_PLAYER_HUES.size():
+	for offset in range(REMOTE_PLAYER_HUES.size()):
 		var hue: float = REMOTE_PLAYER_HUES[(start_index + offset) % REMOTE_PLAYER_HUES.size()]
 		if !hues_similar(hue, Constants.LOCAL_PLAYER_DEFAULT_HUE):
 			return hue
@@ -62,12 +78,12 @@ func remote_hue_for_player(player_id: String) -> float:
 
 
 func hues_similar(
-	first_hue: float,
-	second_hue: float,
-	tolerance := Constants.REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE
+		first_hue: float,
+		second_hue: float,
+		tolerance := Constants.REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE
 ) -> bool:
-	var distance := abs(fposmod(first_hue, 1.0) - fposmod(second_hue, 1.0))
-	return min(distance, 1.0 - distance) < tolerance
+		var distance: float = abs(fposmod(first_hue, 1.0) - fposmod(second_hue, 1.0))
+		return min(distance, 1.0 - distance) < tolerance
 
 
 func player_id_hash(player_id: String) -> int:

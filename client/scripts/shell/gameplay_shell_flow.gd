@@ -8,6 +8,7 @@ const GameplayDeathFlow = preload("res://scripts/shell/gameplay_death_flow.gd")
 const GameplayRespawnFlow = preload("res://scripts/shell/gameplay_respawn_flow.gd")
 const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
 const GameplayPauseInputFlow = preload("res://scripts/shell/gameplay_pause_input_flow.gd")
+const GameplayDebugFlow = preload("res://scripts/devtools/gameplay_debug_flow.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 
 signal gameplay_started
@@ -25,6 +26,7 @@ var death_flow
 var respawn_flow
 var runtime_tick_flow
 var pause_input_flow
+var debug_flow
 var spectate_menu_state
 var has_received_state := false
 
@@ -71,6 +73,8 @@ func configure(
 	runtime_tick_flow.configure(hud_flow)
 	pause_input_flow = GameplayPauseInputFlow.new()
 	pause_input_flow.configure(menu_flow)
+	debug_flow = GameplayDebugFlow.new()
+	debug_flow.configure(connection_service)
 
 
 func reset() -> void:
@@ -95,6 +99,8 @@ func reset() -> void:
 		runtime_tick_flow.reset()
 	if pause_input_flow != null:
 		pause_input_flow.reset()
+	if debug_flow != null:
+		debug_flow.reset()
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
@@ -147,12 +153,6 @@ func remote_player_visual_positions() -> Dictionary:
 	return world_sync.get_remote_player_visual_positions()
 
 
-func remote_player_hues() -> Dictionary:
-	if world_sync == null:
-		return {}
-	return world_sync.get_remote_player_hues()
-
-
 func process(_delta: float) -> void:
 	if world_sync != null:
 		world_sync.interpolate(_delta)
@@ -160,6 +160,8 @@ func process(_delta: float) -> void:
 		runtime_tick_flow.process(_delta)
 	if pause_input_flow != null:
 		pause_input_flow.process(has_received_state)
+	if debug_flow != null:
+		debug_flow.process(has_received_state)
 	if background_flow != null && has_received_state && player != null && player.visible:
 		background_flow.set_scroll_reference(player.global_position)
 	if respawn_flow != null:
