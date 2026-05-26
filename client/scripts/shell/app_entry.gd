@@ -6,6 +6,7 @@ const SessionNetworkController := preload("res://scripts/session/session_network
 const RoomSessionController := preload("res://scripts/session/room_session_controller.gd")
 const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
 const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
+const AppShutdownController := preload("res://scripts/session/app_shutdown_controller.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
@@ -25,13 +26,18 @@ var session_network_controller
 var room_session_controller
 var gameplay_session_controller
 var client_config_controller
+var app_shutdown_controller
 
 
 func _ready() -> void:
 	_log_v2_status("V2 app entry booted")
+	get_tree().set_auto_accept_quit(false)
 	session_boot_controller = SessionBootController.new()
 	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
 	add_child(session_boot_controller)
+	app_shutdown_controller = AppShutdownController.new()
+	add_child(app_shutdown_controller)
+	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
 	client_config_controller = ClientConfigController.new()
 	client_config_controller.configure(session_boot_controller.get_connection_service(), get_viewport())
 	_connect_boot_flow_signal(
@@ -86,6 +92,14 @@ func _ready() -> void:
 		Callable(self, "_log_v2_status")
 	)
 	_connect_main_menu_signals()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if app_shutdown_controller != null:
+			app_shutdown_controller.request_shutdown()
+		else:
+			get_tree().quit()
 
 
 func _connect_main_menu_signals() -> void:
