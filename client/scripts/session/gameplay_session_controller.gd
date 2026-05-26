@@ -15,6 +15,8 @@ var game_over_sound: AudioStreamPlayer
 var main_menu: Control
 var repeated_background: TextureRect
 var repeated_foreground_background: TextureRect
+var session_context
+var shell_boot_flow
 var logger: Callable
 
 var gameplay_shell_flow
@@ -34,6 +36,8 @@ func configure(
 	main_menu_ref: Control,
 	repeated_background_ref: TextureRect,
 	repeated_foreground_background_ref: TextureRect,
+	session_context_ref,
+	shell_boot_flow_ref,
 	logger_callable: Callable
 ) -> void:
 	connection_service = connection_service_ref
@@ -46,6 +50,8 @@ func configure(
 	main_menu = main_menu_ref
 	repeated_background = repeated_background_ref
 	repeated_foreground_background = repeated_foreground_background_ref
+	session_context = session_context_ref
+	shell_boot_flow = shell_boot_flow_ref
 	logger = logger_callable
 
 	gameplay_hud_flow = GameplayHudFlow.new()
@@ -103,6 +109,10 @@ func _on_gameplay_quit_to_main_menu_requested() -> void:
 	if connection_service != null:
 		connection_service.begin_graceful_close()
 	reset()
+	if session_context != null:
+		session_context.clear()
+	if shell_boot_flow != null:
+		shell_boot_flow.clear()
 	if main_menu != null:
 		main_menu.show()
 
