@@ -33,6 +33,22 @@ func configure(game_owner: Node2D, player: Player) -> void:
 	local_player.z_index = Constants.LOCAL_PLAYER_Z_INDEX
 
 
+func reset() -> void:
+	if local_player != null:
+		local_player.hide()
+
+	for player_node in player_nodes.values():
+		if player_node != local_player:
+			player_node.queue_free()
+
+	player_nodes.clear()
+	initialized_players.clear()
+	target_player_positions.clear()
+	target_player_rotations.clear()
+	remote_player_visual_positions.clear()
+	remote_player_hues.clear()
+
+
 func get_player_node(self_id: String, player_id: String):
 	if player_nodes.has(player_id):
 		return player_nodes[player_id]
