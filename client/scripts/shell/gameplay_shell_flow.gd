@@ -2,6 +2,7 @@ extends RefCounted
 class_name GameplayShellFlow
 
 signal gameplay_started
+signal quit_to_main_menu_requested
 
 const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
@@ -34,6 +35,10 @@ func configure(
 	player = player_ref
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
+	if menu_flow != null && menu_flow.has_signal("quit_to_main_menu_requested"):
+		var quit_callable := Callable(self, "_on_quit_to_main_menu_requested")
+		if !menu_flow.quit_to_main_menu_requested.is_connected(quit_callable):
+			menu_flow.quit_to_main_menu_requested.connect(quit_callable)
 	background_flow = background_flow_ref
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(game_owner, player_ref, bullets, asteroids)
@@ -81,6 +86,8 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	)
 	if hud_flow != null && _should_restore_alive_hud(state):
 		hud_flow.set_alive()
+		if menu_flow != null:
+			menu_flow.set_alive()
 		awaiting_respawn_confirmation = false
 	if event_flow != null:
 		event_flow.apply_server_events(state["server_events"], state["self_id"])
@@ -107,13 +114,25 @@ func process(delta: float) -> void:
 
 	_update_local_player_presentation()
 
-	if has_received_state && player != null && connection_service != null:
+	if menu_flow != null:
+		menu_flow.handle_open_menu_pressed(has_received_state)
+
+	if (
+		has_received_state
+		&& player != null
+		&& connection_service != null
+		&& (menu_flow == null || !menu_flow.is_gameplay_paused)
+	):
 		connection_service.send_input_packet(player.get_input_packet())
 
 
 func _on_bullet_spawned() -> void:
 	if player != null:
 		player.play_laser_sound()
+
+
+func _on_quit_to_main_menu_requested() -> void:
+	quit_to_main_menu_requested.emit()
 
 
 func _update_local_player_presentation() -> void:
@@ -132,6 +151,8 @@ func _on_self_death_event(event: Dictionary) -> void:
 	hud_flow.apply_lives(lives)
 	if lives <= 0:
 		hud_flow.set_game_over()
+		if menu_flow != null:
+			menu_flow.set_game_over()
 		return
 
 	var respawn_delay := 0.0

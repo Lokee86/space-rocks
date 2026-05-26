@@ -79,7 +79,7 @@ func _ready() -> void:
 	gameplay_hud_flow = GameplayHudFlow.new()
 	gameplay_hud_flow.configure(hud)
 	gameplay_menu_flow = GameplayMenuFlow.new()
-	gameplay_menu_flow.configure(hud)
+	gameplay_menu_flow.configure(hud, connection_service, player)
 	gameplay_background_flow = GameplayBackgroundFlow.new()
 	gameplay_background_flow.configure(repeated_background, repeated_foreground_background)
 	client_viewport_config_flow = ClientViewportConfigFlow.new()
@@ -98,6 +98,7 @@ func _ready() -> void:
 		game_over_sound
 	)
 	gameplay_shell_flow.gameplay_started.connect(Callable(self, "_on_gameplay_started"))
+	gameplay_shell_flow.quit_to_main_menu_requested.connect(Callable(self, "_on_gameplay_quit_to_main_menu_requested"))
 	add_child(connection_service)
 	_connect_connection_service()
 	_connect_main_menu()
@@ -107,6 +108,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.process(delta)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST && connection_service != null:
+		connection_service.begin_graceful_close()
 
 
 func _connect_connection_service() -> void:
@@ -194,6 +200,18 @@ func _on_lobby_returned_to_main_menu() -> void:
 		gameplay_shell_flow.reset()
 	main_menu.show()
 	shell_boot_flow.clear()
+
+
+func _on_gameplay_quit_to_main_menu_requested() -> void:
+	if connection_service != null:
+		connection_service.begin_graceful_close()
+	if shell_state != null:
+		shell_state.set_state(Constants.SHELL_STATE_MAIN_MENU)
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.reset()
+	main_menu.show()
+	if shell_boot_flow != null:
+		shell_boot_flow.clear()
 
 
 func _on_room_state_changed(_packet: Dictionary) -> void:
