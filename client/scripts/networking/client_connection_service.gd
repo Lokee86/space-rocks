@@ -87,10 +87,12 @@ func send_respawn_request() -> void:
 
 func send_pause_player_request() -> void:
 	send_packet(Packets.pause_player_packet())
+	ClientLogger.network_debug("PausePlayerRequest sent")
 
 
 func send_resume_player_request() -> void:
 	send_packet(Packets.resume_player_packet())
+	ClientLogger.network_debug("ResumePlayerRequest sent")
 
 
 func send_leave_room_request() -> void:

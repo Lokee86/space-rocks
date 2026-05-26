@@ -33,6 +33,9 @@ func configure(hud_ref: Control, connection_service_ref = null, player_ref: Play
 		cycle_view = hud.get_node_or_null(CYCLE_VIEW_PATH)
 		game_menu = hud.get_node_or_null(GAME_MENU_PATH)
 		_log_missing_live_pause_paths()
+	hide_live_pause_menu()
+	is_gameplay_paused = false
+	is_game_over = false
 	if game_menu == null:
 		return
 

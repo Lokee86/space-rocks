@@ -5,6 +5,7 @@ const MainMenuSessionController := preload("res://scripts/main_menu/main_menu_se
 const SessionNetworkController := preload("res://scripts/session/session_network_controller.gd")
 const RoomSessionController := preload("res://scripts/session/room_session_controller.gd")
 const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
+const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
@@ -23,6 +24,7 @@ var main_menu_session_controller
 var session_network_controller
 var room_session_controller
 var gameplay_session_controller
+var client_config_controller
 
 
 func _ready() -> void:
@@ -30,6 +32,12 @@ func _ready() -> void:
 	session_boot_controller = SessionBootController.new()
 	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
 	add_child(session_boot_controller)
+	client_config_controller = ClientConfigController.new()
+	client_config_controller.configure(session_boot_controller.get_connection_service(), get_viewport())
+	_connect_boot_flow_signal(
+		"boot_request_sent",
+		Callable(client_config_controller, "send_client_config")
+	)
 	gameplay_session_controller = GameplaySessionController.new()
 	add_child(gameplay_session_controller)
 	gameplay_session_controller.configure(
@@ -88,6 +96,12 @@ func _connect_main_menu_signals() -> void:
 func _connect_main_menu_signal(signal_name: StringName, handler: Callable) -> void:
 	if main_menu.has_signal(signal_name):
 		main_menu.connect(signal_name, handler)
+
+
+func _connect_boot_flow_signal(signal_name: StringName, handler: Callable) -> void:
+	var shell_boot_flow = session_boot_controller.get_shell_boot_flow()
+	if shell_boot_flow.has_signal(signal_name) && !shell_boot_flow.is_connected(signal_name, handler):
+		shell_boot_flow.connect(signal_name, handler)
 
 
 func _log_v2_status(message: String) -> void:
