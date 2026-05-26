@@ -51,6 +51,8 @@ func _ready() -> void:
 		main_menu,
 		repeated_background,
 		repeated_foreground_background,
+		session_boot_controller.get_session_context(),
+		session_boot_controller.get_shell_boot_flow(),
 		Callable(self, "_log_v2_status")
 	)
 	session_network_controller = SessionNetworkController.new()
