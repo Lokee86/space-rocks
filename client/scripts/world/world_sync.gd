@@ -96,5 +96,11 @@ func get_remote_player_hues() -> Dictionary:
 	return player_sync.get_remote_player_hues(current_self_id)
 
 
+func focus_camera_on_player(player_id: String) -> bool:
+	if player_sync == null:
+		return false
+	return player_sync.focus_camera_on_player(player_id)
+
+
 func visual_position_for_server_position(server_position: Vector2) -> Vector2:
 	return local_visual_sync.visual_position_for_server_position(server_position)

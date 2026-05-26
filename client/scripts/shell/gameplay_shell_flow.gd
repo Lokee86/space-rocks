@@ -17,9 +17,11 @@ var hud_flow
 var menu_flow
 var background_flow
 var event_flow
+var spectate_menu_state
 var has_received_state := false
 var awaiting_respawn_confirmation := false
 var pending_open_menu_before_spawn := false
+var is_spectating := false
 
 
 func configure(
@@ -45,6 +47,10 @@ func configure(
 		var return_to_lobby_callable := Callable(self, "_on_return_to_lobby_requested")
 		if !menu_flow.return_to_lobby_requested.is_connected(return_to_lobby_callable):
 			menu_flow.return_to_lobby_requested.connect(return_to_lobby_callable)
+	if menu_flow != null && menu_flow.has_signal("spectate_requested"):
+		var spectate_callable := Callable(self, "_on_spectate_requested")
+		if !menu_flow.spectate_requested.is_connected(spectate_callable):
+			menu_flow.spectate_requested.connect(spectate_callable)
 	background_flow = background_flow_ref
 	world_sync = WorldSyncScript.new()
 	world_sync.configure(game_owner, player_ref, bullets, asteroids)
@@ -62,6 +68,7 @@ func reset() -> void:
 	has_received_state = false
 	awaiting_respawn_confirmation = false
 	pending_open_menu_before_spawn = false
+	is_spectating = false
 	if player != null:
 		player.hide()
 	if world_sync != null:
@@ -109,6 +116,10 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 		gameplay_started.emit()
 
 
+func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
+	spectate_menu_state = spectate_menu_state_ref
+
+
 func process(delta: float) -> void:
 	if world_sync != null:
 		world_sync.interpolate(delta)
@@ -134,6 +145,16 @@ func process(delta: float) -> void:
 			menu_flow.handle_open_menu_pressed(has_received_state)
 
 	if (
+		is_spectating
+		&& Input.is_action_just_pressed("SwitchCamera")
+		&& spectate_menu_state != null
+		&& world_sync != null
+	):
+		var target_id: String = spectate_menu_state.cycle_next_target()
+		if !target_id.is_empty():
+			world_sync.focus_camera_on_player(target_id)
+
+	if (
 		has_received_state
 		&& player != null
 		&& connection_service != null
@@ -153,6 +174,15 @@ func _on_quit_to_main_menu_requested() -> void:
 
 func _on_return_to_lobby_requested() -> void:
 	return_to_lobby_requested.emit()
+
+
+func _on_spectate_requested() -> void:
+	if spectate_menu_state == null || world_sync == null:
+		return
+
+	var target_id: String = spectate_menu_state.begin_spectating()
+	if !target_id.is_empty() && world_sync.focus_camera_on_player(target_id):
+		is_spectating = true
 
 
 func _update_local_player_presentation() -> void:

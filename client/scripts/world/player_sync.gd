@@ -49,6 +49,19 @@ func reset() -> void:
 	remote_player_hues.clear()
 
 
+func focus_camera_on_player(player_id: String) -> bool:
+	if !player_nodes.has(player_id):
+		return false
+
+	var player_node = player_nodes[player_id]
+	var camera := player_node.get_node_or_null("Camera2D") as Camera2D
+	if camera == null:
+		return false
+
+	camera.make_current()
+	return true
+
+
 func get_player_node(self_id: String, player_id: String):
 	if player_nodes.has(player_id):
 		return player_nodes[player_id]
