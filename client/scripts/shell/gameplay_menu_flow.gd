@@ -3,6 +3,7 @@ class_name GameplayMenuFlow
 
 signal quit_to_main_menu_requested
 signal return_to_lobby_requested
+signal spectate_requested
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
@@ -19,14 +20,22 @@ var cycle_view
 var game_menu
 var connection_service
 var player: Player
+var spectate_menu_state
+var session_context
 var is_gameplay_paused := false
 var is_game_over := false
 
 
-func configure(hud_ref: Control, connection_service_ref = null, player_ref: Player = null) -> void:
+func configure(
+	hud_ref: Control,
+	connection_service_ref = null,
+	player_ref: Player = null,
+	session_context_ref = null
+) -> void:
 	hud = hud_ref
 	connection_service = connection_service_ref
 	player = player_ref
+	session_context = session_context_ref
 	if hud != null:
 		game_over_container = hud.get_node_or_null(GAME_OVER_CONTAINER_PATH)
 		game_over_margin_container = hud.get_node_or_null(GAME_OVER_MARGIN_CONTAINER_PATH)
@@ -51,6 +60,14 @@ func configure(hud_ref: Control, connection_service_ref = null, player_ref: Play
 	if game_menu.has_signal("lobby_requested") && !game_menu.lobby_requested.is_connected(lobby_callable):
 		game_menu.lobby_requested.connect(lobby_callable)
 
+	var spectate_callable := Callable(self, "_on_spectate_requested")
+	if game_menu.has_signal("spectate_requested") && !game_menu.spectate_requested.is_connected(spectate_callable):
+		game_menu.spectate_requested.connect(spectate_callable)
+
+
+func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
+	spectate_menu_state = spectate_menu_state_ref
+
 
 func hide_menu() -> void:
 	close_menu()
@@ -65,7 +82,7 @@ func show_menu() -> bool:
 	if game_menu == null:
 		return false
 
-	game_menu.configure_for_state(Constants.SESSION_MODE_SINGLE_PLAYER, false, "", false)
+	game_menu.configure_for_state(_current_session_mode(), false, "", false)
 	if !show_live_pause_menu():
 		return false
 	is_gameplay_paused = true
@@ -105,7 +122,7 @@ func show_single_player_game_over_menu() -> void:
 	game_over_margin_container.show()
 	cycle_view.hide()
 	game_menu.show()
-	game_menu.configure_for_state(Constants.SESSION_MODE_SINGLE_PLAYER, true, "", false)
+	game_menu.configure_for_state(_current_session_mode(), true, "", _has_spectate_targets())
 
 
 func hide_live_pause_menu() -> void:
@@ -161,6 +178,27 @@ func _on_quit_requested() -> void:
 
 func _on_lobby_requested() -> void:
 	return_to_lobby_requested.emit()
+
+
+func _on_spectate_requested() -> void:
+	if game_menu != null:
+		game_menu.hide()
+	if cycle_view != null:
+		cycle_view.show()
+	is_gameplay_paused = false
+	spectate_requested.emit()
+
+
+func _has_spectate_targets() -> bool:
+	if spectate_menu_state != null:
+		return spectate_menu_state.has_spectate_targets()
+	return false
+
+
+func _current_session_mode() -> String:
+	if session_context != null && !str(session_context.active_mode).is_empty():
+		return session_context.active_mode
+	return Constants.SESSION_MODE_SINGLE_PLAYER
 
 
 func _has_live_pause_paths() -> bool:

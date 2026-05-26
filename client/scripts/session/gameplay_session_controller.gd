@@ -4,6 +4,8 @@ const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
 const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
 const GameplayMenuFlow := preload("res://scripts/shell/gameplay_menu_flow.gd")
 const GameplayBackgroundFlow := preload("res://scripts/shell/gameplay_background_flow.gd")
+const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
+const GameplayStatePacketReader := preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 
 var connection_service
 var scene_root: Node
@@ -23,6 +25,7 @@ var gameplay_shell_flow
 var gameplay_hud_flow
 var gameplay_menu_flow
 var gameplay_background_flow
+var spectate_menu_state
 
 
 func configure(
@@ -36,9 +39,9 @@ func configure(
 	main_menu_ref: Control,
 	repeated_background_ref: TextureRect,
 	repeated_foreground_background_ref: TextureRect,
-	session_context_ref,
 	shell_boot_flow_ref,
-	logger_callable: Callable
+	logger_callable: Callable,
+	session_context_ref = null
 ) -> void:
 	connection_service = connection_service_ref
 	scene_root = scene_root_ref
@@ -57,7 +60,9 @@ func configure(
 	gameplay_hud_flow = GameplayHudFlow.new()
 	gameplay_hud_flow.configure(hud)
 	gameplay_menu_flow = GameplayMenuFlow.new()
-	gameplay_menu_flow.configure(hud, connection_service, player)
+	gameplay_menu_flow.configure(hud, connection_service, player, session_context)
+	spectate_menu_state = SpectateMenuState.new()
+	gameplay_menu_flow.configure_spectate_menu_state(spectate_menu_state)
 	gameplay_background_flow = GameplayBackgroundFlow.new()
 	gameplay_background_flow.configure(repeated_background, repeated_foreground_background)
 	gameplay_shell_flow = GameplayShellFlow.new()
@@ -72,6 +77,8 @@ func configure(
 		gameplay_background_flow,
 		game_over_sound
 	)
+	if gameplay_shell_flow.has_method("configure_spectate_menu_state"):
+		gameplay_shell_flow.configure_spectate_menu_state(spectate_menu_state)
 	_connect_gameplay_shell_signal("gameplay_started", Callable(self, "_on_gameplay_started"))
 	_connect_gameplay_shell_signal(
 		"quit_to_main_menu_requested",
@@ -80,6 +87,9 @@ func configure(
 
 
 func handle_gameplay_state(packet: Dictionary) -> void:
+	var state := GameplayStatePacketReader.read(packet)
+	if spectate_menu_state != null:
+		spectate_menu_state.apply_gameplay_state(state)
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.apply_gameplay_state(packet)
 
@@ -92,6 +102,8 @@ func _process(delta: float) -> void:
 func reset() -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.reset()
+	if spectate_menu_state != null:
+		spectate_menu_state.reset()
 
 
 func _connect_gameplay_shell_signal(signal_name: StringName, handler: Callable) -> void:
