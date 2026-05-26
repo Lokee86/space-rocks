@@ -18,6 +18,7 @@ var background_flow
 var event_flow
 var has_received_state := false
 var awaiting_respawn_confirmation := false
+var pending_open_menu_before_spawn := false
 
 
 func configure(
@@ -55,6 +56,7 @@ func configure(
 func reset() -> void:
 	has_received_state = false
 	awaiting_respawn_confirmation = false
+	pending_open_menu_before_spawn = false
 	if player != null:
 		player.hide()
 	if hud_flow != null:
@@ -92,6 +94,10 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	if event_flow != null:
 		event_flow.apply_server_events(state["server_events"], state["self_id"])
 	has_received_state = true
+	if pending_open_menu_before_spawn:
+		pending_open_menu_before_spawn = false
+		if menu_flow != null:
+			menu_flow.open_live_pause_from_request(true)
 	if is_first_gameplay_state:
 		gameplay_started.emit()
 
@@ -115,7 +121,10 @@ func process(delta: float) -> void:
 	_update_local_player_presentation()
 
 	if menu_flow != null:
-		menu_flow.handle_open_menu_pressed(has_received_state)
+		if !has_received_state && Input.is_action_just_pressed("OpenMenu"):
+			pending_open_menu_before_spawn = true
+		elif has_received_state:
+			menu_flow.handle_open_menu_pressed(has_received_state)
 
 	if (
 		has_received_state
