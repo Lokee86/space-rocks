@@ -19,6 +19,18 @@ func configure(layer: Node2D) -> void:
 	asteroids_layer = layer
 
 
+func reset() -> void:
+	for asteroid_id in asteroid_nodes.keys():
+		asteroid_nodes[asteroid_id].queue_free()
+
+	asteroid_nodes.clear()
+	initialized_asteroids.clear()
+	warned_missing_asteroid_scale.clear()
+	target_asteroid_positions.clear()
+	asteroid_server_positions.clear()
+	asteroid_visual_positions.clear()
+
+
 func get_asteroid_node(asteroid_id: String):
 	if asteroid_nodes.has(asteroid_id):
 		return asteroid_nodes[asteroid_id]

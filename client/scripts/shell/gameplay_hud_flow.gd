@@ -84,6 +84,7 @@ func set_game_over() -> void:
 	respawn_countdown_remaining = 0.0
 	_hide_hud_child("CenterContainer/VBoxContainer2")
 	_show_hud_child("CenterContainer/GameOverContainer")
+	_show_hud_child("CenterContainer/GameOverContainer/MarginContainer")
 
 
 func apply_score(score: int) -> void:

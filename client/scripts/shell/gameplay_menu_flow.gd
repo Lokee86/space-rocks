@@ -2,6 +2,7 @@ extends RefCounted
 class_name GameplayMenuFlow
 
 signal quit_to_main_menu_requested
+signal return_to_lobby_requested
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
@@ -43,6 +44,10 @@ func configure(hud_ref: Control, connection_service_ref = null, player_ref: Play
 	if game_menu.has_signal("quit_requested") && !game_menu.quit_requested.is_connected(quit_callable):
 		game_menu.quit_requested.connect(quit_callable)
 
+	var lobby_callable := Callable(self, "_on_lobby_requested")
+	if game_menu.has_signal("lobby_requested") && !game_menu.lobby_requested.is_connected(lobby_callable):
+		game_menu.lobby_requested.connect(lobby_callable)
+
 
 func hide_menu() -> void:
 	close_menu()
@@ -67,8 +72,7 @@ func show_menu() -> bool:
 func set_game_over() -> void:
 	is_game_over = true
 	is_gameplay_paused = false
-	if game_menu != null:
-		game_menu.configure_for_state(Constants.SESSION_MODE_SINGLE_PLAYER, true, "", false)
+	show_single_player_game_over_menu()
 
 
 func set_alive() -> void:
@@ -88,6 +92,17 @@ func show_live_pause_menu() -> bool:
 	cycle_view.hide()
 	game_menu.show()
 	return true
+
+
+func show_single_player_game_over_menu() -> void:
+	if !_has_live_pause_paths():
+		return
+
+	game_over_container.show()
+	game_over_margin_container.show()
+	cycle_view.hide()
+	game_menu.show()
+	game_menu.configure_for_state(Constants.SESSION_MODE_SINGLE_PLAYER, true, "", false)
 
 
 func hide_live_pause_menu() -> void:
@@ -139,6 +154,10 @@ func _on_resume_requested() -> void:
 func _on_quit_requested() -> void:
 	close_menu()
 	quit_to_main_menu_requested.emit()
+
+
+func _on_lobby_requested() -> void:
+	return_to_lobby_requested.emit()
 
 
 func _has_live_pause_paths() -> bool:
