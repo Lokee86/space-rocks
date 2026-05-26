@@ -7,7 +7,7 @@ const WORLD_HEIGHT := 6750.0
 # data-sync:end constants.server.world
 
 # data-sync:start constants.client.presentation
-const GAME_OVER_SOUND_DELAY := 0.4
+const GAME_OVER_SOUND_DELAY := 0.3
 const BACKGROUND_PARALLAX := 0.25
 const FOREGROUND_BACKGROUND_PARALLAX := 0.45
 const FOREGROUND_BACKGROUND_OFFSET := Vector2(480.0, 270.0)

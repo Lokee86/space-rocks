@@ -29,6 +29,11 @@ func apply_server_events(server_events: Array, self_id: String) -> void:
 	)
 
 
+func play_game_over_sound_after_delay() -> void:
+	if effects != null:
+		effects.play_game_over_sound_after_delay()
+
+
 func reset() -> void:
 	if effects != null:
 		effects.reset_game_over_sound()

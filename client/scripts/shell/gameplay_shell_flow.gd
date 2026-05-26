@@ -125,6 +125,24 @@ func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 	spectate_menu_state = spectate_menu_state_ref
 
 
+func current_camera() -> Camera2D:
+	if player == null:
+		return null
+	return player.get_node_or_null("Camera2D") as Camera2D
+
+
+func remote_player_visual_positions() -> Dictionary:
+	if world_sync == null:
+		return {}
+	return world_sync.get_remote_player_visual_positions()
+
+
+func remote_player_hues() -> Dictionary:
+	if world_sync == null:
+		return {}
+	return world_sync.get_remote_player_hues()
+
+
 func process(delta: float) -> void:
 	if world_sync != null:
 		world_sync.interpolate(delta)
@@ -233,6 +251,8 @@ func _on_self_death_event(event: Dictionary) -> void:
 		hud_flow.set_game_over()
 		if menu_flow != null:
 			menu_flow.set_game_over()
+		if event_flow != null && event_flow.has_method("play_game_over_sound_after_delay"):
+			event_flow.play_game_over_sound_after_delay()
 		return
 
 	var respawn_delay := 0.0
