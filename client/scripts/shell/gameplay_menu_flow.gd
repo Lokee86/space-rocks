@@ -98,9 +98,7 @@ func hide_live_pause_menu() -> void:
 
 
 func handle_open_menu_pressed(has_initial_spawn: bool) -> bool:
-	if !Input.is_action_just_pressed("OpenMenu") || !has_initial_spawn:
-		return false
-	if !can_open_live_pause_menu():
+	if !Input.is_action_just_pressed("OpenMenu"):
 		return false
 
 	if is_menu_visible():
@@ -109,6 +107,16 @@ func handle_open_menu_pressed(has_initial_spawn: bool) -> bool:
 			connection_service.send_resume_player_request()
 		return true
 
+	return open_live_pause_from_request(has_initial_spawn)
+
+
+func open_live_pause_from_request(has_initial_spawn: bool) -> bool:
+	if !has_initial_spawn:
+		return false
+	if !can_open_live_pause_menu():
+		return false
+	if !_has_live_pause_paths():
+		return false
 	if !show_menu():
 		return false
 	if player != null:
