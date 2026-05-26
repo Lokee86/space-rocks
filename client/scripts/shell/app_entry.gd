@@ -32,18 +32,10 @@ var app_shutdown_controller
 func _ready() -> void:
 	_log_v2_status("V2 app entry booted")
 	get_tree().set_auto_accept_quit(false)
-	session_boot_controller = SessionBootController.new()
-	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
-	add_child(session_boot_controller)
+	_setup_boot_and_config()
 	app_shutdown_controller = AppShutdownController.new()
 	add_child(app_shutdown_controller)
 	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
-	client_config_controller = ClientConfigController.new()
-	client_config_controller.configure(session_boot_controller.get_connection_service(), get_viewport())
-	_connect_boot_flow_signal(
-		"boot_request_sent",
-		Callable(client_config_controller, "send_client_config")
-	)
 	gameplay_session_controller = GameplaySessionController.new()
 	add_child(gameplay_session_controller)
 	gameplay_session_controller.configure(
@@ -100,6 +92,18 @@ func _notification(what: int) -> void:
 			app_shutdown_controller.request_shutdown()
 		else:
 			get_tree().quit()
+
+
+func _setup_boot_and_config() -> void:
+	session_boot_controller = SessionBootController.new()
+	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
+	add_child(session_boot_controller)
+	client_config_controller = ClientConfigController.new()
+	client_config_controller.configure(session_boot_controller.get_connection_service(), get_viewport())
+	_connect_boot_flow_signal(
+		"boot_request_sent",
+		Callable(client_config_controller, "send_client_config")
+	)
 
 
 func _connect_main_menu_signals() -> void:
