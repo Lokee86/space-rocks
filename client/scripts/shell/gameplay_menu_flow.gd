@@ -301,7 +301,7 @@ func _log_configure_for_state(
 	has_spectate_targets: bool
 ) -> void:
 	ClientLogger.shell_debug(
-		"V2 gameplay menu configure trace: path=%s session_mode=%s game_over=%s room_state=%s has_spectate_targets=%s"
+		"Gameplay menu configure trace: path=%s session_mode=%s game_over=%s room_state=%s has_spectate_targets=%s"
 		% [path, session_mode, is_game_over_menu, room_state, has_spectate_targets]
 	)
 

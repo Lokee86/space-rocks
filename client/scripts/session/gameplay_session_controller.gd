@@ -137,7 +137,7 @@ func _on_gameplay_started() -> void:
 
 
 func _on_gameplay_quit_to_main_menu_requested() -> void:
-	_log("V2 gameplay quit to main menu requested")
+	_log("Gameplay quit to main menu requested")
 	if connection_service != null:
 		connection_service.begin_graceful_close()
 	reset()
@@ -150,7 +150,7 @@ func _on_gameplay_quit_to_main_menu_requested() -> void:
 
 
 func _on_gameplay_return_to_lobby_requested() -> void:
-	_log("V2 gameplay return to lobby requested")
+	_log("Gameplay return to lobby requested")
 	if connection_service != null:
 		connection_service.send_return_to_lobby_request()
 	reset()

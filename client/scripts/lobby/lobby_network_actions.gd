@@ -11,17 +11,17 @@ func _init(connection_service_ref, logger_callable: Callable) -> void:
 
 func send_ready_requested(ready: bool) -> void:
 	connection_service.send_set_ready_request(ready)
-	_log("V2 lobby ready requested: %s" % ready)
+	_log("Lobby ready requested: %s" % ready)
 
 
 func send_start_game_requested() -> void:
 	connection_service.send_start_game_request()
-	_log("V2 lobby start game requested")
+	_log("Lobby start game requested")
 
 
 func send_leave_requested() -> void:
 	connection_service.send_leave_room_request()
-	_log("V2 lobby leave requested")
+	_log("Lobby leave requested")
 
 
 func _log(message: String) -> void:

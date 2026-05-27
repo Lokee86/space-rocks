@@ -16,7 +16,7 @@ const CATEGORY_HUD := "hud"
 const CATEGORY_INPUT := "input"
 const CATEGORY_PACKETS := "packets"
 
-static var default_level := LEVEL_DEBUG
+static var default_level := LEVEL_INFO
 static var category_levels := {}
 
 

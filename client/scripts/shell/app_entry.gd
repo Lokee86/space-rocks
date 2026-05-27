@@ -31,7 +31,7 @@ var background_controller
 
 func _ready() -> void:
 
-	_log_v2_status("V2 app entry booted")
+	_log_shell_status("App entry booted")
 	get_tree().set_auto_accept_quit(false)
 
 	_setup_boot_and_config()
@@ -57,14 +57,14 @@ func _ready() -> void:
 		main_menu,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_shell_boot_flow(),
-		Callable(self, "_log_v2_status")
+		Callable(self, "_log_shell_status")
 	)
 
 	session_network_controller = SessionNetworkController.new()
 	session_network_controller.configure(
 		session_boot_controller.get_connection_service(),
 		session_boot_controller.get_shell_boot_flow(),
-		Callable(self, "_log_v2_status"),
+		Callable(self, "_log_shell_status"),
 		{}
 	)
 	session_network_controller.connect_connection_signals()
@@ -78,7 +78,7 @@ func _ready() -> void:
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_connection_service(),
 		session_boot_controller.get_shell_boot_flow(),
-		Callable(self, "_log_v2_status")
+		Callable(self, "_log_shell_status")
 	)
 	room_session_controller.configure_client_config_sender(
 		Callable(client_config_controller, "send_client_config")
@@ -95,7 +95,7 @@ func _ready() -> void:
 	main_menu_session_controller.configure(
 		main_menu,
 		session_boot_controller,
-		Callable(self, "_log_v2_status")
+		Callable(self, "_log_shell_status")
 	)
 
 	_connect_main_menu_signals()
@@ -110,7 +110,7 @@ func _notification(what: int) -> void:
 
 func _setup_boot_and_config() -> void:
 	session_boot_controller = SessionBootController.new()
-	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
+	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_shell_status"))
 	add_child(session_boot_controller)
 
 	client_config_controller = ClientConfigController.new()
@@ -143,20 +143,20 @@ func _connect_boot_flow_signal(signal_name: StringName, handler: Callable) -> vo
 		shell_boot_flow.connect(signal_name, handler)
 
 
-func _log_v2_status(message: String) -> void:
+func _log_shell_status(message: String) -> void:
 	ClientLogger.shell_info(message)
 
 
 func _on_single_player_pressed() -> void:
-	_log_v2_status("V2 app entry single player requested")
+	_log_shell_status("App entry single player requested")
 	main_menu_session_controller.request_single_player()
 
 
 func _on_multiplayer_create_requested() -> void:
-	_log_v2_status("V2 app entry multiplayer create requested")
+	_log_shell_status("App entry multiplayer create requested")
 	main_menu_session_controller.request_create_room()
 
 
 func _on_multiplayer_join_requested(room_code: String) -> void:
-	_log_v2_status("V2 app entry multiplayer join requested: %s" % room_code)
+	_log_shell_status("App entry multiplayer join requested: %s" % room_code)
 	main_menu_session_controller.request_join_room(room_code)
