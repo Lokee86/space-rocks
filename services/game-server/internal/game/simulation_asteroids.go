@@ -7,7 +7,7 @@ import (
 )
 
 func (game *Game) stepAsteroidSpawning(delta float64) {
-	if game.worldDevTools.CanSpawnAsteroids() && game.hasCameraViews() {
+	if game.worldSimulationOptions.CanSpawnAsteroids() && game.hasCameraViews() {
 		game.asteroidSpawnElapsed += delta
 		if game.asteroidSpawnElapsed >= constants.AsteroidSpawnInterval {
 			game.asteroidSpawnElapsed = 0
@@ -22,7 +22,7 @@ func (game *Game) stepAsteroidSpawning(delta float64) {
 
 func (game *Game) stepAsteroids(delta float64, bounds space.Bounds) {
 	for id, asteroid := range game.state.Asteroids {
-		if game.worldDevTools.AsteroidsCanMove() {
+		if game.worldSimulationOptions.AsteroidsCanMove() {
 			motion.AdvanceAsteroid(asteroid, delta, bounds)
 		}
 		if asteroid.ReadyForRemoval() {

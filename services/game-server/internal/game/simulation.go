@@ -38,7 +38,7 @@ func (game *Game) Step(delta float64) {
 }
 
 func (game *Game) stepCollisions() {
-	if game.worldDevTools.CanRunCollisions() {
+	if game.worldSimulationOptions.CanRunCollisions() {
 		game.handleShipAsteroidCollisions()
 		game.handleBulletAsteroidCollisions()
 	}

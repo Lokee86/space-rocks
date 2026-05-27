@@ -30,7 +30,8 @@ func (game *Game) handleDebugPacket(playerID string, player *entities.Ship, pack
 		)
 		return true
 	case PacketTypeToggleDebugFreezeWorld:
-		enabled := game.worldDevTools.ToggleFreezeWorld()
+		enabled := !game.worldSimulationOptions.IsWorldFrozen()
+		game.worldSimulationOptions.SetFreezeWorld(enabled)
 		logging.Game.Info("debug world freeze toggled",
 			logging.FieldPlayerID, playerID,
 			"enabled", enabled,
