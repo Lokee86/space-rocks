@@ -19,7 +19,7 @@ func reset() -> void:
 
 
 func process(has_received_state: bool) -> void:
-	var toggle_pressed := Input.is_key_pressed(KEY_1)
+	var toggle_pressed := Input.is_action_just_pressed("DevToggle1")
 	if !has_received_state || connection_service == null:
 		debug_invincible_toggle_was_pressed = toggle_pressed
 		return

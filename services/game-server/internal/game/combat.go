@@ -167,7 +167,7 @@ func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.
 	respawnDelay := 0.0
 	if session, ok := game.playerSessions[playerID]; ok {
 		session.Score = player.Score
-		session.RecordDeath(player.DevTools)
+		session.RecordDeath()
 		player.Lives = session.Lives
 		lives = session.Lives
 		respawnDelay = session.RespawnCooldown

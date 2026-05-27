@@ -11,7 +11,7 @@ func (ship *Ship) State() ShipState {
 		Rotation: ship.Rotation,
 		Score:    ship.Score,
 		Lives:    ship.Lives,
-		Paused:   ship.Paused,
+		Paused:   ship.Suspension.Paused,
 	}
 }
 
@@ -28,19 +28,19 @@ func (ship *Ship) SetConfig(config ClientConfig) {
 }
 
 func (ship *Ship) Pause() {
-	ship.Paused = true
+	ship.Suspension.SetPaused(true)
 	ship.ClearInput()
 	ship.Velocity = physics.Vector2{}
 }
 
 func (ship *Ship) Resume(invulnerabilitySeconds float64) {
-	ship.Paused = false
+	ship.Suspension.SetPaused(false)
 	ship.ClearInput()
 	ship.InvulnerabilityRemaining = invulnerabilitySeconds
 }
 
 func (ship *Ship) IsSuspended() bool {
-	return ship.Paused || ship.DevTools.IsPlayerFrozen()
+	return ship.Suspension.IsSuspended()
 }
 
 func (ship *Ship) CanReceiveInput() bool {
@@ -66,7 +66,7 @@ func (ship *Ship) CanShoot() bool {
 func (ship *Ship) CanTakeCollisionDamage() bool {
 	return !ship.IsSuspended() &&
 		!ship.IsInvulnerable() &&
-		ship.DevTools.CanTakeDamage()
+		ship.DamageOptions.CanTakeDamage()
 }
 
 func (ship *Ship) ResetShootCooldown() {

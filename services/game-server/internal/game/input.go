@@ -26,6 +26,9 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	if !ok {
 		return
 	}
+	if game.handleDebugPacket(playerID, player, packet) {
+		return
+	}
 	switch packet.Type {
 	case PacketTypeInput:
 		if !player.CanReceiveInput() {
@@ -47,40 +50,6 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		logging.Game.Debug("player resumed",
 			logging.FieldPlayerID, playerID,
 			"invulnerability", constants.PlayerResumeInvulnerabilitySeconds,
-		)
-	case PacketTypeToggleDebugInvincible:
-		enabled := player.DevTools.ToggleInvincible()
-		if session, ok := game.playerSessions[playerID]; ok {
-			session.DevTools = player.DevTools
-		}
-		logging.Game.Info("debug invincibility toggled",
-			logging.FieldPlayerID, playerID,
-			"enabled", enabled,
-		)
-	case PacketTypeToggleDebugInfiniteLives:
-		enabled := player.DevTools.ToggleInfiniteLives()
-		if session, ok := game.playerSessions[playerID]; ok {
-			session.DevTools = player.DevTools
-		}
-		logging.Game.Info("debug infinite lives toggled",
-			logging.FieldPlayerID, playerID,
-			"enabled", enabled,
-		)
-	case PacketTypeToggleDebugFreezeWorld:
-		enabled := game.worldDevTools.ToggleFreezeWorld()
-		logging.Game.Info("debug world freeze toggled",
-			logging.FieldPlayerID, playerID,
-			"enabled", enabled,
-		)
-	case PacketTypeToggleDebugFreezePlayer:
-		enabled := player.DevTools.ToggleFreezePlayer()
-		player.ClearInput()
-		if session, ok := game.playerSessions[playerID]; ok {
-			session.DevTools = player.DevTools
-		}
-		logging.Game.Info("debug player freeze toggled",
-			logging.FieldPlayerID, playerID,
-			"enabled", enabled,
 		)
 	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)

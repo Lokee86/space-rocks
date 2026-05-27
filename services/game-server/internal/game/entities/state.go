@@ -1,9 +1,6 @@
 package entities
 
-import (
-	"github.com/Lokee86/space-rocks/server/internal/game/devtools"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-)
+import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 
 const DefaultShipTypeID = "v_wing"
 
@@ -20,9 +17,9 @@ type Ship struct {
 	ShootCooldown            float64
 	Score                    int
 	Lives                    int
-	Paused                   bool
+	Suspension               SuspensionState
+	DamageOptions            DamageOptions
 	InvulnerabilityRemaining float64
-	DevTools                 devtools.PlayerOptions
 	PendingDespawn           bool
 	DespawnDelay             float64
 }
