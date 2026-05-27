@@ -5,16 +5,14 @@ const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
 const GameplayEventFlow = preload("res://scripts/shell/gameplay_event_flow.gd")
 const GameplayDeathFlow = preload("res://scripts/shell/gameplay_death_flow.gd")
 const GameplayRespawnFlow = preload("res://scripts/shell/gameplay_respawn_flow.gd")
-const GameplayInputFlow = preload("res://scripts/gameplay/input/gameplay_input_flow.gd")
-const GameplayPauseInputFlow = preload("res://scripts/shell/gameplay_pause_input_flow.gd")
+const GameplayInputContext = preload("res://scripts/gameplay/input/gameplay_input_context.gd")
 
 var world_sync
 var player
 var event_flow
 var death_flow
 var respawn_flow
-var input_flow
-var pause_input_flow
+var input_context
 var hud_flow
 
 
@@ -53,13 +51,14 @@ func configure_respawn(connection_service_ref, hud_flow_ref) -> void:
 
 
 func configure_input(connection_service_ref, player_ref, menu_flow_ref) -> void:
-	input_flow = GameplayInputFlow.new()
-	input_flow.configure(connection_service_ref, player_ref, menu_flow_ref)
+	input_context = GameplayInputContext.new()
+	input_context.configure(connection_service_ref, player_ref, menu_flow_ref)
 
 
 func configure_pause_input(menu_flow_ref) -> void:
-	pause_input_flow = GameplayPauseInputFlow.new()
-	pause_input_flow.configure(menu_flow_ref)
+	if input_context == null:
+		input_context = GameplayInputContext.new()
+	input_context.configure_pause_input(menu_flow_ref)
 
 
 func reset() -> void:
@@ -73,10 +72,8 @@ func reset() -> void:
 		death_flow.reset()
 	if respawn_flow != null:
 		respawn_flow.reset()
-	if input_flow != null:
-		input_flow.reset()
-	if pause_input_flow != null:
-		pause_input_flow.reset()
+	if input_context != null:
+		input_context.reset()
 
 
 func process(delta: float) -> void:
@@ -90,18 +87,13 @@ func process_respawn(has_received_state: bool) -> void:
 
 
 func mark_input_gameplay_state_received() -> void:
-	if input_flow != null:
-		input_flow.mark_gameplay_state_received()
+	if input_context != null:
+		input_context.mark_gameplay_state_received()
 
 
-func process_input() -> void:
-	if input_flow != null:
-		input_flow.process()
-
-
-func process_pause_input(has_received_state: bool) -> void:
-	if pause_input_flow != null:
-		pause_input_flow.process(has_received_state)
+func process_input(has_received_state: bool) -> void:
+	if input_context != null:
+		input_context.process(has_received_state)
 
 
 func apply_world_state(state: Dictionary, has_received_state: bool) -> void:
