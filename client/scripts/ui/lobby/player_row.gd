@@ -33,4 +33,4 @@ func set_member(member_name, is_ready, member_connected := true, is_owner := fal
 
 func _report_missing_node(node: Node, node_name: String) -> void:
 	if node == null:
-		push_warning("V2 PlayerRow missing node: %s" % node_name)
+	push_warning("PlayerRow missing node: %s" % node_name)
