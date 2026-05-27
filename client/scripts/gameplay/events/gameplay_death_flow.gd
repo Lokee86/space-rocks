@@ -14,10 +14,6 @@ func configure(hud_flow_ref, menu_flow_ref, event_flow_ref) -> void:
 	event_flow = event_flow_ref
 
 
-func reset() -> void:
-	pass
-
-
 func apply_self_death_event(event: Dictionary) -> void:
 	var lives := int(event.get(Packets.FIELD_LIVES, 0))
 	if hud_flow != null:
