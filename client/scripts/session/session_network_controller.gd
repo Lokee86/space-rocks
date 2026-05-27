@@ -57,20 +57,20 @@ func _connect_connection_signal(signal_name: StringName, handler: Callable) -> v
 
 
 func _on_connection_connected() -> void:
-	_log("V2 connection connected")
+	_log("Connection connected")
 	shell_boot_flow.send_pending_boot_request()
 
 
 func _on_connection_closed() -> void:
-	_log("V2 connection closed")
+	_log("Connection closed")
 
 
 func _on_packet_parse_failed(text: String) -> void:
-	_log("V2 packet parse failed: %s" % text)
+	_log("Packet parse failed: %s" % text)
 
 
 func _on_unknown_packet_received(_packet: Dictionary) -> void:
-	_log("V2 unknown packet received")
+	_log("Unknown packet received")
 
 
 func _on_room_snapshot_received(packet: Dictionary) -> void:

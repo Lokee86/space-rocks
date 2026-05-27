@@ -79,7 +79,7 @@ func handle_room_state_changed(packet: Dictionary) -> void:
 	var room_state := str(packet.get(Packets.FIELD_ROOM_STATE, ""))
 	if !room_state.is_empty():
 		latest_room_state = room_state
-	_log("V2 room state changed: %s" % latest_room_state)
+	_log("Room state changed: %s" % latest_room_state)
 
 
 func current_room_state() -> String:
@@ -93,7 +93,7 @@ func current_room_state() -> String:
 func handle_room_error(packet: Dictionary) -> void:
 	var error_code := str(packet.get("error_code", ""))
 	var message := str(packet.get("message", ""))
-	_log("V2 room error received: code=%s message=%s" % [error_code, message])
+	_log("Room error received: code=%s message=%s" % [error_code, message])
 	multiplayer_dialog_status_presenter.show_room_error(main_menu, packet)
 
 

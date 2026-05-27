@@ -76,6 +76,6 @@ func has_spectate_targets() -> bool:
 
 func _log_has_spectate_targets(result: bool) -> void:
 	ClientLogger.shell_debug(
-		"V2 spectate menu state trace: self_id=%s lifecycle_keys=%s has_spectate_targets=%s"
+		"Spectate menu state trace: self_id=%s lifecycle_keys=%s has_spectate_targets=%s"
 		% [self_id, player_lifecycle.keys(), result]
 	)

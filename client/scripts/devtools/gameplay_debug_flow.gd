@@ -32,15 +32,18 @@ func process(has_received_state: bool) -> void:
 			debug_invincible_toggle_was_pressed = true
 			debug_invincible_enabled = !debug_invincible_enabled
 			connection_service.send_packet(Packets.toggle_debug_invincible_packet())
-			ClientLogger.game_debug("Debug invincibility toggled: %s" % debug_invincible_enabled)
+			ClientLogger.game_info("Devtools invincibility toggle sent")
 	else:
 		debug_invincible_toggle_was_pressed = false
 
 	if infinite_lives_toggle_pressed:
 		connection_service.send_packet(Packets.toggle_debug_infinite_lives_packet())
+		ClientLogger.game_info("Devtools infinite lives toggle sent")
 
 	if world_freeze_toggle_pressed:
 		connection_service.send_packet(Packets.toggle_debug_freeze_world_packet())
+		ClientLogger.game_info("Devtools world freeze toggle sent")
 
 	if player_freeze_toggle_pressed:
 		connection_service.send_packet(Packets.toggle_debug_freeze_player_packet())
+		ClientLogger.game_info("Devtools player freeze toggle sent")

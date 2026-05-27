@@ -22,4 +22,4 @@ func send_client_config() -> void:
 	var viewport_size := viewport.get_visible_rect().size
 	var packet := Packets.client_config_packet(viewport_size.x, viewport_size.y)
 	connection_service.send_packet(packet)
-	ClientLogger.shell_debug("V2 sent client viewport config: size=%s" % viewport_size)
+	ClientLogger.shell_debug("Sent client viewport config: size=%s" % viewport_size)

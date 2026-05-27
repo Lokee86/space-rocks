@@ -31,7 +31,7 @@ func request_create_room() -> void:
 func request_join_room(room_code: String) -> void:
 	var stripped_room_code := room_code.strip_edges()
 	if stripped_room_code.is_empty():
-		_log("V2 multiplayer join rejected: empty room code")
+		_log("Multiplayer join rejected: empty room code")
 		multiplayer_dialog_status_presenter.show_status(
 			main_menu,
 			Constants.DIALOG_STATUS_MUST_ENTER_ID

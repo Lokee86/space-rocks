@@ -36,12 +36,12 @@ func request_join_room(room_code: String) -> void:
 
 func connect_to_game_server(reason: String) -> String:
 	if connection_service.is_server_connected():
-		_log("V2 already connected for %s" % reason)
+		_log("Already connected for %s" % reason)
 		send_pending_boot_request()
 		return Constants.CONNECT_RESULT_ALREADY_CONNECTED
 
 	var result = connection_service.connect_to_server(websocket_url)
-	_log("V2 connecting to server for %s: %s" % [reason, error_string(result)])
+	_log("Connecting to server for %s: %s" % [reason, error_string(result)])
 	if result == OK:
 		return Constants.CONNECT_RESULT_STARTED_CONNECTING
 	return Constants.CONNECT_RESULT_FAILED
@@ -58,13 +58,13 @@ func send_pending_boot_request() -> void:
 
 	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
 		connection_service.send_start_single_player_request()
-		_log("V2 sent single player request")
+		_log("Sent single player request")
 	elif request_type == Constants.BOOT_REQUEST_CREATE_ROOM:
 		connection_service.send_create_room_request()
-		_log("V2 sent create room request")
+		_log("Sent create room request")
 	elif request_type == Constants.BOOT_REQUEST_JOIN_ROOM:
 		connection_service.send_join_room_request(room_code)
-		_log("V2 sent join room request: %s" % room_code)
+		_log("Sent join room request: %s" % room_code)
 	else:
 		request_sent = false
 
