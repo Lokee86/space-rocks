@@ -32,7 +32,7 @@ project/assembly_name="Space Rocks"
 
 movie_writer/video_quality=1.0
 movie_writer/audio_bit_depth=32
-movie_writer/movie_file="D:/!bin/space-rocks/client/game-clip.avi"
+movie_writer/movie_file="res://client/game-clip.avi"
 movie_writer/disable_vsync=true
 
 [input]

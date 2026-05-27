@@ -288,7 +288,7 @@ Generated packet files include:
 
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/entities/packets_generated.go`
-- `client/scripts/networking/packets.gd`
+- `client/scripts/networking/packets/packets.gd`
 
 Shared constants are sourced from:
 
