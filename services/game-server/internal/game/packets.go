@@ -103,10 +103,18 @@ type EventState struct {
 	Y            float64 `json:"y"`
 }
 
+type DebugStatus struct {
+	Invincible    bool `json:"invincible"`
+	InfiniteLives bool `json:"infinite_lives"`
+	WorldFrozen   bool `json:"world_frozen"`
+	PlayerFrozen  bool `json:"player_frozen"`
+}
+
 type StatePacket struct {
 	Type            string                            `json:"type"`
 	SelfID          string                            `json:"self_id"`
 	Lives           int                               `json:"lives"`
+	DebugStatus     DebugStatus                       `json:"debug_status"`
 	Players         map[string]entities.ShipState     `json:"players"`
 	PlayerLifecycle map[string]string                 `json:"player_lifecycle"`
 	Bullets         map[string]entities.BulletState   `json:"bullets"`
