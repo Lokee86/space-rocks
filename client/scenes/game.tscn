@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="5_ny5dr"]
 [ext_resource type="PackedScene" uid="uid://2nhypjy0hv4h" path="res://scenes/player.tscn" id="6_a3nuj"]
 [ext_resource type="PackedScene" uid="uid://cqjku4qxxcoxj" path="res://scenes/ui/hud.tscn" id="7_mdqg4"]
+[ext_resource type="AudioStream" uid="uid://dp8em413aifk2" path="res://audio/background.mp3" id="8_gee14"]
+[ext_resource type="Script" path="res://scripts/gameplay/audio/background_music_flow.gd" id="9_background_music_flow"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_62kg4"]
 shader = ExtResource("3_xyiwq")
@@ -26,6 +28,12 @@ shader_parameter/opacity = 1.0
 
 [node name="Game" type="Node2D" unique_id=443982094]
 script = ExtResource("2_04i1g")
+
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="." unique_id=632798022]
+script = ExtResource("9_background_music_flow")
+stream = ExtResource("8_gee14")
+volume_db = -20.0
+parameters/looping = true
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="." unique_id=767588751]
 layer = -10

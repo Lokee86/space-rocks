@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://b8mpb010336ty"]
+[gd_scene format=3 uid="uid://b8mpb010336ty"]
 
 [ext_resource type="Texture2D" uid="uid://bxwhk53xu5vyv" path="res://assets/bullet_blast/OrangeBulletExplo (1).png" id="1_i4do5"]
 [ext_resource type="Texture2D" uid="uid://ccy01k6dx51j0" path="res://assets/bullet_blast/OrangeBulletExplo (2).png" id="2_xidww"]
@@ -34,13 +34,16 @@ animations = [{
 "speed": 20.0
 }]
 
-[node name="BulletBlast" type="Node2D"]
+[node name="BulletBlast" type="Node2D" unique_id=1804742727]
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1433021483]
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_hftmn")
 animation = &"bullet_blast"
 
-[node name="AsteroidDestroyed" type="AudioStreamPlayer2D" parent="."]
+[node name="AsteroidDestroyed" type="AudioStreamPlayer2D" parent="." unique_id=1277973778]
+visible = false
 stream = ExtResource("7_e5wgo")
-volume_db = -5.0
+volume_db = -7.0
+attenuation = 0.3660214
+max_polyphony = 6
