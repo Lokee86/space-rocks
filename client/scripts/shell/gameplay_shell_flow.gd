@@ -4,7 +4,6 @@ class_name GameplayShellFlow
 const GameplayRuntimeContext = preload("res://scripts/gameplay/session/gameplay_runtime_context.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
-const GameplayDevtoolsContext = preload("res://scripts/devtools/gameplay_devtools_context.gd")
 const GameplaySpectateContext = preload("res://scripts/gameplay/spectate/gameplay_spectate_context.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 
@@ -18,7 +17,6 @@ var connection_service
 var hud_flow
 var menu_flow
 var runtime_tick_flow
-var devtools_context
 var spectate_context
 var spectate_menu_state
 var has_received_state := false
@@ -61,12 +59,10 @@ func configure(
 	runtime_context.configure_respawn(connection_service, hud_flow)
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
 	runtime_tick_flow.configure(hud_flow)
+	runtime_context.configure_input(connection_service, player, menu_flow)
 	runtime_context.configure_pause_input(menu_flow)
-	devtools_context = GameplayDevtoolsContext.new()
-	devtools_context.configure(connection_service)
 	spectate_context = GameplaySpectateContext.new()
 	spectate_context.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
-	runtime_context.configure_input(connection_service, player, menu_flow)
 
 
 func reset() -> void:
@@ -79,8 +75,6 @@ func reset() -> void:
 		menu_flow.reset()
 	if runtime_tick_flow != null:
 		runtime_tick_flow.reset()
-	if devtools_context != null:
-		devtools_context.reset()
 	if spectate_context != null:
 		spectate_context.reset()
 
@@ -132,13 +126,10 @@ func process(_delta: float) -> void:
 		runtime_context.process(_delta)
 	if runtime_tick_flow != null:
 		runtime_tick_flow.process(_delta)
-	runtime_context.process_pause_input(has_received_state)
-	if devtools_context != null:
-		devtools_context.process(has_received_state)
+	runtime_context.process_input(has_received_state)
 	if spectate_context != null:
 		spectate_context.process()
 	runtime_context.process_respawn(has_received_state)
-	runtime_context.process_input()
 
 
 func _on_quit_to_main_menu_requested() -> void:

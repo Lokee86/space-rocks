@@ -20,10 +20,9 @@ The current gameplay direction is server-authoritative. The Godot client handles
 
 ## Read First
 
-For normal workflow and verification commands:
+For normal workflow:
 
 - `docs/developer.md`
-- `docs/agent/testing.md`
 
 For project memory and recent volatile context:
 
@@ -65,53 +64,6 @@ github.com/Lokee86/space-rocks/server
 That mismatch is intentional for now. Import paths inside the Go server still use `github.com/Lokee86/space-rocks/server/...`.
 
 `services/api-server/` exists as an empty placeholder for a future Node.js/TypeScript/NestJS API service. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
-
-## Terminal / Verification Policy
-
-Agents should not run terminal commands by default.
-
-- Do not run `rg`, tests, formatters, generators, git commands, or shell commands unless the prompt explicitly allows it.
-- The default agent job is editing only: make the requested small change and report changed files plus unexpected scope.
-- Verification commands are usually human-run by the user after the agent edit.
-- Docs and skills may list useful commands, but those commands are guidance for human-run checkpoints unless the prompt explicitly says the agent should run them.
-- Read-only prompts must not edit files, run formatters, or perform cleanup.
-- When the user asks to "answer" or "report", do not edit files.
-
-## Common Human-Run Commands
-
-Run server tests:
-
-```bash
-cd services/game-server
-go test -buildvcs=false ./...
-```
-
-Preferred server test command when cache/environment issues appear:
-
-```bash
-cd services/game-server
-env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
-```
-
-Run client GUT tests, if the `godot` CLI is available:
-
-```bash
-godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
-```
-
-Validate active shared constants:
-
-```bash
-python3 tools/data_sync/main.py -validate -constants
-```
-
-Validate shared packets:
-
-```bash
-python3 tools/data_sync/main.py -validate -packets
-```
-
-For full testing expectations and additional data-sync commands, read `docs/agent/testing.md`.
 
 ## Generated Files
 
@@ -190,9 +142,6 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability.
 - Use `services/game-server/internal/game/motion` for per-entity movement integration and advance-with-wrap behavior.
 - Use `services/game-server/internal/game/space` for gameplay distance, direction, and wrap-aware spatial math.
-- Add focused Go tests for server gameplay rules that can regress.
-- Add focused GUT tests for client packet, HUD, `world_sync`, and pure client logic regressions.
-- Keep test-only helpers under `client/tests/`, not `client/scripts/`.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
 - Do not revert user/editor changes unless explicitly requested.
 - Keep changes scoped. The user strongly prefers scalable structure without unnecessary code growth.
@@ -258,13 +207,6 @@ Client runtime:
 - `client/scripts/entities/player.gd`
 - `client/scripts/ui/hud/hud_controller.gd`
 - `client/scripts/ui/menus/`
-
-Client tests:
-
-- `client/tests/README.md`
-- `client/tests/unit/`
-- `client/tests/fixtures/`
-- `client/tests/helpers/`
 
 Shared schema/generation:
 
