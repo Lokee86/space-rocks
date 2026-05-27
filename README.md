@@ -150,4 +150,4 @@ Generated recordings and build artifacts should not be committed. `.gitignore` e
 
 ## License
 
-No license file is currently present. The project license is not yet specified.
+All rights reserved

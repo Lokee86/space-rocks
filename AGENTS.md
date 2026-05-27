@@ -218,8 +218,7 @@ Client runtime:
 - `client/scripts/boot/`
 - `client/scripts/config/`
 - `client/scripts/networking/network_client.gd`
-- `client/scripts/networking/packet_codec/packet_codec.gd`
-- `client/scripts/networking/world_sync.gd`
+- `client/scripts/networking/packets/packet_codec.gd`
 - `client/scripts/entities/player.gd`
 - `client/scripts/ui/`
 

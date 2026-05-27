@@ -72,8 +72,6 @@ Pause plumbing exists:
 - resume starts a short invulnerability window
 - pause/menu UI exists but is still evolving
 
-Pause/menu behavior still needs smoke testing, especially active-game pause, GameOver menu behavior, ReturnToLobby, and websocket preservation.
-
 If pause behavior seems wrong, inspect current Godot scenes/scripts before changing code. The HUD/menu scenes have been changed multiple times.
 
 ## Future Plans Already Documented
@@ -98,10 +96,7 @@ API server:
 
 ## Known Gaps / TODOs
 
-- Pause/menu UI is functional but still evolving; smoke-test game-over, spectate, return-to-lobby, and websocket preservation after menu/input changes.
 - Window/gameplay balance should move away from raw OS max window pixels toward a logical gameplay viewport cap.
-- Collision shape export/import should be verified after the Godot 4.6 upgrade.
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
 - API server is planned but not scaffolded.
 - Ship variants are planned but not implemented.
-- Toroidal wrapping is implemented and still needs manual gameplay smoke testing after related changes.
