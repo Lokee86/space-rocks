@@ -5,7 +5,6 @@ const GameplayRuntimeContext = preload("res://scripts/gameplay/session/gameplay_
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
 const GameplaySpectateContext = preload("res://scripts/gameplay/spectate/gameplay_spectate_context.gd")
-const Packets = preload("res://scripts/networking/packets/packets.gd")
 
 signal gameplay_started
 signal quit_to_main_menu_requested
@@ -18,7 +17,6 @@ var hud_flow
 var menu_flow
 var runtime_tick_flow
 var spectate_context
-var spectate_menu_state
 var has_received_state := false
 
 
@@ -44,10 +42,6 @@ func configure(
 		var return_to_lobby_callable := Callable(self, "_on_return_to_lobby_requested")
 		if !menu_flow.return_to_lobby_requested.is_connected(return_to_lobby_callable):
 			menu_flow.return_to_lobby_requested.connect(return_to_lobby_callable)
-	if menu_flow != null && menu_flow.has_signal("spectate_requested"):
-		var spectate_callable := Callable(self, "_on_spectate_requested")
-		if !menu_flow.spectate_requested.is_connected(spectate_callable):
-			menu_flow.spectate_requested.connect(spectate_callable)
 	runtime_context = GameplayRuntimeContext.new()
 	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids)
 	runtime_context.configure_events(
@@ -62,7 +56,7 @@ func configure(
 	runtime_context.configure_input(connection_service, player, menu_flow)
 	runtime_context.configure_pause_input(menu_flow)
 	spectate_context = GameplaySpectateContext.new()
-	spectate_context.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
+	spectate_context.configure(menu_flow, null, runtime_context.world_sync)
 
 
 func reset() -> void:
@@ -87,14 +81,7 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	var state := GameplayStatePacketReader.read(packet)
 	runtime_context.mark_input_gameplay_state_received()
 	if hud_flow != null:
-		hud_flow.show_gameplay()
-		if state["has_lives"]:
-			hud_flow.apply_lives(state["lives"])
-		var server_players: Dictionary = state["server_players"]
-		var self_id: String = state["self_id"]
-		if server_players.has(self_id):
-			var self_state: Dictionary = server_players[self_id]
-			hud_flow.apply_score(int(self_state.get(Packets.FIELD_SCORE, 0)))
+		hud_flow.apply_gameplay_state_summary(state)
 	runtime_context.apply_world_state(state, has_received_state)
 	runtime_context.apply_respawn_alive_restore(state, menu_flow)
 	runtime_context.apply_server_events(state)
@@ -104,9 +91,8 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 
 
 func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
-	spectate_menu_state = spectate_menu_state_ref
 	if spectate_context != null:
-		spectate_context.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
+		spectate_context.configure_menu_state(spectate_menu_state_ref)
 
 
 func current_camera() -> Camera2D:
@@ -138,8 +124,3 @@ func _on_quit_to_main_menu_requested() -> void:
 
 func _on_return_to_lobby_requested() -> void:
 	return_to_lobby_requested.emit()
-
-
-func _on_spectate_requested() -> void:
-	if spectate_context != null:
-		spectate_context.begin_spectating()

@@ -1,6 +1,8 @@
 extends RefCounted
 class_name GameplayHudFlow
 
+const Packets = preload("res://scripts/networking/packets/packets.gd")
+
 var hud: Control
 var is_dead := false
 var is_game_over := false
@@ -23,6 +25,17 @@ func show_gameplay() -> void:
 
 	hud.show()
 	_hide_hud_child("RoomID")
+
+
+func apply_gameplay_state_summary(state: Dictionary) -> void:
+	show_gameplay()
+	if state["has_lives"]:
+		apply_lives(state["lives"])
+	var server_players: Dictionary = state["server_players"]
+	var self_id: String = state["self_id"]
+	if server_players.has(self_id):
+		var self_state: Dictionary = server_players[self_id]
+		apply_score(int(self_state.get(Packets.FIELD_SCORE, 0)))
 
 
 func reset() -> void:
