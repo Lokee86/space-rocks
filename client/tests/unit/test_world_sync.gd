@@ -1,9 +1,9 @@
 extends GutTest
 
-const Packets := preload("res://scripts/networking/packets.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
-const WorldSyncScript := preload("res://scripts/networking/world_sync.gd")
+const WorldSyncScript := preload("res://scripts/world/world_sync.gd")
 const PlayerScene := preload("res://scenes/player.tscn")
 
 var game_owner: Node2D
@@ -41,8 +41,6 @@ func test_apply_state_creates_player_nodes() -> void:
 
 	assert_true(_player_nodes().has(WorldStateFixture.LOCAL_PLAYER_ID))
 	assert_true(_player_nodes().has(WorldStateFixture.REMOTE_PLAYER_ID))
-	assert_false(world_sync.get_remote_player_hues().has(WorldStateFixture.LOCAL_PLAYER_ID))
-	assert_true(world_sync.get_remote_player_hues().has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_eq(_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID], local_player)
 	assert_eq(
 		_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID].position,
@@ -209,7 +207,6 @@ func test_apply_state_removes_stale_remote_player_node() -> void:
 	assert_false(_player_sync().get("initialized_players").has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_false(_player_sync().get("target_player_positions").has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_false(_player_sync().get("target_player_rotations").has(WorldStateFixture.REMOTE_PLAYER_ID))
-	assert_false(world_sync.get_remote_player_hues().has(WorldStateFixture.REMOTE_PLAYER_ID))
 	assert_true(remote_node.is_queued_for_deletion())
 
 

@@ -1,7 +1,7 @@
 extends GutTest
 
-const Packets := preload("res://scripts/networking/packets.gd")
-const AsteroidSyncState := preload("res://scripts/networking/asteroid_sync_state.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
+const AsteroidSyncState := preload("res://scripts/world/asteroid_sync_state.gd")
 
 
 func test_server_position_reads_packet_coordinates() -> void:

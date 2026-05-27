@@ -1,6 +1,6 @@
 extends GutTest
 
-const PacketCodec := preload("res://scripts/networking/packet_codec/packet_codec.gd")
+const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
 
 
 func test_encode_returns_json_text_that_decodes_to_original_fields() -> void:

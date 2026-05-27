@@ -1,6 +1,6 @@
 extends GutTest
 
-const PlayerSyncScript := preload("res://scripts/networking/player_sync.gd")
+const PlayerSyncScript := preload("res://scripts/world/player_sync.gd")
 
 
 func test_remote_hue_for_player_is_deterministic() -> void:

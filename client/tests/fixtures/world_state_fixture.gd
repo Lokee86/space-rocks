@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/networking/packets.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
 
 const LOCAL_PLAYER_ID := "local-player"
 const REMOTE_PLAYER_ID := "remote-player"
