@@ -1,16 +1,11 @@
 extends RefCounted
 class_name GameplayShellFlow
 
-const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
+const GameplayRuntimeContext = preload("res://scripts/gameplay/session/gameplay_runtime_context.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
-const GameplayEventFlow = preload("res://scripts/shell/gameplay_event_flow.gd")
-const GameplayDeathFlow = preload("res://scripts/shell/gameplay_death_flow.gd")
-const GameplayRespawnFlow = preload("res://scripts/shell/gameplay_respawn_flow.gd")
 const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
-const GameplayPauseInputFlow = preload("res://scripts/shell/gameplay_pause_input_flow.gd")
-const GameplayDebugFlow = preload("res://scripts/devtools/gameplay_debug_flow.gd")
+const GameplayDevtoolsContext = preload("res://scripts/devtools/gameplay_devtools_context.gd")
 const GameplaySpectateFlow = preload("res://scripts/gameplay/spectate/gameplay_spectate_flow.gd")
-const GameplayInputFlow = preload("res://scripts/gameplay/input/gameplay_input_flow.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 
 signal gameplay_started
@@ -18,19 +13,14 @@ signal quit_to_main_menu_requested
 signal return_to_lobby_requested
 
 var player
-var world_sync
+var runtime_context
 var connection_service
 var hud_flow
 var menu_flow
 var background_flow
-var event_flow
-var death_flow
-var respawn_flow
 var runtime_tick_flow
-var pause_input_flow
-var debug_flow
+var devtools_context
 var spectate_flow
-var input_flow
 var spectate_menu_state
 var has_received_state := false
 
@@ -63,69 +53,50 @@ func configure(
 		if !menu_flow.spectate_requested.is_connected(spectate_callable):
 			menu_flow.spectate_requested.connect(spectate_callable)
 	background_flow = background_flow_ref
-	world_sync = WorldSyncScript.new()
-	world_sync.configure(game_owner, player_ref, bullets, asteroids)
-	event_flow = GameplayEventFlow.new()
-	event_flow.configure(
+	runtime_context = GameplayRuntimeContext.new()
+	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids)
+	runtime_context.configure_events(
 		game_owner,
 		game_over_sound,
-		Callable(world_sync, "visual_position_for_server_position")
+		hud_flow,
+		menu_flow
 	)
-	death_flow = GameplayDeathFlow.new()
-	death_flow.configure(hud_flow, menu_flow, event_flow)
-	event_flow.self_death_event.connect(Callable(death_flow, "apply_self_death_event"))
-	respawn_flow = GameplayRespawnFlow.new()
-	respawn_flow.configure(connection_service, hud_flow)
+	runtime_context.configure_respawn(connection_service, hud_flow)
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
 	runtime_tick_flow.configure(hud_flow)
-	pause_input_flow = GameplayPauseInputFlow.new()
-	pause_input_flow.configure(menu_flow)
-	debug_flow = GameplayDebugFlow.new()
-	debug_flow.configure(connection_service)
+	runtime_context.configure_pause_input(menu_flow)
+	devtools_context = GameplayDevtoolsContext.new()
+	devtools_context.configure(connection_service)
 	spectate_flow = GameplaySpectateFlow.new()
-	spectate_flow.configure(menu_flow, spectate_menu_state, world_sync)
-	input_flow = GameplayInputFlow.new()
-	input_flow.configure(connection_service, player, menu_flow)
+	spectate_flow.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
+	runtime_context.configure_input(connection_service, player, menu_flow)
 
 
 func reset() -> void:
 	has_received_state = false
-	if player != null:
-		player.hide()
-	if world_sync != null:
-		world_sync.reset()
+	if runtime_context != null:
+		runtime_context.reset()
 	if hud_flow != null:
 		hud_flow.reset()
 	if menu_flow != null && menu_flow.has_method("reset"):
 		menu_flow.reset()
 	if background_flow != null:
 		background_flow.clear()
-	if event_flow != null:
-		event_flow.reset()
-	if death_flow != null:
-		death_flow.reset()
-	if respawn_flow != null:
-		respawn_flow.reset()
 	if runtime_tick_flow != null:
 		runtime_tick_flow.reset()
-	if pause_input_flow != null:
-		pause_input_flow.reset()
-	if debug_flow != null:
-		debug_flow.reset()
+	if devtools_context != null:
+		devtools_context.reset()
 	if spectate_flow != null:
 		spectate_flow.reset()
-	if input_flow != null:
-		input_flow.reset()
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
-	if world_sync == null:
+	if runtime_context == null:
 		return
 
 	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
-	if input_flow != null:
-		input_flow.mark_gameplay_state_received()
+	runtime_context.mark_input_gameplay_state_received()
 	if background_flow != null:
 		background_flow.mark_gameplay_state_received()
 	if hud_flow != null:
@@ -137,20 +108,9 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 		if server_players.has(self_id):
 			var self_state: Dictionary = server_players[self_id]
 			hud_flow.apply_score(int(self_state.get(Packets.FIELD_SCORE, 0)))
-	world_sync.apply_state(
-		state["self_id"],
-		state["server_players"],
-		state["server_bullets"],
-		state["server_asteroids"],
-		has_received_state
-	)
-	if hud_flow != null && respawn_flow != null && respawn_flow.should_restore_alive_hud(state, player):
-		hud_flow.set_alive()
-		if menu_flow != null:
-			menu_flow.set_alive()
-		respawn_flow.clear_awaiting_confirmation()
-	if event_flow != null:
-		event_flow.apply_server_events(state["server_events"], state["self_id"])
+	runtime_context.apply_world_state(state, has_received_state)
+	runtime_context.apply_respawn_alive_restore(state, menu_flow)
+	runtime_context.apply_server_events(state)
 	has_received_state = true
 	if is_first_gameplay_state:
 		gameplay_started.emit()
@@ -159,38 +119,35 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 	spectate_menu_state = spectate_menu_state_ref
 	if spectate_flow != null:
-		spectate_flow.configure(menu_flow, spectate_menu_state, world_sync)
+		spectate_flow.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
 
 
 func current_camera() -> Camera2D:
-	if player == null:
+	if runtime_context == null:
 		return null
-	return player.get_node_or_null("Camera2D") as Camera2D
+	return runtime_context.current_camera()
 
 
 func remote_player_visual_positions() -> Dictionary:
-	if world_sync == null:
+	if runtime_context == null:
 		return {}
-	return world_sync.get_remote_player_visual_positions()
+	return runtime_context.remote_player_visual_positions()
 
 
 func process(_delta: float) -> void:
-	if world_sync != null:
-		world_sync.interpolate(_delta)
+	if runtime_context != null:
+		runtime_context.process(_delta)
 	if runtime_tick_flow != null:
 		runtime_tick_flow.process(_delta)
-	if pause_input_flow != null:
-		pause_input_flow.process(has_received_state)
-	if debug_flow != null:
-		debug_flow.process(has_received_state)
+	runtime_context.process_pause_input(has_received_state)
+	if devtools_context != null:
+		devtools_context.process(has_received_state)
 	if spectate_flow != null:
 		spectate_flow.process()
 	if background_flow != null:
 		background_flow.process()
-	if respawn_flow != null:
-		respawn_flow.process(has_received_state)
-	if input_flow != null:
-		input_flow.process()
+	runtime_context.process_respawn(has_received_state)
+	runtime_context.process_input()
 
 
 func _on_quit_to_main_menu_requested() -> void:
