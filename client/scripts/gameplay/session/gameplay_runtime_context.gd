@@ -2,8 +2,8 @@ extends RefCounted
 class_name GameplayRuntimeContext
 
 const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
-const GameplayEventFlow = preload("res://scripts/shell/gameplay_event_flow.gd")
-const GameplayDeathFlow = preload("res://scripts/shell/gameplay_death_flow.gd")
+const GameplayEventFlow = preload("res://scripts/gameplay/events/gameplay_event_flow.gd")
+const GameplayDeathFlow = preload("res://scripts/gameplay/events/gameplay_death_flow.gd")
 const GameplayRespawnFlow = preload("res://scripts/shell/gameplay_respawn_flow.gd")
 
 var world_sync
@@ -55,8 +55,6 @@ func reset() -> void:
 		world_sync.reset()
 	if event_flow != null:
 		event_flow.reset()
-	if death_flow != null:
-		death_flow.reset()
 	if respawn_flow != null:
 		respawn_flow.reset()
 
