@@ -6,7 +6,7 @@ const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
 const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
 const GameplayMenuFlow := preload("res://scripts/shell/gameplay_menu_flow.gd")
 const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
-const GameplayStatePacketReader := preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
+const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
 
 var connection_service
 var scene_root: Node
