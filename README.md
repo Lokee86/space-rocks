@@ -8,6 +8,31 @@ The project is in active development. Current work includes a playable Godot cli
 
 Expect incomplete docs and rough edges while systems are still moving.
 
+## Prerequisites
+
+Install these before running or developing Space Rocks locally:
+
+- **Godot 4.6** for the client project.
+  - Open/import the `client/` folder as the Godot project.
+  - The configured main scene is `res://scenes/game.tscn`.
+
+- **Go 1.26.3** for the real-time game server.
+  - The Go module is in `services/game-server/`.
+  - The server entrypoint is `services/game-server/cmd/game-server`.
+
+- **Python 3.10+** for repo tooling and static checks.
+  - The data-sync tool uses modern Python typing syntax and requires `tomlkit`.
+  - The client constants-boundary test uses `pytest`.
+
+- **Git LFS** for binary/source asset files.
+  - The repo tracks asset patterns such as PNG, WEBP, WAV, and MP3 through Git LFS.
+  - After cloning, run:
+
+```bash
+git lfs install
+git lfs pull
+```
+
 ## Repository Structure
 
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.

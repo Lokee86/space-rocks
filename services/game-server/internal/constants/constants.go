@@ -15,7 +15,7 @@ const PlayerDamping = 0.98
 // data-sync:end constants.server.player_movement
 
 // data-sync:start constants.server.player_lifecycle
-const PlayerStartingLives = 2
+const PlayerStartingLives = 1
 const PlayerRespawnDelay = 3.0
 
 // data-sync:end constants.server.player_lifecycle
