@@ -27,11 +27,6 @@ func connect_to_server(url: String) -> Error:
 		"Origin: %s" % Constants.MULTIPLAYER_WS_ORIGIN
 	])
 	var err := socket.connect_to_url(url)
-	if err != OK:
-		print("connection failed")
-	else:
-		print("Connecting...")
-
 	return err
 
 
@@ -75,7 +70,6 @@ func send_join_room_request(room_code: String) -> void:
 
 
 func send_leave_room_request() -> void:
-	ClientLogger.network_debug("LeaveRoomRequest sent")
 	send_packet(Packets.leave_room_request_packet())
 
 
@@ -88,12 +82,10 @@ func send_start_game_request() -> void:
 
 
 func send_start_single_player_request() -> void:
-	ClientLogger.network_debug("StartSinglePlayerRequest sent")
 	send_packet(Packets.start_single_player_request_packet())
 
 
 func send_return_to_lobby_request() -> void:
-	ClientLogger.network_debug("ReturnToLobbyRequest sent")
 	send_packet(Packets.return_to_lobby_request_packet())
 
 

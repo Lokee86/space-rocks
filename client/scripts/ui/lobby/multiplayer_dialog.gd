@@ -39,7 +39,6 @@ func _ready() -> void:
 
 
 func _on_create_room_pressed() -> void:
-	print("V2 multiplayer dialog create pressed")
 	create_room_requested.emit()
 
 
@@ -47,13 +46,11 @@ func _on_join_room_pressed() -> void:
 	var room_code := ""
 	if room_code_input != null:
 		room_code = room_code_input.text.strip_edges()
-	print("V2 multiplayer dialog join pressed: %s" % room_code)
 	set_status(Constants.DIALOG_STATUS_JOINING_ROOM)
 	join_room_requested.emit(room_code)
 
 
 func _on_cancel_pressed() -> void:
-	print("V2 multiplayer dialog cancel pressed")
 	canceled.emit()
 
 

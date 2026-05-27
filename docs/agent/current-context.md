@@ -22,7 +22,7 @@ Keep this file shorter than the permanent architecture docs. Remove stale notes 
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
 - The user prefers files under roughly 200 lines when practical and treats roughly 500 lines as a refactor trigger for actively changing production files.
 - Agent prompts should be short work orders, not mini-policy documents.
-- Agents should not run terminal commands by default. Verification commands are usually human-run checkpoints.
+- Verification commands are usually human-run checkpoints.
 - Agent reports should focus on changed files, unexpected files touched, and concise notes. Include command/test/git output only when the prompt explicitly allowed terminal commands.
 - Do not produce no-work prompts. Verification belongs in commands/checkpoints, not in a separate agent prompt.
 
