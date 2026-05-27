@@ -17,7 +17,6 @@ var runtime_context
 var connection_service
 var hud_flow
 var menu_flow
-var background_flow
 var runtime_tick_flow
 var devtools_context
 var spectate_context
@@ -52,9 +51,9 @@ func configure(
 		var spectate_callable := Callable(self, "_on_spectate_requested")
 		if !menu_flow.spectate_requested.is_connected(spectate_callable):
 			menu_flow.spectate_requested.connect(spectate_callable)
-	background_flow = background_flow_ref
 	runtime_context = GameplayRuntimeContext.new()
 	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids)
+	runtime_context.configure_background(background_flow_ref)
 	runtime_context.configure_events(
 		game_owner,
 		game_over_sound,
@@ -80,8 +79,6 @@ func reset() -> void:
 		hud_flow.reset()
 	if menu_flow != null && menu_flow.has_method("reset"):
 		menu_flow.reset()
-	if background_flow != null:
-		background_flow.clear()
 	if runtime_tick_flow != null:
 		runtime_tick_flow.reset()
 	if devtools_context != null:
@@ -97,8 +94,7 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
 	runtime_context.mark_input_gameplay_state_received()
-	if background_flow != null:
-		background_flow.mark_gameplay_state_received()
+	runtime_context.mark_background_gameplay_state_received()
 	if hud_flow != null:
 		hud_flow.show_gameplay()
 		if state["has_lives"]:
@@ -144,8 +140,7 @@ func process(_delta: float) -> void:
 		devtools_context.process(has_received_state)
 	if spectate_context != null:
 		spectate_context.process()
-	if background_flow != null:
-		background_flow.process()
+	runtime_context.process_background()
 	runtime_context.process_respawn(has_received_state)
 	runtime_context.process_input()
 
