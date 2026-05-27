@@ -1,6 +1,6 @@
 extends Node
 
-const NetworkClient := preload("res://scripts/networking/network_client.gd")
+const NetworkClientScript := preload("res://scripts/networking/network_client.gd")
 const ServerPacketRouter := preload("res://scripts/networking/packets/server_packet_router.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const Packets := preload("res://scripts/networking/packets/packets.gd")
@@ -21,7 +21,7 @@ var has_started_connection := false
 
 func _ready() -> void:
 	process_priority = Constants.NETWORK_POLL_PROCESS_PRIORITY
-	network_client = NetworkClient.new()
+	network_client = NetworkClientScript.new()
 	add_child(network_client)
 	_connect_network_client_signals()
 
@@ -60,9 +60,9 @@ func send_join_room_request(room_code: String) -> void:
 		network_client.send_join_room_request(room_code)
 
 
-func send_set_ready_request(ready: bool) -> void:
+func send_set_ready_request(is_ready: bool) -> void:
 	if network_client != null:
-		network_client.send_set_ready_request(ready)
+		network_client.send_set_ready_request(is_ready)
 
 
 func send_start_game_request() -> void:

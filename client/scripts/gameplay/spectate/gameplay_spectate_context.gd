@@ -1,7 +1,6 @@
 extends RefCounted
 class_name GameplaySpectateContext
 
-const GameplaySpectateFlow = preload("res://scripts/gameplay/spectate/gameplay_spectate_flow.gd")
 
 var spectate_flow
 var menu_flow

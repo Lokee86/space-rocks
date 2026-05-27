@@ -2,7 +2,6 @@ extends RefCounted
 class_name Effects
 
 const Constants = preload("res://scripts/constants/constants.gd")
-const GameplayAudioFlow = preload("res://scripts/gameplay/audio/gameplay_audio_flow.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"

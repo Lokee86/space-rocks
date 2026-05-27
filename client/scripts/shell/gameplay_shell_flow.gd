@@ -1,11 +1,7 @@
 extends RefCounted
 class_name GameplayShellFlow
 
-const GameplayRuntimeContext = preload("res://scripts/gameplay/runtime/gameplay_runtime_context.gd")
-const GameplayInputContext = preload("res://scripts/gameplay/input/gameplay_input_context.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
-const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
-const GameplaySpectateContext = preload("res://scripts/gameplay/spectate/gameplay_spectate_context.gd")
 
 signal gameplay_started
 signal quit_to_main_menu_requested

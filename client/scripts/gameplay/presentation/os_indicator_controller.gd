@@ -3,7 +3,6 @@ class_name OSIndicatorController
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const OS_INDICATOR_SCENE = preload("res://scenes/ui/elements/osindicator.tscn")
-const PlayerHuePresenter = preload("res://scripts/gameplay/presentation/player_hue_presenter.gd")
 
 const INDICATOR_SIZE := Vector2(14.0, 14.0)
 const INDICATOR_ROTATION_OFFSET := PI * 0.5

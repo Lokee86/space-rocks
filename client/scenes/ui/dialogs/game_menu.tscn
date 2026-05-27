@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cvvmd6ho6fl74"]
 
-[ext_resource type="Script" uid="uid://bapux4mbnahk5" path="res://scripts/ui/menus/game_menu.gd" id="1_a46sh"]
+[ext_resource type="Script" path="res://scripts/ui/menus/game_menu.gd" path="res://scripts/ui/menus/game_menu.gd" id="1_a46sh"]
 [ext_resource type="Texture2D" uid="uid://mwwqwts1iy0t" path="res://assets/ui/windows/Window (2).png" id="2_fcfrx"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_1b0xy"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="4_x2hll"]
@@ -64,6 +64,7 @@ grow_vertical = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer/MarginContainer/HBoxContainer/PrimaryActionButton/CenterContainer" unique_id=2031967233]
 layout_mode = 2
+theme_override_constants/margin_left = 0
 
 [node name="Resume" type="Label" parent="CenterContainer/TextureRect/CenterContainer/MarginContainer/HBoxContainer/PrimaryActionButton/CenterContainer/MarginContainer" unique_id=1459573401]
 layout_mode = 2
