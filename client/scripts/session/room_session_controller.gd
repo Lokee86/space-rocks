@@ -1,11 +1,11 @@
 extends RefCounted
 
 const LobbyFlow := preload("res://scripts/lobby/lobby_flow.gd")
-const LobbyNetworkActions := preload("res://scripts/shell/lobby_network_actions.gd")
-const LobbyReturnFlow := preload("res://scripts/shell/lobby_return_flow.gd")
-const LobbyShellFlow := preload("res://scripts/shell/lobby_shell_flow.gd")
-const MultiplayerLobbyPresenter := preload("res://scripts/shell/multiplayer_lobby_presenter.gd")
-const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
+const LobbyNetworkActions := preload("res://scripts/lobby/lobby_network_actions.gd")
+const LobbyReturnFlow := preload("res://scripts/lobby/lobby_return_flow.gd")
+const LobbyShellFlow := preload("res://scripts/lobby/lobby_shell_flow.gd")
+const MultiplayerLobbyPresenter := preload("res://scripts/lobby/multiplayer_lobby_presenter.gd")
+const MultiplayerDialogStatusPresenter := preload("res://scripts/lobby/multiplayer_dialog_status_presenter.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 const Packets := preload("res://scripts/networking/packets/packets.gd")
 

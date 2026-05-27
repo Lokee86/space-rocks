@@ -1,7 +1,7 @@
 extends RefCounted
 
 const Constants := preload("res://scripts/constants/constants.gd")
-const MultiplayerDialogStatusPresenter := preload("res://scripts/shell/multiplayer_dialog_status_presenter.gd")
+const MultiplayerDialogStatusPresenter := preload("res://scripts/lobby/multiplayer_dialog_status_presenter.gd")
 
 var main_menu: Control
 var session_boot_controller
