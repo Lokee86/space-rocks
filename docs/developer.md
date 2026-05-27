@@ -221,12 +221,14 @@ Current layout:
 - `client/tests/fixtures/`: small test data and scene fixtures.
 - `client/tests/helpers/`: reusable test-only helpers.
 
-Keep test-only helpers out of `client/scripts/`. Client tests should focus on generated packets, HUD behavior, `world_sync`, missing server-field safety, constants-boundary assumptions, and pure client logic. Do not turn these into full gameplay/network integration tests.
+Keep test-only helpers out of `client/scripts/`. Client tests should focus on generated packets, packet/state reader safety, HUD/menu behavior, `world_sync`, constants-boundary assumptions, and pure client logic. Do not turn these into full gameplay/network integration tests.
 
 Run the GUT suite with:
 
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
+
+A passing run may still report Godot ObjectDB/resource cleanup warnings; treat the suite result as passing when GUT reports all tests passed.
 
 Expected missing-field warnings may appear in tests that intentionally verify safe behavior for missing `lives`, `respawn_delay`, or asteroid `scale`; those warnings are fine when the suite passes.

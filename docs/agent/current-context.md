@@ -35,16 +35,19 @@ Common starting points after the client runtime refactor:
 - `client/scripts/gameplay/runtime/`: gameplay runtime/state-application context.
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
 - `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
-- `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking.
-- `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
-- `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
+- `client/scripts/shell/gameplay_hud_flow.gd`: gameplay HUD flow.
+- `client/scripts/shell/gameplay_menu_flow.gd`: gameplay menu flow and semantic menu lifecycle signal routing.
+- `client/scripts/shell/gameplay_respawn_flow.gd`: respawn request and confirmation state.
+- `client/scripts/shell/gameplay_runtime_tick_flow.gd`: runtime HUD ticking.
 - `client/scripts/gameplay/spectate/`: spectate state, menu requests, and camera target cycling.
 - `client/scripts/gameplay/events/`: server event lane and death/game-over consequences.
 - `client/scripts/gameplay/effects/`: gameplay effects helper used by event/effects flows.
 - `client/scripts/lobby/`: lobby shell/presenter/network action flows.
 - `client/scripts/boot/`: boot flow and pending boot request.
 - `client/scripts/config/`: client config flows.
-- `client/scripts/networking/`: websocket client, packet codec, world sync, and entity sync owners.
+- `client/scripts/networking/`: websocket client and packet transport.
+- `client/scripts/networking/packets/`: generated packets and packet codec.
+- `client/scripts/world/`: world sync and entity sync owners.
 - `client/scripts/entities/player.gd`: local player node and packet-facing input state.
 - `client/scripts/ui/`: UI nodes/controllers.
 
@@ -95,7 +98,7 @@ API server:
 
 ## Known Gaps / TODOs
 
-- Pause/menu UI still needs smoke testing and may still be evolving.
+- Pause/menu UI is functional but still evolving; smoke-test game-over, spectate, return-to-lobby, and websocket preservation after menu/input changes.
 - Window/gameplay balance should move away from raw OS max window pixels toward a logical gameplay viewport cap.
 - Collision shape export/import should be verified after the Godot 4.6 upgrade.
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
