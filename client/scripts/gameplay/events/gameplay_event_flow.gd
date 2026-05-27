@@ -3,7 +3,7 @@ class_name GameplayEventFlow
 
 signal self_death_event(event: Dictionary)
 
-const EffectsScript = preload("res://scripts/gameplay/effects.gd")
+const EffectsScript = preload("res://scripts/gameplay/effects/gameplay_effects.gd")
 const GameplayEventController = preload("res://scripts/gameplay/events/gameplay_event_controller.gd")
 
 var effects
