@@ -1,6 +1,6 @@
 extends GutTest
 
-const Packets := preload("res://scripts/networking/packets.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
 
 
 func test_packet_builders_set_expected_type() -> void:

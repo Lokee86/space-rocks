@@ -1,7 +1,7 @@
 extends GutTest
 
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
-const Packets := preload("res://scripts/networking/packets.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
 
 

@@ -1,7 +1,7 @@
 extends GutTest
 
 const GameplayRoomStateFlow := preload("res://scripts/gameplay/session/gameplay_room_state_flow.gd")
-const Packets := preload("res://scripts/networking/packets.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
 
 
 func test_room_state_from_packet_uses_packet_room_state() -> void:

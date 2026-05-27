@@ -1,7 +1,7 @@
 extends GutTest
 
 const Constants := preload("res://scripts/constants/constants.gd")
-const VisualSyncPositions := preload("res://scripts/networking/visual_sync_positions.gd")
+const VisualSyncPositions := preload("res://scripts/world/visual_sync_positions.gd")
 
 
 func test_relative_to_local_visual_keeps_cross_edge_target_near_local_visual() -> void:
