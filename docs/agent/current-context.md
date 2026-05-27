@@ -24,6 +24,29 @@ Keep this file shorter than the permanent architecture docs. Remove stale notes 
 - Agent prompts should be short work orders, not mini-policy documents.
 - Agents should not run terminal commands by default. Verification commands are usually human-run checkpoints.
 - Agent reports should focus on changed files, unexpected files touched, and concise notes. Include command/test/git output only when the prompt explicitly allowed terminal commands.
+- Do not produce no-work prompts. Verification belongs in commands/checkpoints, not in a separate agent prompt.
+
+## Current Client Runtime Areas
+
+Common starting points after the client runtime refactor:
+
+- `client/scripts/session/`: session-level coordinators, including gameplay, room, config, and client session context.
+- `client/scripts/shell/gameplay_shell_flow.gd`: narrow gameplay shell coordinator. It should stay mostly as orchestration and delegation.
+- `client/scripts/gameplay/runtime/`: gameplay runtime/state-application context.
+- `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
+- `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
+- `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking.
+- `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
+- `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
+- `client/scripts/gameplay/spectate/`: spectate state, menu requests, and camera target cycling.
+- `client/scripts/gameplay/events/`: server event lane and death/game-over consequences.
+- `client/scripts/gameplay/effects/`: gameplay effects helper used by event/effects flows.
+- `client/scripts/lobby/`: lobby shell/presenter/network action flows.
+- `client/scripts/boot/`: boot flow and pending boot request.
+- `client/scripts/config/`: client config flows.
+- `client/scripts/networking/`: websocket client, packet codec, world sync, and entity sync owners.
+- `client/scripts/entities/player.gd`: local player node and packet-facing input state.
+- `client/scripts/ui/`: UI nodes/controllers.
 
 ## Implemented Developer Toggles
 
@@ -35,22 +58,6 @@ Current hardcoded Godot hotkeys:
 - `F4`: toggle the player's paused state
 
 These are server-authoritative toggles sent through generated packets where applicable. See `docs/devtools/toggles.md`.
-
-## Current Client Runtime Areas
-
-Common starting points:
-
-- `client/scripts/shell/game_shell.gd`
-- `client/scripts/gameplay/game.gd`
-- `client/scripts/gameplay/session/`
-- `client/scripts/gameplay/spectate/`
-- `client/scripts/gameplay/support/`
-- `client/scripts/networking/network_client.gd`
-- `client/scripts/networking/packet_codec/packet_codec.gd`
-- `client/scripts/networking/world_sync.gd`
-- `client/scripts/entities/player.gd`
-- `client/scripts/ui/hud/hud_controller.gd`
-- `client/scripts/ui/menus/`
 
 ## Pause / Menu Context
 
