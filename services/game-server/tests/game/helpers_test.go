@@ -305,19 +305,10 @@ func (scenario *scenario) playerInfiniteLives(playerID string) bool {
 	return scenario.sessionField(playerID, "LifeOptions").FieldByName("InfiniteLives").Bool()
 }
 
-func (scenario *scenario) worldDebugBool(fieldName string) bool {
-	scenario.t.Helper()
-
-	return scenario.gameField("worldDevTools").FieldByName(fieldName).Bool()
-}
-
 func (scenario *scenario) worldFrozen() bool {
 	scenario.t.Helper()
 
-	return scenario.worldDebugBool("FreezeAsteroids") &&
-		scenario.worldDebugBool("FreezeBullets") &&
-		scenario.worldDebugBool("FreezeSpawning") &&
-		scenario.worldDebugBool("FreezeCollisions")
+	return scenario.gameField("worldSimulationOptions").FieldByName("FreezeWorld").Bool()
 }
 
 func (scenario *scenario) player(playerID string) *entities.Ship {

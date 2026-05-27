@@ -7,7 +7,7 @@ import (
 
 func (game *Game) stepBullets(delta float64, bounds space.Bounds) {
 	for id, bullet := range game.state.Projectiles {
-		if game.worldDevTools.BulletsCanMove() {
+		if game.worldSimulationOptions.BulletsCanMove() {
 			motion.AdvanceBullet(bullet, delta, bounds)
 		}
 		if bullet.ReadyForRemoval() {

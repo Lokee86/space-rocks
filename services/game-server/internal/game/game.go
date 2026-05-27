@@ -3,7 +3,6 @@ package game
 import (
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
@@ -19,7 +18,7 @@ type Game struct {
 	spawner                   *spawning.Spawner
 	scoringPolicy             scoring.Policy
 	asteroidSpawnElapsed      float64
-	worldDevTools             devtools.WorldOptions
+	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
 	state                     entities.GameState
 	cameraViews               map[string]*entities.CameraView

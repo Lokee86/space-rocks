@@ -31,7 +31,7 @@ func (game *Game) stepPlayers(delta float64, bounds space.Bounds) {
 		if player.IsPendingDespawn() {
 			continue
 		}
-		if game.worldDevTools.BulletsCanMove() && player.WantsToShoot() && player.CanShoot() {
+		if game.worldSimulationOptions.BulletsCanMove() && player.WantsToShoot() && player.CanShoot() {
 			game.spawnBullet(player)
 			player.ResetShootCooldown()
 		}
