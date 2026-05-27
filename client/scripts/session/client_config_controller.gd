@@ -1,6 +1,6 @@
 extends RefCounted
 
-const ClientViewportConfigFlow := preload("res://scripts/shell/client_viewport_config_flow.gd")
+const ClientViewportConfigFlow := preload("res://scripts/config/client_viewport_config_flow.gd")
 
 var client_viewport_config_flow
 

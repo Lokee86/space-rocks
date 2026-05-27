@@ -3,8 +3,8 @@ extends Node
 const GameplayPresentationFlow = preload("res://scripts/gameplay/presentation/gameplay_presentation_flow.gd")
 
 const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
-const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
-const GameplayMenuFlow := preload("res://scripts/shell/gameplay_menu_flow.gd")
+const GameplayHudFlow := preload("res://scripts/gameplay/hud/gameplay_hud_flow.gd")
+const GameplayMenuFlow := preload("res://scripts/gameplay/menu/gameplay_menu_flow.gd")
 const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
 

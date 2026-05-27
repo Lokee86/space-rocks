@@ -2,7 +2,7 @@ extends RefCounted
 
 signal boot_request_sent
 
-const PendingBootRequest := preload("res://scripts/shell/pending_boot_request.gd")
+const PendingBootRequest := preload("res://scripts/boot/pending_boot_request.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 
 var connection_service
