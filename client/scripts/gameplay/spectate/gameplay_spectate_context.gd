@@ -43,5 +43,15 @@ func begin_spectating() -> void:
 		spectate_flow.begin_spectating()
 
 
+func request_open_spectate_menu() -> void:
+	if spectate_flow != null:
+		spectate_flow.request_open_spectate_menu()
+
+
+func request_cycle_target() -> void:
+	if spectate_flow != null:
+		spectate_flow.request_cycle_target()
+
+
 func _on_spectate_requested() -> void:
 	begin_spectating()

@@ -2,6 +2,7 @@ extends RefCounted
 class_name GameplayShellFlow
 
 const GameplayRuntimeContext = preload("res://scripts/gameplay/session/gameplay_runtime_context.gd")
+const GameplayInputContext = preload("res://scripts/gameplay/input/gameplay_input_context.gd")
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
 const GameplaySpectateContext = preload("res://scripts/gameplay/spectate/gameplay_spectate_context.gd")
@@ -15,6 +16,7 @@ var runtime_context
 var connection_service
 var hud_flow
 var menu_flow
+var input_context
 var runtime_tick_flow
 var spectate_context
 var has_received_state := false
@@ -53,10 +55,19 @@ func configure(
 	runtime_context.configure_respawn(connection_service, hud_flow)
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
 	runtime_tick_flow.configure(hud_flow)
-	runtime_context.configure_input(connection_service, player, menu_flow)
-	runtime_context.configure_pause_input(menu_flow)
+	input_context = GameplayInputContext.new()
+	input_context.configure(
+		connection_service,
+		player,
+		menu_flow,
+		Callable(runtime_context, "request_respawn")
+	)
 	spectate_context = GameplaySpectateContext.new()
 	spectate_context.configure(menu_flow, null, runtime_context.world_sync)
+	input_context.configure_spectate_routes(
+		Callable(spectate_context, "request_open_spectate_menu"),
+		Callable(spectate_context, "request_cycle_target")
+	)
 
 
 func reset() -> void:
@@ -67,6 +78,8 @@ func reset() -> void:
 		hud_flow.reset()
 	if menu_flow != null && menu_flow.has_method("reset"):
 		menu_flow.reset()
+	if input_context != null:
+		input_context.reset()
 	if runtime_tick_flow != null:
 		runtime_tick_flow.reset()
 	if spectate_context != null:
@@ -79,7 +92,8 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 
 	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
-	runtime_context.mark_input_gameplay_state_received()
+	if input_context != null:
+		input_context.mark_gameplay_state_received()
 	if hud_flow != null:
 		hud_flow.apply_gameplay_state_summary(state)
 	runtime_context.apply_world_state(state, has_received_state)
@@ -112,7 +126,8 @@ func process(_delta: float) -> void:
 		runtime_context.process(_delta)
 	if runtime_tick_flow != null:
 		runtime_tick_flow.process(_delta)
-	runtime_context.process_input(has_received_state)
+	if input_context != null:
+		input_context.process(has_received_state)
 	if spectate_context != null:
 		spectate_context.process()
 	runtime_context.process_respawn(has_received_state)

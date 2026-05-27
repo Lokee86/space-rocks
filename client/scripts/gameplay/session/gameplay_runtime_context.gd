@@ -5,14 +5,12 @@ const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
 const GameplayEventFlow = preload("res://scripts/shell/gameplay_event_flow.gd")
 const GameplayDeathFlow = preload("res://scripts/shell/gameplay_death_flow.gd")
 const GameplayRespawnFlow = preload("res://scripts/shell/gameplay_respawn_flow.gd")
-const GameplayInputContext = preload("res://scripts/gameplay/input/gameplay_input_context.gd")
 
 var world_sync
 var player
 var event_flow
 var death_flow
 var respawn_flow
-var input_context
 var hud_flow
 
 
@@ -50,17 +48,6 @@ func configure_respawn(connection_service_ref, hud_flow_ref) -> void:
 	respawn_flow.configure(connection_service_ref, hud_flow_ref)
 
 
-func configure_input(connection_service_ref, player_ref, menu_flow_ref) -> void:
-	input_context = GameplayInputContext.new()
-	input_context.configure(connection_service_ref, player_ref, menu_flow_ref)
-
-
-func configure_pause_input(menu_flow_ref) -> void:
-	if input_context == null:
-		input_context = GameplayInputContext.new()
-	input_context.configure_pause_input(menu_flow_ref)
-
-
 func reset() -> void:
 	if player != null:
 		player.hide()
@@ -72,8 +59,6 @@ func reset() -> void:
 		death_flow.reset()
 	if respawn_flow != null:
 		respawn_flow.reset()
-	if input_context != null:
-		input_context.reset()
 
 
 func process(delta: float) -> void:
@@ -86,14 +71,9 @@ func process_respawn(has_received_state: bool) -> void:
 		respawn_flow.process(has_received_state)
 
 
-func mark_input_gameplay_state_received() -> void:
-	if input_context != null:
-		input_context.mark_gameplay_state_received()
-
-
-func process_input(has_received_state: bool) -> void:
-	if input_context != null:
-		input_context.process(has_received_state)
+func request_respawn(has_received_state: bool) -> void:
+	if respawn_flow != null:
+		respawn_flow.request_respawn(has_received_state)
 
 
 func apply_world_state(state: Dictionary, has_received_state: bool) -> void:
