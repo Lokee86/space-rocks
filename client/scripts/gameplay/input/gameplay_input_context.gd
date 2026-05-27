@@ -51,15 +51,16 @@ func mark_gameplay_state_received() -> void:
 
 
 func process(has_received_state: bool) -> void:
+	var open_menu_consumed := false
 	if pause_input_flow != null:
-		pause_input_flow.process(has_received_state)
+		open_menu_consumed = pause_input_flow.process(has_received_state)
 	if devtools_context != null:
 		devtools_context.process(has_received_state)
 	if Input.is_action_just_pressed("Respawn") && !respawn_request_route.is_null():
 		respawn_request_route.call(has_received_state)
 	if input_flow != null:
 		input_flow.process()
-	if Input.is_action_just_pressed("OpenMenu") && !open_spectate_menu_route.is_null():
+	if !open_menu_consumed && Input.is_action_just_pressed("OpenMenu") && !open_spectate_menu_route.is_null():
 		open_spectate_menu_route.call()
 	if Input.is_action_just_pressed("SwitchCamera") && !cycle_spectate_target_route.is_null():
 		cycle_spectate_target_route.call()

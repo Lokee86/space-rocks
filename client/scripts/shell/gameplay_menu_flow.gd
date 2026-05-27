@@ -219,6 +219,8 @@ func hide_live_pause_menu() -> void:
 func handle_open_menu_pressed(has_initial_spawn: bool) -> bool:
 	if !Input.is_action_just_pressed("OpenMenu"):
 		return false
+	if is_game_over:
+		return false
 
 	if is_menu_visible():
 		close_menu()
