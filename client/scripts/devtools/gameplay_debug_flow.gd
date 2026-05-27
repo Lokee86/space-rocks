@@ -20,16 +20,27 @@ func reset() -> void:
 
 func process(has_received_state: bool) -> void:
 	var toggle_pressed := Input.is_action_just_pressed("DevToggle1")
+	var infinite_lives_toggle_pressed := Input.is_action_just_pressed("DevToggle2")
+	var world_freeze_toggle_pressed := Input.is_action_just_pressed("DevToggle3")
+	var player_freeze_toggle_pressed := Input.is_action_just_pressed("DevToggle4")
 	if !has_received_state || connection_service == null:
 		debug_invincible_toggle_was_pressed = toggle_pressed
 		return
-	if !toggle_pressed:
-		debug_invincible_toggle_was_pressed = false
-		return
-	if debug_invincible_toggle_was_pressed:
-		return
 
-	debug_invincible_toggle_was_pressed = true
-	debug_invincible_enabled = !debug_invincible_enabled
-	connection_service.send_packet(Packets.toggle_debug_invincible_packet())
-	ClientLogger.game_debug("Debug invincibility toggled: %s" % debug_invincible_enabled)
+	if toggle_pressed:
+		if !debug_invincible_toggle_was_pressed:
+			debug_invincible_toggle_was_pressed = true
+			debug_invincible_enabled = !debug_invincible_enabled
+			connection_service.send_packet(Packets.toggle_debug_invincible_packet())
+			ClientLogger.game_debug("Debug invincibility toggled: %s" % debug_invincible_enabled)
+	else:
+		debug_invincible_toggle_was_pressed = false
+
+	if infinite_lives_toggle_pressed:
+		connection_service.send_packet(Packets.toggle_debug_infinite_lives_packet())
+
+	if world_freeze_toggle_pressed:
+		connection_service.send_packet(Packets.toggle_debug_freeze_world_packet())
+
+	if player_freeze_toggle_pressed:
+		connection_service.send_packet(Packets.toggle_debug_freeze_player_packet())
