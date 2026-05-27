@@ -120,7 +120,12 @@ func (manager *RoomManager) JoinRoom(memberID string, roomCode string) (*Room, *
 		}
 	}
 
-	switch room.State {
+	if roomErr := room.JoinMember(memberID); roomErr != nil {
+		return nil, roomErr
+	}
+	return room, nil
+
+	switch room.CurrentState() {
 	case RoomStateLobby:
 	case RoomStateStarting, RoomStateInGame:
 		return nil, &RoomDomainError{
@@ -195,7 +200,7 @@ func (manager *RoomManager) SetReady(roomID string, memberID string, ready bool)
 		}
 	}
 
-	if room.State != RoomStateLobby {
+	if room.CurrentState() != RoomStateLobby {
 		return nil, &RoomDomainError{
 			Code:    RoomErrorInvalidRoomState,
 			Message: "Ready state can only be changed in the lobby.",
@@ -260,10 +265,11 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 		)
 		return
 	}
-	if room.ActivePlayers > 0 {
+	activePlayers := room.ActivePlayerCount()
+	if activePlayers > 0 {
 		logging.Rooms.Debug("room cleanup skipped; room active",
 			logging.FieldRoomID, roomID,
-			"active_players", room.ActivePlayers,
+			"active_players", activePlayers,
 			"cleanup_version", cleanupVersion,
 		)
 		return
@@ -276,18 +282,16 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 		)
 		return
 	}
-	if room.CleanupVersion != cleanupVersion {
+	if !room.CleanupVersionMatches(cleanupVersion) {
 		logging.Rooms.Debug("room cleanup skipped; stale cleanup",
 			logging.FieldRoomID, roomID,
 			"cleanup_version", cleanupVersion,
-			"current_cleanup_version", room.CleanupVersion,
+			"current_cleanup_version", room.CurrentCleanupVersion(),
 		)
 		return
 	}
 
-	if room.Game != nil {
-		room.Game.Stop()
-	}
+	room.StopGameIfPresent()
 	delete(manager.rooms, roomID)
 	logging.Rooms.Debug("room cleaned up",
 		logging.FieldRoomID, roomID,
@@ -296,12 +300,7 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 }
 
 func (manager *RoomManager) scheduleCleanupLocked(roomID string, room *Room) {
-	room.CleanupVersion++
-	cleanupVersion := room.CleanupVersion
-	if room.CleanupTimer != nil {
-		room.CleanupTimer.Stop()
-	}
-	room.CleanupTimer = time.AfterFunc(manager.cleanupDelay, func() {
+	cleanupVersion := room.ScheduleCleanupTimer(manager.cleanupDelay, func(cleanupVersion int) {
 		manager.cleanupEmptyRoom(roomID, cleanupVersion)
 	})
 	logging.Rooms.Debug("room cleanup scheduled",

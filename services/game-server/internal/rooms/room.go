@@ -234,7 +234,10 @@ func (room *Room) IsFull() bool {
 }
 
 func (room *Room) IsEmpty() bool {
-	return room.ActivePlayers == 0 && room.MemberCount() == 0
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	return room.ActivePlayers == 0 && len(room.Members) == 0
 }
 
 func (room *Room) ShouldCleanup() bool {
