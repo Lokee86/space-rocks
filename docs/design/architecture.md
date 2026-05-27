@@ -44,7 +44,7 @@ Current client runtime seams:
 - `client/scripts/networking/world_sync.gd`: coordinator for server-state rendering. It delegates node ownership, packet application, cleanup, and interpolation to player, bullet, asteroid, and local-visual sync owners.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
-- `client/scripts/networking/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
+- `client/scripts/networking/packets/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
 
 Client runtime flow:
 

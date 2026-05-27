@@ -45,7 +45,7 @@ The older `space-rocks-(4.3)/` project copy is ignored and should not be used as
 Route client packet wire JSON through:
 
 ```text
-client/scripts/networking/packets/packet_codec.gd
+client/scripts/networking/packet_codec/packet_codec.gd
 ```
 
 Do not add direct `JSON.stringify` or `JSON.parse_string` calls in websocket packet paths.

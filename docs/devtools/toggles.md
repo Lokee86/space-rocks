@@ -74,67 +74,23 @@ Current behavior:
 
 ## Implementation
 
-The devtools state lives in:
+Current ownership paths:
 
-```text
-services/game-server/internal/game/devtools/player_options.go
-```
-
-Player entities store their debug options here:
-
-```text
-services/game-server/internal/game/entities/state.go
-```
-
-The packet source of truth is:
-
-```text
-shared/packets/packets.toml
-```
-
-Generated packet files include:
-
-```text
-services/game-server/internal/game/packets.go
-services/game-server/internal/game/entities/packets_generated.go
-client/scripts/networking/packets.gd
-```
-
-The client hotkey is currently handled in:
-
-```text
-client/scripts/game.gd
-```
-
-The server toggle handling is in:
-
-```text
-services/game-server/internal/game/input.go
-```
-
-The world-freeze collision pass gate is in:
-
-```text
-services/game-server/internal/game/simulation.go
-```
-
-Pair collision fact helpers are in `services/game-server/internal/game/collisions.go`, and combat consumes those facts in `services/game-server/internal/game/combat.go`.
-
-World-freeze gates are in:
-
-```text
-services/game-server/internal/game/simulation.go
-services/game-server/internal/game/simulation_asteroids.go
-services/game-server/internal/game/simulation_bullets.go
-services/game-server/internal/game/simulation_players.go
-```
+- packet source: `shared/packets/packets.toml`
+- generated server packets: `services/game-server/internal/game/packets.go`
+- generated client packets: `client/scripts/networking/packets/packets.gd`
+- server debug packet handling: `services/game-server/internal/game/debug_handler.go`
+- server debug status projection: `services/game-server/internal/game/debug_status.go`
+- client devtools window/context: `client/scripts/devtools/`
+- client gameplay input routing: `client/scripts/gameplay/input/`
+- gameplay shell state routing: `client/scripts/shell/gameplay_shell_flow.gd`
 
 ## Packet Flow
 
 When `F1` is pressed:
 
-1. `client/scripts/game.gd` checks for `KEY_F1`.
-2. If connected, the client sends `Packets.toggle_debug_invincible_packet()`.
+1. `DevToggle1` routes through client devtools/gameplay input seams.
+2. The client sends `Packets.toggle_debug_invincible_packet()`.
 3. The generated packet builder emits:
 
 ```gdscript
@@ -143,14 +99,14 @@ When `F1` is pressed:
 }
 ```
 
-4. The server receives `PacketTypeToggleDebugInvincible`.
-5. The server toggles `player.DevTools.Invincible`.
-6. Collision handling checks `player.DevTools.CanTakeDamage()`.
+4. The server debug handler receives `PacketTypeToggleDebugInvincible`.
+5. The server toggles player `DamageOptions.Invincible`.
+6. State packets report the result through `StatePacket.debug_status.invincible`.
 
 When `F2` is pressed:
 
-1. `client/scripts/game.gd` checks for `KEY_F2`.
-2. If connected, the client sends `Packets.toggle_debug_infinite_lives_packet()`.
+1. `DevToggle2` routes through client devtools/gameplay input seams.
+2. The client sends `Packets.toggle_debug_infinite_lives_packet()`.
 3. The generated packet builder emits:
 
 ```gdscript
@@ -159,15 +115,14 @@ When `F2` is pressed:
 }
 ```
 
-4. The server receives `PacketTypeToggleDebugInfiniteLives`.
-5. The server toggles `player.DevTools.InfiniteLives`.
-6. The player session stores the updated devtools options so the toggle survives respawn.
-7. Death handling checks `player.DevTools.CanLoseLives()` before decrementing lives.
+4. The server debug handler receives `PacketTypeToggleDebugInfiniteLives`.
+5. The server toggles session `LifeOptions.InfiniteLives`.
+6. State packets report the result through `StatePacket.debug_status.infinite_lives`.
 
 When `F3` is pressed:
 
-1. `client/scripts/game.gd` checks for `KEY_F3`.
-2. If connected, the client sends `Packets.toggle_debug_freeze_world_packet()`.
+1. `DevToggle3` routes through client devtools/gameplay input seams.
+2. The client sends `Packets.toggle_debug_freeze_world_packet()`.
 3. The generated packet builder emits:
 
 ```gdscript
@@ -176,14 +131,15 @@ When `F3` is pressed:
 }
 ```
 
-4. The server receives `PacketTypeToggleDebugFreezeWorld`.
-5. The server toggles `game.worldDevTools`.
-6. `Game.Step()` checks `worldDevTools` before asteroid spawning, asteroid advancing, bullet advancing, and collision passes.
+4. The server debug handler receives `PacketTypeToggleDebugFreezeWorld`.
+5. The server toggles `WorldSimulationOptions`.
+6. Simulation gates read `worldSimulationOptions` before asteroid spawning, asteroid advancing, bullet advancing, and collision passes.
+7. State packets report the result through `StatePacket.debug_status.world_frozen`.
 
 When `F4` is pressed:
 
-1. `client/scripts/game.gd` checks for `KEY_F4`.
-2. If connected, the client sends `Packets.toggle_debug_freeze_player_packet()`.
+1. `DevToggle4` routes through client devtools/gameplay input seams.
+2. The client sends `Packets.toggle_debug_freeze_player_packet()`.
 3. The generated packet builder emits:
 
 ```gdscript
@@ -192,9 +148,10 @@ When `F4` is pressed:
 }
 ```
 
-4. The server receives `PacketTypeToggleDebugFreezePlayer`.
-5. The server toggles `player.DevTools.FreezePlayer`.
-6. Ship capability helpers check `Ship.IsSuspended()` before accepting input, moving, shooting, or taking asteroid collision damage.
+4. The server debug handler receives `PacketTypeToggleDebugFreezePlayer`.
+5. The server toggles player/session `Suspension.DevFrozen`.
+6. Ship capability helpers use `Ship.IsSuspended()` before accepting input, moving, shooting, or taking asteroid collision damage.
+7. State packets report the result through `StatePacket.debug_status.player_frozen`.
 
 ## Logging
 
@@ -279,9 +236,9 @@ TODO: add focused server tests for world freeze:
 
 Keep debug gameplay effects server-side. The client may request a toggle, but the server should own whether the toggle is active and how it affects simulation.
 
-Keep devtools isolated. New debug-only gameplay state should live behind `services/game-server/internal/game/devtools` where practical, so the game can ignore or remove it cleanly later.
+Keep devtools isolated. Debug packet handling should stay in the small same-package debug handler, while gameplay-affecting state should live in the owning gameplay seams: `DamageOptions`, `LifeOptions`, `Suspension`, and `WorldSimulationOptions`. Use `DebugStatus` projection for client display.
 
-Avoid scattering one-off debug booleans through core logic. Prefer small methods like `CanTakeDamage()` so collision/combat code only asks a simple gameplay question.
+Avoid scattering one-off debug booleans through core logic. Prefer small gameplay-owned capability methods so collision/combat code only asks simple gameplay questions.
 
 ## Future Options
 
