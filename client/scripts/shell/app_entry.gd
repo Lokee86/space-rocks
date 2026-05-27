@@ -7,6 +7,7 @@ const RoomSessionController := preload("res://scripts/session/room_session_contr
 const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
 const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
 const AppShutdownController := preload("res://scripts/session/app_shutdown_controller.gd")
+const BackgroundController := preload("res://scripts/presentation/background/background_controller.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
@@ -27,6 +28,7 @@ var room_session_controller
 var gameplay_session_controller
 var client_config_controller
 var app_shutdown_controller
+var background_controller
 
 
 func _ready() -> void:
@@ -36,6 +38,9 @@ func _ready() -> void:
 	app_shutdown_controller = AppShutdownController.new()
 	add_child(app_shutdown_controller)
 	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
+	background_controller = BackgroundController.new()
+	add_child(background_controller)
+	background_controller.configure(repeated_background, repeated_foreground_background, player)
 	gameplay_session_controller = GameplaySessionController.new()
 	add_child(gameplay_session_controller)
 	gameplay_session_controller.configure(
@@ -47,8 +52,6 @@ func _ready() -> void:
 		hud,
 		game_over_sound,
 		main_menu,
-		repeated_background,
-		repeated_foreground_background,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_shell_boot_flow(),
 		Callable(self, "_log_v2_status")

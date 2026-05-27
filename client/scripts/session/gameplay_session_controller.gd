@@ -5,7 +5,6 @@ const GameplayPresentationFlow = preload("res://scripts/gameplay/presentation/ga
 const GameplayShellFlow := preload("res://scripts/shell/gameplay_shell_flow.gd")
 const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
 const GameplayMenuFlow := preload("res://scripts/shell/gameplay_menu_flow.gd")
-const GameplayBackgroundFlow := preload("res://scripts/shell/gameplay_background_flow.gd")
 const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
 const GameplayStatePacketReader := preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 
@@ -17,8 +16,6 @@ var asteroids: Node2D
 var hud: Control
 var game_over_sound: AudioStreamPlayer
 var main_menu: Control
-var repeated_background: TextureRect
-var repeated_foreground_background: TextureRect
 var session_context
 var shell_boot_flow
 var logger: Callable
@@ -27,7 +24,6 @@ var gameplay_shell_flow
 var gameplay_presentation_flow
 var gameplay_hud_flow
 var gameplay_menu_flow
-var gameplay_background_flow
 var spectate_menu_state
 var has_received_gameplay_state := false
 
@@ -41,8 +37,6 @@ func configure(
 	hud_ref: Control,
 	game_over_sound_ref: AudioStreamPlayer,
 	main_menu_ref: Control,
-	repeated_background_ref: TextureRect,
-	repeated_foreground_background_ref: TextureRect,
 	session_context_ref,
 	shell_boot_flow_ref,
 	logger_callable: Callable
@@ -55,8 +49,6 @@ func configure(
 	hud = hud_ref
 	game_over_sound = game_over_sound_ref
 	main_menu = main_menu_ref
-	repeated_background = repeated_background_ref
-	repeated_foreground_background = repeated_foreground_background_ref
 	session_context = session_context_ref
 	shell_boot_flow = shell_boot_flow_ref
 	logger = logger_callable
@@ -67,8 +59,6 @@ func configure(
 	gameplay_menu_flow.configure(hud, connection_service, player, session_context)
 	spectate_menu_state = SpectateMenuState.new()
 	gameplay_menu_flow.configure_spectate_menu_state(spectate_menu_state)
-	gameplay_background_flow = GameplayBackgroundFlow.new()
-	gameplay_background_flow.configure(repeated_background, repeated_foreground_background, player)
 	gameplay_shell_flow = GameplayShellFlow.new()
 	gameplay_shell_flow.configure(
 		connection_service,
@@ -78,7 +68,6 @@ func configure(
 		asteroids,
 		gameplay_hud_flow,
 		gameplay_menu_flow,
-		gameplay_background_flow,
 		game_over_sound
 	)
 	if gameplay_shell_flow.has_method("configure_spectate_menu_state"):
