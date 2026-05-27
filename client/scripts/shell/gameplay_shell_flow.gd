@@ -32,7 +32,6 @@ func configure(
 	asteroids: Node2D,
 	hud_flow_ref,
 	menu_flow_ref,
-	background_flow_ref,
 	game_over_sound: AudioStreamPlayer
 ) -> void:
 	connection_service = connection_service_ref
@@ -53,7 +52,6 @@ func configure(
 			menu_flow.spectate_requested.connect(spectate_callable)
 	runtime_context = GameplayRuntimeContext.new()
 	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids)
-	runtime_context.configure_background(background_flow_ref)
 	runtime_context.configure_events(
 		game_owner,
 		game_over_sound,
@@ -94,7 +92,6 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
 	runtime_context.mark_input_gameplay_state_received()
-	runtime_context.mark_background_gameplay_state_received()
 	if hud_flow != null:
 		hud_flow.show_gameplay()
 		if state["has_lives"]:
@@ -140,7 +137,6 @@ func process(_delta: float) -> void:
 		devtools_context.process(has_received_state)
 	if spectate_context != null:
 		spectate_context.process()
-	runtime_context.process_background()
 	runtime_context.process_respawn(has_received_state)
 	runtime_context.process_input()
 

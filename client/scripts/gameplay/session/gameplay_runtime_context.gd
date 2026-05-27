@@ -16,7 +16,6 @@ var respawn_flow
 var input_flow
 var pause_input_flow
 var hud_flow
-var background_flow
 
 
 func configure_world(
@@ -63,17 +62,11 @@ func configure_pause_input(menu_flow_ref) -> void:
 	pause_input_flow.configure(menu_flow_ref)
 
 
-func configure_background(background_flow_ref) -> void:
-	background_flow = background_flow_ref
-
-
 func reset() -> void:
 	if player != null:
 		player.hide()
 	if world_sync != null:
 		world_sync.reset()
-	if background_flow != null:
-		background_flow.clear()
 	if event_flow != null:
 		event_flow.reset()
 	if death_flow != null:
@@ -109,16 +102,6 @@ func process_input() -> void:
 func process_pause_input(has_received_state: bool) -> void:
 	if pause_input_flow != null:
 		pause_input_flow.process(has_received_state)
-
-
-func mark_background_gameplay_state_received() -> void:
-	if background_flow != null:
-		background_flow.mark_gameplay_state_received()
-
-
-func process_background() -> void:
-	if background_flow != null:
-		background_flow.process()
 
 
 func apply_world_state(state: Dictionary, has_received_state: bool) -> void:
