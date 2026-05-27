@@ -120,9 +120,8 @@ Task-specific workflows live under `skills/*/SKILL.md`.
 
 Use only the relevant skill for the current task. Do not load every skill for every prompt.
 
-- `skills/agent-micro-refactor/SKILL.md` for normal tiny implementation prompts.
-- `skills/seam-first-feature/SKILL.md` for adding new behavior/features without growing gravity-well files.
-- `skills/godot-seam-refactor/SKILL.md` for splitting or shrinking Godot scripts.
+- `skills/micro-prompt/SKILL.md` for normal tiny implementation prompts.
+- `skills/seam-first/SKILL.md` for adding/changing behavior without growing gravity-well files.
 - `skills/go-gameplay-seam/SKILL.md` for server gameplay ownership changes.
 - `skills/packet-schema-change/SKILL.md` for packet/schema/codec changes.
 - `skills/godot-ui-scene-edit/SKILL.md` for Godot scene, HUD, menu, and layout changes.
@@ -196,17 +195,25 @@ Rooms/networking:
 
 Client runtime:
 
-- `client/scripts/shell/game_shell.gd`
-- `client/scripts/gameplay/game.gd`
-- `client/scripts/gameplay/session/`
+- `client/scripts/session/`
+- `client/scripts/shell/gameplay_shell_flow.gd`
+- `client/scripts/gameplay/runtime/`
+- `client/scripts/gameplay/state/`
+- `client/scripts/gameplay/input/`
+- `client/scripts/gameplay/hud/`
+- `client/scripts/gameplay/menu/`
+- `client/scripts/gameplay/respawn/`
 - `client/scripts/gameplay/spectate/`
-- `client/scripts/gameplay/support/`
+- `client/scripts/gameplay/events/`
+- `client/scripts/gameplay/effects/`
+- `client/scripts/lobby/`
+- `client/scripts/boot/`
+- `client/scripts/config/`
 - `client/scripts/networking/network_client.gd`
 - `client/scripts/networking/packet_codec/packet_codec.gd`
 - `client/scripts/networking/world_sync.gd`
 - `client/scripts/entities/player.gd`
-- `client/scripts/ui/hud/hud_controller.gd`
-- `client/scripts/ui/menus/`
+- `client/scripts/ui/`
 
 Shared schema/generation:
 
@@ -230,6 +237,7 @@ Shared schema/generation:
 - Before editing a known gravity-well file, use the line-count guardrails above as judgment, but do not run `wc -l` unless the prompt allows terminal commands.
 - Implementation prompts must not broaden scope beyond the named target.
 - If broader work appears necessary, stop and propose a follow-up prompt.
+- Do not produce no-work prompts. Verification belongs in commands/checkpoints, not in separate agent prompts.
 - When completing a numbered prompt, announce completion at the bottom of the response/report using the exact format `**COMPLETED PROMPT X**`, replacing `X` with the prompt number.
 
 ## Default Agent Report
