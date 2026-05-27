@@ -5,7 +5,7 @@ const GameplayRuntimeContext = preload("res://scripts/gameplay/session/gameplay_
 const GameplayStatePacketReader = preload("res://scripts/gameplay/session/gameplay_state_packet_reader.gd")
 const GameplayRuntimeTickFlow = preload("res://scripts/shell/gameplay_runtime_tick_flow.gd")
 const GameplayDevtoolsContext = preload("res://scripts/devtools/gameplay_devtools_context.gd")
-const GameplaySpectateFlow = preload("res://scripts/gameplay/spectate/gameplay_spectate_flow.gd")
+const GameplaySpectateContext = preload("res://scripts/gameplay/spectate/gameplay_spectate_context.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 
 signal gameplay_started
@@ -20,7 +20,7 @@ var menu_flow
 var background_flow
 var runtime_tick_flow
 var devtools_context
-var spectate_flow
+var spectate_context
 var spectate_menu_state
 var has_received_state := false
 
@@ -67,8 +67,8 @@ func configure(
 	runtime_context.configure_pause_input(menu_flow)
 	devtools_context = GameplayDevtoolsContext.new()
 	devtools_context.configure(connection_service)
-	spectate_flow = GameplaySpectateFlow.new()
-	spectate_flow.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
+	spectate_context = GameplaySpectateContext.new()
+	spectate_context.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
 	runtime_context.configure_input(connection_service, player, menu_flow)
 
 
@@ -86,8 +86,8 @@ func reset() -> void:
 		runtime_tick_flow.reset()
 	if devtools_context != null:
 		devtools_context.reset()
-	if spectate_flow != null:
-		spectate_flow.reset()
+	if spectate_context != null:
+		spectate_context.reset()
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
@@ -118,8 +118,8 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 
 func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 	spectate_menu_state = spectate_menu_state_ref
-	if spectate_flow != null:
-		spectate_flow.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
+	if spectate_context != null:
+		spectate_context.configure(menu_flow, spectate_menu_state, runtime_context.world_sync)
 
 
 func current_camera() -> Camera2D:
@@ -142,8 +142,8 @@ func process(_delta: float) -> void:
 	runtime_context.process_pause_input(has_received_state)
 	if devtools_context != null:
 		devtools_context.process(has_received_state)
-	if spectate_flow != null:
-		spectate_flow.process()
+	if spectate_context != null:
+		spectate_context.process()
 	if background_flow != null:
 		background_flow.process()
 	runtime_context.process_respawn(has_received_state)
@@ -159,5 +159,5 @@ func _on_return_to_lobby_requested() -> void:
 
 
 func _on_spectate_requested() -> void:
-	if spectate_flow != null:
-		spectate_flow.begin_spectating()
+	if spectate_context != null:
+		spectate_context.begin_spectating()
