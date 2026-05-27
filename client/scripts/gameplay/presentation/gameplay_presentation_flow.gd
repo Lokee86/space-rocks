@@ -1,9 +1,6 @@
 extends RefCounted
 class_name GameplayPresentationFlow
 
-const OSIndicatorController = preload("res://scripts/gameplay/presentation/os_indicator_controller.gd")
-const LocalPlayerPresentationController = preload("res://scripts/gameplay/presentation/local_player_presentation_controller.gd")
-
 var hud: Control
 var camera_provider: Callable
 var remote_positions_provider: Callable

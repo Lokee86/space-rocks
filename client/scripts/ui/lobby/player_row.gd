@@ -16,7 +16,7 @@ func _ready() -> void:
 
 
 func set_member(member_name, is_ready, member_connected := true, is_owner := false) -> void:
-	var ready := bool(is_ready)
+	var member_ready := bool(is_ready)
 	var connected := bool(member_connected)
 
 	if player_name_label != null:
@@ -26,9 +26,9 @@ func set_member(member_name, is_ready, member_connected := true, is_owner := fal
 	if owner_indicator != null:
 		owner_indicator.visible = bool(is_owner)
 	if ready_green != null:
-		ready_green.visible = ready && connected
+		ready_green.visible = member_ready && connected
 	if ready_red != null:
-		ready_red.visible = !ready || !connected
+		ready_red.visible = !member_ready || !connected
 
 
 func _report_missing_node(node: Node, node_name: String) -> void:

@@ -1,7 +1,6 @@
 extends Node
 class_name BackgroundController
 
-const GameplayBackgroundFlow = preload("res://scripts/presentation/background/background_flow.gd")
 
 var background_flow
 

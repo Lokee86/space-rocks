@@ -1,7 +1,6 @@
 extends RefCounted
 class_name GameplayDevtoolsContext
 
-const GameplayDebugFlow = preload("res://scripts/devtools/gameplay_debug_flow.gd")
 
 var debug_flow
 

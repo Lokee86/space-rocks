@@ -5,7 +5,6 @@ const MultiplayerDialogScene := preload("res://scenes/ui/dialogs/multiplayer_dia
 signal single_player_pressed
 signal multiplayer_create_requested
 signal multiplayer_join_requested(room_code: String)
-signal multiplayer_room_requested(room_id: String)
 
 var multiplayer_dialog: Control
 

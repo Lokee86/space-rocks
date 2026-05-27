@@ -1,9 +1,6 @@
 extends RefCounted
 class_name GameplayInputContext
 
-const GameplayInputFlow = preload("res://scripts/gameplay/input/gameplay_input_flow.gd")
-const GameplayPauseInputFlow = preload("res://scripts/gameplay/input/gameplay_pause_input_flow.gd")
-const GameplayDevtoolsContext = preload("res://scripts/devtools/gameplay_devtools_context.gd")
 
 var input_flow
 var pause_input_flow
