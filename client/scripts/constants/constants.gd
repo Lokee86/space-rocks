@@ -7,9 +7,11 @@ const WORLD_HEIGHT := 6750.0
 # data-sync:end constants.server.world
 
 # data-sync:start constants.client.presentation
-const GAME_OVER_SOUND_DELAY := 0.3
+const GAME_OVER_SOUND_DELAY := 0.4
 const BACKGROUND_PARALLAX := 0.25
 const FOREGROUND_BACKGROUND_PARALLAX := 0.45
+const BACKGROUND_DRIFT_PER_FRAME := Vector2(0.8, 0.25)
+const FOREGROUND_BACKGROUND_DRIFT_PER_FRAME := Vector2(1.2, 0.4)
 const FOREGROUND_BACKGROUND_OFFSET := Vector2(480.0, 270.0)
 const PLAYER_INTERPOLATION_SPEED := 18.0
 const ASTEROID_Z_INDEX := 10
@@ -36,7 +38,7 @@ const REMOTE_PLAYER_FALLBACK_HUE := 0.5
 const REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE := 0.08
 const WINDOW_MIN_SIZE := Vector2(1280.0, 720.0)
 const WINDOW_MAX_SIZE := Vector2(2875.0, 1500.0)
-const OSINDICATOR_EDGE_MARGIN := 12.0
+const OSINDICATOR_EDGE_MARGIN := 32.0
 const OSINDICATOR_TARGET_VISIBILITY_PADDING := 64.0
 # data-sync:end constants.client.presentation
 
