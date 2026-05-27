@@ -70,6 +70,16 @@ func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 	spectate_menu_state = spectate_menu_state_ref
 
 
+func configure_lifecycle_routes(quit_route: Callable, return_to_lobby_route: Callable) -> void:
+	if !quit_route.is_null() && !quit_to_main_menu_requested.is_connected(quit_route):
+		quit_to_main_menu_requested.connect(quit_route)
+	if (
+		!return_to_lobby_route.is_null()
+		&& !return_to_lobby_requested.is_connected(return_to_lobby_route)
+	):
+		return_to_lobby_requested.connect(return_to_lobby_route)
+
+
 func configure_room_state_provider(provider: Callable) -> void:
 	room_state_provider = provider
 

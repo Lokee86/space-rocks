@@ -36,14 +36,11 @@ func configure(
 	player = player_ref
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
-	if menu_flow != null && menu_flow.has_signal("quit_to_main_menu_requested"):
-		var quit_callable := Callable(self, "_on_quit_to_main_menu_requested")
-		if !menu_flow.quit_to_main_menu_requested.is_connected(quit_callable):
-			menu_flow.quit_to_main_menu_requested.connect(quit_callable)
-	if menu_flow != null && menu_flow.has_signal("return_to_lobby_requested"):
-		var return_to_lobby_callable := Callable(self, "_on_return_to_lobby_requested")
-		if !menu_flow.return_to_lobby_requested.is_connected(return_to_lobby_callable):
-			menu_flow.return_to_lobby_requested.connect(return_to_lobby_callable)
+	if menu_flow != null:
+		menu_flow.configure_lifecycle_routes(
+			Callable(self, "_on_quit_to_main_menu_requested"),
+			Callable(self, "_on_return_to_lobby_requested")
+		)
 	runtime_context = GameplayRuntimeContext.new()
 	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids)
 	runtime_context.configure_events(
