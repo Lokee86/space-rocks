@@ -1,5 +1,4 @@
 extends AudioStreamPlayer
-class_name BackgroundMusicFlow
 
 
 func _ready() -> void:
