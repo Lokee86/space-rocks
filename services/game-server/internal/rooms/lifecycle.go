@@ -15,17 +15,7 @@ func (manager *RoomManager) StartRoomGame(roomID string, memberID string) (*Room
 		}
 	}
 
-	if roomErr := room.ValidateStart(memberID); roomErr != nil {
-		return nil, roomErr
-	}
-	if roomErr := room.MarkStarting(); roomErr != nil {
-		return nil, roomErr
-	}
-	if room.Game == nil {
-		room.Game = game.New()
-	}
-	room.Game.Start()
-	if roomErr := room.MarkInGame(); roomErr != nil {
+	if roomErr := room.StartGameForMember(memberID, game.New); roomErr != nil {
 		return nil, roomErr
 	}
 
@@ -41,9 +31,9 @@ func (manager *RoomManager) CreateStartedSinglePlayerRoom(memberID string) (*Roo
 		}
 	}
 
-	room.Game = game.New()
-	room.Game.Start()
-	room.State = RoomStateInGame
+	if roomErr := room.StartSinglePlayerGame(game.New); roomErr != nil {
+		return nil, roomErr
+	}
 
 	return room, nil
 }
