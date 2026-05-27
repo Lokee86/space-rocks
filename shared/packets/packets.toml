@@ -9,7 +9,7 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "StatePacket"]
+structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "DebugStatus", "StatePacket"]
 
 [outputs.imports]
 entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
@@ -423,6 +423,32 @@ json = "y"
 type = "float"
 
 [[structs]]
+id = "DebugStatus"
+
+[[structs.fields]]
+name = "invincible"
+json = "invincible"
+type = "bool"
+
+[[structs.fields]]
+name = "infinite_lives"
+go_name = "InfiniteLives"
+json = "infinite_lives"
+type = "bool"
+
+[[structs.fields]]
+name = "world_frozen"
+go_name = "WorldFrozen"
+json = "world_frozen"
+type = "bool"
+
+[[structs.fields]]
+name = "player_frozen"
+go_name = "PlayerFrozen"
+json = "player_frozen"
+type = "bool"
+
+[[structs]]
 id = "StatePacket"
 
 [[structs.fields]]
@@ -440,6 +466,12 @@ type = "string"
 name = "lives"
 json = "lives"
 type = "int"
+
+[[structs.fields]]
+name = "debug_status"
+go_name = "DebugStatus"
+json = "debug_status"
+type = "DebugStatus"
 
 [[structs.fields]]
 name = "players"

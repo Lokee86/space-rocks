@@ -5,6 +5,11 @@ class_name GameplayInputContext
 var input_flow
 var pause_input_flow
 var devtools_context
+
+
+func apply_debug_status(status: Dictionary) -> void:
+	if devtools_context != null:
+		devtools_context.apply_debug_status(status)
 var respawn_request_route: Callable
 var open_spectate_menu_route: Callable
 var cycle_spectate_target_route: Callable

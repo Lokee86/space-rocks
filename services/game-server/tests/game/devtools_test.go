@@ -24,6 +24,35 @@ func TestDebugInvincibleToggleCanBeDisabled(t *testing.T) {
 	}
 }
 
+func TestStatePacketDebugStatusReflectsDebugToggles(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	initial := scenario.state(playerID).DebugStatus
+	if initial.Invincible || initial.InfiniteLives || initial.WorldFrozen || initial.PlayerFrozen {
+		t.Fatalf("expected initial debug status to be false, got %+v", initial)
+	}
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInvincible})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInfiniteLives})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezePlayer})
+
+	status := scenario.state(playerID).DebugStatus
+	if !status.Invincible {
+		t.Fatal("expected debug status to report invincible")
+	}
+	if !status.InfiniteLives {
+		t.Fatal("expected debug status to report infinite lives")
+	}
+	if !status.WorldFrozen {
+		t.Fatal("expected debug status to report world frozen")
+	}
+	if !status.PlayerFrozen {
+		t.Fatal("expected debug status to report player frozen")
+	}
+}
+
 func TestDebugInvinciblePlayerDoesNotDieFromAsteroidCollision(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()

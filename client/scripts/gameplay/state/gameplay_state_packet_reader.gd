@@ -15,6 +15,10 @@ static func read(data: Dictionary) -> Dictionary:
 	if has_lives:
 		lives = int(data[Packets.FIELD_LIVES])
 
+	var debug_status = data.get(Packets.FIELD_DEBUG_STATUS, {})
+	if !(debug_status is Dictionary):
+		debug_status = {}
+
 	return {
 		"self_id": data[Packets.FIELD_SELF_ID],
 		"server_players": data[Packets.FIELD_PLAYERS],
@@ -22,6 +26,7 @@ static func read(data: Dictionary) -> Dictionary:
 		"server_bullets": data.get(Packets.FIELD_BULLETS, {}),
 		"server_asteroids": data.get(Packets.FIELD_ASTEROIDS, {}),
 		"server_events": server_events,
+		"debug_status": debug_status,
 		"has_lives": has_lives,
 		"lives": lives,
 	}
