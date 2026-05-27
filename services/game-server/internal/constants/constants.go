@@ -3,7 +3,6 @@ package constants
 
 // data-sync:start constants.server.runtime
 const ServerTickRate = 60
-
 // data-sync:end constants.server.runtime
 
 // data-sync:start constants.server.player_movement
@@ -11,30 +10,25 @@ const PlayerRotationSpeed = 4.0
 const PlayerThrustForce = 1000.0
 const PlayerMaxSpeed = 1500.0
 const PlayerDamping = 0.98
-
 // data-sync:end constants.server.player_movement
 
 // data-sync:start constants.server.player_lifecycle
 const PlayerStartingLives = 3
 const PlayerRespawnDelay = 3.0
-
 // data-sync:end constants.server.player_lifecycle
 
 // data-sync:start constants.server.player_session
 const PlayerRespawnBuffer = 160.0
 const PlayerResumeInvulnerabilitySeconds = 1.5
-
 // data-sync:end constants.server.player_session
 
 // data-sync:start constants.server.world
 const WorldWidth = 8625.0
 const WorldHeight = 6750.0
-
 // data-sync:end constants.server.world
 
 // data-sync:start constants.server.scoring
 const BaseScore = 120
-
 // data-sync:end constants.server.scoring
 
 // data-sync:start constants.server.asteroids
@@ -46,7 +40,6 @@ const AsteroidMinSpeed = 90.0
 const AsteroidMaxSpeed = 170.0
 const AsteroidAimRandomnessDegrees = 30.0
 const AsteroidSizeScale = 0.125
-
 // data-sync:end constants.server.asteroids
 
 // data-sync:start constants.server.bullets
@@ -55,5 +48,4 @@ const BulletLifetime = 1.25
 const BulletCooldown = 0.2
 const BulletSpawnOffset = 42.0
 const CollisionDespawnDelay = 0.05
-
 // data-sync:end constants.server.bullets

@@ -11,7 +11,7 @@ import (
 func WebSocketHandler(rooms *rooms.RoomManager) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return true
+			return allowWebSocketOrigin(r)
 		},
 	}
 

@@ -76,6 +76,7 @@ osindicator_target_visibility_padding = 64.0
 
 [constants.client.shell]
 multiplayer_ws_url = "ws://localhost:8080/ws"
+multiplayer_ws_origin = "https://space-rocks-client.local"
 room_state_lobby = "Lobby"
 room_state_starting = "Starting"
 room_state_in_game = "InGame"
