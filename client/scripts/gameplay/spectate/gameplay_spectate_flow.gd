@@ -18,20 +18,22 @@ func reset() -> void:
 
 
 func process() -> void:
-	if !is_spectating:
+	pass
+
+
+func request_open_spectate_menu() -> void:
+	if !is_spectating || menu_flow == null:
+		return
+	menu_flow.show_spectating_menu()
+
+
+func request_cycle_target() -> void:
+	if !is_spectating || spectate_menu_state == null || world_sync == null:
 		return
 
-	if Input.is_action_just_pressed("OpenMenu") && menu_flow != null:
-		menu_flow.show_spectating_menu()
-
-	if (
-		Input.is_action_just_pressed("SwitchCamera")
-		&& spectate_menu_state != null
-		&& world_sync != null
-	):
-		var target_id: String = spectate_menu_state.cycle_next_target()
-		if !target_id.is_empty():
-			world_sync.focus_camera_on_player(target_id)
+	var target_id: String = spectate_menu_state.cycle_next_target()
+	if !target_id.is_empty():
+		world_sync.focus_camera_on_player(target_id)
 
 
 func begin_spectating() -> void:

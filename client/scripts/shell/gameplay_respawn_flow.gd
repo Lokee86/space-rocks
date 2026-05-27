@@ -15,12 +15,14 @@ func reset() -> void:
 	awaiting_respawn_confirmation = false
 
 
-func process(has_received_state: bool) -> void:
+func process(_has_received_state: bool) -> void:
+	pass
+
+
+func request_respawn(has_received_state: bool) -> void:
 	if !has_received_state || connection_service == null || hud_flow == null:
 		return
 	if !hud_flow.can_request_respawn():
-		return
-	if !Input.is_action_just_pressed("Respawn"):
 		return
 
 	connection_service.send_respawn_request()
