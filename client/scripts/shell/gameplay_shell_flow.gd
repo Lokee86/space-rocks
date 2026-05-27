@@ -130,7 +130,6 @@ func process(_delta: float) -> void:
 		input_context.process(has_received_state)
 	if spectate_context != null:
 		spectate_context.process()
-	runtime_context.process_respawn(has_received_state)
 
 
 func _on_quit_to_main_menu_requested() -> void:

@@ -66,11 +66,6 @@ func process(delta: float) -> void:
 		world_sync.interpolate(delta)
 
 
-func process_respawn(has_received_state: bool) -> void:
-	if respawn_flow != null:
-		respawn_flow.process(has_received_state)
-
-
 func request_respawn(has_received_state: bool) -> void:
 	if respawn_flow != null:
 		respawn_flow.request_respawn(has_received_state)
