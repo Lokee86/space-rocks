@@ -44,6 +44,6 @@ animation = &"bullet_blast"
 [node name="AsteroidDestroyed" type="AudioStreamPlayer2D" parent="." unique_id=1277973778]
 visible = false
 stream = ExtResource("7_e5wgo")
-volume_db = -7.0
-attenuation = 0.3660214
+volume_db = -10.0
+pitch_scale = 0.8
 max_polyphony = 6
