@@ -15,13 +15,13 @@ func TestShipIsSuspendedReflectsPauseAndFreeze(t *testing.T) {
 		t.Fatal("expected ship without pause or freeze to be active")
 	}
 
-	ship.Paused = true
+	ship.Pause()
 	if !ship.IsSuspended() {
 		t.Fatal("expected paused ship to be suspended")
 	}
 
-	ship.Paused = false
-	ship.DevTools.FreezePlayer = true
+	ship.Resume(0)
+	ship.Suspension.SetDevFrozen(true)
 	if !ship.IsSuspended() {
 		t.Fatal("expected frozen ship to be suspended")
 	}
@@ -36,7 +36,7 @@ func TestFrozenShipCannotReceiveInputOrMove(t *testing.T) {
 		t.Fatal("expected active ship to move")
 	}
 
-	ship.DevTools.FreezePlayer = true
+	ship.Suspension.SetDevFrozen(true)
 	if ship.CanReceiveInput() {
 		t.Fatal("expected frozen ship not to receive input")
 	}
@@ -48,10 +48,10 @@ func TestFrozenShipCannotReceiveInputOrMove(t *testing.T) {
 func TestPausedAndFrozenShipRequiresBothCausesCleared(t *testing.T) {
 	ship := entities.Ship{}
 	ship.Pause()
-	ship.DevTools.ToggleFreezePlayer()
+	ship.Suspension.SetDevFrozen(true)
 
 	ship.Resume(0)
-	if !ship.DevTools.IsPlayerFrozen() {
+	if !ship.Suspension.DevFrozen {
 		t.Fatal("expected resume not to clear player freeze")
 	}
 	if !ship.IsSuspended() {
@@ -59,8 +59,8 @@ func TestPausedAndFrozenShipRequiresBothCausesCleared(t *testing.T) {
 	}
 
 	ship.Pause()
-	ship.DevTools.ToggleFreezePlayer()
-	if !ship.Paused {
+	ship.Suspension.SetDevFrozen(false)
+	if !ship.Suspension.Paused {
 		t.Fatal("expected unfreeze not to clear pause")
 	}
 	if !ship.IsSuspended() {
@@ -136,12 +136,13 @@ func TestFreshPlayerAcceptsInputAndMoves(t *testing.T) {
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	player := scenario.playerState(playerID, playerID)
-	if player.Paused {
+	player := scenario.player(playerID)
+	if player.Suspension.Paused {
 		t.Fatal("expected fresh player not to be paused")
 	}
-	if player.X == start.X && player.Y == start.Y {
-		t.Fatalf("expected fresh player to move after input, still at (%v, %v)", player.X, player.Y)
+	state := scenario.playerState(playerID, playerID)
+	if state.X == start.X && state.Y == start.Y {
+		t.Fatalf("expected fresh player to move after input, still at (%v, %v)", state.X, state.Y)
 	}
 }
 
@@ -190,8 +191,8 @@ func TestResumePlayerPacketResumesAndBlocksImmediateShooting(t *testing.T) {
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeResumePlayer})
 
-	player := scenario.playerState(playerID, playerID)
-	if player.Paused {
+	player := scenario.player(playerID)
+	if player.Suspension.Paused {
 		t.Fatal("expected player to resume")
 	}
 

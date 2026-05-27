@@ -14,12 +14,12 @@ func TestDebugInvincibleToggleCanBeDisabled(t *testing.T) {
 	playerID := scenario.addPlayer()
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInvincible})
-	if !scenario.playerDebugBool(playerID, "Invincible") {
+	if !scenario.playerInvincible(playerID) {
 		t.Fatal("expected first toggle to make player invincible")
 	}
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInvincible})
-	if scenario.playerDebugBool(playerID, "Invincible") {
+	if scenario.playerInvincible(playerID) {
 		t.Fatal("expected second toggle to make player vulnerable")
 	}
 }
@@ -50,12 +50,12 @@ func TestDebugInfiniteLivesToggleCanBeDisabled(t *testing.T) {
 	playerID := scenario.addPlayer()
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInfiniteLives})
-	if !scenario.playerDebugBool(playerID, "InfiniteLives") {
+	if !scenario.playerInfiniteLives(playerID) {
 		t.Fatal("expected first toggle to enable infinite lives")
 	}
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInfiniteLives})
-	if scenario.playerDebugBool(playerID, "InfiniteLives") {
+	if scenario.playerInfiniteLives(playerID) {
 		t.Fatal("expected second toggle to disable infinite lives")
 	}
 }
@@ -88,7 +88,7 @@ func TestDebugInfiniteLivesPlayerDiesWithoutLosingLife(t *testing.T) {
 	scenario.advanceRespawnTimer(playerID, constants.PlayerRespawnDelay)
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
 
-	if !scenario.playerDebugBool(playerID, "InfiniteLives") {
+	if !scenario.playerInfiniteLives(playerID) {
 		t.Fatal("expected infinite lives flag to persist after respawn")
 	}
 }

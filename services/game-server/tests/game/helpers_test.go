@@ -165,7 +165,12 @@ func (scenario *scenario) setPlayerPosition(playerID string, position physics.Ve
 func (scenario *scenario) setPlayerPaused(playerID string, paused bool) {
 	scenario.t.Helper()
 
-	scenario.player(playerID).Paused = paused
+	player := scenario.player(playerID)
+	if paused {
+		player.Pause()
+		return
+	}
+	player.Resume(0)
 }
 
 func (scenario *scenario) setPlayerInvulnerability(playerID string, seconds float64) {
@@ -288,10 +293,16 @@ func (scenario *scenario) bullet(id string) *entities.Bullet {
 	return bullet.Interface().(*entities.Bullet)
 }
 
-func (scenario *scenario) playerDebugBool(playerID string, fieldName string) bool {
+func (scenario *scenario) playerInvincible(playerID string) bool {
 	scenario.t.Helper()
 
-	return reflect.ValueOf(scenario.player(playerID)).Elem().FieldByName("DevTools").FieldByName(fieldName).Bool()
+	return scenario.player(playerID).DamageOptions.Invincible
+}
+
+func (scenario *scenario) playerInfiniteLives(playerID string) bool {
+	scenario.t.Helper()
+
+	return scenario.sessionField(playerID, "LifeOptions").FieldByName("InfiniteLives").Bool()
 }
 
 func (scenario *scenario) worldDebugBool(fieldName string) bool {

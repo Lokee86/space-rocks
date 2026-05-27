@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
@@ -20,7 +19,9 @@ type playerSession struct {
 	Score           int
 	Lives           int
 	RespawnCooldown float64
-	DevTools        devtools.PlayerOptions
+	Suspension      entities.SuspensionState
+	DamageOptions   entities.DamageOptions
+	LifeOptions     entities.LifeOptions
 }
 
 func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
@@ -47,8 +48,8 @@ func (session *playerSession) CanRespawn() bool {
 	return session.Lives > 0 && session.RespawnCooldown == 0
 }
 
-func (session *playerSession) RecordDeath(options devtools.PlayerOptions) {
-	if options.CanLoseLives() && session.Lives > 0 {
+func (session *playerSession) RecordDeath() {
+	if session.LifeOptions.CanLoseLives() && session.Lives > 0 {
 		session.Lives--
 	}
 	if session.Lives > 0 {
@@ -66,7 +67,8 @@ func (session *playerSession) NewShip(position physics.Vector2) *entities.Ship {
 		Config:     session.Config,
 		Score:      session.Score,
 		Lives:      session.Lives,
-		DevTools:   session.DevTools,
+		Suspension: session.Suspension,
+		DamageOptions: session.DamageOptions,
 	}
 }
 
