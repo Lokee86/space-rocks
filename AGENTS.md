@@ -136,7 +136,7 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants.
 - Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets.
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.
-- Route client packet wire JSON through `client/scripts/networking/packets/packet_codec.gd`.
+- Route client packet wire JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
 - Keep client websocket and packet transport under `client/scripts/networking/`.
 - Keep client world sync and entity sync owners under `client/scripts/world/`.
 - Keep packet-facing player lifecycle status in `StatePacket.player_lifecycle`, beside `players`.
@@ -203,6 +203,8 @@ Client runtime:
 - `client/scripts/shell/gameplay_runtime_tick_flow.gd`
 - `client/scripts/world/`
 - `client/scripts/world/world_sync.gd`
+- `client/scripts/devtools/`
+- `client/scenes/devtools/`
 - `client/scripts/session/`
 - `client/scripts/shell/gameplay_shell_flow.gd`
 - `client/scripts/gameplay/runtime/`
@@ -218,7 +220,7 @@ Client runtime:
 - `client/scripts/boot/`
 - `client/scripts/config/`
 - `client/scripts/networking/network_client.gd`
-- `client/scripts/networking/packets/packet_codec.gd`
+- `client/scripts/networking/packet_codec/packet_codec.gd`
 - `client/scripts/entities/player.gd`
 - `client/scripts/ui/`
 

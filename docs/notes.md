@@ -148,7 +148,7 @@ Generated outputs:
 
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/entities/packets_generated.go`
-- `client/scripts/networking/packets.gd`
+- `client/scripts/networking/packets/packets.gd`
 
 The packet TOML schema preserves the old rich JSON behavior:
 
@@ -200,7 +200,7 @@ Current routed production paths:
 - inbound websocket packet text decode in `client/scripts/networking/network_client.gd`
 - outbound websocket packet dictionary encode in `client/scripts/networking/network_client.gd`
 
-`network_client.gd` remains the websocket owner for polling, signals, connection state, graceful close, and `send_text`. Generated packet builders remain in `client/scripts/networking/packets.gd`, and packet schema edits still belong in `shared/packets/packets.toml`. Do not add packet validation, typed packet objects, protobuf references, codec interfaces, or format switching unless a future prompt explicitly starts that migration. Remaining direct client JSON usage is acceptable in `packet_codec.gd` itself and in focused tests that inspect codec JSON shape.
+`network_client.gd` remains the websocket owner for polling, signals, connection state, graceful close, and `send_text`. Generated packet builders remain in `client/scripts/networking/packets/packets.gd`, and packet schema edits still belong in `shared/packets/packets.toml`. Do not add packet validation, typed packet objects, protobuf references, codec interfaces, or format switching unless a future prompt explicitly starts that migration. Remaining direct client JSON usage is acceptable in `packet_codec.gd` itself and in focused tests that inspect codec JSON shape.
 
 ### Data Sync Pipeline
 
@@ -275,8 +275,8 @@ Client lifecycle notes:
 
 - `client/scripts/ui/game_shell.gd` owns explicit session mode and lobby/gameplay transitions.
 - `client/scripts/networking/network_client.gd` owns generated packet send helpers.
-- `client/scripts/game.gd` can receive an injected `NetworkClient` for multiplayer gameplay and returns it to the shell when a GameOver room returns to Lobby.
-- `client/scripts/game.gd` stores authoritative `StatePacket.player_lifecycle` status by player ID.
+- `client/scripts/shell/gameplay_shell_flow.gd` coordinates multiplayer gameplay shell routing and returns the injected `NetworkClient` to the shell when a GameOver room returns to Lobby.
+- `client/scripts/gameplay/state/` stores authoritative `StatePacket.player_lifecycle` status by player ID; `client/scripts/gameplay/input/` owns local gameplay input routing.
 - `client/scripts/spectate_targets.gd` selects view-cycle targets from players that have both a visual position and authoritative lifecycle status `active`; pending-respawn, eliminated, and missing lifecycle entries are not eligible targets.
 - Gameplay packets are ignored/deferred unless the multiplayer room state is `InGame`; single-player and legacy empty-room-state behavior still work.
 
@@ -471,7 +471,7 @@ Use `ClientLogger` for new client lifecycle/network/UI diagnostics instead of ad
 
 ## Risks / Likely Messy Areas
 
-- `client/scripts/game.gd`: central gameplay coordinator. It has already accumulated networking, HUD, effects, input, and state responsibilities. Continue extracting carefully.
+- `client/scripts/shell/gameplay_shell_flow.gd`: central gameplay shell coordinator. Keep gameplay state, input, HUD, effects, and networking responsibilities routed through their current seams instead of growing this file.
 - Pause/menu state: server rules exist, but UI is not complete. Be careful around `OpenMenu`, game-over return-to-menu, and websocket close behavior.
 - Window/viewport sizing: raw window pixel limits are not reliable across monitors, DPI, title bars, taskbars, and Godot editor/debug behavior.
 - Godot scene diffs: editor upgrades can add `uid`/`unique_id`/offset changes. Inspect scene diffs carefully before reverting.
