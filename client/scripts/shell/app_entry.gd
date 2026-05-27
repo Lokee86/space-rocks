@@ -29,17 +29,21 @@ var client_config_controller
 var app_shutdown_controller
 var background_controller
 
-
 func _ready() -> void:
+
 	_log_v2_status("V2 app entry booted")
 	get_tree().set_auto_accept_quit(false)
+
 	_setup_boot_and_config()
+
 	app_shutdown_controller = AppShutdownController.new()
 	add_child(app_shutdown_controller)
 	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
+
 	background_controller = BackgroundController.new()
 	add_child(background_controller)
 	background_controller.configure(repeated_background, repeated_foreground_background, player)
+
 	gameplay_session_controller = GameplaySessionController.new()
 	add_child(gameplay_session_controller)
 	gameplay_session_controller.configure(
@@ -55,6 +59,7 @@ func _ready() -> void:
 		session_boot_controller.get_shell_boot_flow(),
 		Callable(self, "_log_v2_status")
 	)
+
 	session_network_controller = SessionNetworkController.new()
 	session_network_controller.configure(
 		session_boot_controller.get_connection_service(),
@@ -65,6 +70,7 @@ func _ready() -> void:
 	session_network_controller.connect_connection_signals()
 	session_network_controller.configure_gameplay_session_controller(gameplay_session_controller)
 	session_network_controller.connect_gameplay_signals()
+
 	room_session_controller = RoomSessionController.new()
 	room_session_controller.configure(
 		main_menu,
@@ -77,19 +83,22 @@ func _ready() -> void:
 	room_session_controller.configure_client_config_sender(
 		Callable(client_config_controller, "send_client_config")
 	)
+
 	gameplay_session_controller.configure_room_state_provider(
 		Callable(room_session_controller, "current_room_state")
 	)
+
 	session_network_controller.configure_room_session_controller(room_session_controller)
 	session_network_controller.connect_room_signals()
+
 	main_menu_session_controller = MainMenuSessionController.new()
 	main_menu_session_controller.configure(
 		main_menu,
 		session_boot_controller,
 		Callable(self, "_log_v2_status")
 	)
-	_connect_main_menu_signals()
 
+	_connect_main_menu_signals()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -103,8 +112,10 @@ func _setup_boot_and_config() -> void:
 	session_boot_controller = SessionBootController.new()
 	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_v2_status"))
 	add_child(session_boot_controller)
+
 	client_config_controller = ClientConfigController.new()
 	client_config_controller.configure(session_boot_controller.get_connection_service(), get_viewport())
+
 	_connect_boot_flow_signal(
 		"boot_request_sent",
 		Callable(client_config_controller, "send_client_config")

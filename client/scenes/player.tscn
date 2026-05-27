@@ -44,7 +44,10 @@ position = Vector2(-0.0202003, -37.7274)
 [node name="Camera2D" type="Camera2D" parent="." unique_id=562647492]
 
 [node name="LaserSound" type="AudioStreamPlayer2D" parent="." unique_id=1062667136]
+visible = false
 stream = ExtResource("5_fxgnq")
+volume_db = -6.95
+pitch_scale = 0.5
 
 [node name="AfterburnerMarker" type="Marker2D" parent="." unique_id=648800397]
 position = Vector2(0, 36)
