@@ -15,10 +15,6 @@ func reset() -> void:
 	awaiting_respawn_confirmation = false
 
 
-func process(_has_received_state: bool) -> void:
-	pass
-
-
 func request_respawn(has_received_state: bool) -> void:
 	if !has_received_state || connection_service == null || hud_flow == null:
 		return
