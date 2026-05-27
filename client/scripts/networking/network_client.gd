@@ -1,6 +1,8 @@
 extends Node
 class_name NetworkClient
 
+const Constants = preload("res://scripts/constants/constants.gd")
+
 signal connected_to_server
 signal connection_closed
 signal packet_received(data: Dictionary)
@@ -21,6 +23,9 @@ var closing_gracefully := false
 func connect_to_server(url: String) -> Error:
 	closing_gracefully = false
 	closed_notified = false
+	socket.handshake_headers = PackedStringArray([
+		"Origin: %s" % Constants.MULTIPLAYER_WS_ORIGIN
+	])
 	var err := socket.connect_to_url(url)
 	if err != OK:
 		print("connection failed")

@@ -44,6 +44,7 @@ const OSINDICATOR_TARGET_VISIBILITY_PADDING := 64.0
 
 # data-sync:start constants.client.shell
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
+const MULTIPLAYER_WS_ORIGIN := "https://space-rocks-client.local"
 const ROOM_STATE_LOBBY := "Lobby"
 const ROOM_STATE_STARTING := "Starting"
 const ROOM_STATE_IN_GAME := "InGame"
