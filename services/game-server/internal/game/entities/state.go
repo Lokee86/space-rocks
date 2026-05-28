@@ -17,7 +17,6 @@ type Ship struct {
 	ShootCooldown            float64
 	Score                    int
 	Lives                    int
-	Suspension               SuspensionState
 	DamageOptions            DamageOptions
 	InvulnerabilityRemaining float64
 	PendingDespawn           bool

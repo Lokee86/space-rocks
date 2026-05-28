@@ -26,48 +26,6 @@ func (ship *Ship) SetConfig(config ClientConfig) {
 	ship.Config = config
 }
 
-func (ship *Ship) Pause() {
-	ship.Suspension.SetPaused(true)
-	ship.ClearInput()
-	ship.Velocity = physics.Vector2{}
-}
-
-func (ship *Ship) Resume(invulnerabilitySeconds float64) {
-	ship.Suspension.SetPaused(false)
-	ship.ClearInput()
-	ship.InvulnerabilityRemaining = invulnerabilitySeconds
-}
-
-func (ship *Ship) IsSuspended() bool {
-	return ship.Suspension.IsSuspended()
-}
-
-func (ship *Ship) CanReceiveInput() bool {
-	return !ship.IsPendingDespawn() && !ship.IsSuspended()
-}
-
-func (ship *Ship) CanMove() bool {
-	return !ship.IsPendingDespawn() && !ship.IsSuspended()
-}
-
-func (ship *Ship) CanActivelyShoot() bool {
-	return !ship.IsSuspended() && !ship.IsInvulnerable()
-}
-
-func (ship *Ship) WantsToShoot() bool {
-	return ship.Input.Shoot && ship.CanActivelyShoot()
-}
-
-func (ship *Ship) CanShoot() bool {
-	return ship.CanActivelyShoot() && ship.ShootCooldown == 0
-}
-
-func (ship *Ship) CanTakeCollisionDamage() bool {
-	return !ship.IsSuspended() &&
-		!ship.IsInvulnerable() &&
-		ship.DamageOptions.CanTakeDamage()
-}
-
 func (ship *Ship) ResetShootCooldown() {
 	ship.ShootCooldown = ship.Stats.BulletCooldown
 }

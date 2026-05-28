@@ -165,12 +165,11 @@ func (scenario *scenario) setPlayerPosition(playerID string, position physics.Ve
 func (scenario *scenario) setPlayerPaused(playerID string, paused bool) {
 	scenario.t.Helper()
 
-	player := scenario.player(playerID)
 	if paused {
-		player.Pause()
+		scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
 		return
 	}
-	player.Resume(0)
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeResumePlayer})
 }
 
 func (scenario *scenario) setPlayerInvulnerability(playerID string, seconds float64) {

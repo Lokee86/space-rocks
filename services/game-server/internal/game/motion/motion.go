@@ -9,7 +9,7 @@ import (
 )
 
 func StepShip(ship *entities.Ship, delta float64) {
-	StepShipWithMovePolicy(ship, delta, ship.CanMove())
+	StepShipWithMovePolicy(ship, delta, true)
 }
 
 func StepShipWithMovePolicy(ship *entities.Ship, delta float64, canMove bool) {

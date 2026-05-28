@@ -38,12 +38,13 @@ func (game *Game) handleDebugPacket(playerID string, player *entities.Ship, pack
 		)
 		return true
 	case PacketTypeToggleDebugFreezePlayer:
-		enabled := !player.Suspension.DevFrozen
-		player.Suspension.SetDevFrozen(enabled)
-		player.ClearInput()
-		if session, ok := game.playerSessions[playerID]; ok {
-			session.Suspension.SetDevFrozen(enabled)
+		session, ok := game.playerSessions[playerID]
+		if !ok {
+			return true
 		}
+		enabled := !session.Suspension.DevFrozen
+		session.Suspension.SetDevFrozen(enabled)
+		player.ClearInput()
 		logging.Game.Info("debug player freeze toggled",
 			logging.FieldPlayerID, playerID,
 			"enabled", enabled,

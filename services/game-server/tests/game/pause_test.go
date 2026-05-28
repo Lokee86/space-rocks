@@ -9,67 +9,49 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
-func TestShipIsSuspendedReflectsPauseAndFreeze(t *testing.T) {
-	ship := entities.Ship{}
-	if ship.IsSuspended() {
-		t.Fatal("expected ship without pause or freeze to be active")
+func TestSuspensionStateReflectsPauseAndFreeze(t *testing.T) {
+	state := entities.SuspensionState{}
+	if state.IsSuspended() {
+		t.Fatal("expected state without pause or freeze to be active")
 	}
 
-	ship.Pause()
-	if !ship.IsSuspended() {
-		t.Fatal("expected paused ship to be suspended")
+	state.SetPaused(true)
+	if !state.IsSuspended() {
+		t.Fatal("expected paused state to be suspended")
 	}
 
-	ship.Resume(0)
-	ship.Suspension.SetDevFrozen(true)
-	if !ship.IsSuspended() {
-		t.Fatal("expected frozen ship to be suspended")
+	state.SetPaused(false)
+	state.SetDevFrozen(true)
+	if !state.IsSuspended() {
+		t.Fatal("expected frozen state to be suspended")
 	}
 }
 
-func TestFrozenShipCannotReceiveInputOrMove(t *testing.T) {
-	ship := entities.Ship{}
-	if !ship.CanReceiveInput() {
-		t.Fatal("expected active ship to receive input")
-	}
-	if !ship.CanMove() {
-		t.Fatal("expected active ship to move")
-	}
+func TestPausedAndFrozenSuspensionRequiresBothCausesCleared(t *testing.T) {
+	state := entities.SuspensionState{}
+	state.SetPaused(true)
+	state.SetDevFrozen(true)
 
-	ship.Suspension.SetDevFrozen(true)
-	if ship.CanReceiveInput() {
-		t.Fatal("expected frozen ship not to receive input")
-	}
-	if ship.CanMove() {
-		t.Fatal("expected frozen ship not to move")
-	}
-}
-
-func TestPausedAndFrozenShipRequiresBothCausesCleared(t *testing.T) {
-	ship := entities.Ship{}
-	ship.Pause()
-	ship.Suspension.SetDevFrozen(true)
-
-	ship.Resume(0)
-	if !ship.Suspension.DevFrozen {
+	state.SetPaused(false)
+	if !state.DevFrozen {
 		t.Fatal("expected resume not to clear player freeze")
 	}
-	if !ship.IsSuspended() {
-		t.Fatal("expected resumed ship to remain suspended while frozen")
+	if !state.IsSuspended() {
+		t.Fatal("expected resumed state to remain suspended while frozen")
 	}
 
-	ship.Pause()
-	ship.Suspension.SetDevFrozen(false)
-	if !ship.Suspension.Paused {
+	state.SetPaused(true)
+	state.SetDevFrozen(false)
+	if !state.Paused {
 		t.Fatal("expected unfreeze not to clear pause")
 	}
-	if !ship.IsSuspended() {
-		t.Fatal("expected unfrozen ship to remain suspended while paused")
+	if !state.IsSuspended() {
+		t.Fatal("expected unfrozen state to remain suspended while paused")
 	}
 
-	ship.Resume(0)
-	if ship.IsSuspended() {
-		t.Fatal("expected ship to be active after pause and freeze are cleared")
+	state.SetPaused(false)
+	if state.IsSuspended() {
+		t.Fatal("expected state to be active after pause and freeze are cleared")
 	}
 }
 
@@ -124,8 +106,11 @@ func TestPauseRequestPacketTogglesPauseState(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 
-	player := scenario.player(playerID)
-	if player.Suspension.Paused {
+	resumed, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet after second pause request")
+	}
+	if resumed.Paused {
 		t.Fatal("expected second pause request to resume player")
 	}
 }
@@ -198,8 +183,11 @@ func TestFreshPlayerAcceptsInputAndMoves(t *testing.T) {
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	player := scenario.player(playerID)
-	if player.Suspension.Paused {
+	fresh, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet for fresh player")
+	}
+	if fresh.Paused {
 		t.Fatal("expected fresh player not to be paused")
 	}
 	state := scenario.playerState(playerID, playerID)
@@ -253,8 +241,11 @@ func TestResumePlayerPacketResumesAndBlocksImmediateShooting(t *testing.T) {
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeResumePlayer})
 
-	player := scenario.player(playerID)
-	if player.Suspension.Paused {
+	resumed, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet after resume")
+	}
+	if resumed.Paused {
 		t.Fatal("expected player to resume")
 	}
 
