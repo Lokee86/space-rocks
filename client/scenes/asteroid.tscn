@@ -1,19 +1,18 @@
 [gd_scene format=3 uid="uid://daircltkhadt1"]
 
 [ext_resource type="Script" uid="uid://dkbi0vhbilxqm" path="res://scripts/entities/asteroid.gd" id="1_rigo0"]
-[ext_resource type="Texture2D" uid="uid://dporywmuugicl" path="res://assets/asteroids/asteroid1.png" id="2_6mo6b"]
 
 [node name="Asteroid" type="CharacterBody2D" unique_id=1712312301]
 collision_mask = 0
 script = ExtResource("1_rigo0")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1453374869]
-texture = ExtResource("2_6mo6b")
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=1318796385]
 
 [node name="CollisionVariants" type="Node2D" parent="." unique_id=721218541]
 
 [node name="AsteroidCollision1" type="CollisionPolygon2D" parent="CollisionVariants" unique_id=1400372896]
-polygon = PackedVector2Array(64, -21, 62, 24, 47, 52, 14, 63, -40, 54, -59, 24, -65, -5, -58, -39, -40, -59, -14, -71, 21, -64, 45, -54)
+visible = false
+polygon = PackedVector2Array(69, -22, 66, 26, 47, 53, 3, 69, -40, 54, -65, 25, -70, -4, -58, -39, -40, -55, -14, -71, 22, -64, 42, -55)
 disabled = true
