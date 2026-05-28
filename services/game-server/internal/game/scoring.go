@@ -14,7 +14,7 @@ func (game *Game) awardScore(award scoring.Award) {
 	if !ok {
 		return
 	}
-	if player.IsSuspended() || player.IsInvulnerable() {
+	if !game.playerCanReceiveScore(award.PlayerID, player) {
 		return
 	}
 

@@ -117,3 +117,12 @@ func (game *Game) playerCanTakeCollisionDamage(playerID string, player *entities
 		!player.IsInvulnerable() &&
 		player.DamageOptions.CanTakeDamage()
 }
+
+func (game *Game) playerCanReceiveScore(playerID string, player *entities.Ship) bool {
+	session, ok := game.playerSessions[playerID]
+	if !ok {
+		return false
+	}
+	return !session.Suspension.IsSuspended() &&
+		!player.IsInvulnerable()
+}

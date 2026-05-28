@@ -13,7 +13,6 @@ func (game *Game) debugStatusFor(playerID string) DebugStatus {
 
 	if player, ok := game.state.Players[playerID]; ok {
 		status.Invincible = player.DamageOptions.Invincible
-		status.PlayerFrozen = player.Suspension.DevFrozen
 	}
 
 	return status
