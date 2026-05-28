@@ -22,7 +22,7 @@ func TestRoomInitializesMemberStorage(t *testing.T) {
 
 func TestRoomAddAndRemoveMember(t *testing.T) {
 	room := rooms.NewRoom("abc", rooms.RoomStateLobby, nil)
-	member := room.AddMemberID("session-1")
+	member := room.AddMemberSessionID("session-1")
 
 	if member.SessionID != "session-1" {
 		t.Fatalf("expected member session id %q, got %q", "session-1", member.SessionID)
@@ -33,12 +33,12 @@ func TestRoomAddAndRemoveMember(t *testing.T) {
 	if !member.Connected {
 		t.Fatal("expected new room member to start connected")
 	}
-	if !room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); !ok {
 		t.Fatal("expected member to be stored by session id")
 	}
 
-	room.RemoveMember("session-1")
-	if room.HasMember("session-1") {
+	room.RemoveMember(member.PlayerID)
+	if _, ok := room.PlayerIDForSession("session-1"); ok {
 		t.Fatal("expected member to be removed")
 	}
 }
@@ -53,7 +53,7 @@ func TestRoomMemberCountAndFullCapacity(t *testing.T) {
 	}
 
 	for index := 0; index < rooms.MaxPlayersPerRoom-1; index++ {
-		room.AddMemberID(string(rune('a' + index)))
+		room.AddMemberSessionID(string(rune('a' + index)))
 	}
 	if count := room.MemberCount(); count != rooms.MaxPlayersPerRoom-1 {
 		t.Fatalf("expected member count %d, got %d", rooms.MaxPlayersPerRoom-1, count)
@@ -62,7 +62,7 @@ func TestRoomMemberCountAndFullCapacity(t *testing.T) {
 		t.Fatal("expected room below capacity not to be full")
 	}
 
-	room.AddMemberID("last")
+	room.AddMemberSessionID("last")
 	if count := room.MemberCount(); count != rooms.MaxPlayersPerRoom {
 		t.Fatalf("expected full room member count %d, got %d", rooms.MaxPlayersPerRoom, count)
 	}
@@ -443,7 +443,7 @@ func TestJoinRoomRequestRejectsFullRoom(t *testing.T) {
 		t.Fatalf("create lobby room: %v", err)
 	}
 	for index := 0; index < rooms.MaxPlayersPerRoom; index++ {
-		room.AddMemberID(string(rune('a' + index)))
+		room.AddMemberSessionID(string(rune('a' + index)))
 	}
 
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
@@ -868,7 +868,13 @@ func TestStartGameRequestRejectsDoubleStartState(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
 	}
-	room.SetMemberReady(createdSnapshot.LocalMemberID, true)
+	playerID, ok := room.PlayerIDForSession(createdSnapshot.LocalMemberID)
+	if !ok {
+		t.Fatalf("expected member %q to resolve to a player", createdSnapshot.LocalMemberID)
+	}
+	if roomErr := room.SetReadyInLobby(playerID, true); roomErr != nil {
+		t.Fatalf("expected ready update for member %q, got %s", createdSnapshot.LocalMemberID, roomErr.Code)
+	}
 	room.State = rooms.RoomStateInGame
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartGameRequest}); err != nil {

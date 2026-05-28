@@ -32,10 +32,10 @@ func TestBuildRoomSnapshotIncludesRoomStateAndCapacity(t *testing.T) {
 
 func TestBuildRoomSnapshotIncludesMembersAndReadyStates(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	room.AddMemberID("player-2")
-	room.SetMemberReady("player-2", false)
-	room.AddMemberID("player-1")
-	room.SetMemberReady("player-1", true)
+	room.AddMemberSessionID("player-2")
+	setReadyInLobbyBySession(t, room, "player-2", false)
+	room.AddMemberSessionID("player-1")
+	setReadyInLobbyBySession(t, room, "player-1", true)
 
 	snapshot := networking.BuildRoomSnapshot(room, "player-1")
 
@@ -52,5 +52,17 @@ func TestBuildRoomSnapshotIncludesMembersAndReadyStates(t *testing.T) {
 		if !member.Connected {
 			t.Fatalf("expected snapshot member to be connected, got %#v", member)
 		}
+	}
+}
+
+func setReadyInLobbyBySession(t *testing.T, room *rooms.Room, sessionID string, ready bool) {
+	t.Helper()
+
+	playerID, ok := room.PlayerIDForSession(sessionID)
+	if !ok {
+		t.Fatalf("expected session %q to resolve to a player ID", sessionID)
+	}
+	if err := room.SetReadyInLobby(playerID, ready); err != nil {
+		t.Fatalf("set ready for session %q: %v", sessionID, err)
 	}
 }

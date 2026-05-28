@@ -34,39 +34,48 @@ func (room *Room) AddMember(member *RoomMember) *RoomMember {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	room.Members[member.SessionID] = member
+	return room.addMemberLocked(member)
+}
+
+func (room *Room) addMemberLocked(member *RoomMember) *RoomMember {
+	member.PlayerID = room.nextAvailablePlayerIDLocked()
+	room.Members[member.PlayerID] = member
 	if room.OwnerID == "" {
-		room.OwnerID = member.SessionID
+		room.OwnerID = member.PlayerID
 	}
 
 	return member
 }
 
-func (room *Room) AddMemberID(sessionID string) *RoomMember {
+func (room *Room) AddMemberSessionID(sessionID string) *RoomMember {
 	return room.AddMember(NewRoomMember(sessionID))
 }
 
-func (room *Room) RemoveMember(sessionID string) {
+func (room *Room) PlayerIDForSession(sessionID string) (string, bool) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	delete(room.Members, sessionID)
-	if room.OwnerID == sessionID {
+	for _, member := range room.Members {
+		if member.SessionID == sessionID {
+			return member.PlayerID, true
+		}
+	}
+	return "", false
+}
+
+func (room *Room) RemoveMember(playerID string) {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	delete(room.Members, playerID)
+	if room.OwnerID == playerID {
 		room.OwnerID = ""
-		for memberID := range room.Members {
-			if room.OwnerID == "" || memberID < room.OwnerID {
-				room.OwnerID = memberID
+		for remainingPlayerID := range room.Members {
+			if room.OwnerID == "" || remainingPlayerID < room.OwnerID {
+				room.OwnerID = remainingPlayerID
 			}
 		}
 	}
-}
-
-func (room *Room) HasMember(sessionID string) bool {
-	room.mu.Lock()
-	defer room.mu.Unlock()
-
-	_, ok := room.Members[sessionID]
-	return ok
 }
 
 func (room *Room) MemberCount() int {
@@ -74,19 +83,6 @@ func (room *Room) MemberCount() int {
 	defer room.mu.Unlock()
 
 	return len(room.Members)
-}
-
-func (room *Room) SetMemberReady(sessionID string, ready bool) bool {
-	room.mu.Lock()
-	defer room.mu.Unlock()
-
-	member, ok := room.Members[sessionID]
-	if !ok {
-		return false
-	}
-
-	member.SetReady(ready)
-	return true
 }
 
 func (room *Room) SetJoinable(joinable bool) {
@@ -103,18 +99,18 @@ func (room *Room) IsJoinable() bool {
 	return room.Joinable
 }
 
-func (room *Room) ValidateStart(memberID string) *RoomDomainError {
+func (room *Room) ValidateStart(playerID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if _, ok := room.Members[memberID]; !ok {
+	if _, ok := room.Members[playerID]; !ok {
 		return &RoomDomainError{
 			Code:    RoomErrorNotInRoom,
 			Message: "Member is not in the room.",
 		}
 	}
 
-	if memberID != room.OwnerID {
+	if playerID != room.OwnerID {
 		return &RoomDomainError{
 			Code:    RoomErrorNotRoomOwner,
 			Message: "Only the room owner can start the game.",
@@ -200,11 +196,11 @@ func (room *Room) MarkGameOverIfComplete() bool {
 	return room.MarkGameOver() == nil
 }
 
-func (room *Room) ResetToLobby(memberID string) *RoomDomainError {
+func (room *Room) ResetToLobby(playerID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if _, ok := room.Members[memberID]; !ok {
+	if _, ok := room.Members[playerID]; !ok {
 		return &RoomDomainError{
 			Code:    RoomErrorNotInRoom,
 			Message: "Member is not in the room.",

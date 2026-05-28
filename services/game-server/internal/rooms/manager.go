@@ -76,7 +76,7 @@ func (manager *RoomManager) CreateLobbyRoom() (*Room, error) {
 	return nil, fmt.Errorf("generate unique room code")
 }
 
-func (manager *RoomManager) CreateSinglePlayerRoom(memberID string) (*Room, error) {
+func (manager *RoomManager) CreateSinglePlayerRoom(sessionID string) (*Room, error) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
@@ -91,7 +91,7 @@ func (manager *RoomManager) CreateSinglePlayerRoom(memberID string) (*Room, erro
 
 		room := NewRoom(roomID, RoomStateLobby, nil)
 		room.SetJoinable(false)
-		room.AddMemberID(memberID)
+		room.AddMemberSessionID(sessionID)
 		manager.rooms[roomID] = room
 		logging.Rooms.Debug("single-player room created", logging.FieldRoomID, roomID)
 
@@ -101,7 +101,7 @@ func (manager *RoomManager) CreateSinglePlayerRoom(memberID string) (*Room, erro
 	return nil, fmt.Errorf("generate unique room code")
 }
 
-func (manager *RoomManager) JoinRoom(memberID string, roomCode string) (*Room, *RoomDomainError) {
+func (manager *RoomManager) JoinRoom(sessionID string, roomCode string) (*Room, *RoomDomainError) {
 	roomCode = NormalizeRoomCode(roomCode)
 	if !IsValidRoomCode(roomCode) {
 		return nil, &RoomDomainError{
@@ -120,7 +120,7 @@ func (manager *RoomManager) JoinRoom(memberID string, roomCode string) (*Room, *
 		}
 	}
 
-	if roomErr := room.JoinMember(memberID); roomErr != nil {
+	if roomErr := room.JoinMember(sessionID); roomErr != nil {
 		return nil, roomErr
 	}
 	return room, nil
@@ -158,11 +158,11 @@ func (manager *RoomManager) JoinRoom(memberID string, roomCode string) (*Room, *
 		}
 	}
 
-	room.AddMemberID(memberID)
+	room.AddMemberSessionID(sessionID)
 	return room, nil
 }
 
-func (manager *RoomManager) LeaveRoom(roomID string, memberID string) (*LeaveRoomResult, *RoomDomainError) {
+func (manager *RoomManager) LeaveRoom(roomID string, sessionID string) (*LeaveRoomResult, *RoomDomainError) {
 	roomID = NormalizeRoomID(roomID)
 
 	manager.mu.Lock()
@@ -175,19 +175,21 @@ func (manager *RoomManager) LeaveRoom(roomID string, memberID string) (*LeaveRoo
 		}
 	}
 
-	if memberID != "" {
-		room.RemoveMember(memberID)
+	if sessionID != "" {
+		if playerID, ok := room.PlayerIDForSession(sessionID); ok {
+			room.RemoveMember(playerID)
+		}
 	}
 
 	return &LeaveRoomResult{
 		Room:             room,
 		RoomID:           roomID,
-		MemberID:         memberID,
+		MemberID:         sessionID,
 		RemainingMembers: room.MemberCount(),
 	}, nil
 }
 
-func (manager *RoomManager) SetReady(roomID string, memberID string, ready bool) (*Room, *RoomDomainError) {
+func (manager *RoomManager) SetReady(roomID string, sessionID string, ready bool) (*Room, *RoomDomainError) {
 	roomID = NormalizeRoomID(roomID)
 
 	manager.mu.Lock()
@@ -207,11 +209,16 @@ func (manager *RoomManager) SetReady(roomID string, memberID string, ready bool)
 		}
 	}
 
-	if !room.SetMemberReady(memberID, ready) {
+	playerID, ok := room.PlayerIDForSession(sessionID)
+	if !ok {
 		return nil, &RoomDomainError{
 			Code:    RoomErrorNotInRoom,
 			Message: "Member is not in the room.",
 		}
+	}
+
+	if roomErr := room.SetReadyInLobby(playerID, ready); roomErr != nil {
+		return nil, roomErr
 	}
 
 	return room, nil

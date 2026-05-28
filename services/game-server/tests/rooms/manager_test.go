@@ -60,7 +60,7 @@ func TestRoomManagerCreateSinglePlayerRoom(t *testing.T) {
 	if count := room.MemberCount(); count != 1 {
 		t.Fatalf("expected single-player room member count 1, got %d", count)
 	}
-	if !room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); !ok {
 		t.Fatal("expected requesting session to be the only room member")
 	}
 
@@ -94,7 +94,7 @@ func TestRoomManagerCreateStartedSinglePlayerRoomCreatesInGameRoom(t *testing.T)
 	if count := room.MemberCount(); count != 1 {
 		t.Fatalf("expected single-player room member count 1, got %d", count)
 	}
-	if !room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); !ok {
 		t.Fatal("expected requesting session to be the room member")
 	}
 }
@@ -118,7 +118,7 @@ func TestRoomManagerCreateSinglePlayerRoomRejectsJoinRoom(t *testing.T) {
 	if roomErr.Code != rooms.RoomErrorInvalidRoomState {
 		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomErr.Code)
 	}
-	if room.HasMember("session-2") {
+	if _, ok := room.PlayerIDForSession("session-2"); ok {
 		t.Fatal("expected rejected join not to add member")
 	}
 	if count := room.MemberCount(); count != 1 {
@@ -134,10 +134,10 @@ func TestRoomManagerReturnRoomToLobbyResetsGameAndReadiness(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	room.AddMemberID("session-1")
-	room.AddMemberID("session-2")
-	room.SetMemberReady("session-1", true)
-	room.SetMemberReady("session-2", true)
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
+	setReadyInLobbyBySession(t, room, "session-1", true)
+	setReadyInLobbyBySession(t, room, "session-2", true)
 	oldGame := game.New()
 	room.Game = oldGame
 	room.State = rooms.RoomStateGameOver
@@ -182,7 +182,7 @@ func TestRoomManagerJoinRoomAddsMember(t *testing.T) {
 	if joinedRoom != room {
 		t.Fatal("expected joined room to match lobby room")
 	}
-	if !room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); !ok {
 		t.Fatal("expected joined member to be added")
 	}
 	if count := room.MemberCount(); count != 1 {
@@ -206,7 +206,7 @@ func TestRoomManagerMultiplayerLobbyRoomRemainsJoinable(t *testing.T) {
 	if joinedRoom != room {
 		t.Fatal("expected joined room to match lobby room")
 	}
-	if !room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); !ok {
 		t.Fatal("expected joined member to be added")
 	}
 }
@@ -231,7 +231,7 @@ func TestRoomManagerJoinRoomRejectsUnjoinableRoom(t *testing.T) {
 	if roomErr.Code != rooms.RoomErrorInvalidRoomState {
 		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomErr.Code)
 	}
-	if room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); ok {
 		t.Fatal("expected rejected join not to add member")
 	}
 }
@@ -245,7 +245,7 @@ func TestRoomManagerJoinRoomBelowCapacitySucceeds(t *testing.T) {
 		t.Fatalf("create lobby room: %v", err)
 	}
 	for index := 0; index < rooms.MaxPlayersPerRoom-1; index++ {
-		room.AddMemberID(string(rune('a' + index)))
+		room.AddMemberSessionID(string(rune('a' + index)))
 	}
 
 	joinedRoom, roomErr := manager.JoinRoom("last", room.ID)
@@ -269,7 +269,7 @@ func TestRoomManagerJoinRoomAtCapacityFails(t *testing.T) {
 		t.Fatalf("create lobby room: %v", err)
 	}
 	for index := 0; index < rooms.MaxPlayersPerRoom; index++ {
-		room.AddMemberID(string(rune('a' + index)))
+		room.AddMemberSessionID(string(rune('a' + index)))
 	}
 
 	joinedRoom, roomErr := manager.JoinRoom("overflow", room.ID)
@@ -285,7 +285,7 @@ func TestRoomManagerJoinRoomAtCapacityFails(t *testing.T) {
 	if count := room.MemberCount(); count != rooms.MaxPlayersPerRoom {
 		t.Fatalf("expected failed join to preserve member count %d, got %d", rooms.MaxPlayersPerRoom, count)
 	}
-	if room.HasMember("overflow") {
+	if _, ok := room.PlayerIDForSession("overflow"); ok {
 		t.Fatal("expected failed join not to add member")
 	}
 }
@@ -318,7 +318,7 @@ func TestRoomManagerLeaveRoomRemovesMember(t *testing.T) {
 	if result.RemainingMembers != 0 {
 		t.Fatalf("expected remaining members 0, got %d", result.RemainingMembers)
 	}
-	if room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); ok {
 		t.Fatal("expected member to be removed")
 	}
 }
@@ -331,8 +331,8 @@ func TestRoomManagerLeaveMemberRemovesMemberAndReportsBroadcast(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	room.AddMemberID("session-1")
-	room.AddMemberID("session-2")
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
 
 	result, roomErr := manager.LeaveMember(room.ID, "session-1", "")
 	if roomErr != nil {
@@ -356,10 +356,10 @@ func TestRoomManagerLeaveMemberRemovesMemberAndReportsBroadcast(t *testing.T) {
 	if !result.ShouldBroadcastSnapshot {
 		t.Fatal("expected leave member result to request snapshot broadcast")
 	}
-	if room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); ok {
 		t.Fatal("expected leaving member to be removed")
 	}
-	if !room.HasMember("session-2") {
+	if _, ok := room.PlayerIDForSession("session-2"); !ok {
 		t.Fatal("expected remaining member to stay in room")
 	}
 	if room.CleanupTimer != nil {
@@ -375,7 +375,7 @@ func TestRoomManagerLeaveMemberRemovesPlayerAndSchedulesCleanupWhenEmpty(t *test
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	room.AddMemberID("session-1")
+	room.AddMemberSessionID("session-1")
 	room.Game = game.New()
 	playerID := room.Game.AddPlayer()
 	room.ActivePlayers = 1
@@ -384,7 +384,7 @@ func TestRoomManagerLeaveMemberRemovesPlayerAndSchedulesCleanupWhenEmpty(t *test
 	if roomErr != nil {
 		t.Fatalf("leave member: %v", roomErr)
 	}
-	if room.HasMember("session-1") {
+	if _, ok := room.PlayerIDForSession("session-1"); ok {
 		t.Fatal("expected leaving member to be removed")
 	}
 	if gameTracksPlayer(t, room.Game, playerID) {
@@ -505,8 +505,8 @@ func TestRoomManagerStartRoomGameRejectsNonMember(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	room.AddMemberID("session-1")
-	room.SetMemberReady("session-1", true)
+	room.AddMemberSessionID("session-1")
+	setReadyInLobbyBySession(t, room, "session-1", true)
 
 	startedRoom, roomErr := manager.StartRoomGame(room.ID, "missing")
 	if roomErr == nil {
@@ -534,9 +534,9 @@ func TestRoomManagerStartRoomGameRejectsNotReadyMembers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	room.AddMemberID("session-1")
-	room.AddMemberID("session-2")
-	room.SetMemberReady("session-1", true)
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
+	setReadyInLobbyBySession(t, room, "session-1", true)
 
 	startedRoom, roomErr := manager.StartRoomGame(room.ID, "session-1")
 	if roomErr == nil {
@@ -564,10 +564,10 @@ func TestRoomManagerStartRoomGameTransitionsLobbyToInGame(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	room.AddMemberID("session-1")
-	room.AddMemberID("session-2")
-	room.SetMemberReady("session-1", true)
-	room.SetMemberReady("session-2", true)
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
+	setReadyInLobbyBySession(t, room, "session-1", true)
+	setReadyInLobbyBySession(t, room, "session-2", true)
 
 	startedRoom, roomErr := manager.StartRoomGame(room.ID, "session-1")
 	if roomErr != nil {
@@ -591,4 +591,16 @@ func gameTracksPlayer(t *testing.T, gameInstance *game.Game, playerID string) bo
 		reflect.ValueOf(gameInstance).Elem().FieldByName("playerSessions"),
 	)
 	return playerSessions.MapIndex(reflect.ValueOf(playerID)).IsValid()
+}
+
+func setReadyInLobbyBySession(t *testing.T, room *rooms.Room, sessionID string, ready bool) {
+	t.Helper()
+
+	playerID, ok := room.PlayerIDForSession(sessionID)
+	if !ok {
+		t.Fatalf("expected session %q to resolve to a player ID", sessionID)
+	}
+	if err := room.SetReadyInLobby(playerID, ready); err != nil {
+		t.Fatalf("set ready for session %q: %v", sessionID, err)
+	}
 }

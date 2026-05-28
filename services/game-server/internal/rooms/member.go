@@ -2,6 +2,7 @@ package rooms
 
 type RoomMember struct {
 	SessionID string
+	PlayerID  string
 	Ready     bool
 	Connected bool
 }
