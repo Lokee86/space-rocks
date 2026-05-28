@@ -19,6 +19,7 @@ const PLAYER_HUE_SHIFT_SHADER := preload("res://shaders/player_hue_shift.gdshade
 
 var afterburner: Node2D
 var afterburner_sprite: AnimatedSprite2D
+var afterburner_audio: AudioStreamPlayer2D
 var afterburner_active := false
 var ship_hue_material: ShaderMaterial
 var player_hue := Constants.PLAYER_DEFAULT_HUE
@@ -35,6 +36,9 @@ func _ready() -> void:
 	afterburner_marker.add_child(afterburner)
 
 	afterburner_sprite = afterburner.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	afterburner_audio = afterburner.get_node_or_null("AudioStreamPlayer2D") as AudioStreamPlayer2D
+	if afterburner_audio != null && !afterburner_audio.finished.is_connected(_on_afterburner_audio_finished):
+		afterburner_audio.finished.connect(_on_afterburner_audio_finished)
 
 
 func get_input_packet() -> Dictionary:
@@ -65,13 +69,33 @@ func set_afterburner_active(active: bool) -> void:
 
 	afterburner_active = active
 	afterburner.visible = active
-	if afterburner_sprite == null:
-		return
 
 	if active:
-		afterburner_sprite.play("default")
+		if afterburner_sprite != null:
+			afterburner_sprite.play("default")
+		_play_afterburner_audio()
 	else:
-		afterburner_sprite.stop()
+		if afterburner_sprite != null:
+			afterburner_sprite.stop()
+		_stop_afterburner_audio()
+
+
+func _play_afterburner_audio() -> void:
+	if afterburner_audio == null:
+		return
+	if !afterburner_audio.playing:
+		afterburner_audio.play()
+
+
+func _stop_afterburner_audio() -> void:
+	if afterburner_audio == null:
+		return
+	afterburner_audio.stop()
+
+
+func _on_afterburner_audio_finished() -> void:
+	if afterburner_active:
+		_play_afterburner_audio()
 
 
 func _ensure_unique_ship_hue_material() -> ShaderMaterial:
