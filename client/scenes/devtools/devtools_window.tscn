@@ -1,31 +1,66 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://cv8gwk403kb78"]
 
-[ext_resource type="Script" path="res://scripts/devtools/devtools_window.gd" id="1_devtools_window"]
+[ext_resource type="Script" uid="uid://gj4spdunkujd" path="res://scripts/devtools/devtools_window.gd" id="1_devtools_window"]
 
-[node name="DevtoolsWindow" type="Window"]
+[node name="DevtoolsWindow" type="Window" unique_id=296839702]
+oversampling_override = 1.0
 title = "Space Rocks Devtools"
+position = Vector2i(0, 36)
 size = Vector2i(360, 220)
-visible = false
 script = ExtResource("1_devtools_window")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=328286901]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = -7.0
+offset_bottom = 7.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=542001528]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer" unique_id=974160291]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="InvincibleButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=816769564]
 layout_mode = 2
-text = "Devtools"
+text = "Invincible"
 
-[node name="DebugStatusLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="InfiniteLivesButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1460655812]
 layout_mode = 2
-text = "Debug status will appear here."
-autowrap_mode = 2
+text = "Infinite Lives"
+
+[node name="FreezeWorldButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=203052911]
+layout_mode = 2
+text = "Freeze World"
+
+[node name="FreezePlayerButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1920186547]
+layout_mode = 2
+text = "Freeze Player"
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/HBoxContainer" unique_id=413148754]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="InvincibleStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1418502128]
+layout_mode = 2
+text = "Status"
+
+[node name="InfiniteLivesStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=191291838]
+layout_mode = 2
+text = "Status"
+
+[node name="WorldFrozenStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1038932319]
+layout_mode = 2
+text = "Status"
+
+[node name="PlayerFrozenStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=920680265]
+layout_mode = 2
+text = "Status"
