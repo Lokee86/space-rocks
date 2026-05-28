@@ -26,7 +26,7 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	}
 	switch packet.Type {
 	case PacketTypeInput:
-		if !player.CanReceiveInput() {
+		if !game.playerCanReceiveInput(playerID, player) {
 			return
 		}
 		player.SetInput(packet.Input)

@@ -2,10 +2,16 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) setPlayerPaused(playerID string, paused bool) {
+	session, ok := game.playerSessions[playerID]
+	if !ok {
+		return
+	}
 	player, ok := game.state.Players[playerID]
 	if !ok {
 		return
@@ -16,12 +22,15 @@ func (game *Game) setPlayerPaused(playerID string, paused bool) {
 		}
 		return
 	}
+	session.Suspension.SetPaused(paused)
 	if paused {
-		player.Pause()
+		player.ClearInput()
+		player.Velocity = physics.Vector2{}
 		logging.Game.Debug("player paused", logging.FieldPlayerID, playerID)
 		return
 	}
-	player.Resume(constants.PlayerResumeInvulnerabilitySeconds)
+	player.ClearInput()
+	player.InvulnerabilityRemaining = constants.PlayerResumeInvulnerabilitySeconds
 	logging.Game.Debug("player resumed",
 		logging.FieldPlayerID, playerID,
 		"invulnerability", constants.PlayerResumeInvulnerabilitySeconds,
@@ -29,6 +38,10 @@ func (game *Game) setPlayerPaused(playerID string, paused bool) {
 }
 
 func (game *Game) togglePlayerPaused(playerID string) {
+	session, ok := game.playerSessions[playerID]
+	if !ok {
+		return
+	}
 	player, ok := game.state.Players[playerID]
 	if !ok {
 		return
@@ -36,20 +49,71 @@ func (game *Game) togglePlayerPaused(playerID string) {
 	if player.IsPendingDespawn() {
 		return
 	}
-	game.setPlayerPaused(playerID, !player.Suspension.Paused)
+	game.setPlayerPaused(playerID, !session.Suspension.Paused)
 }
 
 func (game *Game) PlayerPauseStatePacket(playerID string) (PlayerPauseState, bool) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	player, ok := game.state.Players[playerID]
+	session, ok := game.playerSessions[playerID]
 	if !ok {
+		return PlayerPauseState{}, false
+	}
+	if _, ok := game.state.Players[playerID]; !ok {
 		return PlayerPauseState{}, false
 	}
 	return PlayerPauseState{
 		Type:     PacketTypePlayerPauseState,
 		PlayerID: playerID,
-		Paused:   player.Suspension.Paused,
+		Paused:   session.Suspension.Paused,
 	}, true
+}
+
+func (game *Game) playerCanReceiveInput(playerID string, player *entities.Ship) bool {
+	if player.IsPendingDespawn() {
+		return false
+	}
+	session, ok := game.playerSessions[playerID]
+	if !ok {
+		return false
+	}
+	return !session.Suspension.IsSuspended()
+}
+
+func (game *Game) playerCanMove(playerID string, player *entities.Ship) bool {
+	if player.IsPendingDespawn() {
+		return false
+	}
+	session, ok := game.playerSessions[playerID]
+	if !ok {
+		return false
+	}
+	return !session.Suspension.IsSuspended()
+}
+
+func (game *Game) playerCanShoot(playerID string, player *entities.Ship) bool {
+	if player.IsPendingDespawn() {
+		return false
+	}
+	session, ok := game.playerSessions[playerID]
+	if !ok {
+		return false
+	}
+	return !session.Suspension.IsSuspended() &&
+		!player.IsInvulnerable() &&
+		player.ShootCooldown == 0
+}
+
+func (game *Game) playerCanTakeCollisionDamage(playerID string, player *entities.Ship) bool {
+	if player.IsPendingDespawn() {
+		return false
+	}
+	session, ok := game.playerSessions[playerID]
+	if !ok {
+		return false
+	}
+	return !session.Suspension.IsSuspended() &&
+		!player.IsInvulnerable() &&
+		player.DamageOptions.CanTakeDamage()
 }

@@ -24,14 +24,14 @@ func (game *Game) stepPlayerSessions(delta float64) {
 
 func (game *Game) stepPlayers(delta float64, bounds space.Bounds) {
 	for _, player := range game.state.Players {
-		motion.AdvanceShip(player, delta, bounds)
+		motion.AdvanceShipWithMovePolicy(player, delta, bounds, game.playerCanMove(player.ID, player))
 		if cameraView, ok := game.cameraViews[player.ID]; ok {
 			cameraView.SetPosition(player.Position())
 		}
 		if player.IsPendingDespawn() {
 			continue
 		}
-		if game.worldSimulationOptions.BulletsCanMove() && player.WantsToShoot() && player.CanShoot() {
+		if game.worldSimulationOptions.BulletsCanMove() && player.Input.Shoot && game.playerCanShoot(player.ID, player) {
 			game.spawnBullet(player)
 			player.ResetShootCooldown()
 		}
