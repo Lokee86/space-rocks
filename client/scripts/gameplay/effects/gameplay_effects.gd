@@ -7,15 +7,14 @@ const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"
 
 var owner_node: Node2D
-var game_over_sound: AudioStreamPlayer
 var audio_flow := GameplayAudioFlow.new()
 var game_over_sound_played := false
 var game_over_sound_token := 0
 
 
-func configure(game_owner: Node2D, game_over_audio: AudioStreamPlayer) -> void:
+func configure(game_owner: Node2D, hud: Control) -> void:
 	owner_node = game_owner
-	game_over_sound = game_over_audio
+	audio_flow.configure(hud)
 
 
 func reset_game_over_sound() -> void:
@@ -25,8 +24,7 @@ func reset_game_over_sound() -> void:
 
 func stop_game_over_sound() -> void:
 	game_over_sound_token += 1
-	if game_over_sound != null:
-		game_over_sound.stop()
+	audio_flow.stop_game_over_sound()
 
 
 func play_game_over_sound_after_delay() -> void:
@@ -104,9 +102,9 @@ func spawn_ship_death(event_position: Vector2) -> void:
 
 
 func _play_game_over_sound() -> void:
-	if is_instance_valid(game_over_sound) && !game_over_sound_played:
+	if audio_flow.has_game_over_sound() && !game_over_sound_played:
 		game_over_sound_played = true
-		game_over_sound.play()
+		audio_flow.play_game_over_sound()
 
 
 func _hide_effect_sprite(sprite: AnimatedSprite2D) -> void:

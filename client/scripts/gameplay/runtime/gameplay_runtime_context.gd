@@ -24,14 +24,14 @@ func configure_world(
 
 func configure_events(
 	game_owner: Node2D,
-	game_over_sound: AudioStreamPlayer,
+	hud: Control,
 	hud_flow_ref,
 	menu_flow_ref
 ) -> void:
 	event_flow = GameplayEventFlow.new()
 	event_flow.configure(
 		game_owner,
-		game_over_sound,
+		hud,
 		Callable(world_sync, "visual_position_for_server_position")
 	)
 	death_flow = GameplayDeathFlow.new()

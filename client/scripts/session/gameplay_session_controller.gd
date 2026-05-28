@@ -10,7 +10,6 @@ var player
 var bullets: Node2D
 var asteroids: Node2D
 var hud: Control
-var game_over_sound: AudioStreamPlayer
 var main_menu: Control
 var session_context
 var shell_boot_flow
@@ -31,7 +30,6 @@ func configure(
 	bullets_ref: Node2D,
 	asteroids_ref: Node2D,
 	hud_ref: Control,
-	game_over_sound_ref: AudioStreamPlayer,
 	main_menu_ref: Control,
 	session_context_ref,
 	shell_boot_flow_ref,
@@ -43,7 +41,6 @@ func configure(
 	bullets = bullets_ref
 	asteroids = asteroids_ref
 	hud = hud_ref
-	game_over_sound = game_over_sound_ref
 	main_menu = main_menu_ref
 	session_context = session_context_ref
 	shell_boot_flow = shell_boot_flow_ref
@@ -63,8 +60,7 @@ func configure(
 		bullets,
 		asteroids,
 		gameplay_hud_flow,
-		gameplay_menu_flow,
-		game_over_sound
+		gameplay_menu_flow
 	)
 	if gameplay_shell_flow.has_method("configure_spectate_menu_state"):
 		gameplay_shell_flow.configure_spectate_menu_state(spectate_menu_state)
