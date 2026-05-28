@@ -15,6 +15,10 @@ static func local_member_id(packet: Dictionary) -> String:
 	return str(packet.get(Packets.FIELD_LOCAL_MEMBER_ID, ""))
 
 
+static func local_player_id(packet: Dictionary) -> String:
+	return str(packet.get(Packets.FIELD_LOCAL_PLAYER_ID, ""))
+
+
 static func owner_id(packet: Dictionary) -> String:
 	return str(packet.get(Packets.FIELD_OWNER_ID, ""))
 
@@ -28,3 +32,7 @@ static func members(packet: Dictionary) -> Array:
 	if value is Array:
 		return value.duplicate(true)
 	return []
+
+
+static func member_player_id(member: Dictionary) -> String:
+	return str(member.get(Packets.FIELD_PLAYER_ID, ""))

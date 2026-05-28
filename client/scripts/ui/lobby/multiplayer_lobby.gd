@@ -42,6 +42,7 @@ func apply_lobby_state(
 	room_code: String,
 	room_state: String,
 	local_member_id: String,
+	local_player_id: String,
 	owner_id: String,
 	_max_players: int,
 	members: Array,
@@ -53,6 +54,7 @@ func apply_lobby_state(
 		room_status_label.text = LobbyStatusViewModel.status_text(
 			room_state,
 			local_member_id,
+			local_player_id,
 			owner_id,
 			members,
 			can_start
