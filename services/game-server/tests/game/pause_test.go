@@ -84,7 +84,10 @@ func TestPausePlayerPacketClearsInputAndIgnoresNewInput(t *testing.T) {
 	})
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
 
-	paused := scenario.playerState(playerID, playerID)
+	paused, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet after pause")
+	}
 	if !paused.Paused {
 		t.Fatal("expected player to be paused")
 	}
@@ -111,7 +114,10 @@ func TestPauseRequestPacketTogglesPauseState(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 
-	paused := scenario.playerState(playerID, playerID)
+	paused, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet after pause request")
+	}
 	if !paused.Paused {
 		t.Fatal("expected pause request to pause player")
 	}
