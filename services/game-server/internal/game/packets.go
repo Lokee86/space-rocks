@@ -12,7 +12,7 @@ const (
 	PacketTypeRespawn                  = "respawn"
 	PacketTypePausePlayer              = "pause_player"
 	PacketTypeResumePlayer             = "resume_player"
-	PacketTypeSetPlayerPausedRequest   = "set_player_paused_request"
+	PacketTypePauseRequest             = "pause_request"
 	PacketTypePlayerPauseState         = "player_pause_state"
 	PacketTypeToggleDebugInvincible    = "toggle_debug_invincible"
 	PacketTypeToggleDebugInfiniteLives = "toggle_debug_infinite_lives"
@@ -36,7 +36,6 @@ type ClientPacket struct {
 	Config   entities.ClientConfig `json:"config"`
 	RoomCode string                `json:"room_code"`
 	Ready    bool                  `json:"ready"`
-	Paused   bool                  `json:"paused"`
 }
 
 type CreateRoomRequest struct {

@@ -105,6 +105,25 @@ func TestPausePlayerPacketClearsInputAndIgnoresNewInput(t *testing.T) {
 	}
 }
 
+func TestPauseRequestPacketTogglesPauseState(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
+
+	paused := scenario.playerState(playerID, playerID)
+	if !paused.Paused {
+		t.Fatal("expected pause request to pause player")
+	}
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
+
+	player := scenario.player(playerID)
+	if player.Suspension.Paused {
+		t.Fatal("expected second pause request to resume player")
+	}
+}
+
 func TestPausePlayerPacketClearsVelocityBeforeResume(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()

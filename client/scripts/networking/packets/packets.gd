@@ -9,7 +9,7 @@ const TYPE_SHIP_DEATH := "ship_death"
 const TYPE_RESPAWN := "respawn"
 const TYPE_PAUSE_PLAYER := "pause_player"
 const TYPE_RESUME_PLAYER := "resume_player"
-const TYPE_SET_PLAYER_PAUSED_REQUEST := "set_player_paused_request"
+const TYPE_PAUSE_REQUEST := "pause_request"
 const TYPE_PLAYER_PAUSE_STATE := "player_pause_state"
 const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
 const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
@@ -104,10 +104,9 @@ static func resume_player_packet() -> Dictionary:
 	packet[FIELD_TYPE] = "resume_player"
 	return packet
 
-static func set_player_paused_request_packet(paused) -> Dictionary:
+static func pause_request_packet() -> Dictionary:
 	var packet := {}
-	packet[FIELD_TYPE] = "set_player_paused_request"
-	packet[FIELD_PAUSED] = paused
+	packet[FIELD_TYPE] = "pause_request"
 	return packet
 
 static func toggle_debug_invincible_packet() -> Dictionary:

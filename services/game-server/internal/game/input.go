@@ -1,10 +1,5 @@
 package game
 
-import (
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-)
-
 func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
@@ -36,21 +31,11 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		}
 		player.SetInput(packet.Input)
 	case PacketTypePausePlayer:
-		if player.IsPendingDespawn() {
-			return
-		}
-		player.Pause()
-		logging.Game.Debug("player paused", logging.FieldPlayerID, playerID)
+		game.setPlayerPaused(playerID, true)
 	case PacketTypeResumePlayer:
-		if player.IsPendingDespawn() {
-			logging.Game.Debug("resume ignored; player pending despawn", logging.FieldPlayerID, playerID)
-			return
-		}
-		player.Resume(constants.PlayerResumeInvulnerabilitySeconds)
-		logging.Game.Debug("player resumed",
-			logging.FieldPlayerID, playerID,
-			"invulnerability", constants.PlayerResumeInvulnerabilitySeconds,
-		)
+		game.setPlayerPaused(playerID, false)
+	case PacketTypePauseRequest:
+		game.togglePlayerPaused(playerID)
 	case PacketTypeClientConfig:
 		player.SetConfig(packet.Config)
 	}
