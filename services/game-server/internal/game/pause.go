@@ -38,3 +38,18 @@ func (game *Game) togglePlayerPaused(playerID string) {
 	}
 	game.setPlayerPaused(playerID, !player.Suspension.Paused)
 }
+
+func (game *Game) PlayerPauseStatePacket(playerID string) (PlayerPauseState, bool) {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	player, ok := game.state.Players[playerID]
+	if !ok {
+		return PlayerPauseState{}, false
+	}
+	return PlayerPauseState{
+		Type:     PacketTypePlayerPauseState,
+		PlayerID: playerID,
+		Paused:   player.Suspension.Paused,
+	}, true
+}
