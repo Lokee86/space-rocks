@@ -9,11 +9,15 @@ import (
 )
 
 func StepShip(ship *entities.Ship, delta float64) {
+	StepShipWithMovePolicy(ship, delta, ship.CanMove())
+}
+
+func StepShipWithMovePolicy(ship *entities.Ship, delta float64, canMove bool) {
 	if ship.PendingDespawn {
 		ship.DespawnDelay -= delta
 		return
 	}
-	if !ship.CanMove() {
+	if !canMove {
 		ship.ClearInput()
 		return
 	}
@@ -43,6 +47,13 @@ func StepShip(ship *entities.Ship, delta float64) {
 
 func AdvanceShip(ship *entities.Ship, delta float64, bounds space.Bounds) {
 	StepShip(ship, delta)
+	wrapped := normalizePosition(ship.Position(), bounds)
+	ship.X = wrapped.X
+	ship.Y = wrapped.Y
+}
+
+func AdvanceShipWithMovePolicy(ship *entities.Ship, delta float64, bounds space.Bounds, canMove bool) {
+	StepShipWithMovePolicy(ship, delta, canMove)
 	wrapped := normalizePosition(ship.Position(), bounds)
 	ship.X = wrapped.X
 	ship.Y = wrapped.Y

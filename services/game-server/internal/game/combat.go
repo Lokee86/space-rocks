@@ -129,7 +129,7 @@ func (game *Game) handleShipAsteroidCollisions() {
 		if player.IsPendingDespawn() {
 			continue
 		}
-		if !player.CanTakeCollisionDamage() {
+		if !game.playerCanTakeCollisionDamage(playerID, player) {
 			continue
 		}
 

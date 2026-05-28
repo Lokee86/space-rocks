@@ -270,7 +270,7 @@ func TestShipAsteroidCollisionSkipsPausedPlayer(t *testing.T) {
 	scenario.useCircleCollisionShapes()
 	playerID := scenario.addPlayer()
 	player := scenario.playerState(playerID, playerID)
-	scenario.setPlayerPaused(playerID, true)
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
