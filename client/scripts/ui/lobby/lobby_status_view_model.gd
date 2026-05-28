@@ -7,6 +7,7 @@ const Constants := preload("res://scripts/constants/constants.gd")
 static func status_text(
 	room_state: String,
 	local_member_id: String,
+	local_player_id: String,
 	owner_id: String,
 	members: Array,
 	can_start: bool
@@ -20,7 +21,7 @@ static func status_text(
 	if room_state != Constants.ROOM_STATE_LOBBY:
 		return room_state
 
-	if local_member_id == owner_id:
+	if local_player_id == owner_id:
 		if can_start:
 			return Constants.STATUS_READY_TO_START
 		return Constants.STATUS_WAITING_FOR_PLAYERS_READY

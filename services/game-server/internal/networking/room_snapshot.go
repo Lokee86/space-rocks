@@ -19,10 +19,13 @@ func BuildRoomSnapshot(room *rooms.Room, localMemberID string) game.RoomSnapshot
 	for _, member := range memberSnapshot {
 		members = append(members, game.RoomMemberState{
 			MemberID:  member.SessionID,
+			PlayerID:  member.PlayerID,
 			Ready:     member.Ready,
 			Connected: member.Connected,
 		})
 	}
+
+	localPlayerID, _ := room.PlayerIDForSession(localMemberID)
 
 	return game.RoomSnapshot{
 		Type:          game.PacketTypeRoomSnapshot,
@@ -30,6 +33,7 @@ func BuildRoomSnapshot(room *rooms.Room, localMemberID string) game.RoomSnapshot
 		RoomState:     string(room.State),
 		Members:       members,
 		LocalMemberID: localMemberID,
+		LocalPlayerID: localPlayerID,
 		OwnerID:       room.OwnerID,
 		MaxPlayers:    rooms.MaxPlayersPerRoom,
 	}

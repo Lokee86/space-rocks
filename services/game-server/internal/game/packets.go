@@ -68,6 +68,7 @@ type ReturnToLobbyRequest struct {
 
 type RoomMemberState struct {
 	MemberID  string `json:"member_id"`
+	PlayerID  string `json:"player_id"`
 	Ready     bool   `json:"ready"`
 	Connected bool   `json:"connected"`
 }
@@ -78,6 +79,7 @@ type RoomSnapshot struct {
 	RoomState     string            `json:"room_state"`
 	Members       []RoomMemberState `json:"members"`
 	LocalMemberID string            `json:"local_member_id"`
+	LocalPlayerID string            `json:"local_player_id"`
 	OwnerID       string            `json:"owner_id"`
 	MaxPlayers    int               `json:"max_players"`
 }
