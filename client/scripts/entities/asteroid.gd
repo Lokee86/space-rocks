@@ -9,6 +9,10 @@ var asteroid_textures := [
 	preload("res://assets/asteroids/asteroid2.png"),
 	preload("res://assets/asteroids/asteroid3.png"),
 	preload("res://assets/asteroids/asteroid4.png"),
+	preload("res://assets/asteroids/asteroid5.png"),
+	preload("res://assets/asteroids/asteroid6.png"),
+	preload("res://assets/asteroids/asteroid7.png"),
+	preload("res://assets/asteroids/asteroid8.png"),
 ]
 
 
@@ -21,12 +25,12 @@ func set_asteroid_variant(index: int) -> void:
 		return
 
 	for child in collision_variants.get_children():
-		var variant_collision := child as CollisionPolygon2D
+		var variant_collision := child as CollisionShape2D
 		if variant_collision != null:
 			variant_collision.disabled = true
 
 	var shape_node := collision_variants.get_child(
 		min(variant_index, collision_variants.get_child_count() - 1)
-	) as CollisionPolygon2D
+	) as CollisionShape2D
 	if shape_node != null:
 		collision.polygon = shape_node.polygon
