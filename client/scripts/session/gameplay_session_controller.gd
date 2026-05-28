@@ -85,6 +85,11 @@ func handle_gameplay_state(packet: Dictionary) -> void:
 		gameplay_shell_flow.apply_gameplay_state(packet)
 
 
+func handle_player_pause_state(packet: Dictionary) -> void:
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.apply_player_pause_state_packet(packet)
+
+
 func _process(delta: float) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.process(delta)
