@@ -9,7 +9,7 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "DebugStatus", "StatePacket"]
+structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "DebugStatus", "PlayerPauseState", "StatePacket"]
 
 [outputs.imports]
 entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
@@ -18,7 +18,7 @@ entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
 language = "gdscript"
 path = "client/scripts/networking/packets/packets.gd"
 base = "RefCounted"
-builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
+builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "set_player_paused_request_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
 
 [[structs]]
 id = "ClientPacket"
@@ -49,6 +49,11 @@ type = "string"
 [[structs.fields]]
 name = "ready"
 json = "ready"
+type = "bool"
+
+[[structs.fields]]
+name = "paused"
+json = "paused"
 type = "bool"
 
 [[structs]]
@@ -143,6 +148,12 @@ json = "member_id"
 type = "string"
 
 [[structs.fields]]
+name = "player_id"
+go_name = "PlayerID"
+json = "player_id"
+type = "string"
+
+[[structs.fields]]
 name = "ready"
 json = "ready"
 type = "bool"
@@ -204,6 +215,12 @@ item_type = "RoomMemberState"
 name = "local_member_id"
 go_name = "LocalMemberID"
 json = "local_member_id"
+type = "string"
+
+[[structs.fields]]
+name = "local_player_id"
+go_name = "LocalPlayerID"
+json = "local_player_id"
 type = "string"
 
 [[structs.fields]]
@@ -449,6 +466,25 @@ json = "player_frozen"
 type = "bool"
 
 [[structs]]
+id = "PlayerPauseState"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "player_id"
+go_name = "PlayerID"
+json = "player_id"
+type = "string"
+
+[[structs.fields]]
+name = "paused"
+json = "paused"
+type = "bool"
+
+[[structs]]
 id = "StatePacket"
 
 [[structs.fields]]
@@ -544,6 +580,14 @@ id = "resume_player"
 value = "resume_player"
 
 [[packet_types]]
+id = "set_player_paused_request"
+value = "set_player_paused_request"
+
+[[packet_types]]
+id = "player_pause_state"
+value = "player_pause_state"
+
+[[packet_types]]
 id = "toggle_debug_invincible"
 value = "toggle_debug_invincible"
 
@@ -630,6 +674,14 @@ id = "resume_player_packet"
 
 [builders.body]
 type = "resume_player"
+
+[[builders]]
+id = "set_player_paused_request_packet"
+args = ["paused"]
+
+[builders.body]
+type = "set_player_paused_request"
+paused = "$paused"
 
 [[builders]]
 id = "toggle_debug_invincible_packet"
