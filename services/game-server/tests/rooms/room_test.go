@@ -17,26 +17,30 @@ func TestRoomMemberAccessors(t *testing.T) {
 	if stored != member {
 		t.Fatal("expected AddMember to return stored member")
 	}
-	if !room.HasMember("session-1") {
+	_, ok := room.PlayerIDForSession("session-1")
+	if !ok {
 		t.Fatal("expected room to have member")
 	}
 	if count := room.MemberCount(); count != 1 {
 		t.Fatalf("expected member count 1, got %d", count)
 	}
 
-	room.RemoveMember("session-1")
-	if room.HasMember("session-1") {
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected session to resolve before removal")
+	}
+	room.RemoveMember(playerID)
+	_, ok = room.PlayerIDForSession("session-1")
+	if ok {
 		t.Fatal("expected room member to be removed")
 	}
 }
 
-func TestRoomSetMemberReady(t *testing.T) {
+func TestRoomSetReadyInLobbyBySession(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	room.AddMemberID("session-1")
+	room.AddMemberSessionID("session-1")
 
-	if !room.SetMemberReady("session-1", true) {
-		t.Fatal("expected SetMemberReady to find member")
-	}
+	setReadyInLobbyBySession(t, room, "session-1", true)
 
 	members := room.MembersSnapshot()
 	if len(members) != 1 {
@@ -46,27 +50,31 @@ func TestRoomSetMemberReady(t *testing.T) {
 		t.Fatal("expected member to be ready")
 	}
 
-	if room.SetMemberReady("missing", true) {
-		t.Fatal("expected SetMemberReady to fail for missing member")
+	if _, ok := room.PlayerIDForSession("missing"); ok {
+		t.Fatal("expected missing session not to resolve to a player")
 	}
 }
 
 func TestRoomValidateStartAllowsOneReadyMember(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	room.AddMemberID("session-1")
-	room.SetMemberReady("session-1", true)
+	room.AddMemberSessionID("session-1")
+	setReadyInLobbyBySession(t, room, "session-1", true)
 
-	if roomErr := room.ValidateStart("session-1"); roomErr != nil {
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected session to resolve before start validation")
+	}
+	if roomErr := room.ValidateStart(playerID); roomErr != nil {
 		t.Fatalf("expected ready solo member to start, got %s", roomErr.Code)
 	}
 }
 
 func TestRoomValidateStartRequiresRequesterInRoom(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	room.AddMemberID("session-1")
-	room.SetMemberReady("session-1", true)
+	room.AddMemberSessionID("session-1")
+	setReadyInLobbyBySession(t, room, "session-1", true)
 
-	roomErr := room.ValidateStart("missing")
+	roomErr := room.ValidateStart("missing-player")
 	if roomErr == nil {
 		t.Fatal("expected missing requester to be rejected")
 	}
@@ -76,11 +84,16 @@ func TestRoomValidateStartRequiresRequesterInRoom(t *testing.T) {
 }
 
 func TestRoomValidateStartRequiresLobbyState(t *testing.T) {
-	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, nil)
-	room.AddMemberID("session-1")
-	room.SetMemberReady("session-1", true)
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	room.AddMemberSessionID("session-1")
+	setReadyInLobbyBySession(t, room, "session-1", true)
+	room.State = rooms.RoomStateGameOver
 
-	roomErr := room.ValidateStart("session-1")
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected session to resolve before start validation")
+	}
+	roomErr := room.ValidateStart(playerID)
 	if roomErr == nil {
 		t.Fatal("expected non-lobby room to be rejected")
 	}
@@ -91,11 +104,16 @@ func TestRoomValidateStartRequiresLobbyState(t *testing.T) {
 
 func TestRoomValidateStartRejectsDoubleStartStates(t *testing.T) {
 	for _, state := range []rooms.RoomState{rooms.RoomStateStarting, rooms.RoomStateInGame} {
-		room := rooms.NewRoom("TEST", state, nil)
-		room.AddMemberID("session-1")
-		room.SetMemberReady("session-1", true)
+		room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+		room.AddMemberSessionID("session-1")
+		setReadyInLobbyBySession(t, room, "session-1", true)
+		room.State = state
 
-		roomErr := room.ValidateStart("session-1")
+		playerID, ok := room.PlayerIDForSession("session-1")
+		if !ok {
+			t.Fatal("expected session to resolve before start validation")
+		}
+		roomErr := room.ValidateStart(playerID)
 		if roomErr == nil {
 			t.Fatalf("expected state %q to reject double start", state)
 		}
@@ -107,11 +125,15 @@ func TestRoomValidateStartRejectsDoubleStartStates(t *testing.T) {
 
 func TestRoomValidateStartRequiresAllConnectedMembersReady(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	room.AddMemberID("session-1")
-	room.AddMemberID("session-2")
-	room.SetMemberReady("session-1", true)
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
+	setReadyInLobbyBySession(t, room, "session-1", true)
 
-	roomErr := room.ValidateStart("session-1")
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected session to resolve before start validation")
+	}
+	roomErr := room.ValidateStart(playerID)
 	if roomErr == nil {
 		t.Fatal("expected unready connected member to block start")
 	}
@@ -122,12 +144,16 @@ func TestRoomValidateStartRequiresAllConnectedMembersReady(t *testing.T) {
 
 func TestRoomValidateStartIgnoresDisconnectedUnreadyMembers(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	room.AddMemberID("session-1")
-	disconnected := room.AddMemberID("session-2")
+	room.AddMemberSessionID("session-1")
+	disconnected := room.AddMemberSessionID("session-2")
 	disconnected.MarkDisconnected()
-	room.SetMemberReady("session-1", true)
+	setReadyInLobbyBySession(t, room, "session-1", true)
 
-	if roomErr := room.ValidateStart("session-1"); roomErr != nil {
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected session to resolve before start validation")
+	}
+	if roomErr := room.ValidateStart(playerID); roomErr != nil {
 		t.Fatalf("expected disconnected unready member not to block start, got %s", roomErr.Code)
 	}
 }
@@ -286,12 +312,16 @@ func TestRoomMarkGameOverIfCompleteTransitionsFinishedGame(t *testing.T) {
 func TestRoomResetToLobbyClearsGameAndReadyStates(t *testing.T) {
 	oldGame := game.New()
 	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, oldGame)
-	first := room.AddMemberID("session-1")
-	second := room.AddMemberID("session-2")
+	first := room.AddMemberSessionID("session-1")
+	second := room.AddMemberSessionID("session-2")
 	first.SetReady(true)
 	second.SetReady(true)
 
-	if roomErr := room.ResetToLobby("session-1"); roomErr != nil {
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected session to resolve before reset to lobby")
+	}
+	if roomErr := room.ResetToLobby(playerID); roomErr != nil {
 		t.Fatalf("expected game-over room to reset to lobby, got %s", roomErr.Code)
 	}
 	if room.State != rooms.RoomStateLobby {
@@ -320,9 +350,9 @@ func TestRoomResetToLobbyClearsGameAndReadyStates(t *testing.T) {
 
 func TestRoomResetToLobbyRequiresRequesterMember(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, game.New())
-	room.AddMemberID("session-1")
+	room.AddMemberSessionID("session-1")
 
-	roomErr := room.ResetToLobby("missing")
+	roomErr := room.ResetToLobby("missing-player")
 	if roomErr == nil {
 		t.Fatal("expected missing member to be rejected")
 	}
@@ -342,10 +372,14 @@ func TestRoomResetToLobbyRequiresGameOverState(t *testing.T) {
 		rooms.RoomStateClosed,
 	} {
 		room := rooms.NewRoom("TEST", state, game.New())
-		member := room.AddMemberID("session-1")
+		member := room.AddMemberSessionID("session-1")
 		member.SetReady(true)
 
-		roomErr := room.ResetToLobby("session-1")
+		playerID, ok := room.PlayerIDForSession("session-1")
+		if !ok {
+			t.Fatal("expected session to resolve before reset to lobby")
+		}
+		roomErr := room.ResetToLobby(playerID)
 		if roomErr == nil {
 			t.Fatalf("expected state %q to reject reset to lobby", state)
 		}
@@ -366,7 +400,7 @@ func TestRoomResetToLobbyRequiresGameOverState(t *testing.T) {
 
 func TestRoomMembersSnapshotIsCopy(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	room.AddMemberID("session-1")
+	room.AddMemberSessionID("session-1")
 
 	members := room.MembersSnapshot()
 	members[0].SetReady(true)
@@ -396,7 +430,7 @@ func TestRoomShouldCleanupWhenEmptyAcrossLifecycleStates(t *testing.T) {
 
 func TestRoomShouldCleanupRejectsNonEmptyRooms(t *testing.T) {
 	memberRoom := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
-	memberRoom.AddMemberID("session-1")
+	memberRoom.AddMemberSessionID("session-1")
 
 	if memberRoom.IsEmpty() {
 		t.Fatal("expected room with member not to be empty")

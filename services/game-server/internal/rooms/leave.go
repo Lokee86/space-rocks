@@ -12,8 +12,8 @@ type LeaveMemberResult struct {
 	ShouldBroadcastSnapshot bool
 }
 
-func (manager *RoomManager) LeaveMember(roomID string, memberID string, playerID string) (*LeaveMemberResult, *RoomDomainError) {
-	leaveResult, roomErr := manager.LeaveRoom(roomID, memberID)
+func (manager *RoomManager) LeaveMember(roomID string, sessionID string, playerID string) (*LeaveMemberResult, *RoomDomainError) {
+	leaveResult, roomErr := manager.LeaveRoom(roomID, sessionID)
 	if roomErr != nil {
 		return nil, roomErr
 	}
@@ -34,7 +34,7 @@ func (manager *RoomManager) LeaveMember(roomID string, memberID string, playerID
 	return &LeaveMemberResult{
 		Room:                    room,
 		RoomID:                  leaveResult.RoomID,
-		MemberID:                memberID,
+		MemberID:                sessionID,
 		PlayerID:                playerID,
 		RemainingMembers:        remainingMembers,
 		ActivePlayers:           room.ActivePlayers,

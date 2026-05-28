@@ -2,15 +2,15 @@ package rooms
 
 import "github.com/Lokee86/space-rocks/server/internal/game"
 
-func (room *Room) StartGameForMember(memberID string, newGame func() *game.Game) *RoomDomainError {
+func (room *Room) StartGameForMember(playerID string, newGame func() *game.Game) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if _, ok := room.Members[memberID]; !ok {
+	if _, ok := room.Members[playerID]; !ok {
 		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
 	}
 
-	if memberID != room.OwnerID {
+	if playerID != room.OwnerID {
 		return &RoomDomainError{Code: RoomErrorNotRoomOwner, Message: "Only the room owner can start the game."}
 	}
 
