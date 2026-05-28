@@ -26,7 +26,7 @@ asteroid_despawn_margin = 320.0
 asteroid_min_speed = 90.0
 asteroid_max_speed = 170.0
 asteroid_aim_randomness_degrees = 30.0
-asteroid_size_scale = 0.125
+asteroid_size_scale = 0.5
 asteroid_variants = 8
 
 [constants.server.bullets]
