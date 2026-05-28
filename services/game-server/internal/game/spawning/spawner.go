@@ -106,7 +106,7 @@ func (spawner *Spawner) PlanAsteroidFragmentSpawns(asteroid *entities.Asteroid) 
 			Position:   position,
 			Velocity:   direction.Multiply(randomAsteroidSpeed()),
 			Size:       fragmentSize,
-			Variant:    rand.Intn(4),
+			Variant:    rand.Intn(constants.AsteroidVariants),
 		})
 	}
 	return plans

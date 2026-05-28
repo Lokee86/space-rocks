@@ -40,6 +40,7 @@ const AsteroidMinSpeed = 90.0
 const AsteroidMaxSpeed = 170.0
 const AsteroidAimRandomnessDegrees = 30.0
 const AsteroidSizeScale = 0.125
+const AsteroidVariants = 8
 // data-sync:end constants.server.asteroids
 
 // data-sync:start constants.server.bullets
