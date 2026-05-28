@@ -10,15 +10,15 @@ const AppShutdownController := preload("res://scripts/session/app_shutdown_contr
 const Constants := preload("res://scripts/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
-@onready var main_menu: Control = $CanvasLayer/MainMenu
+@onready var main_menu: Control = %MainMenu
 @onready var canvas_layer: CanvasLayer = $CanvasLayer
-@onready var repeated_background: TextureRect = $ParallaxBackground/BackgroundLayer/RepeatedBackground
-@onready var repeated_foreground_background: TextureRect = $ParallaxBackground/ForegroundBackgroundLayer/RepeatedBackground
+@onready var repeated_background: TextureRect = %RepeatedBackground
+@onready var repeated_foreground_background: TextureRect = %RepeatedForegroundBackground
 @onready var player = $Player
 @onready var bullets: Node2D = $Bullets
 @onready var asteroids: Node2D = $Asteroids
-@onready var hud: Control = $CanvasLayer/HUD
-@onready var game_over_sound: AudioStreamPlayer = $CanvasLayer/HUD/CenterContainer/GameOverContainer/GameOverSound
+@onready var hud: Control = %HUD
+@onready var game_over_sound: AudioStreamPlayer = hud.get_node("%GameOverSound") as AudioStreamPlayer
 
 var session_boot_controller
 var main_menu_session_controller
