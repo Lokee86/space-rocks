@@ -43,6 +43,7 @@ func connect_room_signals() -> void:
 
 func connect_gameplay_signals() -> void:
 	_connect_connection_signal("gameplay_state_received", Callable(self, "_on_gameplay_state_received"))
+	_connect_connection_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
 
 
 func _connect_connection_signal(signal_name: StringName, handler: Callable) -> void:
@@ -97,6 +98,12 @@ func _on_gameplay_state_received(packet: Dictionary) -> void:
 	if gameplay_session_controller == null:
 		return
 	gameplay_session_controller.handle_gameplay_state(packet)
+
+
+func _on_player_pause_state_received(packet: Dictionary) -> void:
+	if gameplay_session_controller == null:
+		return
+	gameplay_session_controller.handle_player_pause_state(packet)
 
 
 func _refresh_game_over_menu_state() -> void:

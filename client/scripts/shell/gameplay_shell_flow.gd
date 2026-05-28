@@ -2,6 +2,8 @@ extends RefCounted
 class_name GameplayShellFlow
 
 const GameplayStatePacketReader = preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
+const PlayerPauseStatePacketReader = preload("res://scripts/gameplay/state/player_pause_state_packet_reader.gd")
+const PlayerPauseStateTracker = preload("res://scripts/gameplay/state/player_pause_state_tracker.gd")
 
 signal gameplay_started
 signal quit_to_main_menu_requested
@@ -15,6 +17,7 @@ var menu_flow
 var input_context
 var runtime_tick_flow
 var spectate_context
+var player_pause_state_tracker
 var has_received_state := false
 
 
@@ -31,6 +34,7 @@ func configure(
 	player = player_ref
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
+	player_pause_state_tracker = PlayerPauseStateTracker.new()
 	if menu_flow != null:
 		menu_flow.configure_lifecycle_routes(
 			Callable(self, "_on_quit_to_main_menu_requested"),
@@ -76,6 +80,8 @@ func reset() -> void:
 		runtime_tick_flow.reset()
 	if spectate_context != null:
 		spectate_context.reset()
+	if player_pause_state_tracker != null:
+		player_pause_state_tracker.reset()
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
@@ -96,6 +102,13 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	has_received_state = true
 	if is_first_gameplay_state:
 		gameplay_started.emit()
+
+
+func apply_player_pause_state_packet(packet: Dictionary) -> void:
+	if !PlayerPauseStatePacketReader.is_player_pause_state(packet):
+		return
+	var state := PlayerPauseStatePacketReader.read(packet)
+	player_pause_state_tracker.apply_state(state)
 
 
 func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
