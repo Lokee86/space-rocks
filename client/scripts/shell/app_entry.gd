@@ -14,6 +14,7 @@ const ClientLogger := preload("res://scripts/logging/logger.gd")
 @onready var canvas_layer: CanvasLayer = $CanvasLayer
 @onready var repeated_background: TextureRect = %RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = %RepeatedForegroundBackground
+@onready var repeated_planet_background: TextureRect = %RepeatedPlanetBackground
 @onready var player = $Player
 @onready var bullets: Node2D = $Bullets
 @onready var asteroids: Node2D = $Asteroids
@@ -41,7 +42,7 @@ func _ready() -> void:
 
 	background_controller = BackgroundController.new()
 	add_child(background_controller)
-	background_controller.configure(repeated_background, repeated_foreground_background, player)
+	background_controller.configure(repeated_background, repeated_foreground_background, repeated_planet_background, player)
 
 	gameplay_session_controller = GameplaySessionController.new()
 	add_child(gameplay_session_controller)
