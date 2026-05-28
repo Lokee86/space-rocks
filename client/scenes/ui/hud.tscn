@@ -107,6 +107,7 @@ layout_mode = 2
 theme_override_constants/separation = 117
 
 [node name="GameOverSound" type="AudioStreamPlayer" parent="CenterContainer/GameOverContainer" unique_id=2014825901]
+unique_name_in_owner = true
 stream = ExtResource("5_a2ab3")
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/GameOverContainer" unique_id=1531772139]

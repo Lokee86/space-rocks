@@ -2,65 +2,122 @@
 
 [ext_resource type="Script" uid="uid://gj4spdunkujd" path="res://scripts/devtools/devtools_window.gd" id="1_devtools_window"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d7pth"]
+
 [node name="DevtoolsWindow" type="Window" unique_id=296839702]
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(360, 220)
+size = Vector2i(350, 250)
 script = ExtResource("1_devtools_window")
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=328286901]
+[node name="Control" type="Control" parent="." unique_id=214690309]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -7.0
-offset_bottom = 7.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=542001528]
-layout_mode = 2
+[node name="Panel" type="Panel" parent="." unique_id=704527748]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_d7pth")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer" unique_id=974160291]
-layout_mode = 2
-theme_override_constants/separation = 8
+[node name="GridContainer" type="GridContainer" parent="Panel" unique_id=1520436722]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 2
 
-[node name="InvincibleButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=816769564]
+[node name="CenterContainer" type="CenterContainer" parent="Panel/GridContainer" unique_id=1417348712]
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InvincibleButton" type="Button" parent="Panel/GridContainer/CenterContainer" unique_id=816769564]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 text = "Invincible"
 
-[node name="InfiniteLivesButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1460655812]
+[node name="CenterContainer2" type="CenterContainer" parent="Panel/GridContainer" unique_id=1763126971]
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InvincibleStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer2" unique_id=1418502128]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Status"
+
+[node name="CenterContainer3" type="CenterContainer" parent="Panel/GridContainer" unique_id=491936647]
+layout_mode = 2
+
+[node name="InfiniteLivesButton" type="Button" parent="Panel/GridContainer/CenterContainer3" unique_id=1460655812]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 text = "Infinite Lives"
 
-[node name="FreezeWorldButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=203052911]
+[node name="CenterContainer4" type="CenterContainer" parent="Panel/GridContainer" unique_id=1499251787]
 layout_mode = 2
+
+[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer4" unique_id=191291838]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Status"
+
+[node name="CenterContainer5" type="CenterContainer" parent="Panel/GridContainer" unique_id=1069885471]
+layout_mode = 2
+
+[node name="FreezeWorldButton" type="Button" parent="Panel/GridContainer/CenterContainer5" unique_id=203052911]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 text = "Freeze World"
 
-[node name="FreezePlayerButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1920186547]
+[node name="CenterContainer6" type="CenterContainer" parent="Panel/GridContainer" unique_id=1286600823]
 layout_mode = 2
+
+[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer6" unique_id=1038932319]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Status"
+
+[node name="CenterContainer7" type="CenterContainer" parent="Panel/GridContainer" unique_id=1398406923]
+layout_mode = 2
+
+[node name="FreezePlayerButton" type="Button" parent="Panel/GridContainer/CenterContainer7" unique_id=1920186547]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 text = "Freeze Player"
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/HBoxContainer" unique_id=413148754]
+[node name="CenterContainer8" type="CenterContainer" parent="Panel/GridContainer" unique_id=957371410]
 layout_mode = 2
-theme_override_constants/separation = 18
 
-[node name="InvincibleStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1418502128]
+[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer8" unique_id=920680265]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Status"
-
-[node name="InfiniteLivesStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=191291838]
-layout_mode = 2
-text = "Status"
-
-[node name="WorldFrozenStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1038932319]
-layout_mode = 2
-text = "Status"
-
-[node name="PlayerFrozenStatusLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer2" unique_id=920680265]
-layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 text = "Status"

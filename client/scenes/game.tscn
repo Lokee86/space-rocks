@@ -43,6 +43,7 @@ position = Vector2(1344, 704)
 motion_scale = Vector2(0, 0)
 
 [node name="RepeatedBackground" type="TextureRect" parent="ParallaxBackground/BackgroundLayer" unique_id=1418273356]
+unique_name_in_owner = true
 material = SubResource("ShaderMaterial_62kg4")
 offset_left = -1344.0
 offset_top = -704.0
@@ -55,7 +56,8 @@ metadata/_edit_use_anchors_ = true
 position = Vector2(1365, 705)
 motion_scale = Vector2(0, 0)
 
-[node name="RepeatedBackground" type="TextureRect" parent="ParallaxBackground/ForegroundBackgroundLayer" unique_id=173860911]
+[node name="RepeatedForegroundBackground" type="TextureRect" parent="ParallaxBackground/ForegroundBackgroundLayer" unique_id=173860911]
+unique_name_in_owner = true
 material = SubResource("ShaderMaterial_se2r5")
 anchors_preset = 15
 anchor_right = 1.0
@@ -79,6 +81,8 @@ visible = false
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1725241940]
 
 [node name="MainMenu" parent="CanvasLayer" unique_id=1939259662 instance=ExtResource("1_wu7gp")]
+unique_name_in_owner = true
 
 [node name="HUD" parent="CanvasLayer" unique_id=229965824 instance=ExtResource("7_mdqg4")]
+unique_name_in_owner = true
 visible = false

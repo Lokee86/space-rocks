@@ -5,14 +5,14 @@ signal toggle_infinite_lives_requested
 signal toggle_freeze_world_requested
 signal toggle_freeze_player_requested
 
-@onready var invincible_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/InvincibleButton
-@onready var infinite_lives_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/InfiniteLivesButton
-@onready var freeze_world_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/FreezeWorldButton
-@onready var freeze_player_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/FreezePlayerButton
-@onready var invincible_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/InvincibleStatusLabel
-@onready var infinite_lives_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/InfiniteLivesStatusLabel
-@onready var world_frozen_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/WorldFrozenStatusLabel
-@onready var player_frozen_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/PlayerFrozenStatusLabel
+@onready var invincible_button: Button = %InvincibleButton
+@onready var infinite_lives_button: Button = %InfiniteLivesButton
+@onready var freeze_world_button: Button = %FreezeWorldButton
+@onready var freeze_player_button: Button = %FreezePlayerButton
+@onready var invincible_status_label: Label = %InvincibleStatusLabel
+@onready var infinite_lives_status_label: Label = %InfiniteLivesStatusLabel
+@onready var world_frozen_status_label: Label = %WorldFrozenStatusLabel
+@onready var player_frozen_status_label: Label = %PlayerFrozenStatusLabel
 
 
 func _ready() -> void:
