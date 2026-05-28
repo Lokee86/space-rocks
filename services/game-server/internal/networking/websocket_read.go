@@ -66,7 +66,16 @@ func readClientInput(
 		}
 
 		session.room.Game.HandlePacket(session.currentPlayerID, packet)
+		if isPauseStateRequest(packet.Type) {
+			session.EnqueuePlayerPauseState()
+		}
 	}
+}
+
+func isPauseStateRequest(packetType string) bool {
+	return packetType == game.PacketTypePauseRequest ||
+		packetType == game.PacketTypePausePlayer ||
+		packetType == game.PacketTypeResumePlayer
 }
 
 func (session *webSocketSession) logLobbyPacketReceived(message string, roomCode string) {

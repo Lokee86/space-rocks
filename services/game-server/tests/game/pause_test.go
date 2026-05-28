@@ -124,6 +124,43 @@ func TestPauseRequestPacketTogglesPauseState(t *testing.T) {
 	}
 }
 
+func TestPlayerPauseStatePacketReflectsPauseRequestToggle(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	fresh, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet for fresh player")
+	}
+	if fresh.Type != servergame.PacketTypePlayerPauseState {
+		t.Fatalf("expected packet type %q, got %q", servergame.PacketTypePlayerPauseState, fresh.Type)
+	}
+	if fresh.PlayerID != playerID {
+		t.Fatalf("expected player id %q, got %q", playerID, fresh.PlayerID)
+	}
+	if fresh.Paused {
+		t.Fatal("expected fresh player pause state to be false")
+	}
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
+	paused, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet after pause request")
+	}
+	if !paused.Paused {
+		t.Fatal("expected pause state packet to report paused true")
+	}
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
+	resumed, ok := scenario.game.PlayerPauseStatePacket(playerID)
+	if !ok {
+		t.Fatal("expected pause state packet after second pause request")
+	}
+	if resumed.Paused {
+		t.Fatal("expected pause state packet to report paused false")
+	}
+}
+
 func TestPausePlayerPacketClearsVelocityBeforeResume(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
