@@ -59,18 +59,11 @@ func test_lobby_packet_builders_include_request_fields() -> void:
 	assert_eq(ready_packet[Packets.FIELD_READY], true)
 
 
-func test_set_player_paused_request_packet_sets_paused_true() -> void:
-	var packet := Packets.set_player_paused_request_packet(true)
+func test_pause_request_packet_sets_expected_type_without_paused_field() -> void:
+	var packet := Packets.pause_request_packet()
 
-	assert_eq(packet[Packets.FIELD_TYPE], Packets.TYPE_SET_PLAYER_PAUSED_REQUEST)
-	assert_eq(packet[Packets.FIELD_PAUSED], true)
-
-
-func test_set_player_paused_request_packet_sets_paused_false() -> void:
-	var packet := Packets.set_player_paused_request_packet(false)
-
-	assert_eq(packet[Packets.FIELD_TYPE], Packets.TYPE_SET_PLAYER_PAUSED_REQUEST)
-	assert_eq(packet[Packets.FIELD_PAUSED], false)
+	assert_eq(packet[Packets.FIELD_TYPE], Packets.TYPE_PAUSE_REQUEST)
+	assert_false(packet.has(Packets.FIELD_PAUSED))
 
 
 func test_lobby_packet_type_constants_exist() -> void:

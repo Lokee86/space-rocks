@@ -18,7 +18,7 @@ entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
 language = "gdscript"
 path = "client/scripts/networking/packets/packets.gd"
 base = "RefCounted"
-builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "set_player_paused_request_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
+builders = ["input_packet", "respawn_packet", "pause_player_packet", "resume_player_packet", "pause_request_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
 
 [[structs]]
 id = "ClientPacket"
@@ -49,11 +49,6 @@ type = "string"
 [[structs.fields]]
 name = "ready"
 json = "ready"
-type = "bool"
-
-[[structs.fields]]
-name = "paused"
-json = "paused"
 type = "bool"
 
 [[structs]]
@@ -580,8 +575,8 @@ id = "resume_player"
 value = "resume_player"
 
 [[packet_types]]
-id = "set_player_paused_request"
-value = "set_player_paused_request"
+id = "pause_request"
+value = "pause_request"
 
 [[packet_types]]
 id = "player_pause_state"
@@ -676,12 +671,10 @@ id = "resume_player_packet"
 type = "resume_player"
 
 [[builders]]
-id = "set_player_paused_request_packet"
-args = ["paused"]
+id = "pause_request_packet"
 
 [builders.body]
-type = "set_player_paused_request"
-paused = "$paused"
+type = "pause_request"
 
 [[builders]]
 id = "toggle_debug_invincible_packet"
