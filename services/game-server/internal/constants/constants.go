@@ -36,10 +36,10 @@ const AsteroidSpawnInterval = 3.0
 const AsteroidSpawnBatchSize = 3
 const AsteroidSpawnMargin = 160.0
 const AsteroidDespawnMargin = 320.0
-const AsteroidMinSpeed = 90.0
-const AsteroidMaxSpeed = 170.0
+const AsteroidMinSpeed = 130.0
+const AsteroidMaxSpeed = 210.0
 const AsteroidAimRandomnessDegrees = 30.0
-const AsteroidSizeScale = 0.5
+const AsteroidSizeScale = 0.35
 const AsteroidVariants = 8
 // data-sync:end constants.server.asteroids
 

@@ -23,10 +23,10 @@ asteroid_spawn_interval = 3.0
 asteroid_spawn_batch_size = 3
 asteroid_spawn_margin = 160.0
 asteroid_despawn_margin = 320.0
-asteroid_min_speed = 90.0
-asteroid_max_speed = 170.0
+asteroid_min_speed = 130.0
+asteroid_max_speed = 210.0
 asteroid_aim_randomness_degrees = 30.0
-asteroid_size_scale = 0.5
+asteroid_size_scale = 0.35
 asteroid_variants = 8
 
 [constants.server.bullets]
