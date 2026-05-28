@@ -21,12 +21,3 @@ func test_server_rotation_reads_packet_rotation() -> void:
 		}),
 		1.25
 	)
-
-
-func test_is_paused_defaults_to_false_when_missing() -> void:
-	assert_false(PlayerSyncState.is_paused({}))
-
-
-func test_is_paused_coerces_packet_value_to_bool() -> void:
-	assert_true(PlayerSyncState.is_paused({Packets.FIELD_PAUSED: 1}))
-	assert_false(PlayerSyncState.is_paused({Packets.FIELD_PAUSED: 0}))

@@ -22,7 +22,8 @@ func configure(
 	game_owner: Node2D,
 	player: Player,
 	bullets: Node2D,
-	asteroids: Node2D
+	asteroids: Node2D,
+	pause_state_tracker = null
 ) -> void:
 	asteroid_sync = AsteroidSyncScript.new()
 	asteroid_sync.configure(asteroids)
@@ -36,7 +37,7 @@ func configure(
 	)
 	local_visual_sync = LocalVisualSyncScript.new()
 	player_sync = PlayerSyncScript.new()
-	player_sync.configure(game_owner, player)
+	player_sync.configure(game_owner, player, pause_state_tracker)
 
 	asteroids.z_index = Constants.ASTEROID_Z_INDEX
 	bullets.z_index = Constants.BULLET_Z_INDEX

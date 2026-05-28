@@ -39,9 +39,9 @@ func configure(
 		menu_flow.configure_lifecycle_routes(
 			Callable(self, "_on_quit_to_main_menu_requested"),
 			Callable(self, "_on_return_to_lobby_requested")
-		)
+	)
 	runtime_context = GameplayRuntimeContext.new()
-	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids)
+	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids, player_pause_state_tracker)
 	runtime_context.configure_events(
 		game_owner,
 		hud_flow.hud if hud_flow != null else null,

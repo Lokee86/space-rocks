@@ -9,7 +9,3 @@ static func server_position(state: Dictionary) -> Vector2:
 
 static func server_rotation(state: Dictionary) -> float:
 	return state[Packets.FIELD_ROTATION]
-
-
-static func is_paused(state: Dictionary) -> bool:
-	return bool(state.get(Packets.FIELD_PAUSED, false))

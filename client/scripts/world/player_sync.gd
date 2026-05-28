@@ -4,7 +4,6 @@ class_name PlayerSync
 const Constants = preload("res://scripts/constants/constants.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
-const PlayerSyncState = preload("res://scripts/world/player_sync_state.gd")
 const VisualSyncPositions = preload("res://scripts/world/visual_sync_positions.gd")
 
 var owner_node: Node2D
@@ -15,11 +14,13 @@ var target_player_positions := {}
 var target_player_rotations := {}
 var remote_player_visual_positions := {}
 var player_hue_presenter := PlayerHuePresenter.new()
+var pause_state_tracker
 
 
-func configure(game_owner: Node2D, player: Player) -> void:
+func configure(game_owner: Node2D, player: Player, pause_tracker = null) -> void:
 	owner_node = game_owner
 	local_player = player
+	pause_state_tracker = pause_tracker
 	local_player.z_index = Constants.LOCAL_PLAYER_Z_INDEX
 
 
@@ -84,7 +85,9 @@ func apply(
 		var server_position := Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
 		var visual_position := server_position
 		var server_rotation: float = state[Packets.FIELD_ROTATION]
-		var is_paused := PlayerSyncState.is_paused(state)
+		var is_paused: bool = false
+		if pause_state_tracker != null:
+			is_paused = pause_state_tracker.is_paused(player_id)
 
 		if player_id == self_id:
 			visual_position = local_visual_position

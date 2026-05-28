@@ -11,7 +11,6 @@ func (ship *Ship) State() ShipState {
 		Rotation: ship.Rotation,
 		Score:    ship.Score,
 		Lives:    ship.Lives,
-		Paused:   ship.Suspension.Paused,
 	}
 }
 

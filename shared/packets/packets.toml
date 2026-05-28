@@ -332,11 +332,6 @@ name = "lives"
 json = "lives"
 type = "int"
 
-[[structs.fields]]
-name = "paused"
-json = "paused"
-type = "bool"
-
 [[structs]]
 id = "AsteroidState"
 

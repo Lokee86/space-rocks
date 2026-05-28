@@ -15,11 +15,12 @@ func configure_world(
 	game_owner: Node2D,
 	player_ref: Player,
 	bullets: Node2D,
-	asteroids: Node2D
+	asteroids: Node2D,
+	pause_state_tracker = null
 ) -> void:
 	player = player_ref
 	world_sync = WorldSyncScript.new()
-	world_sync.configure(game_owner, player_ref, bullets, asteroids)
+	world_sync.configure(game_owner, player_ref, bullets, asteroids, pause_state_tracker)
 
 
 func configure_events(
