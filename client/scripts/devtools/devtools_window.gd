@@ -1,11 +1,31 @@
 extends Window
 
-@onready var debug_status_label: Label = $MarginContainer/VBoxContainer/DebugStatusLabel
+signal toggle_invincible_requested
+signal toggle_infinite_lives_requested
+signal toggle_freeze_world_requested
+signal toggle_freeze_player_requested
+
+@onready var invincible_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/InvincibleButton
+@onready var infinite_lives_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/InfiniteLivesButton
+@onready var freeze_world_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/FreezeWorldButton
+@onready var freeze_player_button: Button = $MarginContainer/HBoxContainer/VBoxContainer/FreezePlayerButton
+@onready var invincible_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/InvincibleStatusLabel
+@onready var infinite_lives_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/InfiniteLivesStatusLabel
+@onready var world_frozen_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/WorldFrozenStatusLabel
+@onready var player_frozen_status_label: Label = $MarginContainer/HBoxContainer/VBoxContainer2/PlayerFrozenStatusLabel
 
 
 func _ready() -> void:
 	if !close_requested.is_connected(_on_close_requested):
 		close_requested.connect(_on_close_requested)
+	if !invincible_button.pressed.is_connected(_on_invincible_button_pressed):
+		invincible_button.pressed.connect(_on_invincible_button_pressed)
+	if !infinite_lives_button.pressed.is_connected(_on_infinite_lives_button_pressed):
+		infinite_lives_button.pressed.connect(_on_infinite_lives_button_pressed)
+	if !freeze_world_button.pressed.is_connected(_on_freeze_world_button_pressed):
+		freeze_world_button.pressed.connect(_on_freeze_world_button_pressed)
+	if !freeze_player_button.pressed.is_connected(_on_freeze_player_button_pressed):
+		freeze_player_button.pressed.connect(_on_freeze_player_button_pressed)
 
 
 func show_window() -> void:
@@ -24,18 +44,30 @@ func toggle_window() -> void:
 
 
 func set_debug_status(status: Dictionary) -> void:
-	if debug_status_label == null:
-		return
-	debug_status_label.text = "\n".join([
-		"Invincible: %s" % _on_off(status.get("invincible", false)),
-		"Infinite lives: %s" % _on_off(status.get("infinite_lives", false)),
-		"World frozen: %s" % _on_off(status.get("world_frozen", false)),
-		"Player frozen: %s" % _on_off(status.get("player_frozen", false)),
-	])
+	invincible_status_label.text = "Invincible: %s" % _on_off(status.get("invincible", false))
+	infinite_lives_status_label.text = "Infinite lives: %s" % _on_off(status.get("infinite_lives", false))
+	world_frozen_status_label.text = "World frozen: %s" % _on_off(status.get("world_frozen", false))
+	player_frozen_status_label.text = "Player frozen: %s" % _on_off(status.get("player_frozen", false))
 
 
 func _on_close_requested() -> void:
 	hide_window()
+
+
+func _on_invincible_button_pressed() -> void:
+	toggle_invincible_requested.emit()
+
+
+func _on_infinite_lives_button_pressed() -> void:
+	toggle_infinite_lives_requested.emit()
+
+
+func _on_freeze_world_button_pressed() -> void:
+	toggle_freeze_world_requested.emit()
+
+
+func _on_freeze_player_button_pressed() -> void:
+	toggle_freeze_player_requested.emit()
 
 
 func _on_off(value) -> String:
