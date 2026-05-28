@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3 uid="uid://b87mice1sciou"]
+[gd_scene format=3 uid="uid://b87mice1sciou"]
 
 [ext_resource type="Texture2D" uid="uid://c1rdiljl1froi" path="res://assets/afterburner.png" id="1_sc821"]
+[ext_resource type="AudioStream" uid="uid://pyv1nv8cvsqk" path="res://audio/afterburner.ogg" id="2_ufo2e"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_d2fr4"]
 atlas = ExtResource("1_sc821")
@@ -45,10 +46,14 @@ animations = [{
 "speed": 30.0
 }]
 
-[node name="BlueAfterburner" type="Node2D"]
+[node name="BlueAfterburner" type="Node2D" unique_id=729256856]
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1732953501]
 position = Vector2(-40, 0)
 rotation = 3.14159
 sprite_frames = SubResource("SpriteFrames_0kbw1")
 frame_progress = 0.779062
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=1813509157]
+stream = ExtResource("2_ufo2e")
+autoplay = true

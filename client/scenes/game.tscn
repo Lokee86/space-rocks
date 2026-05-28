@@ -4,11 +4,12 @@
 [ext_resource type="Script" uid="uid://bhupn562tedxo" path="res://scripts/shell/app_entry.gd" id="2_04i1g"]
 [ext_resource type="Shader" uid="uid://d4gd4qbnce18a" path="res://shaders/repeating_background.gdshader" id="3_xyiwq"]
 [ext_resource type="Texture2D" uid="uid://4dccc352w3p0" path="res://assets/background.png" id="4_geh66"]
-[ext_resource type="Texture2D" uid="uid://elo2144mjlhs" path="res://assets/background-fore.png" id="5_ny5dr"]
 [ext_resource type="PackedScene" uid="uid://2nhypjy0hv4h" path="res://scenes/player.tscn" id="6_a3nuj"]
+[ext_resource type="Texture2D" uid="uid://ccil72kxt31hv" path="res://assets/backgroun-fore.png" id="6_vtaks"]
 [ext_resource type="PackedScene" uid="uid://cqjku4qxxcoxj" path="res://scenes/ui/hud.tscn" id="7_mdqg4"]
+[ext_resource type="Texture2D" uid="uid://2k8baugk0fwp" path="res://assets/background-planets.png" id="7_vtaks"]
 [ext_resource type="AudioStream" uid="uid://dp8em413aifk2" path="res://audio/background.mp3" id="8_gee14"]
-[ext_resource type="Script" path="res://scripts/gameplay/audio/background_music_flow.gd" id="9_background_music_flow"]
+[ext_resource type="Script" uid="uid://4ljwy3p50teh" path="res://scripts/gameplay/audio/background_music_flow.gd" id="9_background_music_flow"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_62kg4"]
 shader = ExtResource("3_xyiwq")
@@ -20,20 +21,46 @@ shader_parameter/opacity = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_se2r5"]
 shader = ExtResource("3_xyiwq")
-shader_parameter/background_texture = ExtResource("5_ny5dr")
+shader_parameter/background_texture = ExtResource("6_vtaks")
 shader_parameter/base_tile_size = Vector2(2400, 1599)
 shader_parameter/tile_scale = 1.0
 shader_parameter/scroll_offset = Vector2(480, 270)
+shader_parameter/opacity = 1.0
+
+[sub_resource type="Shader" id="Shader_vtaks"]
+code = "shader_type canvas_item;
+
+uniform sampler2D background_texture : source_color, repeat_enable;
+uniform vec2 base_tile_size = vec2(960.0, 540.0);
+uniform float tile_scale = 1.0;
+uniform vec2 scroll_offset = vec2(0.0, 0.0);
+uniform float opacity = 1.0;
+
+void fragment() {
+	vec2 pixel_position = FRAGCOORD.xy + scroll_offset;
+	vec2 repeated_uv = fract(pixel_position / (base_tile_size * tile_scale));
+	vec4 texture_color = texture(background_texture, repeated_uv);
+	texture_color.a *= opacity;
+	COLOR = texture_color;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vtaks"]
+shader = SubResource("Shader_vtaks")
+shader_parameter/background_texture = ExtResource("7_vtaks")
+shader_parameter/base_tile_size = Vector2(8600, 4600)
+shader_parameter/tile_scale = 1.0
+shader_parameter/scroll_offset = Vector2(0, 0)
 shader_parameter/opacity = 1.0
 
 [node name="Game" type="Node2D" unique_id=443982094]
 script = ExtResource("2_04i1g")
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="." unique_id=632798022]
-script = ExtResource("9_background_music_flow")
 stream = ExtResource("8_gee14")
 volume_db = -20.0
 parameters/looping = true
+script = ExtResource("9_background_music_flow")
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="." unique_id=767588751]
 layer = -10
@@ -47,7 +74,7 @@ unique_name_in_owner = true
 material = SubResource("ShaderMaterial_62kg4")
 offset_left = -1344.0
 offset_top = -704.0
-offset_right = 2956.0
+offset_right = 2956.7349
 offset_bottom = 1596.0
 texture = ExtResource("4_geh66")
 metadata/_edit_use_anchors_ = true
@@ -59,17 +86,28 @@ motion_scale = Vector2(0, 0)
 [node name="RepeatedForegroundBackground" type="TextureRect" parent="ParallaxBackground/ForegroundBackgroundLayer" unique_id=173860911]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_se2r5")
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -1365.0
-offset_top = -705.0
-offset_right = 1035.0
-offset_bottom = 894.0
+offset_left = -1364.0
+offset_top = -706.0
+offset_right = 7236.0
+offset_bottom = 3894.0
 grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("5_ny5dr")
+texture = ExtResource("6_vtaks")
 stretch_mode = 1
+
+[node name="PlanetBackgroundLayer" type="ParallaxLayer" parent="ParallaxBackground" unique_id=682581352]
+position = Vector2(1365, 705)
+motion_scale = Vector2(0, 0)
+
+[node name="RepeatedPlanetBackground" type="TextureRect" parent="ParallaxBackground/PlanetBackgroundLayer" unique_id=1164358942]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_vtaks")
+offset_left = -1365.0
+offset_top = -704.0
+offset_right = 7235.0
+offset_bottom = 3896.0
+texture = ExtResource("7_vtaks")
 
 [node name="Player" parent="." unique_id=956579809 instance=ExtResource("6_a3nuj")]
 visible = false
