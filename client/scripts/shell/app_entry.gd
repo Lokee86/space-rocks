@@ -18,7 +18,6 @@ const ClientLogger := preload("res://scripts/logging/logger.gd")
 @onready var bullets: Node2D = $Bullets
 @onready var asteroids: Node2D = $Asteroids
 @onready var hud: Control = %HUD
-@onready var game_over_sound: AudioStreamPlayer = hud.get_node("%GameOverSound") as AudioStreamPlayer
 
 var session_boot_controller
 var main_menu_session_controller
@@ -53,7 +52,6 @@ func _ready() -> void:
 		bullets,
 		asteroids,
 		hud,
-		game_over_sound,
 		main_menu,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_shell_boot_flow(),

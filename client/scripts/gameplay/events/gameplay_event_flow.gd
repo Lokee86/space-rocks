@@ -12,11 +12,11 @@ var gameplay_event_controller
 
 func configure(
 	game_owner: Node2D,
-	game_over_sound: AudioStreamPlayer,
+	hud: Control,
 	visual_position_for_server_position: Callable
 ) -> void:
 	effects = EffectsScript.new()
-	effects.configure(game_owner, game_over_sound)
+	effects.configure(game_owner, hud)
 	gameplay_event_controller = GameplayEventController.new()
 	gameplay_event_controller.configure(effects, visual_position_for_server_position)
 

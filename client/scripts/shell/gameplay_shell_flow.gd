@@ -25,8 +25,7 @@ func configure(
 	bullets: Node2D,
 	asteroids: Node2D,
 	hud_flow_ref,
-	menu_flow_ref,
-	game_over_sound: AudioStreamPlayer
+	menu_flow_ref
 ) -> void:
 	connection_service = connection_service_ref
 	player = player_ref
@@ -41,7 +40,7 @@ func configure(
 	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids)
 	runtime_context.configure_events(
 		game_owner,
-		game_over_sound,
+		hud_flow.hud if hud_flow != null else null,
 		hud_flow,
 		menu_flow
 	)
