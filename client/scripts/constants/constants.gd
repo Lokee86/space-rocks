@@ -2,8 +2,8 @@
 extends RefCounted
 
 # data-sync:start constants.server.world
-const WORLD_WIDTH := 8625.0
-const WORLD_HEIGHT := 6750.0
+const WORLD_WIDTH := 17200.0
+const WORLD_HEIGHT := 9200.0
 # data-sync:end constants.server.world
 
 # data-sync:start constants.client.presentation
@@ -27,7 +27,7 @@ const PLAYER_AFTERBURNER_ROTATION_DEGREES := -90.0
 const PLAYER_AFTERBURNER_SCALE := 0.45
 const EFFECT_Z_INDEX := 40
 const BULLET_PULSE_MULTIPLIER := 1.5
-const BULLET_PULSE_TIME := 0.15
+const BULLET_PULSE_TIME := 0.1
 const BULLET_BLAST_MIN_SOUND_LENGTH := 1.0
 const BULLET_BLAST_CLEANUP_PADDING := 0.25
 const SHIP_DEATH_CLEANUP_PADDING := 0.05

@@ -48,7 +48,7 @@ void fragment() {
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vtaks"]
 shader = SubResource("Shader_vtaks")
 shader_parameter/background_texture = ExtResource("7_vtaks")
-shader_parameter/base_tile_size = Vector2(8600, 4600)
+shader_parameter/base_tile_size = Vector2(17200, 9200)
 shader_parameter/tile_scale = 1.0
 shader_parameter/scroll_offset = Vector2(0, 0)
 shader_parameter/opacity = 1.0
@@ -66,16 +66,16 @@ script = ExtResource("9_background_music_flow")
 layer = -10
 
 [node name="BackgroundLayer" type="ParallaxLayer" parent="ParallaxBackground" unique_id=1283319752]
-position = Vector2(1344, 704)
+position = Vector2(1344.705, 704)
 motion_scale = Vector2(0, 0)
 
 [node name="RepeatedBackground" type="TextureRect" parent="ParallaxBackground/BackgroundLayer" unique_id=1418273356]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_62kg4")
-offset_left = -1344.0
+offset_left = -1344.705
 offset_top = -704.0
-offset_right = 2956.7349
-offset_bottom = 1596.0
+offset_right = 7255.295
+offset_bottom = 3896.0
 texture = ExtResource("4_geh66")
 metadata/_edit_use_anchors_ = true
 
