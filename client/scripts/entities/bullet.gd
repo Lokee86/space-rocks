@@ -1,7 +1,6 @@
 extends CharacterBody2D
 
 const Constants = preload("res://scripts/constants/constants.gd")
-
 @onready var sprite: Sprite2D = $Sprite2D
 
 var base_sprite_scale: Vector2
