@@ -36,7 +36,7 @@ const AsteroidSpawnInterval = 3.0
 const AsteroidSpawnBatchSize = 3
 const AsteroidSpawnMargin = 160.0
 const AsteroidDespawnMargin = 320.0
-const AsteroidMinSpeed = 130.0
+const AsteroidMinSpeed = 115.0
 const AsteroidMaxSpeed = 210.0
 const AsteroidAimRandomnessDegrees = 30.0
 const AsteroidSizeScale = 0.35
@@ -44,11 +44,9 @@ const AsteroidVariants = 8
 // data-sync:end constants.server.asteroids
 
 // data-sync:start constants.server.bullets
-const BulletSpeed = 900.0
-const BulletLifetime = 1.25
-const BulletCooldown = 0.2
+const BulletSpeed = 1200.0
+const BulletLifetime = 1.75
+const BulletCooldown = 0.22
 const BulletSpawnOffset = 42.0
-const BulletPulseMultiplier = 1.5
-const BulletPulseTimer = 0.15
 const CollisionDespawnDelay = 0.05
 // data-sync:end constants.server.bullets
