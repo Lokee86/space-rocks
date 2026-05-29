@@ -23,11 +23,10 @@ asteroid_spawn_interval = 3.0
 asteroid_spawn_batch_size = 3
 asteroid_spawn_margin = 160.0
 asteroid_despawn_margin = 320.0
-asteroid_min_speed = 130.0
-asteroid_max_speed = 210.0
+asteroid_min_speed = 90.0
+asteroid_max_speed = 170.0
 asteroid_aim_randomness_degrees = 30.0
-asteroid_size_scale = 0.35
-asteroid_variants = 8
+asteroid_size_scale = 0.125
 
 [constants.server.bullets]
 bullet_speed = 900.0
@@ -60,6 +59,8 @@ player_default_hue = 0.0
 player_afterburner_rotation_degrees = -90.0
 player_afterburner_scale = 0.45
 effect_z_index = 40
+bullet_pulse_multiplier = 1.5
+bullet_pulse_time = 0.15
 bullet_blast_min_sound_length = 1.0
 bullet_blast_cleanup_padding = 0.25
 ship_death_cleanup_padding = 0.05

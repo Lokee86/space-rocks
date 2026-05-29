@@ -1,19 +1,22 @@
-[gd_scene load_steps=3 format=3 uid="uid://bdi7370ve417y"]
+[gd_scene format=3 uid="uid://bdi7370ve417y"]
 
 [ext_resource type="Texture2D" uid="uid://dhqslpwrweveb" path="res://assets/OrangeScale__000.png" id="1_pppl6"]
+[ext_resource type="Script" uid="uid://b4i8i6puyqywl" path="res://scripts/entities/bullet.gd" id="1_y25gk"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_4wvvi"]
 radius = 3.0
 height = 24.0
 
-[node name="Bullet" type="CharacterBody2D"]
+[node name="Bullet" type="CharacterBody2D" unique_id=815812444]
 collision_layer = 0
 collision_mask = 0
+script = ExtResource("1_y25gk")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=144382724]
+position = Vector2(-8.419156e-07, 0.1618014)
 rotation = 1.5708
-scale = Vector2(0.43085, 0.263971)
+scale = Vector2(0.44383773, 0.27600458)
 texture = ExtResource("1_pppl6")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=238185911]
 shape = SubResource("CapsuleShape2D_4wvvi")
