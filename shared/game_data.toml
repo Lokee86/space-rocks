@@ -12,8 +12,8 @@ player_respawn_buffer = 160.0
 player_resume_invulnerability_seconds = 1.5
 
 [constants.server.world]
-world_width = 8625.0
-world_height = 6750.0
+world_width = 17200.0
+world_height = 9200.0
 
 [constants.server.scoring]
 base_score = 120
@@ -61,7 +61,7 @@ player_afterburner_rotation_degrees = -90.0
 player_afterburner_scale = 0.45
 effect_z_index = 40
 bullet_pulse_multiplier = 1.5
-bullet_pulse_time = 0.15
+bullet_pulse_time = 0.1
 bullet_blast_min_sound_length = 1.0
 bullet_blast_cleanup_padding = 0.25
 ship_death_cleanup_padding = 0.05

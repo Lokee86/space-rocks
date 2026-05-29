@@ -23,8 +23,8 @@ const PlayerResumeInvulnerabilitySeconds = 1.5
 // data-sync:end constants.server.player_session
 
 // data-sync:start constants.server.world
-const WorldWidth = 8625.0
-const WorldHeight = 6750.0
+const WorldWidth = 17200.0
+const WorldHeight = 9200.0
 // data-sync:end constants.server.world
 
 // data-sync:start constants.server.scoring
