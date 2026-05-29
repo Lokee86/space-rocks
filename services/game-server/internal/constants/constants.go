@@ -48,5 +48,7 @@ const BulletSpeed = 900.0
 const BulletLifetime = 1.25
 const BulletCooldown = 0.2
 const BulletSpawnOffset = 42.0
+const BulletPulseMultiplier = 1.5
+const BulletPulseTimer = 0.15
 const CollisionDespawnDelay = 0.05
 // data-sync:end constants.server.bullets
