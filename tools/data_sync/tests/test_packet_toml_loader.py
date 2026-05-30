@@ -27,12 +27,14 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert game_output.language == "go"
     assert game_output.package == "game"
     assert game_output.packet_types is True
-    assert game_output.structs == ("ClientPacket", "EventState", "StatePacket")
+    for required_struct in ("ClientPacket", "EventState", "StatePacket"):
+        assert required_struct in game_output.structs
+    assert any(name in game_output.structs for name in ("RoomSnapshot", "CreateRoomRequest"))
     assert game_output.imports == {
         "entities": "github.com/Lokee86/space-rocks/server/internal/game/entities",
     }
 
-    gds_output = schema.output_for_path("client/scripts/networking/packets.gd")
+    gds_output = schema.output_for_path("client/scripts/networking/packets/packets.gd")
     assert gds_output.language == "gdscript"
     assert gds_output.base == "RefCounted"
     assert "input_packet" in gds_output.builders
