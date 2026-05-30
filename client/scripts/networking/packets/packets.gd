@@ -13,6 +13,7 @@ const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
 const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
 const TYPE_TOGGLE_DEBUG_FREEZE_WORLD := "toggle_debug_freeze_world"
 const TYPE_TOGGLE_DEBUG_FREEZE_PLAYER := "toggle_debug_freeze_player"
+const TYPE_DEBUG_KILL_PLAYER := "debug_kill_player"
 const TYPE_CREATE_ROOM_REQUEST := "create_room_request"
 const TYPE_JOIN_ROOM_REQUEST := "join_room_request"
 const TYPE_LEAVE_ROOM_REQUEST := "leave_room_request"
@@ -65,6 +66,7 @@ const FIELD_SELF_ID := "self_id"
 const FIELD_SHIP_TYPE := "ship_type"
 const FIELD_SHOOT := "shoot"
 const FIELD_SIZE := "size"
+const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TYPE := "type"
 const FIELD_VARIANT := "variant"
 const FIELD_VISIBLE_WORLD_HEIGHT := "visible_world_height"
@@ -113,6 +115,17 @@ static func toggle_debug_freeze_world_packet() -> Dictionary:
 static func toggle_debug_freeze_player_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "toggle_debug_freeze_player"
+	return packet
+
+static func debug_kill_player_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_kill_player"
+	return packet
+
+static func debug_kill_target_player_packet(target_player_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_kill_player"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
 
 static func client_config_packet(visible_world_width, visible_world_height) -> Dictionary:

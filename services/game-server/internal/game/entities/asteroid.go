@@ -7,12 +7,14 @@ import (
 
 func NewAsteroid(id string, position physics.Vector2, velocity physics.Vector2, size int, variant int) *Asteroid {
 	return &Asteroid{
-		ID:       id,
-		X:        position.X,
-		Y:        position.Y,
-		Velocity: velocity,
-		Size:     size,
-		Variant:  variant,
+		ID:              id,
+		X:               position.X,
+		Y:               position.Y,
+		Velocity:        velocity,
+		Size:            size,
+		Variant:         variant,
+		Health:          constants.AsteroidHealth,
+		CollisionDamage: constants.AsteroidCollisionDamage,
 	}
 }
 

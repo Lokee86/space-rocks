@@ -36,6 +36,12 @@ bullet_cooldown = 0.22
 bullet_spawn_offset = 42.0
 collision_despawn_delay = 0.05
 
+[constants.server.damage]
+player_max_health = 1
+asteroid_health = 1
+bullet_damage = 1
+asteroid_collision_damage = 1
+
 [constants.server.player_lifecycle]
 player_starting_lives = 3
 player_respawn_delay = 3.0

@@ -35,10 +35,12 @@ func (game *Game) handleBulletAsteroidCollisions() {
 				continue
 			}
 
-			damageRequest := projectileAsteroidDamageRequest(collision)
+			damageRequest := projectileAsteroidDamageRequest(collision, bullet, asteroid)
 			damageResult := damage.Resolve(damageRequest)
+			asteroid.Health = damageResult.RemainingHealth
+			hitBullets[bulletID] = true
 			if !damageResult.Destroyed {
-				continue
+				break
 			}
 
 			game.recordProjectileAsteroidHit(
@@ -58,17 +60,19 @@ func (game *Game) handleBulletAsteroidCollisions() {
 	game.applyProjectileAsteroidHitConsequences(hitBullets, hitAsteroids, scoreAwards)
 }
 
-func projectileAsteroidDamageRequest(collision ProjectileAsteroidCollision) damage.DamageRequest {
+func projectileAsteroidDamageRequest(
+	collision ProjectileAsteroidCollision,
+	bullet *entities.Bullet,
+	asteroid *entities.Asteroid,
+) damage.DamageRequest {
 	return damage.DamageRequest{
 		TargetEntityID:   collision.AsteroidID,
 		TargetEntityType: damage.EntityTypeAsteroid,
 		SourceEntityID:   collision.ProjectileID,
 		SourceEntityType: damage.EntityTypeProjectile,
-		Amount:           1,
+		CurrentHealth:    asteroid.Health,
+		Amount:           bullet.Damage,
 		Type:             damage.DamageTypeProjectile,
-		Flags: damage.DamageFlags{
-			Lethal: true,
-		},
 	}
 }
 
@@ -143,8 +147,9 @@ func (game *Game) handleShipAsteroidCollisions() {
 				continue
 			}
 
-			damageRequest := playerAsteroidDamageRequest(collision, asteroidID)
+			damageRequest := playerAsteroidDamageRequest(collision, asteroidID, player, asteroid)
 			damageResult := damage.Resolve(damageRequest)
+			player.Health = damageResult.RemainingHealth
 			if !damageResult.Fatal || damageResult.TargetEntityType != damage.EntityTypePlayer {
 				continue
 			}
@@ -161,6 +166,10 @@ func (game *Game) handleShipAsteroidCollisions() {
 }
 
 func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.Ship) {
+	game.applyFatalPlayerDamage(playerID, player)
+}
+
+func (game *Game) applyFatalPlayerDamage(playerID string, player *entities.Ship) {
 	position := player.Position()
 	player.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	lives := 0
@@ -198,16 +207,19 @@ func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.
 	})
 }
 
-func playerAsteroidDamageRequest(collision PlayerAsteroidCollision, asteroidID string) damage.DamageRequest {
+func playerAsteroidDamageRequest(
+	collision PlayerAsteroidCollision,
+	asteroidID string,
+	player *entities.Ship,
+	asteroid *entities.Asteroid,
+) damage.DamageRequest {
 	return damage.DamageRequest{
 		TargetEntityID:   collision.PlayerID,
 		TargetEntityType: damage.EntityTypePlayer,
 		SourceEntityID:   asteroidID,
 		SourceEntityType: damage.EntityTypeAsteroid,
-		Amount:           1,
+		CurrentHealth:    player.Health,
+		Amount:           asteroid.CollisionDamage,
 		Type:             damage.DamageTypeCollision,
-		Flags: damage.DamageFlags{
-			Lethal: true,
-		},
 	}
 }
