@@ -51,26 +51,73 @@ def _plan_target_updates(
     if renderer is None:
         raise PacketsSyncError(f"unsupported packets language: {target.language}")
 
+    if target.outputs:
+        return _plan_target_updates_by_output_ids(config, schema, target, renderer)
+    return _plan_target_updates_by_paths(config, schema, target, renderer)
+
+
+def _plan_target_updates_by_output_ids(
+    config: DataSyncConfig,
+    schema: PacketSchema,
+    target: DomainLanguageConfig,
+    renderer: Renderer,
+) -> tuple[FileUpdate, ...]:
+    updates: list[FileUpdate] = []
+    for output_id in target.outputs:
+        try:
+            output = schema.output_for_id(output_id)
+        except KeyError as exc:
+            raise PacketsSyncError(
+                f"packet TOML has no output for configured output id: {output_id}"
+            ) from exc
+        path = _resolve_output_file_path(config, output.path)
+        updates.append(_build_update_for_output(path, output, schema, renderer))
+    return tuple(updates)
+
+
+def _plan_target_updates_by_paths(
+    config: DataSyncConfig,
+    schema: PacketSchema,
+    target: DomainLanguageConfig,
+    renderer: Renderer,
+) -> tuple[FileUpdate, ...]:
     updates: list[FileUpdate] = []
     for path in target.files:
-        try:
-            text = path.read_text(encoding="utf-8")
-        except FileNotFoundError as exc:
-            raise PacketsSyncError(f"configured packets file does not exist: {path}") from exc
-        except OSError as exc:
-            raise PacketsSyncError(f"failed to read packets file {path}: {exc}") from exc
-
         output_path = _relative_output_path(config, path)
         try:
             output = schema.output_for_path(output_path)
-            generated = renderer(schema, output)
         except KeyError as exc:
             raise PacketsSyncError(f"packet TOML has no output for configured file: {output_path}") from exc
-        except (RichGoPacketGenerationError, RichGdsPacketGenerationError) as exc:
-            raise PacketsSyncError(str(exc)) from exc
-
-        updates.append(FileUpdate(path=path, before=text, after=generated))
+        updates.append(_build_update_for_output(path, output, schema, renderer))
     return tuple(updates)
+
+
+def _build_update_for_output(
+    path: Path,
+    output: PacketOutput,
+    schema: PacketSchema,
+    renderer: Renderer,
+) -> FileUpdate:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise PacketsSyncError(f"configured packets file does not exist: {path}") from exc
+    except OSError as exc:
+        raise PacketsSyncError(f"failed to read packets file {path}: {exc}") from exc
+
+    try:
+        generated = renderer(schema, output)
+    except (RichGoPacketGenerationError, RichGdsPacketGenerationError) as exc:
+        raise PacketsSyncError(str(exc)) from exc
+
+    return FileUpdate(path=path, before=text, after=generated)
+
+
+def _resolve_output_file_path(config: DataSyncConfig, output_path: str) -> Path:
+    path = Path(output_path)
+    if path.is_absolute():
+        return path
+    return (config.root / path).resolve()
 
 
 def _relative_output_path(config: DataSyncConfig, path: Path) -> str:

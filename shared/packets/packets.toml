@@ -1,10 +1,12 @@
 [[outputs]]
+id = "server_entities_packets"
 language = "go"
 path = "services/game-server/internal/game/entities/packets_generated.go"
 package = "entities"
 structs = ["ClientConfig", "InputState", "ShipState", "AsteroidState", "BulletState"]
 
 [[outputs]]
+id = "server_game_packets"
 language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
@@ -15,6 +17,7 @@ structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomReq
 entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
 
 [[outputs]]
+id = "client_packets"
 language = "gdscript"
 path = "client/scripts/networking/packets/packets.gd"
 base = "RefCounted"

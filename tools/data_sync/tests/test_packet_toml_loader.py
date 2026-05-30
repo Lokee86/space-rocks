@@ -112,3 +112,53 @@ type = "state"
     fields = schema.struct("StatePacket").fields
     assert fields[0].type == "map<string,ShipState>"
     assert fields[1].type == "array<EventState>"
+
+
+def test_supports_output_lookup_by_id_and_path(tmp_path: Path) -> None:
+    path = tmp_path / "packets.toml"
+    path.write_text(
+        """
+[[outputs]]
+id = "go_packets"
+language = "go"
+path = "some/path.go"
+package = "game"
+structs = ["StatePacket"]
+
+[[outputs]]
+id = "gds_packets"
+language = "gdscript"
+path = "some/path.gd"
+base = "RefCounted"
+structs = ["StatePacket"]
+
+[[structs]]
+id = "StatePacket"
+
+[[structs.fields]]
+name = "players"
+json = "players"
+type = "map<string,ShipState>"
+
+[[packet_types]]
+id = "state"
+value = "state"
+
+[[builders]]
+id = "state_packet"
+args = []
+
+[builders.body]
+type = "state"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    schema = load_packet_schema(path)
+
+    assert schema.outputs[0].id == "go_packets"
+    assert schema.outputs[1].id == "gds_packets"
+    assert schema.output_for_id("gds_packets").path == "some/path.gd"
+    assert schema.output_for_path("some/path.gd").id == "gds_packets"
+    with pytest.raises(KeyError):
+        schema.output_for_id("missing_output")

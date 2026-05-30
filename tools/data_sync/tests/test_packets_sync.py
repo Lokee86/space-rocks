@@ -45,7 +45,12 @@ static func input_packet(sequence, shoot, turn) -> Dictionary:
 """
 
 
-def write_project(tmp_path: Path) -> Path:
+def write_project(
+    tmp_path: Path,
+    *,
+    packet_output_ids: bool = False,
+    packet_target_outputs: tuple[str, ...] = (),
+) -> Path:
     for directory in ["shared/packets", "go", "gds", "ts"]:
         (tmp_path / directory).mkdir(parents=True)
 
@@ -63,7 +68,10 @@ max_players = 2
         + "\n",
         encoding="utf-8",
     )
-    (tmp_path / "shared/packets/packets.toml").write_text(packet_toml(), encoding="utf-8")
+    (tmp_path / "shared/packets/packets.toml").write_text(
+        packet_toml(include_output_ids=packet_output_ids),
+        encoding="utf-8",
+    )
 
     (tmp_path / "go/constants.go").write_text(
         """
@@ -96,21 +104,23 @@ old
     (tmp_path / "ts/packets.ts").write_text("stale ts packets\n", encoding="utf-8")
 
     config_path = tmp_path / "config.toml"
-    config_path.write_text(config_text(), encoding="utf-8")
+    config_path.write_text(config_text(packet_target_outputs=packet_target_outputs), encoding="utf-8")
     return config_path
 
 
-def packet_toml() -> str:
+def packet_toml(*, include_output_ids: bool = False) -> str:
+    go_id = 'id = "server_game_packets"\n' if include_output_ids else ""
+    gds_id = 'id = "client_packets"\n' if include_output_ids else ""
     return """
 [[outputs]]
-language = "go"
+{go_id}language = "go"
 path = "go/packets.go"
 package = "packets"
 packet_types = true
 structs = ["PlayerInputPacket"]
 
 [[outputs]]
-language = "gdscript"
+{gds_id}language = "gdscript"
 path = "gds/packets.gd"
 base = "RefCounted"
 builders = ["input_packet"]
@@ -151,10 +161,14 @@ type = "input"
 sequence = "$sequence"
 shoot = "$shoot"
 turn = "$turn"
-""".lstrip()
+""".format(go_id=go_id, gds_id=gds_id).lstrip()
 
 
-def config_text() -> str:
+def config_text(*, packet_target_outputs: tuple[str, ...] = ()) -> str:
+    outputs_line = ""
+    if packet_target_outputs:
+        quoted = ", ".join(f'"{value}"' for value in packet_target_outputs)
+        outputs_line = f"outputs = [{quoted}]\n"
     return """
 [sot.constants]
 path = "shared/game_data.toml"
@@ -181,6 +195,7 @@ owns = ["constants.network"]
 files = ["go/packets.go"]
 sections = ["packets"]
 owns = []
+{outputs_line}
 
 [packets.gds]
 files = ["gds/packets.gd"]
@@ -192,7 +207,7 @@ enabled = false
 files = []
 sections = []
 owns = []
-""".lstrip()
+""".format(outputs_line=outputs_line).lstrip()
 
 
 def test_diff_packets_writes_nothing_and_prints_unified_diff(
@@ -246,3 +261,32 @@ def test_packet_push_go_and_gds(tmp_path: Path) -> None:
     assert (tmp_path / "go/packets.go").read_text(encoding="utf-8") == GO_PACKETS
     assert (tmp_path / "gds/packets.gd").read_text(encoding="utf-8") == GDS_PACKETS
     assert run(["-check", "-packets", "-go", "-gds", "-config", str(config_path)]) == 0
+
+
+def test_packet_push_uses_configured_output_ids(tmp_path: Path) -> None:
+    config_path = write_project(
+        tmp_path,
+        packet_output_ids=True,
+        packet_target_outputs=("server_game_packets",),
+    )
+    gds_before = (tmp_path / "gds/packets.gd").read_text(encoding="utf-8")
+
+    assert run(["-push", "-packets", "-go", "-config", str(config_path)]) == 0
+
+    assert (tmp_path / "go/packets.go").read_text(encoding="utf-8") == GO_PACKETS
+    assert (tmp_path / "gds/packets.gd").read_text(encoding="utf-8") == gds_before
+
+
+def test_packet_push_errors_when_configured_output_id_missing(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_path = write_project(
+        tmp_path,
+        packet_output_ids=True,
+        packet_target_outputs=("missing_output_id",),
+    )
+
+    assert run(["-push", "-packets", "-go", "-config", str(config_path)]) == 1
+    captured = capsys.readouterr()
+    assert "packet TOML has no output for configured output id: missing_output_id" in captured.err

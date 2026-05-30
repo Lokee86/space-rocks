@@ -34,6 +34,7 @@ class PacketOutput:
     base: str | None = None
     builders: tuple[str, ...] = ()
     extras: Mapping[str, Any] | None = None
+    id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -79,6 +80,12 @@ class PacketSchema:
     structs: tuple[PacketStruct, ...]
     packet_types: tuple[PacketType, ...]
     builders: tuple[PacketBuilder, ...]
+
+    def output_for_id(self, output_id: str) -> PacketOutput:
+        for output in self.outputs:
+            if output.id == output_id:
+                return output
+        raise KeyError(output_id)
 
     def output_for_path(self, path: str) -> PacketOutput:
         for output in self.outputs:

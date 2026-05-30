@@ -80,11 +80,13 @@ files = [
 ]
 sections = ["packets"]
 owns = []
+outputs = ["server_entities_packets", "server_game_packets"]
 
 [packets.gds]
 files = ["client/scripts/networking/packets/packets.gd"]
 sections = ["packets"]
 owns = []
+outputs = ["client_packets"]
 
 [packets.ts]
 enabled = false

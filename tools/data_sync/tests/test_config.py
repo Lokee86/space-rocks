@@ -207,3 +207,56 @@ def test_filter_targets_uses_requested_domains_and_languages(tmp_path: Path) -> 
         ("packets", "ts"),
         ("constants", "ts"),
     ]
+
+
+def test_packet_target_supports_optional_outputs_ids_in_order(tmp_path: Path) -> None:
+    config_text = valid_config().replace(
+        """
+[packets.go]
+files = ["services/game-server/internal/network/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+""".strip(),
+        """
+[packets.go]
+files = ["services/game-server/internal/network/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+outputs = ["server_entities_packets", "server_game_packets"]
+""".strip(),
+    )
+    config_path = write_config(tmp_path, config_text)
+    config = load_config(config_path)
+
+    packets_go = config.target("packets", "go")
+    assert packets_go.files == (tmp_path / "services/game-server/internal/network/packets.go",)
+    assert packets_go.sections == ("packets",)
+    assert packets_go.owns == ("packets",)
+    assert packets_go.outputs == ("server_entities_packets", "server_game_packets")
+
+    constants_go = config.target("constants", "go")
+    assert constants_go.files == (tmp_path / "services/game-server/internal/game/constants.go",)
+    assert constants_go.sections == ("constants.gameplay", "constants.network")
+    assert constants_go.owns == ("constants.gameplay", "constants.network")
+
+
+def test_packet_target_outputs_must_be_list_of_non_empty_strings(tmp_path: Path) -> None:
+    config_text = valid_config().replace(
+        """
+[packets.go]
+files = ["services/game-server/internal/network/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+""".strip(),
+        """
+[packets.go]
+files = ["services/game-server/internal/network/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+outputs = ["server_entities_packets", ""]
+""".strip(),
+    )
+    config_path = write_config(tmp_path, config_text)
+
+    with pytest.raises(ConfigError, match=r"\[packets.go\]\.outputs must contain only non-empty strings"):
+        load_config(config_path)
