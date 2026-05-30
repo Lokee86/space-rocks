@@ -6,8 +6,10 @@ signal toggle_infinite_lives_requested
 signal toggle_freeze_world_requested
 signal toggle_freeze_player_requested
 signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
+signal respawn_player_requested(target_player_id: String)
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
+const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 var window: Window
 var parent: Node
@@ -136,8 +138,9 @@ func _on_spawn_bullet_placement_requested() -> void:
 
 
 func _on_respawn_player_placement_requested(target_player_id: String) -> void:
+	ClientLogger.game_info("Devtools respawn placement received target_player_id='%s'" % target_player_id)
 	if target_player_id == "":
+		ClientLogger.game_warn("Devtools respawn placement blocked: target_player_id is empty")
 		return
-	var placement_context := {}
-	placement_context["target_player_id"] = target_player_id
-	request_placement_action(&"respawn_player", placement_context)
+	ClientLogger.game_info("Devtools respawn direct request starting")
+	respawn_player_requested.emit(target_player_id)

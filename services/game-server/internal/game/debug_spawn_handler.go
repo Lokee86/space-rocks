@@ -15,6 +15,48 @@ func (game *Game) handleDebugSpawnEntity(playerID string, packet ClientPacket) b
 		DirectionY:     packet.DirectionY,
 		TargetPlayerID: packet.TargetPlayerID,
 	}
+	if request.EntityType == debugging.EntityTypePlayer {
+		spawnedPlayerID, ok := game.applyDebugSpawnPlayer(request)
+		if !ok {
+			logging.Game.Info("debug player spawn ignored",
+				logging.FieldPlayerID, playerID,
+				"target_player_id", request.TargetPlayerID,
+			)
+			return true
+		}
+
+		spawnedPlayer := game.state.Players[spawnedPlayerID]
+		logging.Game.Info("debug player spawned",
+			logging.FieldPlayerID, playerID,
+			"spawned_player_id", spawnedPlayerID,
+			"x", spawnedPlayer.X,
+			"y", spawnedPlayer.Y,
+			"has_target_player_id", request.TargetPlayerID != "",
+		)
+		return true
+	}
+
+	if request.EntityType == debugging.EntityTypeBullet {
+		bulletID, ok := game.applyDebugSpawnBullet(playerID, request)
+		if !ok {
+			logging.Game.Info("debug bullet spawn ignored",
+				logging.FieldPlayerID, playerID,
+			)
+			return true
+		}
+
+		bullet := game.state.Projectiles[bulletID]
+		logging.Game.Info("debug bullet spawned",
+			logging.FieldPlayerID, playerID,
+			"bullet_id", bulletID,
+			"owner_player_id", playerID,
+			"x", bullet.X,
+			"y", bullet.Y,
+			"has_direction", request.HasDirection,
+		)
+		return true
+	}
+
 	if request.EntityType != debugging.EntityTypeAsteroid {
 		logging.Game.Info("debug spawn entity not implemented for entity type",
 			logging.FieldPlayerID, playerID,

@@ -1,11 +1,15 @@
 package rooms
 
-import "time"
+import (
+	"time"
+
+	"github.com/Lokee86/space-rocks/server/internal/playerids"
+)
 
 const (
 	DefaultRoomID        = "default"
 	RoomCleanupGraceTime = 30 * time.Second
-	MaxPlayersPerRoom    = 8
+	MaxPlayersPerRoom    = playerids.MaxPlayers
 	RoomCodeLength       = 6
 	RoomCodeAlphabet     = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 )

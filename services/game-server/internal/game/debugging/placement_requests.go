@@ -28,6 +28,10 @@ func (request SpawnEntityRequest) Position() physics.Vector2 {
 	return physics.Vector2{X: request.X, Y: request.Y}
 }
 
+func (request RespawnPlayerRequest) Position() physics.Vector2 {
+	return physics.Vector2{X: request.X, Y: request.Y}
+}
+
 func (request SpawnEntityRequest) DirectionOr(fallback physics.Vector2) physics.Vector2 {
 	if !request.HasDirection {
 		return fallback.Normalized()

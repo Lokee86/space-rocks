@@ -18,5 +18,13 @@ func (game *Game) handleDebugRespawnPlayer(playerID string, packet ClientPacket)
 		"x", request.X,
 		"y", request.Y,
 	)
+
+	if !game.applyDebugRespawnPlayer(request) {
+		logging.Game.Info("debug respawn player ignored",
+			logging.FieldPlayerID, playerID,
+			"target_player_id", request.TargetPlayerID,
+		)
+	}
+
 	return true
 }
