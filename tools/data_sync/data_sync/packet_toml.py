@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
+from typing import Iterable
 
 from data_sync.model.packets import (
     PacketBuilder,
@@ -23,19 +24,69 @@ class PacketTomlError(Exception):
 def load_packet_schema(path: Path | str) -> PacketSchema:
     tomlkit = _load_tomlkit()
     resolved_path = Path(path)
-    try:
-        text = resolved_path.read_text(encoding="utf-8")
-    except FileNotFoundError as exc:
-        raise PacketTomlError(f"packet TOML file does not exist: {resolved_path}") from exc
-    except OSError as exc:
-        raise PacketTomlError(f"failed to read packet TOML {resolved_path}: {exc}") from exc
-
-    try:
-        document = tomlkit.parse(text)
-    except Exception as exc:
-        raise PacketTomlError(f"failed to parse packet TOML {resolved_path}: {exc}") from exc
+    document = _load_toml_document(tomlkit, resolved_path)
 
     return packet_schema_from_document(document)
+
+
+def load_packet_schema_files(paths: Iterable[Path | str]) -> PacketSchema:
+    resolved_paths = tuple(Path(path) for path in paths)
+    if not resolved_paths:
+        raise PacketTomlError("packet TOML paths must not be empty")
+
+    tomlkit = _load_tomlkit()
+    outputs: list[PacketOutput] = []
+    structs: list[PacketStruct] = []
+    packet_types: list[PacketType] = []
+    builders: list[PacketBuilder] = []
+    saw_rich_schema_list = False
+
+    for resolved_path in resolved_paths:
+        document = _load_toml_document(tomlkit, resolved_path)
+        saw_rich_schema_list = saw_rich_schema_list or _contains_rich_schema_list(document)
+        outputs.extend(
+            _packet_output(item, index)
+            for index, item in enumerate(_optional_list(document, "outputs"))
+        )
+        structs.extend(
+            _packet_struct(item, index)
+            for index, item in enumerate(_optional_list(document, "structs"))
+        )
+        packet_types.extend(
+            _packet_type(item, index)
+            for index, item in enumerate(_optional_list(document, "packet_types"))
+        )
+        builders.extend(
+            _packet_builder(item, index)
+            for index, item in enumerate(_optional_list(document, "builders"))
+        )
+
+    if not saw_rich_schema_list:
+        raise PacketTomlError(
+            "packet TOML does not contain rich schema lists: outputs, structs, packet_types, builders"
+        )
+
+    _validate_unique_output_ids(outputs)
+    _validate_unique_output_paths(outputs)
+    _validate_unique_values(
+        (struct.id for struct in structs),
+        "struct id",
+    )
+    _validate_unique_values(
+        (packet_type.id for packet_type in packet_types),
+        "packet_type id",
+    )
+    _validate_unique_values(
+        (builder.id for builder in builders),
+        "builder id",
+    )
+
+    return PacketSchema(
+        outputs=tuple(outputs),
+        structs=tuple(structs),
+        packet_types=tuple(packet_types),
+        builders=tuple(builders),
+    )
 
 
 def packet_schema_from_document(document: Mapping[str, Any]) -> PacketSchema:
@@ -50,6 +101,27 @@ def packet_schema_from_document(document: Mapping[str, Any]) -> PacketSchema:
         structs=structs,
         packet_types=packet_types,
         builders=builders,
+    )
+
+
+def _load_toml_document(tomlkit: Any, resolved_path: Path) -> Mapping[str, Any]:
+    try:
+        text = resolved_path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise PacketTomlError(f"packet TOML file does not exist: {resolved_path}") from exc
+    except OSError as exc:
+        raise PacketTomlError(f"failed to read packet TOML {resolved_path}: {exc}") from exc
+
+    try:
+        return tomlkit.parse(text)
+    except Exception as exc:
+        raise PacketTomlError(f"failed to parse packet TOML {resolved_path}: {exc}") from exc
+
+
+def _contains_rich_schema_list(document: Mapping[str, Any]) -> bool:
+    return any(
+        key in document
+        for key in ("outputs", "structs", "packet_types", "builders")
     )
 
 
@@ -152,6 +224,34 @@ def _required_list(table: Mapping[str, Any], key: str, label: str | None = None)
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise PacketTomlError(f"{context} missing list: {key}")
     return value
+
+
+def _optional_list(table: Mapping[str, Any], key: str) -> Sequence[Any]:
+    value = table.get(key)
+    if value is None:
+        return ()
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        raise PacketTomlError(f"packet TOML {key} must be a list")
+    return value
+
+
+def _validate_unique_output_ids(outputs: Sequence[PacketOutput]) -> None:
+    _validate_unique_values(
+        (output_id for output_id in (output.id for output in outputs) if output_id),
+        "output id",
+    )
+
+
+def _validate_unique_output_paths(outputs: Sequence[PacketOutput]) -> None:
+    _validate_unique_values((output.path for output in outputs), "output path")
+
+
+def _validate_unique_values(values: Iterable[str], kind: str) -> None:
+    seen: set[str] = set()
+    for value in values:
+        if value in seen:
+            raise PacketTomlError(f"duplicate {kind}: {value}")
+        seen.add(value)
 
 
 def _required_mapping(value: Any, label: str) -> Mapping[str, Any]:
