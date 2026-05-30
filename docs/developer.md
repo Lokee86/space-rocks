@@ -49,7 +49,9 @@ git lfs pull
 - `shared/`: source data used by both client and server:
   - `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` for active constants
   - client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`
-  - `shared/packets/packets.toml` for active packets
+  - `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` for active packets
+  - debug/devtools packet schema lives in `shared/packets/debug.toml`
+  - data-sync output id `server_devtools_packets` generates server devtools packet types into `services/game-server/internal/devtools/packets_generated.go`
   - `shared/collisions/collision_shapes.json`
 - `tools/data_sync/`: Python sync/generation tool for constants and packet code.
 - `docs/`: Documentation.
