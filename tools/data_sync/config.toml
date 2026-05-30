@@ -1,5 +1,5 @@
 [sot.constants]
-path = "shared/game_data.toml"
+path = "shared/constants/game_data.toml"
 
 [sot.packets]
 path = "shared/packets/packets.toml"

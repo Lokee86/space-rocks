@@ -47,7 +47,7 @@ git lfs pull
 - `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
 - `services/api-server/`: empty placeholder for a planned API server service for business/backend systems. Intended stack is Node.js/TypeScript with NestJS.
 - `shared/`: source data used by both client and server:
-  - `shared/game_data.toml` for active constants
+  - `shared/constants/game_data.toml` for active constants
   - `shared/packets/packets.toml` for active packets
   - `shared/collisions/collision_shapes.json`
 - `tools/data_sync/`: Python sync/generation tool for constants and packet code.
