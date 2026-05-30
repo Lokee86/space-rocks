@@ -271,6 +271,13 @@ Server package ownership:
 - `services/game-server/internal/game` owns simulation, gameplay state mutation, and adapters from game storage to narrower gameplay seams.
 - `services/game-server/internal/game/rules` owns match/mode policy evaluation from plain snapshots. It currently evaluates match-over status and per-player participation through `MatchSnapshot -> EvaluateMatch -> MatchDecision`.
 
+Identity guardrails:
+
+- `PlayerID` is permanent player-facing identity using readable values like `Player-1`, `Player-2`, `Player-3`.
+- `PlayerID` must not be converted to UUID during the internal UUID upgrade.
+- `SessionID` and `MemberID` are server-internal identity seams.
+- `MemberID` is the future disconnect/reconnect seam and should stay out of normal room snapshot packets.
+
 Client lifecycle notes:
 
 - `client/scripts/ui/game_shell.gd` owns explicit session mode and lobby/gameplay transitions.
@@ -544,3 +551,4 @@ TODO: validate collision shape export after Godot 4.6.
 TODO: consider moving generated Godot constants/packets into a generated scripts folder once references are easy to update.
 
 TODO: document networking/rooms separately if room UX grows beyond the current architecture doc.
+
