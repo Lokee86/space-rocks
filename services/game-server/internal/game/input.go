@@ -16,6 +16,10 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 			cameraView.SetConfig(packet.Config)
 		}
 	}
+	if packet.Type == PacketTypeDebugRespawnPlayer {
+		game.handleDebugRespawnPlayer(playerID, packet)
+		return
+	}
 
 	player, ok := game.state.Players[playerID]
 	if !ok {

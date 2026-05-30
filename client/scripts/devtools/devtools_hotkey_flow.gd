@@ -14,7 +14,7 @@ func process(has_received_gameplay_state: bool) -> void:
 	if !has_received_gameplay_state:
 		return
 
-	if Input.is_action_just_pressed("DevToggle5"):
+	if Input.is_action_just_pressed("DevToggle7"):
 		if !respawn_local_player_route.is_null():
 			respawn_local_player_route.call()
 
