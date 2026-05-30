@@ -177,6 +177,12 @@ python3 tools/data_sync/main.py -validate -constants
 python3 tools/data_sync/main.py -validate -packets
 ```
 
+Regenerate collision shapes from Godot scenes:
+
+```bash
+godot --headless --path client -s res://tools/export_collision_shapes.gd
+```
+
 ## Server Test Layout
 
 Go server tests are kept out of production package folders. Put server tests under:

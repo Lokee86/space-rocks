@@ -137,6 +137,7 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets.
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.
 - Route client packet wire JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
+- Keep `PlayerID` player-facing and readable, for example `Player-1`/`Player-2`; do not convert it to UUID. UUID upgrades are for server-internal identities such as `SessionID` and `MemberID`.
 - Keep client websocket and packet transport under `client/scripts/networking/`.
 - Keep client world sync and entity sync owners under `client/scripts/world/`.
 - Keep packet-facing player lifecycle status in `StatePacket.player_lifecycle`, beside `players`.
