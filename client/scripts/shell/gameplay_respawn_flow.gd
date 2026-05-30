@@ -1,6 +1,8 @@
 extends RefCounted
 class_name GameplayRespawnFlow
 
+const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
+
 var connection_service
 var hud_flow
 var awaiting_respawn_confirmation := false
@@ -33,11 +35,15 @@ func clear_awaiting_confirmation() -> void:
 	awaiting_respawn_confirmation = false
 
 
-func should_restore_alive_hud(state: Dictionary, player) -> bool:
-	if !awaiting_respawn_confirmation:
+func should_restore_alive_hud(
+	state: Dictionary,
+	player,
+	has_stale_dead_presentation := false
+) -> bool:
+	if !awaiting_respawn_confirmation && !has_stale_dead_presentation:
 		return false
 
-	if state["has_lives"] && int(state["lives"]) <= 0:
+	if !PlayerLifecycle.is_player_active(state["player_lifecycle"], state["self_id"]):
 		return false
 
 	var server_players: Dictionary = state["server_players"]
