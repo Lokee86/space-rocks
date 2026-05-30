@@ -50,3 +50,10 @@ const BulletCooldown = 0.22
 const BulletSpawnOffset = 42.0
 const CollisionDespawnDelay = 0.05
 // data-sync:end constants.server.bullets
+
+// data-sync:start constants.server.damage
+const PlayerMaxHealth = 1
+const AsteroidHealth = 1
+const BulletDamage = 1
+const AsteroidCollisionDamage = 1
+// data-sync:end constants.server.damage

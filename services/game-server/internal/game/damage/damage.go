@@ -13,22 +13,17 @@ type DamageType string
 const (
 	DamageTypeCollision  DamageType = "collision"
 	DamageTypeProjectile DamageType = "projectile"
+	DamageTypeDebug      DamageType = "debug"
 )
-
-type DamageFlags struct {
-	BypassesShield          bool
-	BypassesInvulnerability bool
-	Lethal                  bool
-}
 
 type DamageRequest struct {
 	TargetEntityID   string
 	TargetEntityType EntityType
 	SourceEntityID   string
 	SourceEntityType EntityType
+	CurrentHealth    int
 	Amount           int
 	Type             DamageType
-	Flags            DamageFlags
 }
 
 type DamageResult struct {
@@ -54,23 +49,21 @@ func Resolve(req DamageRequest) DamageResult {
 		SourceEntityType: req.SourceEntityType,
 	}
 
-	if req.Type == DamageTypeProjectile &&
-		req.TargetEntityType == EntityTypeAsteroid &&
-		req.Amount == 1 &&
-		req.Flags.Lethal {
-		result.Destroyed = true
+	if req.Amount <= 0 {
+		result.Ignored = true
 		return result
 	}
 
-	if req.Type == DamageTypeCollision &&
-		req.TargetEntityType == EntityTypePlayer &&
-		req.Amount == 1 &&
-		req.Flags.Lethal {
-		result.Destroyed = true
-		result.Fatal = true
+	if req.CurrentHealth <= 0 {
+		result.Ignored = true
 		return result
 	}
 
-	result.Ignored = true
+	remaining := max(req.CurrentHealth-req.Amount, 0)
+	result.AppliedToHealth = req.CurrentHealth - remaining
+	result.RemainingHealth = remaining
+	result.Destroyed = remaining <= 0
+	result.Fatal = result.Destroyed && req.TargetEntityType == EntityTypePlayer
+
 	return result
 }

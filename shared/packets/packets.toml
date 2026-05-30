@@ -18,7 +18,7 @@ entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
 language = "gdscript"
 path = "client/scripts/networking/packets/packets.gd"
 base = "RefCounted"
-builders = ["input_packet", "respawn_packet", "pause_request_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
+builders = ["input_packet", "respawn_packet", "pause_request_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "debug_kill_player_packet", "debug_kill_target_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]
 
 [[structs]]
 id = "ClientPacket"
@@ -50,6 +50,12 @@ type = "string"
 name = "ready"
 json = "ready"
 type = "bool"
+
+[[structs.fields]]
+name = "target_player_id"
+go_name = "TargetPlayerID"
+json = "target_player_id"
+type = "string"
 
 [[structs]]
 id = "CreateRoomRequest"
@@ -574,6 +580,10 @@ id = "toggle_debug_freeze_player"
 value = "toggle_debug_freeze_player"
 
 [[packet_types]]
+id = "debug_kill_player"
+value = "debug_kill_player"
+
+[[packet_types]]
 id = "create_room_request"
 value = "create_room_request"
 
@@ -662,6 +672,20 @@ id = "toggle_debug_freeze_player_packet"
 
 [builders.body]
 type = "toggle_debug_freeze_player"
+
+[[builders]]
+id = "debug_kill_player_packet"
+
+[builders.body]
+type = "debug_kill_player"
+
+[[builders]]
+id = "debug_kill_target_player_packet"
+args = ["target_player_id"]
+
+[builders.body]
+type = "debug_kill_player"
+target_player_id = "$target_player_id"
 
 [[builders]]
 id = "client_config_packet"

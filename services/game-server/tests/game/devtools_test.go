@@ -263,3 +263,61 @@ func TestDebugFrozenWorldDoesNotRunBulletAsteroidCollisionsOrScore(t *testing.T)
 		t.Fatalf("expected no asteroid fragments while frozen, got %d asteroids", len(asteroids))
 	}
 }
+
+func TestDebugKillPlayerMarksDespawnQueuesDeathAndReducesLives(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeDebugKillPlayer})
+
+	if !scenario.playerPendingDespawn(playerID) {
+		t.Fatal("expected debug kill to mark player pending despawn")
+	}
+	if events := scenario.pendingEventCount(playerID); events != 1 {
+		t.Fatalf("expected one queued ship death event, got %d", events)
+	}
+	packet := scenario.state(playerID)
+	if len(packet.Events) != 1 {
+		t.Fatalf("expected one ship death event in packet, got %d", len(packet.Events))
+	}
+	if packet.Events[0].Type != servergame.PacketTypeShipDeath {
+		t.Fatalf("expected ship death event type %q, got %q", servergame.PacketTypeShipDeath, packet.Events[0].Type)
+	}
+	expectedLives := constants.PlayerStartingLives - 1
+	if packet.Lives != expectedLives {
+		t.Fatalf("expected debug kill to reduce lives to %d, got %d", expectedLives, packet.Lives)
+	}
+}
+
+func TestDebugKillPlayerCanKillAnotherActivePlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	scenario.send(playerA, servergame.ClientPacket{
+		Type:           servergame.PacketTypeDebugKillPlayer,
+		TargetPlayerID: playerB,
+	})
+
+	if scenario.playerPendingDespawn(playerA) {
+		t.Fatal("expected source player to remain active")
+	}
+	if !scenario.playerPendingDespawn(playerB) {
+		t.Fatal("expected target player to be marked pending despawn")
+	}
+	packetA := scenario.state(playerA)
+	if len(packetA.Events) != 1 {
+		t.Fatalf("expected one ship death event in source view, got %d", len(packetA.Events))
+	}
+	if packetA.Events[0].Type != servergame.PacketTypeShipDeath {
+		t.Fatalf("expected ship death event type %q, got %q", servergame.PacketTypeShipDeath, packetA.Events[0].Type)
+	}
+	if packetA.Events[0].PlayerID != playerB {
+		t.Fatalf("expected ship death event player id %q, got %q", playerB, packetA.Events[0].PlayerID)
+	}
+	packetB := scenario.state(playerB)
+	expectedLives := constants.PlayerStartingLives - 1
+	if packetB.Lives != expectedLives {
+		t.Fatalf("expected target debug kill to reduce lives to %d, got %d", expectedLives, packetB.Lives)
+	}
+}

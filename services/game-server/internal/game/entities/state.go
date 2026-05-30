@@ -17,6 +17,7 @@ type Ship struct {
 	ShootCooldown            float64
 	Score                    int
 	Lives                    int
+	Health                   int
 	DamageOptions            DamageOptions
 	InvulnerabilityRemaining float64
 	PendingDespawn           bool
@@ -37,6 +38,7 @@ type Bullet struct {
 	Rotation       float64
 	Velocity       physics.Vector2
 	Life           float64
+	Damage         int
 	PendingDespawn bool
 	DespawnDelay   float64
 }
@@ -48,6 +50,8 @@ type Asteroid struct {
 	Velocity       physics.Vector2
 	Size           int
 	Variant        int
+	Health         int
+	CollisionDamage int
 	PendingDespawn bool
 	DespawnDelay   float64
 }

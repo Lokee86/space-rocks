@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
@@ -49,6 +50,30 @@ func (game *Game) handleDebugPacket(playerID string, player *entities.Ship, pack
 			logging.FieldPlayerID, playerID,
 			"enabled", enabled,
 		)
+		return true
+	case PacketTypeDebugKillPlayer:
+		targetPlayerID := packet.TargetPlayerID
+		if targetPlayerID == "" {
+			targetPlayerID = playerID
+		}
+		targetPlayer, ok := game.state.Players[targetPlayerID]
+		if !ok || targetPlayer == nil {
+			return true
+		}
+		damageRequest := damage.DamageRequest{
+			TargetEntityID:   targetPlayerID,
+			TargetEntityType: damage.EntityTypePlayer,
+			SourceEntityID:   playerID,
+			SourceEntityType: damage.EntityTypePlayer,
+			CurrentHealth:    targetPlayer.Health,
+			Amount:           targetPlayer.Health,
+			Type:             damage.DamageTypeDebug,
+		}
+		damageResult := damage.Resolve(damageRequest)
+		targetPlayer.Health = damageResult.RemainingHealth
+		if damageResult.Fatal {
+			game.applyFatalPlayerDamage(targetPlayerID, targetPlayer)
+		}
 		return true
 	default:
 		return false

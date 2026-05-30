@@ -1,6 +1,9 @@
 package entities
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import (
+	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+)
 
 func NewBullet(
 	id string,
@@ -18,6 +21,7 @@ func NewBullet(
 		Rotation: rotation,
 		Velocity: velocity,
 		Life:     lifetime,
+		Damage:   constants.BulletDamage,
 	}
 }
 

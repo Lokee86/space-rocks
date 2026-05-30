@@ -99,6 +99,38 @@ func TestBulletAsteroidCollisionsSplitLargerAsteroid(t *testing.T) {
 	}
 }
 
+func TestBulletAsteroidCollisionNonfatalDamageDoesNotDestroyScoreOrFragment(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	impactPosition := physics.Vector2{X: 100, Y: 100}
+	scenario.placeBullet("bullet-1", playerID, impactPosition, physics.Vector2{})
+	scenario.placeAsteroid("asteroid-1", impactPosition, 3)
+	scenario.setAsteroidHealth("asteroid-1", 3)
+	initialHealth := scenario.asteroidHealth("asteroid-1")
+
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	if !scenario.bulletPendingDespawn("bullet-1") {
+		t.Fatal("expected hit bullet to be marked for delayed despawn")
+	}
+	if !scenario.asteroidExists("asteroid-1") {
+		t.Fatal("expected asteroid to remain active after nonfatal hit")
+	}
+	if scenario.asteroidPendingDespawn("asteroid-1") {
+		t.Fatal("expected nonfatal-hit asteroid not to be pending despawn")
+	}
+	if scenario.asteroidHealth("asteroid-1") >= initialHealth {
+		t.Fatalf("expected asteroid health to be reduced from %d, got %d", initialHealth, scenario.asteroidHealth("asteroid-1"))
+	}
+	if score := scenario.playerState(playerID, playerID).Score; score != 0 {
+		t.Fatalf("expected no score for non-destroying hit, got %d", score)
+	}
+	if len(scenario.state(playerID).Asteroids) != 1 {
+		t.Fatalf("expected no spawned fragments for non-destroying hit, got %d asteroids", len(scenario.state(playerID).Asteroids))
+	}
+}
+
 func TestBulletAsteroidCollisionsScoreByAsteroidSize(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()
@@ -262,6 +294,36 @@ func TestShipAsteroidCollisionWorksAcrossVerticalBoundary(t *testing.T) {
 
 	if !scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected cross-boundary asteroid to collide with player")
+	}
+}
+
+func TestShipAsteroidCollisionNonfatalDamageReducesHealthWithoutDeath(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	player := scenario.playerState(playerID, playerID)
+	position := physics.Vector2{X: player.X, Y: player.Y}
+	scenario.setPlayerHealth(playerID, 3)
+	initialHealth := scenario.playerHealth(playerID)
+	initialLives := scenario.playerState(playerID, playerID).Lives
+	scenario.placeAsteroid("asteroid-1", position, 1)
+
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	if scenario.playerPendingDespawn(playerID) {
+		t.Fatal("expected nonfatal collision player not to be pending despawn")
+	}
+	if !scenario.playerEntityExists(playerID) {
+		t.Fatal("expected nonfatal collision player to remain active")
+	}
+	if scenario.playerHealth(playerID) >= initialHealth {
+		t.Fatalf("expected player health to be reduced from %d, got %d", initialHealth, scenario.playerHealth(playerID))
+	}
+	if events := scenario.pendingEventCount(playerID); events != 0 {
+		t.Fatalf("expected no queued ship_death event for nonfatal collision, got %d", events)
+	}
+	if lives := scenario.playerState(playerID, playerID).Lives; lives != initialLives {
+		t.Fatalf("expected lives to remain %d after nonfatal collision, got %d", initialLives, lives)
 	}
 }
 

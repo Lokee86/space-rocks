@@ -117,24 +117,15 @@ func (scenario *scenario) useBulletCapsuleAsteroidPolygonCollisions() {
 func (scenario *scenario) placeAsteroid(id string, position physics.Vector2, size int) {
 	scenario.t.Helper()
 
-	scenario.asteroids().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(&entities.Asteroid{
-		ID:   id,
-		X:    position.X,
-		Y:    position.Y,
-		Size: size,
-	}))
+	asteroid := entities.NewAsteroid(id, position, physics.Vector2{}, size, 0)
+	scenario.asteroids().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(asteroid))
 }
 
 func (scenario *scenario) placeMovingAsteroid(id string, position physics.Vector2, velocity physics.Vector2, size int) {
 	scenario.t.Helper()
 
-	scenario.asteroids().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(&entities.Asteroid{
-		ID:       id,
-		X:        position.X,
-		Y:        position.Y,
-		Velocity: velocity,
-		Size:     size,
-	}))
+	asteroid := entities.NewAsteroid(id, position, velocity, size, 0)
+	scenario.asteroids().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(asteroid))
 }
 
 func (scenario *scenario) addCameraView(id string, position physics.Vector2, config entities.ClientConfig) {
@@ -186,6 +177,18 @@ func (scenario *scenario) setPlayerLives(playerID string, lives int) {
 
 	scenario.player(playerID).Lives = lives
 	scenario.sessionField(playerID, "Lives").SetInt(int64(lives))
+}
+
+func (scenario *scenario) setPlayerHealth(playerID string, health int) {
+	scenario.t.Helper()
+
+	scenario.player(playerID).Health = health
+}
+
+func (scenario *scenario) playerHealth(playerID string) int {
+	scenario.t.Helper()
+
+	return scenario.player(playerID).Health
 }
 
 func (scenario *scenario) removePlayerEntity(playerID string) {
@@ -270,6 +273,28 @@ func (scenario *scenario) asteroidExists(id string) bool {
 	scenario.t.Helper()
 
 	return scenario.asteroids().MapIndex(reflect.ValueOf(id)).IsValid()
+}
+
+func (scenario *scenario) setAsteroidHealth(id string, health int) {
+	scenario.t.Helper()
+
+	asteroid := scenario.asteroids().MapIndex(reflect.ValueOf(id))
+	if !asteroid.IsValid() || asteroid.IsNil() {
+		scenario.t.Fatalf("expected asteroid %q", id)
+	}
+
+	asteroid.Interface().(*entities.Asteroid).Health = health
+}
+
+func (scenario *scenario) asteroidHealth(id string) int {
+	scenario.t.Helper()
+
+	asteroid := scenario.asteroids().MapIndex(reflect.ValueOf(id))
+	if !asteroid.IsValid() || asteroid.IsNil() {
+		scenario.t.Fatalf("expected asteroid %q", id)
+	}
+
+	return asteroid.Interface().(*entities.Asteroid).Health
 }
 
 func (scenario *scenario) bulletPendingDespawn(id string) bool {
