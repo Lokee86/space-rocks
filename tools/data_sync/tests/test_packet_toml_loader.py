@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from data_sync.packet_toml import load_packet_schema
+from data_sync.packet_toml import PacketTomlError, load_packet_schema, load_packet_schema_files
 
 
 pytest.importorskip("tomlkit")
@@ -162,3 +162,156 @@ type = "state"
     assert schema.output_for_path("some/path.gd").id == "gds_packets"
     with pytest.raises(KeyError):
         schema.output_for_id("missing_output")
+
+
+def test_multi_file_rejects_duplicate_output_ids(tmp_path: Path) -> None:
+    first = tmp_path / "first.toml"
+    second = tmp_path / "second.toml"
+    first.write_text(
+        """
+[[outputs]]
+id = "dup_output"
+language = "go"
+path = "one.go"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    second.write_text(
+        """
+[[outputs]]
+id = "dup_output"
+language = "gdscript"
+path = "two.gd"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PacketTomlError):
+        load_packet_schema_files((first, second))
+
+
+def test_multi_file_rejects_duplicate_output_paths(tmp_path: Path) -> None:
+    first = tmp_path / "first.toml"
+    second = tmp_path / "second.toml"
+    first.write_text(
+        """
+[[outputs]]
+id = "go_output"
+language = "go"
+path = "same/path.go"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    second.write_text(
+        """
+[[outputs]]
+id = "gds_output"
+language = "gdscript"
+path = "same/path.go"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PacketTomlError):
+        load_packet_schema_files((first, second))
+
+
+def test_multi_file_rejects_duplicate_struct_ids(tmp_path: Path) -> None:
+    first = tmp_path / "first.toml"
+    second = tmp_path / "second.toml"
+    first.write_text(
+        """
+[[structs]]
+id = "ShipState"
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    second.write_text(
+        """
+[[structs]]
+id = "ShipState"
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PacketTomlError):
+        load_packet_schema_files((first, second))
+
+
+def test_multi_file_rejects_duplicate_packet_type_ids(tmp_path: Path) -> None:
+    first = tmp_path / "first.toml"
+    second = tmp_path / "second.toml"
+    first.write_text(
+        """
+[[packet_types]]
+id = "state"
+value = "state"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    second.write_text(
+        """
+[[packet_types]]
+id = "state"
+value = "state_two"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PacketTomlError):
+        load_packet_schema_files((first, second))
+
+
+def test_multi_file_rejects_duplicate_builder_ids(tmp_path: Path) -> None:
+    first = tmp_path / "first.toml"
+    second = tmp_path / "second.toml"
+    first.write_text(
+        """
+[[builders]]
+id = "input_packet"
+args = []
+[builders.body]
+type = "input"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    second.write_text(
+        """
+[[builders]]
+id = "input_packet"
+args = []
+[builders.body]
+type = "input_alt"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PacketTomlError):
+        load_packet_schema_files((first, second))
+
+
+def test_multi_file_legacy_packet_toml_raises_packet_toml_error(tmp_path: Path) -> None:
+    legacy = tmp_path / "legacy_packets.toml"
+    legacy.write_text(
+        """
+[packets.player_input]
+id = 100
+direction = "client_to_server"
+
+[packets.player_input.fields]
+sequence = "uint32"
+shoot = "bool"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PacketTomlError):
+        load_packet_schema_files((legacy,))

@@ -290,3 +290,124 @@ def test_packet_push_errors_when_configured_output_id_missing(
     assert run(["-push", "-packets", "-go", "-config", str(config_path)]) == 1
     captured = capsys.readouterr()
     assert "packet TOML has no output for configured output id: missing_output_id" in captured.err
+
+
+def test_packet_check_supports_split_packet_sot_paths_with_output_id(
+    tmp_path: Path,
+) -> None:
+    config_path = write_project(
+        tmp_path,
+        packet_output_ids=True,
+        packet_target_outputs=("server_game_packets",),
+    )
+    outputs_types_path = tmp_path / "shared/packets/packet_outputs_types.toml"
+    structs_builders_path = tmp_path / "shared/packets/packet_structs_builders.toml"
+    outputs_types_path.write_text(
+        """
+[[outputs]]
+id = "server_game_packets"
+language = "go"
+path = "go/packets.go"
+package = "packets"
+packet_types = true
+structs = ["PlayerInputPacket"]
+
+[[packet_types]]
+id = "input"
+value = "input"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    structs_builders_path.write_text(
+        """
+[[structs]]
+id = "PlayerInputPacket"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "sequence"
+json = "sequence"
+type = "uint32"
+
+[[structs.fields]]
+name = "shoot"
+json = "shoot"
+type = "bool"
+
+[[structs.fields]]
+name = "turn"
+json = "turn"
+type = "float32"
+
+[[builders]]
+id = "input_packet"
+args = ["sequence", "shoot", "turn"]
+
+[builders.body]
+type = "input"
+sequence = "$sequence"
+shoot = "$shoot"
+turn = "$turn"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace(
+            '[sot.packets]\npath = "shared/packets/packets.toml"',
+            '[sot.packets]\npaths = ["shared/packets/packet_outputs_types.toml", "shared/packets/packet_structs_builders.toml"]',
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "go/packets.go").write_text(GO_PACKETS, encoding="utf-8")
+
+    assert run(["-check", "-packets", "-go", "-config", str(config_path)]) == 0
+
+
+def test_packet_check_fails_on_duplicate_output_id_across_packet_sot_paths(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_path = write_project(
+        tmp_path,
+        packet_output_ids=True,
+        packet_target_outputs=("server_game_packets",),
+    )
+    first = tmp_path / "shared/packets/packet_first.toml"
+    second = tmp_path / "shared/packets/packet_second.toml"
+    first.write_text(
+        """
+[[outputs]]
+id = "server_game_packets"
+language = "go"
+path = "go/packets.go"
+package = "packets"
+structs = ["PlayerInputPacket"]
+""".lstrip(),
+        encoding="utf-8",
+    )
+    second.write_text(
+        """
+[[outputs]]
+id = "server_game_packets"
+language = "go"
+path = "go/packets_alt.go"
+package = "packets"
+structs = ["PlayerInputPacket"]
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace(
+            '[sot.packets]\npath = "shared/packets/packets.toml"',
+            '[sot.packets]\npaths = ["shared/packets/packet_first.toml", "shared/packets/packet_second.toml"]',
+        ),
+        encoding="utf-8",
+    )
+
+    assert run(["-check", "-packets", "-go", "-config", str(config_path)]) == 1
+    captured = capsys.readouterr()
+    assert "duplicate output id: server_game_packets" in captured.err
