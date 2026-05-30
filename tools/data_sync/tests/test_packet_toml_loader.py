@@ -10,16 +10,25 @@ from data_sync.packet_toml import PacketTomlError, load_packet_schema, load_pack
 pytest.importorskip("tomlkit")
 
 
-def migrated_packet_toml(tmp_path: Path) -> Path:
+def migrated_packet_toml_paths(tmp_path: Path) -> tuple[Path, ...]:
     repo_root = Path(__file__).resolve().parents[3]
-    source = repo_root / "shared/packets/packets.toml"
-    output = tmp_path / "packets.toml"
-    output.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-    return output
+    relative_paths = (
+        "shared/packets/outputs.toml",
+        "shared/packets/gameplay.toml",
+        "shared/packets/debug.toml",
+        "shared/packets/lobby.toml",
+    )
+    outputs: list[Path] = []
+    for relative_path in relative_paths:
+        source = repo_root / relative_path
+        output = tmp_path / Path(relative_path).name
+        output.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        outputs.append(output)
+    return tuple(outputs)
 
 
 def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
-    schema = load_packet_schema(migrated_packet_toml(tmp_path))
+    schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
     assert len(schema.outputs) == 3
 
@@ -41,7 +50,7 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
 
 
 def test_loads_migrated_structs_and_field_overrides(tmp_path: Path) -> None:
-    schema = load_packet_schema(migrated_packet_toml(tmp_path))
+    schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
     state_packet = schema.struct("StatePacket")
     fields = {field.name: field for field in state_packet.fields}
@@ -56,7 +65,7 @@ def test_loads_migrated_structs_and_field_overrides(tmp_path: Path) -> None:
 
 
 def test_loads_packet_types_and_builders(tmp_path: Path) -> None:
-    schema = load_packet_schema(migrated_packet_toml(tmp_path))
+    schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
     assert [packet_type.id for packet_type in schema.packet_types][:3] == [
         "input",

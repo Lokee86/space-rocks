@@ -1,0 +1,398 @@
+[[structs]]
+id = "ClientPacket"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "input"
+json = "input"
+type = "InputState"
+go_type = "entities.InputState"
+
+[[structs.fields]]
+name = "config"
+json = "config"
+type = "ClientConfig"
+go_type = "entities.ClientConfig"
+
+[[structs.fields]]
+name = "room_code"
+go_name = "RoomCode"
+json = "room_code"
+type = "string"
+
+[[structs.fields]]
+name = "ready"
+json = "ready"
+type = "bool"
+
+[[structs.fields]]
+name = "target_player_id"
+go_name = "TargetPlayerID"
+json = "target_player_id"
+type = "string"
+
+[[structs.fields]]
+name = "entity_type"
+json = "entity_type"
+type = "string"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+name = "has_direction"
+go_name = "HasDirection"
+json = "has_direction"
+type = "bool"
+
+[[structs.fields]]
+name = "direction_x"
+go_name = "DirectionX"
+json = "direction_x"
+type = "float"
+
+[[structs.fields]]
+name = "direction_y"
+go_name = "DirectionY"
+json = "direction_y"
+type = "float"
+
+[[structs]]
+id = "ClientConfig"
+
+[[structs.fields]]
+name = "visible_world_width"
+go_name = "VisibleWorldWidth"
+json = "visible_world_width"
+type = "float"
+
+[[structs.fields]]
+name = "visible_world_height"
+go_name = "VisibleWorldHeight"
+json = "visible_world_height"
+type = "float"
+
+[[structs]]
+id = "InputState"
+
+[[structs.fields]]
+name = "forward"
+json = "forward"
+type = "bool"
+
+[[structs.fields]]
+name = "back"
+json = "back"
+type = "bool"
+
+[[structs.fields]]
+name = "right"
+json = "right"
+type = "bool"
+
+[[structs.fields]]
+name = "left"
+json = "left"
+type = "bool"
+
+[[structs.fields]]
+name = "shoot"
+json = "shoot"
+type = "bool"
+
+[[structs]]
+id = "ShipState"
+
+[[structs.fields]]
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+name = "ship_type"
+json = "ship_type"
+type = "string"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+name = "rotation"
+json = "rotation"
+type = "float"
+
+[[structs.fields]]
+name = "score"
+json = "score"
+type = "int"
+
+[[structs.fields]]
+name = "lives"
+json = "lives"
+type = "int"
+
+[[structs]]
+id = "AsteroidState"
+
+[[structs.fields]]
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+name = "size"
+json = "size"
+type = "int"
+
+[[structs.fields]]
+name = "scale"
+json = "scale"
+type = "float"
+
+[[structs.fields]]
+name = "variant"
+json = "variant"
+type = "int"
+
+[[structs]]
+id = "BulletState"
+
+[[structs.fields]]
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+name = "owner_id"
+go_name = "OwnerID"
+json = "owner_id"
+type = "string"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+name = "rotation"
+json = "rotation"
+type = "float"
+
+[[structs]]
+id = "EventState"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "player_id"
+go_name = "PlayerID"
+json = "player_id"
+type = "string"
+
+[[structs.fields]]
+name = "lives"
+json = "lives"
+type = "int"
+
+[[structs.fields]]
+name = "respawn_delay"
+go_name = "RespawnDelay"
+json = "respawn_delay"
+type = "float"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs]]
+id = "PlayerPauseState"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "player_id"
+go_name = "PlayerID"
+json = "player_id"
+type = "string"
+
+[[structs.fields]]
+name = "paused"
+json = "paused"
+type = "bool"
+
+[[structs]]
+id = "StatePacket"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "self_id"
+go_name = "SelfID"
+json = "self_id"
+type = "string"
+
+[[structs.fields]]
+name = "lives"
+json = "lives"
+type = "int"
+
+[[structs.fields]]
+name = "debug_status"
+go_name = "DebugStatus"
+json = "debug_status"
+type = "DebugStatus"
+
+[[structs.fields]]
+name = "players"
+json = "players"
+type = "map"
+key_type = "string"
+value_type = "ShipState"
+go_value_type = "entities.ShipState"
+
+[[structs.fields]]
+name = "player_lifecycle"
+go_name = "PlayerLifecycle"
+json = "player_lifecycle"
+type = "map"
+key_type = "string"
+value_type = "string"
+
+[[structs.fields]]
+name = "bullets"
+json = "bullets"
+type = "map"
+key_type = "string"
+value_type = "BulletState"
+go_value_type = "entities.BulletState"
+
+[[structs.fields]]
+name = "asteroids"
+json = "asteroids"
+type = "map"
+key_type = "string"
+value_type = "AsteroidState"
+go_value_type = "entities.AsteroidState"
+
+[[structs.fields]]
+name = "events"
+json = "events"
+type = "array"
+item_type = "EventState"
+
+[[packet_types]]
+id = "input"
+value = "input"
+
+[[packet_types]]
+id = "client_config"
+value = "client_config"
+
+[[packet_types]]
+id = "state"
+value = "state"
+
+[[packet_types]]
+id = "bullet_blast"
+value = "bullet_blast"
+
+[[packet_types]]
+id = "ship_death"
+value = "ship_death"
+
+[[packet_types]]
+id = "respawn"
+value = "respawn"
+
+[[packet_types]]
+id = "pause_request"
+value = "pause_request"
+
+[[packet_types]]
+id = "player_pause_state"
+value = "player_pause_state"
+
+[[builders]]
+id = "input_packet"
+args = ["forward", "back", "right", "left", "shoot"]
+
+[builders.body]
+type = "input"
+
+[builders.body.input]
+forward = "$forward"
+back = "$back"
+right = "$right"
+left = "$left"
+shoot = "$shoot"
+
+[[builders]]
+id = "respawn_packet"
+
+[builders.body]
+type = "respawn"
+
+[[builders]]
+id = "pause_request_packet"
+
+[builders.body]
+type = "pause_request"
+
+[[builders]]
+id = "client_config_packet"
+args = ["visible_world_width", "visible_world_height"]
+
+[builders.body]
+type = "client_config"
+
+[builders.body.config]
+visible_world_width = "$visible_world_width"
+visible_world_height = "$visible_world_height"

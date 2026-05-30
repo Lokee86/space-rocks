@@ -1,0 +1,273 @@
+[[structs]]
+id = "CreateRoomRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs]]
+id = "JoinRoomRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "room_code"
+go_name = "RoomCode"
+json = "room_code"
+type = "string"
+
+[[structs]]
+id = "LeaveRoomRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs]]
+id = "SetReadyRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "ready"
+json = "ready"
+type = "bool"
+
+[[structs]]
+id = "StartGameRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs]]
+id = "StartSinglePlayerRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs]]
+id = "ReturnToLobbyRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs]]
+id = "RoomMemberState"
+
+[[structs.fields]]
+name = "player_id"
+go_name = "PlayerID"
+json = "player_id"
+type = "string"
+
+[[structs.fields]]
+name = "ready"
+json = "ready"
+type = "bool"
+
+[[structs.fields]]
+name = "connected"
+json = "connected"
+type = "bool"
+
+[[structs]]
+id = "LobbyMemberFieldAliases"
+
+[[structs.fields]]
+name = "is_ready"
+json = "is_ready"
+type = "bool"
+
+[[structs.fields]]
+name = "is_connected"
+json = "is_connected"
+type = "bool"
+
+[[structs.fields]]
+name = "name"
+json = "name"
+type = "string"
+
+[[structs.fields]]
+name = "member_name"
+json = "member_name"
+type = "string"
+
+[[structs]]
+id = "RoomSnapshot"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "room_code"
+go_name = "RoomCode"
+json = "room_code"
+type = "string"
+
+[[structs.fields]]
+name = "room_state"
+json = "room_state"
+type = "string"
+
+[[structs.fields]]
+name = "members"
+json = "members"
+type = "array"
+item_type = "RoomMemberState"
+
+[[structs.fields]]
+name = "local_player_id"
+go_name = "LocalPlayerID"
+json = "local_player_id"
+type = "string"
+
+[[structs.fields]]
+name = "owner_id"
+go_name = "OwnerID"
+json = "owner_id"
+type = "string"
+
+[[structs.fields]]
+name = "max_players"
+json = "max_players"
+type = "int"
+
+[[structs]]
+id = "RoomStateChanged"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "room_code"
+go_name = "RoomCode"
+json = "room_code"
+type = "string"
+
+[[structs.fields]]
+name = "room_state"
+json = "room_state"
+type = "string"
+
+[[structs]]
+id = "RoomError"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "error_code"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[packet_types]]
+id = "create_room_request"
+value = "create_room_request"
+
+[[packet_types]]
+id = "join_room_request"
+value = "join_room_request"
+
+[[packet_types]]
+id = "leave_room_request"
+value = "leave_room_request"
+
+[[packet_types]]
+id = "set_ready_request"
+value = "set_ready_request"
+
+[[packet_types]]
+id = "start_game_request"
+value = "start_game_request"
+
+[[packet_types]]
+id = "start_single_player_request"
+value = "start_single_player_request"
+
+[[packet_types]]
+id = "return_to_lobby_request"
+value = "return_to_lobby_request"
+
+[[packet_types]]
+id = "room_snapshot"
+value = "room_snapshot"
+
+[[packet_types]]
+id = "room_state_changed"
+value = "room_state_changed"
+
+[[packet_types]]
+id = "room_error"
+value = "room_error"
+
+[[builders]]
+id = "create_room_request_packet"
+
+[builders.body]
+type = "create_room_request"
+
+[[builders]]
+id = "join_room_request_packet"
+args = ["room_code"]
+
+[builders.body]
+type = "join_room_request"
+room_code = "$room_code"
+
+[[builders]]
+id = "leave_room_request_packet"
+
+[builders.body]
+type = "leave_room_request"
+
+[[builders]]
+id = "set_ready_request_packet"
+args = ["ready"]
+
+[builders.body]
+type = "set_ready_request"
+ready = "$ready"
+
+[[builders]]
+id = "start_game_request_packet"
+
+[builders.body]
+type = "start_game_request"
+
+[[builders]]
+id = "start_single_player_request_packet"
+
+[builders.body]
+type = "start_single_player_request"
+
+[[builders]]
+id = "return_to_lobby_request_packet"
+
+[builders.body]
+type = "return_to_lobby_request"

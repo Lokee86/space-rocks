@@ -8,7 +8,12 @@ paths = [
 ]
 
 [sot.packets]
-path = "shared/packets/packets.toml"
+paths = [
+  "shared/packets/outputs.toml",
+  "shared/packets/gameplay.toml",
+  "shared/packets/debug.toml",
+  "shared/packets/lobby.toml",
+]
 
 [constants.go]
 files = ["services/game-server/internal/constants/constants.go"]
