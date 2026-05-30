@@ -312,8 +312,8 @@ func TestRoomManagerLeaveRoomRemovesMember(t *testing.T) {
 	if result.RoomID != room.ID {
 		t.Fatalf("expected leave result room id %q, got %q", room.ID, result.RoomID)
 	}
-	if result.MemberID != "session-1" {
-		t.Fatalf("expected leave result member id %q, got %q", "session-1", result.MemberID)
+	if result.SessionID != "session-1" {
+		t.Fatalf("expected leave result session id %q, got %q", "session-1", result.SessionID)
 	}
 	if result.RemainingMembers != 0 {
 		t.Fatalf("expected remaining members 0, got %d", result.RemainingMembers)
@@ -341,8 +341,8 @@ func TestRoomManagerLeaveMemberRemovesMemberAndReportsBroadcast(t *testing.T) {
 	if result.Room != room {
 		t.Fatal("expected leave member result room to match lobby room")
 	}
-	if result.MemberID != "session-1" {
-		t.Fatalf("expected member id %q, got %q", "session-1", result.MemberID)
+	if result.SessionID != "session-1" {
+		t.Fatalf("expected session id %q, got %q", "session-1", result.SessionID)
 	}
 	if result.RemainingMembers != 1 {
 		t.Fatalf("expected remaining members 1, got %d", result.RemainingMembers)

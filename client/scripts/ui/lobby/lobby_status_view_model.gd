@@ -6,7 +6,6 @@ const Constants := preload("res://scripts/constants/constants.gd")
 
 static func status_text(
 	room_state: String,
-	local_member_id: String,
 	local_player_id: String,
 	owner_id: String,
 	members: Array,
@@ -26,6 +25,6 @@ static func status_text(
 			return Constants.STATUS_READY_TO_START
 		return Constants.STATUS_WAITING_FOR_PLAYERS_READY
 
-	if LobbyMemberViewModel.is_local_ready(local_member_id, members):
+	if LobbyMemberViewModel.is_local_ready(local_player_id, members):
 		return Constants.STATUS_WAITING_FOR_HOST_START
 	return Constants.STATUS_PRESS_READY_WHEN_READY

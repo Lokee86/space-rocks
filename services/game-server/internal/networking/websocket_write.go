@@ -21,33 +21,33 @@ func writeServerMessages(
 	for {
 		select {
 		case err := <-readErr:
-			logWebSocketReadClose(err, session.currentRoomID, session.currentPlayerID, remoteAddr)
+			logWebSocketReadClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 			return
 		case message := <-session.outbound:
 			if err := session.conn.WriteMessage(websocket.TextMessage, message); err != nil {
-				logWebSocketWriteClose(err, session.currentRoomID, session.currentPlayerID, remoteAddr)
+				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 				return
 			}
 		case <-ticker.C:
-			if session.currentPlayerID == "" || !canSendGameplayPresentationState(session.room) {
+			if session.currentGamePlayerID == "" || !canSendGameplayPresentationState(session.room) {
 				continue
 			}
 
 			checkRoomGameOver(session.room)
 
-			statePacket := session.room.Game.StatePacket(session.currentPlayerID)
+			statePacket := session.room.Game.StatePacket(session.currentGamePlayerID)
 			response, err := packetcodec.Encode(statePacket)
 			if err != nil {
 				logging.Network.Error("state packet encode failed", err,
 					logging.FieldRoomID, session.currentRoomID,
-					logging.FieldPlayerID, session.currentPlayerID,
+					logging.FieldPlayerID, session.currentGamePlayerID,
 					logging.FieldRemoteAddr, remoteAddr,
 				)
 				continue
 			}
 
 			if err := session.conn.WriteMessage(websocket.TextMessage, response); err != nil {
-				logWebSocketWriteClose(err, session.currentRoomID, session.currentPlayerID, remoteAddr)
+				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 				return
 			}
 		}

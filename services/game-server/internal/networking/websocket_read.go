@@ -23,7 +23,7 @@ func readClientInput(
 			logging.Network.Warn("websocket packet decode failed",
 				logging.FieldError, err,
 				logging.FieldRoomID, session.currentRoomID,
-				logging.FieldPlayerID, session.currentPlayerID,
+				logging.FieldPlayerID, session.currentGamePlayerID,
 				"session_id", session.sessionID,
 				logging.FieldRemoteAddr, remoteAddr,
 			)
@@ -61,11 +61,11 @@ func readClientInput(
 			continue
 		}
 
-		if session.room == nil || session.currentPlayerID == "" {
+		if session.room == nil || session.currentGamePlayerID == "" {
 			continue
 		}
 
-		session.room.Game.HandlePacket(session.currentPlayerID, packet)
+		session.room.Game.HandlePacket(session.currentGamePlayerID, packet)
 		if isPauseStateRequest(packet.Type) {
 			session.EnqueuePlayerPauseState()
 		}
@@ -79,7 +79,7 @@ func isPauseStateRequest(packetType string) bool {
 func (session *webSocketSession) logLobbyPacketReceived(message string, roomCode string) {
 	args := []any{
 		logging.FieldRoomID, session.currentRoomID,
-		logging.FieldPlayerID, session.currentPlayerID,
+		logging.FieldPlayerID, session.currentGamePlayerID,
 		"session_id", session.sessionID,
 		"current_room_id", session.currentRoomID,
 	}

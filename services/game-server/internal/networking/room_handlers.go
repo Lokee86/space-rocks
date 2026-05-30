@@ -21,8 +21,7 @@ func (session *webSocketSession) handleCreateRoomRequest() {
 	addSessionMember(room, session.sessionID, session)
 	session.room = room
 	session.currentRoomID = room.ID
-	session.currentMemberID = session.sessionID
-	session.currentPlayerID = ""
+	session.currentGamePlayerID = ""
 	session.EnqueueRoomSnapshot(room)
 }
 
@@ -41,8 +40,7 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
 	attachRoomSession(room, session.sessionID, session)
 	session.room = room
 	session.currentRoomID = room.ID
-	session.currentMemberID = session.sessionID
-	session.currentPlayerID = ""
+	session.currentGamePlayerID = ""
 	BroadcastRoomSnapshot(room)
 }
 
@@ -51,12 +49,12 @@ func (session *webSocketSession) handleLeaveRoomRequest() {
 }
 
 func (session *webSocketSession) handleSetReadyRequest(ready bool) {
-	if session.currentRoomID == "" || session.currentMemberID == "" {
+	if session.currentRoomID == "" || session.sessionID == "" {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
-	room, roomErr := session.rooms.SetReady(session.currentRoomID, session.currentMemberID, ready)
+	room, roomErr := session.rooms.SetReady(session.currentRoomID, session.sessionID, ready)
 	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
@@ -66,12 +64,12 @@ func (session *webSocketSession) handleSetReadyRequest(ready bool) {
 }
 
 func (session *webSocketSession) handleStartGameRequest() {
-	if session.room == nil || session.currentMemberID == "" {
+	if session.room == nil || session.sessionID == "" {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
-	room, roomErr := session.rooms.StartRoomGame(session.currentRoomID, session.currentMemberID)
+	room, roomErr := session.rooms.StartRoomGame(session.currentRoomID, session.sessionID)
 	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
@@ -85,7 +83,7 @@ func (session *webSocketSession) handleStartGameRequest() {
 func (session *webSocketSession) handleStartSinglePlayerRequest() {
 	logging.Network.Debug("StartSinglePlayerRequest received",
 		logging.FieldRoomID, session.currentRoomID,
-		logging.FieldPlayerID, session.currentPlayerID,
+		logging.FieldPlayerID, session.currentGamePlayerID,
 		"session_id", session.sessionID,
 		"current_room_id", session.currentRoomID,
 	)
@@ -105,20 +103,19 @@ func (session *webSocketSession) handleStartSinglePlayerRequest() {
 	attachRoomSession(room, session.sessionID, session)
 	session.room = room
 	session.currentRoomID = room.ID
-	session.currentMemberID = session.sessionID
-	session.currentPlayerID = ""
+	session.currentGamePlayerID = ""
 
 	activateRoomPlayers(room)
 	BroadcastRoomSnapshot(room)
 }
 
 func (session *webSocketSession) handleReturnToLobbyRequest() {
-	if session.room == nil || session.currentMemberID == "" {
+	if session.room == nil || session.sessionID == "" {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
-	room, roomErr := session.rooms.ReturnRoomToLobby(session.currentRoomID, session.currentMemberID)
+	room, roomErr := session.rooms.ReturnRoomToLobby(session.currentRoomID, session.sessionID)
 	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return

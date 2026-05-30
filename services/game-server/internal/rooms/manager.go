@@ -22,7 +22,7 @@ type RoomDomainError struct {
 type LeaveRoomResult struct {
 	Room             *Room
 	RoomID           string
-	MemberID         string
+	SessionID        string
 	RemainingMembers int
 }
 
@@ -184,7 +184,7 @@ func (manager *RoomManager) LeaveRoom(roomID string, sessionID string) (*LeaveRo
 	return &LeaveRoomResult{
 		Room:             room,
 		RoomID:           roomID,
-		MemberID:         sessionID,
+		SessionID:        sessionID,
 		RemainingMembers: room.MemberCount(),
 	}, nil
 }

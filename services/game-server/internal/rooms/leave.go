@@ -3,7 +3,7 @@ package rooms
 type LeaveMemberResult struct {
 	Room                    *Room
 	RoomID                  string
-	MemberID                string
+	SessionID               string
 	PlayerID                string
 	RemainingMembers        int
 	ActivePlayers           int
@@ -34,7 +34,7 @@ func (manager *RoomManager) LeaveMember(roomID string, sessionID string, playerI
 	return &LeaveMemberResult{
 		Room:                    room,
 		RoomID:                  leaveResult.RoomID,
-		MemberID:                sessionID,
+		SessionID:               sessionID,
 		PlayerID:                playerID,
 		RemainingMembers:        remainingMembers,
 		ActivePlayers:           room.ActivePlayers,

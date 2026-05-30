@@ -6,7 +6,7 @@ const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_
 static func render(
 	container: Container,
 	row_scene: PackedScene,
-	local_member_id: String,
+	local_player_id: String,
 	owner_id: String,
 	members: Array
 ) -> void:
@@ -25,7 +25,7 @@ static func render(
 		container.add_child(row)
 		if row.has_method("set_member"):
 			row.set_member(
-				LobbyMemberViewModel.display_name(member, local_member_id),
+				LobbyMemberViewModel.display_name(member, local_player_id),
 				LobbyMemberViewModel.member_ready(member),
 				LobbyMemberViewModel.member_connected(member),
 				LobbyMemberViewModel.is_owner(member, owner_id)

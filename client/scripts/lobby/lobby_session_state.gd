@@ -4,7 +4,6 @@ const Packets := preload("res://scripts/networking/packets/packets.gd")
 
 var room_code := ""
 var room_state := ""
-var local_member_id := ""
 var local_player_id := ""
 var owner_id := ""
 var max_players := 0
@@ -14,7 +13,6 @@ var members := []
 func clear() -> void:
 	room_code = ""
 	room_state = ""
-	local_member_id = ""
 	local_player_id = ""
 	owner_id = ""
 	max_players = 0
@@ -24,7 +22,6 @@ func clear() -> void:
 func apply_snapshot(
 	room_code_value: String,
 	room_state_value: String,
-	local_member_id_value: String,
 	local_player_id_value: String,
 	owner_id_value: String,
 	max_players_value: int,
@@ -32,7 +29,6 @@ func apply_snapshot(
 ) -> void:
 	room_code = room_code_value
 	room_state = room_state_value
-	local_member_id = local_member_id_value
 	local_player_id = local_player_id_value
 	owner_id = owner_id_value
 	max_players = max_players_value
@@ -45,7 +41,7 @@ func summary() -> String:
 		room_state,
 		members.size(),
 		max_players,
-		local_member_id,
+		local_player_id,
 		owner_id,
 	]
 

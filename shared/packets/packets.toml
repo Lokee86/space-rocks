@@ -137,12 +137,6 @@ type = "float"
 id = "RoomMemberState"
 
 [[structs.fields]]
-name = "member_id"
-go_name = "MemberID"
-json = "member_id"
-type = "string"
-
-[[structs.fields]]
 name = "player_id"
 go_name = "PlayerID"
 json = "player_id"
@@ -205,12 +199,6 @@ name = "members"
 json = "members"
 type = "array"
 item_type = "RoomMemberState"
-
-[[structs.fields]]
-name = "local_member_id"
-go_name = "LocalMemberID"
-json = "local_member_id"
-type = "string"
 
 [[structs.fields]]
 name = "local_player_id"

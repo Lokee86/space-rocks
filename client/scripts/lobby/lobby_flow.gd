@@ -10,7 +10,6 @@ func apply_room_snapshot(packet: Dictionary) -> String:
 	lobby_state.apply_snapshot(
 		LobbyPacketReader.room_code(packet),
 		LobbyPacketReader.room_state(packet),
-		LobbyPacketReader.local_member_id(packet),
 		LobbyPacketReader.local_player_id(packet),
 		LobbyPacketReader.owner_id(packet),
 		LobbyPacketReader.max_players(packet),

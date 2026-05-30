@@ -12,11 +12,11 @@ func (session *webSocketSession) EnqueuePlayerPauseState() {
 	if session.room.Game == nil {
 		return
 	}
-	if session.currentPlayerID == "" {
+	if session.currentGamePlayerID == "" {
 		return
 	}
 
-	packet, ok := session.room.Game.PlayerPauseStatePacket(session.currentPlayerID)
+	packet, ok := session.room.Game.PlayerPauseStatePacket(session.currentGamePlayerID)
 	if !ok {
 		return
 	}
@@ -25,7 +25,7 @@ func (session *webSocketSession) EnqueuePlayerPauseState() {
 	if err != nil {
 		logging.Network.Error("player pause state marshal failed", err,
 			logging.FieldRoomID, session.currentRoomID,
-			logging.FieldPlayerID, session.currentPlayerID,
+			logging.FieldPlayerID, session.currentGamePlayerID,
 			"session_id", session.sessionID,
 		)
 		return

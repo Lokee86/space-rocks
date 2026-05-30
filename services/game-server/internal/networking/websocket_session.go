@@ -14,8 +14,7 @@ type webSocketSession struct {
 	conn            *websocket.Conn
 	sessionID       string
 	currentRoomID   string
-	currentMemberID string
-	currentPlayerID string
+	currentGamePlayerID string
 	room            *rooms.Room
 	rooms           *rooms.RoomManager
 	outbound        chan []byte
