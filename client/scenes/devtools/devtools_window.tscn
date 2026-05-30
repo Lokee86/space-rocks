@@ -8,8 +8,7 @@
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(305, 250)
-visible = false
+size = Vector2i(305, 291)
 script = ExtResource("1_devtools_window")
 
 [node name="Control" type="Control" parent="." unique_id=214690309]
@@ -24,6 +23,8 @@ grow_vertical = 2
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 1.0
+offset_right = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_d7pth")
@@ -33,8 +34,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = -40.0
-offset_bottom = -2.0
+offset_left = 25.0
+offset_top = 8.0
+offset_right = -15.0
+offset_bottom = 6.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
@@ -144,3 +147,70 @@ fit_to_longest_item = false
 allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
+
+[node name="CenterContainer11" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1587433922]
+layout_mode = 2
+
+[node name="SpawnPlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer11" unique_id=1895868783]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Spawn Player"
+
+[node name="CenterContainer12" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1773331478]
+layout_mode = 2
+
+[node name="SpawnPlayerSelect" type="OptionButton" parent="Panel/ToggleButtons/CenterContainer12" unique_id=1594026504]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
+
+[node name="CenterContainer15" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1642896355]
+layout_mode = 2
+
+[node name="RespawnPlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer15" unique_id=1552414892]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Repawn Player"
+
+[node name="CenterContainer16" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1144734693]
+layout_mode = 2
+
+[node name="RespawnPlayerSelect" type="OptionButton" parent="Panel/ToggleButtons/CenterContainer16" unique_id=877755333]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
+
+[node name="CenterContainer13" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=757329232]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpawnAsteroidButton" type="Button" parent="Panel/ToggleButtons/CenterContainer13" unique_id=904544533]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Spawn Asteroid"
+
+[node name="CenterContainer14" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1846458076]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpawnBulletButton" type="Button" parent="Panel/ToggleButtons/CenterContainer14" unique_id=1730392900]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Spawn Bullet
+"

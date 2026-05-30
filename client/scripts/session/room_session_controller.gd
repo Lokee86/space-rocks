@@ -90,6 +90,12 @@ func current_room_state() -> String:
 	return lobby_flow.current_state().room_state
 
 
+func current_max_players() -> int:
+	if lobby_flow == null:
+		return 0
+	return int(lobby_flow.current_state().max_players)
+
+
 func handle_room_error(packet: Dictionary) -> void:
 	var error_code := str(packet.get("error_code", ""))
 	var message := str(packet.get("message", ""))

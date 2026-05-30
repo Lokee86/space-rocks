@@ -57,6 +57,39 @@ go_name = "TargetPlayerID"
 json = "target_player_id"
 type = "string"
 
+[[structs.fields]]
+name = "entity_type"
+json = "entity_type"
+type = "string"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+name = "has_direction"
+go_name = "HasDirection"
+json = "has_direction"
+type = "bool"
+
+[[structs.fields]]
+name = "direction_x"
+go_name = "DirectionX"
+json = "direction_x"
+type = "float"
+
+[[structs.fields]]
+name = "direction_y"
+go_name = "DirectionY"
+json = "direction_y"
+type = "float"
+
 [[structs]]
 id = "CreateRoomRequest"
 
@@ -582,6 +615,14 @@ value = "toggle_debug_freeze_player"
 [[packet_types]]
 id = "debug_kill_player"
 value = "debug_kill_player"
+
+[[packet_types]]
+id = "debug_spawn_entity"
+value = "debug_spawn_entity"
+
+[[packet_types]]
+id = "debug_respawn_player"
+value = "debug_respawn_player"
 
 [[packet_types]]
 id = "create_room_request"

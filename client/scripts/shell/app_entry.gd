@@ -86,6 +86,9 @@ func _ready() -> void:
 	gameplay_session_controller.configure_room_state_provider(
 		Callable(room_session_controller, "current_room_state")
 	)
+	gameplay_session_controller.configure_room_max_players_provider(
+		Callable(room_session_controller, "current_max_players")
+	)
 
 	session_network_controller.configure_room_session_controller(room_session_controller)
 	session_network_controller.connect_room_signals()

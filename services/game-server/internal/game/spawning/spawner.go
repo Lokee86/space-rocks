@@ -22,6 +22,7 @@ type SpawnReason string
 const (
 	SpawnReasonTimedAsteroid    SpawnReason = "timed_asteroid"
 	SpawnReasonAsteroidFragment SpawnReason = "asteroid_fragment"
+	SpawnReasonDebugAsteroid    SpawnReason = "debug_asteroid"
 )
 
 type AsteroidSpawnPlan struct {

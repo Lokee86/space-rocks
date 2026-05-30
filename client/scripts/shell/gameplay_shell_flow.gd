@@ -116,6 +116,16 @@ func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 		spectate_context.configure_menu_state(spectate_menu_state_ref)
 
 
+func configure_debug_placement_route(route: Callable) -> void:
+	if input_context != null:
+		input_context.configure_debug_placement_route(route)
+
+
+func handle_debug_placement_result(result: Dictionary) -> void:
+	if input_context != null && input_context.has_method("handle_debug_placement_result"):
+		input_context.handle_debug_placement_result(result)
+
+
 func current_camera() -> Camera2D:
 	if runtime_context == null:
 		return null
@@ -126,6 +136,12 @@ func remote_player_visual_positions() -> Dictionary:
 	if runtime_context == null:
 		return {}
 	return runtime_context.remote_player_visual_positions()
+
+
+func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
+	if runtime_context == null:
+		return visual_position
+	return runtime_context.server_position_for_visual_position(visual_position)
 
 
 func process(_delta: float) -> void:

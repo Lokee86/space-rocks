@@ -5,6 +5,8 @@ const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_men
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
 const DebugKillInputFlow := preload("res://scripts/gameplay/devtools/debug_kill_input_flow.gd")
 const DebugKillTargetModel := preload("res://scripts/gameplay/devtools/debug_kill_target_model.gd")
+const DebugMouseWorldPosition := preload("res://scripts/gameplay/devtools/debug_mouse_world_position.gd")
+const DebugClickPlacementFlow := preload("res://scripts/gameplay/devtools/debug_click_placement_flow.gd")
 
 var connection_service
 var scene_root: Node
@@ -16,6 +18,7 @@ var main_menu: Control
 var session_context
 var shell_boot_flow
 var logger: Callable
+var room_max_players_provider: Callable
 
 var gameplay_shell_flow
 var gameplay_presentation_flow
@@ -23,6 +26,8 @@ var gameplay_hud_flow
 var gameplay_menu_flow
 var debug_kill_input_flow
 var debug_kill_target_model
+var debug_mouse_world_position
+var debug_click_placement_flow
 var spectate_menu_state
 var has_received_gameplay_state := false
 
@@ -69,6 +74,24 @@ func configure(
 		gameplay_hud_flow,
 		gameplay_menu_flow
 	)
+	if scene_root is Node2D:
+		debug_mouse_world_position = DebugMouseWorldPosition.new()
+		debug_mouse_world_position.configure(
+			scene_root,
+			Callable(gameplay_shell_flow, "server_position_for_visual_position")
+		)
+		debug_click_placement_flow = DebugClickPlacementFlow.new()
+		debug_click_placement_flow.configure(debug_mouse_world_position)
+		debug_click_placement_flow.placement_completed.connect(
+			Callable(self, "_on_debug_click_placement_completed")
+		)
+		debug_click_placement_flow.placement_cancelled.connect(
+			Callable(self, "_on_debug_click_placement_cancelled")
+		)
+		if gameplay_shell_flow != null && gameplay_shell_flow.has_method("configure_debug_placement_route"):
+			gameplay_shell_flow.configure_debug_placement_route(
+				Callable(self, "begin_debug_click_placement")
+			)
 	if gameplay_shell_flow.has_method("configure_spectate_menu_state"):
 		gameplay_shell_flow.configure_spectate_menu_state(spectate_menu_state)
 	_configure_gameplay_presentation_flow()
@@ -91,6 +114,8 @@ func handle_gameplay_state(packet: Dictionary) -> void:
 		var devtools_window_controller = _existing_devtools_window_controller()
 		if devtools_window_controller != null && devtools_window_controller.has_method("refresh_kill_player_targets"):
 			devtools_window_controller.refresh_kill_player_targets(debug_kill_target_model.target_rows())
+		if devtools_window_controller != null && devtools_window_controller.has_method("refresh_spawn_player_slots"):
+			devtools_window_controller.refresh_spawn_player_slots(current_room_max_players())
 		if devtools_window_controller != null && devtools_window_controller.has_method("configure_kill_player_routing"):
 			devtools_window_controller.configure_kill_player_routing(connection_service, debug_kill_target_model.self_id)
 	if spectate_menu_state != null:
@@ -111,6 +136,21 @@ func _process(delta: float) -> void:
 		debug_kill_input_flow.process()
 	if gameplay_presentation_flow != null:
 		gameplay_presentation_flow.process(delta, has_received_gameplay_state)
+
+
+func _input(event: InputEvent) -> void:
+	if debug_click_placement_flow == null:
+		return
+	if !debug_click_placement_flow.is_active():
+		return
+	if debug_click_placement_flow.handle_unhandled_input(event):
+		get_viewport().set_input_as_handled()
+
+
+func begin_debug_click_placement(action_name: StringName, placement_context: Dictionary = {}) -> void:
+	if debug_click_placement_flow == null:
+		return
+	debug_click_placement_flow.begin(action_name, placement_context)
 
 
 func _configure_gameplay_presentation_flow() -> void:
@@ -136,6 +176,16 @@ func reset() -> void:
 func configure_room_state_provider(provider: Callable) -> void:
 	if gameplay_menu_flow != null:
 		gameplay_menu_flow.configure_room_state_provider(provider)
+
+
+func configure_room_max_players_provider(provider: Callable) -> void:
+	room_max_players_provider = provider
+
+
+func current_room_max_players() -> int:
+	if room_max_players_provider.is_null():
+		return 0
+	return int(room_max_players_provider.call())
 
 
 func refresh_game_over_menu_state() -> void:
@@ -171,6 +221,24 @@ func _on_gameplay_return_to_lobby_requested() -> void:
 	if connection_service != null:
 		connection_service.send_return_to_lobby_request()
 	reset()
+
+
+func _on_debug_click_placement_completed(result: Dictionary) -> void:
+	_log(
+		"Debug click placement completed: %s at %s has_direction=%s direction=%s"
+		% [
+			String(result.get("action_name", StringName())),
+			str(result.get("server_position", Vector2.ZERO)),
+			str(result.get("has_direction", false)),
+			str(result.get("direction", Vector2.ZERO))
+		]
+	)
+	if gameplay_shell_flow != null && gameplay_shell_flow.has_method("handle_debug_placement_result"):
+		gameplay_shell_flow.handle_debug_placement_result(result)
+
+
+func _on_debug_click_placement_cancelled(action_name: StringName) -> void:
+	_log("Debug click placement cancelled: %s" % String(action_name))
 
 
 func _log(message: String) -> void:
