@@ -11,6 +11,8 @@ const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn
 var window: Window
 var parent: Node
 var latest_debug_status := {}
+var connection_service
+var self_player_id := ""
 
 
 func ensure_window() -> Window:
@@ -48,6 +50,15 @@ func apply_debug_status(status: Dictionary) -> void:
 		window.set_debug_status(latest_debug_status)
 
 
+func refresh_kill_player_targets(target_rows: Array) -> void:
+	ensure_window().refresh_kill_player_targets(target_rows)
+
+
+func configure_kill_player_routing(connection_service_ref, self_id: String) -> void:
+	connection_service = connection_service_ref
+	self_player_id = self_id
+
+
 func _connect_window_signals() -> void:
 	if !window.toggle_invincible_requested.is_connected(_on_toggle_invincible_requested):
 		window.toggle_invincible_requested.connect(_on_toggle_invincible_requested)
@@ -57,6 +68,8 @@ func _connect_window_signals() -> void:
 		window.toggle_freeze_world_requested.connect(_on_toggle_freeze_world_requested)
 	if !window.toggle_freeze_player_requested.is_connected(_on_toggle_freeze_player_requested):
 		window.toggle_freeze_player_requested.connect(_on_toggle_freeze_player_requested)
+	if !window.kill_player_requested.is_connected(_on_kill_player_requested):
+		window.kill_player_requested.connect(_on_kill_player_requested)
 
 
 func _on_toggle_invincible_requested() -> void:
@@ -73,3 +86,13 @@ func _on_toggle_freeze_world_requested() -> void:
 
 func _on_toggle_freeze_player_requested() -> void:
 	toggle_freeze_player_requested.emit()
+
+
+func _on_kill_player_requested(selected_player_id: String) -> void:
+	if connection_service == null || selected_player_id == "":
+		return
+
+	if selected_player_id == self_player_id:
+		connection_service.send_debug_kill_player_request()
+	else:
+		connection_service.send_debug_kill_target_player_request(selected_player_id)

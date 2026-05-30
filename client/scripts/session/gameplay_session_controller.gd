@@ -3,6 +3,8 @@ extends Node
 
 const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
+const DebugKillInputFlow := preload("res://scripts/gameplay/devtools/debug_kill_input_flow.gd")
+const DebugKillTargetModel := preload("res://scripts/gameplay/devtools/debug_kill_target_model.gd")
 
 var connection_service
 var scene_root: Node
@@ -19,6 +21,8 @@ var gameplay_shell_flow
 var gameplay_presentation_flow
 var gameplay_hud_flow
 var gameplay_menu_flow
+var debug_kill_input_flow
+var debug_kill_target_model
 var spectate_menu_state
 var has_received_gameplay_state := false
 
@@ -50,6 +54,9 @@ func configure(
 	gameplay_hud_flow.configure(hud)
 	gameplay_menu_flow = GameplayMenuFlow.new()
 	gameplay_menu_flow.configure(hud, connection_service, player, session_context)
+	debug_kill_input_flow = DebugKillInputFlow.new()
+	debug_kill_input_flow.configure(connection_service)
+	debug_kill_target_model = DebugKillTargetModel.new()
 	spectate_menu_state = SpectateMenuState.new()
 	gameplay_menu_flow.configure_spectate_menu_state(spectate_menu_state)
 	gameplay_shell_flow = GameplayShellFlow.new()
@@ -79,6 +86,13 @@ func configure(
 func handle_gameplay_state(packet: Dictionary) -> void:
 	has_received_gameplay_state = true
 	var state := GameplayStatePacketReader.read(packet)
+	if debug_kill_target_model != null:
+		debug_kill_target_model.apply_gameplay_state(state)
+		var devtools_window_controller = _existing_devtools_window_controller()
+		if devtools_window_controller != null && devtools_window_controller.has_method("refresh_kill_player_targets"):
+			devtools_window_controller.refresh_kill_player_targets(debug_kill_target_model.target_rows())
+		if devtools_window_controller != null && devtools_window_controller.has_method("configure_kill_player_routing"):
+			devtools_window_controller.configure_kill_player_routing(connection_service, debug_kill_target_model.self_id)
 	if spectate_menu_state != null:
 		spectate_menu_state.apply_gameplay_state(state)
 	if gameplay_shell_flow != null:
@@ -93,6 +107,8 @@ func handle_player_pause_state(packet: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.process(delta)
+	if debug_kill_input_flow != null:
+		debug_kill_input_flow.process()
 	if gameplay_presentation_flow != null:
 		gameplay_presentation_flow.process(delta, has_received_gameplay_state)
 
@@ -160,3 +176,12 @@ func _on_gameplay_return_to_lobby_requested() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
+
+
+func _existing_devtools_window_controller():
+	if gameplay_shell_flow == null || gameplay_shell_flow.input_context == null:
+		return null
+	var input_context = gameplay_shell_flow.input_context
+	if input_context.devtools_context == null:
+		return null
+	return input_context.devtools_context.devtools_window_controller
