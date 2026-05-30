@@ -30,6 +30,7 @@ class PacketOutput:
     package: str | None = None
     imports: Mapping[str, str] | None = None
     packet_types: bool = False
+    packet_type_ids: tuple[str, ...] = ()
     structs: tuple[str, ...] = ()
     base: str | None = None
     builders: tuple[str, ...] = ()
@@ -104,3 +105,9 @@ class PacketSchema:
             if builder.id == builder_id:
                 return builder
         raise KeyError(builder_id)
+
+    def packet_type(self, packet_type_id: str) -> PacketType:
+        for packet_type in self.packet_types:
+            if packet_type.id == packet_type_id:
+                return packet_type
+        raise KeyError(packet_type_id)

@@ -115,9 +115,6 @@ def _validate_rich_packet_schema(schema: PacketSchema, errors: list[str]) -> Non
     if not schema.packet_types:
         errors.append("packet TOML must contain at least one packet_type")
 
-    for output in schema.outputs:
-        _validate_packet_output(output, struct_ids, builder_ids, errors)
-
     for struct in schema.structs:
         if not STRUCT_NAME_RE.fullmatch(struct.id):
             errors.append(f"packet struct name is invalid: {struct.id}")
@@ -140,6 +137,9 @@ def _validate_rich_packet_schema(schema: PacketSchema, errors: list[str]) -> Non
             )
         packet_type_values[packet_type.value] = packet_type.id
 
+    for output in schema.outputs:
+        _validate_packet_output(output, struct_ids, builder_ids, set(packet_type_ids), errors)
+
     for builder in schema.builders:
         if not builder.id or not builder.id.endswith("_packet") or not _is_snake_case(builder.id):
             errors.append(f"packet builder name is invalid: {builder.id}")
@@ -159,6 +159,7 @@ def _validate_packet_output(
     output,
     struct_ids: set[str],
     builder_ids: set[str],
+    packet_type_ids: set[str],
     errors: list[str],
 ) -> None:
     if output.language not in SUPPORTED_PACKET_LANGUAGES:
@@ -182,6 +183,11 @@ def _validate_packet_output(
         for builder_id in output.builders:
             if builder_id not in builder_ids:
                 errors.append(f"packet output {output.path} references unknown builder: {builder_id}")
+    for packet_type_id in output.packet_type_ids:
+        if packet_type_id not in packet_type_ids:
+            errors.append(
+                f"packet output {output.path} references unknown packet type id: {packet_type_id}"
+            )
 
 
 def _validate_schema_field(

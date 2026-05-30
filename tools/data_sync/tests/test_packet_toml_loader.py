@@ -173,6 +173,113 @@ type = "state"
         schema.output_for_id("missing_output")
 
 
+def test_output_packet_type_ids_are_loaded(tmp_path: Path) -> None:
+    path = tmp_path / "packets.toml"
+    path.write_text(
+        """
+builders = []
+
+[[outputs]]
+id = "server_game_packets"
+language = "go"
+path = "services/game-server/internal/game/packets.go"
+package = "game"
+packet_types = true
+packet_type_ids = ["input", "state"]
+structs = ["StatePacket"]
+
+[[structs]]
+id = "StatePacket"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[packet_types]]
+id = "input"
+value = "input"
+
+[[packet_types]]
+id = "state"
+value = "state"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    schema = load_packet_schema(path)
+
+    output = schema.output_for_id("server_game_packets")
+    assert output.packet_type_ids == ("input", "state")
+
+
+def test_output_packet_type_ids_default_empty(tmp_path: Path) -> None:
+    path = tmp_path / "packets.toml"
+    path.write_text(
+        """
+builders = []
+
+[[outputs]]
+id = "server_game_packets"
+language = "go"
+path = "services/game-server/internal/game/packets.go"
+package = "game"
+packet_types = true
+structs = ["StatePacket"]
+
+[[structs]]
+id = "StatePacket"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[packet_types]]
+id = "input"
+value = "input"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    schema = load_packet_schema(path)
+
+    output = schema.output_for_id("server_game_packets")
+    assert output.packet_type_ids == ()
+
+
+def test_output_packet_type_ids_requires_list_of_strings(tmp_path: Path) -> None:
+    path = tmp_path / "packets.toml"
+    path.write_text(
+        """
+[[outputs]]
+id = "server_game_packets"
+language = "go"
+path = "services/game-server/internal/game/packets.go"
+package = "game"
+packet_types = true
+packet_type_ids = [1, "state"]
+structs = ["StatePacket"]
+
+[[structs]]
+id = "StatePacket"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[packet_types]]
+id = "state"
+value = "state"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PacketTomlError):
+        load_packet_schema(path)
+
+
 def test_multi_file_rejects_duplicate_output_ids(tmp_path: Path) -> None:
     first = tmp_path / "first.toml"
     second = tmp_path / "second.toml"

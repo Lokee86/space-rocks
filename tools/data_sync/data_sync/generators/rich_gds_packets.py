@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from data_sync.model.packets import PacketBuilder, PacketOutput, PacketSchema
+from data_sync.model.packets import PacketBuilder, PacketOutput, PacketSchema, PacketType
 from data_sync.packet_rendering import constant_name, gdscript_field_constant, gdscript_leaf
 
 
@@ -26,7 +26,7 @@ def render_gdscript_output(schema: PacketSchema, output: PacketOutput) -> str:
         "",
     ]
 
-    lines.extend(render_packet_type_constants(schema))
+    lines.extend(render_packet_type_constants(_selected_packet_types(schema, output)))
     lines.append("")
     lines.extend(render_field_constants(schema))
 
@@ -37,10 +37,10 @@ def render_gdscript_output(schema: PacketSchema, output: PacketOutput) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_packet_type_constants(schema: PacketSchema) -> list[str]:
+def render_packet_type_constants(packet_types: tuple[PacketType, ...]) -> list[str]:
     return [
         f'const TYPE_{constant_name(packet_type.id)} := "{_escape_gdscript_string(packet_type.value)}"'
-        for packet_type in schema.packet_types
+        for packet_type in packet_types
     ]
 
 
@@ -79,3 +79,18 @@ def render_assignments(variable_name: str, value: Any, indent: int) -> list[str]
 
 def _escape_gdscript_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _selected_packet_types(schema: PacketSchema, output: PacketOutput) -> tuple[PacketType, ...]:
+    if not output.packet_type_ids:
+        return schema.packet_types
+
+    selected: list[PacketType] = []
+    for packet_type_id in output.packet_type_ids:
+        try:
+            selected.append(schema.packet_type(packet_type_id))
+        except KeyError as exc:
+            raise RichGdsPacketGenerationError(
+                f"unknown packet_type_id for output {output.path}: {packet_type_id}"
+            ) from exc
+    return tuple(selected)

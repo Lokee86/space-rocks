@@ -133,7 +133,18 @@ def _packet_output(raw: Any, index: int) -> PacketOutput:
     imports = _optional_string_mapping(table.get("imports"), f"outputs[{index}].imports")
     extras = _extras(
         table,
-        {"id", "language", "path", "package", "imports", "packet_types", "structs", "base", "builders"},
+        {
+            "id",
+            "language",
+            "path",
+            "package",
+            "imports",
+            "packet_types",
+            "packet_type_ids",
+            "structs",
+            "base",
+            "builders",
+        },
     )
 
     return PacketOutput(
@@ -143,6 +154,7 @@ def _packet_output(raw: Any, index: int) -> PacketOutput:
         package=_optional_string(table.get("package"), f"outputs[{index}].package"),
         imports=imports,
         packet_types=_optional_bool(table.get("packet_types"), f"outputs[{index}].packet_types", default=False),
+        packet_type_ids=_string_tuple(table.get("packet_type_ids", []), f"outputs[{index}].packet_type_ids"),
         structs=_string_tuple(table.get("structs", []), f"outputs[{index}].structs"),
         base=_optional_string(table.get("base"), f"outputs[{index}].base"),
         builders=_string_tuple(table.get("builders", []), f"outputs[{index}].builders"),

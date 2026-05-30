@@ -239,6 +239,8 @@ args = ["forward", "back", "right", "left", "shoot"]
 type = "input"
 ```
 
+`packet_type_ids` on an `[[outputs]]` entry restricts which packet type constants that output renders. If `packet_type_ids` is omitted, outputs that render packet types keep legacy behavior and render all schema packet types. When present, the `packet_type_ids` order controls generated constant order.
+
 The packet schema preserves the old rich JSON behavior:
 
 ```text

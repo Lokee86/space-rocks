@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from data_sync.model.packets import PacketOutput, PacketSchema, PacketStruct
+from data_sync.model.packets import PacketOutput, PacketSchema, PacketStruct, PacketType
 from data_sync.packet_rendering import (
     PacketRenderingError,
     go_field_name,
@@ -42,9 +42,9 @@ def render_go_output(schema: PacketSchema, output: PacketOutput) -> str:
                 lines.append(f'\t{alias} "{path}"')
             lines.append(")")
 
-    if output.packet_types:
+    if output.packet_types or output.packet_type_ids:
         lines.append("")
-        lines.extend(render_go_packet_type_constants(schema))
+        lines.extend(render_go_packet_type_constants(_selected_packet_types(schema, output)))
 
     for struct_id in output.structs:
         lines.append("")
@@ -53,10 +53,10 @@ def render_go_output(schema: PacketSchema, output: PacketOutput) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_go_packet_type_constants(schema: PacketSchema) -> list[str]:
+def render_go_packet_type_constants(packet_types: tuple[PacketType, ...]) -> list[str]:
     constants = [
         (f"PacketType{snake_to_go_name(packet_type.id)}", packet_type.value)
-        for packet_type in schema.packet_types
+        for packet_type in packet_types
     ]
     if not constants:
         return []
@@ -67,6 +67,19 @@ def render_go_packet_type_constants(schema: PacketSchema) -> list[str]:
         lines.append(f'\t{name.ljust(max_name_length)} = "{escape_go_string(value)}"')
     lines.append(")")
     return lines
+
+
+def _selected_packet_types(schema: PacketSchema, output: PacketOutput) -> tuple[PacketType, ...]:
+    if not output.packet_type_ids:
+        return schema.packet_types
+
+    selected: list[PacketType] = []
+    for packet_type_id in output.packet_type_ids:
+        try:
+            selected.append(schema.packet_type(packet_type_id))
+        except KeyError as exc:
+            raise RichGoPacketGenerationError(f"unknown packet_type_id for output {output.path}: {packet_type_id}") from exc
+    return tuple(selected)
 
 
 def render_go_struct(struct: PacketStruct) -> list[str]:

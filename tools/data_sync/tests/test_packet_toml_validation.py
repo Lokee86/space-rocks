@@ -108,6 +108,21 @@ def test_validate_packets_rejects_absolute_output_path(tmp_path: Path) -> None:
     assert run(["-validate", "-packets", "-config", str(config_path)]) == 1
 
 
+def test_validate_packets_rejects_unknown_output_packet_type_id(tmp_path: Path) -> None:
+    config_path = write_project(tmp_path)
+    packets_path = tmp_path / "shared/packets/packets.toml"
+    packets_path.write_text(
+        packets_path.read_text(encoding="utf-8").replace(
+            "packet_types = true",
+            'packet_types = true\npacket_type_ids = ["missing_type"]',
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    assert run(["-validate", "-packets", "-config", str(config_path)]) == 1
+
+
 def append_packet_toml(tmp_path: Path, text: str) -> None:
     packets_path = tmp_path / "shared/packets/packets.toml"
     packets_path.write_text(
