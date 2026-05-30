@@ -1,5 +1,11 @@
 [sot.constants]
-path = "shared/constants/game_data.toml"
+paths = [
+  "shared/constants/server_constants.toml",
+  "shared/constants/server_entities.toml",
+  "shared/constants/client/presentation.toml",
+  "shared/constants/client/shell.toml",
+  "shared/constants/client/lobby.toml",
+]
 
 [sot.packets]
 path = "shared/packets/packets.toml"
@@ -31,14 +37,34 @@ owns = [
 files = ["client/scripts/constants/constants.gd"]
 sections = [
   "constants.server.world",
-  "constants.client.presentation",
-  "constants.client.shell",
-  "constants.client.lobby",
+  "constants.client.presentation.background",
+  "constants.client.presentation.rendering",
+  "constants.client.presentation.player_visuals",
+  "constants.client.presentation.effects",
+  "constants.client.presentation.viewport",
+  "constants.client.shell.network",
+  "constants.client.shell.room_states",
+  "constants.client.shell.shell_states",
+  "constants.client.shell.session",
+  "constants.client.shell.game_menu",
+  "constants.client.lobby.status",
+  "constants.client.lobby.dialog",
+  "constants.client.lobby.buttons",
 ]
 owns = [
-  "constants.client.presentation",
-  "constants.client.shell",
-  "constants.client.lobby",
+  "constants.client.presentation.background",
+  "constants.client.presentation.rendering",
+  "constants.client.presentation.player_visuals",
+  "constants.client.presentation.effects",
+  "constants.client.presentation.viewport",
+  "constants.client.shell.network",
+  "constants.client.shell.room_states",
+  "constants.client.shell.shell_states",
+  "constants.client.shell.session",
+  "constants.client.shell.game_menu",
+  "constants.client.lobby.status",
+  "constants.client.lobby.dialog",
+  "constants.client.lobby.buttons",
 ]
 
 [constants.ts]

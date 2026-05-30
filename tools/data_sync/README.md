@@ -2,7 +2,12 @@
 
 `tools/data_sync/` is a reusable Python CLI for syncing shared game data between:
 
-- TOML source of truth for active constants: `shared/constants/game_data.toml`
+- TOML sources of truth for active constants:
+  - `shared/constants/server_constants.toml`
+  - `shared/constants/server_entities.toml`
+  - `shared/constants/client/presentation.toml`
+  - `shared/constants/client/shell.toml`
+  - `shared/constants/client/lobby.toml`
 - TOML source of truth for active packets: `shared/packets/packets.toml`
 - Go game server files
 - GDScript Godot client files
@@ -27,11 +32,12 @@ TypeScript output
 
 ## Source Of Truth
 
-`shared/constants/game_data.toml` is the canonical source for active constants.
+The split constants files under `shared/constants/` are the canonical source for active constants.
 
 `shared/packets/packets.toml` is the canonical source for active packets.
 
-`shared/constants/game_data.toml` contains constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet changes should be made in `shared/packets/packets.toml`.
+The split constants SoT files under `shared/constants/` contain constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet changes should be made in `shared/packets/packets.toml`.
+Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`.
 
 New constants and packet schema changes should be made in TOML. Language files are generated from TOML through `-push`.
 
@@ -113,7 +119,13 @@ Shape:
 
 ```toml
 [sot.constants]
-path = "shared/constants/game_data.toml"
+paths = [
+  "shared/constants/server_constants.toml",
+  "shared/constants/server_entities.toml",
+  "shared/constants/client/presentation.toml",
+  "shared/constants/client/shell.toml",
+  "shared/constants/client/lobby.toml",
+]
 
 [sot.packets]
 path = "shared/packets/packets.toml"
@@ -245,8 +257,8 @@ Go and TypeScript markers:
 GDScript markers:
 
 ```gdscript
-# data-sync:start constants.client.presentation
-# data-sync:end constants.client.presentation
+# data-sync:start constants.client.presentation.background
+# data-sync:end constants.client.presentation.background
 ```
 
 Only content between matching markers is replaced for constants. Missing or duplicate markers are hard failures.
@@ -272,13 +284,17 @@ Disposable migration scripts seeded TOML from the old JSON sources. The old cons
 The active TOML sources are:
 
 ```text
-shared/constants/game_data.toml
+shared/constants/server_constants.toml
+shared/constants/server_entities.toml
+shared/constants/client/presentation.toml
+shared/constants/client/shell.toml
+shared/constants/client/lobby.toml
 shared/packets/packets.toml
 ```
 
 ## Active Constants Workflow
 
-1. Edit `shared/constants/game_data.toml`.
+1. Edit the needed constants SoT file under `shared/constants/` (`server_constants.toml`, `server_entities.toml`, `client/presentation.toml`, `client/shell.toml`, or `client/lobby.toml`).
 2. Run `python tools/data_sync/main.py -validate -constants`.
 3. Run `python tools/data_sync/main.py -diff -constants -go -gds`.
 4. Run `python tools/data_sync/main.py -push -constants -go -gds`.

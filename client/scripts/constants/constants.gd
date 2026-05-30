@@ -6,8 +6,7 @@ const WORLD_WIDTH := 17200.0
 const WORLD_HEIGHT := 9200.0
 # data-sync:end constants.server.world
 
-# data-sync:start constants.client.presentation
-const GAME_OVER_SOUND_DELAY := 0.4
+# data-sync:start constants.client.presentation.background
 const BACKGROUND_PARALLAX := 0.25
 const FOREGROUND_BACKGROUND_PARALLAX := 0.45
 const PLANET_BACKGROUND_PARALLAX := 1
@@ -16,21 +15,22 @@ const FOREGROUND_BACKGROUND_DRIFT_PER_FRAME := Vector2(1.2, 0.4)
 const PLANET_BACKGROUND_DRIFT_PER_FRAME := Vector2(0.0, 0.0)
 const FOREGROUND_BACKGROUND_OFFSET := Vector2(480.0, 270.0)
 const PLANET_BACKGROUND_OFFSET := Vector2(0.0, 0.0)
+# data-sync:end constants.client.presentation.background
+
+# data-sync:start constants.client.presentation.rendering
 const PLAYER_INTERPOLATION_SPEED := 18.0
 const ASTEROID_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
 const REMOTE_PLAYER_Z_INDEX := 30
 const LOCAL_PLAYER_Z_INDEX := 31
+const EFFECT_Z_INDEX := 40
+# data-sync:end constants.client.presentation.rendering
+
+# data-sync:start constants.client.presentation.player_visuals
 const LOCAL_PLAYER_DEFAULT_HUE := 0.0
 const PLAYER_DEFAULT_HUE := 0.0
 const PLAYER_AFTERBURNER_ROTATION_DEGREES := -90.0
 const PLAYER_AFTERBURNER_SCALE := 0.45
-const EFFECT_Z_INDEX := 40
-const BULLET_PULSE_MULTIPLIER := 1.5
-const BULLET_PULSE_TIME := 0.1
-const BULLET_BLAST_MIN_SOUND_LENGTH := 1.0
-const BULLET_BLAST_CLEANUP_PADDING := 0.25
-const SHIP_DEATH_CLEANUP_PADDING := 0.05
 const REMOTE_PLAYER_HUE_ZERO := 0.58
 const REMOTE_PLAYER_HUE_ONE := 0.33
 const REMOTE_PLAYER_HUE_TWO := 0.1
@@ -41,20 +41,39 @@ const REMOTE_PLAYER_HUE_SIX := 0.67
 const REMOTE_PLAYER_HUE_SEVEN := 0.88
 const REMOTE_PLAYER_FALLBACK_HUE := 0.5
 const REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE := 0.08
+# data-sync:end constants.client.presentation.player_visuals
+
+# data-sync:start constants.client.presentation.effects
+const GAME_OVER_SOUND_DELAY := 0.4
+const BULLET_PULSE_MULTIPLIER := 1.5
+const BULLET_PULSE_TIME := 0.1
+const BULLET_BLAST_MIN_SOUND_LENGTH := 1.0
+const BULLET_BLAST_CLEANUP_PADDING := 0.25
+const SHIP_DEATH_CLEANUP_PADDING := 0.05
+# data-sync:end constants.client.presentation.effects
+
+# data-sync:start constants.client.presentation.viewport
 const WINDOW_MIN_SIZE := Vector2(1280.0, 720.0)
 const WINDOW_MAX_SIZE := Vector2(2875.0, 1500.0)
 const OSINDICATOR_EDGE_MARGIN := 5.0
 const OSINDICATOR_TARGET_VISIBILITY_PADDING := 64.0
-# data-sync:end constants.client.presentation
+# data-sync:end constants.client.presentation.viewport
 
-# data-sync:start constants.client.shell
+# data-sync:start constants.client.shell.network
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
 const MULTIPLAYER_WS_ORIGIN := "https://space-rocks-client.local"
+const NETWORK_POLL_PROCESS_PRIORITY := -100
+# data-sync:end constants.client.shell.network
+
+# data-sync:start constants.client.shell.room_states
 const ROOM_STATE_LOBBY := "Lobby"
 const ROOM_STATE_STARTING := "Starting"
 const ROOM_STATE_IN_GAME := "InGame"
 const ROOM_STATE_GAME_OVER := "GameOver"
 const ROOM_STATE_CLOSED := "Closed"
+# data-sync:end constants.client.shell.room_states
+
+# data-sync:start constants.client.shell.shell_states
 const SHELL_STATE_MAIN_MENU := "main_menu"
 const SHELL_STATE_CONNECTING := "connecting"
 const SHELL_STATE_LOBBY := "lobby"
@@ -63,6 +82,9 @@ const SHELL_STATE_GAME_OVER := "game_over"
 const SHELL_STATE_RETURNING_TO_LOBBY := "returning_to_lobby"
 const SHELL_STATE_DISCONNECTED := "disconnected"
 const SHELL_STATE_ERROR := "error"
+# data-sync:end constants.client.shell.shell_states
+
+# data-sync:start constants.client.shell.session
 const BOOT_REQUEST_NONE := "none"
 const BOOT_REQUEST_SINGLE_PLAYER := "single_player"
 const BOOT_REQUEST_CREATE_ROOM := "create_room"
@@ -70,17 +92,19 @@ const BOOT_REQUEST_JOIN_ROOM := "join_room"
 const SESSION_MODE_NONE := "none"
 const SESSION_MODE_SINGLE_PLAYER := "single_player"
 const SESSION_MODE_MULTIPLAYER := "multiplayer"
+const CONNECT_RESULT_STARTED_CONNECTING := "started_connecting"
+const CONNECT_RESULT_ALREADY_CONNECTED := "already_connected"
+const CONNECT_RESULT_FAILED := "failed"
+# data-sync:end constants.client.shell.session
+
+# data-sync:start constants.client.shell.game_menu
 const GAME_MENU_PRIMARY_ACTION_RESUME := "resume"
 const GAME_MENU_PRIMARY_ACTION_LOBBY := "lobby"
 const GAME_MENU_PRIMARY_ACTION_SPECTATE := "spectate"
 const GAME_MENU_PRIMARY_ACTION_WAITING := "waiting"
-const CONNECT_RESULT_STARTED_CONNECTING := "started_connecting"
-const CONNECT_RESULT_ALREADY_CONNECTED := "already_connected"
-const CONNECT_RESULT_FAILED := "failed"
-const NETWORK_POLL_PROCESS_PRIORITY := -100
-# data-sync:end constants.client.shell
+# data-sync:end constants.client.shell.game_menu
 
-# data-sync:start constants.client.lobby
+# data-sync:start constants.client.lobby.status
 const STATUS_STARTING_GAME := "Starting game..."
 const STATUS_GAME_IN_PROGRESS := "Game in progress."
 const STATUS_GAME_OVER := "Game over."
@@ -88,6 +112,9 @@ const STATUS_READY_TO_START := "Ready to start."
 const STATUS_WAITING_FOR_PLAYERS_READY := "Waiting for players to ready."
 const STATUS_WAITING_FOR_HOST_START := "Waiting for host to start."
 const STATUS_PRESS_READY_WHEN_READY := "Press READY when ready."
+# data-sync:end constants.client.lobby.status
+
+# data-sync:start constants.client.lobby.dialog
 const DIALOG_STATUS_MUST_ENTER_ID := "Must enter an ID to join."
 const DIALOG_STATUS_JOINING_ROOM := "Joining room..."
 const DIALOG_STATUS_INVALID_ROOM_ID := "Invalid room ID."
@@ -97,6 +124,9 @@ const DIALOG_STATUS_ROOM_IN_GAME := "Room is already in game."
 const DIALOG_STATUS_ALREADY_IN_ROOM := "Already in a room."
 const DIALOG_STATUS_ROOM_NOT_JOINABLE := "Room is not joinable."
 const DIALOG_STATUS_COULD_NOT_JOIN := "Could not join room."
+# data-sync:end constants.client.lobby.dialog
+
+# data-sync:start constants.client.lobby.buttons
 const READY_BUTTON_TEXT_READY := "READY"
 const READY_BUTTON_TEXT_UNREADY := "UNREADY"
-# data-sync:end constants.client.lobby
+# data-sync:end constants.client.lobby.buttons

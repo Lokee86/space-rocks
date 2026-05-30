@@ -1,0 +1,23 @@
+[constants.client.lobby.status]
+status_starting_game = "Starting game..."
+status_game_in_progress = "Game in progress."
+status_game_over = "Game over."
+status_ready_to_start = "Ready to start."
+status_waiting_for_players_ready = "Waiting for players to ready."
+status_waiting_for_host_start = "Waiting for host to start."
+status_press_ready_when_ready = "Press READY when ready."
+
+[constants.client.lobby.dialog]
+dialog_status_must_enter_id = "Must enter an ID to join."
+dialog_status_joining_room = "Joining room..."
+dialog_status_invalid_room_id = "Invalid room ID."
+dialog_status_room_not_found = "Room not found."
+dialog_status_room_full = "Room is full."
+dialog_status_room_in_game = "Room is already in game."
+dialog_status_already_in_room = "Already in a room."
+dialog_status_room_not_joinable = "Room is not joinable."
+dialog_status_could_not_join = "Could not join room."
+
+[constants.client.lobby.buttons]
+ready_button_text_ready = "READY"
+ready_button_text_unready = "UNREADY"
