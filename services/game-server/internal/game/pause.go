@@ -101,7 +101,6 @@ func (game *Game) playerCanShoot(playerID string, player *entities.Ship) bool {
 		return false
 	}
 	return !session.Suspension.IsSuspended() &&
-		!player.IsInvulnerable() &&
 		player.ShootCooldown == 0
 }
 
