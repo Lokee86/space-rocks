@@ -45,6 +45,8 @@ The canonical sources for active packets are:
 - `shared/packets/debug.toml`
 - `shared/packets/lobby.toml`
 
+Debug/devtools packet schema lives in `shared/packets/debug.toml`. Data-sync generates server devtools packet types into `services/game-server/internal/devtools/packets_generated.go` through the `server_devtools_packets` output id.
+
 The split constants SoT files under `shared/constants/` contain constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet schema changes should be made under `shared/packets/`.
 Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`.
 
@@ -164,9 +166,11 @@ owns = []
 files = [
   "services/game-server/internal/game/entities/packets_generated.go",
   "services/game-server/internal/game/packets.go",
+  "services/game-server/internal/devtools/packets_generated.go",
 ]
 sections = ["packets"]
 owns = []
+outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets"]
 
 [packets.gds]
 files = ["client/scripts/packets.gd"]

@@ -82,10 +82,11 @@ owns = []
 files = [
   "services/game-server/internal/game/entities/packets_generated.go",
   "services/game-server/internal/game/packets.go",
+  "services/game-server/internal/devtools/packets_generated.go",
 ]
 sections = ["packets"]
 owns = []
-outputs = ["server_entities_packets", "server_game_packets"]
+outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets"]
 
 [packets.gds]
 files = ["client/scripts/networking/packets/packets.gd"]

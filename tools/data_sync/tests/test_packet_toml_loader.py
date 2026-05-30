@@ -30,7 +30,7 @@ def migrated_packet_toml_paths(tmp_path: Path) -> tuple[Path, ...]:
 def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
-    assert len(schema.outputs) == 3
+    assert len(schema.outputs) == 4
 
     game_output = schema.output_for_path("services/game-server/internal/game/packets.go")
     assert game_output.language == "go"
@@ -47,6 +47,13 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert gds_output.language == "gdscript"
     assert gds_output.base == "RefCounted"
     assert "input_packet" in gds_output.builders
+
+    devtools_output = schema.output_for_id("server_devtools_packets")
+    assert devtools_output.language == "go"
+    assert devtools_output.package == "devtools"
+    assert devtools_output.path == "services/game-server/internal/devtools/packets_generated.go"
+    assert "DebugCommand" in devtools_output.structs
+    assert "DebugStatus" in devtools_output.structs
 
 
 def test_loads_migrated_structs_and_field_overrides(tmp_path: Path) -> None:
