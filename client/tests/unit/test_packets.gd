@@ -5,8 +5,6 @@ const Packets := preload("res://scripts/networking/packets/packets.gd")
 
 func test_packet_builders_set_expected_type() -> void:
 	var cases := [
-		[Packets.pause_player_packet(), Packets.TYPE_PAUSE_PLAYER],
-		[Packets.resume_player_packet(), Packets.TYPE_RESUME_PLAYER],
 		[Packets.toggle_debug_invincible_packet(), Packets.TYPE_TOGGLE_DEBUG_INVINCIBLE],
 		[Packets.toggle_debug_infinite_lives_packet(), Packets.TYPE_TOGGLE_DEBUG_INFINITE_LIVES],
 		[Packets.toggle_debug_freeze_world_packet(), Packets.TYPE_TOGGLE_DEBUG_FREEZE_WORLD],

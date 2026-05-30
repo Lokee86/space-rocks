@@ -86,12 +86,8 @@ func send_respawn_request() -> void:
 		network_client.send_packet(Packets.respawn_packet())
 
 
-func send_pause_player_request() -> void:
-	send_packet(Packets.pause_player_packet())
-
-
-func send_resume_player_request() -> void:
-	send_packet(Packets.resume_player_packet())
+func send_pause_request() -> void:
+	send_packet(Packets.pause_request_packet())
 
 
 func send_leave_room_request() -> void:

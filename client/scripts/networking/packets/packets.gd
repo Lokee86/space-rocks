@@ -7,8 +7,6 @@ const TYPE_STATE := "state"
 const TYPE_BULLET_BLAST := "bullet_blast"
 const TYPE_SHIP_DEATH := "ship_death"
 const TYPE_RESPAWN := "respawn"
-const TYPE_PAUSE_PLAYER := "pause_player"
-const TYPE_RESUME_PLAYER := "resume_player"
 const TYPE_PAUSE_REQUEST := "pause_request"
 const TYPE_PLAYER_PAUSE_STATE := "player_pause_state"
 const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
@@ -92,16 +90,6 @@ static func input_packet(forward, back, right, left, shoot) -> Dictionary:
 static func respawn_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = TYPE_RESPAWN
-	return packet
-
-static func pause_player_packet() -> Dictionary:
-	var packet := {}
-	packet[FIELD_TYPE] = "pause_player"
-	return packet
-
-static func resume_player_packet() -> Dictionary:
-	var packet := {}
-	packet[FIELD_TYPE] = "resume_player"
 	return packet
 
 static func pause_request_packet() -> Dictionary:
