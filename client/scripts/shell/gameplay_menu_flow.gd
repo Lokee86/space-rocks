@@ -138,6 +138,15 @@ func refresh_game_over_menu_state() -> void:
 
 func set_alive() -> void:
 	is_game_over = false
+	is_gameplay_paused = false
+	if game_menu != null:
+		game_menu.hide()
+	if game_over_container != null:
+		game_over_container.hide()
+	if game_over_margin_container != null:
+		game_over_margin_container.hide()
+	if cycle_view != null:
+		cycle_view.hide()
 
 
 func can_open_live_pause_menu() -> bool:

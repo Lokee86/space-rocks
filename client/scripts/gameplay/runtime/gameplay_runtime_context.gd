@@ -86,11 +86,15 @@ func apply_server_events(state: Dictionary) -> void:
 
 
 func apply_respawn_alive_restore(state: Dictionary, menu_flow_ref) -> void:
-	if (
-		hud_flow == null
-		|| respawn_flow == null
-		|| !respawn_flow.should_restore_alive_hud(state, player)
-	):
+	if hud_flow == null || respawn_flow == null:
+		return
+
+	var has_stale_dead_presentation: bool = false
+	has_stale_dead_presentation = bool(hud_flow.is_dead) || bool(hud_flow.is_game_over)
+	if menu_flow_ref != null:
+		has_stale_dead_presentation = has_stale_dead_presentation || bool(menu_flow_ref.is_game_over)
+
+	if !respawn_flow.should_restore_alive_hud(state, player, has_stale_dead_presentation):
 		return
 
 	hud_flow.set_alive()
