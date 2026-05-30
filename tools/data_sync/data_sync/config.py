@@ -12,7 +12,13 @@ from data_sync.cli import DOMAINS, LANGUAGES
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.toml"
 DEFAULT_SOT_PATHS = {
-    "constants": ("shared/constants/game_data.toml",),
+    "constants": (
+        "shared/constants/server_constants.toml",
+        "shared/constants/server_entities.toml",
+        "shared/constants/client/presentation.toml",
+        "shared/constants/client/shell.toml",
+        "shared/constants/client/lobby.toml",
+    ),
     "packets": ("shared/packets/packets.toml",),
 }
 REQUIRED_DOMAIN_KEYS = ("files", "sections", "owns")

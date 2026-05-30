@@ -1,0 +1,15 @@
+[constants.server.runtime]
+server_tick_rate = 60
+
+[constants.server.world]
+world_width = 17200.0
+world_height = 9200.0
+
+[constants.server.scoring]
+base_score = 120
+
+[constants.server.damage]
+player_max_health = 1
+asteroid_health = 1
+bullet_damage = 1
+asteroid_collision_damage = 1

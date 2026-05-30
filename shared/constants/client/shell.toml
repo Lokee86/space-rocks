@@ -1,0 +1,39 @@
+[constants.client.shell.network]
+multiplayer_ws_url = "ws://localhost:8080/ws"
+multiplayer_ws_origin = "https://space-rocks-client.local"
+network_poll_process_priority = -100
+
+[constants.client.shell.room_states]
+room_state_lobby = "Lobby"
+room_state_starting = "Starting"
+room_state_in_game = "InGame"
+room_state_game_over = "GameOver"
+room_state_closed = "Closed"
+
+[constants.client.shell.shell_states]
+shell_state_main_menu = "main_menu"
+shell_state_connecting = "connecting"
+shell_state_lobby = "lobby"
+shell_state_gameplay = "gameplay"
+shell_state_game_over = "game_over"
+shell_state_returning_to_lobby = "returning_to_lobby"
+shell_state_disconnected = "disconnected"
+shell_state_error = "error"
+
+[constants.client.shell.session]
+boot_request_none = "none"
+boot_request_single_player = "single_player"
+boot_request_create_room = "create_room"
+boot_request_join_room = "join_room"
+session_mode_none = "none"
+session_mode_single_player = "single_player"
+session_mode_multiplayer = "multiplayer"
+connect_result_started_connecting = "started_connecting"
+connect_result_already_connected = "already_connected"
+connect_result_failed = "failed"
+
+[constants.client.shell.game_menu]
+game_menu_primary_action_resume = "resume"
+game_menu_primary_action_lobby = "lobby"
+game_menu_primary_action_spectate = "spectate"
+game_menu_primary_action_waiting = "waiting"

@@ -9,7 +9,7 @@ The design goal is simple: server coordinates stay inside one shared arena, whil
 World size is sourced from:
 
 ```text
-shared/constants/game_data.toml
+shared/constants/server_constants.toml
 ```
 
 Current generated Go constants:

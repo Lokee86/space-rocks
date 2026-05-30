@@ -86,7 +86,12 @@ The harness exists to keep tests readable while still allowing precise server-au
 
 ### Shared Constants
 
-`shared/constants/game_data.toml` is the active source of truth for generated Go and GDScript constants.
+The split constants files under `shared/constants/` are the active source of truth for generated Go and GDScript constants:
+- `shared/constants/server_constants.toml`
+- `shared/constants/server_entities.toml`
+- `shared/constants/client/presentation.toml`
+- `shared/constants/client/shell.toml`
+- `shared/constants/client/lobby.toml`
 
 Generated outputs:
 
@@ -111,6 +116,7 @@ Recent additions include:
 Note: `tools/data_sync/` updates only marked `data-sync` blocks. Do not use the old `tools/scripts/generate_constants.py` path for active constants changes.
 
 Boundary note: server-owned constants live under `constants.server.*`. World size is generated to both Go and GDScript because client visual wrapping must match server bounds. `player_starting_lives` and `player_respawn_delay` live under `constants.server.player_lifecycle`; `asteroid_size_scale` lives under `constants.server.asteroids`. The client should receive lives through player/state data, respawn delay through death events, and asteroid scale through asteroid state instead of importing those constants.
+Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`.
 
 ### Toroidal World Wrap
 
@@ -132,7 +138,7 @@ Client behavior:
 - remote players, asteroids, bullets, and server-driven effects render relative to the local player's visual position
 - camera/background follow the continuous local player node
 
-Important maintenance note: after changing world size in `shared/constants/game_data.toml`, run:
+Important maintenance note: after changing world size in `shared/constants/server_constants.toml`, run:
 
 ```bash
 python3 tools/data_sync/main.py -push -constants -go -gds
@@ -159,7 +165,7 @@ The packet TOML schema preserves the old rich JSON behavior:
 - arrays/maps/custom struct refs and overrides such as `go_type`, `go_item_type`, and `go_value_type`
 - rich type strings such as `map<string,ShipState>` and `array<EventState>`
 
-`shared/constants/game_data.toml` contains constants only. Obsolete packet reference sections were removed when the packet TOML pipeline was adopted; packet schema edits belong in `shared/packets/packets.toml`.
+The split constants SoT files under `shared/constants/` contain constants only. Obsolete packet reference sections were removed when the packet TOML pipeline was adopted; packet schema edits belong in `shared/packets/packets.toml`.
 
 Recent packet additions:
 
@@ -213,7 +219,11 @@ tools/data_sync/
 The active sources of truth are:
 
 ```text
-shared/constants/game_data.toml
+shared/constants/server_constants.toml
+shared/constants/server_entities.toml
+shared/constants/client/presentation.toml
+shared/constants/client/shell.toml
+shared/constants/client/lobby.toml
 shared/packets/packets.toml
 ```
 
@@ -228,7 +238,7 @@ Constants pull is strict and updates existing owned values only. Full packet sch
 
 Current constants workflow:
 
-1. Edit `shared/constants/game_data.toml`.
+1. Edit the needed constants SoT file under `shared/constants/` (`server_constants.toml`, `server_entities.toml`, `client/presentation.toml`, `client/shell.toml`, or `client/lobby.toml`).
 2. Validate with `python3 tools/data_sync/main.py -validate -constants`.
 3. Preview with `python3 tools/data_sync/main.py -diff -constants -go -gds`.
 4. Apply with `python3 tools/data_sync/main.py -push -constants -go -gds`.
@@ -438,7 +448,7 @@ Use `ClientLogger` for new client lifecycle/network/UI diagnostics instead of ad
 - Network transport belongs in `services/game-server/internal/networking`, not `cmd/game-server/main.go`.
 - Business/API concerns belong in the planned `services/api-server/` service, not in the Go game server.
 - Room state owns a separate `*game.Game` per room.
-- Shared constants/packets should be generated, not copied by hand. Constants use `shared/constants/game_data.toml` and `tools/data_sync/`; packets use `shared/packets/packets.toml` and `tools/data_sync/`. Output filtering may keep server-owned constants out of client generated files even when they remain in the constants source of truth.
+- Shared constants/packets should be generated, not copied by hand. Constants use split SoT files under `shared/constants/` and `tools/data_sync/`; packets use `shared/packets/packets.toml` and `tools/data_sync/`. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. Output filtering may keep server-owned constants out of client generated files even when they remain in the constants source of truth.
 - Collision shapes are shared through JSON and used by the server physics package. Current combat pair checks route through the server collision detection seam in `internal/game/collisions.go`.
 - Score, lives, respawn, and collision outcomes should not be duplicated as authoritative client logic.
 - Normal lifecycle logs should usually be debug-level; warnings/errors should be reserved for unusual or failed behavior.
@@ -497,7 +507,7 @@ Use `ClientLogger` for new client lifecycle/network/UI diagnostics instead of ad
 - Should the packet/constants generated client files move under `client/scripts/generated/` or a similar folder?
 - How should the eventual API server share code, if at all, with the game server?
 - Is `client/game-clip.avi` tracked or just present locally? It should not be committed.
-- What final world wrap dimensions should be used for balance? Current values are in `shared/constants/game_data.toml`.
+- What final world wrap dimensions should be used for balance? Current values are in `shared/constants/server_constants.toml`.
 - Ship variants now have a server-side stats modifier seam. Future work should decide which concrete stats/weapons/rules are allowed to vary for real ship definitions.
 
 ## Notes For Future Codex Sessions
@@ -505,7 +515,7 @@ Use `ClientLogger` for new client lifecycle/network/UI diagnostics instead of ad
 - Always inspect current files first. The project has been refactored often, and stale assumptions are easy.
 - Prefer small, reversible changes. The user is sensitive to unnecessary code growth and wants scalable structure without bloat.
 - When asked to “answer” or “report,” do not edit files.
-- When changing generated constants, edit `shared/constants/game_data.toml` and run `tools/data_sync`. When changing packets, edit `shared/packets/packets.toml` and run `tools/data_sync`.
+- When changing generated constants, edit the needed SoT file under `shared/constants/` and run `tools/data_sync`. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. When changing packets, edit `shared/packets/packets.toml` and run `tools/data_sync`.
 - When changing server gameplay rules, add or update focused Go tests under `services/game-server/tests/<area>/`.
 - Do not add new Go server `*_test.go` files beside production packages under `services/game-server/internal/`.
 - When changing generated packets, HUD behavior, `world_sync`, or pure client logic, add or update focused GUT tests under `client/tests/unit/`.
