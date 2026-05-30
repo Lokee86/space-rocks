@@ -94,7 +94,7 @@ Core server packages:
 - `services/game-server/internal/game/entities`: game entities and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
-- `services/game-server/internal/constants`: generated Go constants from `shared/game_data.toml`.
+- `services/game-server/internal/constants`: generated Go constants from `shared/constants/game_data.toml`.
 - `services/game-server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
 - `services/game-server/internal/protocol/packetcodec`: JSON-only packet wire encode/decode helpers for server packets.
 
@@ -319,7 +319,7 @@ Generated packet files include:
 Shared constants are sourced from:
 
 ```text
-shared/game_data.toml
+shared/constants/game_data.toml
 ```
 
 Generated constants include:
@@ -360,7 +360,7 @@ Current limitations:
 - Do not infer player lifecycle from `StatePacket.players` or client-side ship presence. Use `StatePacket.player_lifecycle`; pending-respawn and eliminated players can be absent from active ship state.
 - Keep network transport separate from core game simulation. Websocket code should live in `services/game-server/internal/networking`; reusable simulation should live in `services/game-server/internal/game`; match/mode policy evaluation should live in `services/game-server/internal/game/rules`.
 - Keep reusable simulation code out of `main.go`. The server entrypoint should register routes, configure dependencies, and start the process.
-- Use `shared/game_data.toml`, `shared/packets/packets.toml`, and `tools/data_sync/` for packet and constant data that must stay aligned across Go and Godot.
+- Use `shared/constants/game_data.toml`, `shared/packets/packets.toml`, and `tools/data_sync/` for packet and constant data that must stay aligned across Go and Godot.
 - Do not hand-edit generated files unless the generator/source data is intentionally being bypassed.
 - Do not commit generated recordings or build artifacts. `.gitignore` excludes `tmp/`, Godot export/import state, and `*.avi`.
 - Do not put secrets in client code. The client should be treated as inspectable.

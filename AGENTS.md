@@ -72,7 +72,7 @@ Do not hand-edit generated files unless the user explicitly asks for a temporary
 Constants source of truth:
 
 ```text
-shared/game_data.toml
+shared/constants/game_data.toml
 ```
 
 Generated constants:
@@ -108,9 +108,9 @@ Data sync tool:
 tools/data_sync/
 ```
 
-Use `shared/game_data.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred until the API service exists.
+Use `shared/constants/game_data.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred until the API service exists.
 
-Tunable/game-data constants belong in `shared/game_data.toml` and generated scripts under `client/scripts/constants/`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
+Tunable/game-data constants belong in `shared/constants/game_data.toml` and generated scripts under `client/scripts/constants/`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
 
 Packet schema changes should be made in `shared/packets/packets.toml` and pushed with `tools/data_sync`. Packet pull is intentionally unsupported.
 
@@ -133,7 +133,7 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Keep websocket and room transport in `services/game-server/internal/networking`.
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
-- Use `shared/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants.
+- Use `shared/constants/game_data.toml` plus `tools/data_sync/` for active Go/GDScript constants.
 - Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets.
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.
 - Route client packet wire JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
@@ -227,7 +227,7 @@ Client runtime:
 
 Shared schema/generation:
 
-- `shared/game_data.toml`
+- `shared/constants/game_data.toml`
 - `shared/packets/packets.toml`
 - `services/game-server/internal/protocol/packetcodec/`
 - `tools/data_sync/README.md`

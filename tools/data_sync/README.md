@@ -2,7 +2,7 @@
 
 `tools/data_sync/` is a reusable Python CLI for syncing shared game data between:
 
-- TOML source of truth for active constants: `shared/game_data.toml`
+- TOML source of truth for active constants: `shared/constants/game_data.toml`
 - TOML source of truth for active packets: `shared/packets/packets.toml`
 - Go game server files
 - GDScript Godot client files
@@ -27,11 +27,11 @@ TypeScript output
 
 ## Source Of Truth
 
-`shared/game_data.toml` is the canonical source for active constants.
+`shared/constants/game_data.toml` is the canonical source for active constants.
 
 `shared/packets/packets.toml` is the canonical source for active packets.
 
-`shared/game_data.toml` contains constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet changes should be made in `shared/packets/packets.toml`.
+`shared/constants/game_data.toml` contains constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet changes should be made in `shared/packets/packets.toml`.
 
 New constants and packet schema changes should be made in TOML. Language files are generated from TOML through `-push`.
 
@@ -113,7 +113,7 @@ Shape:
 
 ```toml
 [sot.constants]
-path = "shared/game_data.toml"
+path = "shared/constants/game_data.toml"
 
 [sot.packets]
 path = "shared/packets/packets.toml"
@@ -272,13 +272,13 @@ Disposable migration scripts seeded TOML from the old JSON sources. The old cons
 The active TOML sources are:
 
 ```text
-shared/game_data.toml
+shared/constants/game_data.toml
 shared/packets/packets.toml
 ```
 
 ## Active Constants Workflow
 
-1. Edit `shared/game_data.toml`.
+1. Edit `shared/constants/game_data.toml`.
 2. Run `python tools/data_sync/main.py -validate -constants`.
 3. Run `python tools/data_sync/main.py -diff -constants -go -gds`.
 4. Run `python tools/data_sync/main.py -push -constants -go -gds`.
