@@ -35,6 +35,7 @@ class DomainLanguageConfig:
     files: tuple[Path, ...]
     sections: tuple[str, ...]
     owns: tuple[str, ...]
+    outputs: tuple[str, ...] = ()
     enabled: bool = True
 
     def receives_section(self, section: str) -> bool:
@@ -280,6 +281,9 @@ def _load_domain_language_config(
     files = _read_string_list(table["files"], f"[{label}].files")
     sections = _read_string_list(table["sections"], f"[{label}].sections")
     owns = _read_string_list(table["owns"], f"[{label}].owns")
+    outputs: tuple[str, ...] = ()
+    if domain == "packets":
+        outputs = tuple(_read_string_list(table.get("outputs", []), f"[{label}].outputs"))
 
     if enabled and not files:
         raise ConfigError(f"[{label}].files must not be empty")
@@ -298,6 +302,7 @@ def _load_domain_language_config(
         files=tuple(_resolve_path(root, value) for value in files),
         sections=tuple(sections),
         owns=tuple(owns),
+        outputs=outputs,
         enabled=enabled,
     )
 

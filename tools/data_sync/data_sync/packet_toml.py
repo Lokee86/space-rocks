@@ -55,12 +55,17 @@ def packet_schema_from_document(document: Mapping[str, Any]) -> PacketSchema:
 
 def _packet_output(raw: Any, index: int) -> PacketOutput:
     table = _required_mapping(raw, f"outputs[{index}]")
+    output_id = _optional_string(table.get("id"), f"outputs[{index}].id")
     language = _required_string(table, "language", f"outputs[{index}]")
     path = _required_string(table, "path", f"outputs[{index}]")
     imports = _optional_string_mapping(table.get("imports"), f"outputs[{index}].imports")
-    extras = _extras(table, {"language", "path", "package", "imports", "packet_types", "structs", "base", "builders"})
+    extras = _extras(
+        table,
+        {"id", "language", "path", "package", "imports", "packet_types", "structs", "base", "builders"},
+    )
 
     return PacketOutput(
+        id=output_id,
         language=language,
         path=path,
         package=_optional_string(table.get("package"), f"outputs[{index}].package"),
