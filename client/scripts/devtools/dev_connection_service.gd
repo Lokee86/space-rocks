@@ -42,11 +42,11 @@ func send_spawn_from_placement_result(result: Dictionary) -> void:
 	)
 
 
-func send_respawn_from_placement_result(result: Dictionary) -> void:
+func send_respawn_player(target_player_id: String) -> void:
 	if connection_service == null:
 		ClientLogger.game_warn("DevConnectionService: send respawn ignored, connection_service is null")
 		return
-	var packet: Dictionary = DevRespawnPacketBuilder.build_from_placement_result(result)
+	var packet: Dictionary = DevRespawnPacketBuilder.build_for_target_player(target_player_id)
 	if packet.is_empty():
 		ClientLogger.game_warn("DevConnectionService: send respawn ignored, packet build returned empty")
 		return
@@ -55,10 +55,8 @@ func send_respawn_from_placement_result(result: Dictionary) -> void:
 		return
 	connection_service.send_packet(packet)
 	ClientLogger.game_info(
-		"DevConnectionService: dev respawn packet sent target_player_id=%s x=%s y=%s"
+		"DevConnectionService: dev respawn packet sent target_player_id=%s"
 		% [
-			str(packet.get(DevRespawnPacketBuilder.FIELD_TARGET_PLAYER_ID, "")),
-			str(packet.get(DevRespawnPacketBuilder.FIELD_X, 0.0)),
-			str(packet.get(DevRespawnPacketBuilder.FIELD_Y, 0.0))
+			str(packet.get(DevRespawnPacketBuilder.FIELD_TARGET_PLAYER_ID, ""))
 		]
 	)

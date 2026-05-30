@@ -118,6 +118,9 @@ func handle_gameplay_state(packet: Dictionary) -> void:
 			devtools_window_controller.refresh_spawn_player_slots(current_room_max_players())
 		if devtools_window_controller != null && devtools_window_controller.has_method("configure_kill_player_routing"):
 			devtools_window_controller.configure_kill_player_routing(connection_service, debug_kill_target_model.self_id)
+		var devtools_context = _existing_devtools_context()
+		if devtools_context != null && devtools_context.has_method("configure_local_player_id"):
+			devtools_context.configure_local_player_id(debug_kill_target_model.self_id)
 	if spectate_menu_state != null:
 		spectate_menu_state.apply_gameplay_state(state)
 	if gameplay_shell_flow != null:
@@ -253,3 +256,10 @@ func _existing_devtools_window_controller():
 	if input_context.devtools_context == null:
 		return null
 	return input_context.devtools_context.devtools_window_controller
+
+
+func _existing_devtools_context():
+	if gameplay_shell_flow == null || gameplay_shell_flow.input_context == null:
+		return null
+	var input_context = gameplay_shell_flow.input_context
+	return input_context.devtools_context

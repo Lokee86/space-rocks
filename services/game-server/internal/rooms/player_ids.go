@@ -1,9 +1,9 @@
 package rooms
 
-import "fmt"
+import "github.com/Lokee86/space-rocks/server/internal/playerids"
 
 func formatPlayerID(number int) string {
-	return fmt.Sprintf("Player-%d", number)
+	return playerids.Format(number)
 }
 
 func (room *Room) occupiedPlayerIDsLocked() map[string]bool {

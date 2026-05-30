@@ -1,5 +1,7 @@
 extends Window
 
+const ClientLogger = preload("res://scripts/logging/logger.gd")
+
 signal toggle_invincible_requested
 signal toggle_infinite_lives_requested
 signal toggle_freeze_world_requested
@@ -191,7 +193,10 @@ func _on_spawn_bullet_button_pressed() -> void:
 
 
 func _on_respawn_player_button_pressed() -> void:
-	respawn_player_placement_requested.emit(_selected_metadata_as_string(respawn_player_select))
+	var target_player_id := _selected_metadata_as_string(respawn_player_select)
+	ClientLogger.game_info("Devtools respawn button pressed")
+	ClientLogger.game_info("Devtools respawn selected target_player_id='%s'" % target_player_id)
+	respawn_player_placement_requested.emit(target_player_id)
 
 
 func _on_off(value) -> String:

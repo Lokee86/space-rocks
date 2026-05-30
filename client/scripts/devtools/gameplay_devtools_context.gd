@@ -2,13 +2,16 @@ extends RefCounted
 class_name GameplayDevtoolsContext
 
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
+const DevtoolsHotkeyFlow := preload("res://scripts/devtools/devtools_hotkey_flow.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var debug_flow
 var devtools_window_controller
 var dev_connection_service
+var hotkey_flow
 var has_received_gameplay_state := false
 var placement_request_route: Callable
+var local_player_id := ""
 
 
 func configure(connection_service_ref) -> void:
@@ -16,6 +19,11 @@ func configure(connection_service_ref) -> void:
 	dev_connection_service.configure(connection_service_ref)
 	debug_flow = GameplayDebugFlow.new()
 	debug_flow.configure(connection_service_ref)
+	hotkey_flow = DevtoolsHotkeyFlow.new()
+	hotkey_flow.configure(
+		Callable(self, "request_respawn_local_player"),
+		Callable(self, "request_placement_action")
+	)
 	devtools_window_controller = DevtoolsWindowController.new()
 	_connect_window_controller_signals()
 
@@ -29,6 +37,8 @@ func process(has_received_state: bool) -> void:
 	has_received_gameplay_state = has_received_state
 	if Input.is_action_just_pressed("DevToggle0"):
 		toggle_devtools_window()
+	if hotkey_flow != null:
+		hotkey_flow.process(has_received_state)
 	if debug_flow != null:
 		debug_flow.process(has_received_state)
 
@@ -54,6 +64,8 @@ func _connect_window_controller_signals() -> void:
 		devtools_window_controller.toggle_freeze_player_requested.connect(request_toggle_freeze_player)
 	if !devtools_window_controller.placement_action_requested.is_connected(request_placement_action):
 		devtools_window_controller.placement_action_requested.connect(request_placement_action)
+	if !devtools_window_controller.respawn_player_requested.is_connected(request_respawn_player):
+		devtools_window_controller.respawn_player_requested.connect(request_respawn_player)
 
 
 func request_toggle_invincible() -> void:
@@ -80,6 +92,29 @@ func request_toggle_freeze_player() -> void:
 	debug_flow.toggle_freeze_player()
 
 
+func configure_local_player_id(player_id: String) -> void:
+	local_player_id = player_id
+
+
+func request_respawn_player(target_player_id: String) -> void:
+	if target_player_id == "":
+		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, target_player_id is empty")
+		return
+	if !has_received_gameplay_state:
+		return
+	if dev_connection_service == null || !dev_connection_service.is_configured():
+		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, dev_connection_service is unavailable")
+		return
+	dev_connection_service.send_respawn_player(target_player_id)
+
+
+func request_respawn_local_player() -> void:
+	if local_player_id == "":
+		ClientLogger.game_warn("GameplayDevtoolsContext: local respawn request ignored, local_player_id is empty")
+		return
+	request_respawn_player(local_player_id)
+
+
 func configure_placement_request_route(route: Callable) -> void:
 	placement_request_route = route
 
@@ -99,8 +134,5 @@ func handle_placement_result(result: Dictionary) -> void:
 	if action_name.is_empty():
 		return
 	if dev_connection_service == null || !dev_connection_service.is_configured():
-		return
-	if action_name == &"respawn_player":
-		dev_connection_service.send_respawn_from_placement_result(result)
 		return
 	dev_connection_service.send_spawn_from_placement_result(result)
