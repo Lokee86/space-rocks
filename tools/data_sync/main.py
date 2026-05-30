@@ -7,6 +7,7 @@ import sys
 
 from data_sync.cli import parse_args
 from data_sync.config import ConfigError, DataSyncConfig, load_config
+from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.constants_sync import ConstantsSyncError, apply_updates, plan_constants_updates, unified_diff
 from data_sync.packets_sync import PacketsSyncError, plan_packets_updates
 from data_sync.packet_toml import PacketTomlError, load_packet_schema
@@ -41,6 +42,13 @@ def run(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
+        constants_paths = config.sot_paths("constants")
+        if len(constants_paths) != 1:
+            print(
+                "pull error: constants pull supports only one SoT path; configure a single [sot.constants] path for pull.",
+                file=sys.stderr,
+            )
+            return 2
         try:
             store = TomlStore.load(config.sot_path("constants"))
             pull_constants(config, store, args.languages[0])
@@ -53,13 +61,13 @@ def run(argv: list[str] | None = None) -> int:
     try:
         updates = []
         if "constants" in args.domains:
-            constants_store = TomlStore.load(config.sot_path("constants"))
+            constants_store = ConstantsStore.load(config.sot_paths("constants"))
             updates.extend(plan_constants_updates(config, constants_store, args.languages))
         if "packets" in args.domains:
             _ensure_enabled_packet_targets(config, args.languages)
             packet_schema = load_packet_schema(config.sot_path("packets"))
             updates.extend(plan_packets_updates(config, packet_schema, args.languages))
-    except (ConstantsSyncError, PacketsSyncError, PacketTomlError, TomlStoreError) as exc:
+    except (ConstantsSyncError, ConstantsStoreError, PacketsSyncError, PacketTomlError, TomlStoreError) as exc:
         print(f"{args.operation} error: {exc}", file=sys.stderr)
         return 1
 

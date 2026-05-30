@@ -5,16 +5,21 @@ from __future__ import annotations
 import difflib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Protocol
 
 from data_sync.block_io import BlockIOError, replace_block
 from data_sync.config import DataSyncConfig, DomainLanguageConfig
 from data_sync.generators import gds_constants, go_constants, ts_constants
-from data_sync.toml_store import TomlStore
+from data_sync.model.constants import ConstantSection
 
 
 class ConstantsSyncError(Exception):
     """Raised when constants sync cannot complete."""
+
+
+class ConstantsSource(Protocol):
+    def constants(self, section_name: str) -> ConstantSection:
+        ...
 
 
 Generator = Callable[[str, tuple[tuple[str, object], ...]], str]
@@ -40,7 +45,7 @@ class FileUpdate:
 
 def plan_constants_updates(
     config: DataSyncConfig,
-    store: TomlStore,
+    store: ConstantsSource,
     languages: tuple[str, ...],
 ) -> tuple[FileUpdate, ...]:
     updates: list[FileUpdate] = []
@@ -76,7 +81,7 @@ def all_synced(updates: tuple[FileUpdate, ...]) -> bool:
     return all(not update.changed for update in updates)
 
 
-def _plan_target_updates(store: TomlStore, target: DomainLanguageConfig) -> tuple[FileUpdate, ...]:
+def _plan_target_updates(store: ConstantsSource, target: DomainLanguageConfig) -> tuple[FileUpdate, ...]:
     generator = GENERATORS.get(target.language)
     if generator is None:
         raise ConstantsSyncError(f"unsupported constants language: {target.language}")
