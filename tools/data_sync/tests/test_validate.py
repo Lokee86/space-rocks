@@ -115,6 +115,181 @@ def test_validate_valid_config_and_sot(tmp_path: Path) -> None:
     assert run(["-validate", "-config", str(config_path)]) == 0
 
 
+def test_validate_constants_multiple_sot_files(tmp_path: Path) -> None:
+    config_path = write_validation_project(tmp_path)
+    (tmp_path / "shared/constants_a.toml").write_text(
+        """
+[constants.gameplay]
+player_speed = 420.0
+
+[constants.network]
+max_players = 2
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "shared/constants_b.toml").write_text(
+        """
+[constants.client]
+client_scale = 2
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "shared/packets.toml").write_text(
+        """
+[packets.player_input]
+id = 100
+direction = "client_to_server"
+
+[packets.player_input.fields]
+sequence = "uint32"
+shoot = "bool"
+
+[packets.state]
+id = 101
+direction = "server_to_client"
+
+[packets.state.fields]
+self_id = "string"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    config_path.write_text(
+        """
+[sot.constants]
+paths = ["shared/constants_a.toml", "shared/constants_b.toml"]
+
+[sot.packets]
+path = "shared/packets.toml"
+
+[constants.go]
+files = ["go/constants.go"]
+sections = ["constants.gameplay", "constants.network"]
+owns = ["constants.gameplay"]
+
+[constants.gds]
+files = ["gds/constants.gd"]
+sections = ["constants.gameplay", "constants.client"]
+owns = ["constants.client"]
+
+[constants.ts]
+files = ["ts/constants.ts"]
+sections = ["constants.network", "constants.client"]
+owns = ["constants.network"]
+
+[packets.go]
+files = ["go/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+
+[packets.gds]
+files = ["gds/packets.gd"]
+sections = ["packets"]
+owns = []
+
+[packets.ts]
+files = ["ts/packets.ts"]
+sections = ["packets"]
+owns = []
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert run(["-validate", "-config", str(config_path)]) == 0
+
+
+def test_validate_constants_multiple_sot_files_duplicate_section_key(tmp_path: Path) -> None:
+    config_path = write_validation_project(tmp_path)
+    (tmp_path / "shared/constants_a.toml").write_text(
+        """
+[constants.gameplay]
+player_speed = 420.0
+
+[constants.network]
+max_players = 2
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "shared/constants_b.toml").write_text(
+        """
+[constants.gameplay]
+player_speed = 420.0
+
+[constants.client]
+client_scale = 2
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "shared/packets.toml").write_text(
+        """
+[packets.player_input]
+id = 100
+direction = "client_to_server"
+
+[packets.player_input.fields]
+sequence = "uint32"
+shoot = "bool"
+
+[packets.state]
+id = 101
+direction = "server_to_client"
+
+[packets.state.fields]
+self_id = "string"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    config_path.write_text(
+        """
+[sot.constants]
+paths = ["shared/constants_a.toml", "shared/constants_b.toml"]
+
+[sot.packets]
+path = "shared/packets.toml"
+
+[constants.go]
+files = ["go/constants.go"]
+sections = ["constants.gameplay", "constants.network"]
+owns = ["constants.gameplay"]
+
+[constants.gds]
+files = ["gds/constants.gd"]
+sections = ["constants.gameplay", "constants.client"]
+owns = ["constants.client"]
+
+[constants.ts]
+files = ["ts/constants.ts"]
+sections = ["constants.network", "constants.client"]
+owns = ["constants.network"]
+
+[packets.go]
+files = ["go/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+
+[packets.gds]
+files = ["gds/packets.gd"]
+sections = ["packets"]
+owns = []
+
+[packets.ts]
+files = ["ts/packets.ts"]
+sections = ["packets"]
+owns = []
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert run(["-validate", "-config", str(config_path)]) == 1
+
+
 def test_validate_invalid_constants_ownership_overlap(tmp_path: Path) -> None:
     config_path = write_validation_project(tmp_path)
     config_path.write_text(
