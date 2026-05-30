@@ -38,6 +38,16 @@ func configure_spectate_routes(
 	cycle_spectate_target_route = cycle_spectate_target_route_ref
 
 
+func configure_debug_placement_route(route: Callable) -> void:
+	if devtools_context != null:
+		devtools_context.configure_placement_request_route(route)
+
+
+func handle_debug_placement_result(result: Dictionary) -> void:
+	if devtools_context != null && devtools_context.has_method("handle_placement_result"):
+		devtools_context.handle_placement_result(result)
+
+
 func reset() -> void:
 	if input_flow != null:
 		input_flow.reset()

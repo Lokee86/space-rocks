@@ -40,3 +40,12 @@ func visual_position_for_server_position(server_authoritive_position: Vector2) -
 		local_server_position,
 		server_authoritive_position
 	)
+
+
+func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
+	if !has_local_visual_position:
+		return WorldWrapScript.wrap_position(visual_position)
+
+	return WorldWrapScript.wrap_position(
+		local_server_position + WorldWrapScript.shortest_delta(local_visual_position, visual_position)
+	)

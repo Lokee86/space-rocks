@@ -17,6 +17,8 @@ const (
 	PacketTypeToggleDebugFreezeWorld   = "toggle_debug_freeze_world"
 	PacketTypeToggleDebugFreezePlayer  = "toggle_debug_freeze_player"
 	PacketTypeDebugKillPlayer          = "debug_kill_player"
+	PacketTypeDebugSpawnEntity         = "debug_spawn_entity"
+	PacketTypeDebugRespawnPlayer       = "debug_respawn_player"
 	PacketTypeCreateRoomRequest        = "create_room_request"
 	PacketTypeJoinRoomRequest          = "join_room_request"
 	PacketTypeLeaveRoomRequest         = "leave_room_request"
@@ -36,6 +38,12 @@ type ClientPacket struct {
 	RoomCode       string                `json:"room_code"`
 	Ready          bool                  `json:"ready"`
 	TargetPlayerID string                `json:"target_player_id"`
+	EntityType     string                `json:"entity_type"`
+	X              float64               `json:"x"`
+	Y              float64               `json:"y"`
+	HasDirection   bool                  `json:"has_direction"`
+	DirectionX     float64               `json:"direction_x"`
+	DirectionY     float64               `json:"direction_y"`
 }
 
 type CreateRoomRequest struct {

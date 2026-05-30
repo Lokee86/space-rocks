@@ -5,6 +5,7 @@ signal toggle_invincible_requested
 signal toggle_infinite_lives_requested
 signal toggle_freeze_world_requested
 signal toggle_freeze_player_requested
+signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
 
@@ -51,12 +52,25 @@ func apply_debug_status(status: Dictionary) -> void:
 
 
 func refresh_kill_player_targets(target_rows: Array) -> void:
-	ensure_window().refresh_kill_player_targets(target_rows)
+	var devtools_window := ensure_window()
+	devtools_window.refresh_kill_player_targets(target_rows)
+	if devtools_window.has_method("refresh_respawn_player_targets"):
+		devtools_window.refresh_respawn_player_targets(target_rows)
+
+
+func refresh_spawn_player_slots(max_players: int) -> void:
+	var devtools_window := ensure_window()
+	if devtools_window.has_method("refresh_spawn_player_slots"):
+		devtools_window.refresh_spawn_player_slots(max_players)
 
 
 func configure_kill_player_routing(connection_service_ref, self_id: String) -> void:
 	connection_service = connection_service_ref
 	self_player_id = self_id
+
+
+func request_placement_action(action_name: StringName, placement_context: Dictionary = {}) -> void:
+	placement_action_requested.emit(action_name, placement_context)
 
 
 func _connect_window_signals() -> void:
@@ -68,6 +82,14 @@ func _connect_window_signals() -> void:
 		window.toggle_freeze_world_requested.connect(_on_toggle_freeze_world_requested)
 	if !window.toggle_freeze_player_requested.is_connected(_on_toggle_freeze_player_requested):
 		window.toggle_freeze_player_requested.connect(_on_toggle_freeze_player_requested)
+	if !window.spawn_asteroid_placement_requested.is_connected(_on_spawn_asteroid_placement_requested):
+		window.spawn_asteroid_placement_requested.connect(_on_spawn_asteroid_placement_requested)
+	if !window.spawn_player_placement_requested.is_connected(_on_spawn_player_placement_requested):
+		window.spawn_player_placement_requested.connect(_on_spawn_player_placement_requested)
+	if !window.spawn_bullet_placement_requested.is_connected(_on_spawn_bullet_placement_requested):
+		window.spawn_bullet_placement_requested.connect(_on_spawn_bullet_placement_requested)
+	if !window.respawn_player_placement_requested.is_connected(_on_respawn_player_placement_requested):
+		window.respawn_player_placement_requested.connect(_on_respawn_player_placement_requested)
 	if !window.kill_player_requested.is_connected(_on_kill_player_requested):
 		window.kill_player_requested.connect(_on_kill_player_requested)
 
@@ -96,3 +118,26 @@ func _on_kill_player_requested(selected_player_id: String) -> void:
 		connection_service.send_debug_kill_player_request()
 	else:
 		connection_service.send_debug_kill_target_player_request(selected_player_id)
+
+
+func _on_spawn_asteroid_placement_requested() -> void:
+	request_placement_action(&"spawn_asteroid")
+
+
+func _on_spawn_player_placement_requested(target_player_id: String) -> void:
+	var placement_context := {}
+	if target_player_id != "":
+		placement_context["target_player_id"] = target_player_id
+	request_placement_action(&"spawn_player", placement_context)
+
+
+func _on_spawn_bullet_placement_requested() -> void:
+	request_placement_action(&"spawn_bullet")
+
+
+func _on_respawn_player_placement_requested(target_player_id: String) -> void:
+	if target_player_id == "":
+		return
+	var placement_context := {}
+	placement_context["target_player_id"] = target_player_id
+	request_placement_action(&"respawn_player", placement_context)

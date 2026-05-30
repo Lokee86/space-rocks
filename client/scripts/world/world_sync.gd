@@ -105,3 +105,7 @@ func focus_camera_on_player(player_id: String) -> bool:
 
 func visual_position_for_server_position(server_position: Vector2) -> Vector2:
 	return local_visual_sync.visual_position_for_server_position(server_position)
+
+
+func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
+	return local_visual_sync.server_position_for_visual_position(visual_position)
