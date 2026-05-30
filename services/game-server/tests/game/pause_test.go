@@ -55,7 +55,7 @@ func TestPausedAndFrozenSuspensionRequiresBothCausesCleared(t *testing.T) {
 	}
 }
 
-func TestPausePlayerPacketClearsInputAndIgnoresNewInput(t *testing.T) {
+func TestPauseRequestToggleClearsInputAndIgnoresNewInput(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 	start := scenario.playerState(playerID, playerID)
@@ -64,7 +64,7 @@ func TestPausePlayerPacketClearsInputAndIgnoresNewInput(t *testing.T) {
 		Type:  servergame.PacketTypeInput,
 		Input: entities.InputState{Forward: true, Shoot: true},
 	})
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 
 	paused, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
@@ -152,19 +152,19 @@ func TestPlayerPauseStatePacketReflectsPauseRequestToggle(t *testing.T) {
 	}
 }
 
-func TestPausePlayerPacketClearsVelocityBeforeResume(t *testing.T) {
+func TestPauseRequestToggleClearsVelocityBeforeResume(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 	ship := scenario.player(playerID)
 	start := ship.Position()
 	ship.Velocity = physics.Vector2{X: 25, Y: -10}
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	if ship.Velocity.X != 0 || ship.Velocity.Y != 0 {
 		t.Fatalf("expected pause to clear velocity, got (%v, %v)", ship.Velocity.X, ship.Velocity.Y)
 	}
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeResumePlayer})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	if ship.X != start.X || ship.Y != start.Y {
@@ -217,7 +217,7 @@ func TestPausedPlayerDoesNotMoveOrShoot(t *testing.T) {
 	playerID := scenario.addPlayer()
 	start := scenario.playerState(playerID, playerID)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
 		Input: entities.InputState{Forward: true, Shoot: true},
@@ -234,12 +234,12 @@ func TestPausedPlayerDoesNotMoveOrShoot(t *testing.T) {
 	}
 }
 
-func TestResumePlayerPacketResumesAndBlocksImmediateShooting(t *testing.T) {
+func TestPauseRequestSecondToggleResumesAndBlocksImmediateShooting(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePausePlayer})
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeResumePlayer})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 
 	resumed, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
@@ -261,12 +261,12 @@ func TestResumePlayerPacketResumesAndBlocksImmediateShooting(t *testing.T) {
 	}
 }
 
-func TestResumePacketIgnoredForDeadPlayer(t *testing.T) {
+func TestPauseRequestToggleIgnoredForDeadPlayer(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 	scenario.removePlayerEntity(playerID)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeResumePlayer})
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 
 	if scenario.playerEntityExists(playerID) {
 		t.Fatal("expected resume to leave dead player inactive")

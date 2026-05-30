@@ -73,9 +73,7 @@ func readClientInput(
 }
 
 func isPauseStateRequest(packetType string) bool {
-	return packetType == game.PacketTypePauseRequest ||
-		packetType == game.PacketTypePausePlayer ||
-		packetType == game.PacketTypeResumePlayer
+	return packetType == game.PacketTypePauseRequest
 }
 
 func (session *webSocketSession) logLobbyPacketReceived(message string, roomCode string) {

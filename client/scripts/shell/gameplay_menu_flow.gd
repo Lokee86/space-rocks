@@ -225,7 +225,7 @@ func handle_open_menu_pressed(has_initial_spawn: bool) -> bool:
 	if is_menu_visible():
 		close_menu()
 		if connection_service != null:
-			connection_service.send_resume_player_request()
+			connection_service.send_pause_request()
 		return true
 
 	return open_live_pause_from_request(has_initial_spawn)
@@ -243,7 +243,7 @@ func open_live_pause_from_request(has_initial_spawn: bool) -> bool:
 	if player != null:
 		player.set_afterburner_active(false)
 	if connection_service != null:
-		connection_service.send_pause_player_request()
+		connection_service.send_pause_request()
 	return true
 
 
@@ -254,7 +254,7 @@ func is_menu_visible() -> bool:
 func _on_resume_requested() -> void:
 	close_menu()
 	if connection_service != null:
-		connection_service.send_resume_player_request()
+		connection_service.send_pause_request()
 
 
 func _on_quit_requested() -> void:

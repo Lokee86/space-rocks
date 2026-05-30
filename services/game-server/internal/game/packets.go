@@ -10,8 +10,6 @@ const (
 	PacketTypeBulletBlast              = "bullet_blast"
 	PacketTypeShipDeath                = "ship_death"
 	PacketTypeRespawn                  = "respawn"
-	PacketTypePausePlayer              = "pause_player"
-	PacketTypeResumePlayer             = "resume_player"
 	PacketTypePauseRequest             = "pause_request"
 	PacketTypePlayerPauseState         = "player_pause_state"
 	PacketTypeToggleDebugInvincible    = "toggle_debug_invincible"

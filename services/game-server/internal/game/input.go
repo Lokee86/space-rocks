@@ -30,10 +30,6 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 			return
 		}
 		player.SetInput(packet.Input)
-	case PacketTypePausePlayer:
-		game.setPlayerPaused(playerID, true)
-	case PacketTypeResumePlayer:
-		game.setPlayerPaused(playerID, false)
 	case PacketTypePauseRequest:
 		game.togglePlayerPaused(playerID)
 	case PacketTypeClientConfig:
