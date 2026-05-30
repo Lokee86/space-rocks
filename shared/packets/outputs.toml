@@ -1,0 +1,24 @@
+[[outputs]]
+id = "server_entities_packets"
+language = "go"
+path = "services/game-server/internal/game/entities/packets_generated.go"
+package = "entities"
+structs = ["ClientConfig", "InputState", "ShipState", "AsteroidState", "BulletState"]
+
+[[outputs]]
+id = "server_game_packets"
+language = "go"
+path = "services/game-server/internal/game/packets.go"
+package = "game"
+packet_types = true
+structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "DebugStatus", "PlayerPauseState", "StatePacket"]
+
+[outputs.imports]
+entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
+
+[[outputs]]
+id = "client_packets"
+language = "gdscript"
+path = "client/scripts/networking/packets/packets.gd"
+base = "RefCounted"
+builders = ["input_packet", "respawn_packet", "pause_request_packet", "toggle_debug_invincible_packet", "toggle_debug_infinite_lives_packet", "toggle_debug_freeze_world_packet", "toggle_debug_freeze_player_packet", "debug_kill_player_packet", "debug_kill_target_player_packet", "client_config_packet", "create_room_request_packet", "join_room_request_packet", "leave_room_request_packet", "set_ready_request_packet", "start_game_request_packet", "start_single_player_request_packet", "return_to_lobby_request_packet"]

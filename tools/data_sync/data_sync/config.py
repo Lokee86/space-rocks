@@ -19,7 +19,12 @@ DEFAULT_SOT_PATHS = {
         "shared/constants/client/shell.toml",
         "shared/constants/client/lobby.toml",
     ),
-    "packets": ("shared/packets/packets.toml",),
+    "packets": (
+        "shared/packets/outputs.toml",
+        "shared/packets/gameplay.toml",
+        "shared/packets/debug.toml",
+        "shared/packets/lobby.toml",
+    ),
 }
 REQUIRED_DOMAIN_KEYS = ("files", "sections", "owns")
 

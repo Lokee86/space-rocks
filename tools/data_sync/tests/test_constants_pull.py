@@ -154,7 +154,7 @@ def test_packet_pull_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[st
 
     assert run(["-pull", "-packets", "-go", "-config", str(config_path)]) == 2
     captured = capsys.readouterr()
-    assert "Packet pull is not supported. Edit shared/packets/packets.toml directly." in captured.err
+    assert "Packet pull is not supported. Edit packet schema files under shared/packets/." in captured.err
 
 
 def test_pull_does_not_rewrite_language_file(tmp_path: Path) -> None:

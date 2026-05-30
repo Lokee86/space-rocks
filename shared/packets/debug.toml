@@ -1,0 +1,91 @@
+[[structs]]
+id = "DebugStatus"
+
+[[structs.fields]]
+name = "invincible"
+json = "invincible"
+type = "bool"
+
+[[structs.fields]]
+name = "infinite_lives"
+go_name = "InfiniteLives"
+json = "infinite_lives"
+type = "bool"
+
+[[structs.fields]]
+name = "world_frozen"
+go_name = "WorldFrozen"
+json = "world_frozen"
+type = "bool"
+
+[[structs.fields]]
+name = "player_frozen"
+go_name = "PlayerFrozen"
+json = "player_frozen"
+type = "bool"
+
+[[packet_types]]
+id = "toggle_debug_invincible"
+value = "toggle_debug_invincible"
+
+[[packet_types]]
+id = "toggle_debug_infinite_lives"
+value = "toggle_debug_infinite_lives"
+
+[[packet_types]]
+id = "toggle_debug_freeze_world"
+value = "toggle_debug_freeze_world"
+
+[[packet_types]]
+id = "toggle_debug_freeze_player"
+value = "toggle_debug_freeze_player"
+
+[[packet_types]]
+id = "debug_kill_player"
+value = "debug_kill_player"
+
+[[packet_types]]
+id = "debug_spawn_entity"
+value = "debug_spawn_entity"
+
+[[packet_types]]
+id = "debug_respawn_player"
+value = "debug_respawn_player"
+
+[[builders]]
+id = "toggle_debug_invincible_packet"
+
+[builders.body]
+type = "toggle_debug_invincible"
+
+[[builders]]
+id = "toggle_debug_infinite_lives_packet"
+
+[builders.body]
+type = "toggle_debug_infinite_lives"
+
+[[builders]]
+id = "toggle_debug_freeze_world_packet"
+
+[builders.body]
+type = "toggle_debug_freeze_world"
+
+[[builders]]
+id = "toggle_debug_freeze_player_packet"
+
+[builders.body]
+type = "toggle_debug_freeze_player"
+
+[[builders]]
+id = "debug_kill_player_packet"
+
+[builders.body]
+type = "debug_kill_player"
+
+[[builders]]
+id = "debug_kill_target_player_packet"
+args = ["target_player_id"]
+
+[builders.body]
+type = "debug_kill_player"
+target_player_id = "$target_player_id"

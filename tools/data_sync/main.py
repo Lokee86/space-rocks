@@ -38,7 +38,7 @@ def run(argv: list[str] | None = None) -> int:
     if args.operation == "pull":
         if "packets" in args.domains:
             print(
-                "pull error: Packet pull is not supported. Edit shared/packets/packets.toml directly.",
+                "pull error: Packet pull is not supported. Edit packet schema files under shared/packets/.",
                 file=sys.stderr,
             )
             return 2

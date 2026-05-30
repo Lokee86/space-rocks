@@ -8,7 +8,11 @@
   - `shared/constants/client/presentation.toml`
   - `shared/constants/client/shell.toml`
   - `shared/constants/client/lobby.toml`
-- TOML source of truth for active packets: `shared/packets/packets.toml`
+- TOML sources of truth for active packets:
+  - `shared/packets/outputs.toml`
+  - `shared/packets/gameplay.toml`
+  - `shared/packets/debug.toml`
+  - `shared/packets/lobby.toml`
 - Go game server files
 - GDScript Godot client files
 - TypeScript API server files, later
@@ -34,9 +38,14 @@ TypeScript output
 
 The split constants files under `shared/constants/` are the canonical source for active constants.
 
-`shared/packets/packets.toml` is the canonical source for active packets.
+The canonical sources for active packets are:
 
-The split constants SoT files under `shared/constants/` contain constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet changes should be made in `shared/packets/packets.toml`.
+- `shared/packets/outputs.toml`
+- `shared/packets/gameplay.toml`
+- `shared/packets/debug.toml`
+- `shared/packets/lobby.toml`
+
+The split constants SoT files under `shared/constants/` contain constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet schema changes should be made under `shared/packets/`.
 Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`.
 
 New constants and packet schema changes should be made in TOML. Language files are generated from TOML through `-push`.
@@ -128,7 +137,12 @@ paths = [
 ]
 
 [sot.packets]
-path = "shared/packets/packets.toml"
+paths = [
+  "shared/packets/outputs.toml",
+  "shared/packets/gameplay.toml",
+  "shared/packets/debug.toml",
+  "shared/packets/lobby.toml",
+]
 
 [constants.go]
 files = ["services/game-server/internal/game/constants.go"]
@@ -160,7 +174,7 @@ sections = ["packets"]
 owns = []
 ```
 
-Constants and packets have separate SoT paths. `-constants` commands read/write only the constants SoT, and `-packets` commands read/write only the packet SoT.
+Constants and packets have separate SoT paths. `-constants` commands read/write only the constants SoT, and `-packets` commands read/write only the packet SoT files.
 
 `sections` controls what a language receives during `-push`, `-diff`, and `-check`.
 
@@ -273,7 +287,7 @@ For pull, parsers are strict and accept only canonical generated constants. Adde
 
 ## Packet Pull Policy
 
-Full packet schema pull is not supported. Packet schema changes should be edited in `shared/packets/packets.toml`, then pushed from TOML.
+Full packet schema pull is not supported. Packet schema changes should be edited under `shared/packets/`, then pushed from TOML.
 
 `-pull -packets ...` returns a clear refusal instead of attempting fragile packet parsing.
 
@@ -289,7 +303,10 @@ shared/constants/server_entities.toml
 shared/constants/client/presentation.toml
 shared/constants/client/shell.toml
 shared/constants/client/lobby.toml
-shared/packets/packets.toml
+shared/packets/outputs.toml
+shared/packets/gameplay.toml
+shared/packets/debug.toml
+shared/packets/lobby.toml
 ```
 
 ## Active Constants Workflow
@@ -302,7 +319,7 @@ shared/packets/packets.toml
 
 ## Active Packet Workflow
 
-1. Edit `shared/packets/packets.toml`.
+1. Edit packet schema files under `shared/packets/` (`outputs.toml`, `gameplay.toml`, `debug.toml`, and `lobby.toml`).
 2. Run `python tools/data_sync/main.py -validate -packets`.
 3. Run `python tools/data_sync/main.py -diff -packets -go -gds`.
 4. Review the diff.
