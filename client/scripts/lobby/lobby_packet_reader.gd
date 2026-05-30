@@ -10,11 +10,6 @@ static func room_code(packet: Dictionary) -> String:
 static func room_state(packet: Dictionary) -> String:
 	return str(packet.get(Packets.FIELD_ROOM_STATE, ""))
 
-
-static func local_member_id(packet: Dictionary) -> String:
-	return str(packet.get(Packets.FIELD_LOCAL_MEMBER_ID, ""))
-
-
 static func local_player_id(packet: Dictionary) -> String:
 	return str(packet.get(Packets.FIELD_LOCAL_PLAYER_ID, ""))
 

@@ -41,7 +41,6 @@ func _ready() -> void:
 func apply_lobby_state(
 	room_code: String,
 	room_state: String,
-	local_member_id: String,
 	local_player_id: String,
 	owner_id: String,
 	_max_players: int,
@@ -53,15 +52,14 @@ func apply_lobby_state(
 	if room_status_label != null:
 		room_status_label.text = LobbyStatusViewModel.status_text(
 			room_state,
-			local_member_id,
 			local_player_id,
 			owner_id,
 			members,
 			can_start
 		)
-	local_ready = LobbyMemberViewModel.is_local_ready(local_member_id, members)
+	local_ready = LobbyMemberViewModel.is_local_ready(local_player_id, members)
 	_update_ready_button_text()
-	LobbyPlayerListView.render(player_list_container, player_row_scene, local_member_id, owner_id, members)
+	LobbyPlayerListView.render(player_list_container, player_row_scene, local_player_id, owner_id, members)
 
 
 func set_start_enabled(enabled: bool) -> void:

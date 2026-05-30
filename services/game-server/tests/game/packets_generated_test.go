@@ -51,15 +51,16 @@ func TestGeneratedLobbyRequestPacketFields(t *testing.T) {
 
 func TestGeneratedLobbyStatePacketFields(t *testing.T) {
 	snapshot := servergame.RoomSnapshot{
-		Type:      servergame.PacketTypeRoomSnapshot,
-		RoomCode:  "TEST",
-		RoomState: "Lobby",
+		Type:          servergame.PacketTypeRoomSnapshot,
+		RoomCode:      "TEST",
+		RoomState:     "Lobby",
+		LocalPlayerID: "player-1",
+		OwnerID:       "player-1",
 		Members: []servergame.RoomMemberState{
-			{MemberID: "player-1", Ready: true, Connected: true},
-			{MemberID: "player-2", Ready: false, Connected: true},
+			{PlayerID: "player-1", Ready: true, Connected: true},
+			{PlayerID: "player-2", Ready: false, Connected: true},
 		},
-		LocalMemberID: "player-1",
-		MaxPlayers:    8,
+		MaxPlayers: 8,
 	}
 	if snapshot.RoomState != "Lobby" {
 		t.Fatalf("expected room snapshot state field, got %q", snapshot.RoomState)
@@ -69,6 +70,12 @@ func TestGeneratedLobbyStatePacketFields(t *testing.T) {
 	}
 	if !snapshot.Members[0].Ready || snapshot.Members[1].Ready {
 		t.Fatalf("expected generated member ready states, got %#v", snapshot.Members)
+	}
+	if snapshot.Members[0].PlayerID != "player-1" || snapshot.Members[1].PlayerID != "player-2" {
+		t.Fatalf("expected generated member player IDs, got %#v", snapshot.Members)
+	}
+	if snapshot.LocalPlayerID != "player-1" || snapshot.OwnerID != "player-1" {
+		t.Fatalf("expected local/owner player ID fields, got local=%q owner=%q", snapshot.LocalPlayerID, snapshot.OwnerID)
 	}
 	if snapshot.MaxPlayers != 8 {
 		t.Fatalf("expected max players field, got %d", snapshot.MaxPlayers)
@@ -80,6 +87,9 @@ func TestGeneratedLobbyStatePacketFields(t *testing.T) {
 	}
 	if !jsonContainsFields(t, rawSnapshot, "room_state", "members", "max_players") {
 		t.Fatal("expected room snapshot JSON fields")
+	}
+	if jsonContainsFields(t, rawSnapshot, "member_id", "local_member_id") {
+		t.Fatal("expected room snapshot JSON not to include removed member fields")
 	}
 	if !jsonSnapshotMembersContainReady(t, rawSnapshot) {
 		t.Fatal("expected room snapshot member JSON to include ready states")

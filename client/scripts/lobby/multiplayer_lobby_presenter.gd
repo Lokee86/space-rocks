@@ -14,7 +14,6 @@ func show_lobby(canvas_layer: CanvasLayer, state, callbacks: Dictionary) -> Cont
 	multiplayer_lobby.apply_lobby_state(
 		state.room_code,
 		state.room_state,
-		state.local_member_id,
 		state.local_player_id,
 		state.owner_id,
 		state.max_players,

@@ -9,7 +9,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
-func BuildRoomSnapshot(room *rooms.Room, localMemberID string) game.RoomSnapshot {
+func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapshot {
 	memberSnapshot := room.MembersSnapshot()
 	sort.Slice(memberSnapshot, func(left, right int) bool {
 		return memberSnapshot[left].SessionID < memberSnapshot[right].SessionID
@@ -18,21 +18,19 @@ func BuildRoomSnapshot(room *rooms.Room, localMemberID string) game.RoomSnapshot
 	members := make([]game.RoomMemberState, 0, len(memberSnapshot))
 	for _, member := range memberSnapshot {
 		members = append(members, game.RoomMemberState{
-			MemberID:  member.SessionID,
 			PlayerID:  member.PlayerID,
 			Ready:     member.Ready,
 			Connected: member.Connected,
 		})
 	}
 
-	localPlayerID, _ := room.PlayerIDForSession(localMemberID)
+	localPlayerID, _ := room.PlayerIDForSession(localSessionID)
 
 	return game.RoomSnapshot{
 		Type:          game.PacketTypeRoomSnapshot,
 		RoomCode:      room.ID,
 		RoomState:     string(room.State),
 		Members:       members,
-		LocalMemberID: localMemberID,
 		LocalPlayerID: localPlayerID,
 		OwnerID:       room.OwnerID,
 		MaxPlayers:    rooms.MaxPlayersPerRoom,
@@ -40,7 +38,7 @@ func BuildRoomSnapshot(room *rooms.Room, localMemberID string) game.RoomSnapshot
 }
 
 func (session *webSocketSession) EnqueueRoomSnapshot(room *rooms.Room) {
-	packet := BuildRoomSnapshot(room, session.currentMemberID)
+	packet := BuildRoomSnapshot(room, session.sessionID)
 	payload, err := packetcodec.Encode(packet)
 	if err != nil {
 		logging.Network.Error("room snapshot marshal failed", err,

@@ -149,14 +149,14 @@ func TestCreateRoomRequestCreatesLobbyRoomWithoutGame(t *testing.T) {
 	if snapshot.RoomState != string(rooms.RoomStateLobby) {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, snapshot.RoomState)
 	}
-	if snapshot.LocalMemberID == "" {
-		t.Fatal("expected local member id")
+	if snapshot.LocalPlayerID == "" {
+		t.Fatal("expected local player id")
 	}
 	if len(snapshot.Members) != 1 {
 		t.Fatalf("expected snapshot with 1 member, got %d", len(snapshot.Members))
 	}
-	if snapshot.Members[0].MemberID != snapshot.LocalMemberID {
-		t.Fatalf("expected local member in snapshot, got member %q local %q", snapshot.Members[0].MemberID, snapshot.LocalMemberID)
+	if snapshot.Members[0].PlayerID != snapshot.LocalPlayerID {
+		t.Fatalf("expected local player in snapshot, got member %q local %q", snapshot.Members[0].PlayerID, snapshot.LocalPlayerID)
 	}
 	if snapshot.Members[0].Ready {
 		t.Fatal("expected new room member not to be ready")
@@ -241,14 +241,14 @@ func TestStartSinglePlayerRequestCreatesInGameRoomAndStartsState(t *testing.T) {
 	if snapshot.RoomState != string(rooms.RoomStateInGame) {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, snapshot.RoomState)
 	}
-	if snapshot.LocalMemberID == "" {
-		t.Fatal("expected local member id")
+	if snapshot.LocalPlayerID == "" {
+		t.Fatal("expected local player id")
 	}
 	if len(snapshot.Members) != 1 {
 		t.Fatalf("expected single-player snapshot with 1 member, got %d", len(snapshot.Members))
 	}
-	if snapshot.Members[0].MemberID != snapshot.LocalMemberID {
-		t.Fatalf("expected local member in snapshot, got member %q local %q", snapshot.Members[0].MemberID, snapshot.LocalMemberID)
+	if snapshot.Members[0].PlayerID != snapshot.LocalPlayerID {
+		t.Fatalf("expected local player in snapshot, got member %q local %q", snapshot.Members[0].PlayerID, snapshot.LocalPlayerID)
 	}
 
 	room, ok := manager.Find(snapshot.RoomCode)
@@ -539,11 +539,11 @@ func TestLeaveRoomRequestRemovesMemberAndBroadcastsSnapshot(t *testing.T) {
 	if len(leaveSnapshot.Members) != 1 {
 		t.Fatalf("expected leave broadcast with 1 member, got %d", len(leaveSnapshot.Members))
 	}
-	if leaveSnapshot.Members[0].MemberID != createdSnapshot.LocalMemberID {
-		t.Fatalf("expected remaining member %q, got %q", createdSnapshot.LocalMemberID, leaveSnapshot.Members[0].MemberID)
+	if leaveSnapshot.Members[0].PlayerID != createdSnapshot.LocalPlayerID {
+		t.Fatalf("expected remaining member %q, got %q", createdSnapshot.LocalPlayerID, leaveSnapshot.Members[0].PlayerID)
 	}
-	if leaveSnapshot.Members[0].MemberID == joinedJoinerSnapshot.LocalMemberID {
-		t.Fatalf("expected leaving member %q to be excluded from leave broadcast", joinedJoinerSnapshot.LocalMemberID)
+	if leaveSnapshot.Members[0].PlayerID == joinedJoinerSnapshot.LocalPlayerID {
+		t.Fatalf("expected leaving member %q to be excluded from leave broadcast", joinedJoinerSnapshot.LocalPlayerID)
 	}
 
 	room, ok := manager.Find(createdSnapshot.RoomCode)
@@ -705,8 +705,8 @@ func TestSetReadyRequestUpdatesMemberAndBroadcastsSnapshot(t *testing.T) {
 	if len(readySnapshot.Members) != 1 {
 		t.Fatalf("expected ready snapshot with 1 member, got %d", len(readySnapshot.Members))
 	}
-	if readySnapshot.Members[0].MemberID != createdSnapshot.LocalMemberID {
-		t.Fatalf("expected ready member %q, got %q", createdSnapshot.LocalMemberID, readySnapshot.Members[0].MemberID)
+	if readySnapshot.Members[0].PlayerID != createdSnapshot.LocalPlayerID {
+		t.Fatalf("expected ready member %q, got %q", createdSnapshot.LocalPlayerID, readySnapshot.Members[0].PlayerID)
 	}
 	if !readySnapshot.Members[0].Ready {
 		t.Fatal("expected member to be ready")
@@ -868,12 +868,9 @@ func TestStartGameRequestRejectsDoubleStartState(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
 	}
-	playerID, ok := room.PlayerIDForSession(createdSnapshot.LocalMemberID)
-	if !ok {
-		t.Fatalf("expected member %q to resolve to a player", createdSnapshot.LocalMemberID)
-	}
+	playerID := createdSnapshot.LocalPlayerID
 	if roomErr := room.SetReadyInLobby(playerID, true); roomErr != nil {
-		t.Fatalf("expected ready update for member %q, got %s", createdSnapshot.LocalMemberID, roomErr.Code)
+		t.Fatalf("expected ready update for member %q, got %s", createdSnapshot.LocalPlayerID, roomErr.Code)
 	}
 	room.State = rooms.RoomStateInGame
 
@@ -1292,8 +1289,8 @@ func TestDisconnectLeavesLobbyAndBroadcastsSnapshot(t *testing.T) {
 	if len(disconnectSnapshot.Members) != 1 {
 		t.Fatalf("expected disconnect broadcast with 1 member, got %d", len(disconnectSnapshot.Members))
 	}
-	if disconnectSnapshot.Members[0].MemberID != createdSnapshot.LocalMemberID {
-		t.Fatalf("expected remaining member %q, got %q", createdSnapshot.LocalMemberID, disconnectSnapshot.Members[0].MemberID)
+	if disconnectSnapshot.Members[0].PlayerID != createdSnapshot.LocalPlayerID {
+		t.Fatalf("expected remaining member %q, got %q", createdSnapshot.LocalPlayerID, disconnectSnapshot.Members[0].PlayerID)
 	}
 	if !waitUntil(100*time.Millisecond, func() bool {
 		room, ok := manager.Find(createdSnapshot.RoomCode)

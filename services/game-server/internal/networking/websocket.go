@@ -32,7 +32,7 @@ func handleConnection(session *webSocketSession, remoteAddr string) {
 	defer session.leaveDisconnectedRoom()
 
 	roomID := session.currentRoomID
-	playerID := session.currentPlayerID
+	playerID := session.currentGamePlayerID
 	logging.Network.Debug("websocket connected",
 		logging.FieldRoomID, roomID,
 		logging.FieldPlayerID, playerID,
@@ -61,32 +61,30 @@ func (session *webSocketSession) leaveRequestedRoom() {
 
 	room := session.room
 	roomID := session.currentRoomID
-	memberID := session.currentMemberID
-	playerID := session.currentPlayerID
+	sessionID := session.sessionID
+	playerID := session.currentGamePlayerID
 
-	leaveResult, roomErr := session.rooms.LeaveMember(roomID, memberID, playerID)
+	leaveResult, roomErr := session.rooms.LeaveMember(roomID, sessionID, playerID)
 	if roomErr == nil {
 		room = leaveResult.Room
 		logging.Rooms.Debug("room member left",
 			logging.FieldRoomID, roomID,
-			"member_id", memberID,
-			"session_id", session.sessionID,
+			"session_id", sessionID,
 			"remaining_members", leaveResult.RemainingMembers,
 		)
 	}
-	if memberID != "" {
-		detachRoomSession(room, memberID)
+	if sessionID != "" {
+		detachRoomSession(room, sessionID)
 	}
 
 	session.room = nil
 	session.currentRoomID = ""
-	session.currentMemberID = ""
-	session.currentPlayerID = ""
+	session.currentGamePlayerID = ""
 
 	if room.MemberCount() > 0 {
 		logging.Rooms.Debug("broadcasting room snapshot after member left",
 			logging.FieldRoomID, roomID,
-			"member_id", memberID,
+			"session_id", sessionID,
 			"remaining_members", room.MemberCount(),
 		)
 		BroadcastRoomSnapshot(room)
@@ -100,32 +98,30 @@ func (session *webSocketSession) leaveDisconnectedRoom() {
 
 	room := session.room
 	roomID := session.currentRoomID
-	memberID := session.currentMemberID
-	playerID := session.currentPlayerID
+	sessionID := session.sessionID
+	playerID := session.currentGamePlayerID
 
-	leaveResult, roomErr := session.rooms.LeaveMember(roomID, memberID, playerID)
+	leaveResult, roomErr := session.rooms.LeaveMember(roomID, sessionID, playerID)
 	if roomErr == nil {
 		room = leaveResult.Room
 		logging.Rooms.Debug("room member left",
 			logging.FieldRoomID, roomID,
-			"member_id", memberID,
-			"session_id", session.sessionID,
+			"session_id", sessionID,
 			"remaining_members", leaveResult.RemainingMembers,
 		)
 	}
-	if memberID != "" {
-		detachRoomSession(room, memberID)
+	if sessionID != "" {
+		detachRoomSession(room, sessionID)
 	}
 
 	session.room = nil
 	session.currentRoomID = ""
-	session.currentMemberID = ""
-	session.currentPlayerID = ""
+	session.currentGamePlayerID = ""
 
 	if room.MemberCount() > 0 {
 		logging.Rooms.Debug("broadcasting room snapshot after member left",
 			logging.FieldRoomID, roomID,
-			"member_id", memberID,
+			"session_id", sessionID,
 			"remaining_members", room.MemberCount(),
 		)
 		BroadcastRoomSnapshot(room)

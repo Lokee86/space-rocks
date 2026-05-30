@@ -23,9 +23,6 @@ func TestBuildRoomSnapshotIncludesRoomStateAndCapacity(t *testing.T) {
 	if snapshot.RoomState != string(rooms.RoomStateLobby) {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, snapshot.RoomState)
 	}
-	if snapshot.LocalMemberID != "session-1" {
-		t.Fatalf("expected local member id %q, got %q", "session-1", snapshot.LocalMemberID)
-	}
 	if snapshot.LocalPlayerID != member.PlayerID {
 		t.Fatalf("expected local player id %q, got %q", member.PlayerID, snapshot.LocalPlayerID)
 	}
@@ -49,20 +46,17 @@ func TestBuildRoomSnapshotIncludesMembersAndReadyStates(t *testing.T) {
 	if len(snapshot.Members) != 2 {
 		t.Fatalf("expected 2 snapshot members, got %d", len(snapshot.Members))
 	}
-	if snapshot.LocalMemberID != "session-1" {
-		t.Fatalf("expected local member id %q, got %q", "session-1", snapshot.LocalMemberID)
-	}
 	if snapshot.LocalPlayerID != firstSessionMember.PlayerID {
 		t.Fatalf("expected local player id %q, got %q", firstSessionMember.PlayerID, snapshot.LocalPlayerID)
 	}
 	if snapshot.OwnerID != secondSessionMember.PlayerID {
 		t.Fatalf("expected owner id %q, got %q", secondSessionMember.PlayerID, snapshot.OwnerID)
 	}
-	if snapshot.Members[0].MemberID != "session-1" || snapshot.Members[0].PlayerID != firstSessionMember.PlayerID || !snapshot.Members[0].Ready {
-		t.Fatalf("expected first sorted member to be ready session-1 with player id %q, got %#v", firstSessionMember.PlayerID, snapshot.Members[0])
+	if snapshot.Members[0].PlayerID != firstSessionMember.PlayerID || !snapshot.Members[0].Ready {
+		t.Fatalf("expected first sorted member to be ready with player id %q, got %#v", firstSessionMember.PlayerID, snapshot.Members[0])
 	}
-	if snapshot.Members[1].MemberID != "session-2" || snapshot.Members[1].PlayerID != secondSessionMember.PlayerID || snapshot.Members[1].Ready {
-		t.Fatalf("expected second sorted member to be not-ready session-2 with player id %q, got %#v", secondSessionMember.PlayerID, snapshot.Members[1])
+	if snapshot.Members[1].PlayerID != secondSessionMember.PlayerID || snapshot.Members[1].Ready {
+		t.Fatalf("expected second sorted member to be not-ready with player id %q, got %#v", secondSessionMember.PlayerID, snapshot.Members[1])
 	}
 	for _, member := range snapshot.Members {
 		if !member.Connected {

@@ -1,6 +1,7 @@
 package rooms
 
 type RoomMember struct {
+	MemberID  string
 	SessionID string
 	PlayerID  string
 	Ready     bool
@@ -9,6 +10,7 @@ type RoomMember struct {
 
 func NewRoomMember(sessionID string) *RoomMember {
 	return &RoomMember{
+		MemberID:  newMemberID(),
 		SessionID: sessionID,
 		Connected: true,
 	}
