@@ -3,6 +3,7 @@ package physicstests
 import (
 	"testing"
 
+	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -19,8 +20,8 @@ func TestLoadCollisionShapeCatalog(t *testing.T) {
 		t.Fatalf("expected ship polygon shape, got %q", catalog.Ship.Type)
 	}
 
-	if len(catalog.Asteroids) != 4 {
-		t.Fatalf("expected 4 asteroid collision variants, got %d", len(catalog.Asteroids))
+	if len(catalog.Asteroids) != 1 {
+		t.Fatalf("expected 1 asteroid collision variant, got %d", len(catalog.Asteroids))
 	}
 }
 
@@ -46,8 +47,9 @@ func TestAsteroidShapeScalesImportedPolygon(t *testing.T) {
 	if shape.Type != physics.CollisionShapePolygon {
 		t.Fatalf("expected polygon shape, got %s", shape.Type)
 	}
-	if shape.Points[0].X != 2 {
-		t.Fatalf("expected first point X to scale to 2, got %v", shape.Points[0].X)
+	expectedFirstX := 8.0 * 2.0 * constants.AsteroidSizeScale
+	if shape.Points[0].X != expectedFirstX {
+		t.Fatalf("expected first point X to scale to %v, got %v", expectedFirstX, shape.Points[0].X)
 	}
 }
 
