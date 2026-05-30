@@ -12,8 +12,8 @@ from data_sync.cli import DOMAINS, LANGUAGES
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.toml"
 DEFAULT_SOT_PATHS = {
-    "constants": "shared/game_data.toml",
-    "packets": "shared/packets/packets.toml",
+    "constants": ("shared/game_data.toml",),
+    "packets": ("shared/packets/packets.toml",),
 }
 REQUIRED_DOMAIN_KEYS = ("files", "sections", "owns")
 
@@ -42,14 +42,22 @@ class DomainLanguageConfig:
 class DataSyncConfig:
     path: Path
     root: Path
-    sot_paths: Mapping[str, Path]
+    sot_paths_by_domain: Mapping[str, tuple[Path, ...]]
     targets: Mapping[tuple[str, str], DomainLanguageConfig]
 
-    def sot_path(self, domain: str) -> Path:
+    def sot_paths(self, domain: str) -> tuple[Path, ...]:
         try:
-            return self.sot_paths[domain]
+            return self.sot_paths_by_domain[domain]
         except KeyError as exc:
             raise ConfigError(f"missing SoT path for domain: {domain}") from exc
+
+    def sot_path(self, domain: str) -> Path:
+        paths = self.sot_paths(domain)
+        if len(paths) != 1:
+            raise ConfigError(
+                f"domain {domain!r} has multiple SoT paths; use sot_paths({domain!r}) instead"
+            )
+        return paths[0]
 
     def target(self, domain: str, language: str) -> DomainLanguageConfig:
         try:
@@ -79,7 +87,7 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
 
     sot_values = _read_sot_paths(raw)
     if sot_override is not None:
-        sot_values = {domain: str(sot_override) for domain in DOMAINS}
+        sot_values = {domain: (str(sot_override),) for domain in DOMAINS}
 
     targets: dict[tuple[str, str], DomainLanguageConfig] = {}
     for domain in DOMAINS:
@@ -93,7 +101,10 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
     return DataSyncConfig(
         path=resolved_config_path,
         root=root,
-        sot_paths={domain: _resolve_path(root, value) for domain, value in sot_values.items()},
+        sot_paths_by_domain={
+            domain: tuple(_resolve_path(root, value) for value in values)
+            for domain, values in sot_values.items()
+        },
         targets=targets,
     )
 
@@ -196,7 +207,7 @@ def _find_repo_root(start: Path) -> Path | None:
     return None
 
 
-def _read_sot_paths(raw: Mapping[str, Any]) -> dict[str, str]:
+def _read_sot_paths(raw: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
     sot_table = raw.get("sot", {})
     if sot_table is None:
         return dict(DEFAULT_SOT_PATHS)
@@ -207,19 +218,36 @@ def _read_sot_paths(raw: Mapping[str, Any]) -> dict[str, str]:
     if legacy_value is not None:
         if not isinstance(legacy_value, str) or not legacy_value:
             raise ConfigError("[sot].path must be a non-empty string")
-        return {domain: legacy_value for domain in DOMAINS}
+        return {domain: (legacy_value,) for domain in DOMAINS}
 
-    paths: dict[str, str] = {}
+    paths: dict[str, tuple[str, ...]] = {}
     for domain in DOMAINS:
         domain_table = sot_table.get(domain, {})
         if domain_table is None:
             domain_table = {}
         if not isinstance(domain_table, Mapping):
             raise ConfigError(f"[sot.{domain}] must be a table")
-        value = domain_table.get("path", DEFAULT_SOT_PATHS[domain])
-        if not isinstance(value, str) or not value:
-            raise ConfigError(f"[sot.{domain}].path must be a non-empty string")
-        paths[domain] = value
+
+        legacy_domain_path = domain_table.get("path")
+        domain_paths = domain_table.get("paths")
+        if legacy_domain_path is not None and domain_paths is not None:
+            raise ConfigError(f"[sot.{domain}] must not specify both path and paths")
+
+        if domain_paths is not None:
+            if not isinstance(domain_paths, list):
+                raise ConfigError(f"[sot.{domain}].paths must be an array of non-empty strings")
+            if not domain_paths or not all(isinstance(item, str) and item for item in domain_paths):
+                raise ConfigError(f"[sot.{domain}].paths must be an array of non-empty strings")
+            paths[domain] = tuple(domain_paths)
+            continue
+
+        if legacy_domain_path is not None:
+            if not isinstance(legacy_domain_path, str) or not legacy_domain_path:
+                raise ConfigError(f"[sot.{domain}].path must be a non-empty string")
+            paths[domain] = (legacy_domain_path,)
+            continue
+
+        paths[domain] = DEFAULT_SOT_PATHS[domain]
     return paths
 
 

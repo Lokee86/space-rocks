@@ -88,6 +88,45 @@ def test_packet_fields_preserve_toml_order(tmp_path: Path) -> None:
     assert [field.name for field in packet.fields] == ["sequence", "turn", "thrust", "shoot"]
 
 
+def test_constants_section_with_child_table_returns_only_direct_scalars(tmp_path: Path) -> None:
+    path = write_sot(
+        tmp_path,
+        """
+[constants.client.presentation]
+hud_scale = 1.25
+
+[constants.client.presentation.sound]
+master_volume = 0.6
+""",
+    )
+    store = TomlStore.load(path)
+
+    presentation = store.constants("constants.client.presentation")
+    sound = store.constants("constants.client.presentation.sound")
+
+    assert presentation.values == (("hud_scale", 1.25),)
+    assert sound.values == (("master_volume", 0.6),)
+
+
+def test_constants_section_with_direct_table_value_exposes_value_for_validation(tmp_path: Path) -> None:
+    path = write_sot(
+        tmp_path,
+        """
+[constants.client.presentation]
+hud_scale = 1.25
+sound = { master_volume = 0.6 }
+""",
+    )
+    store = TomlStore.load(path)
+
+    presentation = store.constants("constants.client.presentation")
+
+    assert presentation.values == (
+        ("hud_scale", 1.25),
+        ("sound", {"master_volume": 0.6}),
+    )
+
+
 def test_update_one_constants_section_preserves_other_sections(tmp_path: Path) -> None:
     path = write_sot(tmp_path, sample_sot())
     store = TomlStore.load(path)

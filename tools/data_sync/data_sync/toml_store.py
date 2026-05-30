@@ -43,6 +43,8 @@ class TomlStore:
         table = self._get_table(section_name)
         values: list[tuple[str, ConstantValue]] = []
         for key, value in table.items():
+            if _is_namespace_child_table(value):
+                continue
             values.append((key, _unwrap_value(value)))
         return ConstantSection(section_name, tuple(values))
 
@@ -179,6 +181,12 @@ def _split_section_name(section_name: str) -> list[str]:
 
 def _is_mapping(value: Any) -> bool:
     return hasattr(value, "items") and hasattr(value, "__contains__")
+
+
+def _is_namespace_child_table(value: Any) -> bool:
+    if not _is_mapping(value):
+        return False
+    return value.__class__.__name__ in {"Table", "AoT"}
 
 
 def _unwrap_value(value: Any) -> Any:

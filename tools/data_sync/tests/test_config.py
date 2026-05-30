@@ -97,6 +97,51 @@ path = "shared/packets/packets.toml"
     assert config.sot_path("packets") == tmp_path / "shared/packets/packets.toml"
 
 
+def test_loads_per_domain_sot_paths_arrays(tmp_path: Path) -> None:
+    config_text = valid_config().replace(
+        """
+[sot]
+path = "shared/game_data.toml"
+""".strip(),
+        """
+[sot.constants]
+paths = ["shared/game_data.toml", "shared/game_data.override.toml"]
+
+[sot.packets]
+paths = ["shared/packets/packets.toml", "shared/packets/packets.override.toml"]
+""".strip(),
+    )
+    config_path = write_config(tmp_path, config_text)
+
+    config = load_config(config_path)
+
+    assert config.sot_paths("constants") == (
+        tmp_path / "shared/game_data.toml",
+        tmp_path / "shared/game_data.override.toml",
+    )
+    assert config.sot_paths("packets") == (
+        tmp_path / "shared/packets/packets.toml",
+        tmp_path / "shared/packets/packets.override.toml",
+    )
+
+
+def test_invalid_domain_paths_type_raises_clear_error(tmp_path: Path) -> None:
+    config_text = valid_config().replace(
+        """
+[sot]
+path = "shared/game_data.toml"
+""".strip(),
+        """
+[sot.constants]
+paths = "not-a-list"
+""".strip(),
+    )
+    config_path = write_config(tmp_path, config_text)
+
+    with pytest.raises(ConfigError, match=r"\[sot.constants\]\.paths must be an array"):
+        load_config(config_path)
+
+
 def test_missing_config_raises_clear_error(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match="config file does not exist"):
         load_config(tmp_path / "missing.toml")
