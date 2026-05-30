@@ -3,6 +3,7 @@ class_name Player
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
+const GameplayAudioFlow = preload("res://scripts/gameplay/audio/gameplay_audio_flow.gd")
 const AFTERBURNER_SCENE := preload("res://scenes/animations/blue_afterburner.tscn")
 const PLAYER_HUE_SHIFT_SHADER := preload("res://shaders/player_hue_shift.gdshader")
 
@@ -23,6 +24,7 @@ var afterburner_audio: AudioStreamPlayer2D
 var afterburner_active := false
 var ship_hue_material: ShaderMaterial
 var player_hue := Constants.PLAYER_DEFAULT_HUE
+var audio_flow := GameplayAudioFlow.new()
 
 
 func _ready() -> void:
@@ -73,29 +75,27 @@ func set_afterburner_active(active: bool) -> void:
 	if active:
 		if afterburner_sprite != null:
 			afterburner_sprite.play("default")
-		_play_afterburner_audio()
+		_play_afterburner_sound()
 	else:
 		if afterburner_sprite != null:
 			afterburner_sprite.stop()
-		_stop_afterburner_audio()
+		_stop_afterburner_sound()
 
 
-func _play_afterburner_audio() -> void:
+func _play_afterburner_sound() -> void:
 	if afterburner_audio == null:
 		return
 	if !afterburner_audio.playing:
-		afterburner_audio.play()
+		audio_flow.play_afterburner_sound(afterburner_audio)
 
 
-func _stop_afterburner_audio() -> void:
-	if afterburner_audio == null:
-		return
-	afterburner_audio.stop()
+func _stop_afterburner_sound() -> void:
+	audio_flow.stop_afterburner_sound(afterburner_audio)
 
 
 func _on_afterburner_audio_finished() -> void:
 	if afterburner_active:
-		_play_afterburner_audio()
+		_play_afterburner_sound()
 
 
 func _ensure_unique_ship_hue_material() -> ShaderMaterial:
