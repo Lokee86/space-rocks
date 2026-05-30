@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from data_sync.generators.rich_gds_packets import RichGdsPacketGenerationError, render_gdscript_output
 from data_sync.model.packets import PacketSchemaField
+from data_sync.model.packets import PacketBuilder, PacketOutput, PacketSchema, PacketStruct, PacketType
 from data_sync.packet_rendering import (
     PacketRenderingError,
     gdscript_field_constant,
@@ -96,3 +98,47 @@ def test_gdscript_field_constants_and_leaf_values_match_current_generator() -> N
     assert gdscript_leaf(True) == "true"
     assert gdscript_leaf(False) == "false"
     assert gdscript_leaf(None) == "null"
+
+
+def test_rich_gds_packet_type_ids_scopes_packet_type_constants() -> None:
+    schema = PacketSchema(
+        outputs=(),
+        structs=(PacketStruct(id="StatePacket", fields=(field("type", "string"),)),),
+        packet_types=(
+            PacketType(id="input", value="input"),
+            PacketType(id="respawn", value="respawn"),
+            PacketType(id="state", value="state"),
+        ),
+        builders=(PacketBuilder(id="input_packet", args=(), body={"type": "input"}),),
+    )
+    output = PacketOutput(
+        id="client_packets",
+        language="gdscript",
+        path="client/scripts/networking/packets/packets.gd",
+        packet_type_ids=("input", "state"),
+        builders=("input_packet",),
+    )
+
+    rendered = render_gdscript_output(schema, output)
+
+    assert 'const TYPE_INPUT := "input"' in rendered
+    assert 'const TYPE_STATE := "state"' in rendered
+    assert "TYPE_RESPAWN" not in rendered
+
+
+def test_rich_gds_packet_type_ids_unknown_id_raises() -> None:
+    schema = PacketSchema(
+        outputs=(),
+        structs=(),
+        packet_types=(PacketType(id="input", value="input"),),
+        builders=(),
+    )
+    output = PacketOutput(
+        id="client_packets",
+        language="gdscript",
+        path="client/scripts/networking/packets/packets.gd",
+        packet_type_ids=("missing",),
+    )
+
+    with pytest.raises(RichGdsPacketGenerationError):
+        render_gdscript_output(schema, output)
