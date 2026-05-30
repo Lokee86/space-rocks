@@ -9,6 +9,7 @@ from pathlib import Path
 from data_sync.block_io import BlockIOError, find_block
 from data_sync.cli import DOMAINS
 from data_sync.config import DataSyncConfig
+from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.model.constants import ConstantValue
 from data_sync.model.packets import PacketDefinition, PacketSchema, PacketSchemaField
 from data_sync.packet_rendering import GO_PRIMITIVES, PacketRenderingError, parse_rich_type
@@ -48,7 +49,7 @@ def validate(config: DataSyncConfig, domains: tuple[str, ...], languages: tuple[
     errors: list[str] = []
 
     if "constants" in request.domains:
-        constants_store = _load_store(config.sot_path("constants"), errors)
+        constants_store = _load_constants_store(config.sot_paths("constants"), errors)
         if constants_store is not None:
             _validate_constants(config, constants_store, request, errors)
     if "packets" in request.domains:
@@ -64,6 +65,14 @@ def _load_store(path: Path, errors: list[str]) -> TomlStore | None:
     try:
         return TomlStore.load(path)
     except TomlStoreError as exc:
+        errors.append(str(exc))
+        return None
+
+
+def _load_constants_store(paths: tuple[Path, ...], errors: list[str]) -> ConstantsStore | None:
+    try:
+        return ConstantsStore.load(paths)
+    except (ConstantsStoreError, TomlStoreError) as exc:
         errors.append(str(exc))
         return None
 
@@ -300,7 +309,7 @@ def _validate_builder_body(
 
 def _validate_constants(
     config: DataSyncConfig,
-    store: TomlStore,
+    store: ConstantsStore,
     request: ValidationRequest,
     errors: list[str],
 ) -> None:
@@ -312,7 +321,7 @@ def _validate_constants(
     for section_name in section_names:
         try:
             section = store.constants(section_name)
-        except TomlStoreError as exc:
+        except (ConstantsStoreError, TomlStoreError) as exc:
             errors.append(str(exc))
             continue
 
