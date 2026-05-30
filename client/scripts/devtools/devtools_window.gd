@@ -4,6 +4,7 @@ signal toggle_invincible_requested
 signal toggle_infinite_lives_requested
 signal toggle_freeze_world_requested
 signal toggle_freeze_player_requested
+signal kill_player_requested(player_id: String)
 
 @onready var invincible_button: Button = %InvincibleButton
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
@@ -13,6 +14,8 @@ signal toggle_freeze_player_requested
 @onready var infinite_lives_status_label: Label = %InfiniteLivesStatusLabel
 @onready var world_frozen_status_label: Label = %WorldFrozenStatusLabel
 @onready var player_frozen_status_label: Label = %PlayerFrozenStatusLabel
+@onready var kill_player_button: Button = %KillPlayerButton
+@onready var kill_player_select: OptionButton = %KillPlayerSelect
 
 
 func _ready() -> void:
@@ -26,6 +29,8 @@ func _ready() -> void:
 		freeze_world_button.pressed.connect(_on_freeze_world_button_pressed)
 	if !freeze_player_button.pressed.is_connected(_on_freeze_player_button_pressed):
 		freeze_player_button.pressed.connect(_on_freeze_player_button_pressed)
+	if !kill_player_button.pressed.is_connected(_on_kill_player_button_pressed):
+		kill_player_button.pressed.connect(_on_kill_player_button_pressed)
 
 
 func show_window() -> void:
@@ -50,6 +55,31 @@ func set_debug_status(status: Dictionary) -> void:
 	player_frozen_status_label.text = "Player frozen: %s" % _on_off(status.get("player_frozen", false))
 
 
+func refresh_kill_player_targets(target_rows: Array) -> void:
+	var previous_player_id := ""
+	var previous_index := kill_player_select.get_selected()
+	if previous_index >= 0:
+		previous_player_id = str(kill_player_select.get_item_metadata(previous_index))
+
+	kill_player_select.clear()
+
+	var selected_index := -1
+	for row in target_rows:
+		if !(row is Dictionary):
+			continue
+
+		var label := str(row.get("label", ""))
+		var player_id := str(row.get("player_id", ""))
+		kill_player_select.add_item(label)
+		var item_index := kill_player_select.get_item_count() - 1
+		kill_player_select.set_item_metadata(item_index, player_id)
+		if player_id == previous_player_id:
+			selected_index = item_index
+
+	if selected_index >= 0:
+		kill_player_select.select(selected_index)
+
+
 func _on_close_requested() -> void:
 	hide_window()
 
@@ -68,6 +98,18 @@ func _on_freeze_world_button_pressed() -> void:
 
 func _on_freeze_player_button_pressed() -> void:
 	toggle_freeze_player_requested.emit()
+
+
+func _on_kill_player_button_pressed() -> void:
+	var selected_index := kill_player_select.get_selected()
+	if selected_index < 0:
+		return
+
+	var selected_player_id := str(kill_player_select.get_item_metadata(selected_index))
+	if selected_player_id == "":
+		return
+
+	kill_player_requested.emit(selected_player_id)
 
 
 func _on_off(value) -> String:

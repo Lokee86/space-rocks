@@ -90,6 +90,14 @@ func send_pause_request() -> void:
 	send_packet(Packets.pause_request_packet())
 
 
+func send_debug_kill_player_request() -> void:
+	send_packet(Packets.debug_kill_player_packet())
+
+
+func send_debug_kill_target_player_request(target_player_id: String) -> void:
+	send_packet(Packets.debug_kill_target_player_packet(target_player_id))
+
+
 func send_leave_room_request() -> void:
 	if network_client != null:
 		network_client.send_leave_room_request()

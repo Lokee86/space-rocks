@@ -8,7 +8,8 @@
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(350, 250)
+size = Vector2i(305, 250)
+visible = false
 script = ExtResource("1_devtools_window")
 
 [node name="Control" type="Control" parent="." unique_id=214690309]
@@ -27,12 +28,12 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_d7pth")
 
-[node name="GridContainer" type="GridContainer" parent="Panel" unique_id=1520436722]
+[node name="ToggleButtons" type="GridContainer" parent="Panel" unique_id=1520436722]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = -1.0
+offset_right = -40.0
 offset_bottom = -2.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -40,84 +41,106 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="Panel/GridContainer" unique_id=1417348712]
+[node name="CenterContainer" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1417348712]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleButton" type="Button" parent="Panel/GridContainer/CenterContainer" unique_id=816769564]
+[node name="InvincibleButton" type="Button" parent="Panel/ToggleButtons/CenterContainer" unique_id=816769564]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Invincible"
 
-[node name="CenterContainer2" type="CenterContainer" parent="Panel/GridContainer" unique_id=1763126971]
+[node name="CenterContainer2" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1763126971]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer2" unique_id=1418502128]
+[node name="InvincibleStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer2" unique_id=1418502128]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer3" type="CenterContainer" parent="Panel/GridContainer" unique_id=491936647]
+[node name="CenterContainer3" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=491936647]
 layout_mode = 2
 
-[node name="InfiniteLivesButton" type="Button" parent="Panel/GridContainer/CenterContainer3" unique_id=1460655812]
+[node name="InfiniteLivesButton" type="Button" parent="Panel/ToggleButtons/CenterContainer3" unique_id=1460655812]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Infinite Lives"
 
-[node name="CenterContainer4" type="CenterContainer" parent="Panel/GridContainer" unique_id=1499251787]
+[node name="CenterContainer4" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1499251787]
 layout_mode = 2
 
-[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer4" unique_id=191291838]
+[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer4" unique_id=191291838]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer5" type="CenterContainer" parent="Panel/GridContainer" unique_id=1069885471]
+[node name="CenterContainer5" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1069885471]
 layout_mode = 2
 
-[node name="FreezeWorldButton" type="Button" parent="Panel/GridContainer/CenterContainer5" unique_id=203052911]
+[node name="FreezeWorldButton" type="Button" parent="Panel/ToggleButtons/CenterContainer5" unique_id=203052911]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze World"
 
-[node name="CenterContainer6" type="CenterContainer" parent="Panel/GridContainer" unique_id=1286600823]
+[node name="CenterContainer6" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1286600823]
 layout_mode = 2
 
-[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer6" unique_id=1038932319]
+[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer6" unique_id=1038932319]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer7" type="CenterContainer" parent="Panel/GridContainer" unique_id=1398406923]
+[node name="CenterContainer7" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1398406923]
 layout_mode = 2
 
-[node name="FreezePlayerButton" type="Button" parent="Panel/GridContainer/CenterContainer7" unique_id=1920186547]
+[node name="FreezePlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer7" unique_id=1920186547]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze Player"
 
-[node name="CenterContainer8" type="CenterContainer" parent="Panel/GridContainer" unique_id=957371410]
+[node name="CenterContainer8" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=957371410]
 layout_mode = 2
 
-[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/GridContainer/CenterContainer8" unique_id=920680265]
+[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer8" unique_id=920680265]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
+
+[node name="CenterContainer9" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1257293104]
+layout_mode = 2
+
+[node name="KillPlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer9" unique_id=663071140]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Kill Player"
+
+[node name="CenterContainer10" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=467308905]
+layout_mode = 2
+
+[node name="KillPlayerSelect" type="OptionButton" parent="Panel/ToggleButtons/CenterContainer10" unique_id=68962983]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
