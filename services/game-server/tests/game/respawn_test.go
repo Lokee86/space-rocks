@@ -108,7 +108,7 @@ func TestRespawnSafetyUsesRespawnBuffer(t *testing.T) {
 	outsideScenario.removePlayerEntity(outsidePlayerID)
 	outsideScenario.placeAsteroid("asteroid-1", physics.Vector2{}, 1)
 
-	outsideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 26, Y: 0}
+	outsideBuffer := physics.Vector2{X: constants.PlayerRespawnBuffer + 128, Y: 0}
 	outsideScenario.setSessionSpawnPosition(outsidePlayerID, outsideBuffer)
 	outsideScenario.send(outsidePlayerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
 
