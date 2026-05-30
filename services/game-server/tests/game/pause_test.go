@@ -234,7 +234,7 @@ func TestPausedPlayerDoesNotMoveOrShoot(t *testing.T) {
 	}
 }
 
-func TestPauseRequestSecondToggleResumesAndBlocksImmediateShooting(t *testing.T) {
+func TestPauseRequestSecondToggleResumesWithInvulnerabilityAndAllowsShooting(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
@@ -248,6 +248,10 @@ func TestPauseRequestSecondToggleResumesAndBlocksImmediateShooting(t *testing.T)
 	if resumed.Paused {
 		t.Fatal("expected player to resume")
 	}
+	player := scenario.player(playerID)
+	if !player.IsInvulnerable() {
+		t.Fatal("expected resumed player to have post-resume invulnerability")
+	}
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
@@ -256,8 +260,8 @@ func TestPauseRequestSecondToggleResumesAndBlocksImmediateShooting(t *testing.T)
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	packet := scenario.state(playerID)
-	if len(packet.Bullets) != 0 {
-		t.Fatalf("expected immediately resumed player not to shoot, got %d bullets", len(packet.Bullets))
+	if len(packet.Bullets) != 1 {
+		t.Fatalf("expected resumed invulnerable player to shoot, got %d bullets", len(packet.Bullets))
 	}
 }
 
