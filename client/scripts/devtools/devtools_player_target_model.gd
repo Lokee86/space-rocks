@@ -7,6 +7,13 @@ var player_lifecycle: Dictionary = {}
 var debug_statuses: Dictionary = {}
 
 
+func reset() -> void:
+	self_id = ""
+	server_players = {}
+	player_lifecycle = {}
+	debug_statuses = {}
+
+
 func apply_gameplay_state(state: Dictionary) -> void:
 	self_id = str(state.get("self_id", ""))
 

@@ -88,8 +88,12 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	if runtime_context == null:
 		return
 
-	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
+	apply_gameplay_state_data(state)
+
+
+func apply_gameplay_state_data(state: Dictionary) -> void:
+	var is_first_gameplay_state := !has_received_state
 	if input_context != null:
 		input_context.apply_gameplay_state(state)
 	if input_context != null:
@@ -124,6 +128,11 @@ func configure_debug_placement_route(route: Callable) -> void:
 func handle_debug_placement_result(result: Dictionary) -> void:
 	if input_context != null && input_context.has_method("handle_debug_placement_result"):
 		input_context.handle_debug_placement_result(result)
+
+
+func refresh_debug_spawn_player_slots(max_players: int) -> void:
+	if input_context != null && input_context.has_method("refresh_debug_spawn_player_slots"):
+		input_context.refresh_debug_spawn_player_slots(max_players)
 
 
 func current_camera() -> Camera2D:

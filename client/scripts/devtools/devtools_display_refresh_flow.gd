@@ -1,0 +1,46 @@
+extends RefCounted
+
+const DevtoolsPlayerTargetModel = preload("res://scripts/devtools/devtools_player_target_model.gd")
+
+var window_controller
+var target_model := DevtoolsPlayerTargetModel.new()
+var latest_max_players := 0
+
+
+func configure(window_controller_ref) -> void:
+	window_controller = window_controller_ref
+
+
+func reset() -> void:
+	target_model.reset()
+	latest_max_players = 0
+
+
+func local_player_id() -> String:
+	return str(target_model.self_id) if target_model != null else ""
+
+
+func refresh_gameplay_state(state: Dictionary) -> void:
+	target_model.apply_gameplay_state(state)
+	if window_controller == null:
+		return
+
+	if window_controller.has_method("apply_debug_status"):
+		window_controller.apply_debug_status(state.get("debug_status", {}))
+	window_controller.refresh_debug_player_targets(
+		target_model.target_rows(),
+		target_model.invincible_target_rows(),
+		target_model.infinite_lives_target_rows(),
+		target_model.player_frozen_target_rows()
+	)
+	window_controller.refresh_counter_player_targets(target_model.active_player_target_rows())
+	if window_controller.has_method("refresh_spawn_player_slots"):
+		window_controller.refresh_spawn_player_slots(latest_max_players)
+
+
+func refresh_spawn_player_slots(max_players: int) -> void:
+	latest_max_players = max_players
+	if window_controller == null:
+		return
+	if window_controller.has_method("refresh_spawn_player_slots"):
+		window_controller.refresh_spawn_player_slots(latest_max_players)

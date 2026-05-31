@@ -15,6 +15,11 @@ func apply_debug_status(status: Dictionary) -> void:
 func apply_gameplay_state(state: Dictionary) -> void:
 	if devtools_context != null && devtools_context.has_method("apply_gameplay_state"):
 		devtools_context.apply_gameplay_state(state)
+
+
+func refresh_debug_spawn_player_slots(max_players: int) -> void:
+	if devtools_context != null && devtools_context.has_method("refresh_spawn_player_slots"):
+		devtools_context.refresh_spawn_player_slots(max_players)
 var respawn_request_route: Callable
 var open_spectate_menu_route: Callable
 var cycle_spectate_target_route: Callable
