@@ -29,23 +29,3 @@ func (game *Game) DevtoolsRandomAsteroidSpeed() float64 {
 func (game *Game) DevtoolsApplyAsteroidSpawnPlan(plan spawning.AsteroidSpawnPlan) *entities.Asteroid {
 	return game.applyAsteroidSpawn(plan)
 }
-
-func (game *Game) DevtoolsEnsurePlayerSession(playerID string, spawnPosition physics.Vector2) bool {
-	return game.ensureDebugPlayerSession(playerID, spawnPosition) != nil
-}
-
-func (game *Game) DevtoolsSpawnPlayerShip(playerID string, spawnPosition physics.Vector2) bool {
-	session, ok := game.playerSessions[playerID]
-	if !ok || session == nil {
-		return false
-	}
-	return game.applyDebugPlayerShip(playerID, session, spawnPosition)
-}
-
-func (game *Game) DevtoolsPlayerIDOccupied(playerID string) bool {
-	return game.isDebugGameplayPlayerIDOccupied(playerID)
-}
-
-func (game *Game) DevtoolsReservePlayerID(playerID string) bool {
-	return game.reserveDebugGameplayPlayerID(playerID)
-}
