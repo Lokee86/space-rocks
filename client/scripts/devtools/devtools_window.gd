@@ -16,6 +16,7 @@ signal respawn_player_placement_requested(target_player_id: String)
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
 @onready var freeze_world_button: Button = %FreezeWorldButton
 @onready var freeze_asteroids_button: Button = %FreezeAsteroidsButton
+@onready var freeze_bullets_button: Button = %FreezeBulletsButton
 @onready var freeze_spawns_button: Button = %FreezeSpawnsButton
 @onready var freeze_collisions_button: Button = %FreezeCollisionsButton
 @onready var freeze_player_button: Button = %FreezePlayerButton
@@ -29,6 +30,7 @@ signal respawn_player_placement_requested(target_player_id: String)
 @onready var infinite_lives_select: OptionButton = %InfiniteLivesSelect
 @onready var world_frozen_status_label: Label = %WorldFrozenStatusLabel
 @onready var freeze_asteroids_status_label: Label = %FreezeAsteroidsStatusLabel
+@onready var freeze_bullets_status_label: Label = %FreezeBulletsStatusLabel
 @onready var freeze_spawns_status_label: Label = %FreezeSpawnsStatusLabel
 @onready var freeze_collisions_status_label: Label = %FreezeCollisionsStatusLabel
 @onready var player_frozen_select: OptionButton = %PlayerFrozenSelect
@@ -47,6 +49,8 @@ func _ready() -> void:
 		freeze_world_button.pressed.connect(_on_freeze_world_button_pressed)
 	if !freeze_asteroids_button.pressed.is_connected(_on_freeze_asteroids_button_pressed):
 		freeze_asteroids_button.pressed.connect(_on_freeze_asteroids_button_pressed)
+	if !freeze_bullets_button.pressed.is_connected(_on_freeze_bullets_button_pressed):
+		freeze_bullets_button.pressed.connect(_on_freeze_bullets_button_pressed)
 	if !freeze_spawns_button.pressed.is_connected(_on_freeze_spawns_button_pressed):
 		freeze_spawns_button.pressed.connect(_on_freeze_spawns_button_pressed)
 	if !freeze_collisions_button.pressed.is_connected(_on_freeze_collisions_button_pressed):
@@ -81,10 +85,11 @@ func toggle_window() -> void:
 
 
 func set_debug_status(status: Dictionary) -> void:
-	world_frozen_status_label.text = "World frozen: %s" % _on_off(status.get("world_frozen", false))
-	freeze_asteroids_status_label.text = "Asteroids frozen: %s" % _on_off(status.get("asteroids_frozen", false))
-	freeze_spawns_status_label.text = "Spawning frozen: %s" % _on_off(status.get("spawning_frozen", false))
-	freeze_collisions_status_label.text = "Collisions frozen: %s" % _on_off(status.get("collisions_frozen", false))
+	world_frozen_status_label.text = _active_inactive(status.get("world_frozen", false))
+	freeze_asteroids_status_label.text = _active_inactive(status.get("asteroids_frozen", false))
+	freeze_bullets_status_label.text = _active_inactive(status.get("bullets_frozen", false))
+	freeze_spawns_status_label.text = _active_inactive(status.get("spawning_frozen", false))
+	freeze_collisions_status_label.text = _active_inactive(status.get("collisions_frozen", false))
 
 
 func refresh_invincible_targets(rows: Array) -> void:
@@ -192,6 +197,10 @@ func _on_freeze_asteroids_button_pressed() -> void:
 	toggle_freeze_world_requested.emit("asteroids")
 
 
+func _on_freeze_bullets_button_pressed() -> void:
+	toggle_freeze_world_requested.emit("bullets")
+
+
 func _on_freeze_spawns_button_pressed() -> void:
 	toggle_freeze_world_requested.emit("spawns")
 
@@ -235,10 +244,10 @@ func _on_respawn_player_button_pressed() -> void:
 	respawn_player_placement_requested.emit(target_player_id)
 
 
-func _on_off(value) -> String:
+func _active_inactive(value) -> String:
 	if bool(value):
-		return "ON"
-	return "OFF"
+		return "Active"
+	return "Inactive"
 
 
 func _selected_metadata_as_string(select: OptionButton) -> String:

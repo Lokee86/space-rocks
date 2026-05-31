@@ -8,7 +8,7 @@
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(497, 291)
+size = Vector2i(565, 291)
 script = ExtResource("1_devtools_window")
 
 [node name="Control" type="Control" parent="." unique_id=214690309]
@@ -243,7 +243,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Status"
 
 [node name="CenterContainer3" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=103699217]
 layout_mode = 2
@@ -263,7 +263,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Status"
 
 [node name="CenterContainer5" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=93266472]
 layout_mode = 2
@@ -283,12 +283,33 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Status"
+
+[node name="CenterContainer9" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1564023011]
+layout_mode = 2
+
+[node name="FreezeBulletsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer9" unique_id=1890629802]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Freeze Bullets"
+
+[node name="CenterContainer10" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=397231240]
+layout_mode = 2
+
+[node name="FreezeBulletsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer10" unique_id=1188270871]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Status"
 
 [node name="CenterContainer7" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1000151081]
 layout_mode = 2
 
-[node name="FreezePlayerButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer7" unique_id=117226616]
+[node name="SpawnsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer7" unique_id=117226616]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -297,31 +318,12 @@ text = "NoOp"
 [node name="CenterContainer8" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1853451153]
 layout_mode = 2
 
-[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8" unique_id=227687143]
+[node name="StatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8" unique_id=227687143]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
-
-[node name="CenterContainer9" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1564023011]
-layout_mode = 2
-
-[node name="KillPlayerButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer9" unique_id=1890629802]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "NoOp"
-
-[node name="CenterContainer10" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=397231240]
-layout_mode = 2
-
-[node name="KillPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer10" unique_id=830794227]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-fit_to_longest_item = false
-allow_reselect = true
-item_count = 1
-popup/item_0/id = 0
+text = "Status"
 
 [node name="CenterContainer11" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1112428056]
 layout_mode = 2
