@@ -8,7 +8,27 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
-func (game *Game) ensureDebugPlayerSession(playerID string, spawnPosition physics.Vector2) *playerSession {
+func (game *Game) DevtoolsEnsurePlayerSession(playerID string, spawnPosition physics.Vector2) bool {
+	return game.ensureDevtoolsPlayerSession(playerID, spawnPosition) != nil
+}
+
+func (game *Game) DevtoolsSpawnPlayerShip(playerID string, spawnPosition physics.Vector2) bool {
+	session, ok := game.playerSessions[playerID]
+	if !ok || session == nil {
+		return false
+	}
+	return game.applyDevtoolsPlayerShip(playerID, session, spawnPosition)
+}
+
+func (game *Game) DevtoolsPlayerIDOccupied(playerID string) bool {
+	return game.isDevtoolsPlayerIDOccupied(playerID)
+}
+
+func (game *Game) DevtoolsReservePlayerID(playerID string) bool {
+	return game.reserveDevtoolsPlayerID(playerID)
+}
+
+func (game *Game) ensureDevtoolsPlayerSession(playerID string, spawnPosition physics.Vector2) *playerSession {
 	if playerID == "" {
 		return nil
 	}
@@ -18,7 +38,7 @@ func (game *Game) ensureDebugPlayerSession(playerID string, spawnPosition physic
 	return session
 }
 
-func (game *Game) applyDebugPlayerShip(playerID string, session *playerSession, spawnPosition physics.Vector2) bool {
+func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSession, spawnPosition physics.Vector2) bool {
 	if playerID == "" {
 		return false
 	}
@@ -29,12 +49,12 @@ func (game *Game) applyDebugPlayerShip(playerID string, session *playerSession, 
 	session.RespawnCooldown = 0
 	player := session.NewShip(spawnPosition)
 	game.state.Players[playerID] = player
-	game.ensureDebugPlayerCameraView(playerID, player)
+	game.ensureDevtoolsPlayerCameraView(playerID, player)
 
 	return true
 }
 
-func (game *Game) ensureDebugPlayerCameraView(playerID string, player *entities.Ship) {
+func (game *Game) ensureDevtoolsPlayerCameraView(playerID string, player *entities.Ship) {
 	if playerID == "" {
 		return
 	}
@@ -53,15 +73,14 @@ func (game *Game) ensureDebugPlayerCameraView(playerID string, player *entities.
 	cameraView.Config = player.Config
 }
 
-
-func (game *Game) isDebugGameplayPlayerIDOccupied(playerID string) bool {
-	normalizedRequestedID, ok := normalizeDebugSpawnPlayerID(playerID)
+func (game *Game) isDevtoolsPlayerIDOccupied(playerID string) bool {
+	normalizedRequestedID, ok := normalizeDevtoolsSpawnPlayerID(playerID)
 	if !ok {
 		return true
 	}
 
 	for existingPlayerID := range game.playerSessions {
-		normalizedExistingID, normalized := normalizeDebugSpawnPlayerID(existingPlayerID)
+		normalizedExistingID, normalized := normalizeDevtoolsSpawnPlayerID(existingPlayerID)
 		if !normalized {
 			continue
 		}
@@ -71,7 +90,7 @@ func (game *Game) isDebugGameplayPlayerIDOccupied(playerID string) bool {
 	}
 
 	for existingPlayerID := range game.state.Players {
-		normalizedExistingID, normalized := normalizeDebugSpawnPlayerID(existingPlayerID)
+		normalizedExistingID, normalized := normalizeDevtoolsSpawnPlayerID(existingPlayerID)
 		if !normalized {
 			continue
 		}
@@ -83,7 +102,7 @@ func (game *Game) isDebugGameplayPlayerIDOccupied(playerID string) bool {
 	return false
 }
 
-func (game *Game) reserveDebugGameplayPlayerID(playerID string) bool {
+func (game *Game) reserveDevtoolsPlayerID(playerID string) bool {
 	trimmed := strings.TrimSpace(playerID)
 	parts := strings.Split(trimmed, "-")
 	if len(parts) != 2 {
@@ -99,7 +118,7 @@ func (game *Game) reserveDebugGameplayPlayerID(playerID string) bool {
 		return false
 	}
 
-	normalizedID, ok := normalizeDebugSpawnPlayerID(playerID)
+	normalizedID, ok := normalizeDevtoolsSpawnPlayerID(playerID)
 	if !ok {
 		return false
 	}
@@ -114,7 +133,7 @@ func (game *Game) reserveDebugGameplayPlayerID(playerID string) bool {
 	return true
 }
 
-func normalizeDebugSpawnPlayerID(playerID string) (string, bool) {
+func normalizeDevtoolsSpawnPlayerID(playerID string) (string, bool) {
 	trimmed := strings.TrimSpace(playerID)
 	parts := strings.Split(trimmed, "-")
 	if len(parts) != 2 {

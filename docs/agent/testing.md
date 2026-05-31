@@ -51,6 +51,14 @@ cd services/game-server
 go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
+Run the server devtools boundary static check:
+
+```bash
+python3 -m pytest tools/tests/test_server_devtools_boundary.py
+```
+
+This check protects the server devtools boundary: `internal/devtools` owns behavior, and `internal/game` exposes only `export_devtools*.go` bridge files.
+
 If the server test command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
 
 ## Client / Godot Commands
