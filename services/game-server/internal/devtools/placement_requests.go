@@ -1,4 +1,4 @@
-package debugging
+package devtools
 
 import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 

@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
@@ -16,6 +17,40 @@ func readClientInput(
 		if err != nil {
 			readErr <- err
 			return
+		}
+
+		envelope, err := decodeClientPacketEnvelope(msg)
+		if err != nil {
+			logging.Network.Warn("websocket packet envelope decode failed",
+				logging.FieldError, err,
+				logging.FieldRoomID, session.currentRoomID,
+				logging.FieldPlayerID, session.currentGamePlayerID,
+				"session_id", session.sessionID,
+				logging.FieldRemoteAddr, remoteAddr,
+			)
+			continue
+		}
+
+		if devtools.IsCommandType(envelope.Type) {
+			if !devtools.Enabled() {
+				continue
+			}
+			if session.room == nil || session.currentGamePlayerID == "" {
+				continue
+			}
+			var command devtools.DebugCommand
+			if err := packetcodec.Decode(msg, &command); err != nil {
+				logging.Network.Warn("websocket devtools command decode failed",
+					logging.FieldError, err,
+					logging.FieldRoomID, session.currentRoomID,
+					logging.FieldPlayerID, session.currentGamePlayerID,
+					"session_id", session.sessionID,
+					logging.FieldRemoteAddr, remoteAddr,
+				)
+				continue
+			}
+			devtools.HandleCommand(session.room.Game, session.currentGamePlayerID, command)
+			continue
 		}
 
 		var packet game.ClientPacket

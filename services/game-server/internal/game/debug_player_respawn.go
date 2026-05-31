@@ -3,10 +3,10 @@ package game
 import (
 	"log"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/debugging"
+	"github.com/Lokee86/space-rocks/server/internal/devtools"
 )
 
-func (game *Game) applyDebugRespawnPlayer(request debugging.RespawnPlayerRequest) bool {
+func (game *Game) applyDebugRespawnPlayer(request devtools.RespawnPlayerRequest) bool {
 	if request.TargetPlayerID == "" {
 		return false
 	}

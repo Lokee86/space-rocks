@@ -1,17 +1,20 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/debugging"
+	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) handleDebugRespawnPlayer(playerID string, packet ClientPacket) bool {
-	request := debugging.RespawnPlayerRequest{
+	request := devtools.RespawnPlayerRequest{
 		TargetPlayerID: packet.TargetPlayerID,
 		X:              packet.X,
 		Y:              packet.Y,
 	}
+	return game.DevtoolsHandleRespawnPlayer(playerID, request)
+}
 
+func (game *Game) DevtoolsHandleRespawnPlayer(playerID string, request devtools.RespawnPlayerRequest) bool {
 	logging.Game.Info("debug respawn player received",
 		logging.FieldPlayerID, playerID,
 		"target_player_id", request.TargetPlayerID,
