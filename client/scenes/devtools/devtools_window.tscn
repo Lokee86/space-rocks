@@ -227,17 +227,19 @@ columns = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer" unique_id=868550675]
+[node name="FreezeAsteroidsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer" unique_id=868550675]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Freeze Asteroids"
 
 [node name="CenterContainer2" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=818738564]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer2" unique_id=926666414]
+[node name="FreezeAsteroidsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer2" unique_id=926666414]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -246,16 +248,18 @@ text = "NoOp"
 [node name="CenterContainer3" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=103699217]
 layout_mode = 2
 
-[node name="InfiniteLivesButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer3" unique_id=1345399629]
+[node name="FreezeSpawnsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer3" unique_id=1345399629]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Freeze Spawns"
 
 [node name="CenterContainer4" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=538259509]
 layout_mode = 2
 
-[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer4" unique_id=1050035243]
+[node name="FreezeSpawnsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer4" unique_id=1050035243]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -264,16 +268,18 @@ text = "NoOp"
 [node name="CenterContainer5" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=93266472]
 layout_mode = 2
 
-[node name="FreezeWorldButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer5" unique_id=2084171564]
+[node name="FreezeCollisionsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer5" unique_id=2084171564]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Freeze Collisions"
 
 [node name="CenterContainer6" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1397599456]
 layout_mode = 2
 
-[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer6" unique_id=880390274]
+[node name="FreezeCollisionsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer6" unique_id=880390274]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

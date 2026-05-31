@@ -64,6 +64,13 @@ func test_pause_request_packet_sets_expected_type_without_paused_field() -> void
 	assert_false(packet.has(Packets.FIELD_PAUSED))
 
 
+func test_toggle_debug_freeze_world_target_packet_sets_expected_fields() -> void:
+	var packet := Packets.toggle_debug_freeze_world_target_packet("asteroids")
+
+	assert_eq(packet["type"], "toggle_debug_freeze_world")
+	assert_eq(packet["freeze_target"], "asteroids")
+
+
 func test_lobby_packet_type_constants_exist() -> void:
 	var packet_types := [
 		Packets.TYPE_CREATE_ROOM_REQUEST,
