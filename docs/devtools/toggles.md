@@ -107,6 +107,17 @@ Current ownership paths:
 - client gameplay input routing: `client/scripts/gameplay/input/`
 - gameplay shell state routing: `client/scripts/shell/gameplay_shell_flow.gd`
 
+## Server Build Flag
+
+Server devtools are enabled in normal/default builds.
+
+Building or running with the Go build tag `nodevtools` disables server devtools command handling.
+
+```bash
+go run -tags nodevtools ./cmd/game-server
+go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server
+```
+
 ## Packet Flow
 
 When `1` is pressed:

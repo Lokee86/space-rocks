@@ -138,6 +138,15 @@ cd services/game-server
 go run ./cmd/game-server
 ```
 
+Normal local server runs include devtools.
+
+To run with server devtools disabled:
+
+```bash
+cd services/game-server
+go run -tags nodevtools ./cmd/game-server
+```
+
 With Air hot reload, if installed:
 
 ```bash
@@ -185,6 +194,13 @@ Run the server:
 ```bash
 cd services/game-server
 go run ./cmd/game-server
+```
+
+Build the server with devtools disabled:
+
+```bash
+cd services/game-server
+go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
 Run all server tests:

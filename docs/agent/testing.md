@@ -21,6 +21,15 @@ cd services/game-server
 go test -buildvcs=false ./...
 ```
 
+The normal/default server test command exercises the devtools-enabled build.
+
+Run server tests with devtools disabled:
+
+```bash
+cd services/game-server
+go test -tags nodevtools -buildvcs=false ./...
+```
+
 Preferred test command when cache/environment issues appear:
 
 ```bash
@@ -33,6 +42,13 @@ Build the game server:
 ```bash
 cd services/game-server
 go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
+```
+
+Build the game server with devtools disabled:
+
+```bash
+cd services/game-server
+go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
 If the server test command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
