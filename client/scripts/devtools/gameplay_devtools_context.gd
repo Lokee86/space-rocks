@@ -72,6 +72,7 @@ func apply_gameplay_state(state: Dictionary) -> void:
 			target_model.infinite_lives_target_rows(),
 			target_model.player_frozen_target_rows()
 		)
+		devtools_window_controller.refresh_counter_player_targets(target_model.active_player_target_rows())
 
 
 func _connect_window_controller_signals() -> void:
@@ -87,6 +88,30 @@ func _connect_window_controller_signals() -> void:
 		devtools_window_controller.placement_action_requested.connect(request_placement_action)
 	if !devtools_window_controller.respawn_player_requested.is_connected(request_respawn_player):
 		devtools_window_controller.respawn_player_requested.connect(request_respawn_player)
+	if devtools_window_controller.has_signal("set_score_requested"):
+		var set_score_callable := Callable(self, "request_set_score")
+		if !devtools_window_controller.is_connected("set_score_requested", set_score_callable):
+			devtools_window_controller.connect("set_score_requested", set_score_callable)
+	if devtools_window_controller.has_signal("add_score_requested"):
+		var add_score_callable := Callable(self, "request_add_score")
+		if !devtools_window_controller.is_connected("add_score_requested", add_score_callable):
+			devtools_window_controller.connect("add_score_requested", add_score_callable)
+	if devtools_window_controller.has_signal("set_lives_requested"):
+		var set_lives_callable := Callable(self, "request_set_lives")
+		if !devtools_window_controller.is_connected("set_lives_requested", set_lives_callable):
+			devtools_window_controller.connect("set_lives_requested", set_lives_callable)
+	if devtools_window_controller.has_signal("add_lives_requested"):
+		var add_lives_callable := Callable(self, "request_add_lives")
+		if !devtools_window_controller.is_connected("add_lives_requested", add_lives_callable):
+			devtools_window_controller.connect("add_lives_requested", add_lives_callable)
+	if devtools_window_controller.has_signal("clear_bullets_requested"):
+		var clear_bullets_callable := Callable(self, "request_clear_bullets")
+		if !devtools_window_controller.is_connected("clear_bullets_requested", clear_bullets_callable):
+			devtools_window_controller.connect("clear_bullets_requested", clear_bullets_callable)
+	if devtools_window_controller.has_signal("clear_asteroids_requested"):
+		var clear_asteroids_callable := Callable(self, "request_clear_asteroids")
+		if !devtools_window_controller.is_connected("clear_asteroids_requested", clear_asteroids_callable):
+			devtools_window_controller.connect("clear_asteroids_requested", clear_asteroids_callable)
 
 
 func request_toggle_invincible(target_player_id: String = "") -> void:
@@ -111,6 +136,50 @@ func request_toggle_freeze_player(target_player_id: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
 	debug_flow.toggle_freeze_player(target_player_id)
+
+
+func request_set_score(target_player_id: String, score: int) -> void:
+	if !has_received_gameplay_state || debug_flow == null:
+		return
+	if target_player_id == "":
+		return
+	debug_flow.set_score(target_player_id, score)
+
+
+func request_add_score(target_player_id: String, amount: int) -> void:
+	if !has_received_gameplay_state || debug_flow == null:
+		return
+	if target_player_id == "":
+		return
+	debug_flow.add_score(target_player_id, amount)
+
+
+func request_set_lives(target_player_id: String, lives: int) -> void:
+	if !has_received_gameplay_state || debug_flow == null:
+		return
+	if target_player_id == "":
+		return
+	debug_flow.set_lives(target_player_id, lives)
+
+
+func request_add_lives(target_player_id: String, amount: int) -> void:
+	if !has_received_gameplay_state || debug_flow == null:
+		return
+	if target_player_id == "":
+		return
+	debug_flow.add_lives(target_player_id, amount)
+
+
+func request_clear_bullets() -> void:
+	if !has_received_gameplay_state || debug_flow == null:
+		return
+	debug_flow.clear_bullets()
+
+
+func request_clear_asteroids() -> void:
+	if !has_received_gameplay_state || debug_flow == null:
+		return
+	debug_flow.clear_asteroids()
 
 
 func configure_local_player_id(player_id: String) -> void:

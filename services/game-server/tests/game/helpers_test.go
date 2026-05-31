@@ -175,8 +175,10 @@ func (scenario *scenario) setPlayerInvulnerability(playerID string, seconds floa
 func (scenario *scenario) setPlayerLives(playerID string, lives int) {
 	scenario.t.Helper()
 
-	scenario.player(playerID).Lives = lives
-	scenario.sessionField(playerID, "Lives").SetInt(int64(lives))
+	change := scenario.game.SetPlayerLives(playerID, lives)
+	if !change.Found {
+		scenario.t.Fatalf("expected SetPlayerLives to find player %q", playerID)
+	}
 }
 
 func (scenario *scenario) setPlayerHealth(playerID string, health int) {

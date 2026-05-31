@@ -5,6 +5,12 @@ signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
 signal toggle_freeze_world_requested(freeze_target: String)
 signal toggle_freeze_player_requested(target_player_id: String)
+signal set_score_requested(target_player_id: String, score: int)
+signal add_score_requested(target_player_id: String, amount: int)
+signal set_lives_requested(target_player_id: String, lives: int)
+signal add_lives_requested(target_player_id: String, amount: int)
+signal clear_bullets_requested
+signal clear_asteroids_requested
 signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
 signal respawn_player_requested(target_player_id: String)
 
@@ -98,6 +104,12 @@ func refresh_debug_player_targets(
 		window.refresh_player_frozen_targets(latest_player_frozen_rows)
 
 
+func refresh_counter_player_targets(rows: Array) -> void:
+	var devtools_window := ensure_window()
+	if devtools_window.has_method("refresh_counter_player_targets"):
+		devtools_window.refresh_counter_player_targets(rows)
+
+
 func refresh_spawn_player_slots(max_players: int) -> void:
 	var devtools_window := ensure_window()
 	if devtools_window.has_method("refresh_spawn_player_slots"):
@@ -132,6 +144,18 @@ func _connect_window_signals() -> void:
 		window.respawn_player_placement_requested.connect(_on_respawn_player_placement_requested)
 	if !window.kill_player_requested.is_connected(_on_kill_player_requested):
 		window.kill_player_requested.connect(_on_kill_player_requested)
+	if window.has_signal("set_score_requested") and !window.set_score_requested.is_connected(_on_set_score_requested):
+		window.set_score_requested.connect(_on_set_score_requested)
+	if window.has_signal("add_score_requested") and !window.add_score_requested.is_connected(_on_add_score_requested):
+		window.add_score_requested.connect(_on_add_score_requested)
+	if window.has_signal("set_lives_requested") and !window.set_lives_requested.is_connected(_on_set_lives_requested):
+		window.set_lives_requested.connect(_on_set_lives_requested)
+	if window.has_signal("add_lives_requested") and !window.add_lives_requested.is_connected(_on_add_lives_requested):
+		window.add_lives_requested.connect(_on_add_lives_requested)
+	if window.has_signal("clear_bullets_requested") and !window.clear_bullets_requested.is_connected(_on_clear_bullets_requested):
+		window.clear_bullets_requested.connect(_on_clear_bullets_requested)
+	if window.has_signal("clear_asteroids_requested") and !window.clear_asteroids_requested.is_connected(_on_clear_asteroids_requested):
+		window.clear_asteroids_requested.connect(_on_clear_asteroids_requested)
 
 
 func _on_toggle_invincible_requested(target_player_id: String) -> void:
@@ -148,6 +172,30 @@ func _on_toggle_freeze_world_requested(freeze_target: String) -> void:
 
 func _on_toggle_freeze_player_requested(target_player_id: String) -> void:
 	toggle_freeze_player_requested.emit(target_player_id)
+
+
+func _on_set_score_requested(target_player_id: String, score: int) -> void:
+	set_score_requested.emit(target_player_id, score)
+
+
+func _on_add_score_requested(target_player_id: String, amount: int) -> void:
+	add_score_requested.emit(target_player_id, amount)
+
+
+func _on_set_lives_requested(target_player_id: String, lives: int) -> void:
+	set_lives_requested.emit(target_player_id, lives)
+
+
+func _on_add_lives_requested(target_player_id: String, amount: int) -> void:
+	add_lives_requested.emit(target_player_id, amount)
+
+
+func _on_clear_bullets_requested() -> void:
+	clear_bullets_requested.emit()
+
+
+func _on_clear_asteroids_requested() -> void:
+	clear_asteroids_requested.emit()
 
 
 func _on_kill_player_requested(selected_player_id: String) -> void:

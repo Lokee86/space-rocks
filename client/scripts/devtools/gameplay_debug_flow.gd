@@ -84,3 +84,45 @@ func toggle_freeze_player(target_player_id := "") -> void:
 	else:
 		connection_service.send_packet(Packets.toggle_debug_freeze_player_target_player_packet(target_player_id))
 	ClientLogger.game_info("Devtools player freeze toggle sent")
+
+
+func set_score(target_player_id: String, score: int) -> void:
+	if connection_service == null:
+		return
+	connection_service.send_packet(Packets.debug_set_score_packet(target_player_id, score))
+	ClientLogger.game_info("Devtools set score sent")
+
+
+func add_score(target_player_id: String, amount: int) -> void:
+	if connection_service == null:
+		return
+	connection_service.send_packet(Packets.debug_add_score_packet(target_player_id, amount))
+	ClientLogger.game_info("Devtools add score sent")
+
+
+func set_lives(target_player_id: String, lives: int) -> void:
+	if connection_service == null:
+		return
+	connection_service.send_packet(Packets.debug_set_lives_packet(target_player_id, lives))
+	ClientLogger.game_info("Devtools set lives sent")
+
+
+func add_lives(target_player_id: String, amount: int) -> void:
+	if connection_service == null:
+		return
+	connection_service.send_packet(Packets.debug_add_lives_packet(target_player_id, amount))
+	ClientLogger.game_info("Devtools add lives sent")
+
+
+func clear_bullets() -> void:
+	if connection_service == null:
+		return
+	connection_service.send_packet(Packets.debug_clear_bullets_packet())
+	ClientLogger.game_info("Devtools clear bullets sent")
+
+
+func clear_asteroids() -> void:
+	if connection_service == null:
+		return
+	connection_service.send_packet(Packets.debug_clear_asteroids_packet())
+	ClientLogger.game_info("Devtools clear asteroids sent")
