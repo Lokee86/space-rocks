@@ -37,7 +37,7 @@ Exemptions: generated files, Godot `.tscn` scenes, `.tres` resources, vendored a
 1. Open/read only the files needed for the requested edit.
 2. Identify the smallest concrete change that satisfies the prompt.
 3. Make the edit without unrelated cleanup.
-4. Do not run shell/terminal verification unless the prompt explicitly requests it.
+4. Focused, safe terminal checks are allowed when useful for the task.
 5. If verification is not requested, report what changed and whether any unexpected scope was needed.
 
 ## File reading policy
@@ -51,8 +51,9 @@ Exemptions: generated files, Godot `.tscn` scenes, `.tres` resources, vendored a
 ## Shell / verification policy
 
 - Opening and reading named files in the editor is allowed and expected.
-- Do not run shell/terminal commands unless the prompt explicitly says to.
-- Do not run `rg`, tests, formatters, generators, or git commands by default.
+- Focused, safe terminal checks are allowed when useful for the task.
+- Avoid destructive git commands, broad cleanup, dependency upgrades, unrelated formatter runs, or expensive commands unless explicitly requested.
+- Do not run tests, generators, or repo-wide scans by default when a small edit does not require them.
 - The default agent job is editing only.
 - Report changed files and unexpected scope changes.
 - Verification commands are usually run separately by the user.

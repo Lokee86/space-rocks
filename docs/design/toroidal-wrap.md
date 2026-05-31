@@ -75,7 +75,7 @@ The Godot client keeps two coordinate layers:
 Client wrap math lives in:
 
 ```text
-client/scripts/world_wrap.gd
+client/scripts/world/world_wrap.gd
 ```
 
 `local_visual_sync.gd` tracks:
@@ -85,9 +85,9 @@ local_server_position
 local_visual_position
 ```
 
-On each local-player state update, `world_sync.gd` routes the authoritative position through `LocalVisualSync`, which advances visual position by the shortest wrapped delta from the previous server position to the new server position. This prevents the local player, camera, and background from snapping when the server coordinate wraps.
+On each local-player state update, `client/scripts/world/world_sync.gd` routes the authoritative position through `LocalVisualSync`, which advances visual position by the shortest wrapped delta from the previous server position to the new server position. This prevents the local player, camera, and background from snapping when the server coordinate wraps.
 
-Remote players, asteroids, bullets, and server-driven effects render relative to the local player. Entity ownership lives in `player_sync.gd`, `asteroid_sync.gd`, and `bullet_sync.gd`, while `world_sync.gd` coordinates update order:
+Remote players, asteroids, bullets, and server-driven effects render relative to the local player. Entity ownership lives in `client/scripts/world/player_sync.gd`, `client/scripts/world/asteroid_sync.gd`, and `client/scripts/world/bullet_sync.gd`, while `client/scripts/world/world_sync.gd` coordinates update order:
 
 ```gdscript
 visual_position = local_visual_position + WorldWrap.shortest_delta(

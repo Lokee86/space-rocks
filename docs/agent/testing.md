@@ -4,10 +4,10 @@ Use this document for verification commands, generated data checks, and validati
 
 ## Terminal Policy
 
-Agents should not run terminal commands by default.
+Focused, safe terminal checks are allowed when useful.
 
-- Commands in this document are normally human-run by the user.
-- An agent may run a command only when the prompt explicitly says it may.
+- Commands in this document are still usually human-run checkpoints.
+- Avoid destructive git commands, broad cleanup, dependency upgrades, unrelated formatter runs, or expensive commands unless explicitly requested.
 - Prompt reports should not include command results unless the prompt explicitly allowed the agent to run the command.
 - After an agent edit, the user may run the relevant command and paste output back into ChatGPT.
 - If a human-run command fails, stop and diagnose that failure before piling on more changes.
@@ -102,6 +102,14 @@ Apply shared packets:
 ```bash
 python3 tools/data_sync/main.py -push -packets -go -gds
 ```
+
+Check shared packets:
+
+```bash
+python3 tools/data_sync/main.py -check -packets -go -gds
+```
+
+Packet validate/diff/push/check commands operate on the split packet SoT under `shared/packets/` (`outputs.toml`, `gameplay.toml`, `debug.toml`, and `lobby.toml`). Packet generation/checks include server devtools packet output in `services/game-server/internal/devtools/packets_generated.go`.
 
 ## Server Test Layout
 

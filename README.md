@@ -4,7 +4,7 @@ Space Rocks is an Asteroids-inspired game with a Godot client and a Go game serv
 
 ## Status
 
-The project is in active development. Current work includes a playable Godot client, a Go websocket game server, room support, shared packet/constants generation, server-authoritative scoring/lives/respawn logic, asteroid collisions/splitting, HUD updates, audio/effects, and structured server logging.
+The project is in active development. Current work includes a playable Godot client, a Go websocket game server, room support, split TOML shared data for constants/packets under `shared/`, server-authoritative scoring/lives/respawn logic, asteroid collisions/splitting, HUD updates, audio/effects, and structured server logging.
 
 Expect incomplete docs and rough edges while systems are still moving.
 
@@ -38,7 +38,7 @@ git lfs pull
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go game server module. The current game server entrypoint is `services/game-server/cmd/game-server`.
 - `services/api-server/`: empty placeholder for a planned API server service for business/backend concerns. It is intended to be separate from real-time game simulation.
-- `shared/`: sources shared by client/server generation, including TOML constants, TOML packets, and collision shape data.
+- `shared/`: split TOML sources of truth for constants (`shared/constants/*.toml`) and packets (`shared/packets/outputs.toml`, `gameplay.toml`, `debug.toml`, `lobby.toml`), plus collision shape data.
 - `docs/`: Project documentation, including architecture, developer workflow, API plans, devtools, notes, and server logging docs.
 - `tools/`: Python tools for syncing shared constants and generating packet code.
 
@@ -132,9 +132,13 @@ python3 tools/data_sync/main.py -push -packets -go -gds
 ## Documentation
 
 - [Architecture](docs/design/architecture.md)
+- [Toroidal wrap design](docs/design/toroidal-wrap.md)
+- [Ship variants design](docs/design/ship-variants.md)
 - [NestJS API server plan](docs/api/nestjs-api-server.md)
 - [Server logging](docs/server/logging.md)
+- [Client logging](docs/client/logging.md)
 - [Developer toggles](docs/devtools/toggles.md)
+- [Data sync tool](tools/data_sync/README.md)
 
 ## Assets And Git LFS
 

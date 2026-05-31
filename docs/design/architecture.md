@@ -41,7 +41,7 @@ Current client runtime seams:
 - `client/scripts/config/`: client config flows.
 - `client/scripts/networking/network_client.gd`: websocket owner for connect, poll, send, graceful close, and packet signals.
 - `client/scripts/networking/packet_codec/packet_codec.gd`: JSON-only client packet wire encode/decode wrapper around `JSON.stringify` and `JSON.parse_string`.
-- `client/scripts/networking/world_sync.gd`: coordinator for server-state rendering. It delegates node ownership, packet application, cleanup, and interpolation to player, bullet, asteroid, and local-visual sync owners.
+- `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates node ownership, packet application, cleanup, and interpolation to player, bullet, asteroid, and local-visual sync owners.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/networking/packets/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
@@ -53,7 +53,7 @@ Client runtime flow:
 3. Local gameplay input routes through `client/scripts/gameplay/input/`. Player movement/shooting packet data still comes from `client/scripts/entities/player.gd`.
 4. `network_client.gd` sends and receives websocket text through the client packet codec.
 5. Incoming gameplay state is normalized by `client/scripts/gameplay/state/` and applied by `client/scripts/gameplay/runtime/`.
-6. `world_sync.gd` updates renderable player, bullet, asteroid, and local visual state.
+6. `client/scripts/world/world_sync.gd` updates renderable player, bullet, asteroid, and local visual state.
 7. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
 
 Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. The background and camera follow the local player's continuous visual position after initial spawn.
@@ -307,13 +307,17 @@ The current runtime data flow is:
 Shared packet structures are sourced from:
 
 ```text
-shared/packets/packets.toml
+shared/packets/outputs.toml
+shared/packets/gameplay.toml
+shared/packets/debug.toml
+shared/packets/lobby.toml
 ```
 
 Generated packet files include:
 
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/entities/packets_generated.go`
+- `services/game-server/internal/devtools/packets_generated.go`
 - `client/scripts/networking/packets/packets.gd`
 
 Shared constants are sourced from:
@@ -351,6 +355,18 @@ Client-owned today:
 - local audio/effects playback
 - websocket connection lifecycle
 
+### Devtools / Debug Boundary
+
+Devtools are client-triggered and server-authoritative. Client input requests debug actions through generated packets, while gameplay effects are applied by server-owned systems.
+
+- packet schema lives in `shared/packets/debug.toml`
+- output routing lives in `shared/packets/outputs.toml`
+- generated server devtools packets live in `services/game-server/internal/devtools/packets_generated.go`
+- debug actions route through real gameplay seams, not parallel debug-only gameplay logic
+- current actions include invincible, infinite lives, world freeze, player freeze, kill, spawn, and respawn
+
+For key mappings and detailed behavior, see [devtool toggles](../devtools/toggles.md).
+
 Current limitations:
 
 - No account, matchmaking, leaderboard, or persistent backend API is implemented.
@@ -364,7 +380,7 @@ Current limitations:
 - Do not infer player lifecycle from `StatePacket.players` or client-side ship presence. Use `StatePacket.player_lifecycle`; pending-respawn and eliminated players can be absent from active ship state.
 - Keep network transport separate from core game simulation. Websocket code should live in `services/game-server/internal/networking`; reusable simulation should live in `services/game-server/internal/game`; match/mode policy evaluation should live in `services/game-server/internal/game/rules`.
 - Keep reusable simulation code out of `main.go`. The server entrypoint should register routes, configure dependencies, and start the process.
-- Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, `shared/constants/client/lobby.toml`, `shared/packets/packets.toml`, and `tools/data_sync/` for packet and constant data that must stay aligned across Go and Godot.
+- Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, `shared/constants/client/lobby.toml`, `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, `shared/packets/lobby.toml`, and `tools/data_sync/` for packet and constant data that must stay aligned across Go and Godot.
 - Do not hand-edit generated files unless the generator/source data is intentionally being bypassed.
 - Do not commit generated recordings or build artifacts. `.gitignore` excludes `tmp/`, Godot export/import state, and `*.avi`.
 - Do not put secrets in client code. The client should be treated as inspectable.

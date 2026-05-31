@@ -83,6 +83,14 @@ If a change adds more than roughly 100 lines total, report why the slice is that
 
 ## Packet / Codec Boundaries
 
+- Packet schema source of truth is split under `shared/packets/`:
+  - `shared/packets/outputs.toml`
+  - `shared/packets/gameplay.toml`
+  - `shared/packets/debug.toml`
+  - `shared/packets/lobby.toml`
+- Do not recreate `shared/packets/packets.toml`.
+- Devtools packet schema belongs in `shared/packets/debug.toml`.
+- Devtools generated server packet output belongs in `services/game-server/internal/devtools/packets_generated.go`.
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.
 - Do not add direct `encoding/json` calls in server packet wire paths.
 - The server codec is intentionally JSON-only and generic.
@@ -93,6 +101,7 @@ If a change adds more than roughly 100 lines total, report why the slice is that
 - The client codec is intentionally JSON-only and thin.
 - Do not add validation, format switching, typed packet objects, protobuf references, or generator changes unless explicitly requested.
 - `network_client.gd` still owns websocket behavior.
+- Devtools must route through real gameplay seams. Do not create parallel debug-only gameplay logic that bypasses damage, lives, spawning, scoring, movement, room/session, or modifier systems.
 
 ## Domain Event Rules
 

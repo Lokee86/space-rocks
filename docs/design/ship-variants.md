@@ -48,8 +48,9 @@ Relevant areas:
 services/game-server/internal/game/entities/ship.go
 services/game-server/internal/game/physics/collision_shapes.go
 shared/collisions/collision_shapes.json
-client/scripts/networking/world_sync.gd
-shared/packets/packets.toml
+client/scripts/world/world_sync.gd
+shared/packets/gameplay.toml
+client/scripts/networking/packets/packets.gd
 ```
 
 ## Implemented Foundation
@@ -155,7 +156,7 @@ Keep backward compatibility or migrate the current single ship shape into:
 Update:
 
 ```text
-client/scripts/networking/player_sync.gd
+client/scripts/world/player_sync.gd
 ```
 
 Add a mapping from `ship_type` to scene path or preload.

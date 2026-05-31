@@ -9,7 +9,7 @@ Use this skill for work involving files such as:
 - `client/scripts/gameplay/game.gd`
 - `client/scripts/ui/game_shell.gd`
 - `client/scripts/ui/hud/hud_controller.gd`
-- `client/scripts/networking/world_sync.gd`
+- `client/scripts/world/world_sync.gd`
 - `client/scripts/networking/network_client.gd`
 - spectate, lifecycle, sync, HUD, menu, presentation, and controller scripts
 

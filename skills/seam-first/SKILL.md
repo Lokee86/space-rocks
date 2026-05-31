@@ -74,8 +74,9 @@ Stop and report instead of editing if:
 
 ## Terminal policy
 
-- Do not run terminal commands unless the prompt explicitly says to.
-- Do not run `rg`, tests, formatters, generators, or git commands by default.
+- Focused, safe terminal checks are allowed when useful for the task.
+- Avoid destructive git commands, broad cleanup, dependency upgrades, unrelated formatter runs, or expensive commands unless explicitly requested.
+- Do not run tests, generators, or repo-wide scans by default when a small edit does not require them.
 - Human-run verification happens separately after the edit.
 
 ## Report format
