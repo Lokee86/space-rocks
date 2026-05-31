@@ -19,6 +19,10 @@ run/main_scene="res://scenes/game.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://assets/units/yellow-v-wing.png"
 
+[autoload]
+
+DevToolsBuildFlags="*uid://b64ck8tvpvm8q"
+
 [display]
 
 window/size/viewport_width=1280
