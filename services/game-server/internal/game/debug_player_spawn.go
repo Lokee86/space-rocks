@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
@@ -56,13 +55,13 @@ func (game *Game) ensureDebugPlayerCameraView(playerID string, player *entities.
 
 
 func (game *Game) isDebugGameplayPlayerIDOccupied(playerID string) bool {
-	normalizedRequestedID, ok := devtools.NormalizeDebugSpawnPlayerID(playerID)
+	normalizedRequestedID, ok := normalizeDebugSpawnPlayerID(playerID)
 	if !ok {
 		return true
 	}
 
 	for existingPlayerID := range game.playerSessions {
-		normalizedExistingID, normalized := devtools.NormalizeDebugSpawnPlayerID(existingPlayerID)
+		normalizedExistingID, normalized := normalizeDebugSpawnPlayerID(existingPlayerID)
 		if !normalized {
 			continue
 		}
@@ -72,7 +71,7 @@ func (game *Game) isDebugGameplayPlayerIDOccupied(playerID string) bool {
 	}
 
 	for existingPlayerID := range game.state.Players {
-		normalizedExistingID, normalized := devtools.NormalizeDebugSpawnPlayerID(existingPlayerID)
+		normalizedExistingID, normalized := normalizeDebugSpawnPlayerID(existingPlayerID)
 		if !normalized {
 			continue
 		}
@@ -100,7 +99,7 @@ func (game *Game) reserveDebugGameplayPlayerID(playerID string) bool {
 		return false
 	}
 
-	normalizedID, ok := devtools.NormalizeDebugSpawnPlayerID(playerID)
+	normalizedID, ok := normalizeDebugSpawnPlayerID(playerID)
 	if !ok {
 		return false
 	}
@@ -113,4 +112,20 @@ func (game *Game) reserveDebugGameplayPlayerID(playerID string) bool {
 	}
 
 	return true
+}
+
+func normalizeDebugSpawnPlayerID(playerID string) (string, bool) {
+	trimmed := strings.TrimSpace(playerID)
+	parts := strings.Split(trimmed, "-")
+	if len(parts) != 2 {
+		return "", false
+	}
+	if parts[0] != "player" && parts[0] != "Player" {
+		return "", false
+	}
+	number, err := strconv.Atoi(parts[1])
+	if err != nil || number <= 0 {
+		return "", false
+	}
+	return "player-" + strconv.Itoa(number), true
 }

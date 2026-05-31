@@ -38,7 +38,6 @@ func (game *Game) statePacket(playerID string) StatePacket {
 		Type:            PacketTypeState,
 		SelfID:          playerID,
 		Lives:           game.playerLives(playerID),
-		DebugStatus:     game.debugStatusFor(playerID),
 		Players:         players,
 		PlayerLifecycle: playerLifecycle,
 		Bullets:         bullets,

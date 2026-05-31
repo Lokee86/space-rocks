@@ -12,8 +12,8 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-packet_type_ids = ["input", "client_config", "state", "bullet_blast", "ship_death", "respawn", "pause_request", "player_pause_state", "toggle_debug_invincible", "toggle_debug_infinite_lives", "toggle_debug_freeze_world", "toggle_debug_freeze_player", "debug_kill_player", "debug_spawn_entity", "debug_respawn_player", "create_room_request", "join_room_request", "leave_room_request", "set_ready_request", "start_game_request", "start_single_player_request", "return_to_lobby_request", "room_snapshot", "room_state_changed", "room_error"]
-structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "DebugStatus", "PlayerPauseState", "StatePacket"]
+packet_type_ids = ["input", "client_config", "state", "bullet_blast", "ship_death", "respawn", "pause_request", "player_pause_state", "create_room_request", "join_room_request", "leave_room_request", "set_ready_request", "start_game_request", "start_single_player_request", "return_to_lobby_request", "room_snapshot", "room_state_changed", "room_error"]
+structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "PlayerPauseState", "StatePacket"]
 
 [outputs.imports]
 entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"

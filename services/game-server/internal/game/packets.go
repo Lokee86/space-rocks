@@ -12,13 +12,6 @@ const (
 	PacketTypeRespawn                  = "respawn"
 	PacketTypePauseRequest             = "pause_request"
 	PacketTypePlayerPauseState         = "player_pause_state"
-	PacketTypeToggleDebugInvincible    = "toggle_debug_invincible"
-	PacketTypeToggleDebugInfiniteLives = "toggle_debug_infinite_lives"
-	PacketTypeToggleDebugFreezeWorld   = "toggle_debug_freeze_world"
-	PacketTypeToggleDebugFreezePlayer  = "toggle_debug_freeze_player"
-	PacketTypeDebugKillPlayer          = "debug_kill_player"
-	PacketTypeDebugSpawnEntity         = "debug_spawn_entity"
-	PacketTypeDebugRespawnPlayer       = "debug_respawn_player"
 	PacketTypeCreateRoomRequest        = "create_room_request"
 	PacketTypeJoinRoomRequest          = "join_room_request"
 	PacketTypeLeaveRoomRequest         = "leave_room_request"
@@ -32,18 +25,11 @@ const (
 )
 
 type ClientPacket struct {
-	Type           string                `json:"type"`
-	Input          entities.InputState   `json:"input"`
-	Config         entities.ClientConfig `json:"config"`
-	RoomCode       string                `json:"room_code"`
-	Ready          bool                  `json:"ready"`
-	TargetPlayerID string                `json:"target_player_id"`
-	EntityType     string                `json:"entity_type"`
-	X              float64               `json:"x"`
-	Y              float64               `json:"y"`
-	HasDirection   bool                  `json:"has_direction"`
-	DirectionX     float64               `json:"direction_x"`
-	DirectionY     float64               `json:"direction_y"`
+	Type     string                `json:"type"`
+	Input    entities.InputState   `json:"input"`
+	Config   entities.ClientConfig `json:"config"`
+	RoomCode string                `json:"room_code"`
+	Ready    bool                  `json:"ready"`
 }
 
 type CreateRoomRequest struct {
@@ -113,13 +99,6 @@ type EventState struct {
 	Y            float64 `json:"y"`
 }
 
-type DebugStatus struct {
-	Invincible    bool `json:"invincible"`
-	InfiniteLives bool `json:"infinite_lives"`
-	WorldFrozen   bool `json:"world_frozen"`
-	PlayerFrozen  bool `json:"player_frozen"`
-}
-
 type PlayerPauseState struct {
 	Type     string `json:"type"`
 	PlayerID string `json:"player_id"`
@@ -130,7 +109,6 @@ type StatePacket struct {
 	Type            string                            `json:"type"`
 	SelfID          string                            `json:"self_id"`
 	Lives           int                               `json:"lives"`
-	DebugStatus     DebugStatus                       `json:"debug_status"`
 	Players         map[string]entities.ShipState     `json:"players"`
 	PlayerLifecycle map[string]string                 `json:"player_lifecycle"`
 	Bullets         map[string]entities.BulletState   `json:"bullets"`
