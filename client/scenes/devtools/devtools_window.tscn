@@ -8,8 +8,7 @@
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(305, 291)
-visible = false
+size = Vector2i(497, 291)
 script = ExtResource("1_devtools_window")
 
 [node name="Control" type="Control" parent="." unique_id=214690309]
@@ -30,117 +29,113 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_d7pth")
 
-[node name="ToggleButtons" type="GridContainer" parent="Panel" unique_id=1520436722]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 25.0
-offset_top = 8.0
-offset_right = -15.0
-offset_bottom = 6.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel" unique_id=84552176]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LeftPanel" type="GridContainer" parent="Panel/HBoxContainer" unique_id=1520436722]
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1417348712]
+[node name="CenterContainer" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1417348712]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleButton" type="Button" parent="Panel/ToggleButtons/CenterContainer" unique_id=816769564]
+[node name="InvincibleButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer" unique_id=816769564]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Invincible"
 
-[node name="CenterContainer2" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1763126971]
+[node name="CenterContainer2" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1763126971]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer2" unique_id=1418502128]
+[node name="InvincibleStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer2" unique_id=1418502128]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer3" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=491936647]
+[node name="CenterContainer3" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=491936647]
 layout_mode = 2
 
-[node name="InfiniteLivesButton" type="Button" parent="Panel/ToggleButtons/CenterContainer3" unique_id=1460655812]
+[node name="InfiniteLivesButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer3" unique_id=1460655812]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Infinite Lives"
 
-[node name="CenterContainer4" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1499251787]
+[node name="CenterContainer4" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1499251787]
 layout_mode = 2
 
-[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer4" unique_id=191291838]
+[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer4" unique_id=191291838]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer5" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1069885471]
+[node name="CenterContainer5" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1069885471]
 layout_mode = 2
 
-[node name="FreezeWorldButton" type="Button" parent="Panel/ToggleButtons/CenterContainer5" unique_id=203052911]
+[node name="FreezeWorldButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer5" unique_id=203052911]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze World"
 
-[node name="CenterContainer6" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1286600823]
+[node name="CenterContainer6" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1286600823]
 layout_mode = 2
 
-[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer6" unique_id=1038932319]
+[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer6" unique_id=1038932319]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer7" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1398406923]
+[node name="CenterContainer7" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1398406923]
 layout_mode = 2
 
-[node name="FreezePlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer7" unique_id=1920186547]
+[node name="FreezePlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer7" unique_id=1920186547]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze Player"
 
-[node name="CenterContainer8" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=957371410]
+[node name="CenterContainer8" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=957371410]
 layout_mode = 2
 
-[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/ToggleButtons/CenterContainer8" unique_id=920680265]
+[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer8" unique_id=920680265]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer9" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1257293104]
+[node name="CenterContainer9" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1257293104]
 layout_mode = 2
 
-[node name="KillPlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer9" unique_id=663071140]
+[node name="KillPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer9" unique_id=663071140]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Kill Player"
 
-[node name="CenterContainer10" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=467308905]
+[node name="CenterContainer10" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=467308905]
 layout_mode = 2
 
-[node name="KillPlayerSelect" type="OptionButton" parent="Panel/ToggleButtons/CenterContainer10" unique_id=68962983]
+[node name="KillPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer10" unique_id=68962983]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -149,20 +144,20 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer11" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1587433922]
+[node name="CenterContainer11" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1587433922]
 layout_mode = 2
 
-[node name="SpawnPlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer11" unique_id=1895868783]
+[node name="SpawnPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer11" unique_id=1895868783]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Spawn Player"
 
-[node name="CenterContainer12" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1773331478]
+[node name="CenterContainer12" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1773331478]
 layout_mode = 2
 
-[node name="SpawnPlayerSelect" type="OptionButton" parent="Panel/ToggleButtons/CenterContainer12" unique_id=1594026504]
+[node name="SpawnPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer12" unique_id=1594026504]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -171,20 +166,20 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer15" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1642896355]
+[node name="CenterContainer15" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1642896355]
 layout_mode = 2
 
-[node name="RespawnPlayerButton" type="Button" parent="Panel/ToggleButtons/CenterContainer15" unique_id=1552414892]
+[node name="RespawnPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer15" unique_id=1552414892]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Repawn Player"
 
-[node name="CenterContainer16" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1144734693]
+[node name="CenterContainer16" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1144734693]
 layout_mode = 2
 
-[node name="RespawnPlayerSelect" type="OptionButton" parent="Panel/ToggleButtons/CenterContainer16" unique_id=877755333]
+[node name="RespawnPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer16" unique_id=877755333]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -193,25 +188,186 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer13" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=757329232]
+[node name="CenterContainer13" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=757329232]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SpawnAsteroidButton" type="Button" parent="Panel/ToggleButtons/CenterContainer13" unique_id=904544533]
+[node name="SpawnAsteroidButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer13" unique_id=904544533]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Spawn Asteroid"
 
-[node name="CenterContainer14" type="CenterContainer" parent="Panel/ToggleButtons" unique_id=1846458076]
+[node name="CenterContainer14" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1846458076]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SpawnBulletButton" type="Button" parent="Panel/ToggleButtons/CenterContainer14" unique_id=1730392900]
+[node name="SpawnBulletButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer14" unique_id=1730392900]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Spawn Bullet
+"
+
+[node name="LeftPanel2" type="GridContainer" parent="Panel/HBoxContainer" unique_id=1162894039]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=360690084]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InvincibleButton" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer" unique_id=868550675]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer2" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=818738564]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InvincibleStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer2" unique_id=926666414]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer3" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=103699217]
+layout_mode = 2
+
+[node name="InfiniteLivesButton" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer3" unique_id=1345399629]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer4" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=538259509]
+layout_mode = 2
+
+[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer4" unique_id=1050035243]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer5" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=93266472]
+layout_mode = 2
+
+[node name="FreezeWorldButton" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer5" unique_id=2084171564]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer6" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1397599456]
+layout_mode = 2
+
+[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer6" unique_id=880390274]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer7" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1000151081]
+layout_mode = 2
+
+[node name="FreezePlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer7" unique_id=117226616]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer8" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1853451153]
+layout_mode = 2
+
+[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer8" unique_id=227687143]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer9" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1564023011]
+layout_mode = 2
+
+[node name="KillPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer9" unique_id=1890629802]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer10" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=397231240]
+layout_mode = 2
+
+[node name="KillPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer10" unique_id=830794227]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
+
+[node name="CenterContainer11" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1112428056]
+layout_mode = 2
+
+[node name="SpawnPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer11" unique_id=598542177]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer12" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1501216883]
+layout_mode = 2
+
+[node name="SpawnPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer12" unique_id=149968425]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
+
+[node name="CenterContainer15" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=25036607]
+layout_mode = 2
+
+[node name="RespawnPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer15" unique_id=2123196868]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer16" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1862748227]
+layout_mode = 2
+
+[node name="NoOp" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer16" unique_id=1380772687]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
+
+[node name="CenterContainer13" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=838492043]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NoOp" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer13" unique_id=700888395]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp"
+
+[node name="CenterContainer14" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel2" unique_id=1151980265]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NoOp" type="Button" parent="Panel/HBoxContainer/LeftPanel2/CenterContainer14" unique_id=391011392]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NoOp
 "
