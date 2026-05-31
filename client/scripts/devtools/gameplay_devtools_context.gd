@@ -3,12 +3,13 @@ class_name GameplayDevtoolsContext
 
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsHotkeyFlow := preload("res://scripts/devtools/devtools_hotkey_flow.gd")
-const DebugKillTargetModel := preload("res://scripts/gameplay/devtools/debug_kill_target_model.gd")
+const DevtoolsPlayerTargetModel := preload("res://scripts/devtools/devtools_player_target_model.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var debug_flow
 var devtools_window_controller
 var dev_connection_service
+var connection_service
 var hotkey_flow
 var has_received_gameplay_state := false
 var placement_request_route: Callable
@@ -17,6 +18,7 @@ var target_model
 
 
 func configure(connection_service_ref) -> void:
+	connection_service = connection_service_ref
 	dev_connection_service = DevConnectionService.new()
 	dev_connection_service.configure(connection_service_ref)
 	debug_flow = GameplayDebugFlow.new()
@@ -27,7 +29,7 @@ func configure(connection_service_ref) -> void:
 		Callable(self, "request_placement_action")
 	)
 	devtools_window_controller = DevtoolsWindowController.new()
-	target_model = DebugKillTargetModel.new()
+	target_model = DevtoolsPlayerTargetModel.new()
 	_connect_window_controller_signals()
 
 
@@ -63,6 +65,7 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	target_model.apply_gameplay_state(state)
 	if devtools_window_controller != null:
+		devtools_window_controller.configure_kill_player_routing(connection_service, target_model.self_id)
 		devtools_window_controller.refresh_debug_player_targets(
 			target_model.target_rows(),
 			target_model.invincible_target_rows(),
