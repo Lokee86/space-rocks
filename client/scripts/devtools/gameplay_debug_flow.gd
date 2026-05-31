@@ -44,18 +44,24 @@ func process(has_received_state: bool) -> void:
 		toggle_freeze_player()
 
 
-func toggle_invincible() -> void:
+func toggle_invincible(target_player_id := "") -> void:
 	if connection_service == null:
 		return
 	debug_invincible_enabled = !debug_invincible_enabled
-	connection_service.send_packet(Packets.toggle_debug_invincible_packet())
+	if target_player_id == "":
+		connection_service.send_packet(Packets.toggle_debug_invincible_packet())
+	else:
+		connection_service.send_packet(Packets.toggle_debug_invincible_target_player_packet(target_player_id))
 	ClientLogger.game_info("Devtools invincibility toggle sent")
 
 
-func toggle_infinite_lives() -> void:
+func toggle_infinite_lives(target_player_id := "") -> void:
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.toggle_debug_infinite_lives_packet())
+	if target_player_id == "":
+		connection_service.send_packet(Packets.toggle_debug_infinite_lives_packet())
+	else:
+		connection_service.send_packet(Packets.toggle_debug_infinite_lives_target_player_packet(target_player_id))
 	ClientLogger.game_info("Devtools infinite lives toggle sent")
 
 
@@ -66,8 +72,11 @@ func toggle_freeze_world() -> void:
 	ClientLogger.game_info("Devtools world freeze toggle sent")
 
 
-func toggle_freeze_player() -> void:
+func toggle_freeze_player(target_player_id := "") -> void:
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.toggle_debug_freeze_player_packet())
+	if target_player_id == "":
+		connection_service.send_packet(Packets.toggle_debug_freeze_player_packet())
+	else:
+		connection_service.send_packet(Packets.toggle_debug_freeze_player_target_player_packet(target_player_id))
 	ClientLogger.game_info("Devtools player freeze toggle sent")

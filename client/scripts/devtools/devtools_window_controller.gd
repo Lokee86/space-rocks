@@ -1,10 +1,10 @@
 class_name DevtoolsWindowController
 extends RefCounted
 
-signal toggle_invincible_requested
-signal toggle_infinite_lives_requested
+signal toggle_invincible_requested(target_player_id: String)
+signal toggle_infinite_lives_requested(target_player_id: String)
 signal toggle_freeze_world_requested
-signal toggle_freeze_player_requested
+signal toggle_freeze_player_requested(target_player_id: String)
 signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
 signal respawn_player_requested(target_player_id: String)
 
@@ -14,6 +14,10 @@ const ClientLogger = preload("res://scripts/logging/logger.gd")
 var window: Window
 var parent: Node
 var latest_debug_status := {}
+var latest_target_rows: Array = []
+var latest_invincible_rows: Array = []
+var latest_infinite_lives_rows: Array = []
+var latest_player_frozen_rows: Array = []
 var connection_service
 var self_player_id := ""
 
@@ -27,6 +31,15 @@ func ensure_window() -> Window:
 	parent.add_child(window)
 	_connect_window_signals()
 	window.set_debug_status(latest_debug_status)
+	window.refresh_kill_player_targets(latest_target_rows)
+	if window.has_method("refresh_respawn_player_targets"):
+		window.refresh_respawn_player_targets(latest_target_rows)
+	if window.has_method("refresh_invincible_targets"):
+		window.refresh_invincible_targets(latest_invincible_rows)
+	if window.has_method("refresh_infinite_lives_targets"):
+		window.refresh_infinite_lives_targets(latest_infinite_lives_rows)
+	if window.has_method("refresh_player_frozen_targets"):
+		window.refresh_player_frozen_targets(latest_player_frozen_rows)
 	return window
 
 
@@ -58,6 +71,31 @@ func refresh_kill_player_targets(target_rows: Array) -> void:
 	devtools_window.refresh_kill_player_targets(target_rows)
 	if devtools_window.has_method("refresh_respawn_player_targets"):
 		devtools_window.refresh_respawn_player_targets(target_rows)
+
+
+func refresh_debug_player_targets(
+	target_rows: Array,
+	invincible_rows: Array,
+	infinite_lives_rows: Array,
+	player_frozen_rows: Array
+) -> void:
+	latest_target_rows = target_rows
+	latest_invincible_rows = invincible_rows
+	latest_infinite_lives_rows = infinite_lives_rows
+	latest_player_frozen_rows = player_frozen_rows
+
+	if window == null || !is_instance_valid(window):
+		return
+
+	window.refresh_kill_player_targets(latest_target_rows)
+	if window.has_method("refresh_respawn_player_targets"):
+		window.refresh_respawn_player_targets(latest_target_rows)
+	if window.has_method("refresh_invincible_targets"):
+		window.refresh_invincible_targets(latest_invincible_rows)
+	if window.has_method("refresh_infinite_lives_targets"):
+		window.refresh_infinite_lives_targets(latest_infinite_lives_rows)
+	if window.has_method("refresh_player_frozen_targets"):
+		window.refresh_player_frozen_targets(latest_player_frozen_rows)
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:
@@ -96,20 +134,20 @@ func _connect_window_signals() -> void:
 		window.kill_player_requested.connect(_on_kill_player_requested)
 
 
-func _on_toggle_invincible_requested() -> void:
-	toggle_invincible_requested.emit()
+func _on_toggle_invincible_requested(target_player_id: String) -> void:
+	toggle_invincible_requested.emit(target_player_id)
 
 
-func _on_toggle_infinite_lives_requested() -> void:
-	toggle_infinite_lives_requested.emit()
+func _on_toggle_infinite_lives_requested(target_player_id: String) -> void:
+	toggle_infinite_lives_requested.emit(target_player_id)
 
 
 func _on_toggle_freeze_world_requested() -> void:
 	toggle_freeze_world_requested.emit()
 
 
-func _on_toggle_freeze_player_requested() -> void:
-	toggle_freeze_player_requested.emit()
+func _on_toggle_freeze_player_requested(target_player_id: String) -> void:
+	toggle_freeze_player_requested.emit(target_player_id)
 
 
 func _on_kill_player_requested(selected_player_id: String) -> void:

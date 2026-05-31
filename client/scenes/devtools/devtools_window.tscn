@@ -56,12 +56,12 @@ text = "Invincible"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer2" unique_id=1418502128]
+[node name="InvincibleStatusOption" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer2" unique_id=1384574312]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "Status"
 
 [node name="CenterContainer3" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=491936647]
 layout_mode = 2
@@ -76,12 +76,12 @@ text = "Infinite Lives"
 [node name="CenterContainer4" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1499251787]
 layout_mode = 2
 
-[node name="InfiniteLivesStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer4" unique_id=191291838]
+[node name="InfiniteLivesOption" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer4" unique_id=1106889936]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "Status"
 
 [node name="CenterContainer5" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1069885471]
 layout_mode = 2
@@ -116,12 +116,12 @@ text = "Freeze Player"
 [node name="CenterContainer8" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=957371410]
 layout_mode = 2
 
-[node name="PlayerFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer8" unique_id=920680265]
+[node name="PlayerFrozenOption" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer8" unique_id=986549236]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "Status"
 
 [node name="CenterContainer9" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1257293104]
 layout_mode = 2

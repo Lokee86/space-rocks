@@ -265,6 +265,7 @@ Shared schema/generation:
 - If broader work appears necessary, stop and propose a follow-up prompt.
 - Do not produce no-work prompts. Verification belongs in commands/checkpoints, not in separate agent prompts.
 - When completing a numbered prompt, announce completion status at the bottom of the response/report using the exact format `**NOT COMPLETED PROMPT X**`, replacing `X` with the prompt number and removing `NOT` if the task succeeded.
+- Do not report notes or edits unless explicitly asked to do so.
 
 ## Default Agent Report
 

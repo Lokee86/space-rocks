@@ -3,6 +3,7 @@ class_name GameplayDevtoolsContext
 
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsHotkeyFlow := preload("res://scripts/devtools/devtools_hotkey_flow.gd")
+const DebugKillTargetModel := preload("res://scripts/gameplay/devtools/debug_kill_target_model.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var debug_flow
@@ -12,6 +13,7 @@ var hotkey_flow
 var has_received_gameplay_state := false
 var placement_request_route: Callable
 var local_player_id := ""
+var target_model
 
 
 func configure(connection_service_ref) -> void:
@@ -25,6 +27,7 @@ func configure(connection_service_ref) -> void:
 		Callable(self, "request_placement_action")
 	)
 	devtools_window_controller = DevtoolsWindowController.new()
+	target_model = DebugKillTargetModel.new()
 	_connect_window_controller_signals()
 
 
@@ -53,6 +56,21 @@ func apply_debug_status(status: Dictionary) -> void:
 		devtools_window_controller.apply_debug_status(status)
 
 
+func apply_gameplay_state(state: Dictionary) -> void:
+	apply_debug_status(state.get("debug_status", {}))
+	if target_model == null:
+		return
+
+	target_model.apply_gameplay_state(state)
+	if devtools_window_controller != null:
+		devtools_window_controller.refresh_debug_player_targets(
+			target_model.target_rows(),
+			target_model.invincible_target_rows(),
+			target_model.infinite_lives_target_rows(),
+			target_model.player_frozen_target_rows()
+		)
+
+
 func _connect_window_controller_signals() -> void:
 	if !devtools_window_controller.toggle_invincible_requested.is_connected(request_toggle_invincible):
 		devtools_window_controller.toggle_invincible_requested.connect(request_toggle_invincible)
@@ -68,16 +86,16 @@ func _connect_window_controller_signals() -> void:
 		devtools_window_controller.respawn_player_requested.connect(request_respawn_player)
 
 
-func request_toggle_invincible() -> void:
+func request_toggle_invincible(target_player_id: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	debug_flow.toggle_invincible()
+	debug_flow.toggle_invincible(target_player_id)
 
 
-func request_toggle_infinite_lives() -> void:
+func request_toggle_infinite_lives(target_player_id: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	debug_flow.toggle_infinite_lives()
+	debug_flow.toggle_infinite_lives(target_player_id)
 
 
 func request_toggle_freeze_world() -> void:
@@ -86,10 +104,10 @@ func request_toggle_freeze_world() -> void:
 	debug_flow.toggle_freeze_world()
 
 
-func request_toggle_freeze_player() -> void:
+func request_toggle_freeze_player(target_player_id: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	debug_flow.toggle_freeze_player()
+	debug_flow.toggle_freeze_player(target_player_id)
 
 
 func configure_local_player_id(player_id: String) -> void:

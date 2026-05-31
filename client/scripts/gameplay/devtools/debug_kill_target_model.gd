@@ -4,6 +4,7 @@ extends RefCounted
 var self_id := ""
 var server_players: Dictionary = {}
 var player_lifecycle: Dictionary = {}
+var debug_statuses: Dictionary = {}
 
 
 func apply_gameplay_state(state: Dictionary) -> void:
@@ -14,6 +15,9 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var lifecycle_value = state.get("player_lifecycle", {})
 	player_lifecycle = lifecycle_value if lifecycle_value is Dictionary else {}
+
+	var debug_statuses_value = state.get("debug_statuses", {})
+	debug_statuses = debug_statuses_value if debug_statuses_value is Dictionary else {}
 
 
 func target_rows() -> Array:
@@ -42,3 +46,55 @@ func target_rows() -> Array:
 		})
 
 	return rows
+
+
+func invincible_target_rows() -> Array:
+	return _feature_target_rows("invincible")
+
+
+func infinite_lives_target_rows() -> Array:
+	return _feature_target_rows("infinite_lives")
+
+
+func player_frozen_target_rows() -> Array:
+	return _feature_target_rows("player_frozen")
+
+
+func _feature_target_rows(feature_key: String) -> Array:
+	var rows: Array = []
+	var feature_label: String = _feature_label(feature_key)
+	for row in target_rows():
+		var player_id_text: String = str(row.get("player_id", ""))
+		var status_text: String = str(row.get("status", "DEAD"))
+		var feature_on: bool = _player_feature_enabled(player_id_text, feature_key)
+		var feature_status: String = "ON" if feature_on else "OFF"
+		var label: String = "%s: %s (%s %s)" % [player_id_text, status_text, feature_label, feature_status]
+
+		rows.append({
+			"player_id": player_id_text,
+			"status": status_text,
+			"alive": bool(row.get("alive", false)),
+			"is_self": bool(row.get("is_self", false)),
+			"label": label,
+		})
+
+	return rows
+
+
+func _player_feature_enabled(player_id: String, feature_key: String) -> bool:
+	var player_status_value = debug_statuses.get(player_id, {})
+	if !(player_status_value is Dictionary):
+		return false
+	return bool(player_status_value.get(feature_key, false))
+
+
+func _feature_label(feature_key: String) -> String:
+	match feature_key:
+		"invincible":
+			return "INVINCIBLE"
+		"infinite_lives":
+			return "INFINITE LIVES"
+		"player_frozen":
+			return "PLAYER FROZEN"
+		_:
+			return feature_key.to_upper()

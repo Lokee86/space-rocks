@@ -2,10 +2,10 @@ extends Window
 
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 
-signal toggle_invincible_requested
-signal toggle_infinite_lives_requested
+signal toggle_invincible_requested(target_player_id: String)
+signal toggle_infinite_lives_requested(target_player_id: String)
 signal toggle_freeze_world_requested
-signal toggle_freeze_player_requested
+signal toggle_freeze_player_requested(target_player_id: String)
 signal kill_player_requested(player_id: String)
 signal spawn_asteroid_placement_requested
 signal spawn_player_placement_requested(target_player_id: String)
@@ -22,10 +22,10 @@ signal respawn_player_placement_requested(target_player_id: String)
 @onready var respawn_player_button: Button = %RespawnPlayerButton
 @onready var spawn_player_select: OptionButton = %SpawnPlayerSelect
 @onready var respawn_player_select: OptionButton = %RespawnPlayerSelect
-@onready var invincible_status_label: Label = %InvincibleStatusLabel
-@onready var infinite_lives_status_label: Label = %InfiniteLivesStatusLabel
+@onready var invincible_status_option: OptionButton = %InvincibleStatusOption
+@onready var infinite_lives_option: OptionButton = %InfiniteLivesOption
 @onready var world_frozen_status_label: Label = %WorldFrozenStatusLabel
-@onready var player_frozen_status_label: Label = %PlayerFrozenStatusLabel
+@onready var player_frozen_option: OptionButton = %PlayerFrozenOption
 @onready var kill_player_button: Button = %KillPlayerButton
 @onready var kill_player_select: OptionButton = %KillPlayerSelect
 
@@ -69,10 +69,19 @@ func toggle_window() -> void:
 
 
 func set_debug_status(status: Dictionary) -> void:
-	invincible_status_label.text = "Invincible: %s" % _on_off(status.get("invincible", false))
-	infinite_lives_status_label.text = "Infinite lives: %s" % _on_off(status.get("infinite_lives", false))
 	world_frozen_status_label.text = "World frozen: %s" % _on_off(status.get("world_frozen", false))
-	player_frozen_status_label.text = "Player frozen: %s" % _on_off(status.get("player_frozen", false))
+
+
+func refresh_invincible_targets(rows: Array) -> void:
+	_refresh_target_option(invincible_status_option, rows)
+
+
+func refresh_infinite_lives_targets(rows: Array) -> void:
+	_refresh_target_option(infinite_lives_option, rows)
+
+
+func refresh_player_frozen_targets(rows: Array) -> void:
+	_refresh_target_option(player_frozen_option, rows)
 
 
 func refresh_kill_player_targets(target_rows: Array) -> void:
@@ -153,11 +162,11 @@ func _on_close_requested() -> void:
 
 
 func _on_invincible_button_pressed() -> void:
-	toggle_invincible_requested.emit()
+	toggle_invincible_requested.emit(_selected_metadata_as_string(invincible_status_option))
 
 
 func _on_infinite_lives_button_pressed() -> void:
-	toggle_infinite_lives_requested.emit()
+	toggle_infinite_lives_requested.emit(_selected_metadata_as_string(infinite_lives_option))
 
 
 func _on_freeze_world_button_pressed() -> void:
@@ -165,7 +174,7 @@ func _on_freeze_world_button_pressed() -> void:
 
 
 func _on_freeze_player_button_pressed() -> void:
-	toggle_freeze_player_requested.emit()
+	toggle_freeze_player_requested.emit(_selected_metadata_as_string(player_frozen_option))
 
 
 func _on_kill_player_button_pressed() -> void:
@@ -210,3 +219,28 @@ func _selected_metadata_as_string(select: OptionButton) -> String:
 	if selected_index < 0:
 		return ""
 	return str(select.get_item_metadata(selected_index))
+
+
+func _refresh_target_option(select: OptionButton, rows: Array) -> void:
+	var previous_player_id := ""
+	var previous_index := select.get_selected()
+	if previous_index >= 0:
+		previous_player_id = str(select.get_item_metadata(previous_index))
+
+	select.clear()
+
+	var selected_index := -1
+	for row in rows:
+		if !(row is Dictionary):
+			continue
+
+		var label := str(row.get("label", ""))
+		var player_id := str(row.get("player_id", ""))
+		select.add_item(label)
+		var item_index := select.get_item_count() - 1
+		select.set_item_metadata(item_index, player_id)
+		if player_id == previous_player_id:
+			selected_index = item_index
+
+	if selected_index >= 0:
+		select.select(selected_index)
