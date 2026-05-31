@@ -1,12 +1,18 @@
-//go:build !devtools
+//go:build nodevtools
 
 package devtools
 
 import "testing"
 
-func TestShouldHandleCommand_DefaultBuild(t *testing.T) {
+func TestEnabled_NodevtoolsBuild(t *testing.T) {
+	if Enabled() {
+		t.Fatalf("Enabled() = true, want false in nodevtools build")
+	}
+}
+
+func TestShouldHandleCommand_NodevtoolsBuild(t *testing.T) {
 	if got := ShouldHandleCommand(PacketTypeToggleDebugInvincible); got {
-		t.Fatalf("ShouldHandleCommand(devtools packet) = true, want false in default build")
+		t.Fatalf("ShouldHandleCommand(devtools packet) = true, want false in nodevtools build")
 	}
 
 	if got := ShouldHandleCommand("input"); got {

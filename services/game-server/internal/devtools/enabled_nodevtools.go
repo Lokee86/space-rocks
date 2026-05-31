@@ -1,4 +1,4 @@
-//go:build !devtools
+//go:build nodevtools
 
 package devtools
 

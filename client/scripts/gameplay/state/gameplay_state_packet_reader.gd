@@ -2,6 +2,7 @@ extends RefCounted
 
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
+const FIELD_DEBUG_STATUS := "debug_status"
 
 
 static func read(data: Dictionary) -> Dictionary:
@@ -15,7 +16,7 @@ static func read(data: Dictionary) -> Dictionary:
 	if has_lives:
 		lives = int(data[Packets.FIELD_LIVES])
 
-	var debug_status = data.get(Packets.FIELD_DEBUG_STATUS, {})
+	var debug_status = data.get(FIELD_DEBUG_STATUS, {})
 	if !(debug_status is Dictionary):
 		debug_status = {}
 

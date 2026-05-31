@@ -98,11 +98,11 @@ Current ownership paths:
 
 - packet schema (devtools): `shared/packets/debug.toml`
 - packet output routing: `shared/packets/outputs.toml`
-- generated server packets: `services/game-server/internal/game/packets.go`
 - generated server devtools packets: `services/game-server/internal/devtools/packets_generated.go`
 - generated client packets: `client/scripts/networking/packets/packets.gd`
-- server debug packet handling: `services/game-server/internal/game/debug_handler.go`
-- server debug status projection: `services/game-server/internal/game/debug_status.go`
+- server devtools behavior: `services/game-server/internal/devtools/`
+- controlled game access seam: `services/game-server/internal/game/export_devtools*.go`
+- websocket routing: `services/game-server/internal/networking/`
 - client devtools window/context: `client/scripts/devtools/`
 - client gameplay input routing: `client/scripts/gameplay/input/`
 - gameplay shell state routing: `client/scripts/shell/gameplay_shell_flow.gd`
@@ -121,9 +121,9 @@ When `1` is pressed:
 }
 ```
 
-4. The server debug handler receives `PacketTypeToggleDebugInvincible`.
+4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
 5. The server toggles player `DamageOptions.Invincible`.
-6. State packets report the result through `StatePacket.debug_status.invincible`.
+6. Outgoing devtools status reports the result through `debug_status.invincible` (devtools-owned wrapper field).
 
 When `2` is pressed:
 
@@ -137,9 +137,9 @@ When `2` is pressed:
 }
 ```
 
-4. The server debug handler receives `PacketTypeToggleDebugInfiniteLives`.
+4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
 5. The server toggles session `LifeOptions.InfiniteLives`.
-6. State packets report the result through `StatePacket.debug_status.infinite_lives`.
+6. Outgoing devtools status reports the result through `debug_status.infinite_lives` (devtools-owned wrapper field).
 
 When `3` is pressed:
 
@@ -153,10 +153,10 @@ When `3` is pressed:
 }
 ```
 
-4. The server debug handler receives `PacketTypeToggleDebugFreezeWorld`.
+4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
 5. The server toggles `WorldSimulationOptions`.
 6. Simulation gates read `worldSimulationOptions` before asteroid spawning, asteroid advancing, bullet advancing, and collision passes.
-7. State packets report the result through `StatePacket.debug_status.world_frozen`.
+7. Outgoing devtools status reports the result through `debug_status.world_frozen` (devtools-owned wrapper field).
 
 When `4` is pressed:
 
@@ -170,10 +170,10 @@ When `4` is pressed:
 }
 ```
 
-4. The server debug handler receives `PacketTypeToggleDebugFreezePlayer`.
+4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
 5. The server toggles player/session `Suspension.DevFrozen`.
 6. Ship capability helpers use `Ship.IsSuspended()` before accepting input, moving, shooting, or taking asteroid collision damage.
-7. State packets report the result through `StatePacket.debug_status.player_frozen`.
+7. Outgoing devtools status reports the result through `debug_status.player_frozen` (devtools-owned wrapper field).
 
 ## Logging
 
@@ -258,7 +258,7 @@ TODO: add focused server tests for world freeze:
 
 Keep debug gameplay effects server-side. The client may request a toggle, but the server should own whether the toggle is active and how it affects simulation.
 
-Keep devtools isolated. Debug packet handling should stay in the small same-package debug handler, while gameplay-affecting state should live in the owning gameplay seams: `DamageOptions`, `LifeOptions`, `Suspension`, and `WorldSimulationOptions`. Use `DebugStatus` projection for client display.
+Keep devtools isolated. Debug packet handling and outgoing debug status wrapping should stay in `internal/devtools`, while gameplay-affecting state should live in the owning gameplay seams via `export_devtools*.go`: `DamageOptions`, `LifeOptions`, `Suspension`, and `WorldSimulationOptions`.
 
 Avoid scattering one-off debug booleans through core logic. Prefer small gameplay-owned capability methods so collision/combat code only asks simple gameplay questions.
 
