@@ -111,7 +111,10 @@ Devtools packet boundary rules:
 
 - devtools packet schema lives in `shared/packets/debug.toml`
 - server devtools packet output lives in `services/game-server/internal/devtools/packets_generated.go`
+- targeted devtools UI packets use `target_player_id` where applicable
+- when adding a new generated GDS packet helper, also add its builder mapping in `shared/packets/outputs.toml`
 - regenerate Go and GDS packet outputs together when shared packet schema changes
+- packet pull remains unsupported; edit shared packet TOML and push generated outputs
 - client readers should not depend on generated game packet constants for devtools-only wrapper fields such as `debug_status`
 
 ## Devtool Hotkeys
@@ -119,15 +122,20 @@ Devtools packet boundary rules:
 Canonical gameplay devtool hotkeys:
 
 - `0`: window
-- `1`: invincible
-- `2`: infinite lives
+- `1`: invincible (self-targeting hotkey)
+- `2`: infinite lives (self-targeting hotkey)
 - `3`: world freeze
-- `4`: player freeze
+- `4`: player freeze (self-targeting hotkey)
 - `5`: kill local player
 - `6`: spawn new player
 - `7`: force respawn local player
 - `8`: reserved
 - `9`: reserved
+
+Devtools window targeting notes:
+
+- the devtools window can target other players for invincibility, infinite lives, and player freeze
+- world freeze remains room-wide/global
 
 ## Run The Server
 

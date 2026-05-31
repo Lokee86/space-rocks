@@ -8,7 +8,7 @@
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(565, 291)
+size = Vector2i(600, 291)
 script = ExtResource("1_devtools_window")
 
 [node name="Control" type="Control" parent="." unique_id=214690309]
@@ -308,36 +308,55 @@ text = "Status"
 [node name="CenterContainer7" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1000151081]
 layout_mode = 2
 
-[node name="SpawnsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer7" unique_id=117226616]
+[node name="AddLivesButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer7" unique_id=117226616]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Add Lives
+"
 
 [node name="CenterContainer8" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1853451153]
 layout_mode = 2
 
-[node name="StatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8" unique_id=227687143]
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8" unique_id=352131932]
+layout_mode = 2
+
+[node name="AddLivesAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8/HBoxContainer" unique_id=2066590154]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "Status"
+
+[node name="AddLivesSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8/HBoxContainer" unique_id=1334390180]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
 
 [node name="CenterContainer11" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1112428056]
 layout_mode = 2
 
-[node name="SpawnPlayerButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer11" unique_id=598542177]
+[node name="AddScoreButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer11" unique_id=598542177]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Add Score"
 
 [node name="CenterContainer12" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1501216883]
 layout_mode = 2
 
-[node name="SpawnPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer12" unique_id=149968425]
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer12" unique_id=1121594609]
+layout_mode = 2
+
+[node name="AddScoreAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer12/HBoxContainer" unique_id=352064000]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AddScoreSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer12/HBoxContainer" unique_id=1800938734]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 fit_to_longest_item = false
@@ -348,16 +367,25 @@ popup/item_0/id = 0
 [node name="CenterContainer15" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=25036607]
 layout_mode = 2
 
-[node name="RespawnPlayerButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer15" unique_id=2123196868]
+[node name="SetLivesButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer15" unique_id=2123196868]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Set Score"
 
-[node name="CenterContainer16" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1862748227]
+[node name="CenterContainer14" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1151980265]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer14" unique_id=1817226645]
 layout_mode = 2
 
-[node name="NoOp" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer16" unique_id=1380772687]
+[node name="SetLivesAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=757946872]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SetLivesSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=1516796155]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 fit_to_longest_item = false
@@ -369,19 +397,28 @@ popup/item_0/id = 0
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="NoOp" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer13" unique_id=700888395]
+[node name="SetLivesButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer13" unique_id=700888395]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NoOp"
+text = "Set Lives"
 
-[node name="CenterContainer14" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1151980265]
+[node name="CenterContainer16" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1862748227]
 layout_mode = 2
-size_flags_horizontal = 3
 
-[node name="NoOp" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer14" unique_id=391011392]
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer16" unique_id=1152735234]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "NoOp
-"
+
+[node name="SetScoreAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer16/HBoxContainer" unique_id=540620897]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SetScoreSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer16/HBoxContainer" unique_id=499610014]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0

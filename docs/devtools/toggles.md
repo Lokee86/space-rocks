@@ -12,9 +12,12 @@ Invincibility prevents the player from dying when colliding with asteroids.
 
 Current behavior:
 
-- Triggered from the Godot client with `1`.
+- `1` is a self-targeting hotkey from the Godot client; it toggles the local/requesting player.
+- The devtools window can target any listed player.
 - The client sends a `toggle_debug_invincible` packet.
-- The Go server toggles the flag for that player instance.
+- Targeted UI sends `toggle_debug_invincible` with `target_player_id`.
+- If `target_player_id` is omitted, the server falls back to the requesting player.
+- The Go server toggles the flag for the targeted player instance.
 - Ship/asteroid collision skips players with debug invincibility enabled.
 - Movement, shooting, and scoring still work normally.
 - Pressing `1` again disables invincibility.
@@ -27,9 +30,12 @@ Infinite lives lets the player die normally without reducing their lives count.
 
 Current behavior:
 
-- Triggered from the Godot client with `2`.
+- `2` is a self-targeting hotkey from the Godot client; it toggles the local/requesting player.
+- The devtools window can target any listed player.
 - The client sends a `toggle_debug_infinite_lives` packet.
-- The Go server toggles the flag for that player session.
+- Targeted UI sends `toggle_debug_infinite_lives` with `target_player_id`.
+- If `target_player_id` is omitted, the server falls back to the requesting player.
+- The Go server toggles the flag for the targeted player session.
 - Ship/asteroid collision still kills and despawns the player.
 - The death event still fires and the respawn delay still applies.
 - The player's lives count does not decrease while the toggle is enabled.
@@ -63,9 +69,12 @@ Player freeze suspends one player for debugging through the same ship capability
 
 Current behavior:
 
-- Triggered from the Godot client with `4`.
+- `4` is a self-targeting hotkey from the Godot client; it toggles the local/requesting player.
+- The devtools window can target any listed player.
 - The client sends a `toggle_debug_freeze_player` packet.
-- The Go server toggles the freeze flag for that player instance.
+- Targeted UI sends `toggle_debug_freeze_player` with `target_player_id`.
+- If `target_player_id` is omitted, the server falls back to the requesting player.
+- The Go server toggles the freeze flag for the targeted player instance.
 - The toggle blocks input, movement, shooting, and asteroid collision damage through `Ship.IsSuspended()` and related capability helpers.
 - Pause and dev freeze are separate suspension causes. Dev freeze does not call `Pause()` or `Resume()`.
 - Calling `Resume()` does not unfreeze a dev-frozen player.
@@ -77,10 +86,10 @@ Current behavior:
 Current number-key map:
 
 - `0`: window
-- `1`: invincible
-- `2`: infinite lives
+- `1`: invincible (self-targeting hotkey)
+- `2`: infinite lives (self-targeting hotkey)
 - `3`: world freeze
-- `4`: player freeze
+- `4`: player freeze (self-targeting hotkey)
 - `5`: kill local player
 - `6`: spawn new player
 - `7`: force respawn local player
@@ -91,6 +100,27 @@ Current `6` modifier behavior:
 
 - `Shift+6`: spawn asteroid
 - `Alt+6`: spawn bullet
+
+## Devtools Window Targeting
+
+Devtools window actions use player-select controls populated from current gameplay state for:
+
+- Kill Player
+- Respawn Player
+- Spawn Player
+- Invincibility
+- Infinite Lives
+- Freeze Player
+
+Invincibility, Infinite Lives, and Freeze Player selectors show only feature state wording (`Active`/`Inactive`) for the selected player:
+
+- `InvincibleStatusSelect`
+- `InfiniteLivesSelect`
+- `PlayerFrozenSelect`
+
+Kill/Respawn selectors may still use lifecycle wording such as `ALIVE`/`DEAD`.
+
+World Freeze remains a global room toggle and does not use a player selector.
 
 ## Implementation
 
@@ -134,7 +164,16 @@ When `1` is pressed:
 
 4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
 5. The server toggles player `DamageOptions.Invincible`.
-6. Outgoing devtools status reports the result through `debug_status.invincible` (devtools-owned wrapper field).
+6. Targeted devtools UI can send `Packets.toggle_debug_invincible_target_player_packet(target_player_id)`, which emits:
+
+```gdscript
+{
+	"type": "toggle_debug_invincible",
+	"target_player_id": "<player-id>"
+}
+```
+
+7. Outgoing devtools status reports the receiving/local player's state through `debug_status.invincible` and the per-player map through `debug_statuses` for devtools window target/status rows.
 
 When `2` is pressed:
 
@@ -150,7 +189,16 @@ When `2` is pressed:
 
 4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
 5. The server toggles session `LifeOptions.InfiniteLives`.
-6. Outgoing devtools status reports the result through `debug_status.infinite_lives` (devtools-owned wrapper field).
+6. Targeted devtools UI can send `Packets.toggle_debug_infinite_lives_target_player_packet(target_player_id)`, which emits:
+
+```gdscript
+{
+	"type": "toggle_debug_infinite_lives",
+	"target_player_id": "<player-id>"
+}
+```
+
+7. Outgoing devtools status reports the receiving/local player's state through `debug_status.infinite_lives` and the per-player map through `debug_statuses` for devtools window target/status rows.
 
 When `3` is pressed:
 
@@ -164,10 +212,11 @@ When `3` is pressed:
 }
 ```
 
-4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
-5. The server toggles `WorldSimulationOptions`.
-6. Simulation gates read `worldSimulationOptions` before asteroid spawning, asteroid advancing, bullet advancing, and collision passes.
-7. Outgoing devtools status reports the result through `debug_status.world_frozen` (devtools-owned wrapper field).
+4. World Freeze is global and has no `target_player_id` field.
+5. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
+6. The server toggles `WorldSimulationOptions`.
+7. Simulation gates read `worldSimulationOptions` before asteroid spawning, asteroid advancing, bullet advancing, and collision passes.
+8. Outgoing devtools status reports the receiving/local player's view through `debug_status.world_frozen`, while per-player rows still come from `debug_statuses`.
 
 When `4` is pressed:
 
@@ -184,7 +233,16 @@ When `4` is pressed:
 4. `internal/networking` classifies packet type first and routes enabled devtools packets to `devtools.HandleCommand(...)`.
 5. The server toggles player/session `Suspension.DevFrozen`.
 6. Ship capability helpers use `Ship.IsSuspended()` before accepting input, moving, shooting, or taking asteroid collision damage.
-7. Outgoing devtools status reports the result through `debug_status.player_frozen` (devtools-owned wrapper field).
+7. Targeted devtools UI can send `Packets.toggle_debug_freeze_player_target_player_packet(target_player_id)`, which emits:
+
+```gdscript
+{
+	"type": "toggle_debug_freeze_player",
+	"target_player_id": "<player-id>"
+}
+```
+
+8. Outgoing devtools status reports the receiving/local player's state through `debug_status.player_frozen` and the per-player map through `debug_statuses` for devtools window target/status rows.
 
 ## Logging
 
@@ -193,6 +251,7 @@ Toggling invincibility logs through the custom server logger:
 ```go
 logging.Game.Info("debug invincibility toggled",
 	logging.FieldPlayerID, playerID,
+	"target_player_id", targetPlayerID,
 	"enabled", enabled,
 )
 ```
@@ -202,6 +261,7 @@ Toggling infinite lives logs similarly:
 ```go
 logging.Game.Info("debug infinite lives toggled",
 	logging.FieldPlayerID, playerID,
+	"target_player_id", targetPlayerID,
 	"enabled", enabled,
 )
 ```
@@ -220,6 +280,7 @@ Toggling player freeze logs similarly:
 ```go
 logging.Game.Info("debug player freeze toggled",
 	logging.FieldPlayerID, playerID,
+	"target_player_id", targetPlayerID,
 	"enabled", enabled,
 )
 ```
@@ -255,6 +316,8 @@ Current coverage checks:
 - player freeze contributes to `Ship.IsSuspended()`
 - player freeze blocks ship input and movement capabilities
 - paused and frozen players remain suspended until both causes are cleared
+- kill player can target another player
+- source player remains unchanged when kill-player targets another player
 
 TODO: add focused server tests for world freeze:
 
@@ -264,6 +327,15 @@ TODO: add focused server tests for world freeze:
 - frozen world does not spawn bullets
 - frozen world does not run ship/asteroid collisions
 - frozen world does not run bullet/asteroid collisions, scoring, or asteroid splits
+
+TODO: add focused server tests for targeted player toggles:
+
+- invincibility can target another player
+- infinite lives can target another player
+- freeze player can target another player
+- source player remains unchanged when another player is targeted
+
+TODO: if/when a `Game.Start` duplicate-simulation-goroutine guard test exists, list it here.
 
 ## Design Notes
 
