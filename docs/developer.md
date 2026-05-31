@@ -107,6 +107,13 @@ Generated packet outputs:
 
 Edit the relevant split packet TOML file for schema/content changes. Edit `shared/packets/outputs.toml` only when changing output routing.
 
+Devtools packet boundary rules:
+
+- devtools packet schema lives in `shared/packets/debug.toml`
+- server devtools packet output lives in `services/game-server/internal/devtools/packets_generated.go`
+- regenerate Go and GDS packet outputs together when shared packet schema changes
+- client readers should not depend on generated game packet constants for devtools-only wrapper fields such as `debug_status`
+
 ## Devtool Hotkeys
 
 Canonical gameplay devtool hotkeys:

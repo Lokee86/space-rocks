@@ -362,6 +362,12 @@ Devtools are client-triggered and server-authoritative. Client input requests de
 - packet schema lives in `shared/packets/debug.toml`
 - output routing lives in `shared/packets/outputs.toml`
 - generated server devtools packets live in `services/game-server/internal/devtools/packets_generated.go`
+- `internal/networking` classifies incoming packet type first
+- default/disabled builds ignore devtools command packets before game handling
+- `internal/devtools` owns command handling and devtools status wrapping
+- `internal/game/export_devtools*.go` exposes only controlled operations needed by devtools
+- `internal/game` must not import `internal/devtools`
+- generated game packets must not own devtools command packet constants or devtools-only command fields
 - debug actions route through real gameplay seams, not parallel debug-only gameplay logic
 - current actions include invincible, infinite lives, world freeze, player freeze, kill, spawn, and respawn
 
