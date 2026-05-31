@@ -13,6 +13,7 @@ import (
 type Game struct {
 	mu                        sync.Mutex
 	stopSimulation            chan struct{}
+	startSimulationOnce       sync.Once
 	stopSimulationOnce        sync.Once
 	nextID                    int
 	spawner                   *spawning.Spawner
@@ -45,7 +46,9 @@ func New() *Game {
 }
 
 func (game *Game) Start() {
-	go game.runSimulation()
+	game.startSimulationOnce.Do(func() {
+		go game.runSimulation()
+	})
 }
 
 func (game *Game) Stop() {

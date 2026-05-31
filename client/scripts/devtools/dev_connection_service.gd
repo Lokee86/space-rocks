@@ -1,5 +1,4 @@
 extends RefCounted
-class_name DevConnectionService
 
 const DevSpawnPacketBuilder := preload("res://scripts/devtools/dev_spawn_packet_builder.gd")
 const DevRespawnPacketBuilder := preload("res://scripts/devtools/dev_respawn_packet_builder.gd")
