@@ -22,10 +22,10 @@ signal respawn_player_placement_requested(target_player_id: String)
 @onready var respawn_player_button: Button = %RespawnPlayerButton
 @onready var spawn_player_select: OptionButton = %SpawnPlayerSelect
 @onready var respawn_player_select: OptionButton = %RespawnPlayerSelect
-@onready var invincible_status_option: OptionButton = %InvincibleStatusOption
-@onready var infinite_lives_option: OptionButton = %InfiniteLivesOption
+@onready var invincible_status_select: OptionButton = %InvincibleStatusSelect
+@onready var infinite_lives_select: OptionButton = %InfiniteLivesSelect
 @onready var world_frozen_status_label: Label = %WorldFrozenStatusLabel
-@onready var player_frozen_option: OptionButton = %PlayerFrozenOption
+@onready var player_frozen_select: OptionButton = %PlayerFrozenSelect
 @onready var kill_player_button: Button = %KillPlayerButton
 @onready var kill_player_select: OptionButton = %KillPlayerSelect
 
@@ -73,15 +73,15 @@ func set_debug_status(status: Dictionary) -> void:
 
 
 func refresh_invincible_targets(rows: Array) -> void:
-	_refresh_target_option(invincible_status_option, rows)
+	_refresh_target_option(invincible_status_select, rows)
 
 
 func refresh_infinite_lives_targets(rows: Array) -> void:
-	_refresh_target_option(infinite_lives_option, rows)
+	_refresh_target_option(infinite_lives_select, rows)
 
 
 func refresh_player_frozen_targets(rows: Array) -> void:
-	_refresh_target_option(player_frozen_option, rows)
+	_refresh_target_option(player_frozen_select, rows)
 
 
 func refresh_kill_player_targets(target_rows: Array) -> void:
@@ -162,11 +162,11 @@ func _on_close_requested() -> void:
 
 
 func _on_invincible_button_pressed() -> void:
-	toggle_invincible_requested.emit(_selected_metadata_as_string(invincible_status_option))
+	toggle_invincible_requested.emit(_selected_metadata_as_string(invincible_status_select))
 
 
 func _on_infinite_lives_button_pressed() -> void:
-	toggle_infinite_lives_requested.emit(_selected_metadata_as_string(infinite_lives_option))
+	toggle_infinite_lives_requested.emit(_selected_metadata_as_string(infinite_lives_select))
 
 
 func _on_freeze_world_button_pressed() -> void:
@@ -174,7 +174,7 @@ func _on_freeze_world_button_pressed() -> void:
 
 
 func _on_freeze_player_button_pressed() -> void:
-	toggle_freeze_player_requested.emit(_selected_metadata_as_string(player_frozen_option))
+	toggle_freeze_player_requested.emit(_selected_metadata_as_string(player_frozen_select))
 
 
 func _on_kill_player_button_pressed() -> void:
