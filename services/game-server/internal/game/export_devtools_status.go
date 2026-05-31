@@ -4,12 +4,20 @@ type DevtoolsStatus struct {
 	Invincible    bool
 	InfiniteLives bool
 	WorldFrozen   bool
+	AsteroidsFrozen bool
+	BulletsFrozen bool
+	SpawningFrozen bool
+	CollisionsFrozen bool
 	PlayerFrozen  bool
 }
 
 func (game *Game) DevtoolsStatusFor(playerID string) DevtoolsStatus {
 	status := DevtoolsStatus{
 		WorldFrozen: game.worldSimulationOptions.IsWorldFrozen(),
+		AsteroidsFrozen: !game.worldSimulationOptions.AsteroidsCanMove(),
+		BulletsFrozen: !game.worldSimulationOptions.BulletsCanMove(),
+		SpawningFrozen: !game.worldSimulationOptions.CanSpawnAsteroids(),
+		CollisionsFrozen: !game.worldSimulationOptions.CanRunCollisions(),
 	}
 
 	if session, ok := game.playerSessions[playerID]; ok {

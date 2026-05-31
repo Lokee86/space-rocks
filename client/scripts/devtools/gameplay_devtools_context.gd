@@ -101,10 +101,10 @@ func request_toggle_infinite_lives(target_player_id: String = "") -> void:
 	debug_flow.toggle_infinite_lives(target_player_id)
 
 
-func request_toggle_freeze_world() -> void:
+func request_toggle_freeze_world(freeze_target: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	debug_flow.toggle_freeze_world()
+	debug_flow.toggle_freeze_world(freeze_target)
 
 
 func request_toggle_freeze_player(target_player_id: String = "") -> void:

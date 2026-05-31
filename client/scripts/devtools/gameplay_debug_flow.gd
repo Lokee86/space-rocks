@@ -65,11 +65,15 @@ func toggle_infinite_lives(target_player_id := "") -> void:
 	ClientLogger.game_info("Devtools infinite lives toggle sent")
 
 
-func toggle_freeze_world() -> void:
+func toggle_freeze_world(freeze_target := "") -> void:
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.toggle_debug_freeze_world_packet())
-	ClientLogger.game_info("Devtools world freeze toggle sent")
+	if freeze_target == "" || freeze_target == "all":
+		connection_service.send_packet(Packets.toggle_debug_freeze_world_packet())
+		ClientLogger.game_info("Devtools world freeze toggle sent")
+	else:
+		connection_service.send_packet(Packets.toggle_debug_freeze_world_target_packet(freeze_target))
+		ClientLogger.game_info("Devtools world freeze toggle sent (freeze_target='%s')" % freeze_target)
 
 
 func toggle_freeze_player(target_player_id := "") -> void:

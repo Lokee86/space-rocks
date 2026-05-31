@@ -160,6 +160,53 @@ func TestDebugFreezeWorldToggleCanBeDisabled(t *testing.T) {
 	if scenario.worldFrozen() {
 		t.Fatal("expected second toggle to unfreeze world")
 	}
+	if scenario.asteroidsFrozen() {
+		t.Fatal("expected second toggle to unfreeze asteroids")
+	}
+	if scenario.bulletsFrozen() {
+		t.Fatal("expected second toggle to unfreeze bullets")
+	}
+	if scenario.spawningFrozen() {
+		t.Fatal("expected second toggle to unfreeze spawning")
+	}
+	if scenario.collisionsFrozen() {
+		t.Fatal("expected second toggle to unfreeze collisions")
+	}
+}
+
+func TestDebugFreezeWorldFromPartialFreezeEnablesAllFlags(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
+		FreezeTarget: "asteroids",
+	})
+	if !scenario.asteroidsFrozen() {
+		t.Fatal("expected asteroid-only freeze to enable asteroid freeze")
+	}
+	if scenario.worldFrozen() {
+		t.Fatal("expected asteroid-only freeze not to mark world as fully frozen")
+	}
+
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
+	if !scenario.worldFrozen() {
+		t.Fatal("expected aggregate freeze to fully freeze world from partial state")
+	}
+	if !scenario.asteroidsFrozen() {
+		t.Fatal("expected aggregate freeze to keep asteroids frozen")
+	}
+	if !scenario.bulletsFrozen() {
+		t.Fatal("expected aggregate freeze to freeze bullets")
+	}
+	if !scenario.spawningFrozen() {
+		t.Fatal("expected aggregate freeze to freeze spawning")
+	}
+	if !scenario.collisionsFrozen() {
+		t.Fatal("expected aggregate freeze to freeze collisions")
+	}
 }
 
 func TestDebugFrozenWorldDoesNotMoveAsteroids(t *testing.T) {
@@ -180,6 +227,55 @@ func TestDebugFrozenWorldDoesNotMoveAsteroids(t *testing.T) {
 	asteroid := scenario.state(playerID).Asteroids["asteroid-1"]
 	if asteroid.X != 10 || asteroid.Y != 20 {
 		t.Fatalf("expected frozen asteroid to stay at (10, 20), got (%v, %v)", asteroid.X, asteroid.Y)
+	}
+}
+
+func TestDebugFreezeAsteroidsOnlyStopsAsteroidMovement(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+	scenario.placeMovingAsteroid(
+		"asteroid-1",
+		physics.Vector2{X: 10, Y: 20},
+		physics.Vector2{X: 100, Y: 50},
+		1,
+	)
+	scenario.placeBullet(
+		"bullet-1",
+		playerID,
+		physics.Vector2{X: 200, Y: 300},
+		physics.Vector2{X: 80, Y: 40},
+	)
+
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
+		FreezeTarget: "asteroids",
+	})
+	scenario.step(1)
+
+	asteroid := scenario.state(playerID).Asteroids["asteroid-1"]
+	if asteroid.X != 10 || asteroid.Y != 20 {
+		t.Fatalf("expected asteroid-only freeze to keep asteroid at (10, 20), got (%v, %v)", asteroid.X, asteroid.Y)
+	}
+
+	bullet := scenario.state(playerID).Bullets["bullet-1"]
+	if bullet.X == 200 && bullet.Y == 300 {
+		t.Fatalf("expected bullet not to remain fully frozen at (200, 300), got (%v, %v)", bullet.X, bullet.Y)
+	}
+
+	if scenario.worldFrozen() {
+		t.Fatal("expected asteroid-only freeze not to mark world fully frozen")
+	}
+	if !scenario.asteroidsFrozen() {
+		t.Fatal("expected asteroid-only freeze to set asteroids frozen")
+	}
+	if scenario.bulletsFrozen() {
+		t.Fatal("expected asteroid-only freeze not to freeze bullets")
+	}
+	if scenario.spawningFrozen() {
+		t.Fatal("expected asteroid-only freeze not to freeze spawning")
+	}
+	if scenario.collisionsFrozen() {
+		t.Fatal("expected asteroid-only freeze not to freeze collisions")
 	}
 }
 
@@ -247,6 +343,40 @@ func TestDebugFrozenWorldDoesNotSpawnAsteroids(t *testing.T) {
 	}
 }
 
+func TestDebugFreezeSpawningOnlyStopsAsteroidSpawning(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+	scenario.setAsteroidSpawnElapsed(constants.AsteroidSpawnInterval)
+
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
+		FreezeTarget: "spawning",
+	})
+	scenario.step(constants.AsteroidSpawnInterval)
+
+	if asteroids := scenario.state(playerID).Asteroids; len(asteroids) != 0 {
+		t.Fatalf("expected spawning-only freeze not to spawn asteroids, got %d", len(asteroids))
+	}
+	if elapsed := scenario.asteroidSpawnElapsed(); elapsed != constants.AsteroidSpawnInterval {
+		t.Fatalf("expected spawning-only freeze not to advance/reset spawn timer, got %v", elapsed)
+	}
+	if scenario.worldFrozen() {
+		t.Fatal("expected spawning-only freeze not to mark world fully frozen")
+	}
+	if !scenario.spawningFrozen() {
+		t.Fatal("expected spawning-only freeze to set spawning frozen")
+	}
+	if scenario.asteroidsFrozen() {
+		t.Fatal("expected spawning-only freeze not to freeze asteroids")
+	}
+	if scenario.bulletsFrozen() {
+		t.Fatal("expected spawning-only freeze not to freeze bullets")
+	}
+	if scenario.collisionsFrozen() {
+		t.Fatal("expected spawning-only freeze not to freeze collisions")
+	}
+}
+
 func TestDebugFrozenWorldDoesNotRunShipAsteroidCollisions(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()
@@ -267,6 +397,45 @@ func TestDebugFrozenWorldDoesNotRunShipAsteroidCollisions(t *testing.T) {
 	}
 	if events := scenario.pendingEventCount(playerID); events != 0 {
 		t.Fatalf("expected no ship death events while frozen, got %d", events)
+	}
+}
+
+func TestDebugFreezeCollisionsOnlyStopsCollisionConsequences(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	player := scenario.playerState(playerID, playerID)
+	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
+
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
+		FreezeTarget: "collisions",
+	})
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	if scenario.playerPendingDespawn(playerID) {
+		t.Fatal("expected collisions-only freeze not to mark colliding player for despawn")
+	}
+	if packet := scenario.state(playerID); packet.Lives != constants.PlayerStartingLives {
+		t.Fatalf("expected collisions-only freeze to preserve %d lives, got %d", constants.PlayerStartingLives, packet.Lives)
+	}
+	if events := scenario.pendingEventCount(playerID); events != 0 {
+		t.Fatalf("expected no ship death events while collisions are frozen, got %d", events)
+	}
+	if scenario.worldFrozen() {
+		t.Fatal("expected collisions-only freeze not to mark world fully frozen")
+	}
+	if !scenario.collisionsFrozen() {
+		t.Fatal("expected collisions-only freeze to set collisions frozen")
+	}
+	if scenario.asteroidsFrozen() {
+		t.Fatal("expected collisions-only freeze not to freeze asteroids")
+	}
+	if scenario.bulletsFrozen() {
+		t.Fatal("expected collisions-only freeze not to freeze bullets")
+	}
+	if scenario.spawningFrozen() {
+		t.Fatal("expected collisions-only freeze not to freeze spawning")
 	}
 }
 

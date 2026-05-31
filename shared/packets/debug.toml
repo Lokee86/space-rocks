@@ -19,6 +19,30 @@ json = "world_frozen"
 type = "bool"
 
 [[structs.fields]]
+name = "asteroids_frozen"
+go_name = "AsteroidsFrozen"
+json = "asteroids_frozen"
+type = "bool"
+
+[[structs.fields]]
+name = "bullets_frozen"
+go_name = "BulletsFrozen"
+json = "bullets_frozen"
+type = "bool"
+
+[[structs.fields]]
+name = "spawning_frozen"
+go_name = "SpawningFrozen"
+json = "spawning_frozen"
+type = "bool"
+
+[[structs.fields]]
+name = "collisions_frozen"
+go_name = "CollisionsFrozen"
+json = "collisions_frozen"
+type = "bool"
+
+[[structs.fields]]
 name = "player_frozen"
 go_name = "PlayerFrozen"
 json = "player_frozen"
@@ -70,6 +94,12 @@ name = "direction_y"
 go_name = "DirectionY"
 json = "direction_y"
 type = "float"
+
+[[structs.fields]]
+name = "freeze_target"
+go_name = "FreezeTarget"
+json = "freeze_target"
+type = "string"
 
 [[packet_types]]
 id = "toggle_debug_invincible"
@@ -132,6 +162,14 @@ id = "toggle_debug_freeze_world_packet"
 
 [builders.body]
 type = "toggle_debug_freeze_world"
+
+[[builders]]
+id = "toggle_debug_freeze_world_target_packet"
+args = ["freeze_target"]
+
+[builders.body]
+type = "toggle_debug_freeze_world"
+freeze_target = "$freeze_target"
 
 [[builders]]
 id = "toggle_debug_freeze_player_packet"

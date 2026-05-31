@@ -3,7 +3,7 @@ extends RefCounted
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
-signal toggle_freeze_world_requested
+signal toggle_freeze_world_requested(freeze_target: String)
 signal toggle_freeze_player_requested(target_player_id: String)
 signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
 signal respawn_player_requested(target_player_id: String)
@@ -142,8 +142,8 @@ func _on_toggle_infinite_lives_requested(target_player_id: String) -> void:
 	toggle_infinite_lives_requested.emit(target_player_id)
 
 
-func _on_toggle_freeze_world_requested() -> void:
-	toggle_freeze_world_requested.emit()
+func _on_toggle_freeze_world_requested(freeze_target: String) -> void:
+	toggle_freeze_world_requested.emit(freeze_target)
 
 
 func _on_toggle_freeze_player_requested(target_player_id: String) -> void:

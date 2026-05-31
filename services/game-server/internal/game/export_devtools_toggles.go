@@ -10,6 +10,26 @@ func (game *Game) DevtoolsSetWorldFrozen(enabled bool) {
 	game.worldSimulationOptions.SetFreezeWorld(enabled)
 }
 
+func (game *Game) DevtoolsToggleFreezeWorld() bool {
+	return game.worldSimulationOptions.ToggleFreezeWorld()
+}
+
+func (game *Game) DevtoolsToggleFreezeAsteroids() bool {
+	return game.worldSimulationOptions.ToggleFreezeAsteroids()
+}
+
+func (game *Game) DevtoolsToggleFreezeBullets() bool {
+	return game.worldSimulationOptions.ToggleFreezeBullets()
+}
+
+func (game *Game) DevtoolsToggleFreezeSpawning() bool {
+	return game.worldSimulationOptions.ToggleFreezeSpawning()
+}
+
+func (game *Game) DevtoolsToggleFreezeCollisions() bool {
+	return game.worldSimulationOptions.ToggleFreezeCollisions()
+}
+
 func (game *Game) DevtoolsPlayerInvincible(playerID string) (bool, bool) {
 	found := false
 	invincible := false
