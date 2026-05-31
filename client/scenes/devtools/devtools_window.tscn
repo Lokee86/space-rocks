@@ -8,54 +8,49 @@
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(600, 291)
+size = Vector2i(600, 320)
 script = ExtResource("1_devtools_window")
-
-[node name="Control" type="Control" parent="." unique_id=214690309]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="Panel" type="Panel" parent="." unique_id=704527748]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 1.0
-offset_right = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_d7pth")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel" unique_id=84552176]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1820755793]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="LeftPanel" type="GridContainer" parent="Panel/HBoxContainer" unique_id=1520436722]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer" unique_id=84552176]
+layout_mode = 2
+
+[node name="LeftPanel" type="GridContainer" parent="CenterContainer/HBoxContainer" unique_id=1520436722]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1417348712]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1417348712]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer" unique_id=816769564]
+[node name="InvincibleButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer" unique_id=816769564]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Invincible"
 
-[node name="CenterContainer2" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1763126971]
+[node name="CenterContainer2" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1763126971]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InvincibleStatusSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer2" unique_id=780609620]
+[node name="InvincibleStatusSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer2" unique_id=780609620]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -64,20 +59,20 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer3" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=491936647]
+[node name="CenterContainer3" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=491936647]
 layout_mode = 2
 
-[node name="InfiniteLivesButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer3" unique_id=1460655812]
+[node name="InfiniteLivesButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer3" unique_id=1460655812]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Infinite Lives"
 
-[node name="CenterContainer4" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1499251787]
+[node name="CenterContainer4" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1499251787]
 layout_mode = 2
 
-[node name="InfiniteLivesSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer4" unique_id=2088870131]
+[node name="InfiniteLivesSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer4" unique_id=2088870131]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -86,40 +81,40 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer5" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1069885471]
+[node name="CenterContainer5" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1069885471]
 layout_mode = 2
 
-[node name="FreezeWorldButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer5" unique_id=203052911]
+[node name="FreezeWorldButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer5" unique_id=203052911]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze World"
 
-[node name="CenterContainer6" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1286600823]
+[node name="CenterContainer6" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1286600823]
 layout_mode = 2
 
-[node name="WorldFrozenStatusLabel" type="Label" parent="Panel/HBoxContainer/LeftPanel/CenterContainer6" unique_id=1038932319]
+[node name="WorldFrozenStatusLabel" type="Label" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer6" unique_id=1038932319]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer7" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1398406923]
+[node name="CenterContainer7" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1398406923]
 layout_mode = 2
 
-[node name="FreezePlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer7" unique_id=1920186547]
+[node name="FreezePlayerButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer7" unique_id=1920186547]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze Player"
 
-[node name="CenterContainer8" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=957371410]
+[node name="CenterContainer8" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=957371410]
 layout_mode = 2
 
-[node name="PlayerFrozenSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer8" unique_id=1256152725]
+[node name="PlayerFrozenSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer8" unique_id=1256152725]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -128,20 +123,20 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer9" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1257293104]
+[node name="CenterContainer9" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1257293104]
 layout_mode = 2
 
-[node name="KillPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer9" unique_id=663071140]
+[node name="KillPlayerButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer9" unique_id=663071140]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Kill Player"
 
-[node name="CenterContainer10" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=467308905]
+[node name="CenterContainer10" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=467308905]
 layout_mode = 2
 
-[node name="KillPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer10" unique_id=68962983]
+[node name="KillPlayerSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer10" unique_id=68962983]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -150,20 +145,20 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer11" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1587433922]
+[node name="CenterContainer11" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1587433922]
 layout_mode = 2
 
-[node name="SpawnPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer11" unique_id=1895868783]
+[node name="SpawnPlayerButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer11" unique_id=1895868783]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Spawn Player"
 
-[node name="CenterContainer12" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1773331478]
+[node name="CenterContainer12" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1773331478]
 layout_mode = 2
 
-[node name="SpawnPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer12" unique_id=1594026504]
+[node name="SpawnPlayerSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer12" unique_id=1594026504]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -172,20 +167,20 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer15" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1642896355]
+[node name="CenterContainer15" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1642896355]
 layout_mode = 2
 
-[node name="RespawnPlayerButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer15" unique_id=1552414892]
+[node name="RespawnPlayerButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer15" unique_id=1552414892]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Repawn Player"
 
-[node name="CenterContainer16" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1144734693]
+[node name="CenterContainer16" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1144734693]
 layout_mode = 2
 
-[node name="RespawnPlayerSelect" type="OptionButton" parent="Panel/HBoxContainer/LeftPanel/CenterContainer16" unique_id=877755333]
+[node name="RespawnPlayerSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer16" unique_id=877755333]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -194,22 +189,22 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer13" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=757329232]
+[node name="CenterContainer13" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=757329232]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SpawnAsteroidButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer13" unique_id=904544533]
+[node name="SpawnAsteroidButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer13" unique_id=904544533]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Spawn Asteroid"
 
-[node name="CenterContainer14" type="CenterContainer" parent="Panel/HBoxContainer/LeftPanel" unique_id=1846458076]
+[node name="CenterContainer14" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1846458076]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SpawnBulletButton" type="Button" parent="Panel/HBoxContainer/LeftPanel/CenterContainer14" unique_id=1730392900]
+[node name="SpawnBulletButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer14" unique_id=1730392900]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -217,98 +212,121 @@ size_flags_vertical = 3
 text = "Spawn Bullet
 "
 
-[node name="RightPanel-Inactive" type="GridContainer" parent="Panel/HBoxContainer" unique_id=1162894039]
+[node name="CenterContainer17" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=365902890]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ClearAsteroidsButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer17" unique_id=1114090600]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Clear Asteroids
+"
+
+[node name="CenterContainer18" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=153274143]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ClearBulletsButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer18" unique_id=1990372765]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Clear Bullets"
+
+[node name="RightPanel-Inactive" type="GridContainer" parent="CenterContainer/HBoxContainer" unique_id=1162894039]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=360690084]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=360690084]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="FreezeAsteroidsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer" unique_id=868550675]
+[node name="FreezeAsteroidsButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer" unique_id=868550675]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze Asteroids"
 
-[node name="CenterContainer2" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=818738564]
+[node name="CenterContainer2" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=818738564]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="FreezeAsteroidsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer2" unique_id=926666414]
+[node name="FreezeAsteroidsStatusLabel" type="Label" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer2" unique_id=926666414]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer3" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=103699217]
+[node name="CenterContainer3" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=103699217]
 layout_mode = 2
 
-[node name="FreezeSpawnsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer3" unique_id=1345399629]
+[node name="FreezeSpawnsButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer3" unique_id=1345399629]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze Spawns"
 
-[node name="CenterContainer4" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=538259509]
+[node name="CenterContainer4" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=538259509]
 layout_mode = 2
 
-[node name="FreezeSpawnsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer4" unique_id=1050035243]
+[node name="FreezeSpawnsStatusLabel" type="Label" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer4" unique_id=1050035243]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer5" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=93266472]
+[node name="CenterContainer5" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=93266472]
 layout_mode = 2
 
-[node name="FreezeCollisionsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer5" unique_id=2084171564]
+[node name="FreezeCollisionsButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer5" unique_id=2084171564]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze Collisions"
 
-[node name="CenterContainer6" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1397599456]
+[node name="CenterContainer6" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1397599456]
 layout_mode = 2
 
-[node name="FreezeCollisionsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer6" unique_id=880390274]
+[node name="FreezeCollisionsStatusLabel" type="Label" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer6" unique_id=880390274]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer9" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1564023011]
+[node name="CenterContainer9" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1564023011]
 layout_mode = 2
 
-[node name="FreezeBulletsButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer9" unique_id=1890629802]
+[node name="FreezeBulletsButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer9" unique_id=1890629802]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Freeze Bullets"
 
-[node name="CenterContainer10" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=397231240]
+[node name="CenterContainer10" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=397231240]
 layout_mode = 2
 
-[node name="FreezeBulletsStatusLabel" type="Label" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer10" unique_id=1188270871]
+[node name="FreezeBulletsStatusLabel" type="Label" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer10" unique_id=1188270871]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Status"
 
-[node name="CenterContainer7" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1000151081]
+[node name="CenterContainer7" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1000151081]
 layout_mode = 2
 
-[node name="AddLivesButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer7" unique_id=117226616]
+[node name="AddLivesButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer7" unique_id=117226616]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -316,17 +334,17 @@ size_flags_vertical = 3
 text = "Add Lives
 "
 
-[node name="CenterContainer8" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1853451153]
+[node name="CenterContainer8" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1853451153]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8" unique_id=352131932]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer8" unique_id=352131932]
 layout_mode = 2
 
-[node name="AddLivesAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8/HBoxContainer" unique_id=2066590154]
+[node name="AddLivesAmount" type="LineEdit" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer8/HBoxContainer" unique_id=2066590154]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="AddLivesSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer8/HBoxContainer" unique_id=1334390180]
+[node name="AddLivesSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer8/HBoxContainer" unique_id=1334390180]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -335,27 +353,27 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer11" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1112428056]
+[node name="CenterContainer11" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1112428056]
 layout_mode = 2
 
-[node name="AddScoreButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer11" unique_id=598542177]
+[node name="AddScoreButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer11" unique_id=598542177]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Add Score"
 
-[node name="CenterContainer12" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1501216883]
+[node name="CenterContainer12" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1501216883]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer12" unique_id=1121594609]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer12" unique_id=1121594609]
 layout_mode = 2
 
-[node name="AddScoreAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer12/HBoxContainer" unique_id=352064000]
+[node name="AddScoreAmount" type="LineEdit" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer12/HBoxContainer" unique_id=352064000]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="AddScoreSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer12/HBoxContainer" unique_id=1800938734]
+[node name="AddScoreSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer12/HBoxContainer" unique_id=1800938734]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -364,27 +382,28 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer15" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=25036607]
+[node name="CenterContainer15" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=25036607]
 layout_mode = 2
 
-[node name="SetLivesButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer15" unique_id=2123196868]
+[node name="SetScoreButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer15" unique_id=2123196868]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Set Score"
 
-[node name="CenterContainer14" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1151980265]
+[node name="CenterContainer14" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1151980265]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer14" unique_id=1817226645]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14" unique_id=1817226645]
 layout_mode = 2
 
-[node name="SetLivesAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=757946872]
+[node name="SetLivesAmount" type="LineEdit" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=757946872]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="SetLivesSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=1516796155]
+[node name="SetLivesSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=1516796155]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
@@ -393,28 +412,28 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer13" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=838492043]
+[node name="CenterContainer13" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=838492043]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SetLivesButton" type="Button" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer13" unique_id=700888395]
+[node name="SetLivesButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer13" unique_id=700888395]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Set Lives"
 
-[node name="CenterContainer16" type="CenterContainer" parent="Panel/HBoxContainer/RightPanel-Inactive" unique_id=1862748227]
+[node name="CenterContainer16" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1862748227]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer16" unique_id=1152735234]
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer16" unique_id=1152735234]
 layout_mode = 2
 
-[node name="SetScoreAmount" type="LineEdit" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer16/HBoxContainer" unique_id=540620897]
+[node name="SetScoreAmount" type="LineEdit" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer16/HBoxContainer" unique_id=540620897]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="SetScoreSelect" type="OptionButton" parent="Panel/HBoxContainer/RightPanel-Inactive/CenterContainer16/HBoxContainer" unique_id=499610014]
+[node name="SetScoreSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer16/HBoxContainer" unique_id=499610014]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2

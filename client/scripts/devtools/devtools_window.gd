@@ -6,6 +6,10 @@ signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
 signal toggle_freeze_world_requested(freeze_target: String)
 signal toggle_freeze_player_requested(target_player_id: String)
+signal set_score_requested(target_player_id: String, score: int)
+signal add_score_requested(target_player_id: String, amount: int)
+signal set_lives_requested(target_player_id: String, lives: int)
+signal add_lives_requested(target_player_id: String, amount: int)
 signal kill_player_requested(player_id: String)
 signal spawn_asteroid_placement_requested
 signal spawn_player_placement_requested(target_player_id: String)
@@ -36,6 +40,18 @@ signal respawn_player_placement_requested(target_player_id: String)
 @onready var player_frozen_select: OptionButton = %PlayerFrozenSelect
 @onready var kill_player_button: Button = %KillPlayerButton
 @onready var kill_player_select: OptionButton = %KillPlayerSelect
+@onready var set_score_amount: LineEdit = %SetScoreAmount
+@onready var set_score_select: OptionButton = %SetScoreSelect
+@onready var set_score_button: Button = %SetScoreButton
+@onready var add_score_amount: LineEdit = %AddScoreAmount
+@onready var add_score_select: OptionButton = %AddScoreSelect
+@onready var add_score_button: Button = %AddScoreButton
+@onready var set_lives_amount: LineEdit = %SetLivesAmount
+@onready var set_lives_select: OptionButton = %SetLivesSelect
+@onready var set_lives_button: Button = %SetLivesButton
+@onready var add_lives_amount: LineEdit = %AddLivesAmount
+@onready var add_lives_select: OptionButton = %AddLivesSelect
+@onready var add_lives_button: Button = %AddLivesButton
 
 
 func _ready() -> void:
@@ -67,6 +83,14 @@ func _ready() -> void:
 		respawn_player_button.pressed.connect(_on_respawn_player_button_pressed)
 	if !kill_player_button.pressed.is_connected(_on_kill_player_button_pressed):
 		kill_player_button.pressed.connect(_on_kill_player_button_pressed)
+	if !set_score_button.pressed.is_connected(_on_set_score_button_pressed):
+		set_score_button.pressed.connect(_on_set_score_button_pressed)
+	if !add_score_button.pressed.is_connected(_on_add_score_button_pressed):
+		add_score_button.pressed.connect(_on_add_score_button_pressed)
+	if !set_lives_button.pressed.is_connected(_on_set_lives_button_pressed):
+		set_lives_button.pressed.connect(_on_set_lives_button_pressed)
+	if !add_lives_button.pressed.is_connected(_on_add_lives_button_pressed):
+		add_lives_button.pressed.connect(_on_add_lives_button_pressed)
 
 
 func show_window() -> void:
@@ -177,6 +201,13 @@ func refresh_respawn_player_targets(target_rows: Array) -> void:
 		respawn_player_select.select(selected_index)
 
 
+func refresh_counter_player_targets(rows: Array) -> void:
+	_refresh_target_option(set_score_select, rows)
+	_refresh_target_option(add_score_select, rows)
+	_refresh_target_option(set_lives_select, rows)
+	_refresh_target_option(add_lives_select, rows)
+
+
 func _on_close_requested() -> void:
 	hide_window()
 
@@ -211,6 +242,46 @@ func _on_freeze_collisions_button_pressed() -> void:
 
 func _on_freeze_player_button_pressed() -> void:
 	toggle_freeze_player_requested.emit(_selected_metadata_as_string(player_frozen_select))
+
+
+func _on_set_score_button_pressed() -> void:
+	if !_line_edit_has_valid_int(set_score_amount):
+		return
+	var target_player_id: String = _selected_player_id(set_score_select)
+	if target_player_id == "":
+		return
+	var score: int = _line_edit_int(set_score_amount)
+	set_score_requested.emit(target_player_id, score)
+
+
+func _on_add_score_button_pressed() -> void:
+	if !_line_edit_has_valid_int(add_score_amount):
+		return
+	var target_player_id: String = _selected_player_id(add_score_select)
+	if target_player_id == "":
+		return
+	var amount: int = _line_edit_int(add_score_amount)
+	add_score_requested.emit(target_player_id, amount)
+
+
+func _on_set_lives_button_pressed() -> void:
+	if !_line_edit_has_valid_int(set_lives_amount):
+		return
+	var target_player_id: String = _selected_player_id(set_lives_select)
+	if target_player_id == "":
+		return
+	var lives: int = _line_edit_int(set_lives_amount)
+	set_lives_requested.emit(target_player_id, lives)
+
+
+func _on_add_lives_button_pressed() -> void:
+	if !_line_edit_has_valid_int(add_lives_amount):
+		return
+	var target_player_id: String = _selected_player_id(add_lives_select)
+	if target_player_id == "":
+		return
+	var amount: int = _line_edit_int(add_lives_amount)
+	add_lives_requested.emit(target_player_id, amount)
 
 
 func _on_kill_player_button_pressed() -> void:
@@ -255,6 +326,22 @@ func _selected_metadata_as_string(select: OptionButton) -> String:
 	if selected_index < 0:
 		return ""
 	return str(select.get_item_metadata(selected_index))
+
+
+func _selected_player_id(select: OptionButton) -> String:
+	return _selected_metadata_as_string(select)
+
+
+func _line_edit_has_valid_int(input: LineEdit) -> bool:
+	var text: String = input.text.strip_edges()
+	return text.is_valid_int()
+
+
+func _line_edit_int(input: LineEdit) -> int:
+	var text: String = input.text.strip_edges()
+	if !text.is_valid_int():
+		return 0
+	return int(text)
 
 
 func _refresh_target_option(select: OptionButton, rows: Array) -> void:

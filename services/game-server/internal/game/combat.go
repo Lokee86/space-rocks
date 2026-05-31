@@ -175,9 +175,13 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *entities.Ship)
 	lives := 0
 	respawnDelay := 0.0
 	if session, ok := game.playerSessions[playerID]; ok {
-		session.Score = player.Score
-		session.RecordDeath()
-		player.Lives = session.Lives
+		game.setPlayerScoreLocked(playerID, player.Score)
+		if session.LifeOptions.CanLoseLives() && session.Lives > 0 {
+			game.addPlayerLivesLocked(playerID, -1)
+		}
+		if session.Lives > 0 {
+			session.RespawnCooldown = constants.PlayerRespawnDelay
+		}
 		lives = session.Lives
 		respawnDelay = session.RespawnCooldown
 	}

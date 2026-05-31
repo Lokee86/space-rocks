@@ -14,6 +14,12 @@ func TestIsCommandType(t *testing.T) {
 		{packetType: PacketTypeDebugKillPlayer, want: true},
 		{packetType: PacketTypeDebugSpawnEntity, want: true},
 		{packetType: PacketTypeDebugRespawnPlayer, want: true},
+		{packetType: PacketTypeDebugSetScore, want: true},
+		{packetType: PacketTypeDebugAddScore, want: true},
+		{packetType: PacketTypeDebugSetLives, want: true},
+		{packetType: PacketTypeDebugAddLives, want: true},
+		{packetType: PacketTypeDebugClearBullets, want: true},
+		{packetType: PacketTypeDebugClearAsteroids, want: true},
 		{packetType: "input", want: false},
 	}
 

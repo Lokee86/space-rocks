@@ -8,9 +8,7 @@ import (
 func (game *Game) removeReadyPlayers() {
 	for id, player := range game.state.Players {
 		if player.ReadyForRemoval() {
-			if session, ok := game.playerSessions[id]; ok {
-				session.Score = player.Score
-			}
+			game.setPlayerScoreLocked(id, player.Score)
 			delete(game.state.Players, id)
 		}
 	}

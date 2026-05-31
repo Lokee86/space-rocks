@@ -18,14 +18,11 @@ func (game *Game) awardScore(award scoring.Award) {
 		return
 	}
 
-	player.AddScore(award.Points)
-	if session, ok := game.playerSessions[award.PlayerID]; ok {
-		session.Score = player.Score
-	}
+	change := game.addPlayerScoreLocked(award.PlayerID, award.Points)
 	logging.Game.Debug("score awarded",
 		logging.FieldPlayerID, award.PlayerID,
 		"source", string(award.Reason),
 		"amount", award.Points,
-		"score", player.Score,
+		"score", change.After,
 	)
 }

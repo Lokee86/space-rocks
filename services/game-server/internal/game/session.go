@@ -48,15 +48,6 @@ func (session *playerSession) CanRespawn() bool {
 	return session.Lives > 0 && session.RespawnCooldown == 0
 }
 
-func (session *playerSession) RecordDeath() {
-	if session.LifeOptions.CanLoseLives() && session.Lives > 0 {
-		session.Lives--
-	}
-	if session.Lives > 0 {
-		session.RespawnCooldown = constants.PlayerRespawnDelay
-	}
-}
-
 func (session *playerSession) NewShip(position physics.Vector2) *entities.Ship {
 	return &entities.Ship{
 		ID:         session.ID,

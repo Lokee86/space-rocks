@@ -48,6 +48,19 @@ func target_rows() -> Array:
 	return rows
 
 
+func active_player_target_rows() -> Array:
+	var rows: Array = []
+	for player_id in server_players.keys():
+		var player_id_text: String = str(player_id)
+		rows.append({
+			"player_id": player_id_text,
+			"label": player_id_text,
+			"is_self": player_id_text == self_id,
+		})
+
+	return rows
+
+
 func invincible_target_rows() -> Array:
 	var rows: Array = []
 	for row in target_rows():

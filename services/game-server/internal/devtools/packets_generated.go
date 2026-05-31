@@ -9,6 +9,12 @@ const (
 	PacketTypeDebugKillPlayer          = "debug_kill_player"
 	PacketTypeDebugSpawnEntity         = "debug_spawn_entity"
 	PacketTypeDebugRespawnPlayer       = "debug_respawn_player"
+	PacketTypeDebugSetScore            = "debug_set_score"
+	PacketTypeDebugAddScore            = "debug_add_score"
+	PacketTypeDebugSetLives            = "debug_set_lives"
+	PacketTypeDebugAddLives            = "debug_add_lives"
+	PacketTypeDebugClearBullets        = "debug_clear_bullets"
+	PacketTypeDebugClearAsteroids      = "debug_clear_asteroids"
 )
 
 type DebugCommand struct {
@@ -21,6 +27,9 @@ type DebugCommand struct {
 	DirectionX     float64 `json:"direction_x"`
 	DirectionY     float64 `json:"direction_y"`
 	FreezeTarget   string  `json:"freeze_target"`
+	Score          int     `json:"score"`
+	Amount         int     `json:"amount"`
+	Lives          int     `json:"lives"`
 }
 
 type DebugStatus struct {

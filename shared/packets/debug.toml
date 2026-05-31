@@ -101,6 +101,21 @@ go_name = "FreezeTarget"
 json = "freeze_target"
 type = "string"
 
+[[structs.fields]]
+name = "score"
+json = "score"
+type = "int"
+
+[[structs.fields]]
+name = "amount"
+json = "amount"
+type = "int"
+
+[[structs.fields]]
+name = "lives"
+json = "lives"
+type = "int"
+
 [[packet_types]]
 id = "toggle_debug_invincible"
 value = "toggle_debug_invincible"
@@ -128,6 +143,30 @@ value = "debug_spawn_entity"
 [[packet_types]]
 id = "debug_respawn_player"
 value = "debug_respawn_player"
+
+[[packet_types]]
+id = "debug_set_score"
+value = "debug_set_score"
+
+[[packet_types]]
+id = "debug_add_score"
+value = "debug_add_score"
+
+[[packet_types]]
+id = "debug_set_lives"
+value = "debug_set_lives"
+
+[[packet_types]]
+id = "debug_add_lives"
+value = "debug_add_lives"
+
+[[packet_types]]
+id = "debug_clear_bullets"
+value = "debug_clear_bullets"
+
+[[packet_types]]
+id = "debug_clear_asteroids"
+value = "debug_clear_asteroids"
 
 [[builders]]
 id = "toggle_debug_invincible_packet"
@@ -198,3 +237,51 @@ args = ["target_player_id"]
 [builders.body]
 type = "debug_kill_player"
 target_player_id = "$target_player_id"
+
+[[builders]]
+id = "debug_set_score_packet"
+args = ["target_player_id", "score"]
+
+[builders.body]
+type = "debug_set_score"
+target_player_id = "$target_player_id"
+score = "$score"
+
+[[builders]]
+id = "debug_add_score_packet"
+args = ["target_player_id", "amount"]
+
+[builders.body]
+type = "debug_add_score"
+target_player_id = "$target_player_id"
+amount = "$amount"
+
+[[builders]]
+id = "debug_set_lives_packet"
+args = ["target_player_id", "lives"]
+
+[builders.body]
+type = "debug_set_lives"
+target_player_id = "$target_player_id"
+lives = "$lives"
+
+[[builders]]
+id = "debug_add_lives_packet"
+args = ["target_player_id", "amount"]
+
+[builders.body]
+type = "debug_add_lives"
+target_player_id = "$target_player_id"
+amount = "$amount"
+
+[[builders]]
+id = "debug_clear_bullets_packet"
+
+[builders.body]
+type = "debug_clear_bullets"
+
+[[builders]]
+id = "debug_clear_asteroids_packet"
+
+[builders.body]
+type = "debug_clear_asteroids"

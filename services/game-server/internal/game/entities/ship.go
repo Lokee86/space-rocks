@@ -30,10 +30,6 @@ func (ship *Ship) ResetShootCooldown() {
 	ship.ShootCooldown = ship.Stats.BulletCooldown
 }
 
-func (ship *Ship) AddScore(score int) {
-	ship.Score += score
-}
-
 func (ship *Ship) Position() physics.Vector2 {
 	return physics.Vector2{X: ship.X, Y: ship.Y}
 }

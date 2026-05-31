@@ -16,6 +16,12 @@ const TYPE_TOGGLE_DEBUG_FREEZE_PLAYER := "toggle_debug_freeze_player"
 const TYPE_DEBUG_KILL_PLAYER := "debug_kill_player"
 const TYPE_DEBUG_SPAWN_ENTITY := "debug_spawn_entity"
 const TYPE_DEBUG_RESPAWN_PLAYER := "debug_respawn_player"
+const TYPE_DEBUG_SET_SCORE := "debug_set_score"
+const TYPE_DEBUG_ADD_SCORE := "debug_add_score"
+const TYPE_DEBUG_SET_LIVES := "debug_set_lives"
+const TYPE_DEBUG_ADD_LIVES := "debug_add_lives"
+const TYPE_DEBUG_CLEAR_BULLETS := "debug_clear_bullets"
+const TYPE_DEBUG_CLEAR_ASTEROIDS := "debug_clear_asteroids"
 const TYPE_CREATE_ROOM_REQUEST := "create_room_request"
 const TYPE_JOIN_ROOM_REQUEST := "join_room_request"
 const TYPE_LEAVE_ROOM_REQUEST := "leave_room_request"
@@ -27,6 +33,7 @@ const TYPE_ROOM_SNAPSHOT := "room_snapshot"
 const TYPE_ROOM_STATE_CHANGED := "room_state_changed"
 const TYPE_ROOM_ERROR := "room_error"
 
+const FIELD_AMOUNT := "amount"
 const FIELD_ASTEROIDS := "asteroids"
 const FIELD_ASTEROIDS_FROZEN := "asteroids_frozen"
 const FIELD_BACK := "back"
@@ -160,6 +167,44 @@ static func debug_kill_target_player_packet(target_player_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "debug_kill_player"
 	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	return packet
+
+static func debug_set_score_packet(target_player_id, score) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_set_score"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	packet[FIELD_SCORE] = score
+	return packet
+
+static func debug_add_score_packet(target_player_id, amount) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_add_score"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	packet[FIELD_AMOUNT] = amount
+	return packet
+
+static func debug_set_lives_packet(target_player_id, lives) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_set_lives"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	packet[FIELD_LIVES] = lives
+	return packet
+
+static func debug_add_lives_packet(target_player_id, amount) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_add_lives"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	packet[FIELD_AMOUNT] = amount
+	return packet
+
+static func debug_clear_bullets_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_clear_bullets"
+	return packet
+
+static func debug_clear_asteroids_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_clear_asteroids"
 	return packet
 
 static func client_config_packet(visible_world_width, visible_world_height) -> Dictionary:
