@@ -83,6 +83,18 @@ These are server-authoritative toggles sent through generated packets where appl
 
 Devtools must route through real gameplay seams. Do not create parallel debug-only gameplay logic that bypasses damage, lives, spawning, scoring, movement, room/session, or modifier systems.
 
+Devtools UI/controller/read-model code belongs under `client/scripts/devtools/`. Devtools scenes belong under `client/scenes/devtools/`.
+
+Do not place devtools presentation/read models under `client/scripts/gameplay/` just because they consume gameplay state.
+
+Player-targeting `OptionButton` nodes in the devtools window should use `Select` naming, not `Option` naming. Current select node names:
+
+- `InvincibleStatusSelect`
+- `InfiniteLivesSelect`
+- `PlayerFrozenSelect`
+
+Keep `docs/devtools/toggles.md` as the canonical behavior reference.
+
 ## Pause / Menu Context
 
 Pause plumbing exists:
