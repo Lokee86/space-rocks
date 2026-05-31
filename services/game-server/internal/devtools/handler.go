@@ -7,13 +7,13 @@ import (
 func HandleCommand(target *game.Game, playerID string, command DebugCommand) bool {
 	switch command.Type {
 	case PacketTypeToggleDebugInvincible:
-		return handleToggleDebugInvincible(target, playerID)
+		return handleToggleDebugInvincible(target, playerID, command)
 	case PacketTypeToggleDebugInfiniteLives:
-		return handleToggleDebugInfiniteLives(target, playerID)
+		return handleToggleDebugInfiniteLives(target, playerID, command)
 	case PacketTypeToggleDebugFreezeWorld:
 		return handleToggleDebugFreezeWorld(target, playerID)
 	case PacketTypeToggleDebugFreezePlayer:
-		return handleToggleDebugFreezePlayer(target, playerID)
+		return handleToggleDebugFreezePlayer(target, playerID, command)
 	case PacketTypeDebugKillPlayer:
 		return handleDebugKillPlayer(target, playerID, command)
 	case PacketTypeDebugSpawnEntity:

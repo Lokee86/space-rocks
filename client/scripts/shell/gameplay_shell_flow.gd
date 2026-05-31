@@ -91,7 +91,7 @@ func apply_gameplay_state(packet: Dictionary) -> void:
 	var is_first_gameplay_state := !has_received_state
 	var state := GameplayStatePacketReader.read(packet)
 	if input_context != null:
-		input_context.apply_debug_status(state.get("debug_status", {}))
+		input_context.apply_gameplay_state(state)
 	if input_context != null:
 		input_context.mark_gameplay_state_received()
 	if hud_flow != null:

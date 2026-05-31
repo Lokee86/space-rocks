@@ -42,6 +42,7 @@ func writeServerMessages(
 				payload = devtools.WrapStatePacket(
 					statePacket,
 					devtools.StatusFor(session.room.Game, session.currentGamePlayerID),
+					devtools.StatusesForAllPlayers(session.room.Game),
 				)
 			}
 			response, err := packetcodec.Encode(payload)

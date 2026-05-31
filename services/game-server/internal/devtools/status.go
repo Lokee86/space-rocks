@@ -11,3 +11,11 @@ func StatusFor(target *game.Game, playerID string) DebugStatus {
 		PlayerFrozen:  status.PlayerFrozen,
 	}
 }
+
+func StatusesForAllPlayers(target *game.Game) map[string]DebugStatus {
+	statuses := make(map[string]DebugStatus)
+	for _, player := range target.MatchDecision().Players {
+		statuses[player.ID] = StatusFor(target, player.ID)
+	}
+	return statuses
+}

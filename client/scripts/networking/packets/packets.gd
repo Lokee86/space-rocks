@@ -107,9 +107,21 @@ static func toggle_debug_invincible_packet() -> Dictionary:
 	packet[FIELD_TYPE] = "toggle_debug_invincible"
 	return packet
 
+static func toggle_debug_invincible_target_player_packet(target_player_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "toggle_debug_invincible"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	return packet
+
 static func toggle_debug_infinite_lives_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "toggle_debug_infinite_lives"
+	return packet
+
+static func toggle_debug_infinite_lives_target_player_packet(target_player_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "toggle_debug_infinite_lives"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
 
 static func toggle_debug_freeze_world_packet() -> Dictionary:
@@ -120,6 +132,12 @@ static func toggle_debug_freeze_world_packet() -> Dictionary:
 static func toggle_debug_freeze_player_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "toggle_debug_freeze_player"
+	return packet
+
+static func toggle_debug_freeze_player_target_player_packet(target_player_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "toggle_debug_freeze_player"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
 
 static func debug_kill_player_packet() -> Dictionary:

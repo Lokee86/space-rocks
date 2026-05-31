@@ -106,10 +106,26 @@ id = "toggle_debug_invincible_packet"
 type = "toggle_debug_invincible"
 
 [[builders]]
+id = "toggle_debug_invincible_target_player_packet"
+args = ["target_player_id"]
+
+[builders.body]
+type = "toggle_debug_invincible"
+target_player_id = "$target_player_id"
+
+[[builders]]
 id = "toggle_debug_infinite_lives_packet"
 
 [builders.body]
 type = "toggle_debug_infinite_lives"
+
+[[builders]]
+id = "toggle_debug_infinite_lives_target_player_packet"
+args = ["target_player_id"]
+
+[builders.body]
+type = "toggle_debug_infinite_lives"
+target_player_id = "$target_player_id"
 
 [[builders]]
 id = "toggle_debug_freeze_world_packet"
@@ -122,6 +138,14 @@ id = "toggle_debug_freeze_player_packet"
 
 [builders.body]
 type = "toggle_debug_freeze_player"
+
+[[builders]]
+id = "toggle_debug_freeze_player_target_player_packet"
+args = ["target_player_id"]
+
+[builders.body]
+type = "toggle_debug_freeze_player"
+target_player_id = "$target_player_id"
 
 [[builders]]
 id = "debug_kill_player_packet"
