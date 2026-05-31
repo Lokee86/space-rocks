@@ -382,36 +382,6 @@ allow_reselect = true
 item_count = 1
 popup/item_0/id = 0
 
-[node name="CenterContainer15" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=25036607]
-layout_mode = 2
-
-[node name="SetScoreButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer15" unique_id=2123196868]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "Set Score"
-
-[node name="CenterContainer14" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1151980265]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14" unique_id=1817226645]
-layout_mode = 2
-
-[node name="SetLivesAmount" type="LineEdit" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=757946872]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="SetLivesSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer" unique_id=1516796155]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-fit_to_longest_item = false
-allow_reselect = true
-item_count = 1
-popup/item_0/id = 0
-
 [node name="CenterContainer13" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=838492043]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -422,6 +392,36 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Set Lives"
+
+[node name="CenterContainer14" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1151980265]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14" unique_id=1817226645]
+layout_mode = 2
+
+[node name="SetLivesAmount" type="LineEdit" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer2" unique_id=757946872]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SetLivesSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer14/HBoxContainer2" unique_id=1516796155]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
+
+[node name="CenterContainer15" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=25036607]
+layout_mode = 2
+
+[node name="SetScoreButton" type="Button" parent="CenterContainer/HBoxContainer/RightPanel-Inactive/CenterContainer15" unique_id=2123196868]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Set Score"
 
 [node name="CenterContainer16" type="CenterContainer" parent="CenterContainer/HBoxContainer/RightPanel-Inactive" unique_id=1862748227]
 layout_mode = 2

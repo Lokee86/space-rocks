@@ -10,6 +10,8 @@ signal set_score_requested(target_player_id: String, score: int)
 signal add_score_requested(target_player_id: String, amount: int)
 signal set_lives_requested(target_player_id: String, lives: int)
 signal add_lives_requested(target_player_id: String, amount: int)
+signal clear_bullets_requested
+signal clear_asteroids_requested
 signal kill_player_requested(player_id: String)
 signal spawn_asteroid_placement_requested
 signal spawn_player_placement_requested(target_player_id: String)
@@ -52,6 +54,8 @@ signal respawn_player_placement_requested(target_player_id: String)
 @onready var add_lives_amount: LineEdit = %AddLivesAmount
 @onready var add_lives_select: OptionButton = %AddLivesSelect
 @onready var add_lives_button: Button = %AddLivesButton
+@onready var clear_bullets_button: Button = %ClearBulletsButton
+@onready var clear_asteroids_button: Button = %ClearAsteroidsButton
 
 
 func _ready() -> void:
@@ -91,6 +95,10 @@ func _ready() -> void:
 		set_lives_button.pressed.connect(_on_set_lives_button_pressed)
 	if !add_lives_button.pressed.is_connected(_on_add_lives_button_pressed):
 		add_lives_button.pressed.connect(_on_add_lives_button_pressed)
+	if !clear_bullets_button.pressed.is_connected(_on_clear_bullets_button_pressed):
+		clear_bullets_button.pressed.connect(_on_clear_bullets_button_pressed)
+	if !clear_asteroids_button.pressed.is_connected(_on_clear_asteroids_button_pressed):
+		clear_asteroids_button.pressed.connect(_on_clear_asteroids_button_pressed)
 
 
 func show_window() -> void:
@@ -282,6 +290,14 @@ func _on_add_lives_button_pressed() -> void:
 		return
 	var amount: int = _line_edit_int(add_lives_amount)
 	add_lives_requested.emit(target_player_id, amount)
+
+
+func _on_clear_bullets_button_pressed() -> void:
+	clear_bullets_requested.emit()
+
+
+func _on_clear_asteroids_button_pressed() -> void:
+	clear_asteroids_requested.emit()
 
 
 func _on_kill_player_button_pressed() -> void:
