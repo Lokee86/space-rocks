@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
@@ -13,12 +14,16 @@ func TestDebugInvincibleToggleCanBeDisabled(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInvincible})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInvincible,
+	})
 	if !scenario.playerInvincible(playerID) {
 		t.Fatal("expected first toggle to make player invincible")
 	}
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInvincible})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInvincible,
+	})
 	if scenario.playerInvincible(playerID) {
 		t.Fatal("expected second toggle to make player vulnerable")
 	}
@@ -28,17 +33,25 @@ func TestStatePacketDebugStatusReflectsDebugToggles(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	initial := scenario.state(playerID).DebugStatus
+	initial := devtools.StatusFor(scenario.game, playerID)
 	if initial.Invincible || initial.InfiniteLives || initial.WorldFrozen || initial.PlayerFrozen {
 		t.Fatalf("expected initial debug status to be false, got %+v", initial)
 	}
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInvincible})
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInfiniteLives})
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezePlayer})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInvincible,
+	})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInfiniteLives,
+	})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezePlayer,
+	})
 
-	status := scenario.state(playerID).DebugStatus
+	status := devtools.StatusFor(scenario.game, playerID)
 	if !status.Invincible {
 		t.Fatal("expected debug status to report invincible")
 	}
@@ -60,7 +73,9 @@ func TestDebugInvinciblePlayerDoesNotDieFromAsteroidCollision(t *testing.T) {
 	player := scenario.playerState(playerID, playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInvincible})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInvincible,
+	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	if scenario.playerPendingDespawn(playerID) {
@@ -78,12 +93,16 @@ func TestDebugInfiniteLivesToggleCanBeDisabled(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInfiniteLives})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInfiniteLives,
+	})
 	if !scenario.playerInfiniteLives(playerID) {
 		t.Fatal("expected first toggle to enable infinite lives")
 	}
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInfiniteLives})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInfiniteLives,
+	})
 	if scenario.playerInfiniteLives(playerID) {
 		t.Fatal("expected second toggle to disable infinite lives")
 	}
@@ -96,7 +115,9 @@ func TestDebugInfiniteLivesPlayerDiesWithoutLosingLife(t *testing.T) {
 	player := scenario.playerState(playerID, playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugInfiniteLives})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInfiniteLives,
+	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	if !scenario.playerPendingDespawn(playerID) {
@@ -126,12 +147,16 @@ func TestDebugFreezeWorldToggleCanBeDisabled(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	if !scenario.worldFrozen() {
 		t.Fatal("expected first toggle to freeze world")
 	}
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	if scenario.worldFrozen() {
 		t.Fatal("expected second toggle to unfreeze world")
 	}
@@ -147,7 +172,9 @@ func TestDebugFrozenWorldDoesNotMoveAsteroids(t *testing.T) {
 		1,
 	)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	scenario.step(1)
 
 	asteroid := scenario.state(playerID).Asteroids["asteroid-1"]
@@ -167,7 +194,9 @@ func TestDebugFrozenWorldDoesNotMoveOrExpireBullets(t *testing.T) {
 	)
 	startLife := scenario.bulletLife("bullet-1")
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	scenario.step(startLife + 1)
 
 	bullet, ok := scenario.state(playerID).Bullets["bullet-1"]
@@ -186,7 +215,9 @@ func TestDebugFrozenWorldDoesNotSpawnBullets(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
 		Input: entities.InputState{Shoot: true},
@@ -203,7 +234,9 @@ func TestDebugFrozenWorldDoesNotSpawnAsteroids(t *testing.T) {
 	playerID := scenario.addPlayer()
 	scenario.setAsteroidSpawnElapsed(constants.AsteroidSpawnInterval)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	scenario.step(constants.AsteroidSpawnInterval)
 
 	if asteroids := scenario.state(playerID).Asteroids; len(asteroids) != 0 {
@@ -221,7 +254,9 @@ func TestDebugFrozenWorldDoesNotRunShipAsteroidCollisions(t *testing.T) {
 	player := scenario.playerState(playerID, playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	if scenario.playerPendingDespawn(playerID) {
@@ -244,7 +279,9 @@ func TestDebugFrozenWorldDoesNotRunBulletAsteroidCollisionsOrScore(t *testing.T)
 	scenario.placeBullet("bullet-1", playerID, position, physics.Vector2{})
 	scenario.placeAsteroid("asteroid-1", position, 1)
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeToggleDebugFreezeWorld})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezeWorld,
+	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	if scenario.bulletPendingDespawn("bullet-1") {
@@ -268,7 +305,9 @@ func TestDebugKillPlayerMarksDespawnQueuesDeathAndReducesLives(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeDebugKillPlayer})
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type: devtools.PacketTypeDebugKillPlayer,
+	})
 
 	if !scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected debug kill to mark player pending despawn")
@@ -294,8 +333,8 @@ func TestDebugKillPlayerCanKillAnotherActivePlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	scenario.send(playerA, servergame.ClientPacket{
-		Type:           servergame.PacketTypeDebugKillPlayer,
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:           devtools.PacketTypeDebugKillPlayer,
 		TargetPlayerID: playerB,
 	})
 

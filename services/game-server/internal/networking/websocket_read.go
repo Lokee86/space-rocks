@@ -31,10 +31,7 @@ func readClientInput(
 			continue
 		}
 
-		if devtools.IsCommandType(envelope.Type) {
-			if !devtools.Enabled() {
-				continue
-			}
+		if devtools.ShouldHandleCommand(envelope.Type) {
 			if session.room == nil || session.currentGamePlayerID == "" {
 				continue
 			}
@@ -50,6 +47,9 @@ func readClientInput(
 				continue
 			}
 			devtools.HandleCommand(session.room.Game, session.currentGamePlayerID, command)
+			continue
+		}
+		if devtools.IsCommandType(envelope.Type) {
 			continue
 		}
 

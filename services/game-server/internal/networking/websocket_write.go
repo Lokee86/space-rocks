@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
@@ -36,7 +37,14 @@ func writeServerMessages(
 			checkRoomGameOver(session.room)
 
 			statePacket := session.room.Game.StatePacket(session.currentGamePlayerID)
-			response, err := packetcodec.Encode(statePacket)
+			payload := any(statePacket)
+			if devtools.Enabled() {
+				payload = devtools.WrapStatePacket(
+					statePacket,
+					devtools.StatusFor(session.room.Game, session.currentGamePlayerID),
+				)
+			}
+			response, err := packetcodec.Encode(payload)
 			if err != nil {
 				logging.Network.Error("state packet encode failed", err,
 					logging.FieldRoomID, session.currentRoomID,

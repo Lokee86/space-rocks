@@ -29,45 +29,6 @@ name = "ready"
 json = "ready"
 type = "bool"
 
-[[structs.fields]]
-name = "target_player_id"
-go_name = "TargetPlayerID"
-json = "target_player_id"
-type = "string"
-
-[[structs.fields]]
-name = "entity_type"
-json = "entity_type"
-type = "string"
-
-[[structs.fields]]
-name = "x"
-json = "x"
-type = "float"
-
-[[structs.fields]]
-name = "y"
-json = "y"
-type = "float"
-
-[[structs.fields]]
-name = "has_direction"
-go_name = "HasDirection"
-json = "has_direction"
-type = "bool"
-
-[[structs.fields]]
-name = "direction_x"
-go_name = "DirectionX"
-json = "direction_x"
-type = "float"
-
-[[structs.fields]]
-name = "direction_y"
-go_name = "DirectionY"
-json = "direction_y"
-type = "float"
-
 [[structs]]
 id = "ClientConfig"
 
@@ -283,12 +244,6 @@ type = "string"
 name = "lives"
 json = "lives"
 type = "int"
-
-[[structs.fields]]
-name = "debug_status"
-go_name = "DebugStatus"
-json = "debug_status"
-type = "DebugStatus"
 
 [[structs.fields]]
 name = "players"
