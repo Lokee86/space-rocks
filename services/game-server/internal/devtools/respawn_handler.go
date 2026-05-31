@@ -17,7 +17,16 @@ func handleDebugRespawnPlayer(target *game.Game, playerID string, command DebugC
 		"x", request.X,
 		"y", request.Y,
 	)
-	normalizedTargetPlayerID, spawnPosition, ok := applyDebugRespawnPlayer(target, request)
+
+	if target == nil {
+		logging.Game.Info("debug respawn player ignored",
+			logging.FieldPlayerID, playerID,
+			"target_player_id", request.TargetPlayerID,
+		)
+		return true
+	}
+
+	normalizedTargetPlayerID, ok := resolveDebugRespawnTargetPlayerID(request)
 	if !ok {
 		logging.Game.Info("debug respawn player ignored",
 			logging.FieldPlayerID, playerID,
@@ -25,9 +34,37 @@ func handleDebugRespawnPlayer(target *game.Game, playerID string, command DebugC
 		)
 		return true
 	}
+
+	isPlayerAlive := false
+	for _, player := range target.MatchDecision().Players {
+		if player.ID == normalizedTargetPlayerID {
+			isPlayerAlive = player.Status == "active"
+			break
+		}
+	}
+
+	if isPlayerAlive {
+		logging.Game.Info("debug respawn player ignored",
+			logging.FieldPlayerID, playerID,
+			"target_player_id", normalizedTargetPlayerID,
+		)
+		return true
+	}
+
+	request.TargetPlayerID = normalizedTargetPlayerID
+
+	respawnedPlayerID, spawnPosition, ok := applyDebugRespawnPlayer(target, request)
+	if !ok {
+		logging.Game.Info("debug respawn player ignored",
+			logging.FieldPlayerID, playerID,
+			"target_player_id", request.TargetPlayerID,
+		)
+		return true
+	}
+
 	logging.Game.Info("debug force respawn applied",
 		logging.FieldPlayerID, playerID,
-		"target_player_id", normalizedTargetPlayerID,
+		"target_player_id", respawnedPlayerID,
 		"x", spawnPosition.X,
 		"y", spawnPosition.Y,
 	)

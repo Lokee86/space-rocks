@@ -49,10 +49,27 @@ func handleToggleDebugFreezePlayer(target *game.Game, playerID string) bool {
 }
 
 func handleDebugKillPlayer(target *game.Game, playerID string, command DebugCommand) bool {
+	if target == nil {
+		return true
+	}
+
 	targetPlayerID := command.TargetPlayerID
 	if targetPlayerID == "" {
 		targetPlayerID = playerID
 	}
+
+	isPlayerAlive := false
+	for _, player := range target.MatchDecision().Players {
+		if player.ID == targetPlayerID {
+			isPlayerAlive = player.Status == "active"
+			break
+		}
+	}
+
+	if !isPlayerAlive {
+		return true
+	}
+
 	target.DevtoolsKillPlayer(playerID, targetPlayerID)
 	return true
 }
