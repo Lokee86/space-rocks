@@ -49,15 +49,57 @@ func target_rows() -> Array:
 
 
 func invincible_target_rows() -> Array:
-	return _feature_target_rows("invincible")
+	var rows: Array = []
+	for row in target_rows():
+		var player_id_text: String = str(row.get("player_id", ""))
+		var invincible_on: bool = _player_feature_enabled(player_id_text, "invincible")
+		var label: String = "%s: %s" % [player_id_text, "Active" if invincible_on else "Inactive"]
+
+		rows.append({
+			"player_id": player_id_text,
+			"status": str(row.get("status", "DEAD")),
+			"alive": bool(row.get("alive", false)),
+			"is_self": bool(row.get("is_self", false)),
+			"label": label,
+		})
+
+	return rows
 
 
 func infinite_lives_target_rows() -> Array:
-	return _feature_target_rows("infinite_lives")
+	var rows: Array = []
+	for row in target_rows():
+		var player_id_text: String = str(row.get("player_id", ""))
+		var infinite_lives_on: bool = _player_feature_enabled(player_id_text, "infinite_lives")
+		var label: String = "%s: %s" % [player_id_text, "Active" if infinite_lives_on else "Inactive"]
+
+		rows.append({
+			"player_id": player_id_text,
+			"status": str(row.get("status", "DEAD")),
+			"alive": bool(row.get("alive", false)),
+			"is_self": bool(row.get("is_self", false)),
+			"label": label,
+		})
+
+	return rows
 
 
 func player_frozen_target_rows() -> Array:
-	return _feature_target_rows("player_frozen")
+	var rows: Array = []
+	for row in target_rows():
+		var player_id_text: String = str(row.get("player_id", ""))
+		var player_frozen_on: bool = _player_feature_enabled(player_id_text, "player_frozen")
+		var label: String = "%s: %s" % [player_id_text, "Active" if player_frozen_on else "Inactive"]
+
+		rows.append({
+			"player_id": player_id_text,
+			"status": str(row.get("status", "DEAD")),
+			"alive": bool(row.get("alive", false)),
+			"is_self": bool(row.get("is_self", false)),
+			"label": label,
+		})
+
+	return rows
 
 
 func _feature_target_rows(feature_key: String) -> Array:
