@@ -335,7 +335,46 @@ func (scenario *scenario) playerInfiniteLives(playerID string) bool {
 func (scenario *scenario) worldFrozen() bool {
 	scenario.t.Helper()
 
-	return scenario.gameField("worldSimulationOptions").FieldByName("FreezeWorld").Bool()
+	return scenario.allWorldFreezeFlags()
+}
+
+func (scenario *scenario) asteroidsFrozen() bool {
+	scenario.t.Helper()
+
+	return scenario.worldSimulationOptionBool("FreezeAsteroids")
+}
+
+func (scenario *scenario) bulletsFrozen() bool {
+	scenario.t.Helper()
+
+	return scenario.worldSimulationOptionBool("FreezeBullets")
+}
+
+func (scenario *scenario) spawningFrozen() bool {
+	scenario.t.Helper()
+
+	return scenario.worldSimulationOptionBool("FreezeSpawning")
+}
+
+func (scenario *scenario) collisionsFrozen() bool {
+	scenario.t.Helper()
+
+	return scenario.worldSimulationOptionBool("FreezeCollisions")
+}
+
+func (scenario *scenario) allWorldFreezeFlags() bool {
+	scenario.t.Helper()
+
+	return scenario.asteroidsFrozen() &&
+		scenario.bulletsFrozen() &&
+		scenario.spawningFrozen() &&
+		scenario.collisionsFrozen()
+}
+
+func (scenario *scenario) worldSimulationOptionBool(fieldName string) bool {
+	scenario.t.Helper()
+
+	return scenario.gameField("worldSimulationOptions").FieldByName(fieldName).Bool()
 }
 
 func (scenario *scenario) player(playerID string) *entities.Ship {

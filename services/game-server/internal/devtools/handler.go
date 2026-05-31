@@ -11,7 +11,7 @@ func HandleCommand(target *game.Game, playerID string, command DebugCommand) boo
 	case PacketTypeToggleDebugInfiniteLives:
 		return handleToggleDebugInfiniteLives(target, playerID, command)
 	case PacketTypeToggleDebugFreezeWorld:
-		return handleToggleDebugFreezeWorld(target, playerID)
+		return handleToggleDebugFreezeWorld(target, playerID, command)
 	case PacketTypeToggleDebugFreezePlayer:
 		return handleToggleDebugFreezePlayer(target, playerID, command)
 	case PacketTypeDebugKillPlayer:

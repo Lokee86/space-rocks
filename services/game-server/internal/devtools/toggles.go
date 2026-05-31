@@ -5,6 +5,22 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
+const (
+	freezeTargetAll        = "all"
+	freezeTargetAsteroids  = "asteroids"
+	freezeTargetBullets    = "bullets"
+	freezeTargetSpawning   = "spawning"
+	freezeTargetSpawns     = "spawns"
+	freezeTargetCollisions = "collisions"
+)
+
+func freezeTargetFromCommand(command DebugCommand) string {
+	if command.FreezeTarget == "" {
+		return freezeTargetAll
+	}
+	return command.FreezeTarget
+}
+
 func handleToggleDebugInvincible(target *game.Game, playerID string, command DebugCommand) bool {
 	targetPlayerID := command.TargetPlayerID
 	if targetPlayerID == "" {
@@ -39,11 +55,40 @@ func handleToggleDebugInfiniteLives(target *game.Game, playerID string, command 
 	return true
 }
 
-func handleToggleDebugFreezeWorld(target *game.Game, playerID string) bool {
-	enabled := !target.DevtoolsWorldFrozen()
-	target.DevtoolsSetWorldFrozen(enabled)
+func handleToggleDebugFreezeWorld(target *game.Game, playerID string, command DebugCommand) bool {
+	freezeTarget := freezeTargetFromCommand(command)
+
+	if freezeTarget == freezeTargetAll {
+		enabled := target.DevtoolsToggleFreezeWorld()
+		logging.Game.Info("debug world freeze toggled",
+			logging.FieldPlayerID, playerID,
+			"freeze_target", freezeTarget,
+			"enabled", enabled,
+		)
+		return true
+	}
+
+	enabled := false
+	switch freezeTarget {
+	case freezeTargetAsteroids:
+		enabled = target.DevtoolsToggleFreezeAsteroids()
+	case freezeTargetBullets:
+		enabled = target.DevtoolsToggleFreezeBullets()
+	case freezeTargetSpawning, freezeTargetSpawns:
+		enabled = target.DevtoolsToggleFreezeSpawning()
+	case freezeTargetCollisions:
+		enabled = target.DevtoolsToggleFreezeCollisions()
+	default:
+		logging.Game.Info("debug world freeze target ignored",
+			logging.FieldPlayerID, playerID,
+			"freeze_target", freezeTarget,
+		)
+		return true
+	}
+
 	logging.Game.Info("debug world freeze toggled",
 		logging.FieldPlayerID, playerID,
+		"freeze_target", freezeTarget,
 		"enabled", enabled,
 	)
 	return true

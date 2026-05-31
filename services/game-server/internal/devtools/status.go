@@ -5,10 +5,14 @@ import "github.com/Lokee86/space-rocks/server/internal/game"
 func StatusFor(target *game.Game, playerID string) DebugStatus {
 	status := target.DevtoolsStatusFor(playerID)
 	return DebugStatus{
-		Invincible:    status.Invincible,
-		InfiniteLives: status.InfiniteLives,
-		WorldFrozen:   status.WorldFrozen,
-		PlayerFrozen:  status.PlayerFrozen,
+		Invincible:       status.Invincible,
+		InfiniteLives:    status.InfiniteLives,
+		WorldFrozen:      status.WorldFrozen,
+		AsteroidsFrozen:  status.AsteroidsFrozen,
+		BulletsFrozen:    status.BulletsFrozen,
+		SpawningFrozen:   status.SpawningFrozen,
+		CollisionsFrozen: status.CollisionsFrozen,
+		PlayerFrozen:     status.PlayerFrozen,
 	}
 }
 
