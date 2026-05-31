@@ -158,7 +158,13 @@ The damage resolver only answers what happened to the target from the damage req
 
 `services/game-server/internal/game/scoring` owns pure score policy. It receives scoring facts as `scoring.Event` values and returns `scoring.Award` values. It does not import `internal/game`, inspect game storage, mutate players or sessions, check pause/invulnerability state, log, emit packets, or write events.
 
-`game.awardScore` remains the game-owned application seam. It applies awards to active game state and keeps missing-player, paused-player, invulnerable-player, session sync, and score logging behavior outside the scoring policy package.
+Score/lives mutation is centralized in game-owned player counter seams under `services/game-server/internal/game`. The scoring policy boundary remains pure: policy computes awards only, and game-owned adapters apply mutations.
+
+`game.awardScore` remains the game-owned application seam for scoring awards. It applies score changes through the score counter seam and keeps missing-player, paused-player, invulnerable-player, session sync, and score logging behavior outside the scoring policy package.
+
+Lives and death paths mutate authoritative lives through the lives counter seam. The counter seam keeps persistent player session values and active ship values synchronized.
+
+Future gameplay and devtools adapters should use the same counter mutation seam instead of directly changing session or active-player fields.
 
 ### Domain Gameplay Events
 
@@ -208,6 +214,22 @@ Important lifecycle rules:
 - websocket session activation/deactivation stays in networking because it mutates per-connection session fields
 - `/ws?room_id=...` no longer creates or joins rooms
 - empty rooms schedule cleanup after members/active players leave
+
+#### Devtools Command Handling Boundary
+
+Devtools command handling is a networking-routed server boundary, not a normal gameplay packet path.
+
+- `services/game-server/internal/networking/websocket_read.go` detects devtools command types through `devtools.ShouldHandleCommand`
+- devtools command packets route to `services/game-server/internal/devtools.HandleCommand`
+- devtools commands do not route through `Game.HandlePacket`
+- `nodevtools` builds ignore/reject devtools command handling through the existing devtools gate
+
+Mutation ownership for devtools remains explicit:
+
+- `services/game-server/internal/devtools` owns devtools command handlers
+- `services/game-server/internal/game/export_devtools_*.go` exposes narrow game-owned adapters used by devtools
+- score/lives devtools adapters delegate to the shared player counter mutation seam
+- clear bullets/asteroids mutate authoritative server state only; clients observe changes through normal state/world sync
 
 #### Server Identity Policy
 

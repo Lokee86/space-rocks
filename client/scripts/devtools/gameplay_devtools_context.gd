@@ -3,18 +3,18 @@ class_name GameplayDevtoolsContext
 
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsHotkeyFlow := preload("res://scripts/devtools/devtools_hotkey_flow.gd")
-const DevtoolsPlayerTargetModel := preload("res://scripts/devtools/devtools_player_target_model.gd")
+const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var debug_flow
 var devtools_window_controller
+var display_refresh_flow
 var dev_connection_service
 var connection_service
 var hotkey_flow
 var has_received_gameplay_state := false
 var placement_request_route: Callable
 var local_player_id := ""
-var target_model
 
 
 func configure(connection_service_ref) -> void:
@@ -29,13 +29,16 @@ func configure(connection_service_ref) -> void:
 		Callable(self, "request_placement_action")
 	)
 	devtools_window_controller = DevtoolsWindowController.new()
-	target_model = DevtoolsPlayerTargetModel.new()
+	display_refresh_flow = DevtoolsDisplayRefreshFlow.new()
+	display_refresh_flow.configure(devtools_window_controller)
 	_connect_window_controller_signals()
 
 
 func reset() -> void:
 	if debug_flow != null:
 		debug_flow.reset()
+	if display_refresh_flow != null:
+		display_refresh_flow.reset()
 
 
 func process(has_received_state: bool) -> void:
@@ -60,19 +63,17 @@ func apply_debug_status(status: Dictionary) -> void:
 
 func apply_gameplay_state(state: Dictionary) -> void:
 	apply_debug_status(state.get("debug_status", {}))
-	if target_model == null:
-		return
-
-	target_model.apply_gameplay_state(state)
+	if display_refresh_flow != null:
+		display_refresh_flow.refresh_gameplay_state(state)
+		local_player_id = display_refresh_flow.local_player_id()
 	if devtools_window_controller != null:
-		devtools_window_controller.configure_kill_player_routing(connection_service, target_model.self_id)
-		devtools_window_controller.refresh_debug_player_targets(
-			target_model.target_rows(),
-			target_model.invincible_target_rows(),
-			target_model.infinite_lives_target_rows(),
-			target_model.player_frozen_target_rows()
-		)
-		devtools_window_controller.refresh_counter_player_targets(target_model.active_player_target_rows())
+		devtools_window_controller.configure_kill_player_routing(connection_service, local_player_id)
+
+
+func refresh_spawn_player_slots(max_players: int) -> void:
+	if display_refresh_flow == null:
+		return
+	display_refresh_flow.refresh_spawn_player_slots(max_players)
 
 
 func _connect_window_controller_signals() -> void:

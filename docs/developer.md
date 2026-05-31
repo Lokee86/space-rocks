@@ -114,10 +114,14 @@ Devtools packet boundary rules:
 - targeted devtools UI packets use `target_player_id` where applicable
 - when adding a new generated GDS packet helper, also add its builder mapping in `shared/packets/outputs.toml`
 - regenerate Go and GDS packet outputs together when shared packet schema changes
+- TS output is currently disabled; do not include TS flags in normal data-sync commands
+- packet schema changes normally require editing the relevant `shared/packets/*.toml` source, editing `shared/packets/outputs.toml` when adding generated output routing, then running `data-sync -push -packets -go -gds`
 - packet pull remains unsupported; edit shared packet TOML and push generated outputs
 - client readers should not depend on generated game packet constants for devtools-only wrapper fields such as `debug_status`
 
 ## Devtool Hotkeys
+
+For a focused server devtools reference (commands, boundaries, and checks), see [docs/server/devtools.md](server/devtools.md).
 
 Canonical gameplay devtool hotkeys:
 
@@ -134,8 +138,23 @@ Canonical gameplay devtool hotkeys:
 
 Devtools window targeting notes:
 
-- the devtools window can target other players for invincibility, infinite lives, and player freeze
+- invincibility, infinite lives, player freeze, kill, respawn, and score/lives controls can target selected players where wired
+- score/lives controls use active-player target dropdowns
+- score/lives target dropdown labels are player IDs only (no ALIVE/DEAD or Active/Inactive status text)
 - world freeze remains room-wide/global
+
+Devtools command behavior notes:
+
+- Set Score sets the exact authoritative score
+- Add Score accepts positive or negative amounts and clamps final score at zero minimum
+- Set Lives sets the exact authoritative lives
+- Add Lives accepts positive or negative amounts and clamps final lives at zero minimum
+- Clear Bullets removes authoritative bullets through normal world sync
+- Clear Asteroids removes authoritative asteroids through normal world sync and does not award score or spawn fragments
+
+Client devtools authority note:
+
+- the client devtools UI sends packets only; it does not mutate HUD, score/lives, bullets, asteroids, or `world_sync` locally
 
 ## Run The Server
 
@@ -237,11 +256,25 @@ Run the client constants-boundary scan:
 python3 -m pytest tools/tests/test_client_constants_boundary.py
 ```
 
-Validate generated constants/packets against shared sources:
+Check generated constants/packets against shared sources:
 
 ```bash
-python3 tools/data_sync/main.py -validate -constants
-python3 tools/data_sync/main.py -validate -packets
+data-sync -check -packets -go -gds
+data-sync -check -constants -go -gds
+```
+
+Show pending generated diffs before pushing:
+
+```bash
+data-sync -diff -packets -go -gds
+data-sync -diff -constants -go -gds
+```
+
+Push regenerated outputs:
+
+```bash
+data-sync -push -packets -go -gds
+data-sync -push -constants -go -gds
 ```
 
 Regenerate collision shapes from Godot scenes:
