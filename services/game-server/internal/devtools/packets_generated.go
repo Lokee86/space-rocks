@@ -20,11 +20,16 @@ type DebugCommand struct {
 	HasDirection   bool    `json:"has_direction"`
 	DirectionX     float64 `json:"direction_x"`
 	DirectionY     float64 `json:"direction_y"`
+	FreezeTarget   string  `json:"freeze_target"`
 }
 
 type DebugStatus struct {
-	Invincible    bool `json:"invincible"`
-	InfiniteLives bool `json:"infinite_lives"`
-	WorldFrozen   bool `json:"world_frozen"`
-	PlayerFrozen  bool `json:"player_frozen"`
+	Invincible       bool `json:"invincible"`
+	InfiniteLives    bool `json:"infinite_lives"`
+	WorldFrozen      bool `json:"world_frozen"`
+	AsteroidsFrozen  bool `json:"asteroids_frozen"`
+	BulletsFrozen    bool `json:"bullets_frozen"`
+	SpawningFrozen   bool `json:"spawning_frozen"`
+	CollisionsFrozen bool `json:"collisions_frozen"`
+	PlayerFrozen     bool `json:"player_frozen"`
 }

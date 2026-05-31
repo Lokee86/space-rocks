@@ -28,8 +28,11 @@ const TYPE_ROOM_STATE_CHANGED := "room_state_changed"
 const TYPE_ROOM_ERROR := "room_error"
 
 const FIELD_ASTEROIDS := "asteroids"
+const FIELD_ASTEROIDS_FROZEN := "asteroids_frozen"
 const FIELD_BACK := "back"
 const FIELD_BULLETS := "bullets"
+const FIELD_BULLETS_FROZEN := "bullets_frozen"
+const FIELD_COLLISIONS_FROZEN := "collisions_frozen"
 const FIELD_CONFIG := "config"
 const FIELD_CONNECTED := "connected"
 const FIELD_DIRECTION_X := "direction_x"
@@ -38,6 +41,7 @@ const FIELD_ENTITY_TYPE := "entity_type"
 const FIELD_ERROR_CODE := "error_code"
 const FIELD_EVENTS := "events"
 const FIELD_FORWARD := "forward"
+const FIELD_FREEZE_TARGET := "freeze_target"
 const FIELD_HAS_DIRECTION := "has_direction"
 const FIELD_ID := "id"
 const FIELD_INFINITE_LIVES := "infinite_lives"
@@ -71,6 +75,7 @@ const FIELD_SELF_ID := "self_id"
 const FIELD_SHIP_TYPE := "ship_type"
 const FIELD_SHOOT := "shoot"
 const FIELD_SIZE := "size"
+const FIELD_SPAWNING_FROZEN := "spawning_frozen"
 const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TYPE := "type"
 const FIELD_VARIANT := "variant"
@@ -127,6 +132,12 @@ static func toggle_debug_infinite_lives_target_player_packet(target_player_id) -
 static func toggle_debug_freeze_world_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "toggle_debug_freeze_world"
+	return packet
+
+static func toggle_debug_freeze_world_target_packet(freeze_target) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "toggle_debug_freeze_world"
+	packet[FIELD_FREEZE_TARGET] = freeze_target
 	return packet
 
 static func toggle_debug_freeze_player_packet() -> Dictionary:
