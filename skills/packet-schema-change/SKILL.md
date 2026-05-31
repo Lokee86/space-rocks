@@ -6,10 +6,14 @@ Use this skill when changing packet schemas, generated packet files, packet buil
 
 Use this skill for work involving:
 
-- `shared/packets/packets.toml`
-- `client/scripts/networking/packets.gd`
+- `shared/packets/outputs.toml`
+- `shared/packets/gameplay.toml`
+- `shared/packets/debug.toml`
+- `shared/packets/lobby.toml`
+- `client/scripts/networking/packets/packets.gd`
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/entities/packets_generated.go`
+- `services/game-server/internal/devtools/packets_generated.go`
 - `services/game-server/internal/protocol/packetcodec/`
 - `client/scripts/networking/packet_codec/packet_codec.gd`
 - websocket packet encode/decode paths
@@ -20,20 +24,24 @@ Use this skill for work involving:
 Packet source of truth:
 
 ```text
-shared/packets/packets.toml
+shared/packets/outputs.toml
+shared/packets/gameplay.toml
+shared/packets/debug.toml
+shared/packets/lobby.toml
 ```
 
 Generated packet outputs:
 
 ```text
-client/scripts/networking/packets.gd
+client/scripts/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
+services/game-server/internal/devtools/packets_generated.go
 ```
 
 Do not hand-edit generated packet outputs unless the user explicitly asks for a temporary/manual intervention.
 
-Packet pull is intentionally unsupported. Packet schema changes should be made in `shared/packets/packets.toml` and pushed with `tools/data_sync`.
+Packet pull is intentionally unsupported. Packet schema changes should be made in the relevant split schema file under `shared/packets/` and pushed with `tools/data_sync`. Edit `shared/packets/outputs.toml` only when changing output routing.
 
 ## Codec rules
 
@@ -55,12 +63,12 @@ Packet pull is intentionally unsupported. Packet schema changes should be made i
 
 ## Workflow
 
-1. Edit `shared/packets/packets.toml` when the schema changes.
+1. Edit the relevant split packet schema file under `shared/packets/` (`gameplay.toml`, `debug.toml`, or `lobby.toml`) when packet content changes. Edit `outputs.toml` only when output routing changes.
 2. Do not hand-edit generated packet files unless explicitly requested.
 3. Keep generated Go/GDS outputs together when applying generation.
 4. Update packet codec or call sites only if required.
 5. Add/update focused Go or GUT tests only when the prompt asks for test edits.
-6. Leave broad validation and generated diff checks for human-run checkpoint commands unless the prompt explicitly allows terminal commands.
+6. Focused, safe terminal checks are allowed when the prompt permits them. Avoid destructive git commands, broad cleanup, dependency upgrades, or unrelated formatter runs unless explicitly requested.
 
 ## Human-run commands
 
@@ -95,7 +103,7 @@ Run client GUT tests when Godot CLI is available:
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
 
-Do not run these commands by default as the agent.
+Do not run these commands by default as the agent unless the prompt asks for targeted verification.
 
 ## Stop conditions
 

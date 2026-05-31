@@ -147,12 +147,12 @@ paths = [
 ]
 
 [constants.go]
-files = ["services/game-server/internal/game/constants.go"]
+files = ["services/game-server/internal/constants/constants.go"]
 sections = ["constants.gameplay", "constants.network"]
 owns = ["constants.gameplay", "constants.network"]
 
 [constants.gds]
-files = ["client/scripts/constants.gd"]
+files = ["client/scripts/constants/constants.gd"]
 sections = ["constants.gameplay", "constants.client"]
 owns = ["constants.client"]
 
@@ -173,7 +173,7 @@ owns = []
 outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets"]
 
 [packets.gds]
-files = ["client/scripts/packets.gd"]
+files = ["client/scripts/networking/packets/packets.gd"]
 sections = ["packets"]
 owns = []
 ```

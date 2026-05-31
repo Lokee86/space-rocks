@@ -51,6 +51,12 @@ Rules:
 - Do not duplicate gameplay authority in the API server.
 - Do not put secrets in the Godot client.
 
+Shared-schema boundary note:
+
+- `shared/packets/` is the real-time game client/server protocol, not an automatic API contract.
+- TypeScript data-sync output is deferred unless explicitly started.
+- API contracts should stay separate unless a feature truly needs shared schema.
+
 ## Possible Future Communication
 
 Start simple. The services do not need to talk until a feature requires it.

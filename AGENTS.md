@@ -89,7 +89,10 @@ services/game-server/internal/constants/constants.go
 Packet source of truth:
 
 ```text
-shared/packets/packets.toml
+shared/packets/outputs.toml
+shared/packets/gameplay.toml
+shared/packets/debug.toml
+shared/packets/lobby.toml
 ```
 
 Generated packets:
@@ -98,6 +101,7 @@ Generated packets:
 client/scripts/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
+services/game-server/internal/devtools/packets_generated.go
 ```
 
 Collision shape source:
@@ -112,11 +116,11 @@ Data sync tool:
 tools/data_sync/
 ```
 
-Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred until the API service exists.
+Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred until the API service exists.
 
 Tunable/game-data constants belong in the split constants SoT files under `shared/constants/` and generated scripts under `client/scripts/constants/`. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
 
-Packet schema changes should be made in `shared/packets/packets.toml` and pushed with `tools/data_sync`. Packet pull is intentionally unsupported.
+Packet schema changes should be made in the relevant split packet TOML under `shared/packets/` and pushed with `tools/data_sync`. Edit `shared/packets/outputs.toml` only when changing output routing. Packet pull is intentionally unsupported.
 
 ## Skills
 
@@ -138,7 +142,7 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
 - Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active Go/GDScript constants.
-- Use `shared/packets/packets.toml` plus `tools/data_sync/` for active packets.
+- Use `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` plus `tools/data_sync/` for active packets.
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.
 - Route client packet wire JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
 - Keep `PlayerID` player-facing and readable, for example `Player-1`/`Player-2`; do not convert it to UUID. UUID upgrades are for server-internal identities such as `SessionID` and `MemberID`.
@@ -236,7 +240,10 @@ Shared schema/generation:
 - `shared/constants/client/presentation.toml`
 - `shared/constants/client/shell.toml`
 - `shared/constants/client/lobby.toml`
-- `shared/packets/packets.toml`
+- `shared/packets/outputs.toml`
+- `shared/packets/gameplay.toml`
+- `shared/packets/debug.toml`
+- `shared/packets/lobby.toml`
 - `services/game-server/internal/protocol/packetcodec/`
 - `tools/data_sync/README.md`
 - `tools/data_sync/main.py`
@@ -245,7 +252,8 @@ Shared schema/generation:
 
 - Open/read only the files needed for the requested edit.
 - Do not inspect broadly unless the prompt explicitly asks for a scan or the named file directly points to a needed file.
-- Do not run terminal commands unless explicitly allowed by the prompt.
+- Focused, safe terminal checks are allowed when useful for the task.
+- Avoid destructive git commands, broad cleanup, dependency upgrades, unrelated formatter runs, or expensive commands unless explicitly requested.
 - Use `apply_patch` for manual edits.
 - Do not use destructive git commands unless explicitly asked.
 - Do not create broad refactors when a small change solves the request.
@@ -256,7 +264,7 @@ Shared schema/generation:
 - Implementation prompts must not broaden scope beyond the named target.
 - If broader work appears necessary, stop and propose a follow-up prompt.
 - Do not produce no-work prompts. Verification belongs in commands/checkpoints, not in separate agent prompts.
-- When completing a numbered prompt, announce completion at the bottom of the response/report using the exact format `**COMPLETED PROMPT X**`, replacing `X` with the prompt number.
+- When completing a numbered prompt, announce completion status at the bottom of the response/report using the exact format `**NOT COMPLETED PROMPT X**`, replacing `X` with the prompt number and removing `NOT` if the task succeeded.
 
 ## Default Agent Report
 
@@ -270,5 +278,5 @@ Unexpected files touched:
 Notes:
 - ...
 
-**COMPLETED PROMPT X**
+**<NOT >COMPLETED PROMPT X**
 ```

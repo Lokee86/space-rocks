@@ -12,12 +12,12 @@ Invincibility prevents the player from dying when colliding with asteroids.
 
 Current behavior:
 
-- Triggered from the Godot client with `F1`.
+- Triggered from the Godot client with `1`.
 - The client sends a `toggle_debug_invincible` packet.
 - The Go server toggles the flag for that player instance.
 - Ship/asteroid collision skips players with debug invincibility enabled.
 - Movement, shooting, and scoring still work normally.
-- Pressing `F1` again disables invincibility.
+- Pressing `1` again disables invincibility.
 
 There is no in-game developer console yet. This is currently a hardcoded client hotkey.
 
@@ -27,14 +27,14 @@ Infinite lives lets the player die normally without reducing their lives count.
 
 Current behavior:
 
-- Triggered from the Godot client with `F2`.
+- Triggered from the Godot client with `2`.
 - The client sends a `toggle_debug_infinite_lives` packet.
 - The Go server toggles the flag for that player session.
 - Ship/asteroid collision still kills and despawns the player.
 - The death event still fires and the respawn delay still applies.
 - The player's lives count does not decrease while the toggle is enabled.
 - The toggle persists across respawns for the same connection/player session.
-- Pressing `F2` again disables infinite lives.
+- Pressing `2` again disables infinite lives.
 
 ### World Freeze
 
@@ -42,7 +42,7 @@ World freeze pauses hostile/world simulation while leaving the player able to mo
 
 Current behavior:
 
-- Triggered from the Godot client with `F3`.
+- Triggered from the Godot client with `3`.
 - The client sends a `toggle_debug_freeze_world` packet.
 - The Go server toggles world-freeze state on the current game room.
 - The toggle is room-wide. Every player in that room is affected.
@@ -55,7 +55,7 @@ Current behavior:
 - Player movement and input still work.
 - Player respawn/session timers still work.
 - Existing ready-for-removal cleanup can still run.
-- Pressing `F3` again resumes world simulation.
+- Pressing `3` again resumes world simulation.
 
 ### Player Freeze
 
@@ -63,21 +63,43 @@ Player freeze suspends one player for debugging through the same ship capability
 
 Current behavior:
 
-- Triggered from the Godot client with `F4`.
+- Triggered from the Godot client with `4`.
 - The client sends a `toggle_debug_freeze_player` packet.
 - The Go server toggles the freeze flag for that player instance.
 - The toggle blocks input, movement, shooting, and asteroid collision damage through `Ship.IsSuspended()` and related capability helpers.
 - Pause and dev freeze are separate suspension causes. Dev freeze does not call `Pause()` or `Resume()`.
 - Calling `Resume()` does not unfreeze a dev-frozen player.
 - Unfreezing does not resume a paused player.
-- Pressing `F4` again disables player freeze.
+- Pressing `4` again disables player freeze.
+
+## DevToggle0-9 Map
+
+Current number-key map:
+
+- `0`: window
+- `1`: invincible
+- `2`: infinite lives
+- `3`: world freeze
+- `4`: player freeze
+- `5`: kill local player
+- `6`: spawn new player
+- `7`: force respawn local player
+- `8`: reserved
+- `9`: reserved
+
+Current `6` modifier behavior:
+
+- `Shift+6`: spawn asteroid
+- `Alt+6`: spawn bullet
 
 ## Implementation
 
 Current ownership paths:
 
-- packet source: `shared/packets/packets.toml`
+- packet schema (devtools): `shared/packets/debug.toml`
+- packet output routing: `shared/packets/outputs.toml`
 - generated server packets: `services/game-server/internal/game/packets.go`
+- generated server devtools packets: `services/game-server/internal/devtools/packets_generated.go`
 - generated client packets: `client/scripts/networking/packets/packets.gd`
 - server debug packet handling: `services/game-server/internal/game/debug_handler.go`
 - server debug status projection: `services/game-server/internal/game/debug_status.go`
@@ -87,7 +109,7 @@ Current ownership paths:
 
 ## Packet Flow
 
-When `F1` is pressed:
+When `1` is pressed:
 
 1. `DevToggle1` routes through client devtools/gameplay input seams.
 2. The client sends `Packets.toggle_debug_invincible_packet()`.
@@ -103,7 +125,7 @@ When `F1` is pressed:
 5. The server toggles player `DamageOptions.Invincible`.
 6. State packets report the result through `StatePacket.debug_status.invincible`.
 
-When `F2` is pressed:
+When `2` is pressed:
 
 1. `DevToggle2` routes through client devtools/gameplay input seams.
 2. The client sends `Packets.toggle_debug_infinite_lives_packet()`.
@@ -119,7 +141,7 @@ When `F2` is pressed:
 5. The server toggles session `LifeOptions.InfiniteLives`.
 6. State packets report the result through `StatePacket.debug_status.infinite_lives`.
 
-When `F3` is pressed:
+When `3` is pressed:
 
 1. `DevToggle3` routes through client devtools/gameplay input seams.
 2. The client sends `Packets.toggle_debug_freeze_world_packet()`.
@@ -136,7 +158,7 @@ When `F3` is pressed:
 6. Simulation gates read `worldSimulationOptions` before asteroid spawning, asteroid advancing, bullet advancing, and collision passes.
 7. State packets report the result through `StatePacket.debug_status.world_frozen`.
 
-When `F4` is pressed:
+When `4` is pressed:
 
 1. `DevToggle4` routes through client devtools/gameplay input seams.
 2. The client sends `Packets.toggle_debug_freeze_player_packet()`.

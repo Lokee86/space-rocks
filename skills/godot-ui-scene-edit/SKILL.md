@@ -15,6 +15,7 @@ Use this skill for work involving:
 - scene paths and signal connections
 - `client/scripts/ui/**`
 - UI-facing controller scripts
+- devtools window scene/controller work under `client/scenes/devtools/` and `client/scripts/devtools/` when the task is UI-facing
 
 ## Core rules
 
@@ -81,7 +82,7 @@ Suggested human-run GUT command:
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
 
-Do not run this command by default as the agent.
+Focused, safe terminal checks are allowed when useful for the task, but avoid destructive git commands, broad cleanup, dependency upgrades, unrelated formatter runs, or expensive commands unless explicitly requested.
 
 ## Stop conditions
 

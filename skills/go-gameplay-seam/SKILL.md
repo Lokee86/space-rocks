@@ -20,6 +20,8 @@ Use this skill for server-side gameplay work involving:
 - pause safety
 - domain gameplay events
 - game simulation state
+- debug kill/spawn/respawn actions
+- debug freeze/invincible/infinite-lives toggles
 
 ## Ownership rules
 

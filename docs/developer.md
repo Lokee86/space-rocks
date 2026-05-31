@@ -86,8 +86,41 @@ Runtime flow:
 6. Lobby/lifecycle packets call `services/game-server/internal/rooms` for domain decisions and networking sends snapshots/errors.
 7. After a room reaches `InGame`, the room's `*game.Game` handles gameplay packets and advances simulation.
 8. The server encodes state packets through `packetcodec` and sends them at the server tick rate.
-9. `client/scripts/networking/world_sync.gd` coordinates sync ordering and delegates node ownership, packet application, and interpolation to the player, bullet, asteroid, and local-visual sync owners.
+9. `client/scripts/world/world_sync.gd` coordinates sync ordering and delegates node ownership, packet application, and interpolation to the player, bullet, asteroid, and local-visual sync owners under `client/scripts/world/`.
 10. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
+
+## Packet Schema And Generated Outputs
+
+Packet schema source of truth is split across:
+
+- `shared/packets/outputs.toml`
+- `shared/packets/gameplay.toml`
+- `shared/packets/debug.toml`
+- `shared/packets/lobby.toml`
+
+Generated packet outputs:
+
+- `services/game-server/internal/game/entities/packets_generated.go`
+- `services/game-server/internal/game/packets.go`
+- `services/game-server/internal/devtools/packets_generated.go`
+- `client/scripts/networking/packets/packets.gd`
+
+Edit the relevant split packet TOML file for schema/content changes. Edit `shared/packets/outputs.toml` only when changing output routing.
+
+## Devtool Hotkeys
+
+Canonical gameplay devtool hotkeys:
+
+- `0`: window
+- `1`: invincible
+- `2`: infinite lives
+- `3`: world freeze
+- `4`: player freeze
+- `5`: kill local player
+- `6`: spawn new player
+- `7`: force respawn local player
+- `8`: reserved
+- `9`: reserved
 
 ## Run The Server
 

@@ -54,30 +54,14 @@ The client codec is intentionally JSON-only and thin. Do not add validation, for
 
 `network_client.gd` still owns websocket behavior.
 
-## Current Client Runtime Areas
+## World Script Paths
 
-Common starting points after the client runtime refactor:
+Current world sync/wrap ownership paths:
 
-- `client/scripts/session/`: session-level coordinators, including gameplay, room, config, and client session context.
-- `client/scripts/shell/gameplay_shell_flow.gd`: narrow gameplay shell coordinator. It should stay mostly as orchestration and delegation.
-- `client/scripts/gameplay/runtime/`: gameplay runtime/state-application context.
-- `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
-- `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
-- `client/scripts/shell/gameplay_hud_flow.gd`: gameplay HUD flow.
-- `client/scripts/shell/gameplay_menu_flow.gd`: gameplay menu flow and semantic menu lifecycle signal routing.
-- `client/scripts/shell/gameplay_respawn_flow.gd`: respawn request and confirmation state.
-- `client/scripts/shell/gameplay_runtime_tick_flow.gd`: runtime HUD ticking.
-- `client/scripts/gameplay/spectate/`: spectate state, menu requests, and camera target cycling.
-- `client/scripts/gameplay/events/`: server event lane and death/game-over consequences.
-- `client/scripts/gameplay/effects/`: gameplay effects helper used by event/effects flows.
-- `client/scripts/lobby/`: lobby shell/presenter/network action flows.
-- `client/scripts/boot/`: boot flow and pending boot request.
-- `client/scripts/config/`: client config flows.
-- `client/scripts/networking/`: websocket client and packet transport.
-- `client/scripts/networking/packets/`: generated packets and packet codec.
-- `client/scripts/world/`: world sync and entity sync owners.
-- `client/scripts/entities/player.gd`: local player node and packet-facing input state.
-- `client/scripts/ui/`: UI nodes/controllers.
+- `client/scripts/world/world_sync.gd`
+- `client/scripts/world/world_wrap.gd`
+- `client/scripts/world/local_visual_sync.gd`
+- `client/scripts/world/player_sync.gd`
 
 ## Spectate / Lifecycle Rules
 
@@ -91,14 +75,11 @@ Do not infer active eligibility solely from remote player positions or ship pres
 
 ## Implemented Developer Toggles
 
-Current hardcoded Godot hotkeys:
+Current hardcoded dev toggles use number keys (`DevToggle0` through `DevToggle9`). Use the canonical map in `docs/devtools/toggles.md`.
 
-- `F1`: toggle debug invincibility for the player
-- `F2`: toggle debug infinite lives for the player
-- `F3`: toggle room-wide debug world freeze
-- `F4`: toggle the player's paused state
+Pause/menu is separate from dev toggles and should route through `OpenMenu`, not `DevToggle4`.
 
-These are server-authoritative toggles sent through generated packets where applicable. See `docs/devtools/toggles.md`.
+These are server-authoritative toggles sent through generated packets where applicable.
 
 Devtools must route through real gameplay seams. Do not create parallel debug-only gameplay logic that bypasses damage, lives, spawning, scoring, movement, room/session, or modifier systems.
 
@@ -111,6 +92,7 @@ Pause plumbing exists:
 - paused players should ignore input, not shoot/score, not take asteroid damage, and be hidden by client world sync
 - resume starts a short invulnerability window
 - pause/menu UI exists but is still evolving
+- input routing should treat pause/menu as `OpenMenu` behavior, not a devtool toggle
 
 Pause/menu behavior still needs smoke testing, especially active-game pause, GameOver menu behavior, ReturnToLobby, and websocket preservation.
 
