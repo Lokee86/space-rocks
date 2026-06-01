@@ -61,6 +61,10 @@ signal game_target_clear_requested()
 @onready var game_target_select: OptionButton = %GameTargetSelect
 @onready var set_game_target_button: Button = %SetGameTargetButton
 @onready var clear_game_target_button: Button = %ClearGameTargetButton
+@onready var local_player_telemetry: PanelContainer = %LocalPlayerTelemetry
+@onready var local_player_telemetry_text: Label = %LocalPlayerTelemetryText
+@onready var target_telemetry: PanelContainer = %TargetTelemetry
+@onready var target_telemetry_text: Label = %TargetTelemetryText
 
 
 func _ready() -> void:
@@ -261,6 +265,53 @@ func refresh_game_target_options(
 		game_target_select.select(selected_index)
 	else:
 		game_target_select.select(0)
+
+
+func refresh_local_player_state(state: Dictionary) -> void:
+	if state.is_empty():
+		local_player_telemetry_text.text = "\u2014"
+		return
+
+	var keys := state.keys()
+	keys.sort()
+	var lines: Array[String] = []
+	for key in keys:
+		var value = state.get(key)
+		var rendered_value := ""
+		if value is Array or value is Dictionary:
+			rendered_value = JSON.stringify(value)
+		else:
+			rendered_value = str(value)
+		lines.append("%s: %s" % [str(key), rendered_value])
+	local_player_telemetry_text.text = "\n".join(lines)
+
+
+func refresh_target_state(target_kind: String, target_id: String, state: Dictionary) -> void:
+	if target_kind == "" or target_id == "":
+		target_telemetry_text.text = "\u2014"
+		return
+
+	var lines: Array[String] = []
+	lines.append("target_kind: %s" % target_kind)
+	lines.append("target_id: %s" % target_id)
+
+	if state.is_empty():
+		lines.append("state: \u2014")
+		target_telemetry_text.text = "\n".join(lines)
+		return
+
+	lines.append("")
+	var keys := state.keys()
+	keys.sort()
+	for key in keys:
+		var value = state.get(key)
+		var rendered_value := ""
+		if value is Array or value is Dictionary:
+			rendered_value = JSON.stringify(value)
+		else:
+			rendered_value = str(value)
+		lines.append("%s: %s" % [str(key), rendered_value])
+	target_telemetry_text.text = "\n".join(lines)
 
 
 func _on_close_requested() -> void:

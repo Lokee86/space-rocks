@@ -36,6 +36,14 @@ func refresh_gameplay_state(state: Dictionary) -> void:
 	target_model.apply_gameplay_state(state)
 	if window_controller == null:
 		return
+	if window_controller.has_method("refresh_target_state"):
+		window_controller.refresh_target_state(
+			target_model.game_target_kind,
+			target_model.game_target_id,
+			target_model.target_state()
+		)
+	if window_controller.has_method("refresh_local_player_state"):
+		window_controller.refresh_local_player_state(target_model.local_player_state())
 
 	if window_controller.has_method("apply_debug_status"):
 		window_controller.apply_debug_status(state.get("debug_status", {}))

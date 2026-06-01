@@ -122,6 +122,9 @@ Devtools packet boundary rules:
 ## Devtool Hotkeys
 
 For a focused server devtools reference (commands, boundaries, and checks), see [docs/server/devtools.md](server/devtools.md).
+For semantic mouse input behavior, see [docs/client/mouse-input.md](client/mouse-input.md).
+For targeting ownership and boundaries, see [docs/server/targeting.md](server/targeting.md).
+For devtools telemetry readouts and boundaries, see [docs/devtools/telemetry.md](devtools/telemetry.md).
 
 Canonical gameplay devtool hotkeys:
 
@@ -138,6 +141,8 @@ Canonical gameplay devtool hotkeys:
 
 Devtools window targeting notes:
 
+- canonical gameplay target and per-tool devtools target are separate concepts (see [docs/server/targeting.md](server/targeting.md))
+- player-only commands use `target_player_id` only after resolver compatibility checks
 - invincibility, infinite lives, player freeze, kill, respawn, and score/lives controls can target selected players where wired
 - score/lives controls use active-player target dropdowns
 - score/lives target dropdown labels are player IDs only (no ALIVE/DEAD or Active/Inactive status text)
@@ -155,6 +160,17 @@ Devtools command behavior notes:
 Client devtools authority note:
 
 - the client devtools UI sends packets only; it does not mutate HUD, score/lives, bullets, asteroids, or `world_sync` locally
+
+Devtools telemetry handoff note:
+
+- raw `LocalPlayerTelemetry` and `TargetTelemetry` readouts live in the devtools window (see [docs/devtools/telemetry.md](devtools/telemetry.md))
+- a future world telemetry overlay is separate from HUD and is not implemented yet
+
+Input/targeting handoff note:
+
+- mouse actions in gameplay/devtools flows use semantic InputMap actions (`SelectTarget`, `DeselectTarget`, `SpawnEntity`, `CancelAction`)
+- raw left/right mouse buttons should remain only in InputMap bindings (`project.godot`)
+- targeting and persistent debug bullet stream cadence stay server-owned
 
 ## Run The Server
 
