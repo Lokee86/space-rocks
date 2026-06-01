@@ -1,6 +1,12 @@
 package game
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
+)
 
 func TestSetPlayerTargetStoresExistingTarget(t *testing.T) {
 	game := New()
@@ -66,5 +72,127 @@ func TestStatePacketIncludesTargetPlayerID(t *testing.T) {
 	}
 	if playerState.TargetPlayerID != playerB {
 		t.Fatalf("expected target_player_id %q, got %q", playerB, playerState.TargetPlayerID)
+	}
+}
+
+func TestSetTargetStoresPlayerKindAndID(t *testing.T) {
+	game := New()
+	playerA := game.AddPlayer()
+	playerB := game.AddPlayer()
+
+	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   playerB,
+	})
+	if !ok {
+		t.Fatal("expected SetTarget player target to succeed")
+	}
+
+	target := game.Target(playerA)
+	if target.Kind != targetpolicy.TargetKindPlayer {
+		t.Fatalf("expected target kind %q, got %q", targetpolicy.TargetKindPlayer, target.Kind)
+	}
+	if target.ID != playerB {
+		t.Fatalf("expected target id %q, got %q", playerB, target.ID)
+	}
+}
+
+func TestSetTargetStoresAsteroidKindAndID(t *testing.T) {
+	game := New()
+	playerA := game.AddPlayer()
+	asteroid := entities.NewAsteroid("asteroid-1", physics.Vector2{}, physics.Vector2{}, 1, 0)
+	game.state.Asteroids[asteroid.ID] = asteroid
+
+	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindAsteroid,
+		ID:   asteroid.ID,
+	})
+	if !ok {
+		t.Fatal("expected SetTarget asteroid target to succeed")
+	}
+
+	target := game.Target(playerA)
+	if target.Kind != targetpolicy.TargetKindAsteroid {
+		t.Fatalf("expected target kind %q, got %q", targetpolicy.TargetKindAsteroid, target.Kind)
+	}
+	if target.ID != asteroid.ID {
+		t.Fatalf("expected target id %q, got %q", asteroid.ID, target.ID)
+	}
+}
+
+func TestSetTargetStoresBulletKindAndID(t *testing.T) {
+	game := New()
+	playerA := game.AddPlayer()
+	bullet := entities.NewBullet("bullet-1", playerA, physics.Vector2{}, 0, physics.Vector2{}, 1.0)
+	game.state.Projectiles[bullet.ID] = bullet
+
+	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindBullet,
+		ID:   bullet.ID,
+	})
+	if !ok {
+		t.Fatal("expected SetTarget bullet target to succeed")
+	}
+
+	target := game.Target(playerA)
+	if target.Kind != targetpolicy.TargetKindBullet {
+		t.Fatalf("expected target kind %q, got %q", targetpolicy.TargetKindBullet, target.Kind)
+	}
+	if target.ID != bullet.ID {
+		t.Fatalf("expected target id %q, got %q", bullet.ID, target.ID)
+	}
+}
+
+func TestClearTargetEmptiesGenericAndCompatibilityTargetFields(t *testing.T) {
+	game := New()
+	playerA := game.AddPlayer()
+	playerB := game.AddPlayer()
+
+	if !game.SetTarget(playerA, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   playerB,
+	}) {
+		t.Fatal("expected setup SetTarget to succeed")
+	}
+
+	game.ClearTarget(playerA)
+
+	target := game.Target(playerA)
+	if !target.IsEmpty() {
+		t.Fatalf("expected cleared generic target to be empty, got %#v", target)
+	}
+
+	player := game.state.Players[playerA]
+	if player == nil {
+		t.Fatalf("expected player %q to exist", playerA)
+	}
+	if player.TargetPlayerID != "" {
+		t.Fatalf("expected compatibility target_player_id to be empty, got %q", player.TargetPlayerID)
+	}
+}
+
+func TestSetTargetInvalidTargetDoesNotOverwriteExistingTarget(t *testing.T) {
+	game := New()
+	playerA := game.AddPlayer()
+	playerB := game.AddPlayer()
+
+	if !game.SetTarget(playerA, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   playerB,
+	}) {
+		t.Fatal("expected setup SetTarget to succeed")
+	}
+
+	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindAsteroid,
+		ID:   "asteroid-missing",
+	})
+	if ok {
+		t.Fatal("expected SetTarget with missing asteroid target to fail")
+	}
+
+	target := game.Target(playerA)
+	if target.Kind != targetpolicy.TargetKindPlayer || target.ID != playerB {
+		t.Fatalf("expected existing target to remain player %q, got %#v", playerB, target)
 	}
 }

@@ -226,8 +226,42 @@ func refresh_counter_player_targets(rows: Array) -> void:
 	_refresh_target_option(add_lives_select, rows, "", true, true)
 
 
-func refresh_game_target_options(rows: Array, current_target_player_id: String = "") -> void:
-	_refresh_target_option(game_target_select, rows, current_target_player_id, false, false)
+func refresh_game_target_options(
+	rows: Array,
+	current_target_player_id: String = "",
+	current_target_kind: String = "",
+	current_target_id: String = ""
+) -> void:
+	var previous_player_id := ""
+	var previous_index := game_target_select.get_selected()
+	if previous_index >= 0:
+		previous_player_id = str(game_target_select.get_item_metadata(previous_index))
+
+	game_target_select.clear()
+	game_target_select.add_item(_format_game_target_display(current_target_kind, current_target_id))
+	game_target_select.set_item_metadata(0, "")
+
+	var selected_index := -1
+	for row in rows:
+		if !(row is Dictionary):
+			continue
+
+		var label := str(row.get("label", ""))
+		var player_id := str(row.get("player_id", ""))
+		if player_id == DevtoolsTargetResolver.TARGET_GAME:
+			continue
+		game_target_select.add_item(label)
+		var item_index := game_target_select.get_item_count() - 1
+		game_target_select.set_item_metadata(item_index, player_id)
+		if current_target_player_id != "" and player_id == current_target_player_id:
+			selected_index = item_index
+		elif current_target_player_id == "" and player_id == previous_player_id:
+			selected_index = item_index
+
+	if selected_index >= 0:
+		game_target_select.select(selected_index)
+	else:
+		game_target_select.select(0)
 
 
 func _on_close_requested() -> void:
@@ -360,6 +394,12 @@ func _active_inactive(value) -> String:
 	if bool(value):
 		return "Active"
 	return "Inactive"
+
+
+func _format_game_target_display(target_kind: String, target_id: String) -> String:
+	if target_kind == "" or target_id == "":
+		return "\u2014"
+	return "%s:%s" % [target_kind, target_id]
 
 
 func _selected_metadata_as_string(select: OptionButton) -> String:

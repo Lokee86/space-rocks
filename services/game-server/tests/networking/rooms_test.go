@@ -408,6 +408,55 @@ func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *te
 	}
 }
 
+func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartSinglePlayerRequest}); err != nil {
+		t.Fatalf("write start single-player request: %v", err)
+	}
+
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+	var initialState servergame.StatePacket
+	readJSON(t, conn, &initialState)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:           servergame.PacketTypeSetTargetPlayerRequest,
+		TargetPlayerID: initialState.SelfID,
+	}); err != nil {
+		t.Fatalf("write set target player request: %v", err)
+	}
+	var targetedState servergame.StatePacket
+	readJSON(t, conn, &targetedState)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:           servergame.PacketTypeSetTargetPlayerRequest,
+		TargetPlayerID: "",
+	}); err != nil {
+		t.Fatalf("write clear target player request: %v", err)
+	}
+	var clearedState servergame.StatePacket
+	readJSON(t, conn, &clearedState)
+
+	selfState, ok := clearedState.Players[clearedState.SelfID]
+	if !ok {
+		t.Fatalf("expected state to include self player %q", clearedState.SelfID)
+	}
+	if selfState.TargetPlayerID != "" {
+		t.Fatalf("expected clear target request to produce empty target_player_id, got %q", selfState.TargetPlayerID)
+	}
+}
+
 func TestJoinRoomRequestJoinsLobbyAndBroadcastsSnapshots(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()

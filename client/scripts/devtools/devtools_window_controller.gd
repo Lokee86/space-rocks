@@ -31,6 +31,8 @@ var latest_game_target_rows: Array = []
 var latest_game_target_player_id := ""
 var connection_service
 var self_player_id := ""
+var game_target_kind := ""
+var game_target_id := ""
 
 
 func ensure_window() -> Window:
@@ -52,7 +54,12 @@ func ensure_window() -> Window:
 	if window.has_method("refresh_player_frozen_targets"):
 		window.refresh_player_frozen_targets(latest_player_frozen_rows)
 	if window.has_method("refresh_game_target_options"):
-		window.refresh_game_target_options(latest_game_target_rows, latest_game_target_player_id)
+		window.refresh_game_target_options(
+			latest_game_target_rows,
+			latest_game_target_player_id,
+			game_target_kind,
+			game_target_id
+		)
 	return window
 
 
@@ -117,14 +124,24 @@ func refresh_counter_player_targets(rows: Array) -> void:
 		devtools_window.refresh_counter_player_targets(rows)
 
 
-func refresh_game_target_options(rows: Array, current_target_player_id: String) -> void:
+func refresh_game_target_options(rows: Array, current_target_kind: String, current_target_id: String) -> void:
 	latest_game_target_rows = rows
-	latest_game_target_player_id = current_target_player_id
+	game_target_kind = current_target_kind
+	game_target_id = current_target_id
+	if game_target_kind == DevtoolsTargetResolver.TARGET_KIND_PLAYER:
+		latest_game_target_player_id = game_target_id
+	else:
+		latest_game_target_player_id = ""
 
 	if window == null || !is_instance_valid(window):
 		return
 	if window.has_method("refresh_game_target_options"):
-		window.refresh_game_target_options(latest_game_target_rows, latest_game_target_player_id)
+		window.refresh_game_target_options(
+			latest_game_target_rows,
+			latest_game_target_player_id,
+			game_target_kind,
+			game_target_id
+		)
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:
@@ -133,9 +150,20 @@ func refresh_spawn_player_slots(max_players: int) -> void:
 		devtools_window.refresh_spawn_player_slots(max_players)
 
 
-func configure_kill_player_routing(connection_service_ref, self_id: String) -> void:
+func configure_kill_player_routing(
+	connection_service_ref,
+	self_id: String,
+	target_kind: String,
+	target_id: String
+) -> void:
 	connection_service = connection_service_ref
 	self_player_id = self_id
+	game_target_kind = target_kind
+	game_target_id = target_id
+	if game_target_kind == "player":
+		latest_game_target_player_id = game_target_id
+	else:
+		latest_game_target_player_id = ""
 
 
 func request_placement_action(action_name: StringName, placement_context: Dictionary = {}) -> void:
@@ -288,8 +316,9 @@ func _on_respawn_player_placement_requested(target_player_id: String) -> void:
 
 
 func _effective_target(selected_tool_target: String) -> String:
-	return DevtoolsTargetResolver.resolve(
+	return DevtoolsTargetResolver.resolve_player_target(
 		selected_tool_target,
-		latest_game_target_player_id,
+		game_target_kind,
+		game_target_id,
 		self_player_id
 	)

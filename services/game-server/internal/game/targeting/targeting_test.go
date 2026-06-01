@@ -86,3 +86,48 @@ func TestValidateRequestedTargetSelfTargetAllowed(t *testing.T) {
 		t.Fatalf("expected accepted self target player-1, got %q", acceptedTarget)
 	}
 }
+
+func TestEmptyTargetIsEmpty(t *testing.T) {
+	target := EmptyTarget()
+
+	if !target.IsEmpty() {
+		t.Fatal("expected EmptyTarget() to be empty")
+	}
+}
+
+func TestNonEmptyTargetRefIsNotEmpty(t *testing.T) {
+	target := TargetRef{
+		Kind: TargetKindPlayer,
+		ID:   "player-1",
+	}
+
+	if target.IsEmpty() {
+		t.Fatal("expected non-empty TargetRef to not be empty")
+	}
+}
+
+func TestTargetKindPriorityOrder(t *testing.T) {
+	playerPriority := TargetKindPriority(TargetKindPlayer)
+	enemyPriority := TargetKindPriority(TargetKindEnemy)
+	asteroidPriority := TargetKindPriority(TargetKindAsteroid)
+	bulletPriority := TargetKindPriority(TargetKindBullet)
+
+	if playerPriority <= enemyPriority {
+		t.Fatalf("expected player priority (%d) > enemy priority (%d)", playerPriority, enemyPriority)
+	}
+	if enemyPriority <= asteroidPriority {
+		t.Fatalf("expected enemy priority (%d) > asteroid priority (%d)", enemyPriority, asteroidPriority)
+	}
+	if asteroidPriority <= bulletPriority {
+		t.Fatalf("expected asteroid priority (%d) > bullet priority (%d)", asteroidPriority, bulletPriority)
+	}
+}
+
+func TestUnknownTargetKindPriorityBelowBullet(t *testing.T) {
+	unknownPriority := TargetKindPriority(TargetKind("unknown"))
+	bulletPriority := TargetKindPriority(TargetKindBullet)
+
+	if unknownPriority >= bulletPriority {
+		t.Fatalf("expected unknown kind priority (%d) < bullet priority (%d)", unknownPriority, bulletPriority)
+	}
+}

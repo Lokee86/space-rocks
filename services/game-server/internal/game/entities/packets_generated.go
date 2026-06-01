@@ -25,6 +25,8 @@ type ShipState struct {
 	Health         int     `json:"health"`
 	Shields        int     `json:"shields"`
 	TargetPlayerID string  `json:"target_player_id"`
+	TargetKind     string  `json:"target_kind"`
+	TargetID       string  `json:"target_id"`
 }
 
 type AsteroidState struct {

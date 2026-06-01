@@ -132,6 +132,18 @@ go_name = "TargetPlayerID"
 json = "target_player_id"
 type = "string"
 
+[[structs.fields]]
+name = "target_kind"
+go_name = "TargetKind"
+json = "target_kind"
+type = "string"
+
+[[structs.fields]]
+name = "target_id"
+go_name = "TargetID"
+json = "target_id"
+type = "string"
+
 [[structs]]
 id = "AsteroidState"
 

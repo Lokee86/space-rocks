@@ -16,6 +16,8 @@ var hotkey_flow
 var has_received_gameplay_state := false
 var placement_request_route: Callable
 var local_player_id := ""
+var game_target_kind := ""
+var game_target_id := ""
 var game_target_player_id := ""
 
 
@@ -41,6 +43,8 @@ func reset() -> void:
 		debug_flow.reset()
 	if display_refresh_flow != null:
 		display_refresh_flow.reset()
+	game_target_kind = ""
+	game_target_id = ""
 	game_target_player_id = ""
 
 
@@ -69,9 +73,19 @@ func apply_gameplay_state(state: Dictionary) -> void:
 	if display_refresh_flow != null:
 		display_refresh_flow.refresh_gameplay_state(state)
 		local_player_id = display_refresh_flow.local_player_id()
-		game_target_player_id = display_refresh_flow.game_target_player_id()
+		game_target_kind = display_refresh_flow.game_target_kind()
+		game_target_id = display_refresh_flow.game_target_id()
+		if game_target_kind == "player":
+			game_target_player_id = game_target_id
+		else:
+			game_target_player_id = ""
 	if devtools_window_controller != null:
-		devtools_window_controller.configure_kill_player_routing(connection_service, local_player_id)
+		devtools_window_controller.configure_kill_player_routing(
+			connection_service,
+			local_player_id,
+			game_target_kind,
+			game_target_id
+		)
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:
