@@ -1,5 +1,4 @@
 extends RefCounted
-class_name WorldSync
 
 signal bullet_spawned
 

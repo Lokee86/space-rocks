@@ -22,6 +22,7 @@ type Game struct {
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
 	state                     entities.GameState
+	activeDebugBulletStreams  []DevtoolsContinuousBulletStream
 	cameraViews               map[string]*entities.CameraView
 	playerSessions            map[string]*playerSession
 	pendingPresentationEvents map[string][]EventState

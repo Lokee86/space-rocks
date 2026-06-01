@@ -21,7 +21,9 @@ func process(has_received_gameplay_state: bool) -> void:
 	if Input.is_action_just_pressed("DevToggle6"):
 		if placement_request_route.is_null():
 			return
-		if Input.is_key_pressed(KEY_ALT):
+		if Input.is_key_pressed(KEY_CTRL) and Input.is_key_pressed(KEY_ALT):
+			placement_request_route.call(&"continuous_spawn_bullet")
+		elif Input.is_key_pressed(KEY_ALT):
 			placement_request_route.call(&"spawn_bullet")
 		elif Input.is_key_pressed(KEY_SHIFT):
 			placement_request_route.call(&"spawn_asteroid")

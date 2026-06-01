@@ -30,6 +30,7 @@ func (game *Game) Step(delta float64) {
 
 	game.stepPlayerSessions(delta)
 	game.stepPlayers(delta, bounds)
+	game.stepDevtoolsContinuousBulletStreams(delta)
 	game.removeReadyPlayers()
 	game.stepAsteroidSpawning(delta)
 	game.stepAsteroids(delta, bounds)

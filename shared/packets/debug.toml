@@ -141,6 +141,10 @@ id = "debug_spawn_entity"
 value = "debug_spawn_entity"
 
 [[packet_types]]
+id = "debug_begin_continuous_bullet_stream"
+value = "debug_begin_continuous_bullet_stream"
+
+[[packet_types]]
 id = "debug_respawn_player"
 value = "debug_respawn_player"
 
