@@ -1,5 +1,7 @@
 package targeting
 
+import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+
 type TargetKind string
 
 const (
@@ -12,6 +14,11 @@ const (
 type TargetRef struct {
 	Kind TargetKind
 	ID   string
+}
+
+type TargetCandidate struct {
+	Ref  TargetRef
+	Body physics.CollisionBody
 }
 
 func EmptyTarget() TargetRef {

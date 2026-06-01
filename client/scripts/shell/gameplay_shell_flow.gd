@@ -19,6 +19,7 @@ var runtime_tick_flow
 var spectate_context
 var player_pause_state_tracker
 var has_received_state := false
+var game_owner: Node2D
 
 
 func configure(
@@ -31,6 +32,7 @@ func configure(
 	menu_flow_ref
 ) -> void:
 	connection_service = connection_service_ref
+	self.game_owner = game_owner
 	player = player_ref
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
@@ -56,7 +58,10 @@ func configure(
 		connection_service,
 		player,
 		menu_flow,
-		Callable(runtime_context, "request_respawn")
+		Callable(runtime_context, "request_respawn"),
+		Callable(runtime_context, "target_visual_candidates"),
+		Callable(self, "mouse_visual_position"),
+		Callable(self, "server_position_for_visual_position")
 	)
 	spectate_context = GameplaySpectateContext.new()
 	spectate_context.configure(menu_flow, null, runtime_context.world_sync)
@@ -151,6 +156,21 @@ func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 	if runtime_context == null:
 		return visual_position
 	return runtime_context.server_position_for_visual_position(visual_position)
+
+
+func mouse_visual_position() -> Vector2:
+	if runtime_context == null:
+		return Vector2.ZERO
+	if current_camera() == null:
+		return Vector2.ZERO
+	if game_owner == null:
+		return Vector2.ZERO
+	return game_owner.get_global_mouse_position()
+
+func handle_unhandled_input(event: InputEvent) -> bool:
+	if input_context == null:
+		return false
+	return input_context.handle_unhandled_input(event, has_received_state)
 
 
 func process(_delta: float) -> void:

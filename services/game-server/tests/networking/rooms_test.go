@@ -457,6 +457,119 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 	}
 }
 
+func TestSelectTargetAtPositionRequestRoutesToServerTargetSelection(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartSinglePlayerRequest}); err != nil {
+		t.Fatalf("write start single-player request: %v", err)
+	}
+
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+	var initialState servergame.StatePacket
+	readJSON(t, conn, &initialState)
+
+	selfState, ok := initialState.Players[initialState.SelfID]
+	if !ok {
+		t.Fatalf("expected initial state to include self player %q", initialState.SelfID)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:       servergame.PacketTypeSelectTargetAtPositionRequest,
+		X:          selfState.X,
+		Y:          selfState.Y,
+		TargetKind: "player",
+		TargetID:   initialState.SelfID,
+	}); err != nil {
+		t.Fatalf("write select target at position request: %v", err)
+	}
+
+	var updatedState servergame.StatePacket
+	readJSON(t, conn, &updatedState)
+	updatedSelfState, ok := updatedState.Players[updatedState.SelfID]
+	if !ok {
+		t.Fatalf("expected updated state to include self player %q", updatedState.SelfID)
+	}
+	if updatedSelfState.TargetKind != "player" {
+		t.Fatalf("expected target_kind %q, got %q", "player", updatedSelfState.TargetKind)
+	}
+	if updatedSelfState.TargetID != updatedState.SelfID {
+		t.Fatalf("expected target_id %q, got %q", updatedState.SelfID, updatedSelfState.TargetID)
+	}
+}
+
+func TestClearTargetRequestClearsGenericTarget(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartSinglePlayerRequest}); err != nil {
+		t.Fatalf("write start single-player request: %v", err)
+	}
+
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+	var initialState servergame.StatePacket
+	readJSON(t, conn, &initialState)
+
+	selfState, ok := initialState.Players[initialState.SelfID]
+	if !ok {
+		t.Fatalf("expected initial state to include self player %q", initialState.SelfID)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:       servergame.PacketTypeSelectTargetAtPositionRequest,
+		X:          selfState.X,
+		Y:          selfState.Y,
+		TargetKind: "player",
+		TargetID:   initialState.SelfID,
+	}); err != nil {
+		t.Fatalf("write select target at position request: %v", err)
+	}
+	var targetedState servergame.StatePacket
+	readJSON(t, conn, &targetedState)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type: servergame.PacketTypeClearTargetRequest,
+	}); err != nil {
+		t.Fatalf("write clear target request: %v", err)
+	}
+	var clearedState servergame.StatePacket
+	readJSON(t, conn, &clearedState)
+
+	clearedSelfState, ok := clearedState.Players[clearedState.SelfID]
+	if !ok {
+		t.Fatalf("expected cleared state to include self player %q", clearedState.SelfID)
+	}
+	if clearedSelfState.TargetKind != "" {
+		t.Fatalf("expected cleared target_kind to be empty, got %q", clearedSelfState.TargetKind)
+	}
+	if clearedSelfState.TargetID != "" {
+		t.Fatalf("expected cleared target_id to be empty, got %q", clearedSelfState.TargetID)
+	}
+	if clearedSelfState.TargetPlayerID != "" {
+		t.Fatalf("expected cleared target_player_id to be empty, got %q", clearedSelfState.TargetPlayerID)
+	}
+}
+
 func TestJoinRoomRequestJoinsLobbyAndBroadcastsSnapshots(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()

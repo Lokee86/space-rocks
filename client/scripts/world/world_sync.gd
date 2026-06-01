@@ -109,3 +109,37 @@ func visual_position_for_server_position(server_position: Vector2) -> Vector2:
 
 func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 	return local_visual_sync.server_position_for_visual_position(visual_position)
+
+
+func player_target_positions() -> Dictionary:
+	var positions := {}
+	if player_sync == null:
+		return positions
+
+	if current_self_id != "":
+		positions[current_self_id] = {
+			"visual_position": local_visual_sync.visual_position(),
+			"server_position": local_visual_sync.server_position()
+		}
+
+	var remote_positions := player_sync.get_remote_player_visual_positions(current_self_id)
+	for player_id in remote_positions.keys():
+		var visual_position = remote_positions[player_id]
+		positions[player_id] = {
+			"visual_position": visual_position,
+			"server_position": visual_position
+		}
+
+	return positions
+
+
+func asteroid_target_positions() -> Dictionary:
+	if asteroid_sync == null:
+		return {}
+	return asteroid_sync.asteroid_target_positions()
+
+
+func bullet_target_positions() -> Dictionary:
+	if bullet_sync == null:
+		return {}
+	return bullet_sync.bullet_target_positions()

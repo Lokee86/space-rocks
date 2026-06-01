@@ -136,6 +136,12 @@ func _input(event: InputEvent) -> void:
 	if debug_click_placement_flow.handle_unhandled_input(event):
 		get_viewport().set_input_as_handled()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if gameplay_shell_flow == null:
+		return
+	if gameplay_shell_flow.handle_unhandled_input(event):
+		get_viewport().set_input_as_handled()
+
 
 func begin_debug_click_placement(action_name: StringName, placement_context: Dictionary = {}) -> void:
 	if debug_click_placement_flow == null:

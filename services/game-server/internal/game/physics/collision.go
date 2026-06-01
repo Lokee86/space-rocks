@@ -61,6 +61,21 @@ func DetectCollision(a CollisionBody, b CollisionBody) (Collision, bool) {
 	}, true
 }
 
+func BodyContainsPoint(body CollisionBody, point Vector2) bool {
+	switch primitiveKind(body.Shape.Type) {
+	case "circle":
+		circle := circlePrimitive(body)
+		return point.Subtract(circle.Center).LengthSquared() <= circle.Radius*circle.Radius
+	case "capsule":
+		capsule := capsulePrimitive(body)
+		return pointSegmentDistanceSquared(point, capsule.Start, capsule.End) <= capsule.Radius*capsule.Radius
+	case "polygon":
+		return pointInPolygon(point, polygonPoints(body))
+	default:
+		return false
+	}
+}
+
 func shapesIntersect(a CollisionBody, b CollisionBody) bool {
 	aKind := primitiveKind(a.Shape.Type)
 	bKind := primitiveKind(b.Shape.Type)

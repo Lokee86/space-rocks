@@ -196,3 +196,135 @@ func TestSetTargetInvalidTargetDoesNotOverwriteExistingTarget(t *testing.T) {
 		t.Fatalf("expected existing target to remain player %q, got %#v", playerB, target)
 	}
 }
+
+func TestSelectTargetAtPositionStoresPlayerKindAndIDWhenOverlapping(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	targetID := game.AddPlayer()
+
+	targetPlayer := game.state.Players[targetID]
+	if targetPlayer == nil {
+		t.Fatalf("expected target player %q to exist", targetID)
+	}
+
+	ok := game.SelectTargetAtPosition(
+		requesterID,
+		targetPlayer.X,
+		targetPlayer.Y,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindPlayer, ID: targetID},
+	)
+	if !ok {
+		t.Fatal("expected SelectTargetAtPosition player target to succeed")
+	}
+
+	target := game.Target(requesterID)
+	if target.Kind != targetpolicy.TargetKindPlayer || target.ID != targetID {
+		t.Fatalf("expected player target %q, got %#v", targetID, target)
+	}
+}
+
+func TestSelectTargetAtPositionStoresAsteroidKindAndIDWhenOverlapping(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	asteroid := entities.NewAsteroid("asteroid-claim", physics.Vector2{X: 120, Y: 75}, physics.Vector2{}, 1, 0)
+	game.state.Asteroids[asteroid.ID] = asteroid
+
+	ok := game.SelectTargetAtPosition(
+		requesterID,
+		asteroid.X,
+		asteroid.Y,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindAsteroid, ID: asteroid.ID},
+	)
+	if !ok {
+		t.Fatal("expected SelectTargetAtPosition asteroid target to succeed")
+	}
+
+	target := game.Target(requesterID)
+	if target.Kind != targetpolicy.TargetKindAsteroid || target.ID != asteroid.ID {
+		t.Fatalf("expected asteroid target %q, got %#v", asteroid.ID, target)
+	}
+}
+
+func TestSelectTargetAtPositionStoresBulletKindAndIDWhenOverlapping(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	bullet := entities.NewBullet("bullet-claim", requesterID, physics.Vector2{X: 200, Y: 150}, 0, physics.Vector2{}, 1.0)
+	game.state.Projectiles[bullet.ID] = bullet
+
+	ok := game.SelectTargetAtPosition(
+		requesterID,
+		bullet.X,
+		bullet.Y,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindBullet, ID: bullet.ID},
+	)
+	if !ok {
+		t.Fatal("expected SelectTargetAtPosition bullet target to succeed")
+	}
+
+	target := game.Target(requesterID)
+	if target.Kind != targetpolicy.TargetKindBullet || target.ID != bullet.ID {
+		t.Fatalf("expected bullet target %q, got %#v", bullet.ID, target)
+	}
+}
+
+func TestSelectTargetAtPositionMissingTargetDoesNotOverwriteExistingTarget(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	existingTargetID := game.AddPlayer()
+
+	if !game.SetTarget(requesterID, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   existingTargetID,
+	}) {
+		t.Fatal("expected setup SetTarget to succeed")
+	}
+
+	ok := game.SelectTargetAtPosition(
+		requesterID,
+		0,
+		0,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindAsteroid, ID: "asteroid-missing"},
+	)
+	if ok {
+		t.Fatal("expected SelectTargetAtPosition to fail for missing target")
+	}
+
+	target := game.Target(requesterID)
+	if target.Kind != targetpolicy.TargetKindPlayer || target.ID != existingTargetID {
+		t.Fatalf("expected existing target to remain player %q, got %#v", existingTargetID, target)
+	}
+}
+
+func TestSelectTargetAtPositionNonOverlappingPointDoesNotOverwriteExistingTarget(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	existingTargetID := game.AddPlayer()
+	newTargetID := game.AddPlayer()
+
+	if !game.SetTarget(requesterID, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   existingTargetID,
+	}) {
+		t.Fatal("expected setup SetTarget to succeed")
+	}
+
+	newTarget := game.state.Players[newTargetID]
+	if newTarget == nil {
+		t.Fatalf("expected new target player %q to exist", newTargetID)
+	}
+
+	ok := game.SelectTargetAtPosition(
+		requesterID,
+		newTarget.X+5000,
+		newTarget.Y+5000,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindPlayer, ID: newTargetID},
+	)
+	if ok {
+		t.Fatal("expected SelectTargetAtPosition to fail for non-overlapping point")
+	}
+
+	target := game.Target(requesterID)
+	if target.Kind != targetpolicy.TargetKindPlayer || target.ID != existingTargetID {
+		t.Fatalf("expected existing target to remain player %q, got %#v", existingTargetID, target)
+	}
+}

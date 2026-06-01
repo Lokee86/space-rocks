@@ -86,3 +86,16 @@ func interpolate(weight: float) -> void:
 			weight
 		)
 		bullet_node.rotation = lerp_angle(bullet_node.rotation, target_bullet_rotations[bullet_id], weight)
+
+
+func bullet_target_positions() -> Dictionary:
+	var positions := {}
+	for bullet_id in target_bullet_positions.keys():
+		if not bullet_nodes.has(bullet_id):
+			continue
+		var bullet_node = bullet_nodes[bullet_id]
+		positions[bullet_id] = {
+			"visual_position": bullet_node.global_position,
+			"server_position": target_bullet_positions[bullet_id],
+		}
+	return positions
