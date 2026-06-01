@@ -29,6 +29,10 @@ var latest_infinite_lives_rows: Array = []
 var latest_player_frozen_rows: Array = []
 var latest_game_target_rows: Array = []
 var latest_game_target_player_id := ""
+var latest_local_player_state := {}
+var latest_target_kind := ""
+var latest_target_id := ""
+var latest_target_state := {}
 var connection_service
 var self_player_id := ""
 var game_target_kind := ""
@@ -60,6 +64,10 @@ func ensure_window() -> Window:
 			game_target_kind,
 			game_target_id
 		)
+	if window.has_method("refresh_local_player_state"):
+		window.refresh_local_player_state(latest_local_player_state)
+	if window.has_method("refresh_target_state"):
+		window.refresh_target_state(latest_target_kind, latest_target_id, latest_target_state)
 	return window
 
 
@@ -143,6 +151,24 @@ func refresh_game_target_options(rows: Array, current_target_kind: String, curre
 			game_target_kind,
 			game_target_id
 		)
+
+
+func refresh_local_player_state(state: Dictionary) -> void:
+	latest_local_player_state = state
+	if window == null or !is_instance_valid(window):
+		return
+	if window.has_method("refresh_local_player_state"):
+		window.refresh_local_player_state(state)
+
+
+func refresh_target_state(target_kind: String, target_id: String, state: Dictionary) -> void:
+	latest_target_kind = target_kind
+	latest_target_id = target_id
+	latest_target_state = state
+	if window == null or !is_instance_valid(window):
+		return
+	if window.has_method("refresh_target_state"):
+		window.refresh_target_state(target_kind, target_id, state)
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:

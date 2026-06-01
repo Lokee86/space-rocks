@@ -381,3 +381,68 @@ func test_kill_player_target_rows_with_asteroid_target_do_not_include_game_targe
 		ids.append(str(row.get("player_id", "")))
 
 	assert_false(ids.has(DevtoolsTargetResolver.TARGET_GAME))
+
+
+func test_target_state_for_player_target_returns_raw_player_dictionary() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_player_state := {
+		"score": 123,
+		"lives": 2,
+		"health": 1,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"target_kind": "player", "target_id": "player-2"},
+			"player-2": expected_player_state,
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+			"player-2": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.target_state(), expected_player_state)
+
+
+func test_target_state_for_asteroid_target_returns_raw_asteroid_dictionary_when_server_asteroids_exists() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_asteroid_state := {
+		"x": 44.0,
+		"y": 88.0,
+		"size": 3,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"target_kind": "asteroid", "target_id": "asteroid-7"},
+		},
+		"server_asteroids": {
+			"asteroid-7": expected_asteroid_state,
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.target_state(), expected_asteroid_state)
+
+
+func test_target_state_with_missing_or_empty_target_returns_empty_dictionary() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {},
+			"player-2": {"score": 10},
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+			"player-2": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.target_state(), {})

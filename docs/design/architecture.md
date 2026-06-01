@@ -393,6 +393,19 @@ Devtools are client-triggered and server-authoritative. Client input requests de
 - debug actions route through real gameplay seams, not parallel debug-only gameplay logic
 - current actions include invincible, infinite lives, world freeze, player freeze, kill, spawn, and respawn
 
+Targeting seam notes:
+
+- canonical target is gameplay/server state
+- a client selection request is not authoritative until reflected in authoritative state updates
+- devtools may consume canonical target through resolver compatibility checks
+- targeting state is not automatically combat behavior
+
+Telemetry seam notes:
+
+- HUD remains player-facing
+- devtools window owns raw `LocalPlayerTelemetry` and `TargetTelemetry` state inspection
+- a future world telemetry overlay is a separate seam for glanceable world/performance/network metrics and is not implemented yet
+
 For key mappings and detailed behavior, see [devtool toggles](../devtools/toggles.md).
 
 Current limitations:

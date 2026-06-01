@@ -100,6 +100,14 @@ Current `6` modifier behavior:
 
 - `Shift+6`: spawn asteroid
 - `Alt+6`: spawn bullet
+- `Ctrl+Alt+6`: create persistent bullet stream from drag direction
+
+Continuous stream notes:
+
+- `Alt+6` remains one-shot spawn bullet placement
+- `Ctrl+Alt+6` enters temporary placement only; after release handling, placement mode exits
+- created stream persists until `Clear Bullets`
+- stream creation does not block later devtools actions
 
 ## Devtools Window Targeting
 
@@ -112,6 +120,11 @@ Devtools window actions use player-select controls populated from current gamepl
 - Infinite Lives
 - Freeze Player
 
+Player selectors may include a compact `Game Target` row when canonical target is a player.
+
+- This row is valid for player-only controls only when canonical `target_kind` is `player`.
+- The `Game Target` row should not appear for canonical `asteroid`, `bullet`, or `enemy` targets in player-only controls.
+
 Invincibility, Infinite Lives, and Freeze Player selectors show only feature state wording (`Active`/`Inactive`) for the selected player:
 
 - `InvincibleStatusSelect`
@@ -119,6 +132,8 @@ Invincibility, Infinite Lives, and Freeze Player selectors show only feature sta
 - `PlayerFrozenSelect`
 
 Kill/Respawn selectors may still use lifecycle wording such as `ALIVE`/`DEAD`.
+
+Score/lives controls remain active-player/player-ID focused targeting.
 
 World Freeze remains a global room toggle and does not use a player selector.
 

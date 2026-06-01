@@ -3,6 +3,10 @@ extends RefCounted
 
 var self_id := ""
 var server_players: Dictionary = {}
+var server_asteroids: Dictionary = {}
+var server_bullets: Dictionary = {}
+var server_enemies: Dictionary = {}
+var has_server_enemies := false
 var player_lifecycle: Dictionary = {}
 var debug_statuses: Dictionary = {}
 var game_target_kind := ""
@@ -13,6 +17,10 @@ var game_target_player_id := ""
 func reset() -> void:
 	self_id = ""
 	server_players = {}
+	server_asteroids = {}
+	server_bullets = {}
+	server_enemies = {}
+	has_server_enemies = false
 	player_lifecycle = {}
 	debug_statuses = {}
 	game_target_kind = ""
@@ -25,6 +33,22 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var players_value = state.get("server_players", {})
 	server_players = players_value if players_value is Dictionary else {}
+	var asteroids_value = state.get("server_asteroids", {})
+	server_asteroids = asteroids_value if asteroids_value is Dictionary else {}
+	var bullets_value = state.get("server_bullets", {})
+	server_bullets = bullets_value if bullets_value is Dictionary else {}
+	has_server_enemies = false
+	server_enemies = {}
+	if state.has("server_enemies"):
+		var server_enemies_value = state.get("server_enemies", {})
+		if server_enemies_value is Dictionary:
+			server_enemies = server_enemies_value
+		has_server_enemies = true
+	elif state.has("enemies"):
+		var enemies_value = state.get("enemies", {})
+		if enemies_value is Dictionary:
+			server_enemies = enemies_value
+		has_server_enemies = true
 	game_target_kind = ""
 	game_target_id = ""
 	game_target_player_id = ""
@@ -89,6 +113,38 @@ func active_player_target_rows() -> Array:
 		})
 
 	return rows
+
+
+func local_player_state() -> Dictionary:
+	if self_id == "":
+		return {}
+	var local_state = server_players.get(self_id, null)
+	if local_state is Dictionary:
+		return local_state
+	return {}
+
+
+func target_state() -> Dictionary:
+	if game_target_kind == "" or game_target_id == "":
+		return {}
+
+	var value = null
+	match game_target_kind:
+		"player":
+			value = server_players.get(game_target_id, null)
+		"asteroid":
+			value = server_asteroids.get(game_target_id, null)
+		"bullet":
+			value = server_bullets.get(game_target_id, null)
+		"enemy":
+			if has_server_enemies:
+				value = server_enemies.get(game_target_id, null)
+		_:
+			return {}
+
+	if value is Dictionary:
+		return value
+	return {}
 
 
 func invincible_target_rows() -> Array:
