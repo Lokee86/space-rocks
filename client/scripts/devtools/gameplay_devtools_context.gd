@@ -2,7 +2,6 @@ extends RefCounted
 class_name GameplayDevtoolsContext
 
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
-const DevtoolsHotkeyFlow := preload("res://scripts/devtools/devtools_hotkey_flow.gd")
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
 const Packets := preload("res://scripts/networking/packets/packets.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")

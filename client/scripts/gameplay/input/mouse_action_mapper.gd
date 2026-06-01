@@ -1,8 +1,6 @@
 extends RefCounted
 class_name MouseActionMapper
 
-const MouseActionNames = preload("res://scripts/gameplay/input/mouse_action_names.gd")
-
 static func action_for_event(event: InputEvent, has_pending_context: bool) -> StringName:
 	var mouse_button_event := event as InputEventMouseButton
 	if mouse_button_event != null and mouse_button_event.pressed:

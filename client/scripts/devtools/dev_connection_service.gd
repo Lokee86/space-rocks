@@ -1,7 +1,5 @@
 extends RefCounted
 
-const DevSpawnPacketBuilder := preload("res://scripts/devtools/dev_spawn_packet_builder.gd")
-const DevRespawnPacketBuilder := preload("res://scripts/devtools/dev_respawn_packet_builder.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var connection_service

@@ -75,6 +75,31 @@ func TestStatePacketIncludesTargetPlayerID(t *testing.T) {
 	}
 }
 
+func TestSetPlayerTargetReflectedInStatePacket(t *testing.T) {
+	game := New()
+	shooterID := game.AddPlayer()
+	targetID := game.AddPlayer()
+
+	if !game.SetPlayerTarget(shooterID, targetID) {
+		t.Fatal("expected SetPlayerTarget to succeed for existing requester/target")
+	}
+
+	packet := game.StatePacket(shooterID)
+	shooterState, ok := packet.Players[shooterID]
+	if !ok {
+		t.Fatalf("expected state packet to include shooter %q", shooterID)
+	}
+	if shooterState.TargetKind != "player" {
+		t.Fatalf("expected target kind %q, got %q", "player", shooterState.TargetKind)
+	}
+	if shooterState.TargetID != targetID {
+		t.Fatalf("expected target id %q, got %q", targetID, shooterState.TargetID)
+	}
+	if shooterState.TargetPlayerID != targetID {
+		t.Fatalf("expected target_player_id %q, got %q", targetID, shooterState.TargetPlayerID)
+	}
+}
+
 func TestSetTargetStoresPlayerKindAndID(t *testing.T) {
 	game := New()
 	playerA := game.AddPlayer()

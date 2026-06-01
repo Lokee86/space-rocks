@@ -1,8 +1,6 @@
 extends RefCounted
-class_name TargetRequestFlow
 
 const Packets = preload("res://scripts/networking/packets/packets.gd")
-const TargetVisualPicker = preload("res://scripts/gameplay/input/target_visual_picker.gd")
 
 var connection_service = null
 var target_candidate_provider: Callable = Callable()
@@ -42,7 +40,7 @@ func select_target() -> void:
 		return
 
 	var server_position = server_position_converter.call(mouse_visual_position)
-	connection_service.send(
+	connection_service.send_packet(
 		Packets.select_target_at_position_request_packet(
 			server_position.x,
 			server_position.y,
@@ -57,4 +55,4 @@ func deselect_target() -> void:
 	if connection_service == null:
 		return
 
-	connection_service.send(Packets.clear_target_request_packet())
+	connection_service.send_packet(Packets.clear_target_request_packet())

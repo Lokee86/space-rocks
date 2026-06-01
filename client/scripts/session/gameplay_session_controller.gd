@@ -129,14 +129,27 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if debug_click_placement_flow == null:
+	if debug_click_placement_flow != null and debug_click_placement_flow.is_active():
+		if debug_click_placement_flow.handle_unhandled_input(event):
+			get_viewport().set_input_as_handled()
 		return
-	if !debug_click_placement_flow.is_active():
+
+	var mouse_button_event := event as InputEventMouseButton
+	if mouse_button_event == null or !mouse_button_event.pressed:
 		return
-	if debug_click_placement_flow.handle_unhandled_input(event):
+	if mouse_button_event.button_index != MOUSE_BUTTON_LEFT and mouse_button_event.button_index != MOUSE_BUTTON_RIGHT:
+		return
+	if gameplay_shell_flow == null:
+		return
+	if gameplay_shell_flow.handle_unhandled_input(event):
 		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
+	var mouse_button_event := event as InputEventMouseButton
+	if mouse_button_event != null and mouse_button_event.pressed:
+		if mouse_button_event.button_index == MOUSE_BUTTON_LEFT or mouse_button_event.button_index == MOUSE_BUTTON_RIGHT:
+			return
+
 	if gameplay_shell_flow == null:
 		return
 	if gameplay_shell_flow.handle_unhandled_input(event):

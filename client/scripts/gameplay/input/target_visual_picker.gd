@@ -1,8 +1,6 @@
 extends RefCounted
 class_name TargetVisualPicker
 
-const TargetVisualCandidate = preload("res://scripts/gameplay/input/target_visual_candidate.gd")
-
 const TARGET_KIND_PRIORITY_PLAYER := 4
 const TARGET_KIND_PRIORITY_ENEMY := 3
 const TARGET_KIND_PRIORITY_ASTEROID := 2
