@@ -22,6 +22,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	for _, player := range matchDecision.Players {
 		playerLifecycle[player.ID] = string(player.Status)
 	}
+	playerWorldStates := game.playerWorldStatesLocked()
 
 	asteroids := make(map[string]entities.AsteroidState, len(game.state.Asteroids))
 	for id, asteroid := range game.state.Asteroids {
@@ -40,6 +41,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 		Lives:           game.playerLives(playerID),
 		Players:         players,
 		PlayerLifecycle: playerLifecycle,
+		PlayerWorldStates: playerWorldStates,
 		Bullets:         bullets,
 		Asteroids:       asteroids,
 		Events:          events,
