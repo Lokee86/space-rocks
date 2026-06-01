@@ -446,3 +446,83 @@ func test_target_state_with_missing_or_empty_target_returns_empty_dictionary() -
 	})
 
 	assert_eq(model.target_state(), {})
+
+
+func test_local_player_state_falls_back_to_player_world_states_when_missing_from_players() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_world_state := {
+		"id": "player-1",
+		"status": "pending_respawn",
+		"lives": 1,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-2": {},
+		},
+		"player_world_states": {
+			"player-1": expected_world_state,
+		},
+		"player_lifecycle": {
+			"player-1": "pending_respawn",
+			"player-2": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.local_player_state(), expected_world_state)
+
+
+func test_target_state_for_player_falls_back_to_player_world_states_when_missing_from_players() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_world_state := {
+		"id": "player-2",
+		"status": "pending_respawn",
+		"lives": 2,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"target_kind": "player", "target_id": "player-2"},
+		},
+		"player_world_states": {
+			"player-2": expected_world_state,
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+			"player-2": "pending_respawn",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.target_state(), expected_world_state)
+
+
+func test_target_state_for_player_prefers_active_player_state_over_player_world_states() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_player_state := {
+		"score": 123,
+		"lives": 2,
+	}
+	var world_state := {
+		"id": "player-2",
+		"status": "pending_respawn",
+		"lives": 0,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"target_kind": "player", "target_id": "player-2"},
+			"player-2": expected_player_state,
+		},
+		"player_world_states": {
+			"player-2": world_state,
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+			"player-2": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.target_state(), expected_player_state)

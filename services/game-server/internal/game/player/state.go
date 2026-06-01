@@ -9,16 +9,16 @@ const (
 )
 
 type WorldState struct {
-	ID              string
-	Status          Status
-	HasActiveShip   bool
-	Targetable      bool
-	Damageable      bool
-	Collidable      bool
-	X               float64
-	Y               float64
-	Lives           int
-	RespawnCooldown float64
+	ID              string  `json:"id"`
+	Status          Status  `json:"status"`
+	HasActiveShip   bool    `json:"has_active_ship"`
+	Targetable      bool    `json:"targetable"`
+	Damageable      bool    `json:"damageable"`
+	Collidable      bool    `json:"collidable"`
+	X               float64 `json:"x"`
+	Y               float64 `json:"y"`
+	Lives           int     `json:"lives"`
+	RespawnCooldown float64 `json:"respawn_cooldown"`
 }
 
 type BuildWorldStateInput struct {
