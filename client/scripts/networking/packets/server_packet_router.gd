@@ -25,3 +25,7 @@ static func is_gameplay_state(packet: Dictionary) -> bool:
 
 static func is_player_pause_state(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_PLAYER_PAUSE_STATE
+
+
+static func is_telemetry_pong(packet: Dictionary) -> bool:
+	return packet_type(packet) == Packets.TYPE_TELEMETRY_PONG

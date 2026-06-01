@@ -57,6 +57,29 @@ go_name = "TargetID"
 json = "target_id"
 type = "string"
 
+[[structs.fields]]
+name = "sequence"
+json = "sequence"
+type = "int"
+
+[[structs.fields]]
+name = "client_sent_msec"
+go_name = "ClientSentMsec"
+json = "client_sent_msec"
+type = "int"
+
+[[structs.fields]]
+name = "server_received_msec"
+go_name = "ServerReceivedMsec"
+json = "server_received_msec"
+type = "int"
+
+[[structs.fields]]
+name = "server_sent_msec"
+go_name = "ServerSentMsec"
+json = "server_sent_msec"
+type = "int"
+
 [[structs]]
 id = "ClientConfig"
 
@@ -339,6 +362,12 @@ json = "events"
 type = "array"
 item_type = "EventState"
 
+[[structs.fields]]
+name = "server_sent_msec"
+go_name = "ServerSentMsec"
+json = "server_sent_msec"
+type = "int"
+
 [[packet_types]]
 id = "input"
 value = "input"
@@ -370,6 +399,14 @@ value = "pause_request"
 [[packet_types]]
 id = "player_pause_state"
 value = "player_pause_state"
+
+[[packet_types]]
+id = "telemetry_ping"
+value = "telemetry_ping"
+
+[[packet_types]]
+id = "telemetry_pong"
+value = "telemetry_pong"
 
 [[packet_types]]
 id = "set_target_player_request"

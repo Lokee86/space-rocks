@@ -14,6 +14,7 @@ signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
 signal gameplay_state_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
+signal telemetry_pong_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
 
 var network_client: NetworkClient
@@ -143,5 +144,7 @@ func _on_packet_received(packet: Dictionary) -> void:
 		gameplay_state_received.emit(packet)
 	elif ServerPacketRouter.is_player_pause_state(packet):
 		player_pause_state_received.emit(packet)
+	elif ServerPacketRouter.is_telemetry_pong(packet):
+		telemetry_pong_received.emit(packet)
 	else:
 		unknown_packet_received.emit(packet)

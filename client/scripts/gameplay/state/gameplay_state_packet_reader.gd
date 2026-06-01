@@ -4,6 +4,7 @@ const Packets = preload("res://scripts/networking/packets/packets.gd")
 const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
 const FIELD_DEBUG_STATUS := "debug_status"
 const FIELD_DEBUG_STATUSES := "debug_statuses"
+const FIELD_SERVER_SENT_MSEC := "server_sent_msec"
 
 
 static func read(data: Dictionary) -> Dictionary:
@@ -32,6 +33,7 @@ static func read(data: Dictionary) -> Dictionary:
 		"server_bullets": data.get(Packets.FIELD_BULLETS, {}),
 		"server_asteroids": data.get(Packets.FIELD_ASTEROIDS, {}),
 		"server_events": server_events,
+		"server_sent_msec": int(data.get(FIELD_SERVER_SENT_MSEC, -1)),
 		"debug_status": debug_status,
 		"debug_statuses": debug_statuses,
 		"has_lives": has_lives,
