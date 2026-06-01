@@ -21,8 +21,8 @@ func test_deselect_target_sends_clear_target_request_packet() -> void:
 
 	flow.deselect_target()
 
-	assert(connection.sent_packets.size() == 1)
-	assert(connection.sent_packets[0].type == "clear_target_request")
+	assert_eq(connection.sent_packets.size(), 1)
+	assert_eq(connection.sent_packets[0].type, "clear_target_request")
 
 func test_select_target_with_no_visual_target_sends_no_packet() -> void:
 	var connection := FakeConnectionService.new()
@@ -39,7 +39,7 @@ func test_select_target_with_no_visual_target_sends_no_packet() -> void:
 
 	flow.select_target()
 
-	assert(connection.sent_packets.is_empty())
+	assert_true(connection.sent_packets.is_empty())
 
 func test_select_target_with_valid_visual_target_sends_select_target_claim_packet() -> void:
 	var connection := FakeConnectionService.new()
@@ -66,10 +66,10 @@ func test_select_target_with_valid_visual_target_sends_select_target_claim_packe
 
 	flow.select_target()
 
-	assert(connection.sent_packets.size() == 1)
+	assert_eq(connection.sent_packets.size(), 1)
 	var sent_packet = connection.sent_packets[0]
-	assert(sent_packet.type == "select_target_at_position_request")
-	assert(sent_packet.x == converted_server_position.x)
-	assert(sent_packet.y == converted_server_position.y)
-	assert(sent_packet.target_kind == candidate.target_kind)
-	assert(sent_packet.target_id == candidate.target_id)
+	assert_eq(sent_packet.type, "select_target_at_position_request")
+	assert_eq(sent_packet.x, converted_server_position.x)
+	assert_eq(sent_packet.y, converted_server_position.y)
+	assert_eq(sent_packet.target_kind, candidate.target_kind)
+	assert_eq(sent_packet.target_id, candidate.target_id)
