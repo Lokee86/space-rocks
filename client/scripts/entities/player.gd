@@ -3,7 +3,6 @@ class_name Player
 
 const Constants = preload("res://scripts/constants/constants.gd")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
-const GameplayAudioFlow = preload("res://scripts/gameplay/audio/gameplay_audio_flow.gd")
 const AFTERBURNER_SCENE := preload("res://scenes/animations/blue_afterburner.tscn")
 const PLAYER_HUE_SHIFT_SHADER := preload("res://shaders/player_hue_shift.gdshader")
 

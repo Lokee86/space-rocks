@@ -25,15 +25,15 @@ func test_resolve_game_target_uses_canonical_game_target() -> void:
 	assert_eq(resolved, "player-3")
 
 
-func test_resolve_game_target_falls_back_to_local_player_when_canonical_empty() -> void:
+func test_resolve_explicit_game_target_with_no_target_resolves_empty_string() -> void:
 	var resolved := DevtoolsTargetResolver.resolve_player_target(
 		DevtoolsTargetResolver.TARGET_GAME,
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		"",
 		"",
 		"player-1"
 	)
 
-	assert_eq(resolved, "player-1")
+	assert_eq(resolved, "")
 
 
 func test_resolve_game_target_returns_empty_for_asteroid_canonical_target() -> void:

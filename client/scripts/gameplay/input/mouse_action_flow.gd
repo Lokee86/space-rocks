@@ -1,8 +1,4 @@
 extends RefCounted
-class_name MouseActionFlow
-
-const MouseActionMapper = preload("res://scripts/gameplay/input/mouse_action_mapper.gd")
-const MouseActionNames = preload("res://scripts/gameplay/input/mouse_action_names.gd")
 
 var target_request_flow = null
 var pending_action: Callable = Callable()

@@ -2,7 +2,6 @@ extends RefCounted
 class_name GameplayRuntimeContext
 
 const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
-const TargetVisualCandidate = preload("res://scripts/gameplay/input/target_visual_candidate.gd")
 const TARGET_PLAYER_PICK_RADIUS := 32.0
 const TARGET_ASTEROID_BASE_PICK_RADIUS := 32.0
 const TARGET_BULLET_PICK_RADIUS := 12.0

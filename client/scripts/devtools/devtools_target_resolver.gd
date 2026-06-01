@@ -27,6 +27,10 @@ static func resolve_player_target(
 ) -> String:
 	if selected_tool_target != "" and selected_tool_target != TARGET_GAME:
 		return selected_tool_target
+	if selected_tool_target == TARGET_GAME:
+		if game_target_kind == TARGET_KIND_PLAYER and game_target_id != "":
+			return game_target_id
+		return ""
 
 	if game_target_kind == TARGET_KIND_PLAYER:
 		if game_target_id != "":

@@ -8,8 +8,7 @@
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(640, 320)
-visible = false
+size = Vector2i(720, 378)
 script = ExtResource("1_devtools_window")
 
 [node name="Panel" type="Panel" parent="." unique_id=704527748]

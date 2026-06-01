@@ -6,7 +6,7 @@ const TargetVisualCandidate = preload("res://scripts/gameplay/input/target_visua
 class FakeConnectionService:
 	var sent_packets: Array = []
 
-	func send(packet) -> void:
+	func send_packet(packet) -> void:
 		sent_packets.append(packet)
 
 func test_deselect_target_sends_clear_target_request_packet() -> void:

@@ -24,7 +24,7 @@ var game_owner: Node2D
 
 func configure(
 	connection_service_ref,
-	game_owner: Node2D,
+	game_owner_ref: Node2D,
 	player_ref: Player,
 	bullets: Node2D,
 	asteroids: Node2D,
@@ -32,7 +32,7 @@ func configure(
 	menu_flow_ref
 ) -> void:
 	connection_service = connection_service_ref
-	self.game_owner = game_owner
+	self.game_owner = game_owner_ref
 	player = player_ref
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
@@ -43,9 +43,9 @@ func configure(
 			Callable(self, "_on_return_to_lobby_requested")
 	)
 	runtime_context = GameplayRuntimeContext.new()
-	runtime_context.configure_world(game_owner, player_ref, bullets, asteroids, player_pause_state_tracker)
+	runtime_context.configure_world(game_owner_ref, player_ref, bullets, asteroids, player_pause_state_tracker)
 	runtime_context.configure_events(
-		game_owner,
+		game_owner_ref,
 		hud_flow.hud if hud_flow != null else null,
 		hud_flow,
 		menu_flow

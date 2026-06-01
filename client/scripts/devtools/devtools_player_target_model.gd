@@ -1,7 +1,5 @@
 extends RefCounted
 
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
-
 
 var self_id := ""
 var server_players: Dictionary = {}
@@ -80,7 +78,8 @@ func target_rows() -> Array:
 
 
 func active_player_target_rows() -> Array:
-	var rows: Array = [_game_target_row()]
+	var rows: Array = []
+	rows.append_array(_game_target_rows())
 	for player_id in server_players.keys():
 		var player_id_text: String = str(player_id)
 		rows.append({
@@ -93,7 +92,8 @@ func active_player_target_rows() -> Array:
 
 
 func invincible_target_rows() -> Array:
-	var rows: Array = [_game_target_row()]
+	var rows: Array = []
+	rows.append_array(_game_target_rows())
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
 		var invincible_on: bool = _player_feature_enabled(player_id_text, "invincible")
@@ -111,7 +111,8 @@ func invincible_target_rows() -> Array:
 
 
 func infinite_lives_target_rows() -> Array:
-	var rows: Array = [_game_target_row()]
+	var rows: Array = []
+	rows.append_array(_game_target_rows())
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
 		var infinite_lives_on: bool = _player_feature_enabled(player_id_text, "infinite_lives")
@@ -129,7 +130,8 @@ func infinite_lives_target_rows() -> Array:
 
 
 func player_frozen_target_rows() -> Array:
-	var rows: Array = [_game_target_row()]
+	var rows: Array = []
+	rows.append_array(_game_target_rows())
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
 		var player_frozen_on: bool = _player_feature_enabled(player_id_text, "player_frozen")
@@ -143,6 +145,13 @@ func player_frozen_target_rows() -> Array:
 			"label": label,
 		})
 
+	return rows
+
+
+func kill_player_target_rows() -> Array:
+	var rows: Array = []
+	rows.append_array(_game_target_rows())
+	rows.append_array(target_rows())
 	return rows
 
 
@@ -186,9 +195,20 @@ func _feature_label(feature_key: String) -> String:
 			return feature_key.to_upper()
 
 
-func _game_target_row() -> Dictionary:
-	return {
+func _game_target_rows() -> Array:
+	if game_target_kind != "player" or game_target_player_id == "":
+		return []
+
+	return [{
 		"player_id": DevtoolsTargetResolver.TARGET_GAME,
-		"label": DevtoolsTargetResolver.TARGET_GAME_LABEL,
+		"label": _compact_game_target_label(game_target_player_id),
 		"is_self": false,
-	}
+	}]
+
+
+func _compact_game_target_label(player_id: String) -> String:
+	var lower_player_id := player_id.to_lower()
+	var numeric_suffix := lower_player_id.trim_prefix("player-")
+	if numeric_suffix != "" and numeric_suffix.is_valid_int():
+		return "Target : P%s" % numeric_suffix
+	return "Target : %s" % player_id

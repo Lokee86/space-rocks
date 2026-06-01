@@ -17,12 +17,12 @@ signal placement_action_requested(action_name: StringName, placement_context: Di
 signal respawn_player_requested(target_player_id: String)
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 var window: Window
 var parent: Node
 var latest_debug_status := {}
+var latest_kill_player_rows: Array = []
 var latest_target_rows: Array = []
 var latest_invincible_rows: Array = []
 var latest_infinite_lives_rows: Array = []
@@ -44,7 +44,7 @@ func ensure_window() -> Window:
 	parent.add_child(window)
 	_connect_window_signals()
 	window.set_debug_status(latest_debug_status)
-	window.refresh_kill_player_targets(latest_target_rows)
+	window.refresh_kill_player_targets(latest_kill_player_rows)
 	if window.has_method("refresh_respawn_player_targets"):
 		window.refresh_respawn_player_targets(latest_target_rows)
 	if window.has_method("refresh_invincible_targets"):
@@ -87,18 +87,19 @@ func apply_debug_status(status: Dictionary) -> void:
 
 
 func refresh_kill_player_targets(target_rows: Array) -> void:
+	latest_kill_player_rows = target_rows
 	var devtools_window := ensure_window()
-	devtools_window.refresh_kill_player_targets(target_rows)
-	if devtools_window.has_method("refresh_respawn_player_targets"):
-		devtools_window.refresh_respawn_player_targets(target_rows)
+	devtools_window.refresh_kill_player_targets(latest_kill_player_rows)
 
 
 func refresh_debug_player_targets(
+	kill_player_rows: Array,
 	target_rows: Array,
 	invincible_rows: Array,
 	infinite_lives_rows: Array,
 	player_frozen_rows: Array
 ) -> void:
+	latest_kill_player_rows = kill_player_rows
 	latest_target_rows = target_rows
 	latest_invincible_rows = invincible_rows
 	latest_infinite_lives_rows = infinite_lives_rows
@@ -107,7 +108,7 @@ func refresh_debug_player_targets(
 	if window == null || !is_instance_valid(window):
 		return
 
-	window.refresh_kill_player_targets(latest_target_rows)
+	window.refresh_kill_player_targets(latest_kill_player_rows)
 	if window.has_method("refresh_respawn_player_targets"):
 		window.refresh_respawn_player_targets(latest_target_rows)
 	if window.has_method("refresh_invincible_targets"):
