@@ -171,6 +171,16 @@ func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.
 
 func (game *Game) applyFatalPlayerDamage(playerID string, player *entities.Ship) {
 	position := player.Position()
+	if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
+		cameraView.X = position.X
+		cameraView.Y = position.Y
+	} else {
+		game.cameraViews[playerID] = &entities.CameraView{
+			X:      position.X,
+			Y:      position.Y,
+			Config: player.Config,
+		}
+	}
 	player.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	lives := 0
 	respawnDelay := 0.0
