@@ -3,6 +3,7 @@ class_name GameplayDevtoolsContext
 
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
+const WorldTelemetryContext := preload("res://scripts/devtools/telemetry/world_telemetry_context.gd")
 const Packets := preload("res://scripts/networking/packets/packets.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
@@ -10,6 +11,7 @@ var debug_flow
 var devtools_window_controller
 var display_refresh_flow
 var dev_connection_service
+var world_telemetry_context
 var connection_service
 var hotkey_flow
 var has_received_gameplay_state := false
@@ -34,6 +36,8 @@ func configure(connection_service_ref) -> void:
 	devtools_window_controller = DevtoolsWindowController.new()
 	display_refresh_flow = DevtoolsDisplayRefreshFlow.new()
 	display_refresh_flow.configure(devtools_window_controller)
+	world_telemetry_context = WorldTelemetryContext.new()
+	world_telemetry_context.configure(connection_service_ref)
 	_connect_window_controller_signals()
 
 
@@ -42,6 +46,8 @@ func reset() -> void:
 		debug_flow.reset()
 	if display_refresh_flow != null:
 		display_refresh_flow.reset()
+	if world_telemetry_context != null:
+		world_telemetry_context.reset()
 	game_target_kind = ""
 	game_target_id = ""
 	game_target_player_id = ""
@@ -51,10 +57,14 @@ func process(has_received_state: bool) -> void:
 	has_received_gameplay_state = has_received_state
 	if Input.is_action_just_pressed("DevToggle0"):
 		toggle_devtools_window()
+	if Input.is_action_just_pressed("DevToggle9") and world_telemetry_context != null:
+		world_telemetry_context.toggle_overlay()
 	if hotkey_flow != null:
 		hotkey_flow.process(has_received_state)
 	if debug_flow != null:
 		debug_flow.process(has_received_state)
+	if world_telemetry_context != null:
+		world_telemetry_context.process(has_received_state, 0.0)
 
 
 func toggle_devtools_window() -> void:
@@ -85,6 +95,8 @@ func apply_gameplay_state(state: Dictionary) -> void:
 			game_target_kind,
 			game_target_id
 		)
+	if world_telemetry_context != null:
+		world_telemetry_context.apply_gameplay_state(state)
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:
