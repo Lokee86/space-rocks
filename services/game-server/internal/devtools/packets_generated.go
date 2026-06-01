@@ -2,19 +2,20 @@
 package devtools
 
 const (
-	PacketTypeToggleDebugInvincible    = "toggle_debug_invincible"
-	PacketTypeToggleDebugInfiniteLives = "toggle_debug_infinite_lives"
-	PacketTypeToggleDebugFreezeWorld   = "toggle_debug_freeze_world"
-	PacketTypeToggleDebugFreezePlayer  = "toggle_debug_freeze_player"
-	PacketTypeDebugKillPlayer          = "debug_kill_player"
-	PacketTypeDebugSpawnEntity         = "debug_spawn_entity"
-	PacketTypeDebugRespawnPlayer       = "debug_respawn_player"
-	PacketTypeDebugSetScore            = "debug_set_score"
-	PacketTypeDebugAddScore            = "debug_add_score"
-	PacketTypeDebugSetLives            = "debug_set_lives"
-	PacketTypeDebugAddLives            = "debug_add_lives"
-	PacketTypeDebugClearBullets        = "debug_clear_bullets"
-	PacketTypeDebugClearAsteroids      = "debug_clear_asteroids"
+	PacketTypeToggleDebugInvincible            = "toggle_debug_invincible"
+	PacketTypeToggleDebugInfiniteLives         = "toggle_debug_infinite_lives"
+	PacketTypeToggleDebugFreezeWorld           = "toggle_debug_freeze_world"
+	PacketTypeToggleDebugFreezePlayer          = "toggle_debug_freeze_player"
+	PacketTypeDebugKillPlayer                  = "debug_kill_player"
+	PacketTypeDebugSpawnEntity                 = "debug_spawn_entity"
+	PacketTypeDebugBeginContinuousBulletStream = "debug_begin_continuous_bullet_stream"
+	PacketTypeDebugRespawnPlayer               = "debug_respawn_player"
+	PacketTypeDebugSetScore                    = "debug_set_score"
+	PacketTypeDebugAddScore                    = "debug_add_score"
+	PacketTypeDebugSetLives                    = "debug_set_lives"
+	PacketTypeDebugAddLives                    = "debug_add_lives"
+	PacketTypeDebugClearBullets                = "debug_clear_bullets"
+	PacketTypeDebugClearAsteroids              = "debug_clear_asteroids"
 )
 
 type DebugCommand struct {

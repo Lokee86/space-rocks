@@ -3,6 +3,7 @@ class_name DevSpawnPacketBuilder
 
 
 const TYPE_DEBUG_SPAWN_ENTITY := "debug_spawn_entity"
+const TYPE_DEBUG_BEGIN_CONTINUOUS_BULLET_STREAM := "debug_begin_continuous_bullet_stream"
 const FIELD_TYPE := "type"
 const FIELD_ENTITY_TYPE := "entity_type"
 const FIELD_X := "x"
@@ -51,3 +52,23 @@ static func build_from_placement_result(result: Dictionary) -> Dictionary:
 	if target_player_id != "":
 		packet[FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
+
+
+static func build_continuous_bullet_stream_from_placement_result(result: Dictionary) -> Dictionary:
+	var has_direction := bool(result.get("has_direction", false))
+	if not has_direction:
+		return {}
+
+	var direction: Vector2 = result.get("direction", Vector2.ZERO)
+	if direction == Vector2.ZERO:
+		return {}
+
+	var server_position: Vector2 = result.get("server_position", Vector2.ZERO)
+	return {
+		FIELD_TYPE: TYPE_DEBUG_BEGIN_CONTINUOUS_BULLET_STREAM,
+		FIELD_X: server_position.x,
+		FIELD_Y: server_position.y,
+		FIELD_HAS_DIRECTION: true,
+		FIELD_DIRECTION_X: direction.x,
+		FIELD_DIRECTION_Y: direction.y
+	}

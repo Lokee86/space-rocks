@@ -398,7 +398,7 @@ func _active_inactive(value) -> String:
 func _format_game_target_display(target_kind: String, target_id: String) -> String:
 	if target_kind == "" or target_id == "":
 		return "\u2014"
-	return "%s:%s" % [target_kind, target_id]
+	return target_id
 
 
 func _selected_metadata_as_string(select: OptionButton) -> String:

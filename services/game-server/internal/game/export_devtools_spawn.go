@@ -22,6 +22,10 @@ func (game *Game) DevtoolsAddBullet(bullet *entities.Bullet) bool {
 	return true
 }
 
+func (game *Game) DevtoolsSpawnBullet(ownerID string, position physics.Vector2, direction physics.Vector2) (*entities.Bullet, bool) {
+	return game.spawnDebugBullet(ownerID, position, direction)
+}
+
 func (game *Game) DevtoolsRandomAsteroidSpeed() float64 {
 	return game.spawner.RandomAsteroidSpeed()
 }

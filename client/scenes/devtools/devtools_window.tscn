@@ -257,6 +257,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+text_overrun_behavior = 1
 fit_to_longest_item = false
 allow_reselect = true
 item_count = 1

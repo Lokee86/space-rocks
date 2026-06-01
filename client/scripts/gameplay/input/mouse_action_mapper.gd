@@ -2,20 +2,18 @@ extends RefCounted
 class_name MouseActionMapper
 
 static func action_for_event(event: InputEvent, has_pending_context: bool) -> StringName:
-	var mouse_button_event := event as InputEventMouseButton
-	if mouse_button_event != null and mouse_button_event.pressed:
-		if mouse_button_event.button_index == MOUSE_BUTTON_LEFT:
-			if has_pending_context:
-				return MouseActionNames.SPAWN_ENTITY
+	if has_pending_context:
+		if event.is_action_pressed(MouseActionNames.SPAWN_ENTITY_INPUT):
+			return MouseActionNames.SPAWN_ENTITY
+		if event.is_action_pressed(MouseActionNames.CANCEL_ACTION_INPUT):
+			return MouseActionNames.CANCEL_ACTION
+	else:
+		if event.is_action_pressed(MouseActionNames.SELECT_TARGET_INPUT):
 			return MouseActionNames.SELECT_TARGET
-		if mouse_button_event.button_index == MOUSE_BUTTON_RIGHT:
-			if has_pending_context:
-				return MouseActionNames.CANCEL_ACTION
+		if event.is_action_pressed(MouseActionNames.DESELECT_TARGET_INPUT):
 			return MouseActionNames.DESELECT_TARGET
 
 	if event.is_action_pressed(MouseActionNames.CANCEL_ACTION_INPUT):
-		if has_pending_context:
-			return MouseActionNames.CANCEL_ACTION
 		return MouseActionNames.NONE
 
 	return MouseActionNames.NONE

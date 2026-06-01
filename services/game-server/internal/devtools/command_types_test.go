@@ -13,6 +13,7 @@ func TestIsCommandType(t *testing.T) {
 		{packetType: PacketTypeToggleDebugFreezePlayer, want: true},
 		{packetType: PacketTypeDebugKillPlayer, want: true},
 		{packetType: PacketTypeDebugSpawnEntity, want: true},
+		{packetType: PacketTypeDebugBeginContinuousBulletStream, want: true},
 		{packetType: PacketTypeDebugRespawnPlayer, want: true},
 		{packetType: PacketTypeDebugSetScore, want: true},
 		{packetType: PacketTypeDebugAddScore, want: true},

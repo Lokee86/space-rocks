@@ -18,6 +18,8 @@ func HandleCommand(target *game.Game, playerID string, command DebugCommand) boo
 		return handleDebugKillPlayer(target, playerID, command)
 	case PacketTypeDebugSpawnEntity:
 		return handleDebugSpawnEntity(target, playerID, command)
+	case PacketTypeDebugBeginContinuousBulletStream:
+		return handleDebugBeginContinuousBulletStream(target, playerID, command)
 	case PacketTypeDebugRespawnPlayer:
 		return handleDebugRespawnPlayer(target, playerID, command)
 	case PacketTypeDebugSetScore:

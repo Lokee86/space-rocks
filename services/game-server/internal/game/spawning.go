@@ -1,8 +1,11 @@
 package game
 
 import (
+	"math"
+
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
@@ -11,6 +14,27 @@ import (
 func (game *Game) spawnBullet(ship *entities.Ship) {
 	bullet := game.spawner.BuildBullet(ship)
 	game.state.Projectiles[bullet.ID] = bullet
+}
+
+func debugBulletRotation(direction physics.Vector2) float64 {
+	return math.Atan2(direction.X, -direction.Y)
+}
+
+func (game *Game) spawnDebugBullet(ownerID string, position physics.Vector2, direction physics.Vector2) (*entities.Bullet, bool) {
+	if ownerID == "" {
+		return nil, false
+	}
+	normalizedDirection := direction.Normalized()
+	if normalizedDirection.Length() == 0 {
+		return nil, false
+	}
+	spawnPosition := space.NormalizePosition(position)
+	velocity := normalizedDirection.Multiply(constants.BulletSpeed)
+	rotation := debugBulletRotation(normalizedDirection)
+	bulletID := game.spawner.NextBulletID()
+	bullet := entities.NewBullet(bulletID, ownerID, spawnPosition, rotation, velocity, constants.BulletLifetime)
+	game.state.Projectiles[bullet.ID] = bullet
+	return bullet, true
 }
 
 func (game *Game) spawnAsteroidBatch(view *entities.CameraView) {
