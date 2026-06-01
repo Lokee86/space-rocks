@@ -5,6 +5,7 @@ const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecyc
 const FIELD_DEBUG_STATUS := "debug_status"
 const FIELD_DEBUG_STATUSES := "debug_statuses"
 const FIELD_SERVER_SENT_MSEC := "server_sent_msec"
+const FIELD_PLAYER_WORLD_STATES := "player_world_states"
 
 
 static func read(data: Dictionary) -> Dictionary:
@@ -25,10 +26,15 @@ static func read(data: Dictionary) -> Dictionary:
 	var debug_statuses = data.get(FIELD_DEBUG_STATUSES, {})
 	if !(debug_statuses is Dictionary):
 		debug_statuses = {}
+	var player_world_states := {}
+	var player_world_states_value = data.get(FIELD_PLAYER_WORLD_STATES, {})
+	if player_world_states_value is Dictionary:
+		player_world_states = player_world_states_value
 
 	return {
 		"self_id": data[Packets.FIELD_SELF_ID],
 		"server_players": data[Packets.FIELD_PLAYERS],
+		"player_world_states": player_world_states,
 		"player_lifecycle": PlayerLifecycle.from_state(data),
 		"server_bullets": data.get(Packets.FIELD_BULLETS, {}),
 		"server_asteroids": data.get(Packets.FIELD_ASTEROIDS, {}),

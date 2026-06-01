@@ -3,6 +3,7 @@ extends RefCounted
 
 var self_id := ""
 var server_players: Dictionary = {}
+var player_world_states: Dictionary = {}
 var server_asteroids: Dictionary = {}
 var server_bullets: Dictionary = {}
 var server_enemies: Dictionary = {}
@@ -17,6 +18,7 @@ var game_target_player_id := ""
 func reset() -> void:
 	self_id = ""
 	server_players = {}
+	player_world_states = {}
 	server_asteroids = {}
 	server_bullets = {}
 	server_enemies = {}
@@ -33,6 +35,8 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var players_value = state.get("server_players", {})
 	server_players = players_value if players_value is Dictionary else {}
+	var player_world_states_value = state.get("player_world_states", {})
+	player_world_states = player_world_states_value if player_world_states_value is Dictionary else {}
 	var asteroids_value = state.get("server_asteroids", {})
 	server_asteroids = asteroids_value if asteroids_value is Dictionary else {}
 	var bullets_value = state.get("server_bullets", {})
@@ -121,6 +125,9 @@ func local_player_state() -> Dictionary:
 	var local_state = server_players.get(self_id, null)
 	if local_state is Dictionary:
 		return local_state
+	var local_world_state = player_world_states.get(self_id, null)
+	if local_world_state is Dictionary:
+		return local_world_state
 	return {}
 
 
@@ -132,6 +139,8 @@ func target_state() -> Dictionary:
 	match game_target_kind:
 		"player":
 			value = server_players.get(game_target_id, null)
+			if !(value is Dictionary):
+				value = player_world_states.get(game_target_id, null)
 		"asteroid":
 			value = server_asteroids.get(game_target_id, null)
 		"bullet":

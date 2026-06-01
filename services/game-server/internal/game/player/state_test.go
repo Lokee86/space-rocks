@@ -1,6 +1,10 @@
 package player
 
-import "testing"
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+)
 
 func TestBuildWorldState_StatusAndCapabilities(t *testing.T) {
 	tests := []struct {
@@ -81,5 +85,39 @@ func TestBuildWorldState_StatusAndCapabilities(t *testing.T) {
 				t.Fatalf("Collidable = %t, want %t", got.Collidable, tt.wantCollidable)
 			}
 		})
+	}
+}
+
+func TestWorldStateJSONUsesSnakeCaseFields(t *testing.T) {
+	state := WorldState{
+		ID:              "Player-1",
+		Status:          StatusPendingRespawn,
+		HasActiveShip:   false,
+		Targetable:      false,
+		Damageable:      false,
+		Collidable:      false,
+		X:               10,
+		Y:               20,
+		Lives:           2,
+		RespawnCooldown: 1.25,
+	}
+
+	payload, err := json.Marshal(state)
+	if err != nil {
+		t.Fatalf("json.Marshal(WorldState) error = %v", err)
+	}
+	jsonText := string(payload)
+
+	if !strings.Contains(jsonText, "\"has_active_ship\"") {
+		t.Fatalf("expected JSON to contain %q, got %s", "\"has_active_ship\"", jsonText)
+	}
+	if !strings.Contains(jsonText, "\"respawn_cooldown\"") {
+		t.Fatalf("expected JSON to contain %q, got %s", "\"respawn_cooldown\"", jsonText)
+	}
+	if strings.Contains(jsonText, "\"HasActiveShip\"") {
+		t.Fatalf("expected JSON not to contain %q, got %s", "\"HasActiveShip\"", jsonText)
+	}
+	if strings.Contains(jsonText, "\"RespawnCooldown\"") {
+		t.Fatalf("expected JSON not to contain %q, got %s", "\"RespawnCooldown\"", jsonText)
 	}
 }

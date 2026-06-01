@@ -3,6 +3,7 @@ package devtools
 import (
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	entities "github.com/Lokee86/space-rocks/server/internal/game/entities"
+	player "github.com/Lokee86/space-rocks/server/internal/game/player"
 )
 
 type statePacketWithDebugStatus struct {
@@ -14,6 +15,7 @@ type statePacketWithDebugStatus struct {
 	DebugStatuses   map[string]DebugStatus            `json:"debug_statuses"`
 	Players         map[string]entities.ShipState     `json:"players"`
 	PlayerLifecycle map[string]string                 `json:"player_lifecycle"`
+	PlayerWorldStates map[string]player.WorldState    `json:"player_world_states"`
 	Bullets         map[string]entities.BulletState   `json:"bullets"`
 	Asteroids       map[string]entities.AsteroidState `json:"asteroids"`
 	Events          []game.EventState                 `json:"events"`
@@ -29,6 +31,7 @@ func WrapStatePacket(state game.StatePacket, status DebugStatus, statuses map[st
 		DebugStatuses:   statuses,
 		Players:         state.Players,
 		PlayerLifecycle: state.PlayerLifecycle,
+		PlayerWorldStates: state.PlayerWorldStates,
 		Bullets:         state.Bullets,
 		Asteroids:       state.Asteroids,
 		Events:          state.Events,
