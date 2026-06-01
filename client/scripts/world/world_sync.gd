@@ -122,7 +122,7 @@ func player_target_positions() -> Dictionary:
 			"server_position": local_visual_sync.server_position()
 		}
 
-	var remote_positions := player_sync.get_remote_player_visual_positions(current_self_id)
+	var remote_positions: Dictionary = player_sync.get_remote_player_visual_positions(current_self_id)
 	for player_id in remote_positions.keys():
 		var visual_position = remote_positions[player_id]
 		positions[player_id] = {

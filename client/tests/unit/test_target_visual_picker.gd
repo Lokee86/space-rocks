@@ -20,19 +20,19 @@ func _candidate(
 
 func test_pick_empty_candidate_list_returns_null() -> void:
 	var result = TargetVisualPicker.pick([], Vector2.ZERO)
-	assert(result == null)
+	assert_null(result)
 
 func test_pick_invisible_candidate_is_ignored() -> void:
 	var result = TargetVisualPicker.pick([_candidate("player", "p1", Vector2.ZERO, 10.0, false)], Vector2.ZERO)
-	assert(result == null)
+	assert_null(result)
 
 func test_pick_invalid_candidate_is_ignored() -> void:
 	var result = TargetVisualPicker.pick([_candidate("", "p1", Vector2.ZERO, 10.0, true)], Vector2.ZERO)
-	assert(result == null)
+	assert_null(result)
 
 func test_pick_out_of_radius_candidate_is_ignored() -> void:
 	var result = TargetVisualPicker.pick([_candidate("player", "p1", Vector2.ZERO, 5.0, true)], Vector2(100, 100))
-	assert(result == null)
+	assert_null(result)
 
 func test_pick_higher_pick_rank_wins() -> void:
 	var low_rank := _candidate("player", "low", Vector2.ZERO, 10.0, true)
@@ -41,7 +41,7 @@ func test_pick_higher_pick_rank_wins() -> void:
 	high_rank.pick_rank = 2
 
 	var result = TargetVisualPicker.pick([low_rank, high_rank], Vector2.ZERO)
-	assert(result == high_rank)
+	assert_eq(result, high_rank)
 
 func test_pick_player_beats_asteroid_when_rank_ties() -> void:
 	var asteroid := _candidate("asteroid", "asteroid-1", Vector2.ZERO, 10.0, true)
@@ -50,7 +50,7 @@ func test_pick_player_beats_asteroid_when_rank_ties() -> void:
 	player.pick_rank = 5
 
 	var result = TargetVisualPicker.pick([asteroid, player], Vector2.ZERO)
-	assert(result == player)
+	assert_eq(result, player)
 
 func test_pick_asteroid_beats_bullet_when_rank_ties() -> void:
 	var bullet := _candidate("bullet", "bullet-1", Vector2.ZERO, 10.0, true)
@@ -59,7 +59,7 @@ func test_pick_asteroid_beats_bullet_when_rank_ties() -> void:
 	asteroid.pick_rank = 3
 
 	var result = TargetVisualPicker.pick([bullet, asteroid], Vector2.ZERO)
-	assert(result == asteroid)
+	assert_eq(result, asteroid)
 
 func test_pick_lower_target_id_wins_when_rank_and_kind_tie() -> void:
 	var later := _candidate("player", "target-b", Vector2.ZERO, 10.0, true)
@@ -68,4 +68,4 @@ func test_pick_lower_target_id_wins_when_rank_and_kind_tie() -> void:
 	earlier.pick_rank = 7
 
 	var result = TargetVisualPicker.pick([later, earlier], Vector2.ZERO)
-	assert(result == earlier)
+	assert_eq(result, earlier)
