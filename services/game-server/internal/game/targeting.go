@@ -1,6 +1,7 @@
 package game
 
 import (
+	playerstate "github.com/Lokee86/space-rocks/server/internal/game/player"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
 )
@@ -134,8 +135,8 @@ func (game *Game) PlayerTarget(playerID string) string {
 }
 
 func (game *Game) playerExistsLocked(playerID string) bool {
-	player, exists := game.state.Players[playerID]
-	return exists && player != nil
+	_, exists := game.playerSessions[playerID]
+	return exists
 }
 
 func (game *Game) playerExists(playerID string) bool {
@@ -157,7 +158,8 @@ func (game *Game) clearTargetsForMissingPlayersLocked() {
 		if target.IsEmpty() {
 			continue
 		}
-		if game.targetExists(target) {
+		status := game.targetLookupStatusLocked(target)
+		if status != playerstate.TargetStatusMissing {
 			continue
 		}
 
@@ -170,8 +172,8 @@ func (game *Game) clearTargetsForMissingPlayersLocked() {
 func (game *Game) targetExists(target targetpolicy.TargetRef) bool {
 	switch target.Kind {
 	case targetpolicy.TargetKindPlayer:
-		player, exists := game.state.Players[target.ID]
-		return exists && player != nil
+		_, exists := game.playerWorldStateLocked(target.ID)
+		return exists
 	case targetpolicy.TargetKindEnemy:
 		enemy, exists := game.state.Enemies[target.ID]
 		return exists && enemy != nil
@@ -186,11 +188,55 @@ func (game *Game) targetExists(target targetpolicy.TargetRef) bool {
 	}
 }
 
+func (game *Game) targetLookupStatusLocked(target targetpolicy.TargetRef) playerstate.TargetStatus {
+	if target.IsEmpty() {
+		return playerstate.TargetStatusMissing
+	}
+
+	switch target.Kind {
+	case targetpolicy.TargetKindPlayer:
+		state, ok := game.playerWorldStateLocked(target.ID)
+		return playerstate.TargetStatusForWorldState(state, ok)
+	case targetpolicy.TargetKindAsteroid:
+		asteroid, exists := game.state.Asteroids[target.ID]
+		if !exists || asteroid == nil {
+			return playerstate.TargetStatusMissing
+		}
+		if asteroid.IsPendingDespawn() {
+			return playerstate.TargetStatusInactive
+		}
+		return playerstate.TargetStatusActive
+	case targetpolicy.TargetKindBullet:
+		bullet, exists := game.state.Projectiles[target.ID]
+		if !exists || bullet == nil {
+			return playerstate.TargetStatusMissing
+		}
+		if bullet.IsPendingDespawn() {
+			return playerstate.TargetStatusInactive
+		}
+		return playerstate.TargetStatusActive
+	case targetpolicy.TargetKindEnemy:
+		enemy, exists := game.state.Enemies[target.ID]
+		if !exists || enemy == nil {
+			return playerstate.TargetStatusMissing
+		}
+		if enemy.IsPendingDespawn() {
+			return playerstate.TargetStatusInactive
+		}
+		return playerstate.TargetStatusActive
+	default:
+		return playerstate.TargetStatusMissing
+	}
+}
+
 func (game *Game) targetCandidatesLocked() []targetpolicy.TargetCandidate {
 	candidates := make([]targetpolicy.TargetCandidate, 0)
 
 	for playerID, player := range game.state.Players {
 		if player == nil {
+			continue
+		}
+		if player.IsPendingDespawn() {
 			continue
 		}
 

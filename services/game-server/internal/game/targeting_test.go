@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/player"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
 )
@@ -351,5 +352,106 @@ func TestSelectTargetAtPositionNonOverlappingPointDoesNotOverwriteExistingTarget
 	target := game.Target(requesterID)
 	if target.Kind != targetpolicy.TargetKindPlayer || target.ID != existingTargetID {
 		t.Fatalf("expected existing target to remain player %q, got %#v", existingTargetID, target)
+	}
+}
+
+func TestTargetLookupStatusLocked_PlayerActive(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	game.mu.Lock()
+	status := game.targetLookupStatusLocked(targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   playerID,
+	})
+	game.mu.Unlock()
+
+	if status != player.TargetStatusActive {
+		t.Fatalf("expected status %q, got %q", player.TargetStatusActive, status)
+	}
+}
+
+func TestTargetLookupStatusLocked_PlayerPendingRespawn(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	game.mu.Lock()
+	delete(game.state.Players, playerID)
+	status := game.targetLookupStatusLocked(targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   playerID,
+	})
+	game.mu.Unlock()
+
+	if status != player.TargetStatusInactive {
+		t.Fatalf("expected status %q, got %q", player.TargetStatusInactive, status)
+	}
+}
+
+func TestTargetLookupStatusLocked_PlayerMissing(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	game.RemovePlayer(playerID)
+
+	game.mu.Lock()
+	status := game.targetLookupStatusLocked(targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   playerID,
+	})
+	game.mu.Unlock()
+
+	if status != player.TargetStatusMissing {
+		t.Fatalf("expected status %q, got %q", player.TargetStatusMissing, status)
+	}
+}
+
+func TestClearTargetsForMissingPlayersLocked_KeepsInactivePendingRespawnTarget(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	targetID := game.AddPlayer()
+
+	if !game.SetPlayerTarget(requesterID, targetID) {
+		t.Fatal("expected setup SetPlayerTarget to succeed")
+	}
+
+	game.mu.Lock()
+	delete(game.state.Players, targetID)
+	game.clearTargetsForMissingPlayersLocked()
+	requester := game.state.Players[requesterID]
+	game.mu.Unlock()
+
+	if requester == nil {
+		t.Fatalf("expected requester %q to exist", requesterID)
+	}
+	if requester.TargetKind != string(targetpolicy.TargetKindPlayer) {
+		t.Fatalf("expected target kind to remain %q, got %q", targetpolicy.TargetKindPlayer, requester.TargetKind)
+	}
+	if requester.TargetID != targetID {
+		t.Fatalf("expected target id to remain %q, got %q", targetID, requester.TargetID)
+	}
+}
+
+func TestClearTargetsForMissingPlayersLocked_ClearsMissingRemovedTarget(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	targetID := game.AddPlayer()
+
+	if !game.SetPlayerTarget(requesterID, targetID) {
+		t.Fatal("expected setup SetPlayerTarget to succeed")
+	}
+
+	game.RemovePlayer(targetID)
+
+	game.mu.Lock()
+	game.clearTargetsForMissingPlayersLocked()
+	requester := game.state.Players[requesterID]
+	game.mu.Unlock()
+
+	if requester == nil {
+		t.Fatalf("expected requester %q to exist", requesterID)
+	}
+	if requester.TargetKind != "" || requester.TargetID != "" || requester.TargetPlayerID != "" {
+		t.Fatalf("expected missing target to be cleared, got kind=%q id=%q target_player_id=%q", requester.TargetKind, requester.TargetID, requester.TargetPlayerID)
 	}
 }
