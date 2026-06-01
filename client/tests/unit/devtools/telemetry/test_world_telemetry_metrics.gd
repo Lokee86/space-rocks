@@ -108,3 +108,16 @@ func test_server_sent_msec_is_preserved_when_present() -> void:
 
 	assert_eq(metrics.server_sent_msec, sent_msec)
 	assert_eq(telemetry["server_sent_msec"], sent_msec)
+
+
+func test_server_sent_msec_and_packet_age_remain_available_when_next_state_omits_field() -> void:
+	var metrics := WorldTelemetryMetrics.new()
+	var sent_msec := int(Time.get_unix_time_from_system() * 1000.0) - 100
+
+	metrics.apply_gameplay_state({"server_sent_msec": sent_msec})
+	metrics.apply_gameplay_state({})
+	var telemetry := metrics.snapshot()
+
+	assert_eq(metrics.server_sent_msec, sent_msec)
+	assert_eq(telemetry["server_sent_msec"], sent_msec)
+	assert_true(int(telemetry["packet_age_ms"]) >= 0)

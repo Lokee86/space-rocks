@@ -42,7 +42,10 @@ func snapshot() -> Dictionary:
 
 
 func apply_gameplay_state(state: Dictionary) -> void:
-	server_sent_msec = int(state.get("server_sent_msec", -1))
+	if state.has("server_sent_msec"):
+		var next_server_sent_msec := int(state["server_sent_msec"])
+		if next_server_sent_msec > 0:
+			server_sent_msec = next_server_sent_msec
 
 	previous_packet_arrival_msec = latest_packet_arrival_msec
 	latest_packet_arrival_msec = Time.get_ticks_msec()

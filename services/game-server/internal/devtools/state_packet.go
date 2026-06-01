@@ -9,6 +9,7 @@ type statePacketWithDebugStatus struct {
 	Type            string                            `json:"type"`
 	SelfID          string                            `json:"self_id"`
 	Lives           int                               `json:"lives"`
+	ServerSentMsec  int                               `json:"server_sent_msec"`
 	DebugStatus     DebugStatus                       `json:"debug_status"`
 	DebugStatuses   map[string]DebugStatus            `json:"debug_statuses"`
 	Players         map[string]entities.ShipState     `json:"players"`
@@ -23,6 +24,7 @@ func WrapStatePacket(state game.StatePacket, status DebugStatus, statuses map[st
 		Type:            state.Type,
 		SelfID:          state.SelfID,
 		Lives:           state.Lives,
+		ServerSentMsec:  state.ServerSentMsec,
 		DebugStatus:     status,
 		DebugStatuses:   statuses,
 		Players:         state.Players,
