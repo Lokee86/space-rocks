@@ -9,6 +9,7 @@ const TYPE_SHIP_DEATH := "ship_death"
 const TYPE_RESPAWN := "respawn"
 const TYPE_PAUSE_REQUEST := "pause_request"
 const TYPE_PLAYER_PAUSE_STATE := "player_pause_state"
+const TYPE_SET_TARGET_PLAYER_REQUEST := "set_target_player_request"
 const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
 const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
 const TYPE_TOGGLE_DEBUG_FREEZE_WORLD := "toggle_debug_freeze_world"
@@ -50,6 +51,7 @@ const FIELD_EVENTS := "events"
 const FIELD_FORWARD := "forward"
 const FIELD_FREEZE_TARGET := "freeze_target"
 const FIELD_HAS_DIRECTION := "has_direction"
+const FIELD_HEALTH := "health"
 const FIELD_ID := "id"
 const FIELD_INFINITE_LIVES := "infinite_lives"
 const FIELD_INPUT := "input"
@@ -79,6 +81,7 @@ const FIELD_ROTATION := "rotation"
 const FIELD_SCALE := "scale"
 const FIELD_SCORE := "score"
 const FIELD_SELF_ID := "self_id"
+const FIELD_SHIELDS := "shields"
 const FIELD_SHIP_TYPE := "ship_type"
 const FIELD_SHOOT := "shoot"
 const FIELD_SIZE := "size"
@@ -112,6 +115,12 @@ static func respawn_packet() -> Dictionary:
 static func pause_request_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "pause_request"
+	return packet
+
+static func set_target_player_request_packet(target_player_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "set_target_player_request"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
 
 static func toggle_debug_invincible_packet() -> Dictionary:

@@ -20,6 +20,10 @@ func local_player_id() -> String:
 	return str(target_model.self_id) if target_model != null else ""
 
 
+func game_target_player_id() -> String:
+	return str(target_model.game_target_player_id) if target_model != null else ""
+
+
 func refresh_gameplay_state(state: Dictionary) -> void:
 	target_model.apply_gameplay_state(state)
 	if window_controller == null:
@@ -33,6 +37,11 @@ func refresh_gameplay_state(state: Dictionary) -> void:
 		target_model.infinite_lives_target_rows(),
 		target_model.player_frozen_target_rows()
 	)
+	if window_controller.has_method("refresh_game_target_options"):
+		window_controller.refresh_game_target_options(
+			target_model.target_rows(),
+			target_model.game_target_player_id
+		)
 	window_controller.refresh_counter_player_targets(target_model.active_player_target_rows())
 	if window_controller.has_method("refresh_spawn_player_slots"):
 		window_controller.refresh_spawn_player_slots(latest_max_players)

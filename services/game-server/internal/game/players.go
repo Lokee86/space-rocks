@@ -44,6 +44,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	delete(game.state.Players, playerID)
 	delete(game.cameraViews, playerID)
 	delete(game.playerSessions, playerID)
+	game.clearTargetsForMissingPlayersLocked()
 	delete(game.pendingPresentationEvents, playerID)
 	logging.Game.Debug("player removed", logging.FieldPlayerID, playerID)
 }
