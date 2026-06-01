@@ -3,6 +3,11 @@ package entities
 import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 
 func (ship *Ship) State() ShipState {
+	targetPlayerID := ""
+	if ship.TargetKind == "player" {
+		targetPlayerID = ship.TargetID
+	}
+
 	return ShipState{
 		ID:       ship.ID,
 		ShipType: ship.ShipTypeID,
@@ -11,7 +16,9 @@ func (ship *Ship) State() ShipState {
 		Rotation: ship.Rotation,
 		Score:    ship.Score,
 		Lives:    ship.Lives,
-		TargetPlayerID: ship.TargetPlayerID,
+		TargetKind: ship.TargetKind,
+		TargetID: ship.TargetID,
+		TargetPlayerID: targetPlayerID,
 		Health:   ship.Health,
 		Shields:  ship.Shields,
 	}

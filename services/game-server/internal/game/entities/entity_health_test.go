@@ -60,3 +60,64 @@ func TestShipStateIncludesHealthAndShields(t *testing.T) {
 		t.Fatalf("expected shields %d, got %d", ship.Shields, state.Shields)
 	}
 }
+
+func TestShipStateIncludesTargetKindAndTargetID(t *testing.T) {
+	ship := &Ship{
+		ID:         "player-1",
+		TargetKind: "player",
+		TargetID:   "player-2",
+	}
+
+	state := ship.State()
+
+	if state.TargetKind != "player" {
+		t.Fatalf("expected target kind %q, got %q", "player", state.TargetKind)
+	}
+	if state.TargetID != "player-2" {
+		t.Fatalf("expected target id %q, got %q", "player-2", state.TargetID)
+	}
+}
+
+func TestShipStateSetsTargetPlayerIDWhenTargetKindIsPlayer(t *testing.T) {
+	ship := &Ship{
+		ID:         "player-1",
+		TargetKind: "player",
+		TargetID:   "player-2",
+	}
+
+	state := ship.State()
+
+	if state.TargetPlayerID != "player-2" {
+		t.Fatalf("expected target_player_id %q, got %q", "player-2", state.TargetPlayerID)
+	}
+}
+
+func TestShipStateClearsTargetPlayerIDWhenTargetKindIsAsteroid(t *testing.T) {
+	ship := &Ship{
+		ID:             "player-1",
+		TargetKind:     "asteroid",
+		TargetID:       "asteroid-1",
+		TargetPlayerID: "player-2",
+	}
+
+	state := ship.State()
+
+	if state.TargetPlayerID != "" {
+		t.Fatalf("expected target_player_id to be empty for asteroid target, got %q", state.TargetPlayerID)
+	}
+}
+
+func TestShipStateClearsTargetPlayerIDWhenTargetKindIsBullet(t *testing.T) {
+	ship := &Ship{
+		ID:             "player-1",
+		TargetKind:     "bullet",
+		TargetID:       "bullet-1",
+		TargetPlayerID: "player-2",
+	}
+
+	state := ship.State()
+
+	if state.TargetPlayerID != "" {
+		t.Fatalf("expected target_player_id to be empty for bullet target, got %q", state.TargetPlayerID)
+	}
+}

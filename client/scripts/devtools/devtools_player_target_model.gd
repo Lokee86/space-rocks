@@ -7,6 +7,8 @@ var self_id := ""
 var server_players: Dictionary = {}
 var player_lifecycle: Dictionary = {}
 var debug_statuses: Dictionary = {}
+var game_target_kind := ""
+var game_target_id := ""
 var game_target_player_id := ""
 
 
@@ -15,6 +17,8 @@ func reset() -> void:
 	server_players = {}
 	player_lifecycle = {}
 	debug_statuses = {}
+	game_target_kind = ""
+	game_target_id = ""
 	game_target_player_id = ""
 
 
@@ -23,11 +27,22 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var players_value = state.get("server_players", {})
 	server_players = players_value if players_value is Dictionary else {}
+	game_target_kind = ""
+	game_target_id = ""
 	game_target_player_id = ""
 	if self_id != "":
 		var local_player_value = server_players.get(self_id, {})
 		if local_player_value is Dictionary:
-			game_target_player_id = str(local_player_value.get("target_player_id", ""))
+			game_target_kind = str(local_player_value.get("target_kind", ""))
+			game_target_id = str(local_player_value.get("target_id", ""))
+			if game_target_kind == "player":
+				game_target_player_id = game_target_id
+			elif game_target_kind == "" and game_target_id == "":
+				var fallback_target_player_id := str(local_player_value.get("target_player_id", ""))
+				if fallback_target_player_id != "":
+					game_target_kind = "player"
+					game_target_id = fallback_target_player_id
+					game_target_player_id = fallback_target_player_id
 
 	var lifecycle_value = state.get("player_lifecycle", {})
 	player_lifecycle = lifecycle_value if lifecycle_value is Dictionary else {}
