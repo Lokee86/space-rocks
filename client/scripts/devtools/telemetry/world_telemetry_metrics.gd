@@ -5,6 +5,7 @@ var enemies: int = 0
 var asteroids: int = 0
 var bullets: int = 0
 var server_sent_msec: int = -1
+var server_clock_offset_ms: int = -1
 var latest_packet_arrival_msec: int = -1
 var previous_packet_arrival_msec: int = -1
 var packet_interval_ms: int = -1
@@ -18,6 +19,7 @@ func reset() -> void:
 	asteroids = 0
 	bullets = 0
 	server_sent_msec = -1
+	server_clock_offset_ms = -1
 	latest_packet_arrival_msec = -1
 	previous_packet_arrival_msec = -1
 	packet_interval_ms = -1
@@ -27,13 +29,17 @@ func reset() -> void:
 
 func snapshot() -> Dictionary:
 	var packet_staleness_ms: int = Time.get_ticks_msec() - latest_packet_arrival_msec if latest_packet_arrival_msec >= 0 else -1
-	var packet_age_ms: int = int(Time.get_unix_time_from_system() * 1000.0) - server_sent_msec if server_sent_msec > 0 else -1
+	var packet_age_ms: int = -1
+	if server_sent_msec > 0 and server_clock_offset_ms >= 0:
+		var estimated_client_sent_msec := server_sent_msec - server_clock_offset_ms
+		packet_age_ms = max(Time.get_ticks_msec() - estimated_client_sent_msec, 0)
 	return {
 		"players": players,
 		"enemies": enemies,
 		"asteroids": asteroids,
 		"bullets": bullets,
 		"server_sent_msec": server_sent_msec,
+		"server_clock_offset_ms": server_clock_offset_ms,
 		"packet_interval_ms": packet_interval_ms,
 		"jitter_ms": jitter_ms,
 		"packet_staleness_ms": packet_staleness_ms,
@@ -41,11 +47,15 @@ func snapshot() -> Dictionary:
 	}
 
 
+func set_network_metrics(metrics: Dictionary) -> void:
+	if metrics.has("server_clock_offset_ms"):
+		var offset_ms := int(metrics["server_clock_offset_ms"])
+		if offset_ms >= 0:
+			server_clock_offset_ms = offset_ms
+
+
 func apply_gameplay_state(state: Dictionary) -> void:
-	if state.has("server_sent_msec"):
-		var next_server_sent_msec := int(state["server_sent_msec"])
-		if next_server_sent_msec > 0:
-			server_sent_msec = next_server_sent_msec
+	server_sent_msec = int(state.get("server_sent_msec", -1))
 
 	previous_packet_arrival_msec = latest_packet_arrival_msec
 	latest_packet_arrival_msec = Time.get_ticks_msec()

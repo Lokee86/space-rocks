@@ -5,6 +5,7 @@ const Packets := preload("res://scripts/networking/packets/packets.gd")
 var sequence: int = 0
 var pending_pings: Dictionary = {}
 var latest_rtt_ms: int = -1
+var latest_server_clock_offset_ms: int = -1
 
 
 func next_ping_packet() -> Dictionary:
@@ -28,15 +29,27 @@ func apply_pong(packet: Dictionary) -> void:
 		return
 
 	var sent_msec := int(pending_pings[pong_sequence])
-	latest_rtt_ms = Time.get_ticks_msec() - sent_msec
+	var local_received_msec := Time.get_ticks_msec()
+	latest_rtt_ms = local_received_msec - sent_msec
+
+	var server_received_msec := int(packet.get(Packets.FIELD_SERVER_RECEIVED_MSEC, -1))
+	var server_sent_msec := int(packet.get(Packets.FIELD_SERVER_SENT_MSEC, -1))
+	if server_received_msec > 0 and server_sent_msec > 0:
+		var local_midpoint_msec := sent_msec + ((local_received_msec - sent_msec) / 2)
+		var server_midpoint_msec := server_received_msec + ((server_sent_msec - server_received_msec) / 2)
+		latest_server_clock_offset_ms = server_midpoint_msec - local_midpoint_msec
 	pending_pings.erase(pong_sequence)
 
 
 func snapshot() -> Dictionary:
-	return {"rtt_ms": latest_rtt_ms}
+	return {
+		"rtt_ms": latest_rtt_ms,
+		"server_clock_offset_ms": latest_server_clock_offset_ms,
+	}
 
 
 func reset() -> void:
 	sequence = 0
 	pending_pings.clear()
 	latest_rtt_ms = -1
+	latest_server_clock_offset_ms = -1

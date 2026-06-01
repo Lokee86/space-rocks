@@ -101,8 +101,10 @@ func test_reset_clears_timing_state() -> void:
 
 func test_server_sent_msec_is_preserved_when_present() -> void:
 	var metrics := WorldTelemetryMetrics.new()
-	var sent_msec := int(Time.get_unix_time_from_system() * 1000.0) - 100
+	var offset_ms := 1000
+	var sent_msec := Time.get_ticks_msec() + offset_ms - 100
 
+	metrics.set_network_metrics({"server_clock_offset_ms": offset_ms})
 	metrics.apply_gameplay_state({"server_sent_msec": sent_msec})
 	var telemetry := metrics.snapshot()
 
@@ -110,14 +112,16 @@ func test_server_sent_msec_is_preserved_when_present() -> void:
 	assert_eq(telemetry["server_sent_msec"], sent_msec)
 
 
-func test_server_sent_msec_and_packet_age_remain_available_when_next_state_omits_field() -> void:
+func test_missing_server_sent_msec_makes_packet_age_unavailable() -> void:
 	var metrics := WorldTelemetryMetrics.new()
-	var sent_msec := int(Time.get_unix_time_from_system() * 1000.0) - 100
+	var offset_ms := 1000
+	var sent_msec := Time.get_ticks_msec() + offset_ms - 100
 
+	metrics.set_network_metrics({"server_clock_offset_ms": offset_ms})
 	metrics.apply_gameplay_state({"server_sent_msec": sent_msec})
 	metrics.apply_gameplay_state({})
 	var telemetry := metrics.snapshot()
 
-	assert_eq(metrics.server_sent_msec, sent_msec)
-	assert_eq(telemetry["server_sent_msec"], sent_msec)
-	assert_true(int(telemetry["packet_age_ms"]) >= 0)
+	assert_eq(metrics.server_sent_msec, -1)
+	assert_eq(telemetry["server_sent_msec"], -1)
+	assert_eq(telemetry["packet_age_ms"], -1)

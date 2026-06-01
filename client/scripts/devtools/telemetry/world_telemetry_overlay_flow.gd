@@ -69,6 +69,8 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 func set_network_metrics(metrics_data: Dictionary) -> void:
 	network_metrics = metrics_data
+	if metrics != null:
+		metrics.set_network_metrics(metrics_data)
 
 
 func process(has_received_state: bool, delta: float = 0.0) -> void:

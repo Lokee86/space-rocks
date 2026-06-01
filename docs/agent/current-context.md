@@ -23,6 +23,10 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - API/business/backend concerns should remain out of the Go real-time game server unless explicitly redirected.
 - The user strongly prefers small implementation prompts and quick reviewable diffs.
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
+- World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
+- Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
+- Network telemetry uses `telemetry_ping` / `telemetry_pong`; gameplay state packets include `server_sent_msec`.
+- `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
 
 ## Known Gaps / TODOs
 
@@ -30,3 +34,4 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
 - API server is planned but not scaffolded.
 - Ship variants are planned but not implemented.
+- Gameplay menu button clickability may be broken from earlier targeting implementation; track/fix as a separate follow-up seam.

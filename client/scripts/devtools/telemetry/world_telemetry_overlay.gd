@@ -26,7 +26,6 @@ func refresh_metrics(metrics: Dictionary) -> void:
 		"",
 		"Network",
 		"rtt_ms: %s" % _timing_or_network_value(metrics, "rtt_ms"),
-		"server_sent_msec: %s" % _timing_or_network_value(metrics, "server_sent_msec"),
 		"packet_interval_ms: %s" % _timing_or_network_value(metrics, "packet_interval_ms"),
 		"jitter_ms: %s" % _timing_or_network_value(metrics, "jitter_ms"),
 		"packet_staleness_ms: %s" % _timing_or_network_value(metrics, "packet_staleness_ms"),

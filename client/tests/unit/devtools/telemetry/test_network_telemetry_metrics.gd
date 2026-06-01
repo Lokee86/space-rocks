@@ -8,6 +8,7 @@ func test_initial_snapshot_reports_unavailable_rtt() -> void:
 	var metrics := NetworkTelemetryMetrics.new()
 
 	assert_eq(metrics.snapshot()["rtt_ms"], -1)
+	assert_eq(metrics.snapshot()["server_clock_offset_ms"], -1)
 
 
 func test_next_ping_packet_contains_type_sequence_and_client_sent_msec() -> void:
@@ -50,3 +51,19 @@ func test_reset_clears_pending_and_restores_unavailable_rtt() -> void:
 	metrics.apply_pong({Packets.FIELD_SEQUENCE: 1})
 
 	assert_eq(metrics.snapshot()["rtt_ms"], -1)
+
+
+func test_apply_pong_with_server_timestamps_updates_clock_offset() -> void:
+	var metrics := NetworkTelemetryMetrics.new()
+	var ping_packet := metrics.next_ping_packet()
+	var sequence := int(ping_packet[Packets.FIELD_SEQUENCE])
+	var client_sent_msec := int(ping_packet[Packets.FIELD_CLIENT_SENT_MSEC])
+
+	metrics.apply_pong({
+		Packets.FIELD_SEQUENCE: sequence,
+		Packets.FIELD_SERVER_RECEIVED_MSEC: client_sent_msec + 100,
+		Packets.FIELD_SERVER_SENT_MSEC: client_sent_msec + 120,
+	})
+
+	assert_true(metrics.snapshot()["rtt_ms"] >= 0)
+	assert_true(int(metrics.snapshot()["server_clock_offset_ms"]) > -1)
