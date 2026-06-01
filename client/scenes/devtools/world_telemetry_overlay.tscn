@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://fhhobjak6t8y"]
+
+[ext_resource type="Script" uid="uid://b5spitj0jvopk" path="res://scripts/devtools/telemetry/world_telemetry_overlay.gd" id="1_vop1p"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1do2j"]
+bg_color = Color(0.6, 0.6, 0.6, 0.25490198)
+
+[sub_resource type="LabelSettings" id="LabelSettings_1do2j"]
+font_size = 10
+
+[node name="WorldTelemetryOverlay" type="CanvasLayer" unique_id=1355007717]
+script = ExtResource("1_vop1p")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=419339109]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -136.0
+offset_top = -289.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1do2j")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=749465892]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="MetricsLabel" type="Label" parent="PanelContainer/MarginContainer" unique_id=1978709588]
+unique_name_in_owner = true
+layout_mode = 2
+text = "World
+players: —
+enemies: —
+asteroids: —
+bullets: —
+
+Client
+fps: —
+frame_ms: —
+
+Network
+rtt_ms: —
+packet_interval_ms: —
+jitter_ms: —
+packet_staleness_ms: —
+packet_age_ms: —"
+label_settings = SubResource("LabelSettings_1do2j")

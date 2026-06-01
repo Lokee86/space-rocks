@@ -15,7 +15,7 @@ shader_parameter/strength = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qlg0r"]
 shader = ExtResource("2_dqkch")
-shader_parameter/hue_shift = 0.0
+shader_parameter/hue_shift = 0.850000040375
 shader_parameter/saturation_mult = 1.0000000475
 shader_parameter/value_mult = 1.0000000475
 shader_parameter/strength = 1.0
