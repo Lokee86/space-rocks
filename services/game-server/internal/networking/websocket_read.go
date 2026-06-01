@@ -1,6 +1,8 @@
 package networking
 
 import (
+	"time"
+
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	targeting "github.com/Lokee86/space-rocks/server/internal/game/targeting"
@@ -63,6 +65,29 @@ func readClientInput(
 				"session_id", session.sessionID,
 				logging.FieldRemoteAddr, remoteAddr,
 			)
+			continue
+		}
+		if packet.Type == game.PacketTypeTelemetryPing {
+			serverReceivedMsec := time.Now().UnixMilli()
+			pong := game.ClientPacket{
+				Type:               game.PacketTypeTelemetryPong,
+				Sequence:           packet.Sequence,
+				ClientSentMsec:     packet.ClientSentMsec,
+				ServerReceivedMsec: int(serverReceivedMsec),
+			}
+			pong.ServerSentMsec = int(time.Now().UnixMilli())
+			response, err := packetcodec.Encode(pong)
+			if err != nil {
+				logging.Network.Warn("websocket telemetry pong encode failed",
+					logging.FieldError, err,
+					logging.FieldRoomID, session.currentRoomID,
+					logging.FieldPlayerID, session.currentGamePlayerID,
+					"session_id", session.sessionID,
+					logging.FieldRemoteAddr, remoteAddr,
+				)
+				continue
+			}
+			session.outbound <- response
 			continue
 		}
 

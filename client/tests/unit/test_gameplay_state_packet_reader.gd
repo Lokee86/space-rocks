@@ -62,3 +62,17 @@ func test_read_ignores_non_array_events() -> void:
 	var facts := GameplayStatePacketReader.read(state)
 
 	assert_eq(facts["server_events"], [])
+
+
+func test_read_preserves_server_sent_msec() -> void:
+	var state := WorldStateFixture.state()
+	state["server_sent_msec"] = 123456
+
+	var facts := GameplayStatePacketReader.read(state)
+
+	assert_eq(facts["server_sent_msec"], 123456)
+
+	state.erase("server_sent_msec")
+	facts = GameplayStatePacketReader.read(state)
+
+	assert_eq(facts["server_sent_msec"], -1)

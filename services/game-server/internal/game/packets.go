@@ -12,6 +12,8 @@ const (
 	PacketTypeRespawn                       = "respawn"
 	PacketTypePauseRequest                  = "pause_request"
 	PacketTypePlayerPauseState              = "player_pause_state"
+	PacketTypeTelemetryPing                 = "telemetry_ping"
+	PacketTypeTelemetryPong                 = "telemetry_pong"
 	PacketTypeSetTargetPlayerRequest        = "set_target_player_request"
 	PacketTypeSelectTargetAtPositionRequest = "select_target_at_position_request"
 	PacketTypeClearTargetRequest            = "clear_target_request"
@@ -28,16 +30,20 @@ const (
 )
 
 type ClientPacket struct {
-	Type           string                `json:"type"`
-	Input          entities.InputState   `json:"input"`
-	Config         entities.ClientConfig `json:"config"`
-	RoomCode       string                `json:"room_code"`
-	Ready          bool                  `json:"ready"`
-	TargetPlayerID string                `json:"target_player_id"`
-	X              float64               `json:"x"`
-	Y              float64               `json:"y"`
-	TargetKind     string                `json:"target_kind"`
-	TargetID       string                `json:"target_id"`
+	Type               string                `json:"type"`
+	Input              entities.InputState   `json:"input"`
+	Config             entities.ClientConfig `json:"config"`
+	RoomCode           string                `json:"room_code"`
+	Ready              bool                  `json:"ready"`
+	TargetPlayerID     string                `json:"target_player_id"`
+	X                  float64               `json:"x"`
+	Y                  float64               `json:"y"`
+	TargetKind         string                `json:"target_kind"`
+	TargetID           string                `json:"target_id"`
+	Sequence           int                   `json:"sequence"`
+	ClientSentMsec     int                   `json:"client_sent_msec"`
+	ServerReceivedMsec int                   `json:"server_received_msec"`
+	ServerSentMsec     int                   `json:"server_sent_msec"`
 }
 
 type CreateRoomRequest struct {
@@ -122,4 +128,5 @@ type StatePacket struct {
 	Bullets         map[string]entities.BulletState   `json:"bullets"`
 	Asteroids       map[string]entities.AsteroidState `json:"asteroids"`
 	Events          []EventState                      `json:"events"`
+	ServerSentMsec  int                               `json:"server_sent_msec"`
 }

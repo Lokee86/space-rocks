@@ -8,6 +8,7 @@ var overlay = null
 var metrics = null
 var connection_service = null
 var last_refresh_msec: int = -1
+var network_metrics: Dictionary = {}
 
 
 func configure(connection_service_ref = null) -> void:
@@ -56,10 +57,18 @@ func toggle_overlay() -> void:
 			show_overlay()
 
 
+func is_visible() -> bool:
+	return is_instance_valid(overlay) and overlay.visible
+
+
 func apply_gameplay_state(state: Dictionary) -> void:
 	if metrics == null:
 		metrics = WorldTelemetryMetrics.new()
 	metrics.apply_gameplay_state(state)
+
+
+func set_network_metrics(metrics_data: Dictionary) -> void:
+	network_metrics = metrics_data
 
 
 func process(has_received_state: bool, delta: float = 0.0) -> void:
@@ -79,12 +88,16 @@ func _refresh_overlay() -> void:
 		metrics = WorldTelemetryMetrics.new()
 
 	var merged_metrics: Dictionary = metrics.snapshot()
+	for key in network_metrics.keys():
+		merged_metrics[key] = network_metrics[key]
 	var fps: float = Engine.get_frames_per_second()
 	merged_metrics["fps"] = fps
 	merged_metrics["frame_ms"] = 1000.0 / max(fps, 1.0)
 	merged_metrics["rtt_ms"] = -1
 	if connection_service != null and connection_service.has_method("latest_rtt_ms"):
 		merged_metrics["rtt_ms"] = connection_service.latest_rtt_ms()
+	if network_metrics.has("rtt_ms"):
+		merged_metrics["rtt_ms"] = network_metrics["rtt_ms"]
 
 	overlay.refresh_metrics(merged_metrics)
 	last_refresh_msec = Time.get_ticks_msec()

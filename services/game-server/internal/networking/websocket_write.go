@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
@@ -37,6 +38,7 @@ func writeServerMessages(
 			checkRoomGameOver(session.room)
 
 			statePacket := session.room.Game.StatePacket(session.currentGamePlayerID)
+			stampStatePacketServerSentMsec(&statePacket, time.Now().UnixMilli())
 			payload := any(statePacket)
 			if devtools.Enabled() {
 				payload = devtools.WrapStatePacket(
@@ -61,6 +63,20 @@ func writeServerMessages(
 			}
 		}
 	}
+}
+
+func stampStatePacketServerSentMsec(statePacket any, sentMsec int64) {
+	packetValue := reflect.ValueOf(statePacket)
+	if packetValue.Kind() != reflect.Ptr || packetValue.IsNil() {
+		return
+	}
+
+	field := packetValue.Elem().FieldByName("ServerSentMsec")
+	if !field.IsValid() || !field.CanSet() || field.Kind() != reflect.Int {
+		return
+	}
+
+	field.SetInt(sentMsec)
 }
 
 func canSendGameplayPresentationState(room *rooms.Room) bool {
