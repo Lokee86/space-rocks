@@ -4,25 +4,27 @@ package game
 import entities "github.com/Lokee86/space-rocks/server/internal/game/entities"
 
 const (
-	PacketTypeInput                    = "input"
-	PacketTypeClientConfig             = "client_config"
-	PacketTypeState                    = "state"
-	PacketTypeBulletBlast              = "bullet_blast"
-	PacketTypeShipDeath                = "ship_death"
-	PacketTypeRespawn                  = "respawn"
-	PacketTypePauseRequest             = "pause_request"
-	PacketTypePlayerPauseState         = "player_pause_state"
-	PacketTypeSetTargetPlayerRequest   = "set_target_player_request"
-	PacketTypeCreateRoomRequest        = "create_room_request"
-	PacketTypeJoinRoomRequest          = "join_room_request"
-	PacketTypeLeaveRoomRequest         = "leave_room_request"
-	PacketTypeSetReadyRequest          = "set_ready_request"
-	PacketTypeStartGameRequest         = "start_game_request"
-	PacketTypeStartSinglePlayerRequest = "start_single_player_request"
-	PacketTypeReturnToLobbyRequest     = "return_to_lobby_request"
-	PacketTypeRoomSnapshot             = "room_snapshot"
-	PacketTypeRoomStateChanged         = "room_state_changed"
-	PacketTypeRoomError                = "room_error"
+	PacketTypeInput                         = "input"
+	PacketTypeClientConfig                  = "client_config"
+	PacketTypeState                         = "state"
+	PacketTypeBulletBlast                   = "bullet_blast"
+	PacketTypeShipDeath                     = "ship_death"
+	PacketTypeRespawn                       = "respawn"
+	PacketTypePauseRequest                  = "pause_request"
+	PacketTypePlayerPauseState              = "player_pause_state"
+	PacketTypeSetTargetPlayerRequest        = "set_target_player_request"
+	PacketTypeSelectTargetAtPositionRequest = "select_target_at_position_request"
+	PacketTypeClearTargetRequest            = "clear_target_request"
+	PacketTypeCreateRoomRequest             = "create_room_request"
+	PacketTypeJoinRoomRequest               = "join_room_request"
+	PacketTypeLeaveRoomRequest              = "leave_room_request"
+	PacketTypeSetReadyRequest               = "set_ready_request"
+	PacketTypeStartGameRequest              = "start_game_request"
+	PacketTypeStartSinglePlayerRequest      = "start_single_player_request"
+	PacketTypeReturnToLobbyRequest          = "return_to_lobby_request"
+	PacketTypeRoomSnapshot                  = "room_snapshot"
+	PacketTypeRoomStateChanged              = "room_state_changed"
+	PacketTypeRoomError                     = "room_error"
 )
 
 type ClientPacket struct {
@@ -32,6 +34,10 @@ type ClientPacket struct {
 	RoomCode       string                `json:"room_code"`
 	Ready          bool                  `json:"ready"`
 	TargetPlayerID string                `json:"target_player_id"`
+	X              float64               `json:"x"`
+	Y              float64               `json:"y"`
+	TargetKind     string                `json:"target_kind"`
+	TargetID       string                `json:"target_id"`
 }
 
 type CreateRoomRequest struct {

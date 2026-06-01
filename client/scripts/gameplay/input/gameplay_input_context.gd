@@ -1,10 +1,14 @@
 extends RefCounted
 class_name GameplayInputContext
 
+const TargetRequestFlow = preload("res://scripts/gameplay/input/target_request_flow.gd")
+const MouseActionFlow = preload("res://scripts/gameplay/input/mouse_action_flow.gd")
 
 var input_flow
 var pause_input_flow
 var devtools_context
+var target_request_flow
+var mouse_action_flow
 
 
 func apply_debug_status(status: Dictionary) -> void:
@@ -29,7 +33,10 @@ func configure(
 	connection_service_ref,
 	player_ref,
 	menu_flow_ref,
-	respawn_request_route_ref: Callable
+	respawn_request_route_ref: Callable,
+	target_visual_candidates_provider_ref: Callable = Callable(),
+	mouse_visual_position_provider_ref: Callable = Callable(),
+	server_position_converter_ref: Callable = Callable()
 ) -> void:
 	input_flow = GameplayInputFlow.new()
 	input_flow.configure(connection_service_ref, player_ref, menu_flow_ref)
@@ -37,6 +44,15 @@ func configure(
 	pause_input_flow.configure(menu_flow_ref)
 	devtools_context = GameplayDevtoolsContext.new()
 	devtools_context.configure(connection_service_ref)
+	target_request_flow = TargetRequestFlow.new()
+	target_request_flow.configure(
+		connection_service_ref,
+		target_visual_candidates_provider_ref,
+		mouse_visual_position_provider_ref,
+		server_position_converter_ref
+	)
+	mouse_action_flow = MouseActionFlow.new()
+	mouse_action_flow.configure(target_request_flow)
 	respawn_request_route = respawn_request_route_ref
 
 
@@ -65,11 +81,20 @@ func reset() -> void:
 		pause_input_flow.reset()
 	if devtools_context != null:
 		devtools_context.reset()
+	if mouse_action_flow != null:
+		mouse_action_flow.clear_pending_context()
 
 
 func mark_gameplay_state_received() -> void:
 	if input_flow != null:
 		input_flow.mark_gameplay_state_received()
+
+func handle_unhandled_input(event: InputEvent, has_received_state: bool) -> bool:
+	if !has_received_state:
+		return false
+	if mouse_action_flow == null:
+		return false
+	return mouse_action_flow.handle_input_event(event)
 
 
 func process(has_received_state: bool) -> void:

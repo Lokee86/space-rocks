@@ -115,3 +115,20 @@ func interpolate(weight: float) -> void:
 			target_asteroid_positions[asteroid_id],
 			weight
 		)
+
+
+func asteroid_target_positions() -> Dictionary:
+	var positions := {}
+	for asteroid_id in asteroid_visual_positions.keys():
+		if not asteroid_server_positions.has(asteroid_id):
+			continue
+		var asteroid_node = asteroid_nodes.get(asteroid_id, null)
+		var visual_scale := 1.0
+		if asteroid_node != null:
+			visual_scale = float(asteroid_node.scale.x)
+		positions[asteroid_id] = {
+			"visual_position": asteroid_visual_positions[asteroid_id],
+			"server_position": asteroid_server_positions[asteroid_id],
+			"visual_scale": visual_scale,
+		}
+	return positions

@@ -1,0 +1,60 @@
+extends RefCounted
+class_name TargetRequestFlow
+
+const Packets = preload("res://scripts/networking/packets/packets.gd")
+const TargetVisualPicker = preload("res://scripts/gameplay/input/target_visual_picker.gd")
+
+var connection_service = null
+var target_candidate_provider: Callable = Callable()
+var mouse_visual_position_provider: Callable = Callable()
+var server_position_converter: Callable = Callable()
+
+func configure(
+	next_connection_service,
+	next_target_candidate_provider: Callable,
+	next_mouse_visual_position_provider: Callable,
+	next_server_position_converter: Callable
+) -> void:
+	connection_service = next_connection_service
+	target_candidate_provider = next_target_candidate_provider
+	mouse_visual_position_provider = next_mouse_visual_position_provider
+	server_position_converter = next_server_position_converter
+
+func select_target() -> void:
+	if connection_service == null:
+		return
+	if target_candidate_provider.is_null():
+		return
+	if mouse_visual_position_provider.is_null():
+		return
+	if server_position_converter.is_null():
+		return
+
+	var candidates = target_candidate_provider.call()
+	if candidates == null:
+		return
+	if candidates is Array and candidates.is_empty():
+		return
+
+	var mouse_visual_position = mouse_visual_position_provider.call()
+	var selected_candidate = TargetVisualPicker.pick(candidates, mouse_visual_position)
+	if selected_candidate == null:
+		return
+
+	var server_position = server_position_converter.call(mouse_visual_position)
+	connection_service.send(
+		Packets.select_target_at_position_request_packet(
+			server_position.x,
+			server_position.y,
+			selected_candidate.target_kind,
+			selected_candidate.target_id
+		)
+	)
+
+	return
+
+func deselect_target() -> void:
+	if connection_service == null:
+		return
+
+	connection_service.send(Packets.clear_target_request_packet())

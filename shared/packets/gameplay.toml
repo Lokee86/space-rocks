@@ -35,6 +35,28 @@ go_name = "TargetPlayerID"
 json = "target_player_id"
 type = "string"
 
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+name = "target_kind"
+go_name = "TargetKind"
+json = "target_kind"
+type = "string"
+
+[[structs.fields]]
+name = "target_id"
+go_name = "TargetID"
+json = "target_id"
+type = "string"
+
 [[structs]]
 id = "ClientConfig"
 
@@ -353,6 +375,14 @@ value = "player_pause_state"
 id = "set_target_player_request"
 value = "set_target_player_request"
 
+[[packet_types]]
+id = "select_target_at_position_request"
+value = "select_target_at_position_request"
+
+[[packet_types]]
+id = "clear_target_request"
+value = "clear_target_request"
+
 [[builders]]
 id = "input_packet"
 args = ["forward", "back", "right", "left", "shoot"]
@@ -386,6 +416,23 @@ args = ["target_player_id"]
 [builders.body]
 type = "set_target_player_request"
 target_player_id = "$target_player_id"
+
+[[builders]]
+id = "select_target_at_position_request_packet"
+args = ["x", "y", "target_kind", "target_id"]
+
+[builders.body]
+type = "select_target_at_position_request"
+x = "$x"
+y = "$y"
+target_kind = "$target_kind"
+target_id = "$target_id"
+
+[[builders]]
+id = "clear_target_request_packet"
+
+[builders.body]
+type = "clear_target_request"
 
 [[builders]]
 id = "client_config_packet"

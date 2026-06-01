@@ -3,6 +3,7 @@ package networking
 import (
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/game"
+	targeting "github.com/Lokee86/space-rocks/server/internal/game/targeting"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 )
@@ -102,6 +103,22 @@ func readClientInput(
 
 		if packet.Type == game.PacketTypeSetTargetPlayerRequest {
 			session.room.Game.SetPlayerTarget(session.currentGamePlayerID, packet.TargetPlayerID)
+			continue
+		}
+		if packet.Type == game.PacketTypeSelectTargetAtPositionRequest {
+			session.room.Game.SelectTargetAtPosition(
+				session.currentGamePlayerID,
+				packet.X,
+				packet.Y,
+				targeting.TargetRef{
+					Kind: targeting.TargetKind(packet.TargetKind),
+					ID:   packet.TargetID,
+				},
+			)
+			continue
+		}
+		if packet.Type == game.PacketTypeClearTargetRequest {
+			session.room.Game.ClearTarget(session.currentGamePlayerID)
 			continue
 		}
 

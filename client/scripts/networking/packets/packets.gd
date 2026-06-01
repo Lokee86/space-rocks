@@ -10,6 +10,8 @@ const TYPE_RESPAWN := "respawn"
 const TYPE_PAUSE_REQUEST := "pause_request"
 const TYPE_PLAYER_PAUSE_STATE := "player_pause_state"
 const TYPE_SET_TARGET_PLAYER_REQUEST := "set_target_player_request"
+const TYPE_SELECT_TARGET_AT_POSITION_REQUEST := "select_target_at_position_request"
+const TYPE_CLEAR_TARGET_REQUEST := "clear_target_request"
 const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
 const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
 const TYPE_TOGGLE_DEBUG_FREEZE_WORLD := "toggle_debug_freeze_world"
@@ -123,6 +125,20 @@ static func set_target_player_request_packet(target_player_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "set_target_player_request"
 	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	return packet
+
+static func select_target_at_position_request_packet(x, y, target_kind, target_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "select_target_at_position_request"
+	packet[FIELD_X] = x
+	packet[FIELD_Y] = y
+	packet[FIELD_TARGET_KIND] = target_kind
+	packet[FIELD_TARGET_ID] = target_id
+	return packet
+
+static func clear_target_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "clear_target_request"
 	return packet
 
 static func toggle_debug_invincible_packet() -> Dictionary:
