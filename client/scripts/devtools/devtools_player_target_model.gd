@@ -1,10 +1,13 @@
 extends RefCounted
 
+const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+
 
 var self_id := ""
 var server_players: Dictionary = {}
 var player_lifecycle: Dictionary = {}
 var debug_statuses: Dictionary = {}
+var game_target_player_id := ""
 
 
 func reset() -> void:
@@ -12,6 +15,7 @@ func reset() -> void:
 	server_players = {}
 	player_lifecycle = {}
 	debug_statuses = {}
+	game_target_player_id = ""
 
 
 func apply_gameplay_state(state: Dictionary) -> void:
@@ -19,6 +23,11 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var players_value = state.get("server_players", {})
 	server_players = players_value if players_value is Dictionary else {}
+	game_target_player_id = ""
+	if self_id != "":
+		var local_player_value = server_players.get(self_id, {})
+		if local_player_value is Dictionary:
+			game_target_player_id = str(local_player_value.get("target_player_id", ""))
 
 	var lifecycle_value = state.get("player_lifecycle", {})
 	player_lifecycle = lifecycle_value if lifecycle_value is Dictionary else {}
@@ -56,7 +65,7 @@ func target_rows() -> Array:
 
 
 func active_player_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_game_target_row()]
 	for player_id in server_players.keys():
 		var player_id_text: String = str(player_id)
 		rows.append({
@@ -69,7 +78,7 @@ func active_player_target_rows() -> Array:
 
 
 func invincible_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_game_target_row()]
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
 		var invincible_on: bool = _player_feature_enabled(player_id_text, "invincible")
@@ -87,7 +96,7 @@ func invincible_target_rows() -> Array:
 
 
 func infinite_lives_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_game_target_row()]
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
 		var infinite_lives_on: bool = _player_feature_enabled(player_id_text, "infinite_lives")
@@ -105,7 +114,7 @@ func infinite_lives_target_rows() -> Array:
 
 
 func player_frozen_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_game_target_row()]
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
 		var player_frozen_on: bool = _player_feature_enabled(player_id_text, "player_frozen")
@@ -160,3 +169,11 @@ func _feature_label(feature_key: String) -> String:
 			return "PLAYER FROZEN"
 		_:
 			return feature_key.to_upper()
+
+
+func _game_target_row() -> Dictionary:
+	return {
+		"player_id": DevtoolsTargetResolver.TARGET_GAME,
+		"label": DevtoolsTargetResolver.TARGET_GAME_LABEL,
+		"is_self": false,
+	}

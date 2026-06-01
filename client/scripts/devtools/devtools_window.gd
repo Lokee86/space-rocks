@@ -1,6 +1,7 @@
 extends Window
 
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const DevtoolsTargetResolver = preload("res://scripts/devtools/devtools_target_resolver.gd")
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
@@ -17,6 +18,8 @@ signal spawn_asteroid_placement_requested
 signal spawn_player_placement_requested(target_player_id: String)
 signal spawn_bullet_placement_requested
 signal respawn_player_placement_requested(target_player_id: String)
+signal game_target_set_requested(target_player_id: String)
+signal game_target_clear_requested()
 
 @onready var invincible_button: Button = %InvincibleButton
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
@@ -56,6 +59,9 @@ signal respawn_player_placement_requested(target_player_id: String)
 @onready var add_lives_button: Button = %AddLivesButton
 @onready var clear_bullets_button: Button = %ClearBulletsButton
 @onready var clear_asteroids_button: Button = %ClearAsteroidsButton
+@onready var game_target_select: OptionButton = %GameTargetSelect
+@onready var set_game_target_button: Button = %SetGameTargetButton
+@onready var clear_game_target_button: Button = %ClearGameTargetButton
 
 
 func _ready() -> void:
@@ -99,6 +105,10 @@ func _ready() -> void:
 		clear_bullets_button.pressed.connect(_on_clear_bullets_button_pressed)
 	if !clear_asteroids_button.pressed.is_connected(_on_clear_asteroids_button_pressed):
 		clear_asteroids_button.pressed.connect(_on_clear_asteroids_button_pressed)
+	if !set_game_target_button.pressed.is_connected(_on_set_game_target_button_pressed):
+		set_game_target_button.pressed.connect(_on_set_game_target_button_pressed)
+	if !clear_game_target_button.pressed.is_connected(_on_clear_game_target_button_pressed):
+		clear_game_target_button.pressed.connect(_on_clear_game_target_button_pressed)
 
 
 func show_window() -> void:
@@ -125,15 +135,15 @@ func set_debug_status(status: Dictionary) -> void:
 
 
 func refresh_invincible_targets(rows: Array) -> void:
-	_refresh_target_option(invincible_status_select, rows)
+	_refresh_target_option(invincible_status_select, rows, "", true, true)
 
 
 func refresh_infinite_lives_targets(rows: Array) -> void:
-	_refresh_target_option(infinite_lives_select, rows)
+	_refresh_target_option(infinite_lives_select, rows, "", true, true)
 
 
 func refresh_player_frozen_targets(rows: Array) -> void:
-	_refresh_target_option(player_frozen_select, rows)
+	_refresh_target_option(player_frozen_select, rows, "", true, true)
 
 
 func refresh_kill_player_targets(target_rows: Array) -> void:
@@ -210,10 +220,14 @@ func refresh_respawn_player_targets(target_rows: Array) -> void:
 
 
 func refresh_counter_player_targets(rows: Array) -> void:
-	_refresh_target_option(set_score_select, rows)
-	_refresh_target_option(add_score_select, rows)
-	_refresh_target_option(set_lives_select, rows)
-	_refresh_target_option(add_lives_select, rows)
+	_refresh_target_option(set_score_select, rows, "", true, true)
+	_refresh_target_option(add_score_select, rows, "", true, true)
+	_refresh_target_option(set_lives_select, rows, "", true, true)
+	_refresh_target_option(add_lives_select, rows, "", true, true)
+
+
+func refresh_game_target_options(rows: Array, current_target_player_id: String = "") -> void:
+	_refresh_target_option(game_target_select, rows, current_target_player_id, false, false)
 
 
 func _on_close_requested() -> void:
@@ -300,6 +314,17 @@ func _on_clear_asteroids_button_pressed() -> void:
 	clear_asteroids_requested.emit()
 
 
+func _on_set_game_target_button_pressed() -> void:
+	var target_player_id := _selected_metadata_as_string(game_target_select)
+	if target_player_id == "":
+		return
+	game_target_set_requested.emit(target_player_id)
+
+
+func _on_clear_game_target_button_pressed() -> void:
+	game_target_clear_requested.emit()
+
+
 func _on_kill_player_button_pressed() -> void:
 	var selected_index := kill_player_select.get_selected()
 	if selected_index < 0:
@@ -360,7 +385,13 @@ func _line_edit_int(input: LineEdit) -> int:
 	return int(text)
 
 
-func _refresh_target_option(select: OptionButton, rows: Array) -> void:
+func _refresh_target_option(
+	select: OptionButton,
+	rows: Array,
+	preferred_player_id: String = "",
+	include_game_target: bool = true,
+	default_to_game_target: bool = false
+) -> void:
 	var previous_player_id := ""
 	var previous_index := select.get_selected()
 	if previous_index >= 0:
@@ -369,17 +400,28 @@ func _refresh_target_option(select: OptionButton, rows: Array) -> void:
 	select.clear()
 
 	var selected_index := -1
+	var game_target_index := -1
 	for row in rows:
 		if !(row is Dictionary):
 			continue
 
 		var label := str(row.get("label", ""))
 		var player_id := str(row.get("player_id", ""))
+		if player_id == DevtoolsTargetResolver.TARGET_GAME and !include_game_target:
+			continue
 		select.add_item(label)
 		var item_index := select.get_item_count() - 1
 		select.set_item_metadata(item_index, player_id)
-		if player_id == previous_player_id:
+		if player_id == DevtoolsTargetResolver.TARGET_GAME:
+			game_target_index = item_index
+		if preferred_player_id != "" and player_id == preferred_player_id:
 			selected_index = item_index
+		elif preferred_player_id == "" and player_id == previous_player_id:
+			if player_id != DevtoolsTargetResolver.TARGET_GAME:
+				selected_index = item_index
+
+	if selected_index < 0 and default_to_game_target and game_target_index >= 0:
+		selected_index = game_target_index
 
 	if selected_index >= 0:
 		select.select(selected_index)

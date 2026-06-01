@@ -319,6 +319,95 @@ func TestStartSinglePlayerRequestRejectsSessionAlreadyInRoom(t *testing.T) {
 	}
 }
 
+func TestSetTargetPlayerRequestUpdatesCanonicalTargetInState(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartSinglePlayerRequest}); err != nil {
+		t.Fatalf("write start single-player request: %v", err)
+	}
+
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+	var initialState servergame.StatePacket
+	readJSON(t, conn, &initialState)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:           servergame.PacketTypeSetTargetPlayerRequest,
+		TargetPlayerID: initialState.SelfID,
+	}); err != nil {
+		t.Fatalf("write set target player request: %v", err)
+	}
+
+	var updatedState servergame.StatePacket
+	readJSON(t, conn, &updatedState)
+	selfState, ok := updatedState.Players[updatedState.SelfID]
+	if !ok {
+		t.Fatalf("expected updated state to include self player %q", updatedState.SelfID)
+	}
+	if selfState.TargetPlayerID != updatedState.SelfID {
+		t.Fatalf("expected target_player_id %q, got %q", updatedState.SelfID, selfState.TargetPlayerID)
+	}
+}
+
+func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeStartSinglePlayerRequest}); err != nil {
+		t.Fatalf("write start single-player request: %v", err)
+	}
+
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+	var initialState servergame.StatePacket
+	readJSON(t, conn, &initialState)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:           servergame.PacketTypeSetTargetPlayerRequest,
+		TargetPlayerID: initialState.SelfID,
+	}); err != nil {
+		t.Fatalf("write valid set target player request: %v", err)
+	}
+	var targetedState servergame.StatePacket
+	readJSON(t, conn, &targetedState)
+
+	if err := conn.WriteJSON(servergame.ClientPacket{
+		Type:           servergame.PacketTypeSetTargetPlayerRequest,
+		TargetPlayerID: "player-missing",
+	}); err != nil {
+		t.Fatalf("write invalid set target player request: %v", err)
+	}
+	var afterInvalidState servergame.StatePacket
+	readJSON(t, conn, &afterInvalidState)
+
+	selfState, ok := afterInvalidState.Players[afterInvalidState.SelfID]
+	if !ok {
+		t.Fatalf("expected state to include self player %q", afterInvalidState.SelfID)
+	}
+	if selfState.TargetPlayerID != afterInvalidState.SelfID {
+		t.Fatalf("expected invalid request to keep target_player_id %q, got %q", afterInvalidState.SelfID, selfState.TargetPlayerID)
+	}
+}
+
 func TestJoinRoomRequestJoinsLobbyAndBroadcastsSnapshots(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()

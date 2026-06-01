@@ -41,3 +41,22 @@ func TestNewBulletInitializesDamageFromConstants(t *testing.T) {
 		t.Fatalf("expected bullet damage %d, got %d", constants.BulletDamage, bullet.Damage)
 	}
 }
+
+func TestShipStateIncludesHealthAndShields(t *testing.T) {
+	ship := &Ship{
+		ID:      "player-1",
+		Score:   1200,
+		Lives:   2,
+		Health:  75,
+		Shields: 30,
+	}
+
+	state := ship.State()
+
+	if state.Health != ship.Health {
+		t.Fatalf("expected health %d, got %d", ship.Health, state.Health)
+	}
+	if state.Shields != ship.Shields {
+		t.Fatalf("expected shields %d, got %d", ship.Shields, state.Shields)
+	}
+}

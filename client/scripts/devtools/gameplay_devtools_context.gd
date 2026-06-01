@@ -4,6 +4,7 @@ class_name GameplayDevtoolsContext
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsHotkeyFlow := preload("res://scripts/devtools/devtools_hotkey_flow.gd")
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
+const Packets := preload("res://scripts/networking/packets/packets.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var debug_flow
@@ -15,6 +16,7 @@ var hotkey_flow
 var has_received_gameplay_state := false
 var placement_request_route: Callable
 var local_player_id := ""
+var game_target_player_id := ""
 
 
 func configure(connection_service_ref) -> void:
@@ -39,6 +41,7 @@ func reset() -> void:
 		debug_flow.reset()
 	if display_refresh_flow != null:
 		display_refresh_flow.reset()
+	game_target_player_id = ""
 
 
 func process(has_received_state: bool) -> void:
@@ -66,6 +69,7 @@ func apply_gameplay_state(state: Dictionary) -> void:
 	if display_refresh_flow != null:
 		display_refresh_flow.refresh_gameplay_state(state)
 		local_player_id = display_refresh_flow.local_player_id()
+		game_target_player_id = display_refresh_flow.game_target_player_id()
 	if devtools_window_controller != null:
 		devtools_window_controller.configure_kill_player_routing(connection_service, local_player_id)
 
@@ -113,6 +117,14 @@ func _connect_window_controller_signals() -> void:
 		var clear_asteroids_callable := Callable(self, "request_clear_asteroids")
 		if !devtools_window_controller.is_connected("clear_asteroids_requested", clear_asteroids_callable):
 			devtools_window_controller.connect("clear_asteroids_requested", clear_asteroids_callable)
+	if devtools_window_controller.has_signal("game_target_set_requested"):
+		var game_target_set_callable := Callable(self, "request_set_game_target")
+		if !devtools_window_controller.is_connected("game_target_set_requested", game_target_set_callable):
+			devtools_window_controller.connect("game_target_set_requested", game_target_set_callable)
+	if devtools_window_controller.has_signal("game_target_clear_requested"):
+		var game_target_clear_callable := Callable(self, "request_clear_game_target")
+		if !devtools_window_controller.is_connected("game_target_clear_requested", game_target_clear_callable):
+			devtools_window_controller.connect("game_target_clear_requested", game_target_clear_callable)
 
 
 func request_toggle_invincible(target_player_id: String = "") -> void:
@@ -185,6 +197,18 @@ func request_clear_asteroids() -> void:
 
 func configure_local_player_id(player_id: String) -> void:
 	local_player_id = player_id
+
+
+func request_set_game_target(target_player_id: String) -> void:
+	if !has_received_gameplay_state:
+		return
+	if connection_service == null:
+		return
+	connection_service.send_packet(Packets.set_target_player_request_packet(target_player_id))
+
+
+func request_clear_game_target() -> void:
+	request_set_game_target("")
 
 
 func request_respawn_player(target_player_id: String) -> void:

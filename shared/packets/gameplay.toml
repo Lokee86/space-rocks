@@ -29,6 +29,12 @@ name = "ready"
 json = "ready"
 type = "bool"
 
+[[structs.fields]]
+name = "target_player_id"
+go_name = "TargetPlayerID"
+json = "target_player_id"
+type = "string"
+
 [[structs]]
 id = "ClientConfig"
 
@@ -109,6 +115,22 @@ type = "int"
 name = "lives"
 json = "lives"
 type = "int"
+
+[[structs.fields]]
+name = "health"
+json = "health"
+type = "int"
+
+[[structs.fields]]
+name = "shields"
+json = "shields"
+type = "int"
+
+[[structs.fields]]
+name = "target_player_id"
+go_name = "TargetPlayerID"
+json = "target_player_id"
+type = "string"
 
 [[structs]]
 id = "AsteroidState"
@@ -315,6 +337,10 @@ value = "pause_request"
 id = "player_pause_state"
 value = "player_pause_state"
 
+[[packet_types]]
+id = "set_target_player_request"
+value = "set_target_player_request"
+
 [[builders]]
 id = "input_packet"
 args = ["forward", "back", "right", "left", "shoot"]
@@ -340,6 +366,14 @@ id = "pause_request_packet"
 
 [builders.body]
 type = "pause_request"
+
+[[builders]]
+id = "set_target_player_request_packet"
+args = ["target_player_id"]
+
+[builders.body]
+type = "set_target_player_request"
+target_player_id = "$target_player_id"
 
 [[builders]]
 id = "client_config_packet"

@@ -236,6 +236,43 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Clear Bullets"
 
+[node name="CenterContainer19" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=111908232]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GameTargetLabel" type="Label" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer19" unique_id=199008432]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Game Target"
+
+[node name="CenterContainer20" type="CenterContainer" parent="CenterContainer/HBoxContainer/LeftPanel" unique_id=1902783444]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer20" unique_id=296730155]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GameTargetSelect" type="OptionButton" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer20/HBoxContainer" unique_id=140663901]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
+
+[node name="SetGameTargetButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer20/HBoxContainer" unique_id=2134860198]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Set"
+
+[node name="ClearGameTargetButton" type="Button" parent="CenterContainer/HBoxContainer/LeftPanel/CenterContainer20/HBoxContainer" unique_id=1938082042]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Clear"
+
 [node name="RightPanel-Inactive" type="GridContainer" parent="CenterContainer/HBoxContainer" unique_id=1162894039]
 layout_mode = 2
 size_flags_horizontal = 3

@@ -12,6 +12,7 @@ const (
 	PacketTypeRespawn                  = "respawn"
 	PacketTypePauseRequest             = "pause_request"
 	PacketTypePlayerPauseState         = "player_pause_state"
+	PacketTypeSetTargetPlayerRequest   = "set_target_player_request"
 	PacketTypeCreateRoomRequest        = "create_room_request"
 	PacketTypeJoinRoomRequest          = "join_room_request"
 	PacketTypeLeaveRoomRequest         = "leave_room_request"
@@ -25,11 +26,12 @@ const (
 )
 
 type ClientPacket struct {
-	Type     string                `json:"type"`
-	Input    entities.InputState   `json:"input"`
-	Config   entities.ClientConfig `json:"config"`
-	RoomCode string                `json:"room_code"`
-	Ready    bool                  `json:"ready"`
+	Type           string                `json:"type"`
+	Input          entities.InputState   `json:"input"`
+	Config         entities.ClientConfig `json:"config"`
+	RoomCode       string                `json:"room_code"`
+	Ready          bool                  `json:"ready"`
+	TargetPlayerID string                `json:"target_player_id"`
 }
 
 type CreateRoomRequest struct {

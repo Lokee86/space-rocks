@@ -7,6 +7,9 @@ const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd"
 
 func test_read_extracts_state_packet_facts() -> void:
 	var state := WorldStateFixture.state()
+	var local_player := state[Packets.FIELD_PLAYERS][WorldStateFixture.LOCAL_PLAYER_ID]
+	local_player[Packets.FIELD_HEALTH] = 75
+	local_player[Packets.FIELD_SHIELDS] = 20
 	state[Packets.FIELD_PLAYER_LIFECYCLE] = {
 		WorldStateFixture.LOCAL_PLAYER_ID: "active",
 		WorldStateFixture.REMOTE_PLAYER_ID: "pending_respawn",
@@ -24,6 +27,14 @@ func test_read_extracts_state_packet_facts() -> void:
 	assert_eq(facts["lives"], 3)
 	assert_eq(facts["player_lifecycle"][WorldStateFixture.LOCAL_PLAYER_ID], "active")
 	assert_eq(facts["player_lifecycle"][WorldStateFixture.REMOTE_PLAYER_ID], "pending_respawn")
+	assert_eq(
+		facts["server_players"][WorldStateFixture.LOCAL_PLAYER_ID][Packets.FIELD_HEALTH],
+		75
+	)
+	assert_eq(
+		facts["server_players"][WorldStateFixture.LOCAL_PLAYER_ID][Packets.FIELD_SHIELDS],
+		20
+	)
 
 
 func test_read_uses_existing_defaults_for_optional_fields() -> void:

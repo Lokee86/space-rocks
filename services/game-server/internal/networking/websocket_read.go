@@ -100,6 +100,11 @@ func readClientInput(
 			continue
 		}
 
+		if packet.Type == game.PacketTypeSetTargetPlayerRequest {
+			session.room.Game.SetPlayerTarget(session.currentGamePlayerID, packet.TargetPlayerID)
+			continue
+		}
+
 		session.room.Game.HandlePacket(session.currentGamePlayerID, packet)
 		if isPauseStateRequest(packet.Type) {
 			session.EnqueuePlayerPauseState()
