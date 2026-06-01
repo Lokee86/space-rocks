@@ -31,6 +31,7 @@ Current client runtime seams:
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
 - `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
 - `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking.
+- `client/scripts/devtools/telemetry/`: devtools telemetry seam for debug-only world metrics, overlay flow, RTT tracking, and packet-age display plumbing.
 - `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
 - `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
 - `client/scripts/gameplay/spectate/`: spectate state, menu requests, and camera target cycling.
@@ -45,6 +46,8 @@ Current client runtime seams:
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/networking/packets/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
+
+The devtools telemetry seam is owned behind `GameplayDevtoolsContext`. It is not owned by gameplay HUD flows and not owned by `gameplay_shell_flow.gd`.
 
 Client runtime flow:
 
@@ -197,6 +200,14 @@ Room/domain ownership lives in `services/game-server/internal/rooms`. That packa
 
 Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. Client packet wire serialization goes through `client/scripts/networking/packet_codec/packet_codec.gd`. Both seams are intentionally JSON-only for now.
 
+Diagnostic telemetry packets are part of networking transport behavior:
+
+- `telemetry_ping` and `telemetry_pong` are diagnostic packets.
+- The client sends `telemetry_ping` only while the world telemetry overlay is visible.
+- The server replies with `telemetry_pong` only to the same websocket session.
+- Ping/pong handling does not require room membership or active gameplay state.
+- Ping/pong does not mutate gameplay state.
+
 The websocket connection itself is session-only. Room membership happens through packets:
 
 - `CreateRoomRequest`
@@ -323,8 +334,9 @@ The current runtime data flow is:
 5. The server encodes `StatePacket` JSON through `packetcodec` and writes it back to the client.
 6. `network_client.gd` decodes inbound websocket text through the client packet codec.
 7. Gameplay shell/session code normalizes state through `client/scripts/gameplay/state/`, applies runtime state through `client/scripts/gameplay/runtime/`, and updates world sync plus presentation lanes.
-8. `world_sync.gd` delegates rendered node creation, removal, packet application, and interpolation to `PlayerSync`, `BulletSync`, `AsteroidSync`, and `LocalVisualSync`.
-9. HUD/menu/respawn/spectate/events/effects update from state and events through focused gameplay seams.
+8. Devtools telemetry observes normalized gameplay state for debug metrics and telemetry overlay plumbing after state-reader normalization.
+9. `world_sync.gd` delegates rendered node creation, removal, packet application, and interpolation to `PlayerSync`, `BulletSync`, `AsteroidSync`, and `LocalVisualSync`.
+10. HUD/menu/respawn/spectate/events/effects update from state and events through focused gameplay seams.
 
 Shared packet structures are sourced from:
 
@@ -404,9 +416,16 @@ Telemetry seam notes:
 
 - HUD remains player-facing
 - devtools window owns raw `LocalPlayerTelemetry` and `TargetTelemetry` state inspection
-- a future world telemetry overlay is a separate seam for glanceable world/performance/network metrics and is not implemented yet
+- world telemetry overlay is a separate devtools seam for glanceable world/performance/network metrics
 
 For key mappings and detailed behavior, see [devtool toggles](../devtools/toggles.md).
+
+Telemetry timing ownership notes:
+
+- `StatePacket.server_sent_msec` is stamped by `services/game-server/internal/networking/websocket_write.go` before encode/write.
+- `services/game-server/internal/devtools/WrapStatePacket` preserves `server_sent_msec` when devtools status wrapping is applied.
+- `packet_staleness_ms` is local monotonic age since the last received gameplay state packet.
+- `packet_age_ms` is derived in client monotonic clock space using server clock offset estimated from telemetry pong, not raw client wall-clock minus server wall-clock.
 
 Current limitations:
 

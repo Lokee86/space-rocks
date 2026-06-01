@@ -81,6 +81,20 @@ Current behavior:
 - Unfreezing does not resume a paused player.
 - Pressing `4` again disables player freeze.
 
+### World Telemetry Overlay
+
+World Telemetry Overlay is a devtools/debug-only panel for live world and transport diagnostics.
+
+Current behavior:
+
+- `9` toggles the overlay.
+- It is not player-facing HUD UI.
+- It lives behind the client devtools seam.
+- It displays world counts: players, enemies, asteroids, bullets.
+- It displays client/network timing: fps, frame_ms, rtt_ms, packet_interval_ms, jitter_ms, packet_staleness_ms, packet_age_ms.
+- It does not mutate gameplay.
+- It remains separate from gameplay HUD and separate from devtools window raw packet/readout UI.
+
 ## DevToggle0-9 Map
 
 Current number-key map:
@@ -94,7 +108,7 @@ Current number-key map:
 - `6`: spawn new player
 - `7`: force respawn local player
 - `8`: reserved
-- `9`: reserved
+- `9`: world telemetry overlay
 
 Current `6` modifier behavior:
 
@@ -148,7 +162,11 @@ Current ownership paths:
 - server devtools behavior: `services/game-server/internal/devtools/`
 - controlled game access seam: `services/game-server/internal/game/export_devtools*.go`
 - websocket routing: `services/game-server/internal/networking/`
+- telemetry packet schema: `shared/packets/gameplay.toml`
+- telemetry client/server routing: `client/scripts/networking/`, `services/game-server/internal/networking/`
 - client devtools window/context: `client/scripts/devtools/`
+- client telemetry seam: `client/scripts/devtools/telemetry/`
+- world telemetry overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`
 - client gameplay input routing: `client/scripts/gameplay/input/`
 - gameplay shell state routing: `client/scripts/shell/gameplay_shell_flow.gd`
 

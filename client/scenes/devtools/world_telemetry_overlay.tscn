@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://b5spitj0jvopk" path="res://scripts/devtools/telemetry/world_telemetry_overlay.gd" id="1_vop1p"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1do2j"]
-bg_color = Color(0.6, 0.6, 0.6, 0.25490198)
+bg_color = Color(0, 0, 0, 0.54901963)
 
 [sub_resource type="LabelSettings" id="LabelSettings_1do2j"]
 font_size = 10
