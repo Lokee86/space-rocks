@@ -34,6 +34,7 @@ func configure(
 	connection_service_ref,
 	player_ref,
 	menu_flow_ref,
+	game_owner_ref,
 	respawn_request_route_ref: Callable,
 	target_visual_candidates_provider_ref: Callable = Callable(),
 	mouse_visual_position_provider_ref: Callable = Callable(),
@@ -49,6 +50,8 @@ func configure(
 	remote_player_nodes_provider = remote_player_nodes_provider_ref
 	if devtools_context.has_method("configure_remote_player_nodes_provider"):
 		devtools_context.configure_remote_player_nodes_provider(remote_player_nodes_provider)
+	if game_owner_ref != null && devtools_context.has_method("configure_server_hitbox_overlay"):
+		devtools_context.configure_server_hitbox_overlay(game_owner_ref.get_node_or_null("ServerHitboxOverlay"))
 	target_request_flow = TargetRequestFlow.new()
 	target_request_flow.configure(
 		connection_service_ref,

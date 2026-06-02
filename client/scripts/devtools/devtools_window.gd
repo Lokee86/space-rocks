@@ -19,6 +19,7 @@ signal spawn_bullet_placement_requested
 signal respawn_player_placement_requested(target_player_id: String)
 signal game_target_set_requested(target_player_id: String)
 signal game_target_clear_requested()
+signal show_server_hitboxes_changed(enabled: bool)
 
 @onready var invincible_button: Button = %InvincibleButton
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
@@ -58,6 +59,7 @@ signal game_target_clear_requested()
 @onready var add_lives_button: Button = %AddLivesButton
 @onready var clear_bullets_button: Button = %ClearBulletsButton
 @onready var clear_asteroids_button: Button = %ClearAsteroidsButton
+@onready var show_server_hitboxes_check_box: CheckBox = %ShowServerHitboxesCheckBox
 @onready var game_target_select: OptionButton = %GameTargetSelect
 @onready var set_game_target_button: Button = %SetGameTargetButton
 @onready var clear_game_target_button: Button = %ClearGameTargetButton
@@ -108,6 +110,8 @@ func _ready() -> void:
 		clear_bullets_button.pressed.connect(_on_clear_bullets_button_pressed)
 	if !clear_asteroids_button.pressed.is_connected(_on_clear_asteroids_button_pressed):
 		clear_asteroids_button.pressed.connect(_on_clear_asteroids_button_pressed)
+	if !show_server_hitboxes_check_box.toggled.is_connected(_on_show_server_hitboxes_toggled):
+		show_server_hitboxes_check_box.toggled.connect(_on_show_server_hitboxes_toggled)
 	if !set_game_target_button.pressed.is_connected(_on_set_game_target_button_pressed):
 		set_game_target_button.pressed.connect(_on_set_game_target_button_pressed)
 	if !clear_game_target_button.pressed.is_connected(_on_clear_game_target_button_pressed):
@@ -396,6 +400,14 @@ func _on_clear_bullets_button_pressed() -> void:
 
 func _on_clear_asteroids_button_pressed() -> void:
 	clear_asteroids_requested.emit()
+
+
+func _on_show_server_hitboxes_toggled(enabled: bool) -> void:
+	show_server_hitboxes_changed.emit(enabled)
+
+
+func set_show_server_hitboxes(enabled: bool) -> void:
+	show_server_hitboxes_check_box.button_pressed = enabled
 
 
 func _on_set_game_target_button_pressed() -> void:

@@ -165,3 +165,14 @@ func bullet_target_positions() -> Dictionary:
 	if bullet_sync == null:
 		return {}
 	return bullet_sync.bullet_target_positions()
+
+
+func server_hitbox_draw_entries() -> Array:
+	var entries: Array = []
+	if player_sync == null || asteroid_sync == null || bullet_sync == null:
+		return entries
+
+	entries.append_array(player_sync.server_hitbox_draw_entries(current_self_id))
+	entries.append_array(asteroid_sync.server_hitbox_draw_entries())
+	entries.append_array(bullet_sync.server_hitbox_draw_entries())
+	return entries

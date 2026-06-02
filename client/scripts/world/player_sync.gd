@@ -259,3 +259,30 @@ func get_remote_player_visual_positions(current_self_id: String) -> Dictionary:
 	var positions := remote_player_visual_positions.duplicate()
 	positions.erase(current_self_id)
 	return positions
+
+
+func server_hitbox_draw_entries(_current_self_id: String) -> Array:
+	var entries: Array = []
+
+	for player_id in target_player_positions.keys():
+		if !target_player_rotations.has(player_id):
+			continue
+
+		var visual_position: Vector2 = target_player_positions[player_id]
+		var rotation: float = float(target_player_rotations[player_id])
+
+		if player_nodes.has(player_id):
+			var player_node := player_nodes[player_id] as Node2D
+			if player_node != null and is_instance_valid(player_node):
+				visual_position = player_node.global_position
+				rotation = player_node.rotation
+
+		entries.append({
+			"kind": "player",
+			"id": String(player_id),
+			"visual_position": visual_position,
+			"rotation": rotation,
+			"scale": 1.0,
+		})
+
+	return entries

@@ -135,6 +135,12 @@ func remote_player_nodes() -> Dictionary:
 	return world_sync.remote_player_nodes()
 
 
+func server_hitbox_draw_entries() -> Array:
+	if world_sync == null:
+		return []
+	return world_sync.server_hitbox_draw_entries()
+
+
 func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 	if world_sync == null:
 		return visual_position
