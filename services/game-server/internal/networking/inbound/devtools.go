@@ -1,14 +1,35 @@
-package networking
+package inbound
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
-	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
+	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
-func handleSimpleDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) bool {
+type devtoolsSession interface {
+	CurrentRoom() *rooms.Room
+	CurrentRoomID() string
+	CurrentGamePlayerID() string
+	SessionID() string
+}
+
+func HandleSimpleDevtoolsPacket(session devtoolsSession, remoteAddr string, msg []byte, envelope ClientPacketEnvelope) bool {
 	if !isSimpleDevtoolsPacketType(envelope.Type) {
+		return false
+	}
+	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
+}
+
+func HandlePlacementDevtoolsPacket(session devtoolsSession, remoteAddr string, msg []byte, envelope ClientPacketEnvelope) bool {
+	if envelope.Type != devtools.PacketTypeDebugSpawnEntity {
+		return false
+	}
+	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
+}
+
+func HandleRemainingDevtoolsPacket(session devtoolsSession, remoteAddr string, msg []byte, envelope ClientPacketEnvelope) bool {
+	if !isRemainingDevtoolsPacketType(envelope.Type) {
 		return false
 	}
 	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
@@ -33,20 +54,6 @@ func isSimpleDevtoolsPacketType(packetType string) bool {
 	}
 }
 
-func handlePlacementDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) bool {
-	if envelope.Type != devtools.PacketTypeDebugSpawnEntity {
-		return false
-	}
-	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
-}
-
-func handleRemainingDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) bool {
-	if !isRemainingDevtoolsPacketType(envelope.Type) {
-		return false
-	}
-	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
-}
-
 func isRemainingDevtoolsPacketType(packetType string) bool {
 	switch packetType {
 	case devtools.PacketTypeDebugBeginContinuousBulletStream,
@@ -57,8 +64,8 @@ func isRemainingDevtoolsPacketType(packetType string) bool {
 	}
 }
 
-func handleDevtoolsCommandPacket(session *webSocketSession, remoteAddr string, msg []byte) bool {
-	if session.room == nil || session.currentGamePlayerID == "" {
+func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg []byte) bool {
+	if session.CurrentRoom() == nil || session.CurrentGamePlayerID() == "" {
 		return true
 	}
 
@@ -66,13 +73,13 @@ func handleDevtoolsCommandPacket(session *webSocketSession, remoteAddr string, m
 	if err := packetcodec.Decode(msg, &command); err != nil {
 		logging.Network.Warn("websocket devtools command decode failed",
 			logging.FieldError, err,
-			logging.FieldRoomID, session.currentRoomID,
-			logging.FieldPlayerID, session.currentGamePlayerID,
-			"session_id", session.sessionID,
+			logging.FieldRoomID, session.CurrentRoomID(),
+			logging.FieldPlayerID, session.CurrentGamePlayerID(),
+			"session_id", session.SessionID(),
 			logging.FieldRemoteAddr, remoteAddr,
 		)
 		return true
 	}
-	devtools.HandleCommand(session.room.Game, session.currentGamePlayerID, command)
+	devtools.HandleCommand(session.CurrentRoom().Game, session.CurrentGamePlayerID(), command)
 	return true
 }

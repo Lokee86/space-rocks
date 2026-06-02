@@ -1,5 +1,7 @@
 package networking
 
+import "github.com/Lokee86/space-rocks/server/internal/rooms"
+
 type inboundSessionAdapter struct {
 	session *webSocketSession
 }
@@ -10,6 +12,10 @@ func newInboundSessionAdapter(session *webSocketSession) inboundSessionAdapter {
 
 func (a inboundSessionAdapter) CurrentRoomID() string {
 	return a.session.currentRoomID
+}
+
+func (a inboundSessionAdapter) CurrentRoom() *rooms.Room {
+	return a.session.room
 }
 
 func (a inboundSessionAdapter) CurrentGamePlayerID() string {
@@ -46,4 +52,16 @@ func (a inboundSessionAdapter) HandleSetReadyRequest(ready bool) {
 
 func (a inboundSessionAdapter) HandleStartGameRequest() {
 	a.session.handleStartGameRequest()
+}
+
+func (a inboundSessionAdapter) HandleStartSinglePlayerRequest() {
+	a.session.handleStartSinglePlayerRequest()
+}
+
+func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {
+	a.session.handleReturnToLobbyRequest()
+}
+
+func (a inboundSessionAdapter) EnqueuePlayerPauseState() {
+	a.session.EnqueuePlayerPauseState()
 }

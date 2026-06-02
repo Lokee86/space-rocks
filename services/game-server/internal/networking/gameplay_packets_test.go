@@ -8,6 +8,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
@@ -39,7 +40,7 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 		},
 	}
 
-	if !handleGameplayPacket(session, packet) {
+	if !inbound.HandleGameplayPacket(gameplayPacketTestAdapter{session: session}, packet) {
 		t.Fatal("expected client_config packet to be handled")
 	}
 
@@ -58,6 +59,22 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 	if sessionConfig.VisibleWorldHeight != packet.Config.VisibleWorldHeight {
 		t.Fatalf("expected session height %v, got %v", packet.Config.VisibleWorldHeight, sessionConfig.VisibleWorldHeight)
 	}
+}
+
+type gameplayPacketTestAdapter struct {
+	session *webSocketSession
+}
+
+func (a gameplayPacketTestAdapter) CurrentRoom() *rooms.Room {
+	return a.session.room
+}
+
+func (a gameplayPacketTestAdapter) CurrentGamePlayerID() string {
+	return a.session.currentGamePlayerID
+}
+
+func (a gameplayPacketTestAdapter) EnqueuePlayerPauseState() {
+	a.session.EnqueuePlayerPauseState()
 }
 
 func cameraViewConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID string) entities.ClientConfig {
