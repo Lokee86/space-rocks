@@ -1,13 +1,7 @@
 package networking
 
 import (
-	"time"
-
-	"github.com/Lokee86/space-rocks/server/internal/devtools"
-	"github.com/Lokee86/space-rocks/server/internal/game"
-	targeting "github.com/Lokee86/space-rocks/server/internal/game/targeting"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 )
 
 func readClientInput(
@@ -33,129 +27,8 @@ func readClientInput(
 			)
 			continue
 		}
-
-		if devtools.ShouldHandleCommand(envelope.Type) {
-			if session.room == nil || session.currentGamePlayerID == "" {
-				continue
-			}
-			var command devtools.DebugCommand
-			if err := packetcodec.Decode(msg, &command); err != nil {
-				logging.Network.Warn("websocket devtools command decode failed",
-					logging.FieldError, err,
-					logging.FieldRoomID, session.currentRoomID,
-					logging.FieldPlayerID, session.currentGamePlayerID,
-					"session_id", session.sessionID,
-					logging.FieldRemoteAddr, remoteAddr,
-				)
-				continue
-			}
-			devtools.HandleCommand(session.room.Game, session.currentGamePlayerID, command)
-			continue
-		}
-		if devtools.IsCommandType(envelope.Type) {
-			continue
-		}
-
-		var packet game.ClientPacket
-		if err := packetcodec.Decode(msg, &packet); err != nil {
-			logging.Network.Warn("websocket packet decode failed",
-				logging.FieldError, err,
-				logging.FieldRoomID, session.currentRoomID,
-				logging.FieldPlayerID, session.currentGamePlayerID,
-				"session_id", session.sessionID,
-				logging.FieldRemoteAddr, remoteAddr,
-			)
-			continue
-		}
-		if packet.Type == game.PacketTypeTelemetryPing {
-			serverReceivedMsec := time.Now().UnixMilli()
-			pong := game.ClientPacket{
-				Type:               game.PacketTypeTelemetryPong,
-				Sequence:           packet.Sequence,
-				ClientSentMsec:     packet.ClientSentMsec,
-				ServerReceivedMsec: int(serverReceivedMsec),
-			}
-			pong.ServerSentMsec = int(time.Now().UnixMilli())
-			response, err := packetcodec.Encode(pong)
-			if err != nil {
-				logging.Network.Warn("websocket telemetry pong encode failed",
-					logging.FieldError, err,
-					logging.FieldRoomID, session.currentRoomID,
-					logging.FieldPlayerID, session.currentGamePlayerID,
-					"session_id", session.sessionID,
-					logging.FieldRemoteAddr, remoteAddr,
-				)
-				continue
-			}
-			session.outbound <- response
-			continue
-		}
-
-		if packet.Type == game.PacketTypeCreateRoomRequest {
-			session.logLobbyPacketReceived("CreateRoomRequest received", "")
-			session.handleCreateRoomRequest()
-			continue
-		}
-		if packet.Type == game.PacketTypeJoinRoomRequest {
-			session.logLobbyPacketReceived("JoinRoomRequest received", packet.RoomCode)
-			session.handleJoinRoomRequest(packet.RoomCode)
-			continue
-		}
-		if packet.Type == game.PacketTypeLeaveRoomRequest {
-			session.handleLeaveRoomRequest()
-			continue
-		}
-		if packet.Type == game.PacketTypeSetReadyRequest {
-			session.handleSetReadyRequest(packet.Ready)
-			continue
-		}
-		if packet.Type == game.PacketTypeStartGameRequest {
-			session.handleStartGameRequest()
-			continue
-		}
-		if packet.Type == game.PacketTypeStartSinglePlayerRequest {
-			session.handleStartSinglePlayerRequest()
-			continue
-		}
-		if packet.Type == game.PacketTypeReturnToLobbyRequest {
-			session.handleReturnToLobbyRequest()
-			continue
-		}
-
-		if session.room == nil || session.currentGamePlayerID == "" {
-			continue
-		}
-
-		if packet.Type == game.PacketTypeSetTargetPlayerRequest {
-			session.room.Game.SetPlayerTarget(session.currentGamePlayerID, packet.TargetPlayerID)
-			continue
-		}
-		if packet.Type == game.PacketTypeSelectTargetAtPositionRequest {
-			session.room.Game.SelectTargetAtPosition(
-				session.currentGamePlayerID,
-				packet.X,
-				packet.Y,
-				targeting.TargetRef{
-					Kind: targeting.TargetKind(packet.TargetKind),
-					ID:   packet.TargetID,
-				},
-			)
-			continue
-		}
-		if packet.Type == game.PacketTypeClearTargetRequest {
-			session.room.Game.ClearTarget(session.currentGamePlayerID)
-			continue
-		}
-
-		session.room.Game.HandlePacket(session.currentGamePlayerID, packet)
-		if isPauseStateRequest(packet.Type) {
-			session.EnqueuePlayerPauseState()
-		}
+		handleClientPacket(session, remoteAddr, msg, envelope)
 	}
-}
-
-func isPauseStateRequest(packetType string) bool {
-	return packetType == game.PacketTypePauseRequest
 }
 
 func (session *webSocketSession) logLobbyPacketReceived(message string, roomCode string) {
