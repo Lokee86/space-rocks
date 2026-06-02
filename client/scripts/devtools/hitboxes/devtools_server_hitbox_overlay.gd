@@ -1,7 +1,5 @@
 extends Node2D
 
-const DevtoolsHitboxTemplateCatalog = preload("res://scripts/devtools/hitboxes/devtools_hitbox_template_catalog.gd")
-
 var hitbox_entries: Array = []
 var hitbox_template_catalog := DevtoolsHitboxTemplateCatalog.new()
 
@@ -52,15 +50,15 @@ func _draw() -> void:
 		if template.is_empty():
 			continue
 
-		var rotation := float(entry.get("rotation", 0.0))
-		var scale := float(entry.get("scale", 1.0))
+		var entry_rotation := float(entry.get("rotation", 0.0))
+		var entry_scale := float(entry.get("scale", 1.0))
 		var visual_position: Vector2 = entry.get("visual_position", Vector2.ZERO)
 		var outline := PackedVector2Array()
 		outline.resize(template.size())
 
 		for index in range(template.size()):
 			var point := template[index]
-			var transformed_point := point.rotated(rotation) * scale + visual_position
+			var transformed_point := point.rotated(entry_rotation) * entry_scale + visual_position
 			outline[index] = transformed_point
 
 		draw_polyline(_closed_outline(outline), Color(0.95, 0.95, 0.95, 0.9), 2.0, true)
