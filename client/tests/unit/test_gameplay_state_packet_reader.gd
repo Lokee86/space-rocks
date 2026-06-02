@@ -7,7 +7,7 @@ const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd"
 
 func test_read_extracts_state_packet_facts() -> void:
 	var state := WorldStateFixture.state()
-	var local_player := state[Packets.FIELD_PLAYERS][WorldStateFixture.LOCAL_PLAYER_ID]
+	var local_player: Dictionary = state[Packets.FIELD_PLAYERS][WorldStateFixture.LOCAL_PLAYER_ID]
 	local_player[Packets.FIELD_HEALTH] = 75
 	local_player[Packets.FIELD_SHIELDS] = 20
 	state[Packets.FIELD_PLAYER_LIFECYCLE] = {

@@ -32,7 +32,8 @@ func handle_input_event(event: InputEvent) -> bool:
 	if action == MouseActionNames.SELECT_TARGET:
 		if target_request_flow == null:
 			return false
-		return target_request_flow.select_target()
+		target_request_flow.select_target()
+		return true
 	if action == MouseActionNames.DESELECT_TARGET:
 		if target_request_flow != null:
 			target_request_flow.deselect_target()

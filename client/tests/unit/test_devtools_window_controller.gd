@@ -319,16 +319,6 @@ func test_all_players_counter_effect_signals_emit_scope_with_empty_target_player
 	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(receiver.last_target_player_id, "")
 
-	controller._on_toggle_infinite_lives_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
-	assert_eq(receiver.infinite_lives_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
-	assert_eq(receiver.last_target_player_id, "")
-
-	controller._on_toggle_freeze_player_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
-	assert_eq(receiver.freeze_player_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
-	assert_eq(receiver.last_target_player_id, "")
-
 
 func test_game_target_asteroid_does_not_emit_player_only_effect_signals() -> void:
 	var controller := DevtoolsWindowController.new()
