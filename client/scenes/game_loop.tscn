@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://dsnj8xno50gep"]
+[gd_scene format=3 uid="uid://isqyap8ra8t3"]
 
 [ext_resource type="PackedScene" uid="uid://26137yke3fop" path="res://scenes/devtools/server_hitbox_overlay.tscn" id="2_43akg"]
 [ext_resource type="PackedScene" uid="uid://cqjku4qxxcoxj" path="res://scenes/ui/hud.tscn" id="3_m2elr"]

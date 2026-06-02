@@ -31,13 +31,20 @@ func asteroid_polygon(variant: int) -> PackedVector2Array:
 		return (asteroid_polygons_by_variant[resolved_variant] as PackedVector2Array).duplicate()
 
 	var asteroid_scene := AsteroidScene.instantiate()
-	if asteroid_scene != null and asteroid_scene.has_method("set_asteroid_variant"):
-		asteroid_scene.call("set_asteroid_variant", variant)
+	var collision_variants := asteroid_scene.get_node_or_null("CollisionVariants") as Node2D
+	if collision_variants != null and collision_variants.get_child_count() > 0:
+		resolved_variant = wrapi(variant, 0, collision_variants.get_child_count())
 
 	var polygon := PackedVector2Array()
-	var collision_polygon := asteroid_scene.get_node_or_null("CollisionPolygon2D") as CollisionPolygon2D
-	if collision_polygon != null:
-		polygon = collision_polygon.polygon
+	if collision_variants != null and collision_variants.get_child_count() > 0:
+		var variant_collision := collision_variants.get_child(resolved_variant) as CollisionPolygon2D
+		if variant_collision != null:
+			polygon = variant_collision.polygon
+
+	if polygon.is_empty():
+		var collision_polygon := asteroid_scene.get_node_or_null("CollisionPolygon2D") as CollisionPolygon2D
+		if collision_polygon != null:
+			polygon = collision_polygon.polygon
 	asteroid_scene.free()
 
 	if polygon.is_empty():
