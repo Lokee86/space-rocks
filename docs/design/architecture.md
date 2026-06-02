@@ -33,6 +33,7 @@ Current client runtime seams:
 - `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking.
 - `client/scripts/gameplay/background/`: gameplay background/parallax shader scroll presentation.
 - `client/scripts/devtools/telemetry/`: devtools telemetry seam for debug-only world metrics, overlay flow, RTT tracking, and packet-age display plumbing.
+- `client/scripts/devtools/dev_tools_session_flow.gd`: devtools gameplay session seam for runtime wiring. `GameplaySessionController` delegates devtools input, per-frame processing, and placement routing to this flow.
 - Server hitbox rendering is owned by client devtools. The overlay scene lives under `client/scenes/devtools/`, the drawing/template code lives under `client/scripts/devtools/hitboxes/`, and `WorldSync`/`GameplayRuntimeContext` expose read-only draw-entry data only. Normal gameplay entities do not draw their own debug collision outlines.
 - `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
 - `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
