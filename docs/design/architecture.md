@@ -30,6 +30,7 @@ Current client runtime seams:
 - `client/scripts/gameplay/runtime/`: gameplay runtime/state-application context.
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
 - `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
+- HUD/UI mouse input gating is owned by `client/scripts/gameplay/input/hud_input_policy.gd`, registered as the `HudInputPolicy` autoload. `GameplaySessionController` keeps the top-level input priority order and delegates the HUD/UI hover gate to `HudInputPolicy`.
 - `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking.
 - `client/scripts/gameplay/background/`: gameplay background/parallax shader scroll presentation.
 - `client/scripts/devtools/telemetry/`: devtools telemetry seam for debug-only world metrics, overlay flow, RTT tracking, and packet-age display plumbing.

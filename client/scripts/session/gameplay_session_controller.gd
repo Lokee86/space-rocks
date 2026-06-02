@@ -1,9 +1,6 @@
 extends Node
 
-
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
-const DevToolsSessionFlow := preload("res://scripts/devtools/dev_tools_session_flow.gd")
-const SpectateSessionFlow := preload("res://scripts/gameplay/spectate/spectate_session_flow.gd")
 
 var connection_service
 var scene_root: Node
@@ -122,7 +119,8 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	if _hud_should_receive_mouse_event(event):
+	var hud_input_policy = get_node_or_null("/root/HudInputPolicy")
+	if hud_input_policy != null and hud_input_policy.should_hud_receive_mouse_event(event, hud, get_viewport()):
 		return
 
 	if gameplay_shell_flow == null:
@@ -130,23 +128,6 @@ func _input(event: InputEvent) -> void:
 	if gameplay_shell_flow.handle_unhandled_input(event):
 		get_viewport().set_input_as_handled()
 
-
-func _hud_should_receive_mouse_event(event: InputEvent) -> bool:
-	if !(event is InputEventMouseButton):
-		return false
-	if !event.pressed:
-		return false
-	if hud == null or !hud.visible:
-		return false
-
-	var hovered_control = get_viewport().gui_get_hovered_control()
-	if hovered_control == null:
-		return false
-	if hovered_control == hud:
-		return true
-	if hud.is_ancestor_of(hovered_control):
-		return true
-	return false
 
 func _unhandled_input(event: InputEvent) -> void:
 	if gameplay_shell_flow == null:
