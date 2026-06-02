@@ -72,6 +72,8 @@ docs/api/nestjs-api-server.md
 - Room lifecycle policy belongs in rooms.
 - Gameplay simulation belongs in game.
 - `rooms` owns room creation, joining, leaving, readiness, lifecycle transitions, cleanup policy, and game instance ownership.
+- Room start now uses a deliberate `Lobby -> Starting -> InGame` transition. `Starting` is an admission-closed handoff state for pre-game coordination, including future slow-client handling, final readiness or sync steps, and other pre-match server work before the room becomes `InGame`.
+- Multiplayer start validation is centralized in the room lifecycle path, and `RoomManager` should resolve the room, session, and player identity before delegating to `Room` for the actual transition.
 - `networking` may retain websocket session activation/deactivation when it mutates websocket session fields.
 - `game` owns authoritative gameplay simulation, gameplay state mutation, and adapters from game storage into narrower gameplay seams.
 - Match/mode policy evaluation belongs in `services/game-server/internal/game/rules`, which should receive plain snapshots/facts and return decisions/status.

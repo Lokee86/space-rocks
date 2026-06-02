@@ -143,74 +143,21 @@ func (room *Room) ValidateStart(playerID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if _, ok := room.Members[playerID]; !ok {
-		return &RoomDomainError{
-			Code:    RoomErrorNotInRoom,
-			Message: "Member is not in the room.",
-		}
-	}
-
-	if playerID != room.OwnerID {
-		return &RoomDomainError{
-			Code:    RoomErrorNotRoomOwner,
-			Message: "Only the room owner can start the game.",
-		}
-	}
-
-	switch room.State {
-	case RoomStateLobby:
-	case RoomStateStarting, RoomStateInGame:
-		return &RoomDomainError{
-			Code:    RoomErrorRoomInGame,
-			Message: "Room is already in game.",
-		}
-	default:
-		return &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Game can only be started from the lobby.",
-		}
-	}
-
-	for _, member := range room.Members {
-		if member.Connected && !member.Ready {
-			return &RoomDomainError{
-				Code:    RoomErrorNotReady,
-				Message: "All connected members must be ready.",
-			}
-		}
-	}
-
-	return nil
+	return room.validateStartLocked(playerID)
 }
 
 func (room *Room) MarkStarting() *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if room.State != RoomStateLobby {
-		return &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Room can only start from the lobby.",
-		}
-	}
-
-	room.State = RoomStateStarting
-	return nil
+	return room.markStartingLocked()
 }
 
 func (room *Room) MarkInGame() *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if room.State != RoomStateStarting {
-		return &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Room can only enter in-game from starting.",
-		}
-	}
-
-	room.State = RoomStateInGame
-	return nil
+	return room.markInGameLocked()
 }
 
 func (room *Room) MarkGameOver() *RoomDomainError {
