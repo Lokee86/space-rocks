@@ -1,8 +1,8 @@
 extends Node
 
 const NetworkClientScript := preload("res://scripts/networking/network_client.gd")
+const ClientPacketSenderScript := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 
 signal connected
@@ -17,6 +17,7 @@ signal telemetry_pong_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
 
 var network_client: NetworkClient
+var client_packet_sender: ClientPacketSender
 var server_packet_dispatcher: ServerPacketDispatcher
 var has_started_connection := false
 
@@ -24,6 +25,7 @@ var has_started_connection := false
 func _ready() -> void:
 	process_priority = Constants.NETWORK_POLL_PROCESS_PRIORITY
 	network_client = NetworkClientScript.new()
+	client_packet_sender = ClientPacketSenderScript.new(network_client)
 	server_packet_dispatcher = ServerPacketDispatcher.new()
 	add_child(network_client)
 	add_child(server_packet_dispatcher)
@@ -51,73 +53,73 @@ func begin_graceful_close() -> void:
 
 
 func send_start_single_player_request() -> void:
-	if network_client != null:
-		network_client.send_start_single_player_request()
+	if client_packet_sender != null:
+		client_packet_sender.send_start_single_player_request()
 
 
 func send_create_room_request() -> void:
-	if network_client != null:
-		network_client.send_create_room_request()
+	if client_packet_sender != null:
+		client_packet_sender.send_create_room_request()
 
 
 func send_join_room_request(room_code: String) -> void:
-	if network_client != null:
-		network_client.send_join_room_request(room_code)
+	if client_packet_sender != null:
+		client_packet_sender.send_join_room_request(room_code)
 
 
 func send_set_ready_request(is_ready: bool) -> void:
-	if network_client != null:
-		network_client.send_set_ready_request(is_ready)
+	if client_packet_sender != null:
+		client_packet_sender.send_set_ready_request(is_ready)
 
 
 func send_start_game_request() -> void:
-	if network_client != null:
-		network_client.send_start_game_request()
+	if client_packet_sender != null:
+		client_packet_sender.send_start_game_request()
 
 
 func send_input_packet(packet: Dictionary) -> void:
-	if network_client != null:
-		network_client.send_packet(packet)
+	if client_packet_sender != null:
+		client_packet_sender.send_input_packet(packet)
 
 
 func send_packet(packet: Dictionary) -> void:
-	if network_client != null:
-		network_client.send_packet(packet)
+	if client_packet_sender != null:
+		client_packet_sender.send_packet(packet)
 
 
 func send_respawn_request() -> void:
-	if network_client != null:
-		network_client.send_packet(Packets.respawn_packet())
+	if client_packet_sender != null:
+		client_packet_sender.send_respawn_request()
 
 
 func send_pause_request() -> void:
-	send_packet(Packets.pause_request_packet())
+	if client_packet_sender != null:
+		client_packet_sender.send_pause_request()
+
+
+func send_telemetry_ping(sequence: int, client_sent_msec: int) -> void:
+	if client_packet_sender != null:
+		client_packet_sender.send_telemetry_ping(sequence, client_sent_msec)
 
 
 func send_debug_kill_player_request(target_scope: String = "", target_player_id: String = "") -> void:
-	var packet := Packets.debug_kill_player_packet()
-	if target_scope != "":
-		packet[Packets.FIELD_TARGET_SCOPE] = target_scope
-	if target_player_id != "":
-		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
-	send_packet(packet)
+	if client_packet_sender != null:
+		client_packet_sender.send_debug_kill_player_request(target_scope, target_player_id)
 
 
 func send_debug_kill_target_player_request(target_player_id: String, target_scope: String = "") -> void:
-	var packet := Packets.debug_kill_target_player_packet(target_player_id)
-	if target_scope != "":
-		packet[Packets.FIELD_TARGET_SCOPE] = target_scope
-	send_packet(packet)
+	if client_packet_sender != null:
+		client_packet_sender.send_debug_kill_target_player_request(target_player_id, target_scope)
 
 
 func send_leave_room_request() -> void:
-	if network_client != null:
-		network_client.send_leave_room_request()
+	if client_packet_sender != null:
+		client_packet_sender.send_leave_room_request()
 
 
 func send_return_to_lobby_request() -> void:
-	if network_client != null:
-		network_client.send_packet(Packets.return_to_lobby_request_packet())
+	if client_packet_sender != null:
+		client_packet_sender.send_return_to_lobby_request()
 
 
 func _connect_network_client_signals() -> void:
