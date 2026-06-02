@@ -38,6 +38,7 @@ static func read(data: Dictionary) -> Dictionary:
 		"player_lifecycle": PlayerLifecycle.from_state(data),
 		"server_bullets": data.get(Packets.FIELD_BULLETS, {}),
 		"server_asteroids": data.get(Packets.FIELD_ASTEROIDS, {}),
+		"total_asteroids": int(data.get(Packets.FIELD_TOTAL_ASTEROIDS, 0)),
 		"server_events": server_events,
 		"server_sent_msec": int(data.get(FIELD_SERVER_SENT_MSEC, -1)),
 		"debug_status": debug_status,

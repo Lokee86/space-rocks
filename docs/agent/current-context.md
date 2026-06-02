@@ -27,6 +27,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
 - Network telemetry uses `telemetry_ping` / `telemetry_pong`; gameplay state packets include `server_sent_msec`.
 - `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
+- `total_asteroids` telemetry only stays visible if both the base `StatePacket` and `WrapStatePacket()` preserve the field.
 - Spectate camera/background behavior is being corrected so remote cameras are not made current; the local/current camera anchor should follow the selected active spectate target, and `GameplayBackgroundFlow` must sample hidden parallax anchors instead of relying on visibility alone.
 
 ## Known Gaps / TODOs

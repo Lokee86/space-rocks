@@ -44,6 +44,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 		PlayerWorldStates: playerWorldStates,
 		Bullets:         bullets,
 		Asteroids:       asteroids,
+		TotalAsteroids:  game.spawner.TotalAsteroidsSpawned(),
 		Events:          events,
 	}
 }

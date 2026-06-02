@@ -131,6 +131,7 @@ type StatePacket struct {
 	PlayerWorldStates map[string]player.WorldState      `json:"player_world_states"`
 	Bullets           map[string]entities.BulletState   `json:"bullets"`
 	Asteroids         map[string]entities.AsteroidState `json:"asteroids"`
+	TotalAsteroids    int                               `json:"total_asteroids"`
 	Events            []EventState                      `json:"events"`
 	ServerSentMsec    int                               `json:"server_sent_msec"`
 }

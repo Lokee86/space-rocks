@@ -18,6 +18,7 @@ type statePacketWithDebugStatus struct {
 	PlayerWorldStates map[string]player.WorldState    `json:"player_world_states"`
 	Bullets         map[string]entities.BulletState   `json:"bullets"`
 	Asteroids       map[string]entities.AsteroidState `json:"asteroids"`
+	TotalAsteroids  int                               `json:"total_asteroids"`
 	Events          []game.EventState                 `json:"events"`
 }
 
@@ -34,6 +35,7 @@ func WrapStatePacket(state game.StatePacket, status DebugStatus, statuses map[st
 		PlayerWorldStates: state.PlayerWorldStates,
 		Bullets:         state.Bullets,
 		Asteroids:       state.Asteroids,
+		TotalAsteroids:  state.TotalAsteroids,
 		Events:          state.Events,
 	}
 }

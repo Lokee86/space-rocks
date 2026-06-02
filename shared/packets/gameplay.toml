@@ -372,6 +372,11 @@ value_type = "AsteroidState"
 go_value_type = "entities.AsteroidState"
 
 [[structs.fields]]
+name = "total_asteroids"
+json = "total_asteroids"
+type = "int"
+
+[[structs.fields]]
 name = "events"
 json = "events"
 type = "array"

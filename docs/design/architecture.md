@@ -103,6 +103,8 @@ Core server packages:
 - `services/game-server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
 - `services/game-server/internal/protocol/packetcodec`: JSON-only packet wire encode/decode helpers for server packets.
 
+State packet fields may pass through adapter or wrapper paths before reaching the client. Those paths should intentionally copy any new `StatePacket` fields, such as `total_asteroids`, instead of assuming the base packet shape passes through unchanged.
+
 ### Game Loop And Simulation
 
 Each `game.Game` owns its own simulation state:
