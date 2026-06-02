@@ -16,6 +16,7 @@ type playerSession struct {
 	Stats           entities.ShipStats
 	SpawnPosition   physics.Vector2
 	Config          entities.ClientConfig
+	Targeting       PlayerTargeting
 	Score           int
 	Lives           int
 	RespawnCooldown float64
@@ -34,7 +35,8 @@ func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
 			VisibleWorldWidth:  constants.WorldWidth,
 			VisibleWorldHeight: constants.WorldHeight,
 		},
-		Lives: constants.PlayerStartingLives,
+		Targeting: EmptyPlayerTargeting(),
+		Lives:     constants.PlayerStartingLives,
 	}
 }
 
@@ -49,7 +51,7 @@ func (session *playerSession) CanRespawn() bool {
 }
 
 func (session *playerSession) NewShip(position physics.Vector2) *entities.Ship {
-	return &entities.Ship{
+	ship := &entities.Ship{
 		ID:         session.ID,
 		ShipTypeID: session.ShipTypeID,
 		Stats:      session.Stats,
@@ -61,6 +63,8 @@ func (session *playerSession) NewShip(position physics.Vector2) *entities.Ship {
 		Health:     session.Stats.MaxHealth,
 		DamageOptions: session.DamageOptions,
 	}
+	session.Targeting.ApplyToShip(ship)
+	return ship
 }
 
 func (game *Game) respawnPlayer(playerID string) {

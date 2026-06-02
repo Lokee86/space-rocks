@@ -455,3 +455,92 @@ func TestClearTargetsForMissingPlayersLocked_ClearsMissingRemovedTarget(t *testi
 		t.Fatalf("expected missing target to be cleared, got kind=%q id=%q target_player_id=%q", requester.TargetKind, requester.TargetID, requester.TargetPlayerID)
 	}
 }
+
+func TestSelectTargetAtPosition_DeadPlayerStoresTargetingAndRespawnMirrorsTarget(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	targetID := game.AddPlayer()
+
+	targetPlayer := game.state.Players[targetID]
+	if targetPlayer == nil {
+		t.Fatalf("expected target player %q to exist", targetID)
+	}
+
+	if !game.SelectTargetAtPosition(
+		requesterID,
+		targetPlayer.X,
+		targetPlayer.Y,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindPlayer, ID: targetID},
+	) {
+		t.Fatal("expected initial SelectTargetAtPosition to succeed")
+	}
+
+	game.mu.Lock()
+	delete(game.state.Players, requesterID)
+	game.mu.Unlock()
+
+	func() {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				t.Fatalf("expected SelectTargetAtPosition while dead not to panic, got %v", recovered)
+			}
+		}()
+
+		ok := game.SelectTargetAtPosition(
+			requesterID,
+			targetPlayer.X,
+			targetPlayer.Y,
+			targetpolicy.TargetRef{Kind: targetpolicy.TargetKindPlayer, ID: targetID},
+		)
+		if !ok {
+			t.Fatal("expected SelectTargetAtPosition while dead to succeed")
+		}
+	}()
+
+	game.mu.Lock()
+	session := game.playerSessions[requesterID]
+	game.mu.Unlock()
+	if session == nil {
+		t.Fatalf("expected player session %q to exist", requesterID)
+	}
+	if session.Targeting.Kind != string(targetpolicy.TargetKindPlayer) || session.Targeting.ID != targetID || session.Targeting.PlayerID != targetID {
+		t.Fatalf("expected session targeting player %q, got kind=%q id=%q player_id=%q", targetID, session.Targeting.Kind, session.Targeting.ID, session.Targeting.PlayerID)
+	}
+
+	game.respawnPlayer(requesterID)
+	ship := game.state.Players[requesterID]
+	if ship == nil {
+		t.Fatalf("expected respawned ship %q to exist", requesterID)
+	}
+	if ship.TargetKind != string(targetpolicy.TargetKindPlayer) || ship.TargetID != targetID || ship.TargetPlayerID != targetID {
+		t.Fatalf("expected respawned ship target player %q, got kind=%q id=%q target_player_id=%q", targetID, ship.TargetKind, ship.TargetID, ship.TargetPlayerID)
+	}
+}
+
+func TestClearTarget_DeadPlayerClearsSessionTargetWithoutPanic(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	targetID := game.AddPlayer()
+
+	if !game.SetPlayerTarget(requesterID, targetID) {
+		t.Fatal("expected setup SetPlayerTarget to succeed")
+	}
+
+	game.mu.Lock()
+	delete(game.state.Players, requesterID)
+	game.mu.Unlock()
+
+	func() {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				t.Fatalf("expected ClearTarget while dead not to panic, got %v", recovered)
+			}
+		}()
+		game.ClearTarget(requesterID)
+	}()
+
+	target := game.Target(requesterID)
+	if !target.IsEmpty() {
+		t.Fatalf("expected target to be empty after clear while dead, got %#v", target)
+	}
+}
