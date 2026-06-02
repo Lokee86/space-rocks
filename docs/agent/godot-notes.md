@@ -12,6 +12,7 @@ The Godot client owns:
 - local input collection
 - interpolation
 - client presentation controllers
+- player presentation cleanup across lifecycle transitions
 
 The Go server owns authoritative simulation outcomes.
 
@@ -72,6 +73,10 @@ Do not put match lifecycle on `ShipState`; pending-respawn and eliminated player
 Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability.
 
 Do not infer active eligibility solely from remote player positions or ship presence.
+
+Spectate should keep viewport/camera ownership local/client-owned. It should set a current view target/reference instead of making remote player cameras the viewport owner. Background/parallax should sample the same view reference as the camera, and hidden camera/parallax anchors can still be valid scroll references.
+
+Looping/transient player effects such as afterburner visuals and audio must stop on lifecycle transitions, not only input transitions. Death, removal, respawn-pending, game-over, and gameplay reset paths should force-stop transient effects.
 
 ## HUD-first mouse input routing
 
