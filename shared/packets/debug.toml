@@ -63,6 +63,12 @@ json = "target_player_id"
 type = "string"
 
 [[structs.fields]]
+name = "target_scope"
+go_name = "TargetScope"
+json = "target_scope"
+type = "string"
+
+[[structs.fields]]
 name = "entity_type"
 json = "entity_type"
 type = "string"

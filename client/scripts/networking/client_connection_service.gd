@@ -91,12 +91,20 @@ func send_pause_request() -> void:
 	send_packet(Packets.pause_request_packet())
 
 
-func send_debug_kill_player_request() -> void:
-	send_packet(Packets.debug_kill_player_packet())
+func send_debug_kill_player_request(target_scope: String = "", target_player_id: String = "") -> void:
+	var packet := Packets.debug_kill_player_packet()
+	if target_scope != "":
+		packet[Packets.FIELD_TARGET_SCOPE] = target_scope
+	if target_player_id != "":
+		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
+	send_packet(packet)
 
 
-func send_debug_kill_target_player_request(target_player_id: String) -> void:
-	send_packet(Packets.debug_kill_target_player_packet(target_player_id))
+func send_debug_kill_target_player_request(target_player_id: String, target_scope: String = "") -> void:
+	var packet := Packets.debug_kill_target_player_packet(target_player_id)
+	if target_scope != "":
+		packet[Packets.FIELD_TARGET_SCOPE] = target_scope
+	send_packet(packet)
 
 
 func send_leave_room_request() -> void:

@@ -29,6 +29,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
 - `total_asteroids` telemetry only stays visible if both the base `StatePacket` and `WrapStatePacket()` preserve the field.
 - Spectate camera/background behavior is being corrected so remote cameras are not made current; the local/current camera anchor should follow the selected active spectate target, and `GameplayBackgroundFlow` must sample hidden parallax anchors instead of relying on visibility alone.
+- Eligible devtools player-target lists now default to All Players, using `target_scope=all_players` instead of a fake player ID; Invincible, Infinite Lives, and Freeze Player use set-style all-player activation, and Respawn Player all-player requests still rely on existing per-player respawn guards.
 
 ## Known Gaps / TODOs
 

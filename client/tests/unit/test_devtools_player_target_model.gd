@@ -27,7 +27,17 @@ func test_invincible_target_rows_without_active_game_target_do_not_include_game_
 	assert_false(ids.has(DevtoolsTargetResolver.TARGET_GAME))
 
 
-func test_invincible_target_rows_with_player_target_player_2_include_compact_game_target_first_row() -> void:
+func test_invincible_target_rows_put_all_players_first() -> void:
+	var model := _model_with_two_active_players()
+
+	var rows: Array = model.invincible_target_rows()
+
+	assert_true(rows.size() > 0)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[0]["label"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS_LABEL)
+
+
+func test_invincible_target_rows_with_player_target_player_2_include_compact_game_target_after_all_players() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	model.apply_gameplay_state({
 		"self_id": "player-1",
@@ -44,15 +54,17 @@ func test_invincible_target_rows_with_player_target_player_2_include_compact_gam
 
 	var rows: Array = model.invincible_target_rows()
 
-	assert_true(rows.size() > 0)
-	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
-	assert_eq(rows[0]["label"], "Target : P2")
+	assert_true(rows.size() > 1)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[1]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
+	assert_eq(rows[1]["label"], "Target : P2")
 
 	var ids: Array = []
 	for row in rows:
 		ids.append(str(row.get("player_id", "")))
 
-	assert_eq(ids[0], DevtoolsTargetResolver.TARGET_GAME)
+	assert_eq(ids[0], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(ids[1], DevtoolsTargetResolver.TARGET_GAME)
 	assert_true(ids.has("player-1"))
 	assert_true(ids.has("player-2"))
 
@@ -74,9 +86,10 @@ func test_invincible_target_rows_with_player_target_player_10_use_compact_p10_la
 
 	var rows: Array = model.invincible_target_rows()
 
-	assert_true(rows.size() > 0)
-	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
-	assert_eq(rows[0]["label"], "Target : P10")
+	assert_true(rows.size() > 1)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[1]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
+	assert_eq(rows[1]["label"], "Target : P10")
 
 
 func test_apply_gameplay_state_reads_generic_player_game_target_from_local_player_synced_state() -> void:
@@ -259,7 +272,17 @@ func test_active_player_target_rows_without_active_game_target_do_not_include_ga
 	assert_false(ids.has(DevtoolsTargetResolver.TARGET_GAME))
 
 
-func test_active_player_target_rows_with_player_target_include_compact_game_target_first_row() -> void:
+func test_active_player_target_rows_put_all_players_first() -> void:
+	var model := _model_with_two_active_players()
+
+	var rows: Array = model.active_player_target_rows()
+
+	assert_true(rows.size() > 0)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[0]["label"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS_LABEL)
+
+
+func test_active_player_target_rows_with_player_target_include_compact_game_target_after_all_players() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	model.apply_gameplay_state({
 		"self_id": "player-1",
@@ -279,10 +302,12 @@ func test_active_player_target_rows_with_player_target_include_compact_game_targ
 	for row in rows:
 		ids.append(str(row.get("player_id", "")))
 
-	assert_true(rows.size() > 0)
-	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
-	assert_eq(rows[0]["label"], "Target : P2")
-	assert_eq(ids[0], DevtoolsTargetResolver.TARGET_GAME)
+	assert_true(rows.size() > 1)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[1]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
+	assert_eq(rows[1]["label"], "Target : P2")
+	assert_eq(ids[0], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(ids[1], DevtoolsTargetResolver.TARGET_GAME)
 	assert_true(ids.has("player-1"))
 	assert_true(ids.has("player-2"))
 
@@ -310,7 +335,17 @@ func test_kill_player_target_rows_without_active_game_target_do_not_include_game
 	assert_false(ids.has(DevtoolsTargetResolver.TARGET_GAME))
 
 
-func test_kill_player_target_rows_with_player_target_include_compact_game_target_first_row() -> void:
+func test_kill_player_target_rows_put_all_players_first() -> void:
+	var model := _model_with_two_active_players()
+
+	var rows: Array = model.kill_player_target_rows()
+
+	assert_true(rows.size() > 0)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[0]["label"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS_LABEL)
+
+
+func test_kill_player_target_rows_with_player_target_include_compact_game_target_after_all_players() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	model.apply_gameplay_state({
 		"self_id": "player-1",
@@ -330,10 +365,12 @@ func test_kill_player_target_rows_with_player_target_include_compact_game_target
 	for row in rows:
 		ids.append(str(row.get("player_id", "")))
 
-	assert_true(rows.size() > 0)
-	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
-	assert_eq(rows[0]["label"], "Target : P2")
-	assert_eq(ids[0], DevtoolsTargetResolver.TARGET_GAME)
+	assert_true(rows.size() > 1)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[1]["player_id"], DevtoolsTargetResolver.TARGET_GAME)
+	assert_eq(rows[1]["label"], "Target : P2")
+	assert_eq(ids[0], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(ids[1], DevtoolsTargetResolver.TARGET_GAME)
 
 
 func test_kill_player_target_rows_keep_actual_player_rows_after_conditional_game_target_row() -> void:
@@ -381,6 +418,52 @@ func test_kill_player_target_rows_with_asteroid_target_do_not_include_game_targe
 		ids.append(str(row.get("player_id", "")))
 
 	assert_false(ids.has(DevtoolsTargetResolver.TARGET_GAME))
+
+
+func test_infinite_lives_target_rows_put_all_players_first() -> void:
+	var model := _model_with_two_active_players()
+
+	var rows: Array = model.infinite_lives_target_rows()
+
+	assert_true(rows.size() > 0)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[0]["label"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS_LABEL)
+
+
+func test_player_frozen_target_rows_put_all_players_first() -> void:
+	var model := _model_with_two_active_players()
+
+	var rows: Array = model.player_frozen_target_rows()
+
+	assert_true(rows.size() > 0)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[0]["label"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS_LABEL)
+
+
+func test_respawn_player_target_rows_put_all_players_first() -> void:
+	var model := _model_with_two_active_players()
+
+	var rows: Array = model.respawn_player_target_rows()
+	var ids: Array = []
+	for row in rows:
+		ids.append(str(row.get("player_id", "")))
+
+	assert_true(rows.size() > 0)
+	assert_eq(rows[0]["player_id"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	assert_eq(rows[0]["label"], DevtoolsTargetResolver.TARGET_ALL_PLAYERS_LABEL)
+	assert_true(ids.has("player-1"))
+	assert_true(ids.has("player-2"))
+
+
+func test_target_rows_remain_raw_and_do_not_include_all_players() -> void:
+	var model := _model_with_two_active_players()
+
+	var rows: Array = model.target_rows()
+	var ids: Array = []
+	for row in rows:
+		ids.append(str(row.get("player_id", "")))
+
+	assert_false(ids.has(DevtoolsTargetResolver.TARGET_ALL_PLAYERS))
 
 
 func test_target_state_for_player_target_returns_raw_player_dictionary() -> void:
@@ -526,3 +609,20 @@ func test_target_state_for_player_prefers_active_player_state_over_player_world_
 	})
 
 	assert_eq(model.target_state(), expected_player_state)
+
+
+func _model_with_two_active_players() -> RefCounted:
+	var model := DevtoolsPlayerTargetModel.new()
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {},
+			"player-2": {},
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+			"player-2": "active",
+		},
+		"debug_statuses": {},
+	})
+	return model

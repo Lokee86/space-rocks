@@ -7,9 +7,13 @@ func handleDebugSetScore(target *game.Game, playerID string, command DebugComman
 		return false
 	}
 
-	targetPlayerID := resolveCounterTargetPlayerID(playerID, command)
-	change := target.DevtoolsSetPlayerScore(targetPlayerID, command.Score)
-	return change.Found
+	foundAny := false
+	for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
+		if setDebugScoreForPlayer(target, targetPlayerID, command.Score) {
+			foundAny = true
+		}
+	}
+	return foundAny
 }
 
 func handleDebugAddScore(target *game.Game, playerID string, command DebugCommand) bool {
@@ -17,8 +21,22 @@ func handleDebugAddScore(target *game.Game, playerID string, command DebugComman
 		return false
 	}
 
-	targetPlayerID := resolveCounterTargetPlayerID(playerID, command)
-	change := target.DevtoolsAddPlayerScore(targetPlayerID, command.Amount)
+	foundAny := false
+	for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
+		if addDebugScoreForPlayer(target, targetPlayerID, command.Amount) {
+			foundAny = true
+		}
+	}
+	return foundAny
+}
+
+func setDebugScoreForPlayer(target *game.Game, targetPlayerID string, score int) bool {
+	change := target.DevtoolsSetPlayerScore(targetPlayerID, score)
+	return change.Found
+}
+
+func addDebugScoreForPlayer(target *game.Game, targetPlayerID string, amount int) bool {
+	change := target.DevtoolsAddPlayerScore(targetPlayerID, amount)
 	return change.Found
 }
 
@@ -27,9 +45,13 @@ func handleDebugSetLives(target *game.Game, playerID string, command DebugComman
 		return false
 	}
 
-	targetPlayerID := resolveCounterTargetPlayerID(playerID, command)
-	change := target.DevtoolsSetPlayerLives(targetPlayerID, command.Lives)
-	return change.Found
+	foundAny := false
+	for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
+		if setDebugLivesForPlayer(target, targetPlayerID, command.Lives) {
+			foundAny = true
+		}
+	}
+	return foundAny
 }
 
 func handleDebugAddLives(target *game.Game, playerID string, command DebugCommand) bool {
@@ -37,15 +59,21 @@ func handleDebugAddLives(target *game.Game, playerID string, command DebugComman
 		return false
 	}
 
-	targetPlayerID := resolveCounterTargetPlayerID(playerID, command)
-	change := target.DevtoolsAddPlayerLives(targetPlayerID, command.Amount)
+	foundAny := false
+	for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
+		if addDebugLivesForPlayer(target, targetPlayerID, command.Amount) {
+			foundAny = true
+		}
+	}
+	return foundAny
+}
+
+func setDebugLivesForPlayer(target *game.Game, targetPlayerID string, lives int) bool {
+	change := target.DevtoolsSetPlayerLives(targetPlayerID, lives)
 	return change.Found
 }
 
-func resolveCounterTargetPlayerID(callingPlayerID string, command DebugCommand) string {
-	if command.TargetPlayerID != "" {
-		return command.TargetPlayerID
-	}
-
-	return callingPlayerID
+func addDebugLivesForPlayer(target *game.Game, targetPlayerID string, amount int) bool {
+	change := target.DevtoolsAddPlayerLives(targetPlayerID, amount)
+	return change.Found
 }

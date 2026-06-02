@@ -1,6 +1,7 @@
 package game
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
@@ -41,5 +42,31 @@ func TestDevtoolsSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
 	}
 	if cameraView.Config.VisibleWorldHeight != DummyPlayerVisibleWorldHeight {
 		t.Fatalf("expected camera height %d, got %v", DummyPlayerVisibleWorldHeight, cameraView.Config.VisibleWorldHeight)
+	}
+}
+
+func TestDevtoolsTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
+	game := New()
+	sessionOnlyID := "player-2"
+	sharedID := "player-3"
+	shipOnlyID := "player-4"
+	spawnPosition := physics.Vector2{X: 120, Y: 220}
+
+	if !game.DevtoolsEnsurePlayerSession(sessionOnlyID, spawnPosition) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to create session-only target")
+	}
+	if !game.DevtoolsEnsurePlayerSession(sharedID, spawnPosition) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to create shared target session")
+	}
+	if !game.DevtoolsSpawnPlayerShip(sharedID, spawnPosition, DummyPlayerCameraConfig()) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to create shared target ship")
+	}
+
+	game.state.Players[shipOnlyID] = &entities.Ship{ID: shipOnlyID, X: 10, Y: 20}
+
+	got := game.DevtoolsTargetPlayerIDs()
+	want := []string{sessionOnlyID, sharedID, shipOnlyID}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("DevtoolsTargetPlayerIDs() = %v, want %v", got, want)
 	}
 }

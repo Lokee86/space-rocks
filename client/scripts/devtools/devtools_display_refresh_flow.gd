@@ -49,7 +49,7 @@ func refresh_gameplay_state(state: Dictionary) -> void:
 		window_controller.apply_debug_status(state.get("debug_status", {}))
 	window_controller.refresh_debug_player_targets(
 		target_model.kill_player_target_rows(),
-		target_model.target_rows(),
+		target_model.respawn_player_target_rows(),
 		target_model.invincible_target_rows(),
 		target_model.infinite_lives_target_rows(),
 		target_model.player_frozen_target_rows()
