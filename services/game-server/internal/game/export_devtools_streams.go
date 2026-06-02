@@ -6,6 +6,13 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
 
+type continuousBulletStreamEntry struct {
+	OwnerPlayerID     string
+	Origin            physics.Vector2
+	Direction         physics.Vector2
+	CooldownRemaining float64
+}
+
 type DevtoolsContinuousBulletStream struct {
 	OwnerPlayerID     string
 	Origin            physics.Vector2
@@ -27,19 +34,38 @@ func (game *Game) DevtoolsBeginContinuousBulletStream(ownerPlayerID string, orig
 		Direction:         normalizedDirection,
 		CooldownRemaining: constants.BulletCooldown,
 	}
-	game.activeDebugBulletStreams = append(game.activeDebugBulletStreams, stream)
+	game.devtoolsAppendContinuousBulletStream(continuousBulletStreamEntry(stream))
 	return true
 }
 
 func (game *Game) DevtoolsActiveContinuousBulletStreams() []DevtoolsContinuousBulletStream {
-	streams := make([]DevtoolsContinuousBulletStream, len(game.activeDebugBulletStreams))
-	copy(streams, game.activeDebugBulletStreams)
+	entries := game.devtoolsContinuousBulletStreams()
+	streams := make([]DevtoolsContinuousBulletStream, len(entries))
+	for index, entry := range entries {
+		streams[index] = DevtoolsContinuousBulletStream(entry)
+	}
 	return streams
 }
 
-func (game *Game) stepDevtoolsContinuousBulletStreams(delta float64) {
-	for index := range game.activeDebugBulletStreams {
-		stream := &game.activeDebugBulletStreams[index]
+func (game *Game) DevtoolsClearContinuousBulletStreams() {
+	game.devtoolsResetContinuousBulletStreams()
+}
+
+func (game *Game) devtoolsContinuousBulletStreams() []continuousBulletStreamEntry {
+	return game.streamEmitters
+}
+
+func (game *Game) devtoolsAppendContinuousBulletStream(stream continuousBulletStreamEntry) {
+	game.streamEmitters = append(game.streamEmitters, stream)
+}
+
+func (game *Game) devtoolsResetContinuousBulletStreams() {
+	game.streamEmitters = nil
+}
+
+func (game *Game) stepContinuousBulletStreams(delta float64) {
+	for index := range game.devtoolsContinuousBulletStreams() {
+		stream := &game.streamEmitters[index]
 		stream.CooldownRemaining -= delta
 		if stream.CooldownRemaining > 0 {
 			continue

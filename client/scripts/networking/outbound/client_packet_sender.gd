@@ -96,22 +96,22 @@ func send_toggle_debug_freeze_player_request(target_scope: String = "", target_p
 			network_client.send_raw_packet(DevtoolsClientPackets.toggle_debug_freeze_player_target_player_packet(target_player_id))
 
 
-func send_debug_set_score_request(target_scope: String, target_player_id: String, score: int) -> void:
+func send_debug_set_score_request(_target_scope: String, target_player_id: String, score: int) -> void:
 	if network_client != null:
 		network_client.send_raw_packet(DevtoolsClientPackets.debug_set_score_packet(target_player_id, score))
 
 
-func send_debug_add_score_request(target_scope: String, target_player_id: String, amount: int) -> void:
+func send_debug_add_score_request(_target_scope: String, target_player_id: String, amount: int) -> void:
 	if network_client != null:
 		network_client.send_raw_packet(DevtoolsClientPackets.debug_add_score_packet(target_player_id, amount))
 
 
-func send_debug_set_lives_request(target_scope: String, target_player_id: String, lives: int) -> void:
+func send_debug_set_lives_request(_target_scope: String, target_player_id: String, lives: int) -> void:
 	if network_client != null:
 		network_client.send_raw_packet(DevtoolsClientPackets.debug_set_lives_packet(target_player_id, lives))
 
 
-func send_debug_add_lives_request(target_scope: String, target_player_id: String, amount: int) -> void:
+func send_debug_add_lives_request(_target_scope: String, target_player_id: String, amount: int) -> void:
 	if network_client != null:
 		network_client.send_raw_packet(DevtoolsClientPackets.debug_add_lives_packet(target_player_id, amount))
 

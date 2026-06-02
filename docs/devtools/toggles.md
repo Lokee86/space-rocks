@@ -254,6 +254,8 @@ Current ownership paths:
 - non-devtools world/runtime code exposes read-only draw-entry data only; rendering stays in devtools.
 - `PlayerDevLabel` lifecycle, formatting, and mode state belong in client devtools, not `PlayerSync` or `WorldSync`.
 
+Continuous bullet stream state is owned by the game package only through `export_devtools*.go` bridge methods. Normal `internal/game` files should not own, step, or expose that state directly.
+
 ## Server Build Flag
 
 Server devtools are enabled in normal/default builds.
@@ -435,6 +437,7 @@ Current coverage checks:
 - paused and frozen players remain suspended until both causes are cleared
 - kill player can target another player
 - source player remains unchanged when kill-player targets another player
+- boundary scan keeps devtools bridge terminology out of normal `internal/game` files and allows it only in `export_devtools*.go`
 
 TODO: add focused server tests for world freeze:
 
