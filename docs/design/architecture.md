@@ -26,7 +26,10 @@ client/scenes/game.tscn
 Current client runtime seams:
 
 - `client/scripts/session/`: session-level coordinators, including gameplay, room, config, and client session context.
-- `client/scripts/shell/gameplay_shell_flow.gd`: narrow gameplay shell coordinator. It should stay mostly as orchestration and delegation.
+- `client/scripts/shell/gameplay_shell_flow.gd`: narrow gameplay lifecycle/composition shell. It should stay mostly as orchestration and delegation; gameplay state application, per-frame processing, and server hitbox overlay ticking are delegated to focused flows.
+- `client/scripts/gameplay/debug/server_hitbox_overlay_flow.gd`: server hitbox overlay lookup, reset, and overlay ticking seam for gameplay debug presentation.
+- `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`: gameplay state application seam for packet reading and normalized state application order.
+- `client/scripts/gameplay/runtime/gameplay_process_flow.gd`: per-frame gameplay processing seam for the runtime/input/spectate order.
 - `client/scripts/gameplay/gameplay_composition.gd`: gameplay flow construction and fanout only. `GameplaySessionController` keeps packet gating and outer lifecycle consequences. `GameplayComposition` should not own packet parsing, connection shutdown, session clearing, menu show/hide, or gameplay rules.
 - `client/scripts/gameplay/runtime/`: gameplay runtime/state-application context.
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.

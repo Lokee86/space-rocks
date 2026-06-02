@@ -1,6 +1,5 @@
 extends RefCounted
 
-const NetworkClient = preload("res://scripts/networking/network_client.gd")
 const LobbyClientPackets = preload("res://scripts/networking/outbound/lobby_client_packets.gd")
 const GameplayClientPackets = preload("res://scripts/networking/outbound/gameplay_client_packets.gd")
 const DevtoolsClientPackets = preload("res://scripts/networking/outbound/devtools_client_packets.gd")

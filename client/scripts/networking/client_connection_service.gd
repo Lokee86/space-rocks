@@ -1,6 +1,5 @@
 extends Node
 
-const NetworkClient := preload("res://scripts/networking/network_client.gd")
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
