@@ -24,30 +24,18 @@ func (room *Room) StartGameForMember(playerID string, newGame func() *game.Game)
 	return nil
 }
 
-func (room *Room) validateStartLocked(playerID string) *RoomDomainError {
-	if _, ok := room.Members[playerID]; !ok {
-		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
-	}
+func (room *Room) MarkStarting() *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
 
-	if playerID != room.OwnerID {
-		return &RoomDomainError{Code: RoomErrorNotRoomOwner, Message: "Only the room owner can start the game."}
-	}
+	return room.markStartingLocked()
+}
 
-	switch room.State {
-	case RoomStateLobby:
-	case RoomStateStarting, RoomStateInGame:
-		return &RoomDomainError{Code: RoomErrorRoomInGame, Message: "Room is already in game."}
-	default:
-		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Game can only be started from the lobby."}
-	}
+func (room *Room) MarkInGame() *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
 
-	for _, connectedMember := range room.Members {
-		if connectedMember.Connected && !connectedMember.Ready {
-			return &RoomDomainError{Code: RoomErrorNotReady, Message: "All connected members must be ready."}
-		}
-	}
-
-	return nil
+	return room.markInGameLocked()
 }
 
 func (room *Room) markStartingLocked() *RoomDomainError {
@@ -66,6 +54,66 @@ func (room *Room) markInGameLocked() *RoomDomainError {
 
 	room.State = RoomStateInGame
 	return nil
+}
+
+func (room *Room) MarkGameOver() *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	if room.State != RoomStateInGame {
+		return &RoomDomainError{
+			Code:    RoomErrorInvalidRoomState,
+			Message: "Room can only move to game over from in-game.",
+		}
+	}
+
+	room.State = RoomStateGameOver
+	return nil
+}
+
+func (room *Room) MarkGameOverIfComplete() bool {
+	if room == nil || room.State != RoomStateInGame || !room.IsGameOver() {
+		return false
+	}
+
+	return room.MarkGameOver() == nil
+}
+
+func (room *Room) ResetToLobby(playerID string) *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	if _, ok := room.Members[playerID]; !ok {
+		return &RoomDomainError{
+			Code:    RoomErrorNotInRoom,
+			Message: "Member is not in the room.",
+		}
+	}
+
+	if room.State != RoomStateGameOver {
+		return &RoomDomainError{
+			Code:    RoomErrorInvalidRoomState,
+			Message: "Room can only return to lobby from game over.",
+		}
+	}
+
+	for _, member := range room.Members {
+		member.SetReady(false)
+	}
+	if room.Game != nil {
+		room.Game.Stop()
+	}
+	room.Game = nil
+	room.State = RoomStateLobby
+	return nil
+}
+
+func (room *Room) IsGameOver() bool {
+	if room == nil || room.State != RoomStateInGame || room.Game == nil {
+		return false
+	}
+
+	return room.Game.MatchDecision().IsOver
 }
 
 func (room *Room) StartSinglePlayerGame(newGame func() *game.Game) *RoomDomainError {
