@@ -4,11 +4,6 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/devtools"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
-	"github.com/gorilla/websocket"
 )
 
 func writeServerMessages(
@@ -25,8 +20,7 @@ func writeServerMessages(
 			logWebSocketReadClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 			return
 		case message := <-session.outbound:
-			if err := session.conn.WriteMessage(websocket.TextMessage, message); err != nil {
-				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			if !writeServerMessage(session.conn, message, session.currentRoomID, session.currentGamePlayerID, remoteAddr) {
 				return
 			}
 		case <-ticker.C:
@@ -36,92 +30,14 @@ func writeServerMessages(
 
 			checkRoomGameOver(session.room)
 
-			statePacket := session.room.Game.StatePacket(session.currentGamePlayerID)
-			statePacket.ServerSentMsec = int(time.Now().UnixMilli())
-			payload := any(statePacket)
-			if devtools.Enabled() {
-				payload = devtools.WrapStatePacket(
-					statePacket,
-					devtools.StatusFor(session.room.Game, session.currentGamePlayerID),
-					devtools.StatusesForAllPlayers(session.room.Game),
-				)
-			}
-			response, err := packetcodec.Encode(payload)
-			if err != nil {
-				logging.Network.Error("state packet encode failed", err,
-					logging.FieldRoomID, session.currentRoomID,
-					logging.FieldPlayerID, session.currentGamePlayerID,
-					logging.FieldRemoteAddr, remoteAddr,
-				)
+			response, ok := buildGameplayPresentationStateResponse(session, remoteAddr)
+			if !ok {
 				continue
 			}
 
-			if err := session.conn.WriteMessage(websocket.TextMessage, response); err != nil {
-				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			if !writeServerMessage(session.conn, response, session.currentRoomID, session.currentGamePlayerID, remoteAddr) {
 				return
 			}
 		}
 	}
-}
-
-func canSendGameplayPresentationState(room *rooms.Room) bool {
-	return room != nil &&
-		room.Game != nil &&
-		(room.State == rooms.RoomStateInGame || room.State == rooms.RoomStateGameOver)
-}
-
-func checkRoomGameOver(room *rooms.Room) bool {
-	if !room.MarkGameOverIfComplete() {
-		return false
-	}
-
-	logging.Rooms.Debug("room game over detected",
-		logging.FieldRoomID, room.ID,
-	)
-	BroadcastRoomSnapshot(room)
-	return true
-}
-
-func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr string) {
-	if isExpectedWebSocketClose(err) {
-		logging.Network.Debug("websocket read closed",
-			logging.FieldRoomID, roomID,
-			logging.FieldPlayerID, playerID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
-		return
-	}
-
-	logging.Network.Warn("websocket read failed",
-		logging.FieldError, err,
-		logging.FieldRoomID, roomID,
-		logging.FieldPlayerID, playerID,
-		logging.FieldRemoteAddr, remoteAddr,
-	)
-}
-
-func logWebSocketWriteClose(err error, roomID string, playerID string, remoteAddr string) {
-	if isExpectedWebSocketClose(err) {
-		logging.Network.Debug("websocket write closed",
-			logging.FieldRoomID, roomID,
-			logging.FieldPlayerID, playerID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
-		return
-	}
-
-	logging.Network.Error("websocket write failed", err,
-		logging.FieldRoomID, roomID,
-		logging.FieldPlayerID, playerID,
-		logging.FieldRemoteAddr, remoteAddr,
-	)
-}
-
-func isExpectedWebSocketClose(err error) bool {
-	return websocket.IsCloseError(
-		err,
-		websocket.CloseNormalClosure,
-		websocket.CloseGoingAway,
-		websocket.CloseNoStatusReceived,
-	)
 }
