@@ -1,5 +1,5 @@
-class_name GameplayBackgroundFlow
 extends RefCounted
+class_name GameplayBackgroundFlow
 
 const Constants := preload("res://scripts/constants/constants.gd")
 

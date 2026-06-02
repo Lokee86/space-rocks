@@ -223,6 +223,7 @@ Client runtime:
 - `client/scripts/gameplay/menu/`
 - `client/scripts/gameplay/respawn/`
 - `client/scripts/gameplay/spectate/`
+- `client/scripts/gameplay/background/`
 - `client/scripts/gameplay/events/`
 - `client/scripts/gameplay/effects/`
 - `client/scripts/lobby/`

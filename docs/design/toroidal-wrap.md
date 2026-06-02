@@ -96,7 +96,7 @@ visual_position = local_visual_position + WorldWrap.shortest_delta(
 )
 ```
 
-The camera is a child of the local player node, so it follows the continuous local visual position. Background scroll follows the local player node as well.
+Normal gameplay follows the local player's continuous visual position. Spectate uses a selected active player as the current view reference for camera and background continuity, while keeping viewport/camera ownership local/client-owned. A hidden local camera/parallax anchor may still be a valid scroll reference, so background parallax sampling must not depend on node visibility alone.
 
 ## Tests
 

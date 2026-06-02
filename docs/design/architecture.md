@@ -31,10 +31,11 @@ Current client runtime seams:
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
 - `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
 - `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking.
+- `client/scripts/gameplay/background/`: gameplay background/parallax shader scroll presentation.
 - `client/scripts/devtools/telemetry/`: devtools telemetry seam for debug-only world metrics, overlay flow, RTT tracking, and packet-age display plumbing.
 - `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
 - `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
-- `client/scripts/gameplay/spectate/`: spectate state, menu requests, and camera target cycling.
+- `client/scripts/gameplay/spectate/`: spectate state, menu requests, and view target selection/cycling; it does not own remote camera nodes.
 - `client/scripts/gameplay/events/`: server event lane and death/game-over consequences.
 - `client/scripts/gameplay/effects/`: gameplay effects helper used by event/effects flows.
 - `client/scripts/lobby/`: lobby shell/presenter/network action flows.
@@ -59,7 +60,7 @@ Client runtime flow:
 6. `client/scripts/world/world_sync.gd` updates renderable player, bullet, asteroid, and local visual state.
 7. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
 
-Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. The background and camera follow the local player's continuous visual position after initial spawn.
+Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. Normal gameplay follows the local player's continuous visual position after initial spawn. Spectate keeps viewport/camera ownership local/client-owned, uses the selected active player as the current view/parallax reference, and requires the background/parallax to sample the same view reference as the camera.
 
 Current limitations:
 
