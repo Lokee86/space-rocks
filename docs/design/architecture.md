@@ -147,13 +147,13 @@ The spawn seam is still partial. Bullet construction lives in `spawning.Spawner`
 
 `Game.MatchDecision()` is the public game-facing API for richer match decisions. `Game.IsGameOver()` remains available for existing callers and delegates through the same locked decision path.
 
-`Game.statePacket()` projects `MatchDecision.Players` into `StatePacket.player_lifecycle`, a map from player ID to lifecycle status string. This field sits beside `StatePacket.players`; it is not part of `ShipState` because pending-respawn and eliminated players may have no active ship. `StatePacket.players` remains active ship/render state only.
+`Game.statePacket()` projects `MatchDecision.Players` into `StatePacket.player_lifecycle`, a map from player ID to lifecycle status string. `StatePacket.players` (from `game.state.Players`) is active ship/render state only. Durable player identity/status/position/readout state is carried in `StatePacket.player_world_states` (from `player.WorldState`). Pending-respawn players may be absent from `StatePacket.players` while still present in `StatePacket.player_world_states`; in that lifecycle state they are not targetable, damageable, or collidable.
 
 ### Entity Damage Resolution
 
 `services/game-server/internal/game/collisions.go` defines a narrow collision detection seam for the destructive collision pairs currently used by combat. It reports concrete projectile/asteroid and player/asteroid collision facts.
 
-`services/game-server/internal/game/damage.go` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat consumes collision facts, builds a `DamageRequest`, calls `resolveDamage`, and then existing systems consume the `DamageResult`.
+`services/game-server/internal/game/damage/` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat/game code is the adapter: it consumes collision facts, builds a `DamageRequest`, calls the damage package resolver, and then existing systems consume the `DamageResult`.
 
 The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
 
@@ -399,6 +399,7 @@ Devtools are client-triggered and server-authoritative. Client input requests de
 - `internal/networking` classifies incoming packet type first
 - default/disabled builds ignore devtools command packets before game handling
 - `internal/devtools` owns command handling and devtools status wrapping
+- devtools state wrapping must preserve normal gameplay state fields, including `PlayerWorldStates`
 - `internal/game/export_devtools*.go` exposes only controlled operations needed by devtools
 - `internal/game` must not import `internal/devtools`
 - generated game packets must not own devtools command packet constants or devtools-only command fields
@@ -408,8 +409,11 @@ Devtools are client-triggered and server-authoritative. Client input requests de
 Targeting seam notes:
 
 - canonical target is gameplay/server state
+- canonical game target identity is separate from local player readout state
 - a client selection request is not authoritative until reflected in authoritative state updates
-- devtools may consume canonical target through resolver compatibility checks
+- devtools canonical target readout prefers active players and falls back to `player_world_states` for player targets with no active ship
+- target/readout resolution must not depend only on active players; inactive player identity may remain available through `player_world_states`
+- inactive player identity/readout does not make the player active, clickable, collidable, damageable, or targetable
 - targeting state is not automatically combat behavior
 
 Telemetry seam notes:
@@ -424,6 +428,8 @@ Telemetry timing ownership notes:
 
 - `StatePacket.server_sent_msec` is stamped by `services/game-server/internal/networking/websocket_write.go` before encode/write.
 - `services/game-server/internal/devtools/WrapStatePacket` preserves `server_sent_msec` when devtools status wrapping is applied.
+- devtools local player readout prefers active players and falls back to `player_world_states` when the local player has no active ship.
+- server `player.WorldState` serializes with snake_case JSON field names for client packet compatibility.
 - `packet_staleness_ms` is local monotonic age since the last received gameplay state packet.
 - `packet_age_ms` is derived in client monotonic clock space using server clock offset estimated from telemetry pong, not raw client wall-clock minus server wall-clock.
 
@@ -457,4 +463,3 @@ These are possible directions, not implemented features.
 - If prediction/reconciliation is added, keep it explicitly separate from authoritative game rules so the client remains a presentation/prediction layer rather than the source of truth.
 - Invisible toroidal/wrapped playfield is implemented. See [toroidal wrap](toroidal-wrap.md).
 - A thin server-side ship variant foundation exists: runtime ship type, resolved ship stats/modifiers, `ship_type` snapshots, and collision shape ID lookup. Full variants with client scene mapping and keyed collision catalogs remain future work. See [ship variants plan](ship-variants.md).
-
