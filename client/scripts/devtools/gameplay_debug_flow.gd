@@ -3,6 +3,7 @@ class_name GameplayDebugFlow
 
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const DevtoolsTargetResolver = preload("res://scripts/devtools/devtools_target_resolver.gd")
 
 var connection_service
 var debug_invincible_enabled := false
@@ -44,24 +45,24 @@ func process(has_received_state: bool) -> void:
 		toggle_freeze_player()
 
 
-func toggle_invincible(target_player_id := "") -> void:
+func toggle_invincible(
+	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_player_id: String = ""
+) -> void:
 	if connection_service == null:
 		return
 	debug_invincible_enabled = !debug_invincible_enabled
-	if target_player_id == "":
-		connection_service.send_packet(Packets.toggle_debug_invincible_packet())
-	else:
-		connection_service.send_packet(Packets.toggle_debug_invincible_target_player_packet(target_player_id))
+	connection_service.send_packet(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_INVINCIBLE, target_scope, target_player_id))
 	ClientLogger.game_info("Devtools invincibility toggle sent")
 
 
-func toggle_infinite_lives(target_player_id := "") -> void:
+func toggle_infinite_lives(
+	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_player_id: String = ""
+) -> void:
 	if connection_service == null:
 		return
-	if target_player_id == "":
-		connection_service.send_packet(Packets.toggle_debug_infinite_lives_packet())
-	else:
-		connection_service.send_packet(Packets.toggle_debug_infinite_lives_target_player_packet(target_player_id))
+	connection_service.send_packet(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_INFINITE_LIVES, target_scope, target_player_id))
 	ClientLogger.game_info("Devtools infinite lives toggle sent")
 
 
@@ -76,41 +77,57 @@ func toggle_freeze_world(freeze_target := "") -> void:
 		ClientLogger.game_info("Devtools world freeze toggle sent (freeze_target='%s')" % freeze_target)
 
 
-func toggle_freeze_player(target_player_id := "") -> void:
+func toggle_freeze_player(
+	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_player_id: String = ""
+) -> void:
 	if connection_service == null:
 		return
-	if target_player_id == "":
-		connection_service.send_packet(Packets.toggle_debug_freeze_player_packet())
-	else:
-		connection_service.send_packet(Packets.toggle_debug_freeze_player_target_player_packet(target_player_id))
+	connection_service.send_packet(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_FREEZE_PLAYER, target_scope, target_player_id))
 	ClientLogger.game_info("Devtools player freeze toggle sent")
 
 
-func set_score(target_player_id: String, score: int) -> void:
+func set_score(
+	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_player_id: String = "",
+	score: int = 0
+) -> void:
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.debug_set_score_packet(target_player_id, score))
+	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_SET_SCORE, target_scope, target_player_id, Packets.FIELD_SCORE, score))
 	ClientLogger.game_info("Devtools set score sent")
 
 
-func add_score(target_player_id: String, amount: int) -> void:
+func add_score(
+	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_player_id: String = "",
+	amount: int = 0
+) -> void:
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.debug_add_score_packet(target_player_id, amount))
+	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_ADD_SCORE, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount))
 	ClientLogger.game_info("Devtools add score sent")
 
 
-func set_lives(target_player_id: String, lives: int) -> void:
+func set_lives(
+	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_player_id: String = "",
+	lives: int = 0
+) -> void:
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.debug_set_lives_packet(target_player_id, lives))
+	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_SET_LIVES, target_scope, target_player_id, Packets.FIELD_LIVES, lives))
 	ClientLogger.game_info("Devtools set lives sent")
 
 
-func add_lives(target_player_id: String, amount: int) -> void:
+func add_lives(
+	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_player_id: String = "",
+	amount: int = 0
+) -> void:
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.debug_add_lives_packet(target_player_id, amount))
+	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_ADD_LIVES, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount))
 	ClientLogger.game_info("Devtools add lives sent")
 
 
@@ -126,3 +143,30 @@ func clear_asteroids() -> void:
 		return
 	connection_service.send_packet(Packets.debug_clear_asteroids_packet())
 	ClientLogger.game_info("Devtools clear asteroids sent")
+
+
+func _build_player_toggle_packet(packet_type: String, target_scope: String, target_player_id: String) -> Dictionary:
+	var packet := {
+		Packets.FIELD_TYPE: packet_type,
+		Packets.FIELD_TARGET_SCOPE: target_scope,
+	}
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
+		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
+	return packet
+
+
+func _build_counter_packet(
+	packet_type: String,
+	target_scope: String,
+	target_player_id: String,
+	value_field: String,
+	value: int
+) -> Dictionary:
+	var packet := {
+		Packets.FIELD_TYPE: packet_type,
+		Packets.FIELD_TARGET_SCOPE: target_scope,
+		value_field: value,
+	}
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
+		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
+	return packet

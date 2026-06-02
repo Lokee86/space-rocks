@@ -96,6 +96,48 @@ func TestHandleDebugAddScoreClampsBelowZero(t *testing.T) {
 	assertPlayerPacketScore(t, target, playerID, 0)
 }
 
+func TestHandleDebugSetScoreTargetsAllPlayers(t *testing.T) {
+	target := game.New()
+	callerID := target.AddPlayer()
+	otherPlayerID := target.AddPlayer()
+
+	ok := HandleCommand(target, callerID, DebugCommand{
+		Type:        PacketTypeDebugSetScore,
+		TargetScope: targetScopeAllPlayers,
+		Score:       44,
+	})
+	if !ok {
+		t.Fatalf("expected HandleCommand to return true")
+	}
+
+	assertPlayerPacketScore(t, target, callerID, 44)
+	assertPlayerPacketScore(t, target, otherPlayerID, 44)
+}
+
+func TestHandleDebugAddScoreTargetsAllPlayers(t *testing.T) {
+	target := game.New()
+	callerID := target.AddPlayer()
+	otherPlayerID := target.AddPlayer()
+
+	HandleCommand(target, callerID, DebugCommand{
+		Type:        PacketTypeDebugSetScore,
+		TargetScope: targetScopeAllPlayers,
+		Score:       10,
+	})
+
+	ok := HandleCommand(target, callerID, DebugCommand{
+		Type:        PacketTypeDebugAddScore,
+		TargetScope: targetScopeAllPlayers,
+		Amount:      6,
+	})
+	if !ok {
+		t.Fatalf("expected HandleCommand to return true")
+	}
+
+	assertPlayerPacketScore(t, target, callerID, 16)
+	assertPlayerPacketScore(t, target, otherPlayerID, 16)
+}
+
 func TestHandleDebugSetLivesSetsExactLives(t *testing.T) {
 	target := game.New()
 	playerID := target.AddPlayer()
@@ -184,6 +226,48 @@ func TestHandleDebugAddLivesClampsBelowZero(t *testing.T) {
 	}
 
 	assertPlayerPacketLives(t, target, playerID, 0)
+}
+
+func TestHandleDebugSetLivesTargetsAllPlayers(t *testing.T) {
+	target := game.New()
+	callerID := target.AddPlayer()
+	otherPlayerID := target.AddPlayer()
+
+	ok := HandleCommand(target, callerID, DebugCommand{
+		Type:        PacketTypeDebugSetLives,
+		TargetScope: targetScopeAllPlayers,
+		Lives:       7,
+	})
+	if !ok {
+		t.Fatalf("expected HandleCommand to return true")
+	}
+
+	assertPlayerPacketLives(t, target, callerID, 7)
+	assertPlayerPacketLives(t, target, otherPlayerID, 7)
+}
+
+func TestHandleDebugAddLivesTargetsAllPlayers(t *testing.T) {
+	target := game.New()
+	callerID := target.AddPlayer()
+	otherPlayerID := target.AddPlayer()
+
+	HandleCommand(target, callerID, DebugCommand{
+		Type:        PacketTypeDebugSetLives,
+		TargetScope: targetScopeAllPlayers,
+		Lives:       3,
+	})
+
+	ok := HandleCommand(target, callerID, DebugCommand{
+		Type:        PacketTypeDebugAddLives,
+		TargetScope: targetScopeAllPlayers,
+		Amount:      2,
+	})
+	if !ok {
+		t.Fatalf("expected HandleCommand to return true")
+	}
+
+	assertPlayerPacketLives(t, target, callerID, 5)
+	assertPlayerPacketLives(t, target, otherPlayerID, 5)
 }
 
 func TestHandleDebugSetScoreTargetsAnotherPlayer(t *testing.T) {

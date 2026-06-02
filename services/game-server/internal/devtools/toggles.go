@@ -22,37 +22,71 @@ func freezeTargetFromCommand(command DebugCommand) string {
 }
 
 func handleToggleDebugInvincible(target *game.Game, playerID string, command DebugCommand) bool {
-	targetPlayerID := command.TargetPlayerID
-	if targetPlayerID == "" {
-		targetPlayerID = playerID
+	targetPlayerIDs := resolveCommandTargetPlayerIDs(target, playerID, command)
+	if command.TargetScope == targetScopeAllPlayers {
+		setDebugInvincibleForPlayers(target, playerID, targetPlayerIDs, nextAllPlayersToggleState(targetPlayerIDs, target.DevtoolsPlayerInvincible))
+		return true
 	}
 
-	current, _ := target.DevtoolsPlayerInvincible(targetPlayerID)
-	enabled := !current
-	target.DevtoolsSetPlayerInvincible(targetPlayerID, enabled)
-	logging.Game.Info("debug invincibility toggled",
-		logging.FieldPlayerID, playerID,
-		"target_player_id", targetPlayerID,
-		"enabled", enabled,
-	)
+	for _, targetPlayerID := range targetPlayerIDs {
+		toggleDebugInvincibleForPlayer(target, playerID, targetPlayerID)
+	}
 	return true
 }
 
-func handleToggleDebugInfiniteLives(target *game.Game, playerID string, command DebugCommand) bool {
-	targetPlayerID := command.TargetPlayerID
-	if targetPlayerID == "" {
-		targetPlayerID = playerID
-	}
-
-	current, _ := target.DevtoolsInfiniteLives(targetPlayerID)
+func toggleDebugInvincibleForPlayer(target *game.Game, playerID string, targetPlayerID string) {
+	current, _ := target.DevtoolsPlayerInvincible(targetPlayerID)
 	enabled := !current
-	target.DevtoolsSetInfiniteLives(targetPlayerID, enabled)
-	logging.Game.Info("debug infinite lives toggled",
+	setDebugInvincibleForPlayer(target, playerID, targetPlayerID, enabled)
+}
+
+func setDebugInvincibleForPlayers(target *game.Game, playerID string, targetPlayerIDs []string, enabled bool) {
+	for _, targetPlayerID := range targetPlayerIDs {
+		setDebugInvincibleForPlayer(target, playerID, targetPlayerID, enabled)
+	}
+}
+
+func setDebugInvincibleForPlayer(target *game.Game, playerID string, targetPlayerID string, enabled bool) {
+	target.DevtoolsSetPlayerInvincible(targetPlayerID, enabled)
+	logging.Game.Info("debug invincibility set",
 		logging.FieldPlayerID, playerID,
 		"target_player_id", targetPlayerID,
 		"enabled", enabled,
 	)
+}
+
+func handleToggleDebugInfiniteLives(target *game.Game, playerID string, command DebugCommand) bool {
+	targetPlayerIDs := resolveCommandTargetPlayerIDs(target, playerID, command)
+	if command.TargetScope == targetScopeAllPlayers {
+		setDebugInfiniteLivesForPlayers(target, playerID, targetPlayerIDs, nextAllPlayersToggleState(targetPlayerIDs, target.DevtoolsInfiniteLives))
+		return true
+	}
+
+	for _, targetPlayerID := range targetPlayerIDs {
+		toggleDebugInfiniteLivesForPlayer(target, playerID, targetPlayerID)
+	}
 	return true
+}
+
+func toggleDebugInfiniteLivesForPlayer(target *game.Game, playerID string, targetPlayerID string) {
+	current, _ := target.DevtoolsInfiniteLives(targetPlayerID)
+	enabled := !current
+	setDebugInfiniteLivesForPlayer(target, playerID, targetPlayerID, enabled)
+}
+
+func setDebugInfiniteLivesForPlayers(target *game.Game, playerID string, targetPlayerIDs []string, enabled bool) {
+	for _, targetPlayerID := range targetPlayerIDs {
+		setDebugInfiniteLivesForPlayer(target, playerID, targetPlayerID, enabled)
+	}
+}
+
+func setDebugInfiniteLivesForPlayer(target *game.Game, playerID string, targetPlayerID string, enabled bool) {
+	target.DevtoolsSetInfiniteLives(targetPlayerID, enabled)
+	logging.Game.Info("debug infinite lives set",
+		logging.FieldPlayerID, playerID,
+		"target_player_id", targetPlayerID,
+		"enabled", enabled,
+	)
 }
 
 func handleToggleDebugFreezeWorld(target *game.Game, playerID string, command DebugCommand) bool {
@@ -95,20 +129,52 @@ func handleToggleDebugFreezeWorld(target *game.Game, playerID string, command De
 }
 
 func handleToggleDebugFreezePlayer(target *game.Game, playerID string, command DebugCommand) bool {
-	targetPlayerID := command.TargetPlayerID
-	if targetPlayerID == "" {
-		targetPlayerID = playerID
+	targetPlayerIDs := resolveCommandTargetPlayerIDs(target, playerID, command)
+	if command.TargetScope == targetScopeAllPlayers {
+		setDebugFreezePlayerForPlayers(target, playerID, targetPlayerIDs, nextAllPlayersToggleState(targetPlayerIDs, target.DevtoolsPlayerFrozen))
+		return true
 	}
 
+	for _, targetPlayerID := range targetPlayerIDs {
+		toggleDebugFreezePlayerForPlayer(target, playerID, targetPlayerID)
+	}
+	return true
+}
+
+func toggleDebugFreezePlayerForPlayer(target *game.Game, playerID string, targetPlayerID string) {
 	current, _ := target.DevtoolsPlayerFrozen(targetPlayerID)
 	enabled := !current
+	setDebugFreezePlayerForPlayer(target, playerID, targetPlayerID, enabled)
+}
+
+func setDebugFreezePlayerForPlayers(target *game.Game, playerID string, targetPlayerIDs []string, enabled bool) {
+	for _, targetPlayerID := range targetPlayerIDs {
+		setDebugFreezePlayerForPlayer(target, playerID, targetPlayerID, enabled)
+	}
+}
+
+func setDebugFreezePlayerForPlayer(target *game.Game, playerID string, targetPlayerID string, enabled bool) {
 	target.DevtoolsSetPlayerFrozen(targetPlayerID, enabled)
-	logging.Game.Info("debug player freeze toggled",
+	logging.Game.Info("debug player freeze set",
 		logging.FieldPlayerID, playerID,
 		"target_player_id", targetPlayerID,
 		"enabled", enabled,
 	)
-	return true
+}
+
+func nextAllPlayersToggleState(targetPlayerIDs []string, status func(string) (bool, bool)) bool {
+	if len(targetPlayerIDs) == 0 {
+		return false
+	}
+
+	for _, targetPlayerID := range targetPlayerIDs {
+		enabled, found := status(targetPlayerID)
+		if !found || !enabled {
+			return true
+		}
+	}
+
+	return false
 }
 
 func handleDebugKillPlayer(target *game.Game, playerID string, command DebugCommand) bool {
@@ -116,11 +182,13 @@ func handleDebugKillPlayer(target *game.Game, playerID string, command DebugComm
 		return true
 	}
 
-	targetPlayerID := command.TargetPlayerID
-	if targetPlayerID == "" {
-		targetPlayerID = playerID
+	for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
+		killDebugPlayerTarget(target, playerID, targetPlayerID)
 	}
+	return true
+}
 
+func killDebugPlayerTarget(target *game.Game, playerID string, targetPlayerID string) {
 	isPlayerAlive := false
 	for _, player := range target.MatchDecision().Players {
 		if player.ID == targetPlayerID {
@@ -130,9 +198,8 @@ func handleDebugKillPlayer(target *game.Game, playerID string, command DebugComm
 	}
 
 	if !isPlayerAlive {
-		return true
+		return
 	}
 
 	target.DevtoolsKillPlayer(playerID, targetPlayerID)
-	return true
 }

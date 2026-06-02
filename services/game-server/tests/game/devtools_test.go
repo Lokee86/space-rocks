@@ -29,6 +29,46 @@ func TestDebugInvincibleToggleCanBeDisabled(t *testing.T) {
 	}
 }
 
+func TestDebugInvincibleAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInvincible,
+	})
+	if !scenario.playerInvincible(playerA) {
+		t.Fatal("expected setup to make player A invincible")
+	}
+	if scenario.playerInvincible(playerB) {
+		t.Fatal("expected setup to keep player B vulnerable")
+	}
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeToggleDebugInvincible,
+		TargetScope: "all_players",
+	})
+
+	if !scenario.playerInvincible(playerA) {
+		t.Fatal("expected all-players invincible toggle to affect player A")
+	}
+	if !scenario.playerInvincible(playerB) {
+		t.Fatal("expected all-players invincible toggle to affect player B")
+	}
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeToggleDebugInvincible,
+		TargetScope: "all_players",
+	})
+
+	if scenario.playerInvincible(playerA) {
+		t.Fatal("expected second all-players invincible toggle to disable player A")
+	}
+	if scenario.playerInvincible(playerB) {
+		t.Fatal("expected second all-players invincible toggle to disable player B")
+	}
+}
+
 func TestStatePacketDebugStatusReflectsDebugToggles(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
@@ -139,6 +179,46 @@ func TestDebugInfiniteLivesToggleCanBeDisabled(t *testing.T) {
 	}
 }
 
+func TestDebugInfiniteLivesAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugInfiniteLives,
+	})
+	if !scenario.playerInfiniteLives(playerA) {
+		t.Fatal("expected setup to enable infinite lives for player A")
+	}
+	if scenario.playerInfiniteLives(playerB) {
+		t.Fatal("expected setup to keep player B finite")
+	}
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeToggleDebugInfiniteLives,
+		TargetScope: "all_players",
+	})
+
+	if !scenario.playerInfiniteLives(playerA) {
+		t.Fatal("expected all-players infinite lives toggle to affect player A")
+	}
+	if !scenario.playerInfiniteLives(playerB) {
+		t.Fatal("expected all-players infinite lives toggle to affect player B")
+	}
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeToggleDebugInfiniteLives,
+		TargetScope: "all_players",
+	})
+
+	if scenario.playerInfiniteLives(playerA) {
+		t.Fatal("expected second all-players infinite lives toggle to disable player A")
+	}
+	if scenario.playerInfiniteLives(playerB) {
+		t.Fatal("expected second all-players infinite lives toggle to disable player B")
+	}
+}
+
 func TestDebugInfiniteLivesPlayerDiesWithoutLosingLife(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()
@@ -214,6 +294,46 @@ func TestDebugFreezeWorldToggleCanBeDisabled(t *testing.T) {
 	}
 	if scenario.collisionsFrozen() {
 		t.Fatal("expected second toggle to unfreeze collisions")
+	}
+}
+
+func TestDebugFreezePlayerAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type: devtools.PacketTypeToggleDebugFreezePlayer,
+	})
+	if !devtools.StatusFor(scenario.game, playerA).PlayerFrozen {
+		t.Fatal("expected setup to freeze player A")
+	}
+	if devtools.StatusFor(scenario.game, playerB).PlayerFrozen {
+		t.Fatal("expected setup to keep player B unfrozen")
+	}
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeToggleDebugFreezePlayer,
+		TargetScope: "all_players",
+	})
+
+	if !devtools.StatusFor(scenario.game, playerA).PlayerFrozen {
+		t.Fatal("expected all-players freeze player toggle to affect player A")
+	}
+	if !devtools.StatusFor(scenario.game, playerB).PlayerFrozen {
+		t.Fatal("expected all-players freeze player toggle to affect player B")
+	}
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeToggleDebugFreezePlayer,
+		TargetScope: "all_players",
+	})
+
+	if devtools.StatusFor(scenario.game, playerA).PlayerFrozen {
+		t.Fatal("expected second all-players freeze player toggle to unfreeze player A")
+	}
+	if devtools.StatusFor(scenario.game, playerB).PlayerFrozen {
+		t.Fatal("expected second all-players freeze player toggle to unfreeze player B")
 	}
 }
 
@@ -666,5 +786,150 @@ func TestDebugKillPlayerCanKillAnotherActivePlayer(t *testing.T) {
 	expectedLives := constants.PlayerStartingLives - 1
 	if packetB.Lives != expectedLives {
 		t.Fatalf("expected target debug kill to reduce lives to %d, got %d", expectedLives, packetB.Lives)
+	}
+}
+
+func TestDebugKillPlayerAllPlayersAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugKillPlayer,
+		TargetScope: "all_players",
+	})
+
+	if !scenario.playerPendingDespawn(playerA) {
+		t.Fatal("expected all-players debug kill to mark player A pending despawn")
+	}
+	if !scenario.playerPendingDespawn(playerB) {
+		t.Fatal("expected all-players debug kill to mark player B pending despawn")
+	}
+}
+
+func TestDebugSetScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugSetScore,
+		TargetScope: "all_players",
+		Score:       44,
+	})
+
+	if score := scenario.playerState(playerA, playerA).Score; score != 44 {
+		t.Fatalf("expected player A score 44, got %d", score)
+	}
+	if score := scenario.playerState(playerB, playerB).Score; score != 44 {
+		t.Fatalf("expected player B score 44, got %d", score)
+	}
+}
+
+func TestDebugAddScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugSetScore,
+		TargetScope: "all_players",
+		Score:       10,
+	})
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugAddScore,
+		TargetScope: "all_players",
+		Amount:      6,
+	})
+
+	if score := scenario.playerState(playerA, playerA).Score; score != 16 {
+		t.Fatalf("expected player A score 16, got %d", score)
+	}
+	if score := scenario.playerState(playerB, playerB).Score; score != 16 {
+		t.Fatalf("expected player B score 16, got %d", score)
+	}
+}
+
+func TestDebugSetLivesAllPlayersAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugSetLives,
+		TargetScope: "all_players",
+		Lives:       7,
+	})
+
+	if lives := scenario.state(playerA).Lives; lives != 7 {
+		t.Fatalf("expected player A packet lives 7, got %d", lives)
+	}
+	if lives := scenario.state(playerB).Lives; lives != 7 {
+		t.Fatalf("expected player B packet lives 7, got %d", lives)
+	}
+}
+
+func TestDebugAddLivesAllPlayersAppliesToEveryPlayer(t *testing.T) {
+	scenario := newScenario(t)
+	playerA := scenario.addPlayer()
+	playerB := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugSetLives,
+		TargetScope: "all_players",
+		Lives:       3,
+	})
+	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugAddLives,
+		TargetScope: "all_players",
+		Amount:      2,
+	})
+
+	if lives := scenario.state(playerA).Lives; lives != 5 {
+		t.Fatalf("expected player A packet lives 5, got %d", lives)
+	}
+	if lives := scenario.state(playerB).Lives; lives != 5 {
+		t.Fatalf("expected player B packet lives 5, got %d", lives)
+	}
+}
+
+func TestDebugRespawnPlayerAllPlayersRespawnsEligiblePlayersAndIgnoresActivePlayers(t *testing.T) {
+	scenario := newScenario(t)
+	activePlayerID := scenario.addPlayer()
+	respawnEligiblePlayerID := scenario.addPlayer()
+	activePlayerBefore := scenario.playerState(activePlayerID, activePlayerID)
+	respawnPosition := physics.Vector2{X: 321, Y: 654}
+
+	scenario.removePlayerEntity(respawnEligiblePlayerID)
+	scenario.setSessionSpawnPosition(respawnEligiblePlayerID, respawnPosition)
+
+	devtools.HandleCommand(scenario.game, activePlayerID, devtools.DebugCommand{
+		Type:        devtools.PacketTypeDebugRespawnPlayer,
+		TargetScope: "all_players",
+	})
+
+	if !scenario.playerEntityExists(respawnEligiblePlayerID) {
+		t.Fatal("expected all-players debug respawn to recreate the eligible player entity")
+	}
+	respawned := scenario.playerState(activePlayerID, respawnEligiblePlayerID)
+	if respawned.X != respawnPosition.X || respawned.Y != respawnPosition.Y {
+		t.Fatalf(
+			"expected eligible player to respawn at (%v, %v), got (%v, %v)",
+			respawnPosition.X,
+			respawnPosition.Y,
+			respawned.X,
+			respawned.Y,
+		)
+	}
+
+	activePlayerAfter := scenario.playerState(activePlayerID, activePlayerID)
+	if activePlayerAfter.X != activePlayerBefore.X || activePlayerAfter.Y != activePlayerBefore.Y {
+		t.Fatalf(
+			"expected active player to be ignored by respawn guard and stay at (%v, %v), got (%v, %v)",
+			activePlayerBefore.X,
+			activePlayerBefore.Y,
+			activePlayerAfter.X,
+			activePlayerAfter.Y,
+		)
 	}
 }

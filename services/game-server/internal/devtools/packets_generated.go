@@ -21,6 +21,7 @@ const (
 type DebugCommand struct {
 	Type           string  `json:"type"`
 	TargetPlayerID string  `json:"target_player_id"`
+	TargetScope    string  `json:"target_scope"`
 	EntityType     string  `json:"entity_type"`
 	X              float64 `json:"x"`
 	Y              float64 `json:"y"`

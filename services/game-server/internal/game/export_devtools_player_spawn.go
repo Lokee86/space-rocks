@@ -1,6 +1,7 @@
 package game
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 
@@ -26,6 +27,29 @@ func (game *Game) DevtoolsPlayerIDOccupied(playerID string) bool {
 
 func (game *Game) DevtoolsReservePlayerID(playerID string) bool {
 	return game.reserveDevtoolsPlayerID(playerID)
+}
+
+func (game *Game) DevtoolsTargetPlayerIDs() []string {
+	playerIDs := make(map[string]struct{}, len(game.playerSessions)+len(game.state.Players))
+	for playerID := range game.playerSessions {
+		if playerID == "" {
+			continue
+		}
+		playerIDs[playerID] = struct{}{}
+	}
+	for playerID := range game.state.Players {
+		if playerID == "" {
+			continue
+		}
+		playerIDs[playerID] = struct{}{}
+	}
+
+	ids := make([]string, 0, len(playerIDs))
+	for playerID := range playerIDs {
+		ids = append(ids, playerID)
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 func (game *Game) ensureDevtoolsPlayerSession(playerID string, spawnPosition physics.Vector2) *playerSession {

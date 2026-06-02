@@ -6,11 +6,25 @@ import (
 )
 
 func handleDebugRespawnPlayer(target *game.Game, playerID string, command DebugCommand) bool {
-	request := RespawnPlayerRequest{
+	if command.TargetScope == targetScopeAllPlayers {
+		for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
+			handleDebugRespawnPlayerTarget(target, playerID, RespawnPlayerRequest{
+				TargetPlayerID: targetPlayerID,
+				X:              command.X,
+				Y:              command.Y,
+			})
+		}
+		return true
+	}
+
+	return handleDebugRespawnPlayerTarget(target, playerID, RespawnPlayerRequest{
 		TargetPlayerID: command.TargetPlayerID,
 		X:              command.X,
 		Y:              command.Y,
-	}
+	})
+}
+
+func handleDebugRespawnPlayerTarget(target *game.Game, playerID string, request RespawnPlayerRequest) bool {
 	logging.Game.Info("debug respawn player received",
 		logging.FieldPlayerID, playerID,
 		"target_player_id", request.TargetPlayerID,

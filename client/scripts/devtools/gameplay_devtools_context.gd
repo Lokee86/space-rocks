@@ -152,16 +152,16 @@ func _connect_window_controller_signals() -> void:
 			devtools_window_controller.connect("game_target_clear_requested", game_target_clear_callable)
 
 
-func request_toggle_invincible(target_player_id: String = "") -> void:
+func request_toggle_invincible(target_scope: String = "", target_player_id: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	debug_flow.toggle_invincible(target_player_id)
+	debug_flow.toggle_invincible(target_scope, target_player_id)
 
 
-func request_toggle_infinite_lives(target_player_id: String = "") -> void:
+func request_toggle_infinite_lives(target_scope: String = "", target_player_id: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	debug_flow.toggle_infinite_lives(target_player_id)
+	debug_flow.toggle_infinite_lives(target_scope, target_player_id)
 
 
 func request_toggle_freeze_world(freeze_target: String = "") -> void:
@@ -170,42 +170,42 @@ func request_toggle_freeze_world(freeze_target: String = "") -> void:
 	debug_flow.toggle_freeze_world(freeze_target)
 
 
-func request_toggle_freeze_player(target_player_id: String = "") -> void:
+func request_toggle_freeze_player(target_scope: String = "", target_player_id: String = "") -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	debug_flow.toggle_freeze_player(target_player_id)
+	debug_flow.toggle_freeze_player(target_scope, target_player_id)
 
 
-func request_set_score(target_player_id: String, score: int) -> void:
+func request_set_score(target_scope: String, target_player_id: String, score: int) -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	if target_player_id == "":
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		return
-	debug_flow.set_score(target_player_id, score)
+	debug_flow.set_score(target_scope, target_player_id, score)
 
 
-func request_add_score(target_player_id: String, amount: int) -> void:
+func request_add_score(target_scope: String, target_player_id: String, amount: int) -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	if target_player_id == "":
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		return
-	debug_flow.add_score(target_player_id, amount)
+	debug_flow.add_score(target_scope, target_player_id, amount)
 
 
-func request_set_lives(target_player_id: String, lives: int) -> void:
+func request_set_lives(target_scope: String, target_player_id: String, lives: int) -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	if target_player_id == "":
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		return
-	debug_flow.set_lives(target_player_id, lives)
+	debug_flow.set_lives(target_scope, target_player_id, lives)
 
 
-func request_add_lives(target_player_id: String, amount: int) -> void:
+func request_add_lives(target_scope: String, target_player_id: String, amount: int) -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
-	if target_player_id == "":
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		return
-	debug_flow.add_lives(target_player_id, amount)
+	debug_flow.add_lives(target_scope, target_player_id, amount)
 
 
 func request_clear_bullets() -> void:
@@ -236,8 +236,8 @@ func request_clear_game_target() -> void:
 	request_set_game_target("")
 
 
-func request_respawn_player(target_player_id: String) -> void:
-	if target_player_id == "":
+func request_respawn_player(target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, target_player_id: String = "") -> void:
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, target_player_id is empty")
 		return
 	if !has_received_gameplay_state:
@@ -245,14 +245,14 @@ func request_respawn_player(target_player_id: String) -> void:
 	if dev_connection_service == null || !dev_connection_service.is_configured():
 		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, dev_connection_service is unavailable")
 		return
-	dev_connection_service.send_respawn_player(target_player_id)
+	dev_connection_service.send_respawn_player(target_scope, target_player_id)
 
 
 func request_respawn_local_player() -> void:
 	if local_player_id == "":
 		ClientLogger.game_warn("GameplayDevtoolsContext: local respawn request ignored, local_player_id is empty")
 		return
-	request_respawn_player(local_player_id)
+	request_respawn_player(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, local_player_id)
 
 
 func configure_placement_request_route(route: Callable) -> void:

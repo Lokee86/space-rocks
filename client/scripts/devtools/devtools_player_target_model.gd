@@ -106,7 +106,7 @@ func target_rows() -> Array:
 
 
 func active_player_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_all_players_row()]
 	rows.append_array(_game_target_rows())
 	for player_id in server_players.keys():
 		var player_id_text: String = str(player_id)
@@ -157,7 +157,7 @@ func target_state() -> Dictionary:
 
 
 func invincible_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_all_players_row()]
 	rows.append_array(_game_target_rows())
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
@@ -176,7 +176,7 @@ func invincible_target_rows() -> Array:
 
 
 func infinite_lives_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_all_players_row()]
 	rows.append_array(_game_target_rows())
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
@@ -195,7 +195,7 @@ func infinite_lives_target_rows() -> Array:
 
 
 func player_frozen_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_all_players_row()]
 	rows.append_array(_game_target_rows())
 	for row in target_rows():
 		var player_id_text: String = str(row.get("player_id", ""))
@@ -213,8 +213,14 @@ func player_frozen_target_rows() -> Array:
 	return rows
 
 
+func respawn_player_target_rows() -> Array:
+	var rows: Array = [_all_players_row()]
+	rows.append_array(target_rows())
+	return rows
+
+
 func kill_player_target_rows() -> Array:
-	var rows: Array = []
+	var rows: Array = [_all_players_row()]
 	rows.append_array(_game_target_rows())
 	rows.append_array(target_rows())
 	return rows
@@ -239,6 +245,14 @@ func _feature_target_rows(feature_key: String) -> Array:
 		})
 
 	return rows
+
+
+func _all_players_row() -> Dictionary:
+	return {
+		"player_id": DevtoolsTargetResolver.TARGET_ALL_PLAYERS,
+		"label": DevtoolsTargetResolver.TARGET_ALL_PLAYERS_LABEL,
+		"is_self": false,
+	}
 
 
 func _player_feature_enabled(player_id: String, feature_key: String) -> bool:

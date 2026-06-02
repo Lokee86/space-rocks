@@ -136,6 +136,29 @@ Devtools window actions use player-select controls populated from current gamepl
 - Infinite Lives
 - Freeze Player
 
+Eligible player-targeted controls now include `All Players` as the first/default option for:
+
+- Kill Player
+- Respawn Player
+- Invincibility
+- Infinite Lives
+- Freeze Player
+- Set Score
+- Add Score
+- Set Lives
+- Add Lives
+
+`All Players` uses `target_scope=all_players`, not a fake player ID.
+
+Invincibility, Infinite Lives, and Freeze Player use set-style all-player behavior:
+
+- The first all-player click activates all eligible players unless every eligible player is already active.
+- A later all-player click deactivates all only when every eligible player is already active.
+
+Respawn Player all-player requests still use the existing per-player respawn guards, so active or otherwise ineligible players are ignored through the same path as single-player respawn.
+
+Spawn Player, Game Target, and World Freeze are not part of this `All Players` target-list change.
+
 Player selectors may include a compact `Game Target` row when canonical target is a player.
 
 - This row is valid for player-only controls only when canonical `target_kind` is `player`.

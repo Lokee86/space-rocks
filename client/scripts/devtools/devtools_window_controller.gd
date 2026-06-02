@@ -1,20 +1,20 @@
 class_name DevtoolsWindowController
 extends RefCounted
 
-signal toggle_invincible_requested(target_player_id: String)
-signal toggle_infinite_lives_requested(target_player_id: String)
+signal toggle_invincible_requested(target_scope: String, target_player_id: String)
+signal toggle_infinite_lives_requested(target_scope: String, target_player_id: String)
 signal toggle_freeze_world_requested(freeze_target: String)
-signal toggle_freeze_player_requested(target_player_id: String)
-signal set_score_requested(target_player_id: String, score: int)
-signal add_score_requested(target_player_id: String, amount: int)
-signal set_lives_requested(target_player_id: String, lives: int)
-signal add_lives_requested(target_player_id: String, amount: int)
+signal toggle_freeze_player_requested(target_scope: String, target_player_id: String)
+signal set_score_requested(target_scope: String, target_player_id: String, score: int)
+signal add_score_requested(target_scope: String, target_player_id: String, amount: int)
+signal set_lives_requested(target_scope: String, target_player_id: String, lives: int)
+signal add_lives_requested(target_scope: String, target_player_id: String, amount: int)
 signal clear_bullets_requested
 signal clear_asteroids_requested
 signal game_target_set_requested(target_player_id: String)
 signal game_target_clear_requested
 signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
-signal respawn_player_requested(target_player_id: String)
+signal respawn_player_requested(target_scope: String, target_player_id: String)
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
@@ -235,17 +235,23 @@ func _connect_window_signals() -> void:
 
 
 func _on_toggle_invincible_requested(target_player_id: String) -> void:
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	if str(target_context.get("target_scope", "")) == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and str(target_context.get("target_player_id", "")) == "":
 		return
-	toggle_invincible_requested.emit(effective_target_player_id)
+	toggle_invincible_requested.emit(
+		str(target_context.get("target_scope", "")),
+		str(target_context.get("target_player_id", ""))
+	)
 
 
 func _on_toggle_infinite_lives_requested(target_player_id: String) -> void:
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	if str(target_context.get("target_scope", "")) == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and str(target_context.get("target_player_id", "")) == "":
 		return
-	toggle_infinite_lives_requested.emit(effective_target_player_id)
+	toggle_infinite_lives_requested.emit(
+		str(target_context.get("target_scope", "")),
+		str(target_context.get("target_player_id", ""))
+	)
 
 
 func _on_toggle_freeze_world_requested(freeze_target: String) -> void:
@@ -253,38 +259,57 @@ func _on_toggle_freeze_world_requested(freeze_target: String) -> void:
 
 
 func _on_toggle_freeze_player_requested(target_player_id: String) -> void:
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	if str(target_context.get("target_scope", "")) == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and str(target_context.get("target_player_id", "")) == "":
 		return
-	toggle_freeze_player_requested.emit(effective_target_player_id)
+	toggle_freeze_player_requested.emit(
+		str(target_context.get("target_scope", "")),
+		str(target_context.get("target_player_id", ""))
+	)
 
 
 func _on_set_score_requested(target_player_id: String, score: int) -> void:
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	if str(target_context.get("target_scope", "")) == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and str(target_context.get("target_player_id", "")) == "":
 		return
-	set_score_requested.emit(effective_target_player_id, score)
+	set_score_requested.emit(
+		str(target_context.get("target_scope", "")),
+		str(target_context.get("target_player_id", "")),
+		score
+	)
 
 
 func _on_add_score_requested(target_player_id: String, amount: int) -> void:
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	if str(target_context.get("target_scope", "")) == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and str(target_context.get("target_player_id", "")) == "":
 		return
-	add_score_requested.emit(effective_target_player_id, amount)
+	add_score_requested.emit(
+		str(target_context.get("target_scope", "")),
+		str(target_context.get("target_player_id", "")),
+		amount
+	)
 
 
 func _on_set_lives_requested(target_player_id: String, lives: int) -> void:
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	if str(target_context.get("target_scope", "")) == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and str(target_context.get("target_player_id", "")) == "":
 		return
-	set_lives_requested.emit(effective_target_player_id, lives)
+	set_lives_requested.emit(
+		str(target_context.get("target_scope", "")),
+		str(target_context.get("target_player_id", "")),
+		lives
+	)
 
 
 func _on_add_lives_requested(target_player_id: String, amount: int) -> void:
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	if str(target_context.get("target_scope", "")) == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and str(target_context.get("target_player_id", "")) == "":
 		return
-	add_lives_requested.emit(effective_target_player_id, amount)
+	add_lives_requested.emit(
+		str(target_context.get("target_scope", "")),
+		str(target_context.get("target_player_id", "")),
+		amount
+	)
 
 
 func _on_clear_bullets_requested() -> void:
@@ -307,14 +332,20 @@ func _on_kill_player_requested(selected_player_id: String) -> void:
 	if connection_service == null:
 		return
 
-	var target_player_id := _effective_target(selected_player_id)
-	if target_player_id == "":
+	var target_context := _effective_target_context(selected_player_id)
+	var target_scope := str(target_context.get("target_scope", ""))
+	var target_player_id := str(target_context.get("target_player_id", ""))
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS:
+		connection_service.send_debug_kill_player_request(target_scope, "")
+		return
+
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		return
 
 	if target_player_id == self_player_id:
-		connection_service.send_debug_kill_player_request()
+		connection_service.send_debug_kill_player_request(target_scope, "")
 	else:
-		connection_service.send_debug_kill_target_player_request(target_player_id)
+		connection_service.send_debug_kill_target_player_request(target_player_id, target_scope)
 
 
 func _on_spawn_asteroid_placement_requested() -> void:
@@ -334,16 +365,32 @@ func _on_spawn_bullet_placement_requested() -> void:
 
 func _on_respawn_player_placement_requested(target_player_id: String) -> void:
 	ClientLogger.game_info("Devtools respawn placement received target_player_id='%s'" % target_player_id)
-	var effective_target_player_id := _effective_target(target_player_id)
-	if effective_target_player_id == "":
+	var target_context := _effective_target_context(target_player_id)
+	var target_scope := str(target_context.get("target_scope", ""))
+	var effective_target_player_id := str(target_context.get("target_player_id", ""))
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS:
+		ClientLogger.game_info("Devtools respawn all-players request starting")
+		respawn_player_requested.emit(target_scope, "")
+		return
+
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and effective_target_player_id == "":
 		ClientLogger.game_warn("Devtools respawn placement blocked: effective target_player_id is empty")
 		return
 	ClientLogger.game_info("Devtools respawn direct request starting")
-	respawn_player_requested.emit(effective_target_player_id)
+	respawn_player_requested.emit(target_scope, effective_target_player_id)
 
 
 func _effective_target(selected_tool_target: String) -> String:
 	return DevtoolsTargetResolver.resolve_player_target(
+		selected_tool_target,
+		game_target_kind,
+		game_target_id,
+		self_player_id
+	)
+
+
+func _effective_target_context(selected_tool_target: String) -> Dictionary:
+	return DevtoolsTargetResolver.resolve_player_target_scope(
 		selected_tool_target,
 		game_target_kind,
 		game_target_id,
