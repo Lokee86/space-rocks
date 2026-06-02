@@ -1,9 +1,9 @@
 extends Node
 
 
-const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
 const DevToolsSessionFlow := preload("res://scripts/devtools/dev_tools_session_flow.gd")
+const SpectateSessionFlow := preload("res://scripts/gameplay/spectate/spectate_session_flow.gd")
 
 var connection_service
 var scene_root: Node
@@ -22,7 +22,7 @@ var gameplay_presentation_flow
 var gameplay_hud_flow
 var gameplay_menu_flow
 var dev_tools_session_flow
-var spectate_menu_state
+var spectate_session_flow
 var has_received_gameplay_state := false
 var accepts_gameplay_packets := false
 
@@ -54,8 +54,6 @@ func configure(
 	gameplay_hud_flow.configure(hud)
 	gameplay_menu_flow = GameplayMenuFlow.new()
 	gameplay_menu_flow.configure(hud, connection_service, player, session_context)
-	spectate_menu_state = SpectateMenuState.new()
-	gameplay_menu_flow.configure_spectate_menu_state(spectate_menu_state)
 	gameplay_shell_flow = GameplayShellFlow.new()
 	gameplay_shell_flow.configure(
 		connection_service,
@@ -66,8 +64,8 @@ func configure(
 		gameplay_hud_flow,
 		gameplay_menu_flow
 	)
-	if gameplay_shell_flow.has_method("configure_spectate_menu_state"):
-		gameplay_shell_flow.configure_spectate_menu_state(spectate_menu_state)
+	spectate_session_flow = SpectateSessionFlow.new()
+	spectate_session_flow.configure(gameplay_menu_flow, gameplay_shell_flow)
 	dev_tools_session_flow = DevToolsSessionFlow.new()
 	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, logger)
 	if gameplay_shell_flow != null && gameplay_shell_flow.has_method("configure_debug_placement_route"):
@@ -93,8 +91,8 @@ func handle_gameplay_state(packet: Dictionary) -> void:
 	var state := GameplayStatePacketReader.read(packet)
 	if gameplay_shell_flow != null && gameplay_shell_flow.has_method("refresh_debug_spawn_player_slots"):
 		gameplay_shell_flow.refresh_debug_spawn_player_slots(current_room_max_players())
-	if spectate_menu_state != null:
-		spectate_menu_state.apply_gameplay_state(state)
+	if spectate_session_flow != null:
+		spectate_session_flow.apply_gameplay_state(state)
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.apply_gameplay_state_data(state)
 
@@ -177,8 +175,8 @@ func reset() -> void:
 		gameplay_shell_flow.reset()
 	if gameplay_presentation_flow != null:
 		gameplay_presentation_flow.reset()
-	if spectate_menu_state != null:
-		spectate_menu_state.reset()
+	if spectate_session_flow != null:
+		spectate_session_flow.reset()
 
 
 func configure_room_state_provider(provider: Callable) -> void:

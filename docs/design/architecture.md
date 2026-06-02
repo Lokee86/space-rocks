@@ -38,6 +38,7 @@ Current client runtime seams:
 - `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
 - `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
 - `client/scripts/gameplay/spectate/`: spectate state, menu requests, and view target selection/cycling; it does not own remote camera nodes.
+- `client/scripts/gameplay/spectate/spectate_session_flow.gd`: spectate session wiring. `SpectateSessionFlow` owns `SpectateMenuState` creation, menu/shell configuration, gameplay-state application, and reset delegation.
 - `client/scripts/gameplay/presentation/`: client-side presentation policy, including player hue application and OS indicator hue matching.
 - `client/scripts/gameplay/events/`: server event lane and death/game-over consequences.
 - `client/scripts/gameplay/effects/`: gameplay effects helper used by event/effects flows.
