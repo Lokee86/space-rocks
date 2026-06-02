@@ -123,6 +123,12 @@ func remote_player_visual_positions() -> Dictionary:
 	return world_sync.get_remote_player_visual_positions()
 
 
+func remote_player_hues() -> Dictionary:
+	if world_sync == null:
+		return {}
+	return world_sync.get_remote_player_hues()
+
+
 func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 	if world_sync == null:
 		return visual_position

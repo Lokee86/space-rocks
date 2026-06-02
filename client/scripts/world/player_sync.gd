@@ -100,6 +100,17 @@ func apply(
 	local_visual_position: Vector2,
 	local_server_position: Vector2
 ) -> void:
+	if local_player != null:
+		player_hue_presenter.apply_local_player_hue(local_player)
+
+	var remote_player_ids := []
+	for player_id in server_players.keys():
+		if player_id == self_id:
+			continue
+		remote_player_ids.append(player_id)
+	remote_player_ids.sort()
+	player_hue_presenter.set_remote_player_order(remote_player_ids)
+
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
 		var player_node = get_player_node(self_id, player_id)
@@ -157,6 +168,10 @@ func correct_remote_visual_copy_mismatch(
 
 func apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
 	player_hue_presenter.apply_remote_player_hue(player_id, remote_player)
+
+
+func get_remote_player_hues(current_self_id: String) -> Dictionary:
+	return player_hue_presenter.remote_player_hues_without(current_self_id)
 
 
 func remove_missing(server_players: Dictionary, self_id: String) -> void:

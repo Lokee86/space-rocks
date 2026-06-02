@@ -2,6 +2,10 @@ extends RefCounted
 class_name PlayerHuePresenter
 
 const Constants = preload("res://scripts/constants/constants.gd")
+const REMOTE_HUE_STEP := 0.12
+const PLAYER_COLOR_POLICY_LOCAL_SELECTED := "local_selected"
+const PLAYER_COLOR_POLICY_AUTO_DISTINCT := "auto_distinct"
+const PLAYER_COLOR_POLICY_PLAYER_ID_ASSIGNED := "player_id_assigned"
 
 const REMOTE_PLAYER_HUES := [
 	Constants.REMOTE_PLAYER_HUE_ZERO,
@@ -15,16 +19,24 @@ const REMOTE_PLAYER_HUES := [
 ]
 
 var remote_player_hues := {}
+var remote_player_order := []
+var local_player_hue := Constants.PLAYER_DEFAULT_HUE
 
 
 func reset() -> void:
 	remote_player_hues.clear()
+	remote_player_order.clear()
+	local_player_hue = Constants.PLAYER_DEFAULT_HUE
 
 
 func apply_local_player_hue(player: Player) -> void:
 	if player == null:
 		return
-	player.set_player_hue(Constants.LOCAL_PLAYER_DEFAULT_HUE)
+	local_player_hue = player.player_hue
+
+
+func set_remote_player_order(remote_player_ids: Array) -> void:
+	remote_player_order = remote_player_ids.duplicate()
 
 
 func apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
@@ -66,15 +78,28 @@ func remote_player_hues_without(current_self_id: String) -> Dictionary:
 
 
 func remote_hue_for_player(player_id: String) -> float:
-	if REMOTE_PLAYER_HUES.is_empty():
-		return Constants.REMOTE_PLAYER_FALLBACK_HUE
+	var player_color_policy := _player_color_policy()
+	if player_color_policy != PLAYER_COLOR_POLICY_LOCAL_SELECTED \
+			and player_color_policy != PLAYER_COLOR_POLICY_AUTO_DISTINCT \
+			and player_color_policy != PLAYER_COLOR_POLICY_PLAYER_ID_ASSIGNED:
+		player_color_policy = PLAYER_COLOR_POLICY_AUTO_DISTINCT
 
-	var start_index := player_id_hash(player_id) % REMOTE_PLAYER_HUES.size()
-	for offset in range(REMOTE_PLAYER_HUES.size()):
-		var hue: float = REMOTE_PLAYER_HUES[(start_index + offset) % REMOTE_PLAYER_HUES.size()]
-		if !hues_similar(hue, Constants.LOCAL_PLAYER_DEFAULT_HUE):
-			return hue
+	if player_color_policy == PLAYER_COLOR_POLICY_PLAYER_ID_ASSIGNED:
+		player_color_policy = PLAYER_COLOR_POLICY_AUTO_DISTINCT
+
+	var slot_index := remote_player_order.find(player_id)
+	if slot_index >= 0:
+		var hue := local_player_hue + (float(slot_index + 1) * REMOTE_HUE_STEP)
+		if hue > 1.0:
+			hue -= 1.0
+		return hue
+	if remote_player_hues.has(player_id):
+		return float(remote_player_hues[player_id])
 	return Constants.REMOTE_PLAYER_FALLBACK_HUE
+
+
+func _player_color_policy() -> String:
+	return str(Constants.PLAYER_COLOR_POLICY)
 
 
 func hues_similar(

@@ -27,8 +27,8 @@ const EFFECT_Z_INDEX := 40
 # data-sync:end constants.client.presentation.rendering
 
 # data-sync:start constants.client.presentation.player_visuals
-const LOCAL_PLAYER_DEFAULT_HUE := 0.0
-const PLAYER_DEFAULT_HUE := 0.0
+const PLAYER_DEFAULT_HUE := 0.85
+const PLAYER_COLOR_POLICY := "auto_distinct"
 const PLAYER_AFTERBURNER_ROTATION_DEGREES := -90.0
 const PLAYER_AFTERBURNER_SCALE := 0.45
 const REMOTE_PLAYER_HUE_ZERO := 0.58

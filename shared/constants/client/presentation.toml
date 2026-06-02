@@ -17,8 +17,8 @@ local_player_z_index = 31
 effect_z_index = 40
 
 [constants.client.presentation.player_visuals]
-local_player_default_hue = 0.0
 player_default_hue = 0.0
+player_color_policy = "auto_distinct"
 player_afterburner_rotation_degrees = -90.0
 player_afterburner_scale = 0.45
 remote_player_hue_zero = 0.58
