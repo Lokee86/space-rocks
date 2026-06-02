@@ -138,7 +138,9 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 
 - Keep authoritative gameplay logic on the Go game server.
 - Keep presentation, UI, audio/effects, and interpolation in the Godot client.
-- Keep websocket and room transport in `services/game-server/internal/networking`.
+- Keep server websocket/session transport in `services/game-server/internal/networking`.
+- Keep server inbound packet handlers in `services/game-server/internal/networking/inbound`.
+- Keep server outbound packet/write helpers in `services/game-server/internal/networking/outbound`.
 - Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
 - Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active Go/GDScript constants.
@@ -146,7 +148,9 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.
 - Route client packet wire JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
 - Keep `PlayerID` player-facing and readable, for example `Player-1`/`Player-2`; do not convert it to UUID. UUID upgrades are for server-internal identities such as `SessionID` and `MemberID`.
-- Keep client websocket and packet transport under `client/scripts/networking/`.
+- Keep client websocket transport in `client/scripts/networking/network_client.gd`.
+- Keep client inbound server packet dispatch in `client/scripts/networking/inbound`.
+- Keep client outbound client packet sends in `client/scripts/networking/outbound`.
 - Keep client world sync and entity sync owners under `client/scripts/world/`.
 - Keep packet-facing player lifecycle status in `StatePacket.player_lifecycle`, beside `players`.
 - Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability.

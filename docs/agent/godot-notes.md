@@ -64,6 +64,15 @@ The client codec is intentionally JSON-only and thin. Do not add validation, for
 
 `network_client.gd` still owns websocket behavior.
 
+## Client Packet Routing
+
+- `client/scripts/networking/network_client.gd` owns websocket transport.
+- `client/scripts/networking/client_connection_service.gd` is the public facade and signal bridge.
+- `client/scripts/networking/inbound` owns server packet dispatch and classification.
+- `client/scripts/networking/outbound` owns outbound client packet send helpers.
+- `client/scripts/networking/packets/packets.gd` remains the generated packet helper file.
+- Packet schema changes still go through `shared/packets/` and `tools/data_sync/`, not manual edits to generated files.
+
 ## World Script Paths
 
 Current world sync/wrap ownership paths:
