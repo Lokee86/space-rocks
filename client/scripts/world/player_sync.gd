@@ -109,6 +109,10 @@ func apply(
 		var is_paused: bool = false
 		if pause_state_tracker != null:
 			is_paused = pause_state_tracker.is_paused(player_id)
+		var remote_afterburner_active := false
+		if player_id != self_id:
+			var thrusting := bool(state.get("thrusting", false))
+			remote_afterburner_active = thrusting && !is_paused
 
 		if player_id == self_id:
 			visual_position = local_visual_position
@@ -120,6 +124,8 @@ func apply(
 			)
 			correct_remote_visual_copy_mismatch(player_id, player_node, visual_position)
 			apply_remote_player_hue(player_id, player_node)
+			if player_node.has_method("set_remote_afterburner_visual_active"):
+				player_node.set_remote_afterburner_visual_active(remote_afterburner_active)
 
 		target_player_positions[player_id] = visual_position
 		target_player_rotations[player_id] = server_rotation
@@ -176,6 +182,8 @@ func remove_player_node(self_id: String, player_id: String) -> void:
 		local_player.stop_transient_effects()
 		local_player.visible = false
 	else:
+		if player_node.has_method("stop_transient_effects"):
+			player_node.stop_transient_effects()
 		player_node.queue_free()
 
 	player_nodes.erase(player_id)

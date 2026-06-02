@@ -19,8 +19,9 @@ func (ship *Ship) State() ShipState {
 		TargetKind: ship.TargetKind,
 		TargetID: ship.TargetID,
 		TargetPlayerID: targetPlayerID,
-		Health:   ship.Health,
-		Shields:  ship.Shields,
+		Health:    ship.Health,
+		Shields:   ship.Shields,
+		Thrusting: ship.Input.Forward,
 	}
 }
 

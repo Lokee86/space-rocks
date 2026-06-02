@@ -24,6 +24,7 @@ type ShipState struct {
 	Lives          int     `json:"lives"`
 	Health         int     `json:"health"`
 	Shields        int     `json:"shields"`
+	Thrusting      bool    `json:"thrusting"`
 	TargetPlayerID string  `json:"target_player_id"`
 	TargetKind     string  `json:"target_kind"`
 	TargetID       string  `json:"target_id"`

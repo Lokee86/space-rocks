@@ -172,6 +172,11 @@ json = "shields"
 type = "int"
 
 [[structs.fields]]
+name = "thrusting"
+json = "thrusting"
+type = "bool"
+
+[[structs.fields]]
 name = "target_player_id"
 go_name = "TargetPlayerID"
 json = "target_player_id"
@@ -339,6 +344,16 @@ json = "player_lifecycle"
 type = "map"
 key_type = "string"
 value_type = "string"
+
+[[structs.fields]]
+name = "player_world_states"
+go_name = "PlayerWorldStates"
+json = "player_world_states"
+type = "map"
+key_type = "string"
+value_type = "WorldState"
+go_value_type = "player.WorldState"
+go_import = "github.com/Lokee86/space-rocks/server/internal/game/player"
 
 [[structs.fields]]
 name = "bullets"
