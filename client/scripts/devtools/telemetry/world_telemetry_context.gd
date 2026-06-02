@@ -48,6 +48,19 @@ func toggle_overlay() -> void:
 		overlay_flow.toggle_overlay()
 
 
+func telemetry_snapshot() -> Dictionary:
+	var snapshot := {}
+	if network_metrics != null:
+		var network_snapshot = network_metrics.snapshot()
+		for key in network_snapshot.keys():
+			snapshot[key] = network_snapshot[key]
+	if overlay_flow != null and overlay_flow.has_method("world_packet_metrics_snapshot"):
+		var world_packet_snapshot = overlay_flow.world_packet_metrics_snapshot()
+		for key in world_packet_snapshot.keys():
+			snapshot[key] = world_packet_snapshot[key]
+	return snapshot
+
+
 func _on_telemetry_pong_received(packet: Dictionary) -> void:
 	if network_metrics != null:
 		network_metrics.apply_pong(packet)
