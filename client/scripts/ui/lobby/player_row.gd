@@ -22,7 +22,7 @@ func set_member(member_name, is_ready, member_connected := true, is_owner := fal
 	if player_name_label != null:
 		player_name_label.text = str(member_name)
 	if player_ready_label != null:
-		player_ready_label.text = "Ready" if ready else "Not Ready"
+		player_ready_label.text = "Ready" if member_ready else "Not Ready"
 	if owner_indicator != null:
 		owner_indicator.visible = bool(is_owner)
 	if ready_green != null:
