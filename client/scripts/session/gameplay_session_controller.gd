@@ -3,11 +3,7 @@ extends Node
 
 const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
-const DebugKillInputFlow := preload("res://scripts/gameplay/devtools/debug_kill_input_flow.gd")
-const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
-const DebugMouseWorldPosition := preload("res://scripts/gameplay/devtools/debug_mouse_world_position.gd")
-const DebugClickPlacementFlow := preload("res://scripts/gameplay/devtools/debug_click_placement_flow.gd")
-const DebugContinuousBulletSpawnFlow := preload("res://scripts/gameplay/devtools/debug_continuous_bullet_spawn_flow.gd")
+const DevToolsSessionFlow := preload("res://scripts/devtools/dev_tools_session_flow.gd")
 
 var connection_service
 var scene_root: Node
@@ -25,11 +21,7 @@ var gameplay_shell_flow
 var gameplay_presentation_flow
 var gameplay_hud_flow
 var gameplay_menu_flow
-var debug_kill_input_flow
-var dev_connection_service
-var debug_mouse_world_position
-var debug_click_placement_flow
-var debug_continuous_bullet_spawn_flow
+var dev_tools_session_flow
 var spectate_menu_state
 var has_received_gameplay_state := false
 var accepts_gameplay_packets := false
@@ -62,10 +54,6 @@ func configure(
 	gameplay_hud_flow.configure(hud)
 	gameplay_menu_flow = GameplayMenuFlow.new()
 	gameplay_menu_flow.configure(hud, connection_service, player, session_context)
-	debug_kill_input_flow = DebugKillInputFlow.new()
-	debug_kill_input_flow.configure(connection_service)
-	dev_connection_service = DevConnectionService.new()
-	dev_connection_service.configure(connection_service)
 	spectate_menu_state = SpectateMenuState.new()
 	gameplay_menu_flow.configure_spectate_menu_state(spectate_menu_state)
 	gameplay_shell_flow = GameplayShellFlow.new()
@@ -78,34 +66,14 @@ func configure(
 		gameplay_hud_flow,
 		gameplay_menu_flow
 	)
-	if scene_root is Node2D:
-		debug_mouse_world_position = DebugMouseWorldPosition.new()
-		debug_mouse_world_position.configure(
-			scene_root,
-			Callable(gameplay_shell_flow, "server_position_for_visual_position")
-		)
-		debug_click_placement_flow = DebugClickPlacementFlow.new()
-		debug_click_placement_flow.configure(debug_mouse_world_position)
-		debug_click_placement_flow.placement_completed.connect(
-			Callable(self, "_on_debug_click_placement_completed")
-		)
-		debug_click_placement_flow.placement_cancelled.connect(
-			Callable(self, "_on_debug_click_placement_cancelled")
-		)
-		debug_continuous_bullet_spawn_flow = DebugContinuousBulletSpawnFlow.new()
-		debug_continuous_bullet_spawn_flow.configure(debug_mouse_world_position)
-		debug_continuous_bullet_spawn_flow.placement_completed.connect(
-			Callable(self, "_on_debug_continuous_bullet_spawn_completed")
-		)
-		debug_continuous_bullet_spawn_flow.placement_cancelled.connect(
-			Callable(self, "_on_debug_continuous_bullet_spawn_cancelled")
-		)
-		if gameplay_shell_flow != null && gameplay_shell_flow.has_method("configure_debug_placement_route"):
-			gameplay_shell_flow.configure_debug_placement_route(
-				Callable(self, "begin_debug_click_placement")
-			)
 	if gameplay_shell_flow.has_method("configure_spectate_menu_state"):
 		gameplay_shell_flow.configure_spectate_menu_state(spectate_menu_state)
+	dev_tools_session_flow = DevToolsSessionFlow.new()
+	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, logger)
+	if gameplay_shell_flow != null && gameplay_shell_flow.has_method("configure_debug_placement_route"):
+		gameplay_shell_flow.configure_debug_placement_route(
+			Callable(dev_tools_session_flow, "begin_debug_click_placement")
+		)
 	_configure_gameplay_presentation_flow()
 	_connect_gameplay_shell_signal("gameplay_started", Callable(self, "_on_gameplay_started"))
 	_connect_gameplay_shell_signal(
@@ -145,24 +113,16 @@ func begin_accepting_gameplay_packets() -> void:
 func _process(delta: float) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.process(delta)
-	if debug_kill_input_flow != null:
-		debug_kill_input_flow.process()
-	if debug_continuous_bullet_spawn_flow != null:
-		debug_continuous_bullet_spawn_flow.process(delta)
+	if dev_tools_session_flow != null:
+		dev_tools_session_flow.process(delta)
 	if gameplay_presentation_flow != null:
 		gameplay_presentation_flow.process(delta, has_received_gameplay_state)
 
 
 func _input(event: InputEvent) -> void:
-	if debug_continuous_bullet_spawn_flow != null and debug_continuous_bullet_spawn_flow.is_active():
-		if debug_continuous_bullet_spawn_flow.handle_unhandled_input(event):
-			get_viewport().set_input_as_handled()
-			return
-
-	if debug_click_placement_flow != null and debug_click_placement_flow.is_active():
-		if debug_click_placement_flow.handle_unhandled_input(event):
-			get_viewport().set_input_as_handled()
-			return
+	if dev_tools_session_flow != null and dev_tools_session_flow.handle_input(event):
+		get_viewport().set_input_as_handled()
+		return
 
 	if _hud_should_receive_mouse_event(event):
 		return
@@ -197,17 +157,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func begin_debug_click_placement(action_name: StringName, placement_context: Dictionary = {}) -> void:
-	if action_name == &"continuous_spawn_bullet":
-		if debug_continuous_bullet_spawn_flow == null:
-			return
-		debug_continuous_bullet_spawn_flow.begin(placement_context)
-		return
-	if debug_click_placement_flow == null:
-		return
-	debug_click_placement_flow.begin(action_name, placement_context)
-
-
 func _configure_gameplay_presentation_flow() -> void:
 	gameplay_presentation_flow = GameplayPresentationFlow.new()
 	gameplay_presentation_flow.configure(
@@ -222,6 +171,8 @@ func _configure_gameplay_presentation_flow() -> void:
 func reset() -> void:
 	accepts_gameplay_packets = false
 	has_received_gameplay_state = false
+	if dev_tools_session_flow != null:
+		dev_tools_session_flow.reset()
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.reset()
 	if gameplay_presentation_flow != null:
@@ -278,42 +229,6 @@ func _on_gameplay_return_to_lobby_requested() -> void:
 	if connection_service != null:
 		connection_service.send_return_to_lobby_request()
 	reset()
-
-
-func _on_debug_click_placement_completed(result: Dictionary) -> void:
-	_log(
-		"Debug click placement completed: %s at %s has_direction=%s direction=%s"
-		% [
-			String(result.get("action_name", StringName())),
-			str(result.get("server_position", Vector2.ZERO)),
-			str(result.get("has_direction", false)),
-			str(result.get("direction", Vector2.ZERO))
-		]
-	)
-	if gameplay_shell_flow != null && gameplay_shell_flow.has_method("handle_debug_placement_result"):
-		gameplay_shell_flow.handle_debug_placement_result(result)
-
-
-func _on_debug_click_placement_cancelled(action_name: StringName) -> void:
-	_log("Debug click placement cancelled: %s" % String(action_name))
-
-
-func _on_debug_continuous_bullet_spawn_cancelled(action_name: StringName) -> void:
-	_log("Debug continuous bullet spawn cancelled: %s" % String(action_name))
-
-
-func _on_debug_continuous_bullet_spawn_completed(result: Dictionary) -> void:
-	_log(
-		"Debug continuous bullet stream placement completed: %s at %s has_direction=%s direction=%s"
-		% [
-			String(result.get("action_name", StringName())),
-			str(result.get("server_position", Vector2.ZERO)),
-			str(result.get("has_direction", false)),
-			str(result.get("direction", Vector2.ZERO))
-		]
-	)
-	if dev_connection_service != null && dev_connection_service.has_method("send_begin_continuous_bullet_stream_from_placement_result"):
-		dev_connection_service.send_begin_continuous_bullet_stream_from_placement_result(result)
 
 
 func _log(message: String) -> void:
