@@ -143,11 +143,13 @@ func remove_missing(server_players: Dictionary, self_id: String) -> void:
 func remove_player_node(self_id: String, player_id: String) -> void:
 	if !player_nodes.has(player_id):
 		if player_id == self_id:
+			local_player.stop_transient_effects()
 			local_player.visible = false
 		return
 
 	var player_node = player_nodes[player_id]
 	if player_node == local_player:
+		local_player.stop_transient_effects()
 		local_player.visible = false
 	else:
 		player_node.queue_free()

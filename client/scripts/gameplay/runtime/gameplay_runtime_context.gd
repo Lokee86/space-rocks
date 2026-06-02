@@ -39,7 +39,7 @@ func configure_events(
 		Callable(world_sync, "visual_position_for_server_position")
 	)
 	death_flow = GameplayDeathFlow.new()
-	death_flow.configure(hud_flow_ref, menu_flow_ref, event_flow)
+	death_flow.configure(hud_flow_ref, menu_flow_ref, event_flow, player)
 	event_flow.self_death_event.connect(Callable(death_flow, "apply_self_death_event"))
 
 
