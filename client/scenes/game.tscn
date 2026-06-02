@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://2k8baugk0fwp" path="res://assets/background-planets.png" id="7_vtaks"]
 [ext_resource type="AudioStream" uid="uid://dp8em413aifk2" path="res://audio/background.mp3" id="8_gee14"]
 [ext_resource type="Script" uid="uid://4ljwy3p50teh" path="res://scripts/gameplay/audio/background_music_flow.gd" id="9_background_music_flow"]
+[ext_resource type="PackedScene" uid="uid://26137yke3fop" path="res://scenes/devtools/server_hitbox_overlay.tscn" id="10_server_hitbox_overlay"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_62kg4"]
 shader = ExtResource("3_xyiwq")
@@ -115,6 +116,8 @@ visible = false
 [node name="Bullets" type="Node2D" parent="." unique_id=1112238744]
 
 [node name="Asteroids" type="Node2D" parent="." unique_id=570542828]
+
+[node name="ServerHitboxOverlay" parent="." unique_id=652898134 instance=ExtResource("10_server_hitbox_overlay")]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1725241940]
 

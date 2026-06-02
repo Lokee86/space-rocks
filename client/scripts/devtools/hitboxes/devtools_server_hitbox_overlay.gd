@@ -6,6 +6,10 @@ var hitbox_entries: Array = []
 var hitbox_template_catalog := DevtoolsHitboxTemplateCatalog.new()
 
 
+func _ready() -> void:
+	z_index = 1000
+
+
 func set_enabled(enabled: bool) -> void:
 	visible = enabled
 	if !enabled:
@@ -59,4 +63,13 @@ func _draw() -> void:
 			var transformed_point := point.rotated(rotation) * scale + visual_position
 			outline[index] = transformed_point
 
-		draw_polyline(outline, Color(0.95, 0.95, 0.95, 0.9), 2.0, true)
+		draw_polyline(_closed_outline(outline), Color(0.95, 0.95, 0.95, 0.9), 2.0, true)
+
+
+func _closed_outline(points: PackedVector2Array) -> PackedVector2Array:
+	if points.size() < 2:
+		return points
+
+	var closed_outline := points.duplicate()
+	closed_outline.append(points[0])
+	return closed_outline
