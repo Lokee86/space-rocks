@@ -21,7 +21,9 @@ func writeServerMessages(
 			logWebSocketReadClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 			return
 		case message := <-session.outbound:
-			if !writeServerMessage(session.conn, message, session.currentRoomID, session.currentGamePlayerID, remoteAddr) {
+			if !outbound.WriteServerMessage(session.conn, message, func(err error) {
+				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			}) {
 				return
 			}
 		case <-ticker.C:
@@ -36,7 +38,9 @@ func writeServerMessages(
 				continue
 			}
 
-			if !writeServerMessage(session.conn, response, session.currentRoomID, session.currentGamePlayerID, remoteAddr) {
+			if !outbound.WriteServerMessage(session.conn, response, func(err error) {
+				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			}) {
 				return
 			}
 		}
