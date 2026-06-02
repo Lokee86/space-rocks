@@ -100,6 +100,11 @@ func apply_respawn_alive_restore(state: Dictionary, menu_flow_ref) -> void:
 	if !respawn_flow.should_restore_alive_hud(state, player, has_stale_dead_presentation):
 		return
 
+	if world_sync != null:
+		if world_sync.has_method("clear_view_reference_player"):
+			world_sync.clear_view_reference_player()
+		if world_sync.has_method("clear_view_target_player"):
+			world_sync.clear_view_target_player()
 	hud_flow.set_alive()
 	if menu_flow_ref != null:
 		menu_flow_ref.set_alive()
