@@ -10,7 +10,6 @@ signal packet_parse_failed(text: String)
 
 const NORMAL_CLOSE_CODE := 1000
 const GRACEFUL_CLOSE_TIMEOUT_SECONDS := 0.25
-const Packets = preload("res://scripts/networking/packets/packets.gd")
 const PacketCodec = preload("res://scripts/networking/packets/packet_codec.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 
@@ -54,39 +53,11 @@ func poll() -> void:
 			packet_received.emit(data)
 
 
-func send_packet(packet: Dictionary) -> void:
+func send_raw_packet(packet: Dictionary) -> void:
 	if !is_connected_to_server():
 		return
 
 	socket.send_text(PacketCodec.encode(packet))
-
-
-func send_create_room_request() -> void:
-	send_packet(Packets.create_room_request_packet())
-
-
-func send_join_room_request(room_code: String) -> void:
-	send_packet(Packets.join_room_request_packet(room_code))
-
-
-func send_leave_room_request() -> void:
-	send_packet(Packets.leave_room_request_packet())
-
-
-func send_set_ready_request(is_ready: bool) -> void:
-	send_packet(Packets.set_ready_request_packet(is_ready))
-
-
-func send_start_game_request() -> void:
-	send_packet(Packets.start_game_request_packet())
-
-
-func send_start_single_player_request() -> void:
-	send_packet(Packets.start_single_player_request_packet())
-
-
-func send_return_to_lobby_request() -> void:
-	send_packet(Packets.return_to_lobby_request_packet())
 
 
 func close_gracefully() -> void:
