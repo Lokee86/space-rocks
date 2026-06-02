@@ -174,6 +174,18 @@ func get_remote_player_hues(current_self_id: String) -> Dictionary:
 	return player_hue_presenter.remote_player_hues_without(current_self_id)
 
 
+func remote_player_nodes(current_self_id: String) -> Dictionary:
+	var remotes := {}
+	for player_id in player_nodes.keys():
+		if player_id == current_self_id:
+			continue
+		var player_node = player_nodes[player_id]
+		if !is_instance_valid(player_node):
+			continue
+		remotes[player_id] = player_node
+	return remotes
+
+
 func remove_missing(server_players: Dictionary, self_id: String) -> void:
 	for player_id in player_nodes.keys():
 		if server_players.has(player_id):

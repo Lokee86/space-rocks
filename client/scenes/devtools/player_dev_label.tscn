@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://bk4rkluie182j"]
+
+[ext_resource type="Script" uid="uid://cfdw286evlxo7" path="res://scripts/devtools/player_dev_label.gd" id="1_6kfdo"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pbfs6"]
+bg_color = Color(0, 0, 0, 0.54901963)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cphan"]
+bg_color = Color(0, 0, 0, 0.54901963)
+
+[node name="PlayerDevLabel" type="Node2D" unique_id=1953806538]
+script = ExtResource("1_6kfdo")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1291467490]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer" unique_id=730873521]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pbfs6")
+
+[node name="PlayerInfoLabel" type="Label" parent="HBoxContainer/PanelContainer" unique_id=978523846]
+unique_name_in_owner = true
+layout_mode = 2
+text = "player-ID: —
+score: —
+lives: —
+ship_type: —
+x: —
+y: —"
+
+[node name="PanelContainer2" type="PanelContainer" parent="HBoxContainer" unique_id=1567078554]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cphan")
+
+[node name="PlayerNetworkLabel" type="Label" parent="HBoxContainer/PanelContainer2" unique_id=143175073]
+unique_name_in_owner = true
+layout_mode = 2
+text = "rtt_ms: —
+packet_interval_ms: —
+jitter_ms: —
+packet_staleness_ms: —
+packet_age_ms: —"

@@ -3,6 +3,7 @@ class_name GameplayDevtoolsContext
 
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
+const PlayerDevLabelsContext := preload("res://scripts/devtools/player_labels/player_dev_labels_context.gd")
 const WorldTelemetryContext := preload("res://scripts/devtools/telemetry/world_telemetry_context.gd")
 const Packets := preload("res://scripts/networking/packets/packets.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
@@ -11,11 +12,14 @@ var debug_flow
 var devtools_window_controller
 var display_refresh_flow
 var dev_connection_service
+var player_dev_labels_context
 var world_telemetry_context
 var connection_service
 var hotkey_flow
 var has_received_gameplay_state := false
 var placement_request_route: Callable
+var remote_player_nodes_provider: Callable
+var player_dev_label_mode := ""
 var local_player_id := ""
 var game_target_kind := ""
 var game_target_id := ""
@@ -36,9 +40,18 @@ func configure(connection_service_ref) -> void:
 	devtools_window_controller = DevtoolsWindowController.new()
 	display_refresh_flow = DevtoolsDisplayRefreshFlow.new()
 	display_refresh_flow.configure(devtools_window_controller)
+	player_dev_labels_context = PlayerDevLabelsContext.new()
+	if !remote_player_nodes_provider.is_null() and remote_player_nodes_provider.is_valid():
+		player_dev_labels_context.configure(remote_player_nodes_provider)
 	world_telemetry_context = WorldTelemetryContext.new()
 	world_telemetry_context.configure(connection_service_ref)
 	_connect_window_controller_signals()
+
+
+func configure_remote_player_nodes_provider(provider: Callable) -> void:
+	remote_player_nodes_provider = provider
+	if player_dev_labels_context != null:
+		player_dev_labels_context.configure(remote_player_nodes_provider)
 
 
 func reset() -> void:
@@ -46,6 +59,8 @@ func reset() -> void:
 		debug_flow.reset()
 	if display_refresh_flow != null:
 		display_refresh_flow.reset()
+	if player_dev_labels_context != null && player_dev_labels_context.has_method("clear_labels"):
+		player_dev_labels_context.clear_labels()
 	if world_telemetry_context != null:
 		world_telemetry_context.reset()
 	game_target_kind = ""
@@ -57,12 +72,30 @@ func process(has_received_state: bool) -> void:
 	has_received_gameplay_state = has_received_state
 	if Input.is_action_just_pressed("DevToggle0"):
 		toggle_devtools_window()
+	if Input.is_action_just_pressed("DevToggle8"):
+		if Input.is_key_pressed(KEY_SHIFT):
+			if player_dev_label_mode == "network":
+				player_dev_label_mode = ""
+			else:
+				player_dev_label_mode = "network"
+		else:
+			if player_dev_label_mode == "basic":
+				player_dev_label_mode = ""
+			else:
+				player_dev_label_mode = "basic"
+		if player_dev_labels_context != null && player_dev_labels_context.has_method("set_mode"):
+			player_dev_labels_context.set_mode(player_dev_label_mode)
 	if Input.is_action_just_pressed("DevToggle9") and world_telemetry_context != null:
 		world_telemetry_context.toggle_overlay()
 	if hotkey_flow != null:
 		hotkey_flow.process(has_received_state)
 	if debug_flow != null:
 		debug_flow.process(has_received_state)
+	if player_dev_labels_context != null and world_telemetry_context != null:
+		if world_telemetry_context.has_method("telemetry_snapshot") and player_dev_labels_context.has_method("apply_network_metrics"):
+			player_dev_labels_context.apply_network_metrics(world_telemetry_context.telemetry_snapshot())
+	if player_dev_labels_context != null && player_dev_labels_context.has_method("sync_remote_labels"):
+		player_dev_labels_context.sync_remote_labels()
 	if world_telemetry_context != null:
 		world_telemetry_context.process(has_received_state, 0.0)
 
@@ -95,6 +128,8 @@ func apply_gameplay_state(state: Dictionary) -> void:
 			game_target_kind,
 			game_target_id
 		)
+	if player_dev_labels_context != null && player_dev_labels_context.has_method("apply_gameplay_state"):
+		player_dev_labels_context.apply_gameplay_state(state)
 	if world_telemetry_context != null:
 		world_telemetry_context.apply_gameplay_state(state)
 

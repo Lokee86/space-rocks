@@ -73,6 +73,12 @@ func set_network_metrics(metrics_data: Dictionary) -> void:
 		metrics.set_network_metrics(metrics_data)
 
 
+func world_packet_metrics_snapshot() -> Dictionary:
+	if metrics == null:
+		return {}
+	return metrics.snapshot()
+
+
 func process(has_received_state: bool, delta: float = 0.0) -> void:
 	if not is_instance_valid(overlay) or not overlay.visible:
 		return

@@ -9,6 +9,7 @@ var pause_input_flow
 var devtools_context
 var target_request_flow
 var mouse_action_flow
+var remote_player_nodes_provider: Callable
 
 
 func apply_debug_status(status: Dictionary) -> void:
@@ -36,7 +37,8 @@ func configure(
 	respawn_request_route_ref: Callable,
 	target_visual_candidates_provider_ref: Callable = Callable(),
 	mouse_visual_position_provider_ref: Callable = Callable(),
-	server_position_converter_ref: Callable = Callable()
+	server_position_converter_ref: Callable = Callable(),
+	remote_player_nodes_provider_ref: Callable = Callable()
 ) -> void:
 	input_flow = GameplayInputFlow.new()
 	input_flow.configure(connection_service_ref, player_ref, menu_flow_ref)
@@ -44,6 +46,9 @@ func configure(
 	pause_input_flow.configure(menu_flow_ref)
 	devtools_context = GameplayDevtoolsContext.new()
 	devtools_context.configure(connection_service_ref)
+	remote_player_nodes_provider = remote_player_nodes_provider_ref
+	if devtools_context.has_method("configure_remote_player_nodes_provider"):
+		devtools_context.configure_remote_player_nodes_provider(remote_player_nodes_provider)
 	target_request_flow = TargetRequestFlow.new()
 	target_request_flow.configure(
 		connection_service_ref,

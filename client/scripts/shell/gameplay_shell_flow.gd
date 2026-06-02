@@ -61,7 +61,8 @@ func configure(
 		Callable(runtime_context, "request_respawn"),
 		Callable(runtime_context, "target_visual_candidates"),
 		Callable(self, "mouse_visual_position"),
-		Callable(self, "server_position_for_visual_position")
+		Callable(self, "server_position_for_visual_position"),
+		Callable(runtime_context, "remote_player_nodes")
 	)
 	spectate_context = GameplaySpectateContext.new()
 	spectate_context.configure(menu_flow, null, runtime_context.world_sync)
