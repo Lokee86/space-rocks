@@ -74,6 +74,10 @@ func (spawner *Spawner) NextAsteroidID(existing map[string]*entities.Asteroid) s
 	}
 }
 
+func (spawner *Spawner) TotalAsteroidsSpawned() int {
+	return spawner.nextAsteroidID
+}
+
 func (spawner *Spawner) PlanTimedAsteroidSpawn(position physics.Vector2, targetPosition physics.Vector2) AsteroidSpawnPlan {
 	direction := space.Direction(position, targetPosition).Rotated(randomRange(
 		-degreesToRadians(constants.AsteroidAimRandomnessDegrees),

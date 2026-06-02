@@ -43,3 +43,19 @@ func TestWrapStatePacketPreservesPlayerWorldStates(t *testing.T) {
 		t.Fatalf("PlayerWorldStates[Player-1].ID = %q, want %q", wrapped.PlayerWorldStates["Player-1"].ID, state.PlayerWorldStates["Player-1"].ID)
 	}
 }
+
+func TestWrapStatePacketPreservesTotalAsteroids(t *testing.T) {
+	state := game.StatePacket{
+		Type:           game.PacketTypeState,
+		TotalAsteroids: 42,
+	}
+
+	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{})
+	wrapped, ok := wrappedAny.(statePacketWithDebugStatus)
+	if !ok {
+		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
+	}
+	if wrapped.TotalAsteroids != state.TotalAsteroids {
+		t.Fatalf("TotalAsteroids = %d, want %d", wrapped.TotalAsteroids, state.TotalAsteroids)
+	}
+}

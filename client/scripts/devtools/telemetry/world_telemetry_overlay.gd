@@ -18,6 +18,7 @@ func refresh_metrics(metrics: Dictionary) -> void:
 		"players: %s" % _count_value(metrics, "players"),
 		"enemies: %s" % _count_value(metrics, "enemies"),
 		"asteroids: %s" % _count_value(metrics, "asteroids"),
+		"total_asteroids: %s" % _count_value(metrics, "total_asteroids"),
 		"bullets: %s" % _count_value(metrics, "bullets"),
 		"",
 		"Client",

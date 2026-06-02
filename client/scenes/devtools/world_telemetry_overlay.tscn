@@ -39,6 +39,7 @@ text = "World
 players: —
 enemies: —
 asteroids: —
+total_asteroids: —
 bullets: —
 
 Client

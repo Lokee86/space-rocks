@@ -90,7 +90,9 @@ Current behavior:
 - `9` toggles the overlay.
 - It is not player-facing HUD UI.
 - It lives behind the client devtools seam.
-- It displays world counts: players, enemies, asteroids, bullets.
+- It displays world counts: players, enemies, asteroids, total_asteroids, bullets.
+- `asteroids` is the current live asteroid count.
+- `total_asteroids` is the server-side total spawned asteroid count for the current game.
 - It displays client/network timing: fps, frame_ms, rtt_ms, packet_interval_ms, jitter_ms, packet_staleness_ms, packet_age_ms.
 - It does not mutate gameplay.
 - It remains separate from gameplay HUD and separate from devtools window raw packet/readout UI.
@@ -166,6 +168,7 @@ Current ownership paths:
 - telemetry client/server routing: `client/scripts/networking/`, `services/game-server/internal/networking/`
 - client devtools window/context: `client/scripts/devtools/`
 - client telemetry seam: `client/scripts/devtools/telemetry/`
+- gameplay state fields used by devtools telemetry must survive any devtools wrapping path, including `WrapStatePacket()`.
 - world telemetry overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`
 - client gameplay input routing: `client/scripts/gameplay/input/`
 - gameplay shell state routing: `client/scripts/shell/gameplay_shell_flow.gd`
