@@ -120,45 +120,13 @@ func (manager *RoomManager) JoinRoom(sessionID string, roomCode string) (*Room, 
 		}
 	}
 
+	if roomErr := room.ValidateJoin(); roomErr != nil {
+		return nil, roomErr
+	}
+
 	if roomErr := room.JoinMember(sessionID); roomErr != nil {
 		return nil, roomErr
 	}
-	return room, nil
-
-	switch room.CurrentState() {
-	case RoomStateLobby:
-	case RoomStateStarting, RoomStateInGame:
-		return nil, &RoomDomainError{
-			Code:    RoomErrorRoomInGame,
-			Message: "Room is already in game.",
-		}
-	case RoomStateClosed:
-		return nil, &RoomDomainError{
-			Code:    RoomErrorRoomClosed,
-			Message: "Room is closed.",
-		}
-	default:
-		return nil, &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Room is not joinable.",
-		}
-	}
-
-	if !room.IsJoinable() {
-		return nil, &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Room is not joinable.",
-		}
-	}
-
-	if room.IsFull() {
-		return nil, &RoomDomainError{
-			Code:    RoomErrorRoomFull,
-			Message: "Room is full.",
-		}
-	}
-
-	room.AddMemberSessionID(sessionID)
 	return room, nil
 }
 
