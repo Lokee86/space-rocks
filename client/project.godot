@@ -27,6 +27,7 @@ DevToolsBuildFlags="*uid://b64ck8tvpvm8q"
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/size/always_on_top=true
 window/size/extend_to_title=true
 window/size/sharp_corners=true
 window/subwindows/embed_subwindows=false

@@ -41,47 +41,26 @@ func (game *Game) SelectTargetAtPosition(playerID string, x float64, y float64, 
 		return false
 	}
 
-	player := game.state.Players[playerID]
-	player.TargetKind = string(target.Kind)
-	player.TargetID = target.ID
-	if target.Kind == targetpolicy.TargetKindPlayer {
-		player.TargetPlayerID = target.ID
-	} else {
-		player.TargetPlayerID = ""
-	}
-
-	return true
+	return game.setPlayerTargetingLocked(playerID, target)
 }
 
 func (game *Game) SetTarget(playerID string, target targetpolicy.TargetRef) bool {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	player, exists := game.state.Players[playerID]
-	if !exists || player == nil {
+	if !game.playerExistsLocked(playerID) {
 		return false
 	}
 
 	if target.IsEmpty() {
-		player.TargetKind = ""
-		player.TargetID = ""
-		player.TargetPlayerID = ""
-		return true
+		return game.setPlayerTargetingLocked(playerID, targetpolicy.EmptyTarget())
 	}
 
 	if !game.targetExists(target) {
 		return false
 	}
 
-	player.TargetKind = string(target.Kind)
-	player.TargetID = target.ID
-	if target.Kind == targetpolicy.TargetKindPlayer {
-		player.TargetPlayerID = target.ID
-	} else {
-		player.TargetPlayerID = ""
-	}
-
-	return true
+	return game.setPlayerTargetingLocked(playerID, target)
 }
 
 func (game *Game) ClearTarget(playerID string) {
@@ -92,15 +71,12 @@ func (game *Game) Target(playerID string) targetpolicy.TargetRef {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	player, exists := game.state.Players[playerID]
-	if !exists || player == nil {
+	session, exists := game.playerSessions[playerID]
+	if !exists || session == nil {
 		return targetpolicy.EmptyTarget()
 	}
 
-	return targetpolicy.TargetRef{
-		Kind: targetpolicy.TargetKind(player.TargetKind),
-		ID:   player.TargetID,
-	}
+	return session.Targeting.TargetRef()
 }
 
 func (game *Game) SetPlayerTarget(playerID string, targetPlayerID string) bool {
@@ -146,7 +122,7 @@ func (game *Game) playerExists(playerID string) bool {
 }
 
 func (game *Game) clearTargetsForMissingPlayersLocked() {
-	for _, player := range game.state.Players {
+	for playerID, player := range game.state.Players {
 		if player == nil {
 			continue
 		}
@@ -163,10 +139,27 @@ func (game *Game) clearTargetsForMissingPlayersLocked() {
 			continue
 		}
 
-		player.TargetKind = ""
-		player.TargetID = ""
-		player.TargetPlayerID = ""
+		game.setPlayerTargetingLocked(playerID, targetpolicy.EmptyTarget())
 	}
+}
+
+func (game *Game) setPlayerTargetingLocked(playerID string, target targetpolicy.TargetRef) bool {
+	session, ok := game.playerSessions[playerID]
+	if !ok || session == nil {
+		return false
+	}
+
+	if target.IsEmpty() {
+		session.Targeting = EmptyPlayerTargeting()
+	} else {
+		session.Targeting = PlayerTargetingFromRef(target)
+	}
+
+	if ship, exists := game.state.Players[playerID]; exists {
+		session.Targeting.ApplyToShip(ship)
+	}
+
+	return true
 }
 
 func (game *Game) targetExists(target targetpolicy.TargetRef) bool {
