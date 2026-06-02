@@ -22,6 +22,7 @@ config/icon="res://assets/units/yellow-v-wing.png"
 [autoload]
 
 DevToolsBuildFlags="*uid://b64ck8tvpvm8q"
+HudInputPolicy="*res://scripts/gameplay/input/hud_input_policy.gd"
 
 [display]
 
