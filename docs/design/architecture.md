@@ -27,6 +27,7 @@ Current client runtime seams:
 
 - `client/scripts/session/`: session-level coordinators, including gameplay, room, config, and client session context.
 - `client/scripts/shell/gameplay_shell_flow.gd`: narrow gameplay shell coordinator. It should stay mostly as orchestration and delegation.
+- `client/scripts/gameplay/gameplay_composition.gd`: gameplay flow construction and fanout only. `GameplaySessionController` keeps packet gating and outer lifecycle consequences. `GameplayComposition` should not own packet parsing, connection shutdown, session clearing, menu show/hide, or gameplay rules.
 - `client/scripts/gameplay/runtime/`: gameplay runtime/state-application context.
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
 - `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
