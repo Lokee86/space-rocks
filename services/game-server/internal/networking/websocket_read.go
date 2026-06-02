@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -16,7 +17,7 @@ func readClientInput(
 			return
 		}
 
-		envelope, err := decodeClientPacketEnvelope(msg)
+		envelope, err := inbound.DecodeClientPacketEnvelope(msg)
 		if err != nil {
 			logging.Network.Warn("websocket packet envelope decode failed",
 				logging.FieldError, err,
