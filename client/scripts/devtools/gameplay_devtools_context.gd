@@ -16,6 +16,7 @@ var player_dev_labels_context
 var world_telemetry_context
 var connection_service
 var hotkey_flow
+var server_hitbox_overlay
 var has_received_gameplay_state := false
 var placement_request_route: Callable
 var remote_player_nodes_provider: Callable
@@ -59,6 +60,8 @@ func reset() -> void:
 		debug_flow.reset()
 	if display_refresh_flow != null:
 		display_refresh_flow.reset()
+	if server_hitbox_overlay != null && is_instance_valid(server_hitbox_overlay) and server_hitbox_overlay.has_method("set_hitbox_entries"):
+		server_hitbox_overlay.set_hitbox_entries([])
 	if player_dev_labels_context != null && player_dev_labels_context.has_method("clear_labels"):
 		player_dev_labels_context.clear_labels()
 	if world_telemetry_context != null:
@@ -185,6 +188,16 @@ func _connect_window_controller_signals() -> void:
 		var game_target_clear_callable := Callable(self, "request_clear_game_target")
 		if !devtools_window_controller.is_connected("game_target_clear_requested", game_target_clear_callable):
 			devtools_window_controller.connect("game_target_clear_requested", game_target_clear_callable)
+	if devtools_window_controller.has_signal("show_server_hitboxes_changed"):
+		var show_server_hitboxes_callable := Callable(self, "_on_show_server_hitboxes_changed")
+		if !devtools_window_controller.is_connected("show_server_hitboxes_changed", show_server_hitboxes_callable):
+			devtools_window_controller.connect("show_server_hitboxes_changed", show_server_hitboxes_callable)
+
+
+func configure_server_hitbox_overlay(overlay_ref) -> void:
+	server_hitbox_overlay = overlay_ref
+	if server_hitbox_overlay != null && server_hitbox_overlay.has_method("set_hitbox_entries"):
+		server_hitbox_overlay.set_hitbox_entries([])
 
 
 func request_toggle_invincible(target_scope: String = "", target_player_id: String = "") -> void:
@@ -253,6 +266,13 @@ func request_clear_asteroids() -> void:
 	if !has_received_gameplay_state || debug_flow == null:
 		return
 	debug_flow.clear_asteroids()
+
+
+func _on_show_server_hitboxes_changed(enabled: bool) -> void:
+	if server_hitbox_overlay == null || !is_instance_valid(server_hitbox_overlay):
+		return
+	if server_hitbox_overlay.has_method("set_enabled"):
+		server_hitbox_overlay.set_enabled(enabled)
 
 
 func configure_local_player_id(player_id: String) -> void:

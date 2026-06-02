@@ -15,6 +15,7 @@ signal game_target_set_requested(target_player_id: String)
 signal game_target_clear_requested
 signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
 signal respawn_player_requested(target_scope: String, target_player_id: String)
+signal show_server_hitboxes_changed(enabled: bool)
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
@@ -37,6 +38,7 @@ var connection_service
 var self_player_id := ""
 var game_target_kind := ""
 var game_target_id := ""
+var show_server_hitboxes := false
 
 
 func ensure_window() -> Window:
@@ -68,6 +70,8 @@ func ensure_window() -> Window:
 		window.refresh_local_player_state(latest_local_player_state)
 	if window.has_method("refresh_target_state"):
 		window.refresh_target_state(latest_target_kind, latest_target_id, latest_target_state)
+	if window.has_method("set_show_server_hitboxes"):
+		window.set_show_server_hitboxes(show_server_hitboxes)
 	return window
 
 
@@ -232,6 +236,8 @@ func _connect_window_signals() -> void:
 		window.game_target_set_requested.connect(_on_game_target_set_requested)
 	if window.has_signal("game_target_clear_requested") and !window.game_target_clear_requested.is_connected(_on_game_target_clear_requested):
 		window.game_target_clear_requested.connect(_on_game_target_clear_requested)
+	if window.has_signal("show_server_hitboxes_changed") and !window.show_server_hitboxes_changed.is_connected(_on_show_server_hitboxes_changed):
+		window.show_server_hitboxes_changed.connect(_on_show_server_hitboxes_changed)
 
 
 func _on_toggle_invincible_requested(target_player_id: String) -> void:
@@ -326,6 +332,11 @@ func _on_game_target_set_requested(target_player_id: String) -> void:
 
 func _on_game_target_clear_requested() -> void:
 	game_target_clear_requested.emit()
+
+
+func _on_show_server_hitboxes_changed(enabled: bool) -> void:
+	show_server_hitboxes = enabled
+	show_server_hitboxes_changed.emit(enabled)
 
 
 func _on_kill_player_requested(selected_player_id: String) -> void:

@@ -13,6 +13,7 @@ var warned_missing_asteroid_scale := {}
 var target_asteroid_positions := {}
 var asteroid_server_positions := {}
 var asteroid_visual_positions := {}
+var asteroid_variants := {}
 
 
 func configure(layer: Node2D) -> void:
@@ -29,6 +30,7 @@ func reset() -> void:
 	target_asteroid_positions.clear()
 	asteroid_server_positions.clear()
 	asteroid_visual_positions.clear()
+	asteroid_variants.clear()
 
 
 func get_asteroid_node(asteroid_id: String):
@@ -84,6 +86,8 @@ func apply(
 			asteroid_visual_positions[asteroid_id] = visual_position
 
 		apply_asteroid_scale(asteroid_id, asteroid_node, state)
+		if state.has(Packets.FIELD_VARIANT):
+			asteroid_variants[asteroid_id] = int(state[Packets.FIELD_VARIANT])
 
 		if !initialized_asteroids.has(asteroid_id):
 			initialized_asteroids[asteroid_id] = true
@@ -103,6 +107,7 @@ func remove_missing(server_asteroids: Dictionary) -> void:
 		target_asteroid_positions.erase(asteroid_id)
 		asteroid_server_positions.erase(asteroid_id)
 		asteroid_visual_positions.erase(asteroid_id)
+		asteroid_variants.erase(asteroid_id)
 
 
 func interpolate(weight: float) -> void:
@@ -132,3 +137,30 @@ func asteroid_target_positions() -> Dictionary:
 			"visual_scale": visual_scale,
 		}
 	return positions
+
+
+func server_hitbox_draw_entries() -> Array:
+	var entries: Array = []
+	for asteroid_id in asteroid_visual_positions.keys():
+		if !asteroid_nodes.has(asteroid_id):
+			continue
+
+		var asteroid_node = asteroid_nodes[asteroid_id]
+		if asteroid_node == null or !is_instance_valid(asteroid_node):
+			continue
+
+		var visual_scale := 1.0
+		if asteroid_node != null:
+			visual_scale = float(asteroid_node.scale.x)
+
+		var entry := {
+			"kind": "asteroid",
+			"id": str(asteroid_id),
+			"visual_position": asteroid_visual_positions[asteroid_id],
+			"rotation": asteroid_node.rotation if asteroid_node != null else 0.0,
+			"scale": visual_scale,
+			"variant": int(asteroid_variants.get(asteroid_id, 0)),
+		}
+		entries.append(entry)
+
+	return entries

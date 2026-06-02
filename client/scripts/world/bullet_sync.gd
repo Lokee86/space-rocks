@@ -99,3 +99,25 @@ func bullet_target_positions() -> Dictionary:
 			"server_position": target_bullet_positions[bullet_id],
 		}
 	return positions
+
+
+func server_hitbox_draw_entries() -> Array:
+	var entries: Array = []
+	for bullet_id in target_bullet_positions.keys():
+		if !bullet_nodes.has(bullet_id):
+			continue
+
+		var bullet_node = bullet_nodes[bullet_id]
+		if bullet_node == null or !is_instance_valid(bullet_node):
+			continue
+
+		var entry := {
+			"kind": "bullet",
+			"id": str(bullet_id),
+			"visual_position": bullet_node.global_position,
+			"rotation": bullet_node.rotation if initialized_bullets.has(bullet_id) else target_bullet_rotations[bullet_id],
+			"scale": 1.0,
+		}
+		entries.append(entry)
+
+	return entries

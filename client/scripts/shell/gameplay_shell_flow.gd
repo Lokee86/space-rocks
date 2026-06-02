@@ -20,6 +20,7 @@ var spectate_context
 var player_pause_state_tracker
 var has_received_state := false
 var game_owner: Node2D
+var server_hitbox_overlay
 
 
 func configure(
@@ -37,6 +38,7 @@ func configure(
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
 	player_pause_state_tracker = PlayerPauseStateTracker.new()
+	server_hitbox_overlay = game_owner_ref.get_node_or_null("ServerHitboxOverlay") if game_owner_ref != null else null
 	if menu_flow != null:
 		menu_flow.configure_lifecycle_routes(
 			Callable(self, "_on_quit_to_main_menu_requested"),
@@ -58,6 +60,7 @@ func configure(
 		connection_service,
 		player,
 		menu_flow,
+		game_owner_ref,
 		Callable(runtime_context, "request_respawn"),
 		Callable(runtime_context, "target_visual_candidates"),
 		Callable(self, "mouse_visual_position"),
@@ -88,6 +91,8 @@ func reset() -> void:
 		spectate_context.reset()
 	if player_pause_state_tracker != null:
 		player_pause_state_tracker.reset()
+	if server_hitbox_overlay != null && is_instance_valid(server_hitbox_overlay) and server_hitbox_overlay.has_method("set_hitbox_entries"):
+		server_hitbox_overlay.set_hitbox_entries([])
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
@@ -183,6 +188,9 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 func process(_delta: float) -> void:
 	if runtime_context != null:
 		runtime_context.process(_delta)
+	if server_hitbox_overlay != null && is_instance_valid(server_hitbox_overlay) and server_hitbox_overlay.has_method("is_enabled") and server_hitbox_overlay.is_enabled():
+		if runtime_context != null && runtime_context.has_method("server_hitbox_draw_entries"):
+			server_hitbox_overlay.set_hitbox_entries(runtime_context.server_hitbox_draw_entries())
 	if runtime_tick_flow != null:
 		runtime_tick_flow.process(_delta)
 	if input_context != null:

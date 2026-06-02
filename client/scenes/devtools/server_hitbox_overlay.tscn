@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://26137yke3fop"]
+
+[ext_resource type="Script" path="res://scripts/devtools/hitboxes/devtools_server_hitbox_overlay.gd" id="1_server_hitbox_overlay"]
+
+[node name="ServerHitboxOverlay" type="Node2D" unique_id=652898134]
+visible = false
+script = ExtResource("1_server_hitbox_overlay")

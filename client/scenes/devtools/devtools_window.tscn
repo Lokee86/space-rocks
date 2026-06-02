@@ -242,6 +242,17 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Clear Bullets"
 
+[node name="CenterContainer19" type="CenterContainer" parent="CenterContainer/VBoxContainer/HBoxContainer/LeftPanel" unique_id=2097532991]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ShowServerHitboxesCheckBox" type="CheckBox" parent="CenterContainer/VBoxContainer/HBoxContainer/LeftPanel/CenterContainer19" unique_id=1072808839]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Show Server Hitboxes"
+
 [node name="RightPanel-Inactive" type="GridContainer" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1162894039]
 layout_mode = 2
 size_flags_horizontal = 3
