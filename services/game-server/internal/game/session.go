@@ -92,11 +92,7 @@ func (game *Game) respawnPlayer(playerID string) {
 	spawnPosition := spawnPlan.Position
 	player := session.NewShip(spawnPosition)
 	game.state.Players[playerID] = player
-	game.cameraViews[playerID] = &entities.CameraView{
-		X:      player.X,
-		Y:      player.Y,
-		Config: player.Config,
-	}
+	game.setPlayerCameraViewLocked(playerID, player)
 	logging.Game.Info("player respawned",
 		logging.FieldPlayerID, playerID,
 		"x", spawnPosition.X,
