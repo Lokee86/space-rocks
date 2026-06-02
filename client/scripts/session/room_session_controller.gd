@@ -104,6 +104,8 @@ func handle_room_error(packet: Dictionary) -> void:
 
 
 func _on_lobby_returned_to_main_menu() -> void:
+	if session_context != null:
+		session_context.clear()
 	if shell_boot_flow != null:
 		shell_boot_flow.clear()
 
