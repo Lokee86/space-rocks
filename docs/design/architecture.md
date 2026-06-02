@@ -47,7 +47,10 @@ Current client runtime seams:
 - `client/scripts/lobby/`: lobby shell/presenter/network action flows.
 - `client/scripts/boot/`: boot flow and pending boot request.
 - `client/scripts/config/`: client config flows.
-- `client/scripts/networking/network_client.gd`: websocket owner for connect, poll, send, graceful close, and packet signals.
+- `client/scripts/networking/network_client.gd`: websocket transport owner for connect, poll, raw send, raw receive, graceful close, and packet codec use.
+- `client/scripts/networking/inbound/`: server packet classification and dispatch.
+- `client/scripts/networking/outbound/`: client packet send helpers grouped by packet family.
+- `client/scripts/networking/client_connection_service.gd`: public connection facade and signal bridge; it no longer owns packet-family construction or packet-family routing.
 - `client/scripts/networking/packet_codec/packet_codec.gd`: JSON-only client packet wire encode/decode wrapper around `JSON.stringify` and `JSON.parse_string`.
 - `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates node ownership, packet application, cleanup, and interpolation to player, bullet, asteroid, and local-visual sync owners.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
@@ -95,7 +98,7 @@ services/game-server/cmd/game-server/main.go
 
 Core server packages:
 
-- `services/game-server/internal/networking`: websocket transport, packet dispatch, session registry, and outbound writes.
+- `services/game-server/internal/networking`: websocket upgrade, sessions, read/write loops, transport logging, and adapter wiring.
 - `services/game-server/internal/rooms`: room state, room membership, lifecycle orchestration, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
@@ -205,9 +208,13 @@ See [toroidal wrap](toroidal-wrap.md).
 
 Room/domain ownership lives in `services/game-server/internal/rooms`. That package owns room state, room membership, room-code/default-room helpers, create/join/leave/ready/start-game/single-player/return-to-lobby/game-over/cleanup decisions, and each room's `*game.Game` lifecycle while simulation rules stay in `internal/game`.
 
-`services/game-server/internal/networking` owns websocket/session/packet transport. It upgrades `/ws`, reads generated packets, calls room-domain methods, attaches or clears websocket session player IDs, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
+`services/game-server/internal/networking` owns websocket upgrade, sessions, read/write loops, transport logging, and adapter wiring. It upgrades `/ws`, reads generated packets, calls room-domain methods, attaches or clears websocket session player IDs, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
 
-Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. Client packet wire serialization goes through `client/scripts/networking/packet_codec/packet_codec.gd`. Both seams are intentionally JSON-only for now.
+`services/game-server/internal/networking/inbound` owns pure inbound packet family handlers.
+
+`services/game-server/internal/networking/outbound` owns pure outbound gameplay presentation/write helpers.
+
+Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. It remains JSON-only for now. Client packet wire serialization goes through `client/scripts/networking/packet_codec/packet_codec.gd`.
 
 Diagnostic telemetry packets are part of networking transport behavior:
 
@@ -239,7 +246,7 @@ Important lifecycle rules:
 
 Devtools command handling is a networking-routed server boundary, not a normal gameplay packet path.
 
-- `services/game-server/internal/networking/websocket_read.go` detects devtools command types through `devtools.ShouldHandleCommand`
+- inbound networking routing detects devtools command types and forwards them through the inbound seam
 - devtools command packets route to `services/game-server/internal/devtools.HandleCommand`
 - devtools commands do not route through `Game.HandlePacket`
 - `nodevtools` builds ignore/reject devtools command handling through the existing devtools gate

@@ -67,7 +67,9 @@ docs/api/nestjs-api-server.md
 
 ## Networking / Rooms / Game Ownership
 
-- Keep websocket and room transport in `services/game-server/internal/networking`.
+- Keep websocket/session transport and adapter wiring in `services/game-server/internal/networking`.
+- Keep inbound packet-family handlers in `services/game-server/internal/networking/inbound`.
+- Keep outbound gameplay presentation/write helpers in `services/game-server/internal/networking/outbound`.
 - Networking should transport, decode/route packets, manage websocket session state, and write responses.
 - Room lifecycle policy belongs in rooms.
 - Gameplay simulation belongs in game.
@@ -119,6 +121,7 @@ Non-packet JSON such as collision-shape data-file parsing may still use `encodin
 - Devtools packet schema belongs in `shared/packets/debug.toml`.
 - Devtools output routing belongs in `shared/packets/outputs.toml`.
 - Generated server devtools packet output belongs in `services/game-server/internal/devtools/packets_generated.go`.
+- Devtools packet routing goes through `services/game-server/internal/networking/inbound`, then dispatches mutation work to `services/game-server/internal/devtools`.
 - Server-supported debug actions include `debug_kill_player`, `debug_spawn_entity`, `debug_respawn_player`, and freeze/invincible/infinite-lives toggles.
 
 ## Spatial / Movement Rules
