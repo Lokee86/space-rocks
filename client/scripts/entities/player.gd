@@ -81,6 +81,21 @@ func set_afterburner_active(active: bool) -> void:
 		_stop_afterburner_sound()
 
 
+func set_remote_afterburner_visual_active(active: bool) -> void:
+	if afterburner == null || afterburner_active == active:
+		return
+
+	afterburner_active = active
+	afterburner.visible = active
+
+	if active:
+		if afterburner_sprite != null:
+			afterburner_sprite.play("default")
+	else:
+		if afterburner_sprite != null:
+			afterburner_sprite.stop()
+
+
 func stop_transient_effects() -> void:
 	set_afterburner_active(false)
 

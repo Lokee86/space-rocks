@@ -107,6 +107,17 @@ Generated packet outputs:
 
 Edit the relevant split packet TOML file for schema/content changes. Edit `shared/packets/outputs.toml` only when changing output routing.
 
+Packet schema drift rule:
+
+- Generated packet files are not the source of truth.
+- Packet struct fields belong in `shared/packets/*.toml`.
+- Output-level Go imports belong in `shared/packets/outputs.toml`.
+- The current generator does not support field-level `go_import` for generated Go output.
+- Before adding packet fields, run `data-sync -check -packets -go`.
+- If check fails, repair schema drift before adding new fields.
+- After schema edits, run `data-sync -push -packets -go` and `go test ./...` from `services/game-server`.
+- Example drift case: `StatePacket.PlayerWorldStates` existed in generated Go usage but was missing from `shared/packets/gameplay.toml`, so regeneration removed the field and broke handwritten Go code.
+
 Devtools packet boundary rules:
 
 - devtools packet schema lives in `shared/packets/debug.toml`
