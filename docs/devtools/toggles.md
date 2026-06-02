@@ -97,6 +97,39 @@ Current behavior:
 - It does not mutate gameplay.
 - It remains separate from gameplay HUD and separate from devtools window raw packet/readout UI.
 
+### Remote Player Dev Labels
+
+Remote Player Dev Labels are a devtools/client-only overlay for inspecting remote players.
+
+Current behavior:
+
+- `8` toggles basic remote-player labels.
+- `Shift+8` toggles network telemetry labels.
+- Basic and network modes are mutually exclusive.
+- Labels appear on remote players only.
+- The local player does not get a label.
+- The labels are not player-facing HUD.
+- The labels live in the client devtools seam.
+- The labels use snapshot and telemetry data only.
+- The labels do not mutate gameplay or player nodes.
+
+Basic label fields:
+
+- `ID`
+- `Score`
+- `Lives`
+- `Ship`
+- `X`
+- `Y`
+
+Network label fields:
+
+- `rtt_ms`
+- `packet_interval_ms`
+- `jitter_ms`
+- `packet_staleness_ms`
+- `packet_age_ms`
+
 ## DevToggle0-9 Map
 
 Current number-key map:
@@ -109,7 +142,7 @@ Current number-key map:
 - `5`: kill local player
 - `6`: spawn new player
 - `7`: force respawn local player
-- `8`: reserved
+- `8`: remote player labels
 - `9`: world telemetry overlay
 
 Current `6` modifier behavior:
@@ -191,10 +224,16 @@ Current ownership paths:
 - telemetry client/server routing: `client/scripts/networking/`, `services/game-server/internal/networking/`
 - client devtools window/context: `client/scripts/devtools/`
 - client telemetry seam: `client/scripts/devtools/telemetry/`
+- remote player dev labels scene: `client/scenes/devtools/player_dev_label.tscn`
+- remote player dev label script: `client/scripts/devtools/player_dev_label.gd`
+- remote player dev label formatter: `client/scripts/devtools/player_dev_label_formatter.gd`
+- remote player dev labels context: `client/scripts/devtools/player_labels/`
 - gameplay state fields used by devtools telemetry must survive any devtools wrapping path, including `WrapStatePacket()`.
 - world telemetry overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`
 - client gameplay input routing: `client/scripts/gameplay/input/`
 - gameplay shell state routing: `client/scripts/shell/gameplay_shell_flow.gd`
+- non-devtools gameplay/world code should expose only the read-only observation needed by devtools.
+- `PlayerDevLabel` lifecycle, formatting, and mode state belong in client devtools, not `PlayerSync` or `WorldSync`.
 
 ## Server Build Flag
 
