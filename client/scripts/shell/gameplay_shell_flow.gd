@@ -152,6 +152,12 @@ func remote_player_visual_positions() -> Dictionary:
 	return runtime_context.remote_player_visual_positions()
 
 
+func remote_player_hues() -> Dictionary:
+	if runtime_context == null:
+		return {}
+	return runtime_context.remote_player_hues()
+
+
 func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 	if runtime_context == null:
 		return visual_position

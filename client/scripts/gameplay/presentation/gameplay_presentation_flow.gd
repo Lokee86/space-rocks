@@ -4,6 +4,7 @@ class_name GameplayPresentationFlow
 var hud: Control
 var camera_provider: Callable
 var remote_positions_provider: Callable
+var remote_hues_provider: Callable
 var os_indicator_controller := OSIndicatorController.new()
 var local_player_presentation_controller := LocalPlayerPresentationController.new()
 
@@ -12,11 +13,13 @@ func configure(
 	hud_ref: Control,
 	player_ref,
 	camera_provider_ref: Callable,
-	remote_positions_provider_ref: Callable
+	remote_positions_provider_ref: Callable,
+	remote_hues_provider_ref: Callable
 ) -> void:
 	hud = hud_ref
 	camera_provider = camera_provider_ref
 	remote_positions_provider = remote_positions_provider_ref
+	remote_hues_provider = remote_hues_provider_ref
 	os_indicator_controller.configure(hud)
 	local_player_presentation_controller.configure(player_ref)
 
@@ -31,9 +34,11 @@ func process(_delta: float, has_received_state: bool) -> void:
 	if (
 		camera_provider.is_null()
 		|| remote_positions_provider.is_null()
+		|| remote_hues_provider.is_null()
 	):
 		return
 
 	var camera = camera_provider.call()
 	var positions = remote_positions_provider.call()
-	os_indicator_controller.update_indicators(camera, positions)
+	var remote_hues = remote_hues_provider.call()
+	os_indicator_controller.update_indicators(camera, positions, remote_hues)
