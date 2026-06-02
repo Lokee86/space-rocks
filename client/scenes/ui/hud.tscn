@@ -18,6 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=890084264]
 layout_mode = 1
@@ -74,6 +75,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="CenterContainer" unique_id=2096841942]
 visible = false
@@ -105,6 +107,7 @@ horizontal_alignment = 1
 [node name="GameOverContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1619962020]
 layout_mode = 2
 theme_override_constants/separation = 117
+mouse_filter = 1
 
 [node name="GameOverSound" type="AudioStreamPlayer" parent="CenterContainer/GameOverContainer" unique_id=2014825901]
 unique_name_in_owner = true

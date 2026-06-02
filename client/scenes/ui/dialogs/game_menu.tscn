@@ -18,6 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 script = ExtResource("1_a46sh")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1662064483]
@@ -27,12 +28,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 
 [node name="TextureRect" type="TextureRect" parent="CenterContainer" unique_id=1763278672]
 custom_minimum_size = Vector2(575, 250)
 layout_mode = 2
 texture = ExtResource("2_fcfrx")
 expand_mode = 1
+mouse_filter = 1
 
 [node name="CenterContainer" type="CenterContainer" parent="CenterContainer/TextureRect" unique_id=1024197516]
 layout_mode = 1
@@ -41,14 +44,17 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/TextureRect/CenterContainer" unique_id=1290723396]
 layout_mode = 2
 theme_override_constants/margin_left = 5
+mouse_filter = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/TextureRect/CenterContainer/MarginContainer" unique_id=278462265]
 layout_mode = 2
 theme_override_constants/separation = 13
+mouse_filter = 1
 
 [node name="PrimaryActionButton" parent="CenterContainer/TextureRect/CenterContainer/MarginContainer/HBoxContainer" unique_id=216275255 instance=ExtResource("3_1b0xy")]
 custom_minimum_size = Vector2(220, 100)
