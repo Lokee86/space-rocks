@@ -14,7 +14,7 @@ func handleDebugBeginContinuousBulletStream(target *game.Game, playerID string, 
 		return true
 	}
 
-	direction := physics.Vector2{X: command.DirectionX, Y: command.DirectionY}
+	origin, direction := continuousBulletStreamRequestFromCommand(command)
 	if direction.Length() == 0 {
 		logging.Game.Info("debug begin continuous bullet stream ignored: direction is zero",
 			logging.FieldPlayerID, playerID,
@@ -22,7 +22,6 @@ func handleDebugBeginContinuousBulletStream(target *game.Game, playerID string, 
 		return true
 	}
 
-	origin := physics.Vector2{X: command.X, Y: command.Y}
 	if !target.DevtoolsBeginContinuousBulletStream(playerID, origin, direction) {
 		logging.Game.Info("debug begin continuous bullet stream ignored",
 			logging.FieldPlayerID, playerID,
@@ -39,4 +38,10 @@ func handleDebugBeginContinuousBulletStream(target *game.Game, playerID string, 
 		"direction_y", normalizedDirection.Y,
 	)
 	return true
+}
+
+func continuousBulletStreamRequestFromCommand(command DebugCommand) (physics.Vector2, physics.Vector2) {
+	origin := physics.Vector2{X: command.X, Y: command.Y}
+	direction := physics.Vector2{X: command.DirectionX, Y: command.DirectionY}
+	return origin, direction
 }

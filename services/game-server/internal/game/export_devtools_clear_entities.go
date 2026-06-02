@@ -8,7 +8,7 @@ func (game *Game) DevtoolsClearBullets() int {
 	for id := range game.state.Projectiles {
 		delete(game.state.Projectiles, id)
 	}
-	game.activeDebugBulletStreams = nil
+	game.DevtoolsClearContinuousBulletStreams()
 
 	return removed
 }

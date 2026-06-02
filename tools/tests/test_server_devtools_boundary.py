@@ -23,6 +23,26 @@ def test_game_package_files_do_not_import_internal_devtools() -> None:
     assert violations == []
 
 
+def test_game_package_files_do_not_own_devtools_continuous_bullet_stream_state() -> None:
+    violations: list[str] = []
+    forbidden_terms = (
+        "activeDebugBulletStreams",
+        "DevtoolsContinuousBulletStream",
+        "stepDevtoolsContinuousBulletStreams",
+        "continuousBulletStreams",
+    )
+
+    for path in sorted(GAME_INTERNAL.glob("*.go")):
+        if path.name.startswith("export_devtools"):
+            continue
+
+        text = path.read_text(encoding="utf-8")
+        if any(term in text for term in forbidden_terms):
+            violations.append(str(path.relative_to(REPO_ROOT)))
+
+    assert violations == []
+
+
 def test_export_devtools_anchor_file_exists() -> None:
     assert (GAME_INTERNAL / "export_devtools.go").exists()
 

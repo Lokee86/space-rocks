@@ -1,9 +1,11 @@
 extends RefCounted
 class_name GameplayShellFlow
 
-const GameplayStatePacketReader = preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
 const PlayerPauseStatePacketReader = preload("res://scripts/gameplay/state/player_pause_state_packet_reader.gd")
 const PlayerPauseStateTracker = preload("res://scripts/gameplay/state/player_pause_state_tracker.gd")
+const GameplayStateApplyFlowScript = preload("res://scripts/gameplay/state/gameplay_state_apply_flow.gd")
+const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
+const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
 
 signal gameplay_started
 signal quit_to_main_menu_requested
@@ -18,9 +20,11 @@ var input_context
 var runtime_tick_flow
 var spectate_context
 var player_pause_state_tracker
+var gameplay_state_apply_flow
+var gameplay_process_flow
+var server_hitbox_overlay_flow
 var has_received_state := false
 var game_owner: Node2D
-var server_hitbox_overlay
 
 
 func configure(
@@ -38,7 +42,6 @@ func configure(
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
 	player_pause_state_tracker = PlayerPauseStateTracker.new()
-	server_hitbox_overlay = game_owner_ref.get_node_or_null("ServerHitboxOverlay") if game_owner_ref != null else null
 	if menu_flow != null:
 		menu_flow.configure_lifecycle_routes(
 			Callable(self, "_on_quit_to_main_menu_requested"),
@@ -53,6 +56,10 @@ func configure(
 		menu_flow
 	)
 	runtime_context.configure_respawn(connection_service, hud_flow)
+	gameplay_state_apply_flow = GameplayStateApplyFlowScript.new()
+	gameplay_state_apply_flow.configure(input_context, hud_flow, runtime_context, menu_flow)
+	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
+	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context)
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
 	runtime_tick_flow.configure(hud_flow)
 	input_context = GameplayInputContext.new()
@@ -73,6 +80,14 @@ func configure(
 		Callable(spectate_context, "request_open_spectate_menu"),
 		Callable(spectate_context, "request_cycle_target")
 	)
+	gameplay_process_flow = GameplayProcessFlowScript.new()
+	gameplay_process_flow.configure(
+		runtime_context,
+		server_hitbox_overlay_flow,
+		runtime_tick_flow,
+		input_context,
+		spectate_context
+	)
 
 
 func reset() -> void:
@@ -91,31 +106,17 @@ func reset() -> void:
 		spectate_context.reset()
 	if player_pause_state_tracker != null:
 		player_pause_state_tracker.reset()
-	if server_hitbox_overlay != null && is_instance_valid(server_hitbox_overlay) and server_hitbox_overlay.has_method("set_hitbox_entries"):
-		server_hitbox_overlay.set_hitbox_entries([])
+	if server_hitbox_overlay_flow != null:
+		server_hitbox_overlay_flow.reset()
 
 
 func apply_gameplay_state(packet: Dictionary) -> void:
-	if runtime_context == null:
+	if gameplay_state_apply_flow == null:
 		return
 
-	var state := GameplayStatePacketReader.read(packet)
-	apply_gameplay_state_data(state)
-
-
-func apply_gameplay_state_data(state: Dictionary) -> void:
-	var is_first_gameplay_state := !has_received_state
-	if input_context != null:
-		input_context.apply_gameplay_state(state)
-	if input_context != null:
-		input_context.mark_gameplay_state_received()
-	if hud_flow != null:
-		hud_flow.apply_gameplay_state_summary(state)
-	runtime_context.apply_world_state(state, has_received_state)
-	runtime_context.apply_respawn_alive_restore(state, menu_flow)
-	runtime_context.apply_server_events(state)
-	has_received_state = true
-	if is_first_gameplay_state:
+	var result: GameplayStateApplyResult = gameplay_state_apply_flow.apply_packet(packet, has_received_state)
+	has_received_state = result.has_received_state
+	if result.started_gameplay:
 		gameplay_started.emit()
 
 
@@ -186,17 +187,9 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 
 
 func process(_delta: float) -> void:
-	if runtime_context != null:
-		runtime_context.process(_delta)
-	if server_hitbox_overlay != null && is_instance_valid(server_hitbox_overlay) and server_hitbox_overlay.has_method("is_enabled") and server_hitbox_overlay.is_enabled():
-		if runtime_context != null && runtime_context.has_method("server_hitbox_draw_entries"):
-			server_hitbox_overlay.set_hitbox_entries(runtime_context.server_hitbox_draw_entries())
-	if runtime_tick_flow != null:
-		runtime_tick_flow.process(_delta)
-	if input_context != null:
-		input_context.process(has_received_state)
-	if spectate_context != null:
-		spectate_context.process()
+	if gameplay_process_flow == null:
+		return
+	gameplay_process_flow.process(_delta, has_received_state)
 
 
 func _on_quit_to_main_menu_requested() -> void:

@@ -1,7 +1,7 @@
 extends Node
 
-const NetworkClientScript := preload("res://scripts/networking/network_client.gd")
-const ClientPacketSenderScript := preload("res://scripts/networking/outbound/client_packet_sender.gd")
+const NetworkClient := preload("res://scripts/networking/network_client.gd")
+const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const Constants := preload("res://scripts/constants/constants.gd")
 
@@ -24,8 +24,8 @@ var has_started_connection := false
 
 func _ready() -> void:
 	process_priority = Constants.NETWORK_POLL_PROCESS_PRIORITY
-	network_client = NetworkClientScript.new()
-	client_packet_sender = ClientPacketSenderScript.new(network_client)
+	network_client = NetworkClient.new()
+	client_packet_sender = ClientPacketSender.new(network_client)
 	server_packet_dispatcher = ServerPacketDispatcher.new()
 	add_child(network_client)
 	add_child(server_packet_dispatcher)
