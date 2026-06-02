@@ -158,6 +158,119 @@ func TestRoomValidateStartIgnoresDisconnectedUnreadyMembers(t *testing.T) {
 	}
 }
 
+func TestRoomStartGameForMemberAllowsOwnerWhenConnectedMembersReady(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
+	setReadyInLobbyBySession(t, room, "session-1", true)
+	setReadyInLobbyBySession(t, room, "session-2", true)
+
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected owner session to resolve before start")
+	}
+	if roomErr := room.StartGameForMember(playerID, game.New); roomErr != nil {
+		t.Fatalf("expected owner start to succeed, got %s", roomErr.Code)
+	}
+	if room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
+	}
+	if room.Game == nil {
+		t.Fatal("expected game to be created")
+	}
+}
+
+func TestRoomStartGameForMemberRejectsNonOwner(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
+	setReadyInLobbyBySession(t, room, "session-1", true)
+	setReadyInLobbyBySession(t, room, "session-2", true)
+
+	nonOwnerID, ok := room.PlayerIDForSession("session-2")
+	if !ok {
+		t.Fatal("expected non-owner session to resolve before start")
+	}
+	roomErr := room.StartGameForMember(nonOwnerID, game.New)
+	if roomErr == nil {
+		t.Fatal("expected non-owner to be rejected")
+	}
+	if roomErr.Code != rooms.RoomErrorNotRoomOwner {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotRoomOwner, roomErr.Code)
+	}
+}
+
+func TestRoomStartGameForMemberRejectsConnectedUnreadyMember(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	room.AddMemberSessionID("session-1")
+	room.AddMemberSessionID("session-2")
+	setReadyInLobbyBySession(t, room, "session-1", true)
+
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected owner session to resolve before start")
+	}
+	roomErr := room.StartGameForMember(playerID, game.New)
+	if roomErr == nil {
+		t.Fatal("expected unready connected member to block start")
+	}
+	if roomErr.Code != rooms.RoomErrorNotReady {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotReady, roomErr.Code)
+	}
+}
+
+func TestRoomStartGameForMemberIgnoresDisconnectedUnreadyMember(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	room.AddMemberSessionID("session-1")
+	disconnected := room.AddMemberSessionID("session-2")
+	disconnected.MarkDisconnected()
+	setReadyInLobbyBySession(t, room, "session-1", true)
+
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected owner session to resolve before start")
+	}
+	if roomErr := room.StartGameForMember(playerID, game.New); roomErr != nil {
+		t.Fatalf("expected disconnected unready member not to block start, got %s", roomErr.Code)
+	}
+}
+
+func TestRoomStartGameForMemberRejectsStartingRoom(t *testing.T) {
+	for _, state := range []rooms.RoomState{rooms.RoomStateStarting, rooms.RoomStateInGame} {
+		room := rooms.NewRoom("TEST", state, nil)
+		room.AddMemberSessionID("session-1")
+		playerID, ok := room.PlayerIDForSession("session-1")
+		if !ok {
+			t.Fatal("expected session to resolve before start")
+		}
+
+		roomErr := room.StartGameForMember(playerID, game.New)
+		if roomErr == nil {
+			t.Fatalf("expected state %q to reject start", state)
+		}
+		if roomErr.Code != rooms.RoomErrorRoomInGame {
+			t.Fatalf("expected error code %q for state %q, got %q", rooms.RoomErrorRoomInGame, state, roomErr.Code)
+		}
+	}
+}
+
+func TestRoomStartGameForMemberRejectsGameOverRoom(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateGameOver, nil)
+	room.AddMemberSessionID("session-1")
+	playerID, ok := room.PlayerIDForSession("session-1")
+	if !ok {
+		t.Fatal("expected session to resolve before start")
+	}
+
+	roomErr := room.StartGameForMember(playerID, game.New)
+	if roomErr == nil {
+		t.Fatal("expected game-over room to reject start")
+	}
+	if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorInvalidRoomState, roomErr.Code)
+	}
+}
+
 func TestRoomMarkStartingMovesLobbyToStarting(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
 
@@ -188,6 +301,33 @@ func TestRoomMarkStartingRejectsInvalidState(t *testing.T) {
 		if room.State != state {
 			t.Fatalf("expected rejected room to stay %q, got %q", state, room.State)
 		}
+	}
+}
+
+func TestRoomStartSinglePlayerGameFromLobbySucceeds(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	room.AddMemberSessionID("session-1")
+
+	if roomErr := room.StartSinglePlayerGame(game.New); roomErr != nil {
+		t.Fatalf("expected single-player start to succeed, got %s", roomErr.Code)
+	}
+	if room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
+	}
+	if room.Game == nil {
+		t.Fatal("expected game instance to be created")
+	}
+}
+
+func TestRoomStartSinglePlayerGameRequiresMember(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+
+	roomErr := room.StartSinglePlayerGame(game.New)
+	if roomErr == nil {
+		t.Fatal("expected empty room to reject single-player start")
+	}
+	if roomErr.Code != rooms.RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", rooms.RoomErrorNotInRoom, roomErr.Code)
 	}
 }
 
@@ -223,6 +363,44 @@ func TestRoomMarkInGameRejectsInvalidState(t *testing.T) {
 		}
 		if room.State != state {
 			t.Fatalf("expected rejected room to stay %q, got %q", state, room.State)
+		}
+	}
+}
+
+func TestRoomMarkStartingRequiresLobby(t *testing.T) {
+	for _, state := range []rooms.RoomState{
+		rooms.RoomStateStarting,
+		rooms.RoomStateInGame,
+		rooms.RoomStateGameOver,
+		rooms.RoomStateClosed,
+	} {
+		room := rooms.NewRoom("TEST", state, nil)
+
+		roomErr := room.MarkStarting()
+		if roomErr == nil {
+			t.Fatalf("expected state %q to reject mark starting", state)
+		}
+		if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+			t.Fatalf("expected error code %q for state %q, got %q", rooms.RoomErrorInvalidRoomState, state, roomErr.Code)
+		}
+	}
+}
+
+func TestRoomMarkInGameRequiresStarting(t *testing.T) {
+	for _, state := range []rooms.RoomState{
+		rooms.RoomStateLobby,
+		rooms.RoomStateInGame,
+		rooms.RoomStateGameOver,
+		rooms.RoomStateClosed,
+	} {
+		room := rooms.NewRoom("TEST", state, nil)
+
+		roomErr := room.MarkInGame()
+		if roomErr == nil {
+			t.Fatalf("expected state %q to reject mark in-game", state)
+		}
+		if roomErr.Code != rooms.RoomErrorInvalidRoomState {
+			t.Fatalf("expected error code %q for state %q, got %q", rooms.RoomErrorInvalidRoomState, state, roomErr.Code)
 		}
 	}
 }
