@@ -11,13 +11,13 @@ func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte
 	adapter := newInboundSessionAdapter(session)
 	inbound.RouteClientPacket(inbound.ClientPacketRouter{
 		HandleSimpleDevtools: func() bool {
-			return handleSimpleDevtoolsPacket(session, remoteAddr, msg, envelope)
+			return inbound.HandleSimpleDevtoolsPacket(adapter, remoteAddr, msg, envelope)
 		},
 		HandlePlacementDevtools: func() bool {
-			return handlePlacementDevtoolsPacket(session, remoteAddr, msg, envelope)
+			return inbound.HandlePlacementDevtoolsPacket(adapter, remoteAddr, msg, envelope)
 		},
 		HandleRemainingDevtools: func() bool {
-			return handleRemainingDevtoolsPacket(session, remoteAddr, msg, envelope)
+			return inbound.HandleRemainingDevtoolsPacket(adapter, remoteAddr, msg, envelope)
 		},
 		DecodePacket: func() (game.ClientPacket, error) {
 			var packet game.ClientPacket
@@ -37,13 +37,10 @@ func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte
 			return inbound.HandleTelemetryPacket(adapter, remoteAddr, packet)
 		},
 		HandleLobby: func(packet game.ClientPacket) bool {
-			if inbound.HandleLobbyPacket(adapter, packet) {
-				return true
-			}
-			return handleLobbyPacket(session, packet)
+			return inbound.HandleLobbyPacket(adapter, packet)
 		},
 		HandleGameplay: func(packet game.ClientPacket) bool {
-			return handleGameplayPacket(session, packet)
+			return inbound.HandleGameplayPacket(adapter, packet)
 		},
 	})
 }
