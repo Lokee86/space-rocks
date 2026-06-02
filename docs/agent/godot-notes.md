@@ -16,6 +16,15 @@ The Godot client owns:
 
 The Go server owns authoritative simulation outcomes.
 
+## Player Color Presentation
+
+Player hue policy is client presentation behavior.
+Configure it in `shared/constants/client/presentation.toml` under `[constants.client.presentation.player_visuals]` with `player_color_policy`.
+Generated constants should come from the constants source, not manual edits.
+`local_selected` is a valid `player_color_policy` value. It preserves the local player's selected/default `Player.player_hue`, must not override local player hue selection, and OS indicators must still match the hue used for the represented player.
+`auto_distinct` is the current/default `player_color_policy` value. It preserves the local player's selected/default `Player.player_hue`, generates remote player hues numerically from the local hue plus remote slot offsets, and OS indicators must use the same hue result as the matching remote player ship.
+`player_id_assigned` is a valid `player_color_policy` value. It assigns hues from player identity and/or the configured hue list, is the only policy allowed to override local player hue selection, and OS indicators must still match the represented player ship hue.
+
 ## Scene and Import Safety
 
 Be careful with Godot scene diffs. Godot may rewrite:
