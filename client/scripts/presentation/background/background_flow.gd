@@ -36,7 +36,7 @@ func process_frame() -> void:
 	planet_drift_offset += Constants.PLANET_BACKGROUND_DRIFT_PER_FRAME
 
 	var scroll_position := last_valid_parallax_position
-	if parallax_target != null && parallax_target.visible:
+	if parallax_target != null:
 		last_valid_parallax_position = parallax_target.global_position
 		scroll_position = last_valid_parallax_position
 

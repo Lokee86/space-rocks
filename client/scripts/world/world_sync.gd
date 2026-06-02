@@ -48,6 +48,7 @@ func reset() -> void:
 		player_sync.reset()
 	if asteroid_sync != null:
 		asteroid_sync.reset()
+	clear_view_target_player()
 
 
 func apply_state(
@@ -100,6 +101,16 @@ func focus_camera_on_player(player_id: String) -> bool:
 	if player_sync == null:
 		return false
 	return player_sync.focus_camera_on_player(player_id)
+
+
+func set_view_target_player(player_id: String) -> void:
+	if player_sync != null:
+		player_sync.set_view_target_player(player_id)
+
+
+func clear_view_target_player() -> void:
+	if player_sync != null:
+		player_sync.clear_view_target_player()
 
 
 func visual_position_for_server_position(server_position: Vector2) -> Vector2:

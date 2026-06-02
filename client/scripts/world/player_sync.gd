@@ -13,6 +13,7 @@ var initialized_players := {}
 var target_player_positions := {}
 var target_player_rotations := {}
 var remote_player_visual_positions := {}
+var view_target_player_id := ""
 var player_hue_presenter := PlayerHuePresenter.new()
 var pause_state_tracker
 
@@ -26,6 +27,7 @@ func configure(game_owner: Node2D, player: Player, pause_tracker = null) -> void
 
 func reset() -> void:
 	player_hue_presenter.reset()
+	view_target_player_id = ""
 	if local_player != null:
 		local_player.hide()
 
@@ -40,12 +42,31 @@ func reset() -> void:
 	remote_player_visual_positions.clear()
 
 
+func set_view_target_player(player_id: String) -> void:
+	view_target_player_id = player_id
+	_make_local_camera_current()
+
+
+func clear_view_target_player() -> void:
+	view_target_player_id = ""
+	_make_local_camera_current()
+
+
 func focus_camera_on_player(player_id: String) -> bool:
 	if !player_nodes.has(player_id):
 		return false
 
-	var player_node = player_nodes[player_id]
-	var camera := player_node.get_node_or_null("Camera2D") as Camera2D
+	view_target_player_id = player_id
+	_make_local_camera_current()
+
+	return true
+
+
+func _make_local_camera_current() -> bool:
+	if local_player == null:
+		return false
+
+	var camera := local_player.get_node_or_null("Camera2D") as Camera2D
 	if camera == null:
 		return false
 
@@ -148,6 +169,9 @@ func remove_player_node(self_id: String, player_id: String) -> void:
 		return
 
 	var player_node = player_nodes[player_id]
+	if player_id == view_target_player_id:
+		clear_view_target_player()
+
 	if player_node == local_player:
 		local_player.stop_transient_effects()
 		local_player.visible = false
@@ -181,6 +205,19 @@ func interpolate(weight: float, current_self_id: String) -> void:
 			remote_player_visual_positions.erase(player_id)
 		else:
 			remote_player_visual_positions[player_id] = player_node.position
+
+	if view_target_player_id == "":
+		return
+	if !player_nodes.has(view_target_player_id):
+		return
+
+	var view_target_player = player_nodes[view_target_player_id]
+	if view_target_player == local_player:
+		return
+
+	local_player.global_position = view_target_player.global_position
+	local_player.rotation = view_target_player.rotation
+	local_player.visible = false
 
 
 func get_remote_player_visual_positions(current_self_id: String) -> Dictionary:
