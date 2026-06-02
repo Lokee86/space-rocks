@@ -1,6 +1,9 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import (
+	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+)
 
 func (game *Game) DevtoolsSafeRespawnPosition(playerID string) (physics.Vector2, bool) {
 	session, ok := game.playerSessions[playerID]
@@ -10,7 +13,7 @@ func (game *Game) DevtoolsSafeRespawnPosition(playerID string) (physics.Vector2,
 	return game.safeRespawnPosition(session), true
 }
 
-func (game *Game) DevtoolsForceRespawnPlayer(playerID string, position physics.Vector2) bool {
+func (game *Game) DevtoolsForceRespawnPlayer(playerID string, position physics.Vector2, cameraConfig entities.ClientConfig) bool {
 	session, ok := game.playerSessions[playerID]
 	if !ok || session == nil {
 		return false
@@ -21,10 +24,13 @@ func (game *Game) DevtoolsForceRespawnPlayer(playerID string, position physics.V
 	game.state.Players[playerID] = player
 
 	cameraView := game.cameraViews[playerID]
+	if cameraView == nil {
+		cameraView = &entities.CameraView{}
+		game.cameraViews[playerID] = cameraView
+	}
 	cameraView.X = player.X
 	cameraView.Y = player.Y
-	cameraView.Config = player.Config
-	game.cameraViews[playerID] = cameraView
+	cameraView.Config = cameraConfig
 
 	return true
 }

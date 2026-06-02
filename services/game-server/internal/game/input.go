@@ -9,11 +9,13 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		return
 	}
 	if packet.Type == PacketTypeClientConfig {
-		if session, ok := game.playerSessions[playerID]; ok {
-			session.Config = packet.Config
-		}
-		if cameraView, ok := game.cameraViews[playerID]; ok {
-			cameraView.SetConfig(packet.Config)
+		if packet.Config.VisibleWorldWidth > 0 && packet.Config.VisibleWorldHeight > 0 {
+			if session, ok := game.playerSessions[playerID]; ok && session != nil {
+				session.Config = packet.Config
+			}
+			if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
+				cameraView.SetConfig(packet.Config)
+			}
 		}
 	}
 
@@ -30,6 +32,8 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	case PacketTypePauseRequest:
 		game.togglePlayerPaused(playerID)
 	case PacketTypeClientConfig:
-		player.SetConfig(packet.Config)
+		if packet.Config.VisibleWorldWidth > 0 && packet.Config.VisibleWorldHeight > 0 {
+			player.SetConfig(packet.Config)
+		}
 	}
 }

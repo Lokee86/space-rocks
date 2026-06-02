@@ -27,7 +27,7 @@ func applyDebugRespawnPlayer(target *game.Game, request RespawnPlayerRequest) (s
 		return "", physics.Vector2{}, false
 	}
 
-	if !target.DevtoolsForceRespawnPlayer(playerID, spawnPosition) {
+	if !target.DevtoolsForceRespawnPlayer(playerID, spawnPosition, DummyPlayerCameraConfig()) {
 		return "", physics.Vector2{}, false
 	}
 

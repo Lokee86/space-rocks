@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 
+	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
@@ -21,11 +22,7 @@ func (game *Game) AddPlayer() string {
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session
 	game.state.Players[playerID] = player
-	game.cameraViews[playerID] = &entities.CameraView{
-		X:      player.X,
-		Y:      player.Y,
-		Config: player.Config,
-	}
+	game.setPlayerCameraViewLocked(playerID, player)
 	game.pendingPresentationEvents[playerID] = nil
 	logging.Game.Debug("player added",
 		logging.FieldPlayerID, playerID,
@@ -35,6 +32,41 @@ func (game *Game) AddPlayer() string {
 	)
 
 	return playerID
+}
+
+func (game *Game) setPlayerCameraViewLocked(playerID string, player *entities.Ship) {
+	if playerID == "" || player == nil {
+		return
+	}
+
+	cameraView, ok := game.cameraViews[playerID]
+	if !ok || cameraView == nil {
+		cameraView = &entities.CameraView{}
+		game.cameraViews[playerID] = cameraView
+	}
+
+	cameraView.X = player.X
+	cameraView.Y = player.Y
+
+	// Prefer an existing valid config to avoid flicker. Otherwise seed from session/player.
+	cameraConfig := cameraView.Config
+	if cameraConfig.VisibleWorldWidth <= 0 || cameraConfig.VisibleWorldHeight <= 0 {
+		if session, ok := game.playerSessions[playerID]; ok && session != nil {
+			if session.Config.VisibleWorldWidth > 0 && session.Config.VisibleWorldHeight > 0 {
+				cameraConfig = session.Config
+			}
+		}
+		if cameraConfig.VisibleWorldWidth <= 0 || cameraConfig.VisibleWorldHeight <= 0 {
+			if player.Config.VisibleWorldWidth > 0 && player.Config.VisibleWorldHeight > 0 {
+				cameraConfig = player.Config
+			}
+		}
+		if cameraConfig.VisibleWorldWidth <= 0 || cameraConfig.VisibleWorldHeight <= 0 {
+			cameraConfig.VisibleWorldWidth = constants.WorldWidth
+			cameraConfig.VisibleWorldHeight = constants.WorldHeight
+		}
+	}
+	cameraView.Config = cameraConfig
 }
 
 func (game *Game) RemovePlayer(playerID string) {

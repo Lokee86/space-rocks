@@ -12,12 +12,12 @@ func (game *Game) DevtoolsEnsurePlayerSession(playerID string, spawnPosition phy
 	return game.ensureDevtoolsPlayerSession(playerID, spawnPosition) != nil
 }
 
-func (game *Game) DevtoolsSpawnPlayerShip(playerID string, spawnPosition physics.Vector2) bool {
+func (game *Game) DevtoolsSpawnPlayerShip(playerID string, spawnPosition physics.Vector2, cameraConfig entities.ClientConfig) bool {
 	session, ok := game.playerSessions[playerID]
 	if !ok || session == nil {
 		return false
 	}
-	return game.applyDevtoolsPlayerShip(playerID, session, spawnPosition)
+	return game.applyDevtoolsPlayerShip(playerID, session, spawnPosition, cameraConfig)
 }
 
 func (game *Game) DevtoolsPlayerIDOccupied(playerID string) bool {
@@ -38,7 +38,7 @@ func (game *Game) ensureDevtoolsPlayerSession(playerID string, spawnPosition phy
 	return session
 }
 
-func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSession, spawnPosition physics.Vector2) bool {
+func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSession, spawnPosition physics.Vector2, cameraConfig entities.ClientConfig) bool {
 	if playerID == "" {
 		return false
 	}
@@ -49,16 +49,13 @@ func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSessio
 	session.RespawnCooldown = 0
 	player := session.NewShip(spawnPosition)
 	game.state.Players[playerID] = player
-	game.ensureDevtoolsPlayerCameraView(playerID, player)
+	game.ensureDevtoolsPlayerCameraView(playerID, player, cameraConfig)
 
 	return true
 }
 
-func (game *Game) ensureDevtoolsPlayerCameraView(playerID string, player *entities.Ship) {
-	if playerID == "" {
-		return
-	}
-	if player == nil {
+func (game *Game) ensureDevtoolsPlayerCameraView(playerID string, player *entities.Ship, cameraConfig entities.ClientConfig) {
+	if playerID == "" || player == nil {
 		return
 	}
 
@@ -70,7 +67,9 @@ func (game *Game) ensureDevtoolsPlayerCameraView(playerID string, player *entiti
 
 	cameraView.X = player.X
 	cameraView.Y = player.Y
-	cameraView.Config = player.Config
+	if cameraConfig.VisibleWorldWidth > 0 && cameraConfig.VisibleWorldHeight > 0 {
+		cameraView.Config = cameraConfig
+	}
 }
 
 func (game *Game) isDevtoolsPlayerIDOccupied(playerID string) bool {

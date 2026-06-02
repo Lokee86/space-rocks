@@ -42,7 +42,7 @@ func applyDebugSpawnPlayer(target *game.Game, request SpawnEntityRequest) (strin
 	if !target.DevtoolsEnsurePlayerSession(playerID, spawnPosition) {
 		return "", physics.Vector2{}, false
 	}
-	if !target.DevtoolsSpawnPlayerShip(playerID, spawnPosition) {
+	if !target.DevtoolsSpawnPlayerShip(playerID, spawnPosition, DummyPlayerCameraConfig()) {
 		return "", physics.Vector2{}, false
 	}
 
