@@ -6,7 +6,7 @@ import (
 )
 
 func handleGameplayPacket(session *webSocketSession, packet game.ClientPacket) bool {
-	if packet.Type != game.PacketTypeInput && packet.Type != game.PacketTypeRespawn {
+	if packet.Type != game.PacketTypeInput && packet.Type != game.PacketTypeRespawn && packet.Type != game.PacketTypeClientConfig {
 		if session.room == nil || session.currentGamePlayerID == "" {
 			return false
 		}
