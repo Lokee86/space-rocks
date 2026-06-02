@@ -1,13 +1,13 @@
-package networking
+package inbound
 
 import "github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 
-type clientPacketEnvelope struct {
+type ClientPacketEnvelope struct {
 	Type string `json:"type"`
 }
 
-func decodeClientPacketEnvelope(msg []byte) (clientPacketEnvelope, error) {
-	var envelope clientPacketEnvelope
+func DecodeClientPacketEnvelope(msg []byte) (ClientPacketEnvelope, error) {
+	var envelope ClientPacketEnvelope
 	err := packetcodec.Decode(msg, &envelope)
 	return envelope, err
 }

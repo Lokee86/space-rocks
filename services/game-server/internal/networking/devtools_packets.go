@@ -4,9 +4,10 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
+	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
 )
 
-func handleSimpleDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope clientPacketEnvelope) bool {
+func handleSimpleDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) bool {
 	if !isSimpleDevtoolsPacketType(envelope.Type) {
 		return false
 	}
@@ -32,14 +33,14 @@ func isSimpleDevtoolsPacketType(packetType string) bool {
 	}
 }
 
-func handlePlacementDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope clientPacketEnvelope) bool {
+func handlePlacementDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) bool {
 	if envelope.Type != devtools.PacketTypeDebugSpawnEntity {
 		return false
 	}
 	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
 }
 
-func handleRemainingDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope clientPacketEnvelope) bool {
+func handleRemainingDevtoolsPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) bool {
 	if !isRemainingDevtoolsPacketType(envelope.Type) {
 		return false
 	}
