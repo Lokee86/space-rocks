@@ -1,4 +1,4 @@
-extends RefCounted
+extends GutTest
 
 const GameplayInputContext = preload("res://scripts/gameplay/input/gameplay_input_context.gd")
 
@@ -25,7 +25,7 @@ func test_handle_unhandled_input_returns_false_when_gameplay_state_not_received(
 
 	var consumed := input_context.handle_unhandled_input(_left_click_pressed_event(), false)
 
-	assert(consumed == false)
+	assert_false(consumed)
 	assert(fake_mouse_flow.call_count == 0)
 
 func test_handle_unhandled_input_delegates_to_mouse_action_flow_when_gameplay_state_received() -> void:
@@ -37,6 +37,6 @@ func test_handle_unhandled_input_delegates_to_mouse_action_flow_when_gameplay_st
 
 	var consumed := input_context.handle_unhandled_input(event, true)
 
-	assert(consumed == true)
-	assert(fake_mouse_flow.call_count == 1)
-	assert(fake_mouse_flow.last_event == event)
+	assert_true(consumed)
+	assert_eq(fake_mouse_flow.call_count, 1)
+	assert_eq(fake_mouse_flow.last_event, event)

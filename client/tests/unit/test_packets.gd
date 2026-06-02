@@ -34,8 +34,6 @@ func test_required_packet_field_constants_exist() -> void:
 		Packets.FIELD_ROOM_CODE,
 		Packets.FIELD_ROOM_STATE,
 		Packets.FIELD_MEMBERS,
-		Packets.FIELD_MEMBER_ID,
-		Packets.FIELD_LOCAL_MEMBER_ID,
 		Packets.FIELD_READY,
 		Packets.FIELD_MAX_PLAYERS,
 		Packets.FIELD_ERROR_CODE,

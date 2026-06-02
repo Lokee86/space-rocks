@@ -10,7 +10,7 @@ var game_owner: Node2D
 var local_player: Player
 var bullets_layer: Node2D
 var asteroids_layer: Node2D
-var world_sync: WorldSync
+var world_sync: WorldSyncScript
 
 
 func before_each() -> void:
@@ -163,7 +163,7 @@ func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation(
 	_apply_state(state)
 	var expected_target := Vector2(656.0, 320.0 - Constants.WORLD_HEIGHT)
 	var rendered_snapshot_b: Vector2 = _player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID].position
-	var remote_visual_positions := world_sync.get_remote_player_visual_positions()
+	var remote_visual_positions: Dictionary = world_sync.get_remote_player_visual_positions()
 
 	assert_eq(_player_sync().get("target_player_positions")[WorldStateFixture.REMOTE_PLAYER_ID], expected_target)
 	assert_eq(rendered_snapshot_b, expected_target)

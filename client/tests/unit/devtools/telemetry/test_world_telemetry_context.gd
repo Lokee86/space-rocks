@@ -28,11 +28,10 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
 
-	var constants_map: Dictionary = Packets.get_script_constant_map()
-	var field_type := Packets.FIELD_TYPE if constants_map.has("FIELD_TYPE") else "type"
-	var field_sequence := Packets.FIELD_SEQUENCE if constants_map.has("FIELD_SEQUENCE") else "sequence"
-	var field_client_sent_msec := Packets.FIELD_CLIENT_SENT_MSEC if constants_map.has("FIELD_CLIENT_SENT_MSEC") else "client_sent_msec"
-	var type_telemetry_ping := Packets.TYPE_TELEMETRY_PING if constants_map.has("TYPE_TELEMETRY_PING") else "telemetry_ping"
+	var field_type := Packets.FIELD_TYPE
+	var field_sequence := Packets.FIELD_SEQUENCE
+	var field_client_sent_msec := Packets.FIELD_CLIENT_SENT_MSEC
+	var type_telemetry_ping := Packets.TYPE_TELEMETRY_PING
 
 	var ping_packet := fake_connection.sent_packets[0]
 	assert_eq(ping_packet[field_type], type_telemetry_ping)
