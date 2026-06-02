@@ -21,6 +21,7 @@ Install these before running or developing Space Rocks locally:
   - The server entrypoint is `services/game-server/cmd/game-server`.
 
 - **Python 3.10+** for repo tooling and static checks.
+  - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.
   - The data-sync tool uses modern Python typing syntax and requires `tomlkit`.
   - The client constants-boundary test uses `pytest`.
 

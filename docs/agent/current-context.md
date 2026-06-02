@@ -29,13 +29,11 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
 - `total_asteroids` telemetry only stays visible if both the base `StatePacket` and `WrapStatePacket()` preserve the field.
 - Remote player dev labels are implemented behind the client devtools seam. `DevToggle8` / `8` shows basic remote-player labels, and `Shift+DevToggle8` / `Shift+8` shows network telemetry labels. Labels attach to remote player nodes only, exclude the local player, and keep lifecycle, formatting, and mode state under `client/scripts/devtools/` and `client/scenes/devtools/`.
-- Spectate camera/background behavior is being corrected so remote cameras are not made current; the local/current camera anchor should follow the selected active spectate target, and `GameplayBackgroundFlow` must sample hidden parallax anchors instead of relying on visibility alone.
+- Server Hitbox Overlay is implemented behind the client devtools seam, toggled by the devtools window checkbox, and draws player/asteroid/bullet outlines from `WorldSync`/runtime draw-entry data using Godot collision resources only as visual templates.
 - Eligible devtools player-target lists now default to All Players, using `target_scope=all_players` instead of a fake player ID; Invincible, Infinite Lives, and Freeze Player use set-style all-player activation, and Respawn Player all-player requests still rely on existing per-player respawn guards.
 
 ## Known Gaps / TODOs
 
-- Window/gameplay balance should move away from raw OS max window pixels toward a logical gameplay viewport cap.
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
 - API server is planned but not scaffolded.
 - Ship variants are planned but not implemented.
-- Gameplay menu button clickability may be broken from earlier targeting implementation; track/fix as a separate follow-up seam.
