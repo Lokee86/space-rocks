@@ -34,3 +34,10 @@ Use these instead of expanding this file:
 
 - Space Rocks is moving quickly; stale notes should be removed aggressively.
 - Prefer focused docs over growing this file.
+
+## Asteroid Spawn Regression
+
+- Intended behavior: timed asteroids spawn just outside the active player/camera view, generally drift toward the player/camera area, and despawn using that camera/view area plus despawn margin.
+- Timed asteroid spawning is not currently intended to behave like global ambient spawning across the full playfield.
+- Observed regression: asteroids appeared to spawn randomly across the whole playfield, while Godot camera controls showed asteroids still existed and were drifting elsewhere; `total_asteroids` telemetry helped confirm spawning had not stopped.
+- Cause: after the server networking routing split, `client_config` packets were not forwarded to `Game.HandlePacket`, so the server did not receive or apply visible world dimensions, the camera view fell back to full world dimensions, and spawn/despawn bounds effectively behaved like whole-world bounds.
