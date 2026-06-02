@@ -1,5 +1,7 @@
 package rooms
 
+import "github.com/Lokee86/space-rocks/server/internal/rooms/roomrules"
+
 func (room *Room) SetJoinable(joinable bool) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
@@ -18,37 +20,14 @@ func (room *Room) ValidateJoin() *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	switch room.State {
-	case RoomStateLobby:
-	case RoomStateStarting, RoomStateInGame:
-		return &RoomDomainError{
-			Code:    RoomErrorRoomInGame,
-			Message: "Room is already in game.",
-		}
-	case RoomStateClosed:
-		return &RoomDomainError{
-			Code:    RoomErrorRoomClosed,
-			Message: "Room is closed.",
-		}
-	default:
-		return &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Room is not joinable.",
-		}
-	}
-
-	if !room.Joinable {
-		return &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Room is not joinable.",
-		}
-	}
-
-	if len(room.Members) >= MaxPlayersPerRoom {
-		return &RoomDomainError{
-			Code:    RoomErrorRoomFull,
-			Message: "Room is full.",
-		}
+	decision := roomrules.DecideJoin(roomrules.JoinInput{
+		State:       string(room.State),
+		Joinable:    room.Joinable,
+		MemberCount: len(room.Members),
+		MaxMembers:  MaxPlayersPerRoom,
+	})
+	if roomErr := roomDomainErrorFromDecision(decision); roomErr != nil {
+		return roomErr
 	}
 
 	return nil
@@ -58,22 +37,14 @@ func (room *Room) JoinMember(sessionID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	switch room.State {
-	case RoomStateLobby:
-	case RoomStateStarting, RoomStateInGame:
-		return &RoomDomainError{Code: RoomErrorRoomInGame, Message: "Room is already in game."}
-	case RoomStateClosed:
-		return &RoomDomainError{Code: RoomErrorRoomClosed, Message: "Room is closed."}
-	default:
-		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Room is not joinable."}
-	}
-
-	if !room.Joinable {
-		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Room is not joinable."}
-	}
-
-	if len(room.Members) >= MaxPlayersPerRoom {
-		return &RoomDomainError{Code: RoomErrorRoomFull, Message: "Room is full."}
+	decision := roomrules.DecideJoin(roomrules.JoinInput{
+		State:       string(room.State),
+		Joinable:    room.Joinable,
+		MemberCount: len(room.Members),
+		MaxMembers:  MaxPlayersPerRoom,
+	})
+	if roomErr := roomDomainErrorFromDecision(decision); roomErr != nil {
+		return roomErr
 	}
 
 	room.addMemberLocked(NewRoomMember(sessionID))
