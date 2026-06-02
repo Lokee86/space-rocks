@@ -18,26 +18,26 @@ func configure(
 	mouse_visual_position_provider = next_mouse_visual_position_provider
 	server_position_converter = next_server_position_converter
 
-func select_target() -> void:
+func select_target() -> bool:
 	if connection_service == null:
-		return
+		return false
 	if target_candidate_provider.is_null():
-		return
+		return false
 	if mouse_visual_position_provider.is_null():
-		return
+		return false
 	if server_position_converter.is_null():
-		return
+		return false
 
 	var candidates = target_candidate_provider.call()
 	if candidates == null:
-		return
+		return false
 	if candidates is Array and candidates.is_empty():
-		return
+		return false
 
 	var mouse_visual_position = mouse_visual_position_provider.call()
 	var selected_candidate = TargetVisualPicker.pick(candidates, mouse_visual_position)
 	if selected_candidate == null:
-		return
+		return false
 
 	var server_position = server_position_converter.call(mouse_visual_position)
 	connection_service.send_packet(
@@ -49,7 +49,7 @@ func select_target() -> void:
 		)
 	)
 
-	return
+	return true
 
 func deselect_target() -> void:
 	if connection_service == null:

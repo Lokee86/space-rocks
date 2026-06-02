@@ -73,6 +73,21 @@ Client spectate/view-cycle eligibility must use authoritative lifecycle status (
 
 Do not infer active eligibility solely from remote player positions or ship presence.
 
+## HUD-first mouse input routing
+
+- HUD/UI controls get first priority for mouse clicks.
+- Gameplay mouse handling should run only after visible HUD controls have had a chance to receive the click.
+- Broad HUD layout containers should pass/ignore mouse events so they do not swallow clicks.
+- Actual interactive controls, such as GameMenu TextureButtons, should keep normal button mouse handling.
+- Gameplay target selection should only consume left-click when a target/action is actually selected.
+- If no target/action is available, gameplay should return `false` so the click can continue through normal Godot routing.
+
+Why this rule exists:
+
+- `_unhandled_input` alone was not reliable because other controls/layers can swallow clicks before gameplay sees them.
+- Pure gameplay `_input` consumption was also wrong because it could prevent menu buttons from receiving clicks.
+- The working model is HUD priority first, then world/gameplay fallback.
+
 ## Implemented Developer Toggles
 
 Current hardcoded dev toggles use number keys (`DevToggle0` through `DevToggle9`). Use the canonical map in `docs/devtools/toggles.md`.
