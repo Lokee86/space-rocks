@@ -70,6 +70,7 @@ signal show_server_hitboxes_changed(enabled: bool)
 
 
 func _ready() -> void:
+	always_on_top = true
 	if !close_requested.is_connected(_on_close_requested):
 		close_requested.connect(_on_close_requested)
 	if !invincible_button.pressed.is_connected(_on_invincible_button_pressed):

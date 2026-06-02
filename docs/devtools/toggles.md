@@ -97,6 +97,20 @@ Current behavior:
 - It does not mutate gameplay.
 - It remains separate from gameplay HUD and separate from devtools window raw packet/readout UI.
 
+### Server Hitbox Overlay
+
+Server Hitbox Overlay is a devtools-only outline view for server-state hitboxes.
+
+Current behavior:
+
+- It is toggled from the devtools window checkbox, not a number hotkey.
+- It is not player-facing HUD UI.
+- It draws visible outlines for server-state player, asteroid, and bullet hitboxes.
+- It uses synced/server-derived entity state for position, rotation, scale, and variant where available.
+- It uses Godot collision templates only for visual shape outlines.
+- It does not mutate gameplay.
+- It does not send a server packet.
+
 ### Remote Player Dev Labels
 
 Remote Player Dev Labels are a devtools/client-only overlay for inspecting remote players.
@@ -224,6 +238,10 @@ Current ownership paths:
 - telemetry client/server routing: `client/scripts/networking/`, `services/game-server/internal/networking/`
 - client devtools window/context: `client/scripts/devtools/`
 - client telemetry seam: `client/scripts/devtools/telemetry/`
+- server hitbox overlay scene: `client/scenes/devtools/server_hitbox_overlay.tscn`
+- server hitbox overlay script: `client/scripts/devtools/hitboxes/devtools_server_hitbox_overlay.gd`
+- server hitbox template catalog: `client/scripts/devtools/hitboxes/devtools_hitbox_template_catalog.gd`
+- server hitbox draw-entry data: `client/scripts/world/` and `client/scripts/gameplay/runtime/`
 - remote player dev labels scene: `client/scenes/devtools/player_dev_label.tscn`
 - remote player dev label script: `client/scripts/devtools/player_dev_label.gd`
 - remote player dev label formatter: `client/scripts/devtools/player_dev_label_formatter.gd`
@@ -233,6 +251,7 @@ Current ownership paths:
 - client gameplay input routing: `client/scripts/gameplay/input/`
 - gameplay shell state routing: `client/scripts/shell/gameplay_shell_flow.gd`
 - non-devtools gameplay/world code should expose only the read-only observation needed by devtools.
+- non-devtools world/runtime code exposes read-only draw-entry data only; rendering stays in devtools.
 - `PlayerDevLabel` lifecycle, formatting, and mode state belong in client devtools, not `PlayerSync` or `WorldSync`.
 
 ## Server Build Flag
