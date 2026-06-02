@@ -35,9 +35,9 @@ func apply_pong(packet: Dictionary) -> void:
 	var server_received_msec := int(packet.get(Packets.FIELD_SERVER_RECEIVED_MSEC, -1))
 	var server_sent_msec := int(packet.get(Packets.FIELD_SERVER_SENT_MSEC, -1))
 	if server_received_msec > 0 and server_sent_msec > 0:
-		var local_midpoint_msec := sent_msec + ((local_received_msec - sent_msec) / 2)
-		var server_midpoint_msec := server_received_msec + ((server_sent_msec - server_received_msec) / 2)
-		latest_server_clock_offset_ms = server_midpoint_msec - local_midpoint_msec
+		var local_midpoint_msec := float(sent_msec) + (float(local_received_msec - sent_msec) / 2.0)
+		var server_midpoint_msec := float(server_received_msec) + (float(server_sent_msec - server_received_msec) / 2.0)
+		latest_server_clock_offset_ms = int(round(server_midpoint_msec - local_midpoint_msec))
 	pending_pings.erase(pong_sequence)
 
 

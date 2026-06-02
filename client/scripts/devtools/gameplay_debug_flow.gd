@@ -3,7 +3,7 @@ class_name GameplayDebugFlow
 
 const Packets = preload("res://scripts/networking/packets/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
-const DevtoolsTargetResolver = preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript = preload("res://scripts/devtools/devtools_target_resolver.gd")
 
 var connection_service
 var debug_invincible_enabled := false
@@ -46,7 +46,7 @@ func process(has_received_state: bool) -> void:
 
 
 func toggle_invincible(
-	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = ""
 ) -> void:
 	if connection_service == null:
@@ -57,7 +57,7 @@ func toggle_invincible(
 
 
 func toggle_infinite_lives(
-	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = ""
 ) -> void:
 	if connection_service == null:
@@ -78,7 +78,7 @@ func toggle_freeze_world(freeze_target := "") -> void:
 
 
 func toggle_freeze_player(
-	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = ""
 ) -> void:
 	if connection_service == null:
@@ -88,7 +88,7 @@ func toggle_freeze_player(
 
 
 func set_score(
-	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
 	score: int = 0
 ) -> void:
@@ -99,7 +99,7 @@ func set_score(
 
 
 func add_score(
-	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
 	amount: int = 0
 ) -> void:
@@ -110,7 +110,7 @@ func add_score(
 
 
 func set_lives(
-	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
 	lives: int = 0
 ) -> void:
@@ -121,7 +121,7 @@ func set_lives(
 
 
 func add_lives(
-	target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER,
+	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
 	amount: int = 0
 ) -> void:
@@ -150,7 +150,7 @@ func _build_player_toggle_packet(packet_type: String, target_scope: String, targ
 		Packets.FIELD_TYPE: packet_type,
 		Packets.FIELD_TARGET_SCOPE: target_scope,
 	}
-	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
+	if target_scope == DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
 		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
 
@@ -167,6 +167,6 @@ func _build_counter_packet(
 		Packets.FIELD_TARGET_SCOPE: target_scope,
 		value_field: value,
 	}
-	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
+	if target_scope == DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
 		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
