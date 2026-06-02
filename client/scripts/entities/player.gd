@@ -81,6 +81,10 @@ func set_afterburner_active(active: bool) -> void:
 		_stop_afterburner_sound()
 
 
+func stop_transient_effects() -> void:
+	set_afterburner_active(false)
+
+
 func _play_afterburner_sound() -> void:
 	if afterburner_audio == null:
 		return

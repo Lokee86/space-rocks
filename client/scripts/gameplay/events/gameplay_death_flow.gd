@@ -6,15 +6,20 @@ const Packets = preload("res://scripts/networking/packets/packets.gd")
 var hud_flow
 var menu_flow
 var event_flow
+var player
 
 
-func configure(hud_flow_ref, menu_flow_ref, event_flow_ref) -> void:
+func configure(hud_flow_ref, menu_flow_ref, event_flow_ref, player_ref = null) -> void:
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
 	event_flow = event_flow_ref
+	player = player_ref
 
 
 func apply_self_death_event(event: Dictionary) -> void:
+	if player != null:
+		player.stop_transient_effects()
+
 	var lives := int(event.get(Packets.FIELD_LIVES, 0))
 	if hud_flow != null:
 		hud_flow.apply_lives(lives)
