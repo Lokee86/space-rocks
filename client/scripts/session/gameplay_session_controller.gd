@@ -1,8 +1,5 @@
 extends Node
 
-const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
-const GameplayComposition := preload("res://scripts/gameplay/gameplay_composition.gd")
-
 var connection_service
 var hud: Control
 var main_menu: Control
@@ -11,7 +8,7 @@ var shell_boot_flow
 var logger: Callable
 
 var gameplay_composition
-var has_received_gameplay_state := false
+var gameplay_state_flow
 var accepts_gameplay_packets := false
 
 
@@ -39,15 +36,15 @@ func configure(
 	gameplay_composition.gameplay_started.connect(_on_gameplay_started)
 	gameplay_composition.quit_to_main_menu_requested.connect(_on_gameplay_quit_to_main_menu_requested)
 	gameplay_composition.return_to_lobby_requested.connect(_on_gameplay_return_to_lobby_requested)
+	gameplay_state_flow = GameplayStateFlow.new()
+	gameplay_state_flow.configure(gameplay_composition)
 
 
 func handle_gameplay_state(packet: Dictionary) -> void:
 	if !accepts_gameplay_packets:
 		return
-	has_received_gameplay_state = true
-	var state := GameplayStatePacketReader.read(packet)
-	if gameplay_composition != null:
-		gameplay_composition.apply_gameplay_state(state)
+	if gameplay_state_flow != null:
+		gameplay_state_flow.handle_gameplay_state_packet(packet)
 
 
 func handle_player_pause_state(packet: Dictionary) -> void:
@@ -63,7 +60,10 @@ func begin_accepting_gameplay_packets() -> void:
 
 func _process(delta: float) -> void:
 	if gameplay_composition != null:
-		gameplay_composition.process(delta, has_received_gameplay_state)
+		var has_received_state := false
+		if gameplay_state_flow != null:
+			has_received_state = gameplay_state_flow.has_received_state()
+		gameplay_composition.process(delta, has_received_state)
 
 
 func _input(event: InputEvent) -> void:
@@ -90,7 +90,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func reset() -> void:
 	accepts_gameplay_packets = false
-	has_received_gameplay_state = false
+	if gameplay_state_flow != null:
+		gameplay_state_flow.reset()
 	if gameplay_composition != null:
 		gameplay_composition.reset()
 
