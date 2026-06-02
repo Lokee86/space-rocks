@@ -1,5 +1,7 @@
 extends RefCounted
 
+const Constants := preload("res://scripts/constants/constants.gd")
+
 var connection_service
 var shell_boot_flow
 var room_session_controller
@@ -78,6 +80,8 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 	if room_session_controller == null:
 		return
 	room_session_controller.handle_room_snapshot(packet)
+	if room_session_controller.current_room_state() == Constants.ROOM_STATE_IN_GAME && gameplay_session_controller != null:
+		gameplay_session_controller.begin_accepting_gameplay_packets()
 	_refresh_game_over_menu_state()
 
 
@@ -85,6 +89,8 @@ func _on_room_state_changed(packet: Dictionary) -> void:
 	if room_session_controller == null:
 		return
 	room_session_controller.handle_room_state_changed(packet)
+	if room_session_controller.current_room_state() == Constants.ROOM_STATE_IN_GAME && gameplay_session_controller != null:
+		gameplay_session_controller.begin_accepting_gameplay_packets()
 	_refresh_game_over_menu_state()
 
 

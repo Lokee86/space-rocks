@@ -32,6 +32,7 @@ var debug_click_placement_flow
 var debug_continuous_bullet_spawn_flow
 var spectate_menu_state
 var has_received_gameplay_state := false
+var accepts_gameplay_packets := false
 
 
 func configure(
@@ -118,6 +119,8 @@ func configure(
 
 
 func handle_gameplay_state(packet: Dictionary) -> void:
+	if !accepts_gameplay_packets:
+		return
 	has_received_gameplay_state = true
 	var state := GameplayStatePacketReader.read(packet)
 	if gameplay_shell_flow != null && gameplay_shell_flow.has_method("refresh_debug_spawn_player_slots"):
@@ -129,8 +132,14 @@ func handle_gameplay_state(packet: Dictionary) -> void:
 
 
 func handle_player_pause_state(packet: Dictionary) -> void:
+	if !accepts_gameplay_packets:
+		return
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.apply_player_pause_state_packet(packet)
+
+
+func begin_accepting_gameplay_packets() -> void:
+	accepts_gameplay_packets = true
 
 
 func _process(delta: float) -> void:
@@ -210,6 +219,7 @@ func _configure_gameplay_presentation_flow() -> void:
 
 
 func reset() -> void:
+	accepts_gameplay_packets = false
 	has_received_gameplay_state = false
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.reset()
