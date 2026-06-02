@@ -1,5 +1,7 @@
 package rooms
 
+import "github.com/Lokee86/space-rocks/server/internal/rooms/roomrules"
+
 func (room *Room) ValidateStart(playerID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
@@ -8,26 +10,23 @@ func (room *Room) ValidateStart(playerID string) *RoomDomainError {
 }
 
 func (room *Room) validateStartLocked(playerID string) *RoomDomainError {
-	if _, ok := room.Members[playerID]; !ok {
-		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
+	members := make([]roomrules.StartMember, 0, len(room.Members))
+	for _, member := range room.Members {
+		members = append(members, roomrules.StartMember{
+			PlayerID:  member.PlayerID,
+			Ready:     member.Ready,
+			Connected: member.Connected,
+		})
 	}
 
-	if playerID != room.OwnerID {
-		return &RoomDomainError{Code: RoomErrorNotRoomOwner, Message: "Only the room owner can start the game."}
-	}
-
-	switch room.State {
-	case RoomStateLobby:
-	case RoomStateStarting, RoomStateInGame:
-		return &RoomDomainError{Code: RoomErrorRoomInGame, Message: "Room is already in game."}
-	default:
-		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Game can only be started from the lobby."}
-	}
-
-	for _, connectedMember := range room.Members {
-		if connectedMember.Connected && !connectedMember.Ready {
-			return &RoomDomainError{Code: RoomErrorNotReady, Message: "All connected members must be ready."}
-		}
+	decision := roomrules.DecideStart(roomrules.StartInput{
+		State:              string(room.State),
+		OwnerID:            room.OwnerID,
+		RequestingPlayerID: playerID,
+		Members:            members,
+	})
+	if roomErr := roomDomainErrorFromDecision(decision); roomErr != nil {
+		return roomErr
 	}
 
 	return nil
