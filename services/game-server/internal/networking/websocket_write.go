@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
 )
 
 func writeServerMessages(
@@ -24,13 +25,13 @@ func writeServerMessages(
 				return
 			}
 		case <-ticker.C:
-			if session.currentGamePlayerID == "" || !canSendGameplayPresentationState(session.room) {
+			if session.currentGamePlayerID == "" || !outbound.CanSendGameplayPresentationState(session.room) {
 				continue
 			}
 
-			checkRoomGameOver(session.room)
+			outbound.TickRoomGameOver(session.room, BroadcastRoomSnapshot)
 
-			response, ok := buildGameplayPresentationStateResponse(session, remoteAddr)
+			response, ok := outbound.BuildGameplayPresentationStateResponse(session.room, session.currentGamePlayerID, session.currentRoomID, remoteAddr)
 			if !ok {
 				continue
 			}

@@ -1,11 +1,11 @@
-package networking
+package outbound
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
-func checkRoomGameOver(room *rooms.Room) bool {
+func TickRoomGameOver(room *rooms.Room, broadcastRoomSnapshot func(*rooms.Room)) bool {
 	if !room.MarkGameOverIfComplete() {
 		return false
 	}
@@ -13,6 +13,6 @@ func checkRoomGameOver(room *rooms.Room) bool {
 	logging.Rooms.Debug("room game over detected",
 		logging.FieldRoomID, room.ID,
 	)
-	BroadcastRoomSnapshot(room)
+	broadcastRoomSnapshot(room)
 	return true
 }
