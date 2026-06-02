@@ -1,28 +1,35 @@
 package rooms
 
-func (room *Room) JoinMember(sessionID string) *RoomDomainError {
+func (room *Room) ValidateStart(playerID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
+
+	return room.validateStartLocked(playerID)
+}
+
+func (room *Room) validateStartLocked(playerID string) *RoomDomainError {
+	if _, ok := room.Members[playerID]; !ok {
+		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
+	}
+
+	if playerID != room.OwnerID {
+		return &RoomDomainError{Code: RoomErrorNotRoomOwner, Message: "Only the room owner can start the game."}
+	}
 
 	switch room.State {
 	case RoomStateLobby:
 	case RoomStateStarting, RoomStateInGame:
 		return &RoomDomainError{Code: RoomErrorRoomInGame, Message: "Room is already in game."}
-	case RoomStateClosed:
-		return &RoomDomainError{Code: RoomErrorRoomClosed, Message: "Room is closed."}
 	default:
-		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Room is not joinable."}
+		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Game can only be started from the lobby."}
 	}
 
-	if !room.Joinable {
-		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Room is not joinable."}
+	for _, connectedMember := range room.Members {
+		if connectedMember.Connected && !connectedMember.Ready {
+			return &RoomDomainError{Code: RoomErrorNotReady, Message: "All connected members must be ready."}
+		}
 	}
 
-	if len(room.Members) >= MaxPlayersPerRoom {
-		return &RoomDomainError{Code: RoomErrorRoomFull, Message: "Room is full."}
-	}
-
-	room.addMemberLocked(NewRoomMember(sessionID))
 	return nil
 }
 

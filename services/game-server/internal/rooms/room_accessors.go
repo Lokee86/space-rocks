@@ -19,9 +19,3 @@ func (room *Room) ActivePlayerCount() int {
 	defer room.mu.Unlock()
 	return room.ActivePlayers
 }
-
-func (room *Room) CurrentCleanupVersion() int {
-	room.mu.Lock()
-	defer room.mu.Unlock()
-	return room.CleanupVersion
-}

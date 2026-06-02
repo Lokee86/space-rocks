@@ -29,6 +29,13 @@ func (room *Room) CleanupVersionMatches(cleanupVersion int) bool {
 	return room.CleanupVersion == cleanupVersion
 }
 
+func (room *Room) CurrentCleanupVersion() int {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	return room.CleanupVersion
+}
+
 func (room *Room) ScheduleCleanupTimer(cleanupDelay time.Duration, cleanup func(cleanupVersion int)) int {
 	room.mu.Lock()
 	defer room.mu.Unlock()
@@ -42,4 +49,8 @@ func (room *Room) ScheduleCleanupTimer(cleanupDelay time.Duration, cleanup func(
 		cleanup(cleanupVersion)
 	})
 	return cleanupVersion
+}
+
+func (room *Room) ShouldCleanup() bool {
+	return room != nil && room.IsEmpty()
 }
