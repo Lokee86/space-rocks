@@ -13,6 +13,10 @@ type continuousBulletStreamEntry struct {
 	CooldownRemaining float64
 }
 
+type continuousBulletStreams struct {
+	streamEmitters []continuousBulletStreamEntry
+}
+
 type DevtoolsContinuousBulletStream struct {
 	OwnerPlayerID     string
 	Origin            physics.Vector2
@@ -20,7 +24,7 @@ type DevtoolsContinuousBulletStream struct {
 	CooldownRemaining float64
 }
 
-func (game *Game) DevtoolsBeginContinuousBulletStream(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool {
+func (streams *continuousBulletStreams) start(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool {
 	if ownerPlayerID == "" {
 		return false
 	}
@@ -28,23 +32,52 @@ func (game *Game) DevtoolsBeginContinuousBulletStream(ownerPlayerID string, orig
 	if normalizedDirection.Length() == 0 {
 		return false
 	}
-	stream := DevtoolsContinuousBulletStream{
+	streams.add(continuousBulletStreamEntry{
 		OwnerPlayerID:     ownerPlayerID,
 		Origin:            space.NormalizePosition(origin),
 		Direction:         normalizedDirection,
 		CooldownRemaining: constants.BulletCooldown,
-	}
-	game.devtoolsAppendContinuousBulletStream(continuousBulletStreamEntry(stream))
+	})
 	return true
 }
 
-func (game *Game) DevtoolsActiveContinuousBulletStreams() []DevtoolsContinuousBulletStream {
-	entries := game.devtoolsContinuousBulletStreams()
-	streams := make([]DevtoolsContinuousBulletStream, len(entries))
-	for index, entry := range entries {
-		streams[index] = DevtoolsContinuousBulletStream(entry)
+func (streams *continuousBulletStreams) active() []DevtoolsContinuousBulletStream {
+	active := make([]DevtoolsContinuousBulletStream, len(streams.streamEmitters))
+	for index, entry := range streams.streamEmitters {
+		active[index] = DevtoolsContinuousBulletStream(entry)
 	}
-	return streams
+	return active
+}
+
+func (streams *continuousBulletStreams) add(stream continuousBulletStreamEntry) {
+	streams.streamEmitters = append(streams.streamEmitters, stream)
+}
+
+func (streams *continuousBulletStreams) reset() {
+	streams.streamEmitters = nil
+}
+
+func (streams *continuousBulletStreams) step(delta float64, bulletsCanMove bool, spawn func(string, physics.Vector2, physics.Vector2) bool) {
+	for index := range streams.streamEmitters {
+		stream := &streams.streamEmitters[index]
+		stream.CooldownRemaining -= delta
+		if stream.CooldownRemaining > 0 {
+			continue
+		}
+		if bulletsCanMove {
+			if spawn(stream.OwnerPlayerID, stream.Origin, stream.Direction) {
+				stream.CooldownRemaining = constants.BulletCooldown
+			}
+		}
+	}
+}
+
+func (game *Game) DevtoolsBeginContinuousBulletStream(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool {
+	return game.continuousBulletStreams.start(ownerPlayerID, origin, direction)
+}
+
+func (game *Game) DevtoolsActiveContinuousBulletStreams() []DevtoolsContinuousBulletStream {
+	return game.continuousBulletStreams.active()
 }
 
 func (game *Game) DevtoolsClearContinuousBulletStreams() {
@@ -52,29 +85,20 @@ func (game *Game) DevtoolsClearContinuousBulletStreams() {
 }
 
 func (game *Game) devtoolsContinuousBulletStreams() []continuousBulletStreamEntry {
-	return game.streamEmitters
+	return game.continuousBulletStreams.streamEmitters
 }
 
 func (game *Game) devtoolsAppendContinuousBulletStream(stream continuousBulletStreamEntry) {
-	game.streamEmitters = append(game.streamEmitters, stream)
+	game.continuousBulletStreams.add(stream)
 }
 
 func (game *Game) devtoolsResetContinuousBulletStreams() {
-	game.streamEmitters = nil
+	game.continuousBulletStreams.reset()
 }
 
 func (game *Game) stepContinuousBulletStreams(delta float64) {
-	for index := range game.devtoolsContinuousBulletStreams() {
-		stream := &game.streamEmitters[index]
-		stream.CooldownRemaining -= delta
-		if stream.CooldownRemaining > 0 {
-			continue
-		}
-		if game.worldSimulationOptions.BulletsCanMove() {
-			_, spawned := game.spawnDebugBullet(stream.OwnerPlayerID, stream.Origin, stream.Direction)
-			if spawned {
-				stream.CooldownRemaining = constants.BulletCooldown
-			}
-		}
-	}
+	game.continuousBulletStreams.step(delta, game.worldSimulationOptions.BulletsCanMove(), func(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool {
+		_, spawned := game.spawnDebugBullet(ownerPlayerID, origin, direction)
+		return spawned
+	})
 }

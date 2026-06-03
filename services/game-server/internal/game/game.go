@@ -22,7 +22,7 @@ type Game struct {
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
 	state                     entities.GameState
-	streamEmitters            []continuousBulletStreamEntry
+	continuousBulletStreams   *continuousBulletStreams
 	cameraViews               map[string]*entities.CameraView
 	playerSessions            map[string]*playerSession
 	pendingPresentationEvents map[string][]EventState
@@ -40,6 +40,7 @@ func New() *Game {
 		cameraViews:               make(map[string]*entities.CameraView),
 		playerSessions:            make(map[string]*playerSession),
 		pendingPresentationEvents: make(map[string][]EventState),
+		continuousBulletStreams:   &continuousBulletStreams{},
 		spawner:                   spawning.New(),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
 		state:                     entities.NewGameState(),
