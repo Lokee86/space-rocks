@@ -1,5 +1,4 @@
 extends RefCounted
-class_name GameplayComposition
 
 signal gameplay_started
 signal quit_to_main_menu_requested
