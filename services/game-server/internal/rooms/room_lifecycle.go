@@ -120,11 +120,8 @@ func (room *Room) StartSinglePlayerGame(newGame func() *game.Game) *RoomDomainEr
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if room.State != RoomStateLobby {
-		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Game can only be started from the lobby."}
-	}
-	if len(room.Members) == 0 {
-		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
+	if roomErr := room.validateStartPreconditionsLocked(); roomErr != nil {
+		return roomErr
 	}
 	if roomErr := room.markStartingLocked(); roomErr != nil {
 		return roomErr
