@@ -1,4 +1,7 @@
 extends RefCounted
+class_name GameplayComposition
+
+const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
 
 signal gameplay_started
 signal quit_to_main_menu_requested
@@ -33,6 +36,8 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, bullets
 	gameplay_hud_flow.configure(hud)
 	gameplay_menu_flow = GameplayMenuFlow.new()
 	gameplay_menu_flow.configure(hud, connection_service, player, session_context)
+	var spectate_menu_state = SpectateMenuState.new()
+	spectate_session_flow = SpectateSessionFlow.new()
 	gameplay_shell_flow = GameplayShellFlow.new()
 	gameplay_shell_flow.configure(
 		connection_service,
@@ -41,10 +46,10 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, bullets
 		bullets,
 		asteroids,
 		gameplay_hud_flow,
-		gameplay_menu_flow
+		gameplay_menu_flow,
+		spectate_menu_state
 	)
-	spectate_session_flow = SpectateSessionFlow.new()
-	spectate_session_flow.configure(gameplay_menu_flow, gameplay_shell_flow)
+	spectate_session_flow.configure(gameplay_menu_flow, gameplay_shell_flow, spectate_menu_state)
 	dev_tools_session_flow = DevToolsSessionFlow.new()
 	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, logger)
 	dev_tools_session_flow.attach_to_gameplay_shell(gameplay_shell_flow)
