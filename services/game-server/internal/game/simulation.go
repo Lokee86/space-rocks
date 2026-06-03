@@ -3,6 +3,7 @@ package game
 import (
 	"time"
 
+	"github.com/Lokee86/space-rocks/server/internal/devtools/streamruntime"
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
@@ -30,12 +31,12 @@ func (game *Game) Step(delta float64) {
 
 	game.stepPlayerSessions(delta)
 	game.stepPlayers(delta, bounds)
-	game.stepContinuousBulletStreams(delta)
 	game.removeReadyPlayers()
 	game.stepAsteroidSpawning(delta)
 	game.stepAsteroids(delta, bounds)
 	game.stepBullets(delta, bounds)
 	game.stepCollisions()
+	streamruntime.StepGameRuntime(game, delta)
 }
 
 func (game *Game) stepCollisions() {
