@@ -32,7 +32,7 @@ func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapsho
 		RoomState:     string(room.State),
 		Members:       members,
 		LocalPlayerID: localPlayerID,
-		OwnerID:       room.OwnerID,
+		OwnerID:       room.OwnerID(),
 		MaxPlayers:    rooms.MaxPlayersPerRoom,
 	}
 }

@@ -8,13 +8,7 @@ func (room *Room) AddMember(member *RoomMember) *RoomMember {
 }
 
 func (room *Room) addMemberLocked(member *RoomMember) *RoomMember {
-	member.PlayerID = room.nextAvailablePlayerIDLocked()
-	room.Members[member.PlayerID] = member
-	if room.OwnerID == "" {
-		room.OwnerID = member.PlayerID
-	}
-
-	return member
+	return room.membership.addMember(member)
 }
 
 func (room *Room) AddMemberSessionID(sessionID string) *RoomMember {
@@ -25,38 +19,28 @@ func (room *Room) PlayerIDForSession(sessionID string) (string, bool) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	for _, member := range room.Members {
-		if member.SessionID == sessionID {
-			return member.PlayerID, true
-		}
-	}
-	return "", false
+	return room.membership.playerIDForSession(sessionID)
+}
+
+func (room *Room) OwnerID() string {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	return room.membership.ownerIDValue()
 }
 
 func (room *Room) RemoveMember(playerID string) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	delete(room.Members, playerID)
-	if room.OwnerID == playerID {
-		room.OwnerID = ""
-		room.assignNextOwnerLocked()
-	}
-}
-
-func (room *Room) assignNextOwnerLocked() {
-	for remainingPlayerID := range room.Members {
-		if room.OwnerID == "" || remainingPlayerID < room.OwnerID {
-			room.OwnerID = remainingPlayerID
-		}
-	}
+	room.membership.removeMember(playerID)
 }
 
 func (room *Room) MemberCount() int {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	return len(room.Members)
+	return room.membership.memberCount()
 }
 
 func (room *Room) IsFull() bool {
@@ -67,17 +51,12 @@ func (room *Room) IsEmpty() bool {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	return room.ActivePlayers == 0 && len(room.Members) == 0
+	return room.ActivePlayers == 0 && room.membership.memberCount() == 0
 }
 
 func (room *Room) MembersSnapshot() []RoomMember {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	members := make([]RoomMember, 0, len(room.Members))
-	for _, member := range room.Members {
-		members = append(members, *member)
-	}
-
-	return members
+	return room.membership.membersSnapshot()
 }
