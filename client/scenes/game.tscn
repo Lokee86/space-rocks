@@ -119,6 +119,10 @@ visible = false
 
 [node name="ServerHitboxOverlay" parent="." unique_id=652898134 instance=ExtResource("10_server_hitbox_overlay")]
 
+[node name="Node2D" type="Node2D" parent="." unique_id=375864272]
+
+[node name="Camera2D" type="Camera2D" parent="Node2D" unique_id=593176064]
+
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1725241940]
 
 [node name="MainMenu" parent="CanvasLayer" unique_id=1939259662 instance=ExtResource("1_wu7gp")]
