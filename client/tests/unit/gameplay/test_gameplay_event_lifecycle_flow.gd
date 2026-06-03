@@ -79,7 +79,9 @@ func test_configure_creates_event_and_death_flows() -> void:
 	var death_flow := FakeDeathFlow.new()
 	var flow := GameplayEventLifecycleFlow.new()
 	_game_owner = FakeNode2D.new()
+	add_child_autofree(_game_owner)
 	_hud = FakeControl.new()
+	add_child_autofree(_hud)
 	var hud_flow := Object.new()
 	var menu_flow := Object.new()
 	var player := Object.new()
@@ -110,7 +112,9 @@ func test_apply_server_events_forwards_state_fields() -> void:
 	var flow := GameplayEventLifecycleFlow.new()
 	var callable_target := FakeCallableTarget.new()
 	_game_owner = FakeNode2D.new()
+	add_child_autofree(_game_owner)
 	_hud = FakeControl.new()
+	add_child_autofree(_hud)
 
 	flow.configure(
 		_game_owner,
@@ -140,7 +144,9 @@ func test_reset_calls_owned_event_flow_reset() -> void:
 	var flow := GameplayEventLifecycleFlow.new()
 	var callable_target := FakeCallableTarget.new()
 	_game_owner = FakeNode2D.new()
+	add_child_autofree(_game_owner)
 	_hud = FakeControl.new()
+	add_child_autofree(_hud)
 
 	flow.configure(
 		_game_owner,
