@@ -31,7 +31,7 @@ func configure(connection_service_ref, scene_root_ref: Node, gameplay_shell_flow
 		debug_mouse_world_position = DebugMouseWorldPosition.new()
 		debug_mouse_world_position.configure(
 			scene_root,
-			Callable(gameplay_shell_flow.runtime_context, "server_position_for_visual_position")
+			Callable(gameplay_shell_flow.runtime_context.world_sync, "server_position_for_visual_position")
 		)
 		debug_click_placement_flow = DebugClickPlacementFlow.new()
 		debug_click_placement_flow.configure(debug_mouse_world_position)

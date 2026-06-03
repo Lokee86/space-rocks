@@ -13,8 +13,6 @@ func configure(game_owner_ref, server_position_for_visual_position_provider_ref:
 func mouse_visual_position() -> Vector2:
 	if game_owner == null:
 		return Vector2.ZERO
-	if game_owner.get_node_or_null("Camera2D") == null:
-		return Vector2.ZERO
 	return game_owner.get_global_mouse_position()
 
 
