@@ -6,6 +6,8 @@ type Runtime struct {
 	continuousBulletStreams *ContinuousBulletStreams
 }
 
+var DefaultRuntime = NewRuntime()
+
 func NewRuntime() *Runtime {
 	return &Runtime{
 		continuousBulletStreams: NewContinuousBulletStreams(),
