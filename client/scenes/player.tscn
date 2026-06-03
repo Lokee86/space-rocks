@@ -41,8 +41,6 @@ polygon = PackedVector2Array(12, -11, 20, -12, 23.4882, -16.8588, 47.6126, -19.5
 [node name="WeaponMarker" type="Marker2D" parent="." unique_id=1544338404]
 position = Vector2(-0.0202003, -37.7274)
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=562647492]
-
 [node name="LaserSound" type="AudioStreamPlayer2D" parent="." unique_id=1062667136]
 visible = false
 stream = ExtResource("5_fxgnq")
