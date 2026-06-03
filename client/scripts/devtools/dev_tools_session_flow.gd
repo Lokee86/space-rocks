@@ -51,6 +51,16 @@ func configure(connection_service_ref, scene_root_ref: Node, gameplay_shell_flow
 		)
 
 
+func attach_to_gameplay_shell(gameplay_shell_flow_ref) -> void:
+	if gameplay_shell_flow_ref == null:
+		return
+	if !gameplay_shell_flow_ref.has_method("configure_debug_placement_route"):
+		return
+	gameplay_shell_flow_ref.configure_debug_placement_route(
+		Callable(self, "begin_debug_click_placement")
+	)
+
+
 func process(delta: float) -> void:
 	if debug_kill_input_flow != null:
 		debug_kill_input_flow.process()
