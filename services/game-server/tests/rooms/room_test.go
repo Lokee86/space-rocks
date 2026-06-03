@@ -175,7 +175,7 @@ func TestRoomStartGameForMemberAllowsOwnerWhenConnectedMembersReady(t *testing.T
 	if room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected game to be created")
 	}
 }
@@ -314,7 +314,7 @@ func TestRoomStartSinglePlayerGameFromLobbySucceeds(t *testing.T) {
 	if room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected game instance to be created")
 	}
 }
@@ -340,7 +340,7 @@ func TestRoomMarkInGameMovesStartingToInGame(t *testing.T) {
 	if room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected game instance to remain after in-game transition")
 	}
 }
@@ -414,7 +414,7 @@ func TestRoomMarkGameOverMovesInGameToGameOver(t *testing.T) {
 	if room.State != rooms.RoomStateGameOver {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateGameOver, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected game instance to remain after game-over transition")
 	}
 }
@@ -505,7 +505,7 @@ func TestRoomResetToLobbyClearsGameAndReadyStates(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected old game instance to be cleared")
 	}
 	if !gameStopped(t, oldGame) {
@@ -570,7 +570,7 @@ func TestRoomResetToLobbyRequiresGameOverState(t *testing.T) {
 		if !room.MembersSnapshot()[0].Ready {
 			t.Fatalf("expected rejected reset to preserve ready state for %q", state)
 		}
-		if room.Game == nil {
+		if room.GameInstance() == nil {
 			t.Fatalf("expected rejected reset to preserve game for %q", state)
 		}
 	}
@@ -618,7 +618,7 @@ func TestRoomShouldCleanupRejectsNonEmptyRooms(t *testing.T) {
 	}
 
 	activeRoom := rooms.NewRoom("TEST", rooms.RoomStateInGame, game.New())
-	activeRoom.ActivePlayers = 1
+	activeRoom.SetActivePlayerCount(1)
 
 	if activeRoom.IsEmpty() {
 		t.Fatal("expected room with active player not to be empty")

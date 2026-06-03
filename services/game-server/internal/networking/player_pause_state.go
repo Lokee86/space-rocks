@@ -9,14 +9,15 @@ func (session *webSocketSession) EnqueuePlayerPauseState() {
 	if session.room == nil {
 		return
 	}
-	if session.room.Game == nil {
+	gameInstance := session.room.GameInstance()
+	if gameInstance == nil {
 		return
 	}
 	if session.currentGamePlayerID == "" {
 		return
 	}
 
-	packet, ok := session.room.Game.PlayerPauseStatePacket(session.currentGamePlayerID)
+	packet, ok := gameInstance.PlayerPauseStatePacket(session.currentGamePlayerID)
 	if !ok {
 		return
 	}

@@ -254,7 +254,7 @@ Current ownership paths:
 - non-devtools world/runtime code exposes read-only draw-entry data only; rendering stays in devtools.
 - `PlayerDevLabel` lifecycle, formatting, and mode state belong in client devtools, not `PlayerSync` or `WorldSync`.
 
-Continuous bullet stream runtime state is owned behind a concrete game-package owner seam. Normal `internal/game` files should not own, step, or expose that state directly.
+Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`. Normal `internal/game` files should not own, step, or expose that state directly.
 
 ## Server Build Flag
 

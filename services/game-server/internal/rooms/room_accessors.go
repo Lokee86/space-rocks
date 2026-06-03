@@ -11,11 +11,11 @@ func (room *Room) CurrentState() RoomState {
 func (room *Room) CurrentGame() *game.Game {
 	room.mu.Lock()
 	defer room.mu.Unlock()
-	return room.Game
+	return room.match.Game()
 }
 
 func (room *Room) ActivePlayerCount() int {
 	room.mu.Lock()
 	defer room.mu.Unlock()
-	return room.ActivePlayers
+	return room.match.ActivePlayers()
 }

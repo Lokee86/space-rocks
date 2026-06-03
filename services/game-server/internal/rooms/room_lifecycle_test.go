@@ -21,10 +21,10 @@ func TestStartGameForMemberMovesLobbyRoomToInGame(t *testing.T) {
 	if room.State != RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected game to be created")
 	}
-	room.Game.Stop()
+	room.GameInstance().Stop()
 }
 
 func TestStartGameForMemberRejectsNonOwner(t *testing.T) {
@@ -82,10 +82,10 @@ func TestStartSinglePlayerGameMovesLobbyRoomWithMemberToInGame(t *testing.T) {
 	if room.State != RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected game to be created")
 	}
-	room.Game.Stop()
+	room.GameInstance().Stop()
 }
 
 func TestStartSinglePlayerGameRejectsRoomWithoutMembers(t *testing.T) {

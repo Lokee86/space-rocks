@@ -2,7 +2,6 @@ package rooms
 
 import (
 	"sync"
-	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
 )
@@ -10,12 +9,10 @@ import (
 type Room struct {
 	ID             string
 	State          RoomState
-	Game           *game.Game
+	match          *roomMatch
 	membership     *roomMembership
 	Joinable       bool
-	ActivePlayers  int
-	CleanupTimer   *time.Timer
-	CleanupVersion int
+	cleanup        *roomCleanup
 	mu             sync.Mutex
 }
 
@@ -23,8 +20,9 @@ func NewRoom(roomID string, state RoomState, gameInstance *game.Game) *Room {
 	return &Room{
 		ID:         roomID,
 		State:      state,
-		Game:       gameInstance,
+		match:      newRoomMatch(gameInstance),
 		membership: newRoomMembership(),
+		cleanup:    newRoomCleanup(),
 		Joinable:   true,
 	}
 }

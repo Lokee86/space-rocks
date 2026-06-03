@@ -51,7 +51,7 @@ func (room *Room) IsEmpty() bool {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	return room.ActivePlayers == 0 && room.membership.memberCount() == 0
+	return room.match.ActivePlayers() == 0 && room.membership.memberCount() == 0
 }
 
 func (room *Room) MembersSnapshot() []RoomMember {

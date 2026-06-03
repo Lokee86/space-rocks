@@ -14,15 +14,17 @@ type gameplaySession interface {
 
 func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) bool {
 	if packet.Type != game.PacketTypeInput && packet.Type != game.PacketTypeRespawn && packet.Type != game.PacketTypeClientConfig {
-		if session.CurrentRoom() == nil || session.CurrentGamePlayerID() == "" {
+		room := session.CurrentRoom()
+		if room == nil || session.CurrentGamePlayerID() == "" {
 			return false
 		}
+		gameInstance := room.GameInstance()
 		switch packet.Type {
 		case game.PacketTypeSetTargetPlayerRequest:
-			session.CurrentRoom().Game.SetPlayerTarget(session.CurrentGamePlayerID(), packet.TargetPlayerID)
+			gameInstance.SetPlayerTarget(session.CurrentGamePlayerID(), packet.TargetPlayerID)
 			return true
 		case game.PacketTypeSelectTargetAtPositionRequest:
-			session.CurrentRoom().Game.SelectTargetAtPosition(
+			gameInstance.SelectTargetAtPosition(
 				session.CurrentGamePlayerID(),
 				packet.X,
 				packet.Y,
@@ -33,19 +35,20 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 			)
 			return true
 		case game.PacketTypeClearTargetRequest:
-			session.CurrentRoom().Game.ClearTarget(session.CurrentGamePlayerID())
+			gameInstance.ClearTarget(session.CurrentGamePlayerID())
 			return true
 		case game.PacketTypePauseRequest:
-			session.CurrentRoom().Game.HandlePacket(session.CurrentGamePlayerID(), packet)
+			gameInstance.HandlePacket(session.CurrentGamePlayerID(), packet)
 			session.EnqueuePlayerPauseState()
 			return true
 		}
 		return false
 	}
-	if session.CurrentRoom() == nil || session.CurrentGamePlayerID() == "" {
+	room := session.CurrentRoom()
+	if room == nil || session.CurrentGamePlayerID() == "" {
 		return true
 	}
 
-	session.CurrentRoom().Game.HandlePacket(session.CurrentGamePlayerID(), packet)
+	room.GameInstance().HandlePacket(session.CurrentGamePlayerID(), packet)
 	return true
 }
