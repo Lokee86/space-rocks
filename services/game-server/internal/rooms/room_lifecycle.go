@@ -83,7 +83,7 @@ func (room *Room) ResetToLobby(playerID string) *RoomDomainError {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	if _, ok := room.Members[playerID]; !ok {
+	if _, ok := room.membership.memberByPlayerID(playerID); !ok {
 		return &RoomDomainError{
 			Code:    RoomErrorNotInRoom,
 			Message: "Member is not in the room.",
@@ -97,9 +97,7 @@ func (room *Room) ResetToLobby(playerID string) *RoomDomainError {
 		}
 	}
 
-	for _, member := range room.Members {
-		member.SetReady(false)
-	}
+	room.membership.setAllReady(false)
 	if room.Game != nil {
 		room.Game.Stop()
 	}

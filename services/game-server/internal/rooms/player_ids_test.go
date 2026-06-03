@@ -99,11 +99,11 @@ func TestAddMemberStoresByPlayerIDAndSetsOwnerID(t *testing.T) {
 
 	room.AddMember(NewRoomMember("session-1"))
 
-	if _, ok := room.Members["Player-1"]; !ok {
-		t.Fatal("expected room.Members to contain key Player-1")
+	if _, ok := room.PlayerIDForSession("session-1"); !ok {
+		t.Fatal("expected session-1 to resolve")
 	}
-	if room.OwnerID != "Player-1" {
-		t.Fatalf("expected OwnerID Player-1, got %q", room.OwnerID)
+	if ownerID := room.OwnerID(); ownerID != "Player-1" {
+		t.Fatalf("expected OwnerID Player-1, got %q", ownerID)
 	}
 }
 
@@ -135,8 +135,8 @@ func TestRemoveMemberRecalculatesOwnerIDFromPlayerIDKeys(t *testing.T) {
 
 	room.RemoveMember("Player-1")
 
-	if room.OwnerID != "Player-2" {
-		t.Fatalf("expected OwnerID Player-2, got %q", room.OwnerID)
+	if ownerID := room.OwnerID(); ownerID != "Player-2" {
+		t.Fatalf("expected OwnerID Player-2, got %q", ownerID)
 	}
 }
 
@@ -220,7 +220,7 @@ func roomWithPlayerIDs(playerIDs ...string) *Room {
 	room := NewRoom("room", RoomStateLobby, nil)
 	for index, playerID := range playerIDs {
 		sessionID := formatPlayerID(index + 100)
-		room.Members[playerID] = &RoomMember{
+		room.membership.members[playerID] = &RoomMember{
 			SessionID: sessionID,
 			PlayerID:  playerID,
 		}

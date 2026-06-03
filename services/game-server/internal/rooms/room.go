@@ -11,8 +11,7 @@ type Room struct {
 	ID             string
 	State          RoomState
 	Game           *game.Game
-	Members        map[string]*RoomMember
-	OwnerID        string
+	membership     *roomMembership
 	Joinable       bool
 	ActivePlayers  int
 	CleanupTimer   *time.Timer
@@ -22,10 +21,10 @@ type Room struct {
 
 func NewRoom(roomID string, state RoomState, gameInstance *game.Game) *Room {
 	return &Room{
-		ID:       roomID,
-		State:    state,
-		Game:     gameInstance,
-		Members:  make(map[string]*RoomMember),
-		Joinable: true,
+		ID:         roomID,
+		State:      state,
+		Game:       gameInstance,
+		membership: newRoomMembership(),
+		Joinable:   true,
 	}
 }

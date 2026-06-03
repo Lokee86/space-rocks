@@ -7,8 +7,8 @@ func TestAddMemberSetsFirstMemberAsOwner(t *testing.T) {
 
 	room.AddMember(NewRoomMember("session-1"))
 
-	if room.OwnerID != "Player-1" {
-		t.Fatalf("expected OwnerID Player-1, got %q", room.OwnerID)
+	if ownerID := room.OwnerID(); ownerID != "Player-1" {
+		t.Fatalf("expected OwnerID Player-1, got %q", ownerID)
 	}
 }
 
@@ -19,8 +19,20 @@ func TestRemoveMemberReassignsOwner(t *testing.T) {
 
 	room.RemoveMember("Player-1")
 
-	if room.OwnerID != "Player-2" {
-		t.Fatalf("expected OwnerID Player-2, got %q", room.OwnerID)
+	if ownerID := room.OwnerID(); ownerID != "Player-2" {
+		t.Fatalf("expected OwnerID Player-2, got %q", ownerID)
+	}
+}
+
+func TestRemoveNonOwnerPreservesOwner(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	room.AddMember(NewRoomMember("session-1"))
+	room.AddMember(NewRoomMember("session-2"))
+
+	room.RemoveMember("Player-2")
+
+	if ownerID := room.OwnerID(); ownerID != "Player-1" {
+		t.Fatalf("expected OwnerID Player-1, got %q", ownerID)
 	}
 }
 
@@ -39,16 +51,48 @@ func TestPlayerIDForSessionFindsExpectedPlayer(t *testing.T) {
 
 func TestMembersSnapshotReturnsValueCopies(t *testing.T) {
 	room := NewRoom("room", RoomStateLobby, nil)
-	room.AddMember(NewRoomMember("session-1"))
+	member := room.AddMember(NewRoomMember("session-1"))
+	member.SetReady(true)
 
 	snapshot := room.MembersSnapshot()
 	if len(snapshot) != 1 {
 		t.Fatalf("expected 1 snapshot member, got %d", len(snapshot))
 	}
+	if snapshot[0].PlayerID != "Player-1" {
+		t.Fatalf("expected snapshot PlayerID Player-1, got %q", snapshot[0].PlayerID)
+	}
+	if snapshot[0].SessionID != "session-1" {
+		t.Fatalf("expected snapshot SessionID session-1, got %q", snapshot[0].SessionID)
+	}
+	if !snapshot[0].Ready {
+		t.Fatal("expected snapshot member to be ready")
+	}
 
-	snapshot[0].SetReady(true)
+	snapshot[0].SetReady(false)
 
-	if room.Members["Player-1"].Ready {
+	if !member.Ready {
 		t.Fatal("expected snapshot mutation not to affect room member")
+	}
+}
+
+func TestMemberCountAndIsFullUseMembership(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+
+	if got := room.MemberCount(); got != 0 {
+		t.Fatalf("expected empty member count 0, got %d", got)
+	}
+	if room.IsFull() {
+		t.Fatal("expected empty room not to be full")
+	}
+
+	for index := 0; index < MaxPlayersPerRoom; index++ {
+		room.AddMember(NewRoomMember("session-" + formatPlayerID(index+1)))
+	}
+
+	if got := room.MemberCount(); got != MaxPlayersPerRoom {
+		t.Fatalf("expected member count %d, got %d", MaxPlayersPerRoom, got)
+	}
+	if !room.IsFull() {
+		t.Fatal("expected room to be full")
 	}
 }

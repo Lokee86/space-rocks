@@ -14,8 +14,9 @@ func (room *Room) validateStartLocked(playerID string) *RoomDomainError {
 		return roomErr
 	}
 
-	members := make([]roomrules.StartMember, 0, len(room.Members))
-	for _, member := range room.Members {
+	memberSnapshot := room.membership.membersSnapshot()
+	members := make([]roomrules.StartMember, 0, len(memberSnapshot))
+	for _, member := range memberSnapshot {
 		members = append(members, roomrules.StartMember{
 			PlayerID:  member.PlayerID,
 			Ready:     member.Ready,
@@ -25,7 +26,7 @@ func (room *Room) validateStartLocked(playerID string) *RoomDomainError {
 
 	decision := roomrules.DecideStart(roomrules.StartInput{
 		State:              string(room.State),
-		OwnerID:            room.OwnerID,
+		OwnerID:            room.membership.ownerIDValue(),
 		RequestingPlayerID: playerID,
 		Members:            members,
 	})
@@ -45,7 +46,7 @@ func (room *Room) validateStartPreconditionsLocked() *RoomDomainError {
 		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Game can only be started from the lobby."}
 	}
 
-	if len(room.Members) == 0 {
+	if room.membership.memberCount() == 0 {
 		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
 	}
 
@@ -60,7 +61,7 @@ func (room *Room) SetReadyInLobby(playerID string, ready bool) *RoomDomainError 
 		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Ready state can only be changed in the lobby."}
 	}
 
-	member, ok := room.Members[playerID]
+	member, ok := room.membership.memberByPlayerID(playerID)
 	if !ok {
 		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
 	}
