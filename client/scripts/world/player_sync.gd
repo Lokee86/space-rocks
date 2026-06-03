@@ -8,6 +8,9 @@ var player_lifecycle := PlayerSyncLifecycle.new()
 var player_interpolation := PlayerSyncInterpolation.new()
 var player_targets := PlayerSyncTargets.new()
 var player_presentation := PlayerSyncPresentation.new()
+var initialized_players := player_lifecycle.initialized_players
+var target_player_positions := player_targets.target_player_positions
+var target_player_rotations := player_targets.target_player_rotations
 var view_target_player_id := ""
 var player_hue_presenter := PlayerHuePresenter.new()
 var pause_state_tracker
@@ -136,6 +139,10 @@ func get_remote_player_hues(current_self_id: String) -> Dictionary:
 
 func remote_player_nodes(current_self_id: String) -> Dictionary:
 	return player_lifecycle.get_remote_player_nodes(current_self_id)
+
+
+func player_nodes() -> Dictionary:
+	return player_lifecycle.player_nodes
 
 
 func remove_missing(server_players: Dictionary, self_id: String) -> void:

@@ -109,6 +109,12 @@ func remote_player_nodes() -> Dictionary:
 	return player_sync.remote_player_nodes(current_self_id)
 
 
+func player_nodes() -> Dictionary:
+	if player_sync == null:
+		return {}
+	return player_sync.player_nodes()
+
+
 func focus_camera_on_player(player_id: String) -> bool:
 	if player_sync == null:
 		return false

@@ -28,15 +28,27 @@ class FakeHudFlow:
 		received_state = state
 
 
-class FakeRuntimeContext:
-	var received_state: Dictionary = {}
-	var has_received_state := false
-	var apply_world_state_call_count := 0
+class FakeWorldSync:
+	var apply_state_call_count := 0
+	var received_self_id := ""
+	var received_players: Dictionary = {}
+	var received_bullets: Dictionary = {}
+	var received_asteroids: Dictionary = {}
+	var received_play_new_bullet_sounds := false
 
-	func apply_world_state(state: Dictionary, existing_has_received_state: bool) -> void:
-		apply_world_state_call_count += 1
-		received_state = state
-		has_received_state = existing_has_received_state
+	func apply_state(
+		self_id: String,
+		server_players: Dictionary,
+		server_bullets: Dictionary,
+		server_asteroids: Dictionary,
+		play_new_bullet_sounds: bool
+	) -> void:
+		apply_state_call_count += 1
+		received_self_id = self_id
+		received_players = server_players
+		received_bullets = server_bullets
+		received_asteroids = server_asteroids
+		received_play_new_bullet_sounds = play_new_bullet_sounds
 
 
 class FakeAliveRestoreFlow:
@@ -61,7 +73,7 @@ func test_apply_state_delegates_to_new_seams_on_first_state() -> void:
 	var input_context := FakeInputContext.new()
 	var devtools_context := FakeDevtoolsContext.new()
 	var hud_flow := FakeHudFlow.new()
-	var runtime_context := FakeRuntimeContext.new()
+	var world_sync := FakeWorldSync.new()
 	var alive_restore_flow := FakeAliveRestoreFlow.new()
 	var event_lifecycle_flow := FakeEventLifecycleFlow.new()
 	var flow := GameplayStateApplyFlow.new()
@@ -69,7 +81,7 @@ func test_apply_state_delegates_to_new_seams_on_first_state() -> void:
 		input_context,
 		devtools_context,
 		hud_flow,
-		runtime_context,
+		world_sync,
 		event_lifecycle_flow,
 		alive_restore_flow
 	)
@@ -86,9 +98,12 @@ func test_apply_state_delegates_to_new_seams_on_first_state() -> void:
 	assert_eq(input_context.mark_gameplay_state_received_call_count, 1)
 	assert_eq(hud_flow.apply_gameplay_state_summary_call_count, 1)
 	assert_eq(hud_flow.received_state, state)
-	assert_eq(runtime_context.apply_world_state_call_count, 1)
-	assert_eq(runtime_context.received_state, state)
-	assert_false(runtime_context.has_received_state)
+	assert_eq(world_sync.apply_state_call_count, 1)
+	assert_eq(world_sync.received_self_id, "player-1")
+	assert_eq(world_sync.received_players, {})
+	assert_eq(world_sync.received_bullets, {})
+	assert_eq(world_sync.received_asteroids, {})
+	assert_false(world_sync.received_play_new_bullet_sounds)
 	assert_eq(alive_restore_flow.apply_state_call_count, 1)
 	assert_eq(alive_restore_flow.received_state, state)
 	assert_eq(event_lifecycle_flow.apply_server_events_call_count, 1)
@@ -101,7 +116,7 @@ func test_apply_state_reports_not_first_gameplay_state_after_initial_state() -> 
 	var input_context := FakeInputContext.new()
 	var devtools_context := FakeDevtoolsContext.new()
 	var hud_flow := FakeHudFlow.new()
-	var runtime_context := FakeRuntimeContext.new()
+	var world_sync := FakeWorldSync.new()
 	var alive_restore_flow := FakeAliveRestoreFlow.new()
 	var event_lifecycle_flow := FakeEventLifecycleFlow.new()
 	var flow := GameplayStateApplyFlow.new()
@@ -109,7 +124,7 @@ func test_apply_state_reports_not_first_gameplay_state_after_initial_state() -> 
 		input_context,
 		devtools_context,
 		hud_flow,
-		runtime_context,
+		world_sync,
 		event_lifecycle_flow,
 		alive_restore_flow
 	)

@@ -127,9 +127,9 @@ func _configure_gameplay_presentation_flow() -> void:
 	gameplay_presentation_flow.configure(
 		hud,
 		player,
-		Callable(gameplay_shell_flow.runtime_context, "current_camera"),
-		Callable(gameplay_shell_flow.runtime_context, "remote_player_visual_positions"),
-		Callable(gameplay_shell_flow.runtime_context, "remote_player_hues")
+		Callable(player, "get_node_or_null").bind("Camera2D"),
+		Callable(gameplay_shell_flow.runtime_context.world_sync, "get_remote_player_visual_positions"),
+		Callable(gameplay_shell_flow.runtime_context.world_sync, "get_remote_player_hues")
 	)
 
 func _on_gameplay_started() -> void:
