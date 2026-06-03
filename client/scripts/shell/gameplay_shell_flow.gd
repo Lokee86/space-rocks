@@ -1,10 +1,7 @@
 extends RefCounted
 class_name GameplayShellFlow
 
-const PlayerPauseStatePacketReader = preload("res://scripts/gameplay/state/player_pause_state_packet_reader.gd")
-const PlayerPauseStateTracker = preload("res://scripts/gameplay/state/player_pause_state_tracker.gd")
-const GameplayDevtoolsContext = preload("res://scripts/devtools/gameplay_devtools_context.gd")
-const GameplayPointerPositionProvider = preload("res://scripts/gameplay/input/gameplay_pointer_position_provider.gd")
+const GameplayPauseStateFlowScript = preload("res://scripts/gameplay/state/gameplay_pause_state_flow.gd")
 const GameplayStateApplyFlowScript = preload("res://scripts/gameplay/state/gameplay_state_apply_flow.gd")
 const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
 const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
@@ -20,7 +17,7 @@ var input_context
 var devtools_context
 var runtime_tick_flow
 var spectate_context
-var player_pause_state_tracker
+var gameplay_pause_state_flow
 var gameplay_state_apply_flow
 var gameplay_process_flow
 var server_hitbox_overlay_flow
@@ -35,18 +32,19 @@ func configure(
 	bullets: Node2D,
 	asteroids: Node2D,
 	hud_flow_ref,
-	menu_flow_ref
+	menu_flow_ref,
+	spectate_menu_state_ref = null
 ) -> void:
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
-	player_pause_state_tracker = PlayerPauseStateTracker.new()
+	gameplay_pause_state_flow = GameplayPauseStateFlowScript.new()
 	if menu_flow != null:
 		menu_flow.configure_lifecycle_routes(
 			Callable(self, "_on_quit_to_main_menu_requested"),
 			Callable(self, "_on_return_to_lobby_requested")
-	)
+		)
 	runtime_context = GameplayRuntimeContext.new()
-	runtime_context.configure_world(game_owner_ref, player_ref, bullets, asteroids, player_pause_state_tracker)
+	runtime_context.configure_world(game_owner_ref, player_ref, bullets, asteroids, gameplay_pause_state_flow.tracker())
 	runtime_context.configure_events(
 		game_owner_ref,
 		hud_flow.hud if hud_flow != null else null,
@@ -79,6 +77,8 @@ func configure(
 	runtime_tick_flow.configure(hud_flow)
 	spectate_context = GameplaySpectateContext.new()
 	spectate_context.configure(menu_flow, null, runtime_context.world_sync)
+	if spectate_menu_state_ref != null:
+		spectate_context.configure_menu_state(spectate_menu_state_ref)
 	input_context.configure_spectate_routes(
 		Callable(spectate_context, "request_open_spectate_menu"),
 		Callable(spectate_context, "request_cycle_target")
@@ -100,7 +100,7 @@ func reset() -> void:
 		runtime_context.reset()
 	if hud_flow != null:
 		hud_flow.reset()
-	if menu_flow != null && menu_flow.has_method("reset"):
+	if menu_flow != null:
 		menu_flow.reset()
 	if input_context != null:
 		input_context.reset()
@@ -108,17 +108,13 @@ func reset() -> void:
 		runtime_tick_flow.reset()
 	if spectate_context != null:
 		spectate_context.reset()
-	if player_pause_state_tracker != null:
-		player_pause_state_tracker.reset()
+	if gameplay_pause_state_flow != null:
+		gameplay_pause_state_flow.reset()
 	if server_hitbox_overlay_flow != null:
 		server_hitbox_overlay_flow.reset()
 
 
 func apply_gameplay_state(state: Dictionary) -> void:
-	_apply_gameplay_state(state)
-
-
-func _apply_gameplay_state(state: Dictionary) -> void:
 	if gameplay_state_apply_flow == null:
 		return
 
@@ -129,15 +125,9 @@ func _apply_gameplay_state(state: Dictionary) -> void:
 
 
 func apply_player_pause_state_packet(packet: Dictionary) -> void:
-	if !PlayerPauseStatePacketReader.is_player_pause_state(packet):
+	if gameplay_pause_state_flow == null:
 		return
-	var state := PlayerPauseStatePacketReader.read(packet)
-	player_pause_state_tracker.apply_state(state)
-
-
-func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
-	if spectate_context != null:
-		spectate_context.configure_menu_state(spectate_menu_state_ref)
+	gameplay_pause_state_flow.apply_packet(packet)
 
 
 func handle_unhandled_input(event: InputEvent) -> bool:
