@@ -10,6 +10,10 @@ func (room *Room) ValidateStart(playerID string) *RoomDomainError {
 }
 
 func (room *Room) validateStartLocked(playerID string) *RoomDomainError {
+	if roomErr := room.validateStartPreconditionsLocked(); roomErr != nil {
+		return roomErr
+	}
+
 	members := make([]roomrules.StartMember, 0, len(room.Members))
 	for _, member := range room.Members {
 		members = append(members, roomrules.StartMember{
@@ -27,6 +31,22 @@ func (room *Room) validateStartLocked(playerID string) *RoomDomainError {
 	})
 	if roomErr := roomDomainErrorFromDecision(decision); roomErr != nil {
 		return roomErr
+	}
+
+	return nil
+}
+
+func (room *Room) validateStartPreconditionsLocked() *RoomDomainError {
+	switch room.State {
+	case RoomStateLobby:
+	case RoomStateStarting, RoomStateInGame:
+		return &RoomDomainError{Code: RoomErrorRoomInGame, Message: "Room is already in game."}
+	default:
+		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Game can only be started from the lobby."}
+	}
+
+	if len(room.Members) == 0 {
+		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
 	}
 
 	return nil

@@ -10,6 +10,8 @@ func TestStartGameForMemberMovesLobbyRoomToInGame(t *testing.T) {
 	room := NewRoom("room", RoomStateLobby, nil)
 	owner := room.AddMember(NewRoomMember("session-owner"))
 	owner.SetReady(true)
+	peer := room.AddMember(NewRoomMember("session-peer"))
+	peer.SetReady(true)
 
 	newGame := func() *game.Game { return game.New() }
 
@@ -25,6 +27,38 @@ func TestStartGameForMemberMovesLobbyRoomToInGame(t *testing.T) {
 	room.Game.Stop()
 }
 
+func TestStartGameForMemberRejectsNonOwner(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	owner := room.AddMember(NewRoomMember("session-owner"))
+	owner.SetReady(true)
+	peer := room.AddMember(NewRoomMember("session-peer"))
+	peer.SetReady(true)
+
+	err := room.StartGameForMember("Player-2", func() *game.Game { return game.New() })
+	if err == nil {
+		t.Fatal("expected non-owner start to fail")
+	}
+	if err.Code != RoomErrorNotRoomOwner {
+		t.Fatalf("expected error code %q, got %q", RoomErrorNotRoomOwner, err.Code)
+	}
+}
+
+func TestStartGameForMemberRejectsUnreadyConnectedMember(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	owner := room.AddMember(NewRoomMember("session-owner"))
+	owner.SetReady(true)
+	peer := room.AddMember(NewRoomMember("session-peer"))
+	peer.SetReady(false)
+
+	err := room.StartGameForMember("Player-1", func() *game.Game { return game.New() })
+	if err == nil {
+		t.Fatal("expected unready connected member to block start")
+	}
+	if err.Code != RoomErrorNotReady {
+		t.Fatalf("expected error code %q, got %q", RoomErrorNotReady, err.Code)
+	}
+}
+
 func TestStartGameForMemberRejectsNonLobbyRoom(t *testing.T) {
 	room := NewRoom("room", RoomStateStarting, nil)
 	room.AddMember(NewRoomMember("session-owner"))
@@ -32,6 +66,47 @@ func TestStartGameForMemberRejectsNonLobbyRoom(t *testing.T) {
 	err := room.StartGameForMember("Player-1", func() *game.Game { return game.New() })
 	if err == nil {
 		t.Fatal("expected non-lobby start to fail")
+	}
+	if err.Code != RoomErrorRoomInGame {
+		t.Fatalf("expected error code %q, got %q", RoomErrorRoomInGame, err.Code)
+	}
+}
+
+func TestStartSinglePlayerGameMovesLobbyRoomWithMemberToInGame(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	room.AddMember(NewRoomMember("session-owner"))
+
+	if err := room.StartSinglePlayerGame(func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("expected single-player start to succeed, got %v", err)
+	}
+	if room.State != RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", RoomStateInGame, room.State)
+	}
+	if room.Game == nil {
+		t.Fatal("expected game to be created")
+	}
+	room.Game.Stop()
+}
+
+func TestStartSinglePlayerGameRejectsRoomWithoutMembers(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+
+	err := room.StartSinglePlayerGame(func() *game.Game { return game.New() })
+	if err == nil {
+		t.Fatal("expected single-player start without members to fail")
+	}
+	if err.Code != RoomErrorNotInRoom {
+		t.Fatalf("expected error code %q, got %q", RoomErrorNotInRoom, err.Code)
+	}
+}
+
+func TestStartSinglePlayerGameRejectsNonLobbyRoom(t *testing.T) {
+	room := NewRoom("room", RoomStateStarting, nil)
+	room.AddMember(NewRoomMember("session-owner"))
+
+	err := room.StartSinglePlayerGame(func() *game.Game { return game.New() })
+	if err == nil {
+		t.Fatal("expected single-player start from non-lobby room to fail")
 	}
 	if err.Code != RoomErrorRoomInGame {
 		t.Fatalf("expected error code %q, got %q", RoomErrorRoomInGame, err.Code)
