@@ -27,11 +27,11 @@ func configure(connection_service_ref, scene_root_ref: Node, gameplay_shell_flow
 	debug_kill_input_flow.configure(connection_service)
 	dev_connection_service = DevConnectionService.new()
 	dev_connection_service.configure(connection_service)
-	if scene_root is Node2D:
+	if scene_root is Node2D && gameplay_shell_flow != null && gameplay_shell_flow.runtime_context != null:
 		debug_mouse_world_position = DebugMouseWorldPosition.new()
 		debug_mouse_world_position.configure(
 			scene_root,
-			Callable(gameplay_shell_flow, "server_position_for_visual_position")
+			Callable(gameplay_shell_flow.runtime_context, "server_position_for_visual_position")
 		)
 		debug_click_placement_flow = DebugClickPlacementFlow.new()
 		debug_click_placement_flow.configure(debug_mouse_world_position)
@@ -54,9 +54,9 @@ func configure(connection_service_ref, scene_root_ref: Node, gameplay_shell_flow
 func attach_to_gameplay_shell(gameplay_shell_flow_ref) -> void:
 	if gameplay_shell_flow_ref == null:
 		return
-	if !gameplay_shell_flow_ref.has_method("configure_debug_placement_route"):
+	if gameplay_shell_flow_ref.devtools_context == null:
 		return
-	gameplay_shell_flow_ref.configure_debug_placement_route(
+	gameplay_shell_flow_ref.devtools_context.configure_placement_request_route(
 		Callable(self, "begin_debug_click_placement")
 	)
 
@@ -122,8 +122,8 @@ func _on_debug_click_placement_completed(result: Dictionary) -> void:
 			str(result.get("direction", Vector2.ZERO))
 		]
 	)
-	if gameplay_shell_flow != null && gameplay_shell_flow.has_method("handle_debug_placement_result"):
-		gameplay_shell_flow.handle_debug_placement_result(result)
+	if gameplay_shell_flow != null && gameplay_shell_flow.devtools_context != null:
+		gameplay_shell_flow.devtools_context.handle_placement_result(result)
 
 
 func _on_debug_click_placement_cancelled(action_name: StringName) -> void:

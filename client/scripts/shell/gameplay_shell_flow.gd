@@ -3,6 +3,8 @@ class_name GameplayShellFlow
 
 const PlayerPauseStatePacketReader = preload("res://scripts/gameplay/state/player_pause_state_packet_reader.gd")
 const PlayerPauseStateTracker = preload("res://scripts/gameplay/state/player_pause_state_tracker.gd")
+const GameplayDevtoolsContext = preload("res://scripts/devtools/gameplay_devtools_context.gd")
+const GameplayPointerPositionProvider = preload("res://scripts/gameplay/input/gameplay_pointer_position_provider.gd")
 const GameplayStateApplyFlowScript = preload("res://scripts/gameplay/state/gameplay_state_apply_flow.gd")
 const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
 const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
@@ -11,20 +13,19 @@ signal gameplay_started
 signal quit_to_main_menu_requested
 signal return_to_lobby_requested
 
-var player
 var runtime_context
-var connection_service
 var hud_flow
 var menu_flow
 var input_context
+var devtools_context
 var runtime_tick_flow
 var spectate_context
 var player_pause_state_tracker
 var gameplay_state_apply_flow
 var gameplay_process_flow
 var server_hitbox_overlay_flow
+var pointer_position_provider
 var has_received_state := false
-var game_owner: Node2D
 
 
 func configure(
@@ -36,9 +37,6 @@ func configure(
 	hud_flow_ref,
 	menu_flow_ref
 ) -> void:
-	connection_service = connection_service_ref
-	self.game_owner = game_owner_ref
-	player = player_ref
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
 	player_pause_state_tracker = PlayerPauseStateTracker.new()
@@ -55,21 +53,26 @@ func configure(
 		hud_flow,
 		menu_flow
 	)
-	runtime_context.configure_respawn(connection_service, hud_flow)
+	runtime_context.configure_respawn(connection_service_ref, hud_flow)
+	pointer_position_provider = GameplayPointerPositionProvider.new()
+	pointer_position_provider.configure(game_owner_ref, runtime_context)
+	devtools_context = GameplayDevtoolsContext.new()
+	devtools_context.configure(connection_service_ref)
 	input_context = GameplayInputContext.new()
 	input_context.configure(
-		connection_service,
-		player,
+		connection_service_ref,
+		player_ref,
 		menu_flow,
 		game_owner_ref,
+		devtools_context,
 		Callable(runtime_context, "request_respawn"),
 		Callable(runtime_context, "target_visual_candidates"),
-		Callable(self, "mouse_visual_position"),
-		Callable(self, "server_position_for_visual_position"),
+		Callable(pointer_position_provider, "mouse_visual_position"),
+		Callable(pointer_position_provider, "server_position_for_visual_position"),
 		Callable(runtime_context, "remote_player_nodes")
 	)
 	gameplay_state_apply_flow = GameplayStateApplyFlowScript.new()
-	gameplay_state_apply_flow.configure(input_context, hud_flow, runtime_context, menu_flow)
+	gameplay_state_apply_flow.configure(input_context, devtools_context, hud_flow, runtime_context, menu_flow)
 	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
 	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context)
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
@@ -85,6 +88,7 @@ func configure(
 		runtime_context,
 		server_hitbox_overlay_flow,
 		runtime_tick_flow,
+		devtools_context,
 		input_context,
 		spectate_context
 	)
@@ -135,54 +139,6 @@ func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
 	if spectate_context != null:
 		spectate_context.configure_menu_state(spectate_menu_state_ref)
 
-
-func configure_debug_placement_route(route: Callable) -> void:
-	if input_context != null:
-		input_context.configure_debug_placement_route(route)
-
-
-func handle_debug_placement_result(result: Dictionary) -> void:
-	if input_context != null:
-		input_context.handle_debug_placement_result(result)
-
-
-func refresh_debug_spawn_player_slots(max_players: int) -> void:
-	if input_context != null:
-		input_context.refresh_debug_spawn_player_slots(max_players)
-
-
-func current_camera() -> Camera2D:
-	if runtime_context == null:
-		return null
-	return runtime_context.current_camera()
-
-
-func remote_player_visual_positions() -> Dictionary:
-	if runtime_context == null:
-		return {}
-	return runtime_context.remote_player_visual_positions()
-
-
-func remote_player_hues() -> Dictionary:
-	if runtime_context == null:
-		return {}
-	return runtime_context.remote_player_hues()
-
-
-func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
-	if runtime_context == null:
-		return visual_position
-	return runtime_context.server_position_for_visual_position(visual_position)
-
-
-func mouse_visual_position() -> Vector2:
-	if runtime_context == null:
-		return Vector2.ZERO
-	if current_camera() == null:
-		return Vector2.ZERO
-	if game_owner == null:
-		return Vector2.ZERO
-	return game_owner.get_global_mouse_position()
 
 func handle_unhandled_input(event: InputEvent) -> bool:
 	if input_context == null:
