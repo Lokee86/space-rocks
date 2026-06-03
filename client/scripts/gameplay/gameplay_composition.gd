@@ -60,8 +60,9 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, bullets
 	_configure_gameplay_presentation_flow()
 
 func apply_gameplay_state(state: Dictionary) -> void:
-	if gameplay_shell_flow != null && gameplay_shell_flow.devtools_context != null:
-		gameplay_shell_flow.devtools_context.refresh_spawn_player_slots(_current_room_max_players())
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.apply_devtools_gameplay_state(state)
+		gameplay_shell_flow.refresh_devtools_spawn_player_slots(_current_room_max_players())
 	if spectate_session_flow != null:
 		spectate_session_flow.apply_gameplay_state(state)
 	if gameplay_shell_flow != null:
