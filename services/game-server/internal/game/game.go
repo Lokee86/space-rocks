@@ -3,7 +3,6 @@ package game
 import (
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/devtools/streamruntime"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
@@ -23,7 +22,7 @@ type Game struct {
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
 	state                     entities.GameState
-	devtoolsRuntime           *streamruntime.Runtime
+	simulationStepObservers   []func(float64)
 	cameraViews               map[string]*entities.CameraView
 	playerSessions            map[string]*playerSession
 	pendingPresentationEvents map[string][]EventState
@@ -41,7 +40,6 @@ func New() *Game {
 		cameraViews:               make(map[string]*entities.CameraView),
 		playerSessions:            make(map[string]*playerSession),
 		pendingPresentationEvents: make(map[string][]EventState),
-		devtoolsRuntime:           streamruntime.NewRuntime(),
 		spawner:                   spawning.New(),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
 		state:                     entities.NewGameState(),

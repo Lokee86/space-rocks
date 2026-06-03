@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/devtools/streamruntime"
 )
 
 func TestDevtoolsContinuousBulletStreamSpawnsBulletAfterCooldown(t *testing.T) {
@@ -12,11 +13,12 @@ func TestDevtoolsContinuousBulletStreamSpawnsBulletAfterCooldown(t *testing.T) {
 	playerID := scenario.addPlayer()
 	origin := physics.Vector2{X: 10, Y: 20}
 	direction := physics.Vector2{X: 0, Y: -1}
+	runtime := streamruntime.NewRuntime()
 
-	if !scenario.game.DevtoolsBeginContinuousBulletStream(playerID, origin, direction) {
+	if !runtime.BeginContinuousBulletStream(playerID, origin, direction) {
 		t.Fatal("expected continuous bullet stream to start")
 	}
-	scenario.step(constants.BulletCooldown)
+	runtime.StepContinuousBulletStreams(constants.BulletCooldown, scenario.game.DevtoolsBulletsCanMove(), scenario.game.DevtoolsSpawnDebugBullet)
 
 	if bulletCount := scenario.bullets().Len(); bulletCount != 1 {
 		t.Fatalf("expected 1 spawned bullet, got %d", bulletCount)
