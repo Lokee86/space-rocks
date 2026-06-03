@@ -48,7 +48,11 @@ func handleConnection(session *webSocketSession, remoteAddr string) {
 	)
 
 	readErr := make(chan error, 1)
+	gameplayLifecycleDone := make(chan struct{})
+	defer close(gameplayLifecycleDone)
+
 	go readClientInput(session, remoteAddr, readErr)
+	go tickSessionGameplayLifecycle(session, gameplayLifecycleDone)
 
 	writeServerMessages(session, remoteAddr, readErr)
 }

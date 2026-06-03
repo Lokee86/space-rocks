@@ -5,7 +5,6 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
 func writeServerMessages(
@@ -31,9 +30,6 @@ func writeServerMessages(
 			if session.currentGamePlayerID == "" || !outbound.CanSendGameplayPresentationState(session.room) {
 				continue
 			}
-
-			// Lifecycle tick: advances game-over state before building the presentation payload.
-			rooms.TickRoomGameOverLifecycle(session.room, BroadcastRoomSnapshot)
 
 			response, ok := outbound.BuildGameplayPresentationStateResponse(session.room, session.currentGamePlayerID, session.currentRoomID, remoteAddr)
 			if !ok {
