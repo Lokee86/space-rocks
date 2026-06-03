@@ -1,7 +1,6 @@
 extends RefCounted
 class_name GameplayStateApplyFlow
 
-const GameplayStatePacketReader = preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
 const GameplayStateApplyResultScript = preload("res://scripts/gameplay/state/gameplay_state_apply_result.gd")
 
 var input_context
@@ -15,11 +14,6 @@ func configure(input_context_ref, hud_flow_ref, runtime_context_ref, menu_flow_r
 	hud_flow = hud_flow_ref
 	runtime_context = runtime_context_ref
 	menu_flow = menu_flow_ref
-
-
-func apply_packet(packet: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:
-	var state := GameplayStatePacketReader.read(packet)
-	return apply_state(state, has_received_state)
 
 
 func apply_state(state: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:

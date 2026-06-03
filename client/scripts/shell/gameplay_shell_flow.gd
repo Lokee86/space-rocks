@@ -56,12 +56,6 @@ func configure(
 		menu_flow
 	)
 	runtime_context.configure_respawn(connection_service, hud_flow)
-	gameplay_state_apply_flow = GameplayStateApplyFlowScript.new()
-	gameplay_state_apply_flow.configure(input_context, hud_flow, runtime_context, menu_flow)
-	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
-	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context)
-	runtime_tick_flow = GameplayRuntimeTickFlow.new()
-	runtime_tick_flow.configure(hud_flow)
 	input_context = GameplayInputContext.new()
 	input_context.configure(
 		connection_service,
@@ -74,6 +68,12 @@ func configure(
 		Callable(self, "server_position_for_visual_position"),
 		Callable(runtime_context, "remote_player_nodes")
 	)
+	gameplay_state_apply_flow = GameplayStateApplyFlowScript.new()
+	gameplay_state_apply_flow.configure(input_context, hud_flow, runtime_context, menu_flow)
+	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
+	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context)
+	runtime_tick_flow = GameplayRuntimeTickFlow.new()
+	runtime_tick_flow.configure(hud_flow)
 	spectate_context = GameplaySpectateContext.new()
 	spectate_context.configure(menu_flow, null, runtime_context.world_sync)
 	input_context.configure_spectate_routes(
@@ -110,11 +110,15 @@ func reset() -> void:
 		server_hitbox_overlay_flow.reset()
 
 
-func apply_gameplay_state(packet: Dictionary) -> void:
+func apply_gameplay_state(state: Dictionary) -> void:
+	_apply_gameplay_state(state)
+
+
+func _apply_gameplay_state(state: Dictionary) -> void:
 	if gameplay_state_apply_flow == null:
 		return
 
-	var result: GameplayStateApplyResult = gameplay_state_apply_flow.apply_packet(packet, has_received_state)
+	var result: GameplayStateApplyResult = gameplay_state_apply_flow.apply_state(state, has_received_state)
 	has_received_state = result.has_received_state
 	if result.started_gameplay:
 		gameplay_started.emit()
@@ -138,12 +142,12 @@ func configure_debug_placement_route(route: Callable) -> void:
 
 
 func handle_debug_placement_result(result: Dictionary) -> void:
-	if input_context != null && input_context.has_method("handle_debug_placement_result"):
+	if input_context != null:
 		input_context.handle_debug_placement_result(result)
 
 
 func refresh_debug_spawn_player_slots(max_players: int) -> void:
-	if input_context != null && input_context.has_method("refresh_debug_spawn_player_slots"):
+	if input_context != null:
 		input_context.refresh_debug_spawn_player_slots(max_players)
 
 
