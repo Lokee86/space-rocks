@@ -197,13 +197,11 @@ func (manager *RoomManager) StopAll() {
 	defer manager.mu.Unlock()
 
 	for roomID, room := range manager.rooms {
-		if room.CleanupTimer != nil {
-			room.CleanupTimer.Stop()
-			room.CleanupTimer = nil
-		}
+		room.StopCleanupTimer()
 		logging.Rooms.Debug("room stopped", logging.FieldRoomID, roomID)
-		if room.Game != nil {
-			room.Game.Stop()
+		gameInstance := room.GameInstance()
+		if gameInstance != nil {
+			gameInstance.Stop()
 		}
 		delete(manager.rooms, roomID)
 	}

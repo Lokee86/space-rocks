@@ -21,7 +21,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Server hitbox overlay data comes through `WorldSync`/devtools seams, not `GameplayRuntimeContext`.
 - Room membership/owner state is behind the room membership owner seam.
 - `websocket_write.go` only writes outbound/presentation state now; it does not advance game-over lifecycle.
-- Continuous bullet stream runtime state is behind a concrete game-package owner seam.
+- Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`.
 
 ## Current Direction Notes
 

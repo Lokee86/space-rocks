@@ -11,20 +11,21 @@ import (
 
 func CanSendGameplayPresentationState(room *rooms.Room) bool {
 	return room != nil &&
-		room.Game != nil &&
+		room.GameInstance() != nil &&
 		(room.State == rooms.RoomStateInGame || room.State == rooms.RoomStateGameOver)
 }
 
 func BuildGameplayPresentationStateResponse(room *rooms.Room, playerID string, roomID string, remoteAddr string) ([]byte, bool) {
-	statePacket := room.Game.StatePacket(playerID)
+	gameInstance := room.GameInstance()
+	statePacket := gameInstance.StatePacket(playerID)
 	statePacket.ServerSentMsec = int(time.Now().UnixMilli())
 
 	payload := any(statePacket)
 	if devtools.Enabled() {
 		payload = devtools.WrapStatePacket(
 			statePacket,
-			devtools.StatusFor(room.Game, playerID),
-			devtools.StatusesForAllPlayers(room.Game),
+			devtools.StatusFor(gameInstance, playerID),
+			devtools.StatusesForAllPlayers(gameInstance),
 		)
 	}
 

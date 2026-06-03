@@ -20,11 +20,13 @@ func (manager *RoomManager) LeaveMember(roomID string, sessionID string, playerI
 
 	room := leaveResult.Room
 	playerRemoved := false
-	if playerID != "" && room.Game != nil {
-		room.Game.RemovePlayer(playerID)
+	gameInstance := room.GameInstance()
+	if playerID != "" && gameInstance != nil {
+		gameInstance.RemovePlayer(playerID)
 		playerRemoved = true
-		if room.ActivePlayers > 0 {
-			room.ActivePlayers--
+		activePlayers := room.match.ActivePlayers()
+		if activePlayers > 0 {
+			room.match.SetActivePlayers(activePlayers - 1)
 		}
 	}
 	cleanupScheduled := room.ShouldCleanup()
@@ -37,7 +39,7 @@ func (manager *RoomManager) LeaveMember(roomID string, sessionID string, playerI
 		SessionID:               sessionID,
 		PlayerID:                playerID,
 		RemainingMembers:        remainingMembers,
-		ActivePlayers:           room.ActivePlayers,
+		ActivePlayers:           room.ActivePlayerCount(),
 		PlayerRemoved:           playerRemoved,
 		CleanupScheduled:        cleanupScheduled,
 		ShouldBroadcastSnapshot: remainingMembers > 0,

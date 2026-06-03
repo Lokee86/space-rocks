@@ -14,14 +14,15 @@ func activateRoomPlayers(room *rooms.Room) {
 	}
 
 	sessions := snapshotRoomSessions(room, memberIDs)
+	gameInstance := room.GameInstance()
 	for _, session := range sessions {
 		if session == nil || session.currentGamePlayerID != "" {
 			continue
 		}
 
-		playerID := room.Game.AddPlayer()
+		playerID := gameInstance.AddPlayer()
 		session.currentGamePlayerID = playerID
-		room.ActivePlayers++
+		room.SetActivePlayerCount(room.ActivePlayerCount() + 1)
 	}
 }
 
@@ -42,5 +43,5 @@ func deactivateRoomPlayers(room *rooms.Room) {
 		}
 		session.currentGamePlayerID = ""
 	}
-	room.ActivePlayers = 0
+	room.SetActivePlayerCount(0)
 }

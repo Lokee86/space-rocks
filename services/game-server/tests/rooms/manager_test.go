@@ -20,7 +20,7 @@ func TestRoomManagerCreateLobbyRoom(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected lobby room state %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected lobby room not to create a game")
 	}
 	if !rooms.IsValidRoomCode(room.ID) {
@@ -48,7 +48,7 @@ func TestRoomManagerCreateSinglePlayerRoom(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected single-player room state %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected single-player room not to create a game")
 	}
 	if room.IsJoinable() {
@@ -85,7 +85,7 @@ func TestRoomManagerCreateStartedSinglePlayerRoomCreatesInGameRoom(t *testing.T)
 	if room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected started single-player room to create a game")
 	}
 	if room.IsJoinable() {
@@ -139,7 +139,7 @@ func TestRoomManagerReturnRoomToLobbyResetsGameAndReadiness(t *testing.T) {
 	setReadyInLobbyBySession(t, room, "session-1", true)
 	setReadyInLobbyBySession(t, room, "session-2", true)
 	oldGame := game.New()
-	room.Game = oldGame
+	room.SetGameInstance(oldGame)
 	room.State = rooms.RoomStateGameOver
 
 	returnedRoom, roomErr := manager.ReturnRoomToLobby(room.ID, "session-1")
@@ -152,7 +152,7 @@ func TestRoomManagerReturnRoomToLobbyResetsGameAndReadiness(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected return to lobby to clear game")
 	}
 	if !gameStopped(t, oldGame) {
@@ -362,7 +362,7 @@ func TestRoomManagerLeaveMemberRemovesMemberAndReportsBroadcast(t *testing.T) {
 	if _, ok := room.PlayerIDForSession("session-2"); !ok {
 		t.Fatal("expected remaining member to stay in room")
 	}
-	if room.CleanupTimer != nil {
+	if room.HasCleanupTimer() {
 		t.Fatal("expected cleanup timer not to be scheduled")
 	}
 }
@@ -376,9 +376,9 @@ func TestRoomManagerLeaveMemberRemovesPlayerAndSchedulesCleanupWhenEmpty(t *test
 		t.Fatalf("create lobby room: %v", err)
 	}
 	room.AddMemberSessionID("session-1")
-	room.Game = game.New()
-	playerID := room.Game.AddPlayer()
-	room.ActivePlayers = 1
+	room.SetGameInstance(game.New())
+	playerID := room.GameInstance().AddPlayer()
+	room.SetActivePlayerCount(1)
 
 	result, roomErr := manager.LeaveMember(room.ID, "session-1", playerID)
 	if roomErr != nil {
@@ -387,7 +387,7 @@ func TestRoomManagerLeaveMemberRemovesPlayerAndSchedulesCleanupWhenEmpty(t *test
 	if _, ok := room.PlayerIDForSession("session-1"); ok {
 		t.Fatal("expected leaving member to be removed")
 	}
-	if gameTracksPlayer(t, room.Game, playerID) {
+	if gameTracksPlayer(t, room.GameInstance(), playerID) {
 		t.Fatal("expected leaving player to be removed from game")
 	}
 	if !result.PlayerRemoved {
@@ -405,7 +405,7 @@ func TestRoomManagerLeaveMemberRemovesPlayerAndSchedulesCleanupWhenEmpty(t *test
 	if !result.CleanupScheduled {
 		t.Fatal("expected empty room cleanup to be scheduled")
 	}
-	if room.CleanupTimer == nil {
+	if !room.HasCleanupTimer() {
 		t.Fatal("expected cleanup timer to be scheduled")
 	}
 }
@@ -521,7 +521,7 @@ func TestRoomManagerStartRoomGameRejectsNonMember(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected room state to remain %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected rejected start not to create a game")
 	}
 }
@@ -551,7 +551,7 @@ func TestRoomManagerStartRoomGameRejectsNotReadyMembers(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected room state to remain %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected rejected start not to create a game")
 	}
 }
@@ -579,7 +579,7 @@ func TestRoomManagerStartRoomGameTransitionsLobbyToInGame(t *testing.T) {
 	if room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected started room to create a game")
 	}
 }

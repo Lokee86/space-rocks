@@ -65,7 +65,8 @@ func isRemainingDevtoolsPacketType(packetType string) bool {
 }
 
 func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg []byte) bool {
-	if session.CurrentRoom() == nil || session.CurrentGamePlayerID() == "" {
+	room := session.CurrentRoom()
+	if room == nil || session.CurrentGamePlayerID() == "" {
 		return true
 	}
 
@@ -80,6 +81,6 @@ func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg
 		)
 		return true
 	}
-	devtools.HandleCommand(session.CurrentRoom().Game, session.CurrentGamePlayerID(), command)
+	devtools.HandleCommand(room.GameInstance(), session.CurrentGamePlayerID(), command)
 	return true
 }

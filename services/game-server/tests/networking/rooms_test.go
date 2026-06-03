@@ -92,8 +92,8 @@ func TestWebSocketRoomIDQueryDoesNotJoinOrSpawn(t *testing.T) {
 	if count := room.MemberCount(); count != 0 {
 		t.Fatalf("expected room_id query websocket not to add room member, got %d", count)
 	}
-	if room.ActivePlayers != 0 {
-		t.Fatalf("expected room_id query websocket not to spawn active player, got %d", room.ActivePlayers)
+	if room.ActivePlayerCount() != 0 {
+		t.Fatalf("expected room_id query websocket not to spawn active player, got %d", room.ActivePlayerCount())
 	}
 }
 
@@ -172,7 +172,7 @@ func TestCreateRoomRequestCreatesLobbyRoomWithoutGame(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected created room state %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected lobby room not to create game simulation")
 	}
 	if count := room.MemberCount(); count != 1 {
@@ -258,7 +258,7 @@ func TestStartSinglePlayerRequestCreatesInGameRoomAndStartsState(t *testing.T) {
 	if room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected single-player room to create game simulation")
 	}
 	if room.IsJoinable() {
@@ -267,8 +267,8 @@ func TestStartSinglePlayerRequestCreatesInGameRoomAndStartsState(t *testing.T) {
 	if count := room.MemberCount(); count != 1 {
 		t.Fatalf("expected single-player room member count 1, got %d", count)
 	}
-	if room.ActivePlayers != 1 {
-		t.Fatalf("expected single-player room active players 1, got %d", room.ActivePlayers)
+	if room.ActivePlayerCount() != 1 {
+		t.Fatalf("expected single-player room active players 1, got %d", room.ActivePlayerCount())
 	}
 
 	var state servergame.StatePacket
@@ -1196,11 +1196,11 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 	if room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, room.State)
 	}
-	if room.Game == nil {
+	if room.GameInstance() == nil {
 		t.Fatal("expected valid start request to create game")
 	}
-	if room.ActivePlayers != 1 {
-		t.Fatalf("expected 1 active game player, got %d", room.ActivePlayers)
+	if room.ActivePlayerCount() != 1 {
+		t.Fatalf("expected 1 active game player, got %d", room.ActivePlayerCount())
 	}
 	if readySnapshot.RoomState != string(rooms.RoomStateLobby) {
 		t.Fatalf("expected ready snapshot to remain lobby, got %q", readySnapshot.RoomState)
@@ -1256,8 +1256,8 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
 	}
-	if room.ActivePlayers != 1 {
-		t.Fatalf("expected first match active players 1, got %d", room.ActivePlayers)
+	if room.ActivePlayerCount() != 1 {
+		t.Fatalf("expected first match active players 1, got %d", room.ActivePlayerCount())
 	}
 	room.State = rooms.RoomStateGameOver
 
@@ -1283,11 +1283,11 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	if room.State != rooms.RoomStateLobby {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, room.State)
 	}
-	if room.Game != nil {
+	if room.GameInstance() != nil {
 		t.Fatal("expected return to lobby to clear game")
 	}
-	if room.ActivePlayers != 0 {
-		t.Fatalf("expected return to lobby to clear active players, got %d", room.ActivePlayers)
+	if room.ActivePlayerCount() != 0 {
+		t.Fatalf("expected return to lobby to clear active players, got %d", room.ActivePlayerCount())
 	}
 	members := room.MembersSnapshot()
 	if len(members) != 1 {
@@ -1328,8 +1328,8 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	if _, ok := secondState.Players[secondState.SelfID]; !ok {
 		t.Fatalf("expected second match state to include self player %q", secondState.SelfID)
 	}
-	if room.ActivePlayers != 1 {
-		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayers)
+	if room.ActivePlayerCount() != 1 {
+		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayerCount())
 	}
 	if room.MemberCount() != 1 {
 		t.Fatalf("expected room membership to remain intact, got %d", room.MemberCount())
@@ -1439,8 +1439,8 @@ func TestReturnToLobbyAllowsFreshSecondMatch(t *testing.T) {
 	if len(secondState.Players) != 1 {
 		t.Fatalf("expected second match to create 1 active player, got %d", len(secondState.Players))
 	}
-	if room.ActivePlayers != 1 {
-		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayers)
+	if room.ActivePlayerCount() != 1 {
+		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayerCount())
 	}
 }
 

@@ -13,10 +13,10 @@ func (room *Room) StartGameForMember(playerID string, newGame func() *game.Game)
 	if roomErr := room.markStartingLocked(); roomErr != nil {
 		return roomErr
 	}
-	if room.Game == nil {
-		room.Game = newGame()
+	if room.match.Game() == nil {
+		room.match.SetGame(newGame())
 	}
-	room.Game.Start()
+	room.match.Game().Start()
 	if roomErr := room.markInGameLocked(); roomErr != nil {
 		return roomErr
 	}
@@ -98,20 +98,20 @@ func (room *Room) ResetToLobby(playerID string) *RoomDomainError {
 	}
 
 	room.membership.setAllReady(false)
-	if room.Game != nil {
-		room.Game.Stop()
+	if room.match.Game() != nil {
+		room.match.Game().Stop()
 	}
-	room.Game = nil
+	room.match.ClearGame()
 	room.State = RoomStateLobby
 	return nil
 }
 
 func (room *Room) IsGameOver() bool {
-	if room == nil || room.State != RoomStateInGame || room.Game == nil {
+	if room == nil || room.State != RoomStateInGame || room.match.Game() == nil {
 		return false
 	}
 
-	return room.Game.MatchDecision().IsOver
+	return room.match.Game().MatchDecision().IsOver
 }
 
 func (room *Room) StartSinglePlayerGame(newGame func() *game.Game) *RoomDomainError {
@@ -124,10 +124,10 @@ func (room *Room) StartSinglePlayerGame(newGame func() *game.Game) *RoomDomainEr
 	if roomErr := room.markStartingLocked(); roomErr != nil {
 		return roomErr
 	}
-	if room.Game == nil {
-		room.Game = newGame()
+	if room.match.Game() == nil {
+		room.match.SetGame(newGame())
 	}
-	room.Game.Start()
+	room.match.Game().Start()
 	if roomErr := room.markInGameLocked(); roomErr != nil {
 		return roomErr
 	}

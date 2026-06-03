@@ -156,7 +156,7 @@ Player initial spawn and respawn planning use `PlayerSpawnPlan`. Player lifecycl
 
 The spawn seam is still partial. Bullet construction lives in `spawning.Spawner`, but `spawnBullet()` remains the `Game` adapter that inserts the projectile into `game.state.Projectiles`.
 
-`continuousBulletStreams` owns continuous bullet stream runtime state behind a concrete game-package owner seam rather than a direct `Game` slice.
+Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`. `internal/game` does not import `internal/devtools` or own devtools runtime state. Game-owned debug operations are exposed through narrow `export_devtools_*.go` hooks, including debug bullet spawning and generic simulation step observer registration.
 
 ### Match Rules
 
@@ -212,6 +212,13 @@ See [toroidal wrap](toroidal-wrap.md).
 ### Rooms And Networking
 
 Room/domain ownership lives in `services/game-server/internal/rooms`. That package owns room state, room membership ownership, room-code/default-room helpers, create/join/leave/ready/start-game/single-player/return-to-lobby/game-over/cleanup decisions, and each room's `*game.Game` lifecycle while simulation rules stay in `internal/game`.
+
+Concrete room ownership is split inside the package:
+
+- `roomMembership` owns members and owner selection.
+- `roomMatch` owns the room game instance and active-player count.
+- `roomCleanup` owns the cleanup timer and cleanup version.
+- `Room` remains the aggregate root for room ID, top-level state, joinability, locking, and coordination.
 
 `services/game-server/internal/networking` owns websocket upgrade, sessions, read/write loops, transport logging, and adapter wiring. It upgrades `/ws`, reads generated packets, calls room-domain methods, attaches or clears websocket session player IDs, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
 

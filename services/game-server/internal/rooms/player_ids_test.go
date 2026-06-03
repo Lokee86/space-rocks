@@ -190,8 +190,8 @@ func TestStartGameForMemberLooksUpOwnerByPlayerID(t *testing.T) {
 	if err := room.StartGameForMember("Player-1", game.New); err != nil {
 		t.Fatalf("expected owner start to succeed, got %v", err)
 	}
-	if room.Game != nil {
-		room.Game.Stop()
+	if gameInstance := room.GameInstance(); gameInstance != nil {
+		gameInstance.Stop()
 	}
 }
 
