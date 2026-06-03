@@ -1,4 +1,5 @@
 extends RefCounted
+class_name GameplaySpectateFlow
 
 var menu_flow
 var spectate_menu_state

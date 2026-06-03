@@ -4,13 +4,15 @@ class_name GameplayStateApplyFlow
 const GameplayStateApplyResultScript = preload("res://scripts/gameplay/state/gameplay_state_apply_result.gd")
 
 var input_context
+var devtools_context
 var hud_flow
 var runtime_context
 var menu_flow
 
 
-func configure(input_context_ref, hud_flow_ref, runtime_context_ref, menu_flow_ref) -> void:
+func configure(input_context_ref, devtools_context_ref, hud_flow_ref, runtime_context_ref, menu_flow_ref) -> void:
 	input_context = input_context_ref
+	devtools_context = devtools_context_ref
 	hud_flow = hud_flow_ref
 	runtime_context = runtime_context_ref
 	menu_flow = menu_flow_ref
@@ -19,8 +21,8 @@ func configure(input_context_ref, hud_flow_ref, runtime_context_ref, menu_flow_r
 func apply_state(state: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:
 	var result: GameplayStateApplyResult = GameplayStateApplyResultScript.new()
 	var is_first_gameplay_state := !has_received_state
-	if input_context != null:
-		input_context.apply_gameplay_state(state)
+	if devtools_context != null:
+		devtools_context.apply_gameplay_state(state)
 	if input_context != null:
 		input_context.mark_gameplay_state_received()
 	if hud_flow != null:

@@ -55,8 +55,8 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, bullets
 	_configure_gameplay_presentation_flow()
 
 func apply_gameplay_state(state: Dictionary) -> void:
-	if gameplay_shell_flow != null and gameplay_shell_flow.has_method("refresh_debug_spawn_player_slots"):
-		gameplay_shell_flow.refresh_debug_spawn_player_slots(_current_room_max_players())
+	if gameplay_shell_flow != null && gameplay_shell_flow.devtools_context != null:
+		gameplay_shell_flow.devtools_context.refresh_spawn_player_slots(_current_room_max_players())
 	if spectate_session_flow != null:
 		spectate_session_flow.apply_gameplay_state(state)
 	if gameplay_shell_flow != null:
@@ -121,9 +121,9 @@ func _configure_gameplay_presentation_flow() -> void:
 	gameplay_presentation_flow.configure(
 		hud,
 		player,
-		Callable(gameplay_shell_flow, "current_camera"),
-		Callable(gameplay_shell_flow, "remote_player_visual_positions"),
-		Callable(gameplay_shell_flow, "remote_player_hues")
+		Callable(gameplay_shell_flow.runtime_context, "current_camera"),
+		Callable(gameplay_shell_flow.runtime_context, "remote_player_visual_positions"),
+		Callable(gameplay_shell_flow.runtime_context, "remote_player_hues")
 	)
 
 func _on_gameplay_started() -> void:

@@ -10,21 +10,6 @@ var devtools_context
 var target_request_flow
 var mouse_action_flow
 var remote_player_nodes_provider: Callable
-
-
-func apply_debug_status(status: Dictionary) -> void:
-	if devtools_context != null:
-		devtools_context.apply_debug_status(status)
-
-
-func apply_gameplay_state(state: Dictionary) -> void:
-	if devtools_context != null:
-		devtools_context.apply_gameplay_state(state)
-
-
-func refresh_debug_spawn_player_slots(max_players: int) -> void:
-	if devtools_context != null:
-		devtools_context.refresh_spawn_player_slots(max_players)
 var respawn_request_route: Callable
 var open_spectate_menu_route: Callable
 var cycle_spectate_target_route: Callable
@@ -35,6 +20,7 @@ func configure(
 	player_ref,
 	menu_flow_ref,
 	game_owner_ref,
+	devtools_context_ref,
 	respawn_request_route_ref: Callable,
 	target_visual_candidates_provider_ref: Callable = Callable(),
 	mouse_visual_position_provider_ref: Callable = Callable(),
@@ -45,12 +31,10 @@ func configure(
 	input_flow.configure(connection_service_ref, player_ref, menu_flow_ref)
 	pause_input_flow = GameplayPauseInputFlow.new()
 	pause_input_flow.configure(menu_flow_ref)
-	devtools_context = GameplayDevtoolsContext.new()
-	devtools_context.configure(connection_service_ref)
+	devtools_context = devtools_context_ref
 	remote_player_nodes_provider = remote_player_nodes_provider_ref
-	if devtools_context.has_method("configure_remote_player_nodes_provider"):
-		devtools_context.configure_remote_player_nodes_provider(remote_player_nodes_provider)
-	if game_owner_ref != null && devtools_context.has_method("configure_server_hitbox_overlay"):
+	devtools_context.configure_remote_player_nodes_provider(remote_player_nodes_provider)
+	if game_owner_ref != null:
 		devtools_context.configure_server_hitbox_overlay(game_owner_ref.get_node_or_null("ServerHitboxOverlay"))
 	target_request_flow = TargetRequestFlow.new()
 	target_request_flow.configure(
@@ -70,16 +54,6 @@ func configure_spectate_routes(
 ) -> void:
 	open_spectate_menu_route = open_spectate_menu_route_ref
 	cycle_spectate_target_route = cycle_spectate_target_route_ref
-
-
-func configure_debug_placement_route(route: Callable) -> void:
-	if devtools_context != null:
-		devtools_context.configure_placement_request_route(route)
-
-
-func handle_debug_placement_result(result: Dictionary) -> void:
-	if devtools_context != null:
-		devtools_context.handle_placement_result(result)
 
 
 func reset() -> void:
@@ -109,8 +83,6 @@ func process(has_received_state: bool) -> void:
 	var open_menu_consumed := false
 	if pause_input_flow != null:
 		open_menu_consumed = pause_input_flow.process(has_received_state)
-	if devtools_context != null:
-		devtools_context.process(has_received_state)
 	if Input.is_action_just_pressed("Respawn") && !respawn_request_route.is_null():
 		respawn_request_route.call(has_received_state)
 	if input_flow != null:
