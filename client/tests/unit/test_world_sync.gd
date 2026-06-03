@@ -282,7 +282,7 @@ func _bullet_nodes() -> Dictionary:
 
 
 func _player_nodes() -> Dictionary:
-	return _player_sync().get("player_nodes")
+	return world_sync.player_nodes()
 
 
 func _player_sync():

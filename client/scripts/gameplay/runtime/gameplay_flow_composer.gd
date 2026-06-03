@@ -56,7 +56,10 @@ func configure(
 	target_candidate_flow.configure(runtime_context_ref.world_sync)
 
 	pointer_position_provider = GameplayPointerPositionProvider.new()
-	pointer_position_provider.configure(game_owner_ref, runtime_context_ref)
+	pointer_position_provider.configure(
+		game_owner_ref,
+		Callable(runtime_context_ref.world_sync, "server_position_for_visual_position")
+	)
 
 	devtools_context = devtools_context_ref
 	if devtools_context == null:
@@ -76,7 +79,7 @@ func configure(
 			Callable(target_candidate_flow, "target_visual_candidates"),
 			Callable(pointer_position_provider, "mouse_visual_position"),
 			Callable(pointer_position_provider, "server_position_for_visual_position"),
-			Callable(runtime_context_ref, "remote_player_nodes")
+			Callable(runtime_context_ref.world_sync, "remote_player_nodes")
 		)
 
 	gameplay_state_apply_flow = gameplay_state_apply_flow_ref
@@ -86,13 +89,13 @@ func configure(
 			input_context,
 			devtools_context,
 			hud_flow_ref,
-			runtime_context_ref,
+			runtime_context_ref.world_sync,
 			event_lifecycle_flow,
 			alive_restore_flow
 		)
 
 	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
-	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context_ref)
+	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context_ref.world_sync)
 
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
 	runtime_tick_flow.configure(hud_flow_ref)
