@@ -48,6 +48,8 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, bullets
 	spectate_session_flow.configure(gameplay_menu_flow, gameplay_shell_flow)
 	dev_tools_session_flow = DevToolsSessionFlow.new()
 	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, logger)
+	dev_tools_session_flow.attach_to_gameplay_shell(gameplay_shell_flow)
+
 	_connect_gameplay_shell_signal(&"gameplay_started", Callable(self, "_on_gameplay_started"))
 	_connect_gameplay_shell_signal(&"quit_to_main_menu_requested", Callable(self, "_on_gameplay_quit_to_main_menu_requested"))
 	_connect_gameplay_shell_signal(&"return_to_lobby_requested", Callable(self, "_on_gameplay_return_to_lobby_requested"))
