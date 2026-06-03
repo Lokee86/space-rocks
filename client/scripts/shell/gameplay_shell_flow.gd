@@ -2,8 +2,11 @@ extends RefCounted
 class_name GameplayShellFlow
 
 const GameplayPauseStateFlowScript = preload("res://scripts/gameplay/state/gameplay_pause_state_flow.gd")
+const GameplayEventLifecycleFlowScript = preload("res://scripts/gameplay/events/gameplay_event_lifecycle_flow.gd")
 const GameplayStateApplyFlowScript = preload("res://scripts/gameplay/state/gameplay_state_apply_flow.gd")
 const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
+const GameplayAliveRestoreFlowScript = preload("res://scripts/gameplay/respawn/gameplay_alive_restore_flow.gd")
+const GameplayTargetCandidateFlowScript = preload("res://scripts/gameplay/targeting/gameplay_target_candidate_flow.gd")
 const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
 
 signal gameplay_started
@@ -11,17 +14,20 @@ signal quit_to_main_menu_requested
 signal return_to_lobby_requested
 
 var runtime_context
+var gameplay_pause_state_flow
 var hud_flow
 var menu_flow
+var event_lifecycle_flow
+var alive_restore_flow
+var target_candidate_flow
+var pointer_position_provider
 var input_context
 var devtools_context
 var runtime_tick_flow
 var spectate_context
-var gameplay_pause_state_flow
 var gameplay_state_apply_flow
 var gameplay_process_flow
 var server_hitbox_overlay_flow
-var pointer_position_provider
 var has_received_state := false
 
 
@@ -42,20 +48,34 @@ func configure(
 		menu_flow.configure_lifecycle_routes(
 			Callable(self, "_on_quit_to_main_menu_requested"),
 			Callable(self, "_on_return_to_lobby_requested")
-		)
+	)
 	runtime_context = GameplayRuntimeContext.new()
 	runtime_context.configure_world(game_owner_ref, player_ref, bullets, asteroids, gameplay_pause_state_flow.tracker())
-	runtime_context.configure_events(
+
+	event_lifecycle_flow = GameplayEventLifecycleFlowScript.new()
+	event_lifecycle_flow.configure(
 		game_owner_ref,
 		hud_flow.hud if hud_flow != null else null,
 		hud_flow,
-		menu_flow
+		menu_flow,
+		player_ref,
+		Callable(runtime_context.world_sync, "visual_position_for_server_position")
 	)
+
 	runtime_context.configure_respawn(connection_service_ref, hud_flow)
+
+	alive_restore_flow = GameplayAliveRestoreFlowScript.new()
+	alive_restore_flow.configure(runtime_context.world_sync, runtime_context.respawn_flow, hud_flow, menu_flow, player_ref)
+
+	target_candidate_flow = GameplayTargetCandidateFlowScript.new()
+	target_candidate_flow.configure(runtime_context.world_sync)
+
 	pointer_position_provider = GameplayPointerPositionProvider.new()
 	pointer_position_provider.configure(game_owner_ref, runtime_context)
+
 	devtools_context = GameplayDevtoolsContext.new()
 	devtools_context.configure(connection_service_ref)
+
 	input_context = GameplayInputContext.new()
 	input_context.configure(
 		connection_service_ref,
@@ -64,25 +84,31 @@ func configure(
 		game_owner_ref,
 		devtools_context,
 		Callable(runtime_context, "request_respawn"),
-		Callable(runtime_context, "target_visual_candidates"),
+		Callable(target_candidate_flow, "target_visual_candidates"),
 		Callable(pointer_position_provider, "mouse_visual_position"),
 		Callable(pointer_position_provider, "server_position_for_visual_position"),
 		Callable(runtime_context, "remote_player_nodes")
 	)
+
 	gameplay_state_apply_flow = GameplayStateApplyFlowScript.new()
-	gameplay_state_apply_flow.configure(input_context, devtools_context, hud_flow, runtime_context, menu_flow)
+	gameplay_state_apply_flow.configure(input_context, devtools_context, hud_flow, runtime_context, event_lifecycle_flow, alive_restore_flow)
+
 	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
 	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context)
+
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
 	runtime_tick_flow.configure(hud_flow)
+
 	spectate_context = GameplaySpectateContext.new()
 	spectate_context.configure(menu_flow, null, runtime_context.world_sync)
 	if spectate_menu_state_ref != null:
 		spectate_context.configure_menu_state(spectate_menu_state_ref)
+
 	input_context.configure_spectate_routes(
 		Callable(spectate_context, "request_open_spectate_menu"),
 		Callable(spectate_context, "request_cycle_target")
 	)
+
 	gameplay_process_flow = GameplayProcessFlowScript.new()
 	gameplay_process_flow.configure(
 		runtime_context,
@@ -104,6 +130,10 @@ func reset() -> void:
 		menu_flow.reset()
 	if input_context != null:
 		input_context.reset()
+	if event_lifecycle_flow != null:
+		event_lifecycle_flow.reset()
+	if alive_restore_flow != null:
+		alive_restore_flow.reset()
 	if runtime_tick_flow != null:
 		runtime_tick_flow.reset()
 	if spectate_context != null:

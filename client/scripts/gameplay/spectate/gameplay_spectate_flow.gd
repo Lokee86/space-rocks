@@ -16,8 +16,6 @@ func configure(menu_flow_ref, spectate_menu_state_ref, world_sync_ref) -> void:
 func reset() -> void:
 	is_spectating = false
 	if world_sync != null:
-		if world_sync.has_method("clear_view_reference_player"):
-			world_sync.clear_view_reference_player()
 		if world_sync.has_method("clear_view_target_player"):
 			world_sync.clear_view_target_player()
 
@@ -38,8 +36,6 @@ func request_cycle_target() -> void:
 
 	var target_id: String = spectate_menu_state.cycle_next_target()
 	if !target_id.is_empty():
-		if world_sync.has_method("set_view_reference_player"):
-			world_sync.set_view_reference_player(target_id)
 		if world_sync.has_method("set_view_target_player"):
 			world_sync.set_view_target_player(target_id)
 		world_sync.focus_camera_on_player(target_id)
@@ -51,8 +47,6 @@ func begin_spectating() -> void:
 
 	var target_id: String = spectate_menu_state.begin_spectating()
 	if !target_id.is_empty():
-		if world_sync.has_method("set_view_reference_player"):
-			world_sync.set_view_reference_player(target_id)
 		if world_sync.has_method("set_view_target_player"):
 			world_sync.set_view_target_player(target_id)
 		var focused: bool = bool(world_sync.focus_camera_on_player(target_id))

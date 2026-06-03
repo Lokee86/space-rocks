@@ -7,15 +7,17 @@ var input_context
 var devtools_context
 var hud_flow
 var runtime_context
-var menu_flow
+var event_lifecycle_flow
+var alive_restore_flow
 
 
-func configure(input_context_ref, devtools_context_ref, hud_flow_ref, runtime_context_ref, menu_flow_ref) -> void:
+func configure(input_context_ref, devtools_context_ref, hud_flow_ref, runtime_context_ref, event_lifecycle_flow_ref, alive_restore_flow_ref) -> void:
 	input_context = input_context_ref
 	devtools_context = devtools_context_ref
 	hud_flow = hud_flow_ref
 	runtime_context = runtime_context_ref
-	menu_flow = menu_flow_ref
+	event_lifecycle_flow = event_lifecycle_flow_ref
+	alive_restore_flow = alive_restore_flow_ref
 
 
 func apply_state(state: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:
@@ -29,8 +31,10 @@ func apply_state(state: Dictionary, has_received_state: bool) -> GameplayStateAp
 		hud_flow.apply_gameplay_state_summary(state)
 	if runtime_context != null:
 		runtime_context.apply_world_state(state, has_received_state)
-		runtime_context.apply_respawn_alive_restore(state, menu_flow)
-		runtime_context.apply_server_events(state)
+	if alive_restore_flow != null:
+		alive_restore_flow.apply_state(state)
+	if event_lifecycle_flow != null:
+		event_lifecycle_flow.apply_server_events(state)
 	result.has_received_state = true
 	result.started_gameplay = is_first_gameplay_state
 	return result

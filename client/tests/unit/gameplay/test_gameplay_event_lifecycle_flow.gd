@@ -1,0 +1,158 @@
+extends GutTest
+
+const GameplayEventLifecycleFlow = preload("res://scripts/gameplay/events/gameplay_event_lifecycle_flow.gd")
+
+var _game_owner: FakeNode2D
+var _hud: FakeControl
+
+
+class FakeEventFlow:
+	signal self_death_event
+
+	var configure_call_count := 0
+	var reset_call_count := 0
+	var apply_server_events_call_count := 0
+	var last_game_owner
+	var last_hud
+	var last_visual_position_callable
+	var last_server_events
+	var last_self_id
+
+	func configure(game_owner: Node2D, hud: Control, visual_position_for_server_position: Callable) -> void:
+		configure_call_count += 1
+		last_game_owner = game_owner
+		last_hud = hud
+		last_visual_position_callable = visual_position_for_server_position
+
+	func apply_server_events(server_events: Array, self_id: String) -> void:
+		apply_server_events_call_count += 1
+		last_server_events = server_events
+		last_self_id = self_id
+
+	func reset() -> void:
+		reset_call_count += 1
+
+
+class FakeDeathFlow:
+	var configure_call_count := 0
+	var last_hud_flow
+	var last_menu_flow
+	var last_event_flow
+	var last_player
+	var apply_self_death_event_call_count := 0
+
+	func configure(hud_flow_ref, menu_flow_ref, event_flow_ref, player_ref) -> void:
+		configure_call_count += 1
+		last_hud_flow = hud_flow_ref
+		last_menu_flow = menu_flow_ref
+		last_event_flow = event_flow_ref
+		last_player = player_ref
+
+	func apply_self_death_event(_event) -> void:
+		apply_self_death_event_call_count += 1
+
+
+class FakeNode2D:
+	extends Node2D
+
+
+class FakeControl:
+	extends Control
+
+
+class FakeCallableTarget:
+	func visual_position_for_server_position(_server_position):
+		return Vector2.ZERO
+
+
+func after_each() -> void:
+	if is_instance_valid(_game_owner):
+		_game_owner.queue_free()
+		_game_owner = null
+	if is_instance_valid(_hud):
+		_hud.queue_free()
+		_hud = null
+
+
+func test_configure_creates_event_and_death_flows() -> void:
+	var event_flow := FakeEventFlow.new()
+	var death_flow := FakeDeathFlow.new()
+	var flow := GameplayEventLifecycleFlow.new()
+	_game_owner = FakeNode2D.new()
+	_hud = FakeControl.new()
+	var hud_flow := Object.new()
+	var menu_flow := Object.new()
+	var player := Object.new()
+	var callable_target := FakeCallableTarget.new()
+
+	flow.configure(
+		_game_owner,
+		_hud,
+		hud_flow,
+		menu_flow,
+		player,
+		Callable(callable_target, "visual_position_for_server_position"),
+		event_flow,
+		death_flow
+	)
+
+	assert_eq(flow.event_flow, event_flow)
+	assert_eq(flow.death_flow, death_flow)
+	assert_eq(event_flow.configure_call_count, 1)
+	assert_eq(death_flow.configure_call_count, 1)
+	assert_eq(death_flow.last_event_flow, event_flow)
+	assert_eq(death_flow.last_player, player)
+
+
+func test_apply_server_events_forwards_state_fields() -> void:
+	var event_flow := FakeEventFlow.new()
+	var death_flow := FakeDeathFlow.new()
+	var flow := GameplayEventLifecycleFlow.new()
+	var callable_target := FakeCallableTarget.new()
+	_game_owner = FakeNode2D.new()
+	_hud = FakeControl.new()
+
+	flow.configure(
+		_game_owner,
+		_hud,
+		Object.new(),
+		Object.new(),
+		Object.new(),
+		Callable(callable_target, "visual_position_for_server_position"),
+		event_flow,
+		death_flow
+	)
+
+	var state := {
+		"server_events": [{"type": "test_event"}],
+		"self_id": "player-1",
+	}
+	flow.apply_server_events(state)
+
+	assert_eq(event_flow.apply_server_events_call_count, 1)
+	assert_eq(event_flow.last_server_events, state["server_events"])
+	assert_eq(event_flow.last_self_id, "player-1")
+
+
+func test_reset_calls_owned_event_flow_reset() -> void:
+	var event_flow := FakeEventFlow.new()
+	var death_flow := FakeDeathFlow.new()
+	var flow := GameplayEventLifecycleFlow.new()
+	var callable_target := FakeCallableTarget.new()
+	_game_owner = FakeNode2D.new()
+	_hud = FakeControl.new()
+
+	flow.configure(
+		_game_owner,
+		_hud,
+		Object.new(),
+		Object.new(),
+		Object.new(),
+		Callable(callable_target, "visual_position_for_server_position"),
+		event_flow,
+		death_flow
+	)
+
+	flow.reset()
+
+	assert_eq(event_flow.reset_call_count, 1)
