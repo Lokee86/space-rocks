@@ -59,7 +59,7 @@ func apply_gameplay_state(state: Dictionary) -> void:
 	if spectate_session_flow != null:
 		spectate_session_flow.apply_gameplay_state(state)
 	if gameplay_shell_flow != null:
-		gameplay_shell_flow.apply_gameplay_state_data(state)
+		gameplay_shell_flow.apply_gameplay_state(state)
 
 func apply_player_pause_state_packet(packet: Dictionary) -> void:
 	if gameplay_shell_flow != null:

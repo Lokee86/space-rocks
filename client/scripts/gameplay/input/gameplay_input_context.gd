@@ -18,12 +18,12 @@ func apply_debug_status(status: Dictionary) -> void:
 
 
 func apply_gameplay_state(state: Dictionary) -> void:
-	if devtools_context != null && devtools_context.has_method("apply_gameplay_state"):
+	if devtools_context != null:
 		devtools_context.apply_gameplay_state(state)
 
 
 func refresh_debug_spawn_player_slots(max_players: int) -> void:
-	if devtools_context != null && devtools_context.has_method("refresh_spawn_player_slots"):
+	if devtools_context != null:
 		devtools_context.refresh_spawn_player_slots(max_players)
 var respawn_request_route: Callable
 var open_spectate_menu_route: Callable
@@ -78,7 +78,7 @@ func configure_debug_placement_route(route: Callable) -> void:
 
 
 func handle_debug_placement_result(result: Dictionary) -> void:
-	if devtools_context != null && devtools_context.has_method("handle_placement_result"):
+	if devtools_context != null:
 		devtools_context.handle_placement_result(result)
 
 
