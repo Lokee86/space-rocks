@@ -1,5 +1,5 @@
-class_name DevtoolsWindowController
 extends RefCounted
+class_name DevtoolsWindowController
 
 signal toggle_invincible_requested(target_scope: String, target_player_id: String)
 signal toggle_infinite_lives_requested(target_scope: String, target_player_id: String)
