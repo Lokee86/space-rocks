@@ -16,6 +16,12 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Godot was upgraded to 4.6 recently. Scene/import diffs may be noisy.
 - The older `space-rocks-(4.3)/` project copy is ignored and should not be used as the active project.
 - Generated recordings and build artifacts should not be committed. In particular, avoid committing `*.avi`, `tmp/`, `*/tmp/`, and `client/.godot/`.
+- Dev-readiness items 1-10 are complete; item 11 remains: replace local-player camera piggybacking with a dedicated camera target/controller.
+- `GameplayRuntimeContext` is runtime wiring only; do not treat it as a read-model passthrough bucket.
+- Server hitbox overlay data comes through `WorldSync`/devtools seams, not `GameplayRuntimeContext`.
+- Room membership/owner state is behind the room membership owner seam.
+- `websocket_write.go` only writes outbound/presentation state now; it does not advance game-over lifecycle.
+- Continuous bullet stream runtime state is behind a concrete game-package owner seam.
 
 ## Current Direction Notes
 
@@ -27,11 +33,6 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
 - Network telemetry uses `telemetry_ping` / `telemetry_pong`; gameplay state packets include `server_sent_msec`.
 - `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
-- `total_asteroids` telemetry only stays visible if both the base `StatePacket` and `WrapStatePacket()` preserve the field.
-- Packet-family splitting is complete: server pure inbound handlers live in `services/game-server/internal/networking/inbound`, server pure outbound helpers live in `services/game-server/internal/networking/outbound`, client inbound dispatch lives in `client/scripts/networking/inbound`, and client outbound sends live in `client/scripts/networking/outbound`.
-- Remote player dev labels are implemented behind the client devtools seam. `DevToggle8` / `8` shows basic remote-player labels, and `Shift+DevToggle8` / `Shift+8` shows network telemetry labels. Labels attach to remote player nodes only, exclude the local player, and keep lifecycle, formatting, and mode state under `client/scripts/devtools/` and `client/scenes/devtools/`.
-- Server Hitbox Overlay is implemented behind the client devtools seam, toggled by the devtools window checkbox, and draws player/asteroid/bullet outlines from `WorldSync`/runtime draw-entry data using Godot collision resources only as visual templates.
-- Eligible devtools player-target lists now default to All Players, using `target_scope=all_players` instead of a fake player ID; Invincible, Infinite Lives, and Freeze Player use set-style all-player activation, and Respawn Player all-player requests still rely on existing per-player respawn guards.
 
 ## Known Gaps / TODOs
 

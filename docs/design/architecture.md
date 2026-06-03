@@ -31,7 +31,7 @@ Current client runtime seams:
 - `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`: gameplay state application seam for packet reading and normalized state application order.
 - `client/scripts/gameplay/runtime/gameplay_process_flow.gd`: per-frame gameplay processing seam for the runtime/input/spectate order.
 - `client/scripts/gameplay/gameplay_composition.gd`: gameplay flow construction and fanout only. `GameplaySessionController` keeps packet gating and outer lifecycle consequences. `GameplayComposition` should not own packet parsing, connection shutdown, session clearing, menu show/hide, or gameplay rules.
-- `client/scripts/gameplay/runtime/`: gameplay runtime/state-application context.
+- `client/scripts/gameplay/runtime/`: gameplay runtime composition/delegation context. `GameplayRuntimeContext` stays focused on wiring focused runtime seams rather than acting as a read-model passthrough bucket.
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
 - `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
 - HUD/UI mouse input gating is owned by `client/scripts/gameplay/input/hud_input_policy.gd`, registered as the `HudInputPolicy` autoload. `GameplaySessionController` keeps the top-level input priority order and delegates the HUD/UI hover gate to `HudInputPolicy`.
@@ -39,7 +39,7 @@ Current client runtime seams:
 - `client/scripts/gameplay/background/`: gameplay background/parallax shader scroll presentation.
 - `client/scripts/devtools/telemetry/`: devtools telemetry seam for debug-only world metrics, overlay flow, RTT tracking, and packet-age display plumbing.
 - `client/scripts/devtools/dev_tools_session_flow.gd`: devtools gameplay session seam for runtime wiring. `GameplaySessionController` delegates devtools input, per-frame processing, and placement routing to this flow.
-- Server hitbox rendering is owned by client devtools. The overlay scene lives under `client/scenes/devtools/`, the drawing/template code lives under `client/scripts/devtools/hitboxes/`, and `WorldSync`/`GameplayRuntimeContext` expose read-only draw-entry data only. Normal gameplay entities do not draw their own debug collision outlines.
+- Server hitbox rendering is owned by client devtools. The overlay scene lives under `client/scenes/devtools/`, the drawing/template code lives under `client/scripts/devtools/hitboxes/`, and `WorldSync` exposes read-only draw-entry data only. `GameplayRuntimeContext` does not own or expose that draw-entry data. Normal gameplay entities do not draw their own debug collision outlines.
 - `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
 - `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
 - `client/scripts/gameplay/spectate/`: spectate state, menu requests, and view target selection/cycling; it does not own remote camera nodes.
@@ -102,7 +102,7 @@ services/game-server/cmd/game-server/main.go
 Core server packages:
 
 - `services/game-server/internal/networking`: websocket upgrade, sessions, read/write loops, transport logging, and adapter wiring.
-- `services/game-server/internal/rooms`: room state, room membership, lifecycle orchestration, and cleanup policy.
+- `services/game-server/internal/rooms`: room state, room membership ownership, lifecycle ownership, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
 - `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation and per-player participation classification.
@@ -155,6 +155,8 @@ Per-entity movement integration and wrapping live in `services/game-server/inter
 Player initial spawn and respawn planning use `PlayerSpawnPlan`. Player lifecycle still owns session lookup, `CanRespawn()` gating, lives, death, respawn cooldowns, ship creation, and camera view attachment. Match-over policy is evaluated through `services/game-server/internal/game/rules`.
 
 The spawn seam is still partial. Bullet construction lives in `spawning.Spawner`, but `spawnBullet()` remains the `Game` adapter that inserts the projectile into `game.state.Projectiles`.
+
+`continuousBulletStreams` owns continuous bullet stream runtime state behind a concrete game-package owner seam rather than a direct `Game` slice.
 
 ### Match Rules
 
@@ -209,7 +211,7 @@ See [toroidal wrap](toroidal-wrap.md).
 
 ### Rooms And Networking
 
-Room/domain ownership lives in `services/game-server/internal/rooms`. That package owns room state, room membership, room-code/default-room helpers, create/join/leave/ready/start-game/single-player/return-to-lobby/game-over/cleanup decisions, and each room's `*game.Game` lifecycle while simulation rules stay in `internal/game`.
+Room/domain ownership lives in `services/game-server/internal/rooms`. That package owns room state, room membership ownership, room-code/default-room helpers, create/join/leave/ready/start-game/single-player/return-to-lobby/game-over/cleanup decisions, and each room's `*game.Game` lifecycle while simulation rules stay in `internal/game`.
 
 `services/game-server/internal/networking` owns websocket upgrade, sessions, read/write loops, transport logging, and adapter wiring. It upgrades `/ws`, reads generated packets, calls room-domain methods, attaches or clears websocket session player IDs, and sends or broadcasts generated packets such as `RoomSnapshot` and `RoomError`.
 
@@ -227,7 +229,7 @@ Diagnostic telemetry packets are part of networking transport behavior:
 - Ping/pong handling does not require room membership or active gameplay state.
 - Ping/pong does not mutate gameplay state.
 
-The websocket connection itself is session-only. Room membership happens through packets:
+The websocket connection itself is session-only. Room membership ownership lives in `services/game-server/internal/rooms`; networking routes the membership packets:
 
 - `CreateRoomRequest`
 - `JoinRoomRequest`
@@ -445,7 +447,7 @@ For key mappings and detailed behavior, see [devtool toggles](../devtools/toggle
 
 Telemetry timing ownership notes:
 
-- `StatePacket.server_sent_msec` is stamped by `services/game-server/internal/networking/websocket_write.go` before encode/write.
+- `StatePacket.server_sent_msec` is stamped by `services/game-server/internal/networking/websocket_write.go` before encode/write. That file now only writes outbound/presentation state and no longer advances game-over lifecycle.
 - `services/game-server/internal/devtools/WrapStatePacket` preserves `server_sent_msec` when devtools status wrapping is applied.
 - devtools local player readout prefers active players and falls back to `player_world_states` when the local player has no active ship.
 - server `player.WorldState` serializes with snake_case JSON field names for client packet compatibility.

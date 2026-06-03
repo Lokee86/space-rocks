@@ -80,11 +80,11 @@ Main Menu -> Multiplayer Dialog -> /ws session -> CreateRoomRequest/JoinRoomRequ
 Runtime flow:
 
 1. Session controllers under `client/scripts/session/` coordinate boot, config, room/lobby, and gameplay session flows.
-2. `client/scripts/shell/gameplay_shell_flow.gd` is the narrow gameplay coordinator. It stores references, delegates lane configuration, parses incoming gameplay state packets through `client/scripts/gameplay/state/`, delegates state application to `client/scripts/gameplay/runtime/`, delegates HUD/menu/input/respawn/spectate/events/effects to their owned gameplay seams, and emits outer lifecycle signals.
+2. `client/scripts/shell/gameplay_shell_flow.gd` is the narrow gameplay coordinator. It stores references, delegates lane configuration, routes incoming gameplay state packets through `client/scripts/gameplay/state/`, delegates world-state application to `client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd`, delegates runtime composition to `client/scripts/gameplay/runtime/`, delegates HUD/menu/input/respawn/spectate/events/effects to their owned gameplay seams, and emits outer lifecycle signals. `GameplayRuntimeContext` stays focused on runtime wiring rather than packet parsing or read-model passthroughs.
 3. Local gameplay input is routed through `client/scripts/gameplay/input/`. Player movement/shooting packets still originate from `client/scripts/entities/player.gd`, but input polling/routing for pause/menu, respawn, spectate, and devtools is coordinated by the gameplay input seam.
 4. `client/scripts/networking/network_client.gd` sends and receives websocket text and routes packet JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
 5. `services/game-server/internal/networking/websocket_read.go` reads client packets and decodes packet JSON through `services/game-server/internal/protocol/packetcodec`.
-6. Lobby/lifecycle packets call `services/game-server/internal/rooms` for domain decisions and networking sends snapshots/errors.
+6. Lobby/lifecycle packets call `services/game-server/internal/rooms` for room membership and lifecycle decisions, while networking sends snapshots/errors.
 7. After a room reaches `InGame`, the room's `*game.Game` handles gameplay packets and advances simulation.
 8. The server encodes state packets through `packetcodec` and sends them at the server tick rate.
 9. `client/scripts/world/world_sync.gd` coordinates sync ordering and delegates node ownership, packet application, and interpolation to the player, bullet, asteroid, and local-visual sync owners under `client/scripts/world/`.
@@ -176,7 +176,7 @@ Client devtools authority note:
 Devtools telemetry handoff note:
 
 - raw `LocalPlayerTelemetry` and `TargetTelemetry` readouts live in the devtools window (see [docs/devtools/telemetry.md](devtools/telemetry.md))
-- a future world telemetry overlay is separate from HUD and is not implemented yet
+- the world telemetry overlay is implemented behind the devtools seam and remains separate from HUD
 
 Input/targeting handoff note:
 
@@ -189,8 +189,8 @@ Input/targeting handoff note:
 From the repo root:
 
 ```bash
-cd services/game-server
-go run ./cmd/game-server
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go run ./cmd/game-server); }
 ```
 
 Normal local server runs include devtools.
@@ -198,21 +198,22 @@ Normal local server runs include devtools.
 To run with server devtools disabled:
 
 ```bash
-cd services/game-server
-go run -tags nodevtools ./cmd/game-server
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go run -tags nodevtools ./cmd/game-server); }
 ```
 
 With Air hot reload, if installed:
 
 ```bash
-cd services/game-server
-air
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && air); }
 ```
 
 The Air config is `services/game-server/.air.toml`. It builds:
 
 ```bash
-go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server); }
 ```
 
 The server listens on `:8080` and exposes:
@@ -247,29 +248,29 @@ The client expects the Go server to already be running for gameplay.
 Run the server:
 
 ```bash
-cd services/game-server
-go run ./cmd/game-server
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go run ./cmd/game-server); }
 ```
 
 Build the server with devtools disabled:
 
 ```bash
-cd services/game-server
-go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server); }
 ```
 
 Run all server tests:
 
 ```bash
-cd services/game-server
-go test -buildvcs=false ./...
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go test -buildvcs=false ./...); } 2>&1 | tee /dev/tty | clip.exe
 ```
 
 Use an explicit cache path when the shell environment has cache or permission issues:
 
 ```bash
-cd services/game-server
-env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...); } 2>&1 | tee /dev/tty | clip.exe
 ```
 
 Run client GUT tests, if the `godot` CLI is available:
