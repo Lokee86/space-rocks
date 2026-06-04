@@ -8,7 +8,6 @@ import (
 func (game *Game) removeReadyPlayers() {
 	for id, player := range game.entities.Players {
 		if player.ReadyForRemoval() {
-			game.setPlayerScoreLocked(id, player.Score)
 			delete(game.entities.Players, id)
 		}
 	}

@@ -58,8 +58,6 @@ func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
 		X:          position.X,
 		Y:          position.Y,
 		Config:     session.Config,
-		Score:      session.Score,
-		Lives:      session.Lives,
 		Health:     session.Stats.MaxHealth,
 		DamageOptions: session.DamageOptions,
 	}

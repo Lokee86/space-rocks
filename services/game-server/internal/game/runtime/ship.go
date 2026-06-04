@@ -14,8 +14,6 @@ func (ship *Ship) State() ShipState {
 		X:        ship.X,
 		Y:        ship.Y,
 		Rotation: ship.Rotation,
-		Score:    ship.Score,
-		Lives:    ship.Lives,
 		TargetKind: ship.TargetKind,
 		TargetID: ship.TargetID,
 		TargetPlayerID: targetPlayerID,

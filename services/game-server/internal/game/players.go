@@ -85,9 +85,6 @@ func (game *Game) playerLives(playerID string) int {
 	if session, ok := game.playerSessions[playerID]; ok {
 		return session.Lives
 	}
-	if player, ok := game.entities.Players[playerID]; ok {
-		return player.Lives
-	}
 
 	return 0
 }

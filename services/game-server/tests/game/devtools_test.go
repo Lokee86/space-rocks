@@ -826,6 +826,43 @@ func TestDebugSetScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	}
 }
 
+func TestSetPlayerScoreExportsSessionOwnedScoreInStatePacket(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	change := scenario.game.SetPlayerScore(playerID, 37)
+	if !change.Found {
+		t.Fatalf("expected SetPlayerScore to find player %q", playerID)
+	}
+
+	player := scenario.playerState(playerID, playerID)
+	if player.Score != 37 {
+		t.Fatalf("expected state packet score 37, got %d", player.Score)
+	}
+}
+
+func TestSetPlayerLivesExportsSessionOwnedLivesInStatePacket(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	change := scenario.game.SetPlayerLives(playerID, 6)
+	if !change.Found {
+		t.Fatalf("expected SetPlayerLives to find player %q", playerID)
+	}
+
+	packet := scenario.state(playerID)
+	player, ok := packet.Players[playerID]
+	if !ok {
+		t.Fatalf("expected state packet for %q to include player %q", playerID, playerID)
+	}
+	if player.Lives != 6 {
+		t.Fatalf("expected state packet player lives 6, got %d", player.Lives)
+	}
+	if packet.Lives != 6 {
+		t.Fatalf("expected top-level packet lives 6, got %d", packet.Lives)
+	}
+}
+
 func TestDebugAddScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	scenario := newScenario(t)
 	playerA := scenario.addPlayer()

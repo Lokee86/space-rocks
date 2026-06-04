@@ -15,8 +15,6 @@ type Ship struct {
 	Input                    InputState
 	Config                   ClientConfig
 	ShootCooldown            float64
-	Score                    int
-	Lives                    int
 	TargetKind               string
 	TargetID                 string
 	TargetPlayerID           string
