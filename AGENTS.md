@@ -154,6 +154,7 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Keep client world sync and entity sync owners under `client/scripts/world/`.
 - Keep packet-facing player lifecycle status in `StatePacket.player_lifecycle`, beside `players`.
 - Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability.
+- Durable player counters such as score and lives belong to `playerSession`; `runtime.Ship` is the live avatar state and should not own those counters.
 - Use `services/game-server/internal/game/motion` for per-entity movement integration and advance-with-wrap behavior.
 - Use `services/game-server/internal/game/space` for gameplay distance, direction, and wrap-aware spatial math.
 - Be careful with Godot scene diffs. Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.

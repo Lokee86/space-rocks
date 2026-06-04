@@ -14,6 +14,8 @@ Space Rocks is an Asteroids-inspired game with:
 
 The current direction is server-authoritative for gameplay state. The client collects input and renders/interpolates state; the server owns simulation outcomes such as movement, bullets, asteroid collisions, scoring, lives, death, respawn, room state, and pause safety rules.
 
+Durable player counters such as score and lives are owned by `playerSession` on the server. `runtime.Ship` owns the live world-avatar state that is sent in snapshots and should not carry durable counter ownership.
+
 The project is in active development. Expect rough edges and incomplete UI around newer systems.
 
 ## Prerequisites

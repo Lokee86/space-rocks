@@ -176,6 +176,8 @@ The server currently owns:
 - safe initial spawn/respawn placement
 - state packet generation
 
+Durable player counters such as score and lives are session-owned in `playerSession`. `runtime.Ship` is the live avatar/world-state shape only; it carries active movement and render state, not durable counter ownership.
+
 `Game.Step()` is a same-package simulation coordinator in `services/game-server/internal/game/simulation.go`. It preserves authoritative phase order while routing player/session, asteroid, bullet, and collision phases through focused same-package helpers.
 
 Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`. The motion package imports runtime types and spatial helpers, but it does not import `internal/game`, mutate `game.entities` maps, spawn entities, delete entities, award score, resolve collisions, or write packets.
