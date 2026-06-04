@@ -489,6 +489,95 @@ func test_target_state_for_player_target_returns_raw_player_dictionary() -> void
 	assert_eq(model.target_state(), expected_player_state)
 
 
+func test_local_player_state_for_state_packet_returns_raw_player_dictionary() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_player_state := {
+		"score": 42,
+		"lives": 3,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": expected_player_state,
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.local_player_state_for_source("state_packet"), expected_player_state)
+
+
+func test_local_player_state_for_session_packet_returns_raw_player_world_state_dictionary() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_world_state := {
+		"id": "player-1",
+		"status": "pending_respawn",
+		"lives": 1,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {},
+		"player_world_states": {
+			"player-1": expected_world_state,
+		},
+		"player_lifecycle": {
+			"player-1": "pending_respawn",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.local_player_state_for_source("session_packet"), expected_world_state)
+
+
+func test_target_state_for_session_packet_returns_raw_player_world_state_dictionary() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_world_state := {
+		"id": "player-2",
+		"status": "pending_respawn",
+		"lives": 2,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"target_kind": "player", "target_id": "player-2"},
+		},
+		"player_world_states": {
+			"player-2": expected_world_state,
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+			"player-2": "pending_respawn",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.target_state_for_source("session_packet"), expected_world_state)
+
+
+func test_target_state_for_session_packet_returns_empty_dictionary_for_non_player_target() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"target_kind": "asteroid", "target_id": "asteroid-7"},
+		},
+		"server_asteroids": {
+			"asteroid-7": {
+				"x": 44.0,
+				"y": 88.0,
+			},
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.target_state_for_source("session_packet"), {})
+
+
 func test_target_state_for_asteroid_target_returns_raw_asteroid_dictionary_when_server_asteroids_exists() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_asteroid_state := {

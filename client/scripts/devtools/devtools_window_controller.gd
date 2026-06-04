@@ -16,6 +16,7 @@ signal game_target_clear_requested
 signal placement_action_requested(action_name: StringName, placement_context: Dictionary)
 signal respawn_player_requested(target_scope: String, target_player_id: String)
 signal show_server_hitboxes_changed(enabled: bool)
+signal telemetry_sources_changed(local_source: String, target_source: String)
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
@@ -34,6 +35,8 @@ var latest_local_player_state := {}
 var latest_target_kind := ""
 var latest_target_id := ""
 var latest_target_state := {}
+var latest_local_telemetry_source := "state_packet"
+var latest_target_telemetry_source := "state_packet"
 var connection_service
 var self_player_id := ""
 var game_target_kind := ""
@@ -72,6 +75,13 @@ func ensure_window() -> Window:
 		window.refresh_target_state(latest_target_kind, latest_target_id, latest_target_state)
 	if window.has_method("set_show_server_hitboxes"):
 		window.set_show_server_hitboxes(show_server_hitboxes)
+	if window.has_method("set_telemetry_sources"):
+		window.set_telemetry_sources(latest_local_telemetry_source, latest_target_telemetry_source)
+	else:
+		if window.has_method("set_local_telemetry_source"):
+			window.set_local_telemetry_source(latest_local_telemetry_source)
+		if window.has_method("set_target_telemetry_source"):
+			window.set_target_telemetry_source(latest_target_telemetry_source)
 	return window
 
 
@@ -175,6 +185,14 @@ func refresh_target_state(target_kind: String, target_id: String, state: Diction
 		window.refresh_target_state(target_kind, target_id, state)
 
 
+func local_telemetry_source() -> String:
+	return latest_local_telemetry_source
+
+
+func target_telemetry_source() -> String:
+	return latest_target_telemetry_source
+
+
 func refresh_spawn_player_slots(max_players: int) -> void:
 	var devtools_window := ensure_window()
 	if devtools_window.has_method("refresh_spawn_player_slots"):
@@ -238,6 +256,16 @@ func _connect_window_signals() -> void:
 		window.game_target_clear_requested.connect(_on_game_target_clear_requested)
 	if window.has_signal("show_server_hitboxes_changed") and !window.show_server_hitboxes_changed.is_connected(_on_show_server_hitboxes_changed):
 		window.show_server_hitboxes_changed.connect(_on_show_server_hitboxes_changed)
+	if window.has_signal("telemetry_sources_changed") and !window.telemetry_sources_changed.is_connected(_on_telemetry_sources_changed):
+		window.telemetry_sources_changed.connect(_on_telemetry_sources_changed)
+
+
+func _on_telemetry_sources_changed(local_source: String, target_source: String) -> void:
+	if local_source == latest_local_telemetry_source and target_source == latest_target_telemetry_source:
+		return
+	latest_local_telemetry_source = local_source
+	latest_target_telemetry_source = target_source
+	telemetry_sources_changed.emit(local_source, target_source)
 
 
 func _on_toggle_invincible_requested(target_player_id: String) -> void:

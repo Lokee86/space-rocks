@@ -11,15 +11,17 @@ Related references:
 
 The devtools window currently exposes two raw telemetry readouts from gameplay state:
 
-- `LocalPlayerTelemetry`: displays the raw local player state dictionary from the latest gameplay state packet.
-- `TargetTelemetry`: displays `target_kind`, `target_id`, and the raw resolved target state dictionary.
+- `LocalPlayerTelemetry`: supports `State Packet` and `Session Packet`.
+- `TargetTelemetry`: supports `State Packet` and `Session Packet`.
 
 These readouts are generic packet/state inspection surfaces. They should not hand-map score, lives, health, shields, or other fields into custom per-stat UI logic.
 
 ## Display Behavior
 
-- If required state is missing or unresolved, telemetry renders unavailable/empty output.
+- If the selected source has no matching data, telemetry renders unavailable/empty output.
+- `Session Packet` for non-player targets renders unavailable/empty output.
 - When state is present, raw dictionary values render as key/value lines.
+- `TargetTelemetry` still shows `target_kind` and `target_id` above the raw dictionary body when a target is selected.
 
 ## Separation of Responsibilities
 

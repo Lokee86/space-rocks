@@ -20,6 +20,10 @@ signal respawn_player_placement_requested(target_player_id: String)
 signal game_target_set_requested(target_player_id: String)
 signal game_target_clear_requested()
 signal show_server_hitboxes_changed(enabled: bool)
+signal telemetry_sources_changed(local_source: String, target_source: String)
+
+const TELEMETRY_SOURCE_STATE_PACKET := "state_packet"
+const TELEMETRY_SOURCE_SESSION_PACKET := "session_packet"
 
 @onready var invincible_button: Button = %InvincibleButton
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
@@ -61,6 +65,8 @@ signal show_server_hitboxes_changed(enabled: bool)
 @onready var clear_asteroids_button: Button = %ClearAsteroidsButton
 @onready var show_server_hitboxes_check_box: CheckBox = %ShowServerHitboxesCheckBox
 @onready var game_target_select: OptionButton = %GameTargetSelect
+@onready var local_telemetry_select: OptionButton = %LocalTelemetrySelect
+@onready var target_telemetry_select: OptionButton = %TargetTelemetrySelect
 @onready var set_game_target_button: Button = %SetGameTargetButton
 @onready var clear_game_target_button: Button = %ClearGameTargetButton
 @onready var local_player_telemetry: PanelContainer = %LocalPlayerTelemetry
@@ -117,6 +123,13 @@ func _ready() -> void:
 		set_game_target_button.pressed.connect(_on_set_game_target_button_pressed)
 	if !clear_game_target_button.pressed.is_connected(_on_clear_game_target_button_pressed):
 		clear_game_target_button.pressed.connect(_on_clear_game_target_button_pressed)
+	_initialize_telemetry_source_select(local_telemetry_select)
+	_initialize_telemetry_source_select(target_telemetry_select)
+	if !local_telemetry_select.item_selected.is_connected(_on_local_telemetry_select_item_selected):
+		local_telemetry_select.item_selected.connect(_on_local_telemetry_select_item_selected)
+	if !target_telemetry_select.item_selected.is_connected(_on_target_telemetry_select_item_selected):
+		target_telemetry_select.item_selected.connect(_on_target_telemetry_select_item_selected)
+	_emit_telemetry_sources_changed()
 
 
 func show_window() -> void:
@@ -319,6 +332,27 @@ func refresh_target_state(target_kind: String, target_id: String, state: Diction
 	target_telemetry_text.text = "\n".join(lines)
 
 
+func local_telemetry_source() -> String:
+	return _selected_telemetry_source(local_telemetry_select)
+
+
+func target_telemetry_source() -> String:
+	return _selected_telemetry_source(target_telemetry_select)
+
+
+func set_local_telemetry_source(source: String) -> void:
+	_select_telemetry_source(local_telemetry_select, source)
+
+
+func set_target_telemetry_source(source: String) -> void:
+	_select_telemetry_source(target_telemetry_select, source)
+
+
+func set_telemetry_sources(local_source: String, target_source: String) -> void:
+	_select_telemetry_source(local_telemetry_select, local_source)
+	_select_telemetry_source(target_telemetry_select, target_source)
+
+
 func _on_close_requested() -> void:
 	hide_window()
 
@@ -407,6 +441,14 @@ func _on_show_server_hitboxes_toggled(enabled: bool) -> void:
 	show_server_hitboxes_changed.emit(enabled)
 
 
+func _on_local_telemetry_select_item_selected(_index: int) -> void:
+	_emit_telemetry_sources_changed()
+
+
+func _on_target_telemetry_select_item_selected(_index: int) -> void:
+	_emit_telemetry_sources_changed()
+
+
 func set_show_server_hitboxes(enabled: bool) -> void:
 	show_server_hitboxes_check_box.button_pressed = enabled
 
@@ -470,6 +512,32 @@ func _selected_metadata_as_string(select: OptionButton) -> String:
 	if selected_index < 0:
 		return ""
 	return str(select.get_item_metadata(selected_index))
+
+
+func _selected_telemetry_source(select: OptionButton) -> String:
+	return _selected_metadata_as_string(select)
+
+
+func _initialize_telemetry_source_select(select: OptionButton) -> void:
+	select.clear()
+	select.add_item("State Packet")
+	select.set_item_metadata(0, TELEMETRY_SOURCE_STATE_PACKET)
+	select.add_item("Session Packet")
+	select.set_item_metadata(1, TELEMETRY_SOURCE_SESSION_PACKET)
+	select.select(0)
+
+
+func _emit_telemetry_sources_changed() -> void:
+	telemetry_sources_changed.emit(local_telemetry_source(), target_telemetry_source())
+
+
+func _select_telemetry_source(select: OptionButton, source: String) -> void:
+	var selected_index := 0
+	for index in range(select.get_item_count()):
+		if str(select.get_item_metadata(index)) == source:
+			selected_index = index
+			break
+	select.select(selected_index)
 
 
 func _selected_player_id(select: OptionButton) -> String:

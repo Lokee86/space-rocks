@@ -1,5 +1,8 @@
 extends RefCounted
 
+const TELEMETRY_SOURCE_STATE_PACKET = "state_packet"
+const TELEMETRY_SOURCE_SESSION_PACKET = "session_packet"
+
 
 var self_id := ""
 var server_players: Dictionary = {}
@@ -120,34 +123,52 @@ func active_player_target_rows() -> Array:
 
 
 func local_player_state() -> Dictionary:
+	return local_player_state_for_source(TELEMETRY_SOURCE_STATE_PACKET)
+
+
+func local_player_state_for_source(source: String) -> Dictionary:
 	if self_id == "":
 		return {}
-	var local_state = server_players.get(self_id, null)
-	if local_state is Dictionary:
-		return local_state
-	var local_world_state = player_world_states.get(self_id, null)
-	if local_world_state is Dictionary:
-		return local_world_state
+
+	match source:
+		TELEMETRY_SOURCE_STATE_PACKET:
+			var local_state = server_players.get(self_id, null)
+			if local_state is Dictionary:
+				return local_state
+		TELEMETRY_SOURCE_SESSION_PACKET:
+			var local_world_state = player_world_states.get(self_id, null)
+			if local_world_state is Dictionary:
+				return local_world_state
+
 	return {}
 
 
 func target_state() -> Dictionary:
+	return target_state_for_source(TELEMETRY_SOURCE_STATE_PACKET)
+
+
+func target_state_for_source(source: String) -> Dictionary:
 	if game_target_kind == "" or game_target_id == "":
 		return {}
 
 	var value = null
-	match game_target_kind:
-		"player":
-			value = server_players.get(game_target_id, null)
-			if !(value is Dictionary):
+	match source:
+		TELEMETRY_SOURCE_STATE_PACKET:
+			match game_target_kind:
+				"player":
+					value = server_players.get(game_target_id, null)
+				"asteroid":
+					value = server_asteroids.get(game_target_id, null)
+				"bullet":
+					value = server_bullets.get(game_target_id, null)
+				"enemy":
+					if has_server_enemies:
+						value = server_enemies.get(game_target_id, null)
+				_:
+					return {}
+		TELEMETRY_SOURCE_SESSION_PACKET:
+			if game_target_kind == "player":
 				value = player_world_states.get(game_target_id, null)
-		"asteroid":
-			value = server_asteroids.get(game_target_id, null)
-		"bullet":
-			value = server_bullets.get(game_target_id, null)
-		"enemy":
-			if has_server_enemies:
-				value = server_enemies.get(game_target_id, null)
 		_:
 			return {}
 
