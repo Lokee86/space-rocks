@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://dhqslpwrweveb" path="res://assets/OrangeScale__000.png" id="1_pppl6"]
 [ext_resource type="Script" uid="uid://b4i8i6puyqywl" path="res://scripts/entities/bullet.gd" id="1_y25gk"]
+[ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="3_l5glv"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_4wvvi"]
 radius = 3.0
@@ -20,3 +21,10 @@ texture = ExtResource("1_pppl6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=238185911]
 shape = SubResource("CapsuleShape2D_4wvvi")
+
+[node name="LaserSound" type="AudioStreamPlayer2D" parent="." unique_id=463970855]
+visible = false
+stream = ExtResource("3_l5glv")
+volume_db = -6.95
+pitch_scale = 0.5
+autoplay = true

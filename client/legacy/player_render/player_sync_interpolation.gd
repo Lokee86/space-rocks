@@ -9,8 +9,8 @@ func interpolate_player_nodes(
 	current_self_id: String,
 	player_lifecycle: PlayerSyncLifecycle,
 	player_targets: PlayerSyncTargets,
-	view_target_player_id: String,
-	local_player: Player
+	_view_target_player_id: String,
+	_local_player: Player
 ) -> void:
 	for player_id in player_lifecycle.get_player_ids():
 		if !player_targets.has_target_player_position(player_id):
