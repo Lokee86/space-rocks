@@ -1,8 +1,5 @@
 extends RefCounted
 
-const PacketDecodeResult = preload("res://scripts/networking/packets/packet_decode_result.gd")
-const PacketEncodeResult = preload("res://scripts/networking/packets/packet_encode_result.gd")
-
 # PacketCodec owns wire parsing and envelope checks only; packet readers validate payload details.
 static func encode(packet: Dictionary) -> PacketEncodeResult:
 	return PacketEncodeResult.success(JSON.stringify(packet))

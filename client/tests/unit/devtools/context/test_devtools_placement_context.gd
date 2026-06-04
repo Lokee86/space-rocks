@@ -17,7 +17,7 @@ class FakeDevConnectionService:
 class FakeRoute:
 	var calls: Array = []
 
-	func call(action_name: StringName, placement_context: Dictionary = {}) -> void:
+	func record_call(action_name: StringName, placement_context: Dictionary = {}) -> void:
 		calls.append({
 			"action_name": action_name,
 			"placement_context": placement_context,
@@ -37,7 +37,7 @@ func test_request_placement_action_does_nothing_before_gameplay_state() -> void:
 	var context := DevtoolsPlacementContext.new()
 	context.configure(state_context, dev_connection_service)
 	var route := FakeRoute.new()
-	context.configure_placement_request_route(Callable(route, "call"))
+	context.configure_placement_request_route(Callable(route, "record_call"))
 
 	context.request_placement_action(&"spawn_player", {})
 

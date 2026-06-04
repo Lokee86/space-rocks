@@ -10,7 +10,7 @@ var server_hitbox_overlay
 var remote_player_nodes_provider: Callable
 
 
-func configure(state_context_ref, connection_service_ref) -> void:
+func configure(_state_context_ref, connection_service_ref) -> void:
 	player_dev_labels_context = PlayerDevLabelsContext.new()
 	if !remote_player_nodes_provider.is_null() and remote_player_nodes_provider.is_valid():
 		player_dev_labels_context.configure(remote_player_nodes_provider)
