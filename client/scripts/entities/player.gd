@@ -14,7 +14,6 @@ const PLAYER_HUE_SHIFT_SHADER := preload("res://shaders/player_hue_shift.gdshade
 @export var ship_visual_path: NodePath = ^"Sprite2D"
 
 @onready var ship_visual: CanvasItem = get_node_or_null(ship_visual_path) as CanvasItem
-@onready var laser_sound: AudioStreamPlayer2D = $LaserSound
 @onready var afterburner_marker: Marker2D = $AfterburnerMarker
 
 var afterburner: Node2D
@@ -50,10 +49,6 @@ func get_input_packet() -> Dictionary:
 		Input.is_action_pressed(turn_left_action),
 		Input.is_action_pressed(shoot_action)
 	)
-
-
-func play_laser_sound() -> void:
-	laser_sound.play()
 
 
 func set_player_hue(hue: float) -> void:

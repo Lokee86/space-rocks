@@ -1,8 +1,6 @@
 extends RefCounted
 class_name BulletSync
 
-signal bullet_spawned
-
 const BulletSyncState = preload("res://scripts/world/bullet_sync_state.gd")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const Packets = preload("res://scripts/networking/packets/packets.gd")
@@ -36,13 +34,11 @@ func get_bullet_node(bullet_id: String):
 
 func apply(
 	server_bullets: Dictionary,
-	play_new_bullet_sounds: bool,
 	local_visual_position: Vector2,
 	local_server_position: Vector2
 ) -> void:
 	for bullet_id in server_bullets.keys():
 		var state: Dictionary = server_bullets[bullet_id]
-		var is_new_bullet: bool = !has_bullet(bullet_id)
 		var bullet_node = get_bullet_node(bullet_id)
 		var server_position := BulletSyncState.server_position(state)
 		var visual_position := local_visual_position + WorldWrapScript.shortest_delta(
@@ -58,9 +54,6 @@ func apply(
 			initialized_bullets[bullet_id] = true
 			bullet_node.global_position = visual_position
 			bullet_node.rotation = server_rotation
-
-		if is_new_bullet && play_new_bullet_sounds:
-			bullet_spawned.emit()
 
 
 func remove_missing(server_bullets: Dictionary) -> void:
