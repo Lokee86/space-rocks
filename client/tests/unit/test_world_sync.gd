@@ -289,11 +289,15 @@ func _player_nodes() -> Dictionary:
 
 
 func _player_sync():
-	return world_sync.get("player_sync")
+	return _player_render_api().get("player_meaning").get("legacy_player_sync")
 
 
 func _local_visual_sync():
-	return world_sync.get("local_visual_sync")
+	return _player_render_api().get("view_anchor_sync").get("legacy_sync")
+
+
+func _player_render_api():
+	return world_sync.get("player_render_api")
 
 
 func _asteroid_nodes() -> Dictionary:

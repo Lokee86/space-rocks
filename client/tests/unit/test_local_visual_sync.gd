@@ -1,7 +1,7 @@
 extends GutTest
 
 const Constants := preload("res://scripts/constants/constants.gd")
-const LocalVisualSyncScript := preload("res://scripts/world/local_visual_sync.gd")
+const LocalVisualSyncScript := preload("res://legacy/player_render/local_visual_sync.gd")
 
 
 func test_first_update_initializes_server_and_visual_positions() -> void:
