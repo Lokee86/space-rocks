@@ -39,7 +39,7 @@ func (game *Game) DevtoolsPlayerInvincible(playerID string) (bool, bool) {
 		found = true
 	}
 
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		invincible = player.DamageOptions.Invincible
 		found = true
 	}
@@ -55,7 +55,7 @@ func (game *Game) DevtoolsSetPlayerInvincible(playerID string, enabled bool) boo
 		found = true
 	}
 
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		player.DamageOptions.Invincible = enabled
 		found = true
 	}
@@ -95,7 +95,7 @@ func (game *Game) DevtoolsSetPlayerFrozen(playerID string, enabled bool) bool {
 	}
 	session.Suspension.SetDevFrozen(enabled)
 	if enabled {
-		if player, ok := game.state.Players[playerID]; ok {
+		if player, ok := game.entities.Players[playerID]; ok {
 			player.ClearInput()
 		}
 	}
@@ -103,7 +103,7 @@ func (game *Game) DevtoolsSetPlayerFrozen(playerID string, enabled bool) bool {
 }
 
 func (game *Game) DevtoolsKillPlayer(sourcePlayerID string, targetPlayerID string) bool {
-	targetPlayer, ok := game.state.Players[targetPlayerID]
+		targetPlayer, ok := game.entities.Players[targetPlayerID]
 	if !ok || targetPlayer == nil {
 		return true
 	}

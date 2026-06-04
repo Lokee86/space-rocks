@@ -83,7 +83,7 @@ func (game *Game) respawnPlayer(playerID string) {
 		)
 		return
 	}
-	if _, ok := game.state.Players[playerID]; ok {
+	if _, ok := game.entities.Players[playerID]; ok {
 		logging.Game.Info("respawn blocked; player already active", logging.FieldPlayerID, playerID)
 		return
 	}
@@ -91,7 +91,7 @@ func (game *Game) respawnPlayer(playerID string) {
 	spawnPlan := game.planPlayerRespawn(session)
 	spawnPosition := spawnPlan.Position
 	player := session.NewShip(spawnPosition)
-	game.state.Players[playerID] = player
+	game.entities.Players[playerID] = player
 	game.setPlayerCameraViewLocked(playerID, player)
 	logging.Game.Info("player respawned",
 		logging.FieldPlayerID, playerID,
@@ -175,7 +175,7 @@ func (game *Game) isSafeRespawnPosition(position physics.Vector2, ignorePlayerID
 		Position: position,
 		Shape:    shape,
 	}
-	for _, asteroid := range game.state.Asteroids {
+	for _, asteroid := range game.entities.Asteroids {
 		if asteroid.IsPendingDespawn() {
 			continue
 		}
@@ -188,7 +188,7 @@ func (game *Game) isSafeRespawnPosition(position physics.Vector2, ignorePlayerID
 			return false
 		}
 	}
-	for id, player := range game.state.Players {
+	for id, player := range game.entities.Players {
 		if id == ignorePlayerID || player.IsPendingDespawn() {
 			continue
 		}

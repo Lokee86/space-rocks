@@ -26,7 +26,7 @@ func (game *Game) DevtoolsStatusFor(playerID string) DevtoolsStatus {
 		status.PlayerFrozen = session.Suspension.DevFrozen
 	}
 
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		status.Invincible = player.DamageOptions.Invincible
 	}
 

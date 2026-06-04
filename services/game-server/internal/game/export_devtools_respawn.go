@@ -21,7 +21,7 @@ func (game *Game) DevtoolsForceRespawnPlayer(playerID string, position physics.V
 
 	session.RespawnCooldown = 0
 	player := session.NewShip(position)
-	game.state.Players[playerID] = player
+	game.entities.Players[playerID] = player
 
 	cameraView := game.cameraViews[playerID]
 	if cameraView == nil {

@@ -428,7 +428,7 @@ func (scenario *scenario) sessionField(playerID string, fieldName string) reflec
 func (scenario *scenario) stateField(fieldName string) reflect.Value {
 	scenario.t.Helper()
 
-	return exportValue(scenario.gameField("state").FieldByName(fieldName))
+	return exportValue(scenario.gameField("entities").FieldByName(fieldName))
 }
 
 func (scenario *scenario) gameField(fieldName string) reflect.Value {

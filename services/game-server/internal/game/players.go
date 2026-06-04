@@ -21,7 +21,7 @@ func (game *Game) AddPlayer() string {
 	session := newPlayerSession(playerID, spawnPosition)
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session
-	game.state.Players[playerID] = player
+	game.entities.Players[playerID] = player
 	game.setPlayerCameraViewLocked(playerID, player)
 	game.pendingPresentationEvents[playerID] = nil
 	logging.Game.Debug("player added",
@@ -73,7 +73,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	delete(game.state.Players, playerID)
+	delete(game.entities.Players, playerID)
 	delete(game.cameraViews, playerID)
 	delete(game.playerSessions, playerID)
 	game.clearTargetsForMissingPlayersLocked()
@@ -85,7 +85,7 @@ func (game *Game) playerLives(playerID string) int {
 	if session, ok := game.playerSessions[playerID]; ok {
 		return session.Lives
 	}
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		return player.Lives
 	}
 

@@ -21,16 +21,16 @@ func (game *Game) stepAsteroidSpawning(delta float64) {
 }
 
 func (game *Game) stepAsteroids(delta float64, bounds space.Bounds) {
-	for id, asteroid := range game.state.Asteroids {
+	for id, asteroid := range game.entities.Asteroids {
 		if game.worldSimulationOptions.AsteroidsCanMove() {
 			motion.AdvanceAsteroid(asteroid, delta, bounds)
 		}
 		if asteroid.ReadyForRemoval() {
-			delete(game.state.Asteroids, id)
+			delete(game.entities.Asteroids, id)
 			continue
 		}
 		if game.isAsteroidFarFromAllCameras(asteroid) {
-			delete(game.state.Asteroids, id)
+			delete(game.entities.Asteroids, id)
 		}
 	}
 }

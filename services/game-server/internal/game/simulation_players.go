@@ -6,10 +6,10 @@ import (
 )
 
 func (game *Game) removeReadyPlayers() {
-	for id, player := range game.state.Players {
+	for id, player := range game.entities.Players {
 		if player.ReadyForRemoval() {
 			game.setPlayerScoreLocked(id, player.Score)
-			delete(game.state.Players, id)
+			delete(game.entities.Players, id)
 		}
 	}
 }
@@ -21,7 +21,7 @@ func (game *Game) stepPlayerSessions(delta float64) {
 }
 
 func (game *Game) stepPlayers(delta float64, bounds space.Bounds) {
-	for _, player := range game.state.Players {
+	for _, player := range game.entities.Players {
 		motion.AdvanceShipWithMovePolicy(player, delta, bounds, game.playerCanMove(player.ID, player))
 		if cameraView, ok := game.cameraViews[player.ID]; ok {
 			cameraView.SetPosition(player.Position())
