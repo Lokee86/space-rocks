@@ -8,7 +8,7 @@ func configure(world_sync_ref) -> void:
 	world_sync = world_sync_ref
 
 
-func apply_world_state(state: Dictionary, has_received_state: bool) -> void:
+func apply_world_state(state: Dictionary, _has_received_state: bool) -> void:
 	if world_sync == null:
 		return
 

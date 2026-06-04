@@ -1,11 +1,11 @@
 extends RefCounted
 
-var target_request_flow = null
+var targeting_context = null
 var pending_action: Callable = Callable()
 var pending_cancel: Callable = Callable()
 
-func configure(target_request_flow_ref) -> void:
-	target_request_flow = target_request_flow_ref
+func configure(targeting_context_ref) -> void:
+	targeting_context = targeting_context_ref
 
 func has_pending_context() -> bool:
 	return not pending_action.is_null() and not pending_cancel.is_null()
@@ -30,13 +30,13 @@ func handle_input_event(event: InputEvent) -> bool:
 		clear_pending_context()
 		return true
 	if action == MouseActionNames.SELECT_TARGET:
-		if target_request_flow == null:
+		if targeting_context == null:
 			return false
-		target_request_flow.select_target()
+		targeting_context.select_target()
 		return true
 	if action == MouseActionNames.DESELECT_TARGET:
-		if target_request_flow != null:
-			target_request_flow.deselect_target()
+		if targeting_context != null:
+			targeting_context.deselect_target()
 		return true
 
 	return false

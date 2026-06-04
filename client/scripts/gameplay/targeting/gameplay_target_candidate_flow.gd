@@ -5,19 +5,19 @@ const TARGET_PLAYER_PICK_RADIUS := 32.0
 const TARGET_ASTEROID_BASE_PICK_RADIUS := 32.0
 const TARGET_BULLET_PICK_RADIUS := 12.0
 
-var world_sync
+var target_position_source
 
 
-func configure(world_sync_ref) -> void:
-	world_sync = world_sync_ref
+func configure(target_position_source_ref) -> void:
+	target_position_source = target_position_source_ref
 
 
 func target_visual_candidates() -> Array:
 	var candidates: Array = []
-	if world_sync == null:
+	if target_position_source == null:
 		return candidates
 
-	var player_positions: Dictionary = world_sync.player_target_positions()
+	var player_positions: Dictionary = target_position_source.player_positions()
 	for player_id in player_positions.keys():
 		var position_entry = player_positions[player_id]
 		if not (position_entry is Dictionary):
@@ -35,7 +35,7 @@ func target_visual_candidates() -> Array:
 		candidate.pick_radius = TARGET_PLAYER_PICK_RADIUS
 		candidates.append(candidate)
 
-	var asteroid_positions: Dictionary = world_sync.asteroid_target_positions()
+	var asteroid_positions: Dictionary = target_position_source.asteroid_positions()
 	for asteroid_id in asteroid_positions.keys():
 		var position_entry = asteroid_positions[asteroid_id]
 		if not (position_entry is Dictionary):
@@ -57,7 +57,7 @@ func target_visual_candidates() -> Array:
 		asteroid_candidate.pick_radius = TARGET_ASTEROID_BASE_PICK_RADIUS * visual_scale
 		candidates.append(asteroid_candidate)
 
-	var bullet_positions: Dictionary = world_sync.bullet_target_positions()
+	var bullet_positions: Dictionary = target_position_source.bullet_positions()
 	for bullet_id in bullet_positions.keys():
 		var position_entry = bullet_positions[bullet_id]
 		if not (position_entry is Dictionary):

@@ -1,6 +1,6 @@
 extends GutTest
 
-const TargetRequestFlow = preload("res://scripts/gameplay/input/target_request_flow.gd")
+const TargetRequestFlow = preload("res://scripts/gameplay/targeting/target_request_flow.gd")
 const TargetVisualCandidate = preload("res://scripts/gameplay/input/target_visual_candidate.gd")
 
 class FakeConnectionService:

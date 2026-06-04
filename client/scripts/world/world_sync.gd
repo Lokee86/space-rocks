@@ -4,10 +4,12 @@ const Constants = preload("res://scripts/constants/constants.gd")
 const AsteroidSyncScript = preload("res://scripts/world/asteroid_sync.gd")
 const BulletSyncScript = preload("res://scripts/world/bullet_sync.gd")
 const PlayerRenderApiScript = preload("res://scripts/world/player_render/player_render_api.gd")
+const TargetPositionSourceScript = preload("res://scripts/gameplay/targeting/target_position_source.gd")
 
 var asteroid_sync
 var bullet_sync
 var player_render_api
+var target_position_source
 var view_anchor: Node2D
 var local_player: Player
 var current_self_id := ""
@@ -29,6 +31,8 @@ func configure(
 	player_render_api = PlayerRenderApiScript.new()
 	view_anchor = view_anchor_ref
 	player_render_api.configure(game_owner, player, view_anchor_ref, pause_state_tracker)
+	target_position_source = TargetPositionSourceScript.new()
+	target_position_source.configure(player_render_api, asteroid_sync, bullet_sync)
 
 	asteroids.z_index = Constants.ASTEROID_Z_INDEX
 	bullets.z_index = Constants.BULLET_Z_INDEX
@@ -50,6 +54,8 @@ func apply_state(
 	server_asteroids: Dictionary
 ) -> void:
 	current_self_id = self_id
+	if target_position_source != null:
+		target_position_source.set_current_self_id(self_id)
 	player_render_api.remove_missing(server_players, self_id)
 	bullet_sync.remove_missing(server_bullets)
 	asteroid_sync.remove_missing(server_asteroids)
@@ -121,38 +127,8 @@ func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 	return player_render_api.server_position_for_visual_position(visual_position)
 
 
-func player_target_positions() -> Dictionary:
-	var positions := {}
-	if player_render_api == null:
-		return positions
-
-	if current_self_id != "":
-		positions[current_self_id] = {
-			"visual_position": player_render_api.visual_position(),
-			"server_position": player_render_api.server_position()
-		}
-
-	var remote_positions: Dictionary = player_render_api.get_remote_player_visual_positions(current_self_id)
-	for player_id in remote_positions.keys():
-		var visual_position = remote_positions[player_id]
-		positions[player_id] = {
-			"visual_position": visual_position,
-			"server_position": visual_position
-		}
-
-	return positions
-
-
-func asteroid_target_positions() -> Dictionary:
-	if asteroid_sync == null:
-		return {}
-	return asteroid_sync.asteroid_target_positions()
-
-
-func bullet_target_positions() -> Dictionary:
-	if bullet_sync == null:
-		return {}
-	return bullet_sync.bullet_target_positions()
+func target_source():
+	return target_position_source
 
 
 func server_hitbox_draw_entries() -> Array:

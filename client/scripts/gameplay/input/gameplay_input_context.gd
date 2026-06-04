@@ -1,13 +1,12 @@
 extends RefCounted
 class_name GameplayInputContext
 
-const TargetRequestFlow = preload("res://scripts/gameplay/input/target_request_flow.gd")
 const MouseActionFlow = preload("res://scripts/gameplay/input/mouse_action_flow.gd")
 
 var input_flow
 var pause_input_flow
 var devtools_context
-var target_request_flow
+var targeting_context
 var mouse_action_flow
 var remote_player_nodes_provider: Callable
 var respawn_request_route: Callable
@@ -22,9 +21,7 @@ func configure(
 	game_owner_ref,
 	devtools_context_ref,
 	respawn_request_route_ref: Callable,
-	target_visual_candidates_provider_ref: Callable = Callable(),
-	mouse_visual_position_provider_ref: Callable = Callable(),
-	server_position_converter_ref: Callable = Callable(),
+	targeting_context_ref = null,
 	remote_player_nodes_provider_ref: Callable = Callable()
 ) -> void:
 	input_flow = GameplayInputFlow.new()
@@ -36,15 +33,9 @@ func configure(
 	devtools_context.configure_remote_player_nodes_provider(remote_player_nodes_provider)
 	if game_owner_ref != null:
 		devtools_context.configure_server_hitbox_overlay(game_owner_ref.get_node_or_null("ServerHitboxOverlay"))
-	target_request_flow = TargetRequestFlow.new()
-	target_request_flow.configure(
-		connection_service_ref,
-		target_visual_candidates_provider_ref,
-		mouse_visual_position_provider_ref,
-		server_position_converter_ref
-	)
+	targeting_context = targeting_context_ref
 	mouse_action_flow = MouseActionFlow.new()
-	mouse_action_flow.configure(target_request_flow)
+	mouse_action_flow.configure(targeting_context)
 	respawn_request_route = respawn_request_route_ref
 
 
