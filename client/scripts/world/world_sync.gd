@@ -1,7 +1,5 @@
 extends RefCounted
 
-signal bullet_spawned
-
 const Constants = preload("res://scripts/constants/constants.gd")
 const AsteroidSyncScript = preload("res://scripts/world/asteroid_sync.gd")
 const BulletSyncScript = preload("res://scripts/world/bullet_sync.gd")
@@ -28,11 +26,6 @@ func configure(
 	bullet_sync = BulletSyncScript.new()
 	bullet_sync.configure(bullets)
 	local_player = player
-	bullet_sync.bullet_spawned.connect(func() -> void:
-		if local_player != null:
-			local_player.play_laser_sound()
-		bullet_spawned.emit()
-	)
 	player_render_api = PlayerRenderApiScript.new()
 	view_anchor = view_anchor_ref
 	player_render_api.configure(game_owner, player, view_anchor_ref, pause_state_tracker)
@@ -54,8 +47,7 @@ func apply_state(
 	self_id: String,
 	server_players: Dictionary,
 	server_bullets: Dictionary,
-	server_asteroids: Dictionary,
-	play_new_bullet_sounds: bool
+	server_asteroids: Dictionary
 ) -> void:
 	current_self_id = self_id
 	player_render_api.remove_missing(server_players, self_id)
@@ -64,7 +56,6 @@ func apply_state(
 	player_render_api.apply_state(self_id, server_players)
 	bullet_sync.apply(
 		server_bullets,
-		play_new_bullet_sounds,
 		player_render_api.visual_position(),
 		player_render_api.server_position()
 	)

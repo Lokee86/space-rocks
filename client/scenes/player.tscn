@@ -4,7 +4,6 @@
 [ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="2_dqkch"]
 [ext_resource type="Texture2D" uid="uid://cw8ubidl86juw" path="res://assets/units/yellow-v-wing.png" id="2_lcy76"]
 [ext_resource type="Texture2D" uid="uid://bo5yq5da1hqoo" path="res://assets/units/viewport.png" id="4_qlg0r"]
-[ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="5_fxgnq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tuyoq"]
 shader = ExtResource("2_dqkch")
@@ -40,12 +39,6 @@ polygon = PackedVector2Array(12, -11, 20, -12, 23.4882, -16.8588, 47.6126, -19.5
 
 [node name="WeaponMarker" type="Marker2D" parent="." unique_id=1544338404]
 position = Vector2(-0.0202003, -37.7274)
-
-[node name="LaserSound" type="AudioStreamPlayer2D" parent="." unique_id=1062667136]
-visible = false
-stream = ExtResource("5_fxgnq")
-volume_db = -6.95
-pitch_scale = 0.5
 
 [node name="AfterburnerMarker" type="Marker2D" parent="." unique_id=648800397]
 position = Vector2(0, 36)
