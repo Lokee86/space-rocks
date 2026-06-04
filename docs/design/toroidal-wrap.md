@@ -78,6 +78,10 @@ Client wrap math lives in:
 client/scripts/world/world_wrap.gd
 ```
 
+The active render basis is ViewAnchor/render anchor, not simply the local player.
+
+The active API still uses continuous visual coordinates.
+
 `local_visual_sync.gd` tracks:
 
 ```gdscript
@@ -85,9 +89,11 @@ local_server_position
 local_visual_position
 ```
 
-On each local-player state update, `client/scripts/world/world_sync.gd` routes the authoritative position through `LocalVisualSync`, which advances visual position by the shortest wrapped delta from the previous server position to the new server position. This prevents the local player, camera, and background from snapping when the server coordinate wraps.
+The active anchor has both server position and visual position.
 
-Remote players, asteroids, bullets, and server-driven effects render relative to the local player. Entity ownership lives in `client/scripts/world/player_sync.gd`, `client/scripts/world/asteroid_sync.gd`, and `client/scripts/world/bullet_sync.gd`, while `client/scripts/world/world_sync.gd` coordinates update order:
+On each active-anchor state update, `client/scripts/world/world_sync.gd` routes the authoritative anchor position through the active ViewAnchor/render-anchor seam, which advances visual position by the shortest wrapped delta from the previous server position to the new server position. This prevents the active render origin, camera, and background from snapping when the server coordinate wraps.
+
+Rendered players, bullets, asteroids, effects, target positions, and hitboxes must use the same active anchor basis. Entity ownership lives in `client/scripts/world/player_sync.gd`, `client/scripts/world/asteroid_sync.gd`, and `client/scripts/world/bullet_sync.gd`, while `client/scripts/world/world_sync.gd` coordinates update order:
 
 ```gdscript
 visual_position = local_visual_position + WorldWrap.shortest_delta(
@@ -96,7 +102,11 @@ visual_position = local_visual_position + WorldWrap.shortest_delta(
 )
 ```
 
-Normal gameplay follows the local player's continuous visual position. Spectate uses a selected active player as the current view reference for camera and background continuity, while keeping viewport/camera ownership local/client-owned. A hidden local camera/parallax anchor may still be a valid scroll reference, so background parallax sampling must not depend on node visibility alone.
+Normal gameplay usually keeps the active anchor aligned with `self_id`. Spectate uses a selected active player as the current view reference for camera and background continuity, while keeping viewport/camera ownership local/client-owned. A hidden local camera/parallax anchor may still be a valid scroll reference, so background parallax sampling must not depend on node visibility alone.
+
+Do not split camera position from render anchor position. If camera and world rendering use different origins, background and world-copy bugs can return.
+
+See [active player-render README](../../client/scripts/world/player_render/README.md) and [legacy player-render API](../../client/legacy/player_render/API.md).
 
 ## Tests
 
