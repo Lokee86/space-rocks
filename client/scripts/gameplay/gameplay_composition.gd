@@ -10,6 +10,7 @@ signal return_to_lobby_requested
 var connection_service
 var scene_root: Node
 var player
+var view_anchor
 var bullets: Node2D
 var asteroids: Node2D
 var hud: Control
@@ -23,10 +24,11 @@ var gameplay_menu_flow
 var dev_tools_session_flow
 var spectate_session_flow
 
-func configure(connection_service_ref, scene_root_ref: Node, player_ref, bullets_ref: Node2D, asteroids_ref: Node2D, hud_ref: Control, session_context_ref, logger_callable: Callable) -> void:
+func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_anchor_ref, bullets_ref: Node2D, asteroids_ref: Node2D, hud_ref: Control, session_context_ref, logger_callable: Callable) -> void:
 	connection_service = connection_service_ref
 	scene_root = scene_root_ref
 	player = player_ref
+	view_anchor = view_anchor_ref
 	bullets = bullets_ref
 	asteroids = asteroids_ref
 	hud = hud_ref
@@ -43,6 +45,7 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, bullets
 		connection_service,
 		scene_root,
 		player,
+		view_anchor_ref,
 		bullets,
 		asteroids,
 		gameplay_hud_flow,
@@ -127,10 +130,16 @@ func _configure_gameplay_presentation_flow() -> void:
 	gameplay_presentation_flow.configure(
 		hud,
 		player,
-		Callable(player, "get_node_or_null").bind("Camera2D"),
+		Callable(self, "_active_camera"),
 		Callable(gameplay_shell_flow.runtime_context.world_sync, "get_remote_player_visual_positions"),
 		Callable(gameplay_shell_flow.runtime_context.world_sync, "get_remote_player_hues")
 	)
+
+
+func _active_camera():
+	if view_anchor == null:
+		return null
+	return view_anchor.get_node_or_null("Camera2D")
 
 func _on_gameplay_started() -> void:
 	gameplay_started.emit()

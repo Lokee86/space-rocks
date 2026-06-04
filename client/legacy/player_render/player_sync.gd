@@ -1,7 +1,7 @@
 extends RefCounted
 
 const Packets = preload("res://scripts/networking/packets/packets.gd")
-const VisualSyncPositions = preload("res://scripts/world/visual_sync_positions.gd")
+const VisualSyncPositions = preload("res://legacy/player_render/visual_sync_positions.gd")
 
 var local_player: Player
 var player_lifecycle := PlayerSyncLifecycle.new()
@@ -125,6 +125,65 @@ func apply(
 			player_node.rotation = server_rotation
 
 
+func apply_with_anchor(
+	self_id: String,
+	anchor_player_id: String,
+	server_players: Dictionary,
+	anchor_visual_position: Vector2,
+	anchor_server_position: Vector2
+) -> void:
+	if local_player != null:
+		player_hue_presenter.apply_local_player_hue(local_player)
+
+	var remote_player_ids := []
+	for player_id in server_players.keys():
+		if player_id == self_id:
+			continue
+		remote_player_ids.append(player_id)
+	remote_player_ids.sort()
+	player_hue_presenter.set_remote_player_order(remote_player_ids)
+
+	for player_id in server_players.keys():
+		var state: Dictionary = server_players[player_id]
+		var player_node: Player = player_lifecycle.get_or_create_player_node(self_id, player_id)
+		var visual_position := _visual_position_for_player(
+			player_id,
+			anchor_player_id,
+			state,
+			anchor_visual_position,
+			anchor_server_position
+		)
+		var server_rotation: float = state[Packets.FIELD_ROTATION]
+
+		if player_id != self_id:
+			var remote_afterburner_active: bool = bool(state.get("thrusting", false)) && (
+				pause_state_tracker == null or !pause_state_tracker.is_paused(player_id)
+			)
+			var is_paused: bool = pause_state_tracker != null and pause_state_tracker.is_paused(player_id)
+			player_interpolation.correct_remote_visual_copy_mismatch(
+				player_id,
+				player_node,
+				visual_position,
+				player_lifecycle,
+				player_targets
+			)
+			player_hue_presenter.apply_remote_player_hue(player_id, player_node)
+			player_presentation.apply_remote_player_presentation(
+				player_id,
+				self_id,
+				player_node,
+				is_paused,
+				remote_afterburner_active
+			)
+
+		player_targets.set_target_player_state(player_id, visual_position, server_rotation)
+
+		if !player_lifecycle.is_initialized(player_id):
+			player_lifecycle.mark_initialized(player_id)
+			player_node.position = visual_position
+			player_node.rotation = server_rotation
+
+
 func apply_local_player_hue(player: Player) -> void:
 	player_hue_presenter.apply_local_player_hue(player)
 
@@ -171,3 +230,24 @@ func get_remote_player_visual_positions(current_self_id: String) -> Dictionary:
 
 func server_hitbox_draw_entries(_current_self_id: String) -> Array:
 	return player_targets.build_server_hitbox_draw_entries(_current_self_id, player_lifecycle)
+
+
+func get_view_target_player_id() -> String:
+	return view_target_player_id
+
+
+func _visual_position_for_player(
+	player_id: String,
+	anchor_player_id: String,
+	state: Dictionary,
+	anchor_visual_position: Vector2,
+	anchor_server_position: Vector2
+) -> Vector2:
+	if player_id == anchor_player_id:
+		return anchor_visual_position
+
+	return VisualSyncPositions.relative_to_local_visual(
+		anchor_visual_position,
+		anchor_server_position,
+		Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
+	)

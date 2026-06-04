@@ -1,7 +1,7 @@
 extends RefCounted
 class_name PlayerSyncInterpolation
 
-const VisualSyncPositions = preload("res://scripts/world/visual_sync_positions.gd")
+const VisualSyncPositions = preload("res://legacy/player_render/visual_sync_positions.gd")
 
 
 func interpolate_player_nodes(
@@ -30,20 +30,6 @@ func interpolate_player_nodes(
 			player_targets.erase_remote_player_visual_position(player_id)
 		else:
 			player_targets.set_remote_player_visual_position(player_id, player_node.position)
-
-	if view_target_player_id == "":
-		return
-	if !player_lifecycle.has_player_node(view_target_player_id):
-		return
-
-	var view_target_player = player_lifecycle.get_player_node(view_target_player_id)
-	if view_target_player == local_player:
-		return
-
-	local_player.global_position = view_target_player.global_position
-	local_player.rotation = view_target_player.rotation
-	local_player.visible = false
-
 
 func correct_remote_visual_copy_mismatch(
 	player_id: String,
