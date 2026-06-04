@@ -63,6 +63,15 @@ class FakeWorldSync:
 	func visual_position_for_server_position(value):
 		return value
 
+	func server_position_for_visual_position(value):
+		return value
+
+	func target_source():
+		return RefCounted.new()
+
+	func remote_player_nodes() -> Dictionary:
+		return {}
+
 
 class FakeRuntimeContext:
 	var world_sync := FakeWorldSync.new()
@@ -232,7 +241,7 @@ func test_configure_creates_core_owned_flows() -> void:
 
 	assert_not_null(composer.event_lifecycle_flow)
 	assert_not_null(composer.alive_restore_flow)
-	assert_not_null(composer.target_candidate_flow)
+	assert_not_null(composer.targeting_context)
 	assert_not_null(composer.pointer_position_provider)
 	assert_not_null(composer.input_context)
 	assert_not_null(composer.devtools_context)

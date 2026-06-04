@@ -317,8 +317,7 @@ func _apply_state(state: Dictionary) -> void:
 		state[Packets.FIELD_SELF_ID],
 		state[Packets.FIELD_PLAYERS],
 		state[Packets.FIELD_BULLETS],
-		state[Packets.FIELD_ASTEROIDS],
-		false
+		state[Packets.FIELD_ASTEROIDS]
 	)
 
 

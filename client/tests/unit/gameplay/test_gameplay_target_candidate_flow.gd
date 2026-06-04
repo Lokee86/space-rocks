@@ -3,19 +3,19 @@ extends GutTest
 const GameplayTargetCandidateFlow = preload("res://scripts/gameplay/targeting/gameplay_target_candidate_flow.gd")
 
 
-class FakeWorldSync:
-	var player_positions := {}
-	var asteroid_positions := {}
-	var bullet_positions := {}
+class FakeTargetPositionSource:
+	var player_position_entries := {}
+	var asteroid_position_entries := {}
+	var bullet_position_entries := {}
 
-	func player_target_positions() -> Dictionary:
-		return player_positions
+	func player_positions() -> Dictionary:
+		return player_position_entries
 
-	func asteroid_target_positions() -> Dictionary:
-		return asteroid_positions
+	func asteroid_positions() -> Dictionary:
+		return asteroid_position_entries
 
-	func bullet_target_positions() -> Dictionary:
-		return bullet_positions
+	func bullet_positions() -> Dictionary:
+		return bullet_position_entries
 
 
 func _candidate_map(candidates: Array) -> Dictionary:
@@ -25,28 +25,28 @@ func _candidate_map(candidates: Array) -> Dictionary:
 	return result
 
 
-func test_target_visual_candidates_returns_empty_array_when_world_sync_is_null() -> void:
+func test_target_visual_candidates_returns_empty_array_when_target_position_source_is_null() -> void:
 	var flow := GameplayTargetCandidateFlow.new()
 
 	assert_eq(flow.target_visual_candidates(), [])
 
 
 func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates() -> void:
-	var world_sync := FakeWorldSync.new()
-	world_sync.player_positions = {
+	var target_position_source := FakeTargetPositionSource.new()
+	target_position_source.player_position_entries = {
 		"player-1": {
 			"visual_position": Vector2(10, 20),
 			"server_position": Vector2(30, 40),
 		}
 	}
-	world_sync.asteroid_positions = {
+	target_position_source.asteroid_position_entries = {
 		"asteroid-1": {
 			"visual_position": Vector2(50, 60),
 			"server_position": Vector2(70, 80),
 			"visual_scale": 1.5,
 		}
 	}
-	world_sync.bullet_positions = {
+	target_position_source.bullet_position_entries = {
 		"bullet-1": {
 			"visual_position": Vector2(90, 100),
 			"server_position": Vector2(110, 120),
@@ -54,7 +54,7 @@ func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates(
 	}
 
 	var flow := GameplayTargetCandidateFlow.new()
-	flow.configure(world_sync)
+	flow.configure(target_position_source)
 
 	var candidates := flow.target_visual_candidates()
 	assert_eq(candidates.size(), 3)
@@ -87,8 +87,8 @@ func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates(
 
 
 func test_target_visual_candidates_skips_malformed_entries() -> void:
-	var world_sync := FakeWorldSync.new()
-	world_sync.player_positions = {
+	var target_position_source := FakeTargetPositionSource.new()
+	target_position_source.player_position_entries = {
 		"missing_visual": {
 			"server_position": Vector2(1, 2),
 		},
@@ -96,7 +96,7 @@ func test_target_visual_candidates_skips_malformed_entries() -> void:
 			"visual_position": Vector2(3, 4),
 		},
 	}
-	world_sync.asteroid_positions = {
+	target_position_source.asteroid_position_entries = {
 		"asteroid-ok": {
 			"visual_position": Vector2(5, 6),
 			"server_position": Vector2(7, 8),
@@ -105,14 +105,14 @@ func test_target_visual_candidates_skips_malformed_entries() -> void:
 			"visual_position": Vector2(9, 10),
 		},
 	}
-	world_sync.bullet_positions = {
+	target_position_source.bullet_position_entries = {
 		"bullet-bad": {
 			"server_position": Vector2(11, 12),
 		},
 	}
 
 	var flow := GameplayTargetCandidateFlow.new()
-	flow.configure(world_sync)
+	flow.configure(target_position_source)
 
 	var candidates := flow.target_visual_candidates()
 	assert_eq(candidates.size(), 1)

@@ -22,10 +22,29 @@ func apply_server_events(server_events: Array, self_id: String, apply_self_death
 
 
 func apply_bullet_blast(event: Dictionary) -> void:
-	var event_position := Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y])
-	effects.spawn_bullet_blast(visual_position_for_server_position.call(event_position))
+	var visual_position: Vector2 = _visual_position_for_event(event, "bullet blast")
+	if visual_position == null:
+		return
+	effects.spawn_bullet_blast(visual_position)
 
 
 func apply_ship_death(event: Dictionary) -> void:
-	var event_position := Vector2(event[Packets.FIELD_X], event[Packets.FIELD_Y])
-	effects.spawn_ship_death(visual_position_for_server_position.call(event_position))
+	var visual_position: Vector2 = _visual_position_for_event(event, "ship death")
+	if visual_position == null:
+		return
+	effects.spawn_ship_death(visual_position)
+
+
+func _visual_position_for_event(event: Dictionary, event_name: String):
+	if visual_position_for_server_position.is_null():
+		push_warning("Cannot convert %s event position without a visual position converter." % event_name)
+		return null
+
+	var event_x = event.get(Packets.FIELD_X)
+	var event_y = event.get(Packets.FIELD_Y)
+	if event_x is Callable || event_y is Callable:
+		push_warning("Cannot convert %s event position because event coordinates contain a Callable." % event_name)
+		return null
+
+	var event_position := Vector2(event_x, event_y)
+	return visual_position_for_server_position.call(event_position)

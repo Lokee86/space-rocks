@@ -3,13 +3,13 @@ class_name GameplayFlowComposer
 
 const GameplayEventLifecycleFlowScript = preload("res://scripts/gameplay/events/gameplay_event_lifecycle_flow.gd")
 const GameplayAliveRestoreFlowScript = preload("res://scripts/gameplay/respawn/gameplay_alive_restore_flow.gd")
-const GameplayTargetCandidateFlowScript = preload("res://scripts/gameplay/targeting/gameplay_target_candidate_flow.gd")
+const GameplayTargetingContextScript = preload("res://scripts/gameplay/targeting/gameplay_targeting_context.gd")
 const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
 const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
 
 var event_lifecycle_flow
 var alive_restore_flow
-var target_candidate_flow
+var targeting_context
 var pointer_position_provider
 var input_context
 var devtools_context
@@ -52,13 +52,18 @@ func configure(
 		player_ref
 	)
 
-	target_candidate_flow = GameplayTargetCandidateFlowScript.new()
-	target_candidate_flow.configure(runtime_context_ref.world_sync)
-
 	pointer_position_provider = GameplayPointerPositionProvider.new()
 	pointer_position_provider.configure(
 		game_owner_ref,
 		Callable(runtime_context_ref.world_sync, "server_position_for_visual_position")
+	)
+
+	targeting_context = GameplayTargetingContextScript.new()
+	targeting_context.configure(
+		connection_service_ref,
+		runtime_context_ref.world_sync.target_source(),
+		Callable(pointer_position_provider, "mouse_visual_position"),
+		Callable(pointer_position_provider, "server_position_for_visual_position")
 	)
 
 	devtools_context = devtools_context_ref
@@ -76,9 +81,7 @@ func configure(
 			game_owner_ref,
 			devtools_context,
 			Callable(runtime_context_ref, "request_respawn"),
-			Callable(target_candidate_flow, "target_visual_candidates"),
-			Callable(pointer_position_provider, "mouse_visual_position"),
-			Callable(pointer_position_provider, "server_position_for_visual_position"),
+			targeting_context,
 			Callable(runtime_context_ref.world_sync, "remote_player_nodes")
 		)
 

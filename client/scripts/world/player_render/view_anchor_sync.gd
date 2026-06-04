@@ -16,8 +16,8 @@ func reset() -> void:
 	legacy_sync = LegacyLocalVisualSyncScript.new()
 
 
-func update_from_anchor_server_position(server_position: Vector2) -> void:
-	legacy_sync.update_from_server_position(server_position)
+func update_from_anchor_server_position(server_authoritative_position: Vector2) -> void:
+	legacy_sync.update_from_server_position(server_authoritative_position)
 
 
 func server_position() -> Vector2:
@@ -28,9 +28,9 @@ func visual_position() -> Vector2:
 	return legacy_sync.visual_position()
 
 
-func visual_position_for_server_position(server_position: Vector2) -> Vector2:
-	return legacy_sync.visual_position_for_server_position(server_position)
+func visual_position_for_server_position(server_authoritative_position: Vector2) -> Vector2:
+	return legacy_sync.visual_position_for_server_position(server_authoritative_position)
 
 
-func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
-	return legacy_sync.server_position_for_visual_position(visual_position)
+func server_position_for_visual_position(client_visual_position: Vector2) -> Vector2:
+	return legacy_sync.server_position_for_visual_position(client_visual_position)
