@@ -16,6 +16,7 @@ const ClientLogger := preload("res://scripts/logging/logger.gd")
 @onready var repeated_foreground_background: TextureRect = %RepeatedForegroundBackground
 @onready var repeated_planet_background: TextureRect = %RepeatedPlanetBackground
 @onready var player = $Player
+@onready var view_anchor: Node2D = $ViewAnchor
 @onready var bullets: Node2D = $Bullets
 @onready var asteroids: Node2D = $Asteroids
 @onready var hud: Control = %HUD
@@ -42,7 +43,7 @@ func _ready() -> void:
 
 	background_controller = BackgroundController.new()
 	add_child(background_controller)
-	background_controller.configure(repeated_background, repeated_foreground_background, repeated_planet_background, player)
+	background_controller.configure(repeated_background, repeated_foreground_background, repeated_planet_background, view_anchor)
 
 	gameplay_session_controller = GameplaySessionController.new()
 	add_child(gameplay_session_controller)
@@ -50,6 +51,7 @@ func _ready() -> void:
 		session_boot_controller.get_connection_service(),
 		self,
 		player,
+		view_anchor,
 		bullets,
 		asteroids,
 		hud,
@@ -101,6 +103,7 @@ func _ready() -> void:
 	)
 
 	_connect_main_menu_signals()
+	_make_view_anchor_camera_current()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -162,3 +165,11 @@ func _on_multiplayer_create_requested() -> void:
 func _on_multiplayer_join_requested(room_code: String) -> void:
 	_log_shell_status("App entry multiplayer join requested: %s" % room_code)
 	main_menu_session_controller.request_join_room(room_code)
+
+
+func _make_view_anchor_camera_current() -> void:
+	if view_anchor == null:
+		return
+	var camera := view_anchor.get_node_or_null("Camera2D") as Camera2D
+	if camera != null:
+		camera.make_current()

@@ -8,6 +8,7 @@ const PlayerScene := preload("res://scenes/player.tscn")
 
 var game_owner: Node2D
 var local_player: Player
+var view_anchor: Node2D
 var bullets_layer: Node2D
 var asteroids_layer: Node2D
 var world_sync: WorldSyncScript
@@ -18,15 +19,17 @@ func before_each() -> void:
 	add_child(game_owner)
 
 	local_player = PlayerScene.instantiate()
+	view_anchor = Node2D.new()
 	bullets_layer = Node2D.new()
 	asteroids_layer = Node2D.new()
 
 	game_owner.add_child(local_player)
+	game_owner.add_child(view_anchor)
 	game_owner.add_child(bullets_layer)
 	game_owner.add_child(asteroids_layer)
 
 	world_sync = WorldSyncScript.new()
-	world_sync.configure(game_owner, local_player, bullets_layer, asteroids_layer)
+	world_sync.configure(game_owner, local_player, view_anchor, bullets_layer, asteroids_layer)
 
 
 func after_each() -> void:
