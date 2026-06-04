@@ -31,3 +31,17 @@ Target selection is requested from client input, then confirmed by canonical ser
 
 - Client selection actions send selection/deselection intent.
 - Canonical target identity is read from authoritative gameplay state updates (`target_kind` + `target_id`), not from local click assumptions.
+
+## Targeting Ownership
+
+Targeting sits above `MouseActionFlow`.
+
+Current client targeting flow:
+
+`InputEvent` -> `GameplayInputContext` -> `MouseActionFlow` -> `GameplayTargetingContext` -> candidate source / picker / packet send
+
+- `MouseActionFlow` remains the lowest-level mouse/input action coordinator.
+- `GameplayTargetingContext` owns target selection orchestration.
+- `GameplayTargetCandidateFlow` builds target candidates.
+- `TargetPositionSource` owns targetable position read models.
+- `WorldSync` only exposes `target_source()` for targeting and no longer owns direct target-position methods.

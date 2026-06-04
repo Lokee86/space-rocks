@@ -2,6 +2,8 @@
 
 Space Rocks is an Asteroids-inspired game with a Godot client and a Go game server. A separate API server is planned for business/backend concerns.
 
+Client runtime is split into focused seams for input, targeting, world sync, HUD, and presentation. Target selection flows through `GameplayInputContext`, `MouseActionFlow`, and `GameplayTargetingContext`; `WorldSync` is limited to render/sync ownership and exposes `target_source()` for targeting reads.
+
 ## Status
 
 The project is in active development. Current work includes a playable Godot client, a Go websocket game server, room support, split TOML shared data for constants/packets under `shared/`, server-authoritative scoring/lives/respawn logic, asteroid collisions/splitting, HUD updates, audio/effects, and structured server logging.

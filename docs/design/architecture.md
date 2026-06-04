@@ -55,7 +55,7 @@ Current client runtime seams:
 - `client/scripts/networking/outbound/`: client packet send helpers grouped by packet family.
 - `client/scripts/networking/client_connection_service.gd`: public connection facade and signal bridge; it no longer owns packet-family construction or packet-family routing.
 - `client/scripts/networking/packet_codec/packet_codec.gd`: JSON-only client packet wire encode/decode wrapper around `JSON.stringify` and `JSON.parse_string`.
-- `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates player/render-origin work to `client/scripts/world/player_render/player_render_api.gd` and delegates bullet/asteroid node ownership, packet application, cleanup, and interpolation to the focused sync owners.
+- `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates player/render-origin work to `client/scripts/world/player_render/player_render_api.gd` and delegates bullet/asteroid node ownership, packet application, cleanup, and interpolation to the focused sync owners. For targeting, it only exposes `target_source()`; target selection orchestration lives above it in `GameplayTargetingContext`.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/networking/packets/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
@@ -67,10 +67,11 @@ Client runtime flow:
 1. Session controllers under `client/scripts/session/` coordinate boot, config, room/lobby, and gameplay session flows.
 2. `gameplay_shell_flow.gd` stores references and delegates to focused gameplay lanes rather than owning input, HUD, menu, respawn, spectate, events, effects, and state application directly.
 3. Local gameplay input routes through `client/scripts/gameplay/input/`. Player movement/shooting packet data still comes from `client/scripts/entities/player.gd`.
-4. `network_client.gd` sends and receives websocket text through the client packet codec.
-5. Incoming gameplay state is normalized by `client/scripts/gameplay/state/` and applied by `client/scripts/gameplay/runtime/`.
-6. `client/scripts/world/world_sync.gd` updates renderable player/render-origin state through `PlayerRenderApi` and updates bullet and asteroid state through their focused sync owners.
-7. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
+4. Input/event handling flows `InputEvent` -> `GameplayInputContext` -> `MouseActionFlow` -> `GameplayTargetingContext` -> candidate source / picker / packet send for target selection.
+5. `network_client.gd` sends and receives websocket text through the client packet codec.
+6. Incoming gameplay state is normalized by `client/scripts/gameplay/state/` and applied by `client/scripts/gameplay/runtime/`.
+7. `client/scripts/world/world_sync.gd` updates renderable player/render-origin state through `PlayerRenderApi` and updates bullet and asteroid state through their focused sync owners.
+8. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
 
 Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. Normal gameplay follows the active ViewAnchor render origin after initial spawn. Spectate keeps viewport/camera ownership local/client-owned, uses the selected active player as the current view reference only through the ViewAnchor seam, and requires the background/parallax to sample the same view reference as the camera.
 
@@ -226,6 +227,14 @@ Spatial rules flow through `services/game-server/internal/game/space`:
 - ship/asteroid and projectile/asteroid collision helpers place temporary asteroid bodies in wrapped-local space before collision checks
 
 The client renders continuous visual coordinates. `local_visual_sync.gd` tracks the local server position and continuous local visual position; `player_sync.gd`, `asteroid_sync.gd`, and `bullet_sync.gd` render entities relative to the active anchor position with shortest wrapped deltas. `world_sync.gd` coordinates the update order and delegates player/render-origin work to `client/scripts/world/player_render/player_render_api.gd`. `player_render_api.gd` coordinates player meaning and ViewAnchor/render-anchor mapping. `bullet_sync` and `asteroid_sync` receive the active anchor visual/server positions from `world_sync`. The camera and background follow `ViewAnchor`, not the local player node.
+
+Targeting ownership sits outside `WorldSync`:
+
+- `MouseActionFlow` stays the lowest-level mouse/input action coordinator.
+- `GameplayTargetingContext` owns target selection orchestration.
+- `GameplayTargetCandidateFlow` builds target candidates.
+- `TargetPositionSource` owns targetable position read models.
+- `WorldSync` only exposes `target_source()` for targeting access.
 
 See [toroidal wrap](toroidal-wrap.md).
 
