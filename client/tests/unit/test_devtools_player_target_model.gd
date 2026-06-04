@@ -509,18 +509,19 @@ func test_local_player_state_for_state_packet_returns_raw_player_dictionary() ->
 	assert_eq(model.local_player_state_for_source("state_packet"), expected_player_state)
 
 
-func test_local_player_state_for_session_packet_returns_raw_player_world_state_dictionary() -> void:
+func test_local_player_state_for_session_packet_returns_raw_player_session_dictionary() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
-	var expected_world_state := {
+	var expected_session_state := {
 		"id": "player-1",
-		"status": "pending_respawn",
+		"ship_type": "v_wing",
+		"score": 17,
 		"lives": 1,
 	}
 	model.apply_gameplay_state({
 		"self_id": "player-1",
 		"server_players": {},
-		"player_world_states": {
-			"player-1": expected_world_state,
+		"player_sessions": {
+			"player-1": expected_session_state,
 		},
 		"player_lifecycle": {
 			"player-1": "pending_respawn",
@@ -528,14 +529,17 @@ func test_local_player_state_for_session_packet_returns_raw_player_world_state_d
 		"debug_statuses": {},
 	})
 
-	assert_eq(model.local_player_state_for_source("session_packet"), expected_world_state)
+	assert_eq(model.local_player_state(), {})
+	assert_eq(model.local_player_state_for_source("state_packet"), {})
+	assert_eq(model.local_player_state_for_source("session_packet"), expected_session_state)
 
 
-func test_target_state_for_session_packet_returns_raw_player_world_state_dictionary() -> void:
+func test_target_state_for_session_packet_returns_raw_player_session_dictionary() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
-	var expected_world_state := {
+	var expected_session_state := {
 		"id": "player-2",
-		"status": "pending_respawn",
+		"ship_type": "falcon",
+		"score": 23,
 		"lives": 2,
 	}
 	model.apply_gameplay_state({
@@ -543,8 +547,8 @@ func test_target_state_for_session_packet_returns_raw_player_world_state_diction
 		"server_players": {
 			"player-1": {"target_kind": "player", "target_id": "player-2"},
 		},
-		"player_world_states": {
-			"player-2": expected_world_state,
+		"player_sessions": {
+			"player-2": expected_session_state,
 		},
 		"player_lifecycle": {
 			"player-1": "active",
@@ -553,7 +557,9 @@ func test_target_state_for_session_packet_returns_raw_player_world_state_diction
 		"debug_statuses": {},
 	})
 
-	assert_eq(model.target_state_for_source("session_packet"), expected_world_state)
+	assert_eq(model.target_state(), {})
+	assert_eq(model.target_state_for_source("state_packet"), {})
+	assert_eq(model.target_state_for_source("session_packet"), expected_session_state)
 
 
 func test_target_state_for_session_packet_returns_empty_dictionary_for_non_player_target() -> void:
@@ -620,11 +626,12 @@ func test_target_state_with_missing_or_empty_target_returns_empty_dictionary() -
 	assert_eq(model.target_state(), {})
 
 
-func test_local_player_state_falls_back_to_player_world_states_when_missing_from_players() -> void:
+func test_local_player_state_uses_state_packet_by_default_even_when_session_data_exists() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
-	var expected_world_state := {
+	var expected_session_state := {
 		"id": "player-1",
-		"status": "pending_respawn",
+		"ship_type": "v_wing",
+		"score": 7,
 		"lives": 1,
 	}
 	model.apply_gameplay_state({
@@ -632,8 +639,8 @@ func test_local_player_state_falls_back_to_player_world_states_when_missing_from
 		"server_players": {
 			"player-2": {},
 		},
-		"player_world_states": {
-			"player-1": expected_world_state,
+		"player_sessions": {
+			"player-1": expected_session_state,
 		},
 		"player_lifecycle": {
 			"player-1": "pending_respawn",
@@ -642,14 +649,17 @@ func test_local_player_state_falls_back_to_player_world_states_when_missing_from
 		"debug_statuses": {},
 	})
 
-	assert_eq(model.local_player_state(), expected_world_state)
+	assert_eq(model.local_player_state(), {})
+	assert_eq(model.local_player_state_for_source("state_packet"), {})
+	assert_eq(model.local_player_state_for_source("session_packet"), expected_session_state)
 
 
-func test_target_state_for_player_falls_back_to_player_world_states_when_missing_from_players() -> void:
+func test_target_state_for_player_uses_state_packet_by_default_even_when_session_data_exists() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
-	var expected_world_state := {
+	var expected_session_state := {
 		"id": "player-2",
-		"status": "pending_respawn",
+		"ship_type": "falcon",
+		"score": 19,
 		"lives": 2,
 	}
 	model.apply_gameplay_state({
@@ -657,8 +667,8 @@ func test_target_state_for_player_falls_back_to_player_world_states_when_missing
 		"server_players": {
 			"player-1": {"target_kind": "player", "target_id": "player-2"},
 		},
-		"player_world_states": {
-			"player-2": expected_world_state,
+		"player_sessions": {
+			"player-2": expected_session_state,
 		},
 		"player_lifecycle": {
 			"player-1": "active",
@@ -667,18 +677,21 @@ func test_target_state_for_player_falls_back_to_player_world_states_when_missing
 		"debug_statuses": {},
 	})
 
-	assert_eq(model.target_state(), expected_world_state)
+	assert_eq(model.target_state(), {})
+	assert_eq(model.target_state_for_source("state_packet"), {})
+	assert_eq(model.target_state_for_source("session_packet"), expected_session_state)
 
 
-func test_target_state_for_player_prefers_active_player_state_over_player_world_states() -> void:
+func test_target_state_for_player_prefers_state_packet_over_session_packet() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_player_state := {
 		"score": 123,
 		"lives": 2,
 	}
-	var world_state := {
+	var session_state := {
 		"id": "player-2",
-		"status": "pending_respawn",
+		"ship_type": "v_wing",
+		"score": 9,
 		"lives": 0,
 	}
 	model.apply_gameplay_state({
@@ -687,8 +700,8 @@ func test_target_state_for_player_prefers_active_player_state_over_player_world_
 			"player-1": {"target_kind": "player", "target_id": "player-2"},
 			"player-2": expected_player_state,
 		},
-		"player_world_states": {
-			"player-2": world_state,
+		"player_sessions": {
+			"player-2": session_state,
 		},
 		"player_lifecycle": {
 			"player-1": "active",
@@ -698,6 +711,8 @@ func test_target_state_for_player_prefers_active_player_state_over_player_world_
 	})
 
 	assert_eq(model.target_state(), expected_player_state)
+	assert_eq(model.target_state_for_source("state_packet"), expected_player_state)
+	assert_eq(model.target_state_for_source("session_packet"), session_state)
 
 
 func _model_with_two_active_players() -> RefCounted:

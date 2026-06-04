@@ -31,11 +31,11 @@ func apply_gameplay_state_summary(state: Dictionary) -> void:
 	show_gameplay()
 	if state["has_lives"]:
 		apply_lives(state["lives"])
-	var server_players: Dictionary = state["server_players"]
+	var player_sessions: Dictionary = state.get("player_sessions", {})
 	var self_id: String = state["self_id"]
-	if server_players.has(self_id):
-		var self_state: Dictionary = server_players[self_id]
-		apply_score(int(self_state.get(Packets.FIELD_SCORE, 0)))
+	var self_session_state: Dictionary = player_sessions.get(self_id, {})
+	if self_session_state is Dictionary and self_session_state.has(Packets.FIELD_SCORE):
+		apply_score(int(self_session_state.get(Packets.FIELD_SCORE, 0)))
 
 
 func reset() -> void:

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
-	player "github.com/Lokee86/space-rocks/server/internal/game/player"
 )
 
 func TestWrapStatePacketPreservesServerSentMsec(t *testing.T) {
@@ -23,11 +22,11 @@ func TestWrapStatePacketPreservesServerSentMsec(t *testing.T) {
 	}
 }
 
-func TestWrapStatePacketPreservesPlayerWorldStates(t *testing.T) {
+func TestWrapStatePacketPreservesPlayerSessions(t *testing.T) {
 	state := game.StatePacket{
 		Type: game.PacketTypeState,
-		PlayerWorldStates: map[string]player.WorldState{
-			"Player-1": {ID: "Player-1", Status: player.StatusActive},
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"Player-1": {ID: "Player-1", ShipType: "v_wing", Score: 12, Lives: 3},
 		},
 	}
 
@@ -36,11 +35,11 @@ func TestWrapStatePacketPreservesPlayerWorldStates(t *testing.T) {
 	if !ok {
 		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
 	}
-	if len(wrapped.PlayerWorldStates) != len(state.PlayerWorldStates) {
-		t.Fatalf("PlayerWorldStates len = %d, want %d", len(wrapped.PlayerWorldStates), len(state.PlayerWorldStates))
+	if len(wrapped.PlayerSessions) != len(state.PlayerSessions) {
+		t.Fatalf("PlayerSessions len = %d, want %d", len(wrapped.PlayerSessions), len(state.PlayerSessions))
 	}
-	if wrapped.PlayerWorldStates["Player-1"].ID != state.PlayerWorldStates["Player-1"].ID {
-		t.Fatalf("PlayerWorldStates[Player-1].ID = %q, want %q", wrapped.PlayerWorldStates["Player-1"].ID, state.PlayerWorldStates["Player-1"].ID)
+	if wrapped.PlayerSessions["Player-1"].ID != state.PlayerSessions["Player-1"].ID {
+		t.Fatalf("PlayerSessions[Player-1].ID = %q, want %q", wrapped.PlayerSessions["Player-1"].ID, state.PlayerSessions["Player-1"].ID)
 	}
 }
 

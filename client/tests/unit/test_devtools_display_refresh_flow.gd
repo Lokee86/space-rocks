@@ -36,6 +36,10 @@ class FakeWindowController:
 	func refresh_spawn_player_slots(_max_players: int) -> void:
 		pass
 
+
+class FakeWindowControllerWithoutTelemetrySources extends FakeWindowController:
+	pass
+
 func test_refresh_gameplay_state_forwards_game_target_state_to_window_controller() -> void:
 	var controller := FakeWindowController.new()
 	var flow := DevtoolsDisplayRefreshFlow.new()
@@ -91,3 +95,44 @@ func test_refresh_gameplay_state_forwards_target_kind_target_id_and_raw_target_s
 	assert_eq(controller.received_target_kind, "asteroid")
 	assert_eq(controller.received_target_id, "asteroid-3")
 	assert_eq(controller.received_target_state, expected_target_state)
+
+
+func test_refresh_gameplay_state_defaults_to_state_packet_sources_when_selectors_missing() -> void:
+	var controller := FakeWindowControllerWithoutTelemetrySources.new()
+	var flow := DevtoolsDisplayRefreshFlow.new()
+	flow.configure(controller)
+
+	flow.refresh_gameplay_state({
+		"self_id": "Player-1",
+		"server_players": {
+			"Player-1": {
+				"target_kind": "player",
+				"target_id": "Player-2",
+			},
+			"Player-2": {
+				"score": 7,
+				"lives": 2,
+			},
+		},
+		"player_sessions": {
+			"Player-1": {
+				"id": "Player-1",
+				"score": 9,
+				"lives": 3,
+			},
+			"Player-2": {
+				"id": "Player-2",
+				"score": 11,
+				"lives": 1,
+			},
+		},
+		"player_lifecycle": {
+			"Player-1": "active",
+			"Player-2": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(controller.received_target_kind, "player")
+	assert_eq(controller.received_target_id, "Player-2")
+	assert_eq(controller.received_target_state, {"score": 7, "lives": 2})

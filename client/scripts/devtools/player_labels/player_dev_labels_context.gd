@@ -89,6 +89,7 @@ func sync_remote_labels() -> void:
 		return
 
 	var server_players: Dictionary = latest_gameplay_state.get("server_players", {})
+	var player_sessions: Dictionary = latest_gameplay_state.get("player_sessions", {})
 	for player_id in labels_by_player_id.keys():
 		var label = labels_by_player_id[player_id]
 		if !is_instance_valid(label):
@@ -104,6 +105,9 @@ func sync_remote_labels() -> void:
 				label.hide_label()
 			continue
 
-		var text := PlayerDevLabelFormatter.basic_player_text(player_id, state)
+		var session_state = player_sessions.get(player_id, {})
+		if !(session_state is Dictionary):
+			session_state = {}
+		var text := PlayerDevLabelFormatter.basic_player_text(player_id, state, session_state)
 		if label.has_method("show_basic"):
 			label.show_basic(text)

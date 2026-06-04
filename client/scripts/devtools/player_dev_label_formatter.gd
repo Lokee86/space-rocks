@@ -4,11 +4,11 @@ const Packets := preload("res://scripts/generated/networking/packets/packets.gd"
 const MISSING_VALUE := "—"
 
 
-static func basic_player_text(player_id: String, state: Dictionary) -> String:
+static func basic_player_text(player_id: String, state: Dictionary, session_state: Dictionary) -> String:
 	var lines := [
 		"ID: %s" % _short_player_id(player_id),
-		"Score: %s" % _state_value_text(state, Packets.FIELD_SCORE),
-		"Lives: %s" % _state_value_text(state, Packets.FIELD_LIVES),
+		"Score: %s" % _state_value_text(session_state, Packets.FIELD_SCORE),
+		"Lives: %s" % _state_value_text(session_state, Packets.FIELD_LIVES),
 		"Ship: %s" % _state_value_text(state, Packets.FIELD_SHIP_TYPE),
 		"X: %s" % _rounded_state_value_text(state, Packets.FIELD_X),
 		"Y: %s" % _rounded_state_value_text(state, Packets.FIELD_Y),
