@@ -15,7 +15,12 @@ func (game *Game) StatePacket(playerID string) StatePacket {
 func (game *Game) statePacket(playerID string) StatePacket {
 	players := make(map[string]runtime.ShipState, len(game.entities.Players))
 	for id, player := range game.entities.Players {
-		players[id] = player.State()
+		playerState := player.State()
+		if session, ok := game.playerSessions[id]; ok {
+			playerState.Score = session.Score
+			playerState.Lives = session.Lives
+		}
+		players[id] = playerState
 	}
 	matchDecision := game.matchDecisionLocked()
 	playerLifecycle := make(map[string]string, len(matchDecision.Players))

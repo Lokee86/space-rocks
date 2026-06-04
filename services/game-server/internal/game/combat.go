@@ -183,9 +183,10 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship) 
 	}
 	player.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	lives := 0
+	score := 0
 	respawnDelay := 0.0
 	if session, ok := game.playerSessions[playerID]; ok {
-		game.setPlayerScoreLocked(playerID, player.Score)
+		score = session.Score
 		if session.LifeOptions.CanLoseLives() && session.Lives > 0 {
 			game.addPlayerLivesLocked(playerID, -1)
 		}
@@ -198,7 +199,7 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship) 
 	if lives <= 0 {
 		logging.Game.Info("player game over",
 			logging.FieldPlayerID, playerID,
-			"score", player.Score,
+			"score", score,
 			"x", position.X,
 			"y", position.Y,
 		)

@@ -57,6 +57,34 @@ func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {
 	}
 }
 
+func TestAddedLivesPersistThroughDeathAndRespawn(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	change := scenario.game.AddPlayerLives(playerID, 2)
+	if !change.Found {
+		t.Fatalf("expected AddPlayerLives to find player %q", playerID)
+	}
+
+	initial := scenario.playerState(playerID, playerID)
+	spawnPosition := physics.Vector2{X: initial.X, Y: initial.Y}
+	scenario.placeAsteroid("asteroid-1", spawnPosition, 1)
+
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+	scenario.step(constants.CollisionDespawnDelay)
+	scenario.advanceRespawnTimer(playerID, constants.PlayerRespawnDelay)
+	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
+
+	respawned := scenario.playerState(playerID, playerID)
+	expectedLives := constants.PlayerStartingLives + 1
+	if respawned.Lives != expectedLives {
+		t.Fatalf("expected respawned player to keep %d lives, got %d", expectedLives, respawned.Lives)
+	}
+	if packet := scenario.state(playerID); packet.Lives != expectedLives {
+		t.Fatalf("expected state packet lives %d after respawn, got %d", expectedLives, packet.Lives)
+	}
+}
+
 func TestPlayerWithNoLivesCannotRespawn(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()

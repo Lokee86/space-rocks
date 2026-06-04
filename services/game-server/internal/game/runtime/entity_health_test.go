@@ -45,8 +45,6 @@ func TestNewBulletInitializesDamageFromConstants(t *testing.T) {
 func TestShipStateIncludesHealthAndShields(t *testing.T) {
 	ship := &Ship{
 		ID:      "player-1",
-		Score:   1200,
-		Lives:   2,
 		Health:  75,
 		Shields: 30,
 	}
