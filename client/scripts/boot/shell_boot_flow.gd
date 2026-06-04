@@ -3,7 +3,7 @@ extends RefCounted
 signal boot_request_sent
 
 const PendingBootRequest := preload("res://scripts/boot/pending_boot_request.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var connection_service
 var pending_boot_request: PendingBootRequest
@@ -79,3 +79,4 @@ func clear() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
+

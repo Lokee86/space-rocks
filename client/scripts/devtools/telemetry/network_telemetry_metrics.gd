@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 var sequence: int = 0
 var pending_pings: Dictionary = {}
@@ -53,3 +53,4 @@ func reset() -> void:
 	pending_pings.clear()
 	latest_rtt_ms = -1
 	latest_server_clock_offset_ms = -1
+

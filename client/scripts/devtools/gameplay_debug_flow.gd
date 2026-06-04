@@ -1,7 +1,7 @@
 extends RefCounted
 class_name GameplayDebugFlow
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const DevtoolsTargetResolverScript = preload("res://scripts/devtools/devtools_target_resolver.gd")
 
@@ -170,3 +170,4 @@ func _build_counter_packet(
 	if target_scope == DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
 		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
+

@@ -1,7 +1,7 @@
 extends GutTest
 
 const PlayerPauseStatePacketReader := preload("res://scripts/gameplay/state/player_pause_state_packet_reader.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 func test_is_player_pause_state_returns_true_for_player_pause_state() -> void:
@@ -37,3 +37,4 @@ func test_read_defaults_missing_fields() -> void:
 
 	assert_eq(facts["player_id"], "")
 	assert_false(facts["paused"])
+

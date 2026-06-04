@@ -1,6 +1,6 @@
 extends GutTest
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 func test_server_position_reads_packet_coordinates() -> void:
@@ -15,3 +15,4 @@ func test_server_rotation_reads_packet_rotation() -> void:
 		1.25,
 		1.25
 	)
+

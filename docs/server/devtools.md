@@ -22,7 +22,7 @@ Devtools are for controlled gameplay debugging in active sessions. Commands are 
 - packet schema source: `shared/packets/debug.toml`
 - packet output routing source: `shared/packets/outputs.toml`
 - generated server packet types: `services/game-server/internal/devtools/packets_generated.go`
-- generated client packet helpers: `client/scripts/networking/packets/packets.gd`
+- generated client packet helpers: `client/scripts/generated/networking/packets/packets.gd`
 - regenerate packets: `data-sync -push -packets -go -gds`
 
 ## Server Command Path
@@ -103,3 +103,4 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 data-sync -check -packets -go -gds
 data-sync -diff -packets -go -gds
 ```
+

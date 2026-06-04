@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var connection_service
 var shell_boot_flow
@@ -120,3 +120,4 @@ func _refresh_game_over_menu_state() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
+

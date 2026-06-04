@@ -1,6 +1,6 @@
 extends Control
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 signal create_room_requested
 signal join_room_requested(room_code: String)
@@ -61,3 +61,4 @@ func set_status(message: String) -> void:
 
 func show_join_error(message: String) -> void:
 	set_status(message)
+

@@ -7,7 +7,7 @@ const RoomSessionController := preload("res://scripts/session/room_session_contr
 const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
 const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
 const AppShutdownController := preload("res://scripts/session/app_shutdown_controller.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 @onready var main_menu: Control = %MainMenu
@@ -173,3 +173,4 @@ func _make_view_anchor_camera_current() -> void:
 	var camera := view_anchor.get_node_or_null("Camera2D") as Camera2D
 	if camera != null:
 		camera.make_current()
+

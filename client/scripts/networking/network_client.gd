@@ -1,7 +1,7 @@
 extends Node
 class_name NetworkClient
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 
 signal connected_to_server
 signal connection_closed

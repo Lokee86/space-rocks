@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var current_state := Constants.SHELL_STATE_MAIN_MENU
 
@@ -15,3 +15,4 @@ func is_state(value: String) -> bool:
 
 func current() -> String:
 	return current_state
+

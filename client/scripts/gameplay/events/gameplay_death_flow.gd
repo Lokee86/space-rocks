@@ -1,7 +1,7 @@
 extends RefCounted
 class_name GameplayDeathFlow
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 var hud_flow
 var menu_flow
@@ -37,3 +37,4 @@ func apply_self_death_event(event: Dictionary) -> void:
 		menu_flow.set_game_over()
 	if event_flow != null && event_flow.has_method("play_game_over_sound_after_delay"):
 		event_flow.play_game_over_sound_after_delay()
+

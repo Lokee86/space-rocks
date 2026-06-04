@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
 const FIELD_DEBUG_STATUS := "debug_status"
 const FIELD_DEBUG_STATUSES := "debug_statuses"
@@ -46,3 +46,4 @@ static func read(data: Dictionary) -> Dictionary:
 		"has_lives": has_lives,
 		"lives": lives,
 	}
+

@@ -1,7 +1,7 @@
 extends RefCounted
 class_name PlayerSyncLifecycle
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 
 var owner_node: Node2D
@@ -129,3 +129,4 @@ func remove_player_node(self_id: String, player_id: String) -> bool:
 
 	erase_player(player_id)
 	return true
+

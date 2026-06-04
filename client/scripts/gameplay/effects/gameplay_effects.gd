@@ -1,7 +1,7 @@
 extends RefCounted
 class_name Effects
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"
@@ -129,3 +129,4 @@ func _queue_free_effect_node_once(effect_node: Node) -> void:
 func _on_game_over_sound_delay_timeout(token: int) -> void:
 	if token == game_over_sound_token:
 		_play_game_over_sound()
+

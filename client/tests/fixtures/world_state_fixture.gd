@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 const LOCAL_PLAYER_ID := "local-player"
 const REMOTE_PLAYER_ID := "remote-player"
@@ -64,3 +64,4 @@ static func bullet_state(x: float, y: float, rotation: float) -> Dictionary:
 		Packets.FIELD_ROTATION: rotation,
 		Packets.FIELD_OWNER_ID: LOCAL_PLAYER_ID,
 	}
+

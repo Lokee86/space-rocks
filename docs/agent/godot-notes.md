@@ -70,7 +70,7 @@ The client codec is intentionally JSON-only and thin. Do not add validation, for
 - `client/scripts/networking/client_connection_service.gd` is the public facade and signal bridge.
 - `client/scripts/networking/inbound` owns server packet dispatch and classification.
 - `client/scripts/networking/outbound` owns outbound client packet send helpers.
-- `client/scripts/networking/packets/packets.gd` remains the generated packet helper file.
+- `client/scripts/generated/networking/packets/packets.gd` remains the generated packet helper file.
 - Packet schema changes still go through `shared/packets/` and `tools/data_sync/`, not manual edits to generated files.
 
 ## World Script Paths
@@ -217,3 +217,4 @@ python3 -m pytest tools/tests/test_client_constants_boundary.py
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
 - Ship variants are planned but not implemented.
 - Toroidal wrapping is implemented and still needs manual gameplay smoke testing after related changes.
+

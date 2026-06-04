@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/lobby/multiplayer_dialog_status_presenter.gd")
 
 var main_menu: Control
@@ -44,3 +44,4 @@ func request_join_room(room_code: String) -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
+

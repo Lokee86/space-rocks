@@ -5,7 +5,7 @@ const DevConnectionService := preload("res://scripts/devtools/dev_connection_ser
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
 const PlayerDevLabelsContext := preload("res://scripts/devtools/player_labels/player_dev_labels_context.gd")
 const WorldTelemetryContext := preload("res://scripts/devtools/telemetry/world_telemetry_context.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var debug_flow
@@ -331,3 +331,4 @@ func handle_placement_result(result: Dictionary) -> void:
 	if dev_connection_service == null || !dev_connection_service.is_configured():
 		return
 	dev_connection_service.send_spawn_from_placement_result(result)
+

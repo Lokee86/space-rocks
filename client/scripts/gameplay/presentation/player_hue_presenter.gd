@@ -1,7 +1,7 @@
 extends RefCounted
 class_name PlayerHuePresenter
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const REMOTE_HUE_STEP := 0.12
 const PLAYER_COLOR_POLICY_LOCAL_SELECTED := "local_selected"
 const PLAYER_COLOR_POLICY_AUTO_DISTINCT := "auto_distinct"
@@ -116,3 +116,4 @@ func player_id_hash(player_id: String) -> int:
 	for index in range(player_id.length()):
 		hash_value = int((hash_value ^ player_id.unicode_at(index)) * 16777619) & 0x7fffffff
 	return hash_value
+

@@ -3,7 +3,7 @@ extends Control
 const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_model.gd")
 const LobbyPlayerListView := preload("res://scripts/ui/lobby/lobby_player_list_view.gd")
 const LobbyStatusViewModel := preload("res://scripts/ui/lobby/lobby_status_view_model.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 signal ready_requested(ready: bool)
 signal start_game_requested
@@ -89,3 +89,4 @@ func _on_start_game_pressed() -> void:
 
 func _on_leave_pressed() -> void:
 	leave_requested.emit()
+

@@ -82,7 +82,7 @@ shared/constants/client/lobby.toml
 Generated constants:
 
 ```text
-client/scripts/constants/constants.gd
+client/scripts/generated/constants/constants.gd
 services/game-server/internal/constants/constants.go
 ```
 
@@ -98,7 +98,7 @@ shared/packets/lobby.toml
 Generated packets:
 
 ```text
-client/scripts/networking/packets/packets.gd
+client/scripts/generated/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/entities/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
@@ -286,3 +286,4 @@ Notes:
 
 **<NOT >COMPLETED PROMPT X**
 ```
+

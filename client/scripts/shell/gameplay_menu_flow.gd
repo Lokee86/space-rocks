@@ -5,7 +5,7 @@ signal quit_to_main_menu_requested
 signal return_to_lobby_requested
 signal spectate_requested
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 
 const GAME_OVER_CONTAINER_PATH := "CenterContainer/GameOverContainer"
@@ -334,3 +334,4 @@ func _log_missing_live_pause_paths() -> void:
 func _log_missing_path(path: String, node) -> void:
 	if node == null:
 		ClientLogger.shell_error("GameplayMenuFlow missing expected HUD path: %s" % path)
+

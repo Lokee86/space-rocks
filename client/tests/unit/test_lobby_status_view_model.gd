@@ -1,6 +1,6 @@
 extends GutTest
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const LobbyStatusViewModel := preload("res://scripts/ui/lobby/lobby_status_view_model.gd")
 
 
@@ -14,3 +14,4 @@ func test_status_text_uses_local_player_id_for_owner_identity() -> void:
 	)
 
 	assert_eq(status, Constants.STATUS_READY_TO_START)
+

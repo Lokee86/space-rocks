@@ -43,7 +43,7 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
         "entities": "github.com/Lokee86/space-rocks/server/internal/game/entities",
     }
 
-    gds_output = schema.output_for_path("client/scripts/networking/packets/packets.gd")
+    gds_output = schema.output_for_path("client/scripts/generated/networking/packets/packets.gd")
     assert gds_output.language == "gdscript"
     assert gds_output.base == "RefCounted"
     assert "input_packet" in gds_output.builders
@@ -438,3 +438,4 @@ shoot = "bool"
 
     with pytest.raises(PacketTomlError):
         load_packet_schema_files((legacy,))
+

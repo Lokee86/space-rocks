@@ -114,7 +114,7 @@ def test_rich_gds_packet_type_ids_scopes_packet_type_constants() -> None:
     output = PacketOutput(
         id="client_packets",
         language="gdscript",
-        path="client/scripts/networking/packets/packets.gd",
+        path="client/scripts/generated/networking/packets/packets.gd",
         packet_type_ids=("input", "state"),
         builders=("input_packet",),
     )
@@ -136,9 +136,10 @@ def test_rich_gds_packet_type_ids_unknown_id_raises() -> None:
     output = PacketOutput(
         id="client_packets",
         language="gdscript",
-        path="client/scripts/networking/packets/packets.gd",
+        path="client/scripts/generated/networking/packets/packets.gd",
         packet_type_ids=("missing",),
     )
 
     with pytest.raises(RichGdsPacketGenerationError):
         render_gdscript_output(schema, output)
+

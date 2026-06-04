@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 var room_code := ""
 var room_state := ""
@@ -61,3 +61,4 @@ func all_members_ready() -> bool:
 
 func can_start_game() -> bool:
 	return is_local_owner() && all_members_ready()
+

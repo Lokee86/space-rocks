@@ -1,6 +1,6 @@
 extends GutTest
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const WorldWrap := preload("res://scripts/world/world_wrap.gd")
 
 
@@ -37,3 +37,4 @@ func test_visual_position_relative_to_keeps_cross_edge_target_near_reference() -
 		WorldWrap.visual_position_relative_to(Vector2(Constants.WORLD_WIDTH - 5.0, 100.0), Vector2(5.0, 100.0)),
 		Vector2(Constants.WORLD_WIDTH + 5.0, 100.0)
 	)
+

@@ -1,7 +1,7 @@
 extends GutTest
 
 const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
 
 
@@ -76,3 +76,4 @@ func test_read_preserves_server_sent_msec() -> void:
 	facts = GameplayStatePacketReader.read(state)
 
 	assert_eq(facts["server_sent_msec"], -1)
+

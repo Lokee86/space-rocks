@@ -1,6 +1,6 @@
 extends GutTest
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const VisualSyncPositions := preload("res://legacy/player_render/visual_sync_positions.gd")
 
 
@@ -31,3 +31,4 @@ func test_world_copy_mismatch_ignores_nearby_positions() -> void:
 			Vector2(140.0, 220.0)
 		)
 	)
+

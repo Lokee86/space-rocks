@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 static func room_code(packet: Dictionary) -> String:
@@ -31,3 +31,4 @@ static func members(packet: Dictionary) -> Array:
 
 static func member_player_id(member: Dictionary) -> String:
 	return str(member.get(Packets.FIELD_PLAYER_ID, ""))
+

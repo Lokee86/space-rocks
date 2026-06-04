@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 var connection_service = null
 var target_candidate_provider: Callable = Callable()
@@ -56,3 +56,4 @@ func deselect_target() -> void:
 		return
 
 	connection_service.send_packet(Packets.clear_target_request_packet())
+

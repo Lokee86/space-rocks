@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 static func input_packet(forward, back, right, left, shoot) -> Dictionary:
@@ -25,3 +25,4 @@ static func select_target_at_position_request_packet(x, y, target_kind, target_i
 
 static func clear_target_request_packet() -> Dictionary:
 	return Packets.clear_target_request_packet()
+

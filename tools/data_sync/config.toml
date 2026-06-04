@@ -39,7 +39,7 @@ owns = [
 ]
 
 [constants.gds]
-files = ["client/scripts/constants/constants.gd"]
+files = ["client/scripts/generated/constants/constants.gd"]
 sections = [
   "constants.server.world",
   "constants.client.presentation.background",
@@ -89,7 +89,7 @@ owns = []
 outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets"]
 
 [packets.gds]
-files = ["client/scripts/networking/packets/packets.gd"]
+files = ["client/scripts/generated/networking/packets/packets.gd"]
 sections = ["packets"]
 owns = []
 outputs = ["client_packets"]
