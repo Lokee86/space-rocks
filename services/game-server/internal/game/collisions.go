@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
@@ -19,8 +19,8 @@ type PlayerAsteroidCollision struct {
 }
 
 func detectProjectileAsteroidCollision(
-	bullet *entities.Bullet,
-	asteroid *entities.Asteroid,
+	bullet *runtime.Bullet,
+	asteroid *runtime.Asteroid,
 	catalog physics.CollisionShapeCatalog,
 ) (ProjectileAsteroidCollision, bool) {
 	bulletBody, ok := bullet.CollisionBody(catalog)
@@ -48,8 +48,8 @@ func detectProjectileAsteroidCollision(
 
 func detectPlayerAsteroidCollision(
 	playerID string,
-	player *entities.Ship,
-	asteroid *entities.Asteroid,
+	player *runtime.Ship,
+	asteroid *runtime.Asteroid,
 	catalog physics.CollisionShapeCatalog,
 ) (PlayerAsteroidCollision, bool) {
 	playerBody, ok := player.CollisionBody(catalog)

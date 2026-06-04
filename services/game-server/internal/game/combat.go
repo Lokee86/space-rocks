@@ -3,7 +3,7 @@ package game
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/damage"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/events"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
@@ -11,7 +11,7 @@ import (
 
 func (game *Game) handleBulletAsteroidCollisions() {
 	hitBullets := map[string]bool{}
-	hitAsteroids := map[string]*entities.Asteroid{}
+	hitAsteroids := map[string]*runtime.Asteroid{}
 	scoreAwards := []scoring.Award{}
 
 	for bulletID, bullet := range game.state.Projectiles {
@@ -62,8 +62,8 @@ func (game *Game) handleBulletAsteroidCollisions() {
 
 func projectileAsteroidDamageRequest(
 	collision ProjectileAsteroidCollision,
-	bullet *entities.Bullet,
-	asteroid *entities.Asteroid,
+	bullet *runtime.Bullet,
+	asteroid *runtime.Asteroid,
 ) damage.DamageRequest {
 	return damage.DamageRequest{
 		TargetEntityID:   collision.AsteroidID,
@@ -79,11 +79,11 @@ func projectileAsteroidDamageRequest(
 func (game *Game) recordProjectileAsteroidHit(
 	collision ProjectileAsteroidCollision,
 	bulletID string,
-	bullet *entities.Bullet,
+	bullet *runtime.Bullet,
 	asteroidID string,
-	asteroid *entities.Asteroid,
+	asteroid *runtime.Asteroid,
 	hitBullets map[string]bool,
-	hitAsteroids map[string]*entities.Asteroid,
+	hitAsteroids map[string]*runtime.Asteroid,
 	scoreAwards *[]scoring.Award,
 ) {
 	hitBullets[bulletID] = true
@@ -104,7 +104,7 @@ func (game *Game) recordProjectileAsteroidHit(
 
 func (game *Game) applyProjectileAsteroidHitConsequences(
 	hitBullets map[string]bool,
-	hitAsteroids map[string]*entities.Asteroid,
+	hitAsteroids map[string]*runtime.Asteroid,
 	scoreAwards []scoring.Award,
 ) {
 	for _, award := range scoreAwards {
@@ -127,7 +127,7 @@ func (game *Game) applyProjectileAsteroidHitConsequences(
 }
 
 func (game *Game) handleShipAsteroidCollisions() {
-	hitPlayers := map[string]*entities.Ship{}
+	hitPlayers := map[string]*runtime.Ship{}
 
 	for playerID, player := range game.state.Players {
 		if player.IsPendingDespawn() {
@@ -165,17 +165,17 @@ func (game *Game) handleShipAsteroidCollisions() {
 
 }
 
-func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *entities.Ship) {
+func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *runtime.Ship) {
 	game.applyFatalPlayerDamage(playerID, player)
 }
 
-func (game *Game) applyFatalPlayerDamage(playerID string, player *entities.Ship) {
+func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship) {
 	position := player.Position()
 	if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
 		cameraView.X = position.X
 		cameraView.Y = position.Y
 	} else {
-		game.cameraViews[playerID] = &entities.CameraView{
+		game.cameraViews[playerID] = &runtime.CameraView{
 			X:      position.X,
 			Y:      position.Y,
 			Config: player.Config,
@@ -224,8 +224,8 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *entities.Ship)
 func playerAsteroidDamageRequest(
 	collision PlayerAsteroidCollision,
 	asteroidID string,
-	player *entities.Ship,
-	asteroid *entities.Asteroid,
+	player *runtime.Ship,
+	asteroid *runtime.Asteroid,
 ) damage.DamageRequest {
 	return damage.DamageRequest{
 		TargetEntityID:   collision.PlayerID,

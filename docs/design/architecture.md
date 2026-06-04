@@ -139,7 +139,7 @@ Core server packages:
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
 - `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation and per-player participation classification.
 - `services/game-server/internal/game/scoring`: pure score policy evaluation. It converts scoring events into awards without mutating game sessions.
-- `services/game-server/internal/game/entities`: game entities and generated packet state structs.
+- `services/game-server/internal/game/runtime`: current runtime state/data-shape package that contains game runtime structs and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
 - `services/game-server/internal/constants`: generated Go constants from split constants SoT files under `shared/constants/`.
@@ -178,7 +178,7 @@ The server currently owns:
 
 `Game.Step()` is a same-package simulation coordinator in `services/game-server/internal/game/simulation.go`. It preserves authoritative phase order while routing player/session, asteroid, bullet, and collision phases through focused same-package helpers.
 
-Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`. The motion package imports entity types and spatial helpers, but it does not import `internal/game`, mutate `game.state` maps, spawn entities, delete entities, award score, resolve collisions, or write packets.
+Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`. The motion package imports runtime types and spatial helpers, but it does not import `internal/game`, mutate `game.state` maps, spawn entities, delete entities, award score, resolve collisions, or write packets.
 
 ### Spawn Planning
 
@@ -418,7 +418,7 @@ shared/packets/lobby.toml
 Generated packet files include:
 
 - `services/game-server/internal/game/packets.go`
-- `services/game-server/internal/game/entities/packets_generated.go`
+- `services/game-server/internal/game/runtime/packets_generated.go`
 - `services/game-server/internal/devtools/packets_generated.go`
 - `client/scripts/generated/networking/packets/packets.gd`
 

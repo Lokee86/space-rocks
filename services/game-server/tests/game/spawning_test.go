@@ -6,7 +6,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -16,7 +16,7 @@ func TestAsteroidSpawningUsesClientCameraView(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type: servergame.PacketTypeClientConfig,
-		Config: entities.ClientConfig{
+		Config: runtime.ClientConfig{
 			VisibleWorldWidth:  200,
 			VisibleWorldHeight: 200,
 		},
@@ -39,7 +39,7 @@ func TestAsteroidSpawningNearBoundaryStoresWrappedPosition(t *testing.T) {
 	})
 	scenario.send(playerID, servergame.ClientPacket{
 		Type: servergame.PacketTypeClientConfig,
-		Config: entities.ClientConfig{
+		Config: runtime.ClientConfig{
 			VisibleWorldWidth:  200,
 			VisibleWorldHeight: 200,
 		},

@@ -1,8 +1,8 @@
 [[outputs]]
 id = "server_entities_packets"
 language = "go"
-path = "services/game-server/internal/game/entities/packets_generated.go"
-package = "entities"
+path = "services/game-server/internal/game/runtime/packets_generated.go"
+package = "runtime"
 packet_type_ids = []
 structs = ["ClientConfig", "InputState", "ShipState", "AsteroidState", "BulletState"]
 
@@ -16,7 +16,7 @@ packet_type_ids = ["input", "client_config", "state", "bullet_blast", "ship_deat
 structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "PlayerPauseState", "StatePacket"]
 
 [outputs.imports]
-entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
+runtime = "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 player = "github.com/Lokee86/space-rocks/server/internal/game/player"
 
 [[outputs]]

@@ -40,7 +40,8 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
         assert required_struct in game_output.structs
     assert any(name in game_output.structs for name in ("RoomSnapshot", "CreateRoomRequest"))
     assert game_output.imports == {
-        "entities": "github.com/Lokee86/space-rocks/server/internal/game/entities",
+        "runtime": "github.com/Lokee86/space-rocks/server/internal/game/runtime",
+        "player": "github.com/Lokee86/space-rocks/server/internal/game/player",
     }
 
     gds_output = schema.output_for_path("client/scripts/generated/networking/packets/packets.gd")
@@ -65,7 +66,7 @@ def test_loads_migrated_structs_and_field_overrides(tmp_path: Path) -> None:
     assert fields["players"].type == "map"
     assert fields["players"].key_type == "string"
     assert fields["players"].value_type == "ShipState"
-    assert fields["players"].go_value_type == "entities.ShipState"
+    assert fields["players"].go_value_type == "runtime.ShipState"
     assert fields["events"].type == "array"
     assert fields["events"].item_type == "EventState"
     assert fields["self_id"].go_name == "SelfID"

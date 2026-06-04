@@ -1,6 +1,6 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/entities"
+import "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 
 func (game *Game) StatePacket(playerID string) StatePacket {
 	game.mu.Lock()
@@ -13,7 +13,7 @@ func (game *Game) StatePacket(playerID string) StatePacket {
 }
 
 func (game *Game) statePacket(playerID string) StatePacket {
-	players := make(map[string]entities.ShipState, len(game.state.Players))
+	players := make(map[string]runtime.ShipState, len(game.state.Players))
 	for id, player := range game.state.Players {
 		players[id] = player.State()
 	}
@@ -24,12 +24,12 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	}
 	playerWorldStates := game.playerWorldStatesLocked()
 
-	asteroids := make(map[string]entities.AsteroidState, len(game.state.Asteroids))
+	asteroids := make(map[string]runtime.AsteroidState, len(game.state.Asteroids))
 	for id, asteroid := range game.state.Asteroids {
 		asteroids[id] = asteroid.State()
 	}
 
-	bullets := make(map[string]entities.BulletState, len(game.state.Projectiles))
+	bullets := make(map[string]runtime.BulletState, len(game.state.Projectiles))
 	for id, bullet := range game.state.Projectiles {
 		bullets[id] = bullet.State()
 	}

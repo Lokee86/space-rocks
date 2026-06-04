@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -44,7 +44,7 @@ func TestPlayerCrossingLeftEdgeWrapsToRight(t *testing.T) {
 func TestAsteroidCrossingEdgeWraps(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
-	scenario.addCameraView("observer", physics.Vector2{X: 5, Y: 100}, entities.ClientConfig{
+	scenario.addCameraView("observer", physics.Vector2{X: 5, Y: 100}, runtime.ClientConfig{
 		VisibleWorldWidth:  400,
 		VisibleWorldHeight: 400,
 	})
@@ -69,7 +69,7 @@ func TestAsteroidCrossingEdgeWraps(t *testing.T) {
 func TestBulletCrossingEdgeWraps(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
-	scenario.addCameraView("observer", physics.Vector2{X: 5, Y: 100}, entities.ClientConfig{
+	scenario.addCameraView("observer", physics.Vector2{X: 5, Y: 100}, runtime.ClientConfig{
 		VisibleWorldWidth:  400,
 		VisibleWorldHeight: 400,
 	})

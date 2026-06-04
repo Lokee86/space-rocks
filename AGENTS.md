@@ -100,7 +100,7 @@ Generated packets:
 ```text
 client/scripts/generated/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
-services/game-server/internal/game/entities/packets_generated.go
+services/game-server/internal/game/runtime/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
 ```
 
@@ -201,7 +201,7 @@ Server gameplay:
 - `services/game-server/internal/game/spawning/`
 - `services/game-server/internal/game/scoring/`
 - `services/game-server/internal/game/scoring.go`
-- `services/game-server/internal/game/entities/`
+- `services/game-server/internal/game/runtime/`
 
 Rooms/networking:
 

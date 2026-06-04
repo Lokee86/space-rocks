@@ -12,7 +12,7 @@ Use this skill for work involving:
 - `shared/packets/lobby.toml`
 - `client/scripts/networking/packets/packets.gd`
 - `services/game-server/internal/game/packets.go`
-- `services/game-server/internal/game/entities/packets_generated.go`
+- `services/game-server/internal/game/runtime/packets_generated.go`
 - `services/game-server/internal/devtools/packets_generated.go`
 - `services/game-server/internal/protocol/packetcodec/`
 - `client/scripts/networking/packet_codec/packet_codec.gd`
@@ -35,7 +35,7 @@ Generated packet outputs:
 ```text
 client/scripts/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
-services/game-server/internal/game/entities/packets_generated.go
+services/game-server/internal/game/runtime/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
 ```
 
@@ -75,19 +75,19 @@ Packet pull is intentionally unsupported. Packet schema changes should be made i
 Validate shared packets:
 
 ```bash
-python3 tools/data_sync/main.py -validate -packets
+data-sync -validate -packets
 ```
 
 Preview shared packet generated output:
 
 ```bash
-python3 tools/data_sync/main.py -diff -packets -go -gds
+data-sync -diff -packets -go -gds
 ```
 
 Apply shared packet generated output:
 
 ```bash
-python3 tools/data_sync/main.py -push -packets -go -gds
+data-sync -push -packets -go -gds
 ```
 
 Run server tests:

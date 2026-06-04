@@ -6,7 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -523,7 +523,7 @@ func TestDebugFrozenWorldDoesNotSpawnBullets(t *testing.T) {
 	})
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Shoot: true},
+		Input: runtime.InputState{Shoot: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 

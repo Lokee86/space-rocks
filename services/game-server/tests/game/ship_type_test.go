@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 )
 
 func TestNewShipsDefaultToDefaultShipTypeID(t *testing.T) {
@@ -13,8 +13,8 @@ func TestNewShipsDefaultToDefaultShipTypeID(t *testing.T) {
 	playerID := scenario.addPlayer()
 
 	ship := scenario.player(playerID)
-	if ship.ShipTypeID != entities.DefaultShipTypeID {
-		t.Fatalf("expected new ship type %q, got %q", entities.DefaultShipTypeID, ship.ShipTypeID)
+	if ship.ShipTypeID != runtime.DefaultShipTypeID {
+		t.Fatalf("expected new ship type %q, got %q", runtime.DefaultShipTypeID, ship.ShipTypeID)
 	}
 }
 
@@ -23,8 +23,8 @@ func TestNewPlayerSessionDefaultsToDefaultShipTypeID(t *testing.T) {
 	playerID := scenario.addPlayer()
 
 	shipTypeID := scenario.sessionField(playerID, "ShipTypeID").String()
-	if shipTypeID != entities.DefaultShipTypeID {
-		t.Fatalf("expected new session ship type %q, got %q", entities.DefaultShipTypeID, shipTypeID)
+	if shipTypeID != runtime.DefaultShipTypeID {
+		t.Fatalf("expected new session ship type %q, got %q", runtime.DefaultShipTypeID, shipTypeID)
 	}
 }
 
@@ -44,7 +44,7 @@ func TestSessionCreatedShipsCopySessionShipTypeID(t *testing.T) {
 }
 
 func TestShipStateIncludesShipType(t *testing.T) {
-	ship := entities.Ship{
+	ship := runtime.Ship{
 		ID:         "player-1",
 		ShipTypeID: "test_ship",
 	}
@@ -64,7 +64,7 @@ func TestShipStateIncludesShipType(t *testing.T) {
 }
 
 func TestShipStateShipTypeEqualsShipTypeID(t *testing.T) {
-	ship := entities.Ship{
+	ship := runtime.Ship{
 		ID:         "player-1",
 		ShipTypeID: "test_ship",
 	}

@@ -5,7 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -387,7 +387,7 @@ func TestShipAsteroidCollisionKillsAfterInvulnerabilityExpires(t *testing.T) {
 
 func TestAsteroidVisibilityUsesCameraViewsWithoutPlayer(t *testing.T) {
 	scenario := newScenario(t)
-	scenario.addCameraView("player-1", physics.Vector2{X: 100, Y: 100}, entities.ClientConfig{
+	scenario.addCameraView("player-1", physics.Vector2{X: 100, Y: 100}, runtime.ClientConfig{
 		VisibleWorldWidth:  200,
 		VisibleWorldHeight: 200,
 	})

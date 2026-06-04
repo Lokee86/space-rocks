@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -48,7 +48,7 @@ func (scenario *scenario) state(playerID string) servergame.StatePacket {
 	return scenario.game.StatePacket(playerID)
 }
 
-func (scenario *scenario) playerState(viewerID string, playerID string) entities.ShipState {
+func (scenario *scenario) playerState(viewerID string, playerID string) runtime.ShipState {
 	scenario.t.Helper()
 
 	packet := scenario.state(viewerID)
@@ -117,21 +117,21 @@ func (scenario *scenario) useBulletCapsuleAsteroidPolygonCollisions() {
 func (scenario *scenario) placeAsteroid(id string, position physics.Vector2, size int) {
 	scenario.t.Helper()
 
-	asteroid := entities.NewAsteroid(id, position, physics.Vector2{}, size, 0)
+	asteroid := runtime.NewAsteroid(id, position, physics.Vector2{}, size, 0)
 	scenario.asteroids().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(asteroid))
 }
 
 func (scenario *scenario) placeMovingAsteroid(id string, position physics.Vector2, velocity physics.Vector2, size int) {
 	scenario.t.Helper()
 
-	asteroid := entities.NewAsteroid(id, position, velocity, size, 0)
+	asteroid := runtime.NewAsteroid(id, position, velocity, size, 0)
 	scenario.asteroids().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(asteroid))
 }
 
-func (scenario *scenario) addCameraView(id string, position physics.Vector2, config entities.ClientConfig) {
+func (scenario *scenario) addCameraView(id string, position physics.Vector2, config runtime.ClientConfig) {
 	scenario.t.Helper()
 
-	scenario.gameField("cameraViews").SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(&entities.CameraView{
+	scenario.gameField("cameraViews").SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(&runtime.CameraView{
 		X:      position.X,
 		Y:      position.Y,
 		Config: config,
@@ -141,7 +141,7 @@ func (scenario *scenario) addCameraView(id string, position physics.Vector2, con
 func (scenario *scenario) placeBullet(id string, ownerID string, position physics.Vector2, velocity physics.Vector2) {
 	scenario.t.Helper()
 
-	bullet := entities.NewBullet(id, ownerID, position, 0, velocity, entities.DefaultShipStats().BulletLifetime)
+	bullet := runtime.NewBullet(id, ownerID, position, 0, velocity, runtime.DefaultShipStats().BulletLifetime)
 	scenario.bullets().SetMapIndex(reflect.ValueOf(id), reflect.ValueOf(bullet))
 }
 
@@ -268,7 +268,7 @@ func (scenario *scenario) asteroidPendingDespawn(id string) bool {
 		scenario.t.Fatalf("expected asteroid %q", id)
 	}
 
-	return asteroid.Interface().(*entities.Asteroid).PendingDespawn
+	return asteroid.Interface().(*runtime.Asteroid).PendingDespawn
 }
 
 func (scenario *scenario) asteroidExists(id string) bool {
@@ -285,7 +285,7 @@ func (scenario *scenario) setAsteroidHealth(id string, health int) {
 		scenario.t.Fatalf("expected asteroid %q", id)
 	}
 
-	asteroid.Interface().(*entities.Asteroid).Health = health
+	asteroid.Interface().(*runtime.Asteroid).Health = health
 }
 
 func (scenario *scenario) asteroidHealth(id string) int {
@@ -296,7 +296,7 @@ func (scenario *scenario) asteroidHealth(id string) int {
 		scenario.t.Fatalf("expected asteroid %q", id)
 	}
 
-	return asteroid.Interface().(*entities.Asteroid).Health
+	return asteroid.Interface().(*runtime.Asteroid).Health
 }
 
 func (scenario *scenario) bulletPendingDespawn(id string) bool {
@@ -311,7 +311,7 @@ func (scenario *scenario) bulletLife(id string) float64 {
 	return scenario.bullet(id).Life
 }
 
-func (scenario *scenario) bullet(id string) *entities.Bullet {
+func (scenario *scenario) bullet(id string) *runtime.Bullet {
 	scenario.t.Helper()
 
 	bullet := scenario.bullets().MapIndex(reflect.ValueOf(id))
@@ -319,7 +319,7 @@ func (scenario *scenario) bullet(id string) *entities.Bullet {
 		scenario.t.Fatalf("expected bullet %q", id)
 	}
 
-	return bullet.Interface().(*entities.Bullet)
+	return bullet.Interface().(*runtime.Bullet)
 }
 
 func (scenario *scenario) playerInvincible(playerID string) bool {
@@ -379,7 +379,7 @@ func (scenario *scenario) worldSimulationOptionBool(fieldName string) bool {
 	return scenario.gameField("worldSimulationOptions").FieldByName(fieldName).Bool()
 }
 
-func (scenario *scenario) player(playerID string) *entities.Ship {
+func (scenario *scenario) player(playerID string) *runtime.Ship {
 	scenario.t.Helper()
 
 	player := scenario.players().MapIndex(reflect.ValueOf(playerID))
@@ -387,7 +387,7 @@ func (scenario *scenario) player(playerID string) *entities.Ship {
 		scenario.t.Fatalf("expected player %q", playerID)
 	}
 
-	return player.Interface().(*entities.Ship)
+	return player.Interface().(*runtime.Ship)
 }
 
 func (scenario *scenario) players() reflect.Value {

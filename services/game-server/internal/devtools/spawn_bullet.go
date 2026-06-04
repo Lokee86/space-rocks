@@ -2,7 +2,7 @@ package devtools
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
@@ -15,7 +15,7 @@ func debugBulletDirection(target *game.Game, request SpawnEntityRequest) physics
 	return request.DirectionOr(target.DevtoolsRandomUnitVector())
 }
 
-func applyDebugSpawnBullet(target *game.Game, ownerID string, request SpawnEntityRequest) (*entities.Bullet, bool) {
+func applyDebugSpawnBullet(target *game.Game, ownerID string, request SpawnEntityRequest) (*runtime.Bullet, bool) {
 	if target == nil || ownerID == "" {
 		return nil, false
 	}

@@ -4,7 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 )
@@ -24,7 +24,7 @@ func buildDebugAsteroidSpawnPlan(target *game.Game, request SpawnEntityRequest) 
 	}
 }
 
-func applyDebugSpawnAsteroid(target *game.Game, request SpawnEntityRequest) (*entities.Asteroid, spawning.AsteroidSpawnPlan, bool) {
+func applyDebugSpawnAsteroid(target *game.Game, request SpawnEntityRequest) (*runtime.Asteroid, spawning.AsteroidSpawnPlan, bool) {
 	if target == nil {
 		return nil, spawning.AsteroidSpawnPlan{}, false
 	}

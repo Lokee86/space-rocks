@@ -3,7 +3,7 @@ package game
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -13,7 +13,7 @@ func TestDevtoolsForceRespawnPlayerCreatesCameraViewWithDummyConfig(t *testing.T
 	spawnPosition := physics.Vector2{X: 320, Y: 420}
 
 	session := newPlayerSession(playerID, spawnPosition)
-	session.Config = entities.ClientConfig{
+	session.Config = runtime.ClientConfig{
 		VisibleWorldWidth:  640,
 		VisibleWorldHeight: 360,
 	}

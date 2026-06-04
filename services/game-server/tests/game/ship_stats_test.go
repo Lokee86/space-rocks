@@ -7,13 +7,13 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func TestDefaultShipTypeResolvesBaselineEffectiveStats(t *testing.T) {
-	stats := entities.ResolveShipStats(entities.DefaultShipTypeID)
+	stats := runtime.ResolveShipStats(runtime.DefaultShipTypeID)
 
 	if stats.RotationSpeed != constants.PlayerRotationSpeed {
 		t.Fatalf("expected effective rotation speed %v, got %v", constants.PlayerRotationSpeed, stats.RotationSpeed)
@@ -39,13 +39,13 @@ func TestDefaultShipTypeResolvesBaselineEffectiveStats(t *testing.T) {
 	if stats.BulletSpawnOffset != constants.BulletSpawnOffset {
 		t.Fatalf("expected effective bullet spawn offset %v, got %v", constants.BulletSpawnOffset, stats.BulletSpawnOffset)
 	}
-	if stats.CollisionShapeID != entities.DefaultShipTypeID {
-		t.Fatalf("expected effective collision shape ID %q, got %q", entities.DefaultShipTypeID, stats.CollisionShapeID)
+	if stats.CollisionShapeID != runtime.DefaultShipTypeID {
+		t.Fatalf("expected effective collision shape ID %q, got %q", runtime.DefaultShipTypeID, stats.CollisionShapeID)
 	}
 }
 
 func TestDefaultShipStatModifiersAreNeutral(t *testing.T) {
-	modifiers := entities.DefaultShipStatModifiers()
+	modifiers := runtime.DefaultShipStatModifiers()
 
 	if modifiers.RotationSpeed != 1.0 {
 		t.Fatalf("expected rotation speed modifier 1.0, got %v", modifiers.RotationSpeed)
@@ -77,23 +77,23 @@ func TestDefaultShipStatModifiersAreNeutral(t *testing.T) {
 }
 
 func TestResolveShipStatModifiersFallsBackToDefaultModifiers(t *testing.T) {
-	defaultModifiers := entities.DefaultShipStatModifiers()
+	defaultModifiers := runtime.DefaultShipStatModifiers()
 
-	if modifiers := entities.ResolveShipStatModifiers(entities.DefaultShipTypeID); modifiers != defaultModifiers {
+	if modifiers := runtime.ResolveShipStatModifiers(runtime.DefaultShipTypeID); modifiers != defaultModifiers {
 		t.Fatalf("expected default ship modifiers %#v, got %#v", defaultModifiers, modifiers)
 	}
-	if modifiers := entities.ResolveShipStatModifiers("unknown_ship"); modifiers != defaultModifiers {
+	if modifiers := runtime.ResolveShipStatModifiers("unknown_ship"); modifiers != defaultModifiers {
 		t.Fatalf("expected unknown ship type to resolve default modifiers %#v, got %#v", defaultModifiers, modifiers)
 	}
 }
 
 func TestResolveShipStatsFallsBackToDefaultEffectiveStats(t *testing.T) {
-	defaultStats := entities.DefaultShipStats()
+	defaultStats := runtime.DefaultShipStats()
 
-	if stats := entities.ResolveShipStats(entities.DefaultShipTypeID); stats != defaultStats {
+	if stats := runtime.ResolveShipStats(runtime.DefaultShipTypeID); stats != defaultStats {
 		t.Fatalf("expected default effective stats %#v, got %#v", defaultStats, stats)
 	}
-	if stats := entities.ResolveShipStats("unknown_ship"); stats != defaultStats {
+	if stats := runtime.ResolveShipStats("unknown_ship"); stats != defaultStats {
 		t.Fatalf("expected unknown ship type to resolve default effective stats %#v, got %#v", defaultStats, stats)
 	}
 }
@@ -102,16 +102,16 @@ func TestNewPlayerSessionCarriesResolvedDefaultStats(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	stats := scenario.sessionField(playerID, "Stats").Interface().(entities.ShipStats)
-	if stats != entities.DefaultShipStats() {
-		t.Fatalf("expected session default stats %#v, got %#v", entities.DefaultShipStats(), stats)
+	stats := scenario.sessionField(playerID, "Stats").Interface().(runtime.ShipStats)
+	if stats != runtime.DefaultShipStats() {
+		t.Fatalf("expected session default stats %#v, got %#v", runtime.DefaultShipStats(), stats)
 	}
 }
 
 func TestSessionCreatedShipsCopySessionStats(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
-	customStats := entities.DefaultShipStats()
+	customStats := runtime.DefaultShipStats()
 	customStats.MaxSpeed = 1234
 	scenario.sessionField(playerID, "Stats").Set(reflect.ValueOf(customStats))
 	scenario.removePlayerEntity(playerID)
@@ -125,14 +125,14 @@ func TestSessionCreatedShipsCopySessionStats(t *testing.T) {
 }
 
 func TestShipMovementUsesShipStatsValues(t *testing.T) {
-	ship := entities.Ship{
-		Stats: entities.ShipStats{
+	ship := runtime.Ship{
+		Stats: runtime.ShipStats{
 			RotationSpeed: 3,
 			ThrustForce:   10,
 			MaxSpeed:      1000,
 			Damping:       1,
 		},
-		Input: entities.InputState{
+		Input: runtime.InputState{
 			Right:   true,
 			Forward: true,
 		},
@@ -153,8 +153,8 @@ func TestShipMovementUsesShipStatsValues(t *testing.T) {
 }
 
 func TestShootCooldownUsesShipStatsBulletCooldown(t *testing.T) {
-	ship := entities.Ship{
-		Stats: entities.ShipStats{
+	ship := runtime.Ship{
+		Stats: runtime.ShipStats{
 			BulletCooldown: 0.77,
 		},
 	}
@@ -179,7 +179,7 @@ func TestSpawnedBulletUsesShipStats(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Shoot: true},
+		Input: runtime.InputState{Shoot: true},
 	})
 	scenario.step(0)
 

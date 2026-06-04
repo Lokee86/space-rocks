@@ -6,14 +6,14 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func TestDefaultShipCollisionShapeIDResolves(t *testing.T) {
 	catalog := testShipCollisionCatalog()
 
-	shape, err := catalog.ShipShapeByID(entities.DefaultShipStats().CollisionShapeID)
+	shape, err := catalog.ShipShapeByID(runtime.DefaultShipStats().CollisionShapeID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,9 +23,9 @@ func TestDefaultShipCollisionShapeIDResolves(t *testing.T) {
 
 func TestDefaultShipCollisionBodyMatchesDefaultShape(t *testing.T) {
 	catalog := testShipCollisionCatalog()
-	ship := entities.Ship{
+	ship := runtime.Ship{
 		ID:       "player-1",
-		Stats:    entities.DefaultShipStats(),
+		Stats:    runtime.DefaultShipStats(),
 		X:        10,
 		Y:        20,
 		Rotation: 1.5,
@@ -54,9 +54,9 @@ func TestDefaultShipCollisionBodyMatchesDefaultShape(t *testing.T) {
 
 func TestShipCollisionBodyFallsBackForUnknownCollisionShapeID(t *testing.T) {
 	catalog := testShipCollisionCatalog()
-	ship := entities.Ship{
+	ship := runtime.Ship{
 		ID: "player-1",
-		Stats: entities.ShipStats{
+		Stats: runtime.ShipStats{
 			CollisionShapeID: "unknown_ship",
 		},
 	}
@@ -75,7 +75,7 @@ func TestRespawnSafetyFallsBackForUnknownSessionCollisionShapeID(t *testing.T) {
 	playerID := scenario.addPlayer()
 	scenario.removePlayerEntity(playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{}, 1)
-	stats := entities.DefaultShipStats()
+	stats := runtime.DefaultShipStats()
 	stats.CollisionShapeID = "unknown_ship"
 	scenario.sessionField(playerID, "Stats").Set(reflect.ValueOf(stats))
 

@@ -1,4 +1,4 @@
-package entities
+package runtime
 
 import "github.com/Lokee86/space-rocks/server/internal/constants"
 

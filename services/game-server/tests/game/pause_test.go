@@ -5,12 +5,12 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func TestSuspensionStateReflectsPauseAndFreeze(t *testing.T) {
-	state := entities.SuspensionState{}
+	state := runtime.SuspensionState{}
 	if state.IsSuspended() {
 		t.Fatal("expected state without pause or freeze to be active")
 	}
@@ -28,7 +28,7 @@ func TestSuspensionStateReflectsPauseAndFreeze(t *testing.T) {
 }
 
 func TestPausedAndFrozenSuspensionRequiresBothCausesCleared(t *testing.T) {
-	state := entities.SuspensionState{}
+	state := runtime.SuspensionState{}
 	state.SetPaused(true)
 	state.SetDevFrozen(true)
 
@@ -62,7 +62,7 @@ func TestPauseRequestToggleClearsInputAndIgnoresNewInput(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Forward: true, Shoot: true},
+		Input: runtime.InputState{Forward: true, Shoot: true},
 	})
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 
@@ -76,7 +76,7 @@ func TestPauseRequestToggleClearsInputAndIgnoresNewInput(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Forward: true, Shoot: true},
+		Input: runtime.InputState{Forward: true, Shoot: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
@@ -179,7 +179,7 @@ func TestFreshPlayerAcceptsInputAndMoves(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Forward: true},
+		Input: runtime.InputState{Forward: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
@@ -202,7 +202,7 @@ func TestFreshPlayerCanShoot(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Shoot: true},
+		Input: runtime.InputState{Shoot: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
@@ -220,7 +220,7 @@ func TestPausedPlayerDoesNotMoveOrShoot(t *testing.T) {
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Forward: true, Shoot: true},
+		Input: runtime.InputState{Forward: true, Shoot: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
@@ -255,7 +255,7 @@ func TestPauseRequestSecondToggleResumesWithInvulnerabilityAndAllowsShooting(t *
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: entities.InputState{Shoot: true},
+		Input: runtime.InputState{Shoot: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 

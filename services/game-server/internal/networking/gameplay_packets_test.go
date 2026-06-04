@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
@@ -20,7 +20,7 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, spawnPosition) {
 		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
 	}
-	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, spawnPosition, entities.ClientConfig{
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, spawnPosition, runtime.ClientConfig{
 		VisibleWorldWidth:  1920,
 		VisibleWorldHeight: 1080,
 	}) {
@@ -34,7 +34,7 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 
 	packet := game.ClientPacket{
 		Type: game.PacketTypeClientConfig,
-		Config: entities.ClientConfig{
+		Config: runtime.ClientConfig{
 			VisibleWorldWidth:  640,
 			VisibleWorldHeight: 360,
 		},
@@ -77,7 +77,7 @@ func (a gameplayPacketTestAdapter) EnqueuePlayerPauseState() {
 	a.session.EnqueuePlayerPauseState()
 }
 
-func cameraViewConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID string) entities.ClientConfig {
+func cameraViewConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID string) runtime.ClientConfig {
 	t.Helper()
 
 	cameraViews := exportedFieldValue(t, gameInstance, "cameraViews")
@@ -89,7 +89,7 @@ func cameraViewConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID s
 	return clientConfigFieldValue(t, cameraView)
 }
 
-func playerSessionConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID string) entities.ClientConfig {
+func playerSessionConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID string) runtime.ClientConfig {
 	t.Helper()
 
 	playerSessions := exportedFieldValue(t, gameInstance, "playerSessions")
@@ -119,12 +119,12 @@ func mapValueForKey(t *testing.T, mapValue reflect.Value, key string) reflect.Va
 	return value
 }
 
-func clientConfigFieldValue(t *testing.T, value reflect.Value) entities.ClientConfig {
+func clientConfigFieldValue(t *testing.T, value reflect.Value) runtime.ClientConfig {
 	t.Helper()
 
 	if value.Kind() == reflect.Pointer {
 		value = value.Elem()
 	}
 	field := value.FieldByName("Config")
-	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface().(entities.ClientConfig)
+	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface().(runtime.ClientConfig)
 }

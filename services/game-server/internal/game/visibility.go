@@ -5,12 +5,12 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
 
-func (game *Game) randomAsteroidSpawnPosition(targetView *entities.CameraView) physics.Vector2 {
+func (game *Game) randomAsteroidSpawnPosition(targetView *runtime.CameraView) physics.Vector2 {
 	margin := constants.AsteroidSpawnMargin
 	for attempts := 0; ; attempts++ {
 		spawn := randomOffscreenPosition(targetView, margin)
@@ -24,7 +24,7 @@ func (game *Game) randomAsteroidSpawnPosition(targetView *entities.CameraView) p
 	}
 }
 
-func randomOffscreenPosition(view *entities.CameraView, margin float64) physics.Vector2 {
+func randomOffscreenPosition(view *runtime.CameraView, margin float64) physics.Vector2 {
 	width := view.VisibleWorldWidth()
 	height := view.VisibleWorldHeight()
 	left := view.X - width*0.5
@@ -60,7 +60,7 @@ func (game *Game) isOnscreenForAnyCamera(position physics.Vector2) bool {
 	return false
 }
 
-func (game *Game) isAsteroidFarFromAllCameras(asteroid *entities.Asteroid) bool {
+func (game *Game) isAsteroidFarFromAllCameras(asteroid *runtime.Asteroid) bool {
 	if !game.hasCameraViews() {
 		return true
 	}
@@ -74,7 +74,7 @@ func (game *Game) isAsteroidFarFromAllCameras(asteroid *entities.Asteroid) bool 
 	return true
 }
 
-func (game *Game) isBulletFarFromAllCameras(bullet *entities.Bullet) bool {
+func (game *Game) isBulletFarFromAllCameras(bullet *runtime.Bullet) bool {
 	if !game.hasCameraViews() {
 		return true
 	}
@@ -92,13 +92,13 @@ func (game *Game) hasCameraViews() bool {
 	return len(game.cameraViews) > 0
 }
 
-func isInsideCameraView(view *entities.CameraView, position physics.Vector2) bool {
+func isInsideCameraView(view *runtime.CameraView, position physics.Vector2) bool {
 	delta := space.Delta(view.Position(), position)
 	return math.Abs(delta.X) <= view.VisibleWorldWidth()*0.5 &&
 		math.Abs(delta.Y) <= view.VisibleWorldHeight()*0.5
 }
 
-func isFarFromCameraView(view *entities.CameraView, position physics.Vector2) bool {
+func isFarFromCameraView(view *runtime.CameraView, position physics.Vector2) bool {
 	delta := space.Delta(view.Position(), position)
 	return math.Abs(delta.X) > view.VisibleWorldWidth()*0.5+constants.AsteroidDespawnMargin ||
 		math.Abs(delta.Y) > view.VisibleWorldHeight()*0.5+constants.AsteroidDespawnMargin

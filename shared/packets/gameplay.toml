@@ -10,13 +10,13 @@ type = "string"
 name = "input"
 json = "input"
 type = "InputState"
-go_type = "entities.InputState"
+go_type = "runtime.InputState"
 
 [[structs.fields]]
 name = "config"
 json = "config"
 type = "ClientConfig"
-go_type = "entities.ClientConfig"
+go_type = "runtime.ClientConfig"
 
 [[structs.fields]]
 name = "room_code"
@@ -311,6 +311,61 @@ json = "paused"
 type = "bool"
 
 [[structs]]
+id = "WorldState"
+
+[[structs.fields]]
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+name = "status"
+json = "status"
+type = "string"
+
+[[structs.fields]]
+name = "has_active_ship"
+go_name = "HasActiveShip"
+json = "has_active_ship"
+type = "bool"
+
+[[structs.fields]]
+name = "targetable"
+json = "targetable"
+type = "bool"
+
+[[structs.fields]]
+name = "damageable"
+json = "damageable"
+type = "bool"
+
+[[structs.fields]]
+name = "collidable"
+json = "collidable"
+type = "bool"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+name = "lives"
+json = "lives"
+type = "int"
+
+[[structs.fields]]
+name = "respawn_cooldown"
+go_name = "RespawnCooldown"
+json = "respawn_cooldown"
+type = "float"
+
+[[structs]]
 id = "StatePacket"
 
 [[structs.fields]]
@@ -335,7 +390,7 @@ json = "players"
 type = "map"
 key_type = "string"
 value_type = "ShipState"
-go_value_type = "entities.ShipState"
+go_value_type = "runtime.ShipState"
 
 [[structs.fields]]
 name = "player_lifecycle"
@@ -361,7 +416,7 @@ json = "bullets"
 type = "map"
 key_type = "string"
 value_type = "BulletState"
-go_value_type = "entities.BulletState"
+go_value_type = "runtime.BulletState"
 
 [[structs.fields]]
 name = "asteroids"
@@ -369,7 +424,7 @@ json = "asteroids"
 type = "map"
 key_type = "string"
 value_type = "AsteroidState"
-go_value_type = "entities.AsteroidState"
+go_value_type = "runtime.AsteroidState"
 
 [[structs.fields]]
 name = "total_asteroids"

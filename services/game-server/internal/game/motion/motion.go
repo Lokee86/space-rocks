@@ -3,16 +3,16 @@ package motion
 import (
 	"math"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
 
-func StepShip(ship *entities.Ship, delta float64) {
+func StepShip(ship *runtime.Ship, delta float64) {
 	StepShipWithMovePolicy(ship, delta, true)
 }
 
-func StepShipWithMovePolicy(ship *entities.Ship, delta float64, canMove bool) {
+func StepShipWithMovePolicy(ship *runtime.Ship, delta float64, canMove bool) {
 	if ship.PendingDespawn {
 		ship.DespawnDelay -= delta
 		return
@@ -45,21 +45,21 @@ func StepShipWithMovePolicy(ship *entities.Ship, delta float64, canMove bool) {
 	ship.Y += ship.Velocity.Y * delta
 }
 
-func AdvanceShip(ship *entities.Ship, delta float64, bounds space.Bounds) {
+func AdvanceShip(ship *runtime.Ship, delta float64, bounds space.Bounds) {
 	StepShip(ship, delta)
 	wrapped := normalizePosition(ship.Position(), bounds)
 	ship.X = wrapped.X
 	ship.Y = wrapped.Y
 }
 
-func AdvanceShipWithMovePolicy(ship *entities.Ship, delta float64, bounds space.Bounds, canMove bool) {
+func AdvanceShipWithMovePolicy(ship *runtime.Ship, delta float64, bounds space.Bounds, canMove bool) {
 	StepShipWithMovePolicy(ship, delta, canMove)
 	wrapped := normalizePosition(ship.Position(), bounds)
 	ship.X = wrapped.X
 	ship.Y = wrapped.Y
 }
 
-func StepAsteroid(asteroid *entities.Asteroid, delta float64) {
+func StepAsteroid(asteroid *runtime.Asteroid, delta float64) {
 	if asteroid.PendingDespawn {
 		asteroid.DespawnDelay -= delta
 		return
@@ -69,14 +69,14 @@ func StepAsteroid(asteroid *entities.Asteroid, delta float64) {
 	asteroid.Y += asteroid.Velocity.Y * delta
 }
 
-func AdvanceAsteroid(asteroid *entities.Asteroid, delta float64, bounds space.Bounds) {
+func AdvanceAsteroid(asteroid *runtime.Asteroid, delta float64, bounds space.Bounds) {
 	StepAsteroid(asteroid, delta)
 	wrapped := normalizePosition(asteroid.Position(), bounds)
 	asteroid.X = wrapped.X
 	asteroid.Y = wrapped.Y
 }
 
-func StepBullet(bullet *entities.Bullet, delta float64) {
+func StepBullet(bullet *runtime.Bullet, delta float64) {
 	if bullet.PendingDespawn {
 		bullet.DespawnDelay -= delta
 		return
@@ -87,7 +87,7 @@ func StepBullet(bullet *entities.Bullet, delta float64) {
 	bullet.Life -= delta
 }
 
-func AdvanceBullet(bullet *entities.Bullet, delta float64, bounds space.Bounds) {
+func AdvanceBullet(bullet *runtime.Bullet, delta float64, bounds space.Bounds) {
 	StepBullet(bullet, delta)
 	wrapped := normalizePosition(bullet.Position(), bounds)
 	bullet.X = wrapped.X

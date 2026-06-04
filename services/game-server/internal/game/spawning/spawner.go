@@ -6,7 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
@@ -48,13 +48,13 @@ func (spawner *Spawner) NextBulletID() string {
 	return fmt.Sprintf("bullet-%d", spawner.nextBulletID)
 }
 
-func (spawner *Spawner) BuildBullet(ship *entities.Ship) *entities.Bullet {
+func (spawner *Spawner) BuildBullet(ship *runtime.Ship) *runtime.Bullet {
 	forward := ship.Forward()
 	spawnPosition := ship.Position().Add(forward.Multiply(ship.Stats.BulletSpawnOffset))
 	velocity := forward.Multiply(ship.Stats.BulletSpeed)
 	bulletID := spawner.NextBulletID()
 
-	return entities.NewBullet(
+	return runtime.NewBullet(
 		bulletID,
 		ship.ID,
 		spawnPosition,
@@ -64,7 +64,7 @@ func (spawner *Spawner) BuildBullet(ship *entities.Ship) *entities.Bullet {
 	)
 }
 
-func (spawner *Spawner) NextAsteroidID(existing map[string]*entities.Asteroid) string {
+func (spawner *Spawner) NextAsteroidID(existing map[string]*runtime.Asteroid) string {
 	for {
 		spawner.nextAsteroidID++
 		asteroidID := fmt.Sprintf("asteroid-%d", spawner.nextAsteroidID)
@@ -95,7 +95,7 @@ func (spawner *Spawner) PlanTimedAsteroidSpawn(position physics.Vector2, targetP
 	}
 }
 
-func (spawner *Spawner) PlanAsteroidFragmentSpawns(asteroid *entities.Asteroid) []AsteroidSpawnPlan {
+func (spawner *Spawner) PlanAsteroidFragmentSpawns(asteroid *runtime.Asteroid) []AsteroidSpawnPlan {
 	fragmentSize := asteroid.FragmentSize()
 	if fragmentSize <= 0 {
 		return nil
