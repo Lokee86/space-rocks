@@ -96,7 +96,7 @@ If a change adds more than roughly 100 lines total, report why the slice is that
 - The server codec is intentionally JSON-only and generic.
 - Do not add format switching, protobuf references, or an interface unless explicitly requested.
 - Non-packet JSON such as collision-shape data-file parsing may still use `encoding/json` directly.
-- Route client packet wire JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
+- Route client packet wire JSON through `client/scripts/networking/packets/packet_codec.gd`.
 - Do not add direct `JSON.stringify` or `JSON.parse_string` calls in websocket packet paths.
 - The client codec is intentionally JSON-only and thin.
 - Do not add validation, format switching, typed packet objects, protobuf references, or generator changes unless explicitly requested.

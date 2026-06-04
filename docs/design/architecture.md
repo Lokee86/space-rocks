@@ -54,7 +54,7 @@ Current client runtime seams:
 - `client/scripts/networking/inbound/`: server packet classification and dispatch.
 - `client/scripts/networking/outbound/`: client packet send helpers grouped by packet family.
 - `client/scripts/networking/client_connection_service.gd`: public connection facade and signal bridge; it no longer owns packet-family construction or packet-family routing.
-- `client/scripts/networking/packet_codec/packet_codec.gd`: JSON-only client packet wire encode/decode wrapper around `JSON.stringify` and `JSON.parse_string`.
+- `client/scripts/networking/packets/packet_codec.gd`: client packet wire encode/decode wrapper around JSON parsing and `JSON.stringify`. It owns wire parsing and envelope validation only; packet-specific readers validate payload details.
 - `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates player/render-origin work to `client/scripts/world/player_render/player_render_api.gd` and delegates bullet/asteroid node ownership, packet application, cleanup, and interpolation to the focused sync owners. For targeting, it only exposes `target_source()`; target selection orchestration lives above it in `GameplayTargetingContext`.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
@@ -255,7 +255,7 @@ Concrete room ownership is split inside the package:
 
 `services/game-server/internal/networking/outbound` owns pure outbound gameplay presentation/write helpers.
 
-Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. It remains JSON-only for now. Client packet wire serialization goes through `client/scripts/networking/packet_codec/packet_codec.gd`.
+Server packet wire serialization goes through `services/game-server/internal/protocol/packetcodec`. It remains JSON-only for now. Client packet wire serialization goes through `client/scripts/networking/packets/packet_codec.gd`. Callers consume `PacketEncodeResult` and `PacketDecodeResult` so `NetworkClient` does not depend on raw JSON return types.
 
 Diagnostic telemetry packets are part of networking transport behavior:
 
@@ -389,7 +389,7 @@ The current runtime data flow is:
 3. The Go websocket read path decodes client packet JSON through the server `packetcodec` and passes packets to room/game handlers.
 4. The game simulation applies input and advances authoritative state.
 5. The server encodes `StatePacket` JSON through `packetcodec` and writes it back to the client.
-6. `network_client.gd` decodes inbound websocket text through the client packet codec.
+6. `network_client.gd` decodes inbound websocket text through the client packet codec result types, not raw JSON values.
 7. Gameplay shell/session code normalizes state through `client/scripts/gameplay/state/`, applies runtime state through `client/scripts/gameplay/runtime/`, and updates world sync plus presentation lanes.
 8. Devtools telemetry observes normalized gameplay state for debug metrics and telemetry overlay plumbing after state-reader normalization.
 9. `world_sync.gd` delegates rendered node creation, removal, packet application, and interpolation to `PlayerSync`, `BulletSync`, `AsteroidSync`, and `LocalVisualSync`.

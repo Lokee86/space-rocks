@@ -40,3 +40,4 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
 - API server is planned but not scaffolded.
 - Ship variants are planned but not implemented.
+- Client packet codec callers now consume `PacketEncodeResult` and `PacketDecodeResult`; the codec at `client/scripts/networking/packets/packet_codec.gd` owns JSON parsing plus envelope validation only.

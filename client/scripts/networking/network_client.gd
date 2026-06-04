@@ -45,19 +45,24 @@ func poll() -> void:
 
 	while socket.get_available_packet_count() > 0:
 		var text := socket.get_packet().get_string_from_utf8()
-		var data = PacketCodec.decode(text)
-		if data == null:
+		var decode_result = PacketCodec.decode(text)
+		if !decode_result.ok:
+			ClientLogger.network_warn("Packet decode failed: %s" % decode_result.error)
 			packet_parse_failed.emit(text)
 			continue
-		if data is Dictionary:
-			packet_received.emit(data)
+		packet_received.emit(decode_result.packet)
 
 
 func send_raw_packet(packet: Dictionary) -> void:
 	if !is_connected_to_server():
 		return
 
-	socket.send_text(PacketCodec.encode(packet))
+	var encode_result = PacketCodec.encode(packet)
+	if !encode_result.ok:
+		ClientLogger.network_warn("Packet encode failed: %s" % encode_result.error)
+		return
+
+	socket.send_text(encode_result.wire_message)
 
 
 func close_gracefully() -> void:
