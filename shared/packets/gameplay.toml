@@ -152,16 +152,6 @@ json = "rotation"
 type = "float"
 
 [[structs.fields]]
-name = "score"
-json = "score"
-type = "int"
-
-[[structs.fields]]
-name = "lives"
-json = "lives"
-type = "int"
-
-[[structs.fields]]
 name = "health"
 json = "health"
 type = "int"
@@ -193,6 +183,47 @@ name = "target_id"
 go_name = "TargetID"
 json = "target_id"
 type = "string"
+
+[[structs]]
+id = "PlayerSessionState"
+
+[[structs.fields]]
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+name = "ship_type"
+json = "ship_type"
+type = "string"
+
+[[structs.fields]]
+name = "score"
+json = "score"
+type = "int"
+
+[[structs.fields]]
+name = "lives"
+json = "lives"
+type = "int"
+
+[[structs.fields]]
+name = "respawn_cooldown"
+go_name = "RespawnCooldown"
+json = "respawn_cooldown"
+type = "float"
+
+[[structs.fields]]
+name = "spawn_x"
+go_name = "SpawnX"
+json = "spawn_x"
+type = "float"
+
+[[structs.fields]]
+name = "spawn_y"
+go_name = "SpawnY"
+json = "spawn_y"
+type = "float"
 
 [[structs]]
 id = "AsteroidState"
@@ -311,61 +342,6 @@ json = "paused"
 type = "bool"
 
 [[structs]]
-id = "WorldState"
-
-[[structs.fields]]
-name = "id"
-json = "id"
-type = "string"
-
-[[structs.fields]]
-name = "status"
-json = "status"
-type = "string"
-
-[[structs.fields]]
-name = "has_active_ship"
-go_name = "HasActiveShip"
-json = "has_active_ship"
-type = "bool"
-
-[[structs.fields]]
-name = "targetable"
-json = "targetable"
-type = "bool"
-
-[[structs.fields]]
-name = "damageable"
-json = "damageable"
-type = "bool"
-
-[[structs.fields]]
-name = "collidable"
-json = "collidable"
-type = "bool"
-
-[[structs.fields]]
-name = "x"
-json = "x"
-type = "float"
-
-[[structs.fields]]
-name = "y"
-json = "y"
-type = "float"
-
-[[structs.fields]]
-name = "lives"
-json = "lives"
-type = "int"
-
-[[structs.fields]]
-name = "respawn_cooldown"
-go_name = "RespawnCooldown"
-json = "respawn_cooldown"
-type = "float"
-
-[[structs]]
 id = "StatePacket"
 
 [[structs.fields]]
@@ -393,22 +369,19 @@ value_type = "ShipState"
 go_value_type = "runtime.ShipState"
 
 [[structs.fields]]
+name = "player_sessions"
+json = "player_sessions"
+type = "map"
+key_type = "string"
+value_type = "PlayerSessionState"
+
+[[structs.fields]]
 name = "player_lifecycle"
 go_name = "PlayerLifecycle"
 json = "player_lifecycle"
 type = "map"
 key_type = "string"
 value_type = "string"
-
-[[structs.fields]]
-name = "player_world_states"
-go_name = "PlayerWorldStates"
-json = "player_world_states"
-type = "map"
-key_type = "string"
-value_type = "WorldState"
-go_value_type = "player.WorldState"
-go_import = "github.com/Lokee86/space-rocks/server/internal/game/player"
 
 [[structs.fields]]
 name = "bullets"

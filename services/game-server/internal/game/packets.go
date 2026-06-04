@@ -33,20 +33,20 @@ const (
 )
 
 type ClientPacket struct {
-	Type               string                `json:"type"`
+	Type               string               `json:"type"`
 	Input              runtime.InputState   `json:"input"`
 	Config             runtime.ClientConfig `json:"config"`
-	RoomCode           string                `json:"room_code"`
-	Ready              bool                  `json:"ready"`
-	TargetPlayerID     string                `json:"target_player_id"`
-	X                  float64               `json:"x"`
-	Y                  float64               `json:"y"`
-	TargetKind         string                `json:"target_kind"`
-	TargetID           string                `json:"target_id"`
-	Sequence           int                   `json:"sequence"`
-	ClientSentMsec     int                   `json:"client_sent_msec"`
-	ServerReceivedMsec int                   `json:"server_received_msec"`
-	ServerSentMsec     int                   `json:"server_sent_msec"`
+	RoomCode           string               `json:"room_code"`
+	Ready              bool                 `json:"ready"`
+	TargetPlayerID     string               `json:"target_player_id"`
+	X                  float64              `json:"x"`
+	Y                  float64              `json:"y"`
+	TargetKind         string               `json:"target_kind"`
+	TargetID           string               `json:"target_id"`
+	Sequence           int                  `json:"sequence"`
+	ClientSentMsec     int                  `json:"client_sent_msec"`
+	ServerReceivedMsec int                  `json:"server_received_msec"`
+	ServerSentMsec     int                  `json:"server_sent_msec"`
 }
 
 type CreateRoomRequest struct {
@@ -123,15 +123,15 @@ type PlayerPauseState struct {
 }
 
 type StatePacket struct {
-	Type              string                            `json:"type"`
-	SelfID            string                            `json:"self_id"`
-	Lives             int                               `json:"lives"`
-	Players           map[string]runtime.ShipState     `json:"players"`
-	PlayerLifecycle   map[string]string                 `json:"player_lifecycle"`
-	PlayerWorldStates map[string]player.WorldState      `json:"player_world_states"`
-	Bullets           map[string]runtime.BulletState   `json:"bullets"`
-	Asteroids         map[string]runtime.AsteroidState `json:"asteroids"`
-	TotalAsteroids    int                               `json:"total_asteroids"`
-	Events            []EventState                      `json:"events"`
-	ServerSentMsec    int                               `json:"server_sent_msec"`
+	Type            string                           `json:"type"`
+	SelfID          string                           `json:"self_id"`
+	Lives           int                              `json:"lives"`
+	Players         map[string]runtime.ShipState     `json:"players"`
+	PlayerSessions  map[string]PlayerSessionState    `json:"player_sessions"`
+	PlayerLifecycle map[string]string                `json:"player_lifecycle"`
+	Bullets         map[string]runtime.BulletState   `json:"bullets"`
+	Asteroids       map[string]runtime.AsteroidState `json:"asteroids"`
+	TotalAsteroids  int                              `json:"total_asteroids"`
+	Events          []EventState                     `json:"events"`
+	ServerSentMsec  int                              `json:"server_sent_msec"`
 }

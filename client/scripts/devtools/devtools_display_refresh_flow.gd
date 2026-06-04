@@ -67,14 +67,26 @@ func _refresh_telemetry() -> void:
 
 	if window_controller.has_method("refresh_local_player_state"):
 		window_controller.refresh_local_player_state(
-			target_model.local_player_state_for_source(window_controller.local_telemetry_source())
+			target_model.local_player_state_for_source(_local_telemetry_source())
 		)
 	if window_controller.has_method("refresh_target_state"):
 		window_controller.refresh_target_state(
 			target_model.game_target_kind,
 			target_model.game_target_id,
-			target_model.target_state_for_source(window_controller.target_telemetry_source())
+			target_model.target_state_for_source(_target_telemetry_source())
 		)
+
+
+func _local_telemetry_source() -> String:
+	if window_controller == null or !window_controller.has_method("local_telemetry_source"):
+		return "state_packet"
+	return window_controller.local_telemetry_source()
+
+
+func _target_telemetry_source() -> String:
+	if window_controller == null or !window_controller.has_method("target_telemetry_source"):
+		return "state_packet"
+	return window_controller.target_telemetry_source()
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:

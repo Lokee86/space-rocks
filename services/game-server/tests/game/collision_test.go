@@ -42,7 +42,7 @@ func TestBulletAsteroidCollisionsDelayHitDespawns(t *testing.T) {
 	if packet.Events[0].Type != servergame.PacketTypeBulletBlast {
 		t.Fatalf("expected bullet_blast event, got %q", packet.Events[0].Type)
 	}
-	if score := packet.Players[playerID].Score; score != constants.BaseScore {
+	if score := packet.PlayerSessions[playerID].Score; score != constants.BaseScore {
 		t.Fatalf("expected player score %d, got %d", constants.BaseScore, score)
 	}
 

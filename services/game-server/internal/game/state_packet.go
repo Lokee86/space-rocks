@@ -15,19 +15,14 @@ func (game *Game) StatePacket(playerID string) StatePacket {
 func (game *Game) statePacket(playerID string) StatePacket {
 	players := make(map[string]runtime.ShipState, len(game.entities.Players))
 	for id, player := range game.entities.Players {
-		playerState := player.State()
-		if session, ok := game.playerSessions[id]; ok {
-			playerState.Score = session.Score
-			playerState.Lives = session.Lives
-		}
-		players[id] = playerState
+		players[id] = player.State()
 	}
 	matchDecision := game.matchDecisionLocked()
 	playerLifecycle := make(map[string]string, len(matchDecision.Players))
 	for _, player := range matchDecision.Players {
 		playerLifecycle[player.ID] = string(player.Status)
 	}
-	playerWorldStates := game.playerWorldStatesLocked()
+	playerSessions := game.playerSessionStatesLocked()
 
 	asteroids := make(map[string]runtime.AsteroidState, len(game.entities.Asteroids))
 	for id, asteroid := range game.entities.Asteroids {
@@ -45,8 +40,8 @@ func (game *Game) statePacket(playerID string) StatePacket {
 		SelfID:          playerID,
 		Lives:           game.playerLives(playerID),
 		Players:         players,
+		PlayerSessions:  playerSessions,
 		PlayerLifecycle: playerLifecycle,
-		PlayerWorldStates: playerWorldStates,
 		Bullets:         bullets,
 		Asteroids:       asteroids,
 		TotalAsteroids:  game.spawner.TotalAsteroidsSpawned(),
