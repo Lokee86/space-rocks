@@ -9,6 +9,9 @@ var latest_max_players := 0
 
 func configure(window_controller_ref) -> void:
 	window_controller = window_controller_ref
+	if window_controller != null and window_controller.has_signal("telemetry_sources_changed"):
+		if !window_controller.telemetry_sources_changed.is_connected(_refresh_telemetry):
+			window_controller.telemetry_sources_changed.connect(_refresh_telemetry)
 
 
 func reset() -> void:
@@ -34,16 +37,9 @@ func game_target_player_id() -> String:
 
 func refresh_gameplay_state(state: Dictionary) -> void:
 	target_model.apply_gameplay_state(state)
+	_refresh_telemetry()
 	if window_controller == null:
 		return
-	if window_controller.has_method("refresh_target_state"):
-		window_controller.refresh_target_state(
-			target_model.game_target_kind,
-			target_model.game_target_id,
-			target_model.target_state()
-		)
-	if window_controller.has_method("refresh_local_player_state"):
-		window_controller.refresh_local_player_state(target_model.local_player_state())
 
 	if window_controller.has_method("apply_debug_status"):
 		window_controller.apply_debug_status(state.get("debug_status", {}))
@@ -63,6 +59,22 @@ func refresh_gameplay_state(state: Dictionary) -> void:
 	window_controller.refresh_counter_player_targets(target_model.active_player_target_rows())
 	if window_controller.has_method("refresh_spawn_player_slots"):
 		window_controller.refresh_spawn_player_slots(latest_max_players)
+
+
+func _refresh_telemetry() -> void:
+	if window_controller == null:
+		return
+
+	if window_controller.has_method("refresh_local_player_state"):
+		window_controller.refresh_local_player_state(
+			target_model.local_player_state_for_source(window_controller.local_telemetry_source())
+		)
+	if window_controller.has_method("refresh_target_state"):
+		window_controller.refresh_target_state(
+			target_model.game_target_kind,
+			target_model.game_target_id,
+			target_model.target_state_for_source(window_controller.target_telemetry_source())
+		)
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:
