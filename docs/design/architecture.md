@@ -37,6 +37,7 @@ Current client runtime seams:
 - HUD/UI mouse input gating is owned by `client/scripts/gameplay/input/hud_input_policy.gd`, registered as the `HudInputPolicy` autoload. `GameplaySessionController` keeps the top-level input priority order and delegates the HUD/UI hover gate to `HudInputPolicy`.
 - `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking.
 - `client/scripts/gameplay/background/`: gameplay background/parallax shader scroll presentation.
+- `client/scripts/devtools/context/`: devtools coordination contexts for state caching, command delegation, placement routing, overlay coordination, gameplay-state fanout, window signal wiring, and DevToggle routing.
 - `client/scripts/devtools/telemetry/`: devtools telemetry seam for debug-only world metrics, overlay flow, RTT tracking, and packet-age display plumbing.
 - `client/scripts/devtools/dev_tools_session_flow.gd`: devtools gameplay session seam for runtime wiring. `GameplaySessionController` delegates devtools input, per-frame processing, and placement routing to this flow.
 - Server hitbox rendering is owned by client devtools. The overlay scene lives under `client/scenes/devtools/`, the drawing/template code lives under `client/scripts/devtools/hitboxes/`, and `WorldSync` exposes read-only draw-entry data only. `GameplayRuntimeContext` does not own or expose that draw-entry data. Normal gameplay entities do not draw their own debug collision outlines.
@@ -60,7 +61,7 @@ Current client runtime seams:
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/generated/networking/packets/packets.gd` and `client/scripts/generated/constants/constants.gd`: generated/shared client packet helpers and constants.
 
-The devtools telemetry seam is owned behind `GameplayDevtoolsContext`. It is not owned by gameplay HUD flows and not owned by `gameplay_shell_flow.gd`.
+`GameplayDevtoolsContext` is a composition facade for devtools coordination. It constructs the devtools contexts, delegates reset/process/public wrapper methods, and keeps the outer API stable while the owned responsibilities live under `client/scripts/devtools/context/`. It is not owned by gameplay HUD flows and not owned by `gameplay_shell_flow.gd`.
 
 Client runtime flow:
 

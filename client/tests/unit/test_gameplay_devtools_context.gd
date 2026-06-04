@@ -12,7 +12,7 @@ func test_request_set_game_target_sends_set_target_player_request_packet() -> vo
 	var connection := FakeConnectionService.new()
 	var context := GameplayDevtoolsContext.new()
 	context.configure(connection)
-	context.has_received_gameplay_state = true
+	context.state_context.set_has_received_gameplay_state(true)
 
 	context.request_set_game_target("Player-2")
 
