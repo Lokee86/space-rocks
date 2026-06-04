@@ -178,7 +178,7 @@ The server currently owns:
 
 `Game.Step()` is a same-package simulation coordinator in `services/game-server/internal/game/simulation.go`. It preserves authoritative phase order while routing player/session, asteroid, bullet, and collision phases through focused same-package helpers.
 
-Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`. The motion package imports runtime types and spatial helpers, but it does not import `internal/game`, mutate `game.state` maps, spawn entities, delete entities, award score, resolve collisions, or write packets.
+Per-entity movement integration and wrapping live in `services/game-server/internal/game/motion`. The motion package imports runtime types and spatial helpers, but it does not import `internal/game`, mutate `game.entities` maps, spawn entities, delete entities, award score, resolve collisions, or write packets.
 
 ### Spawn Planning
 
@@ -186,7 +186,7 @@ Per-entity movement integration and wrapping live in `services/game-server/inter
 
 Player initial spawn and respawn planning use `PlayerSpawnPlan`. Player lifecycle still owns session lookup, `CanRespawn()` gating, lives, death, respawn cooldowns, ship creation, and camera view attachment. Match-over policy is evaluated through `services/game-server/internal/game/rules`.
 
-The spawn seam is still partial. Bullet construction lives in `spawning.Spawner`, but `spawnBullet()` remains the `Game` adapter that inserts the projectile into `game.state.Projectiles`.
+The spawn seam is still partial. Bullet construction lives in `spawning.Spawner`, but `spawnBullet()` remains the `Game` adapter that inserts the projectile into `game.entities.Projectiles`.
 
 Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`. `internal/game` does not import `internal/devtools` or own devtools runtime state. Game-owned debug operations are exposed through narrow `export_devtools_*.go` hooks, including debug bullet spawning and generic simulation step observer registration.
 
@@ -196,7 +196,7 @@ Continuous bullet stream runtime state is owned by `services/game-server/interna
 
 `Game.MatchDecision()` is the public game-facing API for richer match decisions. `Game.IsGameOver()` remains available for existing callers and delegates through the same locked decision path.
 
-`Game.statePacket()` projects `MatchDecision.Players` into `StatePacket.player_lifecycle`, a map from player ID to lifecycle status string. `StatePacket.players` (from `game.state.Players`) is active ship/render state only. Durable player identity/status/position/readout state is carried in `StatePacket.player_world_states` (from `player.WorldState`). Pending-respawn players may be absent from `StatePacket.players` while still present in `StatePacket.player_world_states`; in that lifecycle state they are not targetable, damageable, or collidable.
+`Game.statePacket()` projects `MatchDecision.Players` into `StatePacket.player_lifecycle`, a map from player ID to lifecycle status string. `StatePacket.players` (from `game.entities.Players`) is active ship/render state only. Durable player identity/status/position/readout state is carried in `StatePacket.player_world_states` (from `player.WorldState`). Pending-respawn players may be absent from `StatePacket.players` while still present in `StatePacket.player_world_states`; in that lifecycle state they are not targetable, damageable, or collidable.
 
 ### Entity Damage Resolution
 

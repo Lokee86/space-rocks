@@ -60,15 +60,15 @@ type Asteroid struct {
 	DespawnDelay   float64
 }
 
-type GameState struct {
+type EntityStore struct {
 	Players     map[string]*Ship
 	Projectiles map[string]*Bullet
 	Asteroids   map[string]*Asteroid
 	Enemies     map[string]*Ship
 }
 
-func NewGameState() GameState {
-	return GameState{
+func NewEntityStore() EntityStore {
+	return EntityStore{
 		Players:     make(map[string]*Ship),
 		Projectiles: make(map[string]*Bullet),
 		Asteroids:   make(map[string]*Asteroid),

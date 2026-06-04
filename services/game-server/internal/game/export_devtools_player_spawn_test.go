@@ -62,7 +62,7 @@ func TestDevtoolsTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
 		t.Fatal("expected DevtoolsSpawnPlayerShip to create shared target ship")
 	}
 
-	game.state.Players[shipOnlyID] = &runtime.Ship{ID: shipOnlyID, X: 10, Y: 20}
+	game.entities.Players[shipOnlyID] = &runtime.Ship{ID: shipOnlyID, X: 10, Y: 20}
 
 	got := game.DevtoolsTargetPlayerIDs()
 	want := []string{sessionOnlyID, sharedID, shipOnlyID}

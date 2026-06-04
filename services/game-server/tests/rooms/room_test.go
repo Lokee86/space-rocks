@@ -690,7 +690,7 @@ func markGameOver(t *testing.T, gameInstance *game.Game) {
 	session := exportRoomTestValue(value.FieldByName("playerSessions")).
 		MapIndex(reflect.ValueOf(playerID))
 	exportRoomTestValue(session.Elem().FieldByName("Lives")).SetInt(0)
-	players := exportRoomTestValue(value.FieldByName("state").FieldByName("Players"))
+	players := exportRoomTestValue(value.FieldByName("entities").FieldByName("Players"))
 	players.SetMapIndex(reflect.ValueOf(playerID), reflect.Value{})
 }
 

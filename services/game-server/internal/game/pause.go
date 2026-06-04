@@ -12,7 +12,7 @@ func (game *Game) setPlayerPaused(playerID string, paused bool) {
 	if !ok {
 		return
 	}
-	player, ok := game.state.Players[playerID]
+	player, ok := game.entities.Players[playerID]
 	if !ok {
 		return
 	}
@@ -42,7 +42,7 @@ func (game *Game) togglePlayerPaused(playerID string) {
 	if !ok {
 		return
 	}
-	player, ok := game.state.Players[playerID]
+	player, ok := game.entities.Players[playerID]
 	if !ok {
 		return
 	}
@@ -60,7 +60,7 @@ func (game *Game) PlayerPauseStatePacket(playerID string) (PlayerPauseState, boo
 	if !ok {
 		return PlayerPauseState{}, false
 	}
-	if _, ok := game.state.Players[playerID]; !ok {
+	if _, ok := game.entities.Players[playerID]; !ok {
 		return PlayerPauseState{}, false
 	}
 	return PlayerPauseState{

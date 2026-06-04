@@ -39,7 +39,7 @@ func TestPlayerWorldStateLocked_PendingRespawnWithoutActiveShip(t *testing.T) {
 	playerID := game.AddPlayer()
 
 	game.mu.Lock()
-	delete(game.state.Players, playerID)
+	delete(game.entities.Players, playerID)
 	state, ok := game.playerWorldStateLocked(playerID)
 	game.mu.Unlock()
 
@@ -68,7 +68,7 @@ func TestPlayerWorldStateLocked_EliminatedWithoutActiveShip(t *testing.T) {
 	playerID := game.AddPlayer()
 
 	game.mu.Lock()
-	delete(game.state.Players, playerID)
+	delete(game.entities.Players, playerID)
 	game.playerSessions[playerID].Lives = 0
 	state, ok := game.playerWorldStateLocked(playerID)
 	game.mu.Unlock()

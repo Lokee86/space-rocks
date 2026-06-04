@@ -23,7 +23,7 @@ func (game *Game) matchDecisionLocked() rules.MatchDecision {
 func (game *Game) matchSnapshot() rules.MatchSnapshot {
 	players := make([]rules.PlayerSnapshot, 0, len(game.playerSessions))
 	for playerID, session := range game.playerSessions {
-		player, ok := game.state.Players[playerID]
+		player, ok := game.entities.Players[playerID]
 		hasActiveShip := ok && player != nil && !player.IsPendingDespawn()
 		players = append(players, rules.PlayerSnapshot{
 			ID:                session.ID,

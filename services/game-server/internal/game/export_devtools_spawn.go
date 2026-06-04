@@ -18,7 +18,7 @@ func (game *Game) DevtoolsAddBullet(bullet *runtime.Bullet) bool {
 	if bullet == nil {
 		return false
 	}
-	game.state.Projectiles[bullet.ID] = bullet
+	game.entities.Projectiles[bullet.ID] = bullet
 	return true
 }
 

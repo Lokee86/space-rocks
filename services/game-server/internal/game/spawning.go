@@ -13,7 +13,7 @@ import (
 
 func (game *Game) spawnBullet(ship *runtime.Ship) {
 	bullet := game.spawner.BuildBullet(ship)
-	game.state.Projectiles[bullet.ID] = bullet
+	game.entities.Projectiles[bullet.ID] = bullet
 }
 
 func debugBulletRotation(direction physics.Vector2) float64 {
@@ -33,7 +33,7 @@ func (game *Game) spawnDebugBullet(ownerID string, position physics.Vector2, dir
 	rotation := debugBulletRotation(normalizedDirection)
 	bulletID := game.spawner.NextBulletID()
 	bullet := runtime.NewBullet(bulletID, ownerID, spawnPosition, rotation, velocity, constants.BulletLifetime)
-	game.state.Projectiles[bullet.ID] = bullet
+	game.entities.Projectiles[bullet.ID] = bullet
 	return bullet, true
 }
 
@@ -52,9 +52,9 @@ func (game *Game) spawnAsteroid(view *runtime.CameraView) {
 }
 
 func (game *Game) applyAsteroidSpawn(plan spawning.AsteroidSpawnPlan) *runtime.Asteroid {
-	asteroidID := game.spawner.NextAsteroidID(game.state.Asteroids)
+	asteroidID := game.spawner.NextAsteroidID(game.entities.Asteroids)
 	asteroid := runtime.NewAsteroid(asteroidID, plan.Position, plan.Velocity, plan.Size, plan.Variant)
-	game.state.Asteroids[asteroidID] = asteroid
+	game.entities.Asteroids[asteroidID] = asteroid
 	return asteroid
 }
 

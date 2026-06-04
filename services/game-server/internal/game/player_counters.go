@@ -45,7 +45,7 @@ func clampPlayerCounter(value int) int {
 }
 
 func (game *Game) currentPlayerScoreLocked(playerID string) (int, bool) {
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		return player.Score, true
 	}
 	if session, ok := game.playerSessions[playerID]; ok {
@@ -65,7 +65,7 @@ func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounter
 	if session, ok := game.playerSessions[playerID]; ok {
 		session.Score = after
 	}
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		player.Score = after
 	}
 
@@ -91,7 +91,7 @@ func (game *Game) currentPlayerLivesLocked(playerID string) (int, bool) {
 	if session, ok := game.playerSessions[playerID]; ok {
 		return session.Lives, true
 	}
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		return player.Lives, true
 	}
 
@@ -108,7 +108,7 @@ func (game *Game) setPlayerLivesLocked(playerID string, lives int) PlayerCounter
 	if session, ok := game.playerSessions[playerID]; ok {
 		session.Lives = after
 	}
-	if player, ok := game.state.Players[playerID]; ok {
+	if player, ok := game.entities.Players[playerID]; ok {
 		player.Lives = after
 	}
 

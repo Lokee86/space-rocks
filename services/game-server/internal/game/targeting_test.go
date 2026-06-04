@@ -127,7 +127,7 @@ func TestSetTargetStoresAsteroidKindAndID(t *testing.T) {
 	game := New()
 	playerA := game.AddPlayer()
 	asteroid := runtime.NewAsteroid("asteroid-1", physics.Vector2{}, physics.Vector2{}, 1, 0)
-	game.state.Asteroids[asteroid.ID] = asteroid
+	game.entities.Asteroids[asteroid.ID] = asteroid
 
 	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
 		Kind: targetpolicy.TargetKindAsteroid,
@@ -150,7 +150,7 @@ func TestSetTargetStoresBulletKindAndID(t *testing.T) {
 	game := New()
 	playerA := game.AddPlayer()
 	bullet := runtime.NewBullet("bullet-1", playerA, physics.Vector2{}, 0, physics.Vector2{}, 1.0)
-	game.state.Projectiles[bullet.ID] = bullet
+	game.entities.Projectiles[bullet.ID] = bullet
 
 	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
 		Kind: targetpolicy.TargetKindBullet,
@@ -188,7 +188,7 @@ func TestClearTargetEmptiesGenericAndCompatibilityTargetFields(t *testing.T) {
 		t.Fatalf("expected cleared generic target to be empty, got %#v", target)
 	}
 
-	player := game.state.Players[playerA]
+	player := game.entities.Players[playerA]
 	if player == nil {
 		t.Fatalf("expected player %q to exist", playerA)
 	}
@@ -228,7 +228,7 @@ func TestSelectTargetAtPositionStoresPlayerKindAndIDWhenOverlapping(t *testing.T
 	requesterID := game.AddPlayer()
 	targetID := game.AddPlayer()
 
-	targetPlayer := game.state.Players[targetID]
+	targetPlayer := game.entities.Players[targetID]
 	if targetPlayer == nil {
 		t.Fatalf("expected target player %q to exist", targetID)
 	}
@@ -253,7 +253,7 @@ func TestSelectTargetAtPositionStoresAsteroidKindAndIDWhenOverlapping(t *testing
 	game := New()
 	requesterID := game.AddPlayer()
 	asteroid := runtime.NewAsteroid("asteroid-claim", physics.Vector2{X: 120, Y: 75}, physics.Vector2{}, 1, 0)
-	game.state.Asteroids[asteroid.ID] = asteroid
+	game.entities.Asteroids[asteroid.ID] = asteroid
 
 	ok := game.SelectTargetAtPosition(
 		requesterID,
@@ -275,7 +275,7 @@ func TestSelectTargetAtPositionStoresBulletKindAndIDWhenOverlapping(t *testing.T
 	game := New()
 	requesterID := game.AddPlayer()
 	bullet := runtime.NewBullet("bullet-claim", requesterID, physics.Vector2{X: 200, Y: 150}, 0, physics.Vector2{}, 1.0)
-	game.state.Projectiles[bullet.ID] = bullet
+	game.entities.Projectiles[bullet.ID] = bullet
 
 	ok := game.SelectTargetAtPosition(
 		requesterID,
@@ -334,7 +334,7 @@ func TestSelectTargetAtPositionNonOverlappingPointDoesNotOverwriteExistingTarget
 		t.Fatal("expected setup SetTarget to succeed")
 	}
 
-	newTarget := game.state.Players[newTargetID]
+	newTarget := game.entities.Players[newTargetID]
 	if newTarget == nil {
 		t.Fatalf("expected new target player %q to exist", newTargetID)
 	}
@@ -376,7 +376,7 @@ func TestTargetLookupStatusLocked_PlayerPendingRespawn(t *testing.T) {
 	playerID := game.AddPlayer()
 
 	game.mu.Lock()
-	delete(game.state.Players, playerID)
+	delete(game.entities.Players, playerID)
 	status := game.targetLookupStatusLocked(targetpolicy.TargetRef{
 		Kind: targetpolicy.TargetKindPlayer,
 		ID:   playerID,
@@ -416,9 +416,9 @@ func TestClearTargetsForMissingPlayersLocked_KeepsInactivePendingRespawnTarget(t
 	}
 
 	game.mu.Lock()
-	delete(game.state.Players, targetID)
+	delete(game.entities.Players, targetID)
 	game.clearTargetsForMissingPlayersLocked()
-	requester := game.state.Players[requesterID]
+	requester := game.entities.Players[requesterID]
 	game.mu.Unlock()
 
 	if requester == nil {
@@ -445,7 +445,7 @@ func TestClearTargetsForMissingPlayersLocked_ClearsMissingRemovedTarget(t *testi
 
 	game.mu.Lock()
 	game.clearTargetsForMissingPlayersLocked()
-	requester := game.state.Players[requesterID]
+	requester := game.entities.Players[requesterID]
 	game.mu.Unlock()
 
 	if requester == nil {
@@ -461,7 +461,7 @@ func TestSelectTargetAtPosition_DeadPlayerStoresTargetingAndRespawnMirrorsTarget
 	requesterID := game.AddPlayer()
 	targetID := game.AddPlayer()
 
-	targetPlayer := game.state.Players[targetID]
+	targetPlayer := game.entities.Players[targetID]
 	if targetPlayer == nil {
 		t.Fatalf("expected target player %q to exist", targetID)
 	}
@@ -476,7 +476,7 @@ func TestSelectTargetAtPosition_DeadPlayerStoresTargetingAndRespawnMirrorsTarget
 	}
 
 	game.mu.Lock()
-	delete(game.state.Players, requesterID)
+	delete(game.entities.Players, requesterID)
 	game.mu.Unlock()
 
 	func() {
@@ -508,7 +508,7 @@ func TestSelectTargetAtPosition_DeadPlayerStoresTargetingAndRespawnMirrorsTarget
 	}
 
 	game.respawnPlayer(requesterID)
-	ship := game.state.Players[requesterID]
+	ship := game.entities.Players[requesterID]
 	if ship == nil {
 		t.Fatalf("expected respawned ship %q to exist", requesterID)
 	}
@@ -527,7 +527,7 @@ func TestClearTarget_DeadPlayerClearsSessionTargetWithoutPanic(t *testing.T) {
 	}
 
 	game.mu.Lock()
-	delete(game.state.Players, requesterID)
+	delete(game.entities.Players, requesterID)
 	game.mu.Unlock()
 
 	func() {

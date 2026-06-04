@@ -19,7 +19,7 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		}
 	}
 
-	player, ok := game.state.Players[playerID]
+	player, ok := game.entities.Players[playerID]
 	if !ok {
 		return
 	}

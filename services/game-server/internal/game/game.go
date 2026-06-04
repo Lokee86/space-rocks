@@ -21,7 +21,7 @@ type Game struct {
 	asteroidSpawnElapsed      float64
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
-	state                     runtime.GameState
+	entities                  runtime.EntityStore
 	simulationStepObservers   []func(float64)
 	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
@@ -42,7 +42,7 @@ func New() *Game {
 		pendingPresentationEvents: make(map[string][]EventState),
 		spawner:                   spawning.New(),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
-		state:                     runtime.NewGameState(),
+		entities:                  runtime.NewEntityStore(),
 	}
 }
 

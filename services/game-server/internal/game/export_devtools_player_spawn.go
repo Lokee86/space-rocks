@@ -30,14 +30,14 @@ func (game *Game) DevtoolsReservePlayerID(playerID string) bool {
 }
 
 func (game *Game) DevtoolsTargetPlayerIDs() []string {
-	playerIDs := make(map[string]struct{}, len(game.playerSessions)+len(game.state.Players))
+	playerIDs := make(map[string]struct{}, len(game.playerSessions)+len(game.entities.Players))
 	for playerID := range game.playerSessions {
 		if playerID == "" {
 			continue
 		}
 		playerIDs[playerID] = struct{}{}
 	}
-	for playerID := range game.state.Players {
+	for playerID := range game.entities.Players {
 		if playerID == "" {
 			continue
 		}
@@ -72,7 +72,7 @@ func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSessio
 
 	session.RespawnCooldown = 0
 	player := session.NewShip(spawnPosition)
-	game.state.Players[playerID] = player
+	game.entities.Players[playerID] = player
 	game.ensureDevtoolsPlayerCameraView(playerID, player, cameraConfig)
 
 	return true
@@ -112,7 +112,7 @@ func (game *Game) isDevtoolsPlayerIDOccupied(playerID string) bool {
 		}
 	}
 
-	for existingPlayerID := range game.state.Players {
+	for existingPlayerID := range game.entities.Players {
 		normalizedExistingID, normalized := normalizeDevtoolsSpawnPlayerID(existingPlayerID)
 		if !normalized {
 			continue

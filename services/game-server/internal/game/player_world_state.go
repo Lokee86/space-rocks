@@ -12,7 +12,7 @@ func (game *Game) playerWorldStateLocked(playerID string) (player.WorldState, bo
 	positionY := session.SpawnPosition.Y
 	hasActiveShip := false
 
-	ship, shipExists := game.state.Players[playerID]
+	ship, shipExists := game.entities.Players[playerID]
 	if shipExists && ship != nil && !ship.IsPendingDespawn() {
 		hasActiveShip = true
 		position := ship.Position()

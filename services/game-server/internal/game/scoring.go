@@ -10,7 +10,7 @@ func (game *Game) awardScore(award scoring.Award) {
 		return
 	}
 
-	player, ok := game.state.Players[award.PlayerID]
+	player, ok := game.entities.Players[award.PlayerID]
 	if !ok {
 		return
 	}

@@ -14,7 +14,7 @@ func (game *Game) handleBulletAsteroidCollisions() {
 	hitAsteroids := map[string]*runtime.Asteroid{}
 	scoreAwards := []scoring.Award{}
 
-	for bulletID, bullet := range game.state.Projectiles {
+	for bulletID, bullet := range game.entities.Projectiles {
 		if hitBullets[bulletID] {
 			continue
 		}
@@ -22,7 +22,7 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			continue
 		}
 
-		for asteroidID, asteroid := range game.state.Asteroids {
+		for asteroidID, asteroid := range game.entities.Asteroids {
 			if _, ok := hitAsteroids[asteroidID]; ok {
 				continue
 			}
@@ -112,12 +112,12 @@ func (game *Game) applyProjectileAsteroidHitConsequences(
 	}
 
 	for bulletID := range hitBullets {
-		bullet := game.state.Projectiles[bulletID]
+		bullet := game.entities.Projectiles[bulletID]
 		bullet.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	}
 
 	for asteroidID := range hitAsteroids {
-		asteroid := game.state.Asteroids[asteroidID]
+		asteroid := game.entities.Asteroids[asteroidID]
 		asteroid.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	}
 
@@ -129,7 +129,7 @@ func (game *Game) applyProjectileAsteroidHitConsequences(
 func (game *Game) handleShipAsteroidCollisions() {
 	hitPlayers := map[string]*runtime.Ship{}
 
-	for playerID, player := range game.state.Players {
+	for playerID, player := range game.entities.Players {
 		if player.IsPendingDespawn() {
 			continue
 		}
@@ -137,7 +137,7 @@ func (game *Game) handleShipAsteroidCollisions() {
 			continue
 		}
 
-		for asteroidID, asteroid := range game.state.Asteroids {
+		for asteroidID, asteroid := range game.entities.Asteroids {
 			if asteroid.IsPendingDespawn() {
 				continue
 			}

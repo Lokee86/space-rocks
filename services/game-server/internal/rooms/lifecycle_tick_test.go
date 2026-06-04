@@ -59,7 +59,7 @@ func markLifecycleTickTestGameOver(t *testing.T, gameInstance *game.Game) {
 	session := exportLifecycleTickTestValue(value.FieldByName("playerSessions")).
 		MapIndex(reflect.ValueOf(playerID))
 	exportLifecycleTickTestValue(session.Elem().FieldByName("Lives")).SetInt(0)
-	players := exportLifecycleTickTestValue(value.FieldByName("state").FieldByName("Players"))
+	players := exportLifecycleTickTestValue(value.FieldByName("entities").FieldByName("Players"))
 	players.SetMapIndex(reflect.ValueOf(playerID), reflect.Value{})
 }
 

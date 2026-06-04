@@ -122,7 +122,7 @@ func (game *Game) playerExists(playerID string) bool {
 }
 
 func (game *Game) clearTargetsForMissingPlayersLocked() {
-	for playerID, player := range game.state.Players {
+	for playerID, player := range game.entities.Players {
 		if player == nil {
 			continue
 		}
@@ -155,7 +155,7 @@ func (game *Game) setPlayerTargetingLocked(playerID string, target targetpolicy.
 		session.Targeting = PlayerTargetingFromRef(target)
 	}
 
-	if ship, exists := game.state.Players[playerID]; exists {
+	if ship, exists := game.entities.Players[playerID]; exists {
 		session.Targeting.ApplyToShip(ship)
 	}
 
@@ -168,13 +168,13 @@ func (game *Game) targetExists(target targetpolicy.TargetRef) bool {
 		_, exists := game.playerWorldStateLocked(target.ID)
 		return exists
 	case targetpolicy.TargetKindEnemy:
-		enemy, exists := game.state.Enemies[target.ID]
+		enemy, exists := game.entities.Enemies[target.ID]
 		return exists && enemy != nil
 	case targetpolicy.TargetKindAsteroid:
-		asteroid, exists := game.state.Asteroids[target.ID]
+		asteroid, exists := game.entities.Asteroids[target.ID]
 		return exists && asteroid != nil
 	case targetpolicy.TargetKindBullet:
-		bullet, exists := game.state.Projectiles[target.ID]
+		bullet, exists := game.entities.Projectiles[target.ID]
 		return exists && bullet != nil
 	default:
 		return false
@@ -191,7 +191,7 @@ func (game *Game) targetLookupStatusLocked(target targetpolicy.TargetRef) player
 		state, ok := game.playerWorldStateLocked(target.ID)
 		return playerstate.TargetStatusForWorldState(state, ok)
 	case targetpolicy.TargetKindAsteroid:
-		asteroid, exists := game.state.Asteroids[target.ID]
+		asteroid, exists := game.entities.Asteroids[target.ID]
 		if !exists || asteroid == nil {
 			return playerstate.TargetStatusMissing
 		}
@@ -200,7 +200,7 @@ func (game *Game) targetLookupStatusLocked(target targetpolicy.TargetRef) player
 		}
 		return playerstate.TargetStatusActive
 	case targetpolicy.TargetKindBullet:
-		bullet, exists := game.state.Projectiles[target.ID]
+		bullet, exists := game.entities.Projectiles[target.ID]
 		if !exists || bullet == nil {
 			return playerstate.TargetStatusMissing
 		}
@@ -209,7 +209,7 @@ func (game *Game) targetLookupStatusLocked(target targetpolicy.TargetRef) player
 		}
 		return playerstate.TargetStatusActive
 	case targetpolicy.TargetKindEnemy:
-		enemy, exists := game.state.Enemies[target.ID]
+		enemy, exists := game.entities.Enemies[target.ID]
 		if !exists || enemy == nil {
 			return playerstate.TargetStatusMissing
 		}
@@ -225,7 +225,7 @@ func (game *Game) targetLookupStatusLocked(target targetpolicy.TargetRef) player
 func (game *Game) targetCandidatesLocked() []targetpolicy.TargetCandidate {
 	candidates := make([]targetpolicy.TargetCandidate, 0)
 
-	for playerID, player := range game.state.Players {
+	for playerID, player := range game.entities.Players {
 		if player == nil {
 			continue
 		}
@@ -247,7 +247,7 @@ func (game *Game) targetCandidatesLocked() []targetpolicy.TargetCandidate {
 		})
 	}
 
-	for asteroidID, asteroid := range game.state.Asteroids {
+	for asteroidID, asteroid := range game.entities.Asteroids {
 		if asteroid == nil {
 			continue
 		}
@@ -266,7 +266,7 @@ func (game *Game) targetCandidatesLocked() []targetpolicy.TargetCandidate {
 		})
 	}
 
-	for projectileID, projectile := range game.state.Projectiles {
+	for projectileID, projectile := range game.entities.Projectiles {
 		if projectile == nil {
 			continue
 		}
@@ -285,7 +285,7 @@ func (game *Game) targetCandidatesLocked() []targetpolicy.TargetCandidate {
 		})
 	}
 
-	for enemyID, enemy := range game.state.Enemies {
+	for enemyID, enemy := range game.entities.Enemies {
 		if enemy == nil {
 			continue
 		}
