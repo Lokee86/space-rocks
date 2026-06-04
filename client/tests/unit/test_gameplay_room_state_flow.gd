@@ -1,7 +1,7 @@
 extends GutTest
 
 const GameplayRoomStateFlow := preload("res://scripts/gameplay/session/gameplay_room_state_flow.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 func test_room_state_from_packet_uses_packet_room_state() -> void:
@@ -22,3 +22,4 @@ func test_should_stop_spectating_for_room_game_over() -> void:
 
 func test_should_not_stop_spectating_for_non_game_over_room_state() -> void:
 	assert_false(GameplayRoomStateFlow.should_stop_spectating_for_room_state("InGame"))
+

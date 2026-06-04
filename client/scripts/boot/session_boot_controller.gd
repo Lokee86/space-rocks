@@ -3,7 +3,7 @@ extends Node
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const ShellBootFlow := preload("res://scripts/boot/shell_boot_flow.gd")
 const ClientSessionContext := preload("res://scripts/session/client_session_context.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var connection_service
 var shell_boot_flow
@@ -52,3 +52,4 @@ func get_shell_boot_flow():
 
 func get_session_context():
 	return session_context
+

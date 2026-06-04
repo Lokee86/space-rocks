@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const WORLD_SIZE := Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT)
 
 
@@ -42,3 +42,4 @@ static func _shortest_coordinate_delta(delta: float, size: float) -> float:
 	if delta < -half_size:
 		return delta + size
 	return delta
+

@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 static func packet_type(packet: Dictionary) -> String:
@@ -29,3 +29,4 @@ static func is_player_pause_state(packet: Dictionary) -> bool:
 
 static func is_telemetry_pong(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_TELEMETRY_PONG
+

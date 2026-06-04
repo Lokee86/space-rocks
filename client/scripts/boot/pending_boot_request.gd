@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var request_type := Constants.BOOT_REQUEST_NONE
 var join_room_code := ""
@@ -37,3 +37,4 @@ func consume_request() -> Dictionary:
 func clear() -> void:
 	request_type = Constants.BOOT_REQUEST_NONE
 	join_room_code = ""
+

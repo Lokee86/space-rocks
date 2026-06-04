@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const MISSING_VALUE := "—"
 
 
@@ -53,3 +53,4 @@ static func _non_negative_metric_text(metrics: Dictionary, field_name: String) -
 		if value < 0:
 			return MISSING_VALUE
 	return str(value)
+

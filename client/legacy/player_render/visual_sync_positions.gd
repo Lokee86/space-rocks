@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 
@@ -21,3 +21,4 @@ static func is_world_copy_mismatch(current_position: Vector2, target_position: V
 		abs(delta.x) > Constants.WORLD_WIDTH * 0.5 ||
 		abs(delta.y) > Constants.WORLD_HEIGHT * 0.5
 	)
+

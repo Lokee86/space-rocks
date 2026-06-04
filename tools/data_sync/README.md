@@ -152,7 +152,7 @@ sections = ["constants.gameplay", "constants.network"]
 owns = ["constants.gameplay", "constants.network"]
 
 [constants.gds]
-files = ["client/scripts/constants/constants.gd"]
+files = ["client/scripts/generated/constants/constants.gd"]
 sections = ["constants.gameplay", "constants.client"]
 owns = ["constants.client"]
 
@@ -173,7 +173,7 @@ owns = []
 outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets"]
 
 [packets.gds]
-files = ["client/scripts/networking/packets/packets.gd"]
+files = ["client/scripts/generated/networking/packets/packets.gd"]
 sections = ["packets"]
 owns = []
 ```
@@ -331,3 +331,4 @@ shared/packets/lobby.toml
 4. Review the diff.
 5. Run `python tools/data_sync/main.py -push -packets -go -gds`.
 6. Run `python tools/data_sync/main.py -check -packets -go -gds`.
+

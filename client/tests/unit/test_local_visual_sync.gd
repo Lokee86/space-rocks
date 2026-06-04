@@ -1,6 +1,6 @@
 extends GutTest
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const LocalVisualSyncScript := preload("res://legacy/player_render/local_visual_sync.gd")
 
 
@@ -41,3 +41,4 @@ func test_visual_position_for_server_position_returns_server_position_before_ini
 		sync.visual_position_for_server_position(Vector2(5.0, 100.0)),
 		Vector2(5.0, 100.0)
 	)
+

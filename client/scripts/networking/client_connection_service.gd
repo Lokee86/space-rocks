@@ -2,7 +2,7 @@ extends Node
 
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 signal connected
 signal closed
@@ -191,3 +191,4 @@ func _on_telemetry_pong_received(packet: Dictionary) -> void:
 
 func _on_unknown_packet_received(packet: Dictionary) -> void:
 	unknown_packet_received.emit(packet)
+

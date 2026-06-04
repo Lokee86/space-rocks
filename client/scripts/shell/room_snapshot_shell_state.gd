@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 
 static func from_room_state(room_state: String) -> String:
@@ -17,3 +17,4 @@ static func from_room_state(room_state: String) -> String:
 			return Constants.SHELL_STATE_MAIN_MENU
 		_:
 			return Constants.SHELL_STATE_LOBBY
+

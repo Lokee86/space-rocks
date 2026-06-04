@@ -58,7 +58,7 @@ Current client runtime seams:
 - `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates player/render-origin work to `client/scripts/world/player_render/player_render_api.gd` and delegates bullet/asteroid node ownership, packet application, cleanup, and interpolation to the focused sync owners. For targeting, it only exposes `target_source()`; target selection orchestration lives above it in `GameplayTargetingContext`.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
-- `client/scripts/networking/packets/packets.gd` and `client/scripts/constants/constants.gd`: generated/shared client packet helpers and constants.
+- `client/scripts/generated/networking/packets/packets.gd` and `client/scripts/generated/constants/constants.gd`: generated/shared client packet helpers and constants.
 
 The devtools telemetry seam is owned behind `GameplayDevtoolsContext`. It is not owned by gameplay HUD flows and not owned by `gameplay_shell_flow.gd`.
 
@@ -409,7 +409,7 @@ Generated packet files include:
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/entities/packets_generated.go`
 - `services/game-server/internal/devtools/packets_generated.go`
-- `client/scripts/networking/packets/packets.gd`
+- `client/scripts/generated/networking/packets/packets.gd`
 
 Shared constants are sourced from:
 
@@ -424,7 +424,7 @@ shared/constants/client/lobby.toml
 Generated constants include:
 
 - `services/game-server/internal/constants/constants.go`
-- `client/scripts/constants/constants.gd`
+- `client/scripts/generated/constants/constants.gd`
 
 Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. World size is intentionally generated to both Go and GDScript because client visual wrapping must use the same bounds as the server.
 
@@ -520,3 +520,4 @@ These are possible directions, not implemented features.
 - If prediction/reconciliation is added, keep it explicitly separate from authoritative game rules so the client remains a presentation/prediction layer rather than the source of truth.
 - Invisible toroidal/wrapped playfield is implemented. See [toroidal wrap](toroidal-wrap.md).
 - A thin server-side ship variant foundation exists: runtime ship type, resolved ship stats/modifiers, `ship_type` snapshots, and collision shape ID lookup. Full variants with client scene mapping and keyed collision catalogs remain future work. See [ship variants plan](ship-variants.md).
+

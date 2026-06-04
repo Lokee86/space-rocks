@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const STATUS_ACTIVE := "active"
 
 
@@ -20,3 +20,4 @@ static func is_player_active(lifecycle: Dictionary, player_id: String) -> bool:
 		return false
 
 	return str(lifecycle.get(str(player_id), "")) == STATUS_ACTIVE
+

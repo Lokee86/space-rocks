@@ -1,7 +1,7 @@
 extends RefCounted
 
 const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_model.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 
 static func status_text(
@@ -28,3 +28,4 @@ static func status_text(
 	if LobbyMemberViewModel.is_local_ready(local_player_id, members):
 		return Constants.STATUS_WAITING_FOR_HOST_START
 	return Constants.STATUS_PRESS_READY_WHEN_READY
+

@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 var effects
 var visual_position_for_server_position: Callable

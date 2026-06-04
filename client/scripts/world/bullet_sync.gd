@@ -3,7 +3,7 @@ class_name BulletSync
 
 const BulletSyncState = preload("res://scripts/world/bullet_sync_state.gd")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var bullets_layer: Node2D
@@ -114,3 +114,4 @@ func server_hitbox_draw_entries() -> Array:
 		entries.append(entry)
 
 	return entries
+

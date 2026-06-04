@@ -50,7 +50,7 @@ services/game-server/internal/game/physics/collision_shapes.go
 shared/collisions/collision_shapes.json
 client/scripts/world/world_sync.gd
 shared/packets/gameplay.toml
-client/scripts/networking/packets/packets.gd
+client/scripts/generated/networking/packets/packets.gd
 ```
 
 ## Implemented Foundation
@@ -237,3 +237,4 @@ Keep acquisition, ownership, unlocks, purchases, and persistence outside the rea
 ## Design Rule
 
 Do not let the client decide collision behavior. The client can request or display a ship type, but the server must own the selected type, resolved stats, and collision map used for gameplay.
+

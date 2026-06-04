@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const VisualSyncPositions = preload("res://legacy/player_render/visual_sync_positions.gd")
 
 var local_player: Player
@@ -251,3 +251,4 @@ func _visual_position_for_player(
 		anchor_server_position,
 		Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
 	)
+

@@ -1,7 +1,7 @@
 extends GutTest
 
 const NetworkTelemetryMetrics := preload("res://scripts/devtools/telemetry/network_telemetry_metrics.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 func test_initial_snapshot_reports_unavailable_rtt() -> void:
@@ -67,3 +67,4 @@ func test_apply_pong_with_server_timestamps_updates_clock_offset() -> void:
 
 	assert_true(metrics.snapshot()["rtt_ms"] >= 0)
 	assert_true(int(metrics.snapshot()["server_clock_offset_ms"]) > -1)
+

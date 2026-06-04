@@ -8,7 +8,7 @@ signal menu_requested
 signal resume_requested
 signal quit_requested
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 
 @onready var primary_action_button: BaseButton = _find_button(["PrimaryActionButton", "ResumeButton", "LeftButton"])
 @onready var menu_button: BaseButton = _find_button(["MenuButton", "QuitButton"])
@@ -133,3 +133,4 @@ func _set_button_label_visible(button: BaseButton, label_name: String) -> void:
 
 	if !found_target && fallback_label != null:
 		fallback_label.visible = true
+

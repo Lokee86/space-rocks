@@ -3,7 +3,7 @@ class_name PlayerRenderApi
 
 # This API coordinates player meaning and ViewAnchor/render-anchor state.
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const PlayerMeaningApiScript = preload("res://scripts/world/player_render/player_meaning_api.gd")
 const ViewAnchorSyncScript = preload("res://scripts/world/player_render/view_anchor_sync.gd")
 
@@ -112,3 +112,4 @@ func server_position_for_visual_position(client_visual_position: Vector2) -> Vec
 
 func server_hitbox_draw_entries(current_self_id: String) -> Array:
 	return player_meaning.server_hitbox_draw_entries(current_self_id)
+

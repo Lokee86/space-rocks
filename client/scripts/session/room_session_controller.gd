@@ -6,8 +6,8 @@ const LobbyReturnFlow := preload("res://scripts/lobby/lobby_return_flow.gd")
 const LobbyShellFlow := preload("res://scripts/lobby/lobby_shell_flow.gd")
 const MultiplayerLobbyPresenter := preload("res://scripts/lobby/multiplayer_lobby_presenter.gd")
 const MultiplayerDialogStatusPresenter := preload("res://scripts/lobby/multiplayer_dialog_status_presenter.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 var main_menu: Control
 var canvas_layer: CanvasLayer
@@ -113,3 +113,4 @@ func _on_lobby_returned_to_main_menu() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
+

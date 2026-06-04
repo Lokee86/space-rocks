@@ -230,7 +230,7 @@ Current ownership paths:
 - packet schema (devtools): `shared/packets/debug.toml`
 - packet output routing: `shared/packets/outputs.toml`
 - generated server devtools packets: `services/game-server/internal/devtools/packets_generated.go`
-- generated client packets: `client/scripts/networking/packets/packets.gd`
+- generated client packets: `client/scripts/generated/networking/packets/packets.gd`
 - server devtools behavior: `services/game-server/internal/devtools/`
 - controlled game access seam: `services/game-server/internal/game/export_devtools*.go`
 - websocket routing: `services/game-server/internal/networking/`
@@ -477,3 +477,4 @@ Likely future devtools:
 - developer console command layer
 
 If a real dev console is added later, it should call the same packet path instead of bypassing server authority.
+

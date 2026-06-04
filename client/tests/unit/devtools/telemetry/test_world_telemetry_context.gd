@@ -1,7 +1,7 @@
 extends GutTest
 
 const WorldTelemetryContext := preload("res://scripts/devtools/telemetry/world_telemetry_context.gd")
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 class FakeConnectionService:
@@ -49,3 +49,4 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 	telemetry_context.reset()
 	if is_instance_valid(overlay_node):
 		overlay_node.queue_free()
+

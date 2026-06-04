@@ -1,6 +1,6 @@
 extends GutTest
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 func test_packet_builders_set_expected_type() -> void:
@@ -85,3 +85,4 @@ func test_lobby_packet_type_constants_exist() -> void:
 	for packet_type in packet_types:
 		assert_eq(typeof(packet_type), TYPE_STRING)
 		assert_false(packet_type.is_empty())
+

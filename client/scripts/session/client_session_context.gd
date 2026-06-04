@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var requested_mode := Constants.SESSION_MODE_NONE
 var active_mode := Constants.SESSION_MODE_NONE
@@ -34,3 +34,4 @@ func is_multiplayer() -> bool:
 
 func should_show_multiplayer_lobby(room_state: String) -> bool:
 	return active_mode == Constants.SESSION_MODE_MULTIPLAYER && room_state == Constants.ROOM_STATE_LOBBY
+

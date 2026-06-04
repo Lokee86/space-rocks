@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 
 func show_status(main_menu: Control, message: String) -> void:
@@ -33,3 +33,4 @@ func friendly_room_error_message(error_code: String, message: String) -> String:
 	if !message.is_empty():
 		return message
 	return Constants.DIALOG_STATUS_COULD_NOT_JOIN
+

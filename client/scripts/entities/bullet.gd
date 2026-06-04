@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var laser_sound: AudioStreamPlayer2D = $LaserSound
@@ -36,3 +36,4 @@ func _start_pulse() -> void:
 
 func _play_laser_sound() -> void:
 	audio_flow.play_laser_sound(laser_sound)
+

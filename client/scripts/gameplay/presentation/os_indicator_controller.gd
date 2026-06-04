@@ -1,7 +1,7 @@
 extends RefCounted
 class_name OSIndicatorController
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const OS_INDICATOR_SCENE = preload("res://scenes/ui/elements/osindicator.tscn")
 
 const INDICATOR_SIZE := Vector2(14.0, 14.0)
@@ -120,3 +120,4 @@ func _apply_indicator_hue(indicator: Control, hue: float) -> void:
 
 	graphic.material = shader_material.duplicate() as ShaderMaterial
 	(graphic.material as ShaderMaterial).set_shader_parameter("hue_shift", hue)
+

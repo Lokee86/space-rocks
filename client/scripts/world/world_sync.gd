@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Constants = preload("res://scripts/constants/constants.gd")
+const Constants = preload("res://scripts/generated/constants/constants.gd")
 const AsteroidSyncScript = preload("res://scripts/world/asteroid_sync.gd")
 const BulletSyncScript = preload("res://scripts/world/bullet_sync.gd")
 const PlayerRenderApiScript = preload("res://scripts/world/player_render/player_render_api.gd")

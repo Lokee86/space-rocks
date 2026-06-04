@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 static func telemetry_ping_packet(sequence: int, client_sent_msec: int) -> Dictionary:
@@ -9,3 +9,4 @@ static func telemetry_ping_packet(sequence: int, client_sent_msec: int) -> Dicti
 	packet[Packets.FIELD_SEQUENCE] = sequence
 	packet[Packets.FIELD_CLIENT_SENT_MSEC] = client_sent_msec
 	return packet
+

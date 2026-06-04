@@ -1,6 +1,6 @@
 extends GutTest
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const PlayerRenderApiScript := preload("res://scripts/world/player_render/player_render_api.gd")
 const PlayerScene := preload("res://scenes/player.tscn")
 
@@ -84,3 +84,4 @@ func test_apply_state_falls_back_to_self_position_when_view_target_missing() -> 
 	api.apply_state(self_id, server_players)
 
 	assert_eq(api.server_position(), Vector2(100.0, 200.0))
+

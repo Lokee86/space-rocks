@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/networking/packets/packets.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 static func debug_kill_player_packet(target_scope: String = "", target_player_id: String = "") -> Dictionary:
@@ -81,3 +81,4 @@ static func debug_clear_bullets_packet() -> Dictionary:
 
 static func debug_clear_asteroids_packet() -> Dictionary:
 	return Packets.debug_clear_asteroids_packet()
+

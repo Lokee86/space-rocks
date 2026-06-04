@@ -1,7 +1,7 @@
 extends GutTest
 
-const Packets := preload("res://scripts/networking/packets/packets.gd")
-const Constants := preload("res://scripts/constants/constants.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
 const WorldSyncScript := preload("res://scripts/world/world_sync.gd")
 const PlayerScene := preload("res://scenes/player.tscn")
@@ -360,3 +360,4 @@ func _asteroid_state_without_scale() -> Dictionary:
 	var asteroid := WorldStateFixture.asteroid_state(320.0, 340.0, 1, 1.25)
 	asteroid.erase(Packets.FIELD_SCALE)
 	return asteroid
+

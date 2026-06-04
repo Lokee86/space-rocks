@@ -1,7 +1,7 @@
 extends RefCounted
 class_name GameplayBackgroundFlow
 
-const Constants := preload("res://scripts/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var repeated_background: TextureRect
 var repeated_foreground_background: TextureRect
@@ -91,3 +91,4 @@ func _set_scroll_offset(texture_rect: TextureRect, scroll_offset: Vector2) -> vo
 	if shader_material == null:
 		return
 	shader_material.set_shader_parameter("scroll_offset", scroll_offset)
+
