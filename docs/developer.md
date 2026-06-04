@@ -182,7 +182,9 @@ Input/targeting handoff note:
 
 - mouse actions in gameplay/devtools flows use semantic InputMap actions (`SelectTarget`, `DeselectTarget`, `SpawnEntity`, `CancelAction`)
 - raw left/right mouse buttons should remain only in InputMap bindings (`project.godot`)
-- targeting and persistent debug bullet stream cadence stay server-owned
+- targeting flows `InputEvent` -> `GameplayInputContext` -> `MouseActionFlow` -> `GameplayTargetingContext` -> candidate source / picker / packet send
+- `MouseActionFlow` remains the lowest-level mouse/input action coordinator
+- `WorldSync` only exposes `target_source()` for targeting and no longer owns target-position methods
 
 ## Run The Server
 
