@@ -236,7 +236,7 @@ Current ownership paths:
 - websocket routing: `services/game-server/internal/networking/`
 - telemetry packet schema: `shared/packets/gameplay.toml`
 - telemetry client/server routing: `client/scripts/networking/`, `services/game-server/internal/networking/`
-- client devtools facade: `client/scripts/devtools/gameplay_devtools_context.gd`
+- client devtools facade/composition seam: `client/scripts/devtools/gameplay_devtools_context.gd`
 - client devtools coordination contexts: `client/scripts/devtools/context/`
 - client telemetry seam: `client/scripts/devtools/telemetry/`
 - server hitbox overlay scene: `client/scenes/devtools/server_hitbox_overlay.tscn`
@@ -255,7 +255,17 @@ Current ownership paths:
 - non-devtools world/runtime code exposes read-only draw-entry data only; rendering stays in devtools.
 - `PlayerDevLabel` lifecycle, formatting, and mode state belong in client devtools, not `PlayerSync` or `WorldSync`.
 
-`GameplayDevtoolsContext` is now a facade/composition seam. It constructs the devtools contexts, delegates reset/process/public wrapper calls, and keeps the stable public API while ownership lives in the focused context files.
+`GameplayDevtoolsContext` is now facade/composition only. It constructs the devtools contexts, delegates reset/process/public wrapper calls, and keeps the stable public API while ownership lives in the focused context files.
+
+Context ownership inside `client/scripts/devtools/context/` is split as follows:
+
+- `DevtoolsStateContext`: cached local player, target, gameplay-state, and label-mode state.
+- `DevtoolsCommandContext`: command sends/delegation for debug, game-target, and respawn actions.
+- `DevtoolsWindowActionContext`: devtools window signal wiring directly to owning contexts.
+- `DevtoolsHotkeyContext`: DevToggle routing.
+- `DevtoolsPlacementContext`: placement route and spawn-placement result forwarding.
+- `DevtoolsOverlayContext`: telemetry, remote labels, and hitbox coordination.
+- `DevtoolsGameplayStateContext`: gameplay-state fanout into devtools UI, cache, and overlays.
 
 Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`. Normal `internal/game` files should not own, step, or expose that state directly.
 

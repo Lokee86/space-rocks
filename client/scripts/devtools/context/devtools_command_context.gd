@@ -1,9 +1,11 @@
 extends RefCounted
 class_name DevtoolsCommandContext
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 var connection_service
+var dev_connection_service
 var debug_flow
 var state_context
 
@@ -15,6 +17,10 @@ func configure(debug_flow_ref, state_context_ref) -> void:
 
 func configure_connection(connection_service_ref) -> void:
 	connection_service = connection_service_ref
+
+
+func configure_dev_connection(dev_connection_service_ref) -> void:
+	dev_connection_service = dev_connection_service_ref
 
 
 func process(has_received_state: bool) -> void:
@@ -68,6 +74,25 @@ func request_set_game_target(target_player_id: String) -> void:
 
 func request_clear_game_target() -> void:
 	request_set_game_target("")
+
+
+func request_respawn_player(target_scope: String = DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, target_player_id: String = "") -> void:
+	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
+		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, target_player_id is empty")
+		return
+	if state_context == null or !state_context.has_gameplay_state():
+		return
+	if dev_connection_service == null || !dev_connection_service.is_configured():
+		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, dev_connection_service is unavailable")
+		return
+	dev_connection_service.send_respawn_player(target_scope, target_player_id)
+
+
+func request_respawn_local_player() -> void:
+	if state_context == null or state_context.get_local_player_id() == "":
+		ClientLogger.game_warn("GameplayDevtoolsContext: local respawn request ignored, local_player_id is empty")
+		return
+	request_respawn_player(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, state_context.get_local_player_id())
 
 
 func request_set_score(target_scope: String, target_player_id: String, score: int) -> void:
