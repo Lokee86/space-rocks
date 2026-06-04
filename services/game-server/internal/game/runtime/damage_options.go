@@ -1,4 +1,4 @@
-package entities
+package runtime
 
 type DamageOptions struct {
 	Invincible bool

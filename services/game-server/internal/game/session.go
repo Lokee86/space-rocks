@@ -4,34 +4,34 @@ import (
 	"math"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 type playerSession struct {
 	ID              string
 	ShipTypeID      string
-	Stats           entities.ShipStats
+	Stats           runtime.ShipStats
 	SpawnPosition   physics.Vector2
-	Config          entities.ClientConfig
+	Config          runtime.ClientConfig
 	Targeting       PlayerTargeting
 	Score           int
 	Lives           int
 	RespawnCooldown float64
-	Suspension      entities.SuspensionState
-	DamageOptions   entities.DamageOptions
-	LifeOptions     entities.LifeOptions
+	Suspension      runtime.SuspensionState
+	DamageOptions   runtime.DamageOptions
+	LifeOptions     runtime.LifeOptions
 }
 
 func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
 	return &playerSession{
 		ID:            id,
-		ShipTypeID:    entities.DefaultShipTypeID,
-		Stats:         entities.ResolveShipStats(entities.DefaultShipTypeID),
+		ShipTypeID:    runtime.DefaultShipTypeID,
+		Stats:         runtime.ResolveShipStats(runtime.DefaultShipTypeID),
 		SpawnPosition: spawnPosition,
-		Config: entities.ClientConfig{
+		Config: runtime.ClientConfig{
 			VisibleWorldWidth:  constants.WorldWidth,
 			VisibleWorldHeight: constants.WorldHeight,
 		},
@@ -50,8 +50,8 @@ func (session *playerSession) CanRespawn() bool {
 	return session.Lives > 0 && session.RespawnCooldown == 0
 }
 
-func (session *playerSession) NewShip(position physics.Vector2) *entities.Ship {
-	ship := &entities.Ship{
+func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
+	ship := &runtime.Ship{
 		ID:         session.ID,
 		ShipTypeID: session.ShipTypeID,
 		Stats:      session.Stats,
@@ -102,7 +102,7 @@ func (game *Game) respawnPlayer(playerID string) {
 }
 
 func (game *Game) planInitialPlayerSpawn(playerIndex int, playerID string) PlayerSpawnPlan {
-	shapeID := entities.ResolveShipStats(entities.DefaultShipTypeID).CollisionShapeID
+	shapeID := runtime.ResolveShipStats(runtime.DefaultShipTypeID).CollisionShapeID
 	return PlayerSpawnPlan{
 		EntityType: SpawnEntityTypePlayer,
 		Reason:     SpawnReasonInitialPlayer,

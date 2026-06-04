@@ -3,7 +3,7 @@ package game
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/player"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
@@ -126,7 +126,7 @@ func TestSetTargetStoresPlayerKindAndID(t *testing.T) {
 func TestSetTargetStoresAsteroidKindAndID(t *testing.T) {
 	game := New()
 	playerA := game.AddPlayer()
-	asteroid := entities.NewAsteroid("asteroid-1", physics.Vector2{}, physics.Vector2{}, 1, 0)
+	asteroid := runtime.NewAsteroid("asteroid-1", physics.Vector2{}, physics.Vector2{}, 1, 0)
 	game.state.Asteroids[asteroid.ID] = asteroid
 
 	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
@@ -149,7 +149,7 @@ func TestSetTargetStoresAsteroidKindAndID(t *testing.T) {
 func TestSetTargetStoresBulletKindAndID(t *testing.T) {
 	game := New()
 	playerA := game.AddPlayer()
-	bullet := entities.NewBullet("bullet-1", playerA, physics.Vector2{}, 0, physics.Vector2{}, 1.0)
+	bullet := runtime.NewBullet("bullet-1", playerA, physics.Vector2{}, 0, physics.Vector2{}, 1.0)
 	game.state.Projectiles[bullet.ID] = bullet
 
 	ok := game.SetTarget(playerA, targetpolicy.TargetRef{
@@ -252,7 +252,7 @@ func TestSelectTargetAtPositionStoresPlayerKindAndIDWhenOverlapping(t *testing.T
 func TestSelectTargetAtPositionStoresAsteroidKindAndIDWhenOverlapping(t *testing.T) {
 	game := New()
 	requesterID := game.AddPlayer()
-	asteroid := entities.NewAsteroid("asteroid-claim", physics.Vector2{X: 120, Y: 75}, physics.Vector2{}, 1, 0)
+	asteroid := runtime.NewAsteroid("asteroid-claim", physics.Vector2{X: 120, Y: 75}, physics.Vector2{}, 1, 0)
 	game.state.Asteroids[asteroid.ID] = asteroid
 
 	ok := game.SelectTargetAtPosition(
@@ -274,7 +274,7 @@ func TestSelectTargetAtPositionStoresAsteroidKindAndIDWhenOverlapping(t *testing
 func TestSelectTargetAtPositionStoresBulletKindAndIDWhenOverlapping(t *testing.T) {
 	game := New()
 	requesterID := game.AddPlayer()
-	bullet := entities.NewBullet("bullet-claim", requesterID, physics.Vector2{X: 200, Y: 150}, 0, physics.Vector2{}, 1.0)
+	bullet := runtime.NewBullet("bullet-claim", requesterID, physics.Vector2{X: 200, Y: 150}, 0, physics.Vector2{}, 1.0)
 	game.state.Projectiles[bullet.ID] = bullet
 
 	ok := game.SelectTargetAtPosition(

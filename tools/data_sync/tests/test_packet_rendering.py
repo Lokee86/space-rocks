@@ -46,9 +46,9 @@ def test_go_array_and_map_fields_from_expanded_schema() -> None:
             "map",
             key_type="string",
             value_type="ShipState",
-            go_value_type="entities.ShipState",
+            go_value_type="runtime.ShipState",
         ),
-    ) == "map[string]entities.ShipState"
+    ) == "map[string]runtime.ShipState"
 
 
 def test_go_rich_type_strings() -> None:

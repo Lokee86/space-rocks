@@ -3,8 +3,8 @@ package game
 import (
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
@@ -21,9 +21,9 @@ type Game struct {
 	asteroidSpawnElapsed      float64
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
-	state                     entities.GameState
+	state                     runtime.GameState
 	simulationStepObservers   []func(float64)
-	cameraViews               map[string]*entities.CameraView
+	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
 	pendingPresentationEvents map[string][]EventState
 }
@@ -37,12 +37,12 @@ func New() *Game {
 	return &Game{
 		collisionShapes:           collisionShapes,
 		stopSimulation:            make(chan struct{}),
-		cameraViews:               make(map[string]*entities.CameraView),
+		cameraViews:               make(map[string]*runtime.CameraView),
 		playerSessions:            make(map[string]*playerSession),
 		pendingPresentationEvents: make(map[string][]EventState),
 		spawner:                   spawning.New(),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
-		state:                     entities.NewGameState(),
+		state:                     runtime.NewGameState(),
 	}
 }
 

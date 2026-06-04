@@ -89,17 +89,17 @@ Options:
 Examples:
 
 ```bash
-python tools/data_sync/main.py -push -constants -go
-python tools/data_sync/main.py -push -constants -go -gds
-python tools/data_sync/main.py -pull -constants -go
-python tools/data_sync/main.py -diff -constants -go -gds
-python tools/data_sync/main.py -check -constants -go -gds
-python tools/data_sync/main.py -validate -packets
-python tools/data_sync/main.py -diff -packets -go -gds
-python tools/data_sync/main.py -push -packets -go -gds
-python tools/data_sync/main.py -check -packets -go -gds
-python tools/data_sync/main.py -validate
-python tools/data_sync/main.py -validate -constants
+data-sync -push -constants -go
+data-sync -push -constants -go -gds
+data-sync -pull -constants -go
+data-sync -diff -constants -go -gds
+data-sync -check -constants -go -gds
+data-sync -validate -packets
+data-sync -diff -packets -go -gds
+data-sync -push -packets -go -gds
+data-sync -check -packets -go -gds
+data-sync -validate
+data-sync -validate -constants
 ```
 
 `-push`, `-pull`, `-diff`, and `-check` require at least one domain and one language. `-pull` accepts only one language at a time.
@@ -164,7 +164,7 @@ owns = []
 
 [packets.go]
 files = [
-  "services/game-server/internal/game/entities/packets_generated.go",
+  "services/game-server/internal/game/runtime/packets_generated.go",
   "services/game-server/internal/game/packets.go",
   "services/game-server/internal/devtools/packets_generated.go",
 ]
@@ -212,7 +212,7 @@ packet_types = true
 structs = ["ClientPacket", "EventState", "StatePacket"]
 
 [outputs.imports]
-entities = "github.com/Lokee86/space-rocks/server/internal/game/entities"
+runtime = "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 
 [[structs]]
 id = "StatePacket"
@@ -223,7 +223,7 @@ json = "players"
 type = "map"
 key_type = "string"
 value_type = "ShipState"
-go_value_type = "entities.ShipState"
+go_value_type = "runtime.ShipState"
 
 [[structs.fields]]
 name = "events"

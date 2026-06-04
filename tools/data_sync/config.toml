@@ -80,7 +80,7 @@ owns = []
 
 [packets.go]
 files = [
-  "services/game-server/internal/game/entities/packets_generated.go",
+  "services/game-server/internal/game/runtime/packets_generated.go",
   "services/game-server/internal/game/packets.go",
   "services/game-server/internal/devtools/packets_generated.go",
 ]

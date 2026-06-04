@@ -1,4 +1,4 @@
-package entities
+package runtime
 
 type LifeOptions struct {
 	InfiniteLives bool

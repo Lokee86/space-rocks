@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -13,7 +13,7 @@ func (game *Game) DevtoolsEnsurePlayerSession(playerID string, spawnPosition phy
 	return game.ensureDevtoolsPlayerSession(playerID, spawnPosition) != nil
 }
 
-func (game *Game) DevtoolsSpawnPlayerShip(playerID string, spawnPosition physics.Vector2, cameraConfig entities.ClientConfig) bool {
+func (game *Game) DevtoolsSpawnPlayerShip(playerID string, spawnPosition physics.Vector2, cameraConfig runtime.ClientConfig) bool {
 	session, ok := game.playerSessions[playerID]
 	if !ok || session == nil {
 		return false
@@ -62,7 +62,7 @@ func (game *Game) ensureDevtoolsPlayerSession(playerID string, spawnPosition phy
 	return session
 }
 
-func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSession, spawnPosition physics.Vector2, cameraConfig entities.ClientConfig) bool {
+func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSession, spawnPosition physics.Vector2, cameraConfig runtime.ClientConfig) bool {
 	if playerID == "" {
 		return false
 	}
@@ -78,14 +78,14 @@ func (game *Game) applyDevtoolsPlayerShip(playerID string, session *playerSessio
 	return true
 }
 
-func (game *Game) ensureDevtoolsPlayerCameraView(playerID string, player *entities.Ship, cameraConfig entities.ClientConfig) {
+func (game *Game) ensureDevtoolsPlayerCameraView(playerID string, player *runtime.Ship, cameraConfig runtime.ClientConfig) {
 	if playerID == "" || player == nil {
 		return
 	}
 
 	cameraView, ok := game.cameraViews[playerID]
 	if !ok || cameraView == nil {
-		cameraView = &entities.CameraView{}
+		cameraView = &runtime.CameraView{}
 		game.cameraViews[playerID] = cameraView
 	}
 

@@ -45,7 +45,7 @@ The client still renders all players with the current player scene/sprite. It re
 Relevant areas:
 
 ```text
-services/game-server/internal/game/entities/ship.go
+services/game-server/internal/game/runtime/ship.go
 services/game-server/internal/game/physics/collision_shapes.go
 shared/collisions/collision_shapes.json
 client/scripts/world/world_sync.gd

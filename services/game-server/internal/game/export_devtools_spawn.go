@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 )
@@ -14,7 +14,7 @@ func (game *Game) DevtoolsNextBulletID() string {
 	return game.spawner.NextBulletID()
 }
 
-func (game *Game) DevtoolsAddBullet(bullet *entities.Bullet) bool {
+func (game *Game) DevtoolsAddBullet(bullet *runtime.Bullet) bool {
 	if bullet == nil {
 		return false
 	}
@@ -22,7 +22,7 @@ func (game *Game) DevtoolsAddBullet(bullet *entities.Bullet) bool {
 	return true
 }
 
-func (game *Game) DevtoolsSpawnBullet(ownerID string, position physics.Vector2, direction physics.Vector2) (*entities.Bullet, bool) {
+func (game *Game) DevtoolsSpawnBullet(ownerID string, position physics.Vector2, direction physics.Vector2) (*runtime.Bullet, bool) {
 	return game.spawnDebugBullet(ownerID, position, direction)
 }
 
@@ -30,6 +30,6 @@ func (game *Game) DevtoolsRandomAsteroidSpeed() float64 {
 	return game.spawner.RandomAsteroidSpeed()
 }
 
-func (game *Game) DevtoolsApplyAsteroidSpawnPlan(plan spawning.AsteroidSpawnPlan) *entities.Asteroid {
+func (game *Game) DevtoolsApplyAsteroidSpawnPlan(plan spawning.AsteroidSpawnPlan) *runtime.Asteroid {
 	return game.applyAsteroidSpawn(plan)
 }

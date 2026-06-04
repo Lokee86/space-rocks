@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -21,7 +21,7 @@ func TestDevtoolsSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
 	if session == nil {
 		t.Fatalf("expected session %q to exist", playerID)
 	}
-	session.Config = entities.ClientConfig{
+	session.Config = runtime.ClientConfig{
 		VisibleWorldWidth:  640,
 		VisibleWorldHeight: 360,
 	}
@@ -62,7 +62,7 @@ func TestDevtoolsTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
 		t.Fatal("expected DevtoolsSpawnPlayerShip to create shared target ship")
 	}
 
-	game.state.Players[shipOnlyID] = &entities.Ship{ID: shipOnlyID, X: 10, Y: 20}
+	game.state.Players[shipOnlyID] = &runtime.Ship{ID: shipOnlyID, X: 10, Y: 20}
 
 	got := game.DevtoolsTargetPlayerIDs()
 	want := []string{sessionOnlyID, sharedID, shipOnlyID}

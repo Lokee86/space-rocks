@@ -1,8 +1,8 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
 	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 )
 
 type PlayerTargeting struct {
@@ -33,7 +33,7 @@ func (targeting PlayerTargeting) TargetRef() targetpolicy.TargetRef {
 	}
 }
 
-func (targeting PlayerTargeting) ApplyToShip(ship *entities.Ship) {
+func (targeting PlayerTargeting) ApplyToShip(ship *runtime.Ship) {
 	if ship == nil {
 		return
 	}

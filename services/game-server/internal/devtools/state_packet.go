@@ -2,8 +2,8 @@ package devtools
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/game"
-	entities "github.com/Lokee86/space-rocks/server/internal/game/entities"
 	player "github.com/Lokee86/space-rocks/server/internal/game/player"
+	runtime "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 )
 
 type statePacketWithDebugStatus struct {
@@ -13,11 +13,11 @@ type statePacketWithDebugStatus struct {
 	ServerSentMsec  int                               `json:"server_sent_msec"`
 	DebugStatus     DebugStatus                       `json:"debug_status"`
 	DebugStatuses   map[string]DebugStatus            `json:"debug_statuses"`
-	Players         map[string]entities.ShipState     `json:"players"`
+	Players         map[string]runtime.ShipState     `json:"players"`
 	PlayerLifecycle map[string]string                 `json:"player_lifecycle"`
 	PlayerWorldStates map[string]player.WorldState    `json:"player_world_states"`
-	Bullets         map[string]entities.BulletState   `json:"bullets"`
-	Asteroids       map[string]entities.AsteroidState `json:"asteroids"`
+	Bullets         map[string]runtime.BulletState   `json:"bullets"`
+	Asteroids       map[string]runtime.AsteroidState `json:"asteroids"`
 	TotalAsteroids  int                               `json:"total_asteroids"`
 	Events          []game.EventState                 `json:"events"`
 }

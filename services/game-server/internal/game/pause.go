@@ -2,7 +2,7 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
@@ -70,7 +70,7 @@ func (game *Game) PlayerPauseStatePacket(playerID string) (PlayerPauseState, boo
 	}, true
 }
 
-func (game *Game) playerCanReceiveInput(playerID string, player *entities.Ship) bool {
+func (game *Game) playerCanReceiveInput(playerID string, player *runtime.Ship) bool {
 	if player.IsPendingDespawn() {
 		return false
 	}
@@ -81,7 +81,7 @@ func (game *Game) playerCanReceiveInput(playerID string, player *entities.Ship) 
 	return !session.Suspension.IsSuspended()
 }
 
-func (game *Game) playerCanMove(playerID string, player *entities.Ship) bool {
+func (game *Game) playerCanMove(playerID string, player *runtime.Ship) bool {
 	if player.IsPendingDespawn() {
 		return false
 	}
@@ -92,7 +92,7 @@ func (game *Game) playerCanMove(playerID string, player *entities.Ship) bool {
 	return !session.Suspension.IsSuspended()
 }
 
-func (game *Game) playerCanShoot(playerID string, player *entities.Ship) bool {
+func (game *Game) playerCanShoot(playerID string, player *runtime.Ship) bool {
 	if player.IsPendingDespawn() {
 		return false
 	}
@@ -104,7 +104,7 @@ func (game *Game) playerCanShoot(playerID string, player *entities.Ship) bool {
 		player.ShootCooldown == 0
 }
 
-func (game *Game) playerCanTakeCollisionDamage(playerID string, player *entities.Ship) bool {
+func (game *Game) playerCanTakeCollisionDamage(playerID string, player *runtime.Ship) bool {
 	if player.IsPendingDespawn() {
 		return false
 	}
@@ -117,7 +117,7 @@ func (game *Game) playerCanTakeCollisionDamage(playerID string, player *entities
 		player.DamageOptions.CanTakeDamage()
 }
 
-func (game *Game) playerCanReceiveScore(playerID string, player *entities.Ship) bool {
+func (game *Game) playerCanReceiveScore(playerID string, player *runtime.Ship) bool {
 	session, ok := game.playerSessions[playerID]
 	if !ok {
 		return false

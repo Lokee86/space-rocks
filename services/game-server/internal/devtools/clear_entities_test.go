@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 )
@@ -13,8 +13,8 @@ func TestHandleDebugClearBulletsRemovesAllBullets(t *testing.T) {
 	target := game.New()
 	playerID := target.AddPlayer()
 
-	bulletA := entities.NewBullet("debug-bullet-a", playerID, physics.Vector2{X: 10, Y: 20}, 0, physics.Vector2{}, 5)
-	bulletB := entities.NewBullet("debug-bullet-b", playerID, physics.Vector2{X: 30, Y: 40}, 0, physics.Vector2{}, 5)
+	bulletA := runtime.NewBullet("debug-bullet-a", playerID, physics.Vector2{X: 10, Y: 20}, 0, physics.Vector2{}, 5)
+	bulletB := runtime.NewBullet("debug-bullet-b", playerID, physics.Vector2{X: 30, Y: 40}, 0, physics.Vector2{}, 5)
 	target.DevtoolsAddBullet(bulletA)
 	target.DevtoolsAddBullet(bulletB)
 

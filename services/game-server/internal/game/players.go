@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -34,14 +34,14 @@ func (game *Game) AddPlayer() string {
 	return playerID
 }
 
-func (game *Game) setPlayerCameraViewLocked(playerID string, player *entities.Ship) {
+func (game *Game) setPlayerCameraViewLocked(playerID string, player *runtime.Ship) {
 	if playerID == "" || player == nil {
 		return
 	}
 
 	cameraView, ok := game.cameraViews[playerID]
 	if !ok || cameraView == nil {
-		cameraView = &entities.CameraView{}
+		cameraView = &runtime.CameraView{}
 		game.cameraViews[playerID] = cameraView
 	}
 
