@@ -236,7 +236,8 @@ Current ownership paths:
 - websocket routing: `services/game-server/internal/networking/`
 - telemetry packet schema: `shared/packets/gameplay.toml`
 - telemetry client/server routing: `client/scripts/networking/`, `services/game-server/internal/networking/`
-- client devtools window/context: `client/scripts/devtools/`
+- client devtools facade: `client/scripts/devtools/gameplay_devtools_context.gd`
+- client devtools coordination contexts: `client/scripts/devtools/context/`
 - client telemetry seam: `client/scripts/devtools/telemetry/`
 - server hitbox overlay scene: `client/scenes/devtools/server_hitbox_overlay.tscn`
 - server hitbox overlay script: `client/scripts/devtools/hitboxes/devtools_server_hitbox_overlay.gd`
@@ -253,6 +254,8 @@ Current ownership paths:
 - non-devtools gameplay/world code should expose only the read-only observation needed by devtools.
 - non-devtools world/runtime code exposes read-only draw-entry data only; rendering stays in devtools.
 - `PlayerDevLabel` lifecycle, formatting, and mode state belong in client devtools, not `PlayerSync` or `WorldSync`.
+
+`GameplayDevtoolsContext` is now a facade/composition seam. It constructs the devtools contexts, delegates reset/process/public wrapper calls, and keeps the stable public API while ownership lives in the focused context files.
 
 Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`. Normal `internal/game` files should not own, step, or expose that state directly.
 

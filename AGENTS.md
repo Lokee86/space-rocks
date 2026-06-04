@@ -217,6 +217,7 @@ Client runtime:
 - `client/scripts/world/`
 - `client/scripts/world/world_sync.gd`
 - `client/scripts/devtools/`
+- `client/scripts/devtools/context/`
 - `client/scenes/devtools/`
 - `client/scripts/session/`
 - `client/scripts/shell/gameplay_shell_flow.gd`
