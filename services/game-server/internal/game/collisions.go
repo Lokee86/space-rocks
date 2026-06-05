@@ -93,7 +93,10 @@ func detectPlayerPickupCollision(
 		return PlayerPickupCollision{}, false
 	}
 
-	pickupBody := pickup.CollisionBody()
+	pickupBody, ok := pickup.CollisionBody(catalog)
+	if !ok {
+		return PlayerPickupCollision{}, false
+	}
 	delta := space.Delta(player.Position(), pickup.Position())
 	pickupBody.Position = player.Position().Add(delta)
 

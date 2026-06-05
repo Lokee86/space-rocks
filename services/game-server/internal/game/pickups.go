@@ -24,7 +24,6 @@ func (game *Game) SpawnPickup(pickupType pickups.PickupType, position physics.Ve
 		Type:   definition.Type,
 		X:      position.X,
 		Y:      position.Y,
-		Radius: definition.Collision.Radius,
 	}
 	game.entities.Pickups[pickupID] = pickup
 
