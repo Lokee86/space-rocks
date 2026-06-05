@@ -106,6 +106,25 @@ func test_apply_state_creates_bullet_nodes() -> void:
 	)
 
 
+func test_apply_state_exposes_pickup_target_positions() -> void:
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_PICKUPS] = {
+		"pickup-1": {
+			Packets.FIELD_ID: "pickup-1",
+			Packets.FIELD_TYPE: "1_up",
+			Packets.FIELD_X: 520.0,
+			Packets.FIELD_Y: 540.0,
+		},
+	}
+
+	_apply_state(state)
+
+	var pickup_positions: Dictionary = world_sync.target_source().pickup_positions()
+	assert_true(pickup_positions.has("pickup-1"))
+	assert_eq(pickup_positions["pickup-1"]["visual_position"], Vector2(520.0, 540.0))
+	assert_eq(pickup_positions["pickup-1"]["server_position"], Vector2(520.0, 540.0))
+
+
 func test_apply_state_reuses_existing_entity_nodes() -> void:
 	_apply_fixture_state()
 	var local_node = _player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID]

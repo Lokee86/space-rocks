@@ -19,6 +19,7 @@ Supported `target_kind` values:
 
 - `player`
 - `enemy`
+- `pickup`
 - `asteroid`
 - `bullet`
 
@@ -42,7 +43,7 @@ For player-only devtools commands:
 - `Game Target` may resolve only when `target_kind == "player"`
 - resolved `target_id` is used as `target_player_id`
 
-If canonical target is non-player (`enemy`, `asteroid`, or `bullet`), `Game Target` is not a valid `target_player_id` source for player-only commands.
+If canonical target is non-player (`enemy`, `pickup`, `asteroid`, or `bullet`), `Game Target` is not a valid `target_player_id` source for player-only commands.
 
 ## Telemetry Target Readout
 
@@ -50,5 +51,7 @@ Telemetry target readout is display-only status derived from canonical target da
 
 - Non-player canonical targets are valid for telemetry/readout purposes.
 - Non-player canonical targets are not valid player-command targets.
+
+`pickup` is a canonical gameplay target kind, but it is still not a valid target for player-only devtools commands that require `target_player_id`.
 
 Raw `LocalPlayerTelemetry` and `TargetTelemetry` in the devtools window are part of this readout surface and are separate from HUD behavior.

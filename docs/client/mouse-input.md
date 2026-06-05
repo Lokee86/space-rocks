@@ -42,6 +42,6 @@ Current client targeting flow:
 
 - `MouseActionFlow` remains the lowest-level mouse/input action coordinator.
 - `GameplayTargetingContext` owns target selection orchestration.
-- `GameplayTargetCandidateFlow` builds target candidates.
+- `GameplayTargetCandidateFlow` builds target candidates, including players, pickups, asteroids, and bullets.
 - `TargetPositionSource` owns targetable position read models.
 - `WorldSync` only exposes `target_source()` for targeting and no longer owns direct target-position methods.

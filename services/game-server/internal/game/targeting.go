@@ -170,6 +170,9 @@ func (game *Game) targetExists(target targetpolicy.TargetRef) bool {
 	case targetpolicy.TargetKindEnemy:
 		enemy, exists := game.entities.Enemies[target.ID]
 		return exists && enemy != nil
+	case targetpolicy.TargetKindPickup:
+		pickup, exists := game.entities.Pickups[target.ID]
+		return exists && pickup != nil
 	case targetpolicy.TargetKindAsteroid:
 		asteroid, exists := game.entities.Asteroids[target.ID]
 		return exists && asteroid != nil
@@ -215,6 +218,12 @@ func (game *Game) targetLookupStatusLocked(target targetpolicy.TargetRef) player
 		}
 		if enemy.IsPendingDespawn() {
 			return playerstate.TargetStatusInactive
+		}
+		return playerstate.TargetStatusActive
+	case targetpolicy.TargetKindPickup:
+		pickup, exists := game.entities.Pickups[target.ID]
+		if !exists || pickup == nil {
+			return playerstate.TargetStatusMissing
 		}
 		return playerstate.TargetStatusActive
 	default:
@@ -280,6 +289,25 @@ func (game *Game) targetCandidatesLocked() []targetpolicy.TargetCandidate {
 			Ref: targetpolicy.TargetRef{
 				Kind: targetpolicy.TargetKindBullet,
 				ID:   projectileID,
+			},
+			Body: body,
+		})
+	}
+
+	for pickupID, pickup := range game.entities.Pickups {
+		if pickup == nil {
+			continue
+		}
+
+		body, ok := pickup.CollisionBody(game.collisionShapes)
+		if !ok {
+			continue
+		}
+
+		candidates = append(candidates, targetpolicy.TargetCandidate{
+			Ref: targetpolicy.TargetRef{
+				Kind: targetpolicy.TargetKindPickup,
+				ID:   pickupID,
 			},
 			Body: body,
 		})

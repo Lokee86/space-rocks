@@ -3,6 +3,7 @@ package game
 import (
 	"testing"
 
+	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/player"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
@@ -290,6 +291,33 @@ func TestSelectTargetAtPositionStoresBulletKindAndIDWhenOverlapping(t *testing.T
 	}
 }
 
+func TestSelectTargetAtPositionStoresPickupKindAndIDWhenOverlapping(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	pickup, ok, err := game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 160, Y: 90})
+	if err != nil {
+		t.Fatalf("expected SpawnPickup to succeed, got error %v", err)
+	}
+	if !ok {
+		t.Fatal("expected SpawnPickup to report success")
+	}
+
+	ok = game.SelectTargetAtPosition(
+		requesterID,
+		pickup.X,
+		pickup.Y,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindPickup, ID: pickup.ID},
+	)
+	if !ok {
+		t.Fatal("expected SelectTargetAtPosition pickup target to succeed")
+	}
+
+	target := game.Target(requesterID)
+	if target.Kind != targetpolicy.TargetKindPickup || target.ID != pickup.ID {
+		t.Fatalf("expected pickup target %q, got %#v", pickup.ID, target)
+	}
+}
+
 func TestSelectTargetAtPositionMissingTargetDoesNotOverwriteExistingTarget(t *testing.T) {
 	game := New()
 	requesterID := game.AddPlayer()
@@ -310,6 +338,34 @@ func TestSelectTargetAtPositionMissingTargetDoesNotOverwriteExistingTarget(t *te
 	)
 	if ok {
 		t.Fatal("expected SelectTargetAtPosition to fail for missing target")
+	}
+
+	target := game.Target(requesterID)
+	if target.Kind != targetpolicy.TargetKindPlayer || target.ID != existingTargetID {
+		t.Fatalf("expected existing target to remain player %q, got %#v", existingTargetID, target)
+	}
+}
+
+func TestSelectTargetAtPositionRejectsMissingPickup(t *testing.T) {
+	game := New()
+	requesterID := game.AddPlayer()
+	existingTargetID := game.AddPlayer()
+
+	if !game.SetTarget(requesterID, targetpolicy.TargetRef{
+		Kind: targetpolicy.TargetKindPlayer,
+		ID:   existingTargetID,
+	}) {
+		t.Fatal("expected setup SetTarget to succeed")
+	}
+
+	ok := game.SelectTargetAtPosition(
+		requesterID,
+		0,
+		0,
+		targetpolicy.TargetRef{Kind: targetpolicy.TargetKindPickup, ID: "pickup-missing"},
+	)
+	if ok {
+		t.Fatal("expected SelectTargetAtPosition to fail for missing pickup")
 	}
 
 	target := game.Target(requesterID)

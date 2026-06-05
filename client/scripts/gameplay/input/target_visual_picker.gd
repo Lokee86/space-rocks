@@ -1,8 +1,9 @@
 extends RefCounted
 class_name TargetVisualPicker
 
-const TARGET_KIND_PRIORITY_PLAYER := 4
-const TARGET_KIND_PRIORITY_ENEMY := 3
+const TARGET_KIND_PRIORITY_PLAYER := 5
+const TARGET_KIND_PRIORITY_ENEMY := 4
+const TARGET_KIND_PRIORITY_PICKUP := 3
 const TARGET_KIND_PRIORITY_ASTEROID := 2
 const TARGET_KIND_PRIORITY_BULLET := 1
 
@@ -40,6 +41,8 @@ static func _target_kind_priority(target_kind: String) -> int:
 			return TARGET_KIND_PRIORITY_PLAYER
 		"enemy":
 			return TARGET_KIND_PRIORITY_ENEMY
+		"pickup":
+			return TARGET_KIND_PRIORITY_PICKUP
 		"asteroid":
 			return TARGET_KIND_PRIORITY_ASTEROID
 		"bullet":

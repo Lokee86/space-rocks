@@ -7,6 +7,7 @@ type TargetKind string
 const (
 	TargetKindPlayer   TargetKind = "player"
 	TargetKindEnemy    TargetKind = "enemy"
+	TargetKindPickup   TargetKind = "pickup"
 	TargetKindAsteroid TargetKind = "asteroid"
 	TargetKindBullet   TargetKind = "bullet"
 )
@@ -32,8 +33,10 @@ func (target TargetRef) IsEmpty() bool {
 func TargetKindPriority(kind TargetKind) int {
 	switch kind {
 	case TargetKindPlayer:
-		return 4
+		return 5
 	case TargetKindEnemy:
+		return 4
+	case TargetKindPickup:
 		return 3
 	case TargetKindAsteroid:
 		return 2
