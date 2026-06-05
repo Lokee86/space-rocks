@@ -20,7 +20,7 @@ static func debug_kill_target_player_packet(target_player_id: String, target_sco
 
 
 static func set_target_player_request_packet(target_player_id: String) -> Dictionary:
-	return Packets.set_target_player_request_packet(target_player_id)
+	return Packets.set_target_player_request_packet("player", target_player_id)
 
 
 static func clear_target_request_packet() -> Dictionary:
@@ -81,4 +81,3 @@ static func debug_clear_bullets_packet() -> Dictionary:
 
 static func debug_clear_asteroids_packet() -> Dictionary:
 	return Packets.debug_clear_asteroids_packet()
-

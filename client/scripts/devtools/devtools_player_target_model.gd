@@ -1,7 +1,7 @@
 extends RefCounted
 
-const TELEMETRY_SOURCE_STATE_PACKET = "state_packet"
-const TELEMETRY_SOURCE_SESSION_PACKET = "session_packet"
+const TELEMETRY_SOURCE_PLAYER_STATE = "player_state"
+const TELEMETRY_SOURCE_PLAYER_WORLD_STATE = "player_world_state"
 
 
 var self_id := ""
@@ -123,7 +123,7 @@ func active_player_target_rows() -> Array:
 
 
 func local_player_state() -> Dictionary:
-	return local_player_state_for_source(TELEMETRY_SOURCE_STATE_PACKET)
+	return local_player_state_for_source(TELEMETRY_SOURCE_PLAYER_STATE)
 
 
 func local_player_state_for_source(source: String) -> Dictionary:
@@ -131,11 +131,11 @@ func local_player_state_for_source(source: String) -> Dictionary:
 		return {}
 
 	match source:
-		TELEMETRY_SOURCE_STATE_PACKET:
+		TELEMETRY_SOURCE_PLAYER_STATE:
 			var local_state = server_players.get(self_id, null)
 			if local_state is Dictionary:
 				return local_state
-		TELEMETRY_SOURCE_SESSION_PACKET:
+		TELEMETRY_SOURCE_PLAYER_WORLD_STATE:
 			var local_session_state = player_sessions.get(self_id, null)
 			if local_session_state is Dictionary:
 				return local_session_state
@@ -144,7 +144,7 @@ func local_player_state_for_source(source: String) -> Dictionary:
 
 
 func target_state() -> Dictionary:
-	return target_state_for_source(TELEMETRY_SOURCE_STATE_PACKET)
+	return target_state_for_source(TELEMETRY_SOURCE_PLAYER_STATE)
 
 
 func target_state_for_source(source: String) -> Dictionary:
@@ -153,7 +153,7 @@ func target_state_for_source(source: String) -> Dictionary:
 
 	var value = null
 	match source:
-		TELEMETRY_SOURCE_STATE_PACKET:
+		TELEMETRY_SOURCE_PLAYER_STATE:
 			match game_target_kind:
 				"player":
 					value = server_players.get(game_target_id, null)
@@ -166,7 +166,7 @@ func target_state_for_source(source: String) -> Dictionary:
 						value = server_enemies.get(game_target_id, null)
 				_:
 					return {}
-		TELEMETRY_SOURCE_SESSION_PACKET:
+		TELEMETRY_SOURCE_PLAYER_WORLD_STATE:
 			if game_target_kind == "player":
 				value = player_sessions.get(game_target_id, null)
 		_:

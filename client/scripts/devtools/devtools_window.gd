@@ -22,8 +22,8 @@ signal game_target_clear_requested()
 signal show_server_hitboxes_changed(enabled: bool)
 signal telemetry_sources_changed(local_source: String, target_source: String)
 
-const TELEMETRY_SOURCE_STATE_PACKET := "state_packet"
-const TELEMETRY_SOURCE_SESSION_PACKET := "session_packet"
+const TELEMETRY_SOURCE_PLAYER_STATE := "player_state"
+const TELEMETRY_SOURCE_PLAYER_WORLD_STATE := "player_world_state"
 
 @onready var invincible_button: Button = %InvincibleButton
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
@@ -520,10 +520,10 @@ func _selected_telemetry_source(select: OptionButton) -> String:
 
 func _initialize_telemetry_source_select(select: OptionButton) -> void:
 	select.clear()
-	select.add_item("State Packet")
-	select.set_item_metadata(0, TELEMETRY_SOURCE_STATE_PACKET)
-	select.add_item("Session Packet")
-	select.set_item_metadata(1, TELEMETRY_SOURCE_SESSION_PACKET)
+	select.add_item("Player State")
+	select.set_item_metadata(0, TELEMETRY_SOURCE_PLAYER_STATE)
+	select.add_item("Player World State")
+	select.set_item_metadata(1, TELEMETRY_SOURCE_PLAYER_WORLD_STATE)
 	select.select(0)
 
 

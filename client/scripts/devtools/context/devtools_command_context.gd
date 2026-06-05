@@ -69,7 +69,7 @@ func request_set_game_target(target_player_id: String) -> void:
 		return
 	if connection_service == null:
 		return
-	connection_service.send_packet(Packets.set_target_player_request_packet(target_player_id))
+	connection_service.send_packet(Packets.set_target_player_request_packet("player", target_player_id))
 
 
 func request_clear_game_target() -> void:

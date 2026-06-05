@@ -57,7 +57,7 @@ func TestSetPlayerTargetMissingTargetDoesNotOverwriteExistingTarget(t *testing.T
 	}
 }
 
-func TestStatePacketIncludesTargetPlayerID(t *testing.T) {
+func TestStatePacketIncludesTargetKindAndTargetID(t *testing.T) {
 	game := New()
 	playerA := game.AddPlayer()
 	playerB := game.AddPlayer()
@@ -71,8 +71,11 @@ func TestStatePacketIncludesTargetPlayerID(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected state packet to include player %q", playerA)
 	}
-	if playerState.TargetPlayerID != playerB {
-		t.Fatalf("expected target_player_id %q, got %q", playerB, playerState.TargetPlayerID)
+	if playerState.TargetKind != "player" {
+		t.Fatalf("expected target kind %q, got %q", "player", playerState.TargetKind)
+	}
+	if playerState.TargetID != playerB {
+		t.Fatalf("expected target id %q, got %q", playerB, playerState.TargetID)
 	}
 }
 
@@ -95,9 +98,6 @@ func TestSetPlayerTargetReflectedInStatePacket(t *testing.T) {
 	}
 	if shooterState.TargetID != targetID {
 		t.Fatalf("expected target id %q, got %q", targetID, shooterState.TargetID)
-	}
-	if shooterState.TargetPlayerID != targetID {
-		t.Fatalf("expected target_player_id %q, got %q", targetID, shooterState.TargetPlayerID)
 	}
 }
 
@@ -169,7 +169,7 @@ func TestSetTargetStoresBulletKindAndID(t *testing.T) {
 	}
 }
 
-func TestClearTargetEmptiesGenericAndCompatibilityTargetFields(t *testing.T) {
+func TestClearTargetEmptiesGenericTargetFields(t *testing.T) {
 	game := New()
 	playerA := game.AddPlayer()
 	playerB := game.AddPlayer()
@@ -191,9 +191,6 @@ func TestClearTargetEmptiesGenericAndCompatibilityTargetFields(t *testing.T) {
 	player := game.entities.Players[playerA]
 	if player == nil {
 		t.Fatalf("expected player %q to exist", playerA)
-	}
-	if player.TargetPlayerID != "" {
-		t.Fatalf("expected compatibility target_player_id to be empty, got %q", player.TargetPlayerID)
 	}
 }
 
@@ -451,8 +448,8 @@ func TestClearTargetsForMissingPlayersLocked_ClearsMissingRemovedTarget(t *testi
 	if requester == nil {
 		t.Fatalf("expected requester %q to exist", requesterID)
 	}
-	if requester.TargetKind != "" || requester.TargetID != "" || requester.TargetPlayerID != "" {
-		t.Fatalf("expected missing target to be cleared, got kind=%q id=%q target_player_id=%q", requester.TargetKind, requester.TargetID, requester.TargetPlayerID)
+	if requester.TargetKind != "" || requester.TargetID != "" {
+		t.Fatalf("expected missing target to be cleared, got kind=%q id=%q", requester.TargetKind, requester.TargetID)
 	}
 }
 
@@ -503,8 +500,8 @@ func TestSelectTargetAtPosition_DeadPlayerStoresTargetingAndRespawnMirrorsTarget
 	if session == nil {
 		t.Fatalf("expected player session %q to exist", requesterID)
 	}
-	if session.Targeting.Kind != string(targetpolicy.TargetKindPlayer) || session.Targeting.ID != targetID || session.Targeting.PlayerID != targetID {
-		t.Fatalf("expected session targeting player %q, got kind=%q id=%q player_id=%q", targetID, session.Targeting.Kind, session.Targeting.ID, session.Targeting.PlayerID)
+	if session.Targeting.Kind != string(targetpolicy.TargetKindPlayer) || session.Targeting.ID != targetID {
+		t.Fatalf("expected session targeting player %q, got kind=%q id=%q", targetID, session.Targeting.Kind, session.Targeting.ID)
 	}
 
 	game.respawnPlayer(requesterID)
@@ -512,8 +509,8 @@ func TestSelectTargetAtPosition_DeadPlayerStoresTargetingAndRespawnMirrorsTarget
 	if ship == nil {
 		t.Fatalf("expected respawned ship %q to exist", requesterID)
 	}
-	if ship.TargetKind != string(targetpolicy.TargetKindPlayer) || ship.TargetID != targetID || ship.TargetPlayerID != targetID {
-		t.Fatalf("expected respawned ship target player %q, got kind=%q id=%q target_player_id=%q", targetID, ship.TargetKind, ship.TargetID, ship.TargetPlayerID)
+	if ship.TargetKind != string(targetpolicy.TargetKindPlayer) || ship.TargetID != targetID {
+		t.Fatalf("expected respawned ship target player %q, got kind=%q id=%q", targetID, ship.TargetKind, ship.TargetID)
 	}
 }
 

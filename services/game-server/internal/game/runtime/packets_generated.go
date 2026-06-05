@@ -15,17 +15,16 @@ type InputState struct {
 }
 
 type ShipState struct {
-	ID             string  `json:"id"`
-	ShipType       string  `json:"ship_type"`
-	X              float64 `json:"x"`
-	Y              float64 `json:"y"`
-	Rotation       float64 `json:"rotation"`
-	Health         int     `json:"health"`
-	Shields        int     `json:"shields"`
-	Thrusting      bool    `json:"thrusting"`
-	TargetPlayerID string  `json:"target_player_id"`
-	TargetKind     string  `json:"target_kind"`
-	TargetID       string  `json:"target_id"`
+	ID         string  `json:"id"`
+	ShipType   string  `json:"ship_type"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	Rotation   float64 `json:"rotation"`
+	Health     int     `json:"health"`
+	Shields    int     `json:"shields"`
+	Thrusting  bool    `json:"thrusting"`
+	TargetKind string  `json:"target_kind"`
+	TargetID   string  `json:"target_id"`
 }
 
 type AsteroidState struct {
