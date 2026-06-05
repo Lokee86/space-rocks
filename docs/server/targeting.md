@@ -53,5 +53,6 @@ Telemetry target readout is display-only status derived from canonical target da
 - Non-player canonical targets are not valid player-command targets.
 
 `pickup` is a canonical gameplay target kind, but it is still not a valid target for player-only devtools commands that require `target_player_id`.
+See [pickup system design](../design/pickups.md) for the pickup-specific targeting behavior.
 
 Raw `LocalPlayerTelemetry` and `TargetTelemetry` in the devtools window are part of this readout surface and are separate from HUD behavior.

@@ -45,3 +45,4 @@ Current client targeting flow:
 - `GameplayTargetCandidateFlow` builds target candidates, including players, pickups, asteroids, and bullets.
 - `TargetPositionSource` owns targetable position read models.
 - `WorldSync` only exposes `target_source()` for targeting and no longer owns direct target-position methods.
+- For pickup-specific targeting details, see [pickup system design](../design/pickups.md).

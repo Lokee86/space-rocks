@@ -228,13 +228,12 @@ Gameplay systems such as combat still own gameplay decisions: collision outcomes
 
 Pickup ownership is split deliberately:
 
-- `services/game-server/internal/game/entities/pickups` owns pickup entity/type/definition/collision/health behavior
-- `services/game-server/internal/game/pickups` owns pickup collection rules and effect intents
+- `services/game-server/internal/game/entities/pickups` owns pickup entity/type/definition/collision/health.
+- `services/game-server/internal/game/pickups` owns pickup collection rules and effect intents.
+- Root `services/game-server/internal/game` applies mutations and records events.
+- See [docs/design/pickups.md](pickups.md) for the full pickup design.
 
-Pickup collection is intentionally two-stage:
-
-- `pickup_collected` means the pickup entity was consumed/removed
-- `pickup_effect_applied` means the gameplay mutation was applied
+Pickup collection is intentionally two-stage.
 
 This refactor does not enable bullet/pickup collisions.
 This refactor does not change normal spawning.

@@ -18,6 +18,7 @@ These readouts are generic packet/state inspection surfaces. They should not han
 `State Packet` is the live ship/avatar read model, while `Session Packet` is the durable player/session read model. Score and lives are read from `player_sessions`, not `players`.
 The entity-state telemetry source can also display canonical non-player targets such as asteroids, bullets, enemies, and pickups.
 When pickup telemetry is shown from `StatePacket.pickups`, the `health` field is current health only. This does not mean bullet/pickup collision damage is enabled yet.
+See [pickup system design](../design/pickups.md) for the full pickup telemetry and event split.
 
 ## Display Behavior
 
