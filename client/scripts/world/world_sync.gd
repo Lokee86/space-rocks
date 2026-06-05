@@ -5,6 +5,7 @@ const AsteroidSyncScript = preload("res://scripts/world/asteroid_sync.gd")
 const BulletSyncScript = preload("res://scripts/world/bullet_sync.gd")
 const PickupSyncScript = preload("res://scripts/world/pickup_sync.gd")
 const PlayerRenderApiScript = preload("res://scripts/world/player_render/player_render_api.gd")
+const TargetPositionSource = preload("res://scripts/gameplay/targeting/target_position_source.gd")
 
 var asteroid_sync
 var bullet_sync
@@ -36,7 +37,7 @@ func configure(
 	view_anchor = view_anchor_ref
 	player_render_api.configure(game_owner, player, view_anchor_ref, pause_state_tracker)
 	target_position_source = TargetPositionSource.new()
-	target_position_source.configure(player_render_api, asteroid_sync, bullet_sync)
+	target_position_source.configure(player_render_api, asteroid_sync, bullet_sync, pickup_sync)
 
 	asteroids.z_index = Constants.ASTEROID_Z_INDEX
 	pickups.z_index = Constants.ASTEROID_Z_INDEX + 5
@@ -62,12 +63,6 @@ func apply_state(
 	server_pickups: Dictionary = {}
 ) -> void:
 	current_self_id = self_id
-
-	if server_pickups.size() > 0:
-		print("WorldSync: server_pickups count=%s ids=%s" % [
-			server_pickups.size(),
-			server_pickups.keys()
-		])
 
 	if target_position_source != null:
 		target_position_source.set_current_self_id(self_id)

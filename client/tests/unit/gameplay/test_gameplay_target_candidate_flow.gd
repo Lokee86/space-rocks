@@ -7,6 +7,7 @@ class FakeTargetPositionSource:
 	var player_position_entries := {}
 	var asteroid_position_entries := {}
 	var bullet_position_entries := {}
+	var pickup_position_entries := {}
 
 	func player_positions() -> Dictionary:
 		return player_position_entries
@@ -16,6 +17,9 @@ class FakeTargetPositionSource:
 
 	func bullet_positions() -> Dictionary:
 		return bullet_position_entries
+
+	func pickup_positions() -> Dictionary:
+		return pickup_position_entries
 
 
 func _candidate_map(candidates: Array) -> Dictionary:
@@ -52,15 +56,22 @@ func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates(
 			"server_position": Vector2(110, 120),
 		}
 	}
+	target_position_source.pickup_position_entries = {
+		"pickup-1": {
+			"visual_position": Vector2(130, 140),
+			"server_position": Vector2(150, 160),
+		}
+	}
 
 	var flow := GameplayTargetCandidateFlow.new()
 	flow.configure(target_position_source)
 
 	var candidates := flow.target_visual_candidates()
-	assert_eq(candidates.size(), 3)
+	assert_eq(candidates.size(), 4)
 
 	var by_key := _candidate_map(candidates)
 	assert_true(by_key.has("player:player-1"))
+	assert_true(by_key.has("pickup:pickup-1"))
 	assert_true(by_key.has("asteroid:asteroid-1"))
 	assert_true(by_key.has("bullet:bullet-1"))
 
@@ -70,6 +81,13 @@ func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates(
 	assert_eq(player_candidate.visual_position, Vector2(10, 20))
 	assert_eq(player_candidate.server_position, Vector2(30, 40))
 	assert_eq(player_candidate.pick_radius, 32.0)
+
+	var pickup_candidate = by_key["pickup:pickup-1"]
+	assert_eq(pickup_candidate.target_kind, "pickup")
+	assert_eq(pickup_candidate.target_id, "pickup-1")
+	assert_eq(pickup_candidate.visual_position, Vector2(130, 140))
+	assert_eq(pickup_candidate.server_position, Vector2(150, 160))
+	assert_eq(pickup_candidate.pick_radius, 32.0)
 
 	var asteroid_candidate = by_key["asteroid:asteroid-1"]
 	assert_eq(asteroid_candidate.target_kind, "asteroid")
@@ -110,11 +128,22 @@ func test_target_visual_candidates_skips_malformed_entries() -> void:
 			"server_position": Vector2(11, 12),
 		},
 	}
+	target_position_source.pickup_position_entries = {
+		"pickup-ok": {
+			"visual_position": Vector2(13, 14),
+			"server_position": Vector2(15, 16),
+		},
+		"pickup-bad": {
+			"visual_position": Vector2(17, 18),
+		},
+	}
 
 	var flow := GameplayTargetCandidateFlow.new()
 	flow.configure(target_position_source)
 
 	var candidates := flow.target_visual_candidates()
-	assert_eq(candidates.size(), 1)
-	assert_eq(candidates[0].target_kind, "asteroid")
-	assert_eq(candidates[0].target_id, "asteroid-ok")
+	assert_eq(candidates.size(), 2)
+	assert_eq(candidates[0].target_kind, "pickup")
+	assert_eq(candidates[0].target_id, "pickup-ok")
+	assert_eq(candidates[1].target_kind, "asteroid")
+	assert_eq(candidates[1].target_id, "asteroid-ok")

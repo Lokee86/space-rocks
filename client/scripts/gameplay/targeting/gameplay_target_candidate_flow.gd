@@ -2,6 +2,7 @@ extends RefCounted
 class_name GameplayTargetCandidateFlow
 
 const TARGET_PLAYER_PICK_RADIUS := 32.0
+const TARGET_PICKUP_PICK_RADIUS := 32.0
 const TARGET_ASTEROID_BASE_PICK_RADIUS := 32.0
 const TARGET_BULLET_PICK_RADIUS := 12.0
 
@@ -34,6 +35,24 @@ func target_visual_candidates() -> Array:
 		candidate.server_position = position_entry["server_position"]
 		candidate.pick_radius = TARGET_PLAYER_PICK_RADIUS
 		candidates.append(candidate)
+
+	var pickup_positions: Dictionary = target_position_source.pickup_positions()
+	for pickup_id in pickup_positions.keys():
+		var position_entry = pickup_positions[pickup_id]
+		if not (position_entry is Dictionary):
+			continue
+		if not position_entry.has("visual_position"):
+			continue
+		if not position_entry.has("server_position"):
+			continue
+
+		var pickup_candidate := TargetVisualCandidate.new()
+		pickup_candidate.target_kind = "pickup"
+		pickup_candidate.target_id = String(pickup_id)
+		pickup_candidate.visual_position = position_entry["visual_position"]
+		pickup_candidate.server_position = position_entry["server_position"]
+		pickup_candidate.pick_radius = TARGET_PICKUP_PICK_RADIUS
+		candidates.append(pickup_candidate)
 
 	var asteroid_positions: Dictionary = target_position_source.asteroid_positions()
 	for asteroid_id in asteroid_positions.keys():

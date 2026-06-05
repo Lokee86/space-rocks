@@ -115,6 +115,23 @@ func remove_missing(server_pickups: Dictionary) -> void:
 		pickup_visual_positions.erase(pickup_id)
 
 
+func pickup_target_positions() -> Dictionary:
+	var positions = {}
+
+	for pickup_id in target_pickup_positions.keys():
+		var visual_position = target_pickup_positions[pickup_id]
+		var server_position = visual_position
+		if pickup_server_positions.has(pickup_id):
+			server_position = pickup_server_positions[pickup_id]
+
+		positions[pickup_id] = {
+			"visual_position": visual_position,
+			"server_position": server_position,
+		}
+
+	return positions
+
+
 func interpolate(weight: float) -> void:
 	for pickup_id in pickup_nodes.keys():
 		if not target_pickup_positions.has(pickup_id):

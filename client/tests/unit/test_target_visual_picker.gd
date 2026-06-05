@@ -52,6 +52,15 @@ func test_pick_player_beats_asteroid_when_rank_ties() -> void:
 	var result = TargetVisualPicker.pick([asteroid, player], Vector2.ZERO)
 	assert_eq(result, player)
 
+func test_pick_pickup_beats_asteroid_when_rank_ties() -> void:
+	var asteroid := _candidate("asteroid", "asteroid-1", Vector2.ZERO, 10.0, true)
+	asteroid.pick_rank = 4
+	var pickup := _candidate("pickup", "pickup-1", Vector2.ZERO, 10.0, true)
+	pickup.pick_rank = 4
+
+	var result = TargetVisualPicker.pick([asteroid, pickup], Vector2.ZERO)
+	assert_eq(result, pickup)
+
 func test_pick_asteroid_beats_bullet_when_rank_ties() -> void:
 	var bullet := _candidate("bullet", "bullet-1", Vector2.ZERO, 10.0, true)
 	bullet.pick_rank = 3
