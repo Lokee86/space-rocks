@@ -18,13 +18,8 @@ Durable player counters such as score and lives are owned by `playerSession` on 
 
 Pickup ownership is split:
 
-- `services/game-server/internal/game/entities/pickups` owns pickup entity/type/definition/collision/health behavior
-- `services/game-server/internal/game/pickups` owns pickup collection rules and effect intents
-
-Pickup collection now flows through two explicit events:
-
-- `pickup_collected` means the pickup entity was consumed and removed
-- `pickup_effect_applied` means the gameplay mutation was applied
+- See [docs/design/pickups.md](design/pickups.md) for the canonical split owner map and two-stage collection flow.
+- Collection and effect application are two-stage.
 
 This refactor does not enable bullet/pickup collisions.
 This refactor does not change normal spawning.
