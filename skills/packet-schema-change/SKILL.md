@@ -60,6 +60,10 @@ Packet pull is intentionally unsupported. Packet schema changes should be made i
 - Do not put match lifecycle on `ShipState`; pending-respawn and eliminated players may not have active ship state.
 - Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability.
 - Do not infer active eligibility solely from remote player positions or ship presence.
+- For normal gameplay packets, represent targets with `target_kind` + `target_id`.
+- For player targets, use `target_kind = "player"` and `target_id = <playerID>`.
+- Treat `target_player_id` as quarantined legacy compatibility and do not add it to normal gameplay packet schemas.
+- `target_player_id` may only remain in devtools/debug player-only command schemas during the quarantine.
 
 ## Workflow
 
