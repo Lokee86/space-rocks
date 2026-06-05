@@ -342,8 +342,9 @@ func TestSetTargetPlayerRequestUpdatesCanonicalTargetInState(t *testing.T) {
 	readJSON(t, conn, &initialState)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
-		Type:           servergame.PacketTypeSetTargetPlayerRequest,
-		TargetPlayerID: initialState.SelfID,
+		Type:       servergame.PacketTypeSetTargetPlayerRequest,
+		TargetKind: "player",
+		TargetID:   initialState.SelfID,
 	}); err != nil {
 		t.Fatalf("write set target player request: %v", err)
 	}
@@ -354,8 +355,11 @@ func TestSetTargetPlayerRequestUpdatesCanonicalTargetInState(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected updated state to include self player %q", updatedState.SelfID)
 	}
-	if selfState.TargetPlayerID != updatedState.SelfID {
-		t.Fatalf("expected target_player_id %q, got %q", updatedState.SelfID, selfState.TargetPlayerID)
+	if selfState.TargetKind != "player" {
+		t.Fatalf("expected target_kind %q, got %q", "player", selfState.TargetKind)
+	}
+	if selfState.TargetID != updatedState.SelfID {
+		t.Fatalf("expected target_id %q, got %q", updatedState.SelfID, selfState.TargetID)
 	}
 }
 
@@ -382,8 +386,9 @@ func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *te
 	readJSON(t, conn, &initialState)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
-		Type:           servergame.PacketTypeSetTargetPlayerRequest,
-		TargetPlayerID: initialState.SelfID,
+		Type:       servergame.PacketTypeSetTargetPlayerRequest,
+		TargetKind: "player",
+		TargetID:   initialState.SelfID,
 	}); err != nil {
 		t.Fatalf("write valid set target player request: %v", err)
 	}
@@ -391,8 +396,9 @@ func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *te
 	readJSON(t, conn, &targetedState)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
-		Type:           servergame.PacketTypeSetTargetPlayerRequest,
-		TargetPlayerID: "player-missing",
+		Type:       servergame.PacketTypeSetTargetPlayerRequest,
+		TargetKind: "player",
+		TargetID:   "player-missing",
 	}); err != nil {
 		t.Fatalf("write invalid set target player request: %v", err)
 	}
@@ -403,8 +409,11 @@ func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *te
 	if !ok {
 		t.Fatalf("expected state to include self player %q", afterInvalidState.SelfID)
 	}
-	if selfState.TargetPlayerID != afterInvalidState.SelfID {
-		t.Fatalf("expected invalid request to keep target_player_id %q, got %q", afterInvalidState.SelfID, selfState.TargetPlayerID)
+	if selfState.TargetKind != "player" {
+		t.Fatalf("expected invalid request to keep target_kind %q, got %q", "player", selfState.TargetKind)
+	}
+	if selfState.TargetID != afterInvalidState.SelfID {
+		t.Fatalf("expected invalid request to keep target_id %q, got %q", afterInvalidState.SelfID, selfState.TargetID)
 	}
 }
 
@@ -431,8 +440,9 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 	readJSON(t, conn, &initialState)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
-		Type:           servergame.PacketTypeSetTargetPlayerRequest,
-		TargetPlayerID: initialState.SelfID,
+		Type:       servergame.PacketTypeSetTargetPlayerRequest,
+		TargetKind: "player",
+		TargetID:   initialState.SelfID,
 	}); err != nil {
 		t.Fatalf("write set target player request: %v", err)
 	}
@@ -440,8 +450,9 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 	readJSON(t, conn, &targetedState)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
-		Type:           servergame.PacketTypeSetTargetPlayerRequest,
-		TargetPlayerID: "",
+		Type:       servergame.PacketTypeSetTargetPlayerRequest,
+		TargetKind: "player",
+		TargetID:   "",
 	}); err != nil {
 		t.Fatalf("write clear target player request: %v", err)
 	}
@@ -452,8 +463,11 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected state to include self player %q", clearedState.SelfID)
 	}
-	if selfState.TargetPlayerID != "" {
-		t.Fatalf("expected clear target request to produce empty target_player_id, got %q", selfState.TargetPlayerID)
+	if selfState.TargetKind != "" {
+		t.Fatalf("expected clear target request to produce empty target_kind, got %q", selfState.TargetKind)
+	}
+	if selfState.TargetID != "" {
+		t.Fatalf("expected clear target request to produce empty target_id, got %q", selfState.TargetID)
 	}
 }
 
@@ -564,9 +578,6 @@ func TestClearTargetRequestClearsGenericTarget(t *testing.T) {
 	}
 	if clearedSelfState.TargetID != "" {
 		t.Fatalf("expected cleared target_id to be empty, got %q", clearedSelfState.TargetID)
-	}
-	if clearedSelfState.TargetPlayerID != "" {
-		t.Fatalf("expected cleared target_player_id to be empty, got %q", clearedSelfState.TargetPlayerID)
 	}
 }
 

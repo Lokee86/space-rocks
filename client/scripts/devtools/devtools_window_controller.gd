@@ -35,8 +35,8 @@ var latest_local_player_state := {}
 var latest_target_kind := ""
 var latest_target_id := ""
 var latest_target_state := {}
-var latest_local_telemetry_source := "state_packet"
-var latest_target_telemetry_source := "state_packet"
+var latest_local_telemetry_source := "players"
+var latest_target_telemetry_source := "players"
 var connection_service
 var self_player_id := ""
 var game_target_kind := ""
@@ -82,6 +82,10 @@ func ensure_window() -> Window:
 			window.set_local_telemetry_source(latest_local_telemetry_source)
 		if window.has_method("set_target_telemetry_source"):
 			window.set_target_telemetry_source(latest_target_telemetry_source)
+	if window.has_method("refresh_local_player_state"):
+		window.refresh_local_player_state(latest_local_player_state)
+	if window.has_method("refresh_target_state"):
+		window.refresh_target_state(latest_target_kind, latest_target_id, latest_target_state)
 	return window
 
 
