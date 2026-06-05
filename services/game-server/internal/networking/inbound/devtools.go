@@ -22,7 +22,9 @@ func HandleSimpleDevtoolsPacket(session devtoolsSession, remoteAddr string, msg 
 }
 
 func HandlePlacementDevtoolsPacket(session devtoolsSession, remoteAddr string, msg []byte, envelope ClientPacketEnvelope) bool {
-	if envelope.Type != devtools.PacketTypeDebugSpawnEntity {
+	switch envelope.Type {
+	case devtools.PacketTypeDebugSpawnEntity, devtools.PacketTypeDebugSpawnPickup:
+	default:
 		return false
 	}
 	return handleDevtoolsCommandPacket(session, remoteAddr, msg)

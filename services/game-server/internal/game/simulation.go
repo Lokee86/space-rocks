@@ -44,5 +44,6 @@ func (game *Game) stepCollisions() {
 	if game.worldSimulationOptions.CanRunCollisions() {
 		game.handleShipAsteroidCollisions()
 		game.handleBulletAsteroidCollisions()
+		game.handlePlayerPickupCollisions()
 	}
 }

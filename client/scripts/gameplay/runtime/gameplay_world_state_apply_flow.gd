@@ -16,5 +16,6 @@ func apply_world_state(state: Dictionary, _has_received_state: bool) -> void:
 		state["self_id"],
 		state.get("server_players", {}),
 		state.get("server_bullets", {}),
-		state.get("server_asteroids", {})
+		state.get("server_asteroids", {}),
+		state.get("server_pickups", {})
 	)

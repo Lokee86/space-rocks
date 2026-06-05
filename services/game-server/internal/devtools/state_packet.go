@@ -12,11 +12,12 @@ type statePacketWithDebugStatus struct {
 	ServerSentMsec  int                               `json:"server_sent_msec"`
 	DebugStatus     DebugStatus                       `json:"debug_status"`
 	DebugStatuses   map[string]DebugStatus            `json:"debug_statuses"`
-	Players         map[string]runtime.ShipState     `json:"players"`
+	Players         map[string]runtime.ShipState      `json:"players"`
 	PlayerLifecycle map[string]string                 `json:"player_lifecycle"`
 	PlayerSessions  map[string]game.PlayerSessionState `json:"player_sessions"`
-	Bullets         map[string]runtime.BulletState    `json:"bullets"`
-	Asteroids       map[string]runtime.AsteroidState  `json:"asteroids"`
+	Bullets         map[string]runtime.BulletState     `json:"bullets"`
+	Pickups         map[string]runtime.PickupState     `json:"pickups"`
+	Asteroids       map[string]runtime.AsteroidState   `json:"asteroids"`
 	TotalAsteroids  int                                `json:"total_asteroids"`
 	Events          []game.EventState                  `json:"events"`
 }
@@ -33,6 +34,7 @@ func WrapStatePacket(state game.StatePacket, status DebugStatus, statuses map[st
 		PlayerLifecycle: state.PlayerLifecycle,
 		PlayerSessions:  state.PlayerSessions,
 		Bullets:         state.Bullets,
+		Pickups:         state.Pickups,
 		Asteroids:       state.Asteroids,
 		TotalAsteroids:  state.TotalAsteroids,
 		Events:          state.Events,

@@ -281,6 +281,29 @@ json = "rotation"
 type = "float"
 
 [[structs]]
+id = "PickupState"
+
+[[structs.fields]]
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs]]
 id = "EventState"
 
 [[structs.fields]]
@@ -314,6 +337,24 @@ type = "float"
 name = "y"
 json = "y"
 type = "float"
+
+[[structs.fields]]
+name = "pickup_id"
+go_name = "PickupID"
+json = "pickup_id"
+type = "string"
+
+[[structs.fields]]
+name = "pickup_type"
+go_name = "PickupType"
+json = "pickup_type"
+type = "string"
+
+[[structs.fields]]
+name = "lives_after"
+go_name = "LivesAfter"
+json = "lives_after"
+type = "int"
 
 [[structs]]
 id = "PlayerPauseState"
@@ -391,6 +432,14 @@ type = "map"
 key_type = "string"
 value_type = "AsteroidState"
 go_value_type = "runtime.AsteroidState"
+
+[[structs.fields]]
+name = "pickups"
+json = "pickups"
+type = "map"
+key_type = "string"
+value_type = "PickupState"
+go_value_type = "runtime.PickupState"
 
 [[structs.fields]]
 name = "total_asteroids"

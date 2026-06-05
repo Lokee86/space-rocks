@@ -420,6 +420,12 @@ func (scenario *scenario) asteroids() reflect.Value {
 	return scenario.stateField("Asteroids")
 }
 
+func (scenario *scenario) pickups() reflect.Value {
+	scenario.t.Helper()
+
+	return scenario.stateField("Pickups")
+}
+
 func (scenario *scenario) pendingPresentationEvents() reflect.Value {
 	scenario.t.Helper()
 

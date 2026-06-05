@@ -23,6 +23,14 @@ func eventStateForDomainEvent(event events.Event) EventState {
 			X:            event.X,
 			Y:            event.Y,
 		}
+	case events.EventPickupCollected:
+		return EventState{
+			Type:        "pickup_collected",
+			PlayerID:    event.PlayerID,
+			PickupID:    event.PickupID,
+			PickupType:  event.PickupType,
+			LivesAfter:  event.LivesAfter,
+		}
 	default:
 		return EventState{}
 	}

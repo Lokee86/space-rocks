@@ -20,6 +20,7 @@ const TYPE_TOGGLE_DEBUG_FREEZE_WORLD := "toggle_debug_freeze_world"
 const TYPE_TOGGLE_DEBUG_FREEZE_PLAYER := "toggle_debug_freeze_player"
 const TYPE_DEBUG_KILL_PLAYER := "debug_kill_player"
 const TYPE_DEBUG_SPAWN_ENTITY := "debug_spawn_entity"
+const TYPE_DEBUG_SPAWN_PICKUP := "debug_spawn_pickup"
 const TYPE_DEBUG_BEGIN_CONTINUOUS_BULLET_STREAM := "debug_begin_continuous_bullet_stream"
 const TYPE_DEBUG_RESPAWN_PLAYER := "debug_respawn_player"
 const TYPE_DEBUG_SET_SCORE := "debug_set_score"
@@ -66,6 +67,7 @@ const FIELD_IS_CONNECTED := "is_connected"
 const FIELD_IS_READY := "is_ready"
 const FIELD_LEFT := "left"
 const FIELD_LIVES := "lives"
+const FIELD_LIVES_AFTER := "lives_after"
 const FIELD_LOCAL_PLAYER_ID := "local_player_id"
 const FIELD_MAX_PLAYERS := "max_players"
 const FIELD_MEMBER_NAME := "member_name"
@@ -74,6 +76,9 @@ const FIELD_MESSAGE := "message"
 const FIELD_NAME := "name"
 const FIELD_OWNER_ID := "owner_id"
 const FIELD_PAUSED := "paused"
+const FIELD_PICKUP_ID := "pickup_id"
+const FIELD_PICKUP_TYPE := "pickup_type"
+const FIELD_PICKUPS := "pickups"
 const FIELD_PLAYER_FROZEN := "player_frozen"
 const FIELD_PLAYER_ID := "player_id"
 const FIELD_PLAYER_LIFECYCLE := "player_lifecycle"
@@ -203,6 +208,14 @@ static func toggle_debug_freeze_player_target_player_packet(target_player_id) ->
 static func debug_kill_player_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "debug_kill_player"
+	return packet
+
+static func debug_spawn_pickup_packet(pickup_type, x, y) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_spawn_pickup"
+	packet[FIELD_PICKUP_TYPE] = pickup_type
+	packet[FIELD_X] = x
+	packet[FIELD_Y] = y
 	return packet
 
 static func debug_kill_target_player_packet(target_player_id) -> Dictionary:

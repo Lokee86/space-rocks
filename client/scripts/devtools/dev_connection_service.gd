@@ -28,15 +28,26 @@ func send_spawn_from_placement_result(result: Dictionary) -> void:
 		ClientLogger.game_warn("DevConnectionService: send spawn ignored, send_packet is unavailable")
 		return
 	connection_service.send_packet(packet)
-	ClientLogger.game_info(
-		"DevConnectionService: dev spawn packet sent entity_type=%s x=%s y=%s has_direction=%s"
-		% [
-			str(packet.get(DevSpawnPacketBuilder.FIELD_ENTITY_TYPE, "")),
-			str(packet.get(DevSpawnPacketBuilder.FIELD_X, 0.0)),
-			str(packet.get(DevSpawnPacketBuilder.FIELD_Y, 0.0)),
-			str(packet.get(DevSpawnPacketBuilder.FIELD_HAS_DIRECTION, false))
-		]
-	)
+	var packet_type: String = str(packet.get("type", ""))
+	if packet_type == DevSpawnPacketBuilder.TYPE_DEBUG_SPAWN_PICKUP:
+		ClientLogger.game_info(
+			"DevConnectionService: dev spawn packet sent pickup_type=%s x=%s y=%s"
+			% [
+				str(packet.get(DevSpawnPacketBuilder.FIELD_PICKUP_TYPE, "")),
+				str(packet.get(DevSpawnPacketBuilder.FIELD_X, 0.0)),
+				str(packet.get(DevSpawnPacketBuilder.FIELD_Y, 0.0))
+			]
+		)
+	else:
+		ClientLogger.game_info(
+			"DevConnectionService: dev spawn packet sent entity_type=%s x=%s y=%s has_direction=%s"
+			% [
+				str(packet.get(DevSpawnPacketBuilder.FIELD_ENTITY_TYPE, "")),
+				str(packet.get(DevSpawnPacketBuilder.FIELD_X, 0.0)),
+				str(packet.get(DevSpawnPacketBuilder.FIELD_Y, 0.0)),
+				str(packet.get(DevSpawnPacketBuilder.FIELD_HAS_DIRECTION, false))
+			]
+		)
 
 
 func send_begin_continuous_bullet_stream_from_placement_result(result: Dictionary) -> void:

@@ -11,6 +11,7 @@ var local_player: Player
 var view_anchor: Node2D
 var bullets_layer: Node2D
 var asteroids_layer: Node2D
+var pickups_layer: Node2D
 var world_sync: WorldSyncScript
 
 
@@ -22,14 +23,23 @@ func before_each() -> void:
 	view_anchor = Node2D.new()
 	bullets_layer = Node2D.new()
 	asteroids_layer = Node2D.new()
+	pickups_layer = Node2D.new()
 
 	game_owner.add_child(local_player)
 	game_owner.add_child(view_anchor)
 	game_owner.add_child(bullets_layer)
 	game_owner.add_child(asteroids_layer)
+	game_owner.add_child(pickups_layer)
 
 	world_sync = WorldSyncScript.new()
-	world_sync.configure(game_owner, local_player, view_anchor, bullets_layer, asteroids_layer)
+	world_sync.configure(
+		game_owner,
+		local_player,
+		view_anchor,
+		bullets_layer,
+		asteroids_layer,
+		pickups_layer
+	)
 
 
 func after_each() -> void:
@@ -94,6 +104,31 @@ func test_apply_state_creates_bullet_nodes() -> void:
 		_bullet_nodes()[WorldStateFixture.BULLET_ID].global_position,
 		Vector2(420.0, 440.0)
 	)
+
+
+func test_server_hitbox_draw_entries_includes_pickup_entry() -> void:
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_PICKUPS] = {
+		"pickup_1": {
+			Packets.FIELD_ID: "pickup_1",
+			Packets.FIELD_TYPE: "1_up",
+			Packets.FIELD_X: 512.0,
+			Packets.FIELD_Y: 256.0,
+		},
+	}
+
+	_apply_state(state)
+
+	var entries: Array = world_sync.server_hitbox_draw_entries()
+	var pickup_entries: Array = []
+	for entry in entries:
+		if entry.get("kind", "") == "pickup":
+			pickup_entries.append(entry)
+
+	assert_eq(pickup_entries.size(), 1)
+	assert_eq(pickup_entries[0].get("id", ""), "pickup_1")
+	assert_eq(pickup_entries[0].get("pickup_type", ""), "1_up")
+	assert_eq(pickup_entries[0].get("visual_position", Vector2.ZERO), Vector2(512.0, 256.0))
 
 
 func test_apply_state_reuses_existing_entity_nodes() -> void:
@@ -317,7 +352,8 @@ func _apply_state(state: Dictionary) -> void:
 		state[Packets.FIELD_SELF_ID],
 		state[Packets.FIELD_PLAYERS],
 		state[Packets.FIELD_BULLETS],
-		state[Packets.FIELD_ASTEROIDS]
+		state[Packets.FIELD_ASTEROIDS],
+		state.get(Packets.FIELD_PICKUPS, {})
 	)
 
 

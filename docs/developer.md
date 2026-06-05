@@ -122,6 +122,8 @@ Packet schema drift rule:
 - Example drift case: `StatePacket.player_sessions` and `PlayerSessionState` are packet-schema-owned read-model fields. Keep packet source-of-truth changes in `shared/packets/gameplay.toml` and regenerate rather than hand-editing generated packet output.
 - Quarantine check: normal gameplay code and schema should use `target_kind` + `target_id`. `target_player_id` hits should be reviewed and justified as devtools/debug player-only quarantine paths, not added to new gameplay systems.
 
+Devtools state wrapping has a separate copy step: when debug status is enabled, `devtools.WrapStatePacket()` wraps `StatePacket` before the client sees it. Any new `StatePacket` fields must be copied through that wrapper too. Pickups were the recent example.
+
 Devtools packet boundary rules:
 
 - devtools packet schema lives in `shared/packets/debug.toml`

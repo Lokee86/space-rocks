@@ -15,12 +15,13 @@ func configure_world(
 	view_anchor_ref: Node2D,
 	bullets: Node2D,
 	asteroids: Node2D,
+	pickups: Node2D,
 	pause_state_tracker = null
 ) -> void:
 	player = player_ref
 	view_anchor = view_anchor_ref
 	world_sync = WorldSyncScript.new()
-	world_sync.configure(game_owner, player_ref, view_anchor_ref, bullets, asteroids, pause_state_tracker)
+	world_sync.configure(game_owner, player_ref, view_anchor_ref, bullets, asteroids, pickups, pause_state_tracker)
 
 
 func configure_respawn(connection_service_ref, hud_flow_ref) -> void:

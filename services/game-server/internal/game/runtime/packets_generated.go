@@ -44,3 +44,10 @@ type BulletState struct {
 	Y        float64 `json:"y"`
 	Rotation float64 `json:"rotation"`
 }
+
+type PickupState struct {
+	ID   string  `json:"id"`
+	Type string  `json:"type"`
+	X    float64 `json:"x"`
+	Y    float64 `json:"y"`
+}

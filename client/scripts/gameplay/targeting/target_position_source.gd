@@ -1,5 +1,4 @@
 extends RefCounted
-class_name TargetPositionSource
 
 var player_render_api
 var asteroid_sync

@@ -234,6 +234,8 @@ func _connect_window_signals() -> void:
 		window.toggle_freeze_player_requested.connect(_on_toggle_freeze_player_requested)
 	if !window.spawn_asteroid_placement_requested.is_connected(_on_spawn_asteroid_placement_requested):
 		window.spawn_asteroid_placement_requested.connect(_on_spawn_asteroid_placement_requested)
+	if !window.spawn_pickup_placement_requested.is_connected(_on_spawn_pickup_placement_requested):
+		window.spawn_pickup_placement_requested.connect(_on_spawn_pickup_placement_requested)
 	if !window.spawn_player_placement_requested.is_connected(_on_spawn_player_placement_requested):
 		window.spawn_player_placement_requested.connect(_on_spawn_player_placement_requested)
 	if !window.spawn_bullet_placement_requested.is_connected(_on_spawn_bullet_placement_requested):
@@ -393,6 +395,13 @@ func _on_kill_player_requested(selected_player_id: String) -> void:
 
 func _on_spawn_asteroid_placement_requested() -> void:
 	request_placement_action(&"spawn_asteroid")
+
+
+func _on_spawn_pickup_placement_requested(pickup_type: String) -> void:
+	var placement_context := {
+		"pickup_type": pickup_type,
+	}
+	request_placement_action(&"spawn_pickup", placement_context)
 
 
 func _on_spawn_player_placement_requested(target_player_id: String) -> void:

@@ -117,6 +117,8 @@ visible = false
 
 [node name="Asteroids" type="Node2D" parent="." unique_id=570542828]
 
+[node name="Pickups" type="Node2D" parent="." unique_id=1709485621]
+
 [node name="ServerHitboxOverlay" parent="." unique_id=652898134 instance=ExtResource("10_server_hitbox_overlay")]
 
 [node name="ViewAnchor" type="Node2D" parent="." unique_id=375864272]

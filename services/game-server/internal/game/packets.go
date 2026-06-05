@@ -110,6 +110,9 @@ type EventState struct {
 	RespawnDelay float64 `json:"respawn_delay"`
 	X            float64 `json:"x"`
 	Y            float64 `json:"y"`
+	PickupID     string  `json:"pickup_id"`
+	PickupType   string  `json:"pickup_type"`
+	LivesAfter   int     `json:"lives_after"`
 }
 
 type PlayerPauseState struct {
@@ -128,6 +131,13 @@ type PlayerSessionState struct {
 	SpawnY          float64 `json:"spawn_y"`
 }
 
+type PickupState struct {
+	ID   string  `json:"id"`
+	Type string  `json:"type"`
+	X    float64 `json:"x"`
+	Y    float64 `json:"y"`
+}
+
 type StatePacket struct {
 	Type            string                           `json:"type"`
 	SelfID          string                           `json:"self_id"`
@@ -137,6 +147,7 @@ type StatePacket struct {
 	PlayerLifecycle map[string]string                `json:"player_lifecycle"`
 	Bullets         map[string]runtime.BulletState   `json:"bullets"`
 	Asteroids       map[string]runtime.AsteroidState `json:"asteroids"`
+	Pickups         map[string]runtime.PickupState   `json:"pickups"`
 	TotalAsteroids  int                              `json:"total_asteroids"`
 	Events          []EventState                     `json:"events"`
 	ServerSentMsec  int                              `json:"server_sent_msec"`
