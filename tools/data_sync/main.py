@@ -9,6 +9,7 @@ from data_sync.cli import parse_args
 from data_sync.config import ConfigError, DataSyncConfig, load_config
 from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.constants_sync import ConstantsSyncError, apply_updates, plan_constants_updates, unified_diff
+from data_sync.drop_tables_sync import DropTablesSyncError, plan_drop_tables_updates
 from data_sync.packets_sync import PacketsSyncError, plan_packets_updates
 from data_sync.packet_toml import PacketTomlError, load_packet_schema_files
 from data_sync.pull import PullError, pull_constants
@@ -63,11 +64,20 @@ def run(argv: list[str] | None = None) -> int:
         if "constants" in args.domains:
             constants_store = ConstantsStore.load(config.sot_paths("constants"))
             updates.extend(plan_constants_updates(config, constants_store, args.languages))
+        if "drop_tables" in args.domains:
+            updates.extend(plan_drop_tables_updates(config))
         if "packets" in args.domains:
             _ensure_enabled_packet_targets(config, args.languages)
             packet_schema = load_packet_schema_files(config.sot_paths("packets"))
             updates.extend(plan_packets_updates(config, packet_schema, args.languages))
-    except (ConstantsSyncError, ConstantsStoreError, PacketsSyncError, PacketTomlError, TomlStoreError) as exc:
+    except (
+        ConstantsSyncError,
+        ConstantsStoreError,
+        DropTablesSyncError,
+        PacketsSyncError,
+        PacketTomlError,
+        TomlStoreError,
+    ) as exc:
         print(f"{args.operation} error: {exc}", file=sys.stderr)
         return 1
 

@@ -9,7 +9,7 @@ from typing import Sequence
 
 
 OPERATIONS = ("push", "pull", "diff", "check", "validate")
-DOMAINS = ("constants", "packets")
+DOMAINS = ("constants", "packets", "drop_tables")
 LANGUAGES = ("go", "gds", "ts")
 
 
@@ -38,6 +38,15 @@ def build_parser() -> argparse.ArgumentParser:
         parser.add_argument(f"-{operation}", action="store_true", help=f"run {operation}")
 
     for domain in DOMAINS:
+        if domain == "drop_tables":
+            parser.add_argument(
+                "-drop-tables",
+                "-drop_tables",
+                dest="drop_tables",
+                action="store_true",
+                help="include drop tables",
+            )
+            continue
         parser.add_argument(f"-{domain}", action="store_true", help=f"include {domain}")
 
     for language in LANGUAGES:
@@ -65,6 +74,8 @@ def parse_args(argv: Sequence[str] | None = None) -> CliArgs:
             parser.error(f"-{operation} requires at least one domain: -constants and/or -packets")
         if not languages:
             parser.error(f"-{operation} requires at least one language: -go, -gds, and/or -ts")
+        if "drop_tables" in domains and "go" not in languages:
+            parser.error(f"-{operation} with -drop-tables requires -go")
 
     if operation == "pull" and len(languages) > 1:
         parser.error("-pull may only use one language at a time")

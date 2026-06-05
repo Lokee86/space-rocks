@@ -64,12 +64,42 @@ client_scale = 2
 
 [constants.network]
 max_players = 2
+
+[table]
+id = "basicasteroids"
+source_type = "asteroid"
+max_active_pickups = 2
+
+[[entries]]
+pickup_type = "1_up"
+chance = 0.05
+min_source_size = 1
+max_source_size = 4
 """.strip()
         + "\n",
         encoding="utf-8",
     )
     (tmp_path / "shared/packets/packets.toml").write_text(
         packet_toml(include_output_ids=packet_output_ids),
+        encoding="utf-8",
+    )
+    (tmp_path / "shared/drop_tables").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "shared/drop_tables/basicasteroids.toml").write_text(
+        """
+[table]
+id = "basicasteroids"
+source_type = "asteroid"
+drop_mode = "single"
+max_drops_per_source = 1
+max_active_pickups = 2
+
+[[entries]]
+pickup_type = "1_up"
+chance = 0.005
+min_source_size = 1
+max_source_size = 4
+""".strip()
+        + "\n",
         encoding="utf-8",
     )
 
@@ -102,6 +132,7 @@ old
     (tmp_path / "go/packets.go").write_text("stale go packets\n", encoding="utf-8")
     (tmp_path / "gds/packets.gd").write_text("stale gds packets\n", encoding="utf-8")
     (tmp_path / "ts/packets.ts").write_text("stale ts packets\n", encoding="utf-8")
+    (tmp_path / "go/drop_tables.go").write_text("stale drop tables\n", encoding="utf-8")
 
     config_path = tmp_path / "config.toml"
     config_path.write_text(config_text(packet_target_outputs=packet_target_outputs), encoding="utf-8")
@@ -176,6 +207,9 @@ path = "shared/game_data.toml"
 [sot.packets]
 path = "shared/packets/packets.toml"
 
+[sot.drop_tables]
+path = "shared/drop_tables/basicasteroids.toml"
+
 [constants.go]
 files = ["go/constants.go"]
 sections = ["constants.gameplay"]
@@ -205,6 +239,11 @@ owns = []
 [packets.ts]
 enabled = false
 files = []
+sections = []
+owns = []
+
+[drop_tables.go]
+files = ["go/drop_tables.go"]
 sections = []
 owns = []
 """.format(outputs_line=outputs_line).lstrip()

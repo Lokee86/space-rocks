@@ -9,7 +9,7 @@ The project is still in development, so this document describes the architecture
 - `client/`: Godot project. Contains scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go module for the real-time game server. The current entrypoint is `services/game-server/cmd/game-server`.
 - `services/api-server/`: empty placeholder for a planned Node.js/TypeScript NestJS API server for business/backend systems. It is intentionally separate from real-time simulation.
-- `shared/`: source data shared across client and server generation, including TOML constants, TOML packet definitions, and JSON collision shape data.
+- `shared/`: source data shared across client and server generation, including TOML constants, TOML packet definitions, generated gameplay tuning data under `shared/drop_tables/`, and JSON collision shape data.
 - `docs/`: Project documentation.
 - `tools/data_sync/`: Python sync/generation tool used to generate constants and packet code from `shared/`.
 
@@ -137,11 +137,13 @@ Core server packages:
 - `services/game-server/internal/rooms`: room state, room membership ownership, lifecycle ownership, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
+- `services/game-server/internal/game/drops`: drop-table evaluation seam for destroyed entity sources. It evaluates generated drop tables and returns pickup results, but it does not collect pickups or apply pickup effects.
 - `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation and per-player participation classification.
 - `services/game-server/internal/game/scoring`: pure score policy evaluation. It converts scoring events into awards without mutating game sessions.
 - `services/game-server/internal/game/runtime`: current runtime state/data-shape package that contains game runtime structs and generated packet state structs.
 - `services/game-server/internal/game/physics`: collision shapes, collision detection, vectors, and shared collision shape loading.
 - `services/game-server/internal/game/space`: gameplay spatial helpers for wrapped distance, direction, shortest delta, and position normalization.
+- [docs/design/drop-tables.md](drop-tables.md): drop-table data source, evaluation, and gameplay integration seam.
 - `services/game-server/internal/constants`: generated Go constants from split constants SoT files under `shared/constants/`.
 - `services/game-server/internal/logging`: structured `slog` wrapper with categories and environment-controlled levels.
 - `services/game-server/internal/protocol/packetcodec`: JSON-only packet wire encode/decode helpers for server packets.
@@ -170,6 +172,7 @@ The server currently owns:
 - ship/asteroid collision
 - entity damage/destruction resolution
 - asteroid splitting
+- drop-table evaluation for destroyed asteroid sources before pickup spawning
 - scoring
 - lives, death, and respawn state
 - match-over policy evaluation
@@ -436,6 +439,16 @@ Generated packet files include:
 - `services/game-server/internal/devtools/packets_generated.go`
 - `client/scripts/generated/networking/packets/packets.gd`
 
+Shared drop-table data is sourced from:
+
+```text
+shared/drop_tables/basicasteroids.toml
+```
+
+Generated drop-table files include:
+
+- `services/game-server/internal/game/drops/drop_tables.go`
+
 Shared constants are sourced from:
 
 ```text
@@ -451,7 +464,7 @@ Generated constants include:
 - `services/game-server/internal/constants/constants.go`
 - `client/scripts/generated/constants/constants.gd`
 
-Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. World size is intentionally generated to both Go and GDScript because client visual wrapping must use the same bounds as the server.
+Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. World size is intentionally generated to both Go and GDScript because client visual wrapping must use the same bounds as the server. Drop-table generated output is Go-only and lives in `services/game-server/internal/game/drops/drop_tables.go`.
 
 Authoritative today:
 

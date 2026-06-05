@@ -13,6 +13,8 @@
   - `shared/packets/gameplay.toml`
   - `shared/packets/debug.toml`
   - `shared/packets/lobby.toml`
+- TOML sources of truth for active drop tables:
+  - `shared/drop_tables/*.toml`
 - Go game server files
 - GDScript Godot client files
 - TypeScript API server files, later
@@ -26,6 +28,7 @@ Current active scope:
 ```text
 constants -> Go and GDScript
 packets -> Go and GDScript
+drop_tables -> Go only
 ```
 
 Deferred scope:
@@ -44,6 +47,8 @@ The canonical sources for active packets are:
 - `shared/packets/gameplay.toml`
 - `shared/packets/debug.toml`
 - `shared/packets/lobby.toml`
+
+The canonical sources for active drop tables are the TOML files under `shared/drop_tables/`, including `shared/drop_tables/basicasteroids.toml`.
 
 Debug/devtools packet schema lives in `shared/packets/debug.toml`. Data-sync generates server devtools packet types into `services/game-server/internal/devtools/packets_generated.go` through the `server_devtools_packets` output id.
 
@@ -69,6 +74,7 @@ Domains:
 ```bash
 -constants
 -packets
+-drop-tables
 ```
 
 Languages:
@@ -98,15 +104,19 @@ data-sync -validate -packets
 data-sync -diff -packets -go -gds
 data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
+data-sync -push -drop-tables -go
+data-sync -diff -drop-tables -go
+data-sync -check -drop-tables -go
 data-sync -validate
 data-sync -validate -constants
 ```
 
 `-push`, `-pull`, `-diff`, and `-check` require at least one domain and one language. `-pull` accepts only one language at a time.
+`-constants` does not generate drop tables.
 
 ## Operation Behavior
 
-`-push` reads TOML and generates canonical language output. Constants replace configured `data-sync` blocks. Packets rewrite configured generated packet files.
+`-push` reads TOML and generates canonical language output. Constants replace configured `data-sync` blocks. Packets rewrite configured generated packet files. Drop tables generate the server Go file only.
 
 `-diff` does the same generation as `-push`, prints a unified diff, and writes nothing.
 
@@ -146,6 +156,11 @@ paths = [
   "shared/packets/lobby.toml",
 ]
 
+[sot.drop_tables]
+paths = [
+  "shared/drop_tables/basicasteroids.toml",
+]
+
 [constants.go]
 files = ["services/game-server/internal/constants/constants.go"]
 sections = ["constants.gameplay", "constants.network"]
@@ -176,9 +191,16 @@ outputs = ["server_entities_packets", "server_game_packets", "server_devtools_pa
 files = ["client/scripts/generated/networking/packets/packets.gd"]
 sections = ["packets"]
 owns = []
+
+[drop_tables.go]
+files = ["services/game-server/internal/game/drops/drop_tables.go"]
+sections = []
+owns = []
+outputs = ["server_drop_tables"]
 ```
 
 Constants and packets have separate SoT paths. `-constants` commands read/write only the constants SoT, and `-packets` commands read/write only the packet SoT files.
+Drop tables have their own SoT path set under `shared/drop_tables/`, and `-drop-tables -go` reads and writes only the server Go output.
 
 `sections` controls what a language receives during `-push`, `-diff`, and `-check`.
 
@@ -313,6 +335,7 @@ shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
 shared/packets/lobby.toml
+shared/drop_tables/basicasteroids.toml
 ```
 
 ## Active Constants Workflow
@@ -331,4 +354,14 @@ shared/packets/lobby.toml
 4. Review the diff.
 5. Run `python tools/data_sync/main.py -push -packets -go -gds`.
 6. Run `python tools/data_sync/main.py -check -packets -go -gds`.
+
+## Active Drop Table Workflow
+
+1. Edit the drop table TOML files under `shared/drop_tables/`.
+   The current baseline drop table source is `shared/drop_tables/basicasteroids.toml`.
+2. Run `python tools/data_sync/main.py -validate -drop-tables`.
+3. Run `python tools/data_sync/main.py -diff -drop-tables -go`.
+4. Review the diff.
+5. Run `python tools/data_sync/main.py -push -drop-tables -go`.
+6. Run `python tools/data_sync/main.py -check -drop-tables -go`.
 

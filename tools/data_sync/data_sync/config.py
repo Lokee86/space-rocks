@@ -25,6 +25,9 @@ DEFAULT_SOT_PATHS = {
         "shared/packets/debug.toml",
         "shared/packets/lobby.toml",
     ),
+    "drop_tables": (
+        "shared/drop_tables/basicasteroids.toml",
+    ),
 }
 REQUIRED_DOMAIN_KEYS = ("files", "sections", "owns")
 
@@ -78,6 +81,8 @@ class DataSyncConfig:
             raise ConfigError(f"missing config for [{domain}.{language}]") from exc
 
     def enabled_languages(self, domain: str) -> tuple[str, ...]:
+        if (domain, "go") not in self.targets and domain == "drop_tables":
+            return ()
         return tuple(
             language
             for language in LANGUAGES
@@ -103,8 +108,11 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
 
     targets: dict[tuple[str, str], DomainLanguageConfig] = {}
     for domain in DOMAINS:
+        if domain == "drop_tables" and domain not in raw:
+            continue
         domain_table = _require_table(raw, domain)
-        for language in LANGUAGES:
+        domain_languages = ("go",) if domain == "drop_tables" else LANGUAGES
+        for language in domain_languages:
             table = _require_table(domain_table, language, f"{domain}.{language}")
             targets[(domain, language)] = _load_domain_language_config(root, domain, language, table)
 
@@ -234,6 +242,8 @@ def _read_sot_paths(raw: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
 
     paths: dict[str, tuple[str, ...]] = {}
     for domain in DOMAINS:
+        if domain == "drop_tables" and domain not in sot_table:
+            continue
         domain_table = sot_table.get(domain, {})
         if domain_table is None:
             domain_table = {}
@@ -287,12 +297,12 @@ def _load_domain_language_config(
     sections = _read_string_list(table["sections"], f"[{label}].sections")
     owns = _read_string_list(table["owns"], f"[{label}].owns")
     outputs: tuple[str, ...] = ()
-    if domain == "packets":
+    if domain in {"packets", "drop_tables"}:
         outputs = tuple(_read_string_list(table.get("outputs", []), f"[{label}].outputs"))
 
-    if enabled and not files:
+    if enabled and domain != "drop_tables" and not files:
         raise ConfigError(f"[{label}].files must not be empty")
-    if enabled and not sections:
+    if enabled and domain != "drop_tables" and not sections:
         raise ConfigError(f"[{label}].sections must not be empty")
 
     unknown_owns = [section for section in owns if section not in sections]

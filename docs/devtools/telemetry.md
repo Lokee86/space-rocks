@@ -20,6 +20,15 @@ The entity-state telemetry source can also display canonical non-player targets 
 When pickup telemetry is shown from `StatePacket.pickups`, the `health` field is current health only. This does not mean bullet/pickup collision damage is enabled yet.
 See [pickup system design](../design/pickups.md) for the full pickup telemetry and event split.
 
+Pickup event lifecycle now includes `pickup_dropped`:
+
+- asteroid destroyed
+- `pickup_dropped`
+- `pickup_collected`
+- `pickup_effect_applied`
+
+`pickup_dropped` means a drop table produced a pickup and the server spawned it. It is distinct from pickup collection and effect application. See [drop-table design](../design/drop-tables.md) and [pickup system design](../design/pickups.md).
+
 ## Display Behavior
 
 - If the selected source has no matching data, telemetry renders unavailable/empty output.

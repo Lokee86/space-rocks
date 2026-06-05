@@ -42,6 +42,17 @@ func eventStateForDomainEvent(event events.Event) EventState {
 			Amount:     event.Amount,
 			LivesAfter: event.LivesAfter,
 		}
+	case events.EventPickupDropped:
+		return EventState{
+			Type:       "pickup_dropped",
+			PickupID:   event.PickupID,
+			PickupType: event.PickupType,
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			TableID:    event.TableID,
+			X:          event.X,
+			Y:          event.Y,
+		}
 	default:
 		return EventState{}
 	}

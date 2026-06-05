@@ -15,6 +15,11 @@ paths = [
   "shared/packets/lobby.toml",
 ]
 
+[sot.drop_tables]
+paths = [
+  "shared/drop_tables/basicasteroids.toml",
+]
+
 [constants.go]
 files = ["services/game-server/internal/constants/constants.go"]
 sections = [
@@ -101,3 +106,9 @@ enabled = false
 files = []
 sections = []
 owns = []
+
+[drop_tables.go]
+files = ["services/game-server/internal/game/drops/drop_tables.go"]
+sections = []
+owns = []
+outputs = ["server_drop_tables"]

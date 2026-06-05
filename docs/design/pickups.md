@@ -117,6 +117,13 @@
 - Normal spawning should consume the sealed pickup APIs.
 - Normal spawning should not add rules directly to root game if a focused spawning seam is appropriate.
 
+## Pickup Drops
+
+- Pickups may enter gameplay from generated drop tables.
+- Drop tables decide whether a destroyed source produces a pickup.
+- The drop-table seam lives in [docs/design/drop-tables.md](drop-tables.md).
+- Pickup collection and pickup effects remain owned by the existing pickup seam.
+
 ## Adding A New Pickup Type
 
 - [ ] Add scene.

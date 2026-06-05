@@ -1,0 +1,12 @@
+[table]
+id = "basicasteroids"
+source_type = "asteroid"
+drop_mode = "single"
+max_drops_per_source = 1
+max_active_pickups = 2
+
+[[entries]]
+pickup_type = "1_up"
+chance = 0.01
+min_source_size = 1
+max_source_size = 4
