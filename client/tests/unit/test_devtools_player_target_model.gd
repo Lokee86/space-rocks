@@ -148,6 +148,33 @@ func test_apply_gameplay_state_reads_generic_bullet_target_and_clears_compatibil
 	assert_eq(model.game_target_player_id, "")
 
 
+func test_apply_gameplay_state_reads_generic_pickup_target_from_local_player_synced_state() -> void:
+	var model := DevtoolsPlayerTargetModel.new()
+	var expected_pickup_state := {
+		"type": "1_up",
+		"x": 12.0,
+		"y": 24.0,
+	}
+	model.apply_gameplay_state({
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"target_kind": "pickup", "target_id": "pickup_1"},
+		},
+		"server_pickups": {
+			"pickup_1": expected_pickup_state,
+		},
+		"player_lifecycle": {
+			"player-1": "active",
+		},
+		"debug_statuses": {},
+	})
+
+	assert_eq(model.game_target_kind, "pickup")
+	assert_eq(model.game_target_id, "pickup_1")
+	assert_eq(model.game_target_player_id, "")
+	assert_eq(model.target_state_for_source("players"), expected_pickup_state)
+
+
 func test_apply_gameplay_state_missing_target_fields_leave_target_fields_empty() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	model.apply_gameplay_state({

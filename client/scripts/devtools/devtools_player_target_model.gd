@@ -9,6 +9,7 @@ var server_players: Dictionary = {}
 var player_sessions: Dictionary = {}
 var server_asteroids: Dictionary = {}
 var server_bullets: Dictionary = {}
+var server_pickups: Dictionary = {}
 var server_enemies: Dictionary = {}
 var has_server_enemies := false
 var player_lifecycle: Dictionary = {}
@@ -24,6 +25,7 @@ func reset() -> void:
 	player_sessions = {}
 	server_asteroids = {}
 	server_bullets = {}
+	server_pickups = {}
 	server_enemies = {}
 	has_server_enemies = false
 	player_lifecycle = {}
@@ -44,6 +46,8 @@ func apply_gameplay_state(state: Dictionary) -> void:
 	server_asteroids = asteroids_value if asteroids_value is Dictionary else {}
 	var bullets_value = state.get("server_bullets", {})
 	server_bullets = bullets_value if bullets_value is Dictionary else {}
+	var pickups_value = state.get("server_pickups", {})
+	server_pickups = pickups_value if pickups_value is Dictionary else {}
 	has_server_enemies = false
 	server_enemies = {}
 	if state.has("server_enemies"):
@@ -161,6 +165,8 @@ func target_state_for_source(source: String) -> Dictionary:
 					value = server_asteroids.get(game_target_id, null)
 				"bullet":
 					value = server_bullets.get(game_target_id, null)
+				"pickup":
+					value = server_pickups.get(game_target_id, null)
 				"enemy":
 					if has_server_enemies:
 						value = server_enemies.get(game_target_id, null)

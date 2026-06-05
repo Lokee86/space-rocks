@@ -49,7 +49,7 @@ If canonical target is non-player (`enemy`, `pickup`, `asteroid`, or `bullet`), 
 
 Telemetry target readout is display-only status derived from canonical target data.
 
-- Non-player canonical targets are valid for telemetry/readout purposes.
+- Non-player canonical targets, including pickups, are valid for telemetry/readout purposes.
 - Non-player canonical targets are not valid player-command targets.
 
 `pickup` is a canonical gameplay target kind, but it is still not a valid target for player-only devtools commands that require `target_player_id`.
