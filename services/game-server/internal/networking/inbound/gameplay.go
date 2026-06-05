@@ -21,7 +21,7 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 		gameInstance := room.GameInstance()
 		switch packet.Type {
 		case game.PacketTypeSetTargetPlayerRequest:
-			gameInstance.SetPlayerTarget(session.CurrentGamePlayerID(), packet.TargetPlayerID)
+			gameInstance.SetPlayerTarget(session.CurrentGamePlayerID(), packet.TargetID)
 			return true
 		case game.PacketTypeSelectTargetAtPositionRequest:
 			gameInstance.SelectTargetAtPosition(

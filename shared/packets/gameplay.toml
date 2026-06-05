@@ -30,12 +30,6 @@ json = "ready"
 type = "bool"
 
 [[structs.fields]]
-name = "target_player_id"
-go_name = "TargetPlayerID"
-json = "target_player_id"
-type = "string"
-
-[[structs.fields]]
 name = "x"
 json = "x"
 type = "float"
@@ -165,12 +159,6 @@ type = "int"
 name = "thrusting"
 json = "thrusting"
 type = "bool"
-
-[[structs.fields]]
-name = "target_player_id"
-go_name = "TargetPlayerID"
-json = "target_player_id"
-type = "string"
 
 [[structs.fields]]
 name = "target_kind"
@@ -501,11 +489,12 @@ type = "pause_request"
 
 [[builders]]
 id = "set_target_player_request_packet"
-args = ["target_player_id"]
+args = ["target_kind", "target_id"]
 
 [builders.body]
 type = "set_target_player_request"
-target_player_id = "$target_player_id"
+target_kind = "$target_kind"
+target_id = "$target_id"
 
 [[builders]]
 id = "select_target_at_position_request_packet"

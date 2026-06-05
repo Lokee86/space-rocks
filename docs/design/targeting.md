@@ -1,6 +1,6 @@
 # Targeting Rule
 
-This document defines the canonical targeting rule and the quarantine boundary for `target_player_id`.
+This document defines the targeting quarantine rule that guides the next implementation step.
 
 ## Canonical Target Identity
 
@@ -14,17 +14,19 @@ For player targets, the canonical values are:
 - `target_kind = "player"`
 - `target_id = playerID`
 
-Generic targeting systems should use `target_kind` plus `target_id`.
-Player-only systems should use `playerID` directly when they already know they are dealing with a player.
+Generic targeting systems must use `target_kind` plus `target_id`.
+Player-only systems should use `playerID` directly when they already know they are handling a player.
 
 ## `target_player_id` Quarantine
 
-`target_player_id` is a legacy player-only compatibility surface. It is quarantined so new gameplay code does not grow a second targeting model.
+`target_player_id` is a legacy player-only compatibility surface.
+It exists only as a migration bridge so new gameplay code does not grow a second targeting model.
 
 Allowed scope:
 
-- devtools/debug player-only commands
-- generated packet code only when it comes from debug/devtools packet schemas
+- devtools/debug player-only command schemas
+- devtools/debug handlers
+- generated debug packet code
 - tests for those devtools/debug commands
 
 Disallowed scope:
@@ -37,4 +39,5 @@ Disallowed scope:
 - client gameplay targeting logic
 - telemetry/readout display
 
-This is a quarantine and migration rule for the next implementation step. New code should not introduce additional `target_player_id` usage outside the allowed scope above.
+New gameplay systems must not introduce `target_player_id`.
+The intended direction is to keep generic targeting on `target_kind` + `target_id` and keep player-only code on direct `playerID` access when that is already the owning context.

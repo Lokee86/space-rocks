@@ -479,7 +479,12 @@ Devtools are client-triggered and server-authoritative. Client input requests de
 Targeting seam notes:
 
 - canonical target is gameplay/server state
-- canonical game target identity is separate from local player readout state
+- canonical target identity is `target_kind` + `target_id`
+- player targets use `target_kind = "player"` and `target_id = playerID`
+- player-only systems should use `playerID` directly when they already know they are handling a player
+- new gameplay systems must not use `target_player_id`
+- `target_player_id` is legacy/quarantined and may only remain in devtools/debug player-only command paths until removed
+- devtools/readouts should display `target_kind` + `target_id`, not `target_player_id`
 - a client selection request is not authoritative until reflected in authoritative state updates
 - devtools canonical target readout compares `State Packet` live ship state against `Session Packet` durable session state
 - target/readout resolution must not depend only on active players; inactive player identity remains available through `player_sessions`

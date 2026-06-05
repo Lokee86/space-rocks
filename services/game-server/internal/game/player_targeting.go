@@ -6,9 +6,8 @@ import (
 )
 
 type PlayerTargeting struct {
-	Kind     string
-	ID       string
-	PlayerID string
+	Kind string
+	ID   string
 }
 
 func EmptyPlayerTargeting() PlayerTargeting {
@@ -16,14 +15,10 @@ func EmptyPlayerTargeting() PlayerTargeting {
 }
 
 func PlayerTargetingFromRef(target targetpolicy.TargetRef) PlayerTargeting {
-	targeting := PlayerTargeting{
+	return PlayerTargeting{
 		Kind: string(target.Kind),
 		ID:   target.ID,
 	}
-	if target.Kind == targetpolicy.TargetKindPlayer {
-		targeting.PlayerID = target.ID
-	}
-	return targeting
 }
 
 func (targeting PlayerTargeting) TargetRef() targetpolicy.TargetRef {
@@ -40,5 +35,4 @@ func (targeting PlayerTargeting) ApplyToShip(ship *runtime.Ship) {
 
 	ship.TargetKind = targeting.Kind
 	ship.TargetID = targeting.ID
-	ship.TargetPlayerID = targeting.PlayerID
 }

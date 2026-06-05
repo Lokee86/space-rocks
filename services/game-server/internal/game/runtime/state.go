@@ -17,7 +17,6 @@ type Ship struct {
 	ShootCooldown            float64
 	TargetKind               string
 	TargetID                 string
-	TargetPlayerID           string
 	Health                   int
 	Shields                  int
 	DamageOptions            DamageOptions

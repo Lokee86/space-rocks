@@ -79,13 +79,13 @@ func _refresh_telemetry() -> void:
 
 func _local_telemetry_source() -> String:
 	if window_controller == null or !window_controller.has_method("local_telemetry_source"):
-		return "state_packet"
+		return "player_state"
 	return window_controller.local_telemetry_source()
 
 
 func _target_telemetry_source() -> String:
 	if window_controller == null or !window_controller.has_method("target_telemetry_source"):
-		return "state_packet"
+		return "player_state"
 	return window_controller.target_telemetry_source()
 
 

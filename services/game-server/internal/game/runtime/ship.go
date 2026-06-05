@@ -3,23 +3,17 @@ package runtime
 import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 
 func (ship *Ship) State() ShipState {
-	targetPlayerID := ""
-	if ship.TargetKind == "player" {
-		targetPlayerID = ship.TargetID
-	}
-
 	return ShipState{
-		ID:       ship.ID,
-		ShipType: ship.ShipTypeID,
-		X:        ship.X,
-		Y:        ship.Y,
-		Rotation: ship.Rotation,
+		ID:         ship.ID,
+		ShipType:   ship.ShipTypeID,
+		X:          ship.X,
+		Y:          ship.Y,
+		Rotation:   ship.Rotation,
 		TargetKind: ship.TargetKind,
-		TargetID: ship.TargetID,
-		TargetPlayerID: targetPlayerID,
-		Health:    ship.Health,
-		Shields:   ship.Shields,
-		Thrusting: ship.Input.Forward,
+		TargetID:   ship.TargetID,
+		Health:     ship.Health,
+		Shields:    ship.Shields,
+		Thrusting:  ship.Input.Forward,
 	}
 }
 

@@ -135,10 +135,11 @@ static func pause_request_packet() -> Dictionary:
 	packet[FIELD_TYPE] = "pause_request"
 	return packet
 
-static func set_target_player_request_packet(target_player_id) -> Dictionary:
+static func set_target_player_request_packet(target_kind, target_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "set_target_player_request"
-	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	packet[FIELD_TARGET_KIND] = target_kind
+	packet[FIELD_TARGET_ID] = target_id
 	return packet
 
 static func select_target_at_position_request_packet(x, y, target_kind, target_id) -> Dictionary:

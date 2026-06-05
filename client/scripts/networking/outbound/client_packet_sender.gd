@@ -36,9 +36,9 @@ func send_pause_request() -> void:
 		network_client.send_raw_packet(GameplayClientPackets.pause_request_packet())
 
 
-func send_set_target_player_request(target_player_id: String) -> void:
+func send_set_target_player_request(target_id: String) -> void:
 	if network_client != null:
-		network_client.send_raw_packet(GameplayClientPackets.set_target_player_request_packet(target_player_id))
+		network_client.send_raw_packet(GameplayClientPackets.set_target_player_request_packet("player", target_id))
 
 
 func send_select_target_at_position_request(x, y, target_kind, target_id) -> void:

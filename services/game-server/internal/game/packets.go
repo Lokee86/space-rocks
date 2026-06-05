@@ -35,7 +35,6 @@ type ClientPacket struct {
 	Config             runtime.ClientConfig `json:"config"`
 	RoomCode           string               `json:"room_code"`
 	Ready              bool                 `json:"ready"`
-	TargetPlayerID     string               `json:"target_player_id"`
 	X                  float64              `json:"x"`
 	Y                  float64              `json:"y"`
 	TargetKind         string               `json:"target_kind"`
