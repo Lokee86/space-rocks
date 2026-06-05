@@ -33,5 +33,3 @@ collision_despawn_delay = 0.05
 [constants.server.pickups]
 pickup_one_up_type = "1_up"
 pickup_one_up_scene_path = "res://scenes/pickups/1_up.tscn"
-pickup_collision_shape_circle = "circle"
-pickup_one_up_collision_radius = 50.0

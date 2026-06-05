@@ -3,14 +3,8 @@ package pickups
 import "github.com/Lokee86/space-rocks/server/internal/constants"
 
 type Definition struct {
-	Type       PickupType
-	ScenePath  string
-	Collision  CollisionDefinition
-}
-
-type CollisionDefinition struct {
-	Shape  CollisionShape
-	Radius float64
+	Type      PickupType
+	ScenePath string
 }
 
 func DefinitionFor(pickupType PickupType) (Definition, bool) {
@@ -21,9 +15,5 @@ func DefinitionFor(pickupType PickupType) (Definition, bool) {
 	return Definition{
 		Type:      PickupType(constants.PickupOneUpType),
 		ScenePath: constants.PickupOneUpScenePath,
-		Collision: CollisionDefinition{
-			Shape:  CollisionShape(constants.PickupCollisionShapeCircle),
-			Radius: constants.PickupOneUpCollisionRadius,
-		},
 	}, true
 }

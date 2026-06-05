@@ -15,6 +15,7 @@ type CollisionShapeCatalog struct {
 	Bullet    ImportedCollisionShape   `json:"bullet"`
 	Ship      ImportedCollisionShape   `json:"ship"`
 	Asteroids []ImportedCollisionShape `json:"asteroids"`
+	Pickups   map[string]ImportedCollisionShape `json:"pickups"`
 }
 
 type ImportedCollisionShape struct {
@@ -69,6 +70,19 @@ func (catalog CollisionShapeCatalog) AsteroidShape(variant int, size int) (Colli
 
 	scale := float64(size) * constants.AsteroidSizeScale
 	return catalog.Asteroids[wrapIndex(variant, len(catalog.Asteroids))].ToCollisionShape(scale)
+}
+
+func (catalog CollisionShapeCatalog) PickupShape(pickupType string) (CollisionShape, error) {
+	if len(catalog.Pickups) == 0 {
+		return CollisionShape{}, fmt.Errorf("no pickup collision shapes loaded")
+	}
+
+	shape, ok := catalog.Pickups[pickupType]
+	if !ok {
+		return CollisionShape{}, fmt.Errorf("unknown pickup collision shape %q", pickupType)
+	}
+
+	return shape.ToCollisionShape(1)
 }
 
 func (shape ImportedCollisionShape) ToCollisionShape(scale float64) (CollisionShape, error) {

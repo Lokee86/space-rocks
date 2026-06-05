@@ -30,7 +30,7 @@ func TestPickupSpawnStoresPickup(t *testing.T) {
 	}
 }
 
-func TestPickupSpawnUsesStableIDAndDefinitionRadius(t *testing.T) {
+func TestPickupSpawnUsesStableIDAndDefinitionType(t *testing.T) {
 	scenario := newScenario(t)
 
 	definition, ok := pickups.DefinitionFor(pickups.TypeOneUp)
@@ -48,8 +48,8 @@ func TestPickupSpawnUsesStableIDAndDefinitionRadius(t *testing.T) {
 	if spawnedPickup.ID != "pickup_1" {
 		t.Fatalf("expected pickup ID %q, got %q", "pickup_1", spawnedPickup.ID)
 	}
-	if spawnedPickup.Radius != definition.Collision.Radius {
-		t.Fatalf("expected pickup radius %v, got %v", definition.Collision.Radius, spawnedPickup.Radius)
+	if spawnedPickup.Type != definition.Type {
+		t.Fatalf("expected pickup type %q, got %q", definition.Type, spawnedPickup.Type)
 	}
 }
 

@@ -7,20 +7,21 @@ type Pickup struct {
 	Type   PickupType
 	X      float64
 	Y      float64
-	Radius float64
 }
 
 func (pickup *Pickup) Position() physics.Vector2 {
 	return physics.Vector2{X: pickup.X, Y: pickup.Y}
 }
 
-func (pickup *Pickup) CollisionBody() physics.CollisionBody {
+func (pickup *Pickup) CollisionBody(catalog physics.CollisionShapeCatalog) (physics.CollisionBody, bool) {
+	shape, err := catalog.PickupShape(string(pickup.Type))
+	if err != nil {
+		return physics.CollisionBody{}, false
+	}
+
 	return physics.CollisionBody{
 		ID:       pickup.ID,
 		Position: pickup.Position(),
-		Shape: physics.CollisionShape{
-			Type:   "circle",
-			Radius: pickup.Radius,
-		},
-	}
+		Shape:    shape,
+	}, true
 }

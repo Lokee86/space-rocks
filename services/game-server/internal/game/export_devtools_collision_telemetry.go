@@ -47,7 +47,10 @@ func (game *Game) DevtoolsCollisionBodies() []DevtoolsCollisionBody {
 		if pickup == nil {
 			continue
 		}
-		body := pickup.CollisionBody()
+		body, ok := pickup.CollisionBody(game.collisionShapes)
+		if !ok {
+			continue
+		}
 		bodies = append(bodies, devtoolsCollisionBody("pickup", body))
 	}
 
