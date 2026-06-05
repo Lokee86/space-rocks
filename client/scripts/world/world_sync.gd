@@ -40,7 +40,7 @@ func configure(
 	target_position_source.configure(player_render_api, asteroid_sync, bullet_sync, pickup_sync)
 
 	asteroids.z_index = Constants.ASTEROID_Z_INDEX
-	pickups.z_index = Constants.ASTEROID_Z_INDEX + 5
+	pickups.z_index = Constants.PICKUP_Z_INDEX
 	bullets.z_index = Constants.BULLET_Z_INDEX
 
 
