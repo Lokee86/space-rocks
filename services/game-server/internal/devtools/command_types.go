@@ -8,6 +8,7 @@ func IsCommandType(packetType string) bool {
 		PacketTypeToggleDebugFreezePlayer,
 		PacketTypeDebugKillPlayer,
 		PacketTypeDebugSpawnEntity,
+		PacketTypeDebugSpawnPickup,
 		PacketTypeDebugBeginContinuousBulletStream,
 		PacketTypeDebugRespawnPlayer,
 		PacketTypeDebugSetScore,

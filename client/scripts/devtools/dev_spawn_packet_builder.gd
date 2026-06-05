@@ -3,9 +3,11 @@ class_name DevSpawnPacketBuilder
 
 
 const TYPE_DEBUG_SPAWN_ENTITY := "debug_spawn_entity"
+const TYPE_DEBUG_SPAWN_PICKUP := "debug_spawn_pickup"
 const TYPE_DEBUG_BEGIN_CONTINUOUS_BULLET_STREAM := "debug_begin_continuous_bullet_stream"
 const FIELD_TYPE := "type"
 const FIELD_ENTITY_TYPE := "entity_type"
+const FIELD_PICKUP_TYPE := "pickup_type"
 const FIELD_X := "x"
 const FIELD_Y := "y"
 const FIELD_HAS_DIRECTION := "has_direction"
@@ -29,8 +31,25 @@ static func entity_type_for_action(action_name) -> String:
 			return ""
 
 
+static func build_spawn_pickup_from_placement_result(result: Dictionary) -> Dictionary:
+	var pickup_type := str(result.get("pickup_type", ""))
+	if pickup_type == "":
+		return {}
+
+	var server_position: Vector2 = result.get("server_position", Vector2.ZERO)
+	return {
+		FIELD_TYPE: TYPE_DEBUG_SPAWN_PICKUP,
+		FIELD_PICKUP_TYPE: pickup_type,
+		FIELD_X: server_position.x,
+		FIELD_Y: server_position.y
+	}
+
+
 static func build_from_placement_result(result: Dictionary) -> Dictionary:
 	var action_name = result.get("action_name", StringName())
+	if String(action_name) == "spawn_pickup":
+		return build_spawn_pickup_from_placement_result(result)
+
 	var entity_type := entity_type_for_action(action_name)
 	if entity_type == "":
 		return {}

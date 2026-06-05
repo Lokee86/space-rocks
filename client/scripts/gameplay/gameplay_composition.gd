@@ -24,7 +24,7 @@ var gameplay_menu_flow
 var dev_tools_session_flow
 var spectate_session_flow
 
-func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_anchor_ref, bullets_ref: Node2D, asteroids_ref: Node2D, hud_ref: Control, session_context_ref, logger_callable: Callable) -> void:
+func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_anchor_ref, bullets_ref: Node2D, asteroids_ref: Node2D, pickups_ref: Node2D, hud_ref: Control, session_context_ref, logger_callable: Callable) -> void:
 	connection_service = connection_service_ref
 	scene_root = scene_root_ref
 	player = player_ref
@@ -48,6 +48,7 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_an
 		view_anchor_ref,
 		bullets,
 		asteroids,
+		pickups_ref,
 		gameplay_hud_flow,
 		gameplay_menu_flow,
 		spectate_menu_state

@@ -38,12 +38,15 @@ func _draw() -> void:
 
 		var kind := str(entry.get("kind", ""))
 		var template := PackedVector2Array()
+
 		if kind == "player":
 			template = hitbox_template_catalog.player_polygon()
 		elif kind == "asteroid":
 			template = hitbox_template_catalog.asteroid_polygon(int(entry.get("variant", 0)))
 		elif kind == "bullet":
 			template = hitbox_template_catalog.bullet_polygon()
+		elif kind == "pickup":
+			template = hitbox_template_catalog.pickup_polygon(str(entry.get("pickup_type", "")))
 		else:
 			continue
 

@@ -31,6 +31,11 @@ static func read(data: Dictionary) -> Dictionary:
 	if player_sessions_value is Dictionary:
 		player_sessions = player_sessions_value
 
+	var server_pickups_value = data.get(Packets.FIELD_PICKUPS, {})
+	var server_pickups := {}
+	if server_pickups_value is Dictionary:
+		server_pickups = server_pickups_value
+
 	return {
 		"self_id": data[Packets.FIELD_SELF_ID],
 		"server_players": data[Packets.FIELD_PLAYERS],
@@ -38,6 +43,7 @@ static func read(data: Dictionary) -> Dictionary:
 		"player_lifecycle": PlayerLifecycle.from_state(data),
 		"server_bullets": data.get(Packets.FIELD_BULLETS, {}),
 		"server_asteroids": data.get(Packets.FIELD_ASTEROIDS, {}),
+		"server_pickups": server_pickups,
 		"total_asteroids": int(data.get(Packets.FIELD_TOTAL_ASTEROIDS, 0)),
 		"server_events": server_events,
 		"server_sent_msec": int(data.get(FIELD_SERVER_SENT_MSEC, -1)),
@@ -46,4 +52,3 @@ static func read(data: Dictionary) -> Dictionary:
 		"has_lives": has_lives,
 		"lives": lives,
 	}
-

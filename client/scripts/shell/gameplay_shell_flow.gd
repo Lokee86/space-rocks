@@ -23,6 +23,7 @@ func configure(
 	view_anchor_ref,
 	bullets: Node2D,
 	asteroids: Node2D,
+	pickups: Node2D,
 	hud_flow_ref,
 	menu_flow_ref,
 	spectate_menu_state_ref = null
@@ -36,7 +37,7 @@ func configure(
 			Callable(self, "_on_return_to_lobby_requested")
 	)
 	runtime_context = GameplayRuntimeContext.new()
-	runtime_context.configure_world(game_owner_ref, player_ref, view_anchor_ref, bullets, asteroids, gameplay_pause_state_flow.tracker())
+	runtime_context.configure_world(game_owner_ref, player_ref, view_anchor_ref, bullets, asteroids, pickups, gameplay_pause_state_flow.tracker())
 
 	runtime_context.configure_respawn(connection_service_ref, hud_flow)
 

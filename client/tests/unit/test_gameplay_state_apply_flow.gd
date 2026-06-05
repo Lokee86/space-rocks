@@ -34,18 +34,21 @@ class FakeWorldSync:
 	var received_players: Dictionary = {}
 	var received_bullets: Dictionary = {}
 	var received_asteroids: Dictionary = {}
+	var received_pickups: Dictionary = {}
 
 	func apply_state(
 		self_id: String,
 		server_players: Dictionary,
 		server_bullets: Dictionary,
-		server_asteroids: Dictionary
+		server_asteroids: Dictionary,
+		server_pickups: Dictionary
 	) -> void:
 		apply_state_call_count += 1
 		received_self_id = self_id
 		received_players = server_players
 		received_bullets = server_bullets
 		received_asteroids = server_asteroids
+		received_pickups = server_pickups
 
 
 class FakeAliveRestoreFlow:
@@ -100,6 +103,7 @@ func test_apply_state_delegates_to_new_seams_on_first_state() -> void:
 	assert_eq(world_sync.received_players, {})
 	assert_eq(world_sync.received_bullets, {})
 	assert_eq(world_sync.received_asteroids, {})
+	assert_eq(world_sync.received_pickups, {})
 	assert_eq(alive_restore_flow.apply_state_call_count, 1)
 	assert_eq(alive_restore_flow.received_state, state)
 	assert_eq(event_lifecycle_flow.apply_server_events_call_count, 1)

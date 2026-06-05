@@ -3,6 +3,7 @@ extends RefCounted
 var players: int = 0
 var enemies: int = 0
 var asteroids: int = 0
+var pickups: int = 0
 var total_asteroids: int = 0
 var bullets: int = 0
 var server_sent_msec: int = -1
@@ -18,6 +19,7 @@ func reset() -> void:
 	players = 0
 	enemies = 0
 	asteroids = 0
+	pickups = 0
 	total_asteroids = 0
 	bullets = 0
 	server_sent_msec = -1
@@ -39,6 +41,7 @@ func snapshot() -> Dictionary:
 		"players": players,
 		"enemies": enemies,
 		"asteroids": asteroids,
+		"pickups": pickups,
 		"total_asteroids": total_asteroids,
 		"bullets": bullets,
 		"server_sent_msec": server_sent_msec,
@@ -76,6 +79,10 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var server_asteroids_variant: Variant = state.get("server_asteroids", null)
 	asteroids = server_asteroids_variant.size() if server_asteroids_variant is Dictionary else 0
+
+	var server_pickups_variant: Variant = state.get("server_pickups", null)
+	pickups = server_pickups_variant.size() if server_pickups_variant is Dictionary else 0
+
 	total_asteroids = int(state.get("total_asteroids", 0))
 
 	var server_bullets_variant: Variant = state.get("server_bullets", null)

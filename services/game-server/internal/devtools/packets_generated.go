@@ -8,6 +8,7 @@ const (
 	PacketTypeToggleDebugFreezePlayer          = "toggle_debug_freeze_player"
 	PacketTypeDebugKillPlayer                  = "debug_kill_player"
 	PacketTypeDebugSpawnEntity                 = "debug_spawn_entity"
+	PacketTypeDebugSpawnPickup                 = "debug_spawn_pickup"
 	PacketTypeDebugBeginContinuousBulletStream = "debug_begin_continuous_bullet_stream"
 	PacketTypeDebugRespawnPlayer               = "debug_respawn_player"
 	PacketTypeDebugSetScore                    = "debug_set_score"
@@ -23,6 +24,7 @@ type DebugCommand struct {
 	TargetPlayerID string  `json:"target_player_id"`
 	TargetScope    string  `json:"target_scope"`
 	EntityType     string  `json:"entity_type"`
+	PickupType     string  `json:"pickup_type"`
 	X              float64 `json:"x"`
 	Y              float64 `json:"y"`
 	HasDirection   bool    `json:"has_direction"`

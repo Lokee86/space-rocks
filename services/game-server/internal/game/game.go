@@ -16,6 +16,7 @@ type Game struct {
 	startSimulationOnce       sync.Once
 	stopSimulationOnce        sync.Once
 	nextID                    int
+	nextPickupID              int
 	spawner                   *spawning.Spawner
 	scoringPolicy             scoring.Policy
 	asteroidSpawnElapsed      float64

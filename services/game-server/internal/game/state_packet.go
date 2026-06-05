@@ -29,6 +29,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 		asteroids[id] = asteroid.State()
 	}
 
+	pickups := game.pickupStatesLocked()
 	bullets := make(map[string]runtime.BulletState, len(game.entities.Projectiles))
 	for id, bullet := range game.entities.Projectiles {
 		bullets[id] = bullet.State()
@@ -44,6 +45,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 		PlayerLifecycle: playerLifecycle,
 		Bullets:         bullets,
 		Asteroids:       asteroids,
+		Pickups:         pickups,
 		TotalAsteroids:  game.spawner.TotalAsteroidsSpawned(),
 		Events:          events,
 	}

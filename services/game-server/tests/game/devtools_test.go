@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
+	pickupentities "github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
@@ -968,5 +969,69 @@ func TestDebugRespawnPlayerAllPlayersRespawnsEligiblePlayersAndIgnoresActivePlay
 			activePlayerAfter.X,
 			activePlayerAfter.Y,
 		)
+	}
+}
+
+func TestDebugSpawnPickupCreatesPickup(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	ok := devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type:       devtools.PacketTypeDebugSpawnPickup,
+		PickupType: "1_up",
+		X:          123,
+		Y:          456,
+	})
+	if !ok {
+		t.Fatal("expected debug spawn pickup command to be handled")
+	}
+
+	if pickups := scenario.pickups(); pickups.Len() != 1 {
+		t.Fatalf("expected one pickup to be stored, got %d", pickups.Len())
+	}
+}
+
+func TestDebugSpawnPickupUsesRequestedPosition(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type:       devtools.PacketTypeDebugSpawnPickup,
+		PickupType: "1_up",
+		X:          321,
+		Y:          654,
+	})
+
+	pickups := scenario.pickups()
+	if pickups.Len() != 1 {
+		t.Fatalf("expected one pickup to be stored, got %d", pickups.Len())
+	}
+
+	iter := pickups.MapRange()
+	if !iter.Next() {
+		t.Fatal("expected spawned pickup in store")
+	}
+	pickup := iter.Value().Interface().(*pickupentities.Pickup)
+	if pickup.X != 321 || pickup.Y != 654 {
+		t.Fatalf("expected spawned pickup at (321, 654), got (%v, %v)", pickup.X, pickup.Y)
+	}
+}
+
+func TestDebugSpawnPickupRejectsUnknownPickupType(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	ok := devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+		Type:       devtools.PacketTypeDebugSpawnPickup,
+		PickupType: "unknown",
+		X:          11,
+		Y:          22,
+	})
+	if !ok {
+		t.Fatal("expected debug spawn pickup command to be handled")
+	}
+
+	if pickups := scenario.pickups(); pickups.Len() != 0 {
+		t.Fatalf("expected no pickup to be stored for unknown pickup type, got %d", pickups.Len())
 	}
 }

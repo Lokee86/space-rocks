@@ -74,6 +74,12 @@ json = "entity_type"
 type = "string"
 
 [[structs.fields]]
+name = "pickup_type"
+go_name = "PickupType"
+json = "pickup_type"
+type = "string"
+
+[[structs.fields]]
 name = "x"
 json = "x"
 type = "float"
@@ -145,6 +151,10 @@ value = "debug_kill_player"
 [[packet_types]]
 id = "debug_spawn_entity"
 value = "debug_spawn_entity"
+
+[[packet_types]]
+id = "debug_spawn_pickup"
+value = "debug_spawn_pickup"
 
 [[packet_types]]
 id = "debug_begin_continuous_bullet_stream"
@@ -239,6 +249,16 @@ id = "debug_kill_player_packet"
 
 [builders.body]
 type = "debug_kill_player"
+
+[[builders]]
+id = "debug_spawn_pickup_packet"
+args = ["pickup_type", "x", "y"]
+
+[builders.body]
+type = "debug_spawn_pickup"
+pickup_type = "$pickup_type"
+x = "$x"
+y = "$y"
 
 [[builders]]
 id = "debug_kill_target_player_packet"

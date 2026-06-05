@@ -14,6 +14,7 @@ signal clear_bullets_requested
 signal clear_asteroids_requested
 signal kill_player_requested(player_id: String)
 signal spawn_asteroid_placement_requested
+signal spawn_pickup_placement_requested(pickup_type: String)
 signal spawn_player_placement_requested(target_player_id: String)
 signal spawn_bullet_placement_requested
 signal respawn_player_placement_requested(target_player_id: String)
@@ -34,6 +35,8 @@ const TELEMETRY_SOURCE_PLAYER_WORLD_STATES := "player_world_states"
 @onready var freeze_collisions_button: Button = %FreezeCollisionsButton
 @onready var freeze_player_button: Button = %FreezePlayerButton
 @onready var spawn_asteroid_button: Button = %SpawnAsteroidButton
+@onready var spawn_pickup_button: Button = %SpawnPickupButton
+@onready var pickup_select: OptionButton = %PickupSelect
 @onready var spawn_player_button: Button = %SpawnPlayerButton
 @onready var spawn_bullet_button: Button = %SpawnBulletButton
 @onready var respawn_player_button: Button = %RespawnPlayerButton
@@ -97,6 +100,8 @@ func _ready() -> void:
 		freeze_player_button.pressed.connect(_on_freeze_player_button_pressed)
 	if !spawn_asteroid_button.pressed.is_connected(_on_spawn_asteroid_button_pressed):
 		spawn_asteroid_button.pressed.connect(_on_spawn_asteroid_button_pressed)
+	if !spawn_pickup_button.pressed.is_connected(_on_spawn_pickup_button_pressed):
+		spawn_pickup_button.pressed.connect(_on_spawn_pickup_button_pressed)
 	if !spawn_player_button.pressed.is_connected(_on_spawn_player_button_pressed):
 		spawn_player_button.pressed.connect(_on_spawn_player_button_pressed)
 	if !spawn_bullet_button.pressed.is_connected(_on_spawn_bullet_button_pressed):
@@ -123,6 +128,7 @@ func _ready() -> void:
 		set_game_target_button.pressed.connect(_on_set_game_target_button_pressed)
 	if !clear_game_target_button.pressed.is_connected(_on_clear_game_target_button_pressed):
 		clear_game_target_button.pressed.connect(_on_clear_game_target_button_pressed)
+	_initialize_pickup_select()
 	_initialize_telemetry_source_select(local_telemetry_select)
 	_initialize_telemetry_source_select(target_telemetry_select)
 	if !local_telemetry_select.item_selected.is_connected(_on_local_telemetry_select_item_selected):
@@ -472,6 +478,10 @@ func _on_spawn_asteroid_button_pressed() -> void:
 	spawn_asteroid_placement_requested.emit()
 
 
+func _on_spawn_pickup_button_pressed() -> void:
+	spawn_pickup_placement_requested.emit(_selected_metadata_as_string(pickup_select))
+
+
 func _on_spawn_player_button_pressed() -> void:
 	spawn_player_placement_requested.emit(_selected_metadata_as_string(spawn_player_select))
 
@@ -525,6 +535,13 @@ func _initialize_telemetry_source_select(select: OptionButton) -> void:
 	select.add_item("StatePacket.player_world_states")
 	select.set_item_metadata(1, TELEMETRY_SOURCE_PLAYER_WORLD_STATES)
 	select.select(0)
+
+
+func _initialize_pickup_select() -> void:
+	pickup_select.clear()
+	pickup_select.add_item("1_up")
+	pickup_select.set_item_metadata(0, "1_up")
+	pickup_select.select(0)
 
 
 func _emit_telemetry_sources_changed() -> void:

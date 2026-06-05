@@ -1,6 +1,9 @@
 package runtime
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import (
+	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+)
 
 const DefaultShipTypeID = "v_wing"
 
@@ -62,6 +65,7 @@ type EntityStore struct {
 	Projectiles map[string]*Bullet
 	Asteroids   map[string]*Asteroid
 	Enemies     map[string]*Ship
+	Pickups     map[string]*pickups.Pickup
 }
 
 func NewEntityStore() EntityStore {
@@ -70,5 +74,6 @@ func NewEntityStore() EntityStore {
 		Projectiles: make(map[string]*Bullet),
 		Asteroids:   make(map[string]*Asteroid),
 		Enemies:     make(map[string]*Ship),
+		Pickups:     make(map[string]*pickups.Pickup),
 	}
 }

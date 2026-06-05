@@ -19,6 +19,7 @@ const ClientLogger := preload("res://scripts/logging/logger.gd")
 @onready var view_anchor: Node2D = $ViewAnchor
 @onready var bullets: Node2D = $Bullets
 @onready var asteroids: Node2D = $Asteroids
+@onready var pickups: Node2D = $Pickups
 @onready var hud: Control = %HUD
 
 var session_boot_controller
@@ -54,6 +55,7 @@ func _ready() -> void:
 		view_anchor,
 		bullets,
 		asteroids,
+		pickups,
 		hud,
 		main_menu,
 		session_boot_controller.get_session_context(),
