@@ -19,6 +19,10 @@ func apply_server_events(server_events: Array, self_id: String, apply_self_death
 			if event[Packets.FIELD_PLAYER_ID] == self_id:
 				apply_self_death_event.call(event)
 			apply_ship_death(event)
+		elif event.get(Packets.FIELD_TYPE, "") == "pickup_collected":
+			pass
+		elif event.get(Packets.FIELD_TYPE, "") == "pickup_effect_applied":
+			pass
 
 
 func apply_bullet_blast(event: Dictionary) -> void:
