@@ -20,7 +20,7 @@ func apply_server_events(server_events: Array, self_id: String, apply_self_death
 				apply_self_death_event.call(event)
 			apply_ship_death(event)
 		elif event.get(Packets.FIELD_TYPE, "") == "pickup_collected":
-			pass
+			apply_pickup_collected(event)
 		elif event.get(Packets.FIELD_TYPE, "") == "pickup_effect_applied":
 			pass
 
@@ -37,6 +37,13 @@ func apply_ship_death(event: Dictionary) -> void:
 	if visual_position == null:
 		return
 	effects.spawn_ship_death(visual_position)
+
+
+func apply_pickup_collected(event: Dictionary) -> void:
+	var visual_position: Vector2 = _visual_position_for_event(event, "pickup collected")
+	if visual_position == null:
+		return
+	effects.spawn_pickup_collected(visual_position)
 
 
 func _visual_position_for_event(event: Dictionary, event_name: String):

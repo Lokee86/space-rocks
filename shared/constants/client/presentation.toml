@@ -10,8 +10,8 @@ planet_background_offset = [0.0, 0.0]
 
 [constants.client.presentation.rendering]
 player_interpolation_speed = 18.0
-asteroid_z_index = 10
-pickup_z_index = 15
+asteroid_z_index = 15
+pickup_z_index = 10
 bullet_z_index = 20
 remote_player_z_index = 30
 local_player_z_index = 31

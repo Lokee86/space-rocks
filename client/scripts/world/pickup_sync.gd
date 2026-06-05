@@ -2,9 +2,11 @@ extends RefCounted
 class_name PickupSync
 
 const PICKUP_ONE_UP_SCENE = preload("res://scenes/pickups/1_up.tscn")
+const GameplayAudioFlow = preload("res://scripts/gameplay/audio/gameplay_audio_flow.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var pickups_layer = null
+var audio_flow := GameplayAudioFlow.new()
 var pickup_nodes = {}
 var pickup_types = {}
 var initialized_pickups = {}
@@ -54,6 +56,8 @@ func get_pickup_node(pickup_id: String, pickup_type: String):
 
 	var pickup_node = pickup_scene.instantiate()
 	pickups_layer.add_child(pickup_node)
+	if pickup_node.has_method("play_spawn_sound"):
+		pickup_node.play_spawn_sound(audio_flow)
 	pickup_nodes[pickup_id] = pickup_node
 	pickup_types[pickup_id] = pickup_type
 
