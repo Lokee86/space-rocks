@@ -31,3 +31,4 @@ __pycache__/
 
 # Local Codex workspace state
 .codex/
+tools/space-rocks-mcp/node_modules/
