@@ -26,6 +26,7 @@ func BuildGameplayPresentationStateResponse(room *rooms.Room, playerID string, r
 			statePacket,
 			devtools.StatusFor(gameInstance, playerID),
 			devtools.StatusesForAllPlayers(gameInstance),
+			gameInstance.DevtoolsCollisionBodies(),
 		)
 	}
 

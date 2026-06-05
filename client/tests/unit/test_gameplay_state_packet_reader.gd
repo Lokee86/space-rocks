@@ -42,6 +42,7 @@ func test_read_uses_existing_defaults_for_optional_fields() -> void:
 	state.erase(Packets.FIELD_BULLETS)
 	state.erase(Packets.FIELD_ASTEROIDS)
 	state.erase(Packets.FIELD_EVENTS)
+	state.erase("debug_collision_bodies")
 	state.erase(Packets.FIELD_LIVES)
 	state.erase(Packets.FIELD_PLAYER_LIFECYCLE)
 
@@ -50,6 +51,7 @@ func test_read_uses_existing_defaults_for_optional_fields() -> void:
 	assert_eq(facts["server_bullets"], {})
 	assert_eq(facts["server_asteroids"], {})
 	assert_eq(facts["server_events"], [])
+	assert_eq(facts["debug_collision_bodies"], [])
 	assert_false(facts["has_lives"])
 	assert_eq(facts["lives"], 0)
 	assert_eq(facts["player_lifecycle"], {})
@@ -58,10 +60,29 @@ func test_read_uses_existing_defaults_for_optional_fields() -> void:
 func test_read_ignores_non_array_events() -> void:
 	var state := WorldStateFixture.state()
 	state[Packets.FIELD_EVENTS] = "not-events"
+	state["debug_collision_bodies"] = "not-collision-bodies"
 
 	var facts := GameplayStatePacketReader.read(state)
 
 	assert_eq(facts["server_events"], [])
+	assert_eq(facts["debug_collision_bodies"], [])
+
+
+func test_read_preserves_debug_collision_bodies() -> void:
+	var state := WorldStateFixture.state()
+	state["debug_collision_bodies"] = [
+		{
+			"kind": "player",
+			"id": "Player-1",
+			"points": [
+				{"x": 1.0, "y": 2.0},
+			],
+		},
+	]
+
+	var facts := GameplayStatePacketReader.read(state)
+
+	assert_eq(facts["debug_collision_bodies"], state["debug_collision_bodies"])
 
 
 func test_read_preserves_server_sent_msec() -> void:

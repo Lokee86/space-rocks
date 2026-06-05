@@ -13,7 +13,7 @@ func TestWrapStatePacketPreservesServerSentMsec(t *testing.T) {
 		ServerSentMsec: 123456789,
 	}
 
-	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{})
+	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{}, nil)
 	wrapped, ok := wrappedAny.(statePacketWithDebugStatus)
 	if !ok {
 		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
@@ -31,7 +31,7 @@ func TestWrapStatePacketPreservesPlayerSessions(t *testing.T) {
 		},
 	}
 
-	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{})
+	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{}, nil)
 	wrapped, ok := wrappedAny.(statePacketWithDebugStatus)
 	if !ok {
 		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
@@ -50,7 +50,7 @@ func TestWrapStatePacketPreservesTotalAsteroids(t *testing.T) {
 		TotalAsteroids: 42,
 	}
 
-	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{})
+	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{}, nil)
 	wrapped, ok := wrappedAny.(statePacketWithDebugStatus)
 	if !ok {
 		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
@@ -68,7 +68,7 @@ func TestWrapStatePacketPreservesPickups(t *testing.T) {
 		},
 	}
 
-	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{})
+	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{}, nil)
 	wrapped, ok := wrappedAny.(statePacketWithDebugStatus)
 	if !ok {
 		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
@@ -101,7 +101,7 @@ func TestWrapStatePacketPreservesEntityMaps(t *testing.T) {
 		},
 	}
 
-	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{})
+	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{}, nil)
 	wrapped, ok := wrappedAny.(statePacketWithDebugStatus)
 	if !ok {
 		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
@@ -117,5 +117,33 @@ func TestWrapStatePacketPreservesEntityMaps(t *testing.T) {
 	}
 	if len(wrapped.Pickups) != 1 {
 		t.Fatalf("Pickups len = %d, want 1", len(wrapped.Pickups))
+	}
+}
+
+func TestWrapStatePacketPreservesDebugCollisionBodies(t *testing.T) {
+	state := game.StatePacket{
+		Type: game.PacketTypeState,
+	}
+	collisionBodies := []game.DevtoolsCollisionBody{
+		{
+			Kind: "player",
+			ID:   "Player-1",
+			Shape: "rectangle",
+			Points: []game.DevtoolsCollisionPoint{
+				{X: 1, Y: 2},
+			},
+		},
+	}
+
+	wrappedAny := WrapStatePacket(state, DebugStatus{}, map[string]DebugStatus{}, collisionBodies)
+	wrapped, ok := wrappedAny.(statePacketWithDebugStatus)
+	if !ok {
+		t.Fatalf("WrapStatePacket returned %T, want statePacketWithDebugStatus", wrappedAny)
+	}
+	if len(wrapped.DebugCollisionBodies) != len(collisionBodies) {
+		t.Fatalf("DebugCollisionBodies len = %d, want %d", len(wrapped.DebugCollisionBodies), len(collisionBodies))
+	}
+	if wrapped.DebugCollisionBodies[0].ID != collisionBodies[0].ID {
+		t.Fatalf("DebugCollisionBodies[0].ID = %q, want %q", wrapped.DebugCollisionBodies[0].ID, collisionBodies[0].ID)
 	}
 }

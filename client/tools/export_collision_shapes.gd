@@ -16,6 +16,9 @@ func _init() -> void:
 		"bullet": _export_bullet(),
 		"ship": _export_player(),
 		"asteroids": _export_asteroids(),
+		"pickups": {
+			"1_up": _export_pickup_one_up(),
+		},
 	}
 
 	_export_pickup_one_up_collision_radius()
@@ -111,6 +114,32 @@ func _export_asteroids() -> Array:
 	return exported
 
 
+func _export_pickup_one_up() -> Dictionary:
+	var pickup_scene := _pickup_one_up_scene()
+	if pickup_scene.is_empty():
+		return {}
+
+	var root: Node = pickup_scene[0]
+	var collision_shape: CollisionShape2D = pickup_scene[1]
+	var shape := collision_shape.shape
+	if !(shape is CircleShape2D):
+		var shape_class := "<null>" if shape == null else shape.get_class()
+		push_error("Unsupported pickup shape in %s: %s" % [PICKUP_ONE_UP_SCENE, shape_class])
+		root.queue_free()
+		quit(1)
+		return {}
+
+	var exported := {
+		"name": collision_shape.name,
+		"type": "circle",
+		"radius": shape.radius,
+		"offset": [collision_shape.position.x, collision_shape.position.y],
+	}
+
+	root.queue_free()
+	return exported
+
+
 func _export_polygon(collision_polygon: CollisionPolygon2D) -> Dictionary:
 	return {
 		"name": collision_polygon.name,
@@ -128,20 +157,12 @@ func _export_points(points: PackedVector2Array) -> Array:
 
 
 func _export_pickup_one_up_collision_radius() -> float:
-	var scene := load(PICKUP_ONE_UP_SCENE) as PackedScene
-	if scene == null:
-		push_error("Failed to load %s" % PICKUP_ONE_UP_SCENE)
-		quit(1)
+	var pickup_scene := _pickup_one_up_scene()
+	if pickup_scene.is_empty():
 		return 0.0
 
-	var root := scene.instantiate()
-	var collision_shape := root.get_node("CollisionShape2D") as CollisionShape2D
-	if collision_shape == null:
-		push_error("Missing CollisionShape2D in %s" % PICKUP_ONE_UP_SCENE)
-		root.queue_free()
-		quit(1)
-		return 0.0
-
+	var root: Node = pickup_scene[0]
+	var collision_shape: CollisionShape2D = pickup_scene[1]
 	var circle_shape := collision_shape.shape as CircleShape2D
 	if circle_shape == null:
 		var shape := collision_shape.shape
@@ -156,6 +177,24 @@ func _export_pickup_one_up_collision_radius() -> float:
 
 	_update_pickup_radius(radius)
 	return radius
+
+
+func _pickup_one_up_scene() -> Array:
+	var scene := load(PICKUP_ONE_UP_SCENE) as PackedScene
+	if scene == null:
+		push_error("Failed to load %s" % PICKUP_ONE_UP_SCENE)
+		quit(1)
+		return []
+
+	var root := scene.instantiate()
+	var collision_shape := root.get_node("CollisionShape2D") as CollisionShape2D
+	if collision_shape == null:
+		push_error("Missing CollisionShape2D in %s" % PICKUP_ONE_UP_SCENE)
+		root.queue_free()
+		quit(1)
+		return []
+
+	return [root, collision_shape]
 
 
 func _update_pickup_radius(radius: float) -> void:

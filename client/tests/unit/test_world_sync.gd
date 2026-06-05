@@ -106,31 +106,6 @@ func test_apply_state_creates_bullet_nodes() -> void:
 	)
 
 
-func test_server_hitbox_draw_entries_includes_pickup_entry() -> void:
-	var state := WorldStateFixture.state()
-	state[Packets.FIELD_PICKUPS] = {
-		"pickup_1": {
-			Packets.FIELD_ID: "pickup_1",
-			Packets.FIELD_TYPE: "1_up",
-			Packets.FIELD_X: 512.0,
-			Packets.FIELD_Y: 256.0,
-		},
-	}
-
-	_apply_state(state)
-
-	var entries: Array = world_sync.server_hitbox_draw_entries()
-	var pickup_entries: Array = []
-	for entry in entries:
-		if entry.get("kind", "") == "pickup":
-			pickup_entries.append(entry)
-
-	assert_eq(pickup_entries.size(), 1)
-	assert_eq(pickup_entries[0].get("id", ""), "pickup_1")
-	assert_eq(pickup_entries[0].get("pickup_type", ""), "1_up")
-	assert_eq(pickup_entries[0].get("visual_position", Vector2.ZERO), Vector2(512.0, 256.0))
-
-
 func test_apply_state_reuses_existing_entity_nodes() -> void:
 	_apply_fixture_state()
 	var local_node = _player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID]

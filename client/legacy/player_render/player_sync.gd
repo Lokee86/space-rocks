@@ -228,10 +228,6 @@ func get_remote_player_visual_positions(current_self_id: String) -> Dictionary:
 	return player_targets.get_remote_player_visual_positions_without(current_self_id)
 
 
-func server_hitbox_draw_entries(_current_self_id: String) -> Array:
-	return player_targets.build_server_hitbox_draw_entries(_current_self_id, player_lifecycle)
-
-
 func get_view_target_player_id() -> String:
 	return view_target_player_id
 

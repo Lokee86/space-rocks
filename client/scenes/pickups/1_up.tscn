@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://ps3qhn2qpegi" path="res://assets/Items.png" id="1_e8crx"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_q431s"]
-radius = 48.507732
+radius = 50.0
 
 [node name="1up" type="Node2D" unique_id=2092985768]
 

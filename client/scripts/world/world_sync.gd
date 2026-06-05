@@ -151,15 +151,3 @@ func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 
 func target_source():
 	return target_position_source
-
-
-func server_hitbox_draw_entries() -> Array:
-	var entries: Array = []
-	if player_render_api == null || asteroid_sync == null || pickup_sync == null || bullet_sync == null:
-		return entries
-
-	entries.append_array(player_render_api.server_hitbox_draw_entries(current_self_id))
-	entries.append_array(asteroid_sync.server_hitbox_draw_entries())
-	entries.append_array(pickup_sync.server_hitbox_draw_entries())
-	entries.append_array(bullet_sync.server_hitbox_draw_entries())
-	return entries
