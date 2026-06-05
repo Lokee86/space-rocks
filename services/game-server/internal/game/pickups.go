@@ -24,6 +24,7 @@ func (game *Game) SpawnPickup(pickupType pickups.PickupType, position physics.Ve
 		Type:   definition.Type,
 		X:      position.X,
 		Y:      position.Y,
+		Health: definition.Health,
 	}
 	game.entities.Pickups[pickupID] = pickup
 
@@ -50,10 +51,11 @@ func (game *Game) pickupStatesLocked() map[string]runtime.PickupState {
 	pickupStates := make(map[string]runtime.PickupState, len(game.entities.Pickups))
 	for id, pickup := range game.entities.Pickups {
 		pickupStates[id] = runtime.PickupState{
-			ID:   pickup.ID,
-			Type: string(pickup.Type),
-			X:    pickup.X,
-			Y:    pickup.Y,
+			ID:     pickup.ID,
+			Type:   string(pickup.Type),
+			X:      pickup.X,
+			Y:      pickup.Y,
+			Health: pickup.Health,
 		}
 	}
 

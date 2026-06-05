@@ -7,6 +7,7 @@ type Pickup struct {
 	Type   PickupType
 	X      float64
 	Y      float64
+	Health int
 }
 
 func (pickup *Pickup) Position() physics.Vector2 {

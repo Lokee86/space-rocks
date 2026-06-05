@@ -53,6 +53,7 @@ const CollisionDespawnDelay = 0.05
 
 // data-sync:start constants.server.pickups
 const PickupOneUpType = "1_up"
+const PickupOneUpHealth = 1
 const PickupOneUpScenePath = "res://scenes/pickups/1_up.tscn"
 // data-sync:end constants.server.pickups
 
