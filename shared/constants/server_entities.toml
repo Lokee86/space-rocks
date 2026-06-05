@@ -29,3 +29,9 @@ bullet_lifetime = 1.75
 bullet_cooldown = 0.22
 bullet_spawn_offset = 42.0
 collision_despawn_delay = 0.05
+
+[constants.server.pickups]
+pickup_one_up_type = "1_up"
+pickup_one_up_scene_path = "res://scenes/pickups/1_up.tscn"
+pickup_collision_shape_circle = "circle"
+pickup_one_up_collision_radius = 98.1274719238281

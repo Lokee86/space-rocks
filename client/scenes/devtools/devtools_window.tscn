@@ -12,7 +12,6 @@ oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
 size = Vector2i(630, 805)
-visible = false
 always_on_top = true
 script = ExtResource("1_devtools_window")
 
@@ -41,16 +40,43 @@ layout_mode = 2
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/CenterContainer" unique_id=2028100136]
 layout_mode = 2
 
-[node name="CenterContainer19" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=2097532991]
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=82002913]
+layout_mode = 2
+
+[node name="CenterContainer19" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=2097532991]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ShowServerHitboxesCheckBox" type="CheckBox" parent="MarginContainer/CenterContainer/VBoxContainer/CenterContainer19" unique_id=1072808839]
+[node name="ShowServerHitboxesCheckBox" type="CheckBox" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3/CenterContainer19" unique_id=1072808839]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Show Server Hitboxes"
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=952102394]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpawnPickupButton" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3/CenterContainer" unique_id=1619328286]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Invincible"
+
+[node name="CenterContainer2" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=1365037110]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PickupSelect" type="OptionButton" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3/CenterContainer2" unique_id=2055172870]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+fit_to_longest_item = false
+allow_reselect = true
+item_count = 1
+popup/item_0/id = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=84552176]
 layout_mode = 2

@@ -5,6 +5,10 @@ const OUTPUT_PATH := "res://../shared/collisions/collision_shapes.json"
 const BULLET_SCENE := "res://scenes/bullet.tscn"
 const PLAYER_SCENE := "res://scenes/player.tscn"
 const ASTEROID_SCENE := "res://scenes/asteroid.tscn"
+const PICKUP_ONE_UP_SCENE := "res://scenes/pickups/1_up.tscn"
+const PICKUP_TOML_PATH := "res://../shared/constants/server_entities.toml"
+const PICKUP_SECTION := "[constants.server.pickups]"
+const PICKUP_RADIUS_KEY := "pickup_one_up_collision_radius"
 
 
 func _init() -> void:
@@ -13,6 +17,8 @@ func _init() -> void:
 		"ship": _export_player(),
 		"asteroids": _export_asteroids(),
 	}
+
+	_export_pickup_one_up_collision_radius()
 
 	var output := FileAccess.open(OUTPUT_PATH, FileAccess.WRITE)
 	if output == null:
@@ -56,7 +62,8 @@ func _export_bullet() -> Dictionary:
 		exported["type"] = "rectangle"
 		exported["size"] = [shape.size.x, shape.size.y]
 	else:
-		push_error("Unsupported bullet shape: %s" % shape.get_class())
+		var shape_class := "<null>" if shape == null else shape.get_class()
+		push_error("Unsupported bullet shape: %s" % shape_class)
 		root.queue_free()
 		quit(1)
 		return {}
@@ -118,3 +125,80 @@ func _export_points(points: PackedVector2Array) -> Array:
 		exported.append([point.x, point.y])
 
 	return exported
+
+
+func _export_pickup_one_up_collision_radius() -> float:
+	var scene := load(PICKUP_ONE_UP_SCENE) as PackedScene
+	if scene == null:
+		push_error("Failed to load %s" % PICKUP_ONE_UP_SCENE)
+		quit(1)
+		return 0.0
+
+	var root := scene.instantiate()
+	var collision_shape := root.get_node("CollisionShape2D") as CollisionShape2D
+	if collision_shape == null:
+		push_error("Missing CollisionShape2D in %s" % PICKUP_ONE_UP_SCENE)
+		root.queue_free()
+		quit(1)
+		return 0.0
+
+	var circle_shape := collision_shape.shape as CircleShape2D
+	if circle_shape == null:
+		var shape := collision_shape.shape
+		var shape_class := "<null>" if shape == null else shape.get_class()
+		push_error("Unsupported pickup shape in %s: %s" % [PICKUP_ONE_UP_SCENE, shape_class])
+		root.queue_free()
+		quit(1)
+		return 0.0
+
+	var radius: float = circle_shape.radius
+	root.queue_free()
+
+	_update_pickup_radius(radius)
+	return radius
+
+
+func _update_pickup_radius(radius: float) -> void:
+	var file := FileAccess.open(PICKUP_TOML_PATH, FileAccess.READ)
+	if file == null:
+		push_error("Failed to read %s: %s" % [PICKUP_TOML_PATH, FileAccess.get_open_error()])
+		quit(1)
+		return
+
+	var text := file.get_as_text()
+	file.close()
+
+	if not text.contains(PICKUP_SECTION):
+		push_error("Missing TOML section %s in %s" % [PICKUP_SECTION, PICKUP_TOML_PATH])
+		quit(1)
+		return
+
+	var section_start := text.find(PICKUP_SECTION)
+	var next_section_start := text.find("\n[", section_start + PICKUP_SECTION.length())
+	if next_section_start == -1:
+		next_section_start = text.length()
+
+	var section_text := text.substr(section_start, next_section_start - section_start)
+	var prefix := PICKUP_RADIUS_KEY + " = "
+	var key_offset := section_text.find(prefix)
+	if key_offset == -1:
+		push_error("Missing TOML key %s in %s" % [PICKUP_RADIUS_KEY, PICKUP_TOML_PATH])
+		quit(1)
+		return
+
+	var start := section_start + key_offset
+	var line_end := text.find("\n", start)
+	if line_end == -1:
+		line_end = text.length()
+
+	var updated_text := text.substr(0, start) + prefix + str(radius) + text.substr(line_end)
+
+	var output := FileAccess.open(PICKUP_TOML_PATH, FileAccess.WRITE)
+	if output == null:
+		push_error("Failed to write %s: %s" % [PICKUP_TOML_PATH, FileAccess.get_open_error()])
+		quit(1)
+		return
+
+	output.store_string(updated_text)
+	output.close()
+	print("Updated %s to %s in %s" % [PICKUP_RADIUS_KEY, str(radius), PICKUP_TOML_PATH])

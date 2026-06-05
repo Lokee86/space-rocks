@@ -51,6 +51,13 @@ const BulletSpawnOffset = 42.0
 const CollisionDespawnDelay = 0.05
 // data-sync:end constants.server.bullets
 
+// data-sync:start constants.server.pickups
+const PickupOneUpType = "1_up"
+const PickupOneUpScenePath = "res://scenes/pickups/1_up.tscn"
+const PickupCollisionShapeCircle = "circle"
+const PickupOneUpCollisionRadius = 98.1274719238281
+// data-sync:end constants.server.pickups
+
 // data-sync:start constants.server.damage
 const PlayerMaxHealth = 1
 const AsteroidHealth = 1
