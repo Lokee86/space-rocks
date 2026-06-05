@@ -86,6 +86,12 @@ func (scenario *scenario) useCircleCollisionShapes() {
 			Type:   "circle",
 			Radius: 5,
 		},
+		Pickups: map[string]physics.ImportedCollisionShape{
+			"1_up": {
+				Type:   "circle",
+				Radius: 20,
+			},
+		},
 		Ship: physics.ImportedCollisionShape{
 			Type:   "circle",
 			Radius: 20,

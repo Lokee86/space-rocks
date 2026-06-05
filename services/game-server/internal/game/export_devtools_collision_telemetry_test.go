@@ -19,6 +19,13 @@ func TestDevtoolsCollisionBodiesUsesServerCollisionBodies(t *testing.T) {
 			Type: "circle",
 			Radius: 3,
 		},
+		Pickups: map[string]physics.ImportedCollisionShape{
+			"1_up": {
+				Name:   "1_up",
+				Type:   "circle",
+				Radius: 3,
+			},
+		},
 		Ship: physics.ImportedCollisionShape{
 			Name: "ship",
 			Type: "rectangle",
@@ -46,10 +53,10 @@ func TestDevtoolsCollisionBodiesUsesServerCollisionBodies(t *testing.T) {
 		Variant: 0,
 	}
 	game.entities.Pickups["pickup-1"] = &pickups.Pickup{
-		ID:     "pickup-1",
-		X:      -2,
-		Y:      5,
-		Radius: 3,
+		ID:   "pickup-1",
+		Type: pickups.TypeOneUp,
+		X:    -2,
+		Y:    5,
 	}
 
 	bodies := game.DevtoolsCollisionBodies()

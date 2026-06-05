@@ -16,14 +16,6 @@ func TestDefinitionForOneUp(t *testing.T) {
 	if definition.ScenePath != expectedScenePath {
 		t.Fatalf("expected scene path %q, got %q", expectedScenePath, definition.ScenePath)
 	}
-
-	if definition.Collision.Shape != CollisionShapeCircle {
-		t.Fatalf("expected collision shape %q, got %q", CollisionShapeCircle, definition.Collision.Shape)
-	}
-
-	if definition.Collision.Radius <= 0 {
-		t.Fatalf("expected collision radius to be greater than 0, got %v", definition.Collision.Radius)
-	}
 }
 
 func TestDefinitionForUnknownType(t *testing.T) {
