@@ -64,9 +64,5 @@ func get_view_target_player_id() -> String:
 	return legacy_player_sync.get_view_target_player_id()
 
 
-func server_hitbox_draw_entries(current_self_id: String) -> Array:
-	return legacy_player_sync.server_hitbox_draw_entries(current_self_id)
-
-
 func apply_with_anchor(self_id: String, anchor_player_id: String, server_players: Dictionary, anchor_visual_position: Vector2, anchor_server_position: Vector2) -> void:
 	legacy_player_sync.apply_with_anchor(self_id, anchor_player_id, server_players, anchor_visual_position, anchor_server_position)

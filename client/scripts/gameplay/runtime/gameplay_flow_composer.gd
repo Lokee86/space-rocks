@@ -130,7 +130,10 @@ func apply_gameplay_state(state: Dictionary, has_received_state: bool) -> Gamepl
 	if gameplay_state_apply_flow == null:
 		return GameplayStateApplyResult.new()
 
-	return gameplay_state_apply_flow.apply_state(state, has_received_state)
+	var result: GameplayStateApplyResult = gameplay_state_apply_flow.apply_state(state, has_received_state)
+	if server_hitbox_overlay_flow != null:
+		server_hitbox_overlay_flow.apply_gameplay_state(state)
+	return result
 
 
 func apply_devtools_gameplay_state(state: Dictionary) -> void:

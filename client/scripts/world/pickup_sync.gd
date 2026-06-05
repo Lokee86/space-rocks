@@ -129,32 +129,3 @@ func interpolate(weight: float) -> void:
 		var target_position = target_pickup_positions[pickup_id]
 		pickup_node.global_position = pickup_node.global_position.lerp(target_position, weight)
 		pickup_visual_positions[pickup_id] = pickup_node.global_position
-
-
-func server_hitbox_draw_entries() -> Array:
-	var entries = []
-
-	for pickup_id in pickup_nodes.keys():
-		if not pickup_nodes.has(pickup_id):
-			continue
-		if not pickup_visual_positions.has(pickup_id):
-			continue
-		if not pickup_types.has(pickup_id):
-			continue
-
-		var pickup_node = pickup_nodes[pickup_id]
-		if pickup_node == null:
-			continue
-		if not is_instance_valid(pickup_node):
-			continue
-
-		var entry = {}
-		entry["kind"] = "pickup"
-		entry["id"] = str(pickup_id)
-		entry["pickup_type"] = str(pickup_types[pickup_id])
-		entry["visual_position"] = pickup_visual_positions[pickup_id]
-		entry["rotation"] = 0.0
-		entry["scale"] = 1.0
-		entries.append(entry)
-
-	return entries

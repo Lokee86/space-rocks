@@ -109,7 +109,3 @@ func visual_position_for_server_position(server_authoritative_position: Vector2)
 func server_position_for_visual_position(client_visual_position: Vector2) -> Vector2:
 	return view_anchor_sync.server_position_for_visual_position(client_visual_position)
 
-
-func server_hitbox_draw_entries(current_self_id: String) -> Array:
-	return player_meaning.server_hitbox_draw_entries(current_self_id)
-

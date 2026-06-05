@@ -61,6 +61,17 @@
 		"radius": 3.0,
 		"type": "capsule"
 	},
+	"pickups": {
+		"1_up": {
+			"name": "CollisionShape2D",
+			"offset": [
+				0.0,
+				0.0
+			],
+			"radius": 50.0,
+			"type": "circle"
+		}
+	},
 	"ship": {
 		"name": "CollisionPolygon2D",
 		"points": [

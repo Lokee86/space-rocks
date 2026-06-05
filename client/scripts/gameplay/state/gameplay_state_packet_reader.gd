@@ -6,6 +6,7 @@ const FIELD_DEBUG_STATUS := "debug_status"
 const FIELD_DEBUG_STATUSES := "debug_statuses"
 const FIELD_SERVER_SENT_MSEC := "server_sent_msec"
 const FIELD_PLAYER_SESSIONS := "player_sessions"
+const FIELD_DEBUG_COLLISION_BODIES := "debug_collision_bodies"
 
 
 static func read(data: Dictionary) -> Dictionary:
@@ -36,6 +37,10 @@ static func read(data: Dictionary) -> Dictionary:
 	if server_pickups_value is Dictionary:
 		server_pickups = server_pickups_value
 
+	var debug_collision_bodies: Variant = data.get(FIELD_DEBUG_COLLISION_BODIES, [])
+	if !(debug_collision_bodies is Array):
+		debug_collision_bodies = []
+
 	return {
 		"self_id": data[Packets.FIELD_SELF_ID],
 		"server_players": data[Packets.FIELD_PLAYERS],
@@ -49,6 +54,7 @@ static func read(data: Dictionary) -> Dictionary:
 		"server_sent_msec": int(data.get(FIELD_SERVER_SENT_MSEC, -1)),
 		"debug_status": debug_status,
 		"debug_statuses": debug_statuses,
+		"debug_collision_bodies": debug_collision_bodies,
 		"has_lives": has_lives,
 		"lives": lives,
 	}

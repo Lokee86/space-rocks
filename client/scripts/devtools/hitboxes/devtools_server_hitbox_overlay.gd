@@ -1,7 +1,6 @@
 extends Node2D
 
 var hitbox_entries: Array = []
-var hitbox_template_catalog := DevtoolsHitboxTemplateCatalog.new()
 
 
 func _ready() -> void:
@@ -36,35 +35,15 @@ func _draw() -> void:
 		if !(entry is Dictionary):
 			continue
 
-		var kind := str(entry.get("kind", ""))
-		var template := PackedVector2Array()
-
-		if kind == "player":
-			template = hitbox_template_catalog.player_polygon()
-		elif kind == "asteroid":
-			template = hitbox_template_catalog.asteroid_polygon(int(entry.get("variant", 0)))
-		elif kind == "bullet":
-			template = hitbox_template_catalog.bullet_polygon()
-		elif kind == "pickup":
-			template = hitbox_template_catalog.pickup_polygon(str(entry.get("pickup_type", "")))
-		else:
+		var points_value = entry.get("points", PackedVector2Array())
+		if !(points_value is PackedVector2Array):
 			continue
 
-		if template.is_empty():
+		var points: PackedVector2Array = points_value
+		if points.is_empty():
 			continue
 
-		var entry_rotation := float(entry.get("rotation", 0.0))
-		var entry_scale := float(entry.get("scale", 1.0))
-		var visual_position: Vector2 = entry.get("visual_position", Vector2.ZERO)
-		var outline := PackedVector2Array()
-		outline.resize(template.size())
-
-		for index in range(template.size()):
-			var point := template[index]
-			var transformed_point := point.rotated(entry_rotation) * entry_scale + visual_position
-			outline[index] = transformed_point
-
-		draw_polyline(_closed_outline(outline), Color(0.95, 0.95, 0.95, 0.9), 2.0, true)
+		draw_polyline(_closed_outline(points), Color(0.95, 0.95, 0.95, 0.9), 2.0, true)
 
 
 func _closed_outline(points: PackedVector2Array) -> PackedVector2Array:
