@@ -1,8 +1,8 @@
 extends RefCounted
-class_name Effects
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
+const PICKUP_COLLECT_SCENE := preload("res://scenes/pickups/pickup_collect.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"
 
@@ -63,6 +63,34 @@ func spawn_bullet_blast(event_position: Vector2) -> void:
 	owner_node.get_tree().create_timer(sound_length + Constants.BULLET_BLAST_CLEANUP_PADDING).timeout.connect(
 		func() -> void:
 			var node := blast_ref.get_ref() as Node
+			if node != null and is_instance_valid(node):
+				node.queue_free()
+	)
+
+
+func spawn_pickup_collected(event_position: Vector2) -> void:
+	var effect_node := PICKUP_COLLECT_SCENE.instantiate()
+	effect_node.global_position = event_position
+	effect_node.z_index = Constants.PICKUP_Z_INDEX + 1
+	owner_node.add_child(effect_node)
+
+	var particles := effect_node.get_node_or_null("GPUParticles2D") as GPUParticles2D
+	var sound := effect_node.get_node_or_null("AudioStreamPlayer2D") as AudioStreamPlayer2D
+	if particles == null || sound == null:
+		effect_node.queue_free()
+		return
+
+	particles.restart()
+	particles.emitting = true
+	audio_flow.play_pickup_collected_sound(sound)
+
+	var cleanup_time := particles.lifetime
+	if sound.stream != null:
+		cleanup_time = max(cleanup_time, sound.stream.get_length())
+	var effect_ref: WeakRef = weakref(effect_node)
+	owner_node.get_tree().create_timer(cleanup_time + 0.1).timeout.connect(
+		func() -> void:
+			var node := effect_ref.get_ref() as Node
 			if node != null and is_instance_valid(node):
 				node.queue_free()
 	)

@@ -17,6 +17,18 @@ func play_bullet_blast_sound(sound: AudioStreamPlayer2D) -> void:
 	sound.play()
 
 
+func play_pickup_collected_sound(sound: AudioStreamPlayer2D) -> void:
+	if sound == null:
+		return
+	sound.play()
+
+
+func play_pickup_spawned_sound(sound: AudioStreamPlayer2D) -> void:
+	if sound == null:
+		return
+	sound.play()
+
+
 func play_laser_sound(sound: AudioStreamPlayer2D) -> void:
 	if sound == null:
 		return
