@@ -489,7 +489,7 @@ func test_target_state_for_player_target_returns_raw_player_dictionary() -> void
 	assert_eq(model.target_state(), expected_player_state)
 
 
-func test_local_player_state_for_state_packet_returns_raw_player_dictionary() -> void:
+func test_local_player_state_for_players_returns_raw_player_dictionary() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_player_state := {
 		"score": 42,
@@ -506,10 +506,10 @@ func test_local_player_state_for_state_packet_returns_raw_player_dictionary() ->
 		"debug_statuses": {},
 	})
 
-	assert_eq(model.local_player_state_for_source("state_packet"), expected_player_state)
+	assert_eq(model.local_player_state_for_source("players"), expected_player_state)
 
 
-func test_local_player_state_for_session_packet_returns_raw_player_session_dictionary() -> void:
+func test_local_player_state_for_player_world_states_returns_raw_player_session_dictionary() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_session_state := {
 		"id": "player-1",
@@ -530,11 +530,11 @@ func test_local_player_state_for_session_packet_returns_raw_player_session_dicti
 	})
 
 	assert_eq(model.local_player_state(), {})
-	assert_eq(model.local_player_state_for_source("state_packet"), {})
-	assert_eq(model.local_player_state_for_source("session_packet"), expected_session_state)
+	assert_eq(model.local_player_state_for_source("players"), {})
+	assert_eq(model.local_player_state_for_source("player_world_states"), expected_session_state)
 
 
-func test_target_state_for_session_packet_returns_raw_player_session_dictionary() -> void:
+func test_target_state_for_player_world_states_returns_raw_player_session_dictionary() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_session_state := {
 		"id": "player-2",
@@ -558,11 +558,11 @@ func test_target_state_for_session_packet_returns_raw_player_session_dictionary(
 	})
 
 	assert_eq(model.target_state(), {})
-	assert_eq(model.target_state_for_source("state_packet"), {})
-	assert_eq(model.target_state_for_source("session_packet"), expected_session_state)
+	assert_eq(model.target_state_for_source("players"), {})
+	assert_eq(model.target_state_for_source("player_world_states"), expected_session_state)
 
 
-func test_target_state_for_session_packet_returns_empty_dictionary_for_non_player_target() -> void:
+func test_target_state_for_player_world_states_returns_empty_dictionary_for_non_player_target() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	model.apply_gameplay_state({
 		"self_id": "player-1",
@@ -581,7 +581,7 @@ func test_target_state_for_session_packet_returns_empty_dictionary_for_non_playe
 		"debug_statuses": {},
 	})
 
-	assert_eq(model.target_state_for_source("session_packet"), {})
+	assert_eq(model.target_state_for_source("player_world_states"), {})
 
 
 func test_target_state_for_asteroid_target_returns_raw_asteroid_dictionary_when_server_asteroids_exists() -> void:
@@ -626,7 +626,7 @@ func test_target_state_with_missing_or_empty_target_returns_empty_dictionary() -
 	assert_eq(model.target_state(), {})
 
 
-func test_local_player_state_uses_state_packet_by_default_even_when_session_data_exists() -> void:
+func test_local_player_state_uses_players_by_default_even_when_session_data_exists() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_session_state := {
 		"id": "player-1",
@@ -650,11 +650,11 @@ func test_local_player_state_uses_state_packet_by_default_even_when_session_data
 	})
 
 	assert_eq(model.local_player_state(), {})
-	assert_eq(model.local_player_state_for_source("state_packet"), {})
-	assert_eq(model.local_player_state_for_source("session_packet"), expected_session_state)
+	assert_eq(model.local_player_state_for_source("players"), {})
+	assert_eq(model.local_player_state_for_source("player_world_states"), expected_session_state)
 
 
-func test_target_state_for_player_uses_state_packet_by_default_even_when_session_data_exists() -> void:
+func test_target_state_for_player_uses_players_by_default_even_when_session_data_exists() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_session_state := {
 		"id": "player-2",
@@ -678,11 +678,11 @@ func test_target_state_for_player_uses_state_packet_by_default_even_when_session
 	})
 
 	assert_eq(model.target_state(), {})
-	assert_eq(model.target_state_for_source("state_packet"), {})
-	assert_eq(model.target_state_for_source("session_packet"), expected_session_state)
+	assert_eq(model.target_state_for_source("players"), {})
+	assert_eq(model.target_state_for_source("player_world_states"), expected_session_state)
 
 
-func test_target_state_for_player_prefers_state_packet_over_session_packet() -> void:
+func test_target_state_for_player_prefers_players_over_player_world_states() -> void:
 	var model := DevtoolsPlayerTargetModel.new()
 	var expected_player_state := {
 		"score": 123,
@@ -711,8 +711,8 @@ func test_target_state_for_player_prefers_state_packet_over_session_packet() -> 
 	})
 
 	assert_eq(model.target_state(), expected_player_state)
-	assert_eq(model.target_state_for_source("state_packet"), expected_player_state)
-	assert_eq(model.target_state_for_source("session_packet"), session_state)
+	assert_eq(model.target_state_for_source("players"), expected_player_state)
+	assert_eq(model.target_state_for_source("player_world_states"), session_state)
 
 
 func _model_with_two_active_players() -> RefCounted:

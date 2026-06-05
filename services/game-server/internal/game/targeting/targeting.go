@@ -44,11 +44,11 @@ func TargetKindPriority(kind TargetKind) int {
 	}
 }
 
-// ValidateRequestedTarget returns the accepted target_player_id and whether
+// ValidateRequestedTarget returns the accepted player ID and whether
 // the request is valid.
 func ValidateRequestedTarget(
 	requesterPlayerID string,
-	requestedTargetPlayerID string,
+	requestedPlayerID string,
 	playerExists func(playerID string) bool,
 ) (string, bool) {
 	if playerExists == nil {
@@ -59,13 +59,13 @@ func ValidateRequestedTarget(
 		return "", false
 	}
 
-	if requestedTargetPlayerID == "" {
+	if requestedPlayerID == "" {
 		return "", true
 	}
 
-	if !playerExists(requestedTargetPlayerID) {
+	if !playerExists(requestedPlayerID) {
 		return "", false
 	}
 
-	return requestedTargetPlayerID, true
+	return requestedPlayerID, true
 }
