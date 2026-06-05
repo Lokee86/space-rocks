@@ -295,11 +295,7 @@ func refresh_local_player_state(state: Dictionary) -> void:
 	var lines: Array[String] = []
 	for key in keys:
 		var value = state.get(key)
-		var rendered_value := ""
-		if value is Array or value is Dictionary:
-			rendered_value = JSON.stringify(value)
-		else:
-			rendered_value = str(value)
+		var rendered_value := _format_telemetry_value(value)
 		lines.append("%s: %s" % [str(key), rendered_value])
 	local_player_telemetry_text.text = "\n".join(lines)
 
@@ -323,11 +319,7 @@ func refresh_target_state(target_kind: String, target_id: String, state: Diction
 	keys.sort()
 	for key in keys:
 		var value = state.get(key)
-		var rendered_value := ""
-		if value is Array or value is Dictionary:
-			rendered_value = JSON.stringify(value)
-		else:
-			rendered_value = str(value)
+		var rendered_value := _format_telemetry_value(value)
 		lines.append("%s: %s" % [str(key), rendered_value])
 	target_telemetry_text.text = "\n".join(lines)
 
@@ -505,6 +497,14 @@ func _format_game_target_display(target_kind: String, target_id: String) -> Stri
 	if target_kind == "" or target_id == "":
 		return "\u2014"
 	return target_id
+
+
+func _format_telemetry_value(value) -> String:
+	if value is Array or value is Dictionary:
+		return JSON.stringify(value)
+	if value is float:
+		return "%.4f" % snappedf(value, 0.0001)
+	return str(value)
 
 
 func _selected_metadata_as_string(select: OptionButton) -> String:

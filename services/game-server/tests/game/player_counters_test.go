@@ -112,15 +112,15 @@ func TestStatePacketReportsCounterSeamUpdates(t *testing.T) {
 	game.SetPlayerLives(playerID, expectedLives)
 
 	packet := game.StatePacket(playerID)
-	player, ok := packet.Players[playerID]
+	session, ok := packet.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected player %q in state packet", playerID)
+		t.Fatalf("expected player session %q in state packet", playerID)
 	}
-	if player.Score != expectedScore {
-		t.Fatalf("expected player score %d, got %d", expectedScore, player.Score)
+	if session.Score != expectedScore {
+		t.Fatalf("expected player score %d, got %d", expectedScore, session.Score)
 	}
-	if player.Lives != expectedLives {
-		t.Fatalf("expected player lives %d, got %d", expectedLives, player.Lives)
+	if session.Lives != expectedLives {
+		t.Fatalf("expected player lives %d, got %d", expectedLives, session.Lives)
 	}
 	if packet.Lives != expectedLives {
 		t.Fatalf("expected packet lives %d, got %d", expectedLives, packet.Lives)
@@ -131,12 +131,12 @@ func assertPlayerPacketScore(t *testing.T, game *servergame.Game, playerID strin
 	t.Helper()
 
 	packet := game.StatePacket(playerID)
-	player, ok := packet.Players[playerID]
+	session, ok := packet.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected player %q in state packet", playerID)
+		t.Fatalf("expected player session %q in state packet", playerID)
 	}
-	if player.Score != expected {
-		t.Fatalf("expected player score %d, got %d", expected, player.Score)
+	if session.Score != expected {
+		t.Fatalf("expected player score %d, got %d", expected, session.Score)
 	}
 }
 
@@ -144,14 +144,14 @@ func assertPlayerPacketLives(t *testing.T, game *servergame.Game, playerID strin
 	t.Helper()
 
 	packet := game.StatePacket(playerID)
-	player, ok := packet.Players[playerID]
+	session, ok := packet.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected player %q in state packet", playerID)
+		t.Fatalf("expected player session %q in state packet", playerID)
 	}
 	if packet.Lives != expected {
 		t.Fatalf("expected packet lives %d, got %d", expected, packet.Lives)
 	}
-	if player.Lives != expected {
-		t.Fatalf("expected player lives %d, got %d", expected, player.Lives)
+	if session.Lives != expected {
+		t.Fatalf("expected player lives %d, got %d", expected, session.Lives)
 	}
 }

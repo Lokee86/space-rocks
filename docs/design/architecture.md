@@ -198,7 +198,7 @@ Continuous bullet stream runtime state is owned by `services/game-server/interna
 
 `Game.MatchDecision()` is the public game-facing API for richer match decisions. `Game.IsGameOver()` remains available for existing callers and delegates through the same locked decision path.
 
-`Game.statePacket()` projects `MatchDecision.Players` into `StatePacket.player_lifecycle`, a map from player ID to lifecycle status string. `StatePacket.players` (from `game.entities.Players`) is active ship/render state only. Durable player identity/status/position/readout state is carried in `StatePacket.player_world_states` (from `player.WorldState`). Pending-respawn players may be absent from `StatePacket.players` while still present in `StatePacket.player_world_states`; in that lifecycle state they are not targetable, damageable, or collidable.
+`Game.statePacket()` projects `MatchDecision.Players` into `StatePacket.player_lifecycle`, a map from player ID to lifecycle status string. `StatePacket.players` (from `game.entities.Players`) is active ship/render state only. Durable player/session read-model state is carried in `StatePacket.player_sessions` (from `PlayerSessionState`), including score and lives. Pending-respawn players may be absent from `StatePacket.players` while still present in `StatePacket.player_sessions`; in that lifecycle state they are not targetable, damageable, or collidable.
 
 ### Entity Damage Resolution
 
@@ -481,8 +481,8 @@ Targeting seam notes:
 - canonical target is gameplay/server state
 - canonical game target identity is separate from local player readout state
 - a client selection request is not authoritative until reflected in authoritative state updates
-- devtools canonical target readout prefers active players and falls back to `player_world_states` for player targets with no active ship
-- target/readout resolution must not depend only on active players; inactive player identity may remain available through `player_world_states`
+- devtools canonical target readout compares `State Packet` live ship state against `Session Packet` durable session state
+- target/readout resolution must not depend only on active players; inactive player identity remains available through `player_sessions`
 - inactive player identity/readout does not make the player active, clickable, collidable, damageable, or targetable
 - targeting state is not automatically combat behavior
 
@@ -498,7 +498,7 @@ Telemetry timing ownership notes:
 
 - `StatePacket.server_sent_msec` is stamped by `services/game-server/internal/networking/websocket_write.go` before encode/write. That file now only writes outbound/presentation state and no longer advances game-over lifecycle.
 - `services/game-server/internal/devtools/WrapStatePacket` preserves `server_sent_msec` when devtools status wrapping is applied.
-- devtools local player readout prefers active players and falls back to `player_world_states` when the local player has no active ship.
+- devtools local player readout compares `State Packet` live ship state against `Session Packet` durable session state.
 - server `player.WorldState` serializes with snake_case JSON field names for client packet compatibility.
 - `packet_staleness_ms` is local monotonic age since the last received gameplay state packet.
 - `packet_age_ms` is derived in client monotonic clock space using server clock offset estimated from telemetry pong, not raw client wall-clock minus server wall-clock.

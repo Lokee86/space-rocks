@@ -60,6 +60,18 @@ func (scenario *scenario) playerState(viewerID string, playerID string) runtime.
 	return player
 }
 
+func (scenario *scenario) playerSessionState(requestingPlayerID string, targetPlayerID string) servergame.PlayerSessionState {
+	scenario.t.Helper()
+
+	packet := scenario.state(requestingPlayerID)
+	session, ok := packet.PlayerSessions[targetPlayerID]
+	if !ok {
+		scenario.t.Fatalf("expected state packet for %q to include player session %q", requestingPlayerID, targetPlayerID)
+	}
+
+	return session
+}
+
 func (scenario *scenario) events(playerID string) []servergame.EventState {
 	scenario.t.Helper()
 

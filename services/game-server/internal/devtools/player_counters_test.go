@@ -371,12 +371,12 @@ func assertPlayerPacketScore(t *testing.T, target *game.Game, playerID string, e
 	t.Helper()
 
 	packet := target.StatePacket(playerID)
-	player, ok := packet.Players[playerID]
+	session, ok := packet.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected player %q in state packet", playerID)
+		t.Fatalf("expected player session %q in state packet", playerID)
 	}
-	if player.Score != expected {
-		t.Fatalf("expected player score %d, got %d", expected, player.Score)
+	if session.Score != expected {
+		t.Fatalf("expected player score %d, got %d", expected, session.Score)
 	}
 }
 
@@ -384,14 +384,14 @@ func assertPlayerPacketLives(t *testing.T, target *game.Game, playerID string, e
 	t.Helper()
 
 	packet := target.StatePacket(playerID)
-	player, ok := packet.Players[playerID]
+	session, ok := packet.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected player %q in state packet", playerID)
+		t.Fatalf("expected player session %q in state packet", playerID)
 	}
 	if packet.Lives != expected {
 		t.Fatalf("expected packet lives %d, got %d", expected, packet.Lives)
 	}
-	if player.Lives != expected {
-		t.Fatalf("expected player lives %d, got %d", expected, player.Lives)
+	if session.Lives != expected {
+		t.Fatalf("expected player lives %d, got %d", expected, session.Lives)
 	}
 }
