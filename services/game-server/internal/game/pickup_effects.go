@@ -1,26 +1,28 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
+	pickuprules "github.com/Lokee86/space-rocks/server/internal/game/pickups"
 	"github.com/Lokee86/space-rocks/server/internal/game/events"
 )
 
-func (game *Game) applyPickupEffect(playerID string, pickup *pickups.Pickup) bool {
-	if pickup == nil {
+func (game *Game) applyPickupEffectIntentLocked(intent pickuprules.EffectIntent) bool {
+	if intent.EffectType == "" {
 		return false
 	}
 
-	switch pickup.Type {
-	case pickups.TypeOneUp:
-		change := game.addPlayerLivesLocked(playerID, 1)
+	switch intent.EffectType {
+	case pickuprules.EffectTypeAddLives:
+		change := game.addPlayerLivesLocked(intent.PlayerID, intent.Amount)
 		if !change.Found {
 			return false
 		}
 		game.recordDomainEvent(events.Event{
-			Type:       events.EventPickupCollected,
-			PlayerID:   playerID,
-			PickupID:   pickup.ID,
-			PickupType: string(pickup.Type),
+			Type:       events.EventPickupEffectApplied,
+			PlayerID:   intent.PlayerID,
+			PickupID:   intent.PickupID,
+			PickupType: intent.PickupType,
+			EffectType: intent.EffectType,
+			Amount:     intent.Amount,
 			LivesAfter: change.After,
 		})
 		return true

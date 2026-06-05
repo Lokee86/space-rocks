@@ -3,9 +3,10 @@ package events
 type Type string
 
 const (
-	EventBulletBlast Type = "bullet_blast"
-	EventShipDeath   Type = "ship_death"
+	EventBulletBlast     Type = "bullet_blast"
+	EventShipDeath       Type = "ship_death"
 	EventPickupCollected Type = "pickup_collected"
+	EventPickupEffectApplied Type = "pickup_effect_applied"
 )
 
 type Event struct {
@@ -13,6 +14,8 @@ type Event struct {
 	PlayerID     string
 	PickupID     string
 	PickupType   string
+	EffectType   string
+	Amount       int
 	Lives        int
 	LivesAfter   int
 	RespawnDelay float64

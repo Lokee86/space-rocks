@@ -113,6 +113,8 @@ type EventState struct {
 	PickupID     string  `json:"pickup_id"`
 	PickupType   string  `json:"pickup_type"`
 	LivesAfter   int     `json:"lives_after"`
+	EffectType   string  `json:"effect_type"`
+	Amount       int     `json:"amount"`
 }
 
 type PlayerPauseState struct {

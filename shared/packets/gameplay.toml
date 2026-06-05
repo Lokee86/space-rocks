@@ -361,6 +361,16 @@ go_name = "LivesAfter"
 json = "lives_after"
 type = "int"
 
+[[structs.fields]]
+name = "effect_type"
+json = "effect_type"
+type = "string"
+
+[[structs.fields]]
+name = "amount"
+json = "amount"
+type = "int"
+
 [[structs]]
 id = "PlayerPauseState"
 

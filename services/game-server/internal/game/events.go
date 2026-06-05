@@ -25,11 +25,22 @@ func eventStateForDomainEvent(event events.Event) EventState {
 		}
 	case events.EventPickupCollected:
 		return EventState{
-			Type:        "pickup_collected",
-			PlayerID:    event.PlayerID,
-			PickupID:    event.PickupID,
-			PickupType:  event.PickupType,
-			LivesAfter:  event.LivesAfter,
+			Type:       "pickup_collected",
+			PlayerID:   event.PlayerID,
+			PickupID:   event.PickupID,
+			PickupType: event.PickupType,
+			X:          event.X,
+			Y:          event.Y,
+		}
+	case events.EventPickupEffectApplied:
+		return EventState{
+			Type:       "pickup_effect_applied",
+			PlayerID:   event.PlayerID,
+			PickupID:   event.PickupID,
+			PickupType: event.PickupType,
+			EffectType: event.EffectType,
+			Amount:     event.Amount,
+			LivesAfter: event.LivesAfter,
 		}
 	default:
 		return EventState{}

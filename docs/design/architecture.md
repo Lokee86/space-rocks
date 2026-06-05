@@ -226,6 +226,19 @@ Future gameplay and devtools adapters should use the same counter mutation seam 
 
 Gameplay systems such as combat still own gameplay decisions: collision outcomes, scoring, lives, death, respawn, and spawning rules remain in their existing files. Current producers record `events.Event` values. Root `services/game-server/internal/game/events.go` remains the package-local presentation adapter that translates domain events to the generated packet-facing `EventState` output where needed.
 
+Pickup ownership is split deliberately:
+
+- `services/game-server/internal/game/entities/pickups` owns pickup entity/type/definition/collision/health behavior
+- `services/game-server/internal/game/pickups` owns pickup collection rules and effect intents
+
+Pickup collection is intentionally two-stage:
+
+- `pickup_collected` means the pickup entity was consumed/removed
+- `pickup_effect_applied` means the gameplay mutation was applied
+
+This refactor does not enable bullet/pickup collisions.
+This refactor does not change normal spawning.
+
 The packet queue is intentionally named `pendingPresentationEvents` because it stores generated packet `EventState` values for client effects. It is not a domain event queue.
 
 ### Toroidal World Wrap

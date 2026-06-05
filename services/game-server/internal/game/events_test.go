@@ -48,6 +48,67 @@ func TestEventStateForDomainEventConvertsShipDeath(t *testing.T) {
 	}
 }
 
+func TestEventStateForDomainEventConvertsPickupCollected(t *testing.T) {
+	event := eventStateForDomainEvent(events.Event{
+		Type:       events.EventPickupCollected,
+		PlayerID:   "player-1",
+		PickupID:   "pickup-1",
+		PickupType: "1_up",
+		X:          21.5,
+		Y:          43.25,
+	})
+
+	if event.Type != "pickup_collected" {
+		t.Fatalf("expected event type %q, got %q", "pickup_collected", event.Type)
+	}
+	if event.PlayerID != "player-1" {
+		t.Fatalf("expected player ID %q, got %q", "player-1", event.PlayerID)
+	}
+	if event.PickupID != "pickup-1" {
+		t.Fatalf("expected pickup ID %q, got %q", "pickup-1", event.PickupID)
+	}
+	if event.PickupType != "1_up" {
+		t.Fatalf("expected pickup type %q, got %q", "1_up", event.PickupType)
+	}
+	if event.X != 21.5 || event.Y != 43.25 {
+		t.Fatalf("expected pickup collected coordinates (21.5, 43.25), got (%v, %v)", event.X, event.Y)
+	}
+}
+
+func TestEventStateForDomainEventConvertsPickupEffectApplied(t *testing.T) {
+	event := eventStateForDomainEvent(events.Event{
+		Type:       events.EventPickupEffectApplied,
+		PlayerID:   "player-1",
+		PickupID:   "pickup-1",
+		PickupType: "1_up",
+		EffectType: "add_lives",
+		Amount:     1,
+		LivesAfter: 6,
+	})
+
+	if event.Type != "pickup_effect_applied" {
+		t.Fatalf("expected event type %q, got %q", "pickup_effect_applied", event.Type)
+	}
+	if event.PlayerID != "player-1" {
+		t.Fatalf("expected player ID %q, got %q", "player-1", event.PlayerID)
+	}
+	if event.PickupID != "pickup-1" {
+		t.Fatalf("expected pickup ID %q, got %q", "pickup-1", event.PickupID)
+	}
+	if event.PickupType != "1_up" {
+		t.Fatalf("expected pickup type %q, got %q", "1_up", event.PickupType)
+	}
+	if event.EffectType != "add_lives" {
+		t.Fatalf("expected effect type %q, got %q", "add_lives", event.EffectType)
+	}
+	if event.Amount != 1 {
+		t.Fatalf("expected amount 1, got %d", event.Amount)
+	}
+	if event.LivesAfter != 6 {
+		t.Fatalf("expected lives after 6, got %d", event.LivesAfter)
+	}
+}
+
 func TestRecordDomainEventQueuesBulletBlastPacketEvent(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()

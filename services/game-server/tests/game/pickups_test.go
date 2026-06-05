@@ -258,7 +258,7 @@ func TestOneUpPickupStatePacketReportsNewLives(t *testing.T) {
 	}
 }
 
-func TestOneUpPickupCollectionEmitsPickupCollectedEvent(t *testing.T) {
+func TestOneUpPickupCollectionEmitsPickupCollectedAndEffectAppliedEvents(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 	player := scenario.playerState(playerID, playerID)
@@ -276,23 +276,46 @@ func TestOneUpPickupCollectionEmitsPickupCollectedEvent(t *testing.T) {
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	events := scenario.state(playerID).Events
-	if len(events) != 1 {
-		t.Fatalf("expected one pickup collection event, got %d", len(events))
+	if len(events) != 2 {
+		t.Fatalf("expected two pickup events, got %d", len(events))
 	}
-	event := events[0]
-	if event.Type != "pickup_collected" {
-		t.Fatalf("expected event type %q, got %q", "pickup_collected", event.Type)
+	collectedEvent := events[0]
+	if collectedEvent.Type != "pickup_collected" {
+		t.Fatalf("expected first event type %q, got %q", "pickup_collected", collectedEvent.Type)
 	}
-	if event.PlayerID != playerID {
-		t.Fatalf("expected event player id %q, got %q", playerID, event.PlayerID)
+	if collectedEvent.PlayerID != playerID {
+		t.Fatalf("expected pickup_collected player id %q, got %q", playerID, collectedEvent.PlayerID)
 	}
-	if event.PickupID == "" {
-		t.Fatal("expected pickup collection event to include pickup id")
+	if collectedEvent.PickupID == "" {
+		t.Fatal("expected pickup_collected event to include pickup id")
 	}
-	if event.PickupType != string(pickups.TypeOneUp) {
-		t.Fatalf("expected pickup type %q, got %q", pickups.TypeOneUp, event.PickupType)
+	if collectedEvent.PickupType != string(pickups.TypeOneUp) {
+		t.Fatalf("expected pickup_collected pickup type %q, got %q", pickups.TypeOneUp, collectedEvent.PickupType)
 	}
-	if event.LivesAfter != 6 {
-		t.Fatalf("expected lives after 6, got %d", event.LivesAfter)
+	if collectedEvent.X != player.X || collectedEvent.Y != player.Y {
+		t.Fatalf("expected pickup_collected position (%v, %v), got (%v, %v)", player.X, player.Y, collectedEvent.X, collectedEvent.Y)
+	}
+
+	effectEvent := events[1]
+	if effectEvent.Type != "pickup_effect_applied" {
+		t.Fatalf("expected second event type %q, got %q", "pickup_effect_applied", effectEvent.Type)
+	}
+	if effectEvent.PlayerID != playerID {
+		t.Fatalf("expected pickup_effect_applied player id %q, got %q", playerID, effectEvent.PlayerID)
+	}
+	if effectEvent.PickupID == "" {
+		t.Fatal("expected pickup_effect_applied event to include pickup id")
+	}
+	if effectEvent.PickupType != string(pickups.TypeOneUp) {
+		t.Fatalf("expected pickup_effect_applied pickup type %q, got %q", pickups.TypeOneUp, effectEvent.PickupType)
+	}
+	if effectEvent.EffectType != "add_lives" {
+		t.Fatalf("expected effect type %q, got %q", "add_lives", effectEvent.EffectType)
+	}
+	if effectEvent.Amount != 1 {
+		t.Fatalf("expected effect amount 1, got %d", effectEvent.Amount)
+	}
+	if effectEvent.LivesAfter != 6 {
+		t.Fatalf("expected lives after 6, got %d", effectEvent.LivesAfter)
 	}
 }
