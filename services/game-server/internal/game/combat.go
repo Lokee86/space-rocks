@@ -123,6 +123,7 @@ func (game *Game) applyProjectileAsteroidHitConsequences(
 
 	for _, asteroid := range hitAsteroids {
 		game.spawnAsteroidFragments(asteroid)
+		game.maybeDropPickupFromAsteroidLocked(asteroid)
 	}
 }
 

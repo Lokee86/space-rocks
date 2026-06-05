@@ -23,6 +23,10 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Room membership/owner state is behind the room membership owner seam.
 - `websocket_write.go` only writes outbound/presentation state now; it does not advance game-over lifecycle.
 - Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`.
+- Pickup drops are generated from `shared/drop_tables/basicasteroids.toml`.
+- Drop-table logic lives in `services/game-server/internal/game/drops`.
+- Asteroid destruction currently uses the `basicasteroids` table.
+- Drops are server-authoritative and spawn pickups through the existing pickup seam.
 
 ## Current Direction Notes
 

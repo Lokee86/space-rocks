@@ -112,6 +112,9 @@ type EventState struct {
 	Y            float64 `json:"y"`
 	PickupID     string  `json:"pickup_id"`
 	PickupType   string  `json:"pickup_type"`
+	SourceType   string  `json:"source_type"`
+	SourceID     string  `json:"source_id"`
+	TableID      string  `json:"table_id"`
 	LivesAfter   int     `json:"lives_after"`
 	EffectType   string  `json:"effect_type"`
 	Amount       int     `json:"amount"`

@@ -12,6 +12,10 @@ func (game *Game) SpawnPickup(pickupType pickups.PickupType, position physics.Ve
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	return game.spawnPickupLocked(pickupType, position)
+}
+
+func (game *Game) spawnPickupLocked(pickupType pickups.PickupType, position physics.Vector2) (*pickups.Pickup, bool, error) {
 	definition, ok := pickups.DefinitionFor(pickupType)
 	if !ok {
 		return nil, false, fmt.Errorf("unknown pickup type %q", pickupType)

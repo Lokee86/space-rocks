@@ -15,6 +15,14 @@ def test_push_requires_exactly_one_operation() -> None:
     assert args.languages == ("go",)
 
 
+def test_push_accepts_drop_tables_domain() -> None:
+    args = parse_args(["-push", "-drop-tables", "-go"])
+
+    assert args.operation == "push"
+    assert args.domains == ("drop_tables",)
+    assert args.languages == ("go",)
+
+
 def test_multiple_operations_are_invalid() -> None:
     with pytest.raises(SystemExit) as exc:
         parse_args(["-push", "-pull", "-constants", "-go"])
@@ -41,6 +49,20 @@ def test_sync_operations_require_a_domain(operation: str) -> None:
 def test_sync_operations_require_a_language(operation: str) -> None:
     with pytest.raises(SystemExit) as exc:
         parse_args([operation, "-constants"])
+
+    assert exc.value.code == 2
+
+
+def test_drop_tables_requires_go() -> None:
+    with pytest.raises(SystemExit) as exc:
+        parse_args(["-push", "-drop-tables"])
+
+    assert exc.value.code == 2
+
+
+def test_drop_tables_rejects_gds_language() -> None:
+    with pytest.raises(SystemExit) as exc:
+        parse_args(["-push", "-drop-tables", "-gds"])
 
     assert exc.value.code == 2
 

@@ -3,6 +3,7 @@ package game
 import (
 	"sync"
 
+	"github.com/Lokee86/space-rocks/server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
@@ -19,6 +20,7 @@ type Game struct {
 	nextPickupID              int
 	spawner                   *spawning.Spawner
 	scoringPolicy             scoring.Policy
+	dropTables                drops.Tables
 	asteroidSpawnElapsed      float64
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
@@ -43,6 +45,7 @@ func New() *Game {
 		pendingPresentationEvents: make(map[string][]EventState),
 		spawner:                   spawning.New(),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
+		dropTables:                drops.GeneratedTables,
 		entities:                  runtime.NewEntityStore(),
 	}
 }

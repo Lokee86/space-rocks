@@ -41,7 +41,6 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert any(name in game_output.structs for name in ("RoomSnapshot", "CreateRoomRequest"))
     assert game_output.imports == {
         "runtime": "github.com/Lokee86/space-rocks/server/internal/game/runtime",
-        "player": "github.com/Lokee86/space-rocks/server/internal/game/player",
     }
 
     gds_output = schema.output_for_path("client/scripts/generated/networking/packets/packets.gd")
