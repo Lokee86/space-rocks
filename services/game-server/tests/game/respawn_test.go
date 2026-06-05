@@ -49,8 +49,9 @@ func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
 
 	respawned := scenario.playerState(playerID, playerID)
-	if respawned.Lives != constants.PlayerStartingLives-1 {
-		t.Fatalf("expected respawned player to keep %d lives, got %d", constants.PlayerStartingLives-1, respawned.Lives)
+	respawnedSession := scenario.playerSessionState(playerID, playerID)
+	if respawnedSession.Lives != constants.PlayerStartingLives-1 {
+		t.Fatalf("expected respawned player to keep %d lives, got %d", constants.PlayerStartingLives-1, respawnedSession.Lives)
 	}
 	if respawned.X == spawnPosition.X && respawned.Y == spawnPosition.Y {
 		t.Fatal("expected respawn to avoid asteroid on original spawn point")
@@ -75,10 +76,10 @@ func TestAddedLivesPersistThroughDeathAndRespawn(t *testing.T) {
 	scenario.advanceRespawnTimer(playerID, constants.PlayerRespawnDelay)
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
 
-	respawned := scenario.playerState(playerID, playerID)
+	respawnedSession := scenario.playerSessionState(playerID, playerID)
 	expectedLives := constants.PlayerStartingLives + 1
-	if respawned.Lives != expectedLives {
-		t.Fatalf("expected respawned player to keep %d lives, got %d", expectedLives, respawned.Lives)
+	if respawnedSession.Lives != expectedLives {
+		t.Fatalf("expected respawned player to keep %d lives, got %d", expectedLives, respawnedSession.Lives)
 	}
 	if packet := scenario.state(playerID); packet.Lives != expectedLives {
 		t.Fatalf("expected state packet lives %d after respawn, got %d", expectedLives, packet.Lives)

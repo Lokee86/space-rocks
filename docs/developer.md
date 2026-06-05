@@ -119,7 +119,7 @@ Packet schema drift rule:
 - Before adding packet fields, run `data-sync -check -packets -go -gds`.
 - If check fails, repair schema drift before adding new fields.
 - After schema edits, run `data-sync -push -packets -go -gds` and `go test ./...` from `services/game-server`.
-- Example drift case: `StatePacket.PlayerWorldStates` existed in generated Go usage but was missing from `shared/packets/gameplay.toml`, so regeneration removed the field and broke handwritten Go code.
+- Example drift case: `StatePacket.player_sessions` and `PlayerSessionState` are packet-schema-owned read-model fields. Keep packet source-of-truth changes in `shared/packets/gameplay.toml` and regenerate rather than hand-editing generated packet output.
 
 Devtools packet boundary rules:
 

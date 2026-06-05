@@ -15,6 +15,7 @@ The devtools window currently exposes two raw telemetry readouts from gameplay s
 - `TargetTelemetry`: supports `State Packet` and `Session Packet`.
 
 These readouts are generic packet/state inspection surfaces. They should not hand-map score, lives, health, shields, or other fields into custom per-stat UI logic.
+`State Packet` is the live ship/avatar read model, while `Session Packet` is the durable player/session read model. Score and lives are read from `player_sessions`, not `players`.
 
 ## Display Behavior
 

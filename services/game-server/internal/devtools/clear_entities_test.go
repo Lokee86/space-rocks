@@ -75,12 +75,12 @@ func TestHandleDebugClearAsteroidsRemovesAllAsteroids(t *testing.T) {
 	if len(packet.Asteroids) != 0 {
 		t.Fatalf("expected 0 asteroids after clear, got %d", len(packet.Asteroids))
 	}
-	player, exists := packet.Players[playerID]
+	session, exists := packet.PlayerSessions[playerID]
 	if !exists {
-		t.Fatalf("expected player %q in state packet", playerID)
+		t.Fatalf("expected player session %q in state packet", playerID)
 	}
-	if player.Score != 25 {
-		t.Fatalf("expected player score to remain 25, got %d", player.Score)
+	if session.Score != 25 {
+		t.Fatalf("expected player score to remain 25, got %d", session.Score)
 	}
 }
 

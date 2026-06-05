@@ -24,6 +24,7 @@ func (asteroid *Asteroid) State() AsteroidState {
 		X:       asteroid.X,
 		Y:       asteroid.Y,
 		Size:    asteroid.Size,
+		Health:  asteroid.Health,
 		Scale:   float64(asteroid.Size) * constants.AsteroidSizeScale,
 		Variant: asteroid.Variant,
 	}

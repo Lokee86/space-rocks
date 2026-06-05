@@ -68,6 +68,9 @@ func TestAsteroidStateIncludesResolvedScale(t *testing.T) {
 	if asteroid.Size != asteroidSize {
 		t.Fatalf("expected asteroid size %d, got %d", asteroidSize, asteroid.Size)
 	}
+	if asteroid.Health != constants.AsteroidHealth {
+		t.Fatalf("expected asteroid health %d, got %d", constants.AsteroidHealth, asteroid.Health)
+	}
 
 	expectedScale := float64(asteroidSize) * constants.AsteroidSizeScale
 	if asteroid.Scale != expectedScale {

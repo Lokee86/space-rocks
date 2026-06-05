@@ -123,7 +123,7 @@ func TestBulletAsteroidCollisionNonfatalDamageDoesNotDestroyScoreOrFragment(t *t
 	if scenario.asteroidHealth("asteroid-1") >= initialHealth {
 		t.Fatalf("expected asteroid health to be reduced from %d, got %d", initialHealth, scenario.asteroidHealth("asteroid-1"))
 	}
-	if score := scenario.playerState(playerID, playerID).Score; score != 0 {
+	if score := scenario.playerSessionState(playerID, playerID).Score; score != 0 {
 		t.Fatalf("expected no score for non-destroying hit, got %d", score)
 	}
 	if len(scenario.state(playerID).Asteroids) != 1 {
@@ -142,7 +142,7 @@ func TestBulletAsteroidCollisionsScoreByAsteroidSize(t *testing.T) {
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
 	expectedScore := constants.BaseScore / 3
-	if score := scenario.playerState(playerID, playerID).Score; score != expectedScore {
+	if score := scenario.playerSessionState(playerID, playerID).Score; score != expectedScore {
 		t.Fatalf("expected player score %d, got %d", expectedScore, score)
 	}
 }
@@ -192,7 +192,7 @@ func TestPausedPlayerDoesNotScoreFromBulletAsteroidCollision(t *testing.T) {
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	if score := scenario.playerState(playerID, playerID).Score; score != 0 {
+	if score := scenario.playerSessionState(playerID, playerID).Score; score != 0 {
 		t.Fatalf("expected paused player score to remain 0, got %d", score)
 	}
 }
@@ -208,7 +208,7 @@ func TestInvulnerablePlayerDoesNotScoreFromBulletAsteroidCollision(t *testing.T)
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	if score := scenario.playerState(playerID, playerID).Score; score != 0 {
+	if score := scenario.playerSessionState(playerID, playerID).Score; score != 0 {
 		t.Fatalf("expected invulnerable player score to remain 0, got %d", score)
 	}
 }
@@ -305,7 +305,7 @@ func TestShipAsteroidCollisionNonfatalDamageReducesHealthWithoutDeath(t *testing
 	position := physics.Vector2{X: player.X, Y: player.Y}
 	scenario.setPlayerHealth(playerID, 3)
 	initialHealth := scenario.playerHealth(playerID)
-	initialLives := scenario.playerState(playerID, playerID).Lives
+	initialLives := scenario.playerSessionState(playerID, playerID).Lives
 	scenario.placeAsteroid("asteroid-1", position, 1)
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
@@ -322,7 +322,7 @@ func TestShipAsteroidCollisionNonfatalDamageReducesHealthWithoutDeath(t *testing
 	if events := scenario.pendingEventCount(playerID); events != 0 {
 		t.Fatalf("expected no queued ship_death event for nonfatal collision, got %d", events)
 	}
-	if lives := scenario.playerState(playerID, playerID).Lives; lives != initialLives {
+	if lives := scenario.playerSessionState(playerID, playerID).Lives; lives != initialLives {
 		t.Fatalf("expected lives to remain %d after nonfatal collision, got %d", initialLives, lives)
 	}
 }

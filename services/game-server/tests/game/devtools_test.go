@@ -718,8 +718,8 @@ func TestDebugFrozenWorldDoesNotRunBulletAsteroidCollisionsOrScore(t *testing.T)
 	if scenario.asteroidPendingDespawn("asteroid-1") {
 		t.Fatal("expected frozen world not to mark hit asteroid for despawn")
 	}
-	if player := scenario.playerState(playerID, playerID); player.Score != 0 {
-		t.Fatalf("expected no score while frozen, got %d", player.Score)
+	if session := scenario.playerSessionState(playerID, playerID); session.Score != 0 {
+		t.Fatalf("expected no score while frozen, got %d", session.Score)
 	}
 	if events := scenario.pendingEventCount(playerID); events != 0 {
 		t.Fatalf("expected no bullet impact events while frozen, got %d", events)
@@ -818,10 +818,10 @@ func TestDebugSetScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
 		Score:       44,
 	})
 
-	if score := scenario.playerState(playerA, playerA).Score; score != 44 {
+	if score := scenario.playerSessionState(playerA, playerA).Score; score != 44 {
 		t.Fatalf("expected player A score 44, got %d", score)
 	}
-	if score := scenario.playerState(playerB, playerB).Score; score != 44 {
+	if score := scenario.playerSessionState(playerA, playerB).Score; score != 44 {
 		t.Fatalf("expected player B score 44, got %d", score)
 	}
 }
@@ -835,9 +835,9 @@ func TestSetPlayerScoreExportsSessionOwnedScoreInStatePacket(t *testing.T) {
 		t.Fatalf("expected SetPlayerScore to find player %q", playerID)
 	}
 
-	player := scenario.playerState(playerID, playerID)
-	if player.Score != 37 {
-		t.Fatalf("expected state packet score 37, got %d", player.Score)
+	session := scenario.playerSessionState(playerID, playerID)
+	if session.Score != 37 {
+		t.Fatalf("expected state packet player session score 37, got %d", session.Score)
 	}
 }
 
@@ -851,12 +851,12 @@ func TestSetPlayerLivesExportsSessionOwnedLivesInStatePacket(t *testing.T) {
 	}
 
 	packet := scenario.state(playerID)
-	player, ok := packet.Players[playerID]
+	session, ok := packet.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected state packet for %q to include player %q", playerID, playerID)
+		t.Fatalf("expected state packet for %q to include player session %q", playerID, playerID)
 	}
-	if player.Lives != 6 {
-		t.Fatalf("expected state packet player lives 6, got %d", player.Lives)
+	if session.Lives != 6 {
+		t.Fatalf("expected state packet player lives 6, got %d", session.Lives)
 	}
 	if packet.Lives != 6 {
 		t.Fatalf("expected top-level packet lives 6, got %d", packet.Lives)
@@ -879,10 +879,10 @@ func TestDebugAddScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
 		Amount:      6,
 	})
 
-	if score := scenario.playerState(playerA, playerA).Score; score != 16 {
+	if score := scenario.playerSessionState(playerA, playerA).Score; score != 16 {
 		t.Fatalf("expected player A score 16, got %d", score)
 	}
-	if score := scenario.playerState(playerB, playerB).Score; score != 16 {
+	if score := scenario.playerSessionState(playerA, playerB).Score; score != 16 {
 		t.Fatalf("expected player B score 16, got %d", score)
 	}
 }
@@ -898,10 +898,10 @@ func TestDebugSetLivesAllPlayersAppliesToEveryPlayer(t *testing.T) {
 		Lives:       7,
 	})
 
-	if lives := scenario.state(playerA).Lives; lives != 7 {
+	if lives := scenario.playerSessionState(playerA, playerA).Lives; lives != 7 {
 		t.Fatalf("expected player A packet lives 7, got %d", lives)
 	}
-	if lives := scenario.state(playerB).Lives; lives != 7 {
+	if lives := scenario.playerSessionState(playerA, playerB).Lives; lives != 7 {
 		t.Fatalf("expected player B packet lives 7, got %d", lives)
 	}
 }
@@ -922,10 +922,10 @@ func TestDebugAddLivesAllPlayersAppliesToEveryPlayer(t *testing.T) {
 		Amount:      2,
 	})
 
-	if lives := scenario.state(playerA).Lives; lives != 5 {
+	if lives := scenario.playerSessionState(playerA, playerA).Lives; lives != 5 {
 		t.Fatalf("expected player A packet lives 5, got %d", lives)
 	}
-	if lives := scenario.state(playerB).Lives; lives != 5 {
+	if lives := scenario.playerSessionState(playerA, playerB).Lives; lives != 5 {
 		t.Fatalf("expected player B packet lives 5, got %d", lives)
 	}
 }
