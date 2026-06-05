@@ -26,6 +26,7 @@ sections = [
   "constants.server.scoring",
   "constants.server.asteroids",
   "constants.server.bullets",
+  "constants.server.pickups",
 ]
 owns = [
   "constants.server.runtime",
@@ -36,6 +37,7 @@ owns = [
   "constants.server.scoring",
   "constants.server.asteroids",
   "constants.server.bullets",
+  "constants.server.pickups",
 ]
 
 [constants.gds]
