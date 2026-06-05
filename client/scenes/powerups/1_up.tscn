@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://b1r72q744s4va"]
+
+[ext_resource type="Texture2D" uid="uid://ps3qhn2qpegi" path="res://assets/Items.png" id="1_e8crx"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_q431s"]
+radius = 98.12747
+
+[node name="Node2D" type="Node2D" unique_id=2092985768]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1517902554]
+texture = ExtResource("1_e8crx")
+region_enabled = true
+region_rect = Rect2(233.71396, 233.61734, 198.69485, 198.69482)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=686360488]
+shape = SubResource("CircleShape2D_q431s")
