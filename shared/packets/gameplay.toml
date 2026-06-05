@@ -303,6 +303,11 @@ name = "y"
 json = "y"
 type = "float"
 
+[[structs.fields]]
+name = "health"
+json = "health"
+type = "int"
+
 [[structs]]
 id = "EventState"
 

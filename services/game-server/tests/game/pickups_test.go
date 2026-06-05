@@ -53,6 +53,26 @@ func TestPickupSpawnUsesStableIDAndDefinitionType(t *testing.T) {
 	}
 }
 
+func TestPickupSpawnInitializesHealthFromDefinition(t *testing.T) {
+	scenario := newScenario(t)
+
+	definition, ok := pickups.DefinitionFor(pickups.TypeOneUp)
+	if !ok {
+		t.Fatal("expected pickup definition")
+	}
+
+	spawnedPickup, ok, err := scenario.game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 10, Y: 20})
+	if err != nil {
+		t.Fatalf("expected pickup spawn to succeed, got error %v", err)
+	}
+	if !ok {
+		t.Fatal("expected pickup spawn to return ok")
+	}
+	if spawnedPickup.Health != definition.Health {
+		t.Fatalf("expected pickup health %d, got %d", definition.Health, spawnedPickup.Health)
+	}
+}
+
 func TestPickupSpawnRejectsUnknownType(t *testing.T) {
 	scenario := newScenario(t)
 
@@ -124,6 +144,9 @@ func TestStatePacketIncludesSpawnedPickups(t *testing.T) {
 	}
 	if pickup.X != spawnedPickup.X || pickup.Y != spawnedPickup.Y {
 		t.Fatalf("expected pickup at (%v, %v), got (%v, %v)", spawnedPickup.X, spawnedPickup.Y, pickup.X, pickup.Y)
+	}
+	if pickup.Health != spawnedPickup.Health {
+		t.Fatalf("expected pickup health %d, got %d", spawnedPickup.Health, pickup.Health)
 	}
 }
 
