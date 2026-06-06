@@ -7,6 +7,8 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
 )
 
+const debugStatusWriteIntervalTicks = 8
+
 func writeServerMessages(
 	session *webSocketSession,
 	remoteAddr string,
@@ -14,6 +16,8 @@ func writeServerMessages(
 ) {
 	ticker := time.NewTicker(time.Second / time.Duration(constants.ServerTickRate))
 	defer ticker.Stop()
+
+	debugStatusTick := 0
 
 	for {
 		select {
@@ -43,6 +47,28 @@ func writeServerMessages(
 				return
 			}
 			outbound.LogSlowGameplayPresentationWrite(time.Since(writeStarted), session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			debugStatusTick++
+			if debugStatusTick >= debugStatusWriteIntervalTicks {
+				debugStatusTick = 0
+				writeDebugStatusMessage(session, remoteAddr)
+			}
 		}
+	}
+}
+
+func writeDebugStatusMessage(session *webSocketSession, remoteAddr string) {
+	if session.currentGamePlayerID == "" || !outbound.CanSendDebugStatus(session.room) {
+		return
+	}
+
+	response, ok := outbound.BuildDebugStatusResponse(session.room, session.currentGamePlayerID, session.currentRoomID, remoteAddr)
+	if !ok {
+		return
+	}
+
+	if !outbound.WriteServerMessage(session.conn, response, func(err error) {
+		logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+	}) {
+		return
 	}
 }

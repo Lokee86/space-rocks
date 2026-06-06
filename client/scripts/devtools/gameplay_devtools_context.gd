@@ -85,6 +85,11 @@ func apply_debug_status(status: Dictionary) -> void:
 		gameplay_state_context.apply_debug_status(status)
 
 
+func apply_debug_status_packet(packet: Dictionary) -> void:
+	if gameplay_state_context != null:
+		gameplay_state_context.apply_debug_status_packet(packet)
+
+
 func apply_gameplay_state(state: Dictionary) -> void:
 	if gameplay_state_context != null:
 		gameplay_state_context.apply_gameplay_state(state)

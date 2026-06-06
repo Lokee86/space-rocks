@@ -356,6 +356,24 @@ json = "pickup_type"
 type = "string"
 
 [[structs.fields]]
+name = "source_type"
+go_name = "SourceType"
+json = "source_type"
+type = "string"
+
+[[structs.fields]]
+name = "source_id"
+go_name = "SourceID"
+json = "source_id"
+type = "string"
+
+[[structs.fields]]
+name = "table_id"
+go_name = "TableID"
+json = "table_id"
+type = "string"
+
+[[structs.fields]]
 name = "lives_after"
 go_name = "LivesAfter"
 json = "lives_after"
