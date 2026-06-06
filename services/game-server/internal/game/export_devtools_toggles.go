@@ -103,21 +103,31 @@ func (game *Game) DevtoolsSetPlayerFrozen(playerID string, enabled bool) bool {
 }
 
 func (game *Game) DevtoolsKillPlayer(sourcePlayerID string, targetPlayerID string) bool {
-		targetPlayer, ok := game.entities.Players[targetPlayerID]
+	targetPlayer, ok := game.entities.Players[targetPlayerID]
 	if !ok || targetPlayer == nil {
 		return true
 	}
-	damageRequest := damage.DamageRequest{
-		TargetEntityID:   targetPlayerID,
-		TargetEntityType: damage.EntityTypePlayer,
-		SourceEntityID:   sourcePlayerID,
-		SourceEntityType: damage.EntityTypePlayer,
-		CurrentHealth:    targetPlayer.Health,
-		Amount:           targetPlayer.Health,
-		Type:             damage.DamageTypeDebug,
+	damageRequest := damage.DamageResolutionRequest{
+		Source: damage.DamageSource{
+			EntityID:   sourcePlayerID,
+			EntityType: damage.EntityTypePlayer,
+			Cause:      damage.DamageCauseDebug,
+		},
+		Target: damage.DamageTarget{
+			EntityID:   targetPlayerID,
+			EntityType: damage.EntityTypePlayer,
+			Health:     targetPlayer.Health,
+			Shield:     targetPlayer.Shields,
+		},
+		Spec: damage.DamageSpec{
+			Amount: targetPlayer.Health,
+			Kind:   damage.DamageKindKinetic,
+			Cause:  damage.DamageCauseDebug,
+		},
 	}
-	damageResult := damage.Resolve(damageRequest)
+	damageResult := damage.ResolveSingle(damageRequest)
 	targetPlayer.Health = damageResult.RemainingHealth
+	targetPlayer.Shields = damageResult.RemainingShield
 	if damageResult.Fatal {
 		game.applyFatalPlayerDamage(targetPlayerID, targetPlayer)
 	}

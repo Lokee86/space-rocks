@@ -14,6 +14,7 @@ Use this as the short orientation layer for new sessions. It should stay stable 
 - Room membership and owner state moved behind a room membership owner seam.
 - `websocket_write.go` is outbound/presentation only and no longer advances game-over lifecycle.
 - Targeting orchestration now sits above `MouseActionFlow`; `GameplayTargetingContext` owns selection orchestration and `WorldSync` only exposes `target_source()`.
+- The upgraded damage seam now lives in `services/game-server/internal/game/damage/`; `ResolveSingle` handles modifiers, shields, area damage, and DoT at a high level while `game` owns adapters and entity mutation.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
@@ -44,3 +45,4 @@ Use this as the short orientation layer for new sessions. It should stay stable 
 - Do not blur `target_kind` + `target_id` back into legacy `target_player_id` for new gameplay work.
 - Do not assume generated files are safe to hand-edit as a convenience.
 - Do not mix unrelated refactors into a docs-only or seam-specific prompt.
+- Do not add damage math to `combat.go`, and do not bypass the real damage seam from devtools.

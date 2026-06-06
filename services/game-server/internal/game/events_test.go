@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/game/events"
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 )
 
 func TestEventStateForDomainEventConvertsBulletBlast(t *testing.T) {
@@ -210,5 +211,13 @@ func TestStateDrainsDomainEventPacketEvents(t *testing.T) {
 	flushed := game.StatePacket(playerID)
 	if len(flushed.Events) != 0 {
 		t.Fatalf("expected later state packet to include 0 events, got %d", len(flushed.Events))
+	}
+}
+
+func TestDamagePresentationEventForResultIsNoOp(t *testing.T) {
+	event := damagePresentationEventForResult(damage.DamageResult{})
+
+	if event != nil {
+		t.Fatalf("expected no presentation event, got %v", event)
 	}
 }
