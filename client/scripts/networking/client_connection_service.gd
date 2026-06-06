@@ -11,6 +11,7 @@ signal room_snapshot_received(packet: Dictionary)
 signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
 signal gameplay_state_received(packet: Dictionary)
+signal debug_status_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
 signal telemetry_pong_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
@@ -133,6 +134,7 @@ func _connect_server_packet_dispatcher_signals() -> void:
 	_connect_dispatcher_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_dispatcher_signal("room_error_received", Callable(self, "_on_room_error_received"))
 	_connect_dispatcher_signal("gameplay_state_received", Callable(self, "_on_gameplay_state_received"))
+	_connect_dispatcher_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
 	_connect_dispatcher_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
 	_connect_dispatcher_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
 	_connect_dispatcher_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
@@ -179,6 +181,10 @@ func _on_room_error_received(packet: Dictionary) -> void:
 
 func _on_gameplay_state_received(packet: Dictionary) -> void:
 	gameplay_state_received.emit(packet)
+
+
+func _on_debug_status_received(packet: Dictionary) -> void:
+	debug_status_received.emit(packet)
 
 
 func _on_player_pause_state_received(packet: Dictionary) -> void:

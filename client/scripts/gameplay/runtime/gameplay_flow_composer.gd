@@ -142,6 +142,12 @@ func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	devtools_context.apply_gameplay_state(state)
 
 
+func apply_devtools_debug_status_packet(packet: Dictionary) -> void:
+	if devtools_context == null:
+		return
+	devtools_context.apply_debug_status_packet(packet)
+
+
 func handle_unhandled_input(event: InputEvent, has_received_state: bool) -> bool:
 	if input_context == null:
 		return false

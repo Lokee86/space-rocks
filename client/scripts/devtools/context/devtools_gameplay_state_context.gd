@@ -1,6 +1,8 @@
 extends RefCounted
 class_name DevtoolsGameplayStateContext
 
+const DebugStatusPacketReader = preload("res://scripts/devtools/debug_status_packet_reader.gd")
+
 var connection_service
 var devtools_window_controller
 var display_refresh_flow
@@ -19,6 +21,16 @@ func configure(connection_service_ref, devtools_window_controller_ref, display_r
 func apply_debug_status(status: Dictionary) -> void:
 	if devtools_window_controller != null:
 		devtools_window_controller.apply_debug_status(status)
+
+
+func apply_debug_status_packet(packet: Dictionary) -> void:
+	var state = DebugStatusPacketReader.read(packet)
+	if display_refresh_flow != null:
+		display_refresh_flow.apply_debug_status_packet(state)
+		return
+
+	if devtools_window_controller != null:
+		devtools_window_controller.apply_debug_status(state.get("debug_status", {}))
 
 
 func apply_gameplay_state(state: Dictionary) -> void:

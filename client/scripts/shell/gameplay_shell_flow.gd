@@ -82,6 +82,12 @@ func apply_player_pause_state_packet(packet: Dictionary) -> void:
 	gameplay_pause_state_flow.apply_packet(packet)
 
 
+func apply_devtools_debug_status_packet(packet: Dictionary) -> void:
+	if flow_composer == null:
+		return
+	flow_composer.apply_devtools_debug_status_packet(packet)
+
+
 func handle_unhandled_input(event: InputEvent) -> bool:
 	if flow_composer == null:
 		return false

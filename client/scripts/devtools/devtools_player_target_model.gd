@@ -13,6 +13,7 @@ var server_pickups: Dictionary = {}
 var server_enemies: Dictionary = {}
 var has_server_enemies := false
 var player_lifecycle: Dictionary = {}
+var debug_statuses: Dictionary = {}
 var game_target_kind := ""
 var game_target_id := ""
 var game_target_player_id := ""
@@ -28,6 +29,7 @@ func reset() -> void:
 	server_enemies = {}
 	has_server_enemies = false
 	player_lifecycle = {}
+	debug_statuses = {}
 	game_target_kind = ""
 	game_target_id = ""
 	game_target_player_id = ""
@@ -77,6 +79,10 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var lifecycle_value = state.get("player_lifecycle", {})
 	player_lifecycle = lifecycle_value if lifecycle_value is Dictionary else {}
+
+
+func apply_debug_statuses(statuses: Dictionary) -> void:
+	debug_statuses = statuses if statuses is Dictionary else {}
 
 
 func target_rows() -> Array:
@@ -278,7 +284,11 @@ func _all_players_row() -> Dictionary:
 
 
 func _player_feature_enabled(player_id: String, feature_key: String) -> bool:
-	return false
+	var player_status = debug_statuses.get(player_id, null)
+	if not (player_status is Dictionary):
+		return false
+
+	return bool(player_status.get(feature_key, false))
 
 
 func _feature_label(feature_key: String) -> String:

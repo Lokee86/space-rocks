@@ -6,6 +6,7 @@ const (
 	PacketTypeToggleDebugInfiniteLives         = "toggle_debug_infinite_lives"
 	PacketTypeToggleDebugFreezeWorld           = "toggle_debug_freeze_world"
 	PacketTypeToggleDebugFreezePlayer          = "toggle_debug_freeze_player"
+	PacketTypeDebugStatus                      = "debug_status"
 	PacketTypeDebugKillPlayer                  = "debug_kill_player"
 	PacketTypeDebugSpawnEntity                 = "debug_spawn_entity"
 	PacketTypeDebugSpawnPickup                 = "debug_spawn_pickup"
@@ -45,4 +46,10 @@ type DebugStatus struct {
 	SpawningFrozen   bool `json:"spawning_frozen"`
 	CollisionsFrozen bool `json:"collisions_frozen"`
 	PlayerFrozen     bool `json:"player_frozen"`
+}
+
+type DebugStatusPacket struct {
+	Type          string                 `json:"type"`
+	DebugStatus   DebugStatus            `json:"debug_status"`
+	DebugStatuses map[string]DebugStatus `json:"debug_statuses"`
 }

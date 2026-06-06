@@ -38,16 +38,10 @@ func game_target_player_id() -> String:
 func refresh_gameplay_state(state: Dictionary) -> void:
 	target_model.apply_gameplay_state(state)
 	_refresh_telemetry()
+	_refresh_debug_player_targets()
 	if window_controller == null:
 		return
 
-	window_controller.refresh_debug_player_targets(
-		target_model.kill_player_target_rows(),
-		target_model.respawn_player_target_rows(),
-		target_model.invincible_target_rows(),
-		target_model.infinite_lives_target_rows(),
-		target_model.player_frozen_target_rows()
-	)
 	if window_controller.has_method("refresh_game_target_options"):
 		window_controller.refresh_game_target_options(
 			target_model.target_rows(),
@@ -57,6 +51,14 @@ func refresh_gameplay_state(state: Dictionary) -> void:
 	window_controller.refresh_counter_player_targets(target_model.active_player_target_rows())
 	if window_controller.has_method("refresh_spawn_player_slots"):
 		window_controller.refresh_spawn_player_slots(latest_max_players)
+
+
+func apply_debug_status_packet(state: Dictionary) -> void:
+	if target_model != null:
+		target_model.apply_debug_statuses(state.get("debug_statuses", {}))
+	if window_controller != null and window_controller.has_method("apply_debug_status"):
+		window_controller.apply_debug_status(state.get("debug_status", {}))
+	_refresh_debug_player_targets()
 
 
 func _refresh_telemetry() -> void:
@@ -73,6 +75,19 @@ func _refresh_telemetry() -> void:
 			target_model.game_target_id,
 			target_model.target_state_for_source(_target_telemetry_source())
 		)
+
+
+func _refresh_debug_player_targets() -> void:
+	if window_controller == null:
+		return
+
+	window_controller.refresh_debug_player_targets(
+		target_model.kill_player_target_rows(),
+		target_model.respawn_player_target_rows(),
+		target_model.invincible_target_rows(),
+		target_model.infinite_lives_target_rows(),
+		target_model.player_frozen_target_rows()
+	)
 
 
 func _local_telemetry_source() -> String:
