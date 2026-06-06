@@ -23,14 +23,11 @@ func ResolveArea(req AreaDamageRequest) AreaDamageResult {
 		Results: make([]DamageResult, 0, len(req.Candidates)),
 	}
 	for _, candidate := range req.Candidates {
-		modifiers := make([]DamageModifier, 0, len(req.Modifiers)+len(candidate.Modifiers))
-		modifiers = append(modifiers, req.Modifiers...)
-		modifiers = append(modifiers, candidate.Modifiers...)
 		single := ResolveSingle(DamageResolutionRequest{
-			Source: req.Source,
-			Target: candidate,
-			Spec:   req.Spec,
-			Modifiers: modifiers,
+			Source:    req.Source,
+			Target:    candidate,
+			Spec:      req.Spec,
+			Modifiers: req.Modifiers,
 		})
 		result.Results = append(result.Results, single)
 	}

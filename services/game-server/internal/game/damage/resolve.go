@@ -1,13 +1,16 @@
 package damage
 
 func ResolveSingle(req DamageResolutionRequest) DamageResult {
-	modified := ResolveModifiedAmount(req.Spec.Amount, req.Modifiers, req.Spec.Kind)
+	modifiers := make([]DamageModifier, 0, len(req.Modifiers)+len(req.Target.Modifiers))
+	modifiers = append(modifiers, req.Modifiers...)
+	modifiers = append(modifiers, req.Target.Modifiers...)
+	modified := ResolveModifiedAmount(req.Spec.Amount, modifiers, req.Spec.Type)
 	result := DamageResult{
 		TargetEntityID:   req.Target.EntityID,
 		TargetEntityType: req.Target.EntityType,
 		BaseAmount:       int(modified.BaseAmount),
 		ModifiedAmount:   modified.ModifiedAmount,
-		Kind:             req.Spec.Kind,
+		Type:             req.Spec.Type,
 		Cause:            req.Spec.Cause,
 		AppliedModifiers: modified.AppliedModifiers,
 	}
@@ -27,7 +30,7 @@ func ResolveSingle(req DamageResolutionRequest) DamageResult {
 				AmountPerTick:   req.Spec.DoT.AmountPerTick,
 				TickSeconds:     req.Spec.DoT.TickSeconds,
 				DurationSeconds: req.Spec.DoT.DurationSeconds,
-				Kind:            req.Spec.DoT.Kind,
+				Type:            req.Spec.DoT.Type,
 				Modifiers:       req.Spec.DoT.Modifiers,
 			},
 		}

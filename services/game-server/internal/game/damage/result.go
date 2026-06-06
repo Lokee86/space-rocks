@@ -7,7 +7,7 @@ type DamageResult struct {
 	SourceEntityType EntityType
 	BaseAmount       int
 	ModifiedAmount   int
-	Kind             DamageKind
+	Type             DamageType
 	Cause            DamageCause
 	AppliedModifiers []AppliedDamageModifier
 	AppliedToHealth  int
@@ -20,3 +20,4 @@ type DamageResult struct {
 	CreatedDamageOverTime []ActiveDamageOverTime
 	Reason           string
 }
+

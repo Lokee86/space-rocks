@@ -4,9 +4,9 @@ type DamageModifierCategory string
 
 const (
 	DamageModifierCategoryOutgoing     DamageModifierCategory = "outgoing"
-	DamageModifierCategoryResistance    DamageModifierCategory = "resistance"
+	DamageModifierCategoryResistance   DamageModifierCategory = "resistance"
 	DamageModifierCategoryVulnerability DamageModifierCategory = "vulnerability"
-	DamageModifierCategoryGeneric       DamageModifierCategory = "generic"
+	DamageModifierCategoryGeneric      DamageModifierCategory = "generic"
 )
 
 type DamageModifierOperation string
@@ -18,15 +18,15 @@ const (
 )
 
 type DamageModifier struct {
-	Kind      DamageKind
+	Type      DamageType
 	Category  DamageModifierCategory
 	Operation DamageModifierOperation
-	Value     int
+	Value     float64
 }
 
 type AppliedDamageModifier struct {
 	Modifier DamageModifier
-	Value    int
+	Value    float64
 }
 
 type ModifiedDamageAmount struct {
@@ -35,10 +35,45 @@ type ModifiedDamageAmount struct {
 	AppliedModifiers []AppliedDamageModifier
 }
 
-func FilterDamageModifiersByKind(modifiers []DamageModifier, kind DamageKind) []DamageModifier {
+func normalizedDamageModifierCategory(modifier DamageModifier) DamageModifierCategory {
+	if modifier.Category == "" {
+		return DamageModifierCategoryGeneric
+	}
+	return modifier.Category
+}
+
+func damageModifierAppliesToType(modifier DamageModifier, damageType DamageType) bool {
+	if modifier.Type == "" {
+		return true
+	}
+	return modifier.Type == damageType
+}
+
+func isDamageModifierValid(modifier DamageModifier) bool {
+	switch normalizedDamageModifierCategory(modifier) {
+	case DamageModifierCategoryResistance:
+		return modifier.Operation == DamageModifierOperationMultiply && modifier.Value >= 0 && modifier.Value < 1
+	case DamageModifierCategoryVulnerability:
+		return modifier.Operation == DamageModifierOperationMultiply && modifier.Value > 1
+	case DamageModifierCategoryOutgoing, DamageModifierCategoryGeneric:
+		switch modifier.Operation {
+		case DamageModifierOperationAdd, DamageModifierOperationMultiply, DamageModifierOperationSet:
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}
+
+func FilterDamageModifiersByKind(modifiers []DamageModifier, kind DamageType) []DamageModifier {
 	filtered := make([]DamageModifier, 0, len(modifiers))
 	for _, modifier := range modifiers {
-		if modifier.Kind != "" && modifier.Kind != kind {
+		if !damageModifierAppliesToType(modifier, kind) {
+			continue
+		}
+		if !isDamageModifierValid(modifier) {
 			continue
 		}
 		filtered = append(filtered, modifier)
@@ -46,7 +81,7 @@ func FilterDamageModifiersByKind(modifiers []DamageModifier, kind DamageKind) []
 	return filtered
 }
 
-func ResolveModifiedAmount(baseAmount int, modifiers []DamageModifier, kind DamageKind) ModifiedDamageAmount {
+func ResolveModifiedAmount(baseAmount int, modifiers []DamageModifier, kind DamageType) ModifiedDamageAmount {
 	result := ModifiedDamageAmount{
 		BaseAmount:     float64(baseAmount),
 		ModifiedAmount: baseAmount,
@@ -58,21 +93,42 @@ func ResolveModifiedAmount(baseAmount int, modifiers []DamageModifier, kind Dama
 	for _, modifier := range applicable {
 		switch modifier.Operation {
 		case DamageModifierOperationAdd:
-			modified += float64(modifier.Value)
+			modified += modifier.Value
 		}
 	}
 
 	for _, modifier := range applicable {
 		switch modifier.Operation {
 		case DamageModifierOperationMultiply:
-			modified *= float64(modifier.Value)
+			category := normalizedDamageModifierCategory(modifier)
+			if category == DamageModifierCategoryOutgoing || category == DamageModifierCategoryGeneric {
+				modified *= modifier.Value
+			}
+		}
+	}
+
+	for _, modifier := range applicable {
+		switch modifier.Operation {
+		case DamageModifierOperationMultiply:
+			if normalizedDamageModifierCategory(modifier) == DamageModifierCategoryResistance {
+				modified *= (1 - modifier.Value)
+			}
+		}
+	}
+
+	for _, modifier := range applicable {
+		switch modifier.Operation {
+		case DamageModifierOperationMultiply:
+			if normalizedDamageModifierCategory(modifier) == DamageModifierCategoryVulnerability {
+				modified *= modifier.Value
+			}
 		}
 	}
 
 	for _, modifier := range applicable {
 		switch modifier.Operation {
 		case DamageModifierOperationSet:
-			modified = float64(modifier.Value)
+			modified = modifier.Value
 		}
 	}
 

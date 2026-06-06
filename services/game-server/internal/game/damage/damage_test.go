@@ -16,7 +16,7 @@ func TestResolveSingleNoDotCreatesNoDoT(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 1,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -39,13 +39,13 @@ func TestResolveSingleEnabledDotCreatesEffect(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 1,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 			DoT: DamageOverTimeSpec{
 				Enabled:         true,
 				AmountPerTick:   2,
 				TickSeconds:     0.5,
 				DurationSeconds: 3.0,
-				Kind:            DamageKindPoison,
+				Type:            DamageTypeRadioactive,
 				Modifiers: []DamageModifier{
 					{Operation: DamageModifierOperationAdd, Value: 1},
 				},
@@ -63,8 +63,8 @@ func TestResolveSingleEnabledDotCreatesEffect(t *testing.T) {
 	if effect.Target.EntityID != "player-1" {
 		t.Fatalf("expected target entity id %q, got %q", "player-1", effect.Target.EntityID)
 	}
-	if effect.Kind != DamageKindPoison {
-		t.Fatalf("expected kind %q, got %q", DamageKindPoison, effect.Kind)
+	if effect.Type != DamageTypeRadioactive {
+		t.Fatalf("expected kind %q, got %q", DamageTypeRadioactive, effect.Type)
 	}
 	if effect.Source.Cause != DamageCauseDot {
 		t.Fatalf("expected source cause %q, got %q", DamageCauseDot, effect.Source.Cause)
@@ -92,13 +92,13 @@ func TestResolveSingleIgnoredDamageCreatesNoDoT(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 0,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 			DoT: DamageOverTimeSpec{
 				Enabled:         true,
 				AmountPerTick:   2,
 				TickSeconds:     0.5,
 				DurationSeconds: 3.0,
-				Kind:            DamageKindPoison,
+				Type:            DamageTypeRadioactive,
 			},
 		},
 	})
@@ -125,13 +125,13 @@ func TestResolveSingleDotEffectFieldPreservation(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 1,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 			DoT: DamageOverTimeSpec{
 				Enabled:         true,
 				AmountPerTick:   2,
 				TickSeconds:     0.5,
 				DurationSeconds: 3.0,
-				Kind:            DamageKindPoison,
+				Type:            DamageTypeRadioactive,
 				Modifiers: []DamageModifier{
 					{Operation: DamageModifierOperationAdd, Value: 1},
 				},
@@ -146,8 +146,8 @@ func TestResolveSingleDotEffectFieldPreservation(t *testing.T) {
 	if effect.Target.EntityID != "player-1" || effect.Target.EntityType != EntityTypePlayer {
 		t.Fatal("expected target ref to be preserved")
 	}
-	if effect.Kind != DamageKindPoison {
-		t.Fatalf("expected kind %q, got %q", DamageKindPoison, effect.Kind)
+	if effect.Type != DamageTypeRadioactive {
+		t.Fatalf("expected kind %q, got %q", DamageTypeRadioactive, effect.Type)
 	}
 	if effect.AmountPerTick != 2 || effect.TickSeconds != 0.5 || effect.DurationSeconds != 3.0 {
 		t.Fatal("expected tick fields to be preserved")
@@ -164,7 +164,7 @@ func TestTickDamageOverTimeNoTickBeforeInterval(t *testing.T) {
 		AmountPerTick: 1,
 		TickSeconds: 1,
 		DurationSeconds: 5,
-		Kind: DamageKindPoison,
+		Type: DamageTypeRadioactive,
 	}
 
 	result := TickDamageOverTime(effect, DamageTarget{EntityID: "player-1", EntityType: EntityTypePlayer, Health: 10}, 0.5)
@@ -184,7 +184,7 @@ func TestTickDamageOverTimeOneTickAtInterval(t *testing.T) {
 		AmountPerTick: 2,
 		TickSeconds: 1,
 		DurationSeconds: 5,
-		Kind: DamageKindPoison,
+		Type: DamageTypeRadioactive,
 	}
 
 	result := TickDamageOverTime(effect, DamageTarget{EntityID: "player-1", EntityType: EntityTypePlayer, Health: 10}, 1)
@@ -207,7 +207,7 @@ func TestTickDamageOverTimeMultipleTicksForLargeDelta(t *testing.T) {
 		AmountPerTick: 2,
 		TickSeconds: 1,
 		DurationSeconds: 5,
-		Kind: DamageKindPoison,
+		Type: DamageTypeRadioactive,
 	}
 
 	result := TickDamageOverTime(effect, DamageTarget{EntityID: "player-1", EntityType: EntityTypePlayer, Health: 10}, 2.5)
@@ -230,9 +230,9 @@ func TestTickDamageOverTimeResistanceAffectsTickDamage(t *testing.T) {
 		AmountPerTick: 4,
 		TickSeconds: 1,
 		DurationSeconds: 5,
-		Kind: DamageKindFire,
+		Type: DamageTypeThermal,
 		Modifiers: []DamageModifier{
-			{Kind: DamageKindFire, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationAdd, Value: -2},
+			{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.5},
 		},
 	}
 
@@ -253,7 +253,7 @@ func TestTickDamageOverTimeExpiredEffect(t *testing.T) {
 		AmountPerTick: 2,
 		TickSeconds: 1,
 		DurationSeconds: 1,
-		Kind: DamageKindPoison,
+		Type: DamageTypeRadioactive,
 	}
 
 	result := TickDamageOverTime(effect, DamageTarget{EntityID: "player-1", EntityType: EntityTypePlayer, Health: 10}, 1.5)
@@ -280,7 +280,7 @@ func TestActiveDamageOverTimeConstruction(t *testing.T) {
 		AmountPerTick:  2,
 		TickSeconds:    0.5,
 		DurationSeconds: 3.0,
-		Kind:           DamageKindPoison,
+		Type:           DamageTypeRadioactive,
 		Modifiers: []DamageModifier{
 			{Operation: DamageModifierOperationAdd, Value: 1},
 		},
@@ -301,8 +301,8 @@ func TestActiveDamageOverTimeConstruction(t *testing.T) {
 	if active.DurationSeconds != 3.0 {
 		t.Fatalf("expected duration seconds %v, got %v", 3.0, active.DurationSeconds)
 	}
-	if active.Kind != DamageKindPoison {
-		t.Fatalf("expected kind %q, got %q", DamageKindPoison, active.Kind)
+	if active.Type != DamageTypeRadioactive {
+		t.Fatalf("expected kind %q, got %q", DamageTypeRadioactive, active.Type)
 	}
 	if len(active.Modifiers) != 1 {
 		t.Fatalf("expected 1 modifier, got %d", len(active.Modifiers))
@@ -323,7 +323,7 @@ func TestDamageOverTimeTickResultConstruction(t *testing.T) {
 		AmountPerTick:  2,
 		TickSeconds:    0.5,
 		DurationSeconds: 3.0,
-		Kind:           DamageKindPoison,
+		Type:           DamageTypeRadioactive,
 		Modifiers: []DamageModifier{
 			{Operation: DamageModifierOperationAdd, Value: 1},
 		},
@@ -344,8 +344,8 @@ func TestDamageOverTimeTickResultConstruction(t *testing.T) {
 	if result.DurationSeconds != 3.0 {
 		t.Fatalf("expected duration seconds %v, got %v", 3.0, result.DurationSeconds)
 	}
-	if result.Kind != DamageKindPoison {
-		t.Fatalf("expected kind %q, got %q", DamageKindPoison, result.Kind)
+	if result.Type != DamageTypeRadioactive {
+		t.Fatalf("expected kind %q, got %q", DamageTypeRadioactive, result.Type)
 	}
 	if len(result.Modifiers) != 1 {
 		t.Fatalf("expected 1 modifier, got %d", len(result.Modifiers))
@@ -355,13 +355,13 @@ func TestDamageOverTimeTickResultConstruction(t *testing.T) {
 func TestDamageSpecConstructionWithDot(t *testing.T) {
 	spec := DamageSpec{
 		Amount: 5,
-		Kind:   DamageKindFire,
+		Type:   DamageTypeThermal,
 		DoT: DamageOverTimeSpec{
 			Enabled:         true,
 			AmountPerTick:   1,
 			TickSeconds:     0.5,
 			DurationSeconds: 3.0,
-			Kind:            DamageKindPoison,
+			Type:            DamageTypeRadioactive,
 			Modifiers: []DamageModifier{
 				{Operation: DamageModifierOperationAdd, Value: 1},
 			},
@@ -380,8 +380,8 @@ func TestDamageSpecConstructionWithDot(t *testing.T) {
 	if spec.DoT.DurationSeconds != 3.0 {
 		t.Fatalf("expected duration seconds %v, got %v", 3.0, spec.DoT.DurationSeconds)
 	}
-	if spec.DoT.Kind != DamageKindPoison {
-		t.Fatalf("expected dot kind %q, got %q", DamageKindPoison, spec.DoT.Kind)
+	if spec.DoT.Type != DamageTypeRadioactive {
+		t.Fatalf("expected dot kind %q, got %q", DamageTypeRadioactive, spec.DoT.Type)
 	}
 	if len(spec.DoT.Modifiers) != 1 {
 		t.Fatalf("expected 1 dot modifier, got %d", len(spec.DoT.Modifiers))
@@ -393,7 +393,7 @@ func TestResolveAreaEmptyCandidates(t *testing.T) {
 		Radius: 10,
 		Spec: DamageSpec{
 			Amount: 4,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -407,7 +407,7 @@ func TestResolveAreaMultipleCandidates(t *testing.T) {
 		Radius: 10,
 		Spec: DamageSpec{
 			Amount: 4,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 		Candidates: []DamageTarget{
 			{EntityID: "player-1", EntityType: EntityTypePlayer, Health: 10},
@@ -431,7 +431,7 @@ func TestResolveAreaTargetSpecificResistance(t *testing.T) {
 		Radius: 10,
 		Spec: DamageSpec{
 			Amount: 4,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 		Candidates: []DamageTarget{
 			{
@@ -439,7 +439,7 @@ func TestResolveAreaTargetSpecificResistance(t *testing.T) {
 				EntityType: EntityTypePlayer,
 				Health:     10,
 				Modifiers: []DamageModifier{
-					{Kind: DamageKindFire, Operation: DamageModifierOperationAdd, Value: -2},
+					{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.5},
 				},
 			},
 		},
@@ -458,7 +458,7 @@ func TestResolveAreaTargetSpecificVulnerability(t *testing.T) {
 		Radius: 10,
 		Spec: DamageSpec{
 			Amount: 4,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 		Candidates: []DamageTarget{
 			{
@@ -466,7 +466,7 @@ func TestResolveAreaTargetSpecificVulnerability(t *testing.T) {
 				EntityType: EntityTypeAsteroid,
 				Health:     10,
 				Modifiers: []DamageModifier{
-					{Kind: DamageKindFire, Operation: DamageModifierOperationMultiply, Value: 2},
+					{Type: DamageTypeThermal, Operation: DamageModifierOperationMultiply, Value: 2},
 				},
 			},
 		},
@@ -485,7 +485,7 @@ func TestResolveAreaShieldHandlingPerTarget(t *testing.T) {
 		Radius: 10,
 		Spec: DamageSpec{
 			Amount: 5,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 		Candidates: []DamageTarget{
 			{
@@ -532,7 +532,7 @@ func TestAreaDamageRequestConstruction(t *testing.T) {
 		Radius:  20.0,
 		Spec: DamageSpec{
 			Amount:       4,
-			Kind:         DamageKindFire,
+			Type:         DamageTypeThermal,
 			Cause:        DamageCauseArea,
 			BypassShield: false,
 		},
@@ -604,7 +604,7 @@ func TestResolveSingleHealthOneDamageOneDestroysTarget(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 1,
-			Kind:   DamageKindKinetic,
+			Type:   DamageTypeKinetic,
 		},
 	})
 
@@ -637,7 +637,7 @@ func TestResolveSinglePlayerDestroyedIsFatal(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 1,
-			Kind:   DamageKindKinetic,
+			Type:   DamageTypeKinetic,
 		},
 	})
 
@@ -658,7 +658,7 @@ func TestResolveSingleModifiedAmountUsesModifiers(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 5,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 		Modifiers: []DamageModifier{
 			{Operation: DamageModifierOperationAdd, Value: 3},
@@ -672,8 +672,8 @@ func TestResolveSingleModifiedAmountUsesModifiers(t *testing.T) {
 	if result.ModifiedAmount != 16 {
 		t.Fatalf("expected modified amount %d, got %d", 16, result.ModifiedAmount)
 	}
-	if result.Kind != DamageKindFire {
-		t.Fatalf("expected kind %q, got %q", DamageKindFire, result.Kind)
+	if result.Type != DamageTypeThermal {
+		t.Fatalf("expected kind %q, got %q", DamageTypeThermal, result.Type)
 	}
 	if result.Cause != "" {
 		t.Fatalf("expected empty cause, got %q", result.Cause)
@@ -699,7 +699,7 @@ func TestResolveSingleFullShieldAbsorption(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 5,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -730,7 +730,7 @@ func TestResolveSinglePartialShieldAbsorption(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 5,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -758,7 +758,7 @@ func TestResolveSingleBypassShield(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount:       5,
-			Kind:         DamageKindFire,
+			Type:         DamageTypeThermal,
 			BypassShield: true,
 		},
 	})
@@ -787,7 +787,7 @@ func TestResolveSingleZeroDamageIgnored(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 0,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -806,7 +806,7 @@ func TestResolveSingleDeadTargetIgnored(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 5,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -825,7 +825,7 @@ func TestResolveSingleFatalPlayer(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 1,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -847,7 +847,7 @@ func TestResolveSingleNonfatalAsteroidDestruction(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 1,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 	})
 
@@ -868,10 +868,10 @@ func TestResolveSingleReportsAppliedResistanceModifier(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 5,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 		Modifiers: []DamageModifier{
-			{Kind: DamageKindFire, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationAdd, Value: -2},
+			{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.5},
 		},
 	})
 
@@ -892,10 +892,10 @@ func TestResolveSingleReportsAppliedVulnerabilityModifier(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount: 5,
-			Kind:   DamageKindFire,
+			Type:   DamageTypeThermal,
 		},
 		Modifiers: []DamageModifier{
-			{Kind: DamageKindFire, Category: DamageModifierCategoryVulnerability, Operation: DamageModifierOperationMultiply, Value: 2},
+			{Type: DamageTypeThermal, Category: DamageModifierCategoryVulnerability, Operation: DamageModifierOperationMultiply, Value: 2},
 		},
 	})
 
@@ -922,12 +922,12 @@ func TestDamageResolutionRequestConstruction(t *testing.T) {
 		},
 		Spec: DamageSpec{
 			Amount:       2,
-			Kind:         DamageKindExplosive,
+			Type:         DamageTypeExplosive,
 			Cause:        DamageCauseProjectile,
 			BypassShield: true,
 		},
 		Modifiers: []DamageModifier{
-			{Kind: DamageKindExplosive, Category: DamageModifierCategoryOutgoing, Operation: DamageModifierOperationAdd, Value: 1},
+			{Type: DamageTypeExplosive, Category: DamageModifierCategoryOutgoing, Operation: DamageModifierOperationAdd, Value: 1},
 		},
 	}
 
@@ -946,7 +946,7 @@ func TestDamageResolutionRequestConstruction(t *testing.T) {
 }
 
 func TestResolveModifiedAmountNoModifiers(t *testing.T) {
-	result := ResolveModifiedAmount(5, nil, DamageKindFire)
+	result := ResolveModifiedAmount(5, nil, DamageTypeThermal)
 
 	if result.BaseAmount != 5 {
 		t.Fatalf("expected base amount %v, got %v", 5, result.BaseAmount)
@@ -962,7 +962,7 @@ func TestResolveModifiedAmountNoModifiers(t *testing.T) {
 func TestResolveModifiedAmountAdd(t *testing.T) {
 	result := ResolveModifiedAmount(5, []DamageModifier{
 		{Operation: DamageModifierOperationAdd, Value: 2},
-	}, DamageKindFire)
+	}, DamageTypeThermal)
 
 	if result.ModifiedAmount != 7 {
 		t.Fatalf("expected modified amount %d, got %d", 7, result.ModifiedAmount)
@@ -972,10 +972,111 @@ func TestResolveModifiedAmountAdd(t *testing.T) {
 func TestResolveModifiedAmountMultiply(t *testing.T) {
 	result := ResolveModifiedAmount(5, []DamageModifier{
 		{Operation: DamageModifierOperationMultiply, Value: 2},
-	}, DamageKindFire)
+	}, DamageTypeThermal)
 
 	if result.ModifiedAmount != 10 {
 		t.Fatalf("expected modified amount %d, got %d", 10, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountthermalResistance025(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.25},
+	}, DamageTypeThermal)
+
+	if result.ModifiedAmount != 75 {
+		t.Fatalf("expected modified amount %d, got %d", 75, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountthermalResistance025And020(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.25},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.20},
+	}, DamageTypeThermal)
+
+	if result.ModifiedAmount != 60 {
+		t.Fatalf("expected modified amount %d, got %d", 60, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountthermalVulnerability125(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryVulnerability, Operation: DamageModifierOperationMultiply, Value: 1.25},
+	}, DamageTypeThermal)
+
+	if result.ModifiedAmount != 125 {
+		t.Fatalf("expected modified amount %d, got %d", 125, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountthermalResistanceDoesNotAffectradioactive(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.25},
+	}, DamageTypeRadioactive)
+
+	if result.ModifiedAmount != 100 {
+		t.Fatalf("expected modified amount %d, got %d", 100, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountthermalVulnerabilityDoesNotAffectradioactive(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryVulnerability, Operation: DamageModifierOperationMultiply, Value: 1.25},
+	}, DamageTypeRadioactive)
+
+	if result.ModifiedAmount != 100 {
+		t.Fatalf("expected modified amount %d, got %d", 100, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountEmptyKindResistanceAppliesGlobally(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.25},
+	}, DamageTypeRadioactive)
+
+	if result.ModifiedAmount != 75 {
+		t.Fatalf("expected modified amount %d, got %d", 75, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountRadioactiveIgnoresThermalResistance(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.25},
+	}, DamageTypeRadioactive)
+
+	if result.ModifiedAmount != 100 {
+		t.Fatalf("expected modified amount %d, got %d", 100, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountEmptyTypeResistanceAppliesGlobally(t *testing.T) {
+	result := ResolveModifiedAmount(100, []DamageModifier{
+		{Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.25},
+	}, DamageTypeThermal)
+
+	if result.ModifiedAmount != 75 {
+		t.Fatalf("expected modified amount %d, got %d", 75, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountMultiplyHalf(t *testing.T) {
+	result := ResolveModifiedAmount(5, []DamageModifier{
+		{Operation: DamageModifierOperationMultiply, Value: 0.5},
+	}, DamageTypeThermal)
+
+	if result.ModifiedAmount != 3 {
+		t.Fatalf("expected modified amount %d, got %d", 3, result.ModifiedAmount)
+	}
+}
+
+func TestResolveModifiedAmountMultiplyOnePointFive(t *testing.T) {
+	result := ResolveModifiedAmount(5, []DamageModifier{
+		{Operation: DamageModifierOperationMultiply, Value: 1.5},
+	}, DamageTypeThermal)
+
+	if result.ModifiedAmount != 8 {
+		t.Fatalf("expected modified amount %d, got %d", 8, result.ModifiedAmount)
 	}
 }
 
@@ -983,7 +1084,7 @@ func TestResolveModifiedAmountAddBeforeMultiply(t *testing.T) {
 	result := ResolveModifiedAmount(5, []DamageModifier{
 		{Operation: DamageModifierOperationAdd, Value: 3},
 		{Operation: DamageModifierOperationMultiply, Value: 2},
-	}, DamageKindFire)
+	}, DamageTypeThermal)
 
 	if result.ModifiedAmount != 16 {
 		t.Fatalf("expected modified amount %d, got %d", 16, result.ModifiedAmount)
@@ -995,7 +1096,7 @@ func TestResolveModifiedAmountSetLast(t *testing.T) {
 		{Operation: DamageModifierOperationAdd, Value: 3},
 		{Operation: DamageModifierOperationMultiply, Value: 2},
 		{Operation: DamageModifierOperationSet, Value: 4},
-	}, DamageKindFire)
+	}, DamageTypeThermal)
 
 	if result.ModifiedAmount != 4 {
 		t.Fatalf("expected modified amount %d, got %d", 4, result.ModifiedAmount)
@@ -1004,8 +1105,8 @@ func TestResolveModifiedAmountSetLast(t *testing.T) {
 
 func TestResolveModifiedAmountWrongKindIgnored(t *testing.T) {
 	result := ResolveModifiedAmount(5, []DamageModifier{
-		{Kind: DamageKindPoison, Operation: DamageModifierOperationAdd, Value: 3},
-	}, DamageKindFire)
+		{Type: DamageTypeRadioactive, Operation: DamageModifierOperationAdd, Value: 3},
+	}, DamageTypeThermal)
 
 	if result.ModifiedAmount != 5 {
 		t.Fatalf("expected modified amount %d, got %d", 5, result.ModifiedAmount)
@@ -1015,7 +1116,7 @@ func TestResolveModifiedAmountWrongKindIgnored(t *testing.T) {
 func TestResolveModifiedAmountZeroMultiplier(t *testing.T) {
 	result := ResolveModifiedAmount(5, []DamageModifier{
 		{Operation: DamageModifierOperationMultiply, Value: 0},
-	}, DamageKindFire)
+	}, DamageTypeThermal)
 
 	if result.ModifiedAmount != 0 {
 		t.Fatalf("expected modified amount %d, got %d", 0, result.ModifiedAmount)
@@ -1025,7 +1126,7 @@ func TestResolveModifiedAmountZeroMultiplier(t *testing.T) {
 func TestResolveModifiedAmountNegativeClamp(t *testing.T) {
 	result := ResolveModifiedAmount(5, []DamageModifier{
 		{Operation: DamageModifierOperationAdd, Value: -10},
-	}, DamageKindFire)
+	}, DamageTypeThermal)
 
 	if result.ModifiedAmount != 0 {
 		t.Fatalf("expected modified amount %d, got %d", 0, result.ModifiedAmount)
@@ -1037,7 +1138,7 @@ func TestFilterDamageModifiersByKindEmptyKindApplies(t *testing.T) {
 		{Category: DamageModifierCategoryGeneric, Operation: DamageModifierOperationAdd, Value: 1},
 	}
 
-	filtered := FilterDamageModifiersByKind(modifiers, DamageKindFire)
+	filtered := FilterDamageModifiersByKind(modifiers, DamageTypeThermal)
 
 	if len(filtered) != 1 {
 		t.Fatalf("expected 1 modifier, got %d", len(filtered))
@@ -1049,10 +1150,10 @@ func TestFilterDamageModifiersByKindEmptyKindApplies(t *testing.T) {
 
 func TestFilterDamageModifiersByKindMatchingKindApplies(t *testing.T) {
 	modifiers := []DamageModifier{
-		{Kind: DamageKindFire, Category: DamageModifierCategoryOutgoing, Operation: DamageModifierOperationMultiply, Value: 2},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryOutgoing, Operation: DamageModifierOperationMultiply, Value: 2},
 	}
 
-	filtered := FilterDamageModifiersByKind(modifiers, DamageKindFire)
+	filtered := FilterDamageModifiersByKind(modifiers, DamageTypeThermal)
 
 	if len(filtered) != 1 {
 		t.Fatalf("expected 1 modifier, got %d", len(filtered))
@@ -1064,10 +1165,10 @@ func TestFilterDamageModifiersByKindMatchingKindApplies(t *testing.T) {
 
 func TestFilterDamageModifiersByKindNonMatchingKindDoesNotApply(t *testing.T) {
 	modifiers := []DamageModifier{
-		{Kind: DamageKindPoison, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationAdd, Value: 3},
+		{Type: DamageTypeRadioactive, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.5},
 	}
 
-	filtered := FilterDamageModifiersByKind(modifiers, DamageKindFire)
+	filtered := FilterDamageModifiersByKind(modifiers, DamageTypeThermal)
 
 	if len(filtered) != 0 {
 		t.Fatalf("expected 0 modifiers, got %d", len(filtered))
@@ -1077,18 +1178,58 @@ func TestFilterDamageModifiersByKindNonMatchingKindDoesNotApply(t *testing.T) {
 func TestFilterDamageModifiersByKindPreservesInputOrder(t *testing.T) {
 	modifiers := []DamageModifier{
 		{Category: DamageModifierCategoryGeneric, Operation: DamageModifierOperationAdd, Value: 1},
-		{Kind: DamageKindFire, Category: DamageModifierCategoryOutgoing, Operation: DamageModifierOperationMultiply, Value: 2},
-		{Kind: DamageKindFire, Category: DamageModifierCategoryVulnerability, Operation: DamageModifierOperationSet, Value: 3},
-		{Kind: DamageKindPoison, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationAdd, Value: 4},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryOutgoing, Operation: DamageModifierOperationMultiply, Value: 2},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryGeneric, Operation: DamageModifierOperationSet, Value: 3},
+		{Type: DamageTypeRadioactive, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 0.5},
 	}
 
-	filtered := FilterDamageModifiersByKind(modifiers, DamageKindFire)
+	filtered := FilterDamageModifiersByKind(modifiers, DamageTypeThermal)
 
 	if len(filtered) != 3 {
 		t.Fatalf("expected 3 modifiers, got %d", len(filtered))
 	}
 	if filtered[0] != modifiers[0] || filtered[1] != modifiers[1] || filtered[2] != modifiers[2] {
 		t.Fatal("expected filtered modifiers to preserve input order")
+	}
+}
+
+func TestFilterDamageModifiersByKindSkipsInvalidResistanceModifiers(t *testing.T) {
+	modifiers := []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 1.0},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryResistance, Operation: DamageModifierOperationMultiply, Value: 1.25},
+	}
+
+	filtered := FilterDamageModifiersByKind(modifiers, DamageTypeThermal)
+
+	if len(filtered) != 0 {
+		t.Fatalf("expected 0 modifiers, got %d", len(filtered))
+	}
+}
+
+func TestFilterDamageModifiersByKindSkipsInvalidVulnerabilityModifiers(t *testing.T) {
+	modifiers := []DamageModifier{
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryVulnerability, Operation: DamageModifierOperationMultiply, Value: 1.0},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryVulnerability, Operation: DamageModifierOperationMultiply, Value: 0.75},
+	}
+
+	filtered := FilterDamageModifiersByKind(modifiers, DamageTypeThermal)
+
+	if len(filtered) != 0 {
+		t.Fatalf("expected 0 modifiers, got %d", len(filtered))
+	}
+}
+
+func TestFilterDamageModifiersByKindOutgoingValidation(t *testing.T) {
+	modifiers := []DamageModifier{
+		{Type: DamageTypeThermal, Category: "", Operation: DamageModifierOperationAdd, Value: 1},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryGeneric, Operation: DamageModifierOperationMultiply, Value: 2},
+		{Type: DamageTypeThermal, Category: DamageModifierCategoryOutgoing, Operation: DamageModifierOperationSet, Value: 3},
+	}
+
+	filtered := FilterDamageModifiersByKind(modifiers, DamageTypeThermal)
+
+	if len(filtered) != len(modifiers) {
+		t.Fatalf("expected %d modifiers, got %d", len(modifiers), len(filtered))
 	}
 }
 
@@ -1136,7 +1277,7 @@ func TestDamageModifierOperationStringValues(t *testing.T) {
 func TestDamageSpecConstructionKineticCollision(t *testing.T) {
 	spec := DamageSpec{
 		Amount:       1,
-		Kind:         DamageKindKinetic,
+		Type:         DamageTypeKinetic,
 		Cause:        DamageCauseCollision,
 		BypassShield: false,
 	}
@@ -1144,8 +1285,8 @@ func TestDamageSpecConstructionKineticCollision(t *testing.T) {
 	if spec.Amount != 1 {
 		t.Fatalf("expected amount %d, got %d", 1, spec.Amount)
 	}
-	if spec.Kind != DamageKindKinetic {
-		t.Fatalf("expected kind %q, got %q", DamageKindKinetic, spec.Kind)
+	if spec.Type != DamageTypeKinetic {
+		t.Fatalf("expected kind %q, got %q", DamageTypeKinetic, spec.Type)
 	}
 	if spec.Cause != DamageCauseCollision {
 		t.Fatalf("expected cause %q, got %q", DamageCauseCollision, spec.Cause)
@@ -1158,7 +1299,7 @@ func TestDamageSpecConstructionKineticCollision(t *testing.T) {
 func TestDamageSpecConstructionExplosiveProjectile(t *testing.T) {
 	spec := DamageSpec{
 		Amount:       3,
-		Kind:         DamageKindExplosive,
+		Type:         DamageTypeExplosive,
 		Cause:        DamageCauseProjectile,
 		BypassShield: true,
 	}
@@ -1166,8 +1307,8 @@ func TestDamageSpecConstructionExplosiveProjectile(t *testing.T) {
 	if spec.Amount != 3 {
 		t.Fatalf("expected amount %d, got %d", 3, spec.Amount)
 	}
-	if spec.Kind != DamageKindExplosive {
-		t.Fatalf("expected kind %q, got %q", DamageKindExplosive, spec.Kind)
+	if spec.Type != DamageTypeExplosive {
+		t.Fatalf("expected kind %q, got %q", DamageTypeExplosive, spec.Type)
 	}
 	if spec.Cause != DamageCauseProjectile {
 		t.Fatalf("expected cause %q, got %q", DamageCauseProjectile, spec.Cause)
@@ -1239,18 +1380,18 @@ func TestDamageCauseStringValues(t *testing.T) {
 	}
 }
 
-func TestDamageKindStringValues(t *testing.T) {
+func TestDamageTypeStringValues(t *testing.T) {
 	cases := []struct {
 		name string
 		got  string
 		want string
 	}{
-		{name: "kinetic", got: string(DamageKindKinetic), want: "kinetic"},
-		{name: "explosive", got: string(DamageKindExplosive), want: "explosive"},
-		{name: "energy", got: string(DamageKindEnergy), want: "energy"},
-		{name: "fire", got: string(DamageKindFire), want: "fire"},
-		{name: "poison", got: string(DamageKindPoison), want: "poison"},
-		{name: "true_damage", got: string(DamageKindTrueDamage), want: "true_damage"},
+		{name: "kinetic", got: string(DamageTypeKinetic), want: "kinetic"},
+		{name: "explosive", got: string(DamageTypeExplosive), want: "explosive"},
+		{name: "energy", got: string(DamageTypeEnergy), want: "energy"},
+		{name: "thermal", got: string(DamageTypeThermal), want: "thermal"},
+		{name: "radioactive", got: string(DamageTypeRadioactive), want: "radioactive"},
+		{name: "true_damage", got: string(DamageTypeTrueDamage), want: "true_damage"},
 	}
 
 	for _, tc := range cases {
@@ -1261,3 +1402,6 @@ func TestDamageKindStringValues(t *testing.T) {
 		})
 	}
 }
+
+
+

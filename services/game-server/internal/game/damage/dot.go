@@ -5,7 +5,7 @@ type DamageOverTimeSpec struct {
 	AmountPerTick   int
 	TickSeconds     float64
 	DurationSeconds float64
-	Kind            DamageKind
+	Type            DamageType
 	Modifiers       []DamageModifier
 }
 
@@ -20,7 +20,7 @@ type ActiveDamageOverTime struct {
 	AmountPerTick  int
 	TickSeconds    float64
 	DurationSeconds float64
-	Kind           DamageKind
+	Type           DamageType
 	Modifiers      []DamageModifier
 }
 
@@ -32,7 +32,7 @@ type DamageOverTimeTickResult struct {
 	TickRemaining    float64
 	DurationSeconds float64
 	DurationRemaining float64
-	Kind             DamageKind
+	Type             DamageType
 	Modifiers        []DamageModifier
 	Results          []DamageResult
 	Expired          bool
@@ -46,7 +46,7 @@ func TickDamageOverTime(effect ActiveDamageOverTime, target DamageTarget, delta 
 		TickSeconds:      effect.TickSeconds,
 		DurationSeconds:  effect.DurationSeconds,
 		DurationRemaining: max(effect.DurationSeconds-delta, 0),
-		Kind:             effect.Kind,
+		Type:             effect.Type,
 		Modifiers:        effect.Modifiers,
 	}
 
@@ -70,7 +70,7 @@ func TickDamageOverTime(effect ActiveDamageOverTime, target DamageTarget, delta 
 			Target: target,
 			Spec: DamageSpec{
 				Amount: effect.AmountPerTick,
-				Kind:   effect.Kind,
+				Type:   effect.Type,
 				Cause:  DamageCauseDot,
 			},
 			Modifiers: effect.Modifiers,
@@ -92,3 +92,4 @@ func TickDamageOverTime(effect ActiveDamageOverTime, target DamageTarget, delta 
 	result.Expired = result.DurationRemaining <= 0
 	return result
 }
+

@@ -121,7 +121,7 @@ func (game *Game) DevtoolsKillPlayer(sourcePlayerID string, targetPlayerID strin
 		},
 		Spec: damage.DamageSpec{
 			Amount: targetPlayer.Health,
-			Kind:   damage.DamageKindKinetic,
+			Type:   damage.DamageTypeKinetic,
 			Cause:  damage.DamageCauseDebug,
 		},
 	}
@@ -133,3 +133,4 @@ func (game *Game) DevtoolsKillPlayer(sourcePlayerID string, targetPlayerID strin
 	}
 	return true
 }
+

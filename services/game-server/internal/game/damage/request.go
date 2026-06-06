@@ -16,7 +16,7 @@ type DamageTarget struct {
 
 type DamageSpec struct {
 	Amount       int
-	Kind         DamageKind
+	Type         DamageType
 	Cause        DamageCause
 	BypassShield bool
 	DoT          DamageOverTimeSpec
@@ -28,3 +28,4 @@ type DamageResolutionRequest struct {
 	Spec      DamageSpec
 	Modifiers []DamageModifier
 }
+
