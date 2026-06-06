@@ -127,13 +127,17 @@ type PlayerPauseState struct {
 }
 
 type PlayerSessionState struct {
-	ID              string  `json:"id"`
-	ShipType        string  `json:"ship_type"`
-	Score           int     `json:"score"`
-	Lives           int     `json:"lives"`
-	RespawnCooldown float64 `json:"respawn_cooldown"`
-	SpawnX          float64 `json:"spawn_x"`
-	SpawnY          float64 `json:"spawn_y"`
+	ID                  string  `json:"id"`
+	ShipType            string  `json:"ship_type"`
+	Score               int     `json:"score"`
+	Lives               int     `json:"lives"`
+	RespawnCooldown     float64 `json:"respawn_cooldown"`
+	PrimaryWeaponID     string  `json:"primary_weapon_id"`
+	PrimaryAmmoPolicy   string  `json:"primary_ammo_policy"`
+	SecondaryWeaponID   string  `json:"secondary_weapon_id"`
+	SecondaryAmmoPolicy string  `json:"secondary_ammo_policy"`
+	SpawnX              float64 `json:"spawn_x"`
+	SpawnY              float64 `json:"spawn_y"`
 }
 
 type PickupState struct {

@@ -3,6 +3,7 @@ package runtime
 import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
 )
 
 func NewBullet(
@@ -25,13 +26,31 @@ func NewBullet(
 	}
 }
 
+func NewBulletFromWeaponSpawn(id string, ownerID string, spawn weapons.ProjectileSpawn) *Bullet {
+	return &Bullet{
+		ID:             id,
+		OwnerID:        ownerID,
+		WeaponID:       spawn.WeaponID,
+		ProjectileType: spawn.ProjectileType,
+		X:              spawn.Position.X,
+		Y:              spawn.Position.Y,
+		Rotation:       spawn.Rotation,
+		Velocity:       spawn.Velocity,
+		Life:           spawn.Lifetime,
+		Damage:         spawn.Damage.Amount,
+		DamageSpec:     spawn.Damage,
+	}
+}
+
 func (bullet *Bullet) State() BulletState {
 	return BulletState{
-		ID:       bullet.ID,
-		OwnerID:  bullet.OwnerID,
-		X:        bullet.X,
-		Y:        bullet.Y,
-		Rotation: bullet.Rotation,
+		ID:             bullet.ID,
+		OwnerID:        bullet.OwnerID,
+		WeaponID:       string(bullet.WeaponID),
+		ProjectileType: bullet.ProjectileType,
+		X:              bullet.X,
+		Y:              bullet.Y,
+		Rotation:       bullet.Rotation,
 	}
 }
 

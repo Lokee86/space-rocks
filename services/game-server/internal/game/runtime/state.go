@@ -4,6 +4,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
 )
 
 const DefaultShipTypeID = "v_wing"
@@ -18,7 +19,8 @@ type Ship struct {
 	Velocity                 physics.Vector2
 	Input                    InputState
 	Config                   ClientConfig
-	ShootCooldown            float64
+	ShipWeapons              weapons.ShipWeapons
+	WeaponState              weapons.State
 	TargetKind               string
 	TargetID                 string
 	Health                   int
@@ -39,12 +41,15 @@ type CameraView struct {
 type Bullet struct {
 	ID             string
 	OwnerID        string
+	WeaponID       weapons.ID
+	ProjectileType string
 	X              float64
 	Y              float64
 	Rotation       float64
 	Velocity       physics.Vector2
 	Life           float64
 	Damage         int
+	DamageSpec     damage.DamageSpec
 	PendingDespawn bool
 	DespawnDelay   float64
 }

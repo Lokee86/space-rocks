@@ -101,7 +101,7 @@ func (game *Game) playerCanShoot(playerID string, player *runtime.Ship) bool {
 		return false
 	}
 	return !session.Suspension.IsSuspended() &&
-		player.ShootCooldown == 0
+		player.WeaponState.Primary.CooldownRemaining == 0
 }
 
 func (game *Game) playerCanTakeCollisionDamage(playerID string, player *runtime.Ship) bool {

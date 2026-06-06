@@ -29,6 +29,7 @@ func (game *Game) Step(delta float64) {
 	bounds := space.DefaultBounds()
 
 	game.stepPlayerSessions(delta)
+	game.stepPlayerWeapons(delta)
 	game.stepPlayers(delta, bounds)
 	game.removeReadyPlayers()
 	game.stepAsteroidSpawning(delta)

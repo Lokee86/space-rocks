@@ -1,6 +1,9 @@
 package pickups
 
+import "github.com/Lokee86/space-rocks/server/internal/game/weapons"
+
 const EffectTypeAddLives = "add_lives"
+const EffectTypeEquipWeapon = "equip_weapon"
 
 type CollectionRequest struct {
 	PlayerID   string
@@ -16,6 +19,9 @@ type EffectIntent struct {
 	PickupType string
 	EffectType string
 	Amount     int
+	WeaponID   weapons.ID
+	Slot       weapons.Slot
+	Ammo       int
 }
 
 type CollectionResult struct {

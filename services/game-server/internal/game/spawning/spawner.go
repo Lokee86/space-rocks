@@ -48,22 +48,6 @@ func (spawner *Spawner) NextBulletID() string {
 	return fmt.Sprintf("bullet-%d", spawner.nextBulletID)
 }
 
-func (spawner *Spawner) BuildBullet(ship *runtime.Ship) *runtime.Bullet {
-	forward := ship.Forward()
-	spawnPosition := ship.Position().Add(forward.Multiply(ship.Stats.BulletSpawnOffset))
-	velocity := forward.Multiply(ship.Stats.BulletSpeed)
-	bulletID := spawner.NextBulletID()
-
-	return runtime.NewBullet(
-		bulletID,
-		ship.ID,
-		spawnPosition,
-		ship.Rotation,
-		velocity,
-		ship.Stats.BulletLifetime,
-	)
-}
-
 func (spawner *Spawner) NextAsteroidID(existing map[string]*runtime.Asteroid) string {
 	for {
 		spawner.nextAsteroidID++

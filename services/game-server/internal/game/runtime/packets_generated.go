@@ -15,16 +15,24 @@ type InputState struct {
 }
 
 type ShipState struct {
-	ID         string  `json:"id"`
-	ShipType   string  `json:"ship_type"`
-	X          float64 `json:"x"`
-	Y          float64 `json:"y"`
-	Rotation   float64 `json:"rotation"`
-	Health     int     `json:"health"`
-	Shields    int     `json:"shields"`
-	Thrusting  bool    `json:"thrusting"`
-	TargetKind string  `json:"target_kind"`
-	TargetID   string  `json:"target_id"`
+	ID                         string  `json:"id"`
+	ShipType                   string  `json:"ship_type"`
+	X                          float64 `json:"x"`
+	Y                          float64 `json:"y"`
+	Rotation                   float64 `json:"rotation"`
+	Health                     int     `json:"health"`
+	Shields                    int     `json:"shields"`
+	Thrusting                  bool    `json:"thrusting"`
+	TargetKind                 string  `json:"target_kind"`
+	TargetID                   string  `json:"target_id"`
+	PrimaryWeaponID            string  `json:"primary_weapon_id"`
+	PrimaryAmmoPolicy          string  `json:"primary_ammo_policy"`
+	PrimaryCooldownRemaining   float64 `json:"primary_cooldown_remaining"`
+	PrimaryAmmoRemaining       int     `json:"primary_ammo_remaining"`
+	SecondaryWeaponID          string  `json:"secondary_weapon_id"`
+	SecondaryAmmoPolicy        string  `json:"secondary_ammo_policy"`
+	SecondaryCooldownRemaining float64 `json:"secondary_cooldown_remaining"`
+	SecondaryAmmoRemaining     int     `json:"secondary_ammo_remaining"`
 }
 
 type AsteroidState struct {
@@ -38,11 +46,13 @@ type AsteroidState struct {
 }
 
 type BulletState struct {
-	ID       string  `json:"id"`
-	OwnerID  string  `json:"owner_id"`
-	X        float64 `json:"x"`
-	Y        float64 `json:"y"`
-	Rotation float64 `json:"rotation"`
+	ID             string  `json:"id"`
+	OwnerID        string  `json:"owner_id"`
+	X              float64 `json:"x"`
+	Y              float64 `json:"y"`
+	Rotation       float64 `json:"rotation"`
+	WeaponID       string  `json:"weapon_id"`
+	ProjectileType string  `json:"projectile_type"`
 }
 
 type PickupState struct {
