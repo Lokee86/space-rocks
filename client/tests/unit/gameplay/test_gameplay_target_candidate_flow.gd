@@ -3,6 +3,11 @@ extends GutTest
 const GameplayTargetCandidateFlow = preload("res://scripts/gameplay/targeting/gameplay_target_candidate_flow.gd")
 
 
+class FakePickupNode:
+	func collision_radius() -> float:
+		return 30.0
+
+
 class FakeTargetPositionSource:
 	var player_position_entries := {}
 	var asteroid_position_entries := {}
@@ -60,6 +65,11 @@ func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates(
 		"pickup-1": {
 			"visual_position": Vector2(130, 140),
 			"server_position": Vector2(150, 160),
+			"node": FakePickupNode.new(),
+		},
+		"pickup-2": {
+			"visual_position": Vector2(170, 180),
+			"server_position": Vector2(190, 200),
 		}
 	}
 
@@ -67,13 +77,14 @@ func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates(
 	flow.configure(target_position_source)
 
 	var candidates := flow.target_visual_candidates()
-	assert_eq(candidates.size(), 4)
+	assert_eq(candidates.size(), 5)
 
 	var by_key := _candidate_map(candidates)
 	assert_true(by_key.has("player:player-1"))
 	assert_true(by_key.has("pickup:pickup-1"))
 	assert_true(by_key.has("asteroid:asteroid-1"))
 	assert_true(by_key.has("bullet:bullet-1"))
+	assert_true(by_key.has("pickup:pickup-2"))
 
 	var player_candidate = by_key["player:player-1"]
 	assert_eq(player_candidate.target_kind, "player")
@@ -87,7 +98,12 @@ func test_target_visual_candidates_builds_player_asteroid_and_bullet_candidates(
 	assert_eq(pickup_candidate.target_id, "pickup-1")
 	assert_eq(pickup_candidate.visual_position, Vector2(130, 140))
 	assert_eq(pickup_candidate.server_position, Vector2(150, 160))
-	assert_eq(pickup_candidate.pick_radius, 32.0)
+	assert_eq(pickup_candidate.pick_radius, 30.0)
+
+	var pickup_fallback_candidate = by_key["pickup:pickup-2"]
+	assert_eq(pickup_fallback_candidate.target_kind, "pickup")
+	assert_eq(pickup_fallback_candidate.target_id, "pickup-2")
+	assert_eq(pickup_fallback_candidate.pick_radius, 32.0)
 
 	var asteroid_candidate = by_key["asteroid:asteroid-1"]
 	assert_eq(asteroid_candidate.target_kind, "asteroid")
