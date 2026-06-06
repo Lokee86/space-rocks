@@ -88,6 +88,12 @@ func apply_devtools_debug_status_packet(packet: Dictionary) -> void:
 	flow_composer.apply_devtools_debug_status_packet(packet)
 
 
+func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
+	if flow_composer == null:
+		return
+	flow_composer.apply_debug_shape_catalog_packet(packet)
+
+
 func handle_unhandled_input(event: InputEvent) -> bool:
 	if flow_composer == null:
 		return false

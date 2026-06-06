@@ -2,7 +2,6 @@ extends RefCounted
 class_name PickupSync
 
 const PICKUP_ONE_UP_SCENE = preload("res://scenes/pickups/1_up.tscn")
-const GameplayAudioFlow = preload("res://scripts/gameplay/audio/gameplay_audio_flow.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var pickups_layer = null

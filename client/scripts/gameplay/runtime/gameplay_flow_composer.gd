@@ -148,6 +148,12 @@ func apply_devtools_debug_status_packet(packet: Dictionary) -> void:
 	devtools_context.apply_debug_status_packet(packet)
 
 
+func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
+	if server_hitbox_overlay_flow == null:
+		return
+	server_hitbox_overlay_flow.apply_debug_shape_catalog_packet(packet)
+
+
 func handle_unhandled_input(event: InputEvent, has_received_state: bool) -> bool:
 	if input_context == null:
 		return false

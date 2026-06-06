@@ -18,6 +18,7 @@ func writeServerMessages(
 	defer ticker.Stop()
 
 	debugStatusTick := 0
+	lastDebugShapeCatalogRoomID := ""
 
 	for {
 		select {
@@ -47,6 +48,7 @@ func writeServerMessages(
 				return
 			}
 			outbound.LogSlowGameplayPresentationWrite(time.Since(writeStarted), session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			lastDebugShapeCatalogRoomID = writeDebugShapeCatalogMessage(session, remoteAddr, lastDebugShapeCatalogRoomID)
 			debugStatusTick++
 			if debugStatusTick >= debugStatusWriteIntervalTicks {
 				debugStatusTick = 0
@@ -71,4 +73,23 @@ func writeDebugStatusMessage(session *webSocketSession, remoteAddr string) {
 	}) {
 		return
 	}
+}
+
+func writeDebugShapeCatalogMessage(session *webSocketSession, remoteAddr string, lastSentRoomID string) string {
+	if session.currentRoomID == "" || session.currentRoomID == lastSentRoomID || !outbound.CanSendDebugShapeCatalog(session.room) {
+		return lastSentRoomID
+	}
+
+	response, ok := outbound.BuildDebugShapeCatalogResponse(session.room, session.currentRoomID, remoteAddr)
+	if !ok {
+		return lastSentRoomID
+	}
+
+	if !outbound.WriteServerMessage(session.conn, response, func(err error) {
+		logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+	}) {
+		return lastSentRoomID
+	}
+
+	return session.currentRoomID
 }
