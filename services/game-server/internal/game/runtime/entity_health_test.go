@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
 )
 
 func TestResolveShipStatsDefaultTypeSetsMaxHealthFromConstants(t *testing.T) {
@@ -40,6 +41,58 @@ func TestNewBulletInitializesDamageFromConstants(t *testing.T) {
 	bullet := NewBullet("bullet-1", "player-1", physics.Vector2{}, 0, physics.Vector2{}, 1.0)
 	if bullet.Damage != constants.BulletDamage {
 		t.Fatalf("expected bullet damage %d, got %d", constants.BulletDamage, bullet.Damage)
+	}
+}
+
+func TestNewBulletFromWeaponSpawnCopiesWeaponFields(t *testing.T) {
+	spawn := weapons.ProjectileSpawn{
+		WeaponID:       weapons.BasicCannon,
+		ProjectileType: "bullet",
+		Position:       physics.Vector2{X: 10, Y: 20},
+		Rotation:       0.5,
+		Velocity:       physics.Vector2{X: 100, Y: 0},
+		Lifetime:       1.25,
+		Damage: damage.DamageSpec{
+			Amount: 3,
+			Type:   damage.DamageTypeKinetic,
+			Cause:  damage.DamageCauseProjectile,
+		},
+	}
+
+	bullet := NewBulletFromWeaponSpawn("bullet-1", "player-1", spawn)
+
+	if bullet.ID != "bullet-1" || bullet.OwnerID != "player-1" {
+		t.Fatalf("expected bullet identity to be copied, got %+v", bullet)
+	}
+	if bullet.WeaponID != spawn.WeaponID {
+		t.Fatalf("expected weapon id %q, got %q", spawn.WeaponID, bullet.WeaponID)
+	}
+	if bullet.ProjectileType != spawn.ProjectileType {
+		t.Fatalf("expected projectile type %q, got %q", spawn.ProjectileType, bullet.ProjectileType)
+	}
+	if bullet.X != spawn.Position.X || bullet.Y != spawn.Position.Y {
+		t.Fatalf("expected bullet position %v, got (%v, %v)", spawn.Position, bullet.X, bullet.Y)
+	}
+	if bullet.Rotation != spawn.Rotation {
+		t.Fatalf("expected rotation %v, got %v", spawn.Rotation, bullet.Rotation)
+	}
+	if bullet.Velocity != spawn.Velocity {
+		t.Fatalf("expected velocity %v, got %v", spawn.Velocity, bullet.Velocity)
+	}
+	if bullet.Life != spawn.Lifetime {
+		t.Fatalf("expected life %v, got %v", spawn.Lifetime, bullet.Life)
+	}
+	if bullet.Damage != spawn.Damage.Amount {
+		t.Fatalf("expected damage %d, got %d", spawn.Damage.Amount, bullet.Damage)
+	}
+	if bullet.DamageSpec.Amount != spawn.Damage.Amount {
+		t.Fatalf("expected damage amount %d, got %d", spawn.Damage.Amount, bullet.DamageSpec.Amount)
+	}
+	if bullet.DamageSpec.Type != spawn.Damage.Type {
+		t.Fatalf("expected damage type %q, got %q", spawn.Damage.Type, bullet.DamageSpec.Type)
+	}
+	if bullet.DamageSpec.Cause != spawn.Damage.Cause {
+		t.Fatalf("expected damage cause %q, got %q", spawn.Damage.Cause, bullet.DamageSpec.Cause)
 	}
 }
 

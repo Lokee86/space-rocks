@@ -11,11 +11,6 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
-func (game *Game) spawnBullet(ship *runtime.Ship) {
-	bullet := game.spawner.BuildBullet(ship)
-	game.entities.Projectiles[bullet.ID] = bullet
-}
-
 func debugBulletRotation(direction physics.Vector2) float64 {
 	return math.Atan2(direction.X, -direction.Y)
 }

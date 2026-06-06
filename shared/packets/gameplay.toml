@@ -172,6 +172,54 @@ go_name = "TargetID"
 json = "target_id"
 type = "string"
 
+[[structs.fields]]
+name = "primary_weapon_id"
+go_name = "PrimaryWeaponID"
+json = "primary_weapon_id"
+type = "string"
+
+[[structs.fields]]
+name = "primary_ammo_policy"
+go_name = "PrimaryAmmoPolicy"
+json = "primary_ammo_policy"
+type = "string"
+
+[[structs.fields]]
+name = "primary_cooldown_remaining"
+go_name = "PrimaryCooldownRemaining"
+json = "primary_cooldown_remaining"
+type = "float"
+
+[[structs.fields]]
+name = "primary_ammo_remaining"
+go_name = "PrimaryAmmoRemaining"
+json = "primary_ammo_remaining"
+type = "int"
+
+[[structs.fields]]
+name = "secondary_weapon_id"
+go_name = "SecondaryWeaponID"
+json = "secondary_weapon_id"
+type = "string"
+
+[[structs.fields]]
+name = "secondary_ammo_policy"
+go_name = "SecondaryAmmoPolicy"
+json = "secondary_ammo_policy"
+type = "string"
+
+[[structs.fields]]
+name = "secondary_cooldown_remaining"
+go_name = "SecondaryCooldownRemaining"
+json = "secondary_cooldown_remaining"
+type = "float"
+
+[[structs.fields]]
+name = "secondary_ammo_remaining"
+go_name = "SecondaryAmmoRemaining"
+json = "secondary_ammo_remaining"
+type = "int"
+
 [[structs]]
 id = "PlayerSessionState"
 
@@ -200,6 +248,30 @@ name = "respawn_cooldown"
 go_name = "RespawnCooldown"
 json = "respawn_cooldown"
 type = "float"
+
+[[structs.fields]]
+name = "primary_weapon_id"
+go_name = "PrimaryWeaponID"
+json = "primary_weapon_id"
+type = "string"
+
+[[structs.fields]]
+name = "primary_ammo_policy"
+go_name = "PrimaryAmmoPolicy"
+json = "primary_ammo_policy"
+type = "string"
+
+[[structs.fields]]
+name = "secondary_weapon_id"
+go_name = "SecondaryWeaponID"
+json = "secondary_weapon_id"
+type = "string"
+
+[[structs.fields]]
+name = "secondary_ammo_policy"
+go_name = "SecondaryAmmoPolicy"
+json = "secondary_ammo_policy"
+type = "string"
 
 [[structs.fields]]
 name = "spawn_x"
@@ -279,6 +351,18 @@ type = "float"
 name = "rotation"
 json = "rotation"
 type = "float"
+
+[[structs.fields]]
+name = "weapon_id"
+go_name = "WeaponID"
+json = "weapon_id"
+type = "string"
+
+[[structs.fields]]
+name = "projectile_type"
+go_name = "ProjectileType"
+json = "projectile_type"
+type = "string"
 
 [[structs]]
 id = "PickupState"

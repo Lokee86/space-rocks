@@ -10,6 +10,15 @@ func projectileAsteroidDamageRequest(
 	bullet *runtime.Bullet,
 	asteroid *runtime.Asteroid,
 ) damage.DamageResolutionRequest {
+	spec := bullet.DamageSpec
+	if spec.Amount == 0 {
+		spec = damage.DamageSpec{
+			Amount: bullet.Damage,
+			Type:   damage.DamageTypeKinetic,
+			Cause:  damage.DamageCauseProjectile,
+		}
+	}
+
 	return damage.DamageResolutionRequest{
 		Source: damage.DamageSource{
 			EntityID:   collision.ProjectileID,
@@ -22,11 +31,7 @@ func projectileAsteroidDamageRequest(
 			Health:     asteroid.Health,
 			Modifiers:  asteroid.DamageModifiers,
 		},
-		Spec: damage.DamageSpec{
-			Amount: bullet.Damage,
-			Type:   damage.DamageTypeKinetic,
-			Cause:  damage.DamageCauseProjectile,
-		},
+		Spec: spec,
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
@@ -23,6 +24,7 @@ type playerSession struct {
 	Suspension      runtime.SuspensionState
 	DamageOptions   runtime.DamageOptions
 	LifeOptions     runtime.LifeOptions
+	PlayerArmory    weapons.PlayerArmory
 }
 
 func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
@@ -37,6 +39,7 @@ func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
 		},
 		Targeting: EmptyPlayerTargeting(),
 		Lives:     constants.PlayerStartingLives,
+		PlayerArmory: weapons.DefaultPlayerArmory(),
 	}
 }
 
@@ -52,15 +55,17 @@ func (session *playerSession) CanRespawn() bool {
 
 func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
 	ship := &runtime.Ship{
-		ID:         session.ID,
-		ShipTypeID: session.ShipTypeID,
-		Stats:      session.Stats,
-		X:          position.X,
-		Y:          position.Y,
-		Config:     session.Config,
-		Health:     session.Stats.MaxHealth,
+		ID:            session.ID,
+		ShipTypeID:    session.ShipTypeID,
+		Stats:         session.Stats,
+		X:             position.X,
+		Y:             position.Y,
+		Config:        session.Config,
+		Health:        session.Stats.MaxHealth,
 		DamageOptions: session.DamageOptions,
 	}
+	ship.ShipWeapons.Primary = session.PlayerArmory.Primary
+	ship.ShipWeapons.Secondary = session.PlayerArmory.Secondary
 	session.Targeting.ApplyToShip(ship)
 	return ship
 }

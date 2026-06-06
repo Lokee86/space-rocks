@@ -207,11 +207,15 @@ Continuous bullet stream runtime state is owned by `services/game-server/interna
 
 `services/game-server/internal/game/collisions.go` defines a narrow collision detection seam for the destructive collision pairs currently used by combat. It reports concrete projectile/asteroid and player/asteroid collision facts.
 
-`services/game-server/internal/game/damage/` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat/game code is the adapter: it consumes collision facts, builds a `DamageResolutionRequest`, calls `ResolveSingle`, and then existing systems consume the `DamageResult`.
+`services/game-server/internal/game/damage/` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat/game code is the adapter: it consumes collision facts, builds a `DamageResolutionRequest` with `DamageSource`, `DamageTarget`, `DamageType`, and `DamageCause`, calls `ResolveSingle`, and then existing systems consume the `DamageResult`.
 
-The damage package also owns pure area and damage-over-time resolution helpers through `ResolveArea` and `TickDamageOverTime`. See [docs/design/damage.md](damage.md) for the full damage seam model.
+`DamageType` drives resistance and vulnerability matching, while `DamageSource` carries source entity identity plus cause. See [docs/design/damage.md](damage.md) for the full damage seam model.
+
+The damage package also owns pure area and damage-over-time resolution helpers through `ResolveArea` and `TickDamageOverTime`.
 
 The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
+Damage application may lead to future presentation events, but `DamageResult` itself is not the domain event boundary.
+Current combat damage can emit `damage_applied`, while `damage_over_time_started` and `damage_over_time_tick` remain adapter-mapped until DoT gameplay ownership is fully wired, as described in [docs/design/damage.md](damage.md).
 
 ### Scoring Policy
 

@@ -1,19 +1,29 @@
 package runtime
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import (
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+)
 
 func (ship *Ship) State() ShipState {
 	return ShipState{
-		ID:         ship.ID,
-		ShipType:   ship.ShipTypeID,
-		X:          ship.X,
-		Y:          ship.Y,
-		Rotation:   ship.Rotation,
-		TargetKind: ship.TargetKind,
-		TargetID:   ship.TargetID,
-		Health:     ship.Health,
-		Shields:    ship.Shields,
-		Thrusting:  ship.Input.Forward,
+		ID:                       ship.ID,
+		ShipType:                 ship.ShipTypeID,
+		X:                        ship.X,
+		Y:                        ship.Y,
+		Rotation:                 ship.Rotation,
+		TargetKind:               ship.TargetKind,
+		TargetID:                 ship.TargetID,
+		Health:                   ship.Health,
+		Shields:                  ship.Shields,
+		Thrusting:                ship.Input.Forward,
+		PrimaryWeaponID:          string(ship.ShipWeapons.Primary.ID),
+		PrimaryAmmoPolicy:        string(ship.ShipWeapons.Primary.AmmoPolicy),
+		PrimaryCooldownRemaining: ship.WeaponState.Primary.CooldownRemaining,
+		PrimaryAmmoRemaining:     ship.WeaponState.Primary.AmmoRemaining,
+		SecondaryWeaponID:        string(ship.ShipWeapons.Secondary.ID),
+		SecondaryAmmoPolicy:      string(ship.ShipWeapons.Secondary.AmmoPolicy),
+		SecondaryCooldownRemaining: ship.WeaponState.Secondary.CooldownRemaining,
+		SecondaryAmmoRemaining:   ship.WeaponState.Secondary.AmmoRemaining,
 	}
 }
 
@@ -27,10 +37,6 @@ func (ship *Ship) ClearInput() {
 
 func (ship *Ship) SetConfig(config ClientConfig) {
 	ship.Config = config
-}
-
-func (ship *Ship) ResetShootCooldown() {
-	ship.ShootCooldown = ship.Stats.BulletCooldown
 }
 
 func (ship *Ship) Position() physics.Vector2 {

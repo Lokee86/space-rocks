@@ -28,8 +28,10 @@
 
 - Damage runs as pure result calculation.
 - Runtime entities are passed in by the caller, not looked up inside the damage package.
+- Runtime ships and asteroids may carry `DamageModifiers` in game state.
 - The damage package returns results for the caller to apply.
 - `internal/game` builds damage targets, feeds them into the damage package, and writes `RemainingHealth` and `RemainingShield` back to runtime entities.
+- `combat_damage_requests.go` is the adapter between runtime entities and `DamageTarget`.
 - `ResolveSingle` is the main server-side runtime entry point.
 - `ResolveArea` and `TickDamageOverTime` are pure helpers that also stay inside the damage seam.
 
@@ -38,15 +40,18 @@
 - `DamageResolutionRequest` is the canonical request shape for new damage code.
 - `DamageSource` carries `EntityID`, `EntityType`, and `Cause`.
 - `DamageTarget` carries `EntityID`, `EntityType`, `Health`, `Shield`, and target-specific `Modifiers`.
-- `DamageSpec` carries the intent: `Amount`, `Kind`, `Cause`, `BypassShield`, and nested `DoT`.
-- `DamageKind` is damage flavor.
+- `DamageSpec` carries the intent: `Amount`, `Type`, `Cause`, `BypassShield`, and nested `DoT`.
+- `DamageType` is damage flavor.
 - `DamageCause` is delivery or source cause.
 - `DamageCause` examples: `collision`, `projectile`, `debug`, `area`, `dot`.
-- `DamageKind` examples: `kinetic`, `explosive`, `energy`, `fire`, `poison`, `true_damage`.
-- `DamageKind` answers "what kind of damage is this?"
+- `DamageType` examples: `kinetic`, `explosive`, `energy`, `thermal`, `radioactive`, `true_damage`.
+- `DamageType` answers "what type of damage is this?"
 - `DamageCause` answers "how or why did this damage happen?"
 - `DamageTarget` is the caller-provided runtime snapshot for one target, not a live entity handle.
 - `DamageTarget` includes health, shield, and target-specific modifiers.
+- Runtime entity modifiers are copied into `DamageTarget.Modifiers` by the game-package request builders.
+- Modifiers are per `DamageType`, not flat resistance profiles.
+- The damage package consumes the modifiers but does not own runtime entity storage.
 
 ## Damage Result Model
 
@@ -59,12 +64,26 @@
 
 ## Modifier Model
 
-- Damage modifiers are filtered before they are applied.
-- A modifier with an empty `Kind` applies globally.
-- A modifier with a matching `Kind` applies to that damage kind.
-- A modifier with a different non-empty `Kind` is ignored.
+- Modifier values are floats.
+- Damage modifiers are keyed by `DamageType`.
+- A modifier with an empty `DamageType` applies globally.
+- A modifier with a matching `DamageType` applies to that damage type.
+- A modifier with a different non-empty `DamageType` is ignored.
 - The current modifier categories are `outgoing`, `resistance`, `vulnerability`, and `generic`.
 - The current modifier operations are `add`, `multiply`, and `set`.
+- Outgoing and generic modifiers stay on the normal add/multiply/set path.
+- Resistance semantics:
+  - resistance values are resistance amounts
+  - valid range is `0 <= value < 1`
+  - `0.25` means 25% resistance
+  - applied as `damage *= (1 - value)`
+  - multiple resistances stack by multiplying the remaining damage
+- Vulnerability semantics:
+  - vulnerability values are damage multipliers
+  - valid range is `value > 1`
+  - `1.25` means +25% incoming damage
+  - applied as `damage *= value`
+- Invalid resistance and vulnerability modifiers are ignored.
 - Modifier application order is stable and intentional:
   - add modifiers apply first
   - multiply modifiers apply second
@@ -112,8 +131,8 @@
 
 - Future client rendering should receive damage results or damage events from server output.
 - The client should not calculate damage locally.
-- Future presentation events could include `damage_applied`, `shield_absorbed`, `damage_immune`, `dot_started`, `dot_tick`, and `damage_area_applied`.
-- Those names are future presentation concepts only; they are not the current packet schema.
+- Future presentation events could include `shield_absorbed`, `damage_immune`, and `damage_area_applied`.
+- `damage_applied`, `damage_over_time_started`, and `damage_over_time_tick` now exist as implemented domain-event names, but client rendering is still not implemented from them here.
 - Generated packet files should not be manually edited.
 
 ## Testing And Verification
@@ -130,3 +149,14 @@
 - Future work may add area falloff rules.
 - Future work may extend DoT into broader status effects.
 - Future work may add richer presentation and telemetry around damage outcomes.
+
+## Damage Events And Presentation
+
+- `DamageResult` is not a domain event.
+- Applying a `DamageResult` is game-owned state mutation, not a domain event.
+- Game-owned damage application emits damage domain events when useful.
+- Implemented domain-event names include `damage_applied`, `damage_over_time_started`, and `damage_over_time_tick`.
+- `damage_applied` is wired for current live combat damage paths.
+- `damage_over_time_started` and `damage_over_time_tick` have adapters/mapping, but active DoT gameplay ownership is not fully wired here unless the code says otherwise.
+- Possible future presentation events still include `shield_absorbed`, `damage_immune`, and `damage_area_applied`.
+- Those names are presentation concepts unless they are already wired elsewhere.

@@ -24,8 +24,6 @@ func StepShipWithMovePolicy(ship *runtime.Ship, delta float64, canMove bool) {
 
 	ship.InvulnerabilityRemaining = max(0, ship.InvulnerabilityRemaining-delta)
 
-	ship.ShootCooldown = max(0, ship.ShootCooldown-delta)
-
 	rotationInput := axis(ship.Input.Left, ship.Input.Right)
 	thrustInput := axis(ship.Input.Back, ship.Input.Forward)
 

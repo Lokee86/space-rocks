@@ -7,6 +7,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
@@ -152,17 +153,13 @@ func TestShipMovementUsesShipStatsValues(t *testing.T) {
 	assertFloatNear(t, ship.Y, expectedVelocity.Y*0.5)
 }
 
-func TestShootCooldownUsesShipStatsBulletCooldown(t *testing.T) {
-	ship := runtime.Ship{
-		Stats: runtime.ShipStats{
-			BulletCooldown: 0.77,
-		},
+func TestBasicCannonProfileUsesBulletCooldown(t *testing.T) {
+	profile, ok := weapons.Lookup(weapons.BasicCannon)
+	if !ok {
+		t.Fatal("expected basic cannon profile to exist")
 	}
-
-	ship.ResetShootCooldown()
-
-	if ship.ShootCooldown != ship.Stats.BulletCooldown {
-		t.Fatalf("expected shoot cooldown %v, got %v", ship.Stats.BulletCooldown, ship.ShootCooldown)
+	if profile.CooldownSeconds != constants.BulletCooldown {
+		t.Fatalf("expected cooldown %v, got %v", constants.BulletCooldown, profile.CooldownSeconds)
 	}
 }
 
@@ -173,9 +170,11 @@ func TestSpawnedBulletUsesShipStats(t *testing.T) {
 	ship.X = 100
 	ship.Y = 200
 	ship.Rotation = 0
-	ship.Stats.BulletSpeed = 321
-	ship.Stats.BulletLifetime = 0.45
-	ship.Stats.BulletSpawnOffset = 67
+
+	profile, ok := weapons.Lookup(weapons.BasicCannon)
+	if !ok {
+		t.Fatal("expected basic cannon profile to exist")
+	}
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
@@ -184,14 +183,14 @@ func TestSpawnedBulletUsesShipStats(t *testing.T) {
 	scenario.step(0)
 
 	bullet := scenario.bullet("bullet-1")
-	if bullet.Velocity.X != 0 || bullet.Velocity.Y != -ship.Stats.BulletSpeed {
-		t.Fatalf("expected bullet velocity (0, %v), got (%v, %v)", -ship.Stats.BulletSpeed, bullet.Velocity.X, bullet.Velocity.Y)
+	if bullet.Velocity.X != 0 || bullet.Velocity.Y != -profile.Projectile.Speed {
+		t.Fatalf("expected bullet velocity (0, %v), got (%v, %v)", -profile.Projectile.Speed, bullet.Velocity.X, bullet.Velocity.Y)
 	}
-	if bullet.Life != ship.Stats.BulletLifetime {
-		t.Fatalf("expected bullet lifetime %v, got %v", ship.Stats.BulletLifetime, bullet.Life)
+	if bullet.Life != profile.Projectile.Lifetime {
+		t.Fatalf("expected bullet lifetime %v, got %v", profile.Projectile.Lifetime, bullet.Life)
 	}
-	if bullet.X != ship.X || bullet.Y != ship.Y-ship.Stats.BulletSpawnOffset {
-		t.Fatalf("expected bullet position (%v, %v), got (%v, %v)", ship.X, ship.Y-ship.Stats.BulletSpawnOffset, bullet.X, bullet.Y)
+	if bullet.X != ship.X || bullet.Y != ship.Y-profile.Projectile.SpawnOffset {
+		t.Fatalf("expected bullet position (%v, %v), got (%v, %v)", ship.X, ship.Y-profile.Projectile.SpawnOffset, bullet.X, bullet.Y)
 	}
 }
 

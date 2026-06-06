@@ -29,8 +29,7 @@ func (game *Game) stepPlayers(delta float64, bounds space.Bounds) {
 			continue
 		}
 		if game.worldSimulationOptions.BulletsCanMove() && player.Input.Shoot && game.playerCanShoot(player.ID, player) {
-			game.spawnBullet(player)
-			player.ResetShootCooldown()
+			game.firePlayerPrimaryWeapon(player.ID, player)
 		}
 	}
 }
