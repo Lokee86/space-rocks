@@ -49,6 +49,44 @@ json = "player_frozen"
 type = "bool"
 
 [[structs]]
+id = "DebugShapePoint"
+
+[[structs.fields]]
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+name = "y"
+json = "y"
+type = "float"
+
+[[structs]]
+id = "DebugShapeDefinition"
+
+[[structs.fields]]
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+name = "kind"
+json = "kind"
+type = "string"
+
+[[structs.fields]]
+name = "shape_type"
+go_name = "ShapeType"
+json = "shape_type"
+type = "string"
+
+[[structs.fields]]
+name = "points"
+json = "points"
+type = "array"
+item_type = "DebugShapePoint"
+
+[[structs]]
 id = "DebugStatusPacket"
 
 [[structs.fields]]
@@ -69,6 +107,21 @@ json = "debug_statuses"
 type = "map"
 key_type = "string"
 value_type = "DebugStatus"
+
+[[structs]]
+id = "DebugShapeCatalogPacket"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "shapes"
+json = "shapes"
+type = "map"
+key_type = "string"
+value_type = "DebugShapeDefinition"
 
 [[structs]]
 id = "DebugCommand"
@@ -153,6 +206,10 @@ type = "int"
 [[packet_types]]
 id = "debug_status"
 value = "debug_status"
+
+[[packet_types]]
+id = "debug_shape_catalog"
+value = "debug_shape_catalog"
 
 [[packet_types]]
 id = "toggle_debug_invincible"

@@ -7,6 +7,7 @@ const (
 	PacketTypeToggleDebugFreezeWorld           = "toggle_debug_freeze_world"
 	PacketTypeToggleDebugFreezePlayer          = "toggle_debug_freeze_player"
 	PacketTypeDebugStatus                      = "debug_status"
+	PacketTypeDebugShapeCatalog                = "debug_shape_catalog"
 	PacketTypeDebugKillPlayer                  = "debug_kill_player"
 	PacketTypeDebugSpawnEntity                 = "debug_spawn_entity"
 	PacketTypeDebugSpawnPickup                 = "debug_spawn_pickup"
@@ -46,6 +47,23 @@ type DebugStatus struct {
 	SpawningFrozen   bool `json:"spawning_frozen"`
 	CollisionsFrozen bool `json:"collisions_frozen"`
 	PlayerFrozen     bool `json:"player_frozen"`
+}
+
+type DebugShapePoint struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+type DebugShapeDefinition struct {
+	ID        string            `json:"id"`
+	Kind      string            `json:"kind"`
+	ShapeType string            `json:"shape_type"`
+	Points    []DebugShapePoint `json:"points"`
+}
+
+type DebugShapeCatalogPacket struct {
+	Type   string                          `json:"type"`
+	Shapes map[string]DebugShapeDefinition `json:"shapes"`
 }
 
 type DebugStatusPacket struct {

@@ -61,6 +61,11 @@ func handle_debug_status_packet(packet: Dictionary) -> void:
 		gameplay_composition.apply_devtools_debug_status_packet(packet)
 
 
+func handle_debug_shape_catalog_packet(packet: Dictionary) -> void:
+	if gameplay_composition != null:
+		gameplay_composition.apply_debug_shape_catalog_packet(packet)
+
+
 func begin_accepting_gameplay_packets() -> void:
 	accepts_gameplay_packets = true
 

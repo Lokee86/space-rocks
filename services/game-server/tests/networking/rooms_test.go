@@ -1,6 +1,7 @@
 package networkingtests
 
 import (
+	"encoding/json"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -1692,13 +1693,38 @@ func webSocketURL(httpURL string) string {
 func readJSON(t *testing.T, conn *websocket.Conn, value any) {
 	t.Helper()
 
-	if err := conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond)); err != nil {
-		t.Fatalf("set websocket read deadline: %v", err)
-	}
-	if err := conn.ReadJSON(value); err != nil {
-		t.Fatalf("read websocket JSON: %v", err)
-	}
-	if err := conn.SetReadDeadline(time.Time{}); err != nil {
-		t.Fatalf("clear websocket read deadline: %v", err)
+	const maxSkippedPackets = 10
+
+	for skipped := 0; ; skipped++ {
+		if skipped >= maxSkippedPackets {
+			t.Fatalf("read websocket JSON: exceeded %d skipped async devtools packets", maxSkippedPackets)
+		}
+
+		if err := conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond)); err != nil {
+			t.Fatalf("set websocket read deadline: %v", err)
+		}
+
+		var raw map[string]any
+		if err := conn.ReadJSON(&raw); err != nil {
+			t.Fatalf("read websocket JSON: %v", err)
+		}
+
+		if err := conn.SetReadDeadline(time.Time{}); err != nil {
+			t.Fatalf("clear websocket read deadline: %v", err)
+		}
+
+		packetType, _ := raw["type"].(string)
+		if packetType == "debug_status" || packetType == "debug_shape_catalog" {
+			continue
+		}
+
+		encoded, err := json.Marshal(raw)
+		if err != nil {
+			t.Fatalf("marshal websocket JSON: %v", err)
+		}
+		if err := json.Unmarshal(encoded, value); err != nil {
+			t.Fatalf("unmarshal websocket JSON: %v", err)
+		}
+		return
 	}
 }
