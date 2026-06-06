@@ -5,6 +5,7 @@ const TARGET_PLAYER_PICK_RADIUS := 32.0
 const TARGET_PICKUP_PICK_RADIUS := 32.0
 const TARGET_ASTEROID_BASE_PICK_RADIUS := 32.0
 const TARGET_BULLET_PICK_RADIUS := 12.0
+const TargetPickRadiusResolver = preload("res://scripts/gameplay/targeting/target_pick_radius_resolver.gd")
 
 var target_position_source
 
@@ -51,7 +52,7 @@ func target_visual_candidates() -> Array:
 		pickup_candidate.target_id = String(pickup_id)
 		pickup_candidate.visual_position = position_entry["visual_position"]
 		pickup_candidate.server_position = position_entry["server_position"]
-		pickup_candidate.pick_radius = TARGET_PICKUP_PICK_RADIUS
+		pickup_candidate.pick_radius = TargetPickRadiusResolver.pickup_radius(position_entry, TARGET_PICKUP_PICK_RADIUS)
 		candidates.append(pickup_candidate)
 
 	var asteroid_positions: Dictionary = target_position_source.asteroid_positions()

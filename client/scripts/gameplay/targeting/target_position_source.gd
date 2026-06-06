@@ -55,4 +55,4 @@ func bullet_positions() -> Dictionary:
 func pickup_positions() -> Dictionary:
 	if pickup_sync == null:
 		return {}
-	return pickup_sync.pickup_target_positions()
+	return pickup_sync.pickup_position_entries()

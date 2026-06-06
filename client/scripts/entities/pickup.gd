@@ -5,6 +5,7 @@ const Constants = preload("res://scripts/generated/constants/constants.gd")
 @export var sprite_path: NodePath = NodePath("Sprite2D")
 @export var glow_sprite_path: NodePath = NodePath("GlowSprite2D")
 @export var spawn_sound_path: NodePath = NodePath("PickupSpawned")
+@export var collision_shape_path: NodePath = NodePath("CollisionShape2D")
 
 @export var sprite_pulse_rate := 2.0
 @export var sprite_pulse_amount := 0.06
@@ -19,6 +20,7 @@ const Constants = preload("res://scripts/generated/constants/constants.gd")
 var sprite: Sprite2D
 var glow_sprite: Sprite2D
 var spawn_sound: AudioStreamPlayer2D
+var collision_shape: CollisionShape2D
 
 var sprite_base_scale := Vector2.ONE
 var sprite_base_modulate := Color.WHITE
@@ -35,6 +37,7 @@ func _ready() -> void:
 	sprite = get_node_or_null(sprite_path) as Sprite2D
 	glow_sprite = get_node_or_null(glow_sprite_path) as Sprite2D
 	spawn_sound = get_node_or_null(spawn_sound_path) as AudioStreamPlayer2D
+	collision_shape = get_node_or_null(collision_shape_path) as CollisionShape2D
 
 	if sprite != null:
 		sprite_base_scale = sprite.scale
@@ -43,6 +46,17 @@ func _ready() -> void:
 	if glow_sprite != null:
 		glow_base_scale = glow_sprite.scale
 		glow_base_modulate = glow_sprite.modulate
+
+
+func collision_radius() -> float:
+	if collision_shape == null:
+		return 0.0
+
+	var circle_shape := collision_shape.shape as CircleShape2D
+	if circle_shape == null:
+		return 0.0
+
+	return circle_shape.radius
 
 
 func play_spawn_sound(audio_flow) -> void:

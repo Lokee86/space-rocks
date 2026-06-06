@@ -124,18 +124,17 @@ func remove_missing(server_pickups: Dictionary) -> void:
 		pickup_visual_positions.erase(pickup_id)
 
 
-func pickup_target_positions() -> Dictionary:
+func pickup_position_entries() -> Dictionary:
 	var positions = {}
 
 	for pickup_id in target_pickup_positions.keys():
 		var visual_position = target_pickup_positions[pickup_id]
-		var server_position = visual_position
-		if pickup_server_positions.has(pickup_id):
-			server_position = pickup_server_positions[pickup_id]
 
 		positions[pickup_id] = {
 			"visual_position": visual_position,
-			"server_position": server_position,
+			"server_position": pickup_server_positions.get(pickup_id, visual_position),
+			"pickup_type": pickup_types.get(pickup_id, ""),
+			"node": pickup_nodes.get(pickup_id, null),
 		}
 
 	return positions
