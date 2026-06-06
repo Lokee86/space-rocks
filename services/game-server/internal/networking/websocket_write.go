@@ -36,11 +36,13 @@ func writeServerMessages(
 				continue
 			}
 
+			writeStarted := time.Now()
 			if !outbound.WriteServerMessage(session.conn, response, func(err error) {
 				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 			}) {
 				return
 			}
+			outbound.LogSlowGameplayPresentationWrite(time.Since(writeStarted), session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 		}
 	}
 }
