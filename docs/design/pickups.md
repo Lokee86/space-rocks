@@ -107,7 +107,7 @@
 - Pickup health exists as current health only.
 - No `max_health` exists for pickups.
 - Bullet/pickup collision damage is not enabled.
-- Future damage should use the existing damage seam and update `Pickup.Health`.
+- Future pickup damage should use the damage seam in [docs/design/damage.md](damage.md), build `DamageTarget` values in game-owned adapters, and apply `DamageResult` back to `Pickup.Health` through game-owned adapters.
 - Destroyed pickup behavior should be a later explicit decision.
 
 ## Lifespan And Expiry

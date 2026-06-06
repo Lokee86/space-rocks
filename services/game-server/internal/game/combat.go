@@ -36,8 +36,8 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			}
 
 			damageRequest := projectileAsteroidDamageRequest(collision, bullet, asteroid)
-			damageResult := damage.Resolve(damageRequest)
-			asteroid.Health = damageResult.RemainingHealth
+			damageResult := damage.ResolveSingle(damageRequest)
+			applyDamageResultToAsteroid(asteroid, damageResult)
 			hitBullets[bulletID] = true
 			if !damageResult.Destroyed {
 				break
@@ -58,22 +58,6 @@ func (game *Game) handleBulletAsteroidCollisions() {
 	}
 
 	game.applyProjectileAsteroidHitConsequences(hitBullets, hitAsteroids, scoreAwards)
-}
-
-func projectileAsteroidDamageRequest(
-	collision ProjectileAsteroidCollision,
-	bullet *runtime.Bullet,
-	asteroid *runtime.Asteroid,
-) damage.DamageRequest {
-	return damage.DamageRequest{
-		TargetEntityID:   collision.AsteroidID,
-		TargetEntityType: damage.EntityTypeAsteroid,
-		SourceEntityID:   collision.ProjectileID,
-		SourceEntityType: damage.EntityTypeProjectile,
-		CurrentHealth:    asteroid.Health,
-		Amount:           bullet.Damage,
-		Type:             damage.DamageTypeProjectile,
-	}
 }
 
 func (game *Game) recordProjectileAsteroidHit(
@@ -149,8 +133,8 @@ func (game *Game) handleShipAsteroidCollisions() {
 			}
 
 			damageRequest := playerAsteroidDamageRequest(collision, asteroidID, player, asteroid)
-			damageResult := damage.Resolve(damageRequest)
-			player.Health = damageResult.RemainingHealth
+			damageResult := damage.ResolveSingle(damageRequest)
+			applyDamageResultToPlayer(player, damageResult)
 			if !damageResult.Fatal || damageResult.TargetEntityType != damage.EntityTypePlayer {
 				continue
 			}
@@ -221,21 +205,4 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship) 
 		X:            position.X,
 		Y:            position.Y,
 	})
-}
-
-func playerAsteroidDamageRequest(
-	collision PlayerAsteroidCollision,
-	asteroidID string,
-	player *runtime.Ship,
-	asteroid *runtime.Asteroid,
-) damage.DamageRequest {
-	return damage.DamageRequest{
-		TargetEntityID:   collision.PlayerID,
-		TargetEntityType: damage.EntityTypePlayer,
-		SourceEntityID:   asteroidID,
-		SourceEntityType: damage.EntityTypeAsteroid,
-		CurrentHealth:    player.Health,
-		Amount:           asteroid.CollisionDamage,
-		Type:             damage.DamageTypeCollision,
-	}
 }

@@ -78,6 +78,7 @@ docs/api/nestjs-api-server.md
 - Multiplayer start validation is centralized in the room lifecycle path, and `RoomManager` should resolve the room, session, and player identity before delegating to `Room` for the actual transition.
 - `networking` may retain websocket session activation/deactivation when it mutates websocket session fields.
 - `game` owns authoritative gameplay simulation, gameplay state mutation, and adapters from game storage into narrower gameplay seams.
+- Damage resolution lives in `services/game-server/internal/game/damage/`; it owns pure resolution only. `game` owns the entity mutation adapters, and devtools must route damage through the same real damage seam rather than a parallel debug-only path. See `docs/design/damage.md`.
 - Match/mode policy evaluation belongs in `services/game-server/internal/game/rules`, which should receive plain snapshots/facts and return decisions/status.
 - `game` should not own websocket transport, API persistence, account/auth concerns, or lobby UI flow.
 
@@ -233,4 +234,3 @@ env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
 ```
 
 If the command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
-
