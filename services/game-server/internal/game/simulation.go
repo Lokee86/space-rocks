@@ -37,6 +37,7 @@ func (game *Game) Step(delta float64) {
 	game.stepBullets(delta, bounds)
 	game.stepPickups(delta)
 	game.stepCollisions()
+	game.stepRadialEffects(delta)
 	for _, observer := range game.simulationStepObservers {
 		observer(delta)
 	}

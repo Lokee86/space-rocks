@@ -5,14 +5,13 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/events"
-	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) handleBulletAsteroidCollisions() {
 	hitBullets := map[string]bool{}
 	hitAsteroids := map[string]*runtime.Asteroid{}
-	scoreAwards := []scoring.Award{}
+	hitAsteroidOwners := map[string]string{}
 
 	for bulletID, bullet := range game.entities.Projectiles {
 		if hitBullets[bulletID] {
@@ -41,6 +40,7 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			if event, ok := damageAppliedEventForResult(damageResult, collision.ImpactPosition.X, collision.ImpactPosition.Y); ok {
 				game.recordDomainEvent(event)
 			}
+			game.spawnRadialEffectFromBullet(bullet, bullet.OwnerID, collision.ImpactPosition)
 			hitBullets[bulletID] = true
 			if !damageResult.Destroyed {
 				break
@@ -54,13 +54,13 @@ func (game *Game) handleBulletAsteroidCollisions() {
 				asteroid,
 				hitBullets,
 				hitAsteroids,
-				&scoreAwards,
+				hitAsteroidOwners,
 			)
 			break
 		}
 	}
 
-	game.applyProjectileAsteroidHitConsequences(hitBullets, hitAsteroids, scoreAwards)
+	game.applyProjectileAsteroidHitConsequences(hitBullets, hitAsteroids, hitAsteroidOwners)
 }
 
 func (game *Game) recordProjectileAsteroidHit(
@@ -71,17 +71,11 @@ func (game *Game) recordProjectileAsteroidHit(
 	asteroid *runtime.Asteroid,
 	hitBullets map[string]bool,
 	hitAsteroids map[string]*runtime.Asteroid,
-	scoreAwards *[]scoring.Award,
+	hitAsteroidOwners map[string]string,
 ) {
 	hitBullets[bulletID] = true
 	hitAsteroids[asteroidID] = asteroid
-	awards := game.scoringPolicy.Evaluate(scoring.Event{
-		Kind:         scoring.EventAsteroidDestroyed,
-		PlayerID:     bullet.OwnerID,
-		TargetID:     asteroid.ID,
-		AsteroidSize: asteroid.Size,
-	})
-	*scoreAwards = append(*scoreAwards, awards...)
+	hitAsteroidOwners[asteroidID] = bullet.OwnerID
 	game.recordDomainEvent(events.Event{
 		Type: events.EventBulletBlast,
 		X:    collision.ImpactPosition.X,
@@ -92,12 +86,8 @@ func (game *Game) recordProjectileAsteroidHit(
 func (game *Game) applyProjectileAsteroidHitConsequences(
 	hitBullets map[string]bool,
 	hitAsteroids map[string]*runtime.Asteroid,
-	scoreAwards []scoring.Award,
+	hitAsteroidOwners map[string]string,
 ) {
-	for _, award := range scoreAwards {
-		game.awardScore(award)
-	}
-
 	for bulletID := range hitBullets {
 		bullet := game.entities.Projectiles[bulletID]
 		bullet.MarkPendingDespawn(constants.CollisionDespawnDelay)
@@ -105,12 +95,7 @@ func (game *Game) applyProjectileAsteroidHitConsequences(
 
 	for asteroidID := range hitAsteroids {
 		asteroid := game.entities.Asteroids[asteroidID]
-		asteroid.MarkPendingDespawn(constants.CollisionDespawnDelay)
-	}
-
-	for _, asteroid := range hitAsteroids {
-		game.spawnAsteroidFragments(asteroid)
-		game.maybeDropPickupFromAsteroidLocked(asteroid)
+		game.applyProjectileAsteroidDestruction(hitAsteroidOwners[asteroidID], asteroid)
 	}
 }
 

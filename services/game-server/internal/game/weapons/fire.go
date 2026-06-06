@@ -21,6 +21,7 @@ type ProjectileSpawn struct {
 	Velocity       physics.Vector2
 	Lifetime       float64
 	Damage         damage.DamageSpec
+	ImpactEffect   ImpactEffectSpec
 }
 
 type FireResult struct {
@@ -56,6 +57,7 @@ func Fire(req FireRequest) FireResult {
 		Velocity:       forward.Multiply(profile.Projectile.Speed),
 		Lifetime:       profile.Projectile.Lifetime,
 		Damage:         profile.Damage,
+		ImpactEffect:   profile.ImpactEffect,
 	}
 
 	result := FireResult{

@@ -3,6 +3,7 @@ package weapons
 type ID string
 
 const BasicCannon ID = "basic_cannon"
+const Torpedo ID = "torpedo"
 
 type Slot string
 

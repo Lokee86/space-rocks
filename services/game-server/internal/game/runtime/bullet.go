@@ -32,6 +32,7 @@ func NewBulletFromWeaponSpawn(id string, ownerID string, spawn weapons.Projectil
 		OwnerID:        ownerID,
 		WeaponID:       spawn.WeaponID,
 		ProjectileType: spawn.ProjectileType,
+		ImpactEffect:   spawn.ImpactEffect,
 		X:              spawn.Position.X,
 		Y:              spawn.Position.Y,
 		Rotation:       spawn.Rotation,

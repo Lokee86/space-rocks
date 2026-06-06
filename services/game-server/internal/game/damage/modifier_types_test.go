@@ -87,3 +87,24 @@ func TestDamageTypeStringValues(t *testing.T) {
 		})
 	}
 }
+
+func TestEntityTypeStringValues(t *testing.T) {
+	cases := []struct {
+		name string
+		got  string
+		want string
+	}{
+		{name: "player", got: string(EntityTypePlayer), want: "player"},
+		{name: "asteroid", got: string(EntityTypeAsteroid), want: "asteroid"},
+		{name: "projectile", got: string(EntityTypeProjectile), want: "projectile"},
+		{name: "enemy", got: string(EntityTypeEnemy), want: "enemy"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.got != tc.want {
+				t.Fatalf("expected %q, got %q", tc.want, tc.got)
+			}
+		})
+	}
+}

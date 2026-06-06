@@ -11,3 +11,8 @@ func applyDamageResultToPlayer(player *runtime.Ship, result damage.DamageResult)
 	player.Health = result.RemainingHealth
 	player.Shields = result.RemainingShield
 }
+
+func applyDamageResultToEnemy(enemy *runtime.Ship, result damage.DamageResult) {
+	enemy.Health = result.RemainingHealth
+	enemy.Shields = result.RemainingShield
+}

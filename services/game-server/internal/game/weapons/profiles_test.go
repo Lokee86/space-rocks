@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
 	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 )
 
@@ -48,3 +49,46 @@ func TestLookupBasicCannonReturnsExpectedProfile(t *testing.T) {
 	}
 }
 
+func TestLookupTorpedoReturnsExpectedProfile(t *testing.T) {
+	profile, ok := Lookup(Torpedo)
+	if !ok {
+		t.Fatal("expected torpedo profile to be found")
+	}
+
+	if profile.ID != Torpedo {
+		t.Fatalf("ID = %q, want %q", profile.ID, Torpedo)
+	}
+	if profile.Slot != Secondary {
+		t.Fatalf("Slot = %q, want %q", profile.Slot, Secondary)
+	}
+	if profile.Projectile.Type != "torpedo" {
+		t.Fatalf("Projectile.Type = %q, want %q", profile.Projectile.Type, "torpedo")
+	}
+	if profile.ImpactEffect.Kind != ImpactEffectRadial {
+		t.Fatalf("ImpactEffect.Kind = %q, want %q", profile.ImpactEffect.Kind, ImpactEffectRadial)
+	}
+	if profile.ImpactEffect.Radial.CoverageMode != radial.CoverageAnnularWave {
+		t.Fatalf("ImpactEffect.Radial.CoverageMode = %q, want %q", profile.ImpactEffect.Radial.CoverageMode, radial.CoverageAnnularWave)
+	}
+	if profile.ImpactEffect.Radial.ExpirationMode != radial.ExpirationSimultaneous {
+		t.Fatalf("ImpactEffect.Radial.ExpirationMode = %q, want %q", profile.ImpactEffect.Radial.ExpirationMode, radial.ExpirationSimultaneous)
+	}
+	if got, want := profile.ImpactEffect.Radial.ZoneCount, 4; got != want {
+		t.Fatalf("ImpactEffect.Radial.ZoneCount = %d, want %d", got, want)
+	}
+	if !profile.ImpactEffect.Radial.TargetFilter.Allows(radial.TargetAsteroid) {
+		t.Fatal("expected asteroids to be allowed")
+	}
+	if !profile.ImpactEffect.Radial.TargetFilter.Allows(radial.TargetEnemy) {
+		t.Fatal("expected enemies to be allowed")
+	}
+	if profile.ImpactEffect.Radial.TargetFilter.Allows(radial.TargetPlayer) {
+		t.Fatal("expected players to be excluded")
+	}
+	if profile.ImpactEffect.Radial.TargetFilter.Allows(radial.TargetProjectile) {
+		t.Fatal("expected projectiles to be excluded")
+	}
+	if profile.ImpactEffect.Radial.TargetFilter.Allows(radial.TargetPickup) {
+		t.Fatal("expected pickups to be excluded")
+	}
+}

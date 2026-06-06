@@ -43,6 +43,7 @@ type Bullet struct {
 	OwnerID        string
 	WeaponID       weapons.ID
 	ProjectileType string
+	ImpactEffect   weapons.ImpactEffectSpec
 	X              float64
 	Y              float64
 	Rotation       float64

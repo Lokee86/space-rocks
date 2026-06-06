@@ -57,6 +57,9 @@ func TestNewBulletFromWeaponSpawnCopiesWeaponFields(t *testing.T) {
 			Type:   damage.DamageTypeKinetic,
 			Cause:  damage.DamageCauseProjectile,
 		},
+		ImpactEffect: weapons.ImpactEffectSpec{
+			Kind: weapons.ImpactEffectNone,
+		},
 	}
 
 	bullet := NewBulletFromWeaponSpawn("bullet-1", "player-1", spawn)
@@ -93,6 +96,9 @@ func TestNewBulletFromWeaponSpawnCopiesWeaponFields(t *testing.T) {
 	}
 	if bullet.DamageSpec.Cause != spawn.Damage.Cause {
 		t.Fatalf("expected damage cause %q, got %q", spawn.Damage.Cause, bullet.DamageSpec.Cause)
+	}
+	if bullet.ImpactEffect.Kind != spawn.ImpactEffect.Kind {
+		t.Fatalf("expected impact effect kind %q, got %q", spawn.ImpactEffect.Kind, bullet.ImpactEffect.Kind)
 	}
 }
 

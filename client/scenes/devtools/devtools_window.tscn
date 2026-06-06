@@ -11,8 +11,7 @@ bg_color = Color(0.08, 0.1, 0.14, 0.78)
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(630, 805)
-visible = false
+size = Vector2i(630, 915)
 always_on_top = true
 script = ExtResource("1_devtools_window")
 
@@ -44,28 +43,27 @@ layout_mode = 2
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=82002913]
 layout_mode = 2
 
-[node name="CenterContainer19" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=2097532991]
+[node name="CenterContainer3" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=368271522]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ShowServerHitboxesCheckBox" type="CheckBox" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3/CenterContainer19" unique_id=1072808839]
+[node name="ShowServerHitboxesCheckBox" type="CheckBox" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3/CenterContainer3" unique_id=1072808839]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Show Server Collision Telemetry"
 
-[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=952102394]
+[node name="CenterContainer19" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=2097532991]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SpawnPickupButton" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3/CenterContainer" unique_id=1619328286]
+[node name="SpawnPickupButton" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3/CenterContainer19" unique_id=1132238372]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "Spawn Pickup
- "
+text = "Spawn Pickup"
 
 [node name="CenterContainer2" type="CenterContainer" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer3" unique_id=1365037110]
 layout_mode = 2
