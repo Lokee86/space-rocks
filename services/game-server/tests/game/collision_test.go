@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
@@ -128,6 +129,25 @@ func TestBulletAsteroidCollisionNonfatalDamageDoesNotDestroyScoreOrFragment(t *t
 	}
 	if len(scenario.state(playerID).Asteroids) != 1 {
 		t.Fatalf("expected no spawned fragments for non-destroying hit, got %d asteroids", len(scenario.state(playerID).Asteroids))
+	}
+}
+
+func TestBulletAsteroidCollisionAppliesAsteroidDamageModifiers(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	impactPosition := physics.Vector2{X: 100, Y: 100}
+	scenario.placeBullet("bullet-1", playerID, impactPosition, physics.Vector2{})
+	scenario.placeAsteroid("asteroid-1", impactPosition, 3)
+	scenario.setAsteroidHealth("asteroid-1", 3)
+	scenario.setAsteroidDamageModifiers("asteroid-1", []damage.DamageModifier{
+		{Type: damage.DamageTypeKinetic, Category: damage.DamageModifierCategoryResistance, Operation: damage.DamageModifierOperationMultiply, Value: 0.5},
+	})
+
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	if health := scenario.asteroidHealth("asteroid-1"); health != 2 {
+		t.Fatalf("expected asteroid health 2 after resistance, got %d", health)
 	}
 }
 
@@ -327,6 +347,28 @@ func TestShipAsteroidCollisionNonfatalDamageReducesHealthWithoutDeath(t *testing
 	}
 }
 
+func TestShipAsteroidCollisionAppliesPlayerDamageModifiers(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	player := scenario.playerState(playerID, playerID)
+	position := physics.Vector2{X: player.X, Y: player.Y}
+	scenario.setPlayerHealth(playerID, 3)
+	scenario.setPlayerDamageModifiers(playerID, []damage.DamageModifier{
+		{Type: damage.DamageTypeKinetic, Category: damage.DamageModifierCategoryVulnerability, Operation: damage.DamageModifierOperationMultiply, Value: 1.5},
+	})
+	scenario.placeAsteroid("asteroid-1", position, 1)
+
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	if health := scenario.playerHealth(playerID); health != 1 {
+		t.Fatalf("expected player health 1 after vulnerability, got %d", health)
+	}
+	if scenario.playerPendingDespawn(playerID) {
+		t.Fatal("expected player to remain active after modified nonfatal collision")
+	}
+}
+
 func TestShipAsteroidCollisionSkipsPausedPlayer(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()
@@ -399,3 +441,4 @@ func TestAsteroidVisibilityUsesCameraViewsWithoutPlayer(t *testing.T) {
 		t.Fatal("expected asteroid inside camera view to remain even without a player entity")
 	}
 }
+

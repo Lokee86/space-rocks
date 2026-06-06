@@ -8,8 +8,6 @@ const (
 	EntityTypeProjectile EntityType = "projectile"
 )
 
-type DamageType string
-
 type DamageCause string
 
 const (
@@ -20,13 +18,13 @@ const (
 	DamageCauseDot        DamageCause = "dot"
 )
 
-type DamageKind string
+type DamageType string
 
 const (
-	DamageKindKinetic   DamageKind = "kinetic"
-	DamageKindExplosive DamageKind = "explosive"
-	DamageKindEnergy    DamageKind = "energy"
-	DamageKindFire      DamageKind = "fire"
-	DamageKindPoison    DamageKind = "poison"
-	DamageKindTrueDamage DamageKind = "true_damage"
+	DamageTypeKinetic     DamageType = "kinetic"
+	DamageTypeExplosive   DamageType = "explosive"
+	DamageTypeEnergy      DamageType = "energy"
+	DamageTypeThermal     DamageType = "thermal"
+	DamageTypeRadioactive DamageType = "radioactive"
+	DamageTypeTrueDamage  DamageType = "true_damage"
 )

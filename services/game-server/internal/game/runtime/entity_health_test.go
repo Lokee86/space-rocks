@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -75,3 +76,44 @@ func TestShipStateIncludesTargetKindAndTargetID(t *testing.T) {
 		t.Fatalf("expected target id %q, got %q", "player-2", state.TargetID)
 	}
 }
+
+func TestShipConstructionIncludesDamageModifiers(t *testing.T) {
+	ship := &Ship{
+		ID: "player-1",
+		DamageModifiers: []damage.DamageModifier{
+			{Type: damage.DamageTypeThermal, Category: damage.DamageModifierCategoryResistance, Operation: damage.DamageModifierOperationMultiply, Value: 0.25},
+			{Type: damage.DamageTypeRadioactive, Category: damage.DamageModifierCategoryVulnerability, Operation: damage.DamageModifierOperationMultiply, Value: 1.25},
+		},
+	}
+
+	if len(ship.DamageModifiers) != 2 {
+		t.Fatalf("expected 2 ship damage modifiers, got %d", len(ship.DamageModifiers))
+	}
+	if ship.DamageModifiers[0].Type != damage.DamageTypeThermal {
+		t.Fatalf("expected first modifier type %q, got %q", damage.DamageTypeThermal, ship.DamageModifiers[0].Type)
+	}
+	if ship.DamageModifiers[1].Type != damage.DamageTypeRadioactive {
+		t.Fatalf("expected second modifier type %q, got %q", damage.DamageTypeRadioactive, ship.DamageModifiers[1].Type)
+	}
+}
+
+func TestAsteroidConstructionIncludesDamageModifiers(t *testing.T) {
+	asteroid := &Asteroid{
+		ID: "asteroid-1",
+		DamageModifiers: []damage.DamageModifier{
+			{Type: damage.DamageTypeExplosive, Category: damage.DamageModifierCategoryResistance, Operation: damage.DamageModifierOperationMultiply, Value: 0.5},
+			{Type: damage.DamageTypeEnergy, Category: damage.DamageModifierCategoryVulnerability, Operation: damage.DamageModifierOperationMultiply, Value: 1.5},
+		},
+	}
+
+	if len(asteroid.DamageModifiers) != 2 {
+		t.Fatalf("expected 2 asteroid damage modifiers, got %d", len(asteroid.DamageModifiers))
+	}
+	if asteroid.DamageModifiers[0].Type != damage.DamageTypeExplosive {
+		t.Fatalf("expected first modifier type %q, got %q", damage.DamageTypeExplosive, asteroid.DamageModifiers[0].Type)
+	}
+	if asteroid.DamageModifiers[1].Type != damage.DamageTypeEnergy {
+		t.Fatalf("expected second modifier type %q, got %q", damage.DamageTypeEnergy, asteroid.DamageModifiers[1].Type)
+	}
+}
+

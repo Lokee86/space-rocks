@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
@@ -205,6 +206,12 @@ func (scenario *scenario) setPlayerHealth(playerID string, health int) {
 	scenario.player(playerID).Health = health
 }
 
+func (scenario *scenario) setPlayerDamageModifiers(playerID string, modifiers []damage.DamageModifier) {
+	scenario.t.Helper()
+
+	scenario.player(playerID).DamageModifiers = modifiers
+}
+
 func (scenario *scenario) playerHealth(playerID string) int {
 	scenario.t.Helper()
 
@@ -304,6 +311,17 @@ func (scenario *scenario) setAsteroidHealth(id string, health int) {
 	}
 
 	asteroid.Interface().(*runtime.Asteroid).Health = health
+}
+
+func (scenario *scenario) setAsteroidDamageModifiers(id string, modifiers []damage.DamageModifier) {
+	scenario.t.Helper()
+
+	asteroid := scenario.asteroids().MapIndex(reflect.ValueOf(id))
+	if !asteroid.IsValid() || asteroid.IsNil() {
+		scenario.t.Fatalf("expected asteroid %q", id)
+	}
+
+	asteroid.Interface().(*runtime.Asteroid).DamageModifiers = modifiers
 }
 
 func (scenario *scenario) asteroidHealth(id string) int {

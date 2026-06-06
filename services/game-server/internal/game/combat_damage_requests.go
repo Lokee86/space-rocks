@@ -20,10 +20,11 @@ func projectileAsteroidDamageRequest(
 			EntityID:   collision.AsteroidID,
 			EntityType: damage.EntityTypeAsteroid,
 			Health:     asteroid.Health,
+			Modifiers:  asteroid.DamageModifiers,
 		},
 		Spec: damage.DamageSpec{
 			Amount: bullet.Damage,
-			Kind:   damage.DamageKindKinetic,
+			Type:   damage.DamageTypeKinetic,
 			Cause:  damage.DamageCauseProjectile,
 		},
 	}
@@ -46,11 +47,13 @@ func playerAsteroidDamageRequest(
 			EntityType: damage.EntityTypePlayer,
 			Health:     player.Health,
 			Shield:     player.Shields,
+			Modifiers:  player.DamageModifiers,
 		},
 		Spec: damage.DamageSpec{
 			Amount: asteroid.CollisionDamage,
-			Kind:   damage.DamageKindKinetic,
+			Type:   damage.DamageTypeKinetic,
 			Cause:  damage.DamageCauseCollision,
 		},
 	}
 }
+

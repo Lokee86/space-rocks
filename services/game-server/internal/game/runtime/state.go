@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
@@ -22,6 +23,7 @@ type Ship struct {
 	TargetID                 string
 	Health                   int
 	Shields                  int
+	DamageModifiers          []damage.DamageModifier
 	DamageOptions            DamageOptions
 	InvulnerabilityRemaining float64
 	PendingDespawn           bool
@@ -55,6 +57,7 @@ type Asteroid struct {
 	Size           int
 	Variant        int
 	Health         int
+	DamageModifiers []damage.DamageModifier
 	CollisionDamage int
 	PendingDespawn bool
 	DespawnDelay   float64
