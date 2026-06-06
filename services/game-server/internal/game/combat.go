@@ -38,6 +38,9 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			damageRequest := projectileAsteroidDamageRequest(collision, bullet, asteroid)
 			damageResult := damage.ResolveSingle(damageRequest)
 			applyDamageResultToAsteroid(asteroid, damageResult)
+			if event, ok := damageAppliedEventForResult(damageResult, collision.ImpactPosition.X, collision.ImpactPosition.Y); ok {
+				game.recordDomainEvent(event)
+			}
 			hitBullets[bulletID] = true
 			if !damageResult.Destroyed {
 				break
@@ -135,6 +138,9 @@ func (game *Game) handleShipAsteroidCollisions() {
 			damageRequest := playerAsteroidDamageRequest(collision, asteroidID, player, asteroid)
 			damageResult := damage.ResolveSingle(damageRequest)
 			applyDamageResultToPlayer(player, damageResult)
+			if event, ok := damageAppliedEventForResult(damageResult, player.Position().X, player.Position().Y); ok {
+				game.recordDomainEvent(event)
+			}
 			if !damageResult.Fatal || damageResult.TargetEntityType != damage.EntityTypePlayer {
 				continue
 			}

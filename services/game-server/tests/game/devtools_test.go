@@ -239,11 +239,24 @@ func TestDebugInfiniteLivesPlayerDiesWithoutLosingLife(t *testing.T) {
 	if packet.Lives != constants.PlayerStartingLives {
 		t.Fatalf("expected infinite-lives player to keep %d lives, got %d", constants.PlayerStartingLives, packet.Lives)
 	}
-	if len(packet.Events) != 1 {
-		t.Fatalf("expected death event for infinite-lives player, got %d", len(packet.Events))
+	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected death event for infinite-lives player, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
 	}
-	if packet.Events[0].Lives != constants.PlayerStartingLives {
-		t.Fatalf("expected death event to keep %d lives, got %d", constants.PlayerStartingLives, packet.Events[0].Lives)
+	var deathEvent *servergame.EventState
+	for i := range packet.Events {
+		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
+			deathEvent = &packet.Events[i]
+			break
+		}
+	}
+	if deathEvent == nil {
+		t.Fatal("expected ship_death event in packet")
+	}
+	if deathEvent.Lives != constants.PlayerStartingLives {
+		t.Fatalf("expected death event to keep %d lives, got %d", constants.PlayerStartingLives, deathEvent.Lives)
+	}
+	if !hasEventOfType(packet.Events, "damage_applied") {
+		t.Fatal("expected damage_applied event for infinite-lives player death")
 	}
 
 	scenario.step(constants.CollisionDespawnDelay)
@@ -745,11 +758,18 @@ func TestDebugKillPlayerMarksDespawnQueuesDeathAndReducesLives(t *testing.T) {
 		t.Fatalf("expected one queued ship death event, got %d", events)
 	}
 	packet := scenario.state(playerID)
-	if len(packet.Events) != 1 {
-		t.Fatalf("expected one ship death event in packet, got %d", len(packet.Events))
+	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected one ship death event in packet, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
 	}
-	if packet.Events[0].Type != servergame.PacketTypeShipDeath {
-		t.Fatalf("expected ship death event type %q, got %q", servergame.PacketTypeShipDeath, packet.Events[0].Type)
+	var deathEvent *servergame.EventState
+	for i := range packet.Events {
+		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
+			deathEvent = &packet.Events[i]
+			break
+		}
+	}
+	if deathEvent == nil {
+		t.Fatal("expected ship death event in packet")
 	}
 	expectedLives := constants.PlayerStartingLives - 1
 	if packet.Lives != expectedLives {

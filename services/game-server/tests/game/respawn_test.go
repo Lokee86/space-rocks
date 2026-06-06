@@ -22,14 +22,27 @@ func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {
 	if packet.Lives != constants.PlayerStartingLives-1 {
 		t.Fatalf("expected state packet lives %d after death, got %d", constants.PlayerStartingLives-1, packet.Lives)
 	}
-	if len(packet.Events) != 1 {
-		t.Fatalf("expected 1 death event, got %d", len(packet.Events))
+	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected 1 death event, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
 	}
-	if packet.Events[0].Lives != constants.PlayerStartingLives-1 {
-		t.Fatalf("expected death event lives %d, got %d", constants.PlayerStartingLives-1, packet.Events[0].Lives)
+	var deathEvent *servergame.EventState
+	for i := range packet.Events {
+		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
+			deathEvent = &packet.Events[i]
+			break
+		}
 	}
-	if packet.Events[0].RespawnDelay != constants.PlayerRespawnDelay {
-		t.Fatalf("expected respawn delay %v, got %v", constants.PlayerRespawnDelay, packet.Events[0].RespawnDelay)
+	if deathEvent == nil {
+		t.Fatal("expected ship_death event in packet")
+	}
+	if deathEvent.Lives != constants.PlayerStartingLives-1 {
+		t.Fatalf("expected death event lives %d, got %d", constants.PlayerStartingLives-1, deathEvent.Lives)
+	}
+	if deathEvent.RespawnDelay != constants.PlayerRespawnDelay {
+		t.Fatalf("expected respawn delay %v, got %v", constants.PlayerRespawnDelay, deathEvent.RespawnDelay)
+	}
+	if !hasEventOfType(packet.Events, "damage_applied") {
+		t.Fatal("expected damage_applied event for asteroid collision death")
 	}
 
 	scenario.step(constants.CollisionDespawnDelay)
@@ -100,11 +113,24 @@ func TestPlayerWithNoLivesCannotRespawn(t *testing.T) {
 	if packet.Lives != 0 {
 		t.Fatalf("expected 0 lives after final death, got %d", packet.Lives)
 	}
-	if len(packet.Events) != 1 {
-		t.Fatalf("expected 1 death event, got %d", len(packet.Events))
+	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected 1 death event, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
 	}
-	if packet.Events[0].Lives != 0 {
-		t.Fatalf("expected game-over death event with 0 lives, got %d", packet.Events[0].Lives)
+	var deathEvent *servergame.EventState
+	for i := range packet.Events {
+		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
+			deathEvent = &packet.Events[i]
+			break
+		}
+	}
+	if deathEvent == nil {
+		t.Fatal("expected ship_death event in packet")
+	}
+	if deathEvent.Lives != 0 {
+		t.Fatalf("expected game-over death event with 0 lives, got %d", deathEvent.Lives)
+	}
+	if !hasEventOfType(packet.Events, "damage_applied") {
+		t.Fatal("expected damage_applied event for asteroid collision death")
 	}
 
 	scenario.step(constants.CollisionDespawnDelay)
