@@ -6,6 +6,8 @@ func ResolveSingle(req DamageResolutionRequest) DamageResult {
 	modifiers = append(modifiers, req.Target.Modifiers...)
 	modified := ResolveModifiedAmount(req.Spec.Amount, modifiers, req.Spec.Type)
 	result := DamageResult{
+		SourceEntityID:   req.Source.EntityID,
+		SourceEntityType: req.Source.EntityType,
 		TargetEntityID:   req.Target.EntityID,
 		TargetEntityType: req.Target.EntityType,
 		BaseAmount:       int(modified.BaseAmount),

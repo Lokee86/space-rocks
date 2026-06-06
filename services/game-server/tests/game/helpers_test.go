@@ -79,6 +79,20 @@ func (scenario *scenario) events(playerID string) []servergame.EventState {
 	return scenario.state(playerID).Events
 }
 
+func countEventsOfType(events []servergame.EventState, eventType string) int {
+	count := 0
+	for _, event := range events {
+		if event.Type == eventType {
+			count++
+		}
+	}
+	return count
+}
+
+func hasEventOfType(events []servergame.EventState, eventType string) bool {
+	return countEventsOfType(events, eventType) > 0
+}
+
 func (scenario *scenario) useCircleCollisionShapes() {
 	scenario.t.Helper()
 

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
@@ -37,11 +37,24 @@ func TestBulletAsteroidCollisionsDelayHitDespawns(t *testing.T) {
 	if _, ok := packet.Asteroids["asteroid-2"]; !ok {
 		t.Fatal("expected untouched asteroid to remain")
 	}
-	if len(packet.Events) != 1 {
-		t.Fatalf("expected 1 event in state packet, got %d", len(packet.Events))
+	if len(packet.Events) != 2 {
+		t.Fatalf("expected 2 events in state packet, got %d", len(packet.Events))
 	}
-	if packet.Events[0].Type != servergame.PacketTypeBulletBlast {
-		t.Fatalf("expected bullet_blast event, got %q", packet.Events[0].Type)
+	foundBulletBlast := false
+	foundDamageApplied := false
+	for _, event := range packet.Events {
+		switch event.Type {
+		case servergame.PacketTypeBulletBlast:
+			foundBulletBlast = true
+		case "damage_applied":
+			foundDamageApplied = true
+		}
+	}
+	if !foundBulletBlast {
+		t.Fatal("expected bullet_blast event")
+	}
+	if !foundDamageApplied {
+		t.Fatal("expected damage_applied event")
 	}
 	if score := packet.PlayerSessions[playerID].Score; score != constants.BaseScore {
 		t.Fatalf("expected player score %d, got %d", constants.BaseScore, score)
@@ -151,6 +164,36 @@ func TestBulletAsteroidCollisionAppliesAsteroidDamageModifiers(t *testing.T) {
 	}
 }
 
+func TestBulletAsteroidCollisionEmitsDamageAppliedEvent(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	impactPosition := physics.Vector2{X: 100, Y: 100}
+	scenario.placeBullet("bullet-1", playerID, impactPosition, physics.Vector2{})
+	scenario.placeAsteroid("asteroid-1", impactPosition, 3)
+	scenario.setAsteroidHealth("asteroid-1", 3)
+
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	events := scenario.state(playerID).Events
+	found := false
+	for _, event := range events {
+		if event.Type == "damage_applied" {
+			found = true
+			if event.SourceType != "projectile" {
+				t.Fatalf("expected source type projectile, got %q", event.SourceType)
+			}
+			if event.SourceID != "bullet-1" {
+				t.Fatalf("expected source id bullet-1, got %q", event.SourceID)
+			}
+			break
+		}
+	}
+	if !found {
+		t.Fatal("expected damage_applied event for bullet asteroid collision")
+	}
+}
+
 func TestBulletAsteroidCollisionsScoreByAsteroidSize(t *testing.T) {
 	scenario := newScenario(t)
 	scenario.useCircleCollisionShapes()
@@ -255,23 +298,35 @@ func TestShipAsteroidCollisionsDelayPlayerRemovalAndBroadcastDeath(t *testing.T)
 	}
 
 	for _, viewerID := range []string{playerID, otherPlayerID} {
-		if events := scenario.pendingEventCount(viewerID); events != 1 {
-			t.Fatalf("expected 1 queued event for %s, got %d", viewerID, events)
+		if events := scenario.pendingEventCount(viewerID); events != 2 {
+			t.Fatalf("expected 2 queued events for %s, got %d", viewerID, events)
 		}
 
 		packet := scenario.state(viewerID)
-		if len(packet.Events) != 1 {
-			t.Fatalf("expected 1 event in state packet for %s, got %d", viewerID, len(packet.Events))
+		if len(packet.Events) != 2 {
+			t.Fatalf("expected 2 events in state packet for %s, got %d", viewerID, len(packet.Events))
 		}
-		event := packet.Events[0]
-		if event.Type != servergame.PacketTypeShipDeath {
-			t.Fatalf("expected ship_death event for %s, got %q", viewerID, event.Type)
+		foundShipDeath := false
+		foundDamageApplied := false
+		for _, event := range packet.Events {
+			switch event.Type {
+			case servergame.PacketTypeShipDeath:
+				foundShipDeath = true
+				if event.PlayerID != playerID {
+					t.Fatalf("expected dead player id %s for %s, got %q", playerID, viewerID, event.PlayerID)
+				}
+				if event.X != position.X || event.Y != position.Y {
+					t.Fatalf("expected death event at player position for %s, got (%v, %v)", viewerID, event.X, event.Y)
+				}
+			case "damage_applied":
+				foundDamageApplied = true
+			}
 		}
-		if event.PlayerID != playerID {
-			t.Fatalf("expected dead player id %s for %s, got %q", playerID, viewerID, event.PlayerID)
+		if !foundShipDeath {
+			t.Fatalf("expected ship_death event for %s", viewerID)
 		}
-		if event.X != position.X || event.Y != position.Y {
-			t.Fatalf("expected death event at player position for %s, got (%v, %v)", viewerID, event.X, event.Y)
+		if !foundDamageApplied {
+			t.Fatalf("expected damage_applied event for %s", viewerID)
 		}
 	}
 
@@ -339,8 +394,22 @@ func TestShipAsteroidCollisionNonfatalDamageReducesHealthWithoutDeath(t *testing
 	if scenario.playerHealth(playerID) >= initialHealth {
 		t.Fatalf("expected player health to be reduced from %d, got %d", initialHealth, scenario.playerHealth(playerID))
 	}
-	if events := scenario.pendingEventCount(playerID); events != 0 {
-		t.Fatalf("expected no queued ship_death event for nonfatal collision, got %d", events)
+	events := scenario.state(playerID).Events
+	foundShipDeath := false
+	foundDamageApplied := false
+	for _, event := range events {
+		switch event.Type {
+		case servergame.PacketTypeShipDeath:
+			foundShipDeath = true
+		case "damage_applied":
+			foundDamageApplied = true
+		}
+	}
+	if foundShipDeath {
+		t.Fatal("expected no ship_death event for nonfatal collision")
+	}
+	if !foundDamageApplied {
+		t.Fatal("expected damage_applied event for nonfatal collision")
 	}
 	if lives := scenario.playerSessionState(playerID, playerID).Lives; lives != initialLives {
 		t.Fatalf("expected lives to remain %d after nonfatal collision, got %d", initialLives, lives)
@@ -366,6 +435,33 @@ func TestShipAsteroidCollisionAppliesPlayerDamageModifiers(t *testing.T) {
 	}
 	if scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected player to remain active after modified nonfatal collision")
+	}
+}
+
+func TestShipAsteroidCollisionEmitsDamageAppliedEvent(t *testing.T) {
+	scenario := newScenario(t)
+	scenario.useCircleCollisionShapes()
+	playerID := scenario.addPlayer()
+	player := scenario.playerState(playerID, playerID)
+	position := physics.Vector2{X: player.X, Y: player.Y}
+	scenario.setPlayerHealth(playerID, 3)
+	scenario.placeAsteroid("asteroid-1", position, 1)
+
+	scenario.step(1.0 / float64(constants.ServerTickRate))
+
+	events := scenario.state(playerID).Events
+	found := false
+	for _, event := range events {
+		if event.Type == "damage_applied" {
+			found = true
+			if event.SourceType != "asteroid" {
+				t.Fatalf("expected source type asteroid, got %q", event.SourceType)
+			}
+			break
+		}
+	}
+	if !found {
+		t.Fatal("expected damage_applied event for asteroid player collision")
 	}
 }
 
@@ -418,12 +514,23 @@ func TestShipAsteroidCollisionKillsAfterInvulnerabilityExpires(t *testing.T) {
 	if !scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected player to die after invulnerability expires")
 	}
-	if events := scenario.pendingEventCount(playerID); events != 1 {
-		t.Fatalf("expected one death event after invulnerability expires, got %d", events)
+	if events := scenario.pendingEventCount(playerID); events != 2 {
+		t.Fatalf("expected two events after invulnerability expires, got %d", events)
 	}
-	event := scenario.state(playerID).Events[0]
-	if event.Type != servergame.PacketTypeShipDeath {
-		t.Fatalf("expected ship_death event, got %q", event.Type)
+	var foundShipDeath, foundDamageApplied bool
+	for _, event := range scenario.state(playerID).Events {
+		switch event.Type {
+		case servergame.PacketTypeShipDeath:
+			foundShipDeath = true
+		case "damage_applied":
+			foundDamageApplied = true
+		}
+	}
+	if !foundShipDeath {
+		t.Fatal("expected ship_death event")
+	}
+	if !foundDamageApplied {
+		t.Fatal("expected damage_applied event")
 	}
 }
 
