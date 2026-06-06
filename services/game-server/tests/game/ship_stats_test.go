@@ -28,17 +28,17 @@ func TestDefaultShipTypeResolvesBaselineEffectiveStats(t *testing.T) {
 	if stats.Damping != constants.PlayerDamping {
 		t.Fatalf("expected effective damping %v, got %v", constants.PlayerDamping, stats.Damping)
 	}
-	if stats.BulletCooldown != constants.BulletCooldown {
-		t.Fatalf("expected effective bullet cooldown %v, got %v", constants.BulletCooldown, stats.BulletCooldown)
+	if stats.BulletCooldown != constants.BasicCannonCooldown {
+		t.Fatalf("expected effective bullet cooldown %v, got %v", constants.BasicCannonCooldown, stats.BulletCooldown)
 	}
-	if stats.BulletSpeed != constants.BulletSpeed {
-		t.Fatalf("expected effective bullet speed %v, got %v", constants.BulletSpeed, stats.BulletSpeed)
+	if stats.BulletSpeed != constants.BasicCannonProjectileSpeed {
+		t.Fatalf("expected effective bullet speed %v, got %v", constants.BasicCannonProjectileSpeed, stats.BulletSpeed)
 	}
-	if stats.BulletLifetime != constants.BulletLifetime {
-		t.Fatalf("expected effective bullet lifetime %v, got %v", constants.BulletLifetime, stats.BulletLifetime)
+	if stats.BulletLifetime != constants.BasicCannonProjectileLifetime {
+		t.Fatalf("expected effective bullet lifetime %v, got %v", constants.BasicCannonProjectileLifetime, stats.BulletLifetime)
 	}
-	if stats.BulletSpawnOffset != constants.BulletSpawnOffset {
-		t.Fatalf("expected effective bullet spawn offset %v, got %v", constants.BulletSpawnOffset, stats.BulletSpawnOffset)
+	if stats.BulletSpawnOffset != constants.BasicCannonProjectileSpawnOffset {
+		t.Fatalf("expected effective bullet spawn offset %v, got %v", constants.BasicCannonProjectileSpawnOffset, stats.BulletSpawnOffset)
 	}
 	if stats.CollisionShapeID != runtime.DefaultShipTypeID {
 		t.Fatalf("expected effective collision shape ID %q, got %q", runtime.DefaultShipTypeID, stats.CollisionShapeID)
@@ -158,8 +158,8 @@ func TestBasicCannonProfileUsesBulletCooldown(t *testing.T) {
 	if !ok {
 		t.Fatal("expected basic cannon profile to exist")
 	}
-	if profile.CooldownSeconds != constants.BulletCooldown {
-		t.Fatalf("expected cooldown %v, got %v", constants.BulletCooldown, profile.CooldownSeconds)
+	if profile.CooldownSeconds != constants.BasicCannonCooldown {
+		t.Fatalf("expected cooldown %v, got %v", constants.BasicCannonCooldown, profile.CooldownSeconds)
 	}
 }
 

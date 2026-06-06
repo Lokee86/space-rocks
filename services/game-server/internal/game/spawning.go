@@ -24,10 +24,10 @@ func (game *Game) spawnDebugBullet(ownerID string, position physics.Vector2, dir
 		return nil, false
 	}
 	spawnPosition := space.NormalizePosition(position)
-	velocity := normalizedDirection.Multiply(constants.BulletSpeed)
+	velocity := normalizedDirection.Multiply(constants.BasicCannonProjectileSpeed)
 	rotation := debugBulletRotation(normalizedDirection)
 	bulletID := game.spawner.NextBulletID()
-	bullet := runtime.NewBullet(bulletID, ownerID, spawnPosition, rotation, velocity, constants.BulletLifetime)
+	bullet := runtime.NewBullet(bulletID, ownerID, spawnPosition, rotation, velocity, constants.BasicCannonProjectileLifetime)
 	game.entities.Projectiles[bullet.ID] = bullet
 	return bullet, true
 }

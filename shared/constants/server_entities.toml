@@ -23,11 +23,7 @@ asteroid_aim_randomness_degrees = 30.0
 asteroid_size_scale = 0.35
 asteroid_variants = 8
 
-[constants.server.bullets]
-bullet_speed = 1200.0
-bullet_lifetime = 1.75
-bullet_cooldown = 0.22
-bullet_spawn_offset = 42.0
+[constants.server.collision]
 collision_despawn_delay = 0.05
 
 [constants.server.pickups]

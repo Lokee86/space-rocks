@@ -46,8 +46,8 @@ func TestFirePlayerPrimaryWeaponCreatesWeaponBackedBullet(t *testing.T) {
 	if projectile.ProjectileType != "bullet" {
 		t.Fatalf("ProjectileType = %q, want %q", projectile.ProjectileType, "bullet")
 	}
-	if projectile.DamageSpec.Amount != constants.BulletDamage {
-		t.Fatalf("DamageSpec.Amount = %d, want %d", projectile.DamageSpec.Amount, constants.BulletDamage)
+	if projectile.DamageSpec.Amount != constants.BasicCannonDamage {
+		t.Fatalf("DamageSpec.Amount = %d, want %d", projectile.DamageSpec.Amount, constants.BasicCannonDamage)
 	}
 }
 

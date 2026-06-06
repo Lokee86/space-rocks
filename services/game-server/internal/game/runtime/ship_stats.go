@@ -78,11 +78,11 @@ func resolveShipStats(modifiers ShipStatModifiers) ShipStats {
 		MaxSpeed:          constants.PlayerMaxSpeed * modifiers.MaxSpeed,
 		Damping:           constants.PlayerDamping * modifiers.Damping,
 		MaxHealth:         constants.PlayerMaxHealth,
-		BulletCooldown:    constants.BulletCooldown * modifiers.BulletCooldown,
-		BulletDamage:      constants.BulletDamage,
-		BulletSpeed:       constants.BulletSpeed * modifiers.BulletSpeed,
-		BulletLifetime:    constants.BulletLifetime * modifiers.BulletLifetime,
-		BulletSpawnOffset: constants.BulletSpawnOffset * modifiers.BulletSpawnOffset,
+		BulletCooldown:    constants.BasicCannonCooldown * modifiers.BulletCooldown,
+		BulletDamage:      constants.BasicCannonDamage,
+		BulletSpeed:       constants.BasicCannonProjectileSpeed * modifiers.BulletSpeed,
+		BulletLifetime:    constants.BasicCannonProjectileLifetime * modifiers.BulletLifetime,
+		BulletSpawnOffset: constants.BasicCannonProjectileSpawnOffset * modifiers.BulletSpawnOffset,
 		CollisionShapeID:  modifiers.CollisionShapeID,
 	}
 }

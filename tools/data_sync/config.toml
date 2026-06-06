@@ -2,6 +2,7 @@
 paths = [
   "shared/constants/server_constants.toml",
   "shared/constants/server_entities.toml",
+  "shared/constants/weapons.toml",
   "shared/constants/client/presentation.toml",
   "shared/constants/client/shell.toml",
   "shared/constants/client/lobby.toml",
@@ -30,7 +31,8 @@ sections = [
   "constants.server.world",
   "constants.server.scoring",
   "constants.server.asteroids",
-  "constants.server.bullets",
+  "constants.server.collision",
+  "constants.server.damage",
   "constants.server.pickups",
 ]
 owns = [
@@ -41,8 +43,20 @@ owns = [
   "constants.server.world",
   "constants.server.scoring",
   "constants.server.asteroids",
-  "constants.server.bullets",
+  "constants.server.collision",
+  "constants.server.damage",
   "constants.server.pickups",
+]
+
+[weapons.go]
+files = ["services/game-server/internal/constants/weapons.go"]
+sections = [
+  "constants.server.weapons.basic_cannon",
+  "constants.server.weapons.torpedo",
+]
+owns = [
+  "constants.server.weapons.basic_cannon",
+  "constants.server.weapons.torpedo",
 ]
 
 [constants.gds]
