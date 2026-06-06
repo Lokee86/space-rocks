@@ -6,6 +6,7 @@ const (
 	EntityTypePlayer     EntityType = "player"
 	EntityTypeAsteroid   EntityType = "asteroid"
 	EntityTypeProjectile EntityType = "projectile"
+	EntityTypeEnemy      EntityType = "enemy"
 )
 
 type DamageCause string

@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/Lokee86/space-rocks/server/internal/game/drops"
+	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
@@ -21,6 +22,7 @@ type Game struct {
 	spawner                   *spawning.Spawner
 	scoringPolicy             scoring.Policy
 	dropTables                drops.Tables
+	radialEffects             radial.Store
 	asteroidSpawnElapsed      float64
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
@@ -46,6 +48,7 @@ func New() *Game {
 		spawner:                   spawning.New(),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
 		dropTables:                drops.GeneratedTables,
+		radialEffects:             radial.NewStore(),
 		entities:                  runtime.NewEntityStore(),
 	}
 }

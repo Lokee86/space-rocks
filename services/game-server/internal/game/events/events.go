@@ -4,6 +4,7 @@ type Type string
 
 const (
 	EventBulletBlast            Type = "bullet_blast"
+	EventRadialEffectStarted    Type = "radial_effect_started"
 	EventShipDeath              Type = "ship_death"
 	EventPickupCollected        Type = "pickup_collected"
 	EventPickupEffectApplied    Type = "pickup_effect_applied"

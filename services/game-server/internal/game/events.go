@@ -14,6 +14,14 @@ func eventStateForDomainEvent(event events.Event) EventState {
 			X:    event.X,
 			Y:    event.Y,
 		}
+	case events.EventRadialEffectStarted:
+		return EventState{
+			Type:       "radial_effect_started",
+			SourceID:   event.SourceID,
+			EffectType: event.EffectType,
+			X:          event.X,
+			Y:          event.Y,
+		}
 	case events.EventShipDeath:
 		return EventState{
 			Type:         PacketTypeShipDeath,

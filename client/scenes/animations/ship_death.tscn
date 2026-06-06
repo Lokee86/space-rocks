@@ -16,42 +16,48 @@
 [sub_resource type="SpriteFrames" id="SpriteFrames_10tnd"]
 animations = [{
 "frames": [{
-"duration": 2.0,
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.5,
 "texture": ExtResource("1_owsfv")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("2_mlo3l")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("3_vexwe")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("4_5aeuj")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("5_pfwq8")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("6_ssc3e")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("7_yly2w")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("8_f4780")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("9_og6ed")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("10_8hkoj")
 }, {
-"duration": 1.0,
+"duration": 1.5,
 "texture": ExtResource("11_docy6")
+}, {
+"duration": 1.0,
+"texture": null
 }],
 "loop": false,
 "name": &"default",
-"speed": 20.0
+"speed": 30.0
 }]
 
 [node name="ShipDeath" type="Node2D" unique_id=513923855]
@@ -59,7 +65,7 @@ animations = [{
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1588587479]
 scale = Vector2(0.5, 0.5)
 sprite_frames = SubResource("SpriteFrames_10tnd")
-frame = 10
+frame = 12
 frame_progress = 1.0
 
 [node name="ShipDeath" type="AudioStreamPlayer2D" parent="." unique_id=587356334]
