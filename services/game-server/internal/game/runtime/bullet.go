@@ -22,7 +22,7 @@ func NewBullet(
 		Rotation: rotation,
 		Velocity: velocity,
 		Life:     lifetime,
-		Damage:   constants.BulletDamage,
+		Damage:   constants.BasicCannonDamage,
 	}
 }
 

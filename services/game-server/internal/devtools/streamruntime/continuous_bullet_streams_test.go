@@ -29,8 +29,8 @@ func TestContinuousBulletStreamsBeginTracksActiveStream(t *testing.T) {
 	if active[0].Direction != (physics.Vector2{X: 1, Y: 0}) {
 		t.Fatalf("expected normalized direction, got %+v", active[0].Direction)
 	}
-	if active[0].CooldownRemaining != constants.BulletCooldown {
-		t.Fatalf("expected cooldown %f, got %f", constants.BulletCooldown, active[0].CooldownRemaining)
+	if active[0].CooldownRemaining != constants.BasicCannonCooldown {
+		t.Fatalf("expected cooldown %f, got %f", constants.BasicCannonCooldown, active[0].CooldownRemaining)
 	}
 }
 
@@ -68,7 +68,7 @@ func TestContinuousBulletStreamsStepSpawnsBulletAfterCooldown(t *testing.T) {
 	}
 
 	spawnCount := 0
-	streams.Step(constants.BulletCooldown, true, func(owner string, origin physics.Vector2, direction physics.Vector2) bool {
+	streams.Step(constants.BasicCannonCooldown, true, func(owner string, origin physics.Vector2, direction physics.Vector2) bool {
 		spawnCount++
 		if owner != "player-1" {
 			t.Fatalf("expected owner %q, got %q", "player-1", owner)
@@ -85,7 +85,7 @@ func TestContinuousBulletStreamsStepSpawnsBulletAfterCooldown(t *testing.T) {
 	if spawnCount != 1 {
 		t.Fatalf("expected 1 spawn, got %d", spawnCount)
 	}
-	if got := streams.Active()[0].CooldownRemaining; got != constants.BulletCooldown {
-		t.Fatalf("expected cooldown reset to %f, got %f", constants.BulletCooldown, got)
+	if got := streams.Active()[0].CooldownRemaining; got != constants.BasicCannonCooldown {
+		t.Fatalf("expected cooldown reset to %f, got %f", constants.BasicCannonCooldown, got)
 	}
 }

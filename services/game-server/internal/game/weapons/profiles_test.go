@@ -20,23 +20,23 @@ func TestLookupBasicCannonReturnsExpectedProfile(t *testing.T) {
 	if profile.Slot != Primary {
 		t.Fatalf("Slot = %q, want %q", profile.Slot, Primary)
 	}
-	if profile.CooldownSeconds != constants.BulletCooldown {
-		t.Fatalf("CooldownSeconds = %v, want %v", profile.CooldownSeconds, constants.BulletCooldown)
+	if profile.CooldownSeconds != constants.BasicCannonCooldown {
+		t.Fatalf("CooldownSeconds = %v, want %v", profile.CooldownSeconds, constants.BasicCannonCooldown)
 	}
 	if profile.Projectile.Type != "bullet" {
 		t.Fatalf("Projectile.Type = %q, want %q", profile.Projectile.Type, "bullet")
 	}
-	if profile.Projectile.Speed != constants.BulletSpeed {
-		t.Fatalf("Projectile.Speed = %v, want %v", profile.Projectile.Speed, constants.BulletSpeed)
+	if profile.Projectile.Speed != constants.BasicCannonProjectileSpeed {
+		t.Fatalf("Projectile.Speed = %v, want %v", profile.Projectile.Speed, constants.BasicCannonProjectileSpeed)
 	}
-	if profile.Projectile.Lifetime != constants.BulletLifetime {
-		t.Fatalf("Projectile.Lifetime = %v, want %v", profile.Projectile.Lifetime, constants.BulletLifetime)
+	if profile.Projectile.Lifetime != constants.BasicCannonProjectileLifetime {
+		t.Fatalf("Projectile.Lifetime = %v, want %v", profile.Projectile.Lifetime, constants.BasicCannonProjectileLifetime)
 	}
-	if profile.Projectile.SpawnOffset != constants.BulletSpawnOffset {
-		t.Fatalf("Projectile.SpawnOffset = %v, want %v", profile.Projectile.SpawnOffset, constants.BulletSpawnOffset)
+	if profile.Projectile.SpawnOffset != constants.BasicCannonProjectileSpawnOffset {
+		t.Fatalf("Projectile.SpawnOffset = %v, want %v", profile.Projectile.SpawnOffset, constants.BasicCannonProjectileSpawnOffset)
 	}
-	if profile.Damage.Amount != constants.BulletDamage {
-		t.Fatalf("Damage.Amount = %d, want %d", profile.Damage.Amount, constants.BulletDamage)
+	if profile.Damage.Amount != constants.BasicCannonDamage {
+		t.Fatalf("Damage.Amount = %d, want %d", profile.Damage.Amount, constants.BasicCannonDamage)
 	}
 	if profile.Damage.Type != damage.DamageTypeKinetic {
 		t.Fatalf("Damage.Type = %q, want %q", profile.Damage.Type, damage.DamageTypeKinetic)
@@ -64,6 +64,21 @@ func TestLookupTorpedoReturnsExpectedProfile(t *testing.T) {
 	if profile.Projectile.Type != "torpedo" {
 		t.Fatalf("Projectile.Type = %q, want %q", profile.Projectile.Type, "torpedo")
 	}
+	if profile.CooldownSeconds != constants.TorpedoCooldown {
+		t.Fatalf("CooldownSeconds = %v, want %v", profile.CooldownSeconds, constants.TorpedoCooldown)
+	}
+	if profile.Projectile.Speed != constants.TorpedoProjectileSpeed {
+		t.Fatalf("Projectile.Speed = %v, want %v", profile.Projectile.Speed, constants.TorpedoProjectileSpeed)
+	}
+	if profile.Projectile.Lifetime != constants.TorpedoProjectileLifetime {
+		t.Fatalf("Projectile.Lifetime = %v, want %v", profile.Projectile.Lifetime, constants.TorpedoProjectileLifetime)
+	}
+	if profile.Projectile.SpawnOffset != constants.TorpedoProjectileSpawnOffset {
+		t.Fatalf("Projectile.SpawnOffset = %v, want %v", profile.Projectile.SpawnOffset, constants.TorpedoProjectileSpawnOffset)
+	}
+	if profile.Damage.Amount != constants.TorpedoImpactDamage {
+		t.Fatalf("Damage.Amount = %d, want %d", profile.Damage.Amount, constants.TorpedoImpactDamage)
+	}
 	if profile.ImpactEffect.Kind != ImpactEffectRadial {
 		t.Fatalf("ImpactEffect.Kind = %q, want %q", profile.ImpactEffect.Kind, ImpactEffectRadial)
 	}
@@ -73,8 +88,26 @@ func TestLookupTorpedoReturnsExpectedProfile(t *testing.T) {
 	if profile.ImpactEffect.Radial.ExpirationMode != radial.ExpirationSimultaneous {
 		t.Fatalf("ImpactEffect.Radial.ExpirationMode = %q, want %q", profile.ImpactEffect.Radial.ExpirationMode, radial.ExpirationSimultaneous)
 	}
-	if got, want := profile.ImpactEffect.Radial.ZoneCount, 4; got != want {
+	if got, want := profile.ImpactEffect.Radial.ZoneCount, constants.TorpedoRadialZoneCount; got != want {
 		t.Fatalf("ImpactEffect.Radial.ZoneCount = %d, want %d", got, want)
+	}
+	if got, want := profile.ImpactEffect.Radial.ZoneWidth, constants.TorpedoRadialZoneWidth; got != want {
+		t.Fatalf("ImpactEffect.Radial.ZoneWidth = %v, want %v", got, want)
+	}
+	if got, want := profile.ImpactEffect.Radial.ZoneSpawnSeconds, constants.TorpedoRadialZoneSpawnSeconds; got != want {
+		t.Fatalf("ImpactEffect.Radial.ZoneSpawnSeconds = %v, want %v", got, want)
+	}
+	if got, want := profile.ImpactEffect.Radial.TickSeconds, constants.TorpedoRadialTickSeconds; got != want {
+		t.Fatalf("ImpactEffect.Radial.TickSeconds = %v, want %v", got, want)
+	}
+	if got, want := profile.ImpactEffect.Radial.TotalSeconds, constants.TorpedoRadialTotalSeconds; got != want {
+		t.Fatalf("ImpactEffect.Radial.TotalSeconds = %v, want %v", got, want)
+	}
+	if got, want := profile.ImpactEffect.Radial.ZoneLifetimeSeconds, constants.TorpedoRadialZoneLifetimeSeconds; got != want {
+		t.Fatalf("ImpactEffect.Radial.ZoneLifetimeSeconds = %v, want %v", got, want)
+	}
+	if profile.ImpactEffect.Radial.Damage.Amount != constants.TorpedoRadialDamage {
+		t.Fatalf("ImpactEffect.Radial.Damage.Amount = %d, want %d", profile.ImpactEffect.Radial.Damage.Amount, constants.TorpedoRadialDamage)
 	}
 	if !profile.ImpactEffect.Radial.TargetFilter.Allows(radial.TargetAsteroid) {
 		t.Fatal("expected asteroids to be allowed")

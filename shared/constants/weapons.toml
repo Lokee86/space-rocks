@@ -1,0 +1,20 @@
+[constants.server.weapons.basic_cannon]
+basic_cannon_projectile_speed = 1200.0
+basic_cannon_projectile_lifetime = 1.75
+basic_cannon_cooldown = 0.22
+basic_cannon_projectile_spawn_offset = 42.0
+basic_cannon_damage = 1
+
+[constants.server.weapons.torpedo]
+torpedo_projectile_speed = 1200.0
+torpedo_projectile_lifetime = 1.75
+torpedo_cooldown = 0.22
+torpedo_projectile_spawn_offset = 42.0
+torpedo_impact_damage = 1
+torpedo_radial_damage = 1
+torpedo_radial_zone_count = 4
+torpedo_radial_zone_width = 10
+torpedo_radial_zone_spawn_seconds = 0.1
+torpedo_radial_tick_seconds = 0.1
+torpedo_radial_total_seconds = 0.4
+torpedo_radial_zone_lifetime_seconds = 0.4

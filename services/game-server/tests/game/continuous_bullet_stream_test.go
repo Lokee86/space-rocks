@@ -18,7 +18,7 @@ func TestDevtoolsContinuousBulletStreamSpawnsBulletAfterCooldown(t *testing.T) {
 	if !runtime.BeginContinuousBulletStream(playerID, origin, direction) {
 		t.Fatal("expected continuous bullet stream to start")
 	}
-	runtime.StepContinuousBulletStreams(constants.BulletCooldown, scenario.game.DevtoolsBulletsCanMove(), scenario.game.DevtoolsSpawnDebugBullet)
+	runtime.StepContinuousBulletStreams(constants.BasicCannonCooldown, scenario.game.DevtoolsBulletsCanMove(), scenario.game.DevtoolsSpawnDebugBullet)
 
 	if bulletCount := scenario.bullets().Len(); bulletCount != 1 {
 		t.Fatalf("expected 1 spawned bullet, got %d", bulletCount)

@@ -43,13 +43,9 @@ const AsteroidSizeScale = 0.35
 const AsteroidVariants = 8
 // data-sync:end constants.server.asteroids
 
-// data-sync:start constants.server.bullets
-const BulletSpeed = 1200.0
-const BulletLifetime = 1.75
-const BulletCooldown = 0.22
-const BulletSpawnOffset = 42.0
+// data-sync:start constants.server.collision
 const CollisionDespawnDelay = 0.05
-// data-sync:end constants.server.bullets
+// data-sync:end constants.server.collision
 
 // data-sync:start constants.server.pickups
 const PickupOneUpType = "1_up"
@@ -60,6 +56,5 @@ const PickupOneUpScenePath = "res://scenes/pickups/1_up.tscn"
 // data-sync:start constants.server.damage
 const PlayerMaxHealth = 1
 const AsteroidHealth = 1
-const BulletDamage = 1
 const AsteroidCollisionDamage = 1
 // data-sync:end constants.server.damage

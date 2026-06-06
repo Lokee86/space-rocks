@@ -18,8 +18,8 @@ func TestResolveShipStatsDefaultTypeSetsMaxHealthFromConstants(t *testing.T) {
 
 func TestResolveShipStatsDefaultTypeSetsBulletDamageFromConstants(t *testing.T) {
 	stats := ResolveShipStats(DefaultShipTypeID)
-	if stats.BulletDamage != constants.BulletDamage {
-		t.Fatalf("expected bullet damage %d, got %d", constants.BulletDamage, stats.BulletDamage)
+	if stats.BulletDamage != constants.BasicCannonDamage {
+		t.Fatalf("expected bullet damage %d, got %d", constants.BasicCannonDamage, stats.BulletDamage)
 	}
 }
 
@@ -39,8 +39,8 @@ func TestNewAsteroidInitializesCollisionDamageFromConstants(t *testing.T) {
 
 func TestNewBulletInitializesDamageFromConstants(t *testing.T) {
 	bullet := NewBullet("bullet-1", "player-1", physics.Vector2{}, 0, physics.Vector2{}, 1.0)
-	if bullet.Damage != constants.BulletDamage {
-		t.Fatalf("expected bullet damage %d, got %d", constants.BulletDamage, bullet.Damage)
+	if bullet.Damage != constants.BasicCannonDamage {
+		t.Fatalf("expected bullet damage %d, got %d", constants.BasicCannonDamage, bullet.Damage)
 	}
 }
 

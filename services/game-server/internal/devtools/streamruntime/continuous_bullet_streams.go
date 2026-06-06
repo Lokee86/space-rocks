@@ -35,7 +35,7 @@ func (streams *ContinuousBulletStreams) Begin(ownerPlayerID string, origin physi
 		OwnerPlayerID:     ownerPlayerID,
 		Origin:            space.NormalizePosition(origin),
 		Direction:         normalizedDirection,
-		CooldownRemaining: constants.BulletCooldown,
+		CooldownRemaining: constants.BasicCannonCooldown,
 	})
 	return true
 }
@@ -59,7 +59,7 @@ func (streams *ContinuousBulletStreams) Step(delta float64, bulletsCanMove bool,
 		}
 		if bulletsCanMove {
 			if spawn(stream.OwnerPlayerID, stream.Origin, stream.Direction) {
-				stream.CooldownRemaining = constants.BulletCooldown
+				stream.CooldownRemaining = constants.BasicCannonCooldown
 			}
 		}
 	}

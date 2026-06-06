@@ -29,8 +29,8 @@ func TestRuntimeNewRuntimeBeginsContinuousBulletStream(t *testing.T) {
 	if active[0].Direction != (physics.Vector2{X: 1, Y: 0}) {
 		t.Fatalf("expected normalized direction, got %+v", active[0].Direction)
 	}
-	if active[0].CooldownRemaining != constants.BulletCooldown {
-		t.Fatalf("expected cooldown %f, got %f", constants.BulletCooldown, active[0].CooldownRemaining)
+	if active[0].CooldownRemaining != constants.BasicCannonCooldown {
+		t.Fatalf("expected cooldown %f, got %f", constants.BasicCannonCooldown, active[0].CooldownRemaining)
 	}
 }
 
@@ -58,7 +58,7 @@ func TestRuntimeStepContinuousBulletStreamsSpawnsBulletAfterCooldown(t *testing.
 	var gotOrigin physics.Vector2
 	var gotDirection physics.Vector2
 
-	runtime.StepContinuousBulletStreams(constants.BulletCooldown, true, func(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool {
+	runtime.StepContinuousBulletStreams(constants.BasicCannonCooldown, true, func(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool {
 		spawnCount++
 		gotOwner = ownerPlayerID
 		gotOrigin = origin
