@@ -11,6 +11,10 @@ var player_meaning
 var view_anchor_sync
 var view_anchor_node: Node2D
 var anchor_rotation := 0.0
+var target_anchor_visual_position := Vector2.ZERO
+var target_anchor_rotation := 0.0
+var has_anchor_target := false
+var has_rendered_anchor_position := false
 
 
 func _init() -> void:
@@ -27,6 +31,10 @@ func reset() -> void:
 	player_meaning.reset()
 	view_anchor_sync.reset()
 	anchor_rotation = 0.0
+	target_anchor_visual_position = Vector2.ZERO
+	target_anchor_rotation = 0.0
+	has_anchor_target = false
+	has_rendered_anchor_position = false
 
 
 func remove_missing(server_players: Dictionary, self_id: String) -> void:
@@ -35,6 +43,18 @@ func remove_missing(server_players: Dictionary, self_id: String) -> void:
 
 func interpolate(weight: float, current_self_id: String) -> void:
 	player_meaning.interpolate(weight, current_self_id)
+	if view_anchor_node == null:
+		return
+	if not has_anchor_target:
+		return
+	if not has_rendered_anchor_position:
+		view_anchor_node.global_position = target_anchor_visual_position
+		view_anchor_node.rotation = target_anchor_rotation
+		has_rendered_anchor_position = true
+		return
+
+	view_anchor_node.global_position = view_anchor_node.global_position.lerp(target_anchor_visual_position, weight)
+	view_anchor_node.rotation = lerp_angle(view_anchor_node.rotation, target_anchor_rotation, weight)
 
 
 func apply_state(self_id: String, server_players: Dictionary) -> void:
@@ -52,10 +72,9 @@ func apply_state(self_id: String, server_players: Dictionary) -> void:
 		return
 
 	view_anchor_sync.update_from_anchor_server_position(Vector2(anchor_state[Packets.FIELD_X], anchor_state[Packets.FIELD_Y]))
-	anchor_rotation = float(anchor_state[Packets.FIELD_ROTATION])
-	if view_anchor_node != null:
-		view_anchor_node.global_position = view_anchor_sync.visual_position()
-		view_anchor_node.rotation = anchor_rotation
+	target_anchor_visual_position = view_anchor_sync.visual_position()
+	target_anchor_rotation = float(anchor_state[Packets.FIELD_ROTATION])
+	has_anchor_target = true
 
 	player_meaning.apply_with_anchor(
 		self_id,
@@ -108,4 +127,3 @@ func visual_position_for_server_position(server_authoritative_position: Vector2)
 
 func server_position_for_visual_position(client_visual_position: Vector2) -> Vector2:
 	return view_anchor_sync.server_position_for_visual_position(client_visual_position)
-
