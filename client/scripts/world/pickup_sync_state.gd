@@ -17,3 +17,11 @@ static func server_position(state: Dictionary) -> Vector2:
 		float(state.get(Packets.FIELD_X, 0.0)),
 		float(state.get(Packets.FIELD_Y, 0.0))
 	)
+
+
+static func age_seconds(state: Dictionary) -> float:
+	return float(state.get(Packets.FIELD_AGE_SECONDS, 0.0))
+
+
+static func lifespan_seconds(state: Dictionary) -> float:
+	return float(state.get(Packets.FIELD_LIFESPAN_SECONDS, 0.0))

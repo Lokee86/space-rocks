@@ -13,7 +13,7 @@ var GeneratedTables = Tables{
             Entries: []Entry{
                 {
                     PickupType: "1_up",
-                    Chance: 1.01,
+                    Chance: 0.01,
                     MinSourceSize: 1,
                     MaxSourceSize: 4,
                 },

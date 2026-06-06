@@ -4,12 +4,13 @@
 
 - `1_up` exists.
 - Pickups are server-authoritative.
+- Pickups have server-authoritative age, lifespan, and expiry.
 - Pickups are targetable.
 - Pickups are devtools-spawnable.
 - Pickup health is current health only.
 - `pickup_collected` and `pickup_effect_applied` are separate events.
 - Bullet/pickup collision damage is not enabled.
-- Lifespan and expiry are separate work.
+- Pickup end-of-life blink is client presentation.
 - Normal spawning is separate work.
 
 ## Ownership
@@ -30,8 +31,8 @@
 
 ## Server Entity Model
 
-- Pickup fields: `id`, `type`, `x`, `y`, `health`.
-- Definition fields: `type`, scene path, `health`.
+- Pickup fields: `id`, `type`, `x`, `y`, `health`, `age_seconds` / `AgeSeconds`, `lifespan_seconds` / `LifespanSeconds`.
+- Definition fields: `type`, scene path, `health`, `lifespan`.
 - `CollisionBody` uses `CollisionShapeCatalog`.
 - Collision shape comes from exported Godot scene data.
 - Health is current health only.
@@ -40,18 +41,21 @@
 ## Packet Model
 
 - `StatePacket.pickups`.
-- `PickupState` fields: `id`, `type`, `x`, `y`, `health`.
+- `PickupState` fields: `id`, `type`, `x`, `y`, `health`, `age_seconds`, `lifespan_seconds`.
+- `remaining_lifespan` is not sent; the client derives it.
 - `pickup_collected` event fields.
 - `pickup_effect_applied` event fields.
+- `pickup_expired` event fields.
 - Devtools state wrapper must copy new `StatePacket` fields.
 
 ## Client Rendering Model
 
 - `world_sync` coordinates pickup sync.
-- `pickup_sync` owns pickup scene instantiation, state application, cleanup, interpolation, and target positions.
+- `pickup_sync` forwards pickup age and lifespan to the pickup node and owns pickup scene instantiation, state application, cleanup, interpolation, and target positions.
 - Pickup scene visuals are client presentation only.
 - Pickup z-index uses the generated `PICKUP_Z_INDEX` constant.
 - Pickup glow and pulse are scene-local presentation.
+- `pickup.gd` computes end-of-life blink locally.
 
 ## Targeting
 
@@ -108,8 +112,11 @@
 
 ## Lifespan And Expiry
 
-- Lifespan and expiry is separate work unless already implemented.
-- Future lifecycle should include age, lifetime, step, `ReadyForRemoval` or equivalent, and state removal.
+- Lifespan and expiry are implemented on the server.
+- Server tracks age and lifespan, then expires pickups when lifespan is reached.
+- Client end-of-life blinking starts near the end of life and accelerates.
+- `pickup_expired` exists as a domain and presentation event.
+- The client derives remaining lifespan from age and lifespan.
 
 ## Normal Spawning
 

@@ -231,9 +231,10 @@ Gameplay systems such as combat still own gameplay decisions: collision outcomes
 
 Pickup ownership is split deliberately:
 
-- `services/game-server/internal/game/entities/pickups` owns pickup entity/type/definition/collision/health.
+- `services/game-server/internal/game/entities/pickups` owns pickup entity/type/definition/collision/current health/lifespan fields.
 - `services/game-server/internal/game/pickups` owns pickup collection rules and effect intents.
-- Root `services/game-server/internal/game` applies mutations and records events.
+- Root `services/game-server/internal/game` owns pickup lifecycle stepping, expiry removal, and event recording.
+- `client/scripts/world/` owns pickup rendering, interpolation, and lifespan presentation forwarding.
 - See [docs/design/pickups.md](pickups.md) for the full pickup design.
 
 Pickup collection is intentionally two-stage.
@@ -242,6 +243,8 @@ This refactor does not enable bullet/pickup collisions.
 This refactor does not change normal spawning.
 
 The packet queue is intentionally named `pendingPresentationEvents` because it stores generated packet `EventState` values for client effects. It is not a domain event queue.
+
+Pickup-related packet events currently include `pickup_dropped`, `pickup_collected`, `pickup_effect_applied`, and `pickup_expired`.
 
 ### Toroidal World Wrap
 
@@ -563,4 +566,3 @@ These are possible directions, not implemented features.
 - If prediction/reconciliation is added, keep it explicitly separate from authoritative game rules so the client remains a presentation/prediction layer rather than the source of truth.
 - Invisible toroidal/wrapped playfield is implemented. See [toroidal wrap](toroidal-wrap.md).
 - A thin server-side ship variant foundation exists: runtime ship type, resolved ship stats/modifiers, `ship_type` snapshots, and collision shape ID lookup. Full variants with client scene mapping and keyed collision catalogs remain future work. See [ship variants plan](ship-variants.md).
-

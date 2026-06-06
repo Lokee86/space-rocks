@@ -34,6 +34,7 @@ func (game *Game) Step(delta float64) {
 	game.stepAsteroidSpawning(delta)
 	game.stepAsteroids(delta, bounds)
 	game.stepBullets(delta, bounds)
+	game.stepPickups(delta)
 	game.stepCollisions()
 	for _, observer := range game.simulationStepObservers {
 		observer(delta)

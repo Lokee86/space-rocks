@@ -16,6 +16,10 @@ func TestDefinitionForOneUp(t *testing.T) {
 		t.Fatalf("expected positive health, got %d", definition.Health)
 	}
 
+	if definition.LifespanSeconds <= 0 {
+		t.Fatalf("expected positive lifespan, got %f", definition.LifespanSeconds)
+	}
+
 	const expectedScenePath = "res://scenes/pickups/1_up.tscn"
 	if definition.ScenePath != expectedScenePath {
 		t.Fatalf("expected scene path %q, got %q", expectedScenePath, definition.ScenePath)

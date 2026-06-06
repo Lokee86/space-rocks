@@ -3,11 +3,13 @@ package pickups
 import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 
 type Pickup struct {
-	ID     string
-	Type   PickupType
-	X      float64
-	Y      float64
-	Health int
+	ID              string
+	Type            PickupType
+	X               float64
+	Y               float64
+	Health          int
+	AgeSeconds      float64
+	LifespanSeconds float64
 }
 
 func (pickup *Pickup) Position() physics.Vector2 {

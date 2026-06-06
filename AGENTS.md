@@ -27,6 +27,7 @@ For normal workflow:
 For project memory and recent volatile context:
 
 - `docs/agent/current-context.md`
+- `docs/agent/session-primer.md`
 - `docs/notes.md`
 
 For architecture and seam rules:

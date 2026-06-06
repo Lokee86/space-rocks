@@ -75,6 +75,9 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 		if pickup_node == null:
 			continue
 
+		var age_seconds = PickupSyncState.age_seconds(state)
+		var lifespan_seconds = PickupSyncState.lifespan_seconds(state)
+
 		var raw_server_position = PickupSyncState.server_position(state)
 		var visual_position = Vector2.ZERO
 
@@ -95,6 +98,9 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 		if not initialized_pickups.has(resolved_pickup_id):
 			initialized_pickups[resolved_pickup_id] = true
 			pickup_node.global_position = visual_position
+
+		if pickup_node.has_method("apply_lifespan_state"):
+			pickup_node.apply_lifespan_state(age_seconds, lifespan_seconds)
 
 
 func remove_missing(server_pickups: Dictionary) -> void:

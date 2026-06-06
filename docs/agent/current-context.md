@@ -5,6 +5,7 @@ This file is volatile project memory. Read it only when the task depends on curr
 Keep this file shorter than permanent docs. Remove stale notes aggressively.
 
 For stable architecture/runtime maps, use [docs/design/architecture.md](../design/architecture.md).
+For stable current-session orientation, use [docs/agent/session-primer.md](session-primer.md).
 For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](../devtools/toggles.md).
 
 ## Current Context
@@ -16,17 +17,15 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Godot was upgraded to 4.6 recently. Scene/import diffs may be noisy.
 - The older `space-rocks-(4.3)/` project copy is ignored and should not be used as the active project.
 - Generated recordings and build artifacts should not be committed. In particular, avoid committing `*.avi`, `tmp/`, `*/tmp/`, and `client/.godot/`.
-- Dev-readiness items 1-10 are complete; item 11 remains: replace local-player camera piggybacking with a dedicated camera target/controller.
+- Pickup work for the current `1_up` / drop / devtools / lifespan scope is complete.
+- Pickup expiry emits `pickup_expired`.
+- Debug hitboxes use `debug_shape_catalog` plus `GameplayState` transforms; there is no live `DebugOverlayStatePacket`.
 - `GameplayRuntimeContext` is runtime wiring only; do not treat it as a read-model passthrough bucket.
 - Server hitbox overlay data comes through `WorldSync`/devtools seams, not `GameplayRuntimeContext`.
 - Targeting now sits above `MouseActionFlow`; `GameplayTargetingContext` owns target selection orchestration and `WorldSync` only exposes `target_source()`.
 - Room membership/owner state is behind the room membership owner seam.
 - `websocket_write.go` only writes outbound/presentation state now; it does not advance game-over lifecycle.
 - Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`.
-- Pickup drops are generated from `shared/drop_tables/basicasteroids.toml`.
-- Drop-table logic lives in `services/game-server/internal/game/drops`.
-- Asteroid destruction currently uses the `basicasteroids` table.
-- Drops are server-authoritative and spawn pickups through the existing pickup seam.
 
 ## Current Direction Notes
 

@@ -3,9 +3,10 @@ package pickups
 import "github.com/Lokee86/space-rocks/server/internal/constants"
 
 type Definition struct {
-	Type      PickupType
-	ScenePath string
-	Health    int
+	Type            PickupType
+	ScenePath       string
+	Health          int
+	LifespanSeconds float64
 }
 
 func DefinitionFor(pickupType PickupType) (Definition, bool) {
@@ -14,8 +15,9 @@ func DefinitionFor(pickupType PickupType) (Definition, bool) {
 	}
 
 	return Definition{
-		Type:      PickupType(constants.PickupOneUpType),
-		ScenePath: constants.PickupOneUpScenePath,
-		Health:    constants.PickupOneUpHealth,
+		Type:            PickupType(constants.PickupOneUpType),
+		ScenePath:       constants.PickupOneUpScenePath,
+		Health:          constants.PickupOneUpHealth,
+		LifespanSeconds: 12.0,
 	}, true
 }
