@@ -41,8 +41,6 @@ func refresh_gameplay_state(state: Dictionary) -> void:
 	if window_controller == null:
 		return
 
-	if window_controller.has_method("apply_debug_status"):
-		window_controller.apply_debug_status(state.get("debug_status", {}))
 	window_controller.refresh_debug_player_targets(
 		target_model.kill_player_target_rows(),
 		target_model.respawn_player_target_rows(),

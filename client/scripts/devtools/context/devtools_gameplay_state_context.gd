@@ -22,7 +22,6 @@ func apply_debug_status(status: Dictionary) -> void:
 
 
 func apply_gameplay_state(state: Dictionary) -> void:
-	apply_debug_status(state.get("debug_status", {}))
 	if display_refresh_flow != null:
 		display_refresh_flow.refresh_gameplay_state(state)
 		if state_context != null:
