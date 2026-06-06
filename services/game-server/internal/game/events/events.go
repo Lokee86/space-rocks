@@ -7,6 +7,7 @@ const (
 	EventShipDeath           Type = "ship_death"
 	EventPickupCollected     Type = "pickup_collected"
 	EventPickupEffectApplied Type = "pickup_effect_applied"
+	EventPickupExpired       Type = "pickup_expired"
 	EventPickupDropped       Type = "pickup_dropped"
 )
 

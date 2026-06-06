@@ -18,7 +18,7 @@ const PLANET_BACKGROUND_OFFSET := Vector2(0.0, 0.0)
 # data-sync:end constants.client.presentation.background
 
 # data-sync:start constants.client.presentation.rendering
-const PLAYER_INTERPOLATION_SPEED := 72.0
+const PLAYER_INTERPOLATION_SPEED := 18.0
 const ASTEROID_Z_INDEX := 15
 const PICKUP_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
@@ -51,6 +51,7 @@ const BULLET_PULSE_TIME := 0.1
 const BULLET_BLAST_MIN_SOUND_LENGTH := 1.0
 const BULLET_BLAST_CLEANUP_PADDING := 0.25
 const SHIP_DEATH_CLEANUP_PADDING := 0.05
+const PICKUP_EOL_FLASH := 0.25
 # data-sync:end constants.client.presentation.effects
 
 # data-sync:start constants.client.presentation.viewport

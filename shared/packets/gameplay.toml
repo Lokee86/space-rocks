@@ -308,6 +308,18 @@ name = "health"
 json = "health"
 type = "int"
 
+[[structs.fields]]
+name = "age_seconds"
+go_name = "AgeSeconds"
+json = "age_seconds"
+type = "float"
+
+[[structs.fields]]
+name = "lifespan_seconds"
+go_name = "LifespanSeconds"
+json = "lifespan_seconds"
+type = "float"
+
 [[structs]]
 id = "EventState"
 

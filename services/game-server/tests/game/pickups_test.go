@@ -73,6 +73,68 @@ func TestPickupSpawnInitializesHealthFromDefinition(t *testing.T) {
 	}
 }
 
+func TestPickupSpawnInitializesLifespanAndAgeFromDefinition(t *testing.T) {
+	scenario := newScenario(t)
+
+	definition, ok := pickups.DefinitionFor(pickups.TypeOneUp)
+	if !ok {
+		t.Fatal("expected pickup definition")
+	}
+
+	spawnedPickup, ok, err := scenario.game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 10, Y: 20})
+	if err != nil {
+		t.Fatalf("expected pickup spawn to succeed, got error %v", err)
+	}
+	if !ok {
+		t.Fatal("expected pickup spawn to return ok")
+	}
+	if spawnedPickup.LifespanSeconds != definition.LifespanSeconds {
+		t.Fatalf("expected pickup lifespan %f, got %f", definition.LifespanSeconds, spawnedPickup.LifespanSeconds)
+	}
+	if spawnedPickup.LifespanSeconds <= 0 {
+		t.Fatalf("expected pickup lifespan to be positive, got %f", spawnedPickup.LifespanSeconds)
+	}
+	if spawnedPickup.AgeSeconds != 0 {
+		t.Fatalf("expected pickup age 0, got %f", spawnedPickup.AgeSeconds)
+	}
+}
+
+func TestPickupSurvivesBeforeLifespanExpires(t *testing.T) {
+	scenario := newScenario(t)
+
+	spawnedPickup, ok, err := scenario.game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 10, Y: 20})
+	if err != nil {
+		t.Fatalf("expected pickup spawn to succeed, got error %v", err)
+	}
+	if !ok {
+		t.Fatal("expected pickup spawn to return ok")
+	}
+
+	scenario.game.Step(spawnedPickup.LifespanSeconds / 2)
+
+	if storedPickup := scenario.pickups().MapIndex(reflect.ValueOf(spawnedPickup.ID)); !storedPickup.IsValid() || storedPickup.IsNil() {
+		t.Fatalf("expected pickup %q to remain before lifespan expires", spawnedPickup.ID)
+	}
+}
+
+func TestPickupExpiresAfterEnoughSimulationSteps(t *testing.T) {
+	scenario := newScenario(t)
+
+	spawnedPickup, ok, err := scenario.game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 10, Y: 20})
+	if err != nil {
+		t.Fatalf("expected pickup spawn to succeed, got error %v", err)
+	}
+	if !ok {
+		t.Fatal("expected pickup spawn to return ok")
+	}
+
+	scenario.game.Step(spawnedPickup.LifespanSeconds)
+
+	if storedPickup := scenario.pickups().MapIndex(reflect.ValueOf(spawnedPickup.ID)); storedPickup.IsValid() {
+		t.Fatalf("expected pickup %q to expire after enough simulation steps", spawnedPickup.ID)
+	}
+}
+
 func TestPickupSpawnRejectsUnknownType(t *testing.T) {
 	scenario := newScenario(t)
 
@@ -147,6 +209,39 @@ func TestStatePacketIncludesSpawnedPickups(t *testing.T) {
 	}
 	if pickup.Health != spawnedPickup.Health {
 		t.Fatalf("expected pickup health %d, got %d", spawnedPickup.Health, pickup.Health)
+	}
+	if pickup.AgeSeconds != 0 {
+		t.Fatalf("expected pickup age 0, got %f", pickup.AgeSeconds)
+	}
+	if pickup.LifespanSeconds <= 0 {
+		t.Fatalf("expected pickup lifespan to be positive, got %f", pickup.LifespanSeconds)
+	}
+}
+
+func TestPickupStateAgeAdvancesInStatePacket(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	spawnedPickup, ok, err := scenario.game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 12, Y: 34})
+	if err != nil {
+		t.Fatalf("expected pickup spawn to succeed, got error %v", err)
+	}
+	if !ok {
+		t.Fatal("expected pickup spawn to return ok")
+	}
+
+	scenario.game.Step(0.25)
+
+	packet := scenario.state(playerID)
+	pickup, ok := packet.Pickups[spawnedPickup.ID]
+	if !ok {
+		t.Fatalf("expected state packet to include pickup %q", spawnedPickup.ID)
+	}
+	if pickup.AgeSeconds <= 0 {
+		t.Fatalf("expected pickup age to increase, got %f", pickup.AgeSeconds)
+	}
+	if pickup.LifespanSeconds != spawnedPickup.LifespanSeconds {
+		t.Fatalf("expected pickup lifespan %f, got %f", spawnedPickup.LifespanSeconds, pickup.LifespanSeconds)
 	}
 }
 
@@ -317,5 +412,46 @@ func TestOneUpPickupCollectionEmitsPickupCollectedAndEffectAppliedEvents(t *test
 	}
 	if effectEvent.LivesAfter != 6 {
 		t.Fatalf("expected lives after 6, got %d", effectEvent.LivesAfter)
+	}
+}
+
+func TestPickupExpiryEmitsPickupExpiredEventAndRemovesPickupFromStatePacket(t *testing.T) {
+	scenario := newScenario(t)
+	playerID := scenario.addPlayer()
+
+	spawnedPickup, ok, err := scenario.game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 12, Y: 34})
+	if err != nil {
+		t.Fatalf("expected pickup spawn to succeed, got error %v", err)
+	}
+	if !ok {
+		t.Fatal("expected pickup spawn to return ok")
+	}
+
+	scenario.game.Step(spawnedPickup.LifespanSeconds)
+
+	packet := scenario.state(playerID)
+	foundExpiredEvent := false
+	for _, event := range packet.Events {
+		if event.Type != "pickup_expired" {
+			continue
+		}
+		if event.PickupID != spawnedPickup.ID {
+			t.Fatalf("expected pickup_expired pickup id %q, got %q", spawnedPickup.ID, event.PickupID)
+		}
+		if event.PickupType != string(spawnedPickup.Type) {
+			t.Fatalf("expected pickup_expired pickup type %q, got %q", spawnedPickup.Type, event.PickupType)
+		}
+		if event.X != spawnedPickup.X || event.Y != spawnedPickup.Y {
+			t.Fatalf("expected pickup_expired position (%v, %v), got (%v, %v)", spawnedPickup.X, spawnedPickup.Y, event.X, event.Y)
+		}
+		foundExpiredEvent = true
+		break
+	}
+	if !foundExpiredEvent {
+		t.Fatal("expected pickup_expired event in state packet")
+	}
+
+	if _, ok := packet.Pickups[spawnedPickup.ID]; ok {
+		t.Fatalf("expected expired pickup %q to be absent from state packet pickups", spawnedPickup.ID)
 	}
 }

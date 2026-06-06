@@ -70,7 +70,7 @@
 - Max active pickups: `2`
 - Entries:
 - `pickup_type = "1_up"`
-- `chance = 0.005`
+- `chance = 0.01`
 - `min_source_size = 1`
 - `max_source_size = 4`
 
@@ -88,6 +88,7 @@
 - `pickup_dropped` means a pickup was successfully created from a drop table result.
 - The event includes `pickup_id`, `pickup_type`, `source_type`, `source_id`, `table_id`, `x`, and `y`.
 - Drop events are separate from pickup collection and pickup effect events.
+- `pickup_expired` belongs to pickup lifecycle, not drop-table evaluation.
 - `pickup_collected` and `pickup_effect_applied` remain owned by the pickup seam.
 
 ## Relationship To Pickups
@@ -96,7 +97,8 @@
 - Drop tables do not own pickup effects.
 - Pickup collection still resolves through `internal/game/pickups`.
 - Pickup effect application still mutates player sessions through the pickup seam.
-- The drop seam ends once the authoritative pickup exists in the entity store.
+- The drop seam ends once the authoritative pickup exists.
+- Pickup expiry is owned by the pickup lifecycle, not the drop seam.
 
 ## Single vs Multi Drop Behavior
 

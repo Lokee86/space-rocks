@@ -109,6 +109,29 @@ func TestEventStateForDomainEventConvertsPickupEffectApplied(t *testing.T) {
 	}
 }
 
+func TestEventStateForDomainEventConvertsPickupExpired(t *testing.T) {
+	event := eventStateForDomainEvent(events.Event{
+		Type:       events.EventPickupExpired,
+		PickupID:   "pickup-1",
+		PickupType: "1_up",
+		X:          21.5,
+		Y:          43.25,
+	})
+
+	if event.Type != "pickup_expired" {
+		t.Fatalf("expected event type %q, got %q", "pickup_expired", event.Type)
+	}
+	if event.PickupID != "pickup-1" {
+		t.Fatalf("expected pickup ID %q, got %q", "pickup-1", event.PickupID)
+	}
+	if event.PickupType != "1_up" {
+		t.Fatalf("expected pickup type %q, got %q", "1_up", event.PickupType)
+	}
+	if event.X != 21.5 || event.Y != 43.25 {
+		t.Fatalf("expected pickup expired coordinates (21.5, 43.25), got (%v, %v)", event.X, event.Y)
+	}
+}
+
 func TestRecordDomainEventQueuesBulletBlastPacketEvent(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()
