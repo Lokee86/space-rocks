@@ -21,86 +21,9 @@ paths = [
   "shared/drop_tables/basicasteroids.toml",
 ]
 
-[constants.go]
-files = ["services/game-server/internal/constants/constants.go"]
-sections = [
-  "constants.server.runtime",
-  "constants.server.player_movement",
-  "constants.server.player_lifecycle",
-  "constants.server.player_session",
-  "constants.server.world",
-  "constants.server.scoring",
-  "constants.server.asteroids",
-  "constants.server.collision",
-  "constants.server.damage",
-  "constants.server.pickups",
-]
-owns = [
-  "constants.server.runtime",
-  "constants.server.player_movement",
-  "constants.server.player_lifecycle",
-  "constants.server.player_session",
-  "constants.server.world",
-  "constants.server.scoring",
-  "constants.server.asteroids",
-  "constants.server.collision",
-  "constants.server.damage",
-  "constants.server.pickups",
-]
-
-[weapons.go]
-files = ["services/game-server/internal/constants/weapons.go"]
-sections = [
-  "constants.server.weapons.basic_cannon",
-  "constants.server.weapons.torpedo",
-  "constants.shared.weapons.torpedo_radial_shape",
-]
-owns = [
-  "constants.server.weapons.basic_cannon",
-  "constants.server.weapons.torpedo",
-  "constants.shared.weapons.torpedo_radial_shape",
-]
-
-[constants.gds]
-files = ["client/scripts/generated/constants/constants.gd"]
-sections = [
-  "constants.server.world",
-  "constants.shared.weapons.torpedo_radial_shape",
-  "constants.client.presentation.background",
-  "constants.client.presentation.rendering",
-  "constants.client.presentation.player_visuals",
-  "constants.client.presentation.effects",
-  "constants.client.presentation.viewport",
-  "constants.client.shell.network",
-  "constants.client.shell.room_states",
-  "constants.client.shell.shell_states",
-  "constants.client.shell.session",
-  "constants.client.shell.game_menu",
-  "constants.client.lobby.status",
-  "constants.client.lobby.dialog",
-  "constants.client.lobby.buttons",
-]
-owns = [
-  "constants.client.presentation.background",
-  "constants.client.presentation.rendering",
-  "constants.client.presentation.player_visuals",
-  "constants.client.presentation.effects",
-  "constants.client.presentation.viewport",
-  "constants.client.shell.network",
-  "constants.client.shell.room_states",
-  "constants.client.shell.shell_states",
-  "constants.client.shell.session",
-  "constants.client.shell.game_menu",
-  "constants.client.lobby.status",
-  "constants.client.lobby.dialog",
-  "constants.client.lobby.buttons",
-]
-
-[constants.ts]
-enabled = false
-files = []
-sections = []
-owns = []
+[constants.scan]
+include = ["services/**/*.go", "client/**/*.gd", "services/**/*.ts"]
+exclude = [".git/**", "**/.godot/**", "**/node_modules/**"]
 
 [packets.go]
 files = [

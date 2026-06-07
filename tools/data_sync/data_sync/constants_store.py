@@ -41,6 +41,21 @@ class ConstantsStore:
         source = self._source_for_section(section_name)
         return source.store.constants(section_name)
 
+    def has_section(self, section_name: str) -> bool:
+        matches = []
+        for source in self._sources:
+            if source.store.has_section(section_name):
+                matches.append(source)
+
+        if not matches:
+            return False
+        if len(matches) > 1:
+            raise ConstantsStoreError(
+                f"duplicate constants source for [{section_name}]: "
+                + ", ".join(str(source.path) for source in matches)
+            )
+        return True
+
     def source_path(self, section_name: str) -> Path:
         return self._source_for_section(section_name).path
 

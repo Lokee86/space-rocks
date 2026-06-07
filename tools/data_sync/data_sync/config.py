@@ -47,14 +47,20 @@ class DomainLanguageConfig:
     outputs: tuple[str, ...] = ()
     enabled: bool = True
 
-    def receives_section(self, section: str) -> bool:
-        return section in self.sections
-
-    def owns_section(self, section: str) -> bool:
-        return section in self.owns
-
     def display_name(self) -> str:
         return self.label or f"{self.domain}.{self.language}"
+
+
+@dataclass(frozen=True)
+class ScanConfig:
+    include: tuple[str, ...]
+    exclude: tuple[str, ...]
+
+
+DEFAULT_CONSTANTS_SCAN = ScanConfig(
+    include=("services/**/*.go", "client/**/*.gd", "services/**/*.ts"),
+    exclude=(".git/**", "**/.godot/**", "**/node_modules/**"),
+)
 
 
 @dataclass(frozen=True)
@@ -63,6 +69,7 @@ class DataSyncConfig:
     root: Path
     sot_paths_by_domain: Mapping[str, tuple[Path, ...]]
     targets_by_domain_language: Mapping[tuple[str, str], tuple[DomainLanguageConfig, ...]]
+    constants_scan: ScanConfig
 
     def sot_paths(self, domain: str) -> tuple[Path, ...]:
         try:
@@ -124,6 +131,7 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
     root = _resolve_config_root(resolved_config_path)
 
     sot_values = _read_sot_paths(raw)
+    constants_scan = _load_constants_scan(raw)
     if sot_override is not None:
         sot_values = {domain: (str(sot_override),) for domain in DOMAINS}
 
@@ -143,17 +151,11 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
                 continue
             if not isinstance(table, Mapping):
                 raise ConfigError(f"missing required config table [{domain}.{language}]")
+            if domain == "constants":
+                continue
             targets.setdefault((domain, language), []).append(
                 _load_domain_language_config(root, domain, language, table)
             )
-    for target in _discover_constants_outputs(root, raw):
-        targets.setdefault((target.domain, target.language), []).append(target)
-
-    _validate_constants_ownership(
-        target
-        for target_list in targets.values()
-        for target in target_list
-    )
 
     return DataSyncConfig(
         path=resolved_config_path,
@@ -166,6 +168,7 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
             key: tuple(value)
             for key, value in targets.items()
         },
+        constants_scan=constants_scan,
     )
 
 
@@ -313,12 +316,28 @@ def _read_sot_paths(raw: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
     return paths
 
 
-def _require_table(raw: Mapping[str, Any], key: str, label: str | None = None) -> Mapping[str, Any]:
-    table = raw.get(key)
-    label = label or key
-    if not isinstance(table, Mapping):
-        raise ConfigError(f"missing required config table [{label}]")
-    return table
+def _load_constants_scan(raw: Mapping[str, Any]) -> ScanConfig:
+    constants_table = raw.get("constants")
+    if constants_table is None:
+        return DEFAULT_CONSTANTS_SCAN
+    if not isinstance(constants_table, Mapping):
+        raise ConfigError("[constants] must be a table")
+
+    scan_table = constants_table.get("scan")
+    if scan_table is None:
+        return DEFAULT_CONSTANTS_SCAN
+    if not isinstance(scan_table, Mapping):
+        raise ConfigError("[constants.scan] must be a table")
+
+    include = DEFAULT_CONSTANTS_SCAN.include
+    if "include" in scan_table:
+        include = tuple(_read_non_empty_string_array(scan_table["include"], "[constants.scan].include"))
+
+    exclude = DEFAULT_CONSTANTS_SCAN.exclude
+    if "exclude" in scan_table:
+        exclude = tuple(_read_non_empty_string_array(scan_table["exclude"], "[constants.scan].exclude"))
+
+    return ScanConfig(include=include, exclude=exclude)
 
 
 def _load_domain_language_config(
@@ -371,6 +390,14 @@ def _read_string_list(value: Any, label: str) -> list[str]:
     return value
 
 
+def _read_non_empty_string_array(value: Any, label: str) -> list[str]:
+    if not isinstance(value, list):
+        raise ConfigError(f"{label} must be a list of non-empty strings")
+    if not all(isinstance(item, str) and item for item in value):
+        raise ConfigError(f"{label} must be a list of non-empty strings")
+    return value
+
+
 def _read_bool(value: Any, label: str) -> bool:
     if not isinstance(value, bool):
         raise ConfigError(f"{label} must be a boolean")
@@ -382,47 +409,3 @@ def _resolve_path(root: Path, value: str | Path) -> Path:
     if path.is_absolute():
         return path.resolve()
     return (root / path).resolve()
-
-
-def _validate_constants_ownership(targets: Any) -> None:
-    owners: dict[str, str] = {}
-    for target in targets:
-        domain = target.domain
-        if domain != "constants":
-            continue
-        for section in target.owns:
-            previous = owners.get(section)
-            if previous is not None:
-                raise ConfigError(
-                    f"constants section {section!r} is owned by multiple targets: {previous}, {target.display_name()}"
-                )
-            owners[section] = target.display_name()
-
-
-def _discover_constants_outputs(root: Path, raw: Mapping[str, Any]) -> tuple[DomainLanguageConfig, ...]:
-    discovered: list[DomainLanguageConfig] = []
-    for name, table in raw.items():
-        if name in DOMAINS or name == "sot":
-            continue
-        if not isinstance(table, Mapping):
-            continue
-        for language in LANGUAGES:
-            if language not in table:
-                continue
-            language_table = table.get(language)
-            if not isinstance(language_table, Mapping):
-                continue
-            if not _looks_like_constants_output(language_table):
-                continue
-            discovered.append(_load_domain_language_config(root, "constants", language, language_table))
-    return tuple(discovered)
-
-
-def _looks_like_constants_output(table: Mapping[str, Any]) -> bool:
-    for key in REQUIRED_DOMAIN_KEYS:
-        if key not in table:
-            return False
-    sections = table.get("sections")
-    if not isinstance(sections, list):
-        return False
-    return all(isinstance(section, str) and section.startswith("constants.") for section in sections)

@@ -105,3 +105,59 @@ player_speed = 420.0
     store = ConstantsStore.load([path])
 
     assert store.source_path("constants.gameplay") == path
+
+
+def test_has_section_returns_true_when_section_exists_once(tmp_path: Path) -> None:
+    path = write_toml(
+        tmp_path / "game_data.toml",
+        """
+[constants.gameplay]
+player_speed = 420.0
+""",
+    )
+
+    store = ConstantsStore.load([path])
+
+    assert store.has_section("constants.gameplay") is True
+
+
+def test_has_section_returns_false_when_section_is_missing(tmp_path: Path) -> None:
+    path = write_toml(
+        tmp_path / "game_data.toml",
+        """
+[constants.gameplay]
+player_speed = 420.0
+""",
+    )
+
+    store = ConstantsStore.load([path])
+
+    assert store.has_section("constants.network") is False
+
+
+def test_has_section_raises_on_duplicate_section(tmp_path: Path) -> None:
+    base_path = write_toml(
+        tmp_path / "game_data.base.toml",
+        """
+[constants.gameplay]
+tick_rate = 60
+""",
+    )
+    override_path = write_toml(
+        tmp_path / "game_data.override.toml",
+        """
+[constants.gameplay]
+tick_rate = 120
+""",
+    )
+
+    store = ConstantsStore.load([base_path, override_path])
+
+    with pytest.raises(
+        ConstantsStoreError, match=r"duplicate constants source.*constants\.gameplay"
+    ) as excinfo:
+        store.has_section("constants.gameplay")
+
+    error_text = str(excinfo.value)
+    assert str(base_path) in error_text
+    assert str(override_path) in error_text

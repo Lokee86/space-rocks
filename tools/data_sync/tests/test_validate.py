@@ -102,30 +102,9 @@ def valid_config_text() -> str:
 [sot]
 path = "shared/game_data.toml"
 
-[constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay", "constants.network"]
-owns = ["constants.gameplay"]
-
-[constants.gds]
-files = ["gds/constants.gd"]
-sections = ["constants.gameplay", "constants.client"]
-owns = ["constants.client"]
-
-[constants.ts]
-files = ["ts/constants.ts"]
-sections = ["constants.network", "constants.client"]
-owns = ["constants.network"]
-
-[weapons.go]
-files = ["go/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
-
-[weapons.gds]
-files = ["gds/weapons.gd"]
-sections = ["constants.server.weapons.basic_cannon"]
-owns = []
+[constants.scan]
+include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
+exclude = []
 
 [packets.go]
 files = ["go/packets.go"]
@@ -230,20 +209,9 @@ paths = ["shared/constants_a.toml", "shared/constants_b.toml"]
 [sot.packets]
 path = "shared/packets.toml"
 
-[constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay", "constants.network"]
-owns = ["constants.gameplay"]
-
-[constants.gds]
-files = ["gds/constants.gd"]
-sections = ["constants.gameplay", "constants.client"]
-owns = ["constants.client"]
-
-[constants.ts]
-files = ["ts/constants.ts"]
-sections = ["constants.network", "constants.client"]
-owns = ["constants.network"]
+[constants.scan]
+include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
+exclude = []
 
 [packets.go]
 files = ["go/packets.go"]
@@ -319,20 +287,9 @@ paths = ["shared/constants_a.toml", "shared/constants_b.toml"]
 [sot.packets]
 path = "shared/packets.toml"
 
-[constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay", "constants.network"]
-owns = ["constants.gameplay"]
-
-[constants.gds]
-files = ["gds/constants.gd"]
-sections = ["constants.gameplay", "constants.client"]
-owns = ["constants.client"]
-
-[constants.ts]
-files = ["ts/constants.ts"]
-sections = ["constants.network", "constants.client"]
-owns = ["constants.network"]
+[constants.scan]
+include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
+exclude = []
 
 [packets.go]
 files = ["go/packets.go"]
@@ -356,25 +313,18 @@ owns = []
     assert run(["-validate", "-config", str(config_path)]) == 1
 
 
-def test_validate_invalid_constants_ownership_overlap(tmp_path: Path) -> None:
+def test_validate_files_without_data_sync_markers_are_ignored_for_constants(tmp_path: Path) -> None:
     config_path = write_validation_project(tmp_path)
-    config_path.write_text(
-        valid_config_text().replace(
-            """[weapons.gds]
-files = ["gds/weapons.gd"]
-sections = ["constants.server.weapons.basic_cannon"]
-owns = []
-""".strip(),
-            """[weapons.gds]
-files = ["gds/weapons.gd"]
-sections = ["constants.server.weapons.basic_cannon"]
-owns = ["constants.gameplay"]
-""".strip(),
-        ),
+    (tmp_path / "go/ignored.go").write_text(
+        """
+package constants
+
+const Untouched = true
+""".lstrip(),
         encoding="utf-8",
     )
 
-    assert run(["-validate", "-config", str(config_path)]) == 2
+    assert run(["-validate", "-constants", "-go", "-config", str(config_path)]) == 0
 
 
 def test_validate_duplicate_packet_ids(tmp_path: Path) -> None:
@@ -476,6 +426,29 @@ max_players = 2
     )
 
     assert run(["-validate", "-constants", "-go", "-config", str(config_path)]) == 1
+
+
+def test_validate_discovered_constants_block_missing_toml_section_fails_clearly(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_path = write_validation_project(tmp_path)
+    (tmp_path / "go/missing.go").write_text(
+        """
+package constants
+
+// data-sync:start constants.missing.example
+old
+// data-sync:end constants.missing.example
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    exit_code = run(["-validate", "-constants", "-go", "-config", str(config_path)])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "constants.missing.example" in captured.err
 
 
 def test_validate_arbitrary_constants_output_is_checked(tmp_path: Path) -> None:
