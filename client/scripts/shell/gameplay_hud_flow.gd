@@ -2,6 +2,7 @@ extends RefCounted
 class_name GameplayHudFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
+const LoadoutDisplayFlow = preload("res://scripts/ui/hud/loadout_display_flow.gd")
 
 var hud: Control
 var is_dead := false
@@ -9,10 +10,12 @@ var is_game_over := false
 var can_respawn := false
 var respawn_countdown_remaining := 0.0
 var respawn_timer_template := ""
+var loadout_display_flow := LoadoutDisplayFlow.new()
 
 
 func configure(hud_ref: Control) -> void:
 	hud = hud_ref
+	loadout_display_flow.configure(hud)
 	var respawn_timer_label := _respawn_timer_label()
 	if respawn_timer_label != null:
 		respawn_timer_template = respawn_timer_label.text
@@ -33,14 +36,19 @@ func apply_gameplay_state_summary(state: Dictionary) -> void:
 		apply_lives(state["lives"])
 	var player_sessions: Dictionary = state.get("player_sessions", {})
 	var self_id: String = state["self_id"]
-	var self_session_state: Dictionary = player_sessions.get(self_id, {})
+	var self_session_state = player_sessions.get(self_id, {})
 	if self_session_state is Dictionary and self_session_state.has(Packets.FIELD_SCORE):
 		apply_score(int(self_session_state.get(Packets.FIELD_SCORE, 0)))
+	var server_players: Dictionary = state.get("server_players", {})
+	var self_player_state = server_players.get(self_id, {})
+	if self_player_state is Dictionary:
+		loadout_display_flow.apply_player_state(self_player_state)
 
 
 func reset() -> void:
 	if hud != null:
 		set_alive()
+		loadout_display_flow.clear()
 		hud.hide()
 
 
