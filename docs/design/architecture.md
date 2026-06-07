@@ -136,6 +136,8 @@ Core server packages:
 - `services/game-server/internal/networking`: websocket upgrade, sessions, read/write loops, transport logging, and adapter wiring.
 - `services/game-server/internal/rooms`: room state, room membership ownership, lifecycle ownership, and cleanup policy.
 - `services/game-server/internal/game`: game loop, state packets, combat, spawning, scoring, respawn/session logic, visibility.
+- `services/game-server/internal/game/weapons`: weapon IDs, slots, equipped weapon state, weapon profiles, fire policy, and projectile spawn intent construction. See [weapons design](weapons.md).
+- `services/game-server/internal/game/effects/radial`: radial effect specs, zones, stepping, and hit-intent generation. See [radial effects design](radial-effects.md).
 - `services/game-server/internal/game/motion`: per-entity movement integration and advance-with-wrap helpers for ships, asteroids, and bullets.
 - `services/game-server/internal/game/drops`: drop-table evaluation seam for destroyed entity sources. It evaluates generated drop tables and returns pickup results, but it does not collect pickups or apply pickup effects.
 - `services/game-server/internal/game/rules`: match/mode policy evaluation from plain snapshots. It currently owns game-over outcome evaluation and per-player participation classification.
@@ -160,8 +162,10 @@ Each `game.Game` owns its own simulation state:
 - player sessions
 - camera views
 - pending presentation events
+- active radial effects
 
 `Game.Start()` launches a simulation loop at `constants.ServerTickRate`. Each tick advances player sessions, advances moving entities through the motion seam, updates camera views, spawns asteroids, removes expired/far objects, and resolves collisions.
+Active radial effects are stepped as part of the same simulation flow.
 
 The server currently owns:
 
@@ -209,6 +213,8 @@ Continuous bullet stream runtime state is owned by `services/game-server/interna
 
 `services/game-server/internal/game/damage/` defines the internal damage resolution seam for authoritative entity damage and destruction decisions. Combat/game code is the adapter: it consumes collision facts, builds a `DamageResolutionRequest` with `DamageSource`, `DamageTarget`, `DamageType`, and `DamageCause`, calls `ResolveSingle`, and then existing systems consume the `DamageResult`.
 
+Weapon profiles carry damage specs, projectile impact metadata may spawn radial effects, radial effects emit hit intents, and Game converts radial hits into damage requests before applying consequences. Damage remains pure resolution.
+
 `DamageType` drives resistance and vulnerability matching, while `DamageSource` carries source entity identity plus cause. See [docs/design/damage.md](damage.md) for the full damage seam model.
 
 The damage package also owns pure area and damage-over-time resolution helpers through `ResolveArea` and `TickDamageOverTime`.
@@ -216,6 +222,7 @@ The damage package also owns pure area and damage-over-time resolution helpers t
 The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
 Damage application may lead to future presentation events, but `DamageResult` itself is not the domain event boundary.
 Current combat damage can emit `damage_applied`, while `damage_over_time_started` and `damage_over_time_tick` remain adapter-mapped until DoT gameplay ownership is fully wired, as described in [docs/design/damage.md](damage.md).
+Radial effect spawning also emits `radial_effect_started` for the presentation/event flow.
 
 ### Scoring Policy
 

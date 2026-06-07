@@ -23,6 +23,9 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - `GameplayRuntimeContext` is runtime wiring only; do not treat it as a read-model passthrough bucket.
 - Server hitbox overlay data comes through `WorldSync`/devtools seams, not `GameplayRuntimeContext`.
 - Targeting now sits above `MouseActionFlow`; `GameplayTargetingContext` owns target selection orchestration and `WorldSync` only exposes `target_source()`.
+- Weapons live in `services/game-server/internal/game/weapons`; see [docs/design/weapons.md](../design/weapons.md).
+- Radial effects live in `services/game-server/internal/game/effects/radial`; see [docs/design/radial-effects.md](../design/radial-effects.md).
+- Weapon profiles can carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam.
 - Room membership/owner state is behind the room membership owner seam.
 - `websocket_write.go` only writes outbound/presentation state now; it does not advance game-over lifecycle.
 - Continuous bullet stream runtime state is owned by `services/game-server/internal/devtools/streamruntime`.

@@ -79,6 +79,7 @@ docs/api/nestjs-api-server.md
 - `networking` may retain websocket session activation/deactivation when it mutates websocket session fields.
 - `game` owns authoritative gameplay simulation, gameplay state mutation, and adapters from game storage into narrower gameplay seams.
 - Damage resolution lives in `services/game-server/internal/game/damage/`; it owns pure resolution only. `game` owns the entity mutation adapters, and devtools must route damage through the same real damage seam rather than a parallel debug-only path. See `docs/design/damage.md`.
+- Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`. Weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See `docs/design/weapons.md` and `docs/design/radial-effects.md`.
 - Match/mode policy evaluation belongs in `services/game-server/internal/game/rules`, which should receive plain snapshots/facts and return decisions/status.
 - `game` should not own websocket transport, API persistence, account/auth concerns, or lobby UI flow.
 
