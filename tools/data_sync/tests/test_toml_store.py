@@ -52,11 +52,13 @@ lives = "int"
 
 
 def test_loading_constants_preserves_toml_order(tmp_path: Path) -> None:
-    store = TomlStore.load(write_sot(tmp_path, sample_sot()))
+    path = write_sot(tmp_path, sample_sot())
+    store = TomlStore.load(path)
 
     section = store.constants("constants.gameplay")
 
     assert section.name == "constants.gameplay"
+    assert section.source_path == str(path)
     assert section.values == (
         ("player_speed", 420.0),
         ("bullet_speed", 900.0),

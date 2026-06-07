@@ -13,6 +13,7 @@ ConstantValue: TypeAlias = int | float | bool | str | list[float]
 class ConstantSection:
     name: str
     values: tuple[tuple[str, ConstantValue], ...]
+    source_path: str | None = None
 
     def as_dict(self) -> dict[str, ConstantValue]:
         return dict(self.values)

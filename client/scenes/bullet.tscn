@@ -2,11 +2,26 @@
 
 [ext_resource type="Texture2D" uid="uid://dhqslpwrweveb" path="res://assets/OrangeScale__000.png" id="1_pppl6"]
 [ext_resource type="Script" uid="uid://b4i8i6puyqywl" path="res://scripts/entities/bullet.gd" id="1_y25gk"]
+[ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="2_eoqba"]
 [ext_resource type="AudioStream" uid="uid://d3tss4hfinl2e" path="res://audio/laser.wav" id="3_l5glv"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qncy5"]
+shader = ExtResource("2_eoqba")
+shader_parameter/hue_shift = 0.0
+shader_parameter/saturation_mult = 1.0
+shader_parameter/value_mult = 1.0
+shader_parameter/strength = 1.0
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_4wvvi"]
 radius = 3.0
 height = 24.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tamys"]
+shader = ExtResource("2_eoqba")
+shader_parameter/hue_shift = 0.0
+shader_parameter/saturation_mult = 1.0
+shader_parameter/value_mult = 1.0
+shader_parameter/strength = 1.0
 
 [node name="Bullet" type="CharacterBody2D" unique_id=815812444]
 collision_layer = 0
@@ -14,6 +29,7 @@ collision_mask = 0
 script = ExtResource("1_y25gk")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=144382724]
+material = SubResource("ShaderMaterial_qncy5")
 position = Vector2(-8.419156e-07, 0.1618014)
 rotation = 1.5708
 scale = Vector2(0.44383773, 0.27600458)
@@ -24,6 +40,7 @@ shape = SubResource("CapsuleShape2D_4wvvi")
 
 [node name="LaserSound" type="AudioStreamPlayer2D" parent="." unique_id=463970855]
 visible = false
+material = SubResource("ShaderMaterial_tamys")
 stream = ExtResource("3_l5glv")
 volume_db = -6.95
 pitch_scale = 0.5

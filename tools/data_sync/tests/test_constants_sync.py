@@ -29,6 +29,27 @@ client_scale = 2
 
 [constants.network]
 max_players = 2
+
+[constants.server.weapons.basic_cannon]
+basic_cannon_projectile_speed = 1200.0
+basic_cannon_projectile_lifetime = 1.75
+basic_cannon_cooldown = 0.22
+basic_cannon_projectile_spawn_offset = 42.0
+basic_cannon_damage = 1
+
+[constants.server.weapons.torpedo]
+torpedo_projectile_speed = 1200.0
+torpedo_projectile_lifetime = 1.75
+torpedo_cooldown = 0.22
+torpedo_projectile_spawn_offset = 42.0
+torpedo_impact_damage = 1
+torpedo_radial_damage = 1
+torpedo_radial_zone_count = 4
+torpedo_radial_zone_width = 10
+torpedo_radial_zone_spawn_seconds = 0.1
+torpedo_radial_tick_seconds = 0.1
+torpedo_radial_total_seconds = 0.4
+torpedo_radial_zone_lifetime_seconds = 0.4
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -46,6 +67,19 @@ old
 """.lstrip(),
         encoding="utf-8",
     )
+    (tmp_path / "go/weapons.go").write_text(
+        """
+package constants
+
+// data-sync:start constants.server.weapons.basic_cannon
+old
+// data-sync:end constants.server.weapons.basic_cannon
+// data-sync:start constants.server.weapons.torpedo
+old
+// data-sync:end constants.server.weapons.torpedo
+""".lstrip(),
+        encoding="utf-8",
+    )
     (tmp_path / "gds/constants.gd").write_text(
         """
 extends RefCounted
@@ -53,6 +87,16 @@ extends RefCounted
 # data-sync:start constants.client
 old
 # data-sync:end constants.client
+""".lstrip(),
+        encoding="utf-8",
+    )
+    (tmp_path / "gds/weapons.gd").write_text(
+        """
+extends RefCounted
+
+# data-sync:start constants.server.weapons.basic_cannon
+old
+# data-sync:end constants.server.weapons.basic_cannon
 """.lstrip(),
         encoding="utf-8",
     )
@@ -77,10 +121,20 @@ files = ["go/constants.go"]
 sections = ["constants.gameplay"]
 owns = ["constants.gameplay"]
 
+[weapons.go]
+files = ["go/weapons.go"]
+sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+
 [constants.gds]
 files = ["gds/constants.gd"]
 sections = ["constants.client"]
 owns = ["constants.client"]
+
+[weapons.gds]
+files = ["gds/weapons.gd"]
+sections = ["constants.server.weapons.basic_cannon"]
+owns = []
 
 [constants.ts]
 files = ["ts/constants.ts"]
@@ -114,7 +168,8 @@ def test_push_updates_only_managed_block(tmp_path: Path) -> None:
     exit_code = run(["-push", "-constants", "-go", "-config", str(config_path)])
 
     assert exit_code == 0
-    assert (tmp_path / "go/constants.go").read_text(encoding="utf-8") == """
+    assert (tmp_path / "go/constants.go").read_text(encoding="utf-8") == (
+        """
 package constants
 
 // keep before
@@ -125,7 +180,27 @@ const DebugEnabled = true
 const WelcomeText = "hello"
 // data-sync:end constants.gameplay
 // keep after
-""".lstrip()
+"""
+        .lstrip()
+        .strip()
+        + "\n"
+    )
+
+
+def test_push_updates_all_constants_outputs_for_language(tmp_path: Path) -> None:
+    config_path = write_project(tmp_path)
+
+    exit_code = run(["-push", "-constants", "-go", "-config", str(config_path)])
+
+    assert exit_code == 0
+    assert "const PlayerSpeed = 420.0" in (tmp_path / "go/constants.go").read_text(encoding="utf-8")
+    assert "const BasicCannonProjectileSpeed = " in (tmp_path / "go/weapons.go").read_text(encoding="utf-8")
+
+    exit_code = run(["-push", "-constants", "-gds", "-config", str(config_path)])
+
+    assert exit_code == 0
+    assert "CLIENT_SCALE := 2" in (tmp_path / "gds/constants.gd").read_text(encoding="utf-8")
+    assert "BASIC_CANNON_PROJECTILE_SPEED := " in (tmp_path / "gds/weapons.gd").read_text(encoding="utf-8")
 
 
 def test_push_does_not_alter_surrounding_content(tmp_path: Path) -> None:
@@ -155,6 +230,19 @@ def test_diff_writes_nothing(tmp_path: Path, capsys: pytest.CaptureFixture[str])
     assert (tmp_path / "go/constants.go").read_text(encoding="utf-8") == before
 
 
+def test_diff_includes_all_constants_outputs_when_stale(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    config_path = write_project(tmp_path)
+
+    exit_code = run(["-diff", "-constants", "-go", "-config", str(config_path)])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert str(tmp_path / "go/constants.go") in captured.out
+    assert str(tmp_path / "go/weapons.go") in captured.out
+    assert "const PlayerSpeed = 420.0" in captured.out
+    assert "BasicCannonProjectileSpeed" in captured.out
+
+
 def test_check_exits_zero_when_synced(tmp_path: Path) -> None:
     config_path = write_project(tmp_path)
 
@@ -165,6 +253,44 @@ def test_check_exits_zero_when_synced(tmp_path: Path) -> None:
 
 def test_check_exits_one_when_out_of_sync(tmp_path: Path) -> None:
     config_path = write_project(tmp_path)
+
+    assert run(["-check", "-constants", "-go", "-config", str(config_path)]) == 1
+
+
+def test_check_fails_when_either_go_constants_output_is_stale(tmp_path: Path) -> None:
+    config_path = write_project(tmp_path)
+
+    (tmp_path / "go/constants.go").write_text(
+        """
+package constants
+
+// keep before
+// data-sync:start constants.gameplay
+const PlayerSpeed = 420.0
+const TickRate = 60
+const DebugEnabled = true
+const WelcomeText = "hello"
+// data-sync:end constants.gameplay
+// keep after
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    assert run(["-push", "-constants", "-go", "-config", str(config_path)]) == 0
+
+    (tmp_path / "go/weapons.go").write_text(
+        """
+package constants
+
+// data-sync:start constants.server.weapons.basic_cannon
+old
+// data-sync:end constants.server.weapons.basic_cannon
+// data-sync:start constants.server.weapons.torpedo
+old
+// data-sync:end constants.server.weapons.torpedo
+""".lstrip(),
+        encoding="utf-8",
+    )
 
     assert run(["-check", "-constants", "-go", "-config", str(config_path)]) == 1
 

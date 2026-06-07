@@ -50,8 +50,8 @@ def plan_constants_updates(
 ) -> tuple[FileUpdate, ...]:
     updates: list[FileUpdate] = []
     for language in languages:
-        target = config.target("constants", language)
-        updates.extend(_plan_target_updates(store, target))
+        for target in config.targets_for("constants", language):
+            updates.extend(_plan_target_updates(store, target))
     return tuple(updates)
 
 

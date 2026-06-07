@@ -65,6 +65,27 @@ client_scale = 2
 [constants.network]
 max_players = 2
 
+[constants.server.weapons.basic_cannon]
+projectile_speed = 1200.0
+projectile_lifetime = 1.75
+cooldown = 0.22
+projectile_spawn_offset = 42.0
+damage = 1
+
+[constants.server.weapons.torpedo]
+projectile_speed = 1200.0
+projectile_lifetime = 1.75
+cooldown = 0.22
+projectile_spawn_offset = 42.0
+impact_damage = 1
+radial_damage = 1
+radial_zone_count = 4
+radial_zone_width = 10
+radial_zone_spawn_seconds = 0.1
+radial_tick_seconds = 0.1
+radial_total_seconds = 0.4
+radial_zone_lifetime_seconds = 0.4
+
 [table]
 id = "basicasteroids"
 source_type = "asteroid"

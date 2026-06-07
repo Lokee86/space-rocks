@@ -36,6 +36,8 @@ const TEXT_EXTENSIONS = new Set([
   ".ts",
   ".js",
   ".mjs",
+  ".py",
+  ".pyi",
   ".json",
   ".toml",
   ".yaml",

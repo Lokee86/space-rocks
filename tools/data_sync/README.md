@@ -19,14 +19,21 @@
 - GDScript Godot client files
 - TypeScript API server files, later
 
-For constants, the tool updates only marked generated blocks. For packet files,
-the current generated outputs are fully generated files, so packet push rewrites
-the configured packet files as whole files.
+For constants, the tool updates only marked generated blocks. Constants outputs
+can be declared on arbitrary top-level language subtables such as
+`[constants.go]`, `[weapons.go]`, `[constants.gds]`, or `[weapons.gds]` as long
+as they are constants outputs for a supported language and only list
+`constants.*` sections. Constants sync is a bidirectional many-source/many-output
+pipeline: multiple constants TOML files are supported, multiple generated
+constants files per language are supported, `-push` writes source sections to
+every configured output target that lists them, and `-pull` reads only owned
+generated sections and writes each one back to the TOML file that already
+contains it.
 
 Current active scope:
 
 ```text
-constants -> Go and GDScript
+constants -> Go, GDScript, and TypeScript when enabled
 packets -> Go and GDScript
 drop_tables -> Go only
 ```
@@ -52,8 +59,12 @@ The canonical sources for active drop tables are the TOML files under `shared/dr
 
 Debug/devtools packet schema lives in `shared/packets/debug.toml`. Data-sync generates server devtools packet types into `services/game-server/internal/devtools/packets_generated.go` through the `server_devtools_packets` output id.
 
-The split constants SoT files under `shared/constants/` contain constants only. Obsolete packet reference data was removed when the packet TOML pipeline was adopted. Packet schema changes should be made under `shared/packets/`.
-Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`.
+The split constants SoT files under `shared/constants/` contain constants only.
+Obsolete packet reference data was removed when the packet TOML pipeline was
+adopted. Packet schema changes should be made under `shared/packets/`.
+Client constants use nested subcategory sections under
+`constants.client.presentation.*`, `constants.client.shell.*`, and
+`constants.client.lobby.*`.
 
 New constants and packet schema changes should be made in TOML. Language files are generated from TOML through `-push`.
 
@@ -116,15 +127,21 @@ data-sync -validate -constants
 
 ## Operation Behavior
 
-`-push` reads TOML and generates canonical language output. Constants replace configured `data-sync` blocks. Packets rewrite configured generated packet files. Drop tables generate the server Go file only.
+`-push` reads TOML and generates canonical language output. Constants replace
+configured `data-sync` blocks. Every selected constants language processes all
+configured constants outputs for that language. Packets rewrite configured
+generated packet files. Drop tables generate the server Go file only.
 
-`-diff` does the same generation as `-push`, prints a unified diff, and writes nothing.
+`-diff` does the same generation as `-push`, prints a unified diff, and writes
+nothing.
 
 `-check` writes nothing and exits `0` when generated blocks are current, or `1` when files differ.
 
 `-validate` checks config, TOML integrity, supported values/types, ownership rules, configured file existence, and required managed blocks.
 
-`-pull` is intentionally restricted. Constants pull reads owned generated blocks and updates existing TOML values only.
+`-pull` is intentionally restricted. Constants pull reads owned generated blocks from all constants outputs for the selected language, updates existing TOML values only, and writes each section back to the SoT file that already contains it.
+
+Pull fails if a source section is missing from all TOML files, if a source section appears in more than one TOML file, or if a generated section is owned by more than one output target.
 
 TypeScript output is disabled in the default config.
 
@@ -208,6 +225,26 @@ Drop tables have their own SoT path set under `shared/drop_tables/`, and `-drop-
 
 Constants ownership overlap is invalid per section. Packet ownership is coarse for now; packet-level ownership may be added later.
 
+Example constants layout:
+
+```toml
+[sot.constants]
+paths = [
+  "shared/constants/server_constants.toml",
+  "shared/constants/weapons.toml",
+]
+
+[constants.go]
+files = ["services/game-server/internal/constants/constants.go"]
+sections = ["constants.gameplay"]
+owns = ["constants.gameplay"]
+
+[weapons.go]
+files = ["services/game-server/internal/constants/weapons.go"]
+sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+```
+
 ## TOML Format
 
 Constants:
@@ -221,6 +258,36 @@ asteroid_spawn_interval = 1.5
 [constants.network]
 tick_rate = 60
 max_players_per_room = 2
+
+[weapons.go]
+files = ["services/game-server/internal/constants/weapons.go"]
+sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+
+[weapons.gds]
+files = ["client/scripts/generated/constants/weapons.gd"]
+sections = ["constants.server.weapons.basic_cannon"]
+owns = ["constants.server.weapons.basic_cannon"]
+```
+
+Example pull layout:
+
+```toml
+[sot]
+paths = [
+  "shared/constants/server_constants.toml",
+  "shared/constants/weapons.toml",
+]
+
+[constants.go]
+files = ["services/game-server/internal/constants/constants.go"]
+sections = ["constants.gameplay"]
+owns = ["constants.gameplay"]
+
+[weapons.go]
+files = ["services/game-server/internal/constants/weapons.go"]
+sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
 ```
 
 Packets:
@@ -341,27 +408,26 @@ shared/drop_tables/basicasteroids.toml
 ## Active Constants Workflow
 
 1. Edit the needed constants SoT file under `shared/constants/` (`server_constants.toml`, `server_entities.toml`, `client/presentation.toml`, `client/shell.toml`, or `client/lobby.toml`).
-2. Run `python tools/data_sync/main.py -validate -constants`.
-3. Run `python tools/data_sync/main.py -diff -constants -go -gds`.
-4. Run `python tools/data_sync/main.py -push -constants -go -gds`.
-5. Run `python tools/data_sync/main.py -check -constants -go -gds`.
+2. Run `data-sync -validate -constants`.
+3. Run `data-sync -diff -constants -go -gds`.
+4. Run `data-sync -push -constants -go -gds`.
+5. Run `data-sync -check -constants -go -gds`.
 
 ## Active Packet Workflow
 
 1. Edit packet schema files under `shared/packets/` (`outputs.toml`, `gameplay.toml`, `debug.toml`, and `lobby.toml`).
-2. Run `python tools/data_sync/main.py -validate -packets`.
-3. Run `python tools/data_sync/main.py -diff -packets -go -gds`.
+2. Run `data-sync -validate -packets`.
+3. Run `data-sync -diff -packets -go -gds`.
 4. Review the diff.
-5. Run `python tools/data_sync/main.py -push -packets -go -gds`.
-6. Run `python tools/data_sync/main.py -check -packets -go -gds`.
+5. Run `data-sync -push -packets -go -gds`.
+6. Run `data-sync -check -packets -go -gds`.
 
 ## Active Drop Table Workflow
 
 1. Edit the drop table TOML files under `shared/drop_tables/`.
    The current baseline drop table source is `shared/drop_tables/basicasteroids.toml`.
-2. Run `python tools/data_sync/main.py -validate -drop-tables`.
-3. Run `python tools/data_sync/main.py -diff -drop-tables -go`.
+2. Run `data-sync -validate -drop-tables`.
+3. Run `data-sync -diff -drop-tables -go`.
 4. Review the diff.
-5. Run `python tools/data_sync/main.py -push -drop-tables -go`.
-6. Run `python tools/data_sync/main.py -check -drop-tables -go`.
-
+5. Run `data-sync -push -drop-tables -go`.
+6. Run `data-sync -check -drop-tables -go`.

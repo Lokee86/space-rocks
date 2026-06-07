@@ -2,7 +2,24 @@
 package constants
 
 // data-sync:start constants.server.weapons.basic_cannon
+const BasicCannonProjectileSpeed = 1200.0
+const BasicCannonProjectileLifetime = 1.75
+const BasicCannonCooldown = 0.22
+const BasicCannonProjectileSpawnOffset = 42.0
+const BasicCannonDamage = 1
 // data-sync:end constants.server.weapons.basic_cannon
 
 // data-sync:start constants.server.weapons.torpedo
+const TorpedoProjectileSpeed = 1200.0
+const TorpedoProjectileLifetime = 1.75
+const TorpedoCooldown = 0.22
+const TorpedoProjectileSpawnOffset = 42.0
+const TorpedoImpactDamage = 1
+const TorpedoRadialDamage = 1
+const TorpedoRadialZoneCount = 4
+const TorpedoRadialZoneWidth = 10
+const TorpedoRadialZoneSpawnSeconds = 0.1
+const TorpedoRadialTickSeconds = 0.1
+const TorpedoRadialTotalSeconds = 0.4
+const TorpedoRadialZoneLifetimeSeconds = 0.4
 // data-sync:end constants.server.weapons.torpedo

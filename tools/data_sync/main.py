@@ -43,15 +43,9 @@ def run(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        constants_paths = config.sot_paths("constants")
-        if len(constants_paths) != 1:
-            print(
-                "pull error: constants pull supports only one SoT path; configure a single [sot.constants] path for pull.",
-                file=sys.stderr,
-            )
-            return 2
         try:
-            store = TomlStore.load(config.sot_path("constants"))
+            constants_paths = config.sot_paths("constants")
+            store = TomlStore.load(constants_paths[0])
             pull_constants(config, store, args.languages[0])
             store.write()
         except (PullError, TomlStoreError) as exc:
