@@ -159,11 +159,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="MarginContainer" type="MarginContainer" parent="LoadoutDisplay" unique_id=289562621]
+[node name="MarginContainer2" type="MarginContainer" parent="LoadoutDisplay" unique_id=289562621]
 layout_mode = 2
-theme_override_constants/margin_bottom = 95
+theme_override_constants/margin_bottom = 70
 
-[node name="HBoxContainer" type="HBoxContainer" parent="LoadoutDisplay/MarginContainer" unique_id=1054103157]
+[node name="LoadoutContainer" type="HBoxContainer" parent="LoadoutDisplay/MarginContainer2" unique_id=1054103157]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 80
 alignment = 1

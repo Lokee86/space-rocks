@@ -1,5 +1,7 @@
 extends Control
 
+signal cooldown_finished
+
 @export var overlay_size: Vector2 = Vector2(64.0, 64.0)
 @export var radius_ratio: float = 0.43
 @export var overlay_color: Color = Color(0.0, 0.0, 0.0, 0.55)
@@ -17,10 +19,6 @@ func _ready() -> void:
 	size = overlay_size
 	position = -size * 0.5
 
-	cooldown_label.size = size
-	cooldown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cooldown_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-
 	visible = false
 
 
@@ -32,6 +30,7 @@ func _process(delta: float) -> void:
 
 	if _cooldown_remaining <= 0.0:
 		clear_countdown()
+		cooldown_finished.emit()
 		return
 
 	_update_label()
@@ -57,6 +56,14 @@ func start_countdown(seconds: float) -> void:
 	queue_redraw()
 
 
+func apply_cooldown(remaining: float, total: float) -> void:
+	if remaining <= 0.0 or total <= 0.0:
+		clear_countdown()
+		return
+
+	start_countdown(remaining)
+
+
 func clear_countdown() -> void:
 	_cooldown_total = 0.0
 	_cooldown_remaining = 0.0
@@ -66,16 +73,17 @@ func clear_countdown() -> void:
 
 
 func _update_label() -> void:
-	cooldown_label.text = str(ceil(_cooldown_remaining))
+	cooldown_label.text = "%.1f" % _cooldown_remaining
 
 
 func _draw_cooldown_wedge(center: Vector2, radius: float, ratio: float) -> void:
 	var points := PackedVector2Array()
 	points.append(center)
 
+	ratio = clamp(ratio, 0.0, 1.0)
 	var start_angle := -PI * 0.5
-	var sweep := TAU * ratio
-	var steps: float = max(3, float(wedge_segments * ratio))
+	var sweep := -TAU * ratio
+	var steps: int = max(3, int(wedge_segments * ratio))
 
 	for i in range(steps + 1):
 		var t := float(i) / float(steps)
