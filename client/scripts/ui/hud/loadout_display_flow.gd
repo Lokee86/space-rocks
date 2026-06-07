@@ -13,6 +13,7 @@ var loadout_container: HBoxContainer
 var display_nodes := {}
 var displayed_weapon_ids := {}
 var previous_cooldown_remaining := {}
+var ready_effect_played_for_cooldown := {}
 
 
 func configure(hud_ref: Control) -> void:
@@ -29,6 +30,10 @@ func configure(hud_ref: Control) -> void:
 	previous_cooldown_remaining = {
 		SLOT_PRIMARY: 0.0,
 		SLOT_SECONDARY: 0.0,
+	}
+	ready_effect_played_for_cooldown = {
+		SLOT_PRIMARY: true,
+		SLOT_SECONDARY: true,
 	}
 
 
@@ -61,6 +66,7 @@ func _clear_slot(slot: String) -> void:
 	display_nodes[slot] = null
 	displayed_weapon_ids[slot] = ""
 	previous_cooldown_remaining[slot] = 0.0
+	ready_effect_played_for_cooldown[slot] = true
 
 
 func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScene) -> Node:
@@ -107,9 +113,18 @@ func _apply_display_state(display: Node, slot_state: Dictionary, cooldown_total:
 		if cooldown_remaining <= 0.0:
 			if cooldown_overlay.has_method("clear_countdown"):
 				cooldown_overlay.clear_countdown()
-		elif previous_remaining <= 0.0:
-			if cooldown_overlay.has_method("start_countdown"):
+		else:
+			if previous_remaining <= 0.0:
+				ready_effect_played_for_cooldown[slot] = false
+			if cooldown_overlay.has_method("sync_countdown"):
+				cooldown_overlay.sync_countdown(cooldown_remaining)
+			elif cooldown_overlay.has_method("start_countdown"):
 				cooldown_overlay.start_countdown(cooldown_remaining)
+
+	if previous_remaining > 0.0 and cooldown_remaining <= 0.0:
+		if not bool(ready_effect_played_for_cooldown.get(slot, true)):
+			_play_ready_effects_for_display(display)
+			ready_effect_played_for_cooldown[slot] = true
 
 	previous_cooldown_remaining[slot] = cooldown_remaining
 
@@ -144,11 +159,29 @@ func _on_display_cooldown_finished(display: Node) -> void:
 	if display == null or not is_instance_valid(display):
 		return
 
+	var slot := _slot_for_display(display)
+	if slot != "":
+		ready_effect_played_for_cooldown[slot] = true
+	_play_ready_effects_for_display(display)
+
+
+func _play_ready_effects_for_display(display: Node) -> void:
+	if display == null or not is_instance_valid(display):
+		return
+
 	var ring_highlight := display.get_node_or_null("%RingHighlight") as CanvasItem
 	if ring_highlight != null:
 		ring_highlight.show()
 	_play_ready_sweep(display)
 	_play_ready_flash(display)
+
+
+func _slot_for_display(display: Node) -> String:
+	for slot in [SLOT_PRIMARY, SLOT_SECONDARY]:
+		var display_node: Node = display_nodes.get(slot, null)
+		if display_node == display:
+			return slot
+	return ""
 
 
 func _play_ready_sweep(display: Node) -> void:

@@ -61,6 +61,18 @@ func apply_cooldown(remaining: float, total: float) -> void:
 	start_countdown(remaining)
 
 
+func sync_countdown(remaining: float) -> void:
+	if remaining <= 0.0:
+		clear_countdown()
+		return
+
+	_cooldown_total = max(_cooldown_total, remaining, 0.01)
+	_cooldown_remaining = remaining
+	visible = true
+	_update_label()
+	queue_redraw()
+
+
 func clear_countdown() -> void:
 	_cooldown_total = 0.0
 	_cooldown_remaining = 0.0
