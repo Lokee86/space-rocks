@@ -53,16 +53,19 @@ files = ["services/game-server/internal/constants/weapons.go"]
 sections = [
   "constants.server.weapons.basic_cannon",
   "constants.server.weapons.torpedo",
+  "constants.shared.weapons.torpedo_radial_shape",
 ]
 owns = [
   "constants.server.weapons.basic_cannon",
   "constants.server.weapons.torpedo",
+  "constants.shared.weapons.torpedo_radial_shape",
 ]
 
 [constants.gds]
 files = ["client/scripts/generated/constants/constants.gd"]
 sections = [
   "constants.server.world",
+  "constants.shared.weapons.torpedo_radial_shape",
   "constants.client.presentation.background",
   "constants.client.presentation.rendering",
   "constants.client.presentation.player_visuals",

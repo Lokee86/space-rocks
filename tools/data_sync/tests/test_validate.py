@@ -40,12 +40,14 @@ torpedo_cooldown = 0.22
 torpedo_projectile_spawn_offset = 42.0
 torpedo_impact_damage = 1
 torpedo_radial_damage = 1
-torpedo_radial_zone_count = 4
-torpedo_radial_zone_width = 10
 torpedo_radial_zone_spawn_seconds = 0.1
 torpedo_radial_tick_seconds = 0.1
 torpedo_radial_total_seconds = 0.4
 torpedo_radial_zone_lifetime_seconds = 0.4
+
+[constants.shared.weapons.torpedo_radial_shape]
+torpedo_radial_zone_count = 4
+torpedo_radial_zone_width = 10
 
 [packets.player_input]
 id = 100
@@ -70,7 +72,8 @@ self_id = "string"
     )
     (tmp_path / "go/weapons.go").write_text(
         block("//", "constants.server.weapons.basic_cannon")
-        + block("//", "constants.server.weapons.torpedo"),
+        + block("//", "constants.server.weapons.torpedo")
+        + block("//", "constants.shared.weapons.torpedo_radial_shape"),
         encoding="utf-8",
     )
     (tmp_path / "gds/constants.gd").write_text(
@@ -116,8 +119,8 @@ owns = ["constants.network"]
 
 [weapons.go]
 files = ["go/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
+owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
 
 [weapons.gds]
 files = ["gds/weapons.gd"]
@@ -179,12 +182,14 @@ torpedo_cooldown = 0.22
 torpedo_projectile_spawn_offset = 42.0
 torpedo_impact_damage = 1
 torpedo_radial_damage = 1
-torpedo_radial_zone_count = 4
-torpedo_radial_zone_width = 10
 torpedo_radial_zone_spawn_seconds = 0.1
 torpedo_radial_tick_seconds = 0.1
 torpedo_radial_total_seconds = 0.4
 torpedo_radial_zone_lifetime_seconds = 0.4
+
+[constants.shared.weapons.torpedo_radial_shape]
+torpedo_radial_zone_count = 4
+torpedo_radial_zone_width = 10
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -486,6 +491,9 @@ const BasicCannonProjectileSpeed = 1200.0
 // data-sync:start constants.server.weapons.torpedo
 const TorpedoProjectileSpeed = 1200.0
 // data-sync:end constants.server.weapons.torpedo
+// data-sync:start constants.shared.weapons.torpedo_radial_shape
+const TorpedoRadialZoneCount = 4
+// data-sync:end constants.shared.weapons.torpedo_radial_shape
 """.lstrip(),
         encoding="utf-8",
     )

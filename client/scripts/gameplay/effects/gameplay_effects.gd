@@ -4,6 +4,7 @@ const Constants = preload("res://scripts/generated/constants/constants.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
 const PICKUP_COLLECT_SCENE := preload("res://scenes/pickups/pickup_collect.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
+const TORPEDO_EXPLOSION_SCENE := preload("res://scenes/animations/torpedo_explosion.tscn")
 const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"
 
 var owner_node: Node2D
@@ -129,10 +130,50 @@ func spawn_ship_death(event_position: Vector2) -> void:
 		)
 
 
+func spawn_torpedo_explosion(event_position: Vector2) -> void:
+	var explosion_node := TORPEDO_EXPLOSION_SCENE.instantiate()
+	explosion_node.global_position = event_position
+	explosion_node.z_index = Constants.EFFECT_Z_INDEX
+	owner_node.add_child(explosion_node)
+
+	var sprite := explosion_node.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if sprite == null:
+		explosion_node.queue_free()
+		return
+	var sound := explosion_node.get_node_or_null("TorpedoExplosionSound") as AudioStreamPlayer2D
+
+	sprite.frame = 0
+	sprite.frame_progress = 0.0
+	_scale_sprite_to_diameter(sprite, _torpedo_explosion_diameter())
+	sprite.play("torpedo_explosion")
+	sprite.animation_finished.connect(_queue_free_effect_node_once.bind(explosion_node))
+	if sound != null:
+		sound.finished.connect(_queue_free_effect_node_once.bind(explosion_node))
+		audio_flow.play_torpedo_explosion_sound(sound)
+
+
 func _play_game_over_sound() -> void:
 	if audio_flow.has_game_over_sound() && !game_over_sound_played:
 		game_over_sound_played = true
 		audio_flow.play_game_over_sound()
+
+
+func _torpedo_explosion_diameter() -> float:
+	return float(Constants.TORPEDO_RADIAL_ZONE_COUNT * Constants.TORPEDO_RADIAL_ZONE_WIDTH)
+
+
+func _scale_sprite_to_diameter(sprite: AnimatedSprite2D, target_diameter: float) -> void:
+	if sprite == null:
+		return
+	if target_diameter <= 0:
+		return
+	var texture := sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame)
+	if texture == null:
+		return
+	var source_diameter: float = max(texture.get_width(), texture.get_height())
+	if source_diameter <= 0:
+		return
+	sprite.scale = Vector2.ONE * (target_diameter / source_diameter)
 
 
 func _hide_effect_sprite(sprite: AnimatedSprite2D) -> void:
@@ -157,4 +198,3 @@ func _queue_free_effect_node_once(effect_node: Node) -> void:
 func _on_game_over_sound_delay_timeout(token: int) -> void:
 	if token == game_over_sound_token:
 		_play_game_over_sound()
-
