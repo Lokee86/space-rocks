@@ -12,9 +12,9 @@ torpedo_cooldown = 15.0
 torpedo_projectile_spawn_offset = 42.0
 torpedo_impact_damage = 0
 torpedo_radial_damage = 1
-torpedo_radial_zone_spawn_seconds = 0.1
-torpedo_radial_tick_seconds = 0.1
-torpedo_radial_total_seconds = 0.4
+torpedo_radial_zone_spawn_seconds = 0.05
+torpedo_radial_tick_seconds = 0.05
+torpedo_radial_total_seconds = 0.2
 torpedo_radial_zone_lifetime_seconds = 0.4
 
 [constants.shared.weapons.torpedo_radial_shape]
