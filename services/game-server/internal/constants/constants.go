@@ -22,10 +22,10 @@ const PlayerRespawnBuffer = 160.0
 const PlayerResumeInvulnerabilitySeconds = 1.5
 // data-sync:end constants.server.player_session
 
-// data-sync:start constants.server.world
+// data-sync:start constants.shared.world
 const WorldWidth = 17200.0
 const WorldHeight = 9200.0
-// data-sync:end constants.server.world
+// data-sync:end constants.shared.world
 
 // data-sync:start constants.server.scoring
 const BaseScore = 120
