@@ -6,11 +6,6 @@ extends Control
 @export var spin_degrees_per_second: float = 180.0
 @export var highlight_color: Color = Color(1.0, 0.65, 0.95, 0.65)
 
-<<<<<<< Updated upstream
-func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pivot_offset = size * 0.5
-=======
 @export var tail_degrees: float = 45.0
 @export var tail_segments: int = 18
 @export var tail_width_multiplier: float = 2.0
@@ -28,36 +23,17 @@ var _angle: float = 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
->>>>>>> Stashed changes
 	resized.connect(_on_resized)
 
 
 func _process(delta: float) -> void:
-<<<<<<< Updated upstream
-	rotation += deg_to_rad(spin_degrees_per_second) * delta
-=======
 	_angle += deg_to_rad(spin_degrees_per_second) * delta
 	_angle = fposmod(_angle, TAU)
 	queue_redraw()
->>>>>>> Stashed changes
 
 
 func _draw() -> void:
 	var center := size * 0.5
-<<<<<<< Updated upstream
-	var radius:float = min(size.x, size.y) * radius_ratio
-	var half_arc := deg_to_rad(arc_degrees) * 0.5
-
-	# Faint wider glow behind the highlight.
-	draw_arc(
-		center,
-		radius,
-		-half_arc,
-		half_arc,
-		32,
-		Color(highlight_color.r, highlight_color.g, highlight_color.b, 0.18),
-		width * 2.5,
-=======
 	var radius: float = min(size.x, size.y) * radius_ratio
 	var second_offset := deg_to_rad(second_highlight_offset_degrees)
 
@@ -69,7 +45,6 @@ func _draw_spinner_arc(center: Vector2, radius: float, head_angle: float, direct
 	var half_arc := deg_to_rad(arc_degrees) * 0.5
 	var tail_angle := deg_to_rad(tail_degrees)
 
-	# Draw old/faint tail pieces first, then newer/brighter pieces.
 	for i in range(tail_segments, 0, -1):
 		var age := float(i) / float(tail_segments)
 		var fade := pow(1.0 - age, 2.0)
@@ -82,7 +57,6 @@ func _draw_spinner_arc(center: Vector2, radius: float, head_angle: float, direct
 			highlight_color.a * fade * tail_alpha_multiplier
 		)
 
-		# Soft tail glow.
 		draw_arc(
 			center,
 			radius,
@@ -99,7 +73,6 @@ func _draw_spinner_arc(center: Vector2, radius: float, head_angle: float, direct
 			true
 		)
 
-		# Main tail.
 		draw_arc(
 			center,
 			radius,
@@ -111,7 +84,6 @@ func _draw_spinner_arc(center: Vector2, radius: float, head_angle: float, direct
 			true
 		)
 
-	# Outer soft glow behind the highlight.
 	draw_arc(
 		center,
 		radius,
@@ -123,7 +95,6 @@ func _draw_spinner_arc(center: Vector2, radius: float, head_angle: float, direct
 		true
 	)
 
-	# Inner brighter glow behind the highlight.
 	draw_arc(
 		center,
 		radius,
@@ -132,21 +103,14 @@ func _draw_spinner_arc(center: Vector2, radius: float, head_angle: float, direct
 		32,
 		Color(highlight_color.r, highlight_color.g, highlight_color.b, inner_glow_alpha),
 		width * inner_glow_width_multiplier,
->>>>>>> Stashed changes
 		true
 	)
 
-	# Sharp foreground arc.
 	draw_arc(
 		center,
 		radius,
-<<<<<<< Updated upstream
-		-half_arc,
-		half_arc,
-=======
 		head_angle - half_arc,
 		head_angle + half_arc,
->>>>>>> Stashed changes
 		32,
 		highlight_color,
 		width,
@@ -155,8 +119,4 @@ func _draw_spinner_arc(center: Vector2, radius: float, head_angle: float, direct
 
 
 func _on_resized() -> void:
-<<<<<<< Updated upstream
-	pivot_offset = size * 0.5
-=======
->>>>>>> Stashed changes
 	queue_redraw()

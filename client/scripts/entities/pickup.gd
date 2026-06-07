@@ -7,14 +7,14 @@ const Constants = preload("res://scripts/generated/constants/constants.gd")
 @export var spawn_sound_path: NodePath = NodePath("PickupSpawned")
 @export var collision_shape_path: NodePath = NodePath("CollisionShape2D")
 
-@export var sprite_pulse_rate := 2.0
-@export var sprite_pulse_amount := 0.06
+@export var sprite_pulse_rate := 1.0
+@export var sprite_pulse_amount := 0.03
 @export var eol_flash_slow_period := 0.6
 @export var eol_flash_fast_period := 0.08
 
-@export var glow_pulse_rate := 1.15
-@export var glow_pulse_amount := 0.18
-@export var glow_alpha_min := 0.35
+@export var glow_pulse_rate := 0.75
+@export var glow_pulse_amount := 0.0
+@export var glow_alpha_min := 0.65
 @export var glow_alpha_max := 0.85
 
 var sprite: Sprite2D

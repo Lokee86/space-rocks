@@ -6,10 +6,10 @@ const WORLD_WIDTH := 17200.0
 const WORLD_HEIGHT := 9200.0
 # data-sync:end constants.server.world
 
-# data-sync:start constants.shared.weapons.torpedo_radial_shape
+# data-sync:start constants.shared.weapons.torpedo
 const TORPEDO_RADIAL_ZONE_COUNT := 4
 const TORPEDO_RADIAL_ZONE_WIDTH := 10
-# data-sync:end constants.shared.weapons.torpedo_radial_shape
+# data-sync:end constants.shared.weapons.torpedo
 
 # data-sync:start constants.client.presentation.background
 const BACKGROUND_PARALLAX := 0.25

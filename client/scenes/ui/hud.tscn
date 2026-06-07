@@ -49,6 +49,10 @@ label_settings = ExtResource("1_diql1")
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="Spacer2" type="Control" parent="MarginContainer/HBoxContainer" unique_id=650502573]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="LivesContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer" unique_id=436927934]
 layout_mode = 2
 
@@ -75,7 +79,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 1
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="CenterContainer" unique_id=2096841942]
 visible = false
@@ -107,7 +110,6 @@ horizontal_alignment = 1
 [node name="GameOverContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1619962020]
 layout_mode = 2
 theme_override_constants/separation = 117
-mouse_filter = 1
 
 [node name="GameOverSound" type="AudioStreamPlayer" parent="CenterContainer/GameOverContainer" unique_id=2014825901]
 unique_name_in_owner = true
@@ -137,7 +139,6 @@ horizontal_alignment = 1
 layout_mode = 2
 
 [node name="RoomID" type="Label" parent="." unique_id=1769209780]
-visible = false
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -147,3 +148,22 @@ offset_right = 40.0
 grow_vertical = 0
 text = "ROOMID: 00000"
 label_settings = SubResource("LabelSettings_faiu6")
+
+[node name="LoadoutDisplay" type="CenterContainer" parent="." unique_id=1423075844]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="LoadoutDisplay" unique_id=289562621]
+layout_mode = 2
+theme_override_constants/margin_bottom = 95
+
+[node name="HBoxContainer" type="HBoxContainer" parent="LoadoutDisplay/MarginContainer" unique_id=1054103157]
+layout_mode = 2
+theme_override_constants/separation = 80
+alignment = 1
