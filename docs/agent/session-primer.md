@@ -15,6 +15,7 @@ Use this as the short orientation layer for new sessions. It should stay stable 
 - `websocket_write.go` is outbound/presentation only and no longer advances game-over lifecycle.
 - Targeting orchestration now sits above `MouseActionFlow`; `GameplayTargetingContext` owns selection orchestration and `WorldSync` only exposes `target_source()`.
 - The upgraded damage seam now lives in `services/game-server/internal/game/damage/`; `ResolveSingle` handles modifiers, shields, area damage, and DoT at a high level while `game` owns adapters and entity mutation.
+- Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`; weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/design/weapons.md](../design/weapons.md) and [docs/design/radial-effects.md](../design/radial-effects.md).
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.

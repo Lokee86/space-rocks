@@ -105,6 +105,7 @@
 - It does not inspect world maps, collision shapes, or runtime stores.
 - The caller provides the candidate list, and the damage package calls `ResolveSingle` for each supplied candidate.
 - That keeps spatial search and target collection in `internal/game` while damage only handles resolution.
+- `ResolveArea` is separate from the radial effect timing/coverage/hit-intent system in [docs/design/radial-effects.md](radial-effects.md).
 
 ## Damage Over Time
 
@@ -117,9 +118,12 @@
 ## Combat Integration
 
 - Combat owns the collision facts that decide when damage should be resolved.
+- Weapon profiles can carry `DamageSpec`, but the weapon seam stays separate from damage resolution.
+- Projectile impacts can spawn radial effects through Game-owned adapters, and radial hits can later be converted into damage requests by Game-owned adapters.
 - Combat builds the damage request, calls the damage seam, and then applies the returned result.
 - After damage resolution, game-owned code continues with scoring, despawn, fragment spawning, pickup drops, and any other combat consequences.
 - The damage package stays responsible for resolution only; it does not own combat flow.
+- Weapon and radial integration details live in [docs/design/weapons.md](weapons.md) and [docs/design/radial-effects.md](radial-effects.md).
 
 ## Devtools Integration
 
@@ -144,7 +148,6 @@
 
 ## Future Work
 
-- Future work may add weapon-driven damage shaping and pickup modifiers.
 - Future work may add client render events for damage presentation.
 - Future work may add area falloff rules.
 - Future work may extend DoT into broader status effects.
