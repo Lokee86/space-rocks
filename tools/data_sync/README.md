@@ -25,10 +25,11 @@ can be declared on arbitrary top-level language subtables such as
 as they are constants outputs for a supported language and only list
 `constants.*` sections. Constants sync is a bidirectional many-source/many-output
 pipeline: multiple constants TOML files are supported, multiple generated
-constants files per language are supported, `-push` writes source sections to
-every configured output target that lists them, and `-pull` reads only owned
-generated sections and writes each one back to the TOML file that already
-contains it.
+constants files per language are supported, each constants section must exist in
+exactly one source TOML file, `-push`/`-check`/`-diff` process all configured
+output targets for the selected language, and `-pull` reads only owned generated
+sections from all configured output targets and writes each section back to the
+source TOML file that already contains it.
 
 Current active scope:
 
@@ -218,6 +219,26 @@ outputs = ["server_drop_tables"]
 
 Constants and packets have separate SoT paths. `-constants` commands read/write only the constants SoT, and `-packets` commands read/write only the packet SoT files.
 Drop tables have their own SoT path set under `shared/drop_tables/`, and `-drop-tables -go` reads and writes only the server Go output.
+
+Example constants layout:
+
+```toml
+[sot.constants]
+paths = [
+  "shared/constants/server_constants.toml",
+  "shared/constants/weapons.toml",
+]
+
+[constants.go]
+files = ["services/game-server/internal/constants/constants.go"]
+sections = ["constants.gameplay"]
+owns = ["constants.gameplay"]
+
+[weapons.go]
+files = ["services/game-server/internal/constants/weapons.go"]
+sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+```
 
 `sections` controls what a language receives during `-push`, `-diff`, and `-check`.
 

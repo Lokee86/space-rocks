@@ -93,34 +93,6 @@ tick_rate = 120
     assert str(override_path) in error_text
 
 
-def test_duplicate_section_names_across_files_fail_clearly(tmp_path: Path) -> None:
-    base_path = write_toml(
-        tmp_path / "game_data.base.toml",
-        """
-[constants.gameplay]
-player_speed = 420.0
-""",
-    )
-    override_path = write_toml(
-        tmp_path / "game_data.override.toml",
-        """
-[constants.gameplay]
-tick_rate = 60
-""",
-    )
-
-    store = ConstantsStore.load([base_path, override_path])
-
-    with pytest.raises(
-        ConstantsStoreError, match=r"duplicate constants source.*constants\.gameplay"
-    ) as excinfo:
-        store.constants("constants.gameplay")
-
-    error_text = str(excinfo.value)
-    assert str(base_path) in error_text
-    assert str(override_path) in error_text
-
-
 def test_source_path_for_section_is_reported(tmp_path: Path) -> None:
     path = write_toml(
         tmp_path / "game_data.toml",

@@ -26,14 +26,14 @@ CONSTANTS_PARSERS: dict[str, Parser] = {
 }
 
 
-def pull_constants(config: DataSyncConfig, store: TomlStore, language: str) -> None:
+def pull_constants(config: DataSyncConfig, language: str) -> None:
     parser = CONSTANTS_PARSERS.get(language)
     if parser is None:
         raise PullError(f"unsupported constants pull language: {language}")
 
-    targets = config.targets_for("constants", language)
+    targets = config.targets_by_domain_language.get(("constants", language), ())
     if not targets:
-        raise PullError(f"missing config for [constants.{language}]")
+        return
     constants_store = _load_constants_store(config)
     for target in targets:
         if not target.enabled:
@@ -45,7 +45,7 @@ def pull_constants(config: DataSyncConfig, store: TomlStore, language: str) -> N
             except ConstantsStoreError as exc:
                 raise PullError(str(exc)) from exc
 
-            source_store = store if source_path == store.path else _load_source_store(source_path)
+            source_store = _load_source_store(source_path)
 
             existing = source_store.constants(section_name)
             existing_names = tuple(name for name, _value in existing.values)
