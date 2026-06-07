@@ -56,6 +56,10 @@ offset_right = -99.0
 offset_bottom = -99.0
 grow_horizontal = 2
 grow_vertical = 2
+<<<<<<< Updated upstream
+=======
+mouse_filter = 2
+>>>>>>> Stashed changes
 script = ExtResource("5_34fhg")
 highlight_color = Color(1, 1, 1, 0.6509804)
 metadata/_edit_use_anchors_ = true

@@ -40,6 +40,9 @@ func DefaultPlayerArmory() PlayerArmory {
 			ID:         BasicCannon,
 			AmmoPolicy: InfiniteAmmo,
 		},
-		Secondary: EmptyEquipped(),
+		Secondary: Equipped{
+			ID:         Torpedo,
+			AmmoPolicy: InfiniteAmmo,
+		},
 	}
 }

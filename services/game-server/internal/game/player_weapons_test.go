@@ -76,3 +76,46 @@ func TestFirePlayerPrimaryWeaponLeavesInfiniteAmmoBasicCannonIntact(t *testing.T
 		t.Fatalf("expected ammo remaining to stay zero for infinite ammo, got %d", player.WeaponState.Primary.AmmoRemaining)
 	}
 }
+
+func TestStepPlayersFiresMountedSecondaryTorpedoWeapon(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+	player := game.entities.Players[playerID]
+	if player == nil {
+		t.Fatal("expected active player ship to exist")
+	}
+
+	player.ShipWeapons.Secondary = weapons.Equipped{
+		ID:         weapons.Torpedo,
+		AmmoPolicy: weapons.InfiniteAmmo,
+	}
+
+	player.SetInput(runtime.InputState{
+		PrimaryFire:   false,
+		SecondaryFire: true,
+	})
+
+	game.Step(1.0 / float64(constants.ServerTickRate))
+
+	if got := len(game.entities.Projectiles); got != 1 {
+		t.Fatalf("expected exactly 1 projectile to be created, got %d", got)
+	}
+
+	var projectile *runtime.Bullet
+	for _, bullet := range game.entities.Projectiles {
+		projectile = bullet
+		break
+	}
+	if projectile == nil {
+		t.Fatal("expected projectile to be stored")
+	}
+	if projectile.WeaponID != weapons.Torpedo {
+		t.Fatalf("WeaponID = %q, want %q", projectile.WeaponID, weapons.Torpedo)
+	}
+	if projectile.ProjectileType != "torpedo" {
+		t.Fatalf("ProjectileType = %q, want %q", projectile.ProjectileType, "torpedo")
+	}
+	if player.WeaponState.Secondary.CooldownRemaining <= 0 {
+		t.Fatalf("expected secondary cooldown to become positive, got %v", player.WeaponState.Secondary.CooldownRemaining)
+	}
+}

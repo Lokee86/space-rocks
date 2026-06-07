@@ -3,8 +3,8 @@ extends RefCounted
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 
-static func input_packet(forward, back, right, left, shoot) -> Dictionary:
-	return Packets.input_packet(forward, back, right, left, shoot)
+static func input_packet(forward, back, right, left, primary_fire, secondary_fire) -> Dictionary:
+	return Packets.input_packet(forward, back, right, left, primary_fire, secondary_fire)
 
 
 static func respawn_packet() -> Dictionary:

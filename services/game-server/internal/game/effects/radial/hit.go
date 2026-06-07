@@ -9,6 +9,7 @@ type Candidate struct {
 	ID       string
 	Kind     TargetKind
 	Position physics.Vector2
+	Radius   float64
 }
 
 type Hit struct {

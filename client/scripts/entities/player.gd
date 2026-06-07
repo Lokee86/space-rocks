@@ -10,7 +10,8 @@ const PLAYER_HUE_SHIFT_SHADER := preload("res://shaders/player_hue_shift.gdshade
 @export var turn_right_action := &"turn_right"
 @export var move_forward_action := &"move_forward"
 @export var move_backward_action := &"move_backward"
-@export var shoot_action := &"shoot"
+@export var primary_fire_action := &"PrimaryFire"
+@export var secondary_fire_action := &"SecondaryFire"
 @export var ship_visual_path: NodePath = ^"Sprite2D"
 
 @onready var ship_visual: CanvasItem = get_node_or_null(ship_visual_path) as CanvasItem
@@ -47,7 +48,8 @@ func get_input_packet() -> Dictionary:
 		Input.is_action_pressed(move_backward_action),
 		Input.is_action_pressed(turn_right_action),
 		Input.is_action_pressed(turn_left_action),
-		Input.is_action_pressed(shoot_action)
+		Input.is_action_pressed(primary_fire_action),
+		Input.is_action_pressed(secondary_fire_action)
 	)
 
 

@@ -22,7 +22,7 @@ func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {
 			if !effect.Spec.TargetFilter.Allows(candidate.Kind) {
 				continue
 			}
-			if !fillContainsDistance(radius, space.Delta(effect.Origin, candidate.Position).Length()) {
+			if !fillOverlapsCandidate(radius, space.Delta(effect.Origin, candidate.Position).Length(), candidate.Radius) {
 				continue
 			}
 
@@ -58,7 +58,7 @@ func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {
 				continue
 			}
 
-			if !zoneContainsDistance(*zone, space.Delta(effect.Origin, candidate.Position).Length()) {
+			if !zoneOverlapsCandidate(*zone, space.Delta(effect.Origin, candidate.Position).Length(), candidate.Radius) {
 				continue
 			}
 

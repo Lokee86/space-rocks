@@ -1,7 +1,10 @@
 package game
 
 import (
+	"math"
+
 	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func (game *Game) radialCandidates() []radial.Candidate {
@@ -22,6 +25,7 @@ func (game *Game) radialCandidates() []radial.Candidate {
 			ID:       id,
 			Kind:     radial.TargetAsteroid,
 			Position: asteroid.Position(),
+			Radius:   asteroidRadialCandidateRadius(asteroid.CollisionBody(game.collisionShapes)),
 		})
 	}
 
@@ -74,4 +78,21 @@ func (game *Game) radialCandidates() []radial.Candidate {
 	}
 
 	return candidates
+}
+
+func asteroidRadialCandidateRadius(body physics.CollisionBody, ok bool) float64 {
+	if !ok {
+		return 0
+	}
+	if body.Shape.Radius > 0 {
+		return body.Shape.Radius
+	}
+
+	radius := 0.0
+	for _, point := range physics.CollisionBodyOutlinePoints(body) {
+		distance := point.Subtract(body.Position).Length()
+		radius = math.Max(radius, distance)
+	}
+
+	return radius
 }

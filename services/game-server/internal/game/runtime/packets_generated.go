@@ -7,11 +7,12 @@ type ClientConfig struct {
 }
 
 type InputState struct {
-	Forward bool `json:"forward"`
-	Back    bool `json:"back"`
-	Right   bool `json:"right"`
-	Left    bool `json:"left"`
-	Shoot   bool `json:"shoot"`
+	Forward       bool `json:"forward"`
+	Back          bool `json:"back"`
+	Right         bool `json:"right"`
+	Left          bool `json:"left"`
+	PrimaryFire   bool `json:"primary_fire"`
+	SecondaryFire bool `json:"secondary_fire"`
 }
 
 type ShipState struct {
