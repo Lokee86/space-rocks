@@ -20,7 +20,7 @@ class FakeTargetPositionSource:
 	func asteroid_positions() -> Dictionary:
 		return asteroid_position_entries
 
-	func bullet_positions() -> Dictionary:
+	func projectile_positions() -> Dictionary:
 		return bullet_position_entries
 
 	func pickup_positions() -> Dictionary:

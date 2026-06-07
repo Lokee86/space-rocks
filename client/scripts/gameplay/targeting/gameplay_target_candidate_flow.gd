@@ -77,7 +77,7 @@ func target_visual_candidates() -> Array:
 		asteroid_candidate.pick_radius = TARGET_ASTEROID_BASE_PICK_RADIUS * visual_scale
 		candidates.append(asteroid_candidate)
 
-	var bullet_positions: Dictionary = target_position_source.bullet_positions()
+	var bullet_positions: Dictionary = target_position_source.projectile_positions()
 	for bullet_id in bullet_positions.keys():
 		var position_entry = bullet_positions[bullet_id]
 		if not (position_entry is Dictionary):
