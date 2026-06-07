@@ -3,11 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://jbqfavdvpf1r"
-valid=false
+path="res://.godot/imported/pickupicons.png-a3e00da895edc4fc7e1577684033fd66.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://assets/pickupicons.png"
+dest_files=["res://.godot/imported/pickupicons.png-a3e00da895edc4fc7e1577684033fd66.ctex"]
 
 [params]
 

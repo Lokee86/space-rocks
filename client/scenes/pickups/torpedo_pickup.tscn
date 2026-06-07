@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://pyo6mll6d03d"]
+
+[ext_resource type="Script" uid="uid://bxi3cxixi2jbk" path="res://scripts/entities/pickup.gd" id="1_qbbdg"]
+[ext_resource type="Texture2D" uid="uid://cigojhe2wngw1" path="res://assets/glow.png" id="2_las4s"]
+[ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="3_3quq5"]
+[ext_resource type="Texture2D" uid="uid://dtv1urut8krni" path="res://assets/item_badge.png" id="4_k68p2"]
+[ext_resource type="Texture2D" uid="uid://jbqfavdvpf1r" path="res://assets/pickupicons.png" id="6_foaqn"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_80krm"]
+blend_mode = 1
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_n33kh"]
+shader = ExtResource("3_3quq5")
+shader_parameter/hue_shift = 0.86000004085
+shader_parameter/saturation_mult = 1.0
+shader_parameter/value_mult = 1.0
+shader_parameter/strength = 1.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_qbbdg"]
+radius = 30.0
+
+[node name="TorpedoPickup" type="Node2D" unique_id=1274412463]
+script = ExtResource("1_qbbdg")
+
+[node name="GlowSprite2D" type="Sprite2D" parent="." unique_id=284097999]
+modulate = Color(1, 0, 0, 1)
+material = SubResource("CanvasItemMaterial_80krm")
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("2_las4s")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1617306262]
+material = SubResource("ShaderMaterial_n33kh")
+scale = Vector2(0.375, 0.375)
+texture = ExtResource("4_k68p2")
+
+[node name="Sprite2D" type="Sprite2D" parent="Sprite2D" unique_id=16658619]
+position = Vector2(-7, 3)
+texture = ExtResource("6_foaqn")
+region_enabled = true
+region_rect = Rect2(284.45953, 469.72247, 87.41135, 87.7215)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=238627476]
+visible = false
+shape = SubResource("CircleShape2D_qbbdg")
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=1010791677]
