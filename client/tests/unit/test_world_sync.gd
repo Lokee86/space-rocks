@@ -95,15 +95,51 @@ func test_apply_state_creates_asteroid_nodes() -> void:
 func test_apply_state_creates_bullet_nodes() -> void:
 	_apply_fixture_state()
 
-	assert_true(_bullet_nodes().has(WorldStateFixture.BULLET_ID))
+	assert_true(_projectile_nodes().has(WorldStateFixture.BULLET_ID))
 	assert_eq(
-		_bullet_nodes()[WorldStateFixture.BULLET_ID].get_parent(),
+		_projectile_nodes()[WorldStateFixture.BULLET_ID].get_parent(),
 		bullets_layer
 	)
 	assert_eq(
-		_bullet_nodes()[WorldStateFixture.BULLET_ID].global_position,
+		_projectile_nodes()[WorldStateFixture.BULLET_ID].global_position,
 		Vector2(420.0, 440.0)
 	)
+
+
+func test_apply_state_creates_torpedo_scene_for_torpedo_projectile_type() -> void:
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_BULLETS] = {
+		WorldStateFixture.BULLET_ID: {
+			Packets.FIELD_X: 420.0,
+			Packets.FIELD_Y: 440.0,
+			Packets.FIELD_ROTATION: 1.25,
+			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+		},
+	}
+
+	_apply_state(state)
+
+	assert_true(_projectile_nodes().has(WorldStateFixture.BULLET_ID))
+	assert_eq(_projectile_nodes()[WorldStateFixture.BULLET_ID].name, "Torpedo")
+	assert_true(_projectile_nodes()[WorldStateFixture.BULLET_ID] is Node2D)
+
+
+func test_apply_state_defaults_unknown_projectile_type_to_bullet_scene() -> void:
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_BULLETS] = {
+		WorldStateFixture.BULLET_ID: {
+			Packets.FIELD_X: 420.0,
+			Packets.FIELD_Y: 440.0,
+			Packets.FIELD_ROTATION: 1.25,
+			Packets.FIELD_PROJECTILE_TYPE: "mystery",
+		},
+	}
+
+	_apply_state(state)
+
+	assert_true(_projectile_nodes().has(WorldStateFixture.BULLET_ID))
+	assert_eq(_projectile_nodes()[WorldStateFixture.BULLET_ID].name, "Bullet")
+	assert_true(_projectile_nodes()[WorldStateFixture.BULLET_ID] is CharacterBody2D)
 
 
 func test_apply_state_exposes_pickup_target_positions() -> void:
@@ -130,7 +166,7 @@ func test_apply_state_reuses_existing_entity_nodes() -> void:
 	var local_node = _player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID]
 	var remote_node = _player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID]
 	var asteroid_node = _asteroid_nodes()[WorldStateFixture.ASTEROID_ID]
-	var bullet_node = _bullet_nodes()[WorldStateFixture.BULLET_ID]
+	var bullet_node = _projectile_nodes()[WorldStateFixture.BULLET_ID]
 	var owner_child_count := game_owner.get_child_count()
 	var asteroid_child_count := asteroids_layer.get_child_count()
 	var bullet_child_count := bullets_layer.get_child_count()
@@ -139,11 +175,11 @@ func test_apply_state_reuses_existing_entity_nodes() -> void:
 
 	assert_eq(_player_nodes().size(), 2)
 	assert_eq(_asteroid_nodes().size(), 1)
-	assert_eq(_bullet_nodes().size(), 1)
+	assert_eq(_projectile_nodes().size(), 1)
 	assert_eq(_player_nodes()[WorldStateFixture.LOCAL_PLAYER_ID], local_node)
 	assert_eq(_player_nodes()[WorldStateFixture.REMOTE_PLAYER_ID], remote_node)
 	assert_eq(_asteroid_nodes()[WorldStateFixture.ASTEROID_ID], asteroid_node)
-	assert_eq(_bullet_nodes()[WorldStateFixture.BULLET_ID], bullet_node)
+	assert_eq(_projectile_nodes()[WorldStateFixture.BULLET_ID], bullet_node)
 	assert_eq(game_owner.get_child_count(), owner_child_count)
 	assert_eq(asteroids_layer.get_child_count(), asteroid_child_count)
 	assert_eq(bullets_layer.get_child_count(), bullet_child_count)
@@ -168,10 +204,10 @@ func test_apply_state_updates_existing_entity_targets() -> void:
 		Vector2(360.0, 380.0)
 	)
 	assert_eq(
-		_bullet_sync().get("target_bullet_positions")[WorldStateFixture.BULLET_ID],
+		_projectile_sync().get("target_projectile_positions")[WorldStateFixture.BULLET_ID],
 		Vector2(460.0, 480.0)
 	)
-	assert_eq(_bullet_sync().get("target_bullet_rotations")[WorldStateFixture.BULLET_ID], 1.25)
+	assert_eq(_projectile_sync().get("target_projectile_rotations")[WorldStateFixture.BULLET_ID], 1.25)
 
 
 func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation() -> void:
@@ -223,10 +259,10 @@ func test_interpolate_moves_existing_entities_toward_updated_state() -> void:
 		Vector2(360.0, 380.0)
 	)
 	assert_eq(
-		_bullet_nodes()[WorldStateFixture.BULLET_ID].global_position,
+		_projectile_nodes()[WorldStateFixture.BULLET_ID].global_position,
 		Vector2(460.0, 480.0)
 	)
-	assert_eq(_bullet_nodes()[WorldStateFixture.BULLET_ID].rotation, 1.25)
+	assert_eq(_projectile_nodes()[WorldStateFixture.BULLET_ID].rotation, 1.25)
 
 
 func test_apply_state_removes_stale_remote_player_node() -> void:
@@ -256,14 +292,14 @@ func test_apply_state_removes_stale_asteroid_node() -> void:
 
 func test_apply_state_removes_stale_bullet_node() -> void:
 	_apply_fixture_state()
-	var bullet_node = _bullet_nodes()[WorldStateFixture.BULLET_ID]
+	var bullet_node = _projectile_nodes()[WorldStateFixture.BULLET_ID]
 
 	_apply_state(_state_without_bullet())
 
-	assert_false(_bullet_nodes().has(WorldStateFixture.BULLET_ID))
-	assert_false(_bullet_sync().get("initialized_bullets").has(WorldStateFixture.BULLET_ID))
-	assert_false(_bullet_sync().get("target_bullet_positions").has(WorldStateFixture.BULLET_ID))
-	assert_false(_bullet_sync().get("target_bullet_rotations").has(WorldStateFixture.BULLET_ID))
+	assert_false(_projectile_nodes().has(WorldStateFixture.BULLET_ID))
+	assert_false(_projectile_sync().get("initialized_projectiles").has(WorldStateFixture.BULLET_ID))
+	assert_false(_projectile_sync().get("target_projectile_positions").has(WorldStateFixture.BULLET_ID))
+	assert_false(_projectile_sync().get("target_projectile_rotations").has(WorldStateFixture.BULLET_ID))
 	assert_true(bullet_node.is_queued_for_deletion())
 
 
@@ -309,8 +345,8 @@ func _apply_fixture_state() -> void:
 	_apply_state(WorldStateFixture.state())
 
 
-func _bullet_nodes() -> Dictionary:
-	return _bullet_sync().get("bullet_nodes")
+func _projectile_nodes() -> Dictionary:
+	return _projectile_sync().get("projectile_nodes")
 
 
 func _player_nodes() -> Dictionary:
@@ -337,8 +373,8 @@ func _asteroid_sync():
 	return world_sync.get("asteroid_sync")
 
 
-func _bullet_sync():
-	return world_sync.get("bullet_sync")
+func _projectile_sync():
+	return world_sync.get("projectile_sync")
 
 
 func _apply_state(state: Dictionary) -> void:
@@ -390,4 +426,3 @@ func _asteroid_state_without_scale() -> Dictionary:
 	var asteroid := WorldStateFixture.asteroid_state(320.0, 340.0, 1, 1.25)
 	asteroid.erase(Packets.FIELD_SCALE)
 	return asteroid
-
