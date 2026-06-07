@@ -85,7 +85,7 @@ animations = [{
 "duration": 1.0,
 "texture": null
 }],
-"loop": true,
+"loop": false,
 "name": &"torpedo_explosion",
 "speed": 30.0
 }]
@@ -96,7 +96,8 @@ animations = [{
 material = SubResource("CanvasItemMaterial_enayk")
 sprite_frames = SubResource("SpriteFrames_mxqy1")
 animation = &"torpedo_explosion"
-frame_progress = 0.36759734
+frame = 11
+frame_progress = 1.0
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=1256755896]
 stream = ExtResource("2_g1h6d")

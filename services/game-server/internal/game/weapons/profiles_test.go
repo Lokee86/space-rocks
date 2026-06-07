@@ -64,19 +64,19 @@ func TestLookupTorpedoReturnsExpectedProfile(t *testing.T) {
 	if profile.Projectile.Type != "torpedo" {
 		t.Fatalf("Projectile.Type = %q, want %q", profile.Projectile.Type, "torpedo")
 	}
-	if profile.CooldownSeconds != constants.TorpedoCooldown {
+	if profile.CooldownSeconds != float64(constants.TorpedoCooldown) {
 		t.Fatalf("CooldownSeconds = %v, want %v", profile.CooldownSeconds, constants.TorpedoCooldown)
 	}
-	if profile.Projectile.Speed != constants.TorpedoProjectileSpeed {
+	if profile.Projectile.Speed != float64(constants.TorpedoProjectileSpeed) {
 		t.Fatalf("Projectile.Speed = %v, want %v", profile.Projectile.Speed, constants.TorpedoProjectileSpeed)
 	}
-	if profile.Projectile.Lifetime != constants.TorpedoProjectileLifetime {
+	if profile.Projectile.Lifetime != float64(constants.TorpedoProjectileLifetime) {
 		t.Fatalf("Projectile.Lifetime = %v, want %v", profile.Projectile.Lifetime, constants.TorpedoProjectileLifetime)
 	}
-	if profile.Projectile.SpawnOffset != constants.TorpedoProjectileSpawnOffset {
+	if profile.Projectile.SpawnOffset != float64(constants.TorpedoProjectileSpawnOffset) {
 		t.Fatalf("Projectile.SpawnOffset = %v, want %v", profile.Projectile.SpawnOffset, constants.TorpedoProjectileSpawnOffset)
 	}
-	if profile.Damage.Amount != constants.TorpedoImpactDamage {
+	if profile.Damage.Amount != int(constants.TorpedoImpactDamage) {
 		t.Fatalf("Damage.Amount = %d, want %d", profile.Damage.Amount, constants.TorpedoImpactDamage)
 	}
 	if profile.ImpactEffect.Kind != ImpactEffectRadial {
@@ -88,25 +88,25 @@ func TestLookupTorpedoReturnsExpectedProfile(t *testing.T) {
 	if profile.ImpactEffect.Radial.ExpirationMode != radial.ExpirationSimultaneous {
 		t.Fatalf("ImpactEffect.Radial.ExpirationMode = %q, want %q", profile.ImpactEffect.Radial.ExpirationMode, radial.ExpirationSimultaneous)
 	}
-	if got, want := profile.ImpactEffect.Radial.ZoneCount, constants.TorpedoRadialZoneCount; got != want {
+	if got, want := profile.ImpactEffect.Radial.ZoneCount, int(constants.TorpedoRadialZoneCount); got != want {
 		t.Fatalf("ImpactEffect.Radial.ZoneCount = %d, want %d", got, want)
 	}
-	if got, want := profile.ImpactEffect.Radial.ZoneWidth, constants.TorpedoRadialZoneWidth; got != want {
+	if got, want := profile.ImpactEffect.Radial.ZoneWidth, float64(constants.TorpedoRadialZoneWidth); got != want {
 		t.Fatalf("ImpactEffect.Radial.ZoneWidth = %v, want %v", got, want)
 	}
-	if got, want := profile.ImpactEffect.Radial.ZoneSpawnSeconds, constants.TorpedoRadialZoneSpawnSeconds; got != want {
+	if got, want := profile.ImpactEffect.Radial.ZoneSpawnSeconds, float64(constants.TorpedoRadialZoneSpawnSeconds); got != want {
 		t.Fatalf("ImpactEffect.Radial.ZoneSpawnSeconds = %v, want %v", got, want)
 	}
-	if got, want := profile.ImpactEffect.Radial.TickSeconds, constants.TorpedoRadialTickSeconds; got != want {
+	if got, want := profile.ImpactEffect.Radial.TickSeconds, float64(constants.TorpedoRadialTickSeconds); got != want {
 		t.Fatalf("ImpactEffect.Radial.TickSeconds = %v, want %v", got, want)
 	}
-	if got, want := profile.ImpactEffect.Radial.TotalSeconds, constants.TorpedoRadialTotalSeconds; got != want {
+	if got, want := profile.ImpactEffect.Radial.TotalSeconds, float64(constants.TorpedoRadialTotalSeconds); got != want {
 		t.Fatalf("ImpactEffect.Radial.TotalSeconds = %v, want %v", got, want)
 	}
-	if got, want := profile.ImpactEffect.Radial.ZoneLifetimeSeconds, constants.TorpedoRadialZoneLifetimeSeconds; got != want {
+	if got, want := profile.ImpactEffect.Radial.ZoneLifetimeSeconds, float64(constants.TorpedoRadialZoneLifetimeSeconds); got != want {
 		t.Fatalf("ImpactEffect.Radial.ZoneLifetimeSeconds = %v, want %v", got, want)
 	}
-	if profile.ImpactEffect.Radial.Damage.Amount != constants.TorpedoRadialDamage {
+	if profile.ImpactEffect.Radial.Damage.Amount != int(constants.TorpedoRadialDamage) {
 		t.Fatalf("ImpactEffect.Radial.Damage.Amount = %d, want %d", profile.ImpactEffect.Radial.Damage.Amount, constants.TorpedoRadialDamage)
 	}
 	if !profile.ImpactEffect.Radial.TargetFilter.Allows(radial.TargetAsteroid) {

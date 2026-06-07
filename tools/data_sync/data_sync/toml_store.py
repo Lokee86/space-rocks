@@ -46,7 +46,14 @@ class TomlStore:
             if _is_namespace_child_table(value):
                 continue
             values.append((key, _unwrap_value(value)))
-        return ConstantSection(section_name, tuple(values))
+        return ConstantSection(section_name, tuple(values), str(self.path))
+
+    def has_section(self, section_name: str) -> bool:
+        try:
+            self._get_table(section_name)
+        except TomlStoreError:
+            return False
+        return True
 
     def update_constants(self, section_name: str, values: Mapping[str, ConstantValue]) -> None:
         table = self._tomlkit.table()

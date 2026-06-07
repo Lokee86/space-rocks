@@ -392,18 +392,18 @@ def _validate_configured_files_and_blocks(
 ) -> None:
     for domain in request.domains:
         for language in _languages_for_domain(config, domain, request.languages):
-            target = config.target(domain, language)
-            for path in target.files:
-                text = _read_configured_file(path, errors)
-                if text is None:
-                    continue
-                if domain == "packets":
-                    continue
-                for section_name in target.sections:
-                    try:
-                        find_block(text, section_name)
-                    except BlockIOError as exc:
-                        errors.append(f"{path}: {exc}")
+            for target in config.targets_for(domain, language):
+                for path in target.files:
+                    text = _read_configured_file(path, errors)
+                    if text is None:
+                        continue
+                    if domain == "packets":
+                        continue
+                    for section_name in target.sections:
+                        try:
+                            find_block(text, section_name)
+                        except BlockIOError as exc:
+                            errors.append(f"{path} [{domain}.{language}]: {exc}")
 
 
 def _requested_sections(
@@ -414,11 +414,11 @@ def _requested_sections(
     seen: set[str] = set()
     sections: list[str] = []
     for language in languages:
-        target = config.target(domain, language)
-        for section_name in target.sections:
-            if section_name not in seen:
-                seen.add(section_name)
-                sections.append(section_name)
+        for target in config.targets_for(domain, language):
+            for section_name in target.sections:
+                if section_name not in seen:
+                    seen.add(section_name)
+                    sections.append(section_name)
     return tuple(sections)
 
 
@@ -428,7 +428,11 @@ def _languages_for_domain(
     requested_languages: tuple[str, ...],
 ) -> tuple[str, ...]:
     languages = requested_languages or config.enabled_languages(domain)
-    return tuple(language for language in languages if config.target(domain, language).enabled)
+    return tuple(
+        language
+        for language in languages
+        if any(target.enabled for target in config.targets_by_domain_language.get((domain, language), ()))
+    )
 
 
 def _enabled_domains(config: DataSyncConfig) -> tuple[str, ...]:

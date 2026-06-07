@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from data_sync.model.constants import ConstantSection, ConstantValue
+from data_sync.model.constants import ConstantSection
 from data_sync.toml_store import TomlStore, TomlStoreError
 
 
@@ -38,33 +38,23 @@ class ConstantsStore:
         )
 
     def constants(self, section_name: str) -> ConstantSection:
-        if len(self._sources) == 1:
-            return self._sources[0].store.constants(section_name)
+        source = self._source_for_section(section_name)
+        return source.store.constants(section_name)
 
-        merged_values: list[tuple[str, ConstantValue]] = []
-        key_sources: dict[str, Path] = {}
-        section_found = False
+    def source_path(self, section_name: str) -> Path:
+        return self._source_for_section(section_name).path
 
+    def _source_for_section(self, section_name: str) -> _StoreSource:
+        matches = []
         for source in self._sources:
-            try:
-                section = source.store.constants(section_name)
-            except TomlStoreError as exc:
-                if "missing TOML section" in str(exc):
-                    continue
-                raise
+            if source.store.has_section(section_name):
+                matches.append(source)
 
-            section_found = True
-            for key, value in section.values:
-                existing_source = key_sources.get(key)
-                if existing_source is not None:
-                    raise ConstantsStoreError(
-                        f"duplicate constants key in [{section_name}].{key}: "
-                        f"{existing_source} and {source.path}"
-                    )
-                key_sources[key] = source.path
-                merged_values.append((key, value))
-
-        if not section_found:
+        if not matches:
             raise ConstantsStoreError(f"missing TOML section [{section_name}]")
-
-        return ConstantSection(name=section_name, values=tuple(merged_values))
+        if len(matches) > 1:
+            raise ConstantsStoreError(
+                f"duplicate constants source for [{section_name}]: "
+                + ", ".join(str(source.path) for source in matches)
+            )
+        return matches[0]

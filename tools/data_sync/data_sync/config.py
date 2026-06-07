@@ -58,7 +58,7 @@ class DataSyncConfig:
     path: Path
     root: Path
     sot_paths_by_domain: Mapping[str, tuple[Path, ...]]
-    targets: Mapping[tuple[str, str], DomainLanguageConfig]
+    targets_by_domain_language: Mapping[tuple[str, str], tuple[DomainLanguageConfig, ...]]
 
     def sot_paths(self, domain: str) -> tuple[Path, ...]:
         try:
@@ -75,18 +75,30 @@ class DataSyncConfig:
         return paths[0]
 
     def target(self, domain: str, language: str) -> DomainLanguageConfig:
+        targets = self.targets_for(domain, language)
+        if not targets:
+            raise ConfigError(f"missing config for [{domain}.{language}]")
+        return targets[0]
+
+    def targets_for(self, domain: str, language: str) -> tuple[DomainLanguageConfig, ...]:
         try:
-            return self.targets[(domain, language)]
+            return self.targets_by_domain_language[(domain, language)]
         except KeyError as exc:
             raise ConfigError(f"missing config for [{domain}.{language}]") from exc
 
     def enabled_languages(self, domain: str) -> tuple[str, ...]:
-        if (domain, "go") not in self.targets and domain == "drop_tables":
+        if domain == "drop_tables" and not any(
+            key_domain == domain and key_language == "go"
+            for key_domain, key_language in self.targets_by_domain_language
+        ):
             return ()
         return tuple(
             language
             for language in LANGUAGES
-            if self.target(domain, language).enabled
+            if any(
+                target.enabled
+                for target in self.targets_by_domain_language.get((domain, language), ())
+            )
         )
 
     def filter_targets(
@@ -94,7 +106,12 @@ class DataSyncConfig:
         domains: tuple[str, ...] | list[str],
         languages: tuple[str, ...] | list[str],
     ) -> tuple[DomainLanguageConfig, ...]:
-        return tuple(self.target(domain, language) for domain in domains for language in languages)
+        return tuple(
+            target
+            for domain in domains
+            for language in languages
+            for target in self.targets_for(domain, language)
+        )
 
 
 def load_config(config_path: Path | str | None = None, sot_override: Path | str | None = None) -> DataSyncConfig:
@@ -106,17 +123,27 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
     if sot_override is not None:
         sot_values = {domain: (str(sot_override),) for domain in DOMAINS}
 
-    targets: dict[tuple[str, str], DomainLanguageConfig] = {}
+    targets: dict[tuple[str, str], list[DomainLanguageConfig]] = {}
     for domain in DOMAINS:
         if domain == "drop_tables" and domain not in raw:
+            continue
+        if domain == "constants" and domain not in raw:
             continue
         domain_table = _require_table(raw, domain)
         domain_languages = ("go",) if domain == "drop_tables" else LANGUAGES
         for language in domain_languages:
             table = _require_table(domain_table, language, f"{domain}.{language}")
-            targets[(domain, language)] = _load_domain_language_config(root, domain, language, table)
+            targets.setdefault((domain, language), []).append(
+                _load_domain_language_config(root, domain, language, table)
+            )
+    for target in _discover_constants_outputs(root, raw):
+        targets.setdefault((target.domain, target.language), []).append(target)
 
-    _validate_constants_ownership(targets)
+    _validate_constants_ownership(
+        target
+        for target_list in targets.values()
+        for target in target_list
+    )
 
     return DataSyncConfig(
         path=resolved_config_path,
@@ -125,7 +152,10 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
             domain: tuple(_resolve_path(root, value) for value in values)
             for domain, values in sot_values.items()
         },
-        targets=targets,
+        targets_by_domain_language={
+            key: tuple(value)
+            for key, value in targets.items()
+        },
     )
 
 
@@ -343,15 +373,46 @@ def _resolve_path(root: Path, value: str | Path) -> Path:
     return (root / path).resolve()
 
 
-def _validate_constants_ownership(targets: Mapping[tuple[str, str], DomainLanguageConfig]) -> None:
+def _validate_constants_ownership(targets: Any) -> None:
     owners: dict[str, str] = {}
-    for (domain, language), target in targets.items():
+    for target in targets:
+        domain = target.domain
+        language = target.language
         if domain != "constants":
             continue
         for section in target.owns:
             previous = owners.get(section)
             if previous is not None:
                 raise ConfigError(
-                    f"constants section {section!r} is owned by multiple languages: {previous}, {language}"
+                    f"constants section {section!r} is owned by multiple targets: {previous}, {domain}.{language}"
                 )
-            owners[section] = language
+            owners[section] = f"{domain}.{language}:{section}"
+
+
+def _discover_constants_outputs(root: Path, raw: Mapping[str, Any]) -> tuple[DomainLanguageConfig, ...]:
+    discovered: list[DomainLanguageConfig] = []
+    for name, table in raw.items():
+        if name in DOMAINS or name == "sot":
+            continue
+        if not isinstance(table, Mapping):
+            continue
+        for language in LANGUAGES:
+            if language not in table:
+                continue
+            language_table = table.get(language)
+            if not isinstance(language_table, Mapping):
+                continue
+            if not _looks_like_constants_output(language_table):
+                continue
+            discovered.append(_load_domain_language_config(root, "constants", language, language_table))
+    return tuple(discovered)
+
+
+def _looks_like_constants_output(table: Mapping[str, Any]) -> bool:
+    for key in REQUIRED_DOMAIN_KEYS:
+        if key not in table:
+            return False
+    sections = table.get("sections")
+    if not isinstance(sections, list):
+        return False
+    return all(isinstance(section, str) and section.startswith("constants.") for section in sections)
