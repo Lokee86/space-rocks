@@ -96,6 +96,7 @@ const FIELD_POINTS := "points"
 const FIELD_PRIMARY_AMMO_POLICY := "primary_ammo_policy"
 const FIELD_PRIMARY_AMMO_REMAINING := "primary_ammo_remaining"
 const FIELD_PRIMARY_COOLDOWN_REMAINING := "primary_cooldown_remaining"
+const FIELD_PRIMARY_FIRE := "primary_fire"
 const FIELD_PRIMARY_WEAPON_ID := "primary_weapon_id"
 const FIELD_PROJECTILE_TYPE := "projectile_type"
 const FIELD_READY := "ready"
@@ -110,6 +111,7 @@ const FIELD_SCORE := "score"
 const FIELD_SECONDARY_AMMO_POLICY := "secondary_ammo_policy"
 const FIELD_SECONDARY_AMMO_REMAINING := "secondary_ammo_remaining"
 const FIELD_SECONDARY_COOLDOWN_REMAINING := "secondary_cooldown_remaining"
+const FIELD_SECONDARY_FIRE := "secondary_fire"
 const FIELD_SECONDARY_WEAPON_ID := "secondary_weapon_id"
 const FIELD_SELF_ID := "self_id"
 const FIELD_SEQUENCE := "sequence"
@@ -119,7 +121,6 @@ const FIELD_SHAPE_TYPE := "shape_type"
 const FIELD_SHAPES := "shapes"
 const FIELD_SHIELDS := "shields"
 const FIELD_SHIP_TYPE := "ship_type"
-const FIELD_SHOOT := "shoot"
 const FIELD_SIZE := "size"
 const FIELD_SOURCE_ID := "source_id"
 const FIELD_SOURCE_TYPE := "source_type"
@@ -142,7 +143,7 @@ const FIELD_WORLD_FROZEN := "world_frozen"
 const FIELD_X := "x"
 const FIELD_Y := "y"
 
-static func input_packet(forward, back, right, left, shoot) -> Dictionary:
+static func input_packet(forward, back, right, left, primary_fire, secondary_fire) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = TYPE_INPUT
 	var packet_input := {}
@@ -150,7 +151,8 @@ static func input_packet(forward, back, right, left, shoot) -> Dictionary:
 	packet_input[FIELD_BACK] = back
 	packet_input[FIELD_RIGHT] = right
 	packet_input[FIELD_LEFT] = left
-	packet_input[FIELD_SHOOT] = shoot
+	packet_input[FIELD_PRIMARY_FIRE] = primary_fire
+	packet_input[FIELD_SECONDARY_FIRE] = secondary_fire
 	packet[FIELD_INPUT] = packet_input
 	return packet
 

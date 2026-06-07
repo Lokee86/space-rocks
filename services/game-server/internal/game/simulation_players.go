@@ -28,8 +28,11 @@ func (game *Game) stepPlayers(delta float64, bounds space.Bounds) {
 		if player.IsPendingDespawn() {
 			continue
 		}
-		if game.worldSimulationOptions.BulletsCanMove() && player.Input.Shoot && game.playerCanShoot(player.ID, player) {
+		if game.worldSimulationOptions.BulletsCanMove() && player.Input.PrimaryFire && game.playerCanShoot(player.ID, player) {
 			game.firePlayerPrimaryWeapon(player.ID, player)
+		}
+		if game.worldSimulationOptions.BulletsCanMove() && player.Input.SecondaryFire && game.playerCanShoot(player.ID, player) {
+			game.firePlayerSecondaryWeapon(player.ID, player)
 		}
 	}
 }

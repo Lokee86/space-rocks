@@ -104,6 +104,23 @@ func TestStepAnnularSimultaneousBloomSequence(t *testing.T) {
 	}
 }
 
+func TestStepAnnularZoneHitsCandidateWhoseRadiusOverlapsZone(t *testing.T) {
+	effect := Effect{
+		ID:         "effect-radius",
+		Origin:     zeroVector(),
+		Spec:       annularSimultaneousSpec(TargetFilter{Asteroids: true}),
+		Zones:      buildZones(annularSimultaneousSpec(TargetFilter{Asteroids: true})),
+		AgeSeconds: 0,
+	}
+
+	result := Step(&effect, 0.1, []Candidate{
+		{ID: "overlap", Kind: TargetAsteroid, Position: vectorAtDistance(12), Radius: 3},
+		{ID: "miss", Kind: TargetAsteroid, Position: vectorAtDistance(12), Radius: 2},
+	})
+
+	assertHitIDs(t, result.Hits, []string{"overlap"})
+}
+
 func TestStepExpandingFillEarlyRadiusHitsNearTarget(t *testing.T) {
 	spec := Spec{
 		CoverageMode:        CoverageExpandingFill,
@@ -172,6 +189,28 @@ func TestStepExpandingFillHitsCenterOncePerTick(t *testing.T) {
 	if got := countHitsForTarget(result.Hits, "center"); got != 1 {
 		t.Fatalf("center hits on second tick = %d, want 1", got)
 	}
+}
+
+func TestStepExpandingFillHitsCandidateWhoseRadiusOverlapsFill(t *testing.T) {
+	spec := Spec{
+		CoverageMode:        CoverageExpandingFill,
+		ExpirationMode:      ExpirationSimultaneous,
+		TargetFilter:        TargetFilter{Asteroids: true},
+		ZoneCount:           1,
+		ZoneWidth:           10,
+		ZoneSpawnSeconds:    0,
+		TickSeconds:         0.1,
+		TotalSeconds:        0.4,
+		ZoneLifetimeSeconds: 0,
+	}
+
+	effect := Effect{ID: "fill-radius", Origin: zeroVector(), Spec: spec, Zones: buildZones(spec)}
+	result := Step(&effect, 0.1, []Candidate{
+		{ID: "overlap", Kind: TargetAsteroid, Position: vectorAtDistance(12), Radius: 3},
+		{ID: "miss", Kind: TargetAsteroid, Position: vectorAtDistance(12), Radius: 2},
+	})
+
+	assertHitIDs(t, result.Hits, []string{"overlap"})
 }
 
 func annularSimultaneousSpec(filter TargetFilter) Spec {

@@ -62,7 +62,7 @@ func TestPauseRequestToggleClearsInputAndIgnoresNewInput(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: runtime.InputState{Forward: true, Shoot: true},
+		Input: runtime.InputState{Forward: true, PrimaryFire: true},
 	})
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 
@@ -76,7 +76,7 @@ func TestPauseRequestToggleClearsInputAndIgnoresNewInput(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: runtime.InputState{Forward: true, Shoot: true},
+		Input: runtime.InputState{Forward: true, PrimaryFire: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
@@ -202,7 +202,7 @@ func TestFreshPlayerCanShoot(t *testing.T) {
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: runtime.InputState{Shoot: true},
+		Input: runtime.InputState{PrimaryFire: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
@@ -220,7 +220,7 @@ func TestPausedPlayerDoesNotMoveOrShoot(t *testing.T) {
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: runtime.InputState{Forward: true, Shoot: true},
+		Input: runtime.InputState{Forward: true, PrimaryFire: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
@@ -255,7 +255,7 @@ func TestPauseRequestSecondToggleResumesWithInvulnerabilityAndAllowsShooting(t *
 
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: runtime.InputState{Shoot: true},
+		Input: runtime.InputState{PrimaryFire: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 

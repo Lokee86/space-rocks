@@ -537,7 +537,7 @@ func TestDebugFrozenWorldDoesNotSpawnBullets(t *testing.T) {
 	})
 	scenario.send(playerID, servergame.ClientPacket{
 		Type:  servergame.PacketTypeInput,
-		Input: runtime.InputState{Shoot: true},
+		Input: runtime.InputState{PrimaryFire: true},
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 

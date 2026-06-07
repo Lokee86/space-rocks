@@ -113,8 +113,13 @@ json = "left"
 type = "bool"
 
 [[structs.fields]]
-name = "shoot"
-json = "shoot"
+name = "primary_fire"
+json = "primary_fire"
+type = "bool"
+
+[[structs.fields]]
+name = "secondary_fire"
+json = "secondary_fire"
 type = "bool"
 
 [[structs]]
@@ -641,7 +646,7 @@ value = "clear_target_request"
 
 [[builders]]
 id = "input_packet"
-args = ["forward", "back", "right", "left", "shoot"]
+args = ["forward", "back", "right", "left", "primary_fire", "secondary_fire"]
 
 [builders.body]
 type = "input"
@@ -651,7 +656,8 @@ forward = "$forward"
 back = "$back"
 right = "$right"
 left = "$left"
-shoot = "$shoot"
+primary_fire = "$primary_fire"
+secondary_fire = "$secondary_fire"
 
 [[builders]]
 id = "respawn_packet"

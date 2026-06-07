@@ -9,7 +9,7 @@ import (
 )
 
 func TestDecodeClientInputPacket(t *testing.T) {
-	raw := []byte(`{"type":"input","input":{"forward":true,"left":true,"shoot":true}}`)
+	raw := []byte(`{"type":"input","input":{"forward":true,"left":true,"primary_fire":true,"secondary_fire":true}}`)
 
 	var packet game.ClientPacket
 	if err := packetcodec.Decode(raw, &packet); err != nil {
@@ -25,8 +25,11 @@ func TestDecodeClientInputPacket(t *testing.T) {
 	if !packet.Input.Left {
 		t.Fatal("expected left input to decode")
 	}
-	if !packet.Input.Shoot {
-		t.Fatal("expected shoot input to decode")
+	if !packet.Input.PrimaryFire {
+		t.Fatal("expected primary_fire input to decode")
+	}
+	if !packet.Input.SecondaryFire {
+		t.Fatal("expected secondary_fire input to decode")
 	}
 }
 

@@ -62,6 +62,18 @@ func test_pause_request_packet_sets_expected_type_without_paused_field() -> void
 	assert_false(packet.has(Packets.FIELD_PAUSED))
 
 
+func test_input_packet_uses_primary_and_secondary_fire_fields() -> void:
+	var packet := Packets.input_packet(true, false, true, false, true, false)
+
+	assert_eq(packet[Packets.FIELD_TYPE], Packets.TYPE_INPUT)
+	assert_eq(packet[Packets.FIELD_INPUT][Packets.FIELD_FORWARD], true)
+	assert_eq(packet[Packets.FIELD_INPUT][Packets.FIELD_BACK], false)
+	assert_eq(packet[Packets.FIELD_INPUT][Packets.FIELD_RIGHT], true)
+	assert_eq(packet[Packets.FIELD_INPUT][Packets.FIELD_LEFT], false)
+	assert_eq(packet[Packets.FIELD_INPUT][Packets.FIELD_PRIMARY_FIRE], true)
+	assert_eq(packet[Packets.FIELD_INPUT][Packets.FIELD_SECONDARY_FIRE], false)
+
+
 func test_toggle_debug_freeze_world_target_packet_sets_expected_fields() -> void:
 	var packet := Packets.toggle_debug_freeze_world_target_packet("asteroids")
 
