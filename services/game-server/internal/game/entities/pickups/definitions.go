@@ -18,6 +18,6 @@ func DefinitionFor(pickupType PickupType) (Definition, bool) {
 		Type:            PickupType(constants.PickupOneUpType),
 		ScenePath:       constants.PickupOneUpScenePath,
 		Health:          constants.PickupOneUpHealth,
-		LifespanSeconds: 12.0,
+		LifespanSeconds: constants.PickupOneUpLifespan,
 	}, true
 }
