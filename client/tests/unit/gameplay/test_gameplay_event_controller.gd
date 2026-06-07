@@ -6,10 +6,15 @@ const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 class FakeEffects:
 	var spawn_pickup_collected_call_count := 0
+	var spawn_torpedo_explosion_call_count := 0
 	var last_visual_position := Vector2.ZERO
 
 	func spawn_pickup_collected(visual_position: Vector2) -> void:
 		spawn_pickup_collected_call_count += 1
+		last_visual_position = visual_position
+
+	func spawn_torpedo_explosion(visual_position: Vector2) -> void:
+		spawn_torpedo_explosion_call_count += 1
 		last_visual_position = visual_position
 
 
@@ -36,3 +41,23 @@ func test_apply_server_events_routes_pickup_collected_to_effects() -> void:
 
 	assert_eq(effects.spawn_pickup_collected_call_count, 1)
 	assert_eq(effects.last_visual_position, Vector2(22, 54))
+
+
+func test_apply_server_events_routes_radial_effect_started_to_torpedo_explosion() -> void:
+	var effects := FakeEffects.new()
+	var callable_target := FakeCallableTarget.new()
+	var controller := GameplayEventController.new()
+	controller.configure(effects, Callable(callable_target, "visual_position_for_server_position"))
+
+	var server_events := [
+		{
+			Packets.FIELD_TYPE: "radial_effect_started",
+			Packets.FIELD_X: 40,
+			Packets.FIELD_Y: 60,
+		}
+	]
+
+	controller.apply_server_events(server_events, "player-1", Callable())
+
+	assert_eq(effects.spawn_torpedo_explosion_call_count, 1)
+	assert_eq(effects.last_visual_position, Vector2(50, 80))

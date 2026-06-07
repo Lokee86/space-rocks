@@ -49,6 +49,12 @@ func play_ship_death_sound(sound: AudioStreamPlayer2D) -> void:
 	sound.play()
 
 
+func play_torpedo_explosion_sound(sound: AudioStreamPlayer2D) -> void:
+	if sound == null:
+		return
+	sound.play()
+
+
 func play_afterburner_sound(sound: AudioStreamPlayer2D) -> void:
 	if sound == null:
 		return

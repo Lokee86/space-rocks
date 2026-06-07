@@ -44,12 +44,14 @@ torpedo_cooldown = 0.22
 torpedo_projectile_spawn_offset = 42.0
 torpedo_impact_damage = 1
 torpedo_radial_damage = 1
-torpedo_radial_zone_count = 4
-torpedo_radial_zone_width = 10
 torpedo_radial_zone_spawn_seconds = 0.1
 torpedo_radial_tick_seconds = 0.1
 torpedo_radial_total_seconds = 0.4
 torpedo_radial_zone_lifetime_seconds = 0.4
+
+[constants.shared.weapons.torpedo_radial_shape]
+torpedo_radial_zone_count = 4
+torpedo_radial_zone_width = 10
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -77,6 +79,9 @@ old
 // data-sync:start constants.server.weapons.torpedo
 old
 // data-sync:end constants.server.weapons.torpedo
+// data-sync:start constants.shared.weapons.torpedo_radial_shape
+old
+// data-sync:end constants.shared.weapons.torpedo_radial_shape
 """.lstrip(),
         encoding="utf-8",
     )
@@ -123,8 +128,8 @@ owns = ["constants.gameplay"]
 
 [weapons.go]
 files = ["go/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
+sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
+owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
 
 [constants.gds]
 files = ["gds/constants.gd"]
@@ -288,6 +293,9 @@ old
 // data-sync:start constants.server.weapons.torpedo
 old
 // data-sync:end constants.server.weapons.torpedo
+// data-sync:start constants.shared.weapons.torpedo_radial_shape
+old
+// data-sync:end constants.shared.weapons.torpedo_radial_shape
 """.lstrip(),
         encoding="utf-8",
     )
@@ -305,4 +313,3 @@ def test_language_filtering_works(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     assert (tmp_path / "ts/constants.ts").read_text(encoding="utf-8") == ts_before
-

@@ -10,16 +10,19 @@ const BasicCannonDamage = 1
 // data-sync:end constants.server.weapons.basic_cannon
 
 // data-sync:start constants.server.weapons.torpedo
-const TorpedoProjectileSpeed = 1200.0
-const TorpedoProjectileLifetime = 1.75
-const TorpedoCooldown = 0.22
+const TorpedoProjectileSpeed = 400.0
+const TorpedoProjectileLifetime = 3.5
+const TorpedoCooldown = 10.0
 const TorpedoProjectileSpawnOffset = 42.0
 const TorpedoImpactDamage = 0
 const TorpedoRadialDamage = 1
-const TorpedoRadialZoneCount = 4
-const TorpedoRadialZoneWidth = 10
 const TorpedoRadialZoneSpawnSeconds = 0.1
 const TorpedoRadialTickSeconds = 0.1
 const TorpedoRadialTotalSeconds = 0.4
 const TorpedoRadialZoneLifetimeSeconds = 0.4
 // data-sync:end constants.server.weapons.torpedo
+
+// data-sync:start constants.shared.weapons.torpedo_radial_shape
+const TorpedoRadialZoneCount = 4
+const TorpedoRadialZoneWidth = 10
+// data-sync:end constants.shared.weapons.torpedo_radial_shape
