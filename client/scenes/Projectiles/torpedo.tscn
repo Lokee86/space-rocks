@@ -16,6 +16,6 @@ texture = ExtResource("1_wap2v")
 position = Vector2(-0.8018112, -1)
 shape = SubResource("CapsuleShape2D_lqdwr")
 
-[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=117930197]
+[node name="FiringSound" type="AudioStreamPlayer2D" parent="." unique_id=117930197]
 stream = ExtResource("2_rlhp3")
 volume_db = -5.0

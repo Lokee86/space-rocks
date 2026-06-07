@@ -6,6 +6,7 @@ const ProjectileSyncState = preload("res://scripts/world/projectile_sync_state.g
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
+var audio_flow := GameplayAudioFlow.new()
 var bullets_layer: Node2D
 var projectile_nodes := {}
 var initialized_projectiles := {}
@@ -32,6 +33,13 @@ func get_projectile_node(bullet_id: String, state: Dictionary):
 	return bullet_node
 
 
+func _play_projectile_firing_sound(projectile_node: Node) -> void:
+	var sound := projectile_node.get_node_or_null("FiringSound") as AudioStreamPlayer2D
+	if sound == null:
+		return
+	audio_flow.play_projectile_firing_sound(sound, bullets_layer)
+
+
 func apply(
 	server_bullets: Dictionary,
 	local_visual_position: Vector2,
@@ -54,6 +62,7 @@ func apply(
 			initialized_projectiles[bullet_id] = true
 			bullet_node.global_position = visual_position
 			bullet_node.rotation = server_rotation
+			_play_projectile_firing_sound(bullet_node)
 
 
 func remove_missing(server_bullets: Dictionary) -> void:
