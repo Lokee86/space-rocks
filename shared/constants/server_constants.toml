@@ -1,7 +1,7 @@
 [constants.server.runtime]
 server_tick_rate = 60
 
-[constants.server.world]
+[constants.shared.world]
 world_width = 17200.0
 world_height = 9200.0
 
