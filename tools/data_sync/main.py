@@ -44,10 +44,7 @@ def run(argv: list[str] | None = None) -> int:
             )
             return 2
         try:
-            constants_paths = config.sot_paths("constants")
-            store = TomlStore.load(constants_paths[0])
-            pull_constants(config, store, args.languages[0])
-            store.write()
+            pull_constants(config, args.languages[0])
         except (PullError, TomlStoreError) as exc:
             print(f"pull error: {exc}", file=sys.stderr)
             return 1

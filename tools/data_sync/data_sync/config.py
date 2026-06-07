@@ -40,6 +40,7 @@ class ConfigError(Exception):
 class DomainLanguageConfig:
     domain: str
     language: str
+    label: str
     files: tuple[Path, ...]
     sections: tuple[str, ...]
     owns: tuple[str, ...]
@@ -51,6 +52,9 @@ class DomainLanguageConfig:
 
     def owns_section(self, section: str) -> bool:
         return section in self.owns
+
+    def display_name(self) -> str:
+        return self.label or f"{self.domain}.{self.language}"
 
 
 @dataclass(frozen=True)
@@ -127,12 +131,18 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
     for domain in DOMAINS:
         if domain == "drop_tables" and domain not in raw:
             continue
-        if domain == "constants" and domain not in raw:
+        domain_table = raw.get(domain)
+        if domain_table is None:
             continue
-        domain_table = _require_table(raw, domain)
+        if not isinstance(domain_table, Mapping):
+            raise ConfigError(f"missing required config table [{domain}]")
         domain_languages = ("go",) if domain == "drop_tables" else LANGUAGES
         for language in domain_languages:
-            table = _require_table(domain_table, language, f"{domain}.{language}")
+            table = domain_table.get(language)
+            if table is None:
+                continue
+            if not isinstance(table, Mapping):
+                raise ConfigError(f"missing required config table [{domain}.{language}]")
             targets.setdefault((domain, language), []).append(
                 _load_domain_language_config(root, domain, language, table)
             )
@@ -344,6 +354,7 @@ def _load_domain_language_config(
     return DomainLanguageConfig(
         domain=domain,
         language=language,
+        label=label,
         files=tuple(_resolve_path(root, value) for value in files),
         sections=tuple(sections),
         owns=tuple(owns),
@@ -377,16 +388,15 @@ def _validate_constants_ownership(targets: Any) -> None:
     owners: dict[str, str] = {}
     for target in targets:
         domain = target.domain
-        language = target.language
         if domain != "constants":
             continue
         for section in target.owns:
             previous = owners.get(section)
             if previous is not None:
                 raise ConfigError(
-                    f"constants section {section!r} is owned by multiple targets: {previous}, {domain}.{language}"
+                    f"constants section {section!r} is owned by multiple targets: {previous}, {target.display_name()}"
                 )
-            owners[section] = f"{domain}.{language}:{section}"
+            owners[section] = target.display_name()
 
 
 def _discover_constants_outputs(root: Path, raw: Mapping[str, Any]) -> tuple[DomainLanguageConfig, ...]:

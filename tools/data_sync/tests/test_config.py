@@ -129,6 +129,7 @@ def test_targets_for_can_return_multiple_targets(tmp_path: Path) -> None:
     first = DomainLanguageConfig(
         domain="constants",
         language="go",
+        label="constants.go",
         files=(tmp_path / "services/game-server/internal/constants/constants.go",),
         sections=("constants.server.damage",),
         owns=("constants.server.damage",),
@@ -136,6 +137,7 @@ def test_targets_for_can_return_multiple_targets(tmp_path: Path) -> None:
     second = DomainLanguageConfig(
         domain="constants",
         language="go",
+        label="weapons.go",
         files=(tmp_path / "services/game-server/internal/constants/weapons.go",),
         sections=("constants.server.weapons.basic_cannon",),
         owns=("constants.server.weapons.basic_cannon",),
@@ -157,6 +159,7 @@ def test_enabled_languages_ignores_missing_language_entries(tmp_path: Path) -> N
     target = DomainLanguageConfig(
         domain="constants",
         language="go",
+        label="constants.go",
         files=(tmp_path / "services/game-server/internal/constants/constants.go",),
         sections=("constants.server.damage",),
         owns=("constants.server.damage",),
@@ -265,10 +268,14 @@ def test_missing_required_table_raises_clear_error(tmp_path: Path) -> None:
         """
 [sot]
 path = "shared/game_data.toml"
+
+[constants.go]
+files = ["services/game-server/internal/game/constants.go"]
+sections = ["constants.gameplay"]
 """.strip(),
     )
 
-    with pytest.raises(ConfigError, match=r"missing required config table \[constants\]"):
+    with pytest.raises(ConfigError, match=r"\[constants\.go\] missing required key\(s\): owns"):
         load_config(config_path)
 
 
@@ -404,7 +411,7 @@ owns = ["constants.gameplay"]
     )
     config_path = write_config(tmp_path, config_text)
 
-    with pytest.raises(ConfigError, match="owned by multiple targets"):
+    with pytest.raises(ConfigError, match="owned by multiple targets: constants.go, constants.gds"):
         load_config(config_path)
 
 
@@ -432,6 +439,32 @@ owns = ["constants.server.weapons.basic_cannon"]
     assert config.target("constants", "go").files == (
         tmp_path / "services/game-server/internal/constants/constants.go",
     )
+
+
+def test_partial_domain_language_configs_are_allowed(tmp_path: Path) -> None:
+    config_path = write_config(
+        tmp_path,
+        """
+[sot]
+path = "shared/game_data.toml"
+
+[constants.go]
+files = ["services/game-server/internal/constants/constants.go"]
+sections = ["constants.gameplay"]
+owns = ["constants.gameplay"]
+
+[weapons.go]
+files = ["services/game-server/internal/constants/weapons.go"]
+sections = ["constants.server.weapons.basic_cannon"]
+owns = ["constants.server.weapons.basic_cannon"]
+""".strip(),
+    )
+
+    config = load_config(config_path)
+
+    assert config.targets_for("constants", "go")
+    with pytest.raises(ConfigError, match=r"missing config for \[constants\.gds\]"):
+        config.targets_for("constants", "gds")
 
 
 def test_packet_target_outputs_must_be_list_of_non_empty_strings(tmp_path: Path) -> None:
