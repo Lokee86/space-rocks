@@ -2,13 +2,13 @@ extends RefCounted
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 const AsteroidSyncScript = preload("res://scripts/world/asteroid_sync.gd")
-const BulletSyncScript = preload("res://scripts/world/bullet_sync.gd")
+const ProjectileSyncScript = preload("res://scripts/world/projectile_sync.gd")
 const PickupSyncScript = preload("res://scripts/world/pickup_sync.gd")
 const PlayerRenderApiScript = preload("res://scripts/world/player_render/player_render_api.gd")
 const TargetPositionSource = preload("res://scripts/gameplay/targeting/target_position_source.gd")
 
 var asteroid_sync
-var bullet_sync
+var projectile_sync
 var pickup_sync
 var player_render_api
 var target_position_source
@@ -28,8 +28,8 @@ func configure(
 ) -> void:
 	asteroid_sync = AsteroidSyncScript.new()
 	asteroid_sync.configure(asteroids)
-	bullet_sync = BulletSyncScript.new()
-	bullet_sync.configure(bullets)
+	projectile_sync = ProjectileSyncScript.new()
+	projectile_sync.configure(bullets)
 	pickup_sync = PickupSyncScript.new()
 	pickup_sync.configure(pickups)
 	local_player = player
@@ -37,7 +37,7 @@ func configure(
 	view_anchor = view_anchor_ref
 	player_render_api.configure(game_owner, player, view_anchor_ref, pause_state_tracker)
 	target_position_source = TargetPositionSource.new()
-	target_position_source.configure(player_render_api, asteroid_sync, bullet_sync, pickup_sync)
+	target_position_source.configure(player_render_api, asteroid_sync, projectile_sync, pickup_sync)
 
 	asteroids.z_index = Constants.ASTEROID_Z_INDEX
 	pickups.z_index = Constants.PICKUP_Z_INDEX
@@ -67,11 +67,11 @@ func apply_state(
 	if target_position_source != null:
 		target_position_source.set_current_self_id(self_id)
 	player_render_api.remove_missing(server_players, self_id)
-	bullet_sync.remove_missing(server_bullets)
+	projectile_sync.remove_missing(server_bullets)
 	asteroid_sync.remove_missing(server_asteroids)
 	pickup_sync.remove_missing(server_pickups)
 	player_render_api.apply_state(self_id, server_players)
-	bullet_sync.apply(
+	projectile_sync.apply(
 		server_bullets,
 		player_render_api.visual_position(),
 		player_render_api.server_position()
@@ -91,7 +91,7 @@ func apply_state(
 func interpolate(delta: float) -> void:
 	var weight := 1.0 - exp(-Constants.PLAYER_INTERPOLATION_SPEED * delta)
 	player_render_api.interpolate(weight, current_self_id)
-	bullet_sync.interpolate(weight)
+	projectile_sync.interpolate(weight)
 	asteroid_sync.interpolate(weight)
 	pickup_sync.interpolate(weight)
 

@@ -2,15 +2,15 @@ extends RefCounted
 
 var player_render_api
 var asteroid_sync
-var bullet_sync
+var projectile_sync
 var pickup_sync
 var current_self_id := ""
 
 
-func configure(player_render_api_ref, asteroid_sync_ref, bullet_sync_ref, pickup_sync_ref) -> void:
+func configure(player_render_api_ref, asteroid_sync_ref, projectile_sync_ref, pickup_sync_ref) -> void:
 	player_render_api = player_render_api_ref
 	asteroid_sync = asteroid_sync_ref
-	bullet_sync = bullet_sync_ref
+	projectile_sync = projectile_sync_ref
 	pickup_sync = pickup_sync_ref
 
 
@@ -46,10 +46,10 @@ func asteroid_positions() -> Dictionary:
 	return asteroid_sync.asteroid_target_positions()
 
 
-func bullet_positions() -> Dictionary:
-	if bullet_sync == null:
+func projectile_positions() -> Dictionary:
+	if projectile_sync == null:
 		return {}
-	return bullet_sync.bullet_target_positions()
+	return projectile_sync.projectile_target_positions()
 
 
 func pickup_positions() -> Dictionary:
