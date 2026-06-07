@@ -29,10 +29,18 @@ func play_pickup_spawned_sound(sound: AudioStreamPlayer2D) -> void:
 	sound.play()
 
 
-func play_laser_sound(sound: AudioStreamPlayer2D) -> void:
+func play_projectile_firing_sound(sound: AudioStreamPlayer2D, parent: Node) -> void:
 	if sound == null:
 		return
-	sound.play()
+	if parent == null:
+		return
+	var detached_sound := sound.duplicate() as AudioStreamPlayer2D
+	if detached_sound == null:
+		return
+	parent.add_child(detached_sound)
+	detached_sound.global_position = sound.global_position
+	detached_sound.play()
+	detached_sound.finished.connect(detached_sound.queue_free)
 
 
 func play_ship_death_sound(sound: AudioStreamPlayer2D) -> void:

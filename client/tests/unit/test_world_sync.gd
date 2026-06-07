@@ -106,6 +106,17 @@ func test_apply_state_creates_bullet_nodes() -> void:
 	)
 
 
+func test_apply_state_starts_bullet_firing_sound_on_first_projectile_creation() -> void:
+	_apply_fixture_state()
+
+	var bullet_node: Node = _projectile_nodes()[WorldStateFixture.BULLET_ID]
+	var firing_sound := bullet_node.get_node_or_null("FiringSound")
+
+	assert_not_null(firing_sound)
+	assert_true(firing_sound is AudioStreamPlayer2D)
+	assert_true((firing_sound as AudioStreamPlayer2D).playing)
+
+
 func test_apply_state_creates_torpedo_scene_for_torpedo_projectile_type() -> void:
 	var state := WorldStateFixture.state()
 	state[Packets.FIELD_BULLETS] = {
@@ -122,6 +133,27 @@ func test_apply_state_creates_torpedo_scene_for_torpedo_projectile_type() -> voi
 	assert_true(_projectile_nodes().has(WorldStateFixture.BULLET_ID))
 	assert_eq(_projectile_nodes()[WorldStateFixture.BULLET_ID].name, "Torpedo")
 	assert_true(_projectile_nodes()[WorldStateFixture.BULLET_ID] is Node2D)
+
+
+func test_apply_state_starts_torpedo_firing_sound_on_first_projectile_creation() -> void:
+	var state := WorldStateFixture.state()
+	state[Packets.FIELD_BULLETS] = {
+		WorldStateFixture.BULLET_ID: {
+			Packets.FIELD_X: 420.0,
+			Packets.FIELD_Y: 440.0,
+			Packets.FIELD_ROTATION: 1.25,
+			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+		},
+	}
+
+	_apply_state(state)
+
+	var torpedo_node: Node = _projectile_nodes()[WorldStateFixture.BULLET_ID]
+	var firing_sound := torpedo_node.get_node_or_null("FiringSound")
+
+	assert_not_null(firing_sound)
+	assert_true(firing_sound is AudioStreamPlayer2D)
+	assert_true((firing_sound as AudioStreamPlayer2D).playing)
 
 
 func test_apply_state_defaults_unknown_projectile_type_to_bullet_scene() -> void:
