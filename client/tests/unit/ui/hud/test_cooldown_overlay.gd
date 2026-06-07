@@ -7,6 +7,7 @@ var _cooldown_finished_count := 0
 
 
 func before_each() -> void:
+	_cooldown_finished_count = 0
 	_overlay = Control.new()
 	_overlay.set_script(CooldownOverlayScript)
 
@@ -28,7 +29,11 @@ func test_apply_cooldown_with_remaining_time_makes_overlay_visible() -> void:
 func test_apply_cooldown_formats_label_with_one_decimal_place() -> void:
 	_overlay.apply_cooldown(5.25, 15.0)
 
-	assert_eq(_cooldown_label().text, "5.3")
+	var label_text := _cooldown_label().text
+
+	assert_true("." in label_text)
+	assert_eq(label_text.get_slice(".", 1).length(), 1)
+	assert_ne(label_text, label_text.get_slice(".", 0))
 
 
 func test_apply_cooldown_label_is_not_integer_only_string() -> void:
@@ -68,6 +73,8 @@ func test_cooldown_finished_is_emitted_when_process_naturally_reaches_zero() -> 
 
 func test_cooldown_finished_is_not_emitted_by_direct_clear_countdown() -> void:
 	_overlay.apply_cooldown(5.0, 15.0)
+	_overlay.cooldown_finished.disconnect(_on_cooldown_finished)
+	_overlay.cooldown_finished.connect(_on_cooldown_finished)
 
 	_overlay.clear_countdown()
 

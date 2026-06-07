@@ -6,6 +6,9 @@
 [ext_resource type="Texture2D" uid="uid://jbqfavdvpf1r" path="res://assets/pickupicons.png" id="5_5iogl"]
 [ext_resource type="Script" path="res://scripts/ui/hud/ring_highlight.gd" id="5_yr8yt"]
 [ext_resource type="Script" uid="uid://d2rfejth56qgq" path="res://scripts/ui/hud/cooldown_overlay.gd" id="6_o2j1k"]
+[ext_resource type="Script" path="res://scripts/ui/hud/ready_sweep_highlight.gd" id="6_u7v0p"]
+[ext_resource type="Texture2D" uid="uid://dfpuissf8u61t" path="res://assets/ready_flash.png" id="7_4fha2"]
+[ext_resource type="Shader" path="res://shaders/ready_sweep_highlight.gdshader" id="7_u4n4d"]
 [ext_resource type="LabelSettings" uid="uid://ck2uiws3xnfto" path="res://assets/ui/label_settings/hud.tres" id="7_xq636"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_n33kh"]
@@ -17,6 +20,92 @@ shader_parameter/strength = 1.0
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_80krm"]
 blend_mode = 1
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hq5w7"]
+shader = ExtResource("7_u4n4d")
+shader_parameter/sweep_progress = -0.5
+shader_parameter/sweep_width = 0.08
+shader_parameter/sweep_softness = 0.12
+shader_parameter/sweep_alpha = 0.75
+shader_parameter/sweep_angle = 0.75
+shader_parameter/badge_radius = 0.5
+shader_parameter/badge_softness = 0.02
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_peb63"]
+blend_mode = 1
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3meq0"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(0, 0, 312, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xvif2"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(312, 0, 312, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ssdcy"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(624, 0, 312, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yg4pl"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(936, 0, 312, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qmosg"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(1248, 0, 312, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ysj0s"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(1560, 0, 312, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4i83u"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(1872, 0, 312, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ptvec"]
+atlas = ExtResource("7_4fha2")
+region = Rect2(2184, 0, 312, 314)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_7t3db"]
+animations = [{
+"frames": [{
+"duration": 2.4,
+"texture": null
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_3meq0")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_xvif2")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_ssdcy")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_yg4pl")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_qmosg")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_ysj0s")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_4i83u")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_ptvec")
+}, {
+"duration": 2.4,
+"texture": SubResource("AtlasTexture_3meq0")
+}, {
+"duration": 2.5,
+"texture": null
+}],
+"loop": false,
+"name": &"default",
+"speed": 40.0
+}]
 
 [node name="TorpedoDisplay" type="Control" unique_id=42311672]
 layout_mode = 3
@@ -57,8 +146,10 @@ material = SubResource("CanvasItemMaterial_80krm")
 scale = Vector2(0.49, 0.49)
 texture = ExtResource("2_difuo")
 
-[node name="Sprite2D" type="Sprite2D" parent="Control/Sprite2D" unique_id=16658619]
-position = Vector2(-8, 5.3333335)
+[node name="WeaponIcon" type="Node2D" parent="Control/Sprite2D" unique_id=2068211968]
+
+[node name="Torpedo" type="Sprite2D" parent="Control/Sprite2D/WeaponIcon" unique_id=16658619]
+position = Vector2(-8, 5.333334)
 texture = ExtResource("5_5iogl")
 region_enabled = true
 region_rect = Rect2(284.45953, 469.72247, 87.41135, 87.7215)
@@ -78,6 +169,36 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("5_yr8yt")
 
+[node name="ReadySweepHighlight" type="ColorRect" parent="Control/Sprite2D" unique_id=209417331]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_hq5w7")
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -182.07693
+offset_top = -182.07693
+offset_right = -15.923065
+offset_bottom = -14.384613
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.5372549, 0.47058824, 1)
+script = ExtResource("6_u7v0p")
+sweep_duration = 0.65
+sweep_angle = -0.75
+
+[node name="ReadyFlash" type="AnimatedSprite2D" parent="Control/Sprite2D" unique_id=367941375]
+unique_name_in_owner = true
+modulate = Color(1, 0.5361634, 0.47133392, 1)
+material = SubResource("CanvasItemMaterial_peb63")
+position = Vector2(-1.5384617, 0)
+scale = Vector2(0.7988166, 0.7643312)
+sprite_frames = SubResource("SpriteFrames_7t3db")
+frame = 10
+frame_progress = 1.0
+
 [node name="CooldownOverlay" type="Control" parent="Control/Sprite2D" unique_id=1872694270]
 unique_name_in_owner = true
 layout_mode = 3
@@ -92,7 +213,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("6_o2j1k")
-radius_ratio = 1.52
+radius_ratio = 0.49
 overlay_color = Color(0, 0, 0, 0.5294118)
 
 [node name="CooldownLabel" type="Label" parent="Control/Sprite2D/CooldownOverlay" unique_id=1695823699]

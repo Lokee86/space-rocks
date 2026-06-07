@@ -147,26 +147,45 @@ func _on_display_cooldown_finished(display: Node) -> void:
 	var ring_highlight := display.get_node_or_null("%RingHighlight") as CanvasItem
 	if ring_highlight != null:
 		ring_highlight.show()
+	_play_ready_sweep(display)
 	_play_ready_flash(display)
+
+
+func _play_ready_sweep(display: Node) -> void:
+	if display == null or not is_instance_valid(display):
+		return
+
+	var ready_sweep := display.get_node_or_null("%ReadySweepHighlight")
+	if ready_sweep == null:
+		return
+
+	if not ready_sweep.has_method("play"):
+		return
+
+	ready_sweep.play()
 
 
 func _play_ready_flash(display: Node) -> void:
 	if display == null or not is_instance_valid(display):
 		return
 
-	var flash_target := display.get_node_or_null("%GlowSprite2D") as CanvasItem
-	if flash_target == null:
-		flash_target = display as CanvasItem
-	if flash_target == null:
+	var ready_flash := display.get_node_or_null("%ReadyFlash") as AnimatedSprite2D
+	if ready_flash == null:
 		return
 
-	var original_modulate := flash_target.modulate
-	flash_target.modulate = Color(
-		min(original_modulate.r * 1.35, 1.0),
-		min(original_modulate.g * 1.35, 1.0),
-		min(original_modulate.b * 1.35, 1.0),
-		min(original_modulate.a * 1.2, 1.0)
-	)
+	var callback := Callable(self, "_on_ready_flash_animation_finished").bind(ready_flash)
+	if not ready_flash.animation_finished.is_connected(callback):
+		ready_flash.animation_finished.connect(callback)
 
-	var tween := display.create_tween()
-	tween.tween_property(flash_target, "modulate", original_modulate, 0.18)
+	ready_flash.show()
+	ready_flash.stop()
+	ready_flash.frame = 0
+	ready_flash.play()
+
+
+func _on_ready_flash_animation_finished(ready_flash: AnimatedSprite2D) -> void:
+	if ready_flash == null or not is_instance_valid(ready_flash):
+		return
+
+	ready_flash.stop()
+	ready_flash.hide()

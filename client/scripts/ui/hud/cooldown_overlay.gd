@@ -16,9 +16,6 @@ var _cooldown_remaining: float = 0.0
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	size = overlay_size
-	position = -size * 0.5
-
 	visible = false
 
 

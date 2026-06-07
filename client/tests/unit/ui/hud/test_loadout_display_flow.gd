@@ -31,6 +31,26 @@ func test_torpedo_secondary_creates_one_loadout_display_child() -> void:
 	assert_eq(_loadout_container().get_child_count(), 1)
 
 
+func test_torpedo_display_contains_ready_sweep_highlight() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+	}))
+
+	var ready_sweep := _display_ready_sweep_highlight()
+	assert_not_null(ready_sweep)
+	assert_true(ready_sweep.has_method("play"))
+	assert_false(ready_sweep.visible)
+
+
+func test_torpedo_display_contains_ready_flash() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+	}))
+
+	var ready_flash := _display_ready_flash()
+	assert_not_null(ready_flash)
+
+
 func test_torpedo_with_infinite_ammo_policy_hides_ammo_label() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
@@ -104,6 +124,35 @@ func test_cooldown_finished_signal_makes_ring_highlight_visible() -> void:
 	assert_true(ring_highlight.visible)
 
 
+func test_play_ready_sweep_does_not_error_when_ready_sweep_exists() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+	}))
+
+	_flow._play_ready_sweep(_loadout_container().get_child(0))
+
+	assert_not_null(_display_ready_sweep_highlight())
+
+
+func test_play_ready_flash_does_not_error_when_ready_sweep_exists() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+	}))
+
+	_flow._play_ready_flash(_loadout_container().get_child(0))
+
+	assert_not_null(_display_ready_flash())
+
+
+func test_play_ready_flash_returns_gracefully_when_ready_sweep_is_missing() -> void:
+	var fake_display := Control.new()
+	add_child_autofree(fake_display)
+
+	_flow._play_ready_flash(fake_display)
+
+	assert_true(true)
+
+
 func test_switching_from_torpedo_to_unknown_weapon_clears_the_display() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
@@ -135,6 +184,16 @@ func _display_ring_highlight() -> CanvasItem:
 func _display_cooldown_overlay() -> Control:
 	var display := _loadout_container().get_child(0)
 	return display.get_node("%CooldownOverlay") as Control
+
+
+func _display_ready_sweep_highlight() -> CanvasItem:
+	var display := _loadout_container().get_child(0)
+	return display.get_node("%ReadySweepHighlight") as CanvasItem
+
+
+func _display_ready_flash() -> AnimatedSprite2D:
+	var display := _loadout_container().get_child(0)
+	return display.get_node("%ReadyFlash") as AnimatedSprite2D
 
 
 func _player_state(fields: Dictionary) -> Dictionary:
