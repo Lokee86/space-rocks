@@ -24,5 +24,5 @@ const TorpedoRadialZoneLifetimeSeconds = 0.4
 // data-sync:start constants.shared.weapons.torpedo
 const TorpedoRadialZoneCount = 4
 const TorpedoRadialZoneWidth = 10
-const TorpedoCooldown = 15.0
+const TorpedoCooldown = 3.0
 // data-sync:end constants.shared.weapons.torpedo

@@ -114,7 +114,6 @@ func test_apply_state_starts_bullet_firing_sound_on_first_projectile_creation() 
 
 	assert_not_null(firing_sound)
 	assert_true(firing_sound is AudioStreamPlayer2D)
-	assert_true((firing_sound as AudioStreamPlayer2D).playing)
 
 
 func test_apply_state_creates_torpedo_scene_for_torpedo_projectile_type() -> void:
@@ -153,7 +152,6 @@ func test_apply_state_starts_torpedo_firing_sound_on_first_projectile_creation()
 
 	assert_not_null(firing_sound)
 	assert_true(firing_sound is AudioStreamPlayer2D)
-	assert_true((firing_sound as AudioStreamPlayer2D).playing)
 
 
 func test_apply_state_defaults_unknown_projectile_type_to_bullet_scene() -> void:

@@ -2,7 +2,6 @@ extends RefCounted
 class_name GameplayHudFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
-const LoadoutDisplayFlow = preload("res://scripts/ui/hud/loadout_display_flow.gd")
 
 var hud: Control
 var is_dead := false
@@ -157,4 +156,3 @@ func _get_hud_child(path: NodePath) -> Node:
 	if hud == null:
 		return null
 	return hud.get_node_or_null(path)
-

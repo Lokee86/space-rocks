@@ -5,6 +5,7 @@
 [ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="3_3quq5"]
 [ext_resource type="Texture2D" uid="uid://dtv1urut8krni" path="res://assets/item_badge.png" id="4_k68p2"]
 [ext_resource type="Texture2D" uid="uid://jbqfavdvpf1r" path="res://assets/pickupicons.png" id="6_foaqn"]
+[ext_resource type="AudioStream" uid="uid://whh4sbu1rct1" path="res://audio/rack.ogg" id="6_n33kh"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_80krm"]
 blend_mode = 1
@@ -34,7 +35,8 @@ scale = Vector2(0.375, 0.375)
 texture = ExtResource("4_k68p2")
 
 [node name="Sprite2D" type="Sprite2D" parent="Sprite2D" unique_id=16658619]
-position = Vector2(-7, 3)
+position = Vector2(-6.1487226, 2.7082725)
+scale = Vector2(0.9963745, 0.988206)
 texture = ExtResource("6_foaqn")
 region_enabled = true
 region_rect = Rect2(284.45953, 469.72247, 87.41135, 87.7215)
@@ -44,3 +46,4 @@ visible = false
 shape = SubResource("CircleShape2D_qbbdg")
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=1010791677]
+stream = ExtResource("6_n33kh")
