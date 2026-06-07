@@ -5,6 +5,7 @@ const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
 const PICKUP_COLLECT_SCENE := preload("res://scenes/pickups/pickup_collect.tscn")
 const SHIP_DEATH_SCENE := preload("res://scenes/animations/ship_death.tscn")
 const TORPEDO_EXPLOSION_SCENE := preload("res://scenes/animations/torpedo_explosion.tscn")
+const TORPEDO_EXPLOSION_SCALE_SOURCE_FRAME := 5
 const EFFECT_CLEANUP_STARTED_META := &"effect_cleanup_started"
 
 var owner_node: Node2D
@@ -144,7 +145,7 @@ func spawn_torpedo_explosion(event_position: Vector2) -> void:
 
 	sprite.frame = 0
 	sprite.frame_progress = 0.0
-	_scale_sprite_to_diameter(sprite, _torpedo_explosion_diameter())
+	_scale_sprite_to_diameter(sprite, _torpedo_explosion_diameter(), TORPEDO_EXPLOSION_SCALE_SOURCE_FRAME)
 	sprite.play("torpedo_explosion")
 	sprite.animation_finished.connect(_queue_free_effect_node_once.bind(explosion_node))
 	if sound != null:
@@ -159,15 +160,20 @@ func _play_game_over_sound() -> void:
 
 
 func _torpedo_explosion_diameter() -> float:
-	return float(Constants.TORPEDO_RADIAL_ZONE_COUNT * Constants.TORPEDO_RADIAL_ZONE_WIDTH)
+	return float(Constants.TORPEDO_RADIAL_ZONE_COUNT * Constants.TORPEDO_RADIAL_ZONE_WIDTH) * 2.0
 
 
-func _scale_sprite_to_diameter(sprite: AnimatedSprite2D, target_diameter: float) -> void:
+func _scale_sprite_to_diameter(sprite: AnimatedSprite2D, target_diameter: float, source_frame: int) -> void:
 	if sprite == null:
+		return
+	if sprite.sprite_frames == null:
 		return
 	if target_diameter <= 0:
 		return
-	var texture := sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame)
+	var frame_count := sprite.sprite_frames.get_frame_count(sprite.animation)
+	if source_frame < 0 || source_frame >= frame_count:
+		return
+	var texture := sprite.sprite_frames.get_frame_texture(sprite.animation, source_frame)
 	if texture == null:
 		return
 	var source_diameter: float = max(texture.get_width(), texture.get_height())
