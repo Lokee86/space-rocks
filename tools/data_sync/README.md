@@ -19,17 +19,13 @@
 - GDScript Godot client files
 - TypeScript API server files, later
 
-For constants, the tool updates only marked generated blocks. Constants outputs
-can be declared on arbitrary top-level language subtables such as
-`[constants.go]`, `[weapons.go]`, `[constants.gds]`, or `[weapons.gds]` as long
-as they are constants outputs for a supported language and only list
-`constants.*` sections. Constants sync is a bidirectional many-source/many-output
-pipeline: multiple constants TOML files are supported, multiple generated
-constants files per language are supported, each constants section must exist in
-exactly one source TOML file, `-push`/`-check`/`-diff` process all configured
-output targets for the selected language, and `-pull` reads only owned generated
-sections from all configured output targets and writes each section back to the
-source TOML file that already contains it.
+For constants, the tool uses `data-sync` destination blocks discovered through
+`[constants.scan]`. `-push` maps each TOML `constants.*` section to matching
+destination blocks, `-pull` maps destination blocks back to the matching TOML
+section, and the section name is the routing contract. No constants
+files/sections/owns config is required. Multiple constants TOML files are
+supported, each constants section must exist in exactly one source TOML file,
+and duplicate pull blocks must parse to identical values or pull fails.
 
 Current active scope:
 
@@ -129,20 +125,25 @@ data-sync -validate -constants
 ## Operation Behavior
 
 `-push` reads TOML and generates canonical language output. Constants replace
-configured `data-sync` blocks. Every selected constants language processes all
-configured constants outputs for that language. Packets rewrite configured
-generated packet files. Drop tables generate the server Go file only.
+matching discovered `data-sync` blocks by section name. Packets rewrite
+configured generated packet files. Drop tables generate the server Go file
+only.
 
 `-diff` does the same generation as `-push`, prints a unified diff, and writes
 nothing.
 
 `-check` writes nothing and exits `0` when generated blocks are current, or `1` when files differ.
 
-`-validate` checks config, TOML integrity, supported values/types, ownership rules, configured file existence, and required managed blocks.
+`-validate` checks config, TOML integrity, supported values/types, configured
+file existence, and required managed blocks.
 
-`-pull` is intentionally restricted. Constants pull reads owned generated blocks from all constants outputs for the selected language, updates existing TOML values only, and writes each section back to the SoT file that already contains it.
+`-pull` is intentionally restricted. Constants pull reads discovered generated
+blocks for the selected language, updates existing TOML values only, and writes
+each section back to the SoT file that already contains it.
 
-Pull fails if a source section is missing from all TOML files, if a source section appears in more than one TOML file, or if a generated section is owned by more than one output target.
+Pull fails if a source section is missing from all TOML files, if a source
+section appears in more than one TOML file, or if duplicate discovered blocks
+for one section disagree.
 
 TypeScript output is disabled in the default config.
 
@@ -179,21 +180,9 @@ paths = [
   "shared/drop_tables/basicasteroids.toml",
 ]
 
-[constants.go]
-files = ["services/game-server/internal/constants/constants.go"]
-sections = ["constants.gameplay", "constants.network"]
-owns = ["constants.gameplay", "constants.network"]
-
-[constants.gds]
-files = ["client/scripts/generated/constants/constants.gd"]
-sections = ["constants.gameplay", "constants.client"]
-owns = ["constants.client"]
-
-[constants.ts]
-enabled = false
-files = []
-sections = []
-owns = []
+[constants.scan]
+include = ["services/**/*.go", "client/**/*.gd", "services/**/*.ts"]
+exclude = [".git/**", "**/.godot/**", "**/node_modules/**"]
 
 [packets.go]
 files = [
@@ -217,54 +206,10 @@ owns = []
 outputs = ["server_drop_tables"]
 ```
 
-Constants and packets have separate SoT paths. `-constants` commands read/write only the constants SoT, and `-packets` commands read/write only the packet SoT files.
+Constants and packets have separate SoT paths. `-constants` commands read/write
+only the constants SoT, and `-packets` commands read/write only the packet SoT
+files.
 Drop tables have their own SoT path set under `shared/drop_tables/`, and `-drop-tables -go` reads and writes only the server Go output.
-
-Example constants layout:
-
-```toml
-[sot.constants]
-paths = [
-  "shared/constants/server_constants.toml",
-  "shared/constants/weapons.toml",
-]
-
-[constants.go]
-files = ["services/game-server/internal/constants/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
-
-[weapons.go]
-files = ["services/game-server/internal/constants/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-```
-
-`sections` controls what a language receives during `-push`, `-diff`, and `-check`.
-
-`owns` controls what a language may update during `-pull`.
-
-Constants ownership overlap is invalid per section. Packet ownership is coarse for now; packet-level ownership may be added later.
-
-Example constants layout:
-
-```toml
-[sot.constants]
-paths = [
-  "shared/constants/server_constants.toml",
-  "shared/constants/weapons.toml",
-]
-
-[constants.go]
-files = ["services/game-server/internal/constants/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
-
-[weapons.go]
-files = ["services/game-server/internal/constants/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-```
 
 ## TOML Format
 
@@ -280,35 +225,6 @@ asteroid_spawn_interval = 1.5
 tick_rate = 60
 max_players_per_room = 2
 
-[weapons.go]
-files = ["services/game-server/internal/constants/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-
-[weapons.gds]
-files = ["client/scripts/generated/constants/weapons.gd"]
-sections = ["constants.server.weapons.basic_cannon"]
-owns = ["constants.server.weapons.basic_cannon"]
-```
-
-Example pull layout:
-
-```toml
-[sot]
-paths = [
-  "shared/constants/server_constants.toml",
-  "shared/constants/weapons.toml",
-]
-
-[constants.go]
-files = ["services/game-server/internal/constants/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
-
-[weapons.go]
-files = ["services/game-server/internal/constants/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo"]
 ```
 
 Packets:

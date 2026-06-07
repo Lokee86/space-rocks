@@ -10,6 +10,7 @@ from data_sync.block_io import BlockIOError, find_block
 from data_sync.cli import DOMAINS
 from data_sync.config import DataSyncConfig
 from data_sync.constants_store import ConstantsStore, ConstantsStoreError
+from data_sync.discovery import discover_constants_files
 from data_sync.model.constants import ConstantValue
 from data_sync.model.packets import PacketDefinition, PacketSchema, PacketSchemaField
 from data_sync.packet_rendering import GO_PRIMITIVES, PacketRenderingError, parse_rich_type
@@ -18,7 +19,6 @@ from data_sync.toml_store import TomlStore, TomlStoreError
 
 
 SNAKE_CASE_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
-CONSTANT_VALUE_TYPES = (int, float, bool, str)
 PACKET_DIRECTIONS = {"client_to_server", "server_to_client", "bidirectional"}
 PACKET_FIELD_TYPES = {"bool", "int", "uint32", "float32", "float64", "string"}
 SUPPORTED_PACKET_LANGUAGES = {"go", "gdscript"}
@@ -320,13 +320,16 @@ def _validate_constants(
     request: ValidationRequest,
     errors: list[str],
 ) -> None:
-    section_names = _requested_sections(
+    section_names = _discovered_constant_sections(
         config,
-        "constants",
-        _languages_for_domain(config, "constants", request.languages),
+        _constants_languages(request.languages),
+        errors,
     )
     for section_name in section_names:
         try:
+            if not store.has_section(section_name):
+                errors.append(f"missing TOML section [{section_name}]")
+                continue
             section = store.constants(section_name)
         except (ConstantsStoreError, TomlStoreError) as exc:
             errors.append(str(exc))
@@ -391,6 +394,8 @@ def _validate_configured_files_and_blocks(
     errors: list[str],
 ) -> None:
     for domain in request.domains:
+        if domain == "constants":
+            continue
         for language in _languages_for_domain(config, domain, request.languages):
             for target in config.targets_for(domain, language):
                 for path in target.files:
@@ -406,19 +411,25 @@ def _validate_configured_files_and_blocks(
                             errors.append(f"{path} [{domain}.{language}]: {exc}")
 
 
-def _requested_sections(
+def _discovered_constant_sections(
     config: DataSyncConfig,
-    domain: str,
     languages: tuple[str, ...],
+    errors: list[str],
 ) -> tuple[str, ...]:
+    try:
+        discovered_files = discover_constants_files(config, languages)
+    except (BlockIOError, OSError) as exc:
+        errors.append(str(exc))
+        return ()
+
     seen: set[str] = set()
     sections: list[str] = []
-    for language in languages:
-        for target in config.targets_for(domain, language):
-            for section_name in target.sections:
-                if section_name not in seen:
-                    seen.add(section_name)
-                    sections.append(section_name)
+    for discovered in discovered_files:
+        for section_name in discovered.sections:
+            if section_name in seen:
+                continue
+            seen.add(section_name)
+            sections.append(section_name)
     return tuple(sections)
 
 
@@ -437,6 +448,12 @@ def _languages_for_domain(
 
 def _enabled_domains(config: DataSyncConfig) -> tuple[str, ...]:
     return tuple(domain for domain in DOMAINS if config.enabled_languages(domain))
+
+
+def _constants_languages(requested_languages: tuple[str, ...]) -> tuple[str, ...]:
+    if requested_languages:
+        return requested_languages
+    return ("go", "gds", "ts")
 
 
 def _read_configured_file(path: Path, errors: list[str]) -> str | None:

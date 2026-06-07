@@ -121,45 +121,9 @@ old
 [sot]
 path = "shared/game_data.toml"
 
-[constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
-
-[weapons.go]
-files = ["go/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
-owns = ["constants.server.weapons.basic_cannon", "constants.server.weapons.torpedo", "constants.shared.weapons.torpedo_radial_shape"]
-
-[constants.gds]
-files = ["gds/constants.gd"]
-sections = ["constants.client"]
-owns = ["constants.client"]
-
-[weapons.gds]
-files = ["gds/weapons.gd"]
-sections = ["constants.server.weapons.basic_cannon"]
-owns = []
-
-[constants.ts]
-files = ["ts/constants.ts"]
-sections = ["constants.network"]
-owns = ["constants.network"]
-
-[packets.go]
-files = ["go/packets.go"]
-sections = ["packets"]
-owns = ["packets"]
-
-[packets.gds]
-files = ["gds/packets.gd"]
-sections = ["packets"]
-owns = []
-
-[packets.ts]
-files = ["ts/packets.ts"]
-sections = ["packets"]
-owns = []
+[constants.scan]
+include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
+exclude = []
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -189,6 +153,76 @@ const WelcomeText = "hello"
         .lstrip()
         .strip()
         + "\n"
+    )
+
+
+def test_push_updates_new_toml_section_with_matching_marker_without_config_section_list(tmp_path: Path) -> None:
+    config_path = write_project(tmp_path)
+    game_data_path = tmp_path / "shared/game_data.toml"
+    game_data_path.write_text(
+        """
+[constants.gameplay]
+player_speed = 420.0
+tick_rate = 60
+debug_enabled = true
+welcome_text = "hello"
+
+[constants.client]
+client_scale = 2
+
+[constants.network]
+max_players = 2
+
+[constants.server.weapons.basic_cannon]
+basic_cannon_projectile_speed = 1200.0
+basic_cannon_projectile_lifetime = 1.75
+basic_cannon_cooldown = 0.22
+basic_cannon_projectile_spawn_offset = 42.0
+basic_cannon_damage = 1
+
+[constants.server.weapons.torpedo]
+torpedo_projectile_speed = 1200.0
+torpedo_projectile_lifetime = 1.75
+torpedo_cooldown = 0.22
+torpedo_projectile_spawn_offset = 42.0
+torpedo_impact_damage = 1
+torpedo_radial_damage = 1
+torpedo_radial_zone_spawn_seconds = 0.1
+torpedo_radial_tick_seconds = 0.1
+torpedo_radial_total_seconds = 0.4
+torpedo_radial_zone_lifetime_seconds = 0.4
+
+[constants.shared.weapons.torpedo_radial_shape]
+torpedo_radial_zone_count = 4
+torpedo_radial_zone_width = 10
+
+[constants.server.damage]
+collision_damage = 9
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    damage_path = tmp_path / "go/damage.go"
+    damage_path.write_text(
+        """
+package constants
+
+// data-sync:start constants.server.damage
+old
+// data-sync:end constants.server.damage
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    assert run(["-push", "-constants", "-go", "-config", str(config_path)]) == 0
+    assert damage_path.read_text(encoding="utf-8") == (
+        """
+package constants
+
+// data-sync:start constants.server.damage
+const CollisionDamage = 9
+// data-sync:end constants.server.damage
+""".lstrip()
     )
 
 
@@ -313,3 +347,27 @@ def test_language_filtering_works(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     assert (tmp_path / "ts/constants.ts").read_text(encoding="utf-8") == ts_before
+
+
+def test_push_fails_when_destination_marker_section_is_missing_from_toml(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_path = write_project(tmp_path)
+    missing_path = tmp_path / "go/missing.go"
+    missing_path.write_text(
+        """
+package constants
+
+// data-sync:start constants.missing.example
+old
+// data-sync:end constants.missing.example
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    exit_code = run(["-push", "-constants", "-go", "-config", str(config_path)])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "constants.missing.example" in captured.err

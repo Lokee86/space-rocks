@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import Callable, Any
 
 from data_sync.block_io import BlockIOError, extract_block
-from data_sync.config import DataSyncConfig, DomainLanguageConfig
+from data_sync.config import DataSyncConfig
 from data_sync.constants_store import ConstantsStore, ConstantsStoreError
+from data_sync.discovery import discover_constants_files
 from data_sync.parsers import gds_constants, go_constants, ts_constants
 from data_sync.parsers.go_constants import ConstantsParseError
 from data_sync.toml_store import TomlStore, TomlStoreError
@@ -31,32 +32,38 @@ def pull_constants(config: DataSyncConfig, language: str) -> None:
     if parser is None:
         raise PullError(f"unsupported constants pull language: {language}")
 
-    targets = config.targets_by_domain_language.get(("constants", language), ())
-    if not targets:
+    discovered_files = discover_constants_files(config, (language,))
+    if not discovered_files:
         return
     constants_store = _load_constants_store(config)
-    for target in targets:
-        if not target.enabled:
-            raise PullError(f"[constants.{target.language}] is disabled in config")
-        for section_name in target.owns:
-            parsed = _parse_owned_section(target, section_name, parser)
-            try:
-                source_path = constants_store.source_path(section_name)
-            except ConstantsStoreError as exc:
-                raise PullError(str(exc)) from exc
+    parsed_by_section = _parse_discovered_sections(discovered_files, parser)
+    source_stores: dict[object, TomlStore] = {}
+    touched_paths: list[object] = []
 
+    for section_name, parsed in parsed_by_section.items():
+        try:
+            source_path = constants_store.source_path(section_name)
+        except ConstantsStoreError as exc:
+            raise PullError(str(exc)) from exc
+
+        source_store = source_stores.get(source_path)
+        if source_store is None:
             source_store = _load_source_store(source_path)
+            source_stores[source_path] = source_store
+            touched_paths.append(source_path)
 
-            existing = source_store.constants(section_name)
-            existing_names = tuple(name for name, _value in existing.values)
-            parsed_names = tuple(name for name, _value in parsed)
-            if parsed_names != existing_names:
-                raise PullError(
-                    f"[{section_name}] pull may only update existing values; "
-                    f"expected keys {existing_names}, found {parsed_names}"
-                )
-            source_store.update_constants(section_name, dict(parsed))
-            source_store.write(source_path)
+        existing = source_store.constants(section_name)
+        existing_names = tuple(name for name, _value in existing.values)
+        parsed_names = tuple(name for name, _value in parsed)
+        if parsed_names != existing_names:
+            raise PullError(
+                f"[{section_name}] pull may only update existing values; "
+                f"expected keys {existing_names}, found {parsed_names}"
+            )
+        source_store.update_constants(section_name, dict(parsed))
+
+    for source_path in touched_paths:
+        source_stores[source_path].write(source_path)
 
 
 def _load_constants_store(config: DataSyncConfig) -> ConstantsStore:
@@ -76,32 +83,31 @@ def _load_source_store(path) -> TomlStore:
         raise PullError(str(exc)) from exc
 
 
-def _parse_owned_section(
-    target: DomainLanguageConfig,
-    section_name: str,
+def _parse_discovered_sections(
+    discovered_files,
     parser: Parser,
-) -> tuple[tuple[str, Any], ...]:
-    parsed_values: tuple[tuple[str, Any], ...] | None = None
-    for path in target.files:
+) -> dict[str, tuple[tuple[str, Any], ...]]:
+    parsed_by_section: dict[str, tuple[tuple[str, Any], ...]] = {}
+    for discovered in discovered_files:
+        path = discovered.path
         try:
             text = path.read_text(encoding="utf-8")
         except FileNotFoundError as exc:
-            raise PullError(f"configured constants file does not exist: {path}") from exc
+            raise PullError(f"discovered constants file does not exist: {path}") from exc
         except OSError as exc:
             raise PullError(f"failed to read constants file {path}: {exc}") from exc
 
-        try:
-            block = extract_block(text, section_name)
-            current_values = parser(block)
-        except BlockIOError as exc:
-            raise PullError(f"{path}: {exc}") from exc
-        except ConstantsParseError as exc:
-            raise PullError(f"{path} [{section_name}]: {exc}") from exc
+        for section_name in discovered.sections:
+            try:
+                block = extract_block(text, section_name)
+                current_values = parser(block)
+            except BlockIOError as exc:
+                raise PullError(f"{path}: {exc}") from exc
+            except ConstantsParseError as exc:
+                raise PullError(f"{path} [{section_name}]: {exc}") from exc
 
-        if parsed_values is not None and current_values != parsed_values:
-            raise PullError(f"[{section_name}] has conflicting values across configured files")
-        parsed_values = current_values
-
-    if parsed_values is None:
-        raise PullError(f"[{section_name}] has no configured source files")
-    return parsed_values
+            previous_values = parsed_by_section.get(section_name)
+            if previous_values is not None and current_values != previous_values:
+                raise PullError(f"[{section_name}] has conflicting values across discovered files")
+            parsed_by_section[section_name] = current_values
+    return parsed_by_section
