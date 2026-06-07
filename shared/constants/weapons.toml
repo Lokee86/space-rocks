@@ -18,5 +18,5 @@ torpedo_radial_zone_lifetime_seconds = 0.4
 
 [constants.shared.weapons.torpedo]
 torpedo_radial_zone_count = 4
-torpedo_radial_zone_width = 10
+torpedo_radial_zone_width = 100
 torpedo_cooldown = 3.0

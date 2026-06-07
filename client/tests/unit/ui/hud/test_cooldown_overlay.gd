@@ -54,6 +54,33 @@ func test_apply_cooldown_with_zero_total_hides_overlay() -> void:
 	assert_false(_overlay.visible)
 
 
+func test_sync_countdown_with_remaining_time_makes_overlay_visible() -> void:
+	_overlay.sync_countdown(5.0)
+
+	assert_true(_overlay.visible)
+
+
+func test_sync_countdown_formats_label_with_one_decimal_place() -> void:
+	_overlay.sync_countdown(5.0)
+
+	assert_eq(_cooldown_label().text, "5.0")
+
+
+func test_sync_countdown_with_zero_remaining_hides_overlay() -> void:
+	_overlay.sync_countdown(5.0)
+
+	_overlay.sync_countdown(0.0)
+
+	assert_false(_overlay.visible)
+	assert_eq(_cooldown_label().text, "")
+
+
+func test_sync_countdown_does_not_emit_cooldown_finished() -> void:
+	_overlay.sync_countdown(5.0)
+
+	assert_eq(_cooldown_finished_count, 0)
+
+
 func test_clear_countdown_hides_overlay_and_clears_label_text() -> void:
 	_overlay.apply_cooldown(5.0, 15.0)
 

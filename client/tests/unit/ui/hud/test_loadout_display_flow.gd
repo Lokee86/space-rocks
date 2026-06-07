@@ -98,6 +98,48 @@ func test_torpedo_with_cooldown_remaining_hides_ring_highlight() -> void:
 	assert_false(ring_highlight.visible)
 
 
+func test_torpedo_with_cooldown_remaining_on_first_display_creation_shows_cooldown_overlay() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 5.0,
+	}))
+
+	var cooldown_overlay := _display_cooldown_overlay()
+	assert_not_null(cooldown_overlay)
+	assert_true(cooldown_overlay.visible)
+	assert_eq(_display_cooldown_label().text, "5.0")
+
+
+func test_active_cooldown_state_keeps_cooldown_overlay_visible() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 5.0,
+	}))
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 4.0,
+	}))
+
+	var cooldown_overlay := _display_cooldown_overlay()
+	assert_not_null(cooldown_overlay)
+	assert_true(cooldown_overlay.visible)
+	assert_eq(_display_cooldown_label().text, "4.0")
+
+
+func test_larger_active_cooldown_remaining_syncs_overlay_instead_of_leaving_it_stale() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 3.0,
+	}))
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 5.0,
+	}))
+
+	assert_eq(_display_cooldown_label().text, "5.0")
+	assert_true(_display_cooldown_overlay().visible)
+
+
 func test_torpedo_with_no_cooldown_shows_ring_highlight() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
@@ -122,6 +164,58 @@ func test_cooldown_finished_signal_makes_ring_highlight_visible() -> void:
 	_display_cooldown_overlay().cooldown_finished.emit()
 
 	assert_true(ring_highlight.visible)
+
+
+func test_first_cooldown_ready_transition_triggers_ready_effects() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 2.0,
+	}))
+
+	var ready_flash := _display_ready_flash()
+	var ready_sweep := _display_ready_sweep_highlight()
+	assert_not_null(ready_flash)
+	assert_not_null(ready_sweep)
+	assert_false(ready_flash.visible)
+	assert_false(ready_sweep.visible)
+
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 0.0,
+	}))
+
+	assert_true(ready_flash.visible or ready_flash.is_playing())
+	assert_true(ready_sweep.visible)
+
+
+func test_cooldown_ready_transition_clears_overlay_and_only_plays_ready_effects_once() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 2.0,
+	}))
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 0.0,
+	}))
+
+	var ready_sweep := _display_ready_sweep_highlight()
+	var ready_flash := _display_ready_flash()
+	assert_false(_display_cooldown_overlay().visible)
+	assert_true(ready_sweep.visible)
+	assert_true(ready_flash.visible or ready_flash.is_playing())
+
+	ready_sweep.hide()
+	ready_flash.hide()
+	ready_flash.stop()
+
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 0.0,
+	}))
+
+	assert_false(_display_cooldown_overlay().visible)
+	assert_false(ready_sweep.visible)
+	assert_false(ready_flash.visible)
 
 
 func test_play_ready_sweep_does_not_error_when_ready_sweep_exists() -> void:
@@ -184,6 +278,10 @@ func _display_ring_highlight() -> CanvasItem:
 func _display_cooldown_overlay() -> Control:
 	var display := _loadout_container().get_child(0)
 	return display.get_node("%CooldownOverlay") as Control
+
+
+func _display_cooldown_label() -> Label:
+	return _display_cooldown_overlay().get_node("CooldownLabel") as Label
 
 
 func _display_ready_sweep_highlight() -> CanvasItem:
