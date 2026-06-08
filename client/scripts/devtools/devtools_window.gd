@@ -1,6 +1,7 @@
 extends Window
 
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const PickupPresentationCatalog = preload("res://scripts/world/pickups/pickup_presentation_catalog.gd")
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
@@ -539,9 +540,23 @@ func _initialize_telemetry_source_select(select: OptionButton) -> void:
 
 func _initialize_pickup_select() -> void:
 	pickup_select.clear()
-	pickup_select.add_item("1_up")
-	pickup_select.set_item_metadata(0, "1_up")
-	pickup_select.select(0)
+
+	var pickup_types := PickupPresentationCatalog.available_pickup_types()
+	var selected_index := -1
+	for pickup_type in pickup_types:
+		pickup_select.add_item(pickup_type)
+		var item_index := pickup_select.get_item_count() - 1
+		pickup_select.set_item_metadata(item_index, pickup_type)
+		if pickup_type == "1_up":
+			selected_index = item_index
+
+	if pickup_select.get_item_count() == 0:
+		return
+
+	if selected_index < 0:
+		selected_index = 0
+
+	pickup_select.select(selected_index)
 
 
 func _emit_telemetry_sources_changed() -> void:

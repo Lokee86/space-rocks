@@ -62,7 +62,16 @@
 		"type": "capsule"
 	},
 	"pickups": {
-		"1_up": {
+		"powerup": {
+			"name": "CollisionShape2D",
+			"offset": [
+				0.0,
+				0.0
+			],
+			"radius": 30.0,
+			"type": "circle"
+		},
+		"weapon": {
 			"name": "CollisionShape2D",
 			"offset": [
 				0.0,

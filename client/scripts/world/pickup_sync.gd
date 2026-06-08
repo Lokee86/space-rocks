@@ -4,8 +4,7 @@ class_name PickupSync
 const PICKUP_CLASS_POWERUP := "powerup"
 const PICKUP_CLASS_WEAPON := "weapon"
 
-const POWERUP_PICKUP_SCENE = preload("res://scenes/pickups/powerup_pickup.tscn")
-const WEAPON_PICKUP_SCENE = preload("res://scenes/pickups/weapon_pickup.tscn")
+const PickupPresentationCatalog = preload("res://scripts/world/pickups/pickup_presentation_catalog.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var pickups_layer = null
@@ -40,10 +39,9 @@ func reset() -> void:
 
 
 func _scene_for_class(pickup_class: String):
-	if pickup_class == PICKUP_CLASS_POWERUP:
-		return POWERUP_PICKUP_SCENE
-	if pickup_class == PICKUP_CLASS_WEAPON:
-		return WEAPON_PICKUP_SCENE
+	var pickup_scene = PickupPresentationCatalog.scene_for_class(pickup_class)
+	if pickup_scene != null:
+		return pickup_scene
 
 	print("PickupSync: unknown pickup class=%s" % pickup_class)
 	return null

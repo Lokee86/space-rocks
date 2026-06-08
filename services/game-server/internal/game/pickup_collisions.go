@@ -19,6 +19,8 @@ func (game *Game) handlePlayerPickupCollisions() {
 				continue
 			}
 
+			game.removePickupLocked(pickup.ID)
+
 			collection := pickuprules.ResolveCollection(pickuprules.CollectionRequest{
 				PlayerID:   playerID,
 				PickupID:   pickup.ID,
@@ -26,20 +28,17 @@ func (game *Game) handlePlayerPickupCollisions() {
 				X:          pickup.X,
 				Y:          pickup.Y,
 			})
-			if !collection.Collected {
-				continue
+			if collection.Collected {
+				game.recordDomainEvent(events.Event{
+					Type:       events.EventPickupCollected,
+					PlayerID:   collection.PlayerID,
+					PickupID:   collection.PickupID,
+					PickupType: collection.PickupType,
+					X:          collection.X,
+					Y:          collection.Y,
+				})
+				game.applyPickupEffectIntentLocked(collection.EffectIntent)
 			}
-
-			game.removePickupLocked(collection.PickupID)
-			game.recordDomainEvent(events.Event{
-				Type:       events.EventPickupCollected,
-				PlayerID:   collection.PlayerID,
-				PickupID:   collection.PickupID,
-				PickupType: collection.PickupType,
-				X:          collection.X,
-				Y:          collection.Y,
-			})
-			game.applyPickupEffectIntentLocked(collection.EffectIntent)
 			break
 		}
 	}

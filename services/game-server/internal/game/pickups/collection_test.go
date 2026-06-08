@@ -55,7 +55,41 @@ func TestResolveCollection_UnknownType(t *testing.T) {
 		Y:          34.75,
 	})
 
-	if result.Collected {
-		t.Fatalf("expected uncollected result")
+	if !result.Collected {
+		t.Fatalf("expected collected result")
+	}
+
+	if result.EffectIntent != (EffectIntent{}) {
+		t.Fatalf("expected no-op effect intent, got %#v", result.EffectIntent)
+	}
+}
+
+func TestResolveCollection_Torpedo(t *testing.T) {
+	result := ResolveCollection(CollectionRequest{
+		PlayerID:   "Player-1",
+		PickupID:   "pickup-2",
+		PickupType: "torpedo",
+		X:          12.5,
+		Y:          34.75,
+	})
+
+	if !result.Collected {
+		t.Fatalf("expected collected result")
+	}
+
+	if result.EffectIntent.EffectType != EffectTypeEquipWeapon {
+		t.Fatalf("expected effect type %q, got %q", EffectTypeEquipWeapon, result.EffectIntent.EffectType)
+	}
+
+	if result.EffectIntent.WeaponID != "torpedo" {
+		t.Fatalf("expected weapon id %q, got %q", "torpedo", result.EffectIntent.WeaponID)
+	}
+
+	if result.EffectIntent.Slot != "secondary" {
+		t.Fatalf("expected slot %q, got %q", "secondary", result.EffectIntent.Slot)
+	}
+
+	if result.EffectIntent.Ammo != 1 {
+		t.Fatalf("expected ammo 1, got %d", result.EffectIntent.Ammo)
 	}
 }
