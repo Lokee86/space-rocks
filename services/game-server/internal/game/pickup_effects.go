@@ -43,10 +43,10 @@ func (game *Game) applyPickupEffectIntentLocked(intent pickuprules.EffectIntent)
 		switch intent.Slot {
 		case weapons.Primary:
 			player.ShipWeapons.Primary = equipped
-			player.WeaponState.Primary = weapons.SlotState{AmmoRemaining: intent.Ammo}
+			player.WeaponState.Primary.AmmoRemaining += intent.Ammo
 		case weapons.Secondary:
 			player.ShipWeapons.Secondary = equipped
-			player.WeaponState.Secondary = weapons.SlotState{AmmoRemaining: intent.Ammo}
+			player.WeaponState.Secondary.AmmoRemaining += intent.Ammo
 		default:
 			return false
 		}

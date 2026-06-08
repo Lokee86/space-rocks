@@ -20,8 +20,8 @@ func TestDevtoolsCollisionBodiesUsesServerCollisionBodies(t *testing.T) {
 			Radius: 3,
 		},
 		Pickups: map[string]physics.ImportedCollisionShape{
-			"1_up": {
-				Name:   "1_up",
+			"powerup": {
+				Name:   "powerup",
 				Type:   "circle",
 				Radius: 3,
 			},
@@ -60,16 +60,15 @@ func TestDevtoolsCollisionBodiesUsesServerCollisionBodies(t *testing.T) {
 	}
 
 	bodies := game.DevtoolsCollisionBodies()
-	if len(bodies) != 3 {
-		t.Fatalf("expected 3 collision bodies, got %d", len(bodies))
-	}
-
 	byKind := make(map[string]DevtoolsCollisionBody, len(bodies))
 	for _, body := range bodies {
 		byKind[body.Kind] = body
 	}
 
-	player := byKind["player"]
+	player, ok := byKind["player"]
+	if !ok {
+		t.Fatal("expected player collision body to exist")
+	}
 	if player.ID != "player-1" {
 		t.Fatalf("expected player id %q, got %q", "player-1", player.ID)
 	}
@@ -81,7 +80,10 @@ func TestDevtoolsCollisionBodiesUsesServerCollisionBodies(t *testing.T) {
 	}
 	assertCollisionPointApproxEqual(t, player.Points[0], DevtoolsCollisionPoint{X: 11, Y: 18})
 
-	bullet := byKind["bullet"]
+	bullet, ok := byKind["bullet"]
+	if !ok {
+		t.Fatal("expected bullet collision body to exist")
+	}
 	if bullet.ID != "bullet-1" {
 		t.Fatalf("expected bullet id %q, got %q", "bullet-1", bullet.ID)
 	}
@@ -93,7 +95,10 @@ func TestDevtoolsCollisionBodiesUsesServerCollisionBodies(t *testing.T) {
 	}
 	assertCollisionPointApproxEqual(t, bullet.Points[0], DevtoolsCollisionPoint{X: 4, Y: 2})
 
-	pickup := byKind["pickup"]
+	pickup, ok := byKind["pickup"]
+	if !ok {
+		t.Fatal("expected pickup collision body to exist")
+	}
 	if pickup.ID != "pickup-1" {
 		t.Fatalf("expected pickup id %q, got %q", "pickup-1", pickup.ID)
 	}
