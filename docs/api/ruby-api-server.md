@@ -1,10 +1,27 @@
 # Ruby API Server Plan
 
-This is a future service plan. The Rails API-only scaffold now exists, but no product features are implemented yet:
+This is the Ruby/Rails API service for Space Rocks. The current baseline already exists under:
 
 ```text
 services/api-server/
 ```
+
+Current implemented baseline:
+
+- Rails API-only service exists under `services/api-server/`
+- health endpoint exists
+- email/password auth exists
+- opaque bearer access tokens exist
+- provider identity schema exists for future OAuth/provider login
+
+The current API-owned data model is:
+
+- `users`
+- `password_credentials`
+- `user_identities`
+- `access_tokens`
+
+Rails migrations under `services/api-server/db/migrate/` own the API database schema. `shared/` is not the source of truth for API auth schema.
 
 ## Purpose
 
@@ -38,6 +55,12 @@ The Go game server should not read auth tables directly.
 If the game server needs auth in the future, it should use an explicit API or internal verification boundary rather than direct table access.
 
 OAuth and JWT are deferred for now, but the schema is structured so they can be added later without reworking the core account tables.
+
+## Shared Schema Boundary
+
+`shared/` is not the source of truth for API auth schema.
+
+Shared packet schemas remain for the real-time game protocol, not API auth persistence.
 
 ## Planned Stack
 
@@ -81,6 +104,12 @@ Possible later boundaries:
 - API stores user/profile/leaderboard data; game server reports match results through an internal endpoint or event.
 - API performs auth/token validation; game server verifies tokens at websocket connect.
 - API owns matchmaking queues; game server receives selected room/session assignments.
+
+Future/deferred:
+
+- OAuth
+- JWT
+- game-server token verification through a future explicit API/internal boundary
 
 ## Repository Notes
 
