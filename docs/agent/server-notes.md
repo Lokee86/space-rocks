@@ -47,7 +47,7 @@ That mismatch is currently intentional. Import paths inside the Go server still 
 
 ## Planned API Boundary
 
-`services/api-server/` exists as an empty placeholder directory for a future Node.js/TypeScript/NestJS API service.
+`services/api-server/` exists as an empty placeholder directory for a future Ruby/Rails API-only service.
 
 Do not put these concerns into the Go game server unless the user explicitly changes that direction:
 
@@ -62,7 +62,7 @@ The planned API service should own business/backend concerns, not real-time simu
 See:
 
 ```text
-docs/api/nestjs-api-server.md
+docs/api/ruby-api-server.md
 ```
 
 ## Networking / Rooms / Game Ownership

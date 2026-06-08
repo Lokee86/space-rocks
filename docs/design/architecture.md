@@ -8,7 +8,7 @@ The project is still in development, so this document describes the architecture
 
 - `client/`: Godot project. Contains scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go module for the real-time game server. The current entrypoint is `services/game-server/cmd/game-server`.
-- `services/api-server/`: empty placeholder for a planned Node.js/TypeScript NestJS API server for business/backend systems. It is intentionally separate from real-time simulation.
+- `services/api-server/`: empty placeholder for a planned Ruby/Rails API-only server for business/backend systems. It is intentionally separate from real-time simulation.
 - `shared/`: source data shared across client and server generation, including TOML constants, TOML packet definitions, generated gameplay tuning data under `shared/drop_tables/`, and JSON collision shape data.
 - `docs/`: Project documentation.
 - `tools/data_sync/`: Python sync/generation tool used to generate constants and packet code from `shared/`.
@@ -405,9 +405,9 @@ client/scripts/logging/logger.gd
 
 Use `ClientLogger` for new client lifecycle, UI, networking, packet, HUD, input, and world-sync diagnostics. See [client logging](../client/logging.md).
 
-## NestJS API Server Plan
+## Ruby API Server Plan
 
-`services/api-server/` is currently an empty placeholder reserved for a separate business/backend API service. The intended stack is Node.js, TypeScript, and NestJS.
+`services/api-server/` is currently an empty placeholder reserved for a separate business/backend API service. The intended stack is Ruby and Rails API-only.
 
 This service is not implemented yet. The purpose of the separate service is to keep business logic physically and technically separate from the real-time Go game server.
 
@@ -423,7 +423,7 @@ Planned API-owned concerns include:
 
 The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets.
 
-See [NestJS API server plan](../api/nestjs-api-server.md).
+See [Ruby API server plan](../api/ruby-api-server.md).
 
 ## Data Flow
 
