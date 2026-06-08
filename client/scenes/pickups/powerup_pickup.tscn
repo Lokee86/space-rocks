@@ -5,7 +5,7 @@
 [ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="3_eeqmk"]
 [ext_resource type="Texture2D" uid="uid://dtv1urut8krni" path="res://assets/item_badge.png" id="4_1hy3l"]
 [ext_resource type="Texture2D" uid="uid://jbqfavdvpf1r" path="res://assets/pickupicons.png" id="5_ygddb"]
-[ext_resource type="AudioStream" uid="uid://ckajwhfntfpe2" path="res://audio/pickup_pickedup.ogg" id="6_eeqmk"]
+[ext_resource type="AudioStream" uid="uid://cxmugpljionxf" path="res://audio/pickup_spawn.ogg" id="6_eeqmk"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_80krm"]
 blend_mode = 1

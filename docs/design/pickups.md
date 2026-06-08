@@ -27,12 +27,11 @@
 - `shared/constants/client/presentation.toml`
 - `shared/packets/gameplay.toml`
 - `shared/collisions/collision_shapes.json`
-- `client/scenes/pickups/1_up.tscn`
 
 ## Server Entity Model
 
 - Pickup fields: `id`, `type`, `x`, `y`, `health`, `age_seconds` / `AgeSeconds`, `lifespan_seconds` / `LifespanSeconds`.
-- Definition fields: `type`, scene path, `health`, `lifespan`.
+- Definition fields: `type`, `pickup_class`, `health`, `lifespan`.
 - `CollisionBody` uses `CollisionShapeCatalog`.
 - Collision shape comes from exported Godot scene data.
 - Health is current health only.
@@ -41,7 +40,7 @@
 ## Packet Model
 
 - `StatePacket.pickups`.
-- `PickupState` fields: `id`, `type`, `x`, `y`, `health`, `age_seconds`, `lifespan_seconds`.
+- `PickupState` fields: `id`, `type`, `pickup_class`, `x`, `y`, `health`, `age_seconds`, `lifespan_seconds`.
 - `remaining_lifespan` is not sent; the client derives it.
 - `pickup_collected` event fields.
 - `pickup_effect_applied` event fields.
@@ -52,6 +51,8 @@
 
 - `world_sync` coordinates pickup sync.
 - `pickup_sync` forwards pickup age and lifespan to the pickup node and owns pickup scene instantiation, state application, cleanup, interpolation, and target positions.
+- `pickup_class` chooses the generic pickup scene family; `type` chooses the `Badge` child icon.
+- Detailed client rules live in [docs/client/pickup-rendering.md](/d:/!bin/space-rocks/docs/client/pickup-rendering.md).
 - Pickup scene visuals are client presentation only.
 - Pickup z-index uses the generated `PICKUP_Z_INDEX` constant.
 - Pickup glow and pulse are scene-local presentation.
@@ -133,11 +134,11 @@
 
 ## Adding A New Pickup Type
 
-- [ ] Add scene.
+- [ ] Add or verify the class scene family.
+- [ ] Add a `Badge` child named exactly like the pickup type.
 - [ ] Export collision shape.
 - [ ] Add constants.
 - [ ] Add pickup definition.
-- [ ] Update client scene mapping if needed.
 - [ ] Add effect intent rule.
 - [ ] Add packet and event tests if needed.
 - [ ] Update docs.

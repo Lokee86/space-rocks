@@ -25,12 +25,12 @@ type EffectIntent struct {
 }
 
 type CollectionResult struct {
-	Collected   bool
-	PlayerID    string
-	PickupID    string
-	PickupType  string
-	X           float64
-	Y           float64
+	Collected    bool
+	PlayerID     string
+	PickupID     string
+	PickupType   string
+	X            float64
+	Y            float64
 	EffectIntent EffectIntent
 }
 
@@ -39,23 +39,39 @@ func ResolveCollection(req CollectionRequest) CollectionResult {
 		return CollectionResult{Collected: false}
 	}
 
-	if req.PickupType != "1_up" {
-		return CollectionResult{Collected: false}
-	}
-
+	effectIntent := resolveEffectIntent(req)
 	return CollectionResult{
-		Collected:  true,
-		PlayerID:   req.PlayerID,
-		PickupID:   req.PickupID,
-		PickupType: req.PickupType,
-		X:          req.X,
-		Y:          req.Y,
-		EffectIntent: EffectIntent{
+		Collected:    true,
+		PlayerID:     req.PlayerID,
+		PickupID:     req.PickupID,
+		PickupType:   req.PickupType,
+		X:            req.X,
+		Y:            req.Y,
+		EffectIntent: effectIntent,
+	}
+}
+
+func resolveEffectIntent(req CollectionRequest) EffectIntent {
+	switch req.PickupType {
+	case "1_up":
+		return EffectIntent{
 			PlayerID:   req.PlayerID,
 			PickupID:   req.PickupID,
 			PickupType: req.PickupType,
 			EffectType: EffectTypeAddLives,
 			Amount:     1,
-		},
+		}
+	case "torpedo":
+		return EffectIntent{
+			PlayerID:   req.PlayerID,
+			PickupID:   req.PickupID,
+			PickupType: req.PickupType,
+			EffectType: EffectTypeEquipWeapon,
+			WeaponID:   weapons.Torpedo,
+			Slot:       weapons.Secondary,
+			Ammo:       1,
+		}
+	default:
+		return EffectIntent{}
 	}
 }

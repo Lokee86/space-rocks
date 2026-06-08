@@ -10,3 +10,9 @@ pickup_type = "1_up"
 chance = 0.01
 min_source_size = 1
 max_source_size = 4
+
+[[entries]]
+pickup_type = "torpedo"
+chance = 0.02
+min_source_size = 2
+max_source_size = 4

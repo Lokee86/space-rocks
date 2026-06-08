@@ -6,6 +6,7 @@ const BULLET_SCENE := "res://scenes/bullet.tscn"
 const PLAYER_SCENE := "res://scenes/player.tscn"
 const ASTEROID_SCENE := "res://scenes/asteroid.tscn"
 const PICKUP_POWERUP_SCENE := "res://scenes/pickups/powerup_pickup.tscn"
+const PICKUP_WEAPON_SCENE := "res://scenes/pickups/weapon_pickup.tscn"
 
 
 func _init() -> void:
@@ -14,7 +15,8 @@ func _init() -> void:
 		"ship": _export_player(),
 		"asteroids": _export_asteroids(),
 		"pickups": {
-			"powerup": _export_pickup_powerup(),
+			"powerup": _export_pickup_shape(PICKUP_POWERUP_SCENE),
+			"weapon": _export_pickup_shape(PICKUP_WEAPON_SCENE),
 		},
 	}
 
@@ -109,8 +111,8 @@ func _export_asteroids() -> Array:
 	return exported
 
 
-func _export_pickup_powerup() -> Dictionary:
-	var pickup_scene := _pickup_powerup_scene()
+func _export_pickup_shape(scene_path: String) -> Dictionary:
+	var pickup_scene := _pickup_scene(scene_path)
 	if pickup_scene.is_empty():
 		return {}
 
@@ -119,7 +121,7 @@ func _export_pickup_powerup() -> Dictionary:
 	var shape := collision_shape.shape
 	if !(shape is CircleShape2D):
 		var shape_class := "<null>" if shape == null else shape.get_class()
-		push_error("Unsupported pickup shape in %s: %s" % [PICKUP_POWERUP_SCENE, shape_class])
+		push_error("Unsupported pickup shape in %s: %s" % [scene_path, shape_class])
 		scene_root.queue_free()
 		quit(1)
 		return {}
@@ -151,17 +153,17 @@ func _export_points(points: PackedVector2Array) -> Array:
 	return exported
 
 
-func _pickup_powerup_scene() -> Array:
-	var scene := load(PICKUP_POWERUP_SCENE) as PackedScene
+func _pickup_scene(scene_path: String) -> Array:
+	var scene := load(scene_path) as PackedScene
 	if scene == null:
-		push_error("Failed to load %s" % PICKUP_POWERUP_SCENE)
+		push_error("Failed to load %s" % scene_path)
 		quit(1)
 		return []
 
 	var scene_root := scene.instantiate()
 	var collision_shape := scene_root.get_node("CollisionShape2D") as CollisionShape2D
 	if collision_shape == null:
-		push_error("Missing CollisionShape2D in %s" % PICKUP_POWERUP_SCENE)
+		push_error("Missing CollisionShape2D in %s" % scene_path)
 		scene_root.queue_free()
 		quit(1)
 		return []

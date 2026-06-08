@@ -26,7 +26,12 @@ func (pickup *Pickup) Class() PickupClass {
 }
 
 func (pickup *Pickup) CollisionBody(catalog physics.CollisionShapeCatalog) (physics.CollisionBody, bool) {
-	shape, err := catalog.PickupShape(string(pickup.Type))
+	pickupClass := pickup.Class()
+	if pickupClass == "" {
+		return physics.CollisionBody{}, false
+	}
+
+	shape, err := catalog.PickupShape(string(pickupClass))
 	if err != nil {
 		return physics.CollisionBody{}, false
 	}

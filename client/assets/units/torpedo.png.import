@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ps3qhn2qpegi"
-path="res://.godot/imported/Items.png-482d26741e086bcbfe69bfb5208b8bef.ctex"
+uid="uid://d1hxl05tjhal5"
+path="res://.godot/imported/torpedo.png-3cc5232987a14df8bd7b38246d87df1c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Items.png"
-dest_files=["res://.godot/imported/Items.png-482d26741e086bcbfe69bfb5208b8bef.ctex"]
+source_file="res://assets/units/torpedo.png"
+dest_files=["res://.godot/imported/torpedo.png-3cc5232987a14df8bd7b38246d87df1c.ctex"]
 
 [params]
 

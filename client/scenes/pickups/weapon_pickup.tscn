@@ -22,7 +22,6 @@ radius = 30.0
 
 [node name="WeaponPickup" type="Node2D" unique_id=1274412463]
 script = ExtResource("1_qbbdg")
-sprite_path = NodePath("Badge")
 
 [node name="GlowSprite2D" type="Sprite2D" parent="." unique_id=284097999]
 modulate = Color(1, 0, 0, 1)
@@ -50,3 +49,4 @@ shape = SubResource("CircleShape2D_qbbdg")
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=1010791677]
 stream = ExtResource("6_n33kh")
+pitch_scale = 1.15
