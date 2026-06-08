@@ -4,7 +4,6 @@ class_name PickupSync
 const PICKUP_CLASS_POWERUP := "powerup"
 const PICKUP_CLASS_WEAPON := "weapon"
 
-const PickupPresentationCatalog = preload("res://scripts/world/pickups/pickup_presentation_catalog.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var pickups_layer = null

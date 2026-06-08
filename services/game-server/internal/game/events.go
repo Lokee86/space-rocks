@@ -103,7 +103,7 @@ func eventStateForDomainEvent(event events.Event) EventState {
 }
 
 func (game *Game) broadcastEvent(event EventState) {
-	for playerID := range game.entities.Players {
+	for playerID := range game.playerSessions {
 		game.pendingPresentationEvents[playerID] = append(game.pendingPresentationEvents[playerID], event)
 	}
 }

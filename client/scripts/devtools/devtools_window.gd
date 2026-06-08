@@ -1,7 +1,6 @@
 extends Window
 
 const ClientLogger = preload("res://scripts/logging/logger.gd")
-const PickupPresentationCatalog = preload("res://scripts/world/pickups/pickup_presentation_catalog.gd")
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/server/internal/game/events"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
 func TestEventStateForDomainEventConvertsBulletBlast(t *testing.T) {
@@ -144,6 +145,30 @@ func TestRecordDomainEventQueuesBulletBlastPacketEvent(t *testing.T) {
 	})
 
 	queuedEvents := game.pendingPresentationEvents[playerID]
+	if len(queuedEvents) != 1 {
+		t.Fatalf("expected 1 queued event, got %d", len(queuedEvents))
+	}
+	event := queuedEvents[0]
+	if event.Type != PacketTypeBulletBlast {
+		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, event.Type)
+	}
+	if event.X != 12.5 || event.Y != 34.75 {
+		t.Fatalf("expected bullet blast coordinates (12.5, 34.75), got (%v, %v)", event.X, event.Y)
+	}
+}
+
+func TestRecordDomainEventQueuesBulletBlastForDurableSessionWithoutLiveShip(t *testing.T) {
+	game := New()
+	game.playerSessions["player-1"] = newPlayerSession("player-1", physics.Vector2{X: 100, Y: 200})
+	delete(game.entities.Players, "player-1")
+
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
+		X:    12.5,
+		Y:    34.75,
+	})
+
+	queuedEvents := game.pendingPresentationEvents["player-1"]
 	if len(queuedEvents) != 1 {
 		t.Fatalf("expected 1 queued event, got %d", len(queuedEvents))
 	}
