@@ -57,7 +57,7 @@ Current client runtime seams:
 - `client/scripts/networking/client_connection_service.gd`: public connection facade and signal bridge; it no longer owns packet-family construction or packet-family routing.
 - `client/scripts/networking/packets/packet_codec.gd`: client packet wire encode/decode wrapper around JSON parsing and `JSON.stringify`. It owns wire parsing and envelope validation only; packet-specific readers validate payload details.
 - `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates player/render-origin work to `client/scripts/world/player_render/player_render_api.gd` and delegates bullet/asteroid node ownership, packet application, cleanup, and interpolation to the focused sync owners. For targeting, it only exposes `target_source()`; target selection orchestration lives above it in `GameplayTargetingContext`.
-- Pickup rendering rules are documented in [docs/client/pickup-rendering.md](/d:/!bin/space-rocks/docs/client/pickup-rendering.md); `world_sync` passes through `pickup_class` for scene-family selection and `pickup_type` for `Badge` icon selection.
+- Pickup rendering rules are documented in [docs/client/pickup-rendering.md](../client/pickup-rendering.md); `world_sync` passes through `pickup_class` for scene-family selection and `pickup_type` for `Badge` icon selection.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/generated/networking/packets/packets.gd` and `client/scripts/generated/constants/constants.gd`: generated/shared client packet helpers and constants.

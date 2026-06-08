@@ -38,6 +38,14 @@ Devtools are for controlled gameplay debugging in active sessions. Commands are 
 - UI actions send generated debug packets through the normal networking send path
 - client devtools UI does not apply gameplay mutations locally
 
+## Pickup Selector Source
+
+- The devtools pickup selector is populated from `PickupPresentationCatalog` in `client/scripts/world/pickups/pickup_presentation_catalog.gd`.
+- Adding a new `Badge` child in the pickup scene makes that pickup type available to the selector through the shared catalog.
+- Devtools still sends only `pickup_type` in the spawn packet.
+- The server remains authoritative for whether the requested pickup type is valid.
+- The selector is client-side discovery over presentation data; it does not transfer authority to the client.
+
 ## Current Command List
 
 - `toggle_debug_invincible`

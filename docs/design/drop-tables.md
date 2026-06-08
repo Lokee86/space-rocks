@@ -61,7 +61,7 @@
 - Entries outside source size bounds are skipped.
 - A result succeeds when the roll value is below the entry chance.
 
-## Current Basicastroids Table
+## Current BasicAsteroids Table
 
 - Table ID: `basicasteroids`
 - Source type: `asteroid`
@@ -72,6 +72,10 @@
 - `pickup_type = "1_up"`
 - `chance = 0.01`
 - `min_source_size = 1`
+- `max_source_size = 4`
+- `pickup_type = "torpedo"`
+- `chance = 1.00`
+- `min_source_size = 2`
 - `max_source_size = 4`
 
 ## Asteroid Destruction Flow
@@ -95,6 +99,7 @@
 
 - Drop tables create pickups, but they do not own pickup collection.
 - Drop tables do not own pickup effects.
+- Drop tables select `pickup_type` only.
 - Pickup collection still resolves through `internal/game/pickups`.
 - Pickup effect application still mutates player sessions through the pickup seam.
 - The drop seam ends once the authoritative pickup exists.

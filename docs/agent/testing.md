@@ -218,6 +218,17 @@ For packet/schema changes, run the relevant `tools/data_sync` validation/diff/pu
 
 For path moves, renames, deleted APIs, or preload cleanup, use focused `rg` checks. Do not make the agent run those checks unless the prompt explicitly allows terminal commands.
 
+## Collision Export
+
+Export pickup collision shapes with:
+
+```bash
+cd /mnt/d/!bin/space-rocks
+godot --headless --path client -s res://tools/export_collision_shapes.gd
+```
+
+Pickup collision JSON should use class keys such as `powerup` and `weapon`, not per-type keys such as `1_up` or `torpedo`.
+
 ## Reporting Expectations
 
 Default agent reports should include:

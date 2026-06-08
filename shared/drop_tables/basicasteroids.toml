@@ -13,6 +13,6 @@ max_source_size = 4
 
 [[entries]]
 pickup_type = "torpedo"
-chance = 1.00
+chance = 0.15
 min_source_size = 2
 max_source_size = 4

@@ -44,8 +44,9 @@
 - `Equipped` carries weapon identity plus ammo policy.
 - `PlayerArmory` is the player-owned armory shape.
 - `ShipWeapons` is the live ship-facing weapon shape.
-- `DefaultPlayerArmory` gives players `BasicCannon` in `Primary` and leaves `Secondary` empty unless assigned elsewhere.
-- The default primary weapon uses `InfiniteAmmo`.
+- `DefaultPlayerArmory` gives `BasicCannon` in `Primary` with `InfiniteAmmo`.
+- `DefaultPlayerArmory` leaves `Secondary` empty.
+- `Torpedo` is acquired through pickup/equip effects, not default equipment.
 - Ammo policy exists even when the current default primary uses infinite ammo.
 - Durable armory ownership should remain distinct from live runtime state.
 
@@ -102,10 +103,17 @@
 - The current runtime shape stores that spawn data on the bullet-like projectile entity for later collision handling.
 - Projectile damage and impact effect are copied into runtime projectile state for later collision handling.
 - Spawn ownership should stay on the authoritative server side.
-- Client code should only observe the resulting state and effects.
+- Client code should only observe the resulting state and effects; it does not own weapon authority.
 - `runtime.NewBulletFromWeaponSpawn` copies the weapon ID, projectile type, impact effect, rotation, velocity, lifetime, and damage spec into runtime bullet state.
 - `combat.go` later consumes projectile metadata from the runtime bullet when collision happens.
 - Direct damage and impact effects happen later, not inside `weapons.Fire`.
+
+## Pickup Acquisition
+
+- `torpedo` pickup equips `Torpedo` in the `Secondary` slot.
+- `torpedo` pickup uses `LimitedAmmo`.
+- Pickup ammo is additive.
+- Collecting another `torpedo` adds ammo instead of resetting ammo to `1`.
 
 ## Damage Integration
 
