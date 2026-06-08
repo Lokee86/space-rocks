@@ -1,0 +1,10 @@
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Rails secrets and local runtime files
+config/master.key
+log/*
+tmp/*
+storage/*

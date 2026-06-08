@@ -1,12 +1,7 @@
 # PostgreSQL database configuration for the Space Rocks API.
 #
-# Local development/test use a dedicated PostgreSQL role by default:
-#
-#   space_rocks_api
-#
-# Create it locally with:
-#
-#   sudo -u postgres createuser --createdb space_rocks_api
+# Local development/test use the current Linux user by default so PostgreSQL
+# peer authentication works on WSL/Linux.
 #
 # Override with environment variables when needed:
 #
@@ -19,10 +14,10 @@ default: &default
   adapter: postgresql
   encoding: unicode
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_USERNAME", "space_rocks_api") %>
+  username: <%= ENV["SPACE_ROCKS_API_DATABASE_USERNAME"] %>
   password: <%= ENV["SPACE_ROCKS_API_DATABASE_PASSWORD"] %>
-  host: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_HOST", "localhost") %>
-  port: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_PORT", 5432) %>
+  host: <%= ENV["SPACE_ROCKS_API_DATABASE_HOST"] %>
+  port: <%= ENV["SPACE_ROCKS_API_DATABASE_PORT"] %>
 
 development:
   <<: *default
@@ -36,8 +31,6 @@ production:
   primary: &primary_production
     <<: *default
     database: space_rocks_api_production
-    username: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_USERNAME") %>
-    password: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_PASSWORD") %>
   cache:
     <<: *primary_production
     database: space_rocks_api_production_cache

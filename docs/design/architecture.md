@@ -8,7 +8,7 @@ The project is still in development, so this document describes the architecture
 
 - `client/`: Godot project. Contains scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go module for the real-time game server. The current entrypoint is `services/game-server/cmd/game-server`.
-- `services/api-server/`: empty placeholder for a planned Ruby/Rails API-only server for business/backend systems. It is intentionally separate from real-time simulation.
+- `services/api-server/`: Ruby/Rails API-only scaffold for business/backend systems. It is intentionally separate from real-time simulation.
 - `shared/`: source data shared across client and server generation, including TOML constants, TOML packet definitions, generated gameplay tuning data under `shared/drop_tables/`, and JSON collision shape data.
 - `docs/`: Project documentation.
 - `tools/data_sync/`: Python sync/generation tool used to generate constants and packet code from `shared/`.
@@ -407,9 +407,9 @@ Use `ClientLogger` for new client lifecycle, UI, networking, packet, HUD, input,
 
 ## Ruby API Server Plan
 
-`services/api-server/` is currently an empty placeholder reserved for a separate business/backend API service. The intended stack is Ruby and Rails API-only.
+`services/api-server/` is currently a Ruby/Rails API-only scaffold reserved for a separate business/backend API service.
 
-This service is not implemented yet. The purpose of the separate service is to keep business logic physically and technically separate from the real-time Go game server.
+This service has no product features implemented yet. The purpose of the separate service is to keep business logic physically and technically separate from the real-time Go game server.
 
 Planned API-owned concerns include:
 

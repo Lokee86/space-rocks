@@ -1,6 +1,6 @@
 # Ruby API Server Plan
 
-This is a future service plan. The API server is not implemented yet beyond the empty repository placeholder directory:
+This is a future service plan. The Rails API-only scaffold now exists, but no product features are implemented yet:
 
 ```text
 services/api-server/
@@ -85,12 +85,11 @@ The module path and filesystem path do not need to match.
 
 ## Initial Setup Steps Later
 
-When ready to scaffold the API service:
+When ready to continue the API scaffold:
 
-1. Initialize a Rails API-only project inside `services/api-server/`.
-2. Add local run/test/build entrypoints to the Rails project configuration inside `services/api-server/`.
-3. Add an API `.env.example` if config is needed.
-4. Document API commands in `README.md` and `docs/developer.md`.
-5. Keep API contracts separate from game packet schemas unless they truly need to be shared.
+1. Keep local run/test/build entrypoints in the Rails project configuration inside `services/api-server/`.
+2. Keep the API `.env.example` current if config is needed.
+3. Keep API commands documented in `README.md` and `docs/developer.md`.
+4. Keep API contracts separate from game packet schemas unless they truly need to be shared.
 
 Do not add API dependencies to the Go game server.

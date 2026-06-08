@@ -47,7 +47,7 @@ That mismatch is currently intentional. Import paths inside the Go server still 
 
 ## Planned API Boundary
 
-`services/api-server/` exists as an empty placeholder directory for a future Ruby/Rails API-only service.
+`services/api-server/` exists as a Ruby/Rails API-only scaffold.
 
 Do not put these concerns into the Go game server unless the user explicitly changes that direction:
 
