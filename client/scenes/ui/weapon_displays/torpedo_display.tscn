@@ -128,35 +128,28 @@ text = "x999"
 label_settings = SubResource("LabelSettings_xvif2")
 horizontal_alignment = 1
 
-[node name="Control" type="Control" parent="." unique_id=1460708748]
-anchors_preset = 0
-offset_left = -1.0
-offset_top = -40.0
-offset_right = 39.0
-offset_bottom = -40.0
-
-[node name="Sprite2D" type="Sprite2D" parent="Control" unique_id=1617306262]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1617306262]
 material = SubResource("ShaderMaterial_n33kh")
-position = Vector2(0, 38)
+position = Vector2(-1, -2)
 scale = Vector2(0.65, 0.65)
 texture = ExtResource("4_2kq7n")
 
-[node name="GlowSprite2D" type="Sprite2D" parent="Control/Sprite2D" unique_id=284097999]
+[node name="GlowSprite2D" type="Sprite2D" parent="Sprite2D" unique_id=284097999]
 unique_name_in_owner = true
 modulate = Color(1, 0, 0, 1)
 material = SubResource("CanvasItemMaterial_80krm")
 scale = Vector2(0.49, 0.49)
 texture = ExtResource("2_difuo")
 
-[node name="WeaponIcon" type="Node2D" parent="Control/Sprite2D" unique_id=2068211968]
+[node name="WeaponIcon" type="Node2D" parent="Sprite2D" unique_id=2068211968]
 
-[node name="Torpedo" type="Sprite2D" parent="Control/Sprite2D/WeaponIcon" unique_id=16658619]
+[node name="Torpedo" type="Sprite2D" parent="Sprite2D/WeaponIcon" unique_id=16658619]
 position = Vector2(-8, 5.333334)
 texture = ExtResource("5_5iogl")
 region_enabled = true
 region_rect = Rect2(284.45953, 469.72247, 87.41135, 87.7215)
 
-[node name="RingHighlight" type="Control" parent="Control/Sprite2D" unique_id=935335666]
+[node name="RingHighlight" type="Control" parent="Sprite2D" unique_id=935335666]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -171,7 +164,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("5_yr8yt")
 
-[node name="ReadySweepHighlight" type="ColorRect" parent="Control/Sprite2D" unique_id=209417331]
+[node name="ReadySweepHighlight" type="ColorRect" parent="Sprite2D" unique_id=209417331]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_hq5w7")
 anchors_preset = -1
@@ -191,7 +184,7 @@ script = ExtResource("6_u7v0p")
 sweep_duration = 0.65
 sweep_angle = -0.75
 
-[node name="ReadyFlash" type="AnimatedSprite2D" parent="Control/Sprite2D" unique_id=367941375]
+[node name="ReadyFlash" type="AnimatedSprite2D" parent="Sprite2D" unique_id=367941375]
 unique_name_in_owner = true
 visible = false
 modulate = Color(1, 0.5361634, 0.47133392, 1)
@@ -202,7 +195,7 @@ sprite_frames = SubResource("SpriteFrames_7t3db")
 frame = 10
 frame_progress = 1.0
 
-[node name="CooldownOverlay" type="Control" parent="Control/Sprite2D" unique_id=1872694270]
+[node name="CooldownOverlay" type="Control" parent="Sprite2D" unique_id=1872694270]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -219,7 +212,7 @@ script = ExtResource("6_o2j1k")
 radius_ratio = 0.49
 overlay_color = Color(0, 0, 0, 0.5294118)
 
-[node name="CooldownLabel" type="Label" parent="Control/Sprite2D/CooldownOverlay" unique_id=1695823699]
+[node name="CooldownLabel" type="Label" parent="Sprite2D/CooldownOverlay" unique_id=1695823699]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.51554006

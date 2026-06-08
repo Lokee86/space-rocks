@@ -17,7 +17,12 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Godot was upgraded to 4.6 recently. Scene/import diffs may be noisy.
 - The older `space-rocks-(4.3)/` project copy is ignored and should not be used as the active project.
 - Generated recordings and build artifacts should not be committed. In particular, avoid committing `*.avi`, `tmp/`, `*/tmp/`, and `client/.godot/`.
-- Pickup work for the current `1_up` / drop / devtools / lifespan scope is complete.
+- `1_up` and `torpedo` pickups exist.
+- `torpedo` is pickup-acquired, not a default secondary.
+- `pickup_class` drives pickup scene and collision family.
+- Pickup type drives `Badge` icon selection and effect identity.
+- Pickup weapon ammo is additive.
+- Pickup collision export runs through `godot --headless --path client -s res://tools/export_collision_shapes.gd`.
 - Pickup expiry emits `pickup_expired`.
 - Debug hitboxes use `debug_shape_catalog` plus `GameplayState` transforms; there is no live `DebugOverlayStatePacket`.
 - `GameplayRuntimeContext` is runtime wiring only; do not treat it as a read-model passthrough bucket.
