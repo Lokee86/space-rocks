@@ -1,0 +1,52 @@
+# PostgreSQL database configuration for the Space Rocks API.
+#
+# Local development/test use a dedicated PostgreSQL role by default:
+#
+#   space_rocks_api
+#
+# Create it locally with:
+#
+#   sudo -u postgres createuser --createdb space_rocks_api
+#
+# Override with environment variables when needed:
+#
+#   SPACE_ROCKS_API_DATABASE_USERNAME
+#   SPACE_ROCKS_API_DATABASE_PASSWORD
+#   SPACE_ROCKS_API_DATABASE_HOST
+#   SPACE_ROCKS_API_DATABASE_PORT
+
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_USERNAME", "space_rocks_api") %>
+  password: <%= ENV["SPACE_ROCKS_API_DATABASE_PASSWORD"] %>
+  host: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_HOST", "localhost") %>
+  port: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_PORT", 5432) %>
+
+development:
+  <<: *default
+  database: space_rocks_api_development
+
+test:
+  <<: *default
+  database: space_rocks_api_test
+
+production:
+  primary: &primary_production
+    <<: *default
+    database: space_rocks_api_production
+    username: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_USERNAME") %>
+    password: <%= ENV.fetch("SPACE_ROCKS_API_DATABASE_PASSWORD") %>
+  cache:
+    <<: *primary_production
+    database: space_rocks_api_production_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_production
+    database: space_rocks_api_production_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *primary_production
+    database: space_rocks_api_production_cable
+    migrations_paths: db/cable_migrate
