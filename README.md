@@ -137,7 +137,7 @@ python3 tools/data_sync/main.py -push -packets -go -gds
 - [Architecture](docs/design/architecture.md)
 - [Toroidal wrap design](docs/design/toroidal-wrap.md)
 - [Ship variants design](docs/design/ship-variants.md)
-- [NestJS API server plan](docs/api/nestjs-api-server.md)
+- [Ruby API server plan](docs/api/ruby-api-server.md)
 - [Server logging](docs/server/logging.md)
 - [Client logging](docs/client/logging.md)
 - [Developer toggles](docs/devtools/toggles.md)

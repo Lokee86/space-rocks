@@ -34,7 +34,7 @@ Apply these guardrails mainly to:
 
 - `client/scripts/**/*.gd`
 - `services/game-server/internal/**/*.go`
-- future `services/api-server/src/**/*`
+- future `services/api-server/app/**/*`
 
 Do not apply these line-count limits directly to:
 

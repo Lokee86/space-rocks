@@ -56,7 +56,7 @@ git lfs pull
 
 - `client/`: Godot project. Scenes, scripts, assets, audio, shaders, client tools, and generated client constants/packet helpers.
 - `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
-- `services/api-server/`: empty placeholder for a planned API server service for business/backend systems. Intended stack is Node.js/TypeScript with NestJS.
+- `services/api-server/`: empty placeholder for a planned API server service for business/backend systems. Intended stack is Ruby/Rails API-only.
 - `shared/`: source data used by both client and server:
   - `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` for active constants
   - client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`
@@ -382,4 +382,3 @@ godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://test
 A passing run may still report Godot ObjectDB/resource cleanup warnings; treat the suite result as passing when GUT reports all tests passed.
 
 Expected missing-field warnings may appear in tests that intentionally verify safe behavior for missing `lives`, `respawn_delay`, or asteroid `scale`; those warnings are fine when the suite passes.
-

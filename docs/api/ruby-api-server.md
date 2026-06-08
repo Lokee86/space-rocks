@@ -1,4 +1,4 @@
-# NestJS API Server Plan
+# Ruby API Server Plan
 
 This is a future service plan. The API server is not implemented yet beyond the empty repository placeholder directory:
 
@@ -28,11 +28,10 @@ The Go game server should continue to own real-time gameplay simulation.
 
 Planned stack:
 
-- Node.js
-- TypeScript
-- NestJS
+- Ruby
+- Rails API-only
 
-NestJS is a good fit because it gives the API service a strong module/controller/service structure without tempting the API layer to import Go game internals.
+Rails API-only is a good fit because it gives the API service a focused request/response structure without tempting the API layer to import Go game internals.
 
 ## Service Boundary
 
@@ -40,7 +39,7 @@ The language/runtime split is intentional.
 
 ```text
 services/game-server/  Go real-time simulation
-services/api-server/   Node/TypeScript business API
+services/api-server/   Ruby/Rails business API
 ```
 
 Rules:
@@ -54,7 +53,7 @@ Rules:
 Shared-schema boundary note:
 
 - `shared/packets/` is the real-time game client/server protocol, not an automatic API contract.
-- TypeScript data-sync output is deferred unless explicitly started.
+- API-specific shared-schema output is deferred unless explicitly started.
 - API contracts should stay separate unless a feature truly needs shared schema.
 
 ## Possible Future Communication
@@ -88,8 +87,8 @@ The module path and filesystem path do not need to match.
 
 When ready to scaffold the API service:
 
-1. Initialize a NestJS project inside `services/api-server/`.
-2. Add local run/test/build scripts to `services/api-server/package.json`.
+1. Initialize a Rails API-only project inside `services/api-server/`.
+2. Add local run/test/build entrypoints to the Rails project configuration inside `services/api-server/`.
 3. Add an API `.env.example` if config is needed.
 4. Document API commands in `README.md` and `docs/developer.md`.
 5. Keep API contracts separate from game packet schemas unless they truly need to be shared.

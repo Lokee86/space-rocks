@@ -37,7 +37,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 
 ## Current Direction Notes
 
-- The user wants docs/plans to reflect a future NestJS API server separated from the Go game server.
+- The user wants docs/plans to reflect a future Ruby/Rails API-only server separated from the Go game server.
 - API/business/backend concerns should remain out of the Go real-time game server unless explicitly redirected.
 - The user strongly prefers small implementation prompts and quick reviewable diffs.
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
