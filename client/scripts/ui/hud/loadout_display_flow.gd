@@ -5,7 +5,6 @@ const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 const SLOT_PRIMARY := "primary"
 const SLOT_SECONDARY := "secondary"
-const AMMO_POLICY_LIMITED := "limited"
 
 var hud: Control
 var loadout_container: HBoxContainer
@@ -88,41 +87,27 @@ func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScen
 
 func _apply_display_state(display: Node, slot_state: Dictionary, _cooldown_total: float) -> void:
 	var slot := str(slot_state.get("slot", ""))
+	var cooldown_total: float = float(_cooldown_total)
 	var ammo_remaining: int = int(slot_state.get("ammo_remaining", 0))
 	var cooldown_remaining: float = float(slot_state.get("cooldown_remaining", 0.0))
 	var previous_remaining: float = float(previous_cooldown_remaining.get(slot, 0.0))
+	var display_state := {
+		"weapon_id": str(slot_state.get("weapon_id", "")),
+		"ammo_policy": str(slot_state.get("ammo_policy", "")),
+		"ammo_remaining": ammo_remaining,
+		"cooldown_remaining": cooldown_remaining,
+		"cooldown_total": cooldown_total,
+	}
 
-	var ammo_label := display.get_node_or_null("%AmmoLabel") as Label
-	if ammo_label != null:
-		if str(slot_state.get("ammo_policy", "")) == AMMO_POLICY_LIMITED:
-			ammo_label.visible = true
-			ammo_label.text = "x%d" % ammo_remaining
-		else:
-			ammo_label.visible = false
-
-	var ring_highlight := display.get_node_or_null("%RingHighlight") as CanvasItem
-	if ring_highlight != null:
-		if cooldown_remaining > 0.0:
-			ring_highlight.hide()
-		else:
-			ring_highlight.show()
-
-	var cooldown_overlay := display.get_node_or_null("%CooldownOverlay") as Control
-	if cooldown_overlay != null:
-		if cooldown_remaining <= 0.0:
-			if cooldown_overlay.has_method("clear_countdown"):
-				cooldown_overlay.clear_countdown()
-		else:
-			if previous_remaining <= 0.0:
-				ready_effect_played_for_cooldown[slot] = false
-			if cooldown_overlay.has_method("sync_countdown"):
-				cooldown_overlay.sync_countdown(cooldown_remaining)
-			elif cooldown_overlay.has_method("start_countdown"):
-				cooldown_overlay.start_countdown(cooldown_remaining)
+	if display.has_method("apply_weapon_display_state"):
+		display.apply_weapon_display_state(display_state)
 
 	if previous_remaining > 0.0 and cooldown_remaining <= 0.0:
 		if not bool(ready_effect_played_for_cooldown.get(slot, true)):
-			_play_ready_effects_for_display(display)
+			if display.has_method("play_ready_effects"):
+				display.play_ready_effects()
+			else:
+				_play_ready_effects_for_display(display)
 			ready_effect_played_for_cooldown[slot] = true
 
 	previous_cooldown_remaining[slot] = cooldown_remaining
@@ -161,7 +146,10 @@ func _on_display_cooldown_finished(display: Node) -> void:
 	var slot := _slot_for_display(display)
 	if slot != "":
 		ready_effect_played_for_cooldown[slot] = true
-	_play_ready_effects_for_display(display)
+	if display.has_method("play_ready_effects"):
+		display.play_ready_effects()
+	else:
+		_play_ready_effects_for_display(display)
 
 
 func _play_ready_effects_for_display(display: Node) -> void:

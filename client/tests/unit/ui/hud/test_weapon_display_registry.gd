@@ -24,6 +24,7 @@ func test_torpedo_definition_has_scene() -> void:
 
 	assert_true(definition.has("scene"))
 	assert_not_null(definition["scene"])
+	assert_eq((definition["scene"] as PackedScene).resource_path, "res://scenes/ui/weapon_displays/weapon_display.tscn")
 
 
 func test_torpedo_definition_has_positive_cooldown_total() -> void:

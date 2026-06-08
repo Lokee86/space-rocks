@@ -2,7 +2,7 @@ extends RefCounted
 class_name WeaponDisplayRegistry
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
-const TORPEDO_DISPLAY = preload("res://scenes/ui/weapon_displays/torpedo_display.tscn")
+const WEAPON_DISPLAY_SCENE = preload("res://scenes/ui/weapon_displays/weapon_display.tscn")
 
 const BASIC_CANNON_ID := "basic_cannon"
 const TORPEDO_ID := "torpedo"
@@ -10,7 +10,7 @@ const TORPEDO_ID := "torpedo"
 static func definition_for_weapon(weapon_id: String) -> Dictionary:
 	if weapon_id == TORPEDO_ID:
 		return {
-			"scene": TORPEDO_DISPLAY,
+			"scene": WEAPON_DISPLAY_SCENE,
 			"cooldown_total": Constants.TORPEDO_COOLDOWN,
 		}
 	return {}
