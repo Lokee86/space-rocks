@@ -49,10 +49,26 @@ func test_pickup_inside_eol_window_can_hide_during_blink_cycle() -> void:
 	pickup.queue_free()
 
 
+func test_apply_pickup_presentation_shows_matching_badge_icon() -> void:
+	var pickup = _create_pickup_with_icons()
+
+	pickup.apply_pickup_presentation("1_up")
+
+	assert_true(pickup.sprite.get_node("1_up").visible)
+	assert_false(pickup.sprite.get_node("torpedo").visible)
+	pickup.queue_free()
+
+
 func _create_pickup(include_collision_shape := false):
 	var pickup = PickupScript.new()
 	var sprite := Sprite2D.new()
-	sprite.name = "Sprite2D"
+	sprite.name = "Badge"
+	var one_up := Sprite2D.new()
+	one_up.name = "1_up"
+	sprite.add_child(one_up)
+	var torpedo := Sprite2D.new()
+	torpedo.name = "torpedo"
+	sprite.add_child(torpedo)
 	var glow_sprite := Sprite2D.new()
 	glow_sprite.name = "GlowSprite2D"
 	pickup.add_child(sprite)
@@ -68,3 +84,7 @@ func _create_pickup(include_collision_shape := false):
 	add_child(pickup)
 	pickup._ready()
 	return pickup
+
+
+func _create_pickup_with_icons():
+	return _create_pickup()

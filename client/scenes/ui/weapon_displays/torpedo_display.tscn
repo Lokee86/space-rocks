@@ -191,6 +191,7 @@ sweep_angle = -0.75
 
 [node name="ReadyFlash" type="AnimatedSprite2D" parent="Control/Sprite2D" unique_id=367941375]
 unique_name_in_owner = true
+visible = false
 modulate = Color(1, 0.5361634, 0.47133392, 1)
 material = SubResource("CanvasItemMaterial_peb63")
 position = Vector2(-1.5384617, 0)

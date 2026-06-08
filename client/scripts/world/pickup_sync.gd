@@ -1,13 +1,18 @@
 extends RefCounted
 class_name PickupSync
 
-const PICKUP_ONE_UP_SCENE = preload("res://scenes/pickups/1_up.tscn")
+const PICKUP_CLASS_POWERUP := "powerup"
+const PICKUP_CLASS_WEAPON := "weapon"
+
+const POWERUP_PICKUP_SCENE = preload("res://scenes/pickups/powerup_pickup.tscn")
+const WEAPON_PICKUP_SCENE = preload("res://scenes/pickups/weapon_pickup.tscn")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 var pickups_layer = null
 var audio_flow := GameplayAudioFlow.new()
 var pickup_nodes = {}
 var pickup_types = {}
+var pickup_classes = {}
 var initialized_pickups = {}
 var target_pickup_positions = {}
 var pickup_server_positions = {}
@@ -27,21 +32,24 @@ func reset() -> void:
 
 	pickup_nodes.clear()
 	pickup_types.clear()
+	pickup_classes.clear()
 	initialized_pickups.clear()
 	target_pickup_positions.clear()
 	pickup_server_positions.clear()
 	pickup_visual_positions.clear()
 
 
-func _scene_for_type(pickup_type: String):
-	if pickup_type == "1_up":
-		return PICKUP_ONE_UP_SCENE
+func _scene_for_class(pickup_class: String):
+	if pickup_class == PICKUP_CLASS_POWERUP:
+		return POWERUP_PICKUP_SCENE
+	if pickup_class == PICKUP_CLASS_WEAPON:
+		return WEAPON_PICKUP_SCENE
 
-	print("PickupSync: unknown pickup type=%s" % pickup_type)
+	print("PickupSync: unknown pickup class=%s" % pickup_class)
 	return null
 
 
-func get_pickup_node(pickup_id: String, pickup_type: String):
+func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: String):
 	if pickup_nodes.has(pickup_id):
 		return pickup_nodes[pickup_id]
 
@@ -49,7 +57,7 @@ func get_pickup_node(pickup_id: String, pickup_type: String):
 		print("PickupSync: cannot create pickup; pickups_layer is null")
 		return null
 
-	var pickup_scene = _scene_for_type(pickup_type)
+	var pickup_scene = _scene_for_class(pickup_class)
 	if pickup_scene == null:
 		return null
 
@@ -57,8 +65,11 @@ func get_pickup_node(pickup_id: String, pickup_type: String):
 	pickups_layer.add_child(pickup_node)
 	if pickup_node.has_method("play_spawn_sound"):
 		pickup_node.play_spawn_sound(audio_flow)
+	if pickup_node.has_method("apply_pickup_presentation"):
+		pickup_node.apply_pickup_presentation(pickup_type)
 	pickup_nodes[pickup_id] = pickup_node
 	pickup_types[pickup_id] = pickup_type
+	pickup_classes[pickup_id] = pickup_class
 
 	return pickup_node
 
@@ -71,7 +82,8 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 
 		var resolved_pickup_id = str(pickup_id)
 		var pickup_type = PickupSyncState.pickup_type(state)
-		var pickup_node = get_pickup_node(resolved_pickup_id, pickup_type)
+		var pickup_class = PickupSyncState.pickup_class(state)
+		var pickup_node = get_pickup_node(resolved_pickup_id, pickup_type, pickup_class)
 		if pickup_node == null:
 			continue
 
@@ -94,6 +106,7 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 		pickup_server_positions[resolved_pickup_id] = raw_server_position
 		pickup_visual_positions[resolved_pickup_id] = visual_position
 		pickup_types[resolved_pickup_id] = pickup_type
+		pickup_classes[resolved_pickup_id] = pickup_class
 
 		if not initialized_pickups.has(resolved_pickup_id):
 			initialized_pickups[resolved_pickup_id] = true
@@ -118,6 +131,7 @@ func remove_missing(server_pickups: Dictionary) -> void:
 
 		pickup_nodes.erase(pickup_id)
 		pickup_types.erase(pickup_id)
+		pickup_classes.erase(pickup_id)
 		initialized_pickups.erase(pickup_id)
 		target_pickup_positions.erase(pickup_id)
 		pickup_server_positions.erase(pickup_id)
@@ -134,6 +148,7 @@ func pickup_position_entries() -> Dictionary:
 			"visual_position": visual_position,
 			"server_position": pickup_server_positions.get(pickup_id, visual_position),
 			"pickup_type": pickup_types.get(pickup_id, ""),
+			"pickup_class": pickup_classes.get(pickup_id, ""),
 			"node": pickup_nodes.get(pickup_id, null),
 		}
 

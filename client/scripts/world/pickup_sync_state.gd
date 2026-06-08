@@ -12,6 +12,10 @@ static func pickup_type(state: Dictionary) -> String:
 	return str(state.get(Packets.FIELD_TYPE, ""))
 
 
+static func pickup_class(state: Dictionary) -> String:
+	return str(state.get(Packets.FIELD_PICKUP_CLASS, ""))
+
+
 static func server_position(state: Dictionary) -> Vector2:
 	return Vector2(
 		float(state.get(Packets.FIELD_X, 0.0)),

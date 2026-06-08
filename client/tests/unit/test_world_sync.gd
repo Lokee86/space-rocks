@@ -178,6 +178,7 @@ func test_apply_state_exposes_pickup_target_positions() -> void:
 		"pickup-1": {
 			Packets.FIELD_ID: "pickup-1",
 			Packets.FIELD_TYPE: "1_up",
+			Packets.FIELD_PICKUP_CLASS: "powerup",
 			Packets.FIELD_X: 520.0,
 			Packets.FIELD_Y: 540.0,
 		},

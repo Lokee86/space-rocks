@@ -383,6 +383,12 @@ json = "type"
 type = "string"
 
 [[structs.fields]]
+name = "pickup_class"
+go_name = "PickupClass"
+json = "pickup_class"
+type = "string"
+
+[[structs.fields]]
 name = "x"
 json = "x"
 type = "float"

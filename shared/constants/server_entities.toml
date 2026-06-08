@@ -25,9 +25,3 @@ asteroid_variants = 8
 
 [constants.server.collision]
 collision_despawn_delay = 0.05
-
-[constants.server.pickups]
-pickup_one_up_type = "1_up"
-pickup_one_up_health = 1
-pickup_one_up_lifespan = 12.0
-pickup_one_up_scene_path = "res://scenes/pickups/1_up.tscn"

@@ -16,6 +16,15 @@ func (pickup *Pickup) Position() physics.Vector2 {
 	return physics.Vector2{X: pickup.X, Y: pickup.Y}
 }
 
+func (pickup *Pickup) Class() PickupClass {
+	definition, ok := DefinitionFor(pickup.Type)
+	if !ok {
+		return ""
+	}
+
+	return definition.Class
+}
+
 func (pickup *Pickup) CollisionBody(catalog physics.CollisionShapeCatalog) (physics.CollisionBody, bool) {
 	shape, err := catalog.PickupShape(string(pickup.Type))
 	if err != nil {

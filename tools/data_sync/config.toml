@@ -6,6 +6,8 @@ paths = [
   "shared/constants/client/presentation.toml",
   "shared/constants/client/shell.toml",
   "shared/constants/client/lobby.toml",
+  "shared/constants/pickups.toml",
+  "shared/constants/weapon_pickups.toml",
 ]
 
 [sot.packets]
@@ -22,7 +24,7 @@ paths = [
 ]
 
 [constants.scan]
-include = ["services/**/*.go", "client/**/*.gd", "services/**/*.ts"]
+include = ["services/game-server/internal/constants/*.go", "client/scripts/generated/constants/*.gd"]
 exclude = [".git/**", "**/.godot/**", "**/node_modules/**"]
 
 [packets.go]

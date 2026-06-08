@@ -20,9 +20,31 @@ func TestDefinitionForOneUp(t *testing.T) {
 		t.Fatalf("expected positive lifespan, got %f", definition.LifespanSeconds)
 	}
 
-	const expectedScenePath = "res://scenes/pickups/1_up.tscn"
-	if definition.ScenePath != expectedScenePath {
-		t.Fatalf("expected scene path %q, got %q", expectedScenePath, definition.ScenePath)
+	if definition.Class != ClassPowerup {
+		t.Fatalf("expected class %q, got %q", ClassPowerup, definition.Class)
+	}
+}
+
+func TestDefinitionForTorpedo(t *testing.T) {
+	definition, ok := DefinitionFor(TypeTorpedo)
+	if !ok {
+		t.Fatalf("expected definition for %q", TypeTorpedo)
+	}
+
+	if definition.Type != TypeTorpedo {
+		t.Fatalf("expected type %q, got %q", TypeTorpedo, definition.Type)
+	}
+
+	if definition.Class != ClassWeapon {
+		t.Fatalf("expected class %q, got %q", ClassWeapon, definition.Class)
+	}
+
+	if definition.Health <= 0 {
+		t.Fatalf("expected positive health, got %d", definition.Health)
+	}
+
+	if definition.LifespanSeconds <= 0 {
+		t.Fatalf("expected positive lifespan, got %f", definition.LifespanSeconds)
 	}
 }
 

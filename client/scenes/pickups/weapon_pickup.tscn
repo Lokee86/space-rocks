@@ -20,8 +20,9 @@ shader_parameter/strength = 1.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_qbbdg"]
 radius = 30.0
 
-[node name="TorpedoPickup" type="Node2D" unique_id=1274412463]
+[node name="WeaponPickup" type="Node2D" unique_id=1274412463]
 script = ExtResource("1_qbbdg")
+sprite_path = NodePath("Badge")
 
 [node name="GlowSprite2D" type="Sprite2D" parent="." unique_id=284097999]
 modulate = Color(1, 0, 0, 1)
@@ -29,12 +30,14 @@ material = SubResource("CanvasItemMaterial_80krm")
 scale = Vector2(0.6, 0.6)
 texture = ExtResource("2_las4s")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1617306262]
+[node name="Badge" type="Sprite2D" parent="." unique_id=1617306262]
 material = SubResource("ShaderMaterial_n33kh")
 scale = Vector2(0.375, 0.375)
 texture = ExtResource("4_k68p2")
 
-[node name="Sprite2D" type="Sprite2D" parent="Sprite2D" unique_id=16658619]
+[node name="torpedo" type="Sprite2D" parent="Badge" unique_id=16658619]
+unique_name_in_owner = true
+visible = false
 position = Vector2(-6.1487226, 2.7082725)
 scale = Vector2(0.9963745, 0.988206)
 texture = ExtResource("6_foaqn")

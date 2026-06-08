@@ -1,0 +1,10 @@
+[constants.server.weapon_pickups.torpedo]
+pickup_torpedo_type = "torpedo"
+pickup_torpedo_class = "weapon"
+pickup_torpedo_health = 1
+pickup_torpedo_lifespan = 12.0
+pickup_torpedo_scene_path = "res://scenes/pickups/weapon_pickup.tscn"
+pickup_torpedo_icon_id = "torpedo"
+pickup_torpedo_weapon_id = "torpedo"
+pickup_torpedo_slot = "secondary"
+pickup_torpedo_ammo = 1
