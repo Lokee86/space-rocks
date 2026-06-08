@@ -1,4 +1,0 @@
-  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='ApiServer'*/[0m
-  [1m[35m (384.6ms)[0m  [1m[35mCREATE DATABASE "api_server_development" ENCODING = 'unicode' /*application='ApiServer'*/[0m
-  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='ApiServer'*/[0m
-  [1m[35m (38.3ms)[0m  [1m[35mCREATE DATABASE "api_server_test" ENCODING = 'unicode' /*application='ApiServer'*/[0m

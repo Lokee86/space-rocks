@@ -8,7 +8,7 @@ Space Rocks is an Asteroids-inspired game with:
 
 - a Godot client in `client/`
 - a Go game server in `services/game-server/`
-- a planned API server in `services/api-server/`
+- a Ruby/Rails API-only scaffold in `services/api-server/`
 - shared data sources in `shared/`
 - the active constants/packet sync tool in `tools/data_sync/`
 
@@ -38,6 +38,9 @@ Install these before running or developing Space Rocks locally:
   - The Go module is in `services/game-server/`.
   - The server entrypoint is `services/game-server/cmd/game-server`.
 
+- **Ruby / Rails** for the API server scaffold.
+  - The Rails API-only project is in `services/api-server/`.
+
 - **Python 3.10+** for repo tooling and static checks.
   - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.
   - The data-sync tool uses modern Python typing syntax and requires `tomlkit`.
@@ -56,7 +59,7 @@ git lfs pull
 
 - `client/`: Godot project. Scenes, scripts, assets, audio, shaders, client tools, and generated client constants/packet helpers.
 - `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
-- `services/api-server/`: empty placeholder for a planned API server service for business/backend systems. Intended stack is Ruby/Rails API-only.
+- `services/api-server/`: Ruby/Rails API-only scaffold for business/backend systems.
 - `shared/`: source data used by both client and server:
   - `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` for active constants
   - client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`
@@ -235,6 +238,22 @@ The server listens on `:8080` and exposes:
 
 - `GET /health`
 - `GET /ws`
+
+## Run The API Server
+
+From the repo root:
+
+```bash
+cd services/api-server
+bundle install
+bundle exec rails db:create
+bundle exec rails test
+bundle exec rails server
+```
+
+The API server listens on `:3000` by default and exposes:
+
+- `GET /health`
 
 ## Open/Run The Godot Client
 

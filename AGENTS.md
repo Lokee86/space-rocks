@@ -46,7 +46,7 @@ For server/API/logging details:
 
 - `docs/agent/server-notes.md`
 - `docs/server/logging.md`
-- `docs/api/nestjs-api-server.md`
+- `docs/api/ruby-api-server.md`
 
 ## Current Layout Notes
 
@@ -64,7 +64,7 @@ github.com/Lokee86/space-rocks/server
 
 That mismatch is intentional for now. Import paths inside the Go server still use `github.com/Lokee86/space-rocks/server/...`.
 
-`services/api-server/` exists as an empty placeholder for a future Node.js/TypeScript/NestJS API service. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
+`services/api-server/` exists as a Ruby/Rails API-only scaffold. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
 
 ## Generated Files
 
@@ -117,7 +117,7 @@ Data sync tool:
 tools/data_sync/
 ```
 
-Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` plus `tools/data_sync/` for active packets. TypeScript output is future/deferred until the API service exists.
+Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` plus `tools/data_sync/` for active packets. API-specific output is future/deferred until the Ruby/Rails API-only service grows beyond the scaffold.
 
 Tunable/game-data constants belong in the split constants SoT files under `shared/constants/` and generated scripts under `client/scripts/constants/`. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
 

@@ -1,6 +1,6 @@
 # Space Rocks
 
-Space Rocks is an Asteroids-inspired game with a Godot client and a Go game server. A separate API server is planned for business/backend concerns.
+Space Rocks is an Asteroids-inspired game with a Godot client, a Go game server, and a Ruby/Rails API-only scaffold for business/backend concerns.
 
 Client runtime is split into focused seams for input, targeting, world sync, HUD, and presentation. Target selection flows through `GameplayInputContext`, `MouseActionFlow`, and `GameplayTargetingContext`; `WorldSync` is limited to render/sync ownership and exposes `target_source()` for targeting reads.
 
@@ -40,7 +40,7 @@ git lfs pull
 
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go game server module. The current game server entrypoint is `services/game-server/cmd/game-server`.
-- `services/api-server/`: empty placeholder for a planned API server service for business/backend concerns. It is intended to be separate from real-time game simulation.
+- `services/api-server/`: Ruby/Rails API-only scaffold for business/backend concerns. It is separate from real-time game simulation.
 - `shared/`: split TOML sources of truth for constants (`shared/constants/*.toml`) and packets (`shared/packets/outputs.toml`, `gameplay.toml`, `debug.toml`, `lobby.toml`), plus collision shape data.
 - `docs/`: Project documentation, including architecture, developer workflow, API plans, devtools, notes, and server logging docs.
 - `tools/`: Python tools for syncing shared constants and generating packet code.
