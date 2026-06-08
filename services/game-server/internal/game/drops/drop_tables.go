@@ -17,6 +17,12 @@ var GeneratedTables = Tables{
                     MinSourceSize: 1,
                     MaxSourceSize: 4,
                 },
+                {
+                    PickupType: "torpedo",
+                    Chance: 1.0,
+                    MinSourceSize: 2,
+                    MaxSourceSize: 4,
+                },
             },
         },
     },

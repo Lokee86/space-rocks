@@ -9,7 +9,7 @@ const WORLD_HEIGHT := 9200.0
 # data-sync:start constants.shared.weapons.torpedo
 const TORPEDO_RADIAL_ZONE_COUNT := 4
 const TORPEDO_RADIAL_ZONE_WIDTH := 25
-const TORPEDO_COOLDOWN := 1.0
+const TORPEDO_COOLDOWN := 5.0
 # data-sync:end constants.shared.weapons.torpedo
 
 # data-sync:start constants.client.presentation.background

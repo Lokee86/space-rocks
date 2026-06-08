@@ -77,6 +77,30 @@ func TestFirePlayerPrimaryWeaponLeavesInfiniteAmmoBasicCannonIntact(t *testing.T
 	}
 }
 
+func TestNewPlayerSecondaryWeaponStartsEmpty(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+	player := game.entities.Players[playerID]
+	if player == nil {
+		t.Fatal("expected active player ship to exist")
+	}
+
+	if player.ShipWeapons.Secondary != weapons.EmptyEquipped() {
+		t.Fatalf("expected secondary weapon to start empty, got %v", player.ShipWeapons.Secondary)
+	}
+
+	player.SetInput(runtime.InputState{
+		PrimaryFire:   false,
+		SecondaryFire: true,
+	})
+
+	game.Step(1.0 / float64(constants.ServerTickRate))
+
+	if got := len(game.entities.Projectiles); got != 0 {
+		t.Fatalf("expected no projectile to be created, got %d", got)
+	}
+}
+
 func TestStepPlayersFiresMountedSecondaryTorpedoWeapon(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()
