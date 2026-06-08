@@ -36,6 +36,13 @@ func test_apply_cooldown_formats_label_with_one_decimal_place() -> void:
 	assert_ne(label_text, label_text.get_slice(".", 0))
 
 
+func test_apply_cooldown_uses_display_total_for_generic_cooldown_state() -> void:
+	_overlay.apply_cooldown(2.0, 5.0)
+
+	assert_eq(_cooldown_label().text, "2.0")
+	assert_eq(_overlay._cooldown_total, 5.0)
+
+
 func test_apply_cooldown_label_is_not_integer_only_string() -> void:
 	_overlay.apply_cooldown(5.25, 15.0)
 

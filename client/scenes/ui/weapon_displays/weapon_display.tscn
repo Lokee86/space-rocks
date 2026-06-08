@@ -1,23 +1,24 @@
 [gd_scene format=3 uid="uid://bhkirckh01sig"]
 
-[ext_resource type="FontFile" uid="uid://blox2yqbjs6n8" path="res://assets/fonts/Modeseven-L3n5.ttf" id="1_3meq0"]
-[ext_resource type="Texture2D" uid="uid://cigojhe2wngw1" path="res://assets/glow.png" id="2_difuo"]
-[ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="3_aooy2"]
-[ext_resource type="Texture2D" uid="uid://dtv1urut8krni" path="res://assets/item_badge.png" id="4_2kq7n"]
-[ext_resource type="Texture2D" uid="uid://jbqfavdvpf1r" path="res://assets/pickupicons.png" id="5_5iogl"]
-[ext_resource type="Script" path="res://scripts/ui/hud/ring_highlight.gd" id="5_yr8yt"]
-[ext_resource type="Script" uid="uid://d2rfejth56qgq" path="res://scripts/ui/hud/cooldown_overlay.gd" id="6_o2j1k"]
-[ext_resource type="Script" path="res://scripts/ui/hud/ready_sweep_highlight.gd" id="6_u7v0p"]
-[ext_resource type="Texture2D" uid="uid://dfpuissf8u61t" path="res://assets/ready_flash.png" id="7_4fha2"]
-[ext_resource type="Shader" path="res://shaders/ready_sweep_highlight.gdshader" id="7_u4n4d"]
-[ext_resource type="LabelSettings" uid="uid://ck2uiws3xnfto" path="res://assets/ui/label_settings/hud.tres" id="7_xq636"]
+[ext_resource type="FontFile" uid="uid://blox2yqbjs6n8" path="res://assets/fonts/Modeseven-L3n5.ttf" id="1_gkunr"]
+[ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="2_yyu1x"]
+[ext_resource type="Texture2D" uid="uid://dtv1urut8krni" path="res://assets/item_badge.png" id="3_xjc2f"]
+[ext_resource type="Texture2D" uid="uid://cigojhe2wngw1" path="res://assets/glow.png" id="4_bxlc3"]
+[ext_resource type="Texture2D" uid="uid://jbqfavdvpf1r" path="res://assets/pickupicons.png" id="5_w8j6e"]
+[ext_resource type="Script" path="res://scripts/ui/hud/ring_highlight.gd" id="6_w3m00"]
+[ext_resource type="Shader" path="res://shaders/ready_sweep_highlight.gdshader" id="7_vt0yi"]
+[ext_resource type="Script" path="res://scripts/ui/hud/ready_sweep_highlight.gd" id="8_cuhty"]
+[ext_resource type="Texture2D" uid="uid://dfpuissf8u61t" path="res://assets/ready_flash.png" id="9_2tvdl"]
+[ext_resource type="Script" uid="uid://d2rfejth56qgq" path="res://scripts/ui/hud/cooldown_overlay.gd" id="10_00a5j"]
+[ext_resource type="LabelSettings" uid="uid://ck2uiws3xnfto" path="res://assets/ui/label_settings/hud.tres" id="11_6y4sk"]
+[ext_resource type="Script" path="res://scripts/ui/hud/weapon_display.gd" id="12_weapon_display"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_xvif2"]
-font = ExtResource("1_3meq0")
+font = ExtResource("1_gkunr")
 font_size = 28
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_n33kh"]
-shader = ExtResource("3_aooy2")
+shader = ExtResource("2_yyu1x")
 shader_parameter/hue_shift = 0.86000004085
 shader_parameter/saturation_mult = 1.0
 shader_parameter/value_mult = 1.0
@@ -27,7 +28,7 @@ shader_parameter/strength = 1.0
 blend_mode = 1
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hq5w7"]
-shader = ExtResource("7_u4n4d")
+shader = ExtResource("7_vt0yi")
 shader_parameter/sweep_progress = -0.5
 shader_parameter/sweep_width = 0.08
 shader_parameter/sweep_softness = 0.12
@@ -40,35 +41,35 @@ shader_parameter/badge_softness = 0.02
 blend_mode = 1
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3meq0"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(0, 0, 312, 314)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_xvif2"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(312, 0, 312, 314)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ssdcy"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(624, 0, 312, 314)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_yg4pl"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(936, 0, 312, 314)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_qmosg"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(1248, 0, 312, 314)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ysj0s"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(1560, 0, 312, 314)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4i83u"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(1872, 0, 312, 314)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ptvec"]
-atlas = ExtResource("7_4fha2")
+atlas = ExtResource("9_2tvdl")
 region = Rect2(2184, 0, 312, 314)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_7t3db"]
@@ -112,7 +113,8 @@ animations = [{
 "speed": 40.0
 }]
 
-[node name="TorpedoDisplay" type="Control" unique_id=42311672]
+[node name="WeaponDisplay" type="Control" unique_id=42311672]
+script = ExtResource("12_weapon_display")
 layout_mode = 3
 anchors_preset = 0
 
@@ -132,20 +134,21 @@ horizontal_alignment = 1
 material = SubResource("ShaderMaterial_n33kh")
 position = Vector2(-1, -2)
 scale = Vector2(0.65, 0.65)
-texture = ExtResource("4_2kq7n")
+texture = ExtResource("3_xjc2f")
 
 [node name="GlowSprite2D" type="Sprite2D" parent="Sprite2D" unique_id=284097999]
 unique_name_in_owner = true
 modulate = Color(1, 0, 0, 1)
 material = SubResource("CanvasItemMaterial_80krm")
 scale = Vector2(0.49, 0.49)
-texture = ExtResource("2_difuo")
+texture = ExtResource("4_bxlc3")
 
 [node name="WeaponIcon" type="Node2D" parent="Sprite2D" unique_id=2068211968]
 
-[node name="Torpedo" type="Sprite2D" parent="Sprite2D/WeaponIcon" unique_id=16658619]
+[node name="torpedo" type="Sprite2D" parent="Sprite2D/WeaponIcon" unique_id=16658619]
+visible = false
 position = Vector2(-8, 5.333334)
-texture = ExtResource("5_5iogl")
+texture = ExtResource("5_w8j6e")
 region_enabled = true
 region_rect = Rect2(284.45953, 469.72247, 87.41135, 87.7215)
 
@@ -162,7 +165,7 @@ offset_bottom = -99.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("5_yr8yt")
+script = ExtResource("6_w3m00")
 
 [node name="ReadySweepHighlight" type="ColorRect" parent="Sprite2D" unique_id=209417331]
 unique_name_in_owner = true
@@ -180,7 +183,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(1, 0.5372549, 0.47058824, 1)
-script = ExtResource("6_u7v0p")
+script = ExtResource("8_cuhty")
 sweep_duration = 0.65
 sweep_angle = -0.75
 
@@ -208,7 +211,7 @@ offset_bottom = -99.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("6_o2j1k")
+script = ExtResource("10_00a5j")
 radius_ratio = 0.49
 overlay_color = Color(0, 0, 0, 0.5294118)
 
@@ -225,7 +228,7 @@ offset_right = 19.90892
 offset_bottom = 6.187851
 grow_horizontal = 2
 grow_vertical = 2
-label_settings = ExtResource("7_xq636")
+label_settings = ExtResource("11_6y4sk")
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true

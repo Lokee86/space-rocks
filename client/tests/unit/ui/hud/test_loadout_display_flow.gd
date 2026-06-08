@@ -51,6 +51,16 @@ func test_torpedo_display_contains_ready_flash() -> void:
 	assert_not_null(ready_flash)
 
 
+func test_torpedo_display_uses_generic_weapon_display_scene() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+	}))
+
+	var display := _loadout_container().get_child(0)
+
+	assert_eq(display.scene_file_path, "res://scenes/ui/weapon_displays/weapon_display.tscn")
+
+
 func test_torpedo_with_infinite_ammo_policy_hides_ammo_label() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
