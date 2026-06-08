@@ -8,7 +8,7 @@ Space Rocks is an Asteroids-inspired game with:
 
 - a Godot client in `client/`
 - a Go game server in `services/game-server/`
-- a Ruby/Rails API-only scaffold in `services/api-server/`
+- a Ruby/Rails API server in `services/api-server/`
 - shared data sources in `shared/`
 - the active constants/packet sync tool in `tools/data_sync/`
 
@@ -38,8 +38,10 @@ Install these before running or developing Space Rocks locally:
   - The Go module is in `services/game-server/`.
   - The server entrypoint is `services/game-server/cmd/game-server`.
 
-- **Ruby / Rails** for the API server scaffold.
-  - The Rails API-only project is in `services/api-server/`.
+- **Ruby / Rails** for the API server.
+  - The Rails API project is in `services/api-server/`.
+  - The current API baseline includes `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, and `DELETE /auth/logout`.
+  - Auth uses opaque bearer tokens stored hashed in the database.
 
 - **Python 3.10+** for repo tooling and static checks.
   - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.
@@ -59,7 +61,8 @@ git lfs pull
 
 - `client/`: Godot project. Scenes, scripts, assets, audio, shaders, client tools, and generated client constants/packet helpers.
 - `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
-- `services/api-server/`: Ruby/Rails API-only scaffold for business/backend systems.
+- `services/api-server/`: Ruby/Rails API server for business/backend systems. It currently owns health and email/password auth.
+- `bruno-api/`: Bruno collection root for local API smoke tests.
 - `shared/`: source data used by both client and server:
   - `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` for active constants
   - client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`
@@ -254,6 +257,31 @@ bundle exec rails server
 The API server listens on `:3000` by default and exposes:
 
 - `GET /health`
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+- `DELETE /auth/logout`
+
+### Bruno Smoke Tests
+
+Use the Bruno collection rooted at `bruno-api/` for local API smoke tests.
+
+Local environment variables:
+
+- `base_url`
+- `email`
+- `password`
+- `display_name`
+- `auth_token`
+
+Suggested smoke-test order:
+
+1. `Health`
+2. `Register` or `Login`
+3. Copy the returned token into `auth_token`
+4. `Me`
+5. `Logout`
+6. `Me` should fail with the same token after logout
 
 ## Open/Run The Godot Client
 

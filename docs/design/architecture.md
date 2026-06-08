@@ -407,21 +407,43 @@ Use `ClientLogger` for new client lifecycle, UI, networking, packet, HUD, input,
 
 ## Ruby API Server Plan
 
-`services/api-server/` is currently a Ruby/Rails API-only scaffold reserved for a separate business/backend API service.
+`services/api-server/` is the Ruby/Rails API service for the separate business/backend API layer.
 
-This service has no product features implemented yet. The purpose of the separate service is to keep business logic physically and technically separate from the real-time Go game server.
+Current API baseline:
+
+- health endpoint
+- email/password auth
+- opaque bearer access tokens
+- provider identity schema for future OAuth/provider login
+
+Current auth/data model:
+
+- `users`
+- `password_credentials`
+- `user_identities`
+- `access_tokens`
+
+Rails migrations under `services/api-server/db/migrate/` own the API database schema. `shared/` is not the source of truth for API auth schema.
+
+The API server should keep business logic physically and technically separate from the real-time Go game server.
 
 Planned API-owned concerns include:
 
 - accounts and authentication
 - profiles
-- matchmaking or room discovery metadata
-- leaderboards
-- unlocks/cosmetics
 - persistence and database-backed workflows
 - admin or moderation endpoints
 
-The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets.
+Deferred for now:
+
+- OAuth
+- JWT
+- matchmaking or room discovery metadata
+- leaderboards
+- game-server auth integration
+- game-server token verification through a future explicit API/internal boundary
+
+The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets. The Go game server should not read auth tables directly.
 
 See [Ruby API server plan](../api/ruby-api-server.md).
 

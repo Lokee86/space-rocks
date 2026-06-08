@@ -16,6 +16,20 @@ http:
       }
   auth: inherit
 
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        if (!body || !body.token) {
+          throw new Error("Register response did not include token");
+        }
+
+        bru.setVar("auth_token", body.token);
+
+        console.log("Captured auth_token from register response");
+
 settings:
   encodeUrl: true
   timeout: 0

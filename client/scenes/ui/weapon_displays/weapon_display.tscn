@@ -11,7 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://dfpuissf8u61t" path="res://assets/ready_flash.png" id="9_2tvdl"]
 [ext_resource type="Script" uid="uid://d2rfejth56qgq" path="res://scripts/ui/hud/cooldown_overlay.gd" id="10_00a5j"]
 [ext_resource type="LabelSettings" uid="uid://ck2uiws3xnfto" path="res://assets/ui/label_settings/hud.tres" id="11_6y4sk"]
-[ext_resource type="Script" path="res://scripts/ui/hud/weapon_display.gd" id="12_weapon_display"]
+[ext_resource type="Script" uid="uid://ei17jh6htdnt" path="res://scripts/ui/hud/weapon_display.gd" id="12_weapon_display"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_xvif2"]
 font = ExtResource("1_gkunr")
@@ -114,9 +114,9 @@ animations = [{
 }]
 
 [node name="WeaponDisplay" type="Control" unique_id=42311672]
-script = ExtResource("12_weapon_display")
 layout_mode = 3
 anchors_preset = 0
+script = ExtResource("12_weapon_display")
 
 [node name="AmmoLabel" type="Label" parent="." unique_id=436550824]
 unique_name_in_owner = true
