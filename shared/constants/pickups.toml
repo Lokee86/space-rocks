@@ -1,0 +1,11 @@
+[constants.server.powerups.one_up]
+pickup_one_up_type = "1_up"
+pickup_one_up_class = "powerup"
+pickup_one_up_health = 1
+pickup_one_up_lifespan = 12.0
+
+[constants.server.powerups.torpedo]
+pickup_torpedo_type = "torpedo"
+pickup_torpedo_class = "weapon"
+pickup_torpedo_health = 1
+pickup_torpedo_lifespan = 12.0

@@ -59,6 +59,7 @@ func (game *Game) pickupStatesLocked() map[string]runtime.PickupState {
 		pickupStates[id] = runtime.PickupState{
 			ID:              pickup.ID,
 			Type:            string(pickup.Type),
+			PickupClass:     string(pickup.Class()),
 			X:               pickup.X,
 			Y:               pickup.Y,
 			Health:          pickup.Health,

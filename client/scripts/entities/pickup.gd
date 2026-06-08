@@ -2,9 +2,9 @@ extends Node2D
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 
-@export var sprite_path: NodePath = NodePath("Sprite2D")
+@export var sprite_path: NodePath = NodePath("Badge")
 @export var glow_sprite_path: NodePath = NodePath("GlowSprite2D")
-@export var spawn_sound_path: NodePath = NodePath("PickupSpawned")
+@export var spawn_sound_path: NodePath = NodePath("AudioStreamPlayer2D")
 @export var collision_shape_path: NodePath = NodePath("CollisionShape2D")
 
 @export var sprite_pulse_rate := 1.0
@@ -67,6 +67,24 @@ func play_spawn_sound(audio_flow) -> void:
 	if !audio_flow.has_method("play_pickup_spawned_sound"):
 		return
 	audio_flow.play_pickup_spawned_sound(spawn_sound)
+
+
+func apply_pickup_presentation(pickup_type: String) -> void:
+	var badge = get_node_or_null(sprite_path)
+	if badge == null:
+		return
+
+	for child in badge.get_children():
+		if child is CanvasItem:
+			child.visible = false
+
+	var pickup_icon = badge.get_node_or_null(NodePath(pickup_type))
+	if pickup_icon == null:
+		return
+	if not (pickup_icon is CanvasItem):
+		return
+
+	pickup_icon.visible = true
 
 
 func apply_lifespan_state(age_seconds: float, total_lifespan_seconds: float) -> void:

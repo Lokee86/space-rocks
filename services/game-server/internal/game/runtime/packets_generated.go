@@ -59,6 +59,7 @@ type BulletState struct {
 type PickupState struct {
 	ID              string  `json:"id"`
 	Type            string  `json:"type"`
+	PickupClass     string  `json:"pickup_class"`
 	X               float64 `json:"x"`
 	Y               float64 `json:"y"`
 	Health          int     `json:"health"`
