@@ -5,7 +5,6 @@ const TARGET_PLAYER_PICK_RADIUS := 32.0
 const TARGET_PICKUP_PICK_RADIUS := 32.0
 const TARGET_ASTEROID_BASE_PICK_RADIUS := 32.0
 const TARGET_BULLET_PICK_RADIUS := 12.0
-const TargetPickRadiusResolver = preload("res://scripts/gameplay/targeting/target_pick_radius_resolver.gd")
 
 var target_position_source
 

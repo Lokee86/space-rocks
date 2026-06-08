@@ -2,7 +2,6 @@ extends RefCounted
 class_name LoadoutDisplayFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
-const WeaponDisplayRegistry = preload("res://scripts/ui/hud/weapon_display_registry.gd")
 
 const SLOT_PRIMARY := "primary"
 const SLOT_SECONDARY := "secondary"
@@ -87,7 +86,7 @@ func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScen
 	return new_node
 
 
-func _apply_display_state(display: Node, slot_state: Dictionary, cooldown_total: float) -> void:
+func _apply_display_state(display: Node, slot_state: Dictionary, _cooldown_total: float) -> void:
 	var slot := str(slot_state.get("slot", ""))
 	var ammo_remaining: int = int(slot_state.get("ammo_remaining", 0))
 	var cooldown_remaining: float = float(slot_state.get("cooldown_remaining", 0.0))
