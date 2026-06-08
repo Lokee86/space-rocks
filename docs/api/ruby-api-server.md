@@ -24,6 +24,21 @@ Good fits:
 
 The Go game server should continue to own real-time gameplay simulation.
 
+## Auth
+
+The Rails API owns the auth data model:
+
+- users
+- password credentials
+- provider identities
+- access tokens
+
+The Go game server should not read auth tables directly.
+
+If the game server needs auth in the future, it should use an explicit API or internal verification boundary rather than direct table access.
+
+OAuth and JWT are deferred for now, but the schema is structured so they can be added later without reworking the core account tables.
+
 ## Planned Stack
 
 Planned stack:

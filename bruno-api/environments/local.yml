@@ -1,0 +1,12 @@
+name: local
+variables:
+  - name: base_url
+    value: http://localhost:3000
+  - name: email
+    value: test@example.com
+  - name: password
+    value: password123
+  - name: display_name
+    value: Test Pilot
+  - name: auth_token
+    value: 31e897a37787686c44830c325862c99aeb36fd7975dadd53a68d211b324a2445

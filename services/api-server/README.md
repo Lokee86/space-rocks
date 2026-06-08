@@ -27,3 +27,62 @@ Returns a static JSON response:
   "service": "space-rocks-api"
 }
 ```
+
+## Auth
+
+The auth endpoints issue opaque bearer tokens for API access. Tokens are stored hashed in the database.
+
+### `POST /auth/register`
+
+Create a new user with an email/password login.
+
+Request body:
+
+```json
+{
+  "display_name": "Test Pilot",
+  "email": "test@example.com",
+  "password": "password123"
+}
+```
+
+Returns the created user plus a token.
+
+### `POST /auth/login`
+
+Log in with an existing email/password credential.
+
+Request body:
+
+```json
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+```
+
+Returns the current user plus a new token.
+
+### `GET /auth/me`
+
+Return the current authenticated user.
+
+Protected endpoint. Send:
+
+```http
+Authorization: Bearer <token>
+```
+
+Returns the user payload for a valid token.
+
+### `DELETE /auth/logout`
+
+Revoke the current bearer token.
+
+Protected endpoint. Send:
+
+```http
+Authorization: Bearer <token>
+```
+
+Returns no content on success. The same token should fail on `GET /auth/me` after logout.
