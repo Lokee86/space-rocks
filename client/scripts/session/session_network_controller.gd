@@ -35,6 +35,7 @@ func connect_connection_signals() -> void:
 	_connect_connection_signal("closed", Callable(self, "_on_connection_closed"))
 	_connect_connection_signal("packet_parse_failed", Callable(self, "_on_packet_parse_failed"))
 	_connect_connection_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
+	_connect_connection_signal("websocket_auth_result_received", Callable(self, "_on_websocket_auth_result_received"))
 
 
 func connect_room_signals() -> void:
@@ -63,7 +64,18 @@ func _connect_connection_signal(signal_name: StringName, handler: Callable) -> v
 
 func _on_connection_connected() -> void:
 	_log("Connection connected")
-	shell_boot_flow.send_pending_boot_request()
+	if shell_boot_flow == null:
+		return
+
+	if shell_boot_flow.pending_request_is_single_player():
+		shell_boot_flow.send_pending_boot_request()
+		return
+
+	if shell_boot_flow.pending_request_is_multiplayer():
+		if connection_service.is_websocket_auth_authenticated():
+			shell_boot_flow.send_pending_boot_request()
+		else:
+			_log("Waiting for websocket auth before sending multiplayer boot request")
 
 
 func _on_connection_closed() -> void:
@@ -76,6 +88,21 @@ func _on_packet_parse_failed(text: String) -> void:
 
 func _on_unknown_packet_received(_packet: Dictionary) -> void:
 	_log("Unknown packet received")
+
+
+func _on_websocket_auth_result_received(packet: Dictionary) -> void:
+	if shell_boot_flow == null:
+		return
+
+	if bool(packet.get("authenticated", false)):
+		shell_boot_flow.send_pending_boot_request()
+	else:
+		var error_code := str(packet.get("error_code", ""))
+		if error_code == "token_verification_unavailable":
+			_log("Websocket auth unavailable; sending pending multiplayer request for server-side admission")
+			shell_boot_flow.send_pending_boot_request()
+		else:
+			_log("Websocket auth failed before multiplayer boot request")
 
 
 func _on_room_snapshot_received(packet: Dictionary) -> void:

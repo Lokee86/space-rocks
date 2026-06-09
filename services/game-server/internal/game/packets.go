@@ -24,6 +24,8 @@ const (
 	PacketTypeStartGameRequest              = "start_game_request"
 	PacketTypeStartSinglePlayerRequest      = "start_single_player_request"
 	PacketTypeReturnToLobbyRequest          = "return_to_lobby_request"
+	PacketTypeAuthenticateRequest           = "authenticate_request"
+	PacketTypeAuthenticateResult            = "authenticate_result"
 	PacketTypeRoomSnapshot                  = "room_snapshot"
 	PacketTypeRoomStateChanged              = "room_state_changed"
 	PacketTypeRoomError                     = "room_error"
@@ -39,6 +41,7 @@ type ClientPacket struct {
 	Y                  float64              `json:"y"`
 	TargetKind         string               `json:"target_kind"`
 	TargetID           string               `json:"target_id"`
+	Token              string               `json:"token"`
 	Sequence           int                  `json:"sequence"`
 	ClientSentMsec     int                  `json:"client_sent_msec"`
 	ServerReceivedMsec int                  `json:"server_received_msec"`
@@ -73,6 +76,20 @@ type StartSinglePlayerRequest struct {
 
 type ReturnToLobbyRequest struct {
 	Type string `json:"type"`
+}
+
+type AuthenticateRequest struct {
+	Type  string `json:"type"`
+	Token string `json:"token"`
+}
+
+type AuthenticateResult struct {
+	Type          string `json:"type"`
+	Authenticated bool   `json:"authenticated"`
+	UserID        int    `json:"user_id"`
+	DisplayName   string `json:"display_name"`
+	ErrorCode     string `json:"error_code"`
+	Message       string `json:"message"`
 }
 
 type RoomMemberState struct {

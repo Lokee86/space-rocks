@@ -2,6 +2,7 @@ extends Node
 class_name NetworkClient
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
+const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 signal connected_to_server
 signal connection_closed
@@ -63,6 +64,13 @@ func send_raw_packet(packet: Dictionary) -> void:
 		return
 
 	socket.send_text(encode_result.wire_message)
+
+
+func send_authenticate_request(token: String) -> void:
+	if token.is_empty():
+		return
+
+	send_raw_packet(Packets.authenticate_request_packet(token))
 
 
 func close_gracefully() -> void:

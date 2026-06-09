@@ -25,6 +25,18 @@ func has_request() -> bool:
 	return request_type != Constants.BOOT_REQUEST_NONE
 
 
+func current_type() -> String:
+	return request_type
+
+
+func is_single_player_request() -> bool:
+	return request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER
+
+
+func is_multiplayer_request() -> bool:
+	return request_type == Constants.BOOT_REQUEST_CREATE_ROOM || request_type == Constants.BOOT_REQUEST_JOIN_ROOM
+
+
 func consume_request() -> Dictionary:
 	var request := {
 		"type": request_type,

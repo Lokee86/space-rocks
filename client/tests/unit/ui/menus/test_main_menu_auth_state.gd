@@ -27,15 +27,12 @@ func test_show_signed_in_updates_auth_display() -> void:
 
 func test_multiplayer_button_emits_sign_in_requested_when_signed_out() -> void:
 	var menu := await _create_menu()
-	var sign_in_requested := false
-
-	menu.sign_in_requested.connect(func() -> void:
-		sign_in_requested = true
-	)
+	watch_signals(menu)
 
 	menu.multiplayer_button.emit_signal("pressed")
 
-	assert_true(sign_in_requested)
+	assert_signal_emitted(menu, "sign_in_requested")
+	assert_eq(menu.login_status_label.text, "Not Signed In")
 	assert_null(menu.multiplayer_dialog)
 
 

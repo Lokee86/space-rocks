@@ -4,12 +4,13 @@ import "github.com/Lokee86/space-rocks/server/internal/game"
 
 type ClientPacketRouter struct {
 	HandleSimpleDevtools    func() bool
-	HandlePlacementDevtools  func() bool
-	HandleRemainingDevtools  func() bool
-	DecodePacket             func() (game.ClientPacket, error)
-	HandleTelemetry          func(game.ClientPacket) bool
-	HandleLobby              func(game.ClientPacket) bool
-	HandleGameplay           func(game.ClientPacket) bool
+	HandlePlacementDevtools func() bool
+	HandleRemainingDevtools func() bool
+	DecodePacket            func() (game.ClientPacket, error)
+	HandleAuth              func(game.ClientPacket) bool
+	HandleTelemetry         func(game.ClientPacket) bool
+	HandleLobby             func(game.ClientPacket) bool
+	HandleGameplay          func(game.ClientPacket) bool
 }
 
 func RouteClientPacket(router ClientPacketRouter) {
@@ -28,6 +29,9 @@ func RouteClientPacket(router ClientPacketRouter) {
 		return
 	}
 
+	if router.HandleAuth != nil && router.HandleAuth(packet) {
+		return
+	}
 	if router.HandleTelemetry != nil && router.HandleTelemetry(packet) {
 		return
 	}

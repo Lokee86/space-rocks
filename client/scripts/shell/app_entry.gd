@@ -58,6 +58,7 @@ func _ready() -> void:
 	auth_session_controller.configure(auth_api_client)
 	auth_session_controller.auth_state_changed.connect(_on_auth_state_changed)
 	auth_session_controller.auth_error.connect(_on_auth_error)
+	session_boot_controller.get_connection_service().set_auth_session_controller(auth_session_controller)
 
 	background_controller = BackgroundController.new()
 	add_child(background_controller)

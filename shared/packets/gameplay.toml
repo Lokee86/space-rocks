@@ -52,6 +52,11 @@ json = "target_id"
 type = "string"
 
 [[structs.fields]]
+name = "token"
+json = "token"
+type = "string"
+
+[[structs.fields]]
 name = "sequence"
 json = "sequence"
 type = "int"

@@ -66,6 +66,53 @@ json = "type"
 type = "string"
 
 [[structs]]
+id = "AuthenticateRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "token"
+json = "token"
+type = "string"
+
+[[structs]]
+id = "AuthenticateResult"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "authenticated"
+json = "authenticated"
+type = "bool"
+
+[[structs.fields]]
+name = "user_id"
+go_name = "UserID"
+json = "user_id"
+type = "int"
+
+[[structs.fields]]
+name = "display_name"
+json = "display_name"
+type = "string"
+
+[[structs.fields]]
+name = "error_code"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[structs]]
 id = "RoomMemberState"
 
 [[structs.fields]]
@@ -215,6 +262,14 @@ id = "return_to_lobby_request"
 value = "return_to_lobby_request"
 
 [[packet_types]]
+id = "authenticate_request"
+value = "authenticate_request"
+
+[[packet_types]]
+id = "authenticate_result"
+value = "authenticate_result"
+
+[[packet_types]]
 id = "room_snapshot"
 value = "room_snapshot"
 
@@ -271,3 +326,11 @@ id = "return_to_lobby_request_packet"
 
 [builders.body]
 type = "return_to_lobby_request"
+
+[[builders]]
+id = "authenticate_request_packet"
+args = ["token"]
+
+[builders.body]
+type = "authenticate_request"
+token = "$token"

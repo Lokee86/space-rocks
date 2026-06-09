@@ -6,6 +6,10 @@ import (
 )
 
 func (session *webSocketSession) handleCreateRoomRequest() {
+	if !requireAuthenticatedAccount(session) {
+		return
+	}
+
 	if session.currentRoomID != "" {
 		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
 		return
@@ -26,6 +30,10 @@ func (session *webSocketSession) handleCreateRoomRequest() {
 }
 
 func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
+	if !requireAuthenticatedAccount(session) {
+		return
+	}
+
 	if session.currentRoomID != "" {
 		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
 		return

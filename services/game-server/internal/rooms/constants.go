@@ -25,14 +25,17 @@ const (
 )
 
 const (
-	RoomErrorRoomNotFound     = "room_not_found"
-	RoomErrorRoomClosed       = "room_closed"
-	RoomErrorRoomInGame       = "room_in_game"
-	RoomErrorRoomFull         = "room_full"
-	RoomErrorAlreadyInRoom    = "already_in_room"
-	RoomErrorNotInRoom        = "not_in_room"
-	RoomErrorInvalidRoomCode  = "invalid_room_code"
-	RoomErrorNotReady         = "not_ready"
-	RoomErrorNotRoomOwner     = "not_room_owner"
-	RoomErrorInvalidRoomState = "invalid_room_state"
+	RoomErrorRoomNotFound                 = "room_not_found"
+	RoomErrorRoomClosed                   = "room_closed"
+	RoomErrorRoomInGame                   = "room_in_game"
+	RoomErrorRoomFull                     = "room_full"
+	RoomErrorAlreadyInRoom                = "already_in_room"
+	RoomErrorNotInRoom                    = "not_in_room"
+	RoomErrorInvalidRoomCode              = "invalid_room_code"
+	RoomErrorNotReady                     = "not_ready"
+	RoomErrorNotRoomOwner                 = "not_room_owner"
+	RoomErrorInvalidRoomState             = "invalid_room_state"
+	RoomErrorAuthRequired                 = "auth_required"
+	RoomErrorInvalidToken                 = "invalid_token"
+	RoomErrorTokenVerificationUnavailable = "token_verification_unavailable"
 )

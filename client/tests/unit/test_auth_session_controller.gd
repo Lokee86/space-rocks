@@ -33,15 +33,11 @@ func after_each() -> void:
 
 func test_initialize_from_saved_token_with_no_token_emits_signed_out_state() -> void:
 	var controller := _create_controller(FakeAuthApiClient.new())
-	var auth_state_changed := false
-
-	controller.auth_state_changed.connect(func() -> void:
-		auth_state_changed = true
-	)
+	watch_signals(controller)
 
 	controller.initialize_from_saved_token()
 
-	assert_true(auth_state_changed)
+	assert_signal_emitted(controller, "auth_state_changed")
 	assert_false(controller.get_session().is_signed_in())
 	assert_eq(controller.get_session().display_name, "")
 
