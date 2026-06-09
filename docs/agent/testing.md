@@ -89,6 +89,32 @@ python3 -m pytest tools/tests/test_client_constants_boundary.py
 
 Full gameplay/network smoke testing remains manual for now: opening the game scene, websocket connection, asteroid spawning, shooting/effects, pause/debug flow, and the full gameplay loop.
 
+## Client Auth Smoke
+
+Use this checklist for the Godot auth menu flow:
+
+- Rails API is running on `localhost:3000`
+- Discord env vars are loaded
+- Rails migrations are current
+- Godot client starts
+- Main menu shows `Not Signed In`
+- Logout button is hidden
+- Multiplayer button shows `Sign-in`
+- Click `Sign-in`
+- Browser opens Discord login
+- Complete Discord OAuth
+- Return to Godot
+- Main menu shows display name
+- Logout button appears
+- Click `Logout`
+- Main menu returns to `Not Signed In`
+- Single Player still starts without auth
+
+Expected failures:
+
+- `PendingMigrationError` means the Rails database is not migrated
+- API unavailable should not block Single Player
+
 ## Data Sync Commands
 
 Validate active shared constants:

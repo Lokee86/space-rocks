@@ -65,8 +65,12 @@ See:
 docs/api/ruby-api-server.md
 ```
 
+Rails/Godot auth session handoff now exists, but Go websocket auth is still future work. The future game-server should verify Space Rocks bearer tokens through Rails/API via an explicit token-verification boundary and a Go authclient seam, not by reading Rails tables directly.
+The next server-side auth step is that explicit Rails token-verification boundary, then the Go authclient seam, then the game-server session identity seam, then multiplayer websocket auth/admission.
+
 Server-side account and local-profile routing must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, Local Profile uses embedded DB, Authenticated Account uses Rails/API, and gameplay code must not directly choose embedded DB vs Rails/API.
 Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): future `shared/player_data` logical schema work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline will need a future player-data domain.
+Embedded DB, Local Profile, player-data routing, and player-data SSoT implementation are later work.
 
 ## Networking / Rooms / Game Ownership
 
@@ -95,6 +99,9 @@ Account-shaped player data must also follow [docs/design/player-data-schema-ssot
 - `MemberID` is server-internal room-membership identity, currently UUID v4, and is the future reconnect seam.
 - `MemberID` should not be added back to normal room snapshot packets.
 - `currentGamePlayerID` is networking active-game routing state, not a room membership or public identity.
+- Keep `SessionID` / `GamePlayerID` separate from `AccountUserID`; game-server session identity and account identity are different seams.
+- Single-player must not require Rails auth.
+- Online multiplayer will eventually require an Authenticated Account, but that is still above the current Go websocket boundary.
 
 ## Server Packet Codec
 
