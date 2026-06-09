@@ -1,6 +1,6 @@
 # Player-Data Schema Source Of Truth
 
-This doc defines the future shared logical schema contract for account-shaped player data used by Local Profile and Authenticated Account paths.
+This doc defines the shared logical schema contract for account-shaped player data used by Local Profile and Authenticated Account paths.
 
 ## Purpose
 
@@ -12,7 +12,9 @@ Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separat
 
 ## Core Rule
 
-- `shared/player_data` will become the source of truth for logical account-shaped player-data schema.
+- `shared/player_data/stats.toml` and `shared/player_data/match_result.toml` are the source of truth for logical account-shaped player-data schema.
+- `shared/packets/player_data.toml` defines the player-data packet protocol.
+- `services/player-data/protocol/packets.go` is generated from the packet SSoT.
 - Rails/Postgres and embedded DB may have different physical schemas.
 - Both stores must implement the same logical data contract.
 - Gameplay-facing code depends on playerdata contracts, not Rails tables or embedded DB tables.
@@ -40,6 +42,7 @@ V1 stat fields:
 This V1 contract does not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.
 
 For V1 multiplayer, the winner is the authenticated player with the highest match score.
+`wins` is account/multiplayer-only; Local Profile uses the shared core stats fields.
 
 ## Logical Schema Versus Physical Database Schema
 
@@ -67,15 +70,12 @@ Physical schemas must still satisfy the shared logical contract.
 
 ## Source Layout
 
-Planned future source directory:
+Current logical schema sources:
 
-- `shared/player_data/profile.toml`
-- `shared/player_data/loadout.toml`
-- `shared/player_data/progression.toml`
-- `shared/player_data/unlocks.toml`
+- `shared/player_data/stats.toml`
 - `shared/player_data/match_result.toml`
 
-These files do not exist yet unless they already do.
+These files define logical schema contracts and are not physical database schemas.
 
 ## Data-Sync Pipeline Upgrade
 
@@ -113,7 +113,8 @@ Rails migrations own the physical Postgres schema.
 
 Rails physical schema should satisfy the shared logical player-data schema.
 
-`account_id` is the canonical cross-system UUID for authenticated accounts. Rails `user_id` stays an internal foreign key to `users.id`, and player-data contracts should use `account_id` for authenticated accounts while local profiles use `local_profile_id`.
+`account_id` is the authenticated account UUID identity in player-data contracts. Rails `user_id` stays an internal foreign key to `users.id`.
+`local_profile_id` is the local profile identity.
 
 Rails should not use raw SQL as the cross-service SSoT.
 
@@ -148,9 +149,7 @@ Rails migrations remain human-reviewed because database migrations are operation
 
 Embedded DB migrations also need review because local profile data must be durable and upgradeable.
 
-Generated migration skeletons are acceptable earlier than fully generated migration application.
-
-Fully generated end-to-end migrations are deferred until schema shape stabilizes.
+Generated migration skeletons are still not implemented.
 
 ## Contract Tests
 
@@ -163,5 +162,6 @@ Future contract tests:
 - no store adds independent player-data fields without updating SSoT.
 
 `NoDurableStore` for Guest may return defaults or reject durable writes, but should not pretend to persist account-shaped data.
+Current runtime uses memory/no-op stores only.
 
 ## Deferred Work

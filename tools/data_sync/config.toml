@@ -16,6 +16,7 @@ paths = [
   "shared/packets/gameplay.toml",
   "shared/packets/debug.toml",
   "shared/packets/lobby.toml",
+  "shared/packets/player_data.toml",
 ]
 
 [sot.drop_tables]
@@ -38,10 +39,11 @@ files = [
   "services/game-server/internal/game/runtime/packets_generated.go",
   "services/game-server/internal/game/packets.go",
   "services/game-server/internal/devtools/packets_generated.go",
+  "services/player-data/protocol/packets.go",
 ]
 sections = ["packets"]
 owns = []
-outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets"]
+outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets", "player_data_packets"]
 
 [packets.gds]
 files = ["client/scripts/generated/networking/packets/packets.gd"]
