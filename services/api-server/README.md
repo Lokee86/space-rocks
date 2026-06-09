@@ -74,6 +74,8 @@ Both email/password auth and Discord OAuth issue the same opaque bearer access t
 
 Discord OAuth is implemented in the Rails API and requires the environment variables listed in Local Auth Setup above.
 
+The Rails API also expects `GAME_SERVER_INTERNAL_TOKEN` for internal calls from the Go game-server. Normal clients must never receive this value. `POST /internal/auth/verify-token` requires this bearer token.
+
 ### `POST /auth/register`
 
 Create a new user with an email/password login.
