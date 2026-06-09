@@ -11,6 +11,8 @@ Rails.application.routes.draw do
     post "login", to: "sessions#create"
     delete "logout", to: "sessions#destroy"
     get "me", to: "me#show"
+    get "discord/start", to: "discord#start"
+    get "discord/callback", to: "discord#callback"
   end
 
   # Defines the root path route ("/")

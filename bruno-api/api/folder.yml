@@ -5,3 +5,11 @@ info:
 
 request:
   auth: inherit
+
+docs: |-
+  # API Collection Notes
+
+  Discord OAuth smoke testing is browser-driven.
+
+  - Use `GET {{base_url}}/auth/discord/start` to begin the flow.
+  - Complete the Discord callback in a browser; do not store client IDs, client secrets, auth codes, or tokens in this collection.

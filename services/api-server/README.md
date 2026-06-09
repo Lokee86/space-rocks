@@ -40,6 +40,13 @@ The Rails API owns the auth persistence layer at a high level:
 - access tokens
 
 The auth endpoints issue opaque bearer tokens for API access. Tokens are stored hashed in the database.
+Both email/password auth and Discord OAuth issue the same opaque bearer access token.
+
+Discord OAuth requires these environment variables:
+
+- `DISCORD_CLIENT_ID`
+- `DISCORD_CLIENT_SECRET`
+- `DISCORD_REDIRECT_URI`
 
 ### `POST /auth/register`
 
@@ -72,6 +79,16 @@ Request body:
 
 Returns the current user plus a new token.
 
+### `GET /auth/discord/start`
+
+Begin the Discord OAuth flow by redirecting the browser to Discord.
+
+### `GET /auth/discord/callback`
+
+Handle the browser-driven Discord OAuth callback after Discord redirects back with `code` and `state`.
+
+Returns the current user plus a new token on success.
+
 ### `GET /auth/me`
 
 Return the current authenticated user.
@@ -83,6 +100,7 @@ Authorization: Bearer <token>
 ```
 
 Returns the user payload for a valid token.
+This works for bearer tokens issued by either email/password auth or Discord OAuth.
 
 ### `DELETE /auth/logout`
 
@@ -121,6 +139,5 @@ The collection is for manual smoke testing only and should not use real secrets 
 
 Future/deferred:
 
-- OAuth
 - JWT
 - game-server auth verification boundaries

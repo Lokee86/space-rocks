@@ -9,4 +9,4 @@ variables:
   - name: display_name
     value: Test Pilot
   - name: auth_token
-    value: 31e897a37787686c44830c325862c99aeb36fd7975dadd53a68d211b324a2445
+    value: e5d9af99786bb7870aa8540233e17a116b255c70284c3531270c5bd6ed756371
