@@ -9,6 +9,10 @@ import (
 )
 
 func WebSocketHandler(rooms *rooms.RoomManager) http.HandlerFunc {
+	return WebSocketHandlerWithAuth(rooms, nil)
+}
+
+func WebSocketHandlerWithAuth(rooms *rooms.RoomManager, verifier TokenVerifier) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return allowWebSocketOrigin(r)
@@ -22,7 +26,7 @@ func WebSocketHandler(rooms *rooms.RoomManager) http.HandlerFunc {
 			return
 		}
 
-		session := newWebSocketSession(conn, rooms)
+		session := newWebSocketSession(conn, rooms, verifier)
 		handleConnection(session, r.RemoteAddr)
 	}
 }

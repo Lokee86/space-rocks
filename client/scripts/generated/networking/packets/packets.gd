@@ -38,6 +38,8 @@ const TYPE_SET_READY_REQUEST := "set_ready_request"
 const TYPE_START_GAME_REQUEST := "start_game_request"
 const TYPE_START_SINGLE_PLAYER_REQUEST := "start_single_player_request"
 const TYPE_RETURN_TO_LOBBY_REQUEST := "return_to_lobby_request"
+const TYPE_AUTHENTICATE_REQUEST := "authenticate_request"
+const TYPE_AUTHENTICATE_RESULT := "authenticate_result"
 const TYPE_ROOM_SNAPSHOT := "room_snapshot"
 const TYPE_ROOM_STATE_CHANGED := "room_state_changed"
 const TYPE_ROOM_ERROR := "room_error"
@@ -46,6 +48,7 @@ const FIELD_AGE_SECONDS := "age_seconds"
 const FIELD_AMOUNT := "amount"
 const FIELD_ASTEROIDS := "asteroids"
 const FIELD_ASTEROIDS_FROZEN := "asteroids_frozen"
+const FIELD_AUTHENTICATED := "authenticated"
 const FIELD_BACK := "back"
 const FIELD_BULLETS := "bullets"
 const FIELD_BULLETS_FROZEN := "bullets_frozen"
@@ -57,6 +60,7 @@ const FIELD_DEBUG_STATUS := "debug_status"
 const FIELD_DEBUG_STATUSES := "debug_statuses"
 const FIELD_DIRECTION_X := "direction_x"
 const FIELD_DIRECTION_Y := "direction_y"
+const FIELD_DISPLAY_NAME := "display_name"
 const FIELD_EFFECT_TYPE := "effect_type"
 const FIELD_ENTITY_TYPE := "entity_type"
 const FIELD_ERROR_CODE := "error_code"
@@ -134,8 +138,10 @@ const FIELD_TARGET_KIND := "target_kind"
 const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TARGET_SCOPE := "target_scope"
 const FIELD_THRUSTING := "thrusting"
+const FIELD_TOKEN := "token"
 const FIELD_TOTAL_ASTEROIDS := "total_asteroids"
 const FIELD_TYPE := "type"
+const FIELD_USER_ID := "user_id"
 const FIELD_VARIANT := "variant"
 const FIELD_VISIBLE_WORLD_HEIGHT := "visible_world_height"
 const FIELD_VISIBLE_WORLD_WIDTH := "visible_world_width"
@@ -333,4 +339,10 @@ static func start_single_player_request_packet() -> Dictionary:
 static func return_to_lobby_request_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "return_to_lobby_request"
+	return packet
+
+static func authenticate_request_packet(token) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "authenticate_request"
+	packet[FIELD_TOKEN] = token
 	return packet

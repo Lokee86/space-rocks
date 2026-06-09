@@ -19,6 +19,10 @@ static func is_room_error(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_ROOM_ERROR
 
 
+static func is_authenticate_result(packet: Dictionary) -> bool:
+	return packet_type(packet) == Packets.TYPE_AUTHENTICATE_RESULT
+
+
 static func is_gameplay_state(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_STATE
 

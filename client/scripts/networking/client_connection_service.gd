@@ -3,11 +3,13 @@ extends Node
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 signal connected
 signal closed
 signal packet_parse_failed(text: String)
 signal room_snapshot_received(packet: Dictionary)
+signal websocket_auth_result_received(packet: Dictionary)
 signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
 signal gameplay_state_received(packet: Dictionary)
@@ -21,6 +23,10 @@ var network_client: NetworkClient
 var client_packet_sender: ClientPacketSender
 var server_packet_dispatcher: ServerPacketDispatcher
 var has_started_connection := false
+var auth_session_controller
+var websocket_auth_authenticated := false
+var websocket_auth_user_id = null
+var websocket_auth_display_name := ""
 
 
 func _ready() -> void:
@@ -48,9 +54,21 @@ func is_server_connected() -> bool:
 	return network_client != null && network_client.is_connected_to_server()
 
 
+func is_websocket_auth_authenticated() -> bool:
+	return websocket_auth_authenticated
+
+
+func has_websocket_auth_identity() -> bool:
+	return websocket_auth_authenticated && websocket_auth_user_id != null
+
+
 func begin_graceful_close() -> void:
 	if network_client != null:
 		network_client.begin_graceful_close()
+
+
+func set_auth_session_controller(auth_session_controller_ref) -> void:
+	auth_session_controller = auth_session_controller_ref
 
 
 func send_start_single_player_request() -> void:
@@ -131,6 +149,7 @@ func _connect_network_client_signals() -> void:
 
 
 func _connect_server_packet_dispatcher_signals() -> void:
+	_connect_dispatcher_signal("authenticate_result_received", Callable(self, "_on_authenticate_result_received"))
 	_connect_dispatcher_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
 	_connect_dispatcher_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_dispatcher_signal("room_error_received", Callable(self, "_on_room_error_received"))
@@ -153,10 +172,14 @@ func _connect_dispatcher_signal(signal_name: StringName, handler: Callable) -> v
 
 
 func _on_connected() -> void:
+	_send_authenticate_request_if_token_exists()
 	connected.emit()
 
 
 func _on_closed() -> void:
+	websocket_auth_authenticated = false
+	websocket_auth_user_id = null
+	websocket_auth_display_name = ""
 	closed.emit()
 
 
@@ -171,6 +194,13 @@ func _on_packet_received(packet: Dictionary) -> void:
 
 func _on_room_snapshot_received(packet: Dictionary) -> void:
 	room_snapshot_received.emit(packet)
+
+
+func _on_authenticate_result_received(packet: Dictionary) -> void:
+	websocket_auth_authenticated = bool(packet.get(Packets.FIELD_AUTHENTICATED, false))
+	websocket_auth_user_id = packet.get(Packets.FIELD_USER_ID, null)
+	websocket_auth_display_name = str(packet.get(Packets.FIELD_DISPLAY_NAME, ""))
+	websocket_auth_result_received.emit(packet)
 
 
 func _on_room_state_changed(packet: Dictionary) -> void:
@@ -204,3 +234,17 @@ func _on_telemetry_pong_received(packet: Dictionary) -> void:
 func _on_unknown_packet_received(packet: Dictionary) -> void:
 	unknown_packet_received.emit(packet)
 
+
+func _send_authenticate_request_if_token_exists() -> void:
+	if network_client == null || auth_session_controller == null:
+		return
+
+	var auth_session = auth_session_controller.get_session()
+	if auth_session == null:
+		return
+
+	var token: String = auth_session.token
+	if token.is_empty():
+		return
+
+	network_client.send_authenticate_request(token)

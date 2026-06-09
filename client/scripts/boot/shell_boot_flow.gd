@@ -34,6 +34,18 @@ func request_join_room(room_code: String) -> void:
 	pending_boot_request.request_join_room(room_code)
 
 
+func pending_request_type() -> String:
+	return pending_boot_request.current_type()
+
+
+func pending_request_is_single_player() -> bool:
+	return pending_boot_request.is_single_player_request()
+
+
+func pending_request_is_multiplayer() -> bool:
+	return pending_boot_request.is_multiplayer_request()
+
+
 func connect_to_game_server(reason: String) -> String:
 	if connection_service.is_server_connected():
 		_log("Already connected for %s" % reason)

@@ -3,8 +3,8 @@ package networking
 import (
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
+	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 )
 
 func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) {
@@ -32,6 +32,9 @@ func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte
 				return game.ClientPacket{}, err
 			}
 			return packet, nil
+		},
+		HandleAuth: func(packet game.ClientPacket) bool {
+			return inbound.HandleAuthPacket(adapter, packet)
 		},
 		HandleTelemetry: func(packet game.ClientPacket) bool {
 			return inbound.HandleTelemetryPacket(adapter, remoteAddr, packet)

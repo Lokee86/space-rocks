@@ -14,9 +14,10 @@ func main() {
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
+	authVerifier := buildAuthVerifierFromEnv()
 
 	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /ws", networking.WebSocketHandler(rooms))
+	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuth(rooms, authVerifier))
 
 	logging.Server.Info("server starting", "addr", ":8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {

@@ -34,6 +34,10 @@ func (a inboundSessionAdapter) LogLobbyPacketReceived(message string, roomCode s
 	a.session.logLobbyPacketReceived(message, roomCode)
 }
 
+func (a inboundSessionAdapter) HandleAuthenticateRequest(token string) {
+	a.session.handleAuthenticateRequest(token)
+}
+
 func (a inboundSessionAdapter) HandleCreateRoomRequest() {
 	a.session.handleCreateRoomRequest()
 }
