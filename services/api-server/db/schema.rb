@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_08_000700) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_08_000900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -71,6 +71,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_08_000700) do
     t.index ["user_id"], name: "index_password_credentials_on_user_id", unique: true
   end
 
+  create_table "player_match_results", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "match_id", null: false
+    t.string "result_id", null: false
+    t.integer "score", default: 0, null: false
+    t.integer "ship_deaths", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.boolean "won", default: false, null: false
+    t.index ["match_id"], name: "index_player_match_results_on_match_id"
+    t.index ["result_id"], name: "index_player_match_results_on_result_id", unique: true
+    t.index ["user_id"], name: "index_player_match_results_on_user_id"
+  end
+
+  create_table "player_stats", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "games_played", default: 0, null: false
+    t.integer "high_score", default: 0, null: false
+    t.integer "ship_deaths", default: 0, null: false
+    t.integer "total_score", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.integer "wins", default: 0, null: false
+    t.index ["user_id"], name: "index_player_stats_on_user_id", unique: true
+  end
+
   create_table "user_identities", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
@@ -93,5 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_08_000700) do
   add_foreign_key "oauth_login_sessions", "users"
   add_foreign_key "oauth_states", "oauth_login_sessions"
   add_foreign_key "password_credentials", "users"
+  add_foreign_key "player_match_results", "users"
+  add_foreign_key "player_stats", "users"
   add_foreign_key "user_identities", "users"
 end
