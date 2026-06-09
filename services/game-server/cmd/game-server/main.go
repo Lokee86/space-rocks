@@ -14,6 +14,12 @@ func main() {
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
+	playerDataRuntime, err := buildPlayerDataRuntime()
+	if err != nil {
+		logging.Server.Error("player-data runtime initialization failed", err)
+		os.Exit(1)
+	}
+	_ = playerDataRuntime // wiring happens in a later phase
 	authVerifier := buildAuthVerifierFromEnv()
 
 	mux.HandleFunc("GET /health", healthHandler)
