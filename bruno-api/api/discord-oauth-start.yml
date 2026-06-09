@@ -1,0 +1,26 @@
+info:
+  name: discord oauth start
+  type: http
+  seq: 6
+  tags:
+    - smoke
+
+http:
+  method: GET
+  url: "{{base_url}}/auth/discord/start"
+  auth: inherit
+
+docs: |-
+  # Discord OAuth Start
+
+  This request starts the Discord OAuth flow.
+
+  The callback is browser-driven and should be completed in a browser after Discord redirects back to the app.
+
+  Do not place real client IDs, client secrets, authorization codes, or access tokens in Bruno files.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: false
+  maxRedirects: 5

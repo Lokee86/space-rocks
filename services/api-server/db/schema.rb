@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_08_000400) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_08_000500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -28,6 +28,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_08_000400) do
     t.index ["revoked_at"], name: "index_access_tokens_on_revoked_at"
     t.index ["token_digest"], name: "index_access_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_access_tokens_on_user_id"
+  end
+
+  create_table "oauth_states", force: :cascade do |t|
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "provider", null: false
+    t.string "redirect_after"
+    t.string "state_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_oauth_states_on_expires_at"
+    t.index ["provider"], name: "index_oauth_states_on_provider"
+    t.index ["state_digest"], name: "index_oauth_states_on_state_digest", unique: true
   end
 
   create_table "password_credentials", force: :cascade do |t|

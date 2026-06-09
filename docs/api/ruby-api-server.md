@@ -11,6 +11,7 @@ Current implemented baseline:
 - Rails API-only service exists under `services/api-server/`
 - health endpoint exists
 - email/password auth exists
+- Discord OAuth auth exists
 - opaque bearer access tokens exist
 - provider identity schema exists for future OAuth/provider login
 
@@ -50,11 +51,29 @@ The Rails API owns the auth data model:
 - provider identities
 - access tokens
 
+Discord OAuth support currently uses these required environment variables:
+
+- `DISCORD_CLIENT_ID`
+- `DISCORD_CLIENT_SECRET`
+- `DISCORD_REDIRECT_URI`
+
+Implemented auth endpoints:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/discord/start`
+- `GET /auth/discord/callback`
+- `GET /auth/me`
+- `DELETE /auth/logout`
+
 The Go game server should not read auth tables directly.
+
+Email/password auth and Discord OAuth both issue the same opaque bearer access token.
+`GET /auth/me` verifies either login path.
 
 If the game server needs auth in the future, it should use an explicit API or internal verification boundary rather than direct table access.
 
-OAuth and JWT are deferred for now, but the schema is structured so they can be added later without reworking the core account tables.
+JWT is still deferred for now, and the schema is structured so it can be added later without reworking the core account tables.
 
 ## Shared Schema Boundary
 
@@ -107,9 +126,8 @@ Possible later boundaries:
 
 Future/deferred:
 
-- OAuth
-- JWT
 - game-server token verification through a future explicit API/internal boundary
+- JWT
 
 ## Repository Notes
 
