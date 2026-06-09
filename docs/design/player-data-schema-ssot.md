@@ -25,6 +25,22 @@ Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separat
   - MatchResultSummary
 - Live simulation state is excluded.
 
+## V1 Stats Contract
+
+The initial planned logical `Stats` contract is summary-only and intended for match-resolution commits.
+
+V1 stat fields:
+
+- `total_score`
+- `high_score`
+- `ship_deaths`
+- `games_played`
+- `wins`
+
+This V1 contract does not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.
+
+For V1 multiplayer, the winner is the authenticated player with the highest match score.
+
 ## Logical Schema Versus Physical Database Schema
 
 This SSoT is for logical player-data contracts, not raw database DDL.

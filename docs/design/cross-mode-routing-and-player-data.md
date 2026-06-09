@@ -38,6 +38,8 @@ Online Multiplayer:
 - Authenticated Account required
 - player data routes to Rails/API
 
+Implementation status: the online-multiplayer auth/admission seam is now in place with Rails internal token verification, Go authclient, websocket session identity, and websocket auth packets. This does not yet implement Local Profile, embedded DB, player-data routing, loadout persistence, unlocks, achievements, or profile sync.
+
 Multiplayer Simulation:
 
 - controlled local/test environment for online-style multiplayer/account behavior
@@ -109,7 +111,7 @@ Current state:
 
 - Godot connects to the Go websocket.
 - The game server creates session-local player/session state.
-- No account verification exists in the game server yet.
+- The game server now has websocket account verification through Rails token verification, Go authclient, session identity, and websocket auth packets.
 
 Target lifecycle:
 
@@ -188,6 +190,8 @@ Authenticated Account:
 - Rails-owned identity and persistence
 - required for online multiplayer
 - rejected by local single-player
+
+Implementation status: this routing model exists as the auth/admission boundary, but it is not the same as Local Profile or player-data implementation.
 
 ## Non-Goals
 
@@ -327,11 +331,51 @@ Symmetry:
 
 This split is planned from the first Local Profile implementation, not as a later extraction.
 
+### Live Grant Transport
+
+Live progression grants may use internal HTTP from the game-server to the owning player-data service as the first viable path.
+
+For Authenticated Account, the target service is `services/api-server`.
+
+For future Local Profile, the target service is `services/player-data-server`.
+
+A server-to-server websocket is not required for the first version.
+
+Durable queues and outbox workers are future hardening options, not the starting point.
+
+Live grant writes must be idempotent using a `grant_id` or `event_id`.
+
+Retries must not double-credit rewards.
+
 ### Progression Ownership
 
 Player-data services own progression persistence, not live gameplay authority.
 
 The game-server owns gameplay facts, match results, and progression-producing events.
+
+Not every player-data write should wait until match end.
+
+Summary-style stats can be finalized at match resolution, while valuable durable rewards should be persisted live or near-live so they are not coupled to the end-of-match summary path.
+
+Examples of match-summary stats:
+
+- total score
+- high score
+- ship deaths
+- games played
+- wins
+
+Examples of live durable grants:
+
+- currency
+- ship parts
+- rare drops
+- unlock tokens
+- account-affecting rewards
+
+Gameplay emits authoritative domain events, but player-data services own persistence of the durable result.
+
+The game-server should not update Rails/SQLite tables directly.
 
 Game-server-owned facts include:
 
@@ -355,6 +399,46 @@ Player-data-owned persisted data includes:
 The player-data service should not decide combat or gameplay rules such as whether an asteroid kill grants immediate score.
 
 Account and local-profile progression policies may be applied by the player-data service when processing trusted match results, but gameplay rules remain in gameplay and rules systems.
+
+### V1 Persistent Stats
+
+The initial persistent stats payload is summary-only and can be committed at match resolution.
+
+V1 stat fields:
+
+- `total_score`
+- `high_score`
+- `ship_deaths`
+- `games_played`
+- `wins`
+
+For V1 multiplayer, the winner is the authenticated player with the highest match score.
+
+This V1 stats payload does not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.
+
+### Stats Event Pipeline
+
+For V1 stats, the flow is:
+
+- game-server emits domain events during gameplay
+- a match or session summary accumulates per-player facts
+- match resolution decides the final score and V1 winner
+- the game-server reports the summary to the player-data service later
+- the player-data service persists stats
+
+Likely event inputs include:
+
+- `ScoreEarned`
+- `ShipDeath`
+- `MatchCompleted`
+- `PlayerJoined`
+- `PlayerFinished`
+
+Gameplay code should not directly mutate persistent player stats.
+
+For V1, match summary reporting is the commit point for stats.
+
+Live durable rewards use a separate progression-grant style path instead of the stats summary path.
 
 ## Shared Player-Data Schema SSoT
 
