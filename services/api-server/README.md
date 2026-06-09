@@ -4,9 +4,20 @@ This service is the Ruby/Rails API-only server for Space Rocks business and back
 
 The Go game server still owns real-time simulation, including movement, bullets, collisions, scoring, lives, death, respawn, pause safety, rooms, and websocket state.
 
-This API is no longer just a scaffold. The current baseline includes health and email/password auth.
+This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth, and opaque bearer tokens.
 
 ## Local Setup
+
+Local Discord OAuth secrets live outside git in `.secrets/api-server.env`.
+The `.secrets/` directory is ignored, and secrets must not be committed.
+If this repo's `.envrc` is enabled, `direnv` is the preferred local workflow for exporting them into the shell.
+Rails must be started from a shell where the Discord OAuth variables are already exported.
+
+Expected variable names:
+
+- `DISCORD_CLIENT_ID`
+- `DISCORD_CLIENT_SECRET`
+- `DISCORD_REDIRECT_URI`
 
 ```bash
 bundle install
@@ -42,11 +53,7 @@ The Rails API owns the auth persistence layer at a high level:
 The auth endpoints issue opaque bearer tokens for API access. Tokens are stored hashed in the database.
 Both email/password auth and Discord OAuth issue the same opaque bearer access token.
 
-Discord OAuth requires these environment variables:
-
-- `DISCORD_CLIENT_ID`
-- `DISCORD_CLIENT_SECRET`
-- `DISCORD_REDIRECT_URI`
+Discord OAuth requires the environment variables listed in Local Setup above.
 
 ### `POST /auth/register`
 
@@ -88,6 +95,17 @@ Begin the Discord OAuth flow by redirecting the browser to Discord.
 Handle the browser-driven Discord OAuth callback after Discord redirects back with `code` and `state`.
 
 Returns the current user plus a new token on success.
+Email may be `null`.
+Discord OAuth and email/password auth both issue the same opaque bearer token.
+
+#### Discord OAuth smoke test
+
+1. Start Rails with the Discord env vars active.
+2. Open `http://localhost:3000/auth/discord/start` in a browser.
+3. Approve the Discord login.
+4. Confirm the callback returns user plus token JSON.
+5. Copy the raw token only.
+6. Call `GET /auth/me` with `Authorization: Bearer <token>`.
 
 ### `GET /auth/me`
 
@@ -140,4 +158,4 @@ The collection is for manual smoke testing only and should not use real secrets 
 Future/deferred:
 
 - JWT
-- game-server auth verification boundaries
+- game-server token verification boundaries

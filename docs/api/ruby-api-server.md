@@ -14,6 +14,7 @@ Current implemented baseline:
 - Discord OAuth auth exists
 - opaque bearer access tokens exist
 - provider identity schema exists for future OAuth/provider login
+- `/auth/me` verification exists
 
 The current API-owned data model is:
 
@@ -65,6 +66,9 @@ Implemented auth endpoints:
 - `GET /auth/discord/callback`
 - `GET /auth/me`
 - `DELETE /auth/logout`
+
+Discord OAuth is browser-driven for now.
+Godot login handoff remains deferred.
 
 The Go game server should not read auth tables directly.
 
