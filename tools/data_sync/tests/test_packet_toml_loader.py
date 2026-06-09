@@ -81,9 +81,11 @@ def test_loads_packet_types_and_builders(tmp_path: Path) -> None:
     ]
 
     builder = schema.builder("input_packet")
-    assert builder.args == ("forward", "back", "right", "left", "shoot")
+    assert builder.args == ("forward", "back", "right", "left", "primary_fire", "secondary_fire")
     assert builder.body["type"] == "input"
     assert builder.body["input"]["forward"] == "$forward"
+    assert builder.body["input"]["primary_fire"] == "$primary_fire"
+    assert builder.body["input"]["secondary_fire"] == "$secondary_fire"
 
 
 def test_preserves_rich_type_strings(tmp_path: Path) -> None:
@@ -438,4 +440,3 @@ shoot = "bool"
 
     with pytest.raises(PacketTomlError):
         load_packet_schema_files((legacy,))
-

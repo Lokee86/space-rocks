@@ -9,6 +9,7 @@ module Internal
             valid: true,
             user: {
               id: result.user.id,
+              account_id: result.user.account_id,
               display_name: result.user.display_name
             }
           }, status: :ok

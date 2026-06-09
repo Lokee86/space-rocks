@@ -13,6 +13,7 @@ from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.discovery import discover_constants_files
 from data_sync.model.constants import ConstantValue
 from data_sync.model.packets import PacketDefinition, PacketSchema, PacketSchemaField
+from data_sync.player_data_toml import PlayerDataTomlError, load_player_data_schema
 from data_sync.packet_rendering import GO_PRIMITIVES, PacketRenderingError, parse_rich_type
 from data_sync.packet_toml import PacketTomlError, load_packet_schema, load_packet_schema_files
 from data_sync.toml_store import TomlStore, TomlStoreError
@@ -54,6 +55,8 @@ def validate(config: DataSyncConfig, domains: tuple[str, ...], languages: tuple[
             _validate_constants(config, constants_store, request, errors)
     if "packets" in request.domains:
         _validate_packet_sot(config.sot_paths("packets"), errors)
+    if "player_data" in request.domains:
+        _validate_player_data_sot(config.sot_paths("player_data"), errors)
 
     _validate_configured_files_and_blocks(config, request, errors)
 
@@ -95,6 +98,14 @@ def _validate_packet_sot(paths: tuple[Path, ...], errors: list[str]) -> None:
         except TomlStoreError:
             pass
     errors.append(rich_error)
+
+
+def _validate_player_data_sot(paths: tuple[Path, ...], errors: list[str]) -> None:
+    for path in paths:
+        try:
+            load_player_data_schema(path)
+        except PlayerDataTomlError as exc:
+            errors.append(f"{path}: {exc}")
 
 
 def _validate_rich_packet_schema(schema: PacketSchema, errors: list[str]) -> None:

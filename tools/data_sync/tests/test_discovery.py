@@ -98,6 +98,44 @@ const HUD_MARGIN := 12
     assert [item.path for item in discovered] == [included_path]
 
 
+def test_discover_constants_files_sorts_final_paths_globally(tmp_path: Path) -> None:
+    client_path = tmp_path / "client/scripts/world/world_sync.gd"
+    server_path = tmp_path / "services/game-server/internal/game/constants.go"
+    client_path.parent.mkdir(parents=True)
+    server_path.parent.mkdir(parents=True)
+    client_path.write_text(
+        """
+# data-sync:start constants.client.hud
+const HUD_MARGIN := 12
+# data-sync:end constants.client.hud
+""".strip(),
+        encoding="utf-8",
+    )
+    server_path.write_text(
+        """
+// data-sync:start constants.server.damage
+const Damage = 10
+// data-sync:end constants.server.damage
+""".strip(),
+        encoding="utf-8",
+    )
+
+    config = DataSyncConfig(
+        path=tmp_path / "config.toml",
+        root=tmp_path,
+        sot_paths_by_domain={},
+        targets_by_domain_language={},
+        constants_scan=ScanConfig(
+            include=("services/**/*.go", "client/**/*.gd"),
+            exclude=(),
+        ),
+    )
+
+    discovered = discover_constants_files(config, ("go", "gds"))
+
+    assert [item.path for item in discovered] == [client_path, server_path]
+
+
 def test_discover_constants_files_ignores_unsupported_extensions(tmp_path: Path) -> None:
     toml_path = tmp_path / "services/game-server/internal/game/constants.toml"
     toml_path.parent.mkdir(parents=True)
@@ -115,6 +153,44 @@ def test_discover_constants_files_ignores_unsupported_extensions(tmp_path: Path)
     )
 
     assert discover_constants_files(config, ("go", "gds", "ts")) == ()
+
+
+def test_discover_constants_files_excludes_nested_godot_paths(tmp_path: Path) -> None:
+    included_path = tmp_path / "client/scripts/world/world_sync.gd"
+    excluded_path = tmp_path / "client/.godot/editor/cache.gd"
+    included_path.parent.mkdir(parents=True)
+    excluded_path.parent.mkdir(parents=True)
+    included_path.write_text(
+        """
+# data-sync:start constants.client.hud
+const HUD_MARGIN := 12
+# data-sync:end constants.client.hud
+""".strip(),
+        encoding="utf-8",
+    )
+    excluded_path.write_text(
+        """
+# data-sync:start constants.client.hud
+const HUD_MARGIN := 16
+# data-sync:end constants.client.hud
+""".strip(),
+        encoding="utf-8",
+    )
+
+    config = DataSyncConfig(
+        path=tmp_path / "config.toml",
+        root=tmp_path,
+        sot_paths_by_domain={},
+        targets_by_domain_language={},
+        constants_scan=ScanConfig(
+            include=("client/**/*.gd",),
+            exclude=("**/.godot/**",),
+        ),
+    )
+
+    discovered = discover_constants_files(config, ("gds",))
+
+    assert [item.path for item in discovered] == [included_path]
 
 
 def test_discover_constants_files_ignores_packet_only_markers(tmp_path: Path) -> None:

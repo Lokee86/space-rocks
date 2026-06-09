@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Callable, Any
 
 from data_sync.block_io import BlockIOError, extract_block
-from data_sync.config import DataSyncConfig
+from data_sync.config import ConfigError, DataSyncConfig
 from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.discovery import discover_constants_files
 from data_sync.parsers import gds_constants, go_constants, ts_constants
@@ -32,11 +32,15 @@ def pull_constants(config: DataSyncConfig, language: str) -> None:
     if parser is None:
         raise PullError(f"unsupported constants pull language: {language}")
 
-    discovered_files = discover_constants_files(config, (language,))
-    if not discovered_files:
-        return
     constants_store = _load_constants_store(config)
-    parsed_by_section = _parse_discovered_sections(discovered_files, parser)
+    targets = _configured_constants_targets(config, language)
+    if targets:
+        parsed_by_section = _parse_configured_sections(targets, parser)
+    else:
+        discovered_files = discover_constants_files(config, (language,))
+        if not discovered_files:
+            return
+        parsed_by_section = _parse_discovered_sections(discovered_files, parser)
     source_stores: dict[object, TomlStore] = {}
     touched_paths: list[object] = []
 
@@ -66,6 +70,13 @@ def pull_constants(config: DataSyncConfig, language: str) -> None:
         source_stores[source_path].write(source_path)
 
 
+def _configured_constants_targets(config: DataSyncConfig, language: str):
+    try:
+        return config.targets_for("constants", language)
+    except ConfigError:
+        return ()
+
+
 def _load_constants_store(config: DataSyncConfig) -> ConstantsStore:
     sot_paths = config.sot_paths("constants")
     if not sot_paths:
@@ -83,11 +94,65 @@ def _load_source_store(path) -> TomlStore:
         raise PullError(str(exc)) from exc
 
 
+def _parse_configured_sections(
+    targets,
+    parser: Parser,
+) -> dict[str, tuple[tuple[str, Any], ...]]:
+    parsed_by_section: dict[str, tuple[tuple[str, Any], ...]] = {}
+    section_owners: set[str] = set()
+
+    for target in targets:
+        texts: dict[object, str] = {}
+        for path in target.files:
+            try:
+                texts[path] = path.read_text(encoding="utf-8")
+            except FileNotFoundError as exc:
+                raise PullError(f"configured constants file does not exist: {path}") from exc
+            except OSError as exc:
+                raise PullError(f"failed to read constants file {path}: {exc}") from exc
+
+        for section_name in target.sections:
+            if section_name in section_owners:
+                raise PullError(f"[{section_name}] is owned by multiple targets")
+
+            current_values = None
+            current_source = None
+            for path, text in texts.items():
+                try:
+                    block = extract_block(text, section_name)
+                except BlockIOError as exc:
+                    message = str(exc)
+                    if "missing data-sync block" in message:
+                        continue
+                    raise PullError(f"{path}: {exc}") from exc
+
+                if current_source is not None and path != current_source:
+                    raise PullError(f"[{section_name}] is owned by multiple targets")
+
+                try:
+                    current_values = parser(block)
+                except ConstantsParseError as exc:
+                    raise PullError(f"{path} [{section_name}]: {exc}") from exc
+                current_source = path
+
+            if current_values is None:
+                raise PullError(f"configured constants target missing section [{section_name}]")
+
+            section_owners.add(section_name)
+            previous_values = parsed_by_section.get(section_name)
+            if previous_values is not None and current_values != previous_values:
+                raise PullError(f"[{section_name}] has conflicting values across configured targets")
+            parsed_by_section[section_name] = current_values
+
+    return parsed_by_section
+
+
 def _parse_discovered_sections(
     discovered_files,
     parser: Parser,
 ) -> dict[str, tuple[tuple[str, Any], ...]]:
     parsed_by_section: dict[str, tuple[tuple[str, Any], ...]] = {}
+    section_owners: set[str] = set()
     for discovered in discovered_files:
         path = discovered.path
         try:
@@ -98,6 +163,9 @@ def _parse_discovered_sections(
             raise PullError(f"failed to read constants file {path}: {exc}") from exc
 
         for section_name in discovered.sections:
+            if section_name in section_owners:
+                raise PullError(f"[{section_name}] is owned by multiple targets")
+            section_owners.add(section_name)
             try:
                 block = extract_block(text, section_name)
                 current_values = parser(block)

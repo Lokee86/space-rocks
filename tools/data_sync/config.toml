@@ -23,6 +23,12 @@ paths = [
   "shared/drop_tables/basicasteroids.toml",
 ]
 
+[sot.player_data]
+paths = [
+  "shared/player_data/stats.toml",
+  "shared/player_data/match_result.toml",
+]
+
 [constants.scan]
 include = ["services/game-server/internal/constants/*.go", "client/scripts/generated/constants/*.gd"]
 exclude = [".git/**", "**/.godot/**", "**/node_modules/**"]

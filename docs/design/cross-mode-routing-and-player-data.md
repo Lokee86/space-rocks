@@ -224,8 +224,9 @@ Implementation status: this routing model exists as the auth/admission boundary,
 - SessionID is websocket/session scoped.
 - GamePlayerID is temporary match/simulation scoped.
 - LocalProfileID is durable embedded profile identity.
-- AccountUserID is durable Rails/API identity.
-- Never replace GamePlayerID with AccountUserID or LocalProfileID.
+- account_id is the canonical cross-system UUID identity for authenticated accounts.
+- Rails `user_id` remains an internal foreign key to `users.id`.
+- Never replace GamePlayerID with account_id or LocalProfileID.
 
 ## Data Destinations
 

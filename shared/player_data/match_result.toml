@@ -1,0 +1,42 @@
+schema_name = "match_result"
+schema_version = "v1.1"
+
+[MatchResultSummary.metadata]
+winner_rule = "multiplayer_highest_score"
+ties_award_no_wins = true
+
+[MatchResultSummary.fields.match_id]
+type = "string"
+required = true
+
+[MatchResultSummary.fields.mode]
+type = "string"
+required = true
+
+[MatchResultSummary.fields.resolved_at]
+type = "string"
+optional = true
+
+[PlayerMatchSummary.fields.game_player_id]
+type = "string"
+required = true
+
+[PlayerMatchSummary.fields.account_id]
+type = "string"
+optional = true
+
+[PlayerMatchSummary.fields.local_profile_id]
+type = "string"
+optional = true
+
+[PlayerMatchSummary.fields.score]
+type = "integer"
+default = 0
+
+[PlayerMatchSummary.fields.ship_deaths]
+type = "integer"
+default = 0
+
+[PlayerMatchSummary.fields.won]
+type = "boolean"
+default = false

@@ -48,6 +48,7 @@ class Auth::MeControllerTest < ActionDispatch::IntegrationTest
 
     body = JSON.parse(response.body)
     assert_equal @user.id, body["user"]["id"]
+    assert_equal @user.account_id, body["user"]["account_id"]
     assert_equal "Ada", body["user"]["display_name"]
     assert_equal "ada@example.com", body["user"]["email"]
     assert_nil body["user"]["password_digest"]

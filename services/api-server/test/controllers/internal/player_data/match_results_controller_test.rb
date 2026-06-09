@@ -44,7 +44,7 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
         params: {
           result_id: "result-1",
           match_id: "match-1",
-          account_user_id: @user.id,
+          account_id: @user.account_id,
           score: 12,
           ship_deaths: 3,
           won: true
@@ -69,13 +69,13 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
     refute_includes response.body, "access_token"
   end
 
-  test "POST /internal/player-data/match-results with an unknown account_user_id returns 404" do
+  test "POST /internal/player-data/match-results with an unknown account_id returns 404" do
     with_internal_token_env do
       post "/internal/player-data/match-results",
         params: {
           result_id: "result-unknown-user",
           match_id: "match-unknown-user",
-          account_user_id: 999_999,
+          account_id: "account-does-not-match",
           score: 12,
           ship_deaths: 3,
           won: true
@@ -92,7 +92,7 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
       post "/internal/player-data/match-results",
         params: {
           match_id: "match-missing-result-id",
-          account_user_id: @user.id,
+          account_id: @user.account_id,
           score: 12,
           ship_deaths: 3,
           won: true
@@ -109,7 +109,7 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
       post "/internal/player-data/match-results",
         params: {
           result_id: "result-missing-match-id",
-          account_user_id: @user.id,
+          account_id: @user.account_id,
           score: 12,
           ship_deaths: 3,
           won: true
@@ -127,7 +127,7 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
         params: {
           result_id: "result-duplicate",
           match_id: "match-duplicate",
-          account_user_id: @user.id,
+          account_id: @user.account_id,
           score: 12,
           ship_deaths: 3,
           won: true
@@ -148,7 +148,7 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
         params: {
           result_id: "result-duplicate",
           match_id: "match-duplicate",
-          account_user_id: @user.id,
+          account_id: @user.account_id,
           score: 12,
           ship_deaths: 3,
           won: true

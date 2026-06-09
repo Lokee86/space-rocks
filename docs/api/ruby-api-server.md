@@ -99,6 +99,8 @@ Email/password auth and Discord OAuth both issue the same opaque bearer access t
 
 If the game server needs auth, it should use an explicit API or internal verification boundary rather than direct table access. Rails/API owns authenticated users, OAuth identities, and online account persistence.
 
+`account_id` is the canonical cross-system UUID for authenticated accounts. Rails `user_id` remains an internal foreign key to `users.id`, and game-facing payloads should use `account_id` while local profiles use `local_profile_id`.
+
 See [cross-mode routing and player data](../design/cross-mode-routing-and-player-data.md) for the cross-mode admission, identity, and player-data routing model.
 
 JWT is still deferred for now, and the schema is structured so it can be added later without reworking the core account tables.

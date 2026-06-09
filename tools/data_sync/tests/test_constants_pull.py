@@ -11,7 +11,7 @@ pytest.importorskip("tomlkit")
 
 
 def write_pull_project(tmp_path: Path) -> Path:
-    for directory in ["shared", "go"]:
+    for directory in ["shared", "go", "ts"]:
         (tmp_path / directory).mkdir()
     (tmp_path / "shared/game_data.toml").write_text(
         """
@@ -60,6 +60,14 @@ const BasicCannonProjectileSpeed = 900.0
 """.lstrip(),
         encoding="utf-8",
     )
+    (tmp_path / "ts/constants.ts").write_text(
+        """
+// data-sync:start constants.client
+export const CLIENT_SCALE = 2;
+// data-sync:end constants.client
+""".lstrip(),
+        encoding="utf-8",
+    )
     (tmp_path / "go/packets.go").write_text("// data-sync:start packets\nold\n// data-sync:end packets\n")
 
     config_path = tmp_path / "config.toml"
@@ -69,14 +77,14 @@ const BasicCannonProjectileSpeed = 900.0
 path = "shared/game_data.toml"
 
 [constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
+files = ["go/constants.go", "go/weapons.go"]
+sections = ["constants.gameplay", "constants.server.weapons.basic_cannon"]
+owns = ["constants.gameplay", "constants.server.weapons.basic_cannon"]
 
-[weapons.go]
-files = ["go/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon"]
-owns = ["constants.server.weapons.basic_cannon"]
+[constants.ts]
+files = ["ts/constants.ts"]
+sections = ["constants.client"]
+owns = ["constants.client"]
 
 """.strip()
         + "\n",
@@ -94,7 +102,7 @@ def test_pull_constants_updates_gameplay_and_preserves_packets(tmp_path: Path) -
     assert "player_speed = 500.0" in sot
     assert "debug_enabled = false" in sot
     assert 'welcome_text = "hi"' in sot
-    assert "client_scale = 2" in sot
+    assert "basic_cannon_projectile_speed = 900.0" in sot
 
 
 def test_pull_constants_can_load_only_go_constants_outputs(tmp_path: Path) -> None:
@@ -180,14 +188,9 @@ const BasicCannonProjectileSpeed = 900.0
 path = "shared/game_data.toml"
 
 [constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
-
-[weapons.go]
-files = ["go/weapons.go"]
-sections = ["constants.server.weapons.basic_cannon"]
-owns = ["constants.server.weapons.basic_cannon"]
+files = ["go/constants.go", "go/weapons.go"]
+sections = ["constants.gameplay", "constants.server.weapons.basic_cannon"]
+owns = ["constants.gameplay", "constants.server.weapons.basic_cannon"]
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -250,14 +253,9 @@ const TorpedoProjectileSpeed = 900.0
 paths = ["shared/constants.toml", "shared/weapons.toml"]
 
 [constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
-
-[weapons.go]
-files = ["go/weapons.go"]
-sections = ["constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.torpedo"]
+files = ["go/constants.go", "go/weapons.go"]
+sections = ["constants.gameplay", "constants.server.weapons.torpedo"]
+owns = ["constants.gameplay", "constants.server.weapons.torpedo"]
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -318,14 +316,9 @@ const TorpedoProjectileSpeed = 900.0
 paths = ["shared/general.toml", "shared/weapons.toml"]
 
 [constants.go]
-files = ["go/constants.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
-
-[weapons.go]
-files = ["go/weapons.go"]
-sections = ["constants.server.weapons.torpedo"]
-owns = ["constants.server.weapons.torpedo"]
+files = ["go/constants.go", "go/weapons.go"]
+sections = ["constants.gameplay", "constants.server.weapons.torpedo"]
+owns = ["constants.gameplay", "constants.server.weapons.torpedo"]
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -364,7 +357,11 @@ const TorpedoProjectileSpeed = 900.0
 [sot.constants]
 paths = ["shared/general.toml"]
 
-[weapons.go]
+[constants.scan]
+include = ["go/**/*.go"]
+exclude = []
+
+[constants.go]
 files = ["go/weapons.go"]
 sections = ["constants.server.weapons.torpedo"]
 owns = ["constants.server.weapons.torpedo"]
@@ -417,7 +414,7 @@ const TorpedoProjectileSpeed = 900.0
 [sot.constants]
 paths = ["shared/general.toml", "shared/weapons.toml"]
 
-[weapons.go]
+[constants.go]
 files = ["go/weapons.go"]
 sections = ["constants.server.weapons.torpedo"]
 owns = ["constants.server.weapons.torpedo"]
@@ -472,22 +469,18 @@ const PlayerSpeed = 500.0
 path = "shared/general.toml"
 
 [constants.go]
-files = ["go/constants.go"]
+files = ["go/constants.go", "go/weapons.go"]
 sections = ["constants.gameplay"]
 owns = ["constants.gameplay"]
 
-[weapons.go]
-files = ["go/weapons.go"]
-sections = ["constants.gameplay"]
-owns = ["constants.gameplay"]
 """.strip()
         + "\n",
         encoding="utf-8",
     )
 
-    assert run(["-pull", "-constants", "-go", "-config", str(config_path)]) == 2
+    assert run(["-pull", "-constants", "-go", "-config", str(config_path)]) == 1
     captured = capsys.readouterr()
-    assert "config error" in captured.err
+    assert "pull error" in captured.err
     assert "owned by multiple targets" in captured.err
 
 
@@ -498,7 +491,50 @@ def test_pull_constants_refuses_non_owned_section(tmp_path: Path) -> None:
 
     sot = (tmp_path / "shared/game_data.toml").read_text(encoding="utf-8")
     assert "client_scale = 2" in sot
-    assert "CLIENT_SCALE" not in sot
+    assert "client_scale = 1" not in sot
+
+
+def test_pull_constants_falls_back_to_discovery_without_configured_constants_target(
+    tmp_path: Path,
+) -> None:
+    for directory in ["shared", "go"]:
+        (tmp_path / directory).mkdir()
+    (tmp_path / "shared/game_data.toml").write_text(
+        """
+[constants.gameplay]
+player_speed = 420.0
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "go/constants.go").write_text(
+        """
+package constants
+
+// data-sync:start constants.gameplay
+const PlayerSpeed = 500.0
+// data-sync:end constants.gameplay
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path = tmp_path / "config.toml"
+    config_path.write_text(
+        """
+[sot.constants]
+path = "shared/game_data.toml"
+
+[constants.scan]
+include = ["go/**/*.go"]
+exclude = []
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert run(["-pull", "-constants", "-go", "-config", str(config_path)]) == 0
+
+    sot = (tmp_path / "shared/game_data.toml").read_text(encoding="utf-8")
+    assert "player_speed = 500.0" in sot
 
 
 def test_pull_constants_refuses_noncanonical_formatting(tmp_path: Path) -> None:

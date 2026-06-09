@@ -28,6 +28,10 @@ DEFAULT_SOT_PATHS = {
     "drop_tables": (
         "shared/drop_tables/basicasteroids.toml",
     ),
+    "player_data": (
+        "shared/player_data/stats.toml",
+        "shared/player_data/match_result.toml",
+    ),
 }
 REQUIRED_DOMAIN_KEYS = ("files", "sections", "owns")
 
@@ -151,7 +155,7 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
                 continue
             if not isinstance(table, Mapping):
                 raise ConfigError(f"missing required config table [{domain}.{language}]")
-            if domain == "constants":
+            if domain == "constants" and any(key not in table for key in REQUIRED_DOMAIN_KEYS):
                 continue
             targets.setdefault((domain, language), []).append(
                 _load_domain_language_config(root, domain, language, table)

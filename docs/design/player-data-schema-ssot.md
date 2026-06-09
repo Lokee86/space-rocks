@@ -113,6 +113,8 @@ Rails migrations own the physical Postgres schema.
 
 Rails physical schema should satisfy the shared logical player-data schema.
 
+`account_id` is the canonical cross-system UUID for authenticated accounts. Rails `user_id` stays an internal foreign key to `users.id`, and player-data contracts should use `account_id` for authenticated accounts while local profiles use `local_profile_id`.
+
 Rails should not use raw SQL as the cross-service SSoT.
 
 ## Embedded DB Boundary
