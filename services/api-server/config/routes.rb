@@ -17,9 +17,17 @@ Rails.application.routes.draw do
     get "discord/callback", to: "discord#callback"
   end
 
+  namespace :player do
+    get "stats", to: "stats#show"
+  end
+
   namespace :internal do
     namespace :auth do
       post "verify-token", to: "verify_tokens#create"
+    end
+
+    namespace :player_data, path: "player-data" do
+      post "match-results", to: "match_results#create"
     end
   end
 
