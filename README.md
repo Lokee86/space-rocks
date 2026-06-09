@@ -6,7 +6,7 @@ Client runtime is split into focused seams for input, targeting, world sync, HUD
 
 ## Status
 
-The project is in active development. Current work includes a playable Godot client, a Go websocket game server, room support, split TOML shared data for constants/packets under `shared/`, a Rails API server with health and email/password auth, opaque bearer access tokens, server-authoritative scoring/lives/respawn logic, asteroid collisions/splitting, HUD updates, audio/effects, and structured server logging.
+The project is in active development. Current work includes a playable Godot client, a Go websocket game server, room support, split TOML shared data for constants/packets under `shared/`, a Rails API server with health, email/password auth, Discord OAuth, Godot Discord login-session handoff, opaque bearer access tokens, `/auth/me` validation, server-authoritative scoring/lives/respawn logic, asteroid collisions/splitting, HUD updates, audio/effects, and structured server logging.
 
 Expect incomplete docs and rough edges while systems are still moving.
 
@@ -40,7 +40,7 @@ git lfs pull
 
 - `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
 - `services/game-server/`: Go game server module. The current game server entrypoint is `services/game-server/cmd/game-server`.
-- `services/api-server/`: Ruby/Rails API server for business/backend concerns. It currently owns health, email/password auth, and opaque bearer access tokens. It is separate from real-time game simulation.
+- `services/api-server/`: Ruby/Rails API server for business/backend concerns. It currently owns health, email/password auth, Discord OAuth, login-session handoff, opaque bearer access tokens, and `/auth/me` validation. It is separate from real-time game simulation.
 - `shared/`: split TOML sources of truth for constants (`shared/constants/*.toml`) and packets (`shared/packets/outputs.toml`, `gameplay.toml`, `debug.toml`, `lobby.toml`), plus collision shape data.
 - `docs/`: Project documentation, including architecture, developer workflow, API plans, devtools, notes, and server logging docs.
 - `bruno-api/`: Bruno API collection for local API smoke testing.

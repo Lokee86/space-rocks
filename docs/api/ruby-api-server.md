@@ -64,25 +64,31 @@ Implemented auth endpoints:
 - `POST /auth/login`
 - `GET /auth/discord/start`
 - `GET /auth/discord/callback`
+- `POST /auth/discord/login_sessions` - create a login session for browser Discord handoff
+- `POST /auth/discord/login_sessions/:id/exchange` - exchange an authenticated login session for the normal bearer token response
 - `GET /auth/me`
 - `DELETE /auth/logout`
 
-Discord OAuth now supports a browser-driven login-session handoff for Godot:
+### Godot Discord Login-Session Flow
 
-- `POST /auth/discord/login_sessions`
-- `POST /auth/discord/login_sessions/:id/exchange`
+Godot now uses a browser-assisted Discord login-session handoff with Rails:
 
-Current client flow:
+- Godot asks Rails to create a Discord login session.
+- Rails returns `login_session_id`, `poll_secret`, `login_url`, and `expires_at`.
+- Godot opens `login_url` in the browser.
+- The browser completes Discord OAuth.
+- The Rails callback marks the login session authenticated.
+- Godot polls and exchanges the login session using `login_session_id` and `poll_secret`.
+- Rails returns the normal auth response with the Space Rocks bearer token and user payload.
+- Godot stores the Space Rocks bearer token and validates it through `GET /auth/me`.
 
-- the client opens the Discord browser flow
-- the API issues a short-lived login session
-- the browser callback marks that login session authenticated
-- the client polls exchange and receives the normal bearer token after authentication
-- `GET /auth/me` still validates bearer tokens
-- `DELETE /auth/logout` still clears the server-side access token record
+This flow keeps Discord client secrets out of Godot and avoids manually copying browser JSON tokens.
 
+Existing email/password auth and the existing direct Discord browser smoke behavior remain API-level capabilities.
 Single-player remains unauthenticated and does not require Rails auth.
 Websocket token authentication is still future work.
+
+Next auth/account work after this handoff is the Rails internal token-verification endpoint for game-server use, then the Go authclient seam, then the game-server session-identity seam, then multiplayer websocket auth/admission. Embedded DB, Local Profile, player-data routing, and player-data SSoT implementation remain later work.
 
 The Go game server should not read Rails auth tables directly.
 

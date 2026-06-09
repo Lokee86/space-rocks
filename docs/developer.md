@@ -40,9 +40,9 @@ Install these before running or developing Space Rocks locally:
 
 - **Ruby / Rails** for the API server.
   - The Rails API project is in `services/api-server/`.
-  - The current API baseline includes `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/discord/start`, `GET /auth/discord/callback`, `GET /auth/me`, and `DELETE /auth/logout`.
+  - The current API baseline includes `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/discord/start`, `GET /auth/discord/callback`, `POST /auth/discord/login_sessions`, `POST /auth/discord/login_sessions/:id/exchange`, `GET /auth/me`, and `DELETE /auth/logout`.
   - Discord OAuth is implemented at the Rails API level.
-  - Godot login handoff and game-server token verification remain deferred.
+  - Godot login handoff is implemented; game-server token verification remains deferred.
   - Auth uses opaque bearer tokens stored hashed in the database.
 
 - **Python 3.10+** for repo tooling and static checks.
@@ -261,15 +261,32 @@ The API server listens on `:3000` by default and exposes:
 - `GET /health`
 - `POST /auth/register`
 - `POST /auth/login`
+- `POST /auth/discord/login_sessions`
+- `POST /auth/discord/login_sessions/:id/exchange`
 - `GET /auth/me`
 - `DELETE /auth/logout`
 
-API auth/dev note:
+### API Auth Development
+
+Local Discord OAuth depends on `direnv` loading the `.secrets/` environment files before Rails starts.
+Make sure the database is migrated before testing the browser sign-in flow.
+
+```bash
+cd services/api-server
+bundle exec rails db:migrate
+RAILS_ENV=test bundle exec rails db:test:prepare
+bundle exec rails test
+bundle exec rails server
+```
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
 
 - Discord OAuth is implemented at the Rails API layer; see [services/api-server/README.md](../services/api-server/README.md) for the full local Discord OAuth smoke flow.
 - `.secrets/api-server.env` is local-only, ignored, and should not be committed.
-- Load the Discord env vars before launching Rails so the process inherits them.
-- Godot login handoff is still deferred.
+- Godot should not require Rails for single-player.
+- Rails reference columns create an index by default, so `add_reference :table, :thing, foreign_key: true` plus `add_index :table, :thing_id` will duplicate the index unless `index: false` is set on the reference.
 - `POST /auth/login`
 - `GET /auth/me`
 - `DELETE /auth/logout`

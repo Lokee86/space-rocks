@@ -4,16 +4,16 @@ This service is the Ruby/Rails API-only server for Space Rocks business and back
 
 The Go game server still owns real-time simulation, including movement, bullets, collisions, scoring, lives, death, respawn, pause safety, rooms, and websocket state.
 
-This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth at the Rails API level, and opaque bearer tokens.
+This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth at the Rails API level, Godot Discord login-session handoff, `/auth/me` validation, and opaque bearer tokens.
 
-## Local Setup
+## Local Auth Setup
 
 Local Discord OAuth secrets live outside git in `.secrets/api-server.env`.
 The `.secrets/` directory is ignored, and secrets must not be committed.
 If this repo's `.envrc` is enabled, `direnv` is the preferred local workflow for exporting them into the shell.
 Rails must be started from a shell where the Discord OAuth variables are already exported.
 
-Expected variable names:
+Required environment variables:
 
 - `DISCORD_CLIENT_ID`
 - `DISCORD_CLIENT_SECRET`
@@ -21,12 +21,31 @@ Expected variable names:
 
 ```bash
 bundle install
-bundle exec rails db:create
+bundle exec rails db:migrate
 bundle exec rails test
 bundle exec rails server
 ```
 
+If this is a brand-new local database, run `bundle exec rails db:create` once before `db:migrate`.
+
 The API server runs locally on port `3000` by default.
+
+Discord smoke path:
+
+1. Ensure the Discord env vars are loaded from `.secrets/` via `direnv` or your shell.
+2. Run `bundle exec rails db:migrate`.
+3. Start Rails with `bundle exec rails server`.
+4. Start Godot.
+5. Click `Sign-in`.
+6. Complete Discord login in the browser.
+7. Return to Godot and confirm the menu shows your display name.
+8. Click `Logout`.
+
+Troubleshooting:
+
+- `PendingMigrationError` means run `bundle exec rails db:migrate`.
+- Rails reference columns create an index by default, so `add_reference :table, :thing, foreign_key: true` plus `add_index :table, :thing_id` will duplicate the index unless `index: false` is set on the reference.
+- Duplicate index names in new migrations usually mean `add_reference` or `t.references` already created the index and a second `add_index` line was added.
 
 ## Health Check
 
@@ -53,7 +72,7 @@ The Rails API owns the auth persistence layer at a high level:
 The auth endpoints issue opaque bearer tokens for API access. Tokens are stored hashed in the database.
 Both email/password auth and Discord OAuth issue the same opaque bearer access token.
 
-Discord OAuth is implemented in the Rails API and requires the environment variables listed in Local Setup above.
+Discord OAuth is implemented in the Rails API and requires the environment variables listed in Local Auth Setup above.
 
 ### `POST /auth/register`
 
@@ -97,6 +116,16 @@ Handle the browser-driven Discord OAuth callback after Discord redirects back wi
 Returns the current user plus a new token on success.
 Email may be `null`.
 Discord OAuth and email/password auth both issue the same opaque bearer token.
+
+### `POST /auth/discord/login_sessions`
+
+Create a login session for the browser Discord handoff.
+
+Returns `login_session_id`, `poll_secret`, `login_url`, and `expires_at`.
+
+### `POST /auth/discord/login_sessions/:id/exchange`
+
+Exchange an authenticated login session for the normal bearer token response.
 
 #### Discord OAuth smoke test
 
