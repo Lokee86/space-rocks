@@ -1,0 +1,173 @@
+[[structs]]
+id = "PlayerDataIdentity"
+
+[[structs.fields]]
+name = "identity_kind"
+json = "identity_kind"
+type = "string"
+
+[[structs.fields]]
+name = "account_id"
+json = "account_id"
+type = "string"
+
+[[structs.fields]]
+name = "local_profile_id"
+json = "local_profile_id"
+type = "string"
+
+[[structs]]
+id = "PlayerDataStats"
+
+[[structs.fields]]
+name = "total_score"
+json = "total_score"
+type = "int"
+
+[[structs.fields]]
+name = "high_score"
+json = "high_score"
+type = "int"
+
+[[structs.fields]]
+name = "ship_deaths"
+json = "ship_deaths"
+type = "int"
+
+[[structs.fields]]
+name = "games_played"
+json = "games_played"
+type = "int"
+
+[[structs.fields]]
+name = "wins"
+json = "wins"
+type = "int"
+
+[[structs]]
+id = "PlayerDataRecordMatchResult"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "result_id"
+json = "result_id"
+type = "string"
+
+[[structs.fields]]
+name = "match_id"
+json = "match_id"
+type = "string"
+
+[[structs.fields]]
+name = "identity"
+json = "identity"
+type = "PlayerDataIdentity"
+
+[[structs.fields]]
+name = "score"
+json = "score"
+type = "int"
+
+[[structs.fields]]
+name = "ship_deaths"
+json = "ship_deaths"
+type = "int"
+
+[[structs.fields]]
+name = "won"
+json = "won"
+type = "bool"
+
+[[structs]]
+id = "PlayerDataRecordMatchResultResult"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "accepted"
+json = "accepted"
+type = "bool"
+
+[[structs.fields]]
+name = "duplicate"
+json = "duplicate"
+type = "bool"
+
+[[structs.fields]]
+name = "stats"
+json = "stats"
+type = "PlayerDataStats"
+
+[[structs.fields]]
+name = "error_code"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[packet_types]]
+id = "player_data_record_match_result"
+value = "player_data_record_match_result"
+
+[[packet_types]]
+id = "player_data_record_match_result_result"
+value = "player_data_record_match_result_result"
+
+[[packet_types]]
+id = "player_data_load_stats"
+value = "player_data_load_stats"
+
+[[packet_types]]
+id = "player_data_load_stats_result"
+value = "player_data_load_stats_result"
+
+[[structs]]
+id = "PlayerDataLoadStats"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "identity"
+json = "identity"
+type = "PlayerDataIdentity"
+
+[[structs]]
+id = "PlayerDataLoadStatsResult"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "found"
+json = "found"
+type = "bool"
+
+[[structs.fields]]
+name = "stats"
+json = "stats"
+type = "PlayerDataStats"
+
+[[structs.fields]]
+name = "error_code"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"

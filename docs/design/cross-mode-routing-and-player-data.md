@@ -11,6 +11,16 @@ The main thesis is:
 - Identity describes who the session represents.
 - Player-data routing decides which player-data service boundary handles durable data.
 
+Implemented foundation:
+
+- `services/player-data` is the current sibling Go module for player-data routing and packet handling.
+- The game-server hosts the player-data runtime in-process for now.
+- Communication uses player-data packets from the shared packet SSoT across an encoded payload boundary.
+- `services/player-data` has its own codec and does not import game-server internals.
+- Current stores are in-memory account/local routes plus a guest no-op route.
+- SQLite, Rails adapter work, real match resolution, and gameplay wiring remain later work.
+- The runtime can still become a separate player-data server later by replacing the in-process transport.
+
 ## Terminology
 
 - Play mode means the semantic session/game route, not simply whether a process is running locally.
@@ -127,7 +137,7 @@ Local-capable lifecycle:
 - session may default to Guest
 - client may start local single-player as Guest
 - client may select Local Profile
-- Local Profile flow depends on `services/player-data-server`.
+- Local Profile packet handling currently flows through the in-process `services/player-data` runtime hosted by game-server.
 - client may authenticate account for multiplayer simulation or online route
 
 Local single-player with Guest:
@@ -138,14 +148,14 @@ Local single-player with Guest:
 
 Local single-player with Local Profile:
 
-- client uses `services/player-data-server` to create, list, and select Local Profile
+- client uses the player-data packet/runtime boundary for Local Profile operations
 - client starts local game-server session with selected `LocalProfileID` or local profile session reference
-- game-server asks `services/player-data-server` for profile and loadout data needed for the match
-- game-server reports trusted match result back to `services/player-data-server`
-- `services/player-data-server` persists through SQLite
+- game-server asks the in-process player-data runtime for profile and loadout data needed for the match
+- game-server can report trusted match results to the player-data runtime later
+- SQLite-backed persistence remains a later `services/player-data-server` concern
 
 The game-server websocket should not become a general local profile management API.
-Profile management UI should go through `services/player-data-server`, not game-server.
+Profile management UI should go through the player-data packet/runtime boundary for now, not game-server.
 
 Online-authoritative lifecycle:
 
@@ -239,17 +249,21 @@ Initial data destinations:
 No durable route means the data is session-only or scratch-only and is not persisted as account-shaped data.
 Data destination means the service route that owns the data operation, not just a database.
 Backing store details are hidden behind the owning service.
-SQLite belongs to `services/player-data-server`.
+SQLite would belong to the future `services/player-data-server`.
 Postgres belongs to `services/api-server`.
 The game-server should not directly write either account-shaped player-data database.
 
 ## Local Profile, Player-Data Server, And SQLite
 
-The local player-data service exists to support Local Profile.
+The current implemented player-data foundation exists to support Local Profile.
 
 Local Profile is durable, account-shaped, and local-only.
 
-SQLite is owned by `services/player-data-server`, not `services/game-server`.
+`services/player-data` is a sibling Go module, not game-server internals.
+
+The game-server hosts the player-data runtime in-process for now.
+
+SQLite is not implemented yet and remains a future `services/player-data-server` concern.
 
 The embedded or local database is not a gameplay concern.
 
@@ -311,26 +325,29 @@ The client uses `services/api-server` for authenticated account profile, loadout
 
 ## Player-Data Service Boundary
 
-Player-data is not owned by the game-server.
+Player-data is not owned by the game-server internals.
 
-The game-server consumes player-data service APIs.
+`services/player-data` is the current player-data runtime foundation.
 
-The client consumes player-data service APIs for local profile and loadout UI.
+The game-server consumes player-data packets through the encoded payload boundary.
 
-The backing store is hidden behind the service.
+The client and any future separate service can consume the same packet contract later.
+
+The backing store is hidden behind the runtime.
 
 Planned service split:
 
 - `services/game-server` owns simulation, rooms, match lifecycle, gameplay events, and trusted match results.
-- `services/player-data-server` owns Local Profile persistence backed by SQLite.
+- `services/player-data-server` can later own Local Profile persistence backed by SQLite.
 - `services/api-server` owns Authenticated Account persistence backed by Postgres.
 
 Symmetry:
 
-- Local Profile path: `client`/`game-server` -> `services/player-data-server` -> SQLite.
+- Local Profile path now: `client`/`game-server` -> shared packets -> in-process `services/player-data` runtime.
+- Later Local Profile path: `client`/`game-server` -> `services/player-data-server` -> SQLite.
 - Authenticated Account path: `client`/`game-server` -> `services/api-server` -> Postgres.
 
-This split is planned from the first Local Profile implementation, not as a later extraction.
+This split remains extractable from the current runtime foundation.
 
 ### Live Grant Transport
 
@@ -445,7 +462,7 @@ Live durable rewards use a separate progression-grant style path instead of the 
 
 Local Profile and Authenticated Account share the same account-shaped player-data concepts.
 
-The logical schema for those concepts should come from `shared/player_data` via the future data-sync player-data domain.
+The logical schema for those concepts comes from the shared packet SSoT and packet runtime boundary today, and can later expand into a broader `shared/player_data` logical schema if needed.
 
 Physical storage may differ between embedded DB and Rails/Postgres.
 
@@ -472,7 +489,7 @@ RecordMatchResult
 Service-route wording:
 
 - Guest has no durable account-shaped service route.
-- Local Profile uses `services/player-data-server`.
+- Local Profile uses the in-process `services/player-data` runtime for now.
 - Authenticated Account uses `services/api-server`.
 
 Services may implement the contract differently, but they must satisfy the shared logical schema.
@@ -501,13 +518,13 @@ Excluded data categories:
 ## Player-Data Routing
 
 - Guest routes to no durable account-shaped data.
-- Local Profile routes to `services/player-data-server`, backed by SQLite.
+- Local Profile routes to the in-process `services/player-data` runtime for now.
 - Authenticated Account routes to `services/api-server`, backed by Postgres.
 
 | Identity | Durable account-shaped data | Service route | Backing store |
 | --- | --- | --- | --- |
 | Guest | no | none/no durable route | none |
-| Local Profile | yes | `services/player-data-server` | SQLite |
+| Local Profile | yes | `services/player-data` in-process runtime | in-memory for now |
 | Authenticated Account | yes | `services/api-server` | Postgres |
 
 Clarifications:
@@ -528,8 +545,8 @@ These states should not be admitted by the routing architecture:
 - Online-authoritative server + guest gameplay admission
 - game-server directly writing Local Profile SQLite tables
 - game-server directly writing Authenticated Account Postgres tables
-- client directly mutating SQLite outside player-data-server
-- player-data-server owning live gameplay simulation
+- client directly mutating SQLite outside the future player-data server
+- player-data runtime owning live gameplay simulation
 - api-server owning local SQLite Local Profile persistence
 - gameplay code directly selecting Rails/API versus embedded DB
 - Go game-server directly reading Rails auth tables

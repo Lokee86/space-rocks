@@ -41,8 +41,11 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - API/business/backend concerns should remain out of the Go real-time game server unless explicitly redirected.
 - The user strongly prefers small implementation prompts and quick reviewable diffs.
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
-- Server-side account and local-profile work must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, Local Profile uses embedded DB, Authenticated Account uses Rails/API, and gameplay code must not directly choose embedded DB vs Rails/API.
-- Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): future `shared/player_data` logical schema work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline will need a future player-data domain.
+- Server-side account and local-profile work must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, and gameplay code must not directly choose embedded DB vs Rails/API.
+- Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): `shared/player_data` contracts now exist, `shared/packets/player_data.toml` defines player-data packets, and gameplay code must not depend directly on Rails tables or embedded DB tables.
+- `services/player-data` exists as a sibling Go module with an independent codec, generated protocol packets, runtime/dispatcher, memory account/local stores, and guest no-op store.
+- `cmd/game-server` can host the player-data runtime in-process through composition.
+- SQLite, Rails adapter, real match resolution, gameplay wiring, and client UI remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
 - Devtools coordination now lives under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` acting as the facade/composition seam.
@@ -56,7 +59,6 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Single-player remains unchanged and does not require auth.
 - Local/no-auth game-server mode can still allow multiplayer for dev because server-side admission remains authoritative.
 - Non-Discord in-game account creation UI is still deferred.
-- Embedded DB, Local Profile, player-data routing, and player-data SSoT implementation are later work.
 
 ## Known Gaps / TODOs
 
