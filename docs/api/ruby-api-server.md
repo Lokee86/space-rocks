@@ -11,7 +11,7 @@ Current implemented baseline:
 - Rails API-only service exists under `services/api-server/`
 - health endpoint exists
 - email/password auth exists
-- Discord OAuth auth exists
+- Discord OAuth auth exists at the Rails API level
 - opaque bearer access tokens exist
 - provider identity schema exists for future OAuth/provider login
 - `/auth/me` verification exists
@@ -67,15 +67,33 @@ Implemented auth endpoints:
 - `GET /auth/me`
 - `DELETE /auth/logout`
 
-Discord OAuth is browser-driven for now.
-Godot login handoff remains deferred.
+Discord OAuth now supports a browser-driven login-session handoff for Godot:
 
-The Go game server should not read auth tables directly.
+- `POST /auth/discord/login_sessions`
+- `POST /auth/discord/login_sessions/:id/exchange`
+
+Current client flow:
+
+- the client opens the Discord browser flow
+- the API issues a short-lived login session
+- the browser callback marks that login session authenticated
+- the client polls exchange and receives the normal bearer token after authentication
+- `GET /auth/me` still validates bearer tokens
+- `DELETE /auth/logout` still clears the server-side access token record
+
+Single-player remains unauthenticated and does not require Rails auth.
+Websocket token authentication is still future work.
+
+The Go game server should not read Rails auth tables directly.
 
 Email/password auth and Discord OAuth both issue the same opaque bearer access token.
 `GET /auth/me` verifies either login path.
 
 If the game server needs auth in the future, it should use an explicit API or internal verification boundary rather than direct table access.
+
+Future game-server websocket auth should verify bearer tokens through an explicit Rails/API endpoint rather than reading Rails auth tables directly. Rails/API owns authenticated users, OAuth identities, and online account persistence.
+
+See [cross-mode routing and player data](../design/cross-mode-routing-and-player-data.md) for the cross-mode admission, identity, and player-data routing model.
 
 JWT is still deferred for now, and the schema is structured so it can be added later without reworking the core account tables.
 

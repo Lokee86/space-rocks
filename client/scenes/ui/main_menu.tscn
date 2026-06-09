@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://dcn0vbv2b3wfc"]
 
 [ext_resource type="FontFile" uid="uid://b4obamqu1qd0x" path="res://assets/fonts/GamepauseddemoRegular-RpmY6.otf" id="1_187wc"]
+[ext_resource type="LabelSettings" uid="uid://drsllhvt10h1w" path="res://assets/ui/label_settings/death2.tres" id="2_btxxm"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_5kvch"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="3_gy3bv"]
+[ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="3_q85j6"]
 [ext_resource type="Texture2D" uid="uid://bjfpt5avmrn30" path="res://assets/ui/title!.png" id="3_x2yvf"]
+[ext_resource type="Texture2D" uid="uid://clkc3vojcm4uo" path="res://assets/ui/indicator.png" id="4_8g5eo"]
 [ext_resource type="Texture2D" uid="uid://dext0jx4eaxel" path="res://assets/ui/title.png" id="4_uhagc"]
 [ext_resource type="Script" uid="uid://bp5tllbsbp63m" path="res://scripts/ui/menus/main_menu.gd" id="10_n3gqj"]
 
@@ -23,6 +26,44 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("10_n3gqj")
 
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=113644845]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+
+[node name="LoginStatusLabel" type="Label" parent="HBoxContainer" unique_id=1005575616]
+unique_name_in_owner = true
+layout_mode = 2
+text = "SIGN IN STATUS"
+label_settings = ExtResource("2_btxxm")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer" unique_id=214062536]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_top = 3
+
+[node name="LogoutButton" parent="HBoxContainer/MarginContainer" unique_id=1859330374 instance=ExtResource("3_q85j6")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(35, 35)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="CenterContainer" type="CenterContainer" parent="HBoxContainer/MarginContainer/LogoutButton" unique_id=1190788798]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer/MarginContainer/LogoutButton/CenterContainer" unique_id=748146681]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_8g5eo")
+expand_mode = 1
+
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1943361113]
 layout_mode = 1
 anchors_preset = 15
@@ -30,6 +71,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=975268666]
 layout_mode = 2
@@ -152,4 +194,11 @@ MULTI-
 
 
 PLAYER"
+label_settings = ExtResource("3_gy3bv")
+
+[node name="Sign-in" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/MultiplayerButton/CenterContainer/MarginContainer" unique_id=1996238829]
+layout_mode = 2
+text = "
+
+SIGN IN"
 label_settings = ExtResource("3_gy3bv")

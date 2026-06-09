@@ -15,6 +15,8 @@
   - `shared/packets/lobby.toml`
 - TOML sources of truth for active drop tables:
   - `shared/drop_tables/*.toml`
+- Planned future TOML sources of truth for player-data schema:
+  - `shared/player_data/*.toml`
 - Go game server files
 - GDScript Godot client files
 - TypeScript API server files, later
@@ -39,7 +41,19 @@ Deferred scope:
 
 ```text
 TypeScript output
+player_data logical schema domain
+migration skeleton generation
 ```
+
+## Future Player-Data Schema Domain
+
+Player-data schema is planned as a logical schema SSoT, not raw database DDL.
+
+The likely future domain flag is `-player-data`, but it is not implemented yet.
+
+Future outputs may include Go structs/contracts, schema docs, contract fixtures, Rails migration skeletons, and embedded DB migration skeletons.
+
+See [player-data schema source of truth](../../docs/design/player-data-schema-ssot.md).
 
 ## Source Of Truth
 

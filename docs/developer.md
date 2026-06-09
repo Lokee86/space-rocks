@@ -40,7 +40,9 @@ Install these before running or developing Space Rocks locally:
 
 - **Ruby / Rails** for the API server.
   - The Rails API project is in `services/api-server/`.
-  - The current API baseline includes `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, and `DELETE /auth/logout`.
+  - The current API baseline includes `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/discord/start`, `GET /auth/discord/callback`, `GET /auth/me`, and `DELETE /auth/logout`.
+  - Discord OAuth is implemented at the Rails API level.
+  - Godot login handoff and game-server token verification remain deferred.
   - Auth uses opaque bearer tokens stored hashed in the database.
 
 - **Python 3.10+** for repo tooling and static checks.

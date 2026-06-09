@@ -7,6 +7,9 @@ const RoomSessionController := preload("res://scripts/session/room_session_contr
 const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
 const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
 const AppShutdownController := preload("res://scripts/session/app_shutdown_controller.gd")
+const AuthSessionController := preload("res://scripts/auth/auth_session_controller.gd")
+const AuthApiClient := preload("res://scripts/auth/auth_api_client.gd")
+const ApiHttpClient := preload("res://scripts/api/api_http_client.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
@@ -29,6 +32,9 @@ var room_session_controller
 var gameplay_session_controller
 var client_config_controller
 var app_shutdown_controller
+var auth_session_controller
+var api_http_client
+var auth_api_client
 var background_controller
 
 func _ready() -> void:
@@ -41,6 +47,17 @@ func _ready() -> void:
 	app_shutdown_controller = AppShutdownController.new()
 	add_child(app_shutdown_controller)
 	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
+
+	api_http_client = ApiHttpClient.new()
+	add_child(api_http_client)
+
+	auth_api_client = AuthApiClient.new(api_http_client)
+
+	auth_session_controller = AuthSessionController.new()
+	add_child(auth_session_controller)
+	auth_session_controller.configure(auth_api_client)
+	auth_session_controller.auth_state_changed.connect(_on_auth_state_changed)
+	auth_session_controller.auth_error.connect(_on_auth_error)
 
 	background_controller = BackgroundController.new()
 	add_child(background_controller)
@@ -105,6 +122,8 @@ func _ready() -> void:
 	)
 
 	_connect_main_menu_signals()
+	_connect_auth_signals()
+	auth_session_controller.initialize_from_saved_token()
 	_make_view_anchor_camera_current()
 
 func _notification(what: int) -> void:
@@ -135,8 +154,21 @@ func _connect_main_menu_signals() -> void:
 		return
 
 	_connect_main_menu_signal("single_player_pressed", _on_single_player_pressed)
+	_connect_main_menu_signal("sign_in_requested", _on_sign_in_requested)
+	_connect_main_menu_signal("logout_requested", _on_logout_requested)
 	_connect_main_menu_signal("multiplayer_create_requested", _on_multiplayer_create_requested)
 	_connect_main_menu_signal("multiplayer_join_requested", _on_multiplayer_join_requested)
+
+
+func _connect_auth_signals() -> void:
+	if auth_session_controller == null:
+		push_error("Missing auth session controller")
+		return
+
+	if !auth_session_controller.auth_state_changed.is_connected(_on_auth_state_changed):
+		auth_session_controller.auth_state_changed.connect(_on_auth_state_changed)
+	if !auth_session_controller.auth_error.is_connected(_on_auth_error):
+		auth_session_controller.auth_error.connect(_on_auth_error)
 
 
 func _connect_main_menu_signal(signal_name: StringName, handler: Callable) -> void:
@@ -159,6 +191,16 @@ func _on_single_player_pressed() -> void:
 	main_menu_session_controller.request_single_player()
 
 
+func _on_sign_in_requested() -> void:
+	_log_shell_status("App entry sign in requested")
+	auth_session_controller.request_discord_sign_in()
+
+
+func _on_logout_requested() -> void:
+	_log_shell_status("App entry logout requested")
+	auth_session_controller.logout()
+
+
 func _on_multiplayer_create_requested() -> void:
 	_log_shell_status("App entry multiplayer create requested")
 	main_menu_session_controller.request_create_room()
@@ -169,10 +211,24 @@ func _on_multiplayer_join_requested(room_code: String) -> void:
 	main_menu_session_controller.request_join_room(room_code)
 
 
+func _on_auth_state_changed() -> void:
+	if main_menu == null || auth_session_controller == null:
+		return
+
+	var session = auth_session_controller.get_session()
+	if session != null && session.is_signed_in():
+		main_menu.show_signed_in(session.display_name)
+	else:
+		main_menu.show_signed_out()
+
+
+func _on_auth_error(message: String) -> void:
+	ClientLogger.shell_info("Auth error: %s" % message)
+
+
 func _make_view_anchor_camera_current() -> void:
 	if view_anchor == null:
 		return
 	var camera := view_anchor.get_node_or_null("Camera2D") as Camera2D
 	if camera != null:
 		camera.make_current()
-

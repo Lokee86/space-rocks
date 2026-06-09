@@ -65,6 +65,9 @@ See:
 docs/api/ruby-api-server.md
 ```
 
+Server-side account and local-profile routing must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, Local Profile uses embedded DB, Authenticated Account uses Rails/API, and gameplay code must not directly choose embedded DB vs Rails/API.
+Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): future `shared/player_data` logical schema work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline will need a future player-data domain.
+
 ## Networking / Rooms / Game Ownership
 
 - Keep websocket/session transport and adapter wiring in `services/game-server/internal/networking`.
