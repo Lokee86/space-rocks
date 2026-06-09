@@ -11,6 +11,12 @@ http:
       value: Bearer {{auth_token}}
   auth: inherit
 
+docs: |-
+  # Auth Me
+
+  `auth_token` must be the raw Space Rocks bearer token only, with no `Bearer ` prefix.
+  Login and register scripts may set `auth_token` automatically.
+
 settings:
   encodeUrl: true
   timeout: 0

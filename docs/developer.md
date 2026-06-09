@@ -262,6 +262,16 @@ The API server listens on `:3000` by default and exposes:
 - `GET /auth/me`
 - `DELETE /auth/logout`
 
+API auth/dev note:
+
+- Discord OAuth is implemented at the Rails API layer; see [services/api-server/README.md](../services/api-server/README.md) for the full local Discord OAuth smoke flow.
+- `.secrets/api-server.env` is local-only, ignored, and should not be committed.
+- Load the Discord env vars before launching Rails so the process inherits them.
+- Godot login handoff is still deferred.
+- `POST /auth/login`
+- `GET /auth/me`
+- `DELETE /auth/logout`
+
 ### Bruno Smoke Tests
 
 Use the Bruno collection rooted at `bruno-api/` for local API smoke tests.

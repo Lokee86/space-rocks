@@ -9,7 +9,7 @@ request:
 docs: |-
   # API Collection Notes
 
-  Discord OAuth smoke testing is browser-driven.
+  Bruno can test `GET {{base_url}}/auth/discord/start` as a `302` redirect, but the full Discord login must be completed in a browser.
 
   - Use `GET {{base_url}}/auth/discord/start` to begin the flow.
   - Complete the Discord callback in a browser; do not store client IDs, client secrets, auth codes, or tokens in this collection.

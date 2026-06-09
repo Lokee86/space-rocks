@@ -15,6 +15,7 @@ docs: |-
 
   This request starts the Discord OAuth flow.
 
+  Keep `followRedirects` set to `false` so the Discord `Location` header can be inspected.
   The callback is browser-driven and should be completed in a browser after Discord redirects back to the app.
 
   Do not place real client IDs, client secrets, authorization codes, or access tokens in Bruno files.
