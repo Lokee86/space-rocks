@@ -49,9 +49,12 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Network telemetry uses `telemetry_ping` / `telemetry_pong`; gameplay state packets include `server_sent_msec`.
 - `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
 - Client auth checkpoint is working: Main Menu `Sign-in` opens Discord browser OAuth, Rails login-session exchange returns the normal Space Rocks bearer token, Godot stores the token, validates it through `/auth/me`, shows the display name in the menu, and clears local token plus signed-in state on logout.
-- Next auth/account step is a Rails internal token-verification endpoint for game-server use, followed by a Go authclient seam, then a game-server session-identity seam, then multiplayer websocket auth/admission.
+- Rails internal token verification exists for the Go game server.
+- Go authclient exists and verifies Space Rocks bearer tokens through Rails.
+- Websocket `authenticate_request` / `authenticate_result` exists.
+- Multiplayer create/join admission is auth-aware.
 - Single-player remains unchanged and does not require auth.
-- Websocket token authentication is still future work; do not treat it as complete.
+- Local/no-auth game-server mode can still allow multiplayer for dev because server-side admission remains authoritative.
 - Non-Discord in-game account creation UI is still deferred.
 - Embedded DB, Local Profile, player-data routing, and player-data SSoT implementation are later work.
 

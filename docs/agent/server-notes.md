@@ -65,8 +65,9 @@ See:
 docs/api/ruby-api-server.md
 ```
 
-Rails/Godot auth session handoff now exists, but Go websocket auth is still future work. The future game-server should verify Space Rocks bearer tokens through Rails/API via an explicit token-verification boundary and a Go authclient seam, not by reading Rails tables directly.
-The next server-side auth step is that explicit Rails token-verification boundary, then the Go authclient seam, then the game-server session identity seam, then multiplayer websocket auth/admission.
+Rails/Godot auth session handoff now exists, and Go websocket auth now has an explicit Rails token-verification boundary plus a Go authclient seam. `services/game-server/internal/authclient` verifies Space Rocks bearer tokens through Rails and returns minimal identity for the game server to use at the websocket boundary, not by reading Rails tables directly.
+The current server-side auth seams are the Go authclient, then the game-server session identity seam, then multiplayer websocket auth/admission.
+The websocket auth handshake uses `authenticate_request` and `authenticate_result`, with `SessionIdentity` remaining separate from `AccountUserID` so the game server can keep session identity distinct from account identity.
 
 Server-side account and local-profile routing must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, Local Profile uses embedded DB, Authenticated Account uses Rails/API, and gameplay code must not directly choose embedded DB vs Rails/API.
 Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): future `shared/player_data` logical schema work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline will need a future player-data domain.
@@ -83,6 +84,7 @@ Embedded DB, Local Profile, player-data routing, and player-data SSoT implementa
 - `rooms` owns room creation, joining, leaving, readiness, lifecycle transitions, cleanup policy, and game instance ownership.
 - Room start now uses a deliberate `Lobby -> Starting -> InGame` transition. `Starting` is an admission-closed handoff state for pre-game coordination, including future slow-client handling, final readiness or sync steps, and other pre-match server work before the room becomes `InGame`.
 - Multiplayer start validation is centralized in the room lifecycle path, and `RoomManager` should resolve the room, session, and player identity before delegating to `Room` for the actual transition.
+- If the game-server auth verifier is configured, multiplayer create/join requires an Authenticated Account identity; if it is not configured, local/no-auth multiplayer can still proceed because server-side admission remains authoritative.
 - `networking` may retain websocket session activation/deactivation when it mutates websocket session fields.
 - `game` owns authoritative gameplay simulation, gameplay state mutation, and adapters from game storage into narrower gameplay seams.
 - Damage resolution lives in `services/game-server/internal/game/damage/`; it owns pure resolution only. `game` owns the entity mutation adapters, and devtools must route damage through the same real damage seam rather than a parallel debug-only path. See `docs/design/damage.md`.
@@ -101,7 +103,7 @@ Embedded DB, Local Profile, player-data routing, and player-data SSoT implementa
 - `currentGamePlayerID` is networking active-game routing state, not a room membership or public identity.
 - Keep `SessionID` / `GamePlayerID` separate from `AccountUserID`; game-server session identity and account identity are different seams.
 - Single-player must not require Rails auth.
-- Online multiplayer will eventually require an Authenticated Account, but that is still above the current Go websocket boundary.
+- Online multiplayer now authenticates through the Go websocket boundary, and when the auth verifier is configured multiplayer admission requires an Authenticated Account.
 
 ## Server Packet Codec
 

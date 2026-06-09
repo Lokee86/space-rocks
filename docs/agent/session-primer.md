@@ -16,6 +16,7 @@ Use this as the short orientation layer for new sessions. It should stay stable 
 - Targeting orchestration now sits above `MouseActionFlow`; `GameplayTargetingContext` owns selection orchestration and `WorldSync` only exposes `target_source()`.
 - The upgraded damage seam now lives in `services/game-server/internal/game/damage/`; `ResolveSingle` handles modifiers, shields, area damage, and DoT at a high level while `game` owns adapters and entity mutation.
 - Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`; weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/design/weapons.md](../design/weapons.md) and [docs/design/radial-effects.md](../design/radial-effects.md).
+- Rails internal token verification, Go authclient, websocket session identity, and websocket auth packets now form the completed auth/admission seam for multiplayer admission.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
@@ -26,6 +27,7 @@ Use this as the short orientation layer for new sessions. It should stay stable 
 - Dev-readiness item 11 is still open: local-player camera piggybacking must be replaced with a dedicated camera target/controller.
 - Generated Godot constants and packet files still live under `client/scripts/` for now, even though that is not the ideal long-term shape.
 - The API server is planned but not scaffolded.
+- Local Profile, embedded DB, player-data routing, and player-data SSoT are still future work.
 - Ship variants are planned but not implemented.
 - Client packet codec callers already use `PacketEncodeResult` and `PacketDecodeResult`; the codec itself should stay focused on JSON parsing and envelope validation only.
 

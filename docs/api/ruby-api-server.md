@@ -57,6 +57,7 @@ Discord OAuth support currently uses these required environment variables:
 - `DISCORD_CLIENT_ID`
 - `DISCORD_CLIENT_SECRET`
 - `DISCORD_REDIRECT_URI`
+- `GAME_SERVER_INTERNAL_TOKEN`
 
 Implemented auth endpoints:
 
@@ -66,6 +67,7 @@ Implemented auth endpoints:
 - `GET /auth/discord/callback`
 - `POST /auth/discord/login_sessions` - create a login session for browser Discord handoff
 - `POST /auth/discord/login_sessions/:id/exchange` - exchange an authenticated login session for the normal bearer token response
+- `POST /internal/auth/verify-token` - verify Space Rocks bearer tokens for the Go game server only
 - `GET /auth/me`
 - `DELETE /auth/logout`
 
@@ -81,23 +83,21 @@ Godot now uses a browser-assisted Discord login-session handoff with Rails:
 - Godot polls and exchanges the login session using `login_session_id` and `poll_secret`.
 - Rails returns the normal auth response with the Space Rocks bearer token and user payload.
 - Godot stores the Space Rocks bearer token and validates it through `GET /auth/me`.
+- The Go game server verifies Space Rocks bearer tokens through Rails at `POST /internal/auth/verify-token` and receives only the minimal identity needed for websocket admission.
 
 This flow keeps Discord client secrets out of Godot and avoids manually copying browser JSON tokens.
 
 Existing email/password auth and the existing direct Discord browser smoke behavior remain API-level capabilities.
 Single-player remains unauthenticated and does not require Rails auth.
-Websocket token authentication is still future work.
-
-Next auth/account work after this handoff is the Rails internal token-verification endpoint for game-server use, then the Go authclient seam, then the game-server session-identity seam, then multiplayer websocket auth/admission. Embedded DB, Local Profile, player-data routing, and player-data SSoT implementation remain later work.
+Websocket token authentication is now implemented for the Go game server through the Rails internal verification boundary.
+Rails owns OAuth and bearer-token verification, while the Go game server consumes that boundary through authclient and websocket admission. Embedded DB, Local Profile, player-data routing, and player-data SSoT implementation remain later work.
 
 The Go game server should not read Rails auth tables directly.
 
 Email/password auth and Discord OAuth both issue the same opaque bearer access token.
 `GET /auth/me` verifies either login path.
 
-If the game server needs auth in the future, it should use an explicit API or internal verification boundary rather than direct table access.
-
-Future game-server websocket auth should verify bearer tokens through an explicit Rails/API endpoint rather than reading Rails auth tables directly. Rails/API owns authenticated users, OAuth identities, and online account persistence.
+If the game server needs auth, it should use an explicit API or internal verification boundary rather than direct table access. Rails/API owns authenticated users, OAuth identities, and online account persistence.
 
 See [cross-mode routing and player data](../design/cross-mode-routing-and-player-data.md) for the cross-mode admission, identity, and player-data routing model.
 
@@ -149,12 +149,11 @@ Possible later boundaries:
 
 - API creates or records room metadata; game server owns live room state.
 - API stores user/profile/leaderboard data; game server reports match results through an internal endpoint or event.
-- API performs auth/token validation; game server verifies tokens at websocket connect.
+  - API performs auth/token validation; game server verifies tokens at websocket connect through the Rails internal auth boundary.
 - API owns matchmaking queues; game server receives selected room/session assignments.
 
 Future/deferred:
 
-- game-server token verification through a future explicit API/internal boundary
 - JWT
 
 ## Repository Notes
