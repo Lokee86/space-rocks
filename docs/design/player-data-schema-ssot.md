@@ -1,0 +1,149 @@
+# Player-Data Schema Source Of Truth
+
+This doc defines the future shared logical schema contract for account-shaped player data used by Local Profile and Authenticated Account paths.
+
+## Purpose
+
+Local Profile and Authenticated Account must share the same logical account-shaped player-data concepts.
+
+## Problem
+
+Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separately risks schema drift.
+
+## Core Rule
+
+- `shared/player_data` will become the source of truth for logical account-shaped player-data schema.
+- Rails/Postgres and embedded DB may have different physical schemas.
+- Both stores must implement the same logical data contract.
+- Gameplay-facing code depends on playerdata contracts, not Rails tables or embedded DB tables.
+- The logical player-data concepts include:
+  - Profile
+  - Loadout
+  - Progression
+  - Unlocks
+  - Stats
+  - MatchResultSummary
+- Live simulation state is excluded.
+
+## Logical Schema Versus Physical Database Schema
+
+This SSoT is for logical player-data contracts, not raw database DDL.
+
+Logical schema examples:
+
+- `PlayerProfile` has `display_name` and profile metadata.
+- `PlayerLoadout` has selected ship, primary weapon, secondary weapon, and future equipment fields.
+- `PlayerProgression` has unlocks, milestones, stats, or progress markers.
+- `MatchResultSummary` has account/profile relevant match summary fields.
+
+Physical schema examples:
+
+- Rails/Postgres tables, indexes, constraints, migrations.
+- Embedded DB tables, indexes, constraints, migrations.
+
+Physical schemas may differ because Rails/Postgres and the embedded DB may have different storage needs.
+
+Physical schemas must still satisfy the shared logical contract.
+
+## Scope
+
+## Non-Goals
+
+## Source Layout
+
+Planned future source directory:
+
+- `shared/player_data/profile.toml`
+- `shared/player_data/loadout.toml`
+- `shared/player_data/progression.toml`
+- `shared/player_data/unlocks.toml`
+- `shared/player_data/match_result.toml`
+
+These files do not exist yet unless they already do.
+
+## Data-Sync Pipeline Upgrade
+
+Player-data schema support should be added as a new data-sync domain.
+
+Likely future domain flag:
+
+- `-player-data`
+
+This is a future pipeline domain beside:
+
+- constants
+- packets
+- drop_tables
+
+The upgrade should start narrow and should not immediately generate full production migrations end-to-end.
+
+## Generated Outputs
+
+Likely first generated outputs:
+
+- Go playerdata structs/contracts.
+- generated schema reference docs.
+- contract fixtures or schema test fixtures.
+- Rails migration skeletons, later.
+- embedded DB migration skeletons, later.
+
+The first pipeline version should generate low-risk outputs before fully owning migrations.
+
+## Rails/Postgres Boundary
+
+Rails owns online authenticated account persistence.
+
+Rails migrations own the physical Postgres schema.
+
+Rails physical schema should satisfy the shared logical player-data schema.
+
+Rails should not use raw SQL as the cross-service SSoT.
+
+## Embedded DB Boundary
+
+Embedded DB owns Local Profile persistence.
+
+Embedded DB physical schema may differ from Rails/Postgres.
+
+Embedded DB physical schema must satisfy the same logical player-data contract.
+
+Embedded DB must not store Discord access tokens, Rails bearer tokens as local profile identity, or online account secrets.
+
+## Store Parity Rules
+
+Local Profile and Authenticated Account should expose equivalent conceptual player-data operations.
+
+Store parity rules:
+
+- Profile shape must remain conceptually aligned.
+- Loadout shape must remain conceptually aligned.
+- Progression/unlocks shape must remain conceptually aligned.
+- Match result summary shape must remain conceptually aligned where applicable.
+
+Parity does not require identical physical tables.
+
+Both stores are implementations of the same player-data contract, not sources of independent domain truth.
+
+## Migration Skeleton Policy
+
+Rails migrations remain human-reviewed because database migrations are operationally sensitive.
+
+Embedded DB migrations also need review because local profile data must be durable and upgradeable.
+
+Generated migration skeletons are acceptable earlier than fully generated migration application.
+
+Fully generated end-to-end migrations are deferred until schema shape stabilizes.
+
+## Contract Tests
+
+Future contract tests:
+
+- SSoT schema parses and validates.
+- generated Go structs match SSoT fields.
+- Rails API payloads match SSoT fields.
+- embedded DB records map to SSoT fields.
+- no store adds independent player-data fields without updating SSoT.
+
+`NoDurableStore` for Guest may return defaults or reject durable writes, but should not pretend to persist account-shaped data.
+
+## Deferred Work

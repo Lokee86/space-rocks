@@ -35,11 +35,11 @@ func test_spawn_torpedo_explosion_adds_scaled_effect_node() -> void:
 
 	var sprite := explosion_node.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
 	assert_not_null(sprite)
-	var texture := sprite.sprite_frames.get_frame_texture("torpedo_explosion", 5)
+	var texture: Texture2D = sprite.sprite_frames.get_frame_texture("torpedo_explosion", 5)
 	assert_not_null(texture)
-	var target_diameter := float(Constants.TORPEDO_RADIAL_ZONE_COUNT * Constants.TORPEDO_RADIAL_ZONE_WIDTH) * 2.0
-	var source_diameter := max(texture.get_width(), texture.get_height())
-	var expected_scale := Vector2.ONE * (target_diameter / source_diameter)
+	var target_diameter: float = float(Constants.TORPEDO_RADIAL_ZONE_COUNT * Constants.TORPEDO_RADIAL_ZONE_WIDTH) * 2.0
+	var source_diameter: float = float(max(texture.get_width(), texture.get_height()))
+	var expected_scale: Vector2 = Vector2.ONE * (target_diameter / source_diameter)
 	assert_eq(sprite.scale, expected_scale)
 
 	var sound := explosion_node.get_node_or_null("TorpedoExplosionSound") as AudioStreamPlayer2D

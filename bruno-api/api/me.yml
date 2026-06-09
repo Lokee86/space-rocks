@@ -14,6 +14,7 @@ http:
 docs: |-
   # Auth Me
 
+  This request checks bearer-token API access and is separate from the browser Discord OAuth flow.
   `auth_token` must be the raw Space Rocks bearer token only, with no `Bearer ` prefix.
   Login and register scripts may set `auth_token` automatically.
 

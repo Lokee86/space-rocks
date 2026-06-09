@@ -136,6 +136,8 @@ python3 tools/data_sync/main.py -push -packets -go -gds
 ## Documentation
 
 - [Architecture](docs/design/architecture.md)
+- [Cross-mode routing and player data](docs/design/cross-mode-routing-and-player-data.md)
+- [Player-data schema source of truth](docs/design/player-data-schema-ssot.md)
 - [Toroidal wrap design](docs/design/toroidal-wrap.md)
 - [Ship variants design](docs/design/ship-variants.md)
 - [Ruby API server plan](docs/api/ruby-api-server.md)

@@ -41,11 +41,17 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - API/business/backend concerns should remain out of the Go real-time game server unless explicitly redirected.
 - The user strongly prefers small implementation prompts and quick reviewable diffs.
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
+- Server-side account and local-profile work must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, Local Profile uses embedded DB, Authenticated Account uses Rails/API, and gameplay code must not directly choose embedded DB vs Rails/API.
+- Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): future `shared/player_data` logical schema work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline will need a future player-data domain.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
 - Devtools coordination now lives under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` acting as the facade/composition seam.
 - Network telemetry uses `telemetry_ping` / `telemetry_pong`; gameplay state packets include `server_sent_msec`.
 - `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
+- Client auth currently uses the menu sign-in action, Discord browser OAuth, login-session exchange, a stored Space Rocks bearer token, and `/auth/me` validation at startup. Logout clears the local token and signed-in state.
+- Single-player remains unchanged and does not require auth.
+- Websocket token authentication is still future work; do not treat it as complete.
+- Non-Discord in-game account creation UI is still deferred.
 
 ## Known Gaps / TODOs
 

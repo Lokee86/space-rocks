@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_08_000500) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_08_000700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -30,15 +30,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_08_000500) do
     t.index ["user_id"], name: "index_access_tokens_on_user_id"
   end
 
+  create_table "oauth_login_sessions", force: :cascade do |t|
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "poll_secret_digest", null: false
+    t.string "provider", null: false
+    t.string "public_id", null: false
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["expires_at"], name: "index_oauth_login_sessions_on_expires_at"
+    t.index ["poll_secret_digest"], name: "index_oauth_login_sessions_on_poll_secret_digest", unique: true
+    t.index ["public_id"], name: "index_oauth_login_sessions_on_public_id", unique: true
+    t.index ["user_id"], name: "index_oauth_login_sessions_on_user_id"
+  end
+
   create_table "oauth_states", force: :cascade do |t|
     t.datetime "consumed_at"
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
+    t.bigint "oauth_login_session_id"
     t.string "provider", null: false
     t.string "redirect_after"
     t.string "state_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_oauth_states_on_expires_at"
+    t.index ["oauth_login_session_id"], name: "index_oauth_states_on_oauth_login_session_id"
     t.index ["provider"], name: "index_oauth_states_on_provider"
     t.index ["state_digest"], name: "index_oauth_states_on_state_digest", unique: true
   end
@@ -72,6 +90,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_08_000500) do
   end
 
   add_foreign_key "access_tokens", "users"
+  add_foreign_key "oauth_login_sessions", "users"
+  add_foreign_key "oauth_states", "oauth_login_sessions"
   add_foreign_key "password_credentials", "users"
   add_foreign_key "user_identities", "users"
 end

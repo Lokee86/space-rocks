@@ -1,4 +1,6 @@
 class OauthState < ApplicationRecord
+  belongs_to :oauth_login_session, optional: true
+
   validates :provider, presence: true
   validates :state_digest, presence: true
   validates :expires_at, presence: true

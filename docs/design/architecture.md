@@ -328,6 +328,8 @@ Important lifecycle rules:
 - `/ws?room_id=...` no longer creates or joins rooms
 - empty rooms schedule cleanup after members/active players leave
 
+Future server-side account and local-profile support should use explicit cross-mode routing seams for admission routing, identity state, and player-data routing. Local Profile stays backed by the embedded DB path, while Authenticated Account stays backed by Rails/API, and gameplay code must not directly choose embedded DB versus Rails/API. See [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
+
 #### Devtools Command Handling Boundary
 
 Devtools command handling is a networking-routed server boundary, not a normal gameplay packet path.
@@ -504,6 +506,8 @@ Generated constants include:
 - `client/scripts/generated/constants/constants.gd`
 
 Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. World size is intentionally generated to both Go and GDScript because client visual wrapping must use the same bounds as the server. Drop-table generated output is Go-only and lives in `services/game-server/internal/game/drops/drop_tables.go`.
+
+Future account-shaped player data will need a shared logical player-data schema SSoT under `shared/player_data` so Local Profile can stay embedded-DB-backed while Authenticated Account stays Rails/API-backed. That SSoT is logical schema, not raw SQL or Rails migration files; see [player-data schema source of truth](player-data-schema-ssot.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
 
 Authoritative today:
 

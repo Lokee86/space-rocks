@@ -4,7 +4,7 @@ This service is the Ruby/Rails API-only server for Space Rocks business and back
 
 The Go game server still owns real-time simulation, including movement, bullets, collisions, scoring, lives, death, respawn, pause safety, rooms, and websocket state.
 
-This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth, and opaque bearer tokens.
+This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth at the Rails API level, and opaque bearer tokens.
 
 ## Local Setup
 
@@ -53,7 +53,7 @@ The Rails API owns the auth persistence layer at a high level:
 The auth endpoints issue opaque bearer tokens for API access. Tokens are stored hashed in the database.
 Both email/password auth and Discord OAuth issue the same opaque bearer access token.
 
-Discord OAuth requires the environment variables listed in Local Setup above.
+Discord OAuth is implemented in the Rails API and requires the environment variables listed in Local Setup above.
 
 ### `POST /auth/register`
 
