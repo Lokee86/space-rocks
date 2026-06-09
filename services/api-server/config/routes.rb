@@ -17,6 +17,12 @@ Rails.application.routes.draw do
     get "discord/callback", to: "discord#callback"
   end
 
+  namespace :internal do
+    namespace :auth do
+      post "verify-token", to: "verify_tokens#create"
+    end
+  end
+
   # Defines the root path route ("/")
   # root "posts#index"
 end

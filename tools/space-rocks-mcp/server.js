@@ -38,16 +38,41 @@ const TEXT_EXTENSIONS = new Set([
   ".mjs",
   ".py",
   ".pyi",
+
+  // Ruby / Rails
+  ".rb",
+  ".erb",
+  ".rake",
+  ".ru",
+  ".gemspec",
+  ".builder",
+
+  // Data / config
   ".json",
   ".toml",
   ".yaml",
   ".yml",
+  ".xml",
+  ".csv",
+
+  // Docs / text
   ".md",
   ".txt",
+
+  // Godot
   ".tscn",
   ".tres",
   ".cfg",
+
+  // Extensionless or special text files
   ".gitignore",
+  "Gemfile",
+  "Gemfile.lock",
+  "Rakefile",
+  "config.ru",
+  ".ruby-version",
+
+  // Go module files
   ".mod",
   ".sum",
 ]);

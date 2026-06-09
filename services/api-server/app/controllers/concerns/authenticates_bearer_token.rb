@@ -8,24 +8,24 @@ module AuthenticatesBearerToken
   private
 
   def authenticate_bearer_token!
-    access_token = bearer_access_token
+    raw_token = bearer_raw_token
+    result = ::Auth::VerifyAccessToken.call(raw_token: raw_token)
 
-    unless access_token
+    unless result.success?
       render json: { error: "invalid_token" }, status: :unauthorized
       return
     end
 
-    @current_access_token = access_token
-    @current_user = access_token.user
-    @current_access_token.update(last_used_at: Time.current)
+    @current_access_token = result.token
+    @current_user = result.user
   end
 
-  def bearer_access_token
+  def bearer_raw_token
     authorization = request.headers["Authorization"].to_s
     scheme, raw_token = authorization.split(" ", 2)
 
     return unless scheme == "Bearer" && raw_token.present?
 
-    AccessToken.find_active_by_raw_token(raw_token)
+    raw_token
   end
 end

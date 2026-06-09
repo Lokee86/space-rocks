@@ -53,7 +53,7 @@ class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
       Auth::Providers::ProviderProfile.new(
         provider: "discord",
         provider_user_id: "discord-user-1",
-        email: "ada@example.com",
+        email: nil,
         display_name: "Ada Lovelace",
         avatar_url: nil
       )
@@ -77,7 +77,7 @@ class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
 
     assert_predicate body["token"], :present?
     assert_equal "Ada Lovelace", body["user"]["display_name"]
-    assert_equal "ada@example.com", body["user"]["email"]
+    assert_nil body["user"]["email"]
 
     user = User.find(body["user"]["id"])
 
