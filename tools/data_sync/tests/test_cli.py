@@ -97,6 +97,21 @@ def test_validate_allows_optional_filters() -> None:
     assert args.languages == ("go",)
 
 
+def test_validate_allows_player_data_domain() -> None:
+    args = parse_args(["-validate", "-player_data"])
+
+    assert args.operation == "validate"
+    assert args.domains == ("player_data",)
+    assert args.languages == ()
+
+
+def test_player_data_is_validate_only() -> None:
+    with pytest.raises(SystemExit) as exc:
+        parse_args(["-push", "-player_data", "-go"])
+
+    assert exc.value.code == 2
+
+
 def test_config_and_sot_options() -> None:
     args = parse_args(
         [

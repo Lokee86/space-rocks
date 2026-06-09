@@ -9,7 +9,7 @@ from typing import Sequence
 
 
 OPERATIONS = ("push", "pull", "diff", "check", "validate")
-DOMAINS = ("constants", "packets", "drop_tables")
+DOMAINS = ("constants", "packets", "drop_tables", "player_data")
 LANGUAGES = ("go", "gds", "ts")
 
 
@@ -72,6 +72,8 @@ def parse_args(argv: Sequence[str] | None = None) -> CliArgs:
     if operation in {"push", "pull", "diff", "check"}:
         if not domains:
             parser.error(f"-{operation} requires at least one domain: -constants and/or -packets")
+        if "player_data" in domains:
+            parser.error("-player_data is only supported with -validate for now")
         if not languages:
             parser.error(f"-{operation} requires at least one language: -go, -gds, and/or -ts")
         if "drop_tables" in domains and "go" not in languages:

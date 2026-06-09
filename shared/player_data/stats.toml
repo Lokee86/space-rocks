@@ -1,0 +1,23 @@
+schema_name = "stats"
+schema_version = "v1.1"
+
+[fields.total_score]
+type = "integer"
+default = 0
+
+[fields.high_score]
+type = "integer"
+default = 0
+
+[fields.ship_deaths]
+type = "integer"
+default = 0
+
+[fields.games_played]
+type = "integer"
+default = 0
+
+[fields.wins]
+type = "integer"
+default = 0
+scope = "multiplayer_only"

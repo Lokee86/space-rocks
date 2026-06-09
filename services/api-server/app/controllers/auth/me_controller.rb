@@ -8,6 +8,7 @@ module Auth
       render json: {
         user: {
           id: current_user.id,
+          account_id: current_user.account_id,
           display_name: current_user.display_name,
           email: current_user.password_credential&.email
         }

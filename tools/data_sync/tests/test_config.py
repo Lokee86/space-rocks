@@ -29,6 +29,21 @@ path = "shared/game_data.toml"
 include = ["client/scripts/**/*.gd", "services/game-server/**/*.go"]
 exclude = ["**/.godot/**", "**/vendor/**"]
 
+[constants.go]
+files = ["services/game-server/internal/constants/constants.go"]
+sections = ["constants.gameplay"]
+owns = ["constants.gameplay"]
+
+[constants.gds]
+files = ["client/scripts/generated/constants/constants.gd"]
+sections = ["constants.client"]
+owns = ["constants.client"]
+
+[constants.ts]
+files = ["services/api-server/src/constants.ts"]
+sections = ["constants.network"]
+owns = ["constants.network"]
+
 [packets.go]
 files = ["services/game-server/internal/network/packets.go"]
 sections = ["packets"]
@@ -61,6 +76,15 @@ def test_loads_valid_config(tmp_path: Path) -> None:
     assert config.root == tmp_path.resolve()
     assert config.sot_path("constants") == tmp_path / "shared/game_data.toml"
     assert config.sot_path("packets") == tmp_path / "shared/game_data.toml"
+    assert config.target("constants", "go").files == (
+        tmp_path / "services/game-server/internal/constants/constants.go",
+    )
+    assert config.target("constants", "gds").files == (
+        tmp_path / "client/scripts/generated/constants/constants.gd",
+    )
+    assert config.target("constants", "ts").files == (
+        tmp_path / "services/api-server/src/constants.ts",
+    )
     assert config.target("packets", "go").files == (tmp_path / "services/game-server/internal/network/packets.go",)
     assert config.constants_scan == ScanConfig(
         include=("client/scripts/**/*.gd", "services/game-server/**/*.go"),
@@ -71,13 +95,50 @@ def test_loads_valid_config(tmp_path: Path) -> None:
 def test_loads_constants_scan_config(tmp_path: Path) -> None:
     config_path = write_config(
         tmp_path,
-        valid_config()
-        + """
+        """
+[sot]
+path = "shared/game_data.toml"
 
 [constants.scan]
 include = ["client/scripts/constants/**/*.gd", "services/game-server/internal/**/*.go"]
 exclude = ["**/.godot/**", "**/generated/**"]
-""",
+
+[constants.go]
+files = ["services/game-server/internal/constants/constants.go"]
+sections = ["constants.gameplay"]
+owns = ["constants.gameplay"]
+
+[constants.gds]
+files = ["client/scripts/generated/constants/constants.gd"]
+sections = ["constants.client"]
+owns = ["constants.client"]
+
+[constants.ts]
+files = ["services/api-server/src/constants.ts"]
+sections = ["constants.network"]
+owns = ["constants.network"]
+
+[packets.go]
+files = ["services/game-server/internal/network/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+
+[packets.gds]
+files = ["client/scripts/packets.gd"]
+sections = ["packets"]
+owns = []
+
+[packets.ts]
+files = ["services/api-server/src/packets.ts"]
+sections = ["packets"]
+owns = []
+
+[drop_tables.go]
+files = ["services/game-server/internal/game/drops/drop_tables.go"]
+sections = ["drop_tables.basicasteroids"]
+owns = []
+outputs = ["server_drop_tables"]
+""".strip(),
     )
 
     config = load_config(config_path)

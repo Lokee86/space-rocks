@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -73,9 +74,9 @@ def _included_paths(config: DataSyncConfig) -> tuple[Path, ...]:
             if _is_excluded(relative_path, config.constants_scan.exclude):
                 continue
             paths.append(path)
-    return tuple(paths)
+    return tuple(sorted(paths))
 
 
 def _is_excluded(relative_path: Path, exclude_patterns: tuple[str, ...]) -> bool:
     relative_text = relative_path.as_posix()
-    return any(Path(relative_text).match(pattern) for pattern in exclude_patterns)
+    return any(fnmatch.fnmatchcase(relative_text, pattern) for pattern in exclude_patterns)

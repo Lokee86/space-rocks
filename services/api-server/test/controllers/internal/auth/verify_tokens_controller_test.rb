@@ -50,6 +50,7 @@ class Internal::Auth::VerifyTokensControllerTest < ActionDispatch::IntegrationTe
 
     assert_equal true, body["valid"]
     assert_equal @user.id, body["user"]["id"]
+    assert_equal @user.account_id, body["user"]["account_id"]
     assert_equal "Ada", body["user"]["display_name"]
     refute_includes response.body, "email"
     refute_includes response.body, "token_digest"

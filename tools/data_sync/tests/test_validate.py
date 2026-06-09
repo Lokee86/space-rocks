@@ -11,7 +11,7 @@ pytest.importorskip("tomlkit")
 
 
 def write_validation_project(tmp_path: Path) -> Path:
-    for directory in ["shared", "go", "gds", "ts"]:
+    for directory in ["shared", "shared/player_data", "go", "gds", "ts"]:
         (tmp_path / directory).mkdir()
 
     write_sot(
@@ -92,6 +92,84 @@ self_id = "string"
     (tmp_path / "gds/packets.gd").write_text(block("#", "packets"), encoding="utf-8")
     (tmp_path / "ts/packets.ts").write_text(block("//", "packets"), encoding="utf-8")
 
+    (tmp_path / "shared/player_data/stats.toml").write_text(
+        """
+schema_name = "stats"
+schema_version = "v1.1"
+
+[fields.total_score]
+type = "integer"
+default = 0
+
+[fields.high_score]
+type = "integer"
+default = 0
+
+[fields.ship_deaths]
+type = "integer"
+default = 0
+
+[fields.games_played]
+type = "integer"
+default = 0
+
+[fields.wins]
+type = "integer"
+default = 0
+scope = "multiplayer_only"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "shared/player_data/match_result.toml").write_text(
+        """
+schema_name = "match_result"
+schema_version = "v1.1"
+
+[MatchResultSummary.metadata]
+winner_rule = "multiplayer_highest_score"
+ties_award_no_wins = true
+
+[MatchResultSummary.fields.match_id]
+type = "string"
+required = true
+
+[MatchResultSummary.fields.mode]
+type = "string"
+required = true
+
+[MatchResultSummary.fields.resolved_at]
+type = "string"
+optional = true
+
+[PlayerMatchSummary.fields.game_player_id]
+type = "string"
+required = true
+
+[PlayerMatchSummary.fields.account_user_id]
+type = "integer"
+optional = true
+
+[PlayerMatchSummary.fields.local_profile_id]
+type = "string"
+optional = true
+
+[PlayerMatchSummary.fields.score]
+type = "integer"
+default = 0
+
+[PlayerMatchSummary.fields.ship_deaths]
+type = "integer"
+default = 0
+
+[PlayerMatchSummary.fields.won]
+type = "boolean"
+default = false
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
     config_path = tmp_path / "config.toml"
     config_path.write_text(valid_config_text(), encoding="utf-8")
     return config_path
@@ -127,6 +205,38 @@ def write_sot(tmp_path: Path, text: str) -> None:
     (tmp_path / "shared/game_data.toml").write_text(text.strip() + "\n", encoding="utf-8")
 
 
+def player_data_config_text() -> str:
+    return """
+[sot.constants]
+paths = ["shared/game_data.toml"]
+
+[sot.packets]
+paths = ["shared/game_data.toml"]
+
+[sot.player_data]
+paths = ["shared/player_data/stats.toml", "shared/player_data/match_result.toml"]
+
+[constants.scan]
+include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
+exclude = []
+
+[packets.go]
+files = ["go/packets.go"]
+sections = ["packets"]
+owns = ["packets"]
+
+[packets.gds]
+files = ["gds/packets.gd"]
+sections = ["packets"]
+owns = []
+
+[packets.ts]
+files = ["ts/packets.ts"]
+sections = ["packets"]
+owns = []
+""".strip() + "\n"
+
+
 def block(comment: str, section: str) -> str:
     return f"{comment} data-sync:start {section}\nold\n{comment} data-sync:end {section}\n"
 
@@ -135,6 +245,32 @@ def test_validate_valid_config_and_sot(tmp_path: Path) -> None:
     config_path = write_validation_project(tmp_path)
 
     assert run(["-validate", "-config", str(config_path)]) == 0
+
+
+def test_validate_player_data_sot(tmp_path: Path) -> None:
+    config_path = write_validation_project(tmp_path)
+    config_path.write_text(player_data_config_text(), encoding="utf-8")
+
+    assert run(["-validate", "-player_data", "-config", str(config_path)]) == 0
+
+
+def test_validate_player_data_rejects_invalid_toml(tmp_path: Path) -> None:
+    config_path = write_validation_project(tmp_path)
+    (tmp_path / "shared/player_data/stats.toml").write_text(
+        """
+schema_name = "stats"
+schema_version = "v1.1"
+
+[fields.total_score]
+type = "float"
+default = 0
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    config_path.write_text(player_data_config_text(), encoding="utf-8")
+
+    assert run(["-validate", "-player_data", "-config", str(config_path)]) == 1
 
 
 def test_validate_constants_multiple_sot_files(tmp_path: Path) -> None:

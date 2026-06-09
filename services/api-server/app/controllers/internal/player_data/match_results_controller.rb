@@ -4,7 +4,7 @@ module Internal
       def create
         return render_invalid_input unless required_params_present?
 
-        user = User.find_by(id: params[:account_user_id])
+        user = User.find_by(account_id: params[:account_id])
         return render_unknown_user unless user
 
         result = PlayerStats::ApplyMatchResult.call(
@@ -36,7 +36,7 @@ module Internal
       end
 
       def required_params_present?
-        params[:result_id].present? && params[:match_id].present? && params[:account_user_id].present?
+        params[:result_id].present? && params[:match_id].present? && params[:account_id].present?
       end
 
       def normalized_score
