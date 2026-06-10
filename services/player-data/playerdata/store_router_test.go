@@ -9,7 +9,7 @@ import (
 func TestStoreRouterLoadStats(t *testing.T) {
 	accountStore := NewMemoryStore()
 	localStore := NewMemoryStore()
-	guestStore := NewNoopStore()
+	guestStore := NewGuestMemoryStore()
 	router := NewStoreRouter(accountStore, localStore, guestStore)
 
 	t.Run("account route", func(t *testing.T) {
@@ -69,17 +69,32 @@ func TestStoreRouterLoadStats(t *testing.T) {
 	})
 
 	t.Run("guest route", func(t *testing.T) {
+		if _, duplicate, err := guestStore.RecordMatchResult(protocol.PlayerDataRecordMatchResult{
+			ResultID: "guest-result",
+			MatchID:  "match-3",
+			Identity: protocol.PlayerDataIdentity{
+				IdentityKind: IdentityKindGuest,
+			},
+			Score:      5,
+			ShipDeaths: 1,
+			Won:        true,
+		}); err != nil {
+			t.Fatalf("seed guest store: %v", err)
+		} else if duplicate {
+			t.Fatal("seed guest store returned duplicate=true")
+		}
+
 		stats, found, err := router.LoadStats(protocol.PlayerDataIdentity{
 			IdentityKind: IdentityKindGuest,
 		})
 		if err != nil {
 			t.Fatalf("LoadStats returned error: %v", err)
 		}
-		if found {
-			t.Fatal("LoadStats returned found=true for guest identity")
+		if !found {
+			t.Fatal("LoadStats returned found=false for guest identity")
 		}
-		if stats != (protocol.PlayerDataStats{}) {
-			t.Fatalf("LoadStats returned %+v, want zero stats", stats)
+		if stats.TotalScore != 5 || stats.HighScore != 5 || stats.ShipDeaths != 1 || stats.GamesPlayed != 1 || stats.Wins != 1 {
+			t.Fatalf("LoadStats returned %+v, want guest stats", stats)
 		}
 	})
 
@@ -95,7 +110,7 @@ func TestStoreRouterLoadStats(t *testing.T) {
 func TestStoreRouterRecordMatchResult(t *testing.T) {
 	accountStore := NewMemoryStore()
 	localStore := NewMemoryStore()
-	guestStore := NewNoopStore()
+	guestStore := NewGuestMemoryStore()
 	router := NewStoreRouter(accountStore, localStore, guestStore)
 
 	t.Run("account route", func(t *testing.T) {
@@ -158,8 +173,8 @@ func TestStoreRouterRecordMatchResult(t *testing.T) {
 		if duplicate {
 			t.Fatal("RecordMatchResult returned duplicate=true for guest route")
 		}
-		if stats != (protocol.PlayerDataStats{}) {
-			t.Fatalf("RecordMatchResult returned %+v, want zero stats", stats)
+		if stats.TotalScore != 0 || stats.HighScore != 0 || stats.ShipDeaths != 0 || stats.GamesPlayed != 1 || stats.Wins != 0 {
+			t.Fatalf("RecordMatchResult returned %+v, want guest stats", stats)
 		}
 	})
 
