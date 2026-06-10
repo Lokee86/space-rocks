@@ -69,9 +69,9 @@ Rails/Godot auth session handoff now exists, and Go websocket auth now has an ex
 The current server-side auth seams are the Go authclient, then the game-server session identity seam, then multiplayer websocket auth/admission.
 The websocket auth handshake uses `authenticate_request` and `authenticate_result`, with `SessionIdentity` remaining separate from `AccountUserID` so the game server can keep session identity distinct from account identity.
 
-Server-side account and local-profile routing must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): `services/player-data` now exists as a sibling Go module, `cmd/game-server` can host the player-data runtime in-process for now, and this is composition/hosting only because gameplay is not wired to emit player-data packets yet. Player-data packets come from the shared packet SSoT, `services/player-data` must not import `services/game-server/internal`, and SQLite plus Rails adapters are still later work.
+Server-side account and local-profile routing must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): `services/player-data` now has the Phase 4 routes for `authenticated_account` through the Rails adapter, `local_profile` through the SQLite adapter, and `guest` through singleton memory; `cmd/game-server` hosts the configured player-data runtime in-process for now, gameplay is still not wired to emit player-data packets, and `services/player-data` must not import `services/game-server/internal`. The game-server must still not directly write SQLite or Rails/Postgres tables.
 Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): logical contract work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline remains the packet/schema source of truth.
-Embedded DB, Local Profile persistence, and player-data runtime extraction are later work.
+Player-data runtime extraction is later work; the Rails adapter and embedded SQLite backing stores are already in place.
 
 ## Networking / Rooms / Game Ownership
 

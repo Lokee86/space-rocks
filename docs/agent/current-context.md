@@ -43,9 +43,10 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
 - Server-side account and local-profile work must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, and gameplay code must not directly choose embedded DB vs Rails/API.
 - Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): `shared/player_data` contracts now exist, `shared/packets/player_data.toml` defines player-data packets, and gameplay code must not depend directly on Rails tables or embedded DB tables.
-- `services/player-data` exists as a sibling Go module with an independent codec, generated protocol packets, runtime/dispatcher, memory account/local stores, and guest no-op store.
-- `cmd/game-server` can host the player-data runtime in-process through composition.
-- SQLite, Rails adapter, real match resolution, gameplay wiring, and client UI remain later work.
+- `services/player-data` exists as a sibling Go module with an independent codec, generated protocol packets, and a configured runtime builder.
+- `services/player-data` now has the Phase 4 routes for `authenticated_account` through the Rails adapter, `local_profile` through the SQLite adapter, and `guest` through singleton memory-backed stats.
+- `cmd/game-server` can host the configured player-data runtime in-process through composition.
+- Match resolution, gameplay wiring, Godot stats UI, save guest profile, and live progression grants remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
 - Devtools coordination now lives under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` acting as the facade/composition seam.
