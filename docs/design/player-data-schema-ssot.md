@@ -80,7 +80,8 @@ Physical schemas may differ because Rails/Postgres and the embedded DB may have 
 
 Physical schemas must still satisfy the shared logical contract.
 
-Rails/Postgres and embedded SQLite stores exist separately, but Phase 4 did not add match-result reporting to those stores.
+Go `MatchResultSummary` structs and builders exist in the player-data runtime, and the game-server now reports resolved `MatchResultSummary` through `services/player-data`.
+`services/player-data` routes `RecordMatchResult` by identity kind: Authenticated Account uses Rails/Postgres through `RailsStore`, Local Profile uses embedded SQLite through the local store, and Guest uses guest/no-durable behavior.
 
 ## Scope
 

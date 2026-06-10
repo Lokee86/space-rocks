@@ -31,6 +31,17 @@ The main shared modules are:
 - `shared/engineforge_readonly_tools.js` for safe Godot bridge diagnostics.
 - `shared/engineforge_write_tools.js` for Godot mutation tools.
 
+## Chrome DevTools / Plasmic bridge
+
+The info/read MCP server can optionally expose Chrome DevTools and read-only Plasmic tools.
+
+Start it from `tools/space-rocks-mcp`:
+
+```powershell
+$env:ENABLE_CHROME_DEVTOOLS="1"
+npm run start:info
+```
+
 ## Tool groups
 
 - Repo read tools: `ping`, `repo_root`, `list_repo_tree`, `read_repo_file`, `search_repo_text`
@@ -86,4 +97,3 @@ Note:
 - If a bridge command fails, verify the real command name from `/capabilities` instead of guessing.
 - If the write server is reachable outside the machine, stop and remove that exposure.
 - If you only need inspection or planning, use the info server instead of the write server.
-

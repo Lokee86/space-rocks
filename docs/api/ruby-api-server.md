@@ -92,7 +92,7 @@ This flow keeps Discord client secrets out of Godot and avoids manually copying 
 Existing email/password auth and the existing direct Discord browser smoke behavior remain API-level capabilities.
 Single-player remains unauthenticated and does not require Rails auth.
 Websocket token authentication is now implemented for the Go game server through the Rails internal verification boundary.
-Rails owns OAuth and bearer-token verification, while the Go game server consumes that boundary through authclient and websocket admission. The embedded SQLite Local Profile path and player-data routing/SSoT foundation now exist; the remaining later work is wiring match-result reporting from the Go game server back into Rails/local player-data storage.
+Rails owns OAuth and bearer-token verification, while the Go game server consumes that boundary through authclient and websocket admission. The embedded SQLite Local Profile path and player-data routing/SSoT foundation now exist; the Go game server now reports resolved `MatchResultSummary` through `services/player-data`, which routes authenticated_account through `RailsStore` to the Rails internal match-results endpoint, local_profile through the local SQLite store, and guest through no-durable behavior.
 
 The Go game server should not read Rails auth tables directly.
 
@@ -152,7 +152,7 @@ Start simple. The services do not need to talk until a feature requires it.
 Possible later boundaries:
 
 - API creates or records room metadata; game server owns live room state.
-- API stores user/profile/leaderboard data; the Go game server already produces `MatchResultSummary` at `game_over`, and reporting the resolved summary back to Rails is the next/later Phase 5 step.
+- API stores user/profile/leaderboard data; the Go game server already produces `MatchResultSummary` at `game_over`, and reporting the resolved summary through `services/player-data` is already implemented for authenticated_account/local_profile/guest routing.
   - API performs auth/token validation; game server verifies tokens at websocket connect through the Rails internal auth boundary.
 - API owns matchmaking queues; game server receives selected room/session assignments.
 

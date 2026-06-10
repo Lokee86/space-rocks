@@ -54,8 +54,14 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Ties produce no winner.
 - Single-player produces no win.
 - Summaries use `account_id`, `local_profile_id`, or neither for guest.
-- Godot stats UI, save guest profile, live progression grants, and match-result reporting remain later work.
-- Next phase is match-result reporting/routing: `account_id` goes to the Rails/internal authenticated-account stats path, `local_profile_id` goes to the local player-data route, and guest/no durable identity gets no durable write; Phase 5 should not add Godot stats UI unless redirected.
+- Phase 5 match-result reporting is complete.
+- Game-server reports resolved `MatchResultSummary` through `services/player-data`.
+- `services/player-data` routes `account_id` to `authenticated_account`, `local_profile_id` to `local_profile`, and guest/no durable identity to guest behavior.
+- Reporting is triggered from the existing room game-over lifecycle after the resolved summary exists.
+- Successful reports are marked reported and not repeated.
+- Failed reports do not mark reported.
+- Next near-term work is a real end-to-end smoke across Rails + Go + Godot, plus Godot stats fetch/display and Local Profile UX/create/select/save guest profile.
+- Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
 - Devtools coordination now lives under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` acting as the facade/composition seam.
