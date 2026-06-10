@@ -15,7 +15,7 @@ class Auth::Providers::DiscordTokenExchangeTest < ActiveSupport::TestCase
       "https://discord.com/api/oauth2/token",
       "client-id",
       "client-secret",
-      "https://example.com/auth/discord/callback"
+      "https://example.com/api/auth/discord/callback"
     )
 
     response = FakeSuccessResponse.new({ access_token: "discord-access-token" }.to_json)
@@ -33,7 +33,7 @@ class Auth::Providers::DiscordTokenExchangeTest < ActiveSupport::TestCase
       "https://discord.com/api/oauth2/token",
       "client-id",
       "client-secret",
-      "https://example.com/auth/discord/callback"
+      "https://example.com/api/auth/discord/callback"
     )
 
     with_singleton_method_stub(Auth::Providers::DiscordTokenExchange, :post_token_request, ->(*args, **kwargs, &block) { Object.new }) do

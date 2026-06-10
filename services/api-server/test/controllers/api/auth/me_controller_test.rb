@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Auth::MeControllerTest < ActionDispatch::IntegrationTest
+class Api::Auth::MeControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = User.create!(display_name: "Ada")
     PasswordCredential.create!(
@@ -21,28 +21,28 @@ class Auth::MeControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "GET /auth/me without a token returns 401" do
-    get "/auth/me"
+  test "GET /api/auth/me without a token returns 401" do
+    get "/api/auth/me"
 
     assert_response :unauthorized
   end
 
-  test "GET /auth/me with a malformed Authorization header returns 401" do
-    get "/auth/me", headers: { "Authorization" => "Token #{@raw_token}" }
+  test "GET /api/auth/me with a malformed Authorization header returns 401" do
+    get "/api/auth/me", headers: { "Authorization" => "Token #{@raw_token}" }
 
     assert_response :unauthorized
   end
 
-  test "GET /auth/me with an unknown bearer token returns 401" do
-    get "/auth/me", headers: auth_headers("unknown-token")
+  test "GET /api/auth/me with an unknown bearer token returns 401" do
+    get "/api/auth/me", headers: auth_headers("unknown-token")
 
     assert_response :unauthorized
   end
 
-  test "GET /auth/me with a valid bearer token returns 200" do
+  test "GET /api/auth/me with a valid bearer token returns 200" do
     before_last_used_at = @access_token.last_used_at
 
-    get "/auth/me", headers: auth_headers(@raw_token)
+    get "/api/auth/me", headers: auth_headers(@raw_token)
 
     assert_response :success
 
@@ -57,14 +57,14 @@ class Auth::MeControllerTest < ActionDispatch::IntegrationTest
     assert_predicate @access_token.reload.last_used_at, :present?
   end
 
-  test "revoked token returns 401" do
-    get "/auth/me", headers: auth_headers(@revoked_raw_token)
+  test "GET /api/auth/me with a revoked token returns 401" do
+    get "/api/auth/me", headers: auth_headers(@revoked_raw_token)
 
     assert_response :unauthorized
   end
 
-  test "expired token returns 401" do
-    get "/auth/me", headers: auth_headers(@expired_raw_token)
+  test "GET /api/auth/me with an expired token returns 401" do
+    get "/api/auth/me", headers: auth_headers(@expired_raw_token)
 
     assert_response :unauthorized
   end

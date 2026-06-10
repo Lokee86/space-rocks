@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Player::StatsControllerTest < ActionDispatch::IntegrationTest
+class Api::Player::StatsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = User.create!(display_name: "Ada")
     PasswordCredential.create!(
@@ -12,21 +12,21 @@ class Player::StatsControllerTest < ActionDispatch::IntegrationTest
     @raw_token, @access_token = AccessToken.issue_for(@user)
   end
 
-  test "GET /player/stats without a token returns 401" do
-    get "/player/stats"
+  test "GET /api/player/stats without a token returns 401" do
+    get "/api/player/stats"
 
     assert_response :unauthorized
   end
 
-  test "GET /player/stats with an invalid token returns 401" do
-    get "/player/stats", headers: auth_headers("invalid-token")
+  test "GET /api/player/stats with an invalid token returns 401" do
+    get "/api/player/stats", headers: auth_headers("invalid-token")
 
     assert_response :unauthorized
   end
 
-  test "GET /player/stats with a valid token returns 200 and creates zero stats" do
+  test "GET /api/player/stats with a valid token returns 200 and creates zero stats" do
     assert_difference -> { PlayerStat.count }, 1 do
-      get "/player/stats", headers: auth_headers(@raw_token)
+      get "/api/player/stats", headers: auth_headers(@raw_token)
     end
 
     assert_response :success
@@ -46,7 +46,7 @@ class Player::StatsControllerTest < ActionDispatch::IntegrationTest
     assert_nil stats["email"]
   end
 
-  test "GET /player/stats returns existing stats unchanged" do
+  test "GET /api/player/stats returns existing stats unchanged" do
     player_stat = PlayerStat.create!(
       user: @user,
       total_score: 12,
@@ -56,7 +56,7 @@ class Player::StatsControllerTest < ActionDispatch::IntegrationTest
       wins: 2
     )
 
-    get "/player/stats", headers: auth_headers(@raw_token)
+    get "/api/player/stats", headers: auth_headers(@raw_token)
 
     assert_response :success
 

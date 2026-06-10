@@ -94,7 +94,7 @@ func (s *RailsStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.P
 		return protocol.PlayerDataStats{}, false, errors.New("bearer token is required")
 	}
 
-	request, err := s.newJSONRequest(http.MethodGet, "/player/stats", nil)
+	request, err := s.newJSONRequest(http.MethodGet, "/api/player/stats", nil)
 	if err != nil {
 		return protocol.PlayerDataStats{}, false, err
 	}

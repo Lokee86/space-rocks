@@ -7,7 +7,7 @@ Current client auth flow:
 - Sign-in opens the Discord browser login-session flow.
 - The Rails API creates a short-lived login session and returns a poll secret plus login URL.
 - The client exchanges the authenticated login session for the normal Space Rocks bearer token.
-- The Space Rocks bearer token is stored locally and validated with `GET /auth/me` on startup.
+- The Space Rocks bearer token is stored locally and validated with `GET /api/auth/me` on startup.
 - After websocket connect, the client sends `authenticate_request` when a Space Rocks bearer token exists.
 - `authenticate_result` updates websocket auth state for later multiplayer admission checks.
 - Logout clears the local token and signed-in state.

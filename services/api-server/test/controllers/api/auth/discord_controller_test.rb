@@ -1,12 +1,12 @@
 require "test_helper"
 require "uri"
 
-class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
-  test "GET /auth/discord/start redirects to Discord and creates an oauth state" do
+class Api::Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
+  test "GET /api/auth/discord/start redirects to Discord and creates an oauth state" do
     with_singleton_method_stub(Auth::Providers::DiscordConfig, :client_id, ->(*args, **kwargs, &block) { "discord-client-id" }) do
-      with_singleton_method_stub(Auth::Providers::DiscordConfig, :redirect_uri, ->(*args, **kwargs, &block) { "https://example.com/auth/discord/callback" }) do
+      with_singleton_method_stub(Auth::Providers::DiscordConfig, :redirect_uri, ->(*args, **kwargs, &block) { "https://example.com/api/auth/discord/callback" }) do
         assert_difference "OauthState.count", 1 do
-          get "/auth/discord/start"
+          get "/api/auth/discord/start"
         end
       end
     end
@@ -18,36 +18,36 @@ class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal Auth::Providers::DiscordConfig.authorization_url, "#{uri.scheme}://#{uri.host}#{uri.path}"
     assert_equal "discord-client-id", params["client_id"]
-    assert_equal "https://example.com/auth/discord/callback", params["redirect_uri"]
+    assert_equal "https://example.com/api/auth/discord/callback", params["redirect_uri"]
     assert_equal "code", params["response_type"]
     assert_equal "identify email", params["scope"]
     assert_predicate params["state"], :present?
   end
 
-  test "GET /auth/discord/callback returns a JSON error when code is missing" do
+  test "GET /api/auth/discord/callback returns a JSON error when code is missing" do
     state = Auth::OauthStateIssuer.call(provider: "discord")[:state]
 
-    get "/auth/discord/callback", params: { state: state }
+    get "/api/auth/discord/callback", params: { state: state }
 
     assert_response :bad_request
     assert_equal "missing_params", JSON.parse(response.body)["error"]
   end
 
-  test "GET /auth/discord/callback returns a JSON error when state is missing" do
-    get "/auth/discord/callback", params: { code: "auth-code" }
+  test "GET /api/auth/discord/callback returns a JSON error when state is missing" do
+    get "/api/auth/discord/callback", params: { code: "auth-code" }
 
     assert_response :bad_request
     assert_equal "missing_params", JSON.parse(response.body)["error"]
   end
 
-  test "GET /auth/discord/callback returns a JSON error for invalid state" do
-    get "/auth/discord/callback", params: { code: "auth-code", state: "bogus-state" }
+  test "GET /api/auth/discord/callback returns a JSON error for invalid state" do
+    get "/api/auth/discord/callback", params: { code: "auth-code", state: "bogus-state" }
 
     assert_response :unprocessable_entity
     assert_equal "invalid_state", JSON.parse(response.body)["error"]
   end
 
-  test "GET /auth/discord/callback creates a user and returns the normal auth response" do
+  test "GET /api/auth/discord/callback creates a user and returns the normal auth response" do
     profile_result = Struct.new(:success?, :profile).new(
       true,
       Auth::Providers::ProviderProfile.new(
@@ -65,7 +65,7 @@ class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
       with_singleton_method_stub(Auth::Providers::DiscordCurrentUser, :call, ->(*args, **kwargs, &block) { profile_result }) do
         assert_difference "User.count", 1 do
           assert_difference "UserIdentity.count", 1 do
-            get "/auth/discord/callback", params: { code: "auth-code", state: state }
+            get "/api/auth/discord/callback", params: { code: "auth-code", state: state }
           end
         end
       end
@@ -81,7 +81,7 @@ class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
 
     user = User.find(body["user"]["id"])
 
-    get "/auth/me", headers: auth_headers(body["token"])
+    get "/api/auth/me", headers: auth_headers(body["token"])
 
     assert_response :ok
     me_body = JSON.parse(response.body)
@@ -90,7 +90,7 @@ class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
     assert_nil me_body["user"]["email"]
   end
 
-  test "GET /auth/discord/callback reuses the same user on repeated logins" do
+  test "GET /api/auth/discord/callback reuses the same user on repeated logins" do
     profile_result = Struct.new(:success?, :profile).new(
       true,
       Auth::Providers::ProviderProfile.new(
@@ -108,10 +108,10 @@ class Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
         first_state = Auth::OauthStateIssuer.call(provider: "discord")[:state]
         second_state = Auth::OauthStateIssuer.call(provider: "discord")[:state]
 
-        get "/auth/discord/callback", params: { code: "auth-code", state: first_state }
+        get "/api/auth/discord/callback", params: { code: "auth-code", state: first_state }
         first_user_id = JSON.parse(response.body)["user"]["id"]
 
-        get "/auth/discord/callback", params: { code: "auth-code", state: second_state }
+        get "/api/auth/discord/callback", params: { code: "auth-code", state: second_state }
         second_user_id = JSON.parse(response.body)["user"]["id"]
 
         assert_equal first_user_id, second_user_id

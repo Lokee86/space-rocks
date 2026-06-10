@@ -247,7 +247,7 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"accepted":true,"duplicate":false,"stats":{"total_score":11,"high_score":11,"ship_deaths":1,"games_played":1,"wins":1}}`))
-		case r.Method == http.MethodGet && r.URL.Path == "/player/stats":
+		case r.Method == http.MethodGet && r.URL.Path == "/api/player/stats":
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"stats":{"total_score":11,"high_score":11,"ship_deaths":1,"games_played":1,"wins":1}}`))
 		default:

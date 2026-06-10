@@ -4,7 +4,7 @@ This service is the Ruby/Rails API-only server for Space Rocks business and back
 
 The Go game server still owns real-time simulation, including movement, bullets, collisions, scoring, lives, death, respawn, pause safety, rooms, and websocket state.
 
-This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth at the Rails API level, Godot Discord login-session handoff, `/auth/me` validation, and opaque bearer tokens.
+This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth at the Rails API level, Godot Discord login-session handoff, `/api/auth/me` validation, and opaque bearer tokens.
 
 ## Local Auth Setup
 
@@ -76,7 +76,7 @@ Discord OAuth is implemented in the Rails API and requires the environment varia
 
 The Rails API also expects `GAME_SERVER_INTERNAL_TOKEN` for internal calls from the Go game-server. Normal clients must never receive this value. `POST /internal/auth/verify-token` requires this bearer token.
 
-### `POST /auth/register`
+### `POST /api/auth/register`
 
 Create a new user with an email/password login.
 
@@ -92,7 +92,7 @@ Request body:
 
 Returns the created user plus a token.
 
-### `POST /auth/login`
+### `POST /api/auth/login`
 
 Log in with an existing email/password credential.
 
@@ -107,11 +107,11 @@ Request body:
 
 Returns the current user plus a new token.
 
-### `GET /auth/discord/start`
+### `GET /api/auth/discord/start`
 
 Begin the Discord OAuth flow by redirecting the browser to Discord.
 
-### `GET /auth/discord/callback`
+### `GET /api/auth/discord/callback`
 
 Handle the browser-driven Discord OAuth callback after Discord redirects back with `code` and `state`.
 
@@ -119,26 +119,26 @@ Returns the current user plus a new token on success.
 Email may be `null`.
 Discord OAuth and email/password auth both issue the same opaque bearer token.
 
-### `POST /auth/discord/login_sessions`
+### `POST /api/auth/discord/login_sessions`
 
 Create a login session for the browser Discord handoff.
 
 Returns `login_session_id`, `poll_secret`, `login_url`, and `expires_at`.
 
-### `POST /auth/discord/login_sessions/:id/exchange`
+### `POST /api/auth/discord/login_sessions/:id/exchange`
 
 Exchange an authenticated login session for the normal bearer token response.
 
 #### Discord OAuth smoke test
 
 1. Start Rails with the Discord env vars active.
-2. Open `http://localhost:3000/auth/discord/start` in a browser.
+2. Open `http://localhost:3000/api/auth/discord/start` in a browser.
 3. Approve the Discord login.
 4. Confirm the callback returns user plus token JSON.
 5. Copy the raw token only.
-6. Call `GET /auth/me` with `Authorization: Bearer <token>`.
+6. Call `GET /api/auth/me` with `Authorization: Bearer <token>`.
 
-### `GET /auth/me`
+### `GET /api/auth/me`
 
 Return the current authenticated user.
 
@@ -151,7 +151,7 @@ Authorization: Bearer <token>
 Returns the user payload for a valid token.
 This works for bearer tokens issued by either email/password auth or Discord OAuth.
 
-### `DELETE /auth/logout`
+### `DELETE /api/auth/logout`
 
 Revoke the current bearer token.
 
@@ -161,7 +161,7 @@ Protected endpoint. Send:
 Authorization: Bearer <token>
 ```
 
-Returns no content on success. The same token should fail on `GET /auth/me` after logout.
+Returns no content on success. The same token should fail on `GET /api/auth/me` after logout.
 
 ## Bruno Smoke Tests
 
