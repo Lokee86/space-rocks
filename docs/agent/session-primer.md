@@ -21,14 +21,15 @@ Use this as the short orientation layer for new sessions. It should stay stable 
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
 - Pickup presentation blink is client-side and derives from age/lifespan packet state.
-- Player-data foundation is now complete as a sibling `services/player-data` module with shared packet SSoT, generated protocol, independent codec, in-process game-server runtime hosting, and memory/no-op stores only.
+- Player-data foundation is now complete as a sibling `services/player-data` module with shared packet SSoT/generated protocol, independent codec, in-process game-server runtime hosting, Rails adapter for authenticated_account, SQLite adapter for local_profile, and singleton memory stats for guest.
 
 ## Fragile Or Moving Areas
 
 - Dev-readiness item 11 is still open: local-player camera piggybacking must be replaced with a dedicated camera target/controller.
 - Generated Godot constants and packet files still live under `client/scripts/` for now, even though that is not the ideal long-term shape.
 - The API server is planned but not scaffolded.
-- Local Profile persistence, embedded DB, Rails adapter, player-data match resolution, and gameplay wiring are still future work.
+- Player-data match resolution and gameplay wiring are still future work.
+- Godot stats UI, save guest profile, and live progression grants are still future work.
 - Ship variants are planned but not implemented.
 - Client packet codec callers already use `PacketEncodeResult` and `PacketDecodeResult`; the codec itself should stay focused on JSON parsing and envelope validation only.
 

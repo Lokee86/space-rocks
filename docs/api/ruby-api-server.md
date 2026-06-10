@@ -71,6 +71,8 @@ Implemented auth endpoints:
 - `GET /auth/me`
 - `DELETE /auth/logout`
 
+The player stats and internal match-results endpoints are also consumed by `services/player-data` through its Rails adapter for authenticated_account backing. `services/api-server` remains the Rails/Postgres persistence owner for authenticated account stats, and `services/player-data` does not read Rails tables directly.
+
 ### Godot Discord Login-Session Flow
 
 Godot now uses a browser-assisted Discord login-session handoff with Rails:

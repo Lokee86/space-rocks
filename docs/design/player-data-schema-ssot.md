@@ -15,8 +15,9 @@ Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separat
 - `shared/player_data/stats.toml` and `shared/player_data/match_result.toml` are the source of truth for logical account-shaped player-data schema.
 - `shared/packets/player_data.toml` defines the player-data packet protocol.
 - `services/player-data/protocol/packets.go` is generated from the packet SSoT.
-- Rails/Postgres and embedded DB may have different physical schemas.
-- Both stores must implement the same logical data contract.
+- Rails/Postgres physical stats persistence exists for authenticated accounts.
+- Embedded SQLite physical stats persistence exists for local profiles.
+- Both stores implement the same logical stats contract.
 - Gameplay-facing code depends on playerdata contracts, not Rails tables or embedded DB tables.
 - The logical player-data concepts include:
   - Profile
@@ -42,7 +43,7 @@ V1 stat fields:
 This V1 contract does not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.
 
 For V1 multiplayer, the winner is the authenticated player with the highest match score.
-`wins` is account/multiplayer-only; Local Profile uses the shared core stats fields.
+`wins` is account/multiplayer-only; Local Profile uses the shared core stats fields and intentionally excludes `wins`.
 
 ## Logical Schema Versus Physical Database Schema
 
@@ -162,6 +163,8 @@ Future contract tests:
 - no store adds independent player-data fields without updating SSoT.
 
 `NoDurableStore` for Guest may return defaults or reject durable writes, but should not pretend to persist account-shaped data.
-Current runtime uses memory/no-op stores only.
+Guest uses singleton in-memory unsaved stats.
+Authenticated Account uses Rails/Postgres physical stats persistence.
+Local Profile uses embedded SQLite physical stats persistence.
 
 ## Deferred Work
