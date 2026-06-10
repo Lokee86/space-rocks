@@ -61,7 +61,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Devtools coordination now lives under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` acting as the facade/composition seam.
 - Network telemetry uses `telemetry_ping` / `telemetry_pong`; gameplay state packets include `server_sent_msec`.
 - `packet_age_ms` depends on server clock offset estimated from telemetry ping/pong, not raw wall-clock subtraction.
-- Client auth checkpoint is working: Main Menu `Sign-in` opens Discord browser OAuth, Rails login-session exchange returns the normal Space Rocks bearer token, Godot stores the token, validates it through `/auth/me`, shows the display name in the menu, and clears local token plus signed-in state on logout.
+- Client auth checkpoint is working: Main Menu `Sign-in` opens Discord browser OAuth, Rails login-session exchange returns the normal Space Rocks bearer token, Godot stores the token, validates it through `/api/auth/me`, shows the display name in the menu, and clears local token plus signed-in state on logout.
 - Rails internal token verification exists for the Go game server.
 - Go authclient exists and verifies Space Rocks bearer tokens through Rails.
 - Websocket `authenticate_request` / `authenticate_result` exists.

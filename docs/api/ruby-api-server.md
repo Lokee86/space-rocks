@@ -14,7 +14,7 @@ Current implemented baseline:
 - Discord OAuth auth exists at the Rails API level
 - opaque bearer access tokens exist
 - provider identity schema exists for future OAuth/provider login
-- `/auth/me` verification exists
+- `/api/auth/me` verification exists
 
 The current API-owned data model is:
 
@@ -61,15 +61,15 @@ Discord OAuth support currently uses these required environment variables:
 
 Implemented auth endpoints:
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/discord/start`
-- `GET /auth/discord/callback`
-- `POST /auth/discord/login_sessions` - create a login session for browser Discord handoff
-- `POST /auth/discord/login_sessions/:id/exchange` - exchange an authenticated login session for the normal bearer token response
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/discord/start`
+- `GET /api/auth/discord/callback`
+- `POST /api/auth/discord/login_sessions` - create a login session for browser Discord handoff
+- `POST /api/auth/discord/login_sessions/:id/exchange` - exchange an authenticated login session for the normal bearer token response
 - `POST /internal/auth/verify-token` - verify Space Rocks bearer tokens for the Go game server only
-- `GET /auth/me`
-- `DELETE /auth/logout`
+- `GET /api/auth/me`
+- `DELETE /api/auth/logout`
 
 The player stats and internal match-results endpoints are consumed by `services/player-data` through its Rails adapter for authenticated_account backing. `services/api-server` remains the Rails/Postgres persistence owner for authenticated account stats, and `services/player-data` does not read Rails tables directly.
 
@@ -84,7 +84,7 @@ Godot now uses a browser-assisted Discord login-session handoff with Rails:
 - The Rails callback marks the login session authenticated.
 - Godot polls and exchanges the login session using `login_session_id` and `poll_secret`.
 - Rails returns the normal auth response with the Space Rocks bearer token and user payload.
-- Godot stores the Space Rocks bearer token and validates it through `GET /auth/me`.
+- Godot stores the Space Rocks bearer token and validates it through `GET /api/auth/me`.
 - The Go game server verifies Space Rocks bearer tokens through Rails at `POST /internal/auth/verify-token` and receives only the minimal identity needed for websocket admission.
 
 This flow keeps Discord client secrets out of Godot and avoids manually copying browser JSON tokens.
@@ -97,7 +97,7 @@ Rails owns OAuth and bearer-token verification, while the Go game server consume
 The Go game server should not read Rails auth tables directly.
 
 Email/password auth and Discord OAuth both issue the same opaque bearer access token.
-`GET /auth/me` verifies either login path.
+`GET /api/auth/me` verifies either login path.
 
 If the game server needs auth, it should use an explicit API or internal verification boundary rather than direct table access. Rails/API owns authenticated users, OAuth identities, and online account persistence.
 

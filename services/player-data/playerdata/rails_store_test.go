@@ -97,8 +97,8 @@ func TestRailsStoreLoadStats(t *testing.T) {
 			if r.Method != http.MethodGet {
 				t.Fatalf("Method = %q, want %q", r.Method, http.MethodGet)
 			}
-			if r.URL.Path != "/player/stats" {
-				t.Fatalf("Path = %q, want %q", r.URL.Path, "/player/stats")
+			if r.URL.Path != "/api/player/stats" {
+				t.Fatalf("Path = %q, want %q", r.URL.Path, "/api/player/stats")
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"stats":{"total_score":12,"high_score":9,"ship_deaths":3,"games_played":4,"wins":2}}`))

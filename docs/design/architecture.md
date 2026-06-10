@@ -447,7 +447,7 @@ Deferred for now:
 
 The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets. The Go game server should not read auth tables directly.
 
-Rails now also owns the Discord OAuth browser login-session handoff used by the Godot client: Godot receives a Space Rocks bearer token through login-session exchange, validates that token with `/auth/me`, and keeps single-player independent of Rails auth. The Go game-server auth boundary is still future work and should remain an explicit token-verification seam rather than direct access to Rails tables. See [Ruby API server plan](../api/ruby-api-server.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
+Rails now also owns the Discord OAuth browser login-session handoff used by the Godot client: Godot receives a Space Rocks bearer token through login-session exchange, validates that token with `/api/auth/me`, and keeps single-player independent of Rails auth. The Go game-server auth boundary is still future work and should remain an explicit token-verification seam rather than direct access to Rails tables. See [Ruby API server plan](../api/ruby-api-server.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
 
 ## Data Flow
 

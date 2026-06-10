@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
+class Api::Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = User.create!(display_name: "Ada")
     @password_credential = PasswordCredential.create!(
@@ -13,8 +13,8 @@ class Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     @other_raw_token, @other_access_token = AccessToken.issue_for(@user)
   end
 
-  test "POST /auth/login succeeds with valid credentials" do
-    post "/auth/login", params: {
+  test "POST /api/auth/login succeeds with valid credentials" do
+    post "/api/auth/login", params: {
       email: "ADA@EXAMPLE.COM",
       password: "secret123"
     }
@@ -29,8 +29,8 @@ class Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "ada@example.com", body["user"]["email"]
   end
 
-  test "POST /auth/login fails with wrong password" do
-    post "/auth/login", params: {
+  test "POST /api/auth/login fails with wrong password" do
+    post "/api/auth/login", params: {
       email: "ada@example.com",
       password: "wrong-password"
     }
@@ -41,8 +41,8 @@ class Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "invalid_credentials", body["error"]
   end
 
-  test "DELETE /auth/logout with a valid bearer token revokes only that token" do
-    delete "/auth/logout", headers: auth_headers(@raw_token)
+  test "DELETE /api/auth/logout with a valid bearer token revokes only that token" do
+    delete "/api/auth/logout", headers: auth_headers(@raw_token)
 
     assert_response :no_content
 
@@ -52,8 +52,8 @@ class Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate other_access_token, :active?
   end
 
-  test "DELETE /auth/logout without a token returns 401" do
-    delete "/auth/logout"
+  test "DELETE /api/auth/logout without a token returns 401" do
+    delete "/api/auth/logout"
 
     assert_response :unauthorized
   end

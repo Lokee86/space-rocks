@@ -40,7 +40,7 @@ Install these before running or developing Space Rocks locally:
 
 - **Ruby / Rails** for the API server.
   - The Rails API project is in `services/api-server/`.
-  - The current API baseline includes `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/discord/start`, `GET /auth/discord/callback`, `POST /auth/discord/login_sessions`, `POST /auth/discord/login_sessions/:id/exchange`, `GET /auth/me`, and `DELETE /auth/logout`.
+  - The current API baseline includes `GET /health`, `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/discord/start`, `GET /api/auth/discord/callback`, `POST /api/auth/discord/login_sessions`, `POST /api/auth/discord/login_sessions/:id/exchange`, `GET /api/auth/me`, and `DELETE /api/auth/logout`.
   - Discord OAuth is implemented at the Rails API level.
   - Godot login handoff is implemented; game-server token verification remains deferred.
   - Auth uses opaque bearer tokens stored hashed in the database.
@@ -259,12 +259,12 @@ bundle exec rails server
 The API server listens on `:3000` by default and exposes:
 
 - `GET /health`
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/discord/login_sessions`
-- `POST /auth/discord/login_sessions/:id/exchange`
-- `GET /auth/me`
-- `DELETE /auth/logout`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/discord/login_sessions`
+- `POST /api/auth/discord/login_sessions/:id/exchange`
+- `GET /api/auth/me`
+- `DELETE /api/auth/logout`
 
 ### API Auth Development
 
@@ -287,9 +287,9 @@ godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://test
 - `.secrets/api-server.env` is local-only, ignored, and should not be committed.
 - Godot should not require Rails for single-player.
 - Rails reference columns create an index by default, so `add_reference :table, :thing, foreign_key: true` plus `add_index :table, :thing_id` will duplicate the index unless `index: false` is set on the reference.
-- `POST /auth/login`
-- `GET /auth/me`
-- `DELETE /auth/logout`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `DELETE /api/auth/logout`
 
 ### Bruno Smoke Tests
 

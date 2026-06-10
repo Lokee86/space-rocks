@@ -1,16 +1,16 @@
 require "test_helper"
 require "uri"
 
-class Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
-  test "POST /auth/discord/login_sessions returns the login session payload" do
+class Api::Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
+  test "POST /api/auth/discord/login_sessions returns the login session payload" do
     client_secret = "super-secret-client-secret"
 
     with_singleton_method_stub(Auth::Providers::DiscordConfig, :client_id, ->(*args, **kwargs, &block) { "discord-client-id" }) do
       with_singleton_method_stub(Auth::Providers::DiscordConfig, :client_secret, ->(*args, **kwargs, &block) { client_secret }) do
-        with_singleton_method_stub(Auth::Providers::DiscordConfig, :redirect_uri, ->(*args, **kwargs, &block) { "https://example.com/auth/discord/callback" }) do
+        with_singleton_method_stub(Auth::Providers::DiscordConfig, :redirect_uri, ->(*args, **kwargs, &block) { "https://example.com/api/auth/discord/callback" }) do
           assert_difference "OauthLoginSession.count", 1 do
             assert_difference "OauthState.count", 1 do
-              post "/auth/discord/login_sessions"
+              post "/api/auth/discord/login_sessions"
             end
           end
         end
@@ -34,15 +34,15 @@ class Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
     uri = URI.parse(body["login_url"])
     params = URI.decode_www_form(uri.query).to_h
     assert_equal "discord-client-id", params["client_id"]
-    assert_equal "https://example.com/auth/discord/callback", params["redirect_uri"]
+    assert_equal "https://example.com/api/auth/discord/callback", params["redirect_uri"]
     assert_equal oauth_state.state_digest, OauthState.digest_for(params["state"])
   end
 
-  test "POST /auth/discord/login_sessions/:id/exchange returns pending for an unready session" do
+  test "POST /api/auth/discord/login_sessions/:id/exchange returns pending for an unready session" do
     issued = Auth::OauthLoginSessionIssuer.call(provider: "discord")
     oauth_login_session = issued[:oauth_login_session]
 
-    post "/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
+    post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
     }
 
@@ -50,10 +50,10 @@ class Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", JSON.parse(response.body)["status"]
   end
 
-  test "POST /auth/discord/login_sessions/:id/exchange rejects a wrong poll secret" do
+  test "POST /api/auth/discord/login_sessions/:id/exchange rejects a wrong poll secret" do
     issued = Auth::OauthLoginSessionIssuer.call(provider: "discord")
 
-    post "/auth/discord/login_sessions/#{issued[:oauth_login_session].public_id}/exchange", params: {
+    post "/api/auth/discord/login_sessions/#{issued[:oauth_login_session].public_id}/exchange", params: {
       poll_secret: "wrong-secret"
     }
 
@@ -61,12 +61,12 @@ class Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "invalid_login_session", JSON.parse(response.body)["error"]
   end
 
-  test "POST /auth/discord/login_sessions/:id/exchange rejects an expired session" do
+  test "POST /api/auth/discord/login_sessions/:id/exchange rejects an expired session" do
     issued = Auth::OauthLoginSessionIssuer.call(provider: "discord")
     oauth_login_session = issued[:oauth_login_session]
     oauth_login_session.update!(expires_at: 1.minute.ago)
 
-    post "/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
+    post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
     }
 
@@ -74,12 +74,12 @@ class Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "invalid_login_session", JSON.parse(response.body)["error"]
   end
 
-  test "POST /auth/discord/login_sessions/:id/exchange rejects a consumed session" do
+  test "POST /api/auth/discord/login_sessions/:id/exchange rejects a consumed session" do
     issued = Auth::OauthLoginSessionIssuer.call(provider: "discord")
     oauth_login_session = issued[:oauth_login_session]
     oauth_login_session.consume!
 
-    post "/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
+    post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
     }
 
@@ -87,13 +87,13 @@ class Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "invalid_login_session", JSON.parse(response.body)["error"]
   end
 
-  test "POST /auth/discord/login_sessions/:id/exchange issues a bearer token for an authenticated session" do
+  test "POST /api/auth/discord/login_sessions/:id/exchange issues a bearer token for an authenticated session" do
     user = User.create!(display_name: "Ada Lovelace")
     issued = Auth::OauthLoginSessionIssuer.call(provider: "discord")
     oauth_login_session = issued[:oauth_login_session]
     oauth_login_session.authenticate!(user)
 
-    post "/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
+    post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
     }
 
@@ -105,7 +105,7 @@ class Auth::DiscordLoginSessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Ada Lovelace", body["user"]["display_name"]
     assert_predicate oauth_login_session.reload, :consumed?
 
-    get "/auth/me", headers: auth_headers(body["token"])
+    get "/api/auth/me", headers: auth_headers(body["token"])
 
     assert_response :success
     me_body = JSON.parse(response.body)
