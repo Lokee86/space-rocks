@@ -1,11 +1,13 @@
 package rooms
 
 type RoomMember struct {
-	MemberID  string
-	SessionID string
-	PlayerID  string
-	Ready     bool
-	Connected bool
+	MemberID       string
+	SessionID      string
+	PlayerID       string
+	AccountID      string
+	LocalProfileID string
+	Ready          bool
+	Connected      bool
 }
 
 func NewRoomMember(sessionID string) *RoomMember {

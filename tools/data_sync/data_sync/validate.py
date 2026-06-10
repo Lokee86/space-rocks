@@ -51,6 +51,7 @@ def validate(config: DataSyncConfig, domains: tuple[str, ...], languages: tuple[
 
     if "constants" in request.domains:
         constants_store = _load_constants_store(config.sot_paths("constants"), errors)
+        _validate_duplicate_constants_sot_sections(config, errors)
         if constants_store is not None:
             _validate_constants(config, constants_store, request, errors)
     if "packets" in request.domains:
@@ -106,6 +107,30 @@ def _validate_player_data_sot(paths: tuple[Path, ...], errors: list[str]) -> Non
             load_player_data_schema(path)
         except PlayerDataTomlError as exc:
             errors.append(f"{path}: {exc}")
+
+
+def _validate_duplicate_constants_sot_sections(config: DataSyncConfig, errors: list[str]) -> None:
+    seen_sections: dict[str, Path] = {}
+    for path in config.sot_paths("constants"):
+        try:
+            store = TomlStore.load(path)
+        except TomlStoreError as exc:
+            errors.append(str(exc))
+            continue
+
+        for section_name in store.section_names():
+            if not section_name.startswith("constants."):
+                continue
+            section = store.constants(section_name)
+            if not section.values:
+                continue
+            previous_path = seen_sections.get(section_name)
+            if previous_path is not None and previous_path != path:
+                errors.append(
+                    f"duplicate constants source for [{section_name}]: {previous_path}, {path}"
+                )
+                continue
+            seen_sections[section_name] = path
 
 
 def _validate_rich_packet_schema(schema: PacketSchema, errors: list[str]) -> None:
@@ -406,6 +431,7 @@ def _validate_configured_files_and_blocks(
 ) -> None:
     for domain in request.domains:
         if domain == "constants":
+            _validate_configured_constants_files_and_blocks(config, request, errors)
             continue
         for language in _languages_for_domain(config, domain, request.languages):
             for target in config.targets_for(domain, language):
@@ -420,6 +446,32 @@ def _validate_configured_files_and_blocks(
                             find_block(text, section_name)
                         except BlockIOError as exc:
                             errors.append(f"{path} [{domain}.{language}]: {exc}")
+
+
+def _validate_configured_constants_files_and_blocks(
+    config: DataSyncConfig,
+    request: ValidationRequest,
+    errors: list[str],
+) -> None:
+    for language in _languages_for_domain(config, "constants", request.languages):
+        for target in config.targets_for("constants", language):
+            texts: dict[Path, str] = {}
+            for path in target.files:
+                text = _read_configured_file(path, errors)
+                if text is None:
+                    continue
+                texts[path] = text
+            if not texts:
+                continue
+
+            for section_name in target.sections:
+                if any(_has_block(text, section_name) for text in texts.values()):
+                    continue
+                missing_path = target.files[0] if target.files else None
+                if missing_path is None:
+                    errors.append(f"[constants.{language}] missing configured section [{section_name}]")
+                else:
+                    errors.append(f"{missing_path} [constants.{language}]: missing data-sync block [{section_name}]")
 
 
 def _discovered_constant_sections(
@@ -476,6 +528,14 @@ def _read_configured_file(path: Path, errors: list[str]) -> str | None:
     except OSError as exc:
         errors.append(f"failed to read configured file {path}: {exc}")
         return None
+
+
+def _has_block(text: str, section_name: str) -> bool:
+    try:
+        find_block(text, section_name)
+    except BlockIOError:
+        return False
+    return True
 
 
 def _is_snake_case(value: str) -> bool:

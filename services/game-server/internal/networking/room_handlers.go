@@ -46,6 +46,9 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
 	}
 
 	attachRoomSession(room, session.sessionID, session)
+	if accountID := accountIDForSession(session); accountID != "" {
+		room.SetMemberAccountIDForSession(session.sessionID, accountID)
+	}
 	session.room = room
 	session.currentRoomID = room.ID
 	session.currentGamePlayerID = ""

@@ -30,7 +30,9 @@ def migrated_packet_toml_paths(tmp_path: Path) -> tuple[Path, ...]:
 def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
-    assert len(schema.outputs) == 4
+    assert len(schema.outputs) == 5
+    output_ids = {output.id for output in schema.outputs if output.id}
+    assert "server_devtools_packets" in output_ids
 
     game_output = schema.output_for_path("services/game-server/internal/game/packets.go")
     assert game_output.language == "go"

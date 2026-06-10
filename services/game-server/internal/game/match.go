@@ -16,6 +16,21 @@ func (game *Game) MatchDecision() rules.MatchDecision {
 	return game.matchDecisionLocked()
 }
 
+func (game *Game) PlayerMatchFacts() []PlayerMatchFact {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	facts := make([]PlayerMatchFact, 0, len(game.playerSessions))
+	for _, session := range game.playerSessions {
+		facts = append(facts, PlayerMatchFact{
+			GamePlayerID: session.ID,
+			Score:        session.Score,
+			ShipDeaths:   session.ShipDeaths,
+		})
+	}
+	return facts
+}
+
 func (game *Game) matchDecisionLocked() rules.MatchDecision {
 	return rules.EvaluateMatch(game.matchSnapshot())
 }

@@ -45,3 +45,23 @@ func TestAccountPlayerSummaryCanOmitLocalProfileID(t *testing.T) {
 		t.Fatalf("LocalProfileID = %q, want empty string", summary.LocalProfileID)
 	}
 }
+
+func TestMatchModeConstants(t *testing.T) {
+	if MatchModeSinglePlayer != "single_player" {
+		t.Fatalf("MatchModeSinglePlayer = %q, want %q", MatchModeSinglePlayer, "single_player")
+	}
+	if MatchModeMultiplayer != "multiplayer" {
+		t.Fatalf("MatchModeMultiplayer = %q, want %q", MatchModeMultiplayer, "multiplayer")
+	}
+}
+
+func TestMatchResultSummaryUsesMatchMode(t *testing.T) {
+	summary := MatchResultSummary{
+		MatchID: "match-1",
+		Mode:    MatchModeMultiplayer,
+	}
+
+	if summary.Mode != MatchModeMultiplayer {
+		t.Fatalf("Mode = %q, want %q", summary.Mode, MatchModeMultiplayer)
+	}
+}

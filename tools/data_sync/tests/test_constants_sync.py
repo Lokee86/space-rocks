@@ -131,6 +131,45 @@ exclude = []
     return config_path
 
 
+def write_configured_project(tmp_path: Path) -> Path:
+    config_path = write_project(tmp_path)
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8")
+        + """
+[constants.go]
+files = ["go/constants.go", "go/weapons.go"]
+sections = [
+    "constants.gameplay",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+owns = [
+    "constants.gameplay",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+
+[constants.gds]
+files = ["gds/constants.gd", "gds/weapons.gd"]
+sections = ["constants.client", "constants.server.weapons.basic_cannon"]
+owns = ["constants.client", "constants.server.weapons.basic_cannon"]
+
+[constants.ts]
+files = ["ts/constants.ts"]
+sections = ["constants.network"]
+owns = ["constants.network"]
+"""
+        .replace(
+            'include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]',
+            'include = ["other/**/*.go"]',
+        ),
+        encoding="utf-8",
+    )
+    return config_path
+
+
 def test_push_updates_only_managed_block(tmp_path: Path) -> None:
     config_path = write_project(tmp_path)
 
@@ -240,6 +279,16 @@ def test_push_updates_all_constants_outputs_for_language(tmp_path: Path) -> None
     assert exit_code == 0
     assert "CLIENT_SCALE := 2" in (tmp_path / "gds/constants.gd").read_text(encoding="utf-8")
     assert "BASIC_CANNON_PROJECTILE_SPEED := " in (tmp_path / "gds/weapons.gd").read_text(encoding="utf-8")
+
+
+def test_push_updates_configured_constants_targets(tmp_path: Path) -> None:
+    config_path = write_configured_project(tmp_path)
+
+    assert run(["-push", "-constants", "-go", "-config", str(config_path)]) == 0
+    assert run(["-check", "-constants", "-go", "-config", str(config_path)]) == 0
+
+    assert "const PlayerSpeed = 420.0" in (tmp_path / "go/constants.go").read_text(encoding="utf-8")
+    assert "const BasicCannonProjectileSpeed = " in (tmp_path / "go/weapons.go").read_text(encoding="utf-8")
 
 
 def test_push_does_not_alter_surrounding_content(tmp_path: Path) -> None:

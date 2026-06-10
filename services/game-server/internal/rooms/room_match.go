@@ -1,10 +1,18 @@
 package rooms
 
-import "github.com/Lokee86/space-rocks/server/internal/game"
+import (
+	"strconv"
+
+	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/playerdata"
+)
 
 type roomMatch struct {
-	game          *game.Game
-	activePlayers int
+	game            *game.Game
+	activePlayers   int
+	matchNumber     int
+	currentMatchID  string
+	resolvedSummary *playerdata.MatchResultSummary
 }
 
 func newRoomMatch(gameInstance *game.Game) *roomMatch {
@@ -31,4 +39,31 @@ func (rm *roomMatch) ActivePlayers() int {
 
 func (rm *roomMatch) SetActivePlayers(count int) {
 	rm.activePlayers = count
+}
+
+func (rm *roomMatch) BeginNextMatch(roomID string) string {
+	rm.matchNumber++
+	rm.currentMatchID = roomID + "-match-" + strconv.Itoa(rm.matchNumber)
+	rm.ClearResolvedSummary()
+	return rm.currentMatchID
+}
+
+func (rm *roomMatch) CurrentMatchID() string {
+	return rm.currentMatchID
+}
+
+func (rm *roomMatch) SetResolvedSummary(summary playerdata.MatchResultSummary) {
+	rm.resolvedSummary = &summary
+}
+
+func (rm *roomMatch) ResolvedSummary() (playerdata.MatchResultSummary, bool) {
+	if rm.resolvedSummary == nil {
+		return playerdata.MatchResultSummary{}, false
+	}
+
+	return *rm.resolvedSummary, true
+}
+
+func (rm *roomMatch) ClearResolvedSummary() {
+	rm.resolvedSummary = nil
 }
