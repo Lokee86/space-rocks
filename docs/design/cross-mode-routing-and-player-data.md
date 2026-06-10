@@ -17,7 +17,7 @@ Implemented foundation:
 - The game-server hosts the player-data runtime in-process for now.
 - Communication uses player-data packets from the shared packet SSoT across an encoded payload boundary.
 - `services/player-data` has its own codec and does not import game-server internals.
-- Phase 4 now has real backing stores:
+- The player-data foundation has real backing stores:
   - `authenticated_account` routes through the Rails adapter to `services/api-server`
   - `local_profile` routes through embedded SQLite inside `services/player-data`
   - `guest` routes to singleton in-memory unsaved stats
@@ -204,6 +204,22 @@ Authenticated Account:
 - rejected by local single-player
 
 Implementation status: this routing model exists as the auth/admission boundary, but it is not the same as Local Profile or player-data implementation.
+
+## V1.1 Match Summary / Match Resolution
+
+Phase 4/V1.1 match summaries are now produced by the game-server after `game_over`.
+
+- The room game-over lifecycle remains the transition authority.
+- `game/rules` decides when a match reaches `game_over`.
+- `services/player-data` resolves the winner and summary payload after `game_over`.
+- Winner logic selects the highest multiplayer score.
+- Tied high scores produce no winner.
+- Single-player produces no win.
+- `ship_deaths` are counted from actual ship deaths, not inferred from lives.
+- `account_id` is used for authenticated account summaries.
+- `local_profile_id` is used for local profile summaries.
+- Guest summaries have neither `account_id` nor `local_profile_id`.
+- Reporting the summary to Rails or the local player-data service is Phase 5 or later.
 
 ## Non-Goals
 
