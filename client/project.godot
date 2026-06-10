@@ -44,6 +44,10 @@ movie_writer/audio_bit_depth=32
 movie_writer/movie_file="res://client/game-clip.avi"
 movie_writer/disable_vsync=true
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/engineforge_bridge/plugin.cfg", "res://addons/gut/plugin.cfg")
+
 [input]
 
 DevToggle0={
