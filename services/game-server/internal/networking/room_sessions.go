@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"strconv"
 	"sync"
 
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
@@ -15,6 +16,9 @@ var roomSessions = struct {
 
 func addSessionMember(room *rooms.Room, sessionID string, session *webSocketSession) {
 	room.AddMember(rooms.NewRoomMember(sessionID))
+	if accountID := accountIDForSession(session); accountID != "" {
+		room.SetMemberAccountIDForSession(sessionID, accountID)
+	}
 	attachRoomSession(room, sessionID, session)
 }
 
@@ -65,4 +69,17 @@ func snapshotRoomSessions(room *rooms.Room, memberIDs []string) []*webSocketSess
 	}
 
 	return sessions
+}
+
+func accountIDForSession(session *webSocketSession) string {
+	if session == nil {
+		return ""
+	}
+
+	identity := session.SessionIdentity()
+	if !identity.IsAuthenticatedAccount() {
+		return ""
+	}
+
+	return strconv.FormatInt(identity.AccountUserID, 10)
 }

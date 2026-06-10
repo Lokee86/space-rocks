@@ -20,6 +20,7 @@ func (room *Room) StartGameForMember(playerID string, newGame func() *game.Game)
 	if roomErr := room.markInGameLocked(); roomErr != nil {
 		return roomErr
 	}
+	room.match.BeginNextMatch(room.ID)
 
 	return nil
 }
@@ -64,6 +65,12 @@ func (room *Room) MarkGameOver() *RoomDomainError {
 		return &RoomDomainError{
 			Code:    RoomErrorInvalidRoomState,
 			Message: "Room can only move to game over from in-game.",
+		}
+	}
+
+	if _, ok := room.match.ResolvedSummary(); !ok {
+		if summary, ok := room.buildMatchResultSummaryLocked(); ok {
+			room.match.SetResolvedSummary(summary)
 		}
 	}
 
@@ -131,6 +138,7 @@ func (room *Room) StartSinglePlayerGame(newGame func() *game.Game) *RoomDomainEr
 	if roomErr := room.markInGameLocked(); roomErr != nil {
 		return roomErr
 	}
+	room.match.BeginNextMatch(room.ID)
 
 	return nil
 }

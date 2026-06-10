@@ -22,6 +22,42 @@ func (room *Room) PlayerIDForSession(sessionID string) (string, bool) {
 	return room.membership.playerIDForSession(sessionID)
 }
 
+func (room *Room) SetMemberAccountIDForSession(sessionID string, accountID string) bool {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	playerID, ok := room.membership.playerIDForSession(sessionID)
+	if !ok {
+		return false
+	}
+
+	member, ok := room.membership.memberByPlayerID(playerID)
+	if !ok {
+		return false
+	}
+
+	member.AccountID = accountID
+	return true
+}
+
+func (room *Room) SetMemberLocalProfileIDForSession(sessionID string, localProfileID string) bool {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	playerID, ok := room.membership.playerIDForSession(sessionID)
+	if !ok {
+		return false
+	}
+
+	member, ok := room.membership.memberByPlayerID(playerID)
+	if !ok {
+		return false
+	}
+
+	member.LocalProfileID = localProfileID
+	return true
+}
+
 func (room *Room) OwnerID() string {
 	room.mu.Lock()
 	defer room.mu.Unlock()

@@ -55,6 +55,11 @@ class TomlStore:
             return False
         return True
 
+    def section_names(self) -> tuple[str, ...]:
+        names: list[str] = []
+        self._collect_section_names(self.document, (), names)
+        return tuple(names)
+
     def update_constants(self, section_name: str, values: Mapping[str, ConstantValue]) -> None:
         table = self._tomlkit.table()
         for key, value in values.items():
@@ -168,6 +173,19 @@ class TomlStore:
             if not _is_mapping(current):
                 raise TomlStoreError(f"[{'.'.join(parts[:-1])}] must be a table")
         current[parts[-1]] = table
+
+    def _collect_section_names(
+        self,
+        table: Mapping[str, Any],
+        prefix: tuple[str, ...],
+        names: list[str],
+    ) -> None:
+        for key, value in table.items():
+            if not _is_mapping(value):
+                continue
+            section_name = ".".join((*prefix, key))
+            names.append(section_name)
+            self._collect_section_names(value, (*prefix, key), names)
 
 
 def _load_tomlkit() -> Any:

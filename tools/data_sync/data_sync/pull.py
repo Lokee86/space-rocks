@@ -152,7 +152,6 @@ def _parse_discovered_sections(
     parser: Parser,
 ) -> dict[str, tuple[tuple[str, Any], ...]]:
     parsed_by_section: dict[str, tuple[tuple[str, Any], ...]] = {}
-    section_owners: set[str] = set()
     for discovered in discovered_files:
         path = discovered.path
         try:
@@ -163,9 +162,6 @@ def _parse_discovered_sections(
             raise PullError(f"failed to read constants file {path}: {exc}") from exc
 
         for section_name in discovered.sections:
-            if section_name in section_owners:
-                raise PullError(f"[{section_name}] is owned by multiple targets")
-            section_owners.add(section_name)
             try:
                 block = extract_block(text, section_name)
                 current_values = parser(block)

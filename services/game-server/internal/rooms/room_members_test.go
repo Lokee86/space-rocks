@@ -49,6 +49,42 @@ func TestPlayerIDForSessionFindsExpectedPlayer(t *testing.T) {
 	}
 }
 
+func TestSetMemberAccountIDForSession(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	member := room.AddMember(NewRoomMember("session-1"))
+
+	if !room.SetMemberAccountIDForSession("session-1", "account-1") {
+		t.Fatal("expected SetMemberAccountIDForSession to succeed")
+	}
+	if member.AccountID != "account-1" {
+		t.Fatalf("expected AccountID account-1, got %q", member.AccountID)
+	}
+}
+
+func TestSetMemberLocalProfileIDForSession(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	member := room.AddMember(NewRoomMember("session-1"))
+
+	if !room.SetMemberLocalProfileIDForSession("session-1", "local-profile-1") {
+		t.Fatal("expected SetMemberLocalProfileIDForSession to succeed")
+	}
+	if member.LocalProfileID != "local-profile-1" {
+		t.Fatalf("expected LocalProfileID local-profile-1, got %q", member.LocalProfileID)
+	}
+}
+
+func TestSetMemberIdentityForMissingSessionReturnsFalse(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	room.AddMember(NewRoomMember("session-1"))
+
+	if room.SetMemberAccountIDForSession("missing-session", "account-1") {
+		t.Fatal("expected SetMemberAccountIDForSession to fail for missing session")
+	}
+	if room.SetMemberLocalProfileIDForSession("missing-session", "local-profile-1") {
+		t.Fatal("expected SetMemberLocalProfileIDForSession to fail for missing session")
+	}
+}
+
 func TestMembersSnapshotReturnsValueCopies(t *testing.T) {
 	room := NewRoom("room", RoomStateLobby, nil)
 	member := room.AddMember(NewRoomMember("session-1"))

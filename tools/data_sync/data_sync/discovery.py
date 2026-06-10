@@ -39,8 +39,15 @@ def discover_constants_files(
     config: DataSyncConfig,
     languages: tuple[str, ...] | list[str],
 ) -> tuple[DiscoveredConstantsFile, ...]:
+    return discover_constants_files_from_paths(_included_paths(config), languages)
+
+
+def discover_constants_files_from_paths(
+    paths: tuple[Path, ...] | list[Path],
+    languages: tuple[str, ...] | list[str],
+) -> tuple[DiscoveredConstantsFile, ...]:
     discovered: list[DiscoveredConstantsFile] = []
-    for path in _included_paths(config):
+    for path in paths:
         language = language_for_path(path)
         if language is None:
             continue

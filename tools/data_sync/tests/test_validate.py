@@ -180,6 +180,23 @@ def valid_config_text() -> str:
 [sot]
 path = "shared/game_data.toml"
 
+[constants.go]
+files = ["go/constants.go", "go/weapons.go"]
+sections = [
+    "constants.gameplay",
+    "constants.network",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+owns = [
+    "constants.gameplay",
+    "constants.network",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+
 [constants.scan]
 include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
 exclude = []
@@ -345,6 +362,23 @@ paths = ["shared/constants_a.toml", "shared/constants_b.toml"]
 [sot.packets]
 path = "shared/packets.toml"
 
+[constants.go]
+files = ["go/constants.go", "go/weapons.go"]
+sections = [
+    "constants.gameplay",
+    "constants.network",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+owns = [
+    "constants.gameplay",
+    "constants.network",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+
 [constants.scan]
 include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
 exclude = []
@@ -423,6 +457,23 @@ paths = ["shared/constants_a.toml", "shared/constants_b.toml"]
 [sot.packets]
 path = "shared/packets.toml"
 
+[constants.go]
+files = ["go/constants.go", "go/weapons.go"]
+sections = [
+    "constants.gameplay",
+    "constants.network",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+owns = [
+    "constants.gameplay",
+    "constants.network",
+    "constants.server.weapons.basic_cannon",
+    "constants.server.weapons.torpedo",
+    "constants.shared.weapons.torpedo_radial_shape",
+]
+
 [constants.scan]
 include = ["go/**/*.go", "gds/**/*.gd", "ts/**/*.ts"]
 exclude = []
@@ -447,6 +498,65 @@ owns = []
     )
 
     assert run(["-validate", "-config", str(config_path)]) == 1
+
+
+def test_validate_constants_multiple_sot_files_namespace_only_sections_do_not_duplicate(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "shared").mkdir()
+    (tmp_path / "go").mkdir()
+
+    (tmp_path / "shared/constants_a.toml").write_text(
+        """
+[constants.server.weapons.basic_cannon]
+damage = 1
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "shared/constants_b.toml").write_text(
+        """
+[constants.server.entities.asteroid]
+size = 3
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "go/constants.go").write_text(
+        """
+package constants
+
+// data-sync:start constants.server.weapons.basic_cannon
+old
+// data-sync:end constants.server.weapons.basic_cannon
+// data-sync:start constants.server.entities.asteroid
+old
+// data-sync:end constants.server.entities.asteroid
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path = tmp_path / "config.toml"
+    config_path.write_text(
+        """
+[sot.constants]
+paths = ["shared/constants_a.toml", "shared/constants_b.toml"]
+
+[constants.go]
+files = ["go/constants.go"]
+sections = [
+    "constants.server.weapons.basic_cannon",
+    "constants.server.entities.asteroid",
+]
+owns = [
+    "constants.server.weapons.basic_cannon",
+    "constants.server.entities.asteroid",
+]
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert run(["-validate", "-constants", "-go", "-config", str(config_path)]) == 0
 
 
 def test_validate_files_without_data_sync_markers_are_ignored_for_constants(tmp_path: Path) -> None:

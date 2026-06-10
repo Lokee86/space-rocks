@@ -2,6 +2,7 @@ package networkingtests
 
 import (
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/authclient"
@@ -152,6 +153,71 @@ func TestAuthenticatedCreateRoomCreatesLobbyRoom(t *testing.T) {
 	}
 	if snapshot.RoomState != string(rooms.RoomStateLobby) {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateLobby, snapshot.RoomState)
+	}
+}
+
+func TestAuthenticatedCreateRoomAttachesAccountIDToRoomMember(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	verifier := &fakeTokenVerifier{
+		result: authclient.VerifyResult{
+			Valid: true,
+			Identity: authclient.Identity{
+				UserID:      123,
+				DisplayName: "Ada",
+			},
+		},
+	}
+
+	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, verifier))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeAuthenticateRequest, Token: "submitted-token"}); err != nil {
+		t.Fatalf("write authenticate request: %v", err)
+	}
+	var authResult struct {
+		Type          string `json:"type"`
+		Authenticated bool   `json:"authenticated"`
+		UserID        int64  `json:"user_id"`
+		DisplayName   string `json:"display_name"`
+		ErrorCode     string `json:"error_code"`
+	}
+	readJSON(t, conn, &authResult)
+	if !authResult.Authenticated {
+		t.Fatal("expected authenticated websocket")
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+
+	var snapshot servergame.RoomSnapshot
+	readJSON(t, conn, &snapshot)
+	if snapshot.RoomCode == "" {
+		t.Fatal("expected generated room code")
+	}
+
+	room, ok := manager.Find(snapshot.RoomCode)
+	if !ok {
+		t.Fatalf("expected room %q to exist", snapshot.RoomCode)
+	}
+
+	members := room.MembersSnapshot()
+	if len(members) != 1 {
+		t.Fatalf("expected 1 room member, got %d", len(members))
+	}
+	if members[0].AccountID != strconv.FormatInt(123, 10) {
+		t.Fatalf("expected AccountID %q, got %q", strconv.FormatInt(123, 10), members[0].AccountID)
+	}
+	if members[0].LocalProfileID != "" {
+		t.Fatalf("expected empty LocalProfileID, got %q", members[0].LocalProfileID)
 	}
 }
 

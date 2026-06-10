@@ -20,6 +20,7 @@ type playerSession struct {
 	Targeting       PlayerTargeting
 	Score           int
 	Lives           int
+	ShipDeaths      int
 	RespawnCooldown float64
 	Suspension      runtime.SuspensionState
 	DamageOptions   runtime.DamageOptions

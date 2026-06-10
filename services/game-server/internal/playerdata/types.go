@@ -1,5 +1,13 @@
 package playerdata
 
+// MatchMode identifies the logical match mode recorded in playerdata.
+type MatchMode string
+
+const (
+	MatchModeSinglePlayer MatchMode = "single_player"
+	MatchModeMultiplayer   MatchMode = "multiplayer"
+)
+
 // Stats is the logical V1.1 player stats contract.
 type Stats struct {
 	TotalScore  int
@@ -23,6 +31,6 @@ type PlayerMatchSummary struct {
 // MatchResultSummary is the logical V1.1 match summary contract.
 type MatchResultSummary struct {
 	MatchID string
-	Mode    string
+	Mode    MatchMode
 	Players []PlayerMatchSummary
 }
