@@ -9,6 +9,9 @@ FORBIDDEN_IMPORTS = (
     "github.com/Lokee86/space-rocks/server/internal/",
     "services/game-server",
 )
+FORBIDDEN_TEXT_REFERENCES = (
+    "services/api-server/app",
+)
 SKIP_PATH_PARTS = {".git", "vendor", "build", "dist", "node_modules", "__pycache__"}
 
 
@@ -26,5 +29,21 @@ def test_player_data_does_not_import_game_server_internals() -> None:
             if any(forbidden in line for forbidden in FORBIDDEN_IMPORTS):
                 relative_path = path.relative_to(REPO_ROOT)
                 violations.append(f"{relative_path}:{line_number}: {line.strip()}")
+
+    assert violations == []
+
+
+def test_player_data_does_not_reference_api_server_app_sources() -> None:
+    violations: list[str] = []
+
+    for path in sorted(PLAYER_DATA_ROOT.rglob("*.go")):
+        if any(part in SKIP_PATH_PARTS for part in path.parts):
+            continue
+
+        text = path.read_text(encoding="utf-8")
+        for forbidden in FORBIDDEN_TEXT_REFERENCES:
+            if forbidden in text:
+                relative_path = path.relative_to(REPO_ROOT)
+                violations.append(f"{relative_path}: {forbidden}")
 
     assert violations == []

@@ -152,6 +152,9 @@ func TestNewInMemoryRuntimeRoutesGuestMatchResult(t *testing.T) {
 	if recordPacket.Duplicate {
 		t.Fatal("Duplicate = true, want false")
 	}
+	if recordPacket.Stats.TotalScore != 5 || recordPacket.Stats.HighScore != 5 || recordPacket.Stats.ShipDeaths != 1 || recordPacket.Stats.GamesPlayed != 1 || recordPacket.Stats.Wins != 1 {
+		t.Fatalf("Record stats = %+v, want guest stats", recordPacket.Stats)
+	}
 
 	loadPayload, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
@@ -170,10 +173,10 @@ func TestNewInMemoryRuntimeRoutesGuestMatchResult(t *testing.T) {
 	if err := json.Unmarshal(loadResponse, &loadPacket); err != nil {
 		t.Fatalf("unmarshal response: %v", err)
 	}
-	if loadPacket.Found {
-		t.Fatal("Found = true, want false")
+	if !loadPacket.Found {
+		t.Fatal("Found = false, want true")
 	}
-	if loadPacket.Stats != (protocol.PlayerDataStats{}) {
-		t.Fatalf("Stats = %+v, want zero stats", loadPacket.Stats)
+	if loadPacket.Stats.TotalScore != 5 || loadPacket.Stats.HighScore != 5 || loadPacket.Stats.ShipDeaths != 1 || loadPacket.Stats.GamesPlayed != 1 || loadPacket.Stats.Wins != 1 {
+		t.Fatalf("Stats = %+v, want guest stats", loadPacket.Stats)
 	}
 }
