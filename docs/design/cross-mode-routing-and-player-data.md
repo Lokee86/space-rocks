@@ -207,7 +207,7 @@ Implementation status: this routing model exists as the auth/admission boundary,
 
 ## V1.1 Match Summary / Match Resolution
 
-Phase 4/V1.1 match summaries are now produced by the game-server after `game_over`.
+Phase 4/V1.1 match summaries are now produced by the game-server after `game_over`, and Phase 5 reporting is complete.
 
 - The room game-over lifecycle remains the transition authority.
 - `game/rules` decides when a match reaches `game_over`.
@@ -219,7 +219,11 @@ Phase 4/V1.1 match summaries are now produced by the game-server after `game_ove
 - `account_id` is used for authenticated account summaries.
 - `local_profile_id` is used for local profile summaries.
 - Guest summaries have neither `account_id` nor `local_profile_id`.
-- Reporting the summary to Rails or the local player-data service is Phase 5 or later.
+- The game-server reports resolved summaries through the `services/player-data` packet/runtime boundary after `game_over`.
+- `services/player-data` routes `account_id` to `authenticated_account`, `local_profile_id` to `local_profile`, and guest/no durable identity to guest behavior.
+- The game-server does not write Rails/Postgres or SQLite directly.
+- Successful reports are marked and not repeated.
+- Failed reports are not marked successful.
 
 ## Non-Goals
 
@@ -456,11 +460,11 @@ This V1 stats payload does not include currency, ship parts, unlocks, loadouts, 
 
 For V1 stats, the flow is:
 
-- game-server emits domain events during gameplay
-- a match or session summary accumulates per-player facts
+- game-server emits and accumulates gameplay facts during gameplay
+- a match summary accumulates per-player facts
 - match resolution decides the final score and V1 winner
-- the game-server reports the summary to the player-data service later
-- the player-data service persists stats
+- the game-server reports the summary through `services/player-data`
+- `services/player-data` persists or routes the stats through the selected store
 
 Likely event inputs include:
 

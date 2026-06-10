@@ -28,8 +28,8 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - The upgraded damage seam now lives in `services/game-server/internal/game/damage/`; `ResolveSingle` handles modifiers, shields, area damage, and DoT at a high level while `game` owns adapters and entity mutation.
 - Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`; weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/design/weapons.md](../design/weapons.md) and [docs/design/radial-effects.md](../design/radial-effects.md).
 - Rails internal token verification, Go authclient, websocket session identity, and websocket auth packets now form the completed auth/admission seam for multiplayer admission.
-- Phase 4 Go match summaries are complete: `Game.PlayerMatchFacts` feeds the playerdata winner/summary builder, rooms assign stable match IDs, `game_over` stores one resolved `MatchResultSummary`, and summary identity uses `account_id`, `local_profile_id`, or guest/no-ID.
-- Next phase is match-result reporting/routing: `account_id` routes to the Rails/internal authenticated-account stats path, `local_profile_id` routes to the local player-data path, and guest/no durable identity gets no durable write; do not add Godot stats UI unless redirected.
+- Phase 5 match-result reporting is complete: resolved `MatchResultSummary` is reported through `services/player-data`, `account_id` routes to `authenticated_account`, `local_profile_id` routes to `local_profile`, and guest/no durable identity routes to guest behavior.
+- Next near-term work is a real end-to-end smoke across Rails + Go + Godot, plus Godot stats fetch/display and Local Profile UX/create/select/save guest profile.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
@@ -41,7 +41,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Dev-readiness item 11 is still open: local-player camera piggybacking must be replaced with a dedicated camera target/controller.
 - Generated Godot constants and packet files still live under `client/scripts/` for now, even though that is not the ideal long-term shape.
 - The API server is planned but not scaffolded.
-- Match-result reporting, Godot stats UI, save guest profile, and live progression grants are still future work.
+- Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements are still future work.
 - Ship variants are planned but not implemented.
 - Client packet codec callers already use `PacketEncodeResult` and `PacketDecodeResult`; the codec itself should stay focused on JSON parsing and envelope validation only.
 
