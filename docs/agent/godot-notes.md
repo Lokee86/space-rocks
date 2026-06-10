@@ -2,6 +2,38 @@
 
 Use this when changing the Godot client, scenes, UI, GDScript, GUT tests, assets, imports, or developer toggles.
 
+## EngineForge / Godot Bridge Tools
+
+Space Rocks has a local EngineForge/Godot bridge wrapped by the MCP servers.
+
+Use the read-only info MCP server for Godot diagnosis before guessing from scene files alone. It can inspect the active scene, scene tree, project info, node properties, editor state, and logs through the running Godot editor.
+
+Use the write MCP server only through Codex for implementation work that intentionally mutates scenes, nodes, scripts, resources, or editor state.
+
+The bridge command shape is category/action/params, for example:
+
+```json
+{
+  "category": "scene",
+  "action": "getTree",
+  "params": {}
+}
+```
+
+Do not use guessed dotted command strings such as `scene.tree`. The installed bridge exposes actual commands through `/capabilities`.
+
+Do not edit the installed EngineForge plugin manually:
+
+```text
+client/addons/engineforge_bridge/engineforge_bridge.gd
+```
+
+Full MCP reference:
+
+```text
+docs/agent/mcp-servers.md
+```
+
 ## Client Responsibilities
 
 The Godot client owns:

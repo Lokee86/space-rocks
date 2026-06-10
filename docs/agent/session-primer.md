@@ -2,6 +2,17 @@
 
 Use this as the short orientation layer for new sessions. It should stay stable enough to be useful, but narrow enough to avoid becoming a second architecture manual.
 
+## MCP Tooling Reminder
+
+Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
+
+- The info MCP server uses `server-info-next.js` on port `8789`. It is read-only and is intended for ChatGPT/planning/diagnosis. It exposes repo read/search tools plus read-only EngineForge/Godot bridge diagnostics.
+- The write MCP server uses `server-write.js` on port `8788`. It is write-capable and is intended for Codex implementation. It exposes bounded repo writes, allowlisted commands, and explicit Godot bridge mutation tools.
+- For Godot scene/UI diagnosis, use the info server’s bridge tools before guessing from files alone.
+- For implementation work that needs repo writes or Godot scene edits, prompt Codex to use `space_rocks_write`.
+- Never expose the write MCP server through ngrok. Remote access, if needed, should be read-only info server only.
+- Full reference: `docs/agent/mcp-servers.md`.
+
 ## Active Architecture State
 
 - Gameplay is server-authoritative.

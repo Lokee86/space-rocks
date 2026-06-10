@@ -32,3 +32,6 @@ __pycache__/
 # Local Codex workspace state
 .codex/
 tools/space-rocks-mcp/node_modules/
+
+# EngineForge bridge (auto-managed, do not remove)
+addons/engineforge_bridge/

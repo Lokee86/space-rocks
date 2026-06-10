@@ -10,6 +10,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 
 ## Current Context
 
+- MCP tooling is available: use the read-only info MCP for ChatGPT/planning and `space_rocks_write` for Codex implementation. See `docs/agent/mcp-servers.md`.
 - The repo may be dirty.
 - There may be unrelated Godot/editor asset changes in the worktree.
 - Do not clean or revert unrelated user/editor changes casually.

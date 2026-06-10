@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "start:legacy": "node server.js",
+    "start:info-next": "PORT=8789 node server-info-next.js",
+    "start:write": "PORT=8788 node server-write.js",
+    "start:info": "PORT=8789 node server-info-next.js"
   },
   "keywords": [],
   "author": "",
