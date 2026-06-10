@@ -18,6 +18,7 @@ Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separat
 - Rails/Postgres physical stats persistence exists for authenticated accounts.
 - Embedded SQLite physical stats persistence exists for local profiles.
 - Both stores implement the same logical stats contract.
+- Go `MatchResultSummary` structs and builders now exist in the player-data runtime and mirror the shared logical schema.
 - Gameplay-facing code depends on playerdata contracts, not Rails tables or embedded DB tables.
 - The logical player-data concepts include:
   - Profile
@@ -45,6 +46,20 @@ This V1 contract does not include currency, ship parts, unlocks, loadouts, achie
 For V1 multiplayer, the winner is the authenticated player with the highest match score.
 `wins` is account/multiplayer-only; Local Profile uses the shared core stats fields and intentionally excludes `wins`.
 
+`MatchResultSummary` supports:
+
+- `match_id`
+- `mode`
+- `player summaries`
+- `account_id`
+- `local_profile_id`
+- `score`
+- `ship_deaths`
+- `won`
+
+Guest summaries use no durable identity.
+Wins remain account/multiplayer-only, and Local Profile excludes wins.
+
 ## Logical Schema Versus Physical Database Schema
 
 This SSoT is for logical player-data contracts, not raw database DDL.
@@ -64,6 +79,8 @@ Physical schema examples:
 Physical schemas may differ because Rails/Postgres and the embedded DB may have different storage needs.
 
 Physical schemas must still satisfy the shared logical contract.
+
+Rails/Postgres and embedded SQLite stores exist separately, but Phase 4 did not add match-result reporting to those stores.
 
 ## Scope
 
@@ -151,6 +168,7 @@ Rails migrations remain human-reviewed because database migrations are operation
 Embedded DB migrations also need review because local profile data must be durable and upgradeable.
 
 Generated migration skeletons are still not implemented.
+Migration skeleton generation remains future work if still needed.
 
 ## Contract Tests
 

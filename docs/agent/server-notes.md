@@ -92,6 +92,19 @@ Player-data runtime extraction is later work; the Rails adapter and embedded SQL
 - Match/mode policy evaluation belongs in `services/game-server/internal/game/rules`, which should receive plain snapshots/facts and return decisions/status.
 - `game` should not own websocket transport, API persistence, account/auth concerns, or lobby UI flow.
 
+### Match Result Summaries
+
+- The existing room/game-over lifecycle remains the match-over authority.
+- Phase 4 does not add a second match-complete condition.
+- `game/rules` decides match lifecycle and `game_over`.
+- `services/player-data` resolves the winner/result payload after `game_over`.
+- `Game` exposes `PlayerMatchFacts`.
+- Rooms assign stable match IDs per started match.
+- Rooms store one resolved `MatchResultSummary` on `game_over`.
+- Summaries are not persisted or reported yet; later reporting remains future work.
+- Summary identity uses `account_id`, `local_profile_id`, or neither for guest.
+- The Go server must still not directly write Rails/Postgres or SQLite.
+
 ### Server Identity Policy
 
 - `PlayerID` is permanent and player-facing.
