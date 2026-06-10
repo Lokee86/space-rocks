@@ -134,6 +134,47 @@ func TestStartGameForMemberAdvancesMatchIDAfterReturnToLobby(t *testing.T) {
 	room.GameInstance().Stop()
 }
 
+func TestStartGameForMemberResetsMatchResultReportedStateAfterNewMatch(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	owner := room.AddMember(NewRoomMember("session-owner"))
+	owner.SetReady(true)
+	peer := room.AddMember(NewRoomMember("session-peer"))
+	peer.SetReady(true)
+
+	newGame := func() *game.Game { return game.New() }
+
+	if err := room.StartGameForMember("Player-1", newGame); err != nil {
+		t.Fatalf("expected first start to succeed, got %v", err)
+	}
+	if room.MatchResultReported() {
+		t.Fatal("expected new match to start with match result reported state false")
+	}
+
+	room.MarkMatchResultReported()
+	if !room.MatchResultReported() {
+		t.Fatal("expected match result reported state to be true after marking it")
+	}
+
+	if err := room.MarkGameOver(); err != nil {
+		t.Fatalf("expected game over transition to succeed, got %v", err)
+	}
+	if err := room.ResetToLobby("Player-1"); err != nil {
+		t.Fatalf("expected reset to lobby to succeed, got %v", err)
+	}
+
+	owner.SetReady(true)
+	peer.SetReady(true)
+
+	if err := room.StartGameForMember("Player-1", newGame); err != nil {
+		t.Fatalf("expected second start to succeed, got %v", err)
+	}
+	if room.MatchResultReported() {
+		t.Fatal("expected match result reported state to reset for the new match")
+	}
+
+	room.GameInstance().Stop()
+}
+
 func TestStartSinglePlayerGameRejectsRoomWithoutMembers(t *testing.T) {
 	room := NewRoom("room", RoomStateLobby, nil)
 

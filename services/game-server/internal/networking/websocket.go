@@ -8,11 +8,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func WebSocketHandler(rooms *rooms.RoomManager) http.HandlerFunc {
-	return WebSocketHandlerWithAuth(rooms, nil)
+func WebSocketHandler(roomManager *rooms.RoomManager) http.HandlerFunc {
+	return WebSocketHandlerWithAuth(roomManager, nil)
 }
 
-func WebSocketHandlerWithAuth(rooms *rooms.RoomManager, verifier TokenVerifier) http.HandlerFunc {
+func WebSocketHandlerWithAuth(roomManager *rooms.RoomManager, verifier TokenVerifier) http.HandlerFunc {
+	return WebSocketHandlerWithAuthAndReporter(roomManager, verifier, rooms.NoopMatchResultReporter{})
+}
+
+func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return allowWebSocketOrigin(r)
@@ -26,7 +30,7 @@ func WebSocketHandlerWithAuth(rooms *rooms.RoomManager, verifier TokenVerifier) 
 			return
 		}
 
-		session := newWebSocketSession(conn, rooms, verifier)
+		session := newWebSocketSession(conn, roomManager, verifier, reporter)
 		handleConnection(session, r.RemoteAddr)
 	}
 }

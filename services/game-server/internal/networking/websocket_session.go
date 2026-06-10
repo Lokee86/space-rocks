@@ -20,18 +20,23 @@ type webSocketSession struct {
 	outbound            chan []byte
 	identity            SessionIdentity
 	authVerifier        TokenVerifier
+	matchResultReporter rooms.MatchResultReporter
 }
 
-func newWebSocketSession(conn *websocket.Conn, rooms *rooms.RoomManager, authVerifier TokenVerifier) *webSocketSession {
+func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
 	sessionNumber := nextSessionID.Add(1)
+	if reporter == nil {
+		reporter = rooms.NoopMatchResultReporter{}
+	}
 
 	return &webSocketSession{
-		conn:         conn,
-		sessionID:    "session-" + strconv.FormatUint(sessionNumber, 10),
-		rooms:        rooms,
-		outbound:     make(chan []byte, 16),
-		identity:     NewGuestSessionIdentity(),
-		authVerifier: authVerifier,
+		conn:                 conn,
+		sessionID:            "session-" + strconv.FormatUint(sessionNumber, 10),
+		rooms:                roomManager,
+		outbound:             make(chan []byte, 16),
+		identity:             NewGuestSessionIdentity(),
+		authVerifier:         authVerifier,
+		matchResultReporter: reporter,
 	}
 }
 

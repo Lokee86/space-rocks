@@ -10,7 +10,7 @@ type hostedPlayerDataSink struct {
 	runtime *playerdata.Runtime
 }
 
-func (s *hostedPlayerDataSink) handlePlayerDataCommand(payload []byte) ([]byte, error) {
+func (s *hostedPlayerDataSink) HandlePlayerDataCommand(payload []byte) ([]byte, error) {
 	if s.runtime == nil {
 		return nil, errors.New("player-data runtime is required")
 	}

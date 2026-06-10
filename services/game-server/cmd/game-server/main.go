@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/server/internal/matchreporting"
 	"github.com/Lokee86/space-rocks/server/internal/networking"
 )
 
@@ -19,11 +20,16 @@ func main() {
 		logging.Server.Error("player-data runtime initialization failed", err)
 		os.Exit(1)
 	}
-	_ = playerDataRuntime // wiring happens in a later phase
+	playerDataSink := &hostedPlayerDataSink{runtime: playerDataRuntime}
+	reporter, err := matchreporting.NewRuntimeReporter(playerDataSink)
+	if err != nil {
+		logging.Server.Error("player-data reporter initialization failed", err)
+		os.Exit(1)
+	}
 	authVerifier := buildAuthVerifierFromEnv()
 
 	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuth(rooms, authVerifier))
+	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporter(rooms, authVerifier, reporter))
 
 	logging.Server.Info("server starting", "addr", ":8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {

@@ -40,3 +40,15 @@ func (room *Room) ResolvedMatchSummary() (playerdata.MatchResultSummary, bool) {
 	defer room.mu.Unlock()
 	return room.match.ResolvedSummary()
 }
+
+func (room *Room) MatchResultReported() bool {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+	return room.match.MatchResultReported()
+}
+
+func (room *Room) MarkMatchResultReported() {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+	room.match.MarkMatchResultReported()
+}
