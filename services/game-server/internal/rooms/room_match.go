@@ -8,11 +8,12 @@ import (
 )
 
 type roomMatch struct {
-	game            *game.Game
-	activePlayers   int
-	matchNumber     int
-	currentMatchID  string
-	resolvedSummary *playerdata.MatchResultSummary
+	game                 *game.Game
+	activePlayers        int
+	matchNumber          int
+	currentMatchID       string
+	resolvedSummary      *playerdata.MatchResultSummary
+	matchResultReported  bool
 }
 
 func newRoomMatch(gameInstance *game.Game) *roomMatch {
@@ -44,6 +45,7 @@ func (rm *roomMatch) SetActivePlayers(count int) {
 func (rm *roomMatch) BeginNextMatch(roomID string) string {
 	rm.matchNumber++
 	rm.currentMatchID = roomID + "-match-" + strconv.Itoa(rm.matchNumber)
+	rm.matchResultReported = false
 	rm.ClearResolvedSummary()
 	return rm.currentMatchID
 }
@@ -66,4 +68,12 @@ func (rm *roomMatch) ResolvedSummary() (playerdata.MatchResultSummary, bool) {
 
 func (rm *roomMatch) ClearResolvedSummary() {
 	rm.resolvedSummary = nil
+}
+
+func (rm *roomMatch) MarkMatchResultReported() {
+	rm.matchResultReported = true
+}
+
+func (rm *roomMatch) MatchResultReported() bool {
+	return rm.matchResultReported
 }

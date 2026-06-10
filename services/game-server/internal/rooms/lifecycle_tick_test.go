@@ -1,12 +1,24 @@
 package rooms
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 	"unsafe"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/playerdata"
 )
+
+type fakeMatchResultReporter struct {
+	calls int
+	err   error
+}
+
+func (r *fakeMatchResultReporter) ReportMatchResult(summary playerdata.MatchResultSummary) error {
+	r.calls++
+	return r.err
+}
 
 func TestTickRoomGameOverLifecycleTransitionsFinishedGameAndBroadcasts(t *testing.T) {
 	finishedGame := game.New()
@@ -48,6 +60,90 @@ func TestTickRoomGameOverLifecycleDoesNotBroadcastWithoutTransition(t *testing.T
 	}
 	if broadcasts != 0 {
 		t.Fatalf("expected no broadcast, got %d", broadcasts)
+	}
+}
+
+func TestReportResolvedMatchResultOnceReturnsFalseForNilRoom(t *testing.T) {
+	if ReportResolvedMatchResultOnce(nil, &fakeMatchResultReporter{}) {
+		t.Fatal("expected nil room to return false")
+	}
+}
+
+func TestReportResolvedMatchResultOnceReturnsFalseWithoutSummary(t *testing.T) {
+	room := NewRoom("room", RoomStateGameOver, nil)
+
+	if ReportResolvedMatchResultOnce(room, &fakeMatchResultReporter{}) {
+		t.Fatal("expected room without resolved summary to return false")
+	}
+}
+
+func TestReportResolvedMatchResultOnceReportsAndMarksOnce(t *testing.T) {
+	room := NewRoom("room", RoomStateGameOver, nil)
+	room.match.SetResolvedSummary(playerdata.MatchResultSummary{
+		MatchID: "room-match-1",
+		Players: []playerdata.PlayerMatchSummary{
+			{
+				GamePlayerID: "Player-1",
+				Score:        42,
+			},
+		},
+	})
+	reporter := &fakeMatchResultReporter{}
+
+	if !ReportResolvedMatchResultOnce(room, reporter) {
+		t.Fatal("expected successful report to return true")
+	}
+	if reporter.calls != 1 {
+		t.Fatalf("expected reporter to be called once, got %d", reporter.calls)
+	}
+	if !room.MatchResultReported() {
+		t.Fatal("expected room to be marked as reported")
+	}
+}
+
+func TestReportResolvedMatchResultOnceReturnsFalseAfterSuccess(t *testing.T) {
+	room := NewRoom("room", RoomStateGameOver, nil)
+	room.match.SetResolvedSummary(playerdata.MatchResultSummary{
+		MatchID: "room-match-1",
+		Players: []playerdata.PlayerMatchSummary{
+			{
+				GamePlayerID: "Player-1",
+			},
+		},
+	})
+	reporter := &fakeMatchResultReporter{}
+
+	if !ReportResolvedMatchResultOnce(room, reporter) {
+		t.Fatal("expected first report to succeed")
+	}
+	if ReportResolvedMatchResultOnce(room, reporter) {
+		t.Fatal("expected second report attempt to return false")
+	}
+	if reporter.calls != 1 {
+		t.Fatalf("expected reporter to be called once, got %d", reporter.calls)
+	}
+}
+
+func TestReportResolvedMatchResultOnceReturnsFalseOnReporterError(t *testing.T) {
+	room := NewRoom("room", RoomStateGameOver, nil)
+	room.match.SetResolvedSummary(playerdata.MatchResultSummary{
+		MatchID: "room-match-1",
+		Players: []playerdata.PlayerMatchSummary{
+			{
+				GamePlayerID: "Player-1",
+			},
+		},
+	})
+	reporter := &fakeMatchResultReporter{err: errors.New("report failed")}
+
+	if ReportResolvedMatchResultOnce(room, reporter) {
+		t.Fatal("expected reporter error to return false")
+	}
+	if reporter.calls != 1 {
+		t.Fatalf("expected reporter to be called once, got %d", reporter.calls)
+	}
+	if room.MatchResultReported() {
+		t.Fatal("expected room to remain unreported after reporter error")
 	}
 }
 

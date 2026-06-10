@@ -21,7 +21,9 @@ func tickSessionGameplayLifecycle(session *webSocketSession, done <-chan struct{
 				continue
 			}
 
-			rooms.TickRoomGameOverLifecycle(session.room, BroadcastRoomSnapshot)
+			if rooms.TickRoomGameOverLifecycle(session.room, BroadcastRoomSnapshot) {
+				rooms.ReportResolvedMatchResultOnce(session.room, session.matchResultReporter)
+			}
 		}
 	}
 }
