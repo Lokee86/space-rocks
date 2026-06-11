@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://cs5j0cu56sy4e"]
+
+[ext_resource type="Texture2D" uid="uid://wkwgsydgmmvy" path="res://assets/ui/windows/Window (7).png" id="1_8cshs"]
+
+[node name="Window7" type="TextureRect" unique_id=500599427]
+texture = ExtResource("1_8cshs")
+expand_mode = 1
