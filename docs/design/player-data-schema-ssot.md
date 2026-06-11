@@ -10,6 +10,17 @@ Local Profile and Authenticated Account must share the same logical account-shap
 
 Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separately risks schema drift.
 
+## Boundary Summary
+
+- `shared/player_data/*.toml` owns logical player-data contracts.
+- It does not own HTTP request/response shapes.
+- HTTP request/response shapes live in `shared/contracts/http/openapi.yaml`.
+- Rails migrations own the Rails/Postgres physical schema.
+- Embedded DB migrations own local physical storage.
+- Stores must satisfy the logical player-data contract even if physical tables differ.
+- See [Project source-of-truth map](source-of-truth-map.md) for the broader ownership map.
+- If HTTP API payloads are involved, see [HTTP contracts](../api/http-contracts.md).
+
 ## Core Rule
 
 - `shared/player_data/stats.toml` and `shared/player_data/match_result.toml` are the source of truth for logical account-shaped player-data schema.
@@ -177,7 +188,7 @@ Future contract tests:
 
 - SSoT schema parses and validates.
 - generated Go structs match SSoT fields.
-- Rails API payloads match SSoT fields.
+- Rails API payloads match SSoT fields through the OpenAPI contract.
 - embedded DB records map to SSoT fields.
 - no store adds independent player-data fields without updating SSoT.
 

@@ -169,6 +169,9 @@ Returns no content on success. The same token should fail on `GET /api/auth/me` 
 Rails controllers implement the contract, and Rails integration tests enforce it with `openapi_first` at test time.
 This is Level 2 enforcement only. It does not generate controllers, replace strong params, or add runtime middleware yet.
 The normal verification command is `bundle exec rails test` from `services/api-server`.
+runtime OpenAPI middleware is not active.
+
+See [HTTP contracts](../../docs/api/http-contracts.md) for the focused contract workflow.
 
 ## Bruno Smoke Tests
 

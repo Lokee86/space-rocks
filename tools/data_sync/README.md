@@ -1,6 +1,29 @@
 # Data Sync
 
-`tools/data_sync/` is a reusable Python CLI for syncing shared game data between:
+`tools/data_sync/` is a reusable Python CLI for syncing data-sync-supported shared game data.
+
+## Scope
+
+`tools/data_sync/` currently owns workflow support for:
+
+- constants
+- packets
+- drop_tables
+
+`tools/data_sync/` does not currently own:
+
+- HTTP OpenAPI contracts
+- Rails/Postgres migrations
+- Godot scene/node structure
+- collision export source scenes/assets
+
+`player_data` is a logical-schema domain with partial/planned pipeline support. The authoritative overview for project-wide ownership lives in [source-of-truth-map](../../docs/design/source-of-truth-map.md).
+
+HTTP contracts are separate from data-sync and are documented elsewhere.
+
+This README describes data-sync-supported domains only, not every project source of truth.
+
+`tools/data_sync/` works between:
 
 - TOML sources of truth for active constants:
   - `shared/constants/server_constants.toml`
@@ -19,7 +42,7 @@
   - `shared/player_data/*.toml`
 - Go game server files
 - GDScript Godot client files
-- TypeScript API server files, later
+- TypeScript API server files, later, when enabled
 
 For constants, the tool uses `data-sync` destination blocks discovered through
 `[constants.scan]`. `-push` maps each TOML `constants.*` section to matching
@@ -29,7 +52,7 @@ files/sections/owns config is required. Multiple constants TOML files are
 supported, each constants section must exist in exactly one source TOML file,
 and duplicate pull blocks must parse to identical values or pull fails.
 
-Current active scope:
+Current active data-sync scope:
 
 ```text
 constants -> Go, GDScript, and TypeScript when enabled
@@ -37,7 +60,7 @@ packets -> Go and GDScript
 drop_tables -> Go only
 ```
 
-Deferred scope:
+Deferred data-sync scope:
 
 ```text
 TypeScript output
@@ -47,26 +70,26 @@ migration skeleton generation
 
 ## Future Player-Data Schema Domain
 
-Player-data schema is planned as a logical schema SSoT, not raw database DDL.
+Player-data schema is a logical schema SSoT, not raw database DDL, and the pipeline support here is still partial/planned.
 
 The likely future domain flag is `-player-data`, but it is not implemented yet.
 
 Future outputs may include Go structs/contracts, schema docs, contract fixtures, Rails migration skeletons, and embedded DB migration skeletons.
 
-See [player-data schema source of truth](../../docs/design/player-data-schema-ssot.md).
+See the broader [source-of-truth map](../../docs/design/source-of-truth-map.md) and [player-data schema source of truth](../../docs/design/player-data-schema-ssot.md).
 
-## Source Of Truth
+## Supported Source Of Truth
 
-The split constants files under `shared/constants/` are the canonical source for active constants.
+The split constants files under `shared/constants/` are the canonical source for data-sync-supported active constants.
 
-The canonical sources for active packets are:
+The canonical sources for data-sync-supported active packets are:
 
 - `shared/packets/outputs.toml`
 - `shared/packets/gameplay.toml`
 - `shared/packets/debug.toml`
 - `shared/packets/lobby.toml`
 
-The canonical sources for active drop tables are the TOML files under `shared/drop_tables/`, including `shared/drop_tables/basicasteroids.toml`.
+The canonical sources for data-sync-supported active drop tables are the TOML files under `shared/drop_tables/`, including `shared/drop_tables/basicasteroids.toml`.
 
 Debug/devtools packet schema lives in `shared/packets/debug.toml`. Data-sync generates server devtools packet types into `services/game-server/internal/devtools/packets_generated.go` through the `server_devtools_packets` output id.
 
