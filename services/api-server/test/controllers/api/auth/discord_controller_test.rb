@@ -12,6 +12,7 @@ class Api::Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :redirect
+    assert_openapi_response!
 
     uri = URI.parse(response.redirect_url)
     params = URI.decode_www_form(uri.query).to_h
@@ -30,6 +31,7 @@ class Api::Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
     get "/api/auth/discord/callback", params: { state: state }
 
     assert_response :bad_request
+    assert_openapi_response!
     assert_equal "missing_params", JSON.parse(response.body)["error"]
   end
 
@@ -37,6 +39,7 @@ class Api::Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
     get "/api/auth/discord/callback", params: { code: "auth-code" }
 
     assert_response :bad_request
+    assert_openapi_response!
     assert_equal "missing_params", JSON.parse(response.body)["error"]
   end
 
@@ -44,6 +47,7 @@ class Api::Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
     get "/api/auth/discord/callback", params: { code: "auth-code", state: "bogus-state" }
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
     assert_equal "invalid_state", JSON.parse(response.body)["error"]
   end
 
@@ -72,6 +76,7 @@ class Api::Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :ok
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
 

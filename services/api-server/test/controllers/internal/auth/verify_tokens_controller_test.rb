@@ -17,34 +17,38 @@ class Internal::Auth::VerifyTokensControllerTest < ActionDispatch::IntegrationTe
 
   test "POST /internal/auth/verify-token without an Authorization header returns 401" do
     with_internal_token_env do
-      post "/internal/auth/verify-token"
+      post "/internal/auth/verify-token", params: {}, as: :json
     end
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "POST /internal/auth/verify-token with a malformed Authorization header returns 401" do
     with_internal_token_env do
-      post "/internal/auth/verify-token", headers: { "Authorization" => "Token test-internal-token" }
+      post "/internal/auth/verify-token", params: {}, headers: { "Authorization" => "Token test-internal-token" }, as: :json
     end
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "POST /internal/auth/verify-token with the wrong bearer token returns 401" do
     with_internal_token_env do
-      post "/internal/auth/verify-token", headers: internal_headers("wrong-token")
+      post "/internal/auth/verify-token", params: {}, headers: internal_headers("wrong-token"), as: :json
     end
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "POST /internal/auth/verify-token with a valid internal secret and valid user token returns 200" do
     with_internal_token_env do
-      post "/internal/auth/verify-token", params: { token: @raw_token }, headers: internal_headers
+      post "/internal/auth/verify-token", params: { token: @raw_token }, headers: internal_headers, as: :json
     end
 
     assert_response :success
+    assert_openapi_contract!
 
     body = JSON.parse(response.body)
 
@@ -63,37 +67,41 @@ class Internal::Auth::VerifyTokensControllerTest < ActionDispatch::IntegrationTe
 
   test "POST /internal/auth/verify-token with a valid internal secret and unknown user token returns valid false" do
     with_internal_token_env do
-      post "/internal/auth/verify-token", params: { token: "unknown-token" }, headers: internal_headers
+      post "/internal/auth/verify-token", params: { token: "unknown-token" }, headers: internal_headers, as: :json
     end
 
     assert_response :success
+    assert_openapi_response!
     assert_equal({ "valid" => false }, JSON.parse(response.body))
   end
 
   test "POST /internal/auth/verify-token with a valid internal secret and missing token param returns valid false" do
     with_internal_token_env do
-      post "/internal/auth/verify-token", headers: internal_headers
+      post "/internal/auth/verify-token", headers: internal_headers, as: :json
     end
 
     assert_response :success
+    assert_openapi_response!
     assert_equal({ "valid" => false }, JSON.parse(response.body))
   end
 
   test "POST /internal/auth/verify-token with a valid internal secret and revoked user token returns valid false" do
     with_internal_token_env do
-      post "/internal/auth/verify-token", params: { token: @revoked_raw_token }, headers: internal_headers
+      post "/internal/auth/verify-token", params: { token: @revoked_raw_token }, headers: internal_headers, as: :json
     end
 
     assert_response :success
+    assert_openapi_response!
     assert_equal({ "valid" => false }, JSON.parse(response.body))
   end
 
   test "POST /internal/auth/verify-token with a valid internal secret and expired user token returns valid false" do
     with_internal_token_env do
-      post "/internal/auth/verify-token", params: { token: @expired_raw_token }, headers: internal_headers
+      post "/internal/auth/verify-token", params: { token: @expired_raw_token }, headers: internal_headers, as: :json
     end
 
     assert_response :success
+    assert_openapi_response!
     assert_equal({ "valid" => false }, JSON.parse(response.body))
   end
 

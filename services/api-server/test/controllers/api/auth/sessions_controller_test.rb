@@ -17,9 +17,10 @@ class Api::Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     post "/api/auth/login", params: {
       email: "ADA@EXAMPLE.COM",
       password: "secret123"
-    }
+    }, as: :json
 
     assert_response :ok
+    assert_openapi_contract!
 
     body = JSON.parse(response.body)
 
@@ -33,9 +34,10 @@ class Api::Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     post "/api/auth/login", params: {
       email: "ada@example.com",
       password: "wrong-password"
-    }
+    }, as: :json
 
     assert_response :unauthorized
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
     assert_equal "invalid_credentials", body["error"]
@@ -45,6 +47,7 @@ class Api::Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     delete "/api/auth/logout", headers: auth_headers(@raw_token)
 
     assert_response :no_content
+    assert_openapi_response!
 
     assert_predicate @access_token.reload, :revoked?
     other_access_token = @other_access_token.reload
@@ -56,6 +59,7 @@ class Api::Auth::SessionsControllerTest < ActionDispatch::IntegrationTest
     delete "/api/auth/logout"
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   private

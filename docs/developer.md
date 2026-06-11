@@ -44,6 +44,7 @@ Install these before running or developing Space Rocks locally:
   - Discord OAuth is implemented at the Rails API level.
   - Godot login handoff is implemented; game-server token verification remains deferred.
   - Auth uses opaque bearer tokens stored hashed in the database.
+  - HTTP request/response shapes are owned by `shared/contracts/http/openapi.yaml` and enforced in Rails integration tests with `openapi_first` at test time. This is Level 2 enforcement only, not runtime middleware and not controller generation.
 
 - **Python 3.10+** for repo tooling and static checks.
   - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.

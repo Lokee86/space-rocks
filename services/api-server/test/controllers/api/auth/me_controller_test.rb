@@ -25,18 +25,21 @@ class Api::Auth::MeControllerTest < ActionDispatch::IntegrationTest
     get "/api/auth/me"
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "GET /api/auth/me with a malformed Authorization header returns 401" do
     get "/api/auth/me", headers: { "Authorization" => "Token #{@raw_token}" }
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "GET /api/auth/me with an unknown bearer token returns 401" do
     get "/api/auth/me", headers: auth_headers("unknown-token")
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "GET /api/auth/me with a valid bearer token returns 200" do
@@ -45,6 +48,7 @@ class Api::Auth::MeControllerTest < ActionDispatch::IntegrationTest
     get "/api/auth/me", headers: auth_headers(@raw_token)
 
     assert_response :success
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
     assert_equal @user.id, body["user"]["id"]
@@ -61,12 +65,14 @@ class Api::Auth::MeControllerTest < ActionDispatch::IntegrationTest
     get "/api/auth/me", headers: auth_headers(@revoked_raw_token)
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "GET /api/auth/me with an expired token returns 401" do
     get "/api/auth/me", headers: auth_headers(@expired_raw_token)
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   private

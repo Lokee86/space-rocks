@@ -16,12 +16,14 @@ class Api::Player::StatsControllerTest < ActionDispatch::IntegrationTest
     get "/api/player/stats"
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "GET /api/player/stats with an invalid token returns 401" do
     get "/api/player/stats", headers: auth_headers("invalid-token")
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "GET /api/player/stats with a valid token returns 200 and creates zero stats" do
@@ -30,6 +32,7 @@ class Api::Player::StatsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
     stats = body["stats"]
@@ -59,6 +62,7 @@ class Api::Player::StatsControllerTest < ActionDispatch::IntegrationTest
     get "/api/player/stats", headers: auth_headers(@raw_token)
 
     assert_response :success
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
     stats = body["stats"]

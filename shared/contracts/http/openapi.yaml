@@ -1,0 +1,490 @@
+openapi: 3.1.0
+info:
+  title: Space Rocks API
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/login:
+    post:
+      summary: Log in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/me:
+    get:
+      summary: Current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/logout:
+    delete:
+      summary: Log out the current user
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Logged out
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/discord/start:
+    get:
+      summary: Start Discord OAuth
+      responses:
+        "302":
+          description: Redirect to Discord authorization
+  /api/auth/discord/callback:
+    get:
+      summary: Complete Discord OAuth
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Unprocessable entity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/discord/login_sessions:
+    post:
+      summary: Create a Discord login session
+      responses:
+        "200":
+          description: Login session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordLoginSessionResponse"
+  /api/auth/discord/login_sessions/{id}/exchange:
+    post:
+      summary: Exchange a Discord login session for an auth token
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscordLoginSessionExchangeRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "202":
+          description: Login session still pending
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingLoginSessionResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Unprocessable entity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/player/stats:
+    get:
+      summary: Get player stats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Player stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerStatsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /internal/auth/verify-token:
+    post:
+      summary: Verify an internal auth token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyTokenRequest"
+      responses:
+        "200":
+          description: Token verification result
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/VerifyTokenSuccessResponse"
+                  - $ref: "#/components/schemas/VerifyTokenInvalidResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /internal/player-data/match-results:
+    post:
+      summary: Submit a match result
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchResultRequest"
+      responses:
+        "200":
+          description: Match result accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResultAcceptedResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Match result error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResultErrorResponse"
+        "422":
+          description: Match result error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResultErrorResponse"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+      properties:
+        status:
+          type: string
+        service:
+          type: string
+    AuthUser:
+      type: object
+      required:
+        - id
+        - display_name
+      properties:
+        id:
+          type: integer
+        display_name:
+          type: string
+        email:
+          type:
+            - string
+            - "null"
+    AccountUser:
+      type: object
+      required:
+        - id
+        - account_id
+        - display_name
+      properties:
+        id:
+          type: integer
+        account_id:
+          type: string
+        display_name:
+          type: string
+        email:
+          type:
+            - string
+            - "null"
+    AuthResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/AuthUser"
+    RegisterRequest:
+      type: object
+      required:
+        - display_name
+        - email
+        - password
+      properties:
+        display_name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    MeResponse:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: "#/components/schemas/AccountUser"
+    DiscordLoginSessionResponse:
+      type: object
+      required:
+        - login_session_id
+        - poll_secret
+        - login_url
+        - expires_at
+      properties:
+        login_session_id:
+          type: string
+        poll_secret:
+          type: string
+        login_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    DiscordLoginSessionExchangeRequest:
+      type: object
+      required:
+        - poll_secret
+      properties:
+        poll_secret:
+          type: string
+    PendingLoginSessionResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - pending
+    PlayerStats:
+      type: object
+      required:
+        - total_score
+        - high_score
+        - ship_deaths
+        - games_played
+        - wins
+      properties:
+        total_score:
+          type: integer
+        high_score:
+          type: integer
+        ship_deaths:
+          type: integer
+        games_played:
+          type: integer
+        wins:
+          type: integer
+    PlayerStatsResponse:
+      type: object
+      required:
+        - stats
+      properties:
+        stats:
+          $ref: "#/components/schemas/PlayerStats"
+    VerifyTokenRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+    VerifyTokenSuccessResponse:
+      type: object
+      required:
+        - valid
+        - user
+      properties:
+        valid:
+          type: boolean
+          enum:
+            - true
+        user:
+          $ref: "#/components/schemas/AccountUser"
+    VerifyTokenInvalidResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          enum:
+            - false
+    MatchResultRequest:
+      type: object
+      required:
+        - result_id
+        - match_id
+        - account_id
+        - score
+        - ship_deaths
+        - won
+      properties:
+        result_id:
+          type: string
+        match_id:
+          type: string
+        account_id:
+          type: string
+        score:
+          type: integer
+        ship_deaths:
+          type: integer
+        won:
+          type: boolean
+    MatchResultAcceptedResponse:
+      type: object
+      required:
+        - accepted
+        - duplicate
+        - stats
+      properties:
+        accepted:
+          type: boolean
+          enum:
+            - true
+        duplicate:
+          type: boolean
+        stats:
+          $ref: "#/components/schemas/PlayerStats"
+    MatchResultErrorResponse:
+      type: object
+      required:
+        - accepted
+        - error
+      properties:
+        accepted:
+          type: boolean
+          enum:
+            - false
+        error:
+          type: string

@@ -18,6 +18,7 @@ class Api::Auth::DiscordLoginSessionsControllerTest < ActionDispatch::Integratio
     end
 
     assert_response :success
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
     oauth_login_session = OauthLoginSession.order(:id).last
@@ -44,9 +45,10 @@ class Api::Auth::DiscordLoginSessionsControllerTest < ActionDispatch::Integratio
 
     post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
-    }
+    }, as: :json
 
     assert_response :accepted
+    assert_openapi_contract!
     assert_equal "pending", JSON.parse(response.body)["status"]
   end
 
@@ -55,9 +57,10 @@ class Api::Auth::DiscordLoginSessionsControllerTest < ActionDispatch::Integratio
 
     post "/api/auth/discord/login_sessions/#{issued[:oauth_login_session].public_id}/exchange", params: {
       poll_secret: "wrong-secret"
-    }
+    }, as: :json
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
     assert_equal "invalid_login_session", JSON.parse(response.body)["error"]
   end
 
@@ -68,9 +71,10 @@ class Api::Auth::DiscordLoginSessionsControllerTest < ActionDispatch::Integratio
 
     post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
-    }
+    }, as: :json
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
     assert_equal "invalid_login_session", JSON.parse(response.body)["error"]
   end
 
@@ -81,9 +85,10 @@ class Api::Auth::DiscordLoginSessionsControllerTest < ActionDispatch::Integratio
 
     post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
-    }
+    }, as: :json
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
     assert_equal "invalid_login_session", JSON.parse(response.body)["error"]
   end
 
@@ -95,9 +100,10 @@ class Api::Auth::DiscordLoginSessionsControllerTest < ActionDispatch::Integratio
 
     post "/api/auth/discord/login_sessions/#{oauth_login_session.public_id}/exchange", params: {
       poll_secret: issued[:poll_secret]
-    }
+    }, as: :json
 
     assert_response :success
+    assert_openapi_contract!
 
     body = JSON.parse(response.body)
     assert_predicate body["token"], :present?
