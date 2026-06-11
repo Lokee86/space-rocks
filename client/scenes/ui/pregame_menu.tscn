@@ -1,0 +1,269 @@
+[gd_scene format=3 uid="uid://bkn8657e4u2w1"]
+
+[ext_resource type="PackedScene" uid="uid://bany5e266v177" path="res://scenes/ui/elements/windows/window_8.tscn" id="1_6fpxa"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_il3jt"]
+[ext_resource type="PackedScene" uid="uid://xo0wapfubtdh" path="res://scenes/ui/elements/windows/transmission_screen.tscn" id="3_4nfd5"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_avovy"]
+[ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="5_r532d"]
+
+[node name="PregameMenu" type="Control" unique_id=406582919]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1418067178]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Window8" parent="CenterContainer" unique_id=500599427 instance=ExtResource("1_6fpxa")]
+custom_minimum_size = Vector2(753, 668)
+layout_mode = 2
+
+[node name="ModeLabelContainer" type="CenterContainer" parent="CenterContainer/Window8" unique_id=353567277]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -66.0
+offset_top = -335.0
+offset_right = 66.0
+offset_bottom = -272.0
+grow_horizontal = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/ModeLabelContainer" unique_id=842992666]
+layout_mode = 2
+theme_override_constants/margin_top = 40
+
+[node name="ModeLabel" type="Label" parent="CenterContainer/Window8/ModeLabelContainer/MarginContainer" unique_id=893603223]
+layout_mode = 2
+text = "MODE LABEL"
+label_settings = ExtResource("2_il3jt")
+
+[node name="MainInterface" type="HBoxContainer" parent="CenterContainer/Window8" unique_id=1636666409]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -77.0
+offset_top = -75.0
+offset_right = 77.0
+offset_bottom = 75.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 15
+
+[node name="ButtonStack" type="VBoxContainer" parent="CenterContainer/Window8/MainInterface" unique_id=106409370]
+layout_mode = 2
+
+[node name="MultiplayerButtons" type="VBoxContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack" unique_id=66112020]
+layout_mode = 2
+
+[node name="SinglePlayerButtons" type="VBoxContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack" unique_id=744084782]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TextureButton" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=928907867 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton" unique_id=13882441]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton/CenterContainer" unique_id=1710384836]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton/CenterContainer/MarginContainer" unique_id=1994981337]
+layout_mode = 2
+
+[node name="TextureButton2" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=621113119 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton2" unique_id=1741669549]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton2/CenterContainer" unique_id=1475894152]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton2/CenterContainer/MarginContainer" unique_id=1860349315]
+layout_mode = 2
+
+[node name="TextureButton3" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=1972009278 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton3" unique_id=1881220400]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton3/CenterContainer" unique_id=120616070]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton3/CenterContainer/MarginContainer" unique_id=13346399]
+layout_mode = 2
+
+[node name="TextureButton4" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=412828601 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton4" unique_id=369833497]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton4/CenterContainer" unique_id=274837287]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton4/CenterContainer/MarginContainer" unique_id=1043498162]
+layout_mode = 2
+
+[node name="TextureButton5" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=740333817 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton5" unique_id=1404936658]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton5/CenterContainer" unique_id=1219663067]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton5/CenterContainer/MarginContainer" unique_id=719870476]
+layout_mode = 2
+
+[node name="TextureButton6" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=1947592156 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton6" unique_id=1227884895]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton6/CenterContainer" unique_id=747824265]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton6/CenterContainer/MarginContainer" unique_id=395828975]
+layout_mode = 2
+
+[node name="TextureButton7" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=654067485 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton7" unique_id=1117940279]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton7/CenterContainer" unique_id=2129204392]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton7/CenterContainer/MarginContainer" unique_id=1222033669]
+layout_mode = 2
+
+[node name="TextureButton8" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons" unique_id=2061703767 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(125, 52.5)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton8" unique_id=1589711372]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton8/CenterContainer" unique_id=1048868782]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ButtonStack/SinglePlayerButtons/TextureButton8/CenterContainer/MarginContainer" unique_id=656631712]
+layout_mode = 2
+
+[node name="ScreenStack" type="VBoxContainer" parent="CenterContainer/Window8/MainInterface" unique_id=1288213437]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="TransmissionScreen" parent="CenterContainer/Window8/MainInterface/ScreenStack" unique_id=1953924948 instance=ExtResource("3_4nfd5")]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="SubPanel" type="HBoxContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack" unique_id=1009701450]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SubPanelTransmissionScreen" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=902659031 instance=ExtResource("3_4nfd5")]
+custom_minimum_size = Vector2(340, 190)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=1155367612]
+layout_mode = 2
+theme_override_constants/margin_top = 9
+
+[node name="SubpanelControls" type="VBoxContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer" unique_id=962963233]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Dpad" type="GridContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls" unique_id=1384971011]
+layout_mode = 2
+theme_override_constants/h_separation = -2
+theme_override_constants/v_separation = -2
+columns = 3
+
+[node name="Spacer" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1277574545]
+layout_mode = 2
+
+[node name="ButtonSquare" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1859330374 instance=ExtResource("5_r532d")]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=2058282459]
+layout_mode = 2
+
+[node name="ButtonSquare2" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1506272396 instance=ExtResource("5_r532d")]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+
+[node name="ButtonSquare3" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1249161937 instance=ExtResource("5_r532d")]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+
+[node name="ButtonSquare4" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=495380654 instance=ExtResource("5_r532d")]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+
+[node name="Spacer3" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=739055613]
+layout_mode = 2
+
+[node name="ButtonSquare5" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1087926776 instance=ExtResource("5_r532d")]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+
+[node name="Spacer4" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1542796679]
+layout_mode = 2
+
+[node name="TextureButton" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls" unique_id=246860983 instance=ExtResource("3_avovy")]
+custom_minimum_size = Vector2(100, 50)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/TextureButton" unique_id=294681971]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/TextureButton/CenterContainer" unique_id=729233360]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/TextureButton/CenterContainer/MarginContainer" unique_id=1778328765]
+layout_mode = 2

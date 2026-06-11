@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://dhpiky6olgnso"]
+
+[ext_resource type="Texture2D" uid="uid://bvlf24tljrybv" path="res://assets/ui/windows/display_screen.png" id="1_337vq"]
+[ext_resource type="Shader" uid="uid://camotq8rlhg7i" path="res://shaders/screen_static.gdshader" id="2_pg7ia"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ogmjd"]
+shader = ExtResource("2_pg7ia")
+shader_parameter/scanline_count = 520.0
+shader_parameter/scanline_strength = 0.18
+shader_parameter/scanline_hardness = 1.65
+shader_parameter/grain_strength = 0.26
+shader_parameter/grain_speed = 6.465
+shader_parameter/grain_scale = 100.0
+shader_parameter/flicker_strength = 2.5
+shader_parameter/flicker_speed = 16.855
+shader_parameter/flicker_speed_variance = 5.0
+shader_parameter/flicker_variance_speed = 1.35
+shader_parameter/flicker_secondary_strength = 0.35
+shader_parameter/scanline_breakup_strength = 0.14
+shader_parameter/scanline_breakup_segments = 36.0
+shader_parameter/scanline_breakup_cutoff = 0.42
+shader_parameter/scanline_breakup_softness = 0.18
+shader_parameter/scanline_line_variance_strength = 0.06
+shader_parameter/roll_strength = 0.2
+shader_parameter/roll_interval = 5.0
+shader_parameter/roll_duration = 1.2
+shader_parameter/roll_width = 0.1
+shader_parameter/horizontal_shimmer_strength = 0.08
+shader_parameter/horizontal_shimmer_speed = 1.8
+shader_parameter/horizontal_shimmer_count = 42.0
+shader_parameter/effect_cutoff = 0.018
+shader_parameter/effect_gain = 2.0
+shader_parameter/edge_glow_strength = 0.3
+shader_parameter/edge_glow_width = 0.04
+shader_parameter/edge_corner_glow_width = -0.025
+shader_parameter/edge_corner_glow_power = 2.2
+shader_parameter/edge_glow_softness = 0.035
+shader_parameter/vignette_strength = 0.6
+shader_parameter/vignette_edge_bypass_strength = 0.7
+shader_parameter/vignette_edge_bypass_width = 0.193
+
+[node name="TransmissionScreen" type="TextureRect" unique_id=1953924948]
+texture = ExtResource("1_337vq")
+
+[node name="Control" type="Control" parent="." unique_id=1815823382]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="Control" unique_id=898720614]
+material = SubResource("ShaderMaterial_ogmjd")
+layout_mode = 0
+offset_left = 724.0
+offset_top = 543.0
+offset_right = 724.0
+offset_bottom = 543.0
+color = Color(0, 0.5646202, 0.56462, 0.16862746)
