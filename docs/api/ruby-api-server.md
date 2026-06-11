@@ -118,8 +118,15 @@ Shared packet schemas remain for the real-time game protocol, not API auth persi
 `shared/contracts/http/openapi.yaml` owns the HTTP request and response shapes for the Rails API.
 
 Rails controllers implement that contract, and Rails integration tests enforce it with `openapi_first`.
-This is Level 2 enforcement: test-time contract validation only.
+This is Level 2 enforcement: test-time request/response validation only; runtime OpenAPI middleware is not active yet.
 It does not generate Rails controllers, replace Rails strong params, or add runtime middleware yet.
+
+## HTTP Contracts
+
+See [HTTP contracts](./http-contracts.md) for the focused contract workflow.
+
+OpenAPI owns the HTTP request/response shapes.
+Rails migrations still own the physical database schema.
 
 ## Planned Stack
 

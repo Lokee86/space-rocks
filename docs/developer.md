@@ -26,6 +26,14 @@ This refactor does not change normal spawning.
 
 The project is in active development. Expect rough edges and incomplete UI around newer systems.
 
+## Source-Of-Truth Docs
+
+Use [docs/design/source-of-truth-map.md](design/source-of-truth-map.md) first for ownership questions.
+
+- Use [tools/data_sync/README.md](../tools/data_sync/README.md) for constants, packets, and drop_tables commands.
+- Use [docs/api/http-contracts.md](api/http-contracts.md) for OpenAPI and Rails HTTP contract tests.
+- Use [docs/design/player-data-schema-ssot.md](design/player-data-schema-ssot.md) for logical player-data contracts.
+
 ## Prerequisites
 
 Install these before running or developing Space Rocks locally:
@@ -44,7 +52,7 @@ Install these before running or developing Space Rocks locally:
   - Discord OAuth is implemented at the Rails API level.
   - Godot login handoff is implemented; game-server token verification remains deferred.
   - Auth uses opaque bearer tokens stored hashed in the database.
-  - HTTP request/response shapes are owned by `shared/contracts/http/openapi.yaml` and enforced in Rails integration tests with `openapi_first` at test time. This is Level 2 enforcement only, not runtime middleware and not controller generation.
+  - HTTP request/response shapes are documented in [docs/api/http-contracts.md](api/http-contracts.md).
 
 - **Python 3.10+** for repo tooling and static checks.
   - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.
