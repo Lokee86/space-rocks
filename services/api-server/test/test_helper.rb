@@ -1,6 +1,9 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
+require_relative "support/openapi_contract_assertions"
+
+ActionDispatch::IntegrationTest.include(OpenapiContractAssertions)
 
 module ActiveSupport
   class TestCase

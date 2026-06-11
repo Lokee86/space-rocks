@@ -163,6 +163,13 @@ Authorization: Bearer <token>
 
 Returns no content on success. The same token should fail on `GET /api/auth/me` after logout.
 
+## HTTP Contract Tests
+
+`shared/contracts/http/openapi.yaml` is the HTTP request/response source of truth for this API.
+Rails controllers implement the contract, and Rails integration tests enforce it with `openapi_first` at test time.
+This is Level 2 enforcement only. It does not generate controllers, replace strong params, or add runtime middleware yet.
+The normal verification command is `bundle exec rails test` from `services/api-server`.
+
 ## Bruno Smoke Tests
 
 Use the Bruno collection rooted at `bruno-api/` for local API smoke testing.

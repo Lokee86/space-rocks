@@ -113,6 +113,14 @@ JWT is still deferred for now, and the schema is structured so it can be added l
 
 Shared packet schemas remain for the real-time game protocol, not API auth persistence.
 
+## HTTP Contract SSoT
+
+`shared/contracts/http/openapi.yaml` owns the HTTP request and response shapes for the Rails API.
+
+Rails controllers implement that contract, and Rails integration tests enforce it with `openapi_first`.
+This is Level 2 enforcement: test-time contract validation only.
+It does not generate Rails controllers, replace Rails strong params, or add runtime middleware yet.
+
 ## Planned Stack
 
 Planned stack:

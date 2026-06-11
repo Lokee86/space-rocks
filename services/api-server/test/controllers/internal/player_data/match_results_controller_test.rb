@@ -7,34 +7,38 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
 
   test "POST /internal/player-data/match-results without an Authorization header returns 401" do
     with_internal_token_env do
-      post "/internal/player-data/match-results"
+      post "/internal/player-data/match-results", params: {}, as: :json
     end
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "POST /internal/player-data/match-results with a malformed Authorization header returns 401" do
     with_internal_token_env do
-      post "/internal/player-data/match-results", headers: { "Authorization" => "Token test-internal-token" }
+      post "/internal/player-data/match-results", params: {}, headers: { "Authorization" => "Token test-internal-token" }, as: :json
     end
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "POST /internal/player-data/match-results with the wrong bearer token returns 401" do
     with_internal_token_env do
-      post "/internal/player-data/match-results", headers: internal_headers("wrong-token")
+      post "/internal/player-data/match-results", params: {}, headers: internal_headers("wrong-token"), as: :json
     end
 
     assert_response :unauthorized
+    assert_openapi_response!
   end
 
   test "POST /internal/player-data/match-results with a valid internal secret and missing required params returns 422" do
     with_internal_token_env do
-      post "/internal/player-data/match-results", headers: internal_headers
+      post "/internal/player-data/match-results", headers: internal_headers, as: :json
     end
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
     assert_equal({ "accepted" => false, "error" => "invalid_input" }, JSON.parse(response.body))
   end
 
@@ -49,10 +53,12 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
           ship_deaths: 3,
           won: true
         },
-        headers: internal_headers
+        headers: internal_headers,
+        as: :json
     end
 
     assert_response :success
+    assert_openapi_contract!
 
     body = JSON.parse(response.body)
 
@@ -80,10 +86,12 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
           ship_deaths: 3,
           won: true
         },
-        headers: internal_headers
+        headers: internal_headers,
+        as: :json
     end
 
     assert_response :not_found
+    assert_openapi_contract!
     assert_equal({ "accepted" => false, "error" => "unknown_user" }, JSON.parse(response.body))
   end
 
@@ -97,10 +105,12 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
           ship_deaths: 3,
           won: true
         },
-        headers: internal_headers
+        headers: internal_headers,
+        as: :json
     end
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
     assert_equal({ "accepted" => false, "error" => "invalid_input" }, JSON.parse(response.body))
   end
 
@@ -114,10 +124,12 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
           ship_deaths: 3,
           won: true
         },
-        headers: internal_headers
+        headers: internal_headers,
+        as: :json
     end
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
     assert_equal({ "accepted" => false, "error" => "invalid_input" }, JSON.parse(response.body))
   end
 
@@ -132,10 +144,12 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
           ship_deaths: 3,
           won: true
         },
-        headers: internal_headers
+        headers: internal_headers,
+        as: :json
     end
 
     assert_response :success
+    assert_openapi_contract!
 
     first_body = JSON.parse(response.body)
     assert_equal false, first_body["duplicate"]
@@ -153,10 +167,12 @@ class Internal::PlayerData::MatchResultsControllerTest < ActionDispatch::Integra
           ship_deaths: 3,
           won: true
         },
-        headers: internal_headers
+        headers: internal_headers,
+        as: :json
     end
 
     assert_response :success
+    assert_openapi_contract!
 
     second_body = JSON.parse(response.body)
     assert_equal true, second_body["duplicate"]

@@ -5,6 +5,7 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
     get "/health"
 
     assert_response :success
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
     assert_equal "ok", body["status"]

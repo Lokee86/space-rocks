@@ -7,7 +7,7 @@ info:
 
 http:
   method: GET
-  url: "{{base_url}}/auth/discord/start"
+  url: "{{base_url}}/api/auth/discord/start"
   auth: inherit
 
 docs: |-

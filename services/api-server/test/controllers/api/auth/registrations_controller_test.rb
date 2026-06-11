@@ -6,9 +6,10 @@ class Api::Auth::RegistrationsControllerTest < ActionDispatch::IntegrationTest
       display_name: "Ada",
       email: "Ada@Example.com",
       password: "secret123"
-    }
+    }, as: :json
 
     assert_response :created
+    assert_openapi_contract!
 
     body = JSON.parse(response.body)
 
@@ -40,9 +41,10 @@ class Api::Auth::RegistrationsControllerTest < ActionDispatch::IntegrationTest
       display_name: "Another",
       email: "duplicate@example.com",
       password: "secret456"
-    }
+    }, as: :json
 
     assert_response :unprocessable_entity
+    assert_openapi_response!
 
     body = JSON.parse(response.body)
     assert_equal "invalid", body["error"]
