@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://cpgo7s8d6qjlc"]
+
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_m8y7s"]
+
+[node name="PlayerScoreRow" type="HBoxContainer" unique_id=2027068278]
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/separation = 3
+
+[node name="PlayerIDLabel" type="Label" parent="." unique_id=81972819]
+unique_name_in_owner = true
+layout_mode = 2
+text = "PlayerID"
+label_settings = ExtResource("1_m8y7s")
+
+[node name="Spacer" type="Control" parent="." unique_id=373768922]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Separator" type="Label" parent="." unique_id=605817521]
+layout_mode = 2
+text = "|"
+label_settings = ExtResource("1_m8y7s")
+
+[node name="GameDeathsLabel" type="Label" parent="." unique_id=396868876]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(79, 0)
+layout_mode = 2
+text = "XXXXXX"
+label_settings = ExtResource("1_m8y7s")
+horizontal_alignment = 1
+text_overrun_behavior = 1
+
+[node name="Separator2" type="Label" parent="." unique_id=1560637581]
+layout_mode = 2
+text = "|"
+label_settings = ExtResource("1_m8y7s")
+
+[node name="GameKillsLabel" type="Label" parent="." unique_id=244011413]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 0)
+layout_mode = 2
+text = "XXXXXXX"
+label_settings = ExtResource("1_m8y7s")
+text_overrun_behavior = 1
+
+[node name="Separator3" type="Label" parent="." unique_id=1867772529]
+layout_mode = 2
+text = "|"
+label_settings = ExtResource("1_m8y7s")
+
+[node name="GameScoreLabel" type="Label" parent="." unique_id=589383169]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(172, 0)
+layout_mode = 2
+text = "SCORE"
+label_settings = ExtResource("1_m8y7s")
+horizontal_alignment = 2
+text_overrun_behavior = 1
