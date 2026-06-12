@@ -53,6 +53,8 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Continue pushing future business/backend concerns toward the planned API server instead of growing the Go game server.
 - Keep packet and constants changes flowing through the source-of-truth TOML plus data-sync path.
 - Keep pickup presentation blink client-side from age/lifespan packet state.
+- Next implementation target is the final Multiplayer V1.1 client slice: a cohesive menu-flow seam with Main Menu reset to a route launcher, `pregame_menu.tscn` as the shared single-player/multiplayer pregame shell, a dedicated Sign In screen, Local Pilot / Guest selection, profile readout transmission, and the Match Results window for room game-over.
+- Active-game and personal-death menu behavior should not change, and multiplayer Lobby should keep using the existing return-to-lobby flow.
 
 ## Common Mistakes To Avoid
 

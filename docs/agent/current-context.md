@@ -60,7 +60,16 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Reporting is triggered from the existing room game-over lifecycle after the resolved summary exists.
 - Successful reports are marked reported and not repeated.
 - Failed reports do not mark reported.
-- Next near-term work is a real end-to-end smoke across Rails + Go + Godot, plus Godot stats fetch/display and Local Profile UX/create/select/save guest profile.
+- Backend player stats/reporting are implemented and committed.
+- The remaining Multiplayer V1.1 client slice is the cohesive menu-flow/profile/pilot/match-results UI.
+- "Phase 6" naming is being dropped for this work.
+- Main Menu survives as a top-level route launcher with login indicator/logout button.
+- `pregame_menu.tscn` is the shared pregame shell for single-player and multiplayer modes.
+- `pregame_menu.gd` must remain wiring/display only.
+- Sign-in moves to a dedicated screen.
+- `profile_readout` loads into `TransmissionScreen/ScreenDisplay`.
+- `match_result_window` replaces only room game-over flow.
+- Next near-term work is a real end-to-end smoke across Rails + Go + Godot, plus the remaining menu/profile/pilot UI slice.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
