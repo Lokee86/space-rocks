@@ -125,6 +125,7 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="SinglePlayerButton" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1128508508 instance=ExtResource("3_5kvch")]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(262, 140)
 layout_mode = 2
 
@@ -152,6 +153,7 @@ PLAYER"
 label_settings = ExtResource("3_gy3bv")
 
 [node name="QuitButton" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1327979759 instance=ExtResource("3_5kvch")]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(262, 0)
 layout_mode = 2
 
@@ -170,6 +172,7 @@ QUIT"
 label_settings = ExtResource("3_gy3bv")
 
 [node name="MultiplayerButton" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1689792738 instance=ExtResource("3_5kvch")]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(262, 0)
 layout_mode = 2
 
