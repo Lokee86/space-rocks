@@ -64,7 +64,7 @@ func _on_lobby_start_game_requested() -> void:
 
 func _on_lobby_leave_requested() -> void:
 	lobby_network_actions.send_leave_requested()
-	lobby_return_flow.return_to_main_menu()
+	lobby_return_flow.return_after_leave()
 
 
 func _log(message: String) -> void:
