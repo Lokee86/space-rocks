@@ -46,7 +46,8 @@ grow_horizontal = 2
 layout_mode = 2
 theme_override_constants/margin_top = 35
 
-[node name="Label" type="Label" parent="CenterContainer/Window7/WindoLavelContainer/MarginContainer" unique_id=1662222012]
+[node name="MatchResultLabel" type="Label" parent="CenterContainer/Window7/WindoLavelContainer/MarginContainer" unique_id=1662222012]
+unique_name_in_owner = true
 layout_mode = 2
 text = "MATCH RESULT"
 label_settings = ExtResource("2_2r4sw")
@@ -69,6 +70,7 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 23.0
 grow_horizontal = 2
+theme_override_constants/separation = 3
 
 [node name="SummaryHeader" type="HBoxContainer" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer" unique_id=910320263]
 layout_mode = 2
@@ -127,6 +129,10 @@ mouse_filter = 2
 
 [node name="uiSeparator" type="ColorRect" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer" unique_id=1193578278]
 custom_minimum_size = Vector2(0, 1.5)
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer" unique_id=91650908]
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Window7/ScoreDisplayArea" unique_id=820849676]

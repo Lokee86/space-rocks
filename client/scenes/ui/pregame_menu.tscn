@@ -317,7 +317,6 @@ theme_override_constants/separation = 14
 [node name="SubPanelTransmissionScreen" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=344769410 instance=ExtResource("6_sr72t")]
 unique_name_in_owner = true
 layout_mode = 2
-mouse_filter = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=1155367612]
 layout_mode = 2

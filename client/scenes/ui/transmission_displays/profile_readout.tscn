@@ -1,0 +1,191 @@
+[gd_scene format=3 uid="uid://cdelye46peb2w"]
+
+[ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="1_75rq7"]
+[ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="2_ga6ad"]
+[ext_resource type="LabelSettings" uid="uid://cipb7pygv8h8w" path="res://assets/ui/label_settings/transmission_display.tres" id="2_gpd0m"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ga6ad"]
+font = ExtResource("1_75rq7")
+font_size = 25
+font_color = Color(0, 1, 1, 1)
+
+[node name="ProfileReadout" type="Control" unique_id=1295057100]
+layout_mode = 3
+anchor_left = 0.05
+anchor_top = 0.065000005
+anchor_right = 0.952
+anchor_bottom = 0.93100005
+offset_top = 0.19999695
+offset_right = -0.5600586
+offset_bottom = -0.32006836
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ReadoutContainer" type="VBoxContainer" parent="." unique_id=2076804259]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 54.0
+grow_horizontal = 2
+
+[node name="ProfileLabel" type="Label" parent="ReadoutContainer" unique_id=1962208694]
+layout_mode = 2
+text = "PROFILE"
+label_settings = SubResource("LabelSettings_ga6ad")
+horizontal_alignment = 1
+
+[node name="uiSeparator" type="ColorRect" parent="ReadoutContainer" unique_id=1208829884]
+custom_minimum_size = Vector2(0, 1.5)
+layout_mode = 2
+color = Color(0, 1, 1, 1)
+
+[node name="Spacer" type="Control" parent="ReadoutContainer" unique_id=1346799000]
+custom_minimum_size = Vector2(0, 3)
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ReadoutContainer" unique_id=583086183]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="CallsignActivityContainer" type="PanelContainer" parent="ReadoutContainer/VBoxContainer" unique_id=1713139702]
+layout_mode = 2
+theme_override_styles/panel = ExtResource("2_ga6ad")
+
+[node name="CallsignLabel" type="Label" parent="ReadoutContainer/VBoxContainer/CallsignActivityContainer" unique_id=925687940]
+layout_mode = 2
+text = "CALLSIGN: PILOTID"
+label_settings = ExtResource("2_gpd0m")
+
+[node name="ActivityLabel" type="Label" parent="ReadoutContainer/VBoxContainer/CallsignActivityContainer" unique_id=438850007]
+layout_mode = 2
+text = "STATUS: ACTIVE/OFFLINE"
+label_settings = ExtResource("2_gpd0m")
+horizontal_alignment = 2
+
+[node name="ScoreContainer" type="HBoxContainer" parent="ReadoutContainer/VBoxContainer" unique_id=957753598]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TotalScoreContainer" type="PanelContainer" parent="ReadoutContainer/VBoxContainer/ScoreContainer" unique_id=1611833746]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("2_ga6ad")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer" unique_id=1898394880]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="TotalScoreLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer" unique_id=1416855615]
+layout_mode = 2
+text = "Total Score:"
+label_settings = ExtResource("2_gpd0m")
+
+[node name="Spacer" type="Control" parent="ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer" unique_id=516524226]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TotalScoreValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer" unique_id=315456998]
+layout_mode = 2
+text = "XXXXXXXXXXXX"
+label_settings = ExtResource("2_gpd0m")
+horizontal_alignment = 2
+
+[node name="HighScoreContainer" type="PanelContainer" parent="ReadoutContainer/VBoxContainer/ScoreContainer" unique_id=398910291]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("2_ga6ad")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer" unique_id=1230863823]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HighScoreLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer" unique_id=833338655]
+layout_mode = 2
+text = "High Score:"
+label_settings = ExtResource("2_gpd0m")
+
+[node name="Spacer" type="Control" parent="ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer" unique_id=1237926790]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HighScoreValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer" unique_id=269313095]
+layout_mode = 2
+text = "XXXXXXXXXXXX"
+label_settings = ExtResource("2_gpd0m")
+horizontal_alignment = 2
+
+[node name="StatContainer" type="HBoxContainer" parent="ReadoutContainer/VBoxContainer" unique_id=1749635081]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="MissionsContainer" type="PanelContainer" parent="ReadoutContainer/VBoxContainer/StatContainer" unique_id=409568237]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("2_ga6ad")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer" unique_id=861497838]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="MissionsLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer" unique_id=1299689334]
+layout_mode = 2
+text = "MISSIONS "
+label_settings = ExtResource("2_gpd0m")
+
+[node name="Spacer" type="Control" parent="ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer" unique_id=964827371]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MissionsValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer" unique_id=1012358990]
+layout_mode = 2
+text = "XXXX"
+label_settings = ExtResource("2_gpd0m")
+horizontal_alignment = 2
+
+[node name="WinsContainer" type="PanelContainer" parent="ReadoutContainer/VBoxContainer/StatContainer" unique_id=138498049]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("2_ga6ad")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ReadoutContainer/VBoxContainer/StatContainer/WinsContainer" unique_id=122577719]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="WinsLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer" unique_id=2019758019]
+layout_mode = 2
+text = "WINS "
+label_settings = ExtResource("2_gpd0m")
+
+[node name="Spacer" type="Control" parent="ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer" unique_id=1516973602]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="WinsValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer" unique_id=271025544]
+layout_mode = 2
+text = "XXXX"
+label_settings = ExtResource("2_gpd0m")
+horizontal_alignment = 2
+
+[node name="ShipLossesContainer" type="PanelContainer" parent="ReadoutContainer/VBoxContainer/StatContainer" unique_id=802568682]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("2_ga6ad")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer" unique_id=309788025]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="ShipLossesLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer" unique_id=1948068637]
+layout_mode = 2
+text = "SHIPS LOST"
+label_settings = ExtResource("2_gpd0m")
+
+[node name="Spacer" type="Control" parent="ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer" unique_id=891336624]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ShipLossesValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer" unique_id=1876515310]
+layout_mode = 2
+text = "XXXX"
+label_settings = ExtResource("2_gpd0m")
+horizontal_alignment = 2
