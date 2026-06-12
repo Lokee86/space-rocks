@@ -74,15 +74,26 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Main Menu stays hidden during gameplay.
 - Pregame Back still returns to Main Menu.
 - Disabled Single Player future buttons remain disabled.
-- Remaining client work is the menu-flow/profile/pilot/match-results UI slice sequence:
-  - Sign In screen
-  - Multiplayer pre-lobby create/join/logout routing
-  - Local Pilot / Guest selection
+- Client menu-flow Phase 3 / Sign In screen is complete and green.
+- Signed-out Main Menu Multiplayer opens LoginWindow.
+- Discord login works from LoginWindow.
+- LoginWindow Back returns to Main Menu.
+- Signed-in Main Menu Multiplayer opens Multiplayer Pregame.
+- Successful Discord auth routes to Multiplayer Pregame.
+- Client menu-flow Phase 4 / Multiplayer pre-lobby actions is complete and green.
+- Multiplayer Pregame Create uses the existing create-room path and clears Pregame UI.
+- Multiplayer Pregame Join opens JoinDialog.
+- Empty JoinDialog room code validates and stays open.
+- JoinDialog Cancel returns to Multiplayer Pregame.
+- Valid Join uses the existing join-room path and clears menu UI.
+- Multiplayer Pregame Logout returns to Main Menu signed out.
+- Lobby Leave now returns to Multiplayer Pregame without logging out.
+- Remaining client work:
   - Profile readout transmission
+  - Local Pilot / Guest selection
   - Match Results window
   - Stats refresh / final smoke
-- Phase 3 is Sign In screen.
-- Phase 3 should not move Create/Join yet.
+- Next implementation slice is Phase 5 - Profile readout transmission.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
