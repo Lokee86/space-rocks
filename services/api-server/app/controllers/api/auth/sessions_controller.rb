@@ -7,7 +7,7 @@ module Api
       before_action :authenticate_bearer_token!, only: :destroy
 
       def create
-        result = Auth::LoginUser.call(
+        result = ::Auth::LoginUser.call(
           email: login_params[:email],
           password: login_params[:password]
         )

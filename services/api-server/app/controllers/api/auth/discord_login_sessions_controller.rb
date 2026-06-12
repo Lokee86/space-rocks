@@ -4,13 +4,13 @@ module Api
       include RendersAuthResponse
 
       def create
-        login_session_result = Auth::OauthLoginSessionIssuer.call(provider: "discord")
-        state_result = Auth::OauthStateIssuer.call(
+        login_session_result = ::Auth::OauthLoginSessionIssuer.call(provider: "discord")
+        state_result = ::Auth::OauthStateIssuer.call(
           provider: "discord",
           oauth_login_session: login_session_result[:oauth_login_session]
         )
-        login_url = Auth::Providers::DiscordAuthorizationUrl.call(
-          config: Auth::Providers::DiscordConfig,
+        login_url = ::Auth::Providers::DiscordAuthorizationUrl.call(
+          config: ::Auth::Providers::DiscordConfig,
           state: state_result[:state]
         )
 
@@ -34,7 +34,7 @@ module Api
 
         token_result = nil
         ActiveRecord::Base.transaction do
-          token_result = Auth::IssueAccessToken.call(user: oauth_login_session.user)
+          token_result = ::Auth::IssueAccessToken.call(user: oauth_login_session.user)
           oauth_login_session.consume!
         end
 
