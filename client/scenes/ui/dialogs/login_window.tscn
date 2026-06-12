@@ -1,0 +1,172 @@
+[gd_scene format=3 uid="uid://dswon6ejgps75"]
+
+[ext_resource type="PackedScene" uid="uid://bany5e266v177" path="res://scenes/ui/elements/windows/window_8.tscn" id="1_hd0w2"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_baty5"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_dcdmm"]
+[ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="4_pgvq6"]
+[ext_resource type="Texture2D" uid="uid://bayn8xx13j752" path="res://assets/ui/ui_buttons/google-signin.png" id="5_vi4s4"]
+[ext_resource type="Texture2D" uid="uid://dxk1i32ddtjxu" path="res://assets/ui/ui_buttons/discord-signin.png" id="6_sh7at"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_cqygl"]
+font = ExtResource("4_pgvq6")
+font_size = 22
+font_color = Color(0, 0, 0, 1)
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_gwfch"]
+font = ExtResource("4_pgvq6")
+font_size = 22
+font_color = Color(0, 0, 0, 1)
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[node name="LoginWindow" type="Control" unique_id=1163510662]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=381212377]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Window8" parent="CenterContainer" unique_id=1858075105 instance=ExtResource("1_hd0w2")]
+custom_minimum_size = Vector2(385, 510)
+layout_mode = 2
+
+[node name="WindowLabelContainer" type="CenterContainer" parent="CenterContainer/Window8" unique_id=1019544970]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/WindowLabelContainer" unique_id=1387479381]
+layout_mode = 2
+theme_override_constants/margin_top = 21
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/WindowLabelContainer/MarginContainer" unique_id=171292639]
+layout_mode = 2
+text = "Login"
+label_settings = ExtResource("2_baty5")
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8" unique_id=1248971559]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/Window8/CenterContainer" unique_id=306625690]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=626353562]
+layout_mode = 2
+text = "EMAIL"
+label_settings = ExtResource("2_baty5")
+horizontal_alignment = 1
+
+[node name="LineEdit" type="LineEdit" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=732737388]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=2043026033]
+layout_mode = 2
+text = "PASSWORD"
+label_settings = ExtResource("2_baty5")
+horizontal_alignment = 1
+
+[node name="LineEdit2" type="LineEdit" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=914929757]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=73433192]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer" unique_id=928907867 instance=ExtResource("3_dcdmm")]
+custom_minimum_size = Vector2(145, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton" unique_id=613896055]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton/CenterContainer" unique_id=55602519]
+layout_mode = 2
+theme_override_constants/margin_top = 18
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton/CenterContainer/MarginContainer" unique_id=1593438007]
+layout_mode = 2
+text = "SIGN IN"
+label_settings = SubResource("LabelSettings_cqygl")
+horizontal_alignment = 1
+
+[node name="TextureButton2" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer" unique_id=1857233771 instance=ExtResource("3_dcdmm")]
+custom_minimum_size = Vector2(145, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton2" unique_id=1455562671]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton2/CenterContainer" unique_id=1492170320]
+layout_mode = 2
+theme_override_constants/margin_top = 18
+
+[node name="Label" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton2/CenterContainer/MarginContainer" unique_id=691574642]
+layout_mode = 2
+text = "BACK"
+label_settings = SubResource("LabelSettings_gwfch")
+horizontal_alignment = 1
+
+[node name="Label3" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=2009623590]
+layout_mode = 2
+text = "OR SIGN IN WITH:"
+label_settings = ExtResource("2_baty5")
+horizontal_alignment = 1
+
+[node name="TextureButton" type="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=1723961841]
+custom_minimum_size = Vector2(250, 65)
+layout_mode = 2
+texture_normal = ExtResource("5_vi4s4")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="TextureButton2" type="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=475082475]
+custom_minimum_size = Vector2(285, 65)
+layout_mode = 2
+texture_normal = ExtResource("6_sh7at")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label4" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=1853006109]
+layout_mode = 2
+text = "NO ACCOUNT? SIGN UP NOW!"
+label_settings = ExtResource("2_baty5")
+horizontal_alignment = 1

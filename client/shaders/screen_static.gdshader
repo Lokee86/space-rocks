@@ -131,51 +131,23 @@ void fragment() {
 	float grain = hash(floor(uv * grain_scale) + floor(TIME * grain_speed));
 	grain = (grain - 0.5) * grain_strength;
 
-// -------------------------
-// Periodic roll
-// -------------------------
-// Wide-roll-safe version.
-// Uses separate leading/trailing edges instead of abs-distance blob.
-float roll_time = mod(TIME, max(roll_interval, 0.001));
-float roll_active = 1.0 - step(roll_duration, roll_time);
+	// -------------------------
+	// Periodic roll
+	// -------------------------
+	float roll_time = mod(TIME, max(roll_interval, 0.001));
+	float roll_active = 1.0 - step(roll_duration, roll_time);
 
-float roll_progress = roll_time / max(roll_duration, 0.001);
-roll_progress = clamp(roll_progress, 0.0, 1.0);
+	float roll_progress = roll_time / max(roll_duration, 0.001);
+	roll_progress = clamp(roll_progress, 0.0, 1.0);
 
-// Move from above the screen to below the screen.
-// Extra travel keeps wide bars from popping at the ends.
-float safe_roll_width = max(roll_width, 0.001);
-float roll_head = mix(-safe_roll_width, 1.0 + safe_roll_width, roll_progress);
+	float roll_fade_in = smoothstep(0.0, 0.12, roll_progress);
+	float roll_fade_out = 1.0 - smoothstep(0.88, 1.0, roll_progress);
+	float roll_gate = roll_active * roll_fade_in * roll_fade_out;
 
-// Wide roll region behind the leading edge.
-float roll_tail = roll_head - safe_roll_width;
+	float roll_dist = abs(uv.y - roll_progress);
+	float roll = 1.0 - smoothstep(0.0, roll_width, roll_dist);
+	roll *= roll_strength * roll_gate;
 
-// Smooth front edge.
-float front = 1.0 - smoothstep(
-	roll_head - safe_roll_width * 0.35,
-	roll_head,
-	uv.y
-);
-
-// Smooth back edge.
-float back = smoothstep(
-	roll_tail,
-	roll_tail + safe_roll_width * 0.65,
-	uv.y
-);
-
-// Band exists between back and front.
-float roll = front * back;
-
-// Shape it so it feels less like a flat rectangle.
-roll = pow(clamp(roll, 0.0, 1.0), 1.35);
-
-// Fade whole roll in/out.
-float roll_fade_in = smoothstep(0.0, 0.08, roll_progress);
-float roll_fade_out = 1.0 - smoothstep(0.92, 1.0, roll_progress);
-float roll_gate = roll_active * roll_fade_in * roll_fade_out;
-
-roll *= roll_strength * roll_gate;
 	// -------------------------
 	// Horizontal shimmer
 	// -------------------------
@@ -214,7 +186,7 @@ roll *= roll_strength * roll_gate;
 	vignette = clamp(vignette, 0.0, 1.0);
 
 	// -------------------------
-	// Flat edge vignette bypass
+	// Flat edge vignette bypass  
 	// -------------------------
 	float bypass_left = 1.0 - smoothstep(0.0, vignette_edge_bypass_width, uv.x);
 	float bypass_right = 1.0 - smoothstep(0.0, vignette_edge_bypass_width, 1.0 - uv.x);
@@ -243,4 +215,4 @@ roll *= roll_strength * roll_gate;
 	color *= final_vignette;
 
 	COLOR = vec4(color, source.a);
-}  
+}

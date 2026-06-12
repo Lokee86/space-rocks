@@ -17,12 +17,12 @@ shader_parameter/flicker_speed = 16.855
 shader_parameter/flicker_speed_variance = 5.0
 shader_parameter/flicker_variance_speed = 5.0
 shader_parameter/flicker_secondary_strength = 0.35
-shader_parameter/scanline_breakup_strength = 0.55
+shader_parameter/scanline_breakup_strength = 1.5
 shader_parameter/scanline_breakup_segments = 100.0
 shader_parameter/scanline_breakup_cutoff = 0.46
 shader_parameter/scanline_breakup_softness = 0.0
 shader_parameter/scanline_line_variance_strength = 0.25
-shader_parameter/roll_strength = 0.2
+shader_parameter/roll_strength = 0.12
 shader_parameter/roll_interval = 5.0
 shader_parameter/roll_duration = 1.5
 shader_parameter/roll_width = 0.5
@@ -31,10 +31,10 @@ shader_parameter/horizontal_shimmer_speed = 1.8
 shader_parameter/horizontal_shimmer_count = 42.0
 shader_parameter/effect_cutoff = 0.018
 shader_parameter/effect_gain = 2.5
-shader_parameter/edge_glow_strength = 2.0
-shader_parameter/edge_glow_width = -0.257
-shader_parameter/edge_corner_glow_width = 0.005
-shader_parameter/edge_corner_glow_power = 1.8399999999999999
+shader_parameter/edge_glow_strength = 0.695
+shader_parameter/edge_glow_width = -0.2
+shader_parameter/edge_corner_glow_width = 0.05
+shader_parameter/edge_corner_glow_power = 1.84
 shader_parameter/edge_glow_softness = 0.393
 shader_parameter/vignette_strength = 0.32
 shader_parameter/vignette_edge_bypass_strength = 0.7
@@ -49,6 +49,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+mouse_filter = 2
 
 [node name="TransmissionScreen" type="TextureRect" parent="." unique_id=1953924948]
 clip_contents = true
@@ -59,6 +60,20 @@ anchor_bottom = 1.0
 texture = ExtResource("2_vkhqx")
 expand_mode = 1
 
+[node name="screen_display" type="CenterContainer" parent="TransmissionScreen" unique_id=1696253631]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="ScreenArea" type="Control" parent="." unique_id=1152991586]
 layout_mode = 1
 anchor_left = 0.05
@@ -68,6 +83,7 @@ anchor_bottom = 0.92800003
 offset_top = -0.27999878
 offset_right = 0.27990723
 offset_bottom = -0.16003418
+mouse_filter = 2
 
 [node name="ColorRect" type="ColorRect" parent="ScreenArea" unique_id=898720614]
 material = SubResource("ShaderMaterial_ogmjd")
@@ -83,6 +99,7 @@ offset_right = -0.37902832
 offset_bottom = 0.0949707
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0, 0.5646202, 0.56462, 0.16862746)
 
 [node name="TransmissionScreen2" type="TextureRect" parent="." unique_id=580476124]
