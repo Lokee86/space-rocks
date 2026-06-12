@@ -3,26 +3,43 @@ extends RefCounted
 
 const PregameMenuScene := preload("res://scenes/ui/pregame_menu.tscn")
 const LoginWindowScene := preload("res://scenes/ui/dialogs/login_window.tscn")
+const JoinDialogScene := preload("res://scenes/ui/dialogs/join_dialog.tscn")
 const MenuRoute := preload("res://scripts/ui/menu_flow/menu_route.gd")
 const PregameMenuFlow := preload("res://scripts/ui/menu_flow/pregame_menu_flow.gd")
+const JoinDialogFlow := preload("res://scripts/ui/lobby/join_dialog_flow.gd")
 const SignInFlow := preload("res://scripts/ui/sign_in/sign_in_flow.gd")
 
 var canvas_layer: CanvasLayer
 var main_menu: Control
 var pregame_menu: Control
 var sign_in_screen: Control
+var join_dialog: Control
 var pregame_menu_flow
+var join_dialog_flow
 var sign_in_flow
 var start_single_player_callable: Callable
 var request_discord_sign_in_callable: Callable
+var create_room_callable: Callable
+var join_room_callable: Callable
+var logout_callable: Callable
 var current_route := ""
 
 
-func configure(canvas_layer_ref: CanvasLayer, main_menu_ref: Control, start_single_player_callable_ref: Callable = Callable(), request_discord_sign_in_callable_ref: Callable = Callable()) -> void:
+func configure(
+		canvas_layer_ref: CanvasLayer,
+		main_menu_ref: Control,
+		start_single_player_callable_ref: Callable = Callable(),
+		request_discord_sign_in_callable_ref: Callable = Callable(),
+		create_room_callable_ref: Callable = Callable(),
+		join_room_callable_ref: Callable = Callable(),
+		logout_callable_ref: Callable = Callable()) -> void:
 	canvas_layer = canvas_layer_ref
 	main_menu = main_menu_ref
 	start_single_player_callable = start_single_player_callable_ref
 	request_discord_sign_in_callable = request_discord_sign_in_callable_ref
+	create_room_callable = create_room_callable_ref
+	join_room_callable = join_room_callable_ref
+	logout_callable = logout_callable_ref
 	current_route = MenuRoute.MAIN_MENU
 	if main_menu != null:
 		main_menu.show()
@@ -31,6 +48,7 @@ func configure(canvas_layer_ref: CanvasLayer, main_menu_ref: Control, start_sing
 func show_main_menu() -> void:
 	_clear_pregame_menu()
 	_clear_sign_in_screen()
+	_clear_join_dialog()
 	pregame_menu_flow = null
 	if main_menu != null:
 		main_menu.show()
@@ -67,10 +85,55 @@ func show_sign_in_screen() -> void:
 		sign_in_screen.show()
 
 
+func show_join_dialog() -> void:
+	if canvas_layer == null:
+		return
+
+	_clear_sign_in_screen()
+	if main_menu != null:
+		main_menu.hide()
+
+	if join_dialog == null or not is_instance_valid(join_dialog):
+		join_dialog = JoinDialogScene.instantiate()
+		canvas_layer.add_child(join_dialog)
+
+	if join_dialog_flow == null:
+		join_dialog_flow = JoinDialogFlow.new()
+
+	join_dialog_flow.configure(
+		join_dialog,
+		Callable(self, "close_join_dialog"),
+		join_room_callable,
+		Callable(self, "clear_for_room_transition"))
+	current_route = MenuRoute.JOIN_DIALOG
+	if join_dialog != null:
+		join_dialog.show()
+
+
+func close_join_dialog() -> void:
+	_clear_join_dialog()
+	if pregame_menu != null and is_instance_valid(pregame_menu):
+		current_route = MenuRoute.PREGAME_MENU
+		pregame_menu.show()
+	elif main_menu != null:
+		current_route = MenuRoute.MAIN_MENU
+		main_menu.show()
+
+
 func clear_for_gameplay() -> void:
 	_clear_pregame_menu()
 	_clear_sign_in_screen()
+	_clear_join_dialog()
 	pregame_menu_flow = null
+	if main_menu != null:
+		main_menu.hide()
+	current_route = ""
+
+
+func clear_for_room_transition() -> void:
+	_clear_pregame_menu()
+	_clear_sign_in_screen()
+	_clear_join_dialog()
 	if main_menu != null:
 		main_menu.hide()
 	current_route = ""
@@ -78,6 +141,7 @@ func clear_for_gameplay() -> void:
 
 func _show_pregame() -> void:
 	_clear_sign_in_screen()
+	_clear_join_dialog()
 	if main_menu != null:
 		main_menu.hide()
 
@@ -90,7 +154,14 @@ func _show_pregame() -> void:
 	if pregame_menu_flow == null:
 		pregame_menu_flow = PregameMenuFlow.new()
 
-	pregame_menu_flow.configure(pregame_menu, Callable(self, "show_main_menu"), start_single_player_callable)
+	pregame_menu_flow.configure(
+		pregame_menu,
+		Callable(self, "show_main_menu"),
+		start_single_player_callable,
+		create_room_callable,
+		Callable(self, "show_join_dialog"),
+		logout_callable,
+		Callable(self, "clear_for_room_transition"))
 	current_route = MenuRoute.PREGAME_MENU
 	if pregame_menu != null:
 		pregame_menu.show()
@@ -110,6 +181,13 @@ func _clear_sign_in_screen() -> void:
 	sign_in_flow = null
 
 
+func _clear_join_dialog() -> void:
+	if join_dialog != null and is_instance_valid(join_dialog):
+		join_dialog.queue_free()
+	join_dialog = null
+	join_dialog_flow = null
+
+
 func get_current_route() -> String:
 	return current_route
 
@@ -120,3 +198,7 @@ func get_pregame_menu() -> Control:
 
 func get_sign_in_screen() -> Control:
 	return sign_in_screen
+
+
+func get_join_dialog() -> Control:
+	return join_dialog

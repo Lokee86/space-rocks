@@ -49,7 +49,7 @@ func configure(
 		lobby_flow,
 		multiplayer_lobby_presenter,
 		main_menu,
-		Callable(self, "_on_lobby_returned_to_main_menu")
+		Callable(self, "_on_lobby_left_room")
 	)
 	lobby_shell_flow = LobbyShellFlow.new(
 		lobby_flow,
@@ -65,6 +65,11 @@ func configure(
 
 func configure_client_config_sender(sender: Callable) -> void:
 	client_config_sender = sender
+
+
+func configure_lobby_leave_return_destination(destination: Callable) -> void:
+	if lobby_return_flow != null:
+		lobby_return_flow.configure_return_destination(destination)
 
 
 func handle_room_snapshot(packet: Dictionary) -> void:
@@ -103,7 +108,7 @@ func handle_room_error(packet: Dictionary) -> void:
 	multiplayer_dialog_status_presenter.show_room_error(main_menu, packet)
 
 
-func _on_lobby_returned_to_main_menu() -> void:
+func _on_lobby_left_room() -> void:
 	if session_context != null:
 		session_context.clear()
 	if shell_boot_flow != null:

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://412e1vyhip6e"]
 
-[ext_resource type="Script" uid="uid://ddpnqwgdmfo5t" path="res://scripts/ui/lobby/multiplayer_dialog.gd" id="1_l5etu"]
+[ext_resource type="Script" path="res://scripts/ui/lobby/join_dialog.gd" id="1_l5etu"]
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="2_ofq8e"]
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="3_pxrsk"]
 [ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="4_snkjr"]
@@ -72,6 +72,7 @@ custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 alignment = 1
 max_length = 9
+unique_name_in_owner = true
 
 [node name="spacer1" type="Control" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=487622310]
 custom_minimum_size = Vector2(0, 10)
@@ -85,6 +86,7 @@ enter an ID to
 join."
 label_settings = ExtResource("3_pxrsk")
 autowrap_mode = 2
+unique_name_in_owner = true
 
 [node name="ButtonPanel" type="VBoxContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1091220375]
 layout_mode = 2
@@ -93,6 +95,7 @@ alignment = 1
 [node name="JoinButton" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel" unique_id=928907867 instance=ExtResource("5_y7pkf")]
 custom_minimum_size = Vector2(220, 80)
 layout_mode = 2
+unique_name_in_owner = true
 
 [node name="CenterContainer" type="CenterContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/JoinButton" unique_id=1545085902]
 layout_mode = 1
@@ -118,6 +121,7 @@ label_settings = ExtResource("6_kwgio")
 [node name="CancelButton" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel" unique_id=449798243 instance=ExtResource("5_y7pkf")]
 custom_minimum_size = Vector2(220, 80)
 layout_mode = 2
+unique_name_in_owner = true
 
 [node name="CenterContainer" type="CenterContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/CancelButton" unique_id=1109250174]
 layout_mode = 1

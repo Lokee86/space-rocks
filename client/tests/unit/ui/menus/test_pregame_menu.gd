@@ -79,6 +79,7 @@ func test_play_endless_button_emits_play_endless_requested_in_single_player_mode
 	(menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
 
 	assert_signal_emitted(menu, "play_endless_requested")
+	assert_signal_not_emitted(menu, "create_game_requested")
 
 
 func test_play_endless_button_does_not_emit_in_multiplayer_mode() -> void:
@@ -90,6 +91,61 @@ func test_play_endless_button_does_not_emit_in_multiplayer_mode() -> void:
 	(menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
 
 	assert_signal_not_emitted(menu, "play_endless_requested")
+
+
+func test_create_button_emits_create_game_requested_in_multiplayer_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_multiplayer_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "create_game_requested")
+
+
+func test_join_button_emits_join_game_requested_in_multiplayer_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_multiplayer_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%CampaignJoinButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "join_game_requested")
+
+
+func test_logout_button_emits_logout_requested_in_multiplayer_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_multiplayer_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%SelectPilotLogoutButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "logout_requested")
+
+
+func test_join_button_does_not_emit_in_single_player_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_single_player_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%CampaignJoinButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_not_emitted(menu, "join_game_requested")
+
+
+func test_logout_button_does_not_emit_in_single_player_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_single_player_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%SelectPilotLogoutButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_not_emitted(menu, "logout_requested")
 
 
 func _create_menu() -> Control:

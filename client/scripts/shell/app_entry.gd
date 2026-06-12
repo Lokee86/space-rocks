@@ -131,7 +131,13 @@ func _ready() -> void:
 		canvas_layer,
 		main_menu,
 		Callable(self, "_start_single_player_from_pregame"),
-		Callable(auth_session_controller, "request_discord_sign_in")
+		Callable(auth_session_controller, "request_discord_sign_in"),
+		Callable(self, "_request_create_room_from_pregame"),
+		Callable(self, "_request_join_room_from_pregame"),
+		Callable(self, "_logout_from_pregame")
+	)
+	room_session_controller.configure_lobby_leave_return_destination(
+		Callable(menu_flow_controller, "show_multiplayer_pregame")
 	)
 
 	multiplayer_entry_flow = MultiplayerEntryFlow.new()
@@ -221,6 +227,21 @@ func _start_single_player_from_pregame() -> void:
 		menu_flow_controller.clear_for_gameplay()
 	if main_menu_session_controller != null:
 		main_menu_session_controller.request_single_player()
+
+
+func _request_create_room_from_pregame() -> void:
+	if main_menu_session_controller != null:
+		main_menu_session_controller.request_create_room()
+
+
+func _request_join_room_from_pregame(room_code: String) -> void:
+	if main_menu_session_controller != null:
+		main_menu_session_controller.request_join_room(room_code)
+
+
+func _logout_from_pregame() -> void:
+	if auth_session_controller != null:
+		auth_session_controller.logout()
 
 
 func _on_auth_state_changed() -> void:

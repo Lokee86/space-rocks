@@ -11,8 +11,11 @@
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = 579.4746
+offset_bottom = 389.75488
 grow_horizontal = 2
 grow_vertical = 2
+scale = Vector2(0.6883665, 0.64879197)
 script = ExtResource("5_75w2v")
 room_code_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2/RoomCodeValueLabel")
 room_status_label_path = NodePath("CenterContainer/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer/RoomStatusValueLabel")
