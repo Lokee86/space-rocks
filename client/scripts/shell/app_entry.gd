@@ -125,7 +125,7 @@ func _ready() -> void:
 	)
 
 	menu_flow_controller = MenuFlowController.new()
-	menu_flow_controller.configure(canvas_layer, main_menu)
+	menu_flow_controller.configure(canvas_layer, main_menu, Callable(self, "_start_single_player_from_pregame"))
 
 	_connect_main_menu_signals()
 	_connect_auth_signals()
@@ -205,6 +205,13 @@ func _on_multiplayer_requested() -> void:
 func _on_logout_requested() -> void:
 	_log_shell_status("App entry logout requested")
 	auth_session_controller.logout()
+
+
+func _start_single_player_from_pregame() -> void:
+	if menu_flow_controller != null:
+		menu_flow_controller.clear_for_gameplay()
+	if main_menu_session_controller != null:
+		main_menu_session_controller.request_single_player()
 
 
 func _on_auth_state_changed() -> void:
