@@ -55,6 +55,43 @@ func test_back_button_emits_back_requested() -> void:
 	assert_signal_emitted(menu, "back_requested")
 
 
+func test_single_player_future_buttons_are_disabled() -> void:
+	var menu := await _create_menu()
+
+	menu.show_single_player_mode()
+
+	assert_true((menu.get_node_or_null("%CampaignJoinButton") as BaseButton).disabled)
+	assert_true((menu.get_node_or_null("%LoadoutButton") as BaseButton).disabled)
+	assert_true((menu.get_node_or_null("%ProvisionerButton") as BaseButton).disabled)
+	assert_true((menu.get_node_or_null("%BuyOrebitsButton") as BaseButton).disabled)
+
+	var rankings_button := menu.get_node_or_null("%RankingsButton") as BaseButton
+	if rankings_button != null:
+		assert_true(rankings_button.disabled)
+
+
+func test_play_endless_button_emits_play_endless_requested_in_single_player_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_single_player_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "play_endless_requested")
+
+
+func test_play_endless_button_does_not_emit_in_multiplayer_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_multiplayer_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_not_emitted(menu, "play_endless_requested")
+
+
 func _create_menu() -> Control:
 	var menu := PregameMenuScene.instantiate()
 	add_child_autofree(menu)
