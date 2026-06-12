@@ -8,13 +8,17 @@ This is not a separate Phase 6. It is the final client slice for Multiplayer V1.
 
 Phase 1 / foundation slice is complete and green.
 Phase 2 / single-player pregame action slice is complete and green.
+Phase 3 / Sign In screen slice is complete and green.
+Phase 4 / Multiplayer pre-lobby actions slice is complete and green.
 
 Completed Phase 1:
 
 - Main Menu is now a top-level route launcher.
 - Main Menu keeps login indicator and logout button.
 - Single Player routes to `pregame_menu.tscn` in single-player mode.
-- Multiplayer routes to `pregame_menu.tscn` in multiplayer mode.
+- Multiplayer routes through `MultiplayerEntryFlow`.
+- Signed out Multiplayer opens `LoginWindow`.
+- Signed in Multiplayer opens `pregame_menu.tscn` in multiplayer mode.
 - PregameMenu script is attached to `pregame_menu.tscn`.
 - PregameModePresenter applies Single Player vs Multiplayer labels, visibility, and disabled states.
 - Pregame Back returns to Main Menu.
@@ -28,14 +32,33 @@ Completed Phase 2:
 - Disabled Single Player future buttons remain disabled.
 - Pregame Back still returns to Main Menu.
 
+Completed Phase 3:
+
+- Main Menu Multiplayer is auth-aware through `MultiplayerEntryFlow`.
+- Signed-out Multiplayer opens `LoginWindow`.
+- Discord login works from `LoginWindow` using the existing auth flow.
+- Back from `LoginWindow` returns to Main Menu.
+- Manual and Google login remain disabled.
+- Signed-in Multiplayer opens Pregame Menu in Multiplayer mode.
+- Successful Discord auth clears `LoginWindow` and routes to Multiplayer Pregame.
+
+Completed Phase 4:
+
+- Signed-in Multiplayer Pregame Create uses the existing create-room path.
+- Create clears Pregame UI before room/lobby transition.
+- Join opens `join_dialog.tscn`.
+- `JoinDialog` validates empty room code and stays open.
+- JoinDialog Cancel returns to Multiplayer Pregame.
+- Valid Join clears UI and uses the existing join-room path.
+- Logout from Multiplayer Pregame returns to Main Menu signed out.
+- Lobby Leave now sends leave-room, clears Lobby, and returns to Multiplayer Pregame without logging out.
+
 ## Remaining Client Slice Plan
 
-1. Sign In screen
-2. Multiplayer pre-lobby create/join/logout routing
-3. Local Pilot / Guest selection
-4. Profile readout transmission
-5. Match Results window
-6. Stats refresh / final smoke
+1. Profile readout transmission
+2. Local Pilot / Guest selection
+3. Match Results window
+4. Stats refresh / final smoke
 
 ## Rollout Tracker
 
@@ -45,8 +68,9 @@ Completed Phase 2:
 - [x] Multiplayer mode presentation
 - [x] Pregame Back returns to Main Menu
 - [x] Play Endless from Pregame
-- [ ] Sign In screen
-- [ ] Multiplayer Create/Join/Logout from Pregame
+- [x] Sign In screen
+- [x] Multiplayer Create/Join/Logout from Pregame
+- [x] Lobby Leave returns to Multiplayer Pregame
 - [ ] Local Pilot / Guest selector
 - [ ] Profile readout transmission
 - [ ] Match Results window

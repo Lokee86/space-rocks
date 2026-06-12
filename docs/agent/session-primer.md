@@ -31,6 +31,8 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Phase 5 match-result reporting is complete: resolved `MatchResultSummary` is reported through `services/player-data`, `account_id` routes to `authenticated_account`, `local_profile_id` routes to `local_profile`, and guest/no durable identity routes to guest behavior.
 - Client menu-flow Phase 1 foundation is complete and green: Main Menu is a route launcher, `MenuFlowController` owns scene routing, `pregame_menu.tscn` is the shared shell, `PregameModePresenter` owns mode display, and Pregame Back returns to Main Menu.
 - Client menu-flow Phase 2 is complete and green: Pregame Play Endless starts the old single-player flow, `MenuFlowController` clears menu UI when gameplay starts, and Pregame Back still returns to Main Menu.
+- Client menu-flow Phase 3 is complete and green: signed-out Multiplayer opens `LoginWindow`, Discord login works from the Sign In screen, signed-in Multiplayer routes to Pregame, and successful Discord auth returns to Multiplayer Pregame.
+- Client menu-flow Phase 4 is complete and green: Multiplayer Pregame Create/Join/Logout work, and Lobby Leave returns to Multiplayer Pregame without logging out.
 - Next near-term work is a real end-to-end smoke across Rails + Go + Godot, plus Godot stats fetch/display and Local Profile UX/create/select/save guest profile.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
@@ -55,9 +57,12 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Continue pushing future business/backend concerns toward the planned API server instead of growing the Go game server.
 - Keep packet and constants changes flowing through the source-of-truth TOML plus data-sync path.
 - Keep pickup presentation blink client-side from age/lifespan packet state.
-- Next implementation slice is Phase 3 - Sign In screen: Multiplayer Pregame signed-out state exposes Sign In, Sign In opens a dedicated Sign In screen, Discord login uses the existing auth flow, Cancel returns to Main Menu, and Manual/Google remain disabled.
-- Phase 3 does not move Create/Join yet, and Profile, Local Pilot, and Match Results stay deferred.
-- Active-game and personal-death menu behavior should not change, and multiplayer Lobby should keep using the existing return-to-lobby flow.
+- Next implementation slice is Phase 5 - Profile readout transmission.
+- Phase 5 scope: Profile button loads `profile_readout.tscn` into `PregameMenu` `TransmissionScreen/ScreenDisplay`, Back closes active transmission first, and profile readout shows current context.
+- Local Pilot / Guest selector is deferred unless required by profile context.
+- Match Results is deferred.
+- Stats refresh / final smoke is deferred.
+- Active-game and personal-death menu behavior should not change, and multiplayer Lobby Leave should return to Multiplayer Pregame without logging out.
 
 ## Common Mistakes To Avoid
 

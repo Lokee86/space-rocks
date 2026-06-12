@@ -6,16 +6,25 @@ Current client auth flow:
 - Single Player pregame Play Endless is implemented and green.
 - Main menu keeps the login indicator and `LogoutButton`.
 - Main menu Single Player routes to `pregame_menu.tscn` in single-player mode.
-- Main menu Multiplayer routes to `pregame_menu.tscn` in multiplayer mode.
+- Main menu Multiplayer routes through `MultiplayerEntryFlow`.
 - Main menu no longer owns sign-in or multiplayer dialog routing.
 - `pregame_menu.tscn` is attached and mode-aware.
 - Pregame Back returns to Main Menu.
-- Sign-in moves to a dedicated Sign In screen.
+- Sign In screen is implemented and green.
+- Multiplayer pre-lobby Create/Join/Logout routing is implemented and green.
 - Pregame Play Endless starts the old single-player flow.
 - `PregameMenu` clears when gameplay starts.
 - Disabled future Single Player buttons remain disabled.
 - See [Client Menu Flow](../client/menu-flow.md) for the canonical menu direction.
-- Sign-in opens the Discord browser login-session flow.
+- Main Menu Multiplayer routes through `MultiplayerEntryFlow`.
+- Signed out opens `LoginWindow`.
+- Discord login uses the existing browser login-session flow.
+- Signed in opens Multiplayer Pregame.
+- Successful Discord auth routes from `LoginWindow` to Multiplayer Pregame.
+- Multiplayer Pregame Create uses the existing create-room flow.
+- Multiplayer Pregame Join opens `JoinDialog` and uses the existing join-room flow.
+- Multiplayer Pregame Logout returns Main Menu signed out.
+- Lobby Leave returns to Multiplayer Pregame without logout.
 - The Rails API creates a short-lived login session and returns a poll secret plus login URL.
 - The client exchanges the authenticated login session for the normal Space Rocks bearer token.
 - The Space Rocks bearer token is stored locally and validated with `GET /api/auth/me` on startup.
@@ -29,6 +38,8 @@ Limits and boundaries:
 - Its launch path now goes through Pregame Menu -> Play Endless.
 - Online multiplayer create/join flows are intended for signed-in users, but the server remains the authority for admission.
 - Non-Discord in-game account creation UI is deferred.
+- `MainMenu` remains dumb.
+- `AppEntry` remains wiring/composition only.
 - `pregame_menu.gd` is a shell only; flow, controller, and presenter code own the real logic.
 
 Keep this note short and update it when the auth flow changes.
