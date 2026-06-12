@@ -1,0 +1,221 @@
+[gd_scene format=3 uid="uid://dxnxw4rt3jplx"]
+
+[ext_resource type="PackedScene" uid="uid://cs5j0cu56sy4e" path="res://scenes/ui/elements/windows/window_7.tscn" id="1_7dt0e"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_2r4sw"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_ohsys"]
+[ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="4_p8cq4"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_qamjp"]
+font = ExtResource("4_p8cq4")
+font_size = 18
+font_color = Color(0, 0, 0, 1)
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[node name="MatchResultWindow" type="Control" unique_id=1394503262]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=262359850]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Window7" parent="CenterContainer" unique_id=500599427 instance=ExtResource("1_7dt0e")]
+custom_minimum_size = Vector2(800, 600)
+layout_mode = 2
+
+[node name="WindoLavelContainer" type="CenterContainer" parent="CenterContainer/Window7" unique_id=1696132483]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -79.0
+offset_right = 79.0
+offset_bottom = 58.0
+grow_horizontal = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/WindoLavelContainer" unique_id=784343108]
+layout_mode = 2
+theme_override_constants/margin_top = 35
+
+[node name="Label" type="Label" parent="CenterContainer/Window7/WindoLavelContainer/MarginContainer" unique_id=1662222012]
+layout_mode = 2
+text = "MATCH RESULT"
+label_settings = ExtResource("2_2r4sw")
+
+[node name="ScoreDisplayArea" type="Control" parent="CenterContainer/Window7" unique_id=712523409]
+layout_mode = 1
+anchor_left = 0.08400001
+anchor_top = 0.177
+anchor_right = 0.92200005
+anchor_bottom = 0.82800007
+offset_left = -0.19999695
+offset_top = -0.19999695
+offset_right = 0.39996338
+offset_bottom = 0.19995117
+
+[node name="ScoreContainer" type="VBoxContainer" parent="CenterContainer/Window7/ScoreDisplayArea" unique_id=827501158]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
+
+[node name="SummaryHeader" type="HBoxContainer" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer" unique_id=910320263]
+layout_mode = 2
+theme_override_constants/separation = 3
+alignment = 1
+
+[node name="PlayerName" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=1655716787]
+layout_mode = 2
+text = "PLAYER "
+label_settings = ExtResource("2_2r4sw")
+
+[node name="Spacer" type="Control" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=1285567169]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Separator" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=1421033990]
+layout_mode = 2
+text = "|"
+label_settings = ExtResource("2_2r4sw")
+
+[node name="Deaths" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=689370667]
+layout_mode = 2
+text = "DEATHS"
+label_settings = ExtResource("2_2r4sw")
+
+[node name="Separator2" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=989446518]
+layout_mode = 2
+text = "|"
+label_settings = ExtResource("2_2r4sw")
+
+[node name="Kills" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=816913660]
+layout_mode = 2
+text = " KILLS "
+label_settings = ExtResource("2_2r4sw")
+
+[node name="Separator3" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=114014050]
+layout_mode = 2
+text = "|"
+label_settings = ExtResource("2_2r4sw")
+
+[node name="Spacer2" type="Control" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=1110729127]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Score" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=1700561532]
+layout_mode = 2
+text = "SCORE"
+label_settings = ExtResource("2_2r4sw")
+
+[node name="Spacer3" type="Control" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=1676495829]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="uiSeparator" type="ColorRect" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer" unique_id=1193578278]
+custom_minimum_size = Vector2(0, 1.5)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Window7/ScoreDisplayArea" unique_id=820849676]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="LobbyReplayButton" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer" unique_id=928907867 instance=ExtResource("3_ohsys")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/LobbyReplayButton" unique_id=1875934162]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/LobbyReplayButton/CenterContainer" unique_id=628404148]
+layout_mode = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 14
+
+[node name="LobbyLabel" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/LobbyReplayButton/CenterContainer/MarginContainer" unique_id=1932727163]
+unique_name_in_owner = true
+layout_mode = 2
+text = "LOBBY"
+label_settings = SubResource("LabelSettings_qamjp")
+horizontal_alignment = 1
+
+[node name="ReplayLabel" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/LobbyReplayButton/CenterContainer/MarginContainer" unique_id=411243037]
+unique_name_in_owner = true
+layout_mode = 2
+text = "REPLAY"
+label_settings = SubResource("LabelSettings_qamjp")
+horizontal_alignment = 1
+
+[node name="MenuButton" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer" unique_id=906209937 instance=ExtResource("3_ohsys")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/MenuButton" unique_id=1744068806]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/MenuButton/CenterContainer" unique_id=1802391356]
+layout_mode = 2
+theme_override_constants/margin_top = 14
+
+[node name="MenuLabel" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/MenuButton/CenterContainer/MarginContainer" unique_id=868737008]
+layout_mode = 2
+text = "MENU"
+label_settings = SubResource("LabelSettings_qamjp")
+horizontal_alignment = 1
+
+[node name="QuitButton" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer" unique_id=1237437439 instance=ExtResource("3_ohsys")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/QuitButton" unique_id=335542178]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/QuitButton/CenterContainer" unique_id=1644852886]
+layout_mode = 2
+theme_override_constants/margin_top = 14
+
+[node name="QuitLabel" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer/QuitButton/CenterContainer/MarginContainer" unique_id=1926405720]
+layout_mode = 2
+text = "QUIT"
+label_settings = SubResource("LabelSettings_qamjp")
+horizontal_alignment = 1

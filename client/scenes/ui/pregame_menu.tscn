@@ -317,6 +317,7 @@ theme_override_constants/separation = 14
 [node name="SubPanelTransmissionScreen" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=344769410 instance=ExtResource("6_sr72t")]
 unique_name_in_owner = true
 layout_mode = 2
+mouse_filter = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=1155367612]
 layout_mode = 2
@@ -334,6 +335,7 @@ columns = 3
 
 [node name="Spacer" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1277574545]
 layout_mode = 2
+mouse_filter = 2
 
 [node name="UpButton" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1859330374 instance=ExtResource("5_r532d")]
 unique_name_in_owner = true
@@ -360,6 +362,7 @@ expand_mode = 1
 
 [node name="Spacer2" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=2058282459]
 layout_mode = 2
+mouse_filter = 2
 
 [node name="LeftButton" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1911430403 instance=ExtResource("5_r532d")]
 unique_name_in_owner = true
@@ -432,6 +435,7 @@ expand_mode = 1
 
 [node name="Spacer3" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=739055613]
 layout_mode = 2
+mouse_filter = 2
 
 [node name="DownButton" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=99554975 instance=ExtResource("5_r532d")]
 unique_name_in_owner = true
@@ -458,6 +462,7 @@ expand_mode = 1
 
 [node name="Spacer4" type="Control" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls/Dpad" unique_id=1542796679]
 layout_mode = 2
+mouse_filter = 2
 
 [node name="BackButton" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/MarginContainer/SubpanelControls" unique_id=243732867 instance=ExtResource("3_avovy")]
 unique_name_in_owner = true

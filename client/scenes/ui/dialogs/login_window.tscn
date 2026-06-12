@@ -83,8 +83,10 @@ text = "EMAIL"
 label_settings = ExtResource("2_baty5")
 horizontal_alignment = 1
 
-[node name="LineEdit" type="LineEdit" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=732737388]
+[node name="EmailInput" type="LineEdit" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=732737388]
+unique_name_in_owner = true
 layout_mode = 2
+alignment = 1
 
 [node name="Label2" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=2043026033]
 layout_mode = 2
@@ -92,19 +94,22 @@ text = "PASSWORD"
 label_settings = ExtResource("2_baty5")
 horizontal_alignment = 1
 
-[node name="LineEdit2" type="LineEdit" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=914929757]
+[node name="PasswordInput" type="LineEdit" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=914929757]
+unique_name_in_owner = true
 layout_mode = 2
+alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=73433192]
 layout_mode = 2
 theme_override_constants/separation = 7
 
-[node name="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer" unique_id=928907867 instance=ExtResource("3_dcdmm")]
+[node name="SignInButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer" unique_id=928907867 instance=ExtResource("3_dcdmm")]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(145, 50)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton" unique_id=613896055]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/SignInButton" unique_id=613896055]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -112,22 +117,23 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton/CenterContainer" unique_id=55602519]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/SignInButton/CenterContainer" unique_id=55602519]
 layout_mode = 2
 theme_override_constants/margin_top = 18
 
-[node name="Label" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton/CenterContainer/MarginContainer" unique_id=1593438007]
+[node name="Label" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/SignInButton/CenterContainer/MarginContainer" unique_id=1593438007]
 layout_mode = 2
 text = "SIGN IN"
 label_settings = SubResource("LabelSettings_cqygl")
 horizontal_alignment = 1
 
-[node name="TextureButton2" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer" unique_id=1857233771 instance=ExtResource("3_dcdmm")]
+[node name="BackButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer" unique_id=1857233771 instance=ExtResource("3_dcdmm")]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(145, 50)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton2" unique_id=1455562671]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/BackButton" unique_id=1455562671]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -135,11 +141,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton2/CenterContainer" unique_id=1492170320]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/BackButton/CenterContainer" unique_id=1492170320]
 layout_mode = 2
 theme_override_constants/margin_top = 18
 
-[node name="Label" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/TextureButton2/CenterContainer/MarginContainer" unique_id=691574642]
+[node name="Label" type="Label" parent="CenterContainer/Window8/CenterContainer/VBoxContainer/HBoxContainer/BackButton/CenterContainer/MarginContainer" unique_id=691574642]
 layout_mode = 2
 text = "BACK"
 label_settings = SubResource("LabelSettings_gwfch")
@@ -151,14 +157,16 @@ text = "OR SIGN IN WITH:"
 label_settings = ExtResource("2_baty5")
 horizontal_alignment = 1
 
-[node name="TextureButton" type="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=1723961841]
+[node name="GoogleLoginButton" type="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=1723961841]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 65)
 layout_mode = 2
 texture_normal = ExtResource("5_vi4s4")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="TextureButton2" type="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=475082475]
+[node name="DiscordLoginButton" type="TextureButton" parent="CenterContainer/Window8/CenterContainer/VBoxContainer" unique_id=475082475]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(285, 65)
 layout_mode = 2
 texture_normal = ExtResource("6_sh7at")
