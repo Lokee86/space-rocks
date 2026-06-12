@@ -2,9 +2,13 @@
 
 Current client auth flow:
 
-- Main menu keeps the login indicator and `LogoutButton`, but sign-in and multiplayer dialog routing now live in the dedicated menu flow.
+- Menu-flow foundation is implemented and green.
+- Main menu keeps the login indicator and `LogoutButton`.
 - Main menu Single Player routes to `pregame_menu.tscn` in single-player mode.
 - Main menu Multiplayer routes to `pregame_menu.tscn` in multiplayer mode.
+- Main menu no longer owns sign-in or multiplayer dialog routing.
+- `pregame_menu.tscn` is attached and mode-aware.
+- Pregame Back returns to Main Menu.
 - Sign-in moves to a dedicated Sign In screen.
 - See [Client Menu Flow](../client/menu-flow.md) for the canonical menu direction.
 - Sign-in opens the Discord browser login-session flow.

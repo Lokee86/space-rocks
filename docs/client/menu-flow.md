@@ -4,6 +4,46 @@ This document defines the canonical client menu-flow design for the final Multip
 
 This is not a separate Phase 6. It is the final client slice for Multiplayer V1.1.
 
+## Implementation Status
+
+Phase 1 / foundation slice is complete and green.
+
+Completed Phase 1:
+
+- Main Menu is now a top-level route launcher.
+- Main Menu keeps login indicator and logout button.
+- Single Player routes to `pregame_menu.tscn` in single-player mode.
+- Multiplayer routes to `pregame_menu.tscn` in multiplayer mode.
+- PregameMenu script is attached to `pregame_menu.tscn`.
+- PregameModePresenter applies Single Player vs Multiplayer labels, visibility, and disabled states.
+- Pregame Back returns to Main Menu.
+- Old Main Menu multiplayer dialog/sign-in behavior is removed.
+
+## Remaining Client Slice Plan
+
+1. Single-player pregame actions
+2. Sign In screen
+3. Multiplayer pre-lobby create/join/logout routing
+4. Local Pilot / Guest selection
+5. Profile readout transmission
+6. Match Results window
+7. Stats refresh / final smoke
+
+## Rollout Tracker
+
+- [x] Main Menu route launcher
+- [x] Pregame Menu scene mounted by `MenuFlowController`
+- [x] Single Player mode presentation
+- [x] Multiplayer mode presentation
+- [x] Pregame Back returns to Main Menu
+- [ ] Play Endless from Pregame
+- [ ] Sign In screen
+- [ ] Multiplayer Create/Join/Logout from Pregame
+- [ ] Local Pilot / Guest selector
+- [ ] Profile readout transmission
+- [ ] Match Results window
+- [ ] Stats refresh / final smoke
+
 ## High-Level Scene Flow
 
 Main Menu -> Pregame Menu -> Sign In / Join Dialog / Profile Transmission / Match Results
@@ -96,4 +136,3 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 - Multiplayer Lobby uses the existing return-to-lobby flow.
 - `MenuButton` leaves the room and returns to Pregame Menu.
 - `QuitButton` leaves the room and returns to Main Menu.
-
