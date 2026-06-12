@@ -2,8 +2,11 @@
 
 Current client auth flow:
 
-- Main menu signed out state shows `Not Signed In`, hides `LogoutButton`, and shows `Sign-in` on `MultiplayerButton`.
-- Main menu signed in state shows the display name, shows `LogoutButton`, and shows `Multi-player` on `MultiplayerButton`.
+- Main menu keeps the login indicator and `LogoutButton`, but sign-in and multiplayer dialog routing now live in the dedicated menu flow.
+- Main menu Single Player routes to `pregame_menu.tscn` in single-player mode.
+- Main menu Multiplayer routes to `pregame_menu.tscn` in multiplayer mode.
+- Sign-in moves to a dedicated Sign In screen.
+- See [Client Menu Flow](../client/menu-flow.md) for the canonical menu direction.
 - Sign-in opens the Discord browser login-session flow.
 - The Rails API creates a short-lived login session and returns a poll secret plus login URL.
 - The client exchanges the authenticated login session for the normal Space Rocks bearer token.
@@ -15,9 +18,8 @@ Current client auth flow:
 Limits and boundaries:
 
 - Single-player stays unchanged and does not require auth.
-- Signed-out users see `Sign-in` on the shared `MultiplayerButton`.
-- Signed-in users see `Multi-player` on the same button.
 - Online multiplayer create/join flows are intended for signed-in users, but the server remains the authority for admission.
 - Non-Discord in-game account creation UI is deferred.
+- `pregame_menu.gd` is a shell only; flow, controller, and presenter code own the real logic.
 
 Keep this note short and update it when the auth flow changes.

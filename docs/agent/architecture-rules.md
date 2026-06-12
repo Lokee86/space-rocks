@@ -80,6 +80,13 @@ If a change adds more than roughly 100 lines total, report why the slice is that
 - Client presentation, UI, audio/effects, local input collection, and interpolation belong in the Godot client.
 - Client spectate/view-cycle eligibility must use authoritative lifecycle status (`active`) plus visual availability.
 - Do not infer active eligibility solely from remote player positions or ship presence.
+- Client menu flow ownership lives in [docs/client/menu-flow.md](../client/menu-flow.md).
+- Scene scripts should emit intent and expose display methods.
+- Menu scenes should not own API calls, room create/join logic, profile parsing, local profile persistence, or match result row building.
+- `MenuFlowController` owns scene routing.
+- Feature flows/controllers own behavior.
+- Presenters own visibility, label, and disabled state.
+- `pregame_menu.gd` is a wiring shell only.
 
 ## Packet / Codec Boundaries
 

@@ -32,7 +32,7 @@ grow_vertical = 2
 custom_minimum_size = Vector2(800, 600)
 layout_mode = 2
 
-[node name="WindoLavelContainer" type="CenterContainer" parent="CenterContainer/Window7" unique_id=1696132483]
+[node name="WindowLabelContainer" type="CenterContainer" parent="CenterContainer/Window7" unique_id=1696132483]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -42,11 +42,11 @@ offset_right = 79.0
 offset_bottom = 58.0
 grow_horizontal = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/WindoLavelContainer" unique_id=784343108]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/WindowLabelContainer" unique_id=784343108]
 layout_mode = 2
 theme_override_constants/margin_top = 35
 
-[node name="MatchResultLabel" type="Label" parent="CenterContainer/Window7/WindoLavelContainer/MarginContainer" unique_id=1662222012]
+[node name="MatchResultLabel" type="Label" parent="CenterContainer/Window7/WindowLabelContainer/MarginContainer" unique_id=1662222012]
 unique_name_in_owner = true
 layout_mode = 2
 text = "MATCH RESULT"
