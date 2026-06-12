@@ -101,6 +101,33 @@ Email/password auth and Discord OAuth both issue the same opaque bearer access t
 
 If the game server needs auth, it should use an explicit API or internal verification boundary rather than direct table access. Rails/API owns authenticated users, OAuth identities, and online account persistence.
 
+### Client Token Persistence Hardening
+
+Current client behavior:
+
+- Godot stores the Space Rocks bearer token in `user://auth_token.json`.
+- On startup, `AuthSessionController` loads the token and validates it through `GET /api/auth/me`.
+- Invalid tokens are cleared locally.
+- Logout clears the local token and calls remote logout when a token exists.
+
+Security tradeoff:
+
+- The saved bearer token is a password-equivalent credential while valid.
+- A process or user that can read the local file could impersonate the user until the token expires or is revoked.
+- That risk grows once accounts own currency, parts, unlocks, purchases, or other durable value.
+
+Future hardening direction:
+
+- server-side opaque session tokens
+- hashed token storage server-side if not already true
+- expiry and revocation
+- logout revokes the server session
+- token rotation or a refresh-token flow later if needed
+- OS secure credential storage later instead of plain `user://` JSON where feasible
+
+Do not store Discord access tokens, OAuth client secrets, OAuth refresh tokens, or provider secrets in Godot.
+This is documented as future hardening, not a blocker for the current client menu-flow work.
+
 `account_id` is the canonical cross-system UUID for authenticated accounts. Rails `user_id` remains an internal foreign key to `users.id`, and game-facing payloads should use `account_id` while local profiles use `local_profile_id`.
 
 See [cross-mode routing and player data](../design/cross-mode-routing-and-player-data.md) for the cross-mode admission, identity, and player-data routing model.
