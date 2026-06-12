@@ -11,6 +11,7 @@ const AuthSessionController := preload("res://scripts/auth/auth_session_controll
 const AuthApiClient := preload("res://scripts/auth/auth_api_client.gd")
 const ApiHttpClient := preload("res://scripts/api/api_http_client.gd")
 const MenuFlowController := preload("res://scripts/ui/menu_flow/menu_flow_controller.gd")
+const MultiplayerEntryFlow := preload("res://scripts/ui/menu_flow/multiplayer_entry_flow.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
@@ -38,6 +39,7 @@ var api_http_client
 var auth_api_client
 var background_controller
 var menu_flow_controller
+var multiplayer_entry_flow
 
 func _ready() -> void:
 
@@ -125,7 +127,15 @@ func _ready() -> void:
 	)
 
 	menu_flow_controller = MenuFlowController.new()
-	menu_flow_controller.configure(canvas_layer, main_menu, Callable(self, "_start_single_player_from_pregame"))
+	menu_flow_controller.configure(
+		canvas_layer,
+		main_menu,
+		Callable(self, "_start_single_player_from_pregame"),
+		Callable(auth_session_controller, "request_discord_sign_in")
+	)
+
+	multiplayer_entry_flow = MultiplayerEntryFlow.new()
+	multiplayer_entry_flow.configure(menu_flow_controller, auth_session_controller)
 
 	_connect_main_menu_signals()
 	_connect_auth_signals()
@@ -160,7 +170,8 @@ func _connect_main_menu_signals() -> void:
 		return
 
 	_connect_main_menu_signal("single_player_requested", _on_single_player_requested)
-	_connect_main_menu_signal("multiplayer_requested", _on_multiplayer_requested)
+	if multiplayer_entry_flow != null:
+		_connect_main_menu_signal("multiplayer_requested", Callable(multiplayer_entry_flow, "request_multiplayer"))
 	_connect_main_menu_signal("logout_requested", _on_logout_requested)
 
 
@@ -171,6 +182,10 @@ func _connect_auth_signals() -> void:
 
 	if !auth_session_controller.auth_state_changed.is_connected(_on_auth_state_changed):
 		auth_session_controller.auth_state_changed.connect(_on_auth_state_changed)
+	if multiplayer_entry_flow != null:
+		var multiplayer_state_callable := Callable(multiplayer_entry_flow, "handle_auth_state_changed")
+		if !auth_session_controller.auth_state_changed.is_connected(multiplayer_state_callable):
+			auth_session_controller.auth_state_changed.connect(multiplayer_state_callable)
 	if !auth_session_controller.auth_error.is_connected(_on_auth_error):
 		auth_session_controller.auth_error.connect(_on_auth_error)
 
@@ -194,12 +209,6 @@ func _on_single_player_requested() -> void:
 	_log_shell_status("App entry single-player pregame requested")
 	if menu_flow_controller != null:
 		menu_flow_controller.show_single_player_pregame()
-
-
-func _on_multiplayer_requested() -> void:
-	_log_shell_status("App entry multiplayer pregame requested")
-	if menu_flow_controller != null:
-		menu_flow_controller.show_multiplayer_pregame()
 
 
 func _on_logout_requested() -> void:

@@ -6,6 +6,7 @@
 [ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="4_pgvq6"]
 [ext_resource type="Texture2D" uid="uid://bayn8xx13j752" path="res://assets/ui/ui_buttons/google-signin.png" id="5_vi4s4"]
 [ext_resource type="Texture2D" uid="uid://dxk1i32ddtjxu" path="res://assets/ui/ui_buttons/discord-signin.png" id="6_sh7at"]
+[ext_resource type="Script" path="res://scripts/ui/sign_in/login_window.gd" id="7_t8f2r"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_cqygl"]
 font = ExtResource("4_pgvq6")
@@ -22,6 +23,7 @@ outline_size = 2
 outline_color = Color(0, 0, 0, 1)
 
 [node name="LoginWindow" type="Control" unique_id=1163510662]
+script = ExtResource("7_t8f2r")
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
