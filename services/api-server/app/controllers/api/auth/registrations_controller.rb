@@ -4,7 +4,7 @@ module Api
       include RendersAuthResponse
 
       def create
-        result = Auth::RegisterUser.call(
+        result = ::Auth::RegisterUser.call(
           display_name: registration_params[:display_name],
           email: registration_params[:email],
           password: registration_params[:password]
@@ -24,5 +24,4 @@ module Api
       end
     end
   end
-end
 end
