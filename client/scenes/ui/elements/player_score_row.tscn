@@ -55,5 +55,5 @@ custom_minimum_size = Vector2(172, 0)
 layout_mode = 2
 text = "SCORE"
 label_settings = ExtResource("1_m8y7s")
-horizontal_alignment = 2
+horizontal_alignment = 1
 text_overrun_behavior = 1

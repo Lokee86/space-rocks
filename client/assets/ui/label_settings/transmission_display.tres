@@ -1,0 +1,8 @@
+[gd_resource type="LabelSettings" format=3 uid="uid://cipb7pygv8h8w"]
+
+[ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="1_l7ctn"]
+
+[resource]
+font = ExtResource("1_l7ctn")
+font_size = 15
+font_color = Color(0, 1, 1, 1)
