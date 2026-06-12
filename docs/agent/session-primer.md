@@ -29,6 +29,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`; weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/design/weapons.md](../design/weapons.md) and [docs/design/radial-effects.md](../design/radial-effects.md).
 - Rails internal token verification, Go authclient, websocket session identity, and websocket auth packets now form the completed auth/admission seam for multiplayer admission.
 - Phase 5 match-result reporting is complete: resolved `MatchResultSummary` is reported through `services/player-data`, `account_id` routes to `authenticated_account`, `local_profile_id` routes to `local_profile`, and guest/no durable identity routes to guest behavior.
+- Client menu-flow Phase 1 foundation is complete and green: Main Menu is a route launcher, `MenuFlowController` owns scene routing, `pregame_menu.tscn` is the shared shell, `PregameModePresenter` owns mode display, and Pregame Back returns to Main Menu.
 - Next near-term work is a real end-to-end smoke across Rails + Go + Godot, plus Godot stats fetch/display and Local Profile UX/create/select/save guest profile.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
@@ -53,7 +54,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Continue pushing future business/backend concerns toward the planned API server instead of growing the Go game server.
 - Keep packet and constants changes flowing through the source-of-truth TOML plus data-sync path.
 - Keep pickup presentation blink client-side from age/lifespan packet state.
-- Next implementation target is the final Multiplayer V1.1 client slice: a cohesive menu-flow seam with Main Menu reset to a route launcher, `pregame_menu.tscn` as the shared single-player/multiplayer pregame shell, a dedicated Sign In screen, Local Pilot / Guest selection, profile readout transmission, and the Match Results window for room game-over.
+- Next implementation slice is Single-player pregame actions: Play Endless should use the old Main Menu single-player start behavior from Pregame, disabled buttons stay disabled, and Local Pilot / Guest selection, profile transmission, and multiplayer create/join relocation stay deferred.
 - Active-game and personal-death menu behavior should not change, and multiplayer Lobby should keep using the existing return-to-lobby flow.
 
 ## Common Mistakes To Avoid
