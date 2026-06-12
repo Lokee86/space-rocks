@@ -7,6 +7,7 @@ This is not a separate Phase 6. It is the final client slice for Multiplayer V1.
 ## Implementation Status
 
 Phase 1 / foundation slice is complete and green.
+Phase 2 / single-player pregame action slice is complete and green.
 
 Completed Phase 1:
 
@@ -19,15 +20,22 @@ Completed Phase 1:
 - Pregame Back returns to Main Menu.
 - Old Main Menu multiplayer dialog/sign-in behavior is removed.
 
+Completed Phase 2:
+
+- Play Endless from Pregame starts the old single-player flow.
+- PregameMenu clears when gameplay starts.
+- Main Menu stays hidden during gameplay.
+- Disabled Single Player future buttons remain disabled.
+- Pregame Back still returns to Main Menu.
+
 ## Remaining Client Slice Plan
 
-1. Single-player pregame actions
-2. Sign In screen
-3. Multiplayer pre-lobby create/join/logout routing
-4. Local Pilot / Guest selection
-5. Profile readout transmission
-6. Match Results window
-7. Stats refresh / final smoke
+1. Sign In screen
+2. Multiplayer pre-lobby create/join/logout routing
+3. Local Pilot / Guest selection
+4. Profile readout transmission
+5. Match Results window
+6. Stats refresh / final smoke
 
 ## Rollout Tracker
 
@@ -36,7 +44,7 @@ Completed Phase 1:
 - [x] Single Player mode presentation
 - [x] Multiplayer mode presentation
 - [x] Pregame Back returns to Main Menu
-- [ ] Play Endless from Pregame
+- [x] Play Endless from Pregame
 - [ ] Sign In screen
 - [ ] Multiplayer Create/Join/Logout from Pregame
 - [ ] Local Pilot / Guest selector
@@ -92,7 +100,8 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 
 ## Single Player Mode
 
-- Play Endless uses the old Main Menu single-player start behavior.
+- Play Endless is implemented and uses the old Main Menu single-player start behavior.
+- Play Endless clears menu UI for gameplay through the menu-flow seam.
 - Campaign, Loadout, Provisioner, Buy Scrap, and Rankings are disabled.
 - Profile opens `profile_readout.tscn` in `TransmissionScreen/ScreenDisplay`.
 - Select Pilot controls the Guest / Local Pilot / New Pilot flow.

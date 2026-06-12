@@ -68,14 +68,21 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - PregameMenu mode presentation works.
 - Pregame Back returns to Main Menu.
 - Old Main Menu multiplayer dialog/sign-in behavior is removed.
+- Client menu-flow Phase 2 / single-player pregame action is complete and green.
+- Play Endless from Pregame starts the old single-player flow.
+- PregameMenu clears when gameplay starts.
+- Main Menu stays hidden during gameplay.
+- Pregame Back still returns to Main Menu.
+- Disabled Single Player future buttons remain disabled.
 - Remaining client work is the menu-flow/profile/pilot/match-results UI slice sequence:
-  - Single-player pregame actions
   - Sign In screen
   - Multiplayer pre-lobby create/join/logout routing
   - Local Pilot / Guest selection
   - Profile readout transmission
   - Match Results window
   - Stats refresh / final smoke
+- Phase 3 is Sign In screen.
+- Phase 3 should not move Create/Join yet.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
