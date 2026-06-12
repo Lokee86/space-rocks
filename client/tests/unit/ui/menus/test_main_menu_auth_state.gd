@@ -10,8 +10,8 @@ func test_show_signed_out_updates_auth_display() -> void:
 
 	assert_eq(menu.login_status_label.text, "Not Signed In")
 	assert_false(menu.logout_button.visible)
-	assert_true(menu.sign_in_label.visible)
-	assert_false(menu.multiplayer_label.visible)
+	assert_false(menu.sign_in_label.visible)
+	assert_true(menu.multiplayer_label.visible)
 
 
 func test_show_signed_in_updates_auth_display() -> void:
@@ -25,31 +25,46 @@ func test_show_signed_in_updates_auth_display() -> void:
 	assert_true(menu.multiplayer_label.visible)
 
 
-func test_multiplayer_button_emits_sign_in_requested_when_signed_out() -> void:
+func test_single_player_button_emits_single_player_requested() -> void:
 	var menu := await _create_menu()
+
 	watch_signals(menu)
 
-	menu.multiplayer_button.emit_signal("pressed")
+	(menu.get_node("%SinglePlayerButton") as BaseButton).emit_signal("pressed")
 
-	assert_signal_emitted(menu, "sign_in_requested")
-	assert_eq(menu.login_status_label.text, "Not Signed In")
-	assert_null(menu.multiplayer_dialog)
+	assert_signal_emitted(menu, "single_player_requested")
 
 
-func test_multiplayer_button_opens_multiplayer_dialog_when_signed_in() -> void:
+func test_multiplayer_button_emits_multiplayer_requested_when_signed_out() -> void:
 	var menu := await _create_menu()
-	var sign_in_requested := false
 
-	menu.sign_in_requested.connect(func() -> void:
-		sign_in_requested = true
-	)
+	watch_signals(menu)
 
+	(menu.get_node("%MultiplayerButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "multiplayer_requested")
+	assert_null(menu.get("multiplayer_dialog"))
+
+
+func test_multiplayer_button_emits_multiplayer_requested_when_signed_in() -> void:
+	var menu := await _create_menu()
+
+	watch_signals(menu)
 	menu.show_signed_in("Ada Lovelace")
-	menu.multiplayer_button.emit_signal("pressed")
+	(menu.get_node("%MultiplayerButton") as BaseButton).emit_signal("pressed")
 
-	assert_false(sign_in_requested)
-	assert_not_null(menu.multiplayer_dialog)
-	assert_true(is_instance_valid(menu.multiplayer_dialog))
+	assert_signal_emitted(menu, "multiplayer_requested")
+	assert_null(menu.get("multiplayer_dialog"))
+
+
+func test_logout_button_emits_logout_requested() -> void:
+	var menu := await _create_menu()
+
+	watch_signals(menu)
+
+	(menu.get_node("%LogoutButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "logout_requested")
 
 
 func _create_menu() -> Control:
