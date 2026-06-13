@@ -22,6 +22,7 @@ func activateRoomPlayers(room *rooms.Room) {
 
 		playerID := gameInstance.AddPlayer()
 		session.currentGamePlayerID = playerID
+		room.SetMemberPlayerIDForSession(session.sessionID, playerID)
 		room.SetActivePlayerCount(room.ActivePlayerCount() + 1)
 	}
 }

@@ -6,6 +6,10 @@ const LoginWindowScene := preload("res://scenes/ui/dialogs/login_window.tscn")
 const JoinDialogScene := preload("res://scenes/ui/dialogs/join_dialog.tscn")
 const MenuRoute := preload("res://scripts/ui/menu_flow/menu_route.gd")
 const PregameMenuFlow := preload("res://scripts/ui/menu_flow/pregame_menu_flow.gd")
+const TransmissionFlow := preload("res://scripts/ui/menu_flow/transmission_flow.gd")
+const ProfileContextProvider := preload("res://scripts/profile/profile_context_provider.gd")
+const ProfileStatsProvider := preload("res://scripts/profile/profile_stats_provider.gd")
+const ProfileFlow := preload("res://scripts/profile/profile_flow.gd")
 const JoinDialogFlow := preload("res://scripts/ui/lobby/join_dialog_flow.gd")
 const SignInFlow := preload("res://scripts/ui/sign_in/sign_in_flow.gd")
 
@@ -17,6 +21,10 @@ var join_dialog: Control
 var pregame_menu_flow
 var join_dialog_flow
 var sign_in_flow
+var auth_session_controller
+var profile_context_provider
+var profile_stats_provider
+var profile_stats_provider_is_shared := false
 var start_single_player_callable: Callable
 var request_discord_sign_in_callable: Callable
 var create_room_callable: Callable
@@ -32,7 +40,9 @@ func configure(
 		request_discord_sign_in_callable_ref: Callable = Callable(),
 		create_room_callable_ref: Callable = Callable(),
 		join_room_callable_ref: Callable = Callable(),
-		logout_callable_ref: Callable = Callable()) -> void:
+		logout_callable_ref: Callable = Callable(),
+		auth_session_controller_ref = null,
+		profile_stats_provider_ref = null) -> void:
 	canvas_layer = canvas_layer_ref
 	main_menu = main_menu_ref
 	start_single_player_callable = start_single_player_callable_ref
@@ -40,6 +50,20 @@ func configure(
 	create_room_callable = create_room_callable_ref
 	join_room_callable = join_room_callable_ref
 	logout_callable = logout_callable_ref
+	auth_session_controller = auth_session_controller_ref
+	profile_stats_provider_is_shared = profile_stats_provider_ref != null
+	if profile_context_provider == null:
+		profile_context_provider = ProfileContextProvider.new()
+	if profile_context_provider != null and profile_context_provider.has_method("configure"):
+		profile_context_provider.configure(auth_session_controller)
+	if profile_stats_provider_ref != null:
+		profile_stats_provider = profile_stats_provider_ref
+	elif profile_stats_provider == null:
+		profile_stats_provider = ProfileStatsProvider.new()
+		if profile_stats_provider != null and profile_stats_provider.has_method("configure"):
+			profile_stats_provider.configure(auth_session_controller)
+	elif !profile_stats_provider_is_shared and profile_stats_provider != null and profile_stats_provider.has_method("configure"):
+		profile_stats_provider.configure(auth_session_controller)
 	current_route = MenuRoute.MAIN_MENU
 	if main_menu != null:
 		main_menu.show()
@@ -154,6 +178,17 @@ func _show_pregame() -> void:
 	if pregame_menu_flow == null:
 		pregame_menu_flow = PregameMenuFlow.new()
 
+	var transmission_flow := TransmissionFlow.new()
+	transmission_flow.configure(pregame_menu)
+
+	if profile_context_provider == null:
+		profile_context_provider = ProfileContextProvider.new()
+	if profile_context_provider != null and profile_context_provider.has_method("configure"):
+		profile_context_provider.configure(auth_session_controller)
+
+	var profile_flow := ProfileFlow.new()
+	profile_flow.configure(profile_context_provider, profile_stats_provider, transmission_flow)
+
 	pregame_menu_flow.configure(
 		pregame_menu,
 		Callable(self, "show_main_menu"),
@@ -161,7 +196,10 @@ func _show_pregame() -> void:
 		create_room_callable,
 		Callable(self, "show_join_dialog"),
 		logout_callable,
-		Callable(self, "clear_for_room_transition"))
+		Callable(self, "clear_for_room_transition"),
+		profile_context_provider,
+		profile_flow,
+		transmission_flow)
 	current_route = MenuRoute.PREGAME_MENU
 	if pregame_menu != null:
 		pregame_menu.show()

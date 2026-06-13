@@ -1,7 +1,6 @@
 package networking
 
 import (
-	"strconv"
 	"sync"
 
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
@@ -81,5 +80,5 @@ func accountIDForSession(session *webSocketSession) string {
 		return ""
 	}
 
-	return strconv.FormatInt(identity.AccountUserID, 10)
+	return identity.AccountID
 }

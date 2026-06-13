@@ -15,13 +15,11 @@ import (
 type RailsStoreConfig struct {
 	BaseURL       string
 	InternalToken string
-	BearerToken   string
 }
 
 type RailsStore struct {
 	BaseURL       string
 	internalToken string
-	bearerToken   string
 	httpClient    *http.Client
 }
 
@@ -33,7 +31,6 @@ func NewRailsStore(config RailsStoreConfig) (*RailsStore, error) {
 	return &RailsStore{
 		BaseURL:       strings.TrimRight(config.BaseURL, "/"),
 		internalToken: config.InternalToken,
-		bearerToken:   config.BearerToken,
 		httpClient:    http.DefaultClient,
 	}, nil
 }
@@ -69,15 +66,11 @@ func (s *RailsStore) newJSONRequest(method, path string, body any) (*http.Reques
 		request.Header.Set("Content-Type", "application/json")
 	}
 
-	if strings.HasPrefix(path, "/internal") {
+	if strings.HasPrefix(path, "/internal") || strings.HasPrefix(path, "/api/internal") {
 		if s.internalToken != "" {
 			request.Header.Set("Authorization", "Bearer "+s.internalToken)
 		}
 		return request, nil
-	}
-
-	if s.bearerToken != "" {
-		request.Header.Set("Authorization", "Bearer "+s.bearerToken)
 	}
 
 	return request, nil
@@ -90,11 +83,15 @@ func (s *RailsStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.P
 	if identity.AccountID == "" {
 		return protocol.PlayerDataStats{}, false, errors.New("account_id is required")
 	}
-	if s.bearerToken == "" {
-		return protocol.PlayerDataStats{}, false, errors.New("bearer token is required")
+	if s.internalToken == "" {
+		return protocol.PlayerDataStats{}, false, errors.New("internal token is required")
 	}
 
-	request, err := s.newJSONRequest(http.MethodGet, "/api/player/stats", nil)
+	request, err := s.newJSONRequest(http.MethodPost, "/api/internal/player-data/stats", struct {
+		AccountID string `json:"account_id"`
+	}{
+		AccountID: identity.AccountID,
+	})
 	if err != nil {
 		return protocol.PlayerDataStats{}, false, err
 	}
@@ -106,6 +103,12 @@ func (s *RailsStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.P
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
+		if response.StatusCode == http.StatusNotFound {
+			return protocol.PlayerDataStats{}, false, errors.New("unknown_user")
+		}
+		if response.StatusCode == http.StatusUnprocessableEntity {
+			return protocol.PlayerDataStats{}, false, errors.New("invalid_input")
+		}
 		return protocol.PlayerDataStats{}, false, errors.New("unexpected status")
 	}
 

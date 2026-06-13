@@ -44,6 +44,6 @@ func (session *webSocketSession) SessionIdentity() SessionIdentity {
 	return session.identity
 }
 
-func (session *webSocketSession) SetAuthenticatedAccountIdentity(userID int64, displayName string) {
-	session.identity = NewAuthenticatedAccountIdentity(userID, displayName)
+func (session *webSocketSession) SetAuthenticatedAccountIdentity(userID int64, accountID string, displayName string) {
+	session.identity = NewAuthenticatedAccountIdentity(userID, accountID, displayName)
 }

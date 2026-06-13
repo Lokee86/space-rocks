@@ -10,6 +10,7 @@ const (
 type SessionIdentity struct {
 	State         SessionIdentityState
 	AccountUserID int64
+	AccountID     string
 	DisplayName   string
 }
 
@@ -19,10 +20,11 @@ func NewGuestSessionIdentity() SessionIdentity {
 	}
 }
 
-func NewAuthenticatedAccountIdentity(userID int64, displayName string) SessionIdentity {
+func NewAuthenticatedAccountIdentity(userID int64, accountID string, displayName string) SessionIdentity {
 	return SessionIdentity{
 		State:         SessionIdentityStateAuthenticatedAccount,
 		AccountUserID: userID,
+		AccountID:     accountID,
 		DisplayName:   displayName,
 	}
 }

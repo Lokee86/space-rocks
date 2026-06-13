@@ -40,6 +40,13 @@ func (room *Room) SetMemberAccountIDForSession(sessionID string, accountID strin
 	return true
 }
 
+func (room *Room) SetMemberPlayerIDForSession(sessionID string, playerID string) bool {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	return room.membership.setMemberPlayerIDForSession(sessionID, playerID)
+}
+
 func (room *Room) SetMemberLocalProfileIDForSession(sessionID string, localProfileID string) bool {
 	room.mu.Lock()
 	defer room.mu.Unlock()

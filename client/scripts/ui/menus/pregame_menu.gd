@@ -8,6 +8,7 @@ signal play_endless_requested
 signal create_game_requested
 signal join_game_requested
 signal logout_requested
+signal profile_requested
 
 var mode_presenter: PregameModePresenter
 var current_mode: String = ""
@@ -24,6 +25,9 @@ func _ready() -> void:
 	var campaign_join_button := get_node_or_null("%CampaignJoinButton") as BaseButton
 	if campaign_join_button != null:
 		campaign_join_button.pressed.connect(_on_campaign_join_pressed)
+	var profile_button := get_node_or_null("%ProfileButton") as BaseButton
+	if profile_button != null:
+		profile_button.pressed.connect(_on_profile_pressed)
 	var select_pilot_logout_button := get_node_or_null("%SelectPilotLogoutButton") as BaseButton
 	if select_pilot_logout_button != null:
 		select_pilot_logout_button.pressed.connect(_on_select_pilot_logout_pressed)
@@ -63,6 +67,10 @@ func _on_endless_create_pressed() -> void:
 func _on_campaign_join_pressed() -> void:
 	if current_mode == PregameMenuMode.MULTIPLAYER:
 		join_game_requested.emit()
+
+
+func _on_profile_pressed() -> void:
+	profile_requested.emit()
 
 
 func _on_select_pilot_logout_pressed() -> void:

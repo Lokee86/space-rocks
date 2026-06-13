@@ -34,7 +34,18 @@ func configure(
 	logger = logger_callable
 
 	gameplay_composition = GameplayComposition.new()
-	gameplay_composition.configure(connection_service, scene_root_ref, player_ref, view_anchor_ref, bullets_ref, asteroids_ref, pickups_ref, hud, session_context, logger)
+	gameplay_composition.configure(
+		connection_service,
+		scene_root_ref,
+		player_ref,
+		view_anchor_ref,
+		bullets_ref,
+		asteroids_ref,
+		pickups_ref,
+		hud,
+		session_context,
+		logger
+	)
 	gameplay_composition.gameplay_started.connect(_on_gameplay_started)
 	gameplay_composition.quit_to_main_menu_requested.connect(_on_gameplay_quit_to_main_menu_requested)
 	gameplay_composition.return_to_lobby_requested.connect(_on_gameplay_return_to_lobby_requested)

@@ -1,6 +1,6 @@
 # HTTP Contracts
 
-`shared/contracts/http/openapi.yaml` owns the HTTP request and response shapes for the Rails API.
+`shared/contracts/http/openapi.yaml` owns all HTTP request and response shapes, including the game-server-hosted data-handler profile endpoint used during the in-process runtime phase.
 
 Rails controllers implement that contract, and Rails integration tests enforce it using `openapi_first`.
 

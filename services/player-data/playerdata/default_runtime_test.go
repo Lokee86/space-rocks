@@ -24,6 +24,7 @@ func TestNewInMemoryRuntimeRoutesAccountMatchResult(t *testing.T) {
 		ResultID:   "result-1",
 		MatchID:    "match-1",
 		Identity:   identity,
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeMultiplayer},
 		Score:      14,
 		ShipDeaths: 3,
 		Won:        true,
@@ -39,6 +40,7 @@ func TestNewInMemoryRuntimeRoutesAccountMatchResult(t *testing.T) {
 	loadPayload, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: identity,
+		Context:  protocol.PlayerDataRequestContext{PlayMode: PlayModeMultiplayer},
 	})
 	if err != nil {
 		t.Fatalf("encode load payload: %v", err)
@@ -77,6 +79,7 @@ func TestNewInMemoryRuntimeRoutesLocalMatchResult(t *testing.T) {
 		ResultID:   "result-1",
 		MatchID:    "match-1",
 		Identity:   identity,
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 		Score:      7,
 		ShipDeaths: 2,
 		Won:        false,
@@ -92,6 +95,7 @@ func TestNewInMemoryRuntimeRoutesLocalMatchResult(t *testing.T) {
 	loadPayload, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: identity,
+		Context:  protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 	})
 	if err != nil {
 		t.Fatalf("encode load payload: %v", err)
@@ -129,6 +133,7 @@ func TestNewInMemoryRuntimeRoutesGuestMatchResult(t *testing.T) {
 		ResultID:   "guest-result",
 		MatchID:    "match-1",
 		Identity:   identity,
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 		Score:      5,
 		ShipDeaths: 1,
 		Won:        true,
@@ -159,6 +164,7 @@ func TestNewInMemoryRuntimeRoutesGuestMatchResult(t *testing.T) {
 	loadPayload, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: identity,
+		Context:  protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 	})
 	if err != nil {
 		t.Fatalf("encode load payload: %v", err)

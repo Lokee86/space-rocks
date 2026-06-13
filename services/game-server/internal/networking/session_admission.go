@@ -6,7 +6,8 @@ func requireAuthenticatedAccount(session *webSocketSession) bool {
 	}
 
 	if session.authVerifier == nil {
-		return true
+		session.EnqueueRoomError("auth_unavailable", "Authentication unavailable.")
+		return false
 	}
 
 	if session.SessionIdentity().IsAuthenticatedAccount() {

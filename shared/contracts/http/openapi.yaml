@@ -196,6 +196,79 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/internal/player-data/stats:
+    post:
+      summary: Load player stats for an internal caller
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InternalPlayerDataStatsRequest"
+      responses:
+        "200":
+          description: Player stats loaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerStatsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Unknown user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/player-data/profile:
+    post:
+      summary: Load a normalized player profile
+      security:
+        - {}
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerDataProfileRequest"
+      responses:
+        "200":
+          description: Profile loaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDataProfileResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Invalid play mode or identity combination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /internal/auth/verify-token:
     post:
       summary: Verify an internal auth token
@@ -385,6 +458,64 @@ components:
           type: string
           enum:
             - pending
+    PlayMode:
+      type: string
+      enum:
+        - single_player
+        - multiplayer
+        - multiplayer_simulation
+    PlayerDataIdentityKind:
+      type: string
+      enum:
+        - guest
+        - local_profile
+        - authenticated_account
+    PlayerDataProfileRequest:
+      type: object
+      required:
+        - play_mode
+        - identity_kind
+      properties:
+        play_mode:
+          $ref: "#/components/schemas/PlayMode"
+        identity_kind:
+          $ref: "#/components/schemas/PlayerDataIdentityKind"
+        local_profile_id:
+          type:
+            - string
+            - "null"
+      additionalProperties: false
+    InternalPlayerDataStatsRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+      additionalProperties: false
+    PlayerDataProfile:
+      type: object
+      required:
+        - callsign
+        - activity_status
+        - identity_kind
+        - stats
+      properties:
+        callsign:
+          type: string
+        activity_status:
+          type: string
+        identity_kind:
+          $ref: "#/components/schemas/PlayerDataIdentityKind"
+        stats:
+          $ref: "#/components/schemas/PlayerStats"
+    PlayerDataProfileResponse:
+      type: object
+      required:
+        - profile
+      properties:
+        profile:
+          $ref: "#/components/schemas/PlayerDataProfile"
     PlayerStats:
       type: object
       required:

@@ -11,9 +11,9 @@ import (
 )
 
 type fakePlayerDataSink struct {
-	payloads      [][]byte
-	response      []byte
-	responseErr    error
+	payloads    [][]byte
+	response    []byte
+	responseErr error
 }
 
 func (s *fakePlayerDataSink) HandlePlayerDataCommand(payload []byte) ([]byte, error) {
@@ -53,6 +53,7 @@ func decodeRecordMatchResultCommand(t *testing.T, payload []byte) protocol.Playe
 func testReporterSummary() serverplayerdata.MatchResultSummary {
 	return serverplayerdata.MatchResultSummary{
 		MatchID: "room-1-match-1",
+		Mode:    serverplayerdata.MatchModeMultiplayer,
 		Players: []serverplayerdata.PlayerMatchSummary{
 			{
 				GamePlayerID: "Player-1",
@@ -86,6 +87,7 @@ func TestRuntimeReporterReportsMultipleCommands(t *testing.T) {
 
 	summary := serverplayerdata.MatchResultSummary{
 		MatchID: "room-1-match-1",
+		Mode:    serverplayerdata.MatchModeMultiplayer,
 		Players: []serverplayerdata.PlayerMatchSummary{
 			{
 				GamePlayerID: "Player-1",
@@ -118,6 +120,9 @@ func TestRuntimeReporterReportsMultipleCommands(t *testing.T) {
 	if firstCommand.ResultID != "room-1-match-1:Player-1" {
 		t.Fatalf("expected first ResultID %q, got %q", "room-1-match-1:Player-1", firstCommand.ResultID)
 	}
+	if firstCommand.Context.PlayMode != "multiplayer" {
+		t.Fatalf("expected first PlayMode %q, got %q", "multiplayer", firstCommand.Context.PlayMode)
+	}
 
 	secondCommand := decodeRecordMatchResultCommand(t, sink.payloads[1])
 	if secondCommand.Type != protocol.PacketTypePlayerDataRecordMatchResult {
@@ -125,6 +130,9 @@ func TestRuntimeReporterReportsMultipleCommands(t *testing.T) {
 	}
 	if secondCommand.ResultID != "room-1-match-1:Player-2" {
 		t.Fatalf("expected second ResultID %q, got %q", "room-1-match-1:Player-2", secondCommand.ResultID)
+	}
+	if secondCommand.Context.PlayMode != "multiplayer" {
+		t.Fatalf("expected second PlayMode %q, got %q", "multiplayer", secondCommand.Context.PlayMode)
 	}
 }
 
@@ -139,6 +147,7 @@ func TestRuntimeReporterTreatsDuplicateResponseAsSuccess(t *testing.T) {
 
 	summary := serverplayerdata.MatchResultSummary{
 		MatchID: "room-1-match-1",
+		Mode:    serverplayerdata.MatchModeSinglePlayer,
 		Players: []serverplayerdata.PlayerMatchSummary{
 			{
 				GamePlayerID: "Player-1",

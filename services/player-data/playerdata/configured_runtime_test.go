@@ -104,6 +104,7 @@ func TestNewConfiguredRuntimeRoutesAuthenticatedAccountMatchResultThroughRails(t
 			IdentityKind: IdentityKindAuthenticatedAccount,
 			AccountID:    "acct-123",
 		},
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeMultiplayer},
 		Score:      14,
 		ShipDeaths: 3,
 		Won:        true,
@@ -161,6 +162,7 @@ func TestNewConfiguredRuntimeRoutesLocalProfileMatchResultThroughSQLite(t *testi
 			IdentityKind:   IdentityKindLocalProfile,
 			LocalProfileID: "local-123",
 		},
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 		Score:      8,
 		ShipDeaths: 2,
 		Won:        true,
@@ -204,6 +206,7 @@ func TestNewConfiguredRuntimeRoutesLocalProfileMatchResultThroughSQLite(t *testi
 			IdentityKind:   IdentityKindLocalProfile,
 			LocalProfileID: "local-123",
 		},
+		Context: protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 	})
 	if err != nil {
 		t.Fatalf("encode load payload: %v", err)
@@ -238,6 +241,10 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 		ShipDeaths int    `json:"ship_deaths"`
 		Won        bool   `json:"won"`
 	}
+	var gotLoadBody struct {
+		AccountID string `json:"account_id"`
+	}
+	var gotLoadAuth string
 
 	server := newInMemoryHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -247,7 +254,11 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"accepted":true,"duplicate":false,"stats":{"total_score":11,"high_score":11,"ship_deaths":1,"games_played":1,"wins":1}}`))
-		case r.Method == http.MethodGet && r.URL.Path == "/api/player/stats":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/internal/player-data/stats":
+			gotLoadAuth = r.Header.Get("Authorization")
+			if err := json.NewDecoder(r.Body).Decode(&gotLoadBody); err != nil {
+				t.Fatalf("Decode load request body: %v", err)
+			}
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"stats":{"total_score":11,"high_score":11,"ship_deaths":1,"games_played":1,"wins":1}}`))
 		default:
@@ -261,7 +272,6 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 	runtime, err := NewConfiguredRuntime(RuntimeConfig{
 		RailsBaseURL:       server.URL,
 		RailsInternalToken: "internal-token",
-		RailsBearerToken:   "bearer-token",
 		SQLitePath:         dbPath,
 	})
 	if err != nil {
@@ -292,6 +302,7 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 		ResultID:   "account-result",
 		MatchID:    "match-1",
 		Identity:   accountIdentity,
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeMultiplayer},
 		Score:      11,
 		ShipDeaths: 1,
 		Won:        true,
@@ -308,6 +319,7 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 		ResultID:   "local-result",
 		MatchID:    "match-2",
 		Identity:   localIdentity,
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 		Score:      7,
 		ShipDeaths: 2,
 		Won:        false,
@@ -324,6 +336,7 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 		ResultID:   "guest-result",
 		MatchID:    "match-3",
 		Identity:   guestIdentity,
+		Context:    protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 		Score:      5,
 		ShipDeaths: 1,
 		Won:        true,
@@ -338,6 +351,7 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 	accountLoad, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: accountIdentity,
+		Context:  protocol.PlayerDataRequestContext{PlayMode: PlayModeMultiplayer},
 	})
 	if err != nil {
 		t.Fatalf("encode account load payload: %v", err)
@@ -356,10 +370,17 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 	if accountPacket.Stats.TotalScore != 11 || accountPacket.Stats.HighScore != 11 || accountPacket.Stats.ShipDeaths != 1 || accountPacket.Stats.GamesPlayed != 1 || accountPacket.Stats.Wins != 1 {
 		t.Fatalf("account stats = %+v, want rails stats", accountPacket.Stats)
 	}
+	if gotLoadAuth != "Bearer internal-token" {
+		t.Fatalf("load Authorization = %q, want %q", gotLoadAuth, "Bearer internal-token")
+	}
+	if gotLoadBody.AccountID != "acct-123" {
+		t.Fatalf("load AccountID = %q, want %q", gotLoadBody.AccountID, "acct-123")
+	}
 
 	localLoad, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: localIdentity,
+		Context:  protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 	})
 	if err != nil {
 		t.Fatalf("encode local load payload: %v", err)
@@ -385,6 +406,7 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 	guestLoad, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: guestIdentity,
+		Context:  protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
 	})
 	if err != nil {
 		t.Fatalf("encode guest load payload: %v", err)

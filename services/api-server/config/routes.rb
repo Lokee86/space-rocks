@@ -18,6 +18,12 @@ Rails.application.routes.draw do
       post "discord/login_sessions/:id/exchange", to: "discord_login_sessions#exchange"
     end
 
+    namespace :internal do
+      namespace :player_data, path: "player-data" do
+        post "stats", to: "stats#create"
+      end
+    end
+
     namespace :player do
       get "stats", to: "stats#show"
     end

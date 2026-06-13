@@ -22,14 +22,19 @@ type PlayerDataStats struct {
 	Wins        int `json:"wins"`
 }
 
+type PlayerDataRequestContext struct {
+	PlayMode string `json:"play_mode"`
+}
+
 type PlayerDataRecordMatchResult struct {
-	Type       string             `json:"type"`
-	ResultID   string             `json:"result_id"`
-	MatchID    string             `json:"match_id"`
-	Identity   PlayerDataIdentity `json:"identity"`
-	Score      int                `json:"score"`
-	ShipDeaths int                `json:"ship_deaths"`
-	Won        bool               `json:"won"`
+	Type       string                   `json:"type"`
+	ResultID   string                   `json:"result_id"`
+	MatchID    string                   `json:"match_id"`
+	Identity   PlayerDataIdentity       `json:"identity"`
+	Context    PlayerDataRequestContext `json:"context"`
+	Score      int                      `json:"score"`
+	ShipDeaths int                      `json:"ship_deaths"`
+	Won        bool                     `json:"won"`
 }
 
 type PlayerDataRecordMatchResultResult struct {
@@ -42,8 +47,9 @@ type PlayerDataRecordMatchResultResult struct {
 }
 
 type PlayerDataLoadStats struct {
-	Type     string             `json:"type"`
-	Identity PlayerDataIdentity `json:"identity"`
+	Type     string                   `json:"type"`
+	Identity PlayerDataIdentity       `json:"identity"`
+	Context  PlayerDataRequestContext `json:"context"`
 }
 
 type PlayerDataLoadStatsResult struct {

@@ -13,6 +13,7 @@ func BuildRecordMatchResultCommands(summary serverplayerdata.MatchResultSummary)
 			Type:       protocol.PacketTypePlayerDataRecordMatchResult,
 			ResultID:   summary.MatchID + ":" + player.GamePlayerID,
 			MatchID:    summary.MatchID,
+			Context:    protocol.PlayerDataRequestContext{PlayMode: summary.Mode.PlayerDataPlayMode()},
 			Score:      player.Score,
 			ShipDeaths: player.ShipDeaths,
 			Won:        player.Won,

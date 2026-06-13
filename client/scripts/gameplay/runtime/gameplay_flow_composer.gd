@@ -40,7 +40,9 @@ func configure(
 		hud_flow_ref,
 		menu_flow_ref,
 		player_ref,
-		Callable(runtime_context_ref.world_sync, "visual_position_for_server_position")
+		Callable(runtime_context_ref.world_sync, "visual_position_for_server_position"),
+		null,
+		null
 	)
 
 	alive_restore_flow = GameplayAliveRestoreFlowScript.new()
