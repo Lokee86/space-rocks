@@ -77,6 +77,7 @@ func handle_room_snapshot(packet: Dictionary) -> void:
 	lobby_shell_flow.apply_room_snapshot(packet)
 	var state = lobby_flow.current_state()
 	latest_room_state = state.room_state
+	_cache_match_result_from_snapshot(packet)
 	if state.room_state == Constants.ROOM_STATE_IN_GAME && !client_config_sender.is_null():
 		client_config_sender.call()
 
@@ -100,6 +101,16 @@ func current_match_result() -> Dictionary:
 	if latest_match_result is Dictionary:
 		return latest_match_result
 	return {}
+
+
+func _cache_match_result_from_snapshot(packet: Dictionary) -> void:
+	var match_result = packet.get(Packets.FIELD_MATCH_RESULT, null)
+	if match_result is Dictionary:
+		var match_id := str(match_result.get(Packets.FIELD_MATCH_ID, ""))
+		if !match_id.is_empty():
+			latest_match_result = match_result
+			return
+	latest_match_result = {}
 
 
 func current_max_players() -> int:

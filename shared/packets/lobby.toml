@@ -155,6 +155,50 @@ json = "member_name"
 type = "string"
 
 [[structs]]
+id = "RoomPlayerMatchSummary"
+
+[[structs.fields]]
+name = "game_player_id"
+go_name = "GamePlayerID"
+json = "game_player_id"
+type = "string"
+
+[[structs.fields]]
+name = "score"
+json = "score"
+type = "int"
+
+[[structs.fields]]
+name = "ship_deaths"
+json = "ship_deaths"
+type = "int"
+
+[[structs.fields]]
+name = "won"
+json = "won"
+type = "bool"
+
+[[structs]]
+id = "RoomMatchResultSummary"
+
+[[structs.fields]]
+name = "match_id"
+go_name = "MatchID"
+json = "match_id"
+type = "string"
+
+[[structs.fields]]
+name = "mode"
+json = "mode"
+type = "string"
+
+[[structs.fields]]
+name = "players"
+json = "players"
+type = "array"
+item_type = "RoomPlayerMatchSummary"
+
+[[structs]]
 id = "RoomSnapshot"
 
 [[structs.fields]]
@@ -195,6 +239,11 @@ type = "string"
 name = "max_players"
 json = "max_players"
 type = "int"
+
+[[structs.fields]]
+name = "match_result"
+json = "match_result"
+type = "RoomMatchResultSummary"
 
 [[structs]]
 id = "RoomStateChanged"

@@ -13,7 +13,7 @@ path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
 packet_type_ids = ["input", "client_config", "state", "bullet_blast", "ship_death", "respawn", "pause_request", "player_pause_state", "telemetry_ping", "telemetry_pong", "set_target_player_request", "select_target_at_position_request", "clear_target_request", "create_room_request", "join_room_request", "leave_room_request", "set_ready_request", "start_game_request", "start_single_player_request", "return_to_lobby_request", "authenticate_request", "authenticate_result", "room_snapshot", "room_state_changed", "room_error"]
-structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "AuthenticateRequest", "AuthenticateResult", "RoomMemberState", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "PlayerPauseState", "PlayerSessionState", "PickupState", "StatePacket"]
+structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "AuthenticateRequest", "AuthenticateResult", "RoomMemberState", "RoomPlayerMatchSummary", "RoomMatchResultSummary", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "PlayerPauseState", "PlayerSessionState", "PickupState", "StatePacket"]
 
 [outputs.imports]
 runtime = "github.com/Lokee86/space-rocks/server/internal/game/runtime"

@@ -186,3 +186,8 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 - `GameplayMenuFlow` remains the permanent Esc/gameplay menu owner.
 - Result button route execution is session/AppEntry-owned, not scene-owned.
 - See [docs/client/match-end-and-gameplay-ui.md](match-end-and-gameplay-ui.md) for the full match-end and gameplay UI ownership map.
+## Match Results
+
+Match Results are driven by presentation-safe `room_snapshot.match_result` data from the game server. `RoomSessionController` caches the payload, `MatchEndFlow` hands it to `MatchResultsFlow`, and the window renders `PLAYER / DEATHS / SCORE`.
+
+`kills` is not part of the current display, and `account_id` / `local_profile_id` stay out of the UI payload.

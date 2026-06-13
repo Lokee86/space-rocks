@@ -134,9 +134,31 @@ func test_handle_room_match_over_hides_hud_and_passes_rows_to_results() -> void:
 			"score": 125,
 			"ship_deaths": 3,
 			"won": true,
-			"kills": 0,
 		}
 	])
+
+
+func test_handle_room_match_over_passes_empty_rows_when_provider_returns_empty_dictionary() -> void:
+	var flow := MatchEndFlow.new()
+	var hud_flow := FakeHudFlow.new()
+	var menu_flow := FakeMenuFlow.new()
+	var event_flow := FakeEventFlow.new()
+	var match_results_flow := FakeMatchResultsFlow.new()
+	var session_context := FakeSessionContext.new()
+	session_context.active_mode = Constants.SESSION_MODE_MULTIPLAYER
+	var match_result_provider := FakeMatchResultProvider.new()
+	match_result_provider.match_result = {}
+
+	add_child_autofree(hud_flow.hud)
+	flow.configure(hud_flow, menu_flow, session_context)
+	flow.configure_event_flow(event_flow)
+	flow.configure_match_results_flow(match_results_flow)
+	flow.configure_match_result_provider(Callable(match_result_provider, "current_match_result"))
+
+	flow.handle_room_match_over()
+
+	assert_eq(match_results_flow.show_results_calls, 1)
+	assert_eq(match_results_flow.last_rows, [])
 
 
 func test_refresh_match_end_state_ignores_repeated_room_match_over() -> void:

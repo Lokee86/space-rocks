@@ -27,7 +27,7 @@ func test_show_results_twice_clears_old_window() -> void:
 	var first_window := flow.show_results("single_player", [])
 	var second_window := flow.show_results("single_player", [])
 
-	assert_false(is_instance_valid(first_window))
+	assert_true(first_window.is_queued_for_deletion())
 	assert_not_null(second_window)
 	assert_eq(mount_parent.get_child_count(), 1)
 	assert_eq(mount_parent.get_child(0), second_window)
