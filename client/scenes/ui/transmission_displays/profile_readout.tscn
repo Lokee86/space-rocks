@@ -3,7 +3,7 @@
 [ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="1_75rq7"]
 [ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="2_ga6ad"]
 [ext_resource type="LabelSettings" uid="uid://cipb7pygv8h8w" path="res://assets/ui/label_settings/transmission_display.tres" id="2_gpd0m"]
-[ext_resource type="Script" path="res://scripts/profile/profile_readout.gd" id="3_profile_readout"]
+[ext_resource type="Script" uid="uid://cbeojfbv6et48" path="res://scripts/profile/profile_readout.gd" id="3_profile_readout"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ga6ad"]
 font = ExtResource("1_75rq7")
@@ -11,7 +11,6 @@ font_size = 25
 font_color = Color(0, 1, 1, 1)
 
 [node name="ProfileReadout" type="Control" unique_id=1295057100]
-script = ExtResource("3_profile_readout")
 layout_mode = 3
 anchor_left = 0.05
 anchor_top = 0.065000005
@@ -22,6 +21,7 @@ offset_right = -0.5600586
 offset_bottom = -0.32006836
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("3_profile_readout")
 
 [node name="ReadoutContainer" type="VBoxContainer" parent="." unique_id=2076804259]
 layout_mode = 1
@@ -53,12 +53,12 @@ theme_override_constants/separation = 14
 layout_mode = 2
 theme_override_styles/panel = ExtResource("2_ga6ad")
 
-[node name="CallsignLabel" type="Label" parent="ReadoutContainer/VBoxContainer/CallsignActivityContainer" unique_id=925687940 unique_name_in_owner=true]
+[node name="CallsignLabel" type="Label" parent="ReadoutContainer/VBoxContainer/CallsignActivityContainer" unique_id=925687940]
 layout_mode = 2
 text = "CALLSIGN: PILOTID"
 label_settings = ExtResource("2_gpd0m")
 
-[node name="ActivityLabel" type="Label" parent="ReadoutContainer/VBoxContainer/CallsignActivityContainer" unique_id=438850007 unique_name_in_owner=true]
+[node name="ActivityLabel" type="Label" parent="ReadoutContainer/VBoxContainer/CallsignActivityContainer" unique_id=438850007]
 layout_mode = 2
 text = "STATUS: ACTIVE/OFFLINE"
 label_settings = ExtResource("2_gpd0m")
@@ -86,7 +86,7 @@ label_settings = ExtResource("2_gpd0m")
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="TotalScoreValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer" unique_id=315456998 unique_name_in_owner=true]
+[node name="TotalScoreValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer" unique_id=315456998]
 layout_mode = 2
 text = "XXXXXXXXXXXX"
 label_settings = ExtResource("2_gpd0m")
@@ -110,7 +110,7 @@ label_settings = ExtResource("2_gpd0m")
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="HighScoreValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer" unique_id=269313095 unique_name_in_owner=true]
+[node name="HighScoreValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer" unique_id=269313095]
 layout_mode = 2
 text = "XXXXXXXXXXXX"
 label_settings = ExtResource("2_gpd0m")
@@ -138,7 +138,7 @@ label_settings = ExtResource("2_gpd0m")
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MissionsValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer" unique_id=1012358990 unique_name_in_owner=true]
+[node name="MissionsValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer" unique_id=1012358990]
 layout_mode = 2
 text = "XXXX"
 label_settings = ExtResource("2_gpd0m")
@@ -162,7 +162,7 @@ label_settings = ExtResource("2_gpd0m")
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="WinsValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer" unique_id=271025544 unique_name_in_owner=true]
+[node name="WinsValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer" unique_id=271025544]
 layout_mode = 2
 text = "XXXX"
 label_settings = ExtResource("2_gpd0m")
@@ -186,7 +186,7 @@ label_settings = ExtResource("2_gpd0m")
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ShipLossesValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer" unique_id=1876515310 unique_name_in_owner=true]
+[node name="ShipLossesValueLabel" type="Label" parent="ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer" unique_id=1876515310]
 layout_mode = 2
 text = "XXXX"
 label_settings = ExtResource("2_gpd0m")

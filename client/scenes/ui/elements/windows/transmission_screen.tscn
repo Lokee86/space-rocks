@@ -75,6 +75,16 @@ offset_bottom = 0.3199463
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="SelectPilotReadout" type="Control" parent="TransmissionScreen/ScreenDisplay" unique_id=1580026293]
+layout_mode = 1
+anchor_top = 0.004
+anchor_right = 0.9990001
+anchor_bottom = 1.0
+offset_top = 0.28399992
+offset_right = 0.22094727
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="ScreenArea" type="Control" parent="." unique_id=1152991586]
 layout_mode = 1
 anchor_left = 0.05
