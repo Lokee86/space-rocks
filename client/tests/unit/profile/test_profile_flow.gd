@@ -43,24 +43,14 @@ class FakeStatsProvider:
 		return profile.duplicate(true)
 
 
-class FakeProfileReadout:
-	extends Control
-
-	var applied_profile: Dictionary = {}
-
-	func apply_profile(profile: Dictionary) -> void:
-		applied_profile = profile.duplicate(true)
-
-
 class FakeTransmissionFlow:
 	extends RefCounted
 
 	var last_scene: PackedScene
-	var mounted_readout := FakeProfileReadout.new()
 
 	func mount(transmission_scene: PackedScene) -> Control:
 		last_scene = transmission_scene
-		return mounted_readout
+		return transmission_scene.instantiate() as Control
 
 
 func test_show_profile_combines_context_and_stats() -> void:
@@ -90,15 +80,13 @@ func test_show_profile_combines_context_and_stats() -> void:
 
 	assert_eq(context_provider.last_mode, PregameMenuMode.MULTIPLAYER)
 	assert_eq(stats_provider.last_context, context_provider.context)
-	assert_eq(mounted.applied_profile, {
-		"callsign": "Ada",
-		"activity_status": "ACTIVE",
-		"total_score": 100,
-		"high_score": 75,
-		"games_played": 4,
-		"wins": 2,
-		"ship_deaths": 3,
-	})
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: Ada")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/ActivityLabel") as Label).text, "STATUS: ACTIVE")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer/TotalScoreValueLabel") as Label).text, "100")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer/HighScoreValueLabel") as Label).text, "75")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer/MissionsValueLabel") as Label).text, "4")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer/WinsValueLabel") as Label).text, "2")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer/ShipLossesValueLabel") as Label).text, "3")
 
 
 func test_show_profile_mounts_profile_readout_scene() -> void:
@@ -124,5 +112,5 @@ func test_show_profile_calls_apply_profile_on_mounted_readout() -> void:
 	var mounted = await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
 
 	assert_true(mounted.has_method("apply_profile"))
-	assert_eq(mounted.applied_profile["callsign"], "Guest")
-	assert_eq(mounted.applied_profile["activity_status"], "OFFLINE")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: Guest")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/ActivityLabel") as Label).text, "STATUS: OFFLINE")
