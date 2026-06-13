@@ -60,6 +60,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Reporting is triggered from the existing room game-over lifecycle after the resolved summary exists.
 - Successful reports are marked reported and not repeated.
 - Failed reports do not mark reported.
+- Current player-data/profile status: `PlayerDataProfileApiClient` routes client profile reads through `POST /api/player-data/profile` on the game-server data-handler; guest reads hit in-process memory, authenticated reads flow through `RailsStore` to `POST /api/internal/player-data/stats`, and `GuestTransientStatsProvider` is not the profile source of truth.
 - Backend player stats/reporting are implemented and committed.
 - Client menu-flow Phase 1 / foundation is complete and green.
 - Main Menu is a route launcher with login indicator/logout button.
@@ -89,11 +90,9 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Multiplayer Pregame Logout returns to Main Menu signed out.
 - Lobby Leave now returns to Multiplayer Pregame without logging out.
 - Remaining client work:
-  - Profile readout transmission
   - Local Pilot / Guest selection
   - Match Results window
-  - Stats refresh / final smoke
-- Next implementation slice is Phase 5 - Profile readout transmission.
+- Profile readout transmission is complete.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
@@ -108,10 +107,10 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Single-player remains unchanged and does not require auth.
 - Local/no-auth game-server mode can still allow multiplayer for dev because server-side admission remains authoritative.
 - Non-Discord in-game account creation UI is still deferred.
+- The API server is live and owns the current HTTP auth and player-data stats endpoints; it is not merely a scaffold.
 
 ## Known Gaps / TODOs
 
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
-- API server scaffold exists, but no product features are implemented yet.
 - Ship variants are planned but not implemented.
 - Client packet codec callers now consume `PacketEncodeResult` and `PacketDecodeResult`; the codec at `client/scripts/networking/packets/packet_codec.gd` owns JSON parsing plus envelope validation only.

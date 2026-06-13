@@ -11,10 +11,14 @@ The main thesis is:
 - Identity describes who the session represents.
 - Player-data routing decides which player-data service boundary handles durable data.
 
+For a compact routing reference, see [Player-Data Routing Reference](player-data-routing.md).
+
 Implemented foundation:
 
 - `services/player-data` is the current sibling Go module for player-data routing and packet handling.
 - The game-server hosts the player-data runtime in-process for now.
+- The game-server data-handler facade routes profile reads into the in-process player-data runtime.
+- The game-server routes match-result writes into the in-process player-data runtime.
 - Communication uses player-data packets from the shared packet SSoT across an encoded payload boundary.
 - `services/player-data` has its own codec and does not import game-server internals.
 - The player-data foundation has real backing stores:
@@ -50,7 +54,7 @@ Online Multiplayer:
 - Authenticated Account required
 - player data routes to Rails/API
 
-Implementation status: the online-multiplayer auth/admission seam and Phase 4 player-data backing stores are now in place with Rails internal token verification, Go authclient, websocket session identity, websocket auth packets, embedded SQLite for Local Profile, and the Rails adapter path for Authenticated Account. Match resolution and gameplay wiring for trusted player-data writes remain later work, along with loadout persistence, unlocks, achievements, and profile sync.
+Implementation status: the online-multiplayer auth/admission seam and Phase 4 player-data backing stores are now in place with Rails internal token verification, Go authclient, websocket session identity, websocket auth packets, embedded SQLite for Local Profile, and the Rails adapter path for Authenticated Account. Match-result reporting and profile reads are implemented through the player-data runtime and game-server data-handler path; loadout persistence, unlocks, achievements, and broader profile sync remain future work.
 
 Multiplayer Simulation:
 
@@ -150,19 +154,19 @@ Local single-player with Guest:
 
 Local single-player with Local Profile:
 
-- client uses the player-data packet/runtime boundary for Local Profile operations
+- client uses `POST /api/player-data/profile` on the game-server data-handler for profile readout
 - client starts local game-server session with selected `LocalProfileID` or local profile session reference
-- game-server asks the in-process player-data runtime for profile and loadout data needed for the match
-- game-server can report trusted match results to the player-data runtime later
-- match resolution and gameplay wiring remain later `services/player-data-server` concerns
+- game-server asks the in-process player-data runtime for profile, loadout, and match-result data needed for the match
+- game-server reports trusted match results to the player-data runtime
+- the current implementation keeps Local Profile routing inside the in-process `services/player-data` runtime
 
 The game-server websocket should not become a general local profile management API.
-Profile management UI should go through the player-data packet/runtime boundary for now, not game-server.
+Profile management UI and profile readout should go through the game-server data-handler facade, not direct Rails calls.
 
 Online-authoritative lifecycle:
 
 - token required during upgrade or first auth message
-- game-server verifies token through Rails/API
+- game-server verifies token through Rails at `POST /internal/auth/verify-token`
 - session gets Authenticated Account identity
 - only online multiplayer mode is admitted
 
@@ -203,27 +207,67 @@ Authenticated Account:
 - required for online multiplayer
 - rejected by local single-player
 
-Implementation status: this routing model exists as the auth/admission boundary, but it is not the same as Local Profile or player-data implementation.
+Implementation status: this routing model is implemented at the auth/admission boundary and feeds the current player-data routing implementation.
 
-## V1.1 Match Summary / Match Resolution
+## Implemented Player-Data Dataflow
 
-Phase 4/V1.1 match summaries are now produced by the game-server after `game_over`, and Phase 5 reporting is complete.
+The game-server now owns gameplay facts, route admission, and the data-handler facade. The player-data runtime owns identity-based store selection and durable stats writes or reads.
+
+### Match-result Write Flow
 
 - The room game-over lifecycle remains the transition authority.
 - `game/rules` decides when a match reaches `game_over`.
-- `services/player-data` resolves the winner and summary payload after `game_over`.
-- Winner logic selects the highest multiplayer score.
-- Tied high scores produce no winner.
-- Single-player produces no win.
-- `ship_deaths` are counted from actual ship deaths, not inferred from lives.
-- `account_id` is used for authenticated account summaries.
-- `local_profile_id` is used for local profile summaries.
-- Guest summaries have neither `account_id` nor `local_profile_id`.
-- The game-server reports resolved summaries through the `services/player-data` packet/runtime boundary after `game_over`.
+- The game-server builds the authoritative match summary after `game_over`.
+- The game-server sends `RecordMatchResult` into `services/player-data`.
+- `ship_deaths` come from authoritative match results, not client-side counting.
 - `services/player-data` routes `account_id` to `authenticated_account`, `local_profile_id` to `local_profile`, and guest/no durable identity to guest behavior.
-- The game-server does not write Rails/Postgres or SQLite directly.
-- Successful reports are marked and not repeated.
-- Failed reports are not marked successful.
+- `services/player-data` does not let the game-server choose the backing store directly.
+
+### Profile Read Flow
+
+- The Godot client sends `POST /api/player-data/profile` to the game-server.
+- The game-server data-handler validates the request, mode, and identity, then forwards the read into the in-process player-data runtime.
+- The client does not call Rails stats directly for profile readout.
+- The client does not use `GuestTransientStatsProvider` as the profile source of truth.
+- Gameplay and game-over code do not mutate profile stats on the client.
+
+### Authenticated Account Read Flow
+
+- The client bearer token enters the game-server first.
+- The game-server verifies the bearer token through Rails at `POST /internal/auth/verify-token`.
+- Token verification yields the `account_id` used for authenticated account reads and writes.
+- `RailsStore` then reads account stats from `POST /api/internal/player-data/stats`.
+
+### Guest Read/Write Behavior
+
+- Guest identity uses in-process guest memory.
+- Guest profile reads and match-result writes are unsaved.
+- Guest state is session-only and is not persisted as account-shaped data.
+
+### Local Profile Read/Write Behavior
+
+- Local Profile identity uses the embedded SQLite store inside `services/player-data`.
+- Local Profile reads and match-result writes are durable locally.
+- The game-server still does not touch SQLite directly.
+
+### Route Table
+
+| Caller | Callee | Route | Purpose |
+| --- | --- | --- | --- |
+| Godot client | game-server data-handler | `POST /api/player-data/profile` | Profile readout through the game-server facade |
+| game-server | Rails auth verification | `POST /internal/auth/verify-token` | Verify bearer tokens before authenticated-account routing |
+| `RailsStore` | Rails stats read | `POST /api/internal/player-data/stats` | Load authenticated account stats |
+| `RailsStore` | Rails match-result write | `POST /internal/player-data/match-results` | Persist authoritative match results for authenticated accounts |
+
+### Admission Matrix
+
+| Mode | Guest | Local Profile | Authenticated Account |
+| --- | --- | --- | --- |
+| Local Single-Player | allowed | allowed | rejected |
+| Online Multiplayer | rejected | rejected | allowed |
+| Multiplayer Simulation | rejected by default | rejected by default | allowed |
+
+The admission matrix stays unchanged: `single_player + guest/local_profile` is allowed, `multiplayer + authenticated_account` is allowed, and invalid pairs are rejected.
 
 ## Non-Goals
 
@@ -238,6 +282,10 @@ Phase 4/V1.1 match summaries are now produced by the game-server after `game_ove
 - Do not make game-server directly write Postgres account/player-data tables.
 - Do not make game-server websocket handle general local profile CRUD.
 - Do not let client bypass the player-data service to write Local Profile data.
+- Do not mutate stats on the client.
+- Do not have the client read Rails stats directly for profile readout.
+- Do not introduce a static `PLAYER_DATA_RAILS_BEARER_TOKEN`.
+- Do not make the game-server read or write databases directly.
 - Do not treat debug/dev/admin/tester privileges as identity states.
 - Do not persist live simulation state as account/profile data.
 
@@ -334,7 +382,7 @@ Rails/API owns:
 
 The Go game-server interacts with Rails/API only through explicit API clients or endpoints.
 
-Conceptual future token verification endpoint example:
+Token verification endpoint:
 
 ```http
 POST /internal/auth/verify-token
@@ -343,7 +391,7 @@ POST /internal/auth/verify-token
 Token verification returns an Authenticated Account identity context to the game server.
 
 The game server stores identity context, not the Rails token as gameplay identity.
-The client uses `services/api-server` for authenticated account profile, loadout, and progression UI.
+The client uses the game-server data-handler for profile readout and `services/api-server` for authenticated-account persistence and other account UI.
 
 ## Player-Data Service Boundary
 
@@ -484,7 +532,7 @@ Live durable rewards use a separate progression-grant style path instead of the 
 
 Local Profile and Authenticated Account share the same account-shaped player-data concepts.
 
-The logical schema for those concepts comes from the shared packet SSoT and packet runtime boundary today, and can later expand into a broader `shared/player_data` logical schema if needed.
+The logical schema for those concepts lives in `shared/player_data/*.toml` and is carried through the player-data runtime packet boundary.
 
 Physical storage may differ between embedded DB and Rails/Postgres.
 

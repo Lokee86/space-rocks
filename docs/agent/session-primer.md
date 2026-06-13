@@ -29,6 +29,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`; weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/design/weapons.md](../design/weapons.md) and [docs/design/radial-effects.md](../design/radial-effects.md).
 - Rails internal token verification, Go authclient, websocket session identity, and websocket auth packets now form the completed auth/admission seam for multiplayer admission.
 - Phase 5 match-result reporting is complete: resolved `MatchResultSummary` is reported through `services/player-data`, `account_id` routes to `authenticated_account`, `local_profile_id` routes to `local_profile`, and guest/no durable identity routes to guest behavior.
+- Profile readout is complete: the client calls `POST /api/player-data/profile` on the game-server data-handler, guest reads hit in-process memory, and authenticated reads flow through `RailsStore` to `POST /api/internal/player-data/stats`.
 - Client menu-flow Phase 1 foundation is complete and green: Main Menu is a route launcher, `MenuFlowController` owns scene routing, `pregame_menu.tscn` is the shared shell, `PregameModePresenter` owns mode display, and Pregame Back returns to Main Menu.
 - Client menu-flow Phase 2 is complete and green: Pregame Play Endless starts the old single-player flow, `MenuFlowController` clears menu UI when gameplay starts, and Pregame Back still returns to Main Menu.
 - Client menu-flow Phase 3 is complete and green: signed-out Multiplayer opens `LoginWindow`, Discord login works from the Sign In screen, signed-in Multiplayer routes to Pregame, and successful Discord auth returns to Multiplayer Pregame.
@@ -44,8 +45,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 
 - Dev-readiness item 11 is still open: local-player camera piggybacking must be replaced with a dedicated camera target/controller.
 - Generated Godot constants and packet files still live under `client/scripts/` for now, even though that is not the ideal long-term shape.
-- The API server is planned but not scaffolded.
-- Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements are still future work.
+- Godot stats UI and profile readout are implemented through the data-handler route; save guest profile, live progression grants, currency, ship parts, unlocks, and achievements are still future work.
 - Ship variants are planned but not implemented.
 - Client packet codec callers already use `PacketEncodeResult` and `PacketDecodeResult`; the codec itself should stay focused on JSON parsing and envelope validation only.
 
@@ -57,11 +57,10 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Continue pushing future business/backend concerns toward the planned API server instead of growing the Go game server.
 - Keep packet and constants changes flowing through the source-of-truth TOML plus data-sync path.
 - Keep pickup presentation blink client-side from age/lifespan packet state.
-- Next implementation slice is Phase 5 - Profile readout transmission.
-- Phase 5 scope: Profile button loads `profile_readout.tscn` into `PregameMenu` `TransmissionScreen/ScreenDisplay`, Back closes active transmission first, and profile readout shows current context.
+- Profile readout transmission is complete; do not re-open it as the next slice.
 - Local Pilot / Guest selector is deferred unless required by profile context.
 - Match Results is deferred.
-- Stats refresh / final smoke is deferred.
+- Stats refresh / final smoke is no longer a blocker for profile readout.
 - Active-game and personal-death menu behavior should not change, and multiplayer Lobby Leave should return to Multiplayer Pregame without logging out.
 
 ## Common Mistakes To Avoid
@@ -73,3 +72,6 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Do not assume generated files are safe to hand-edit as a convenience.
 - Do not mix unrelated refactors into a docs-only or seam-specific prompt.
 - Do not add damage math to `combat.go`, and do not bypass the real damage seam from devtools.
+- Do not reintroduce client-side profile stat mutation.
+- Do not route profile readout directly to Rails `/api/player/stats`.
+- Do not require `PLAYER_DATA_RAILS_BEARER_TOKEN`.
