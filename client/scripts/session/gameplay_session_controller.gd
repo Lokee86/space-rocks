@@ -2,6 +2,7 @@ extends Node
 
 var connection_service
 var hud: Control
+var gameplay_user_interface: Control
 var main_menu: Control
 var session_context
 var shell_boot_flow
@@ -10,6 +11,9 @@ var logger: Callable
 var gameplay_composition
 var gameplay_state_flow
 var accepts_gameplay_packets := false
+
+signal return_to_pregame_requested(session_mode: String)
+signal replay_requested
 
 
 func configure(
@@ -21,6 +25,7 @@ func configure(
 	asteroids_ref: Node2D,
 	pickups_ref: Node2D,
 	hud_ref: Control,
+	gameplay_user_interface_ref: Control,
 	main_menu_ref: Control,
 	session_context_ref,
 	shell_boot_flow_ref,
@@ -28,6 +33,7 @@ func configure(
 ) -> void:
 	connection_service = connection_service_ref
 	hud = hud_ref
+	gameplay_user_interface = gameplay_user_interface_ref
 	main_menu = main_menu_ref
 	session_context = session_context_ref
 	shell_boot_flow = shell_boot_flow_ref
@@ -43,11 +49,14 @@ func configure(
 		asteroids_ref,
 		pickups_ref,
 		hud,
+		gameplay_user_interface,
 		session_context,
 		logger
 	)
 	gameplay_composition.gameplay_started.connect(_on_gameplay_started)
 	gameplay_composition.quit_to_main_menu_requested.connect(_on_gameplay_quit_to_main_menu_requested)
+	gameplay_composition.replay_requested.connect(_on_gameplay_replay_requested)
+	gameplay_composition.return_to_pregame_requested.connect(_on_gameplay_return_to_pregame_requested)
 	gameplay_composition.return_to_lobby_requested.connect(_on_gameplay_return_to_lobby_requested)
 	gameplay_state_flow = GameplayStateFlow.new()
 	gameplay_state_flow.configure(gameplay_composition)
@@ -95,8 +104,12 @@ func _input(event: InputEvent) -> void:
 		return
 
 	var hud_input_policy = get_node_or_null("/root/HudInputPolicy")
-	if hud_input_policy != null and hud_input_policy.should_hud_receive_mouse_event(event, hud, get_viewport()):
-		return
+	if hud_input_policy != null:
+		if hud_input_policy.has_method("should_gameplay_ui_receive_mouse_event"):
+			if hud_input_policy.should_gameplay_ui_receive_mouse_event(event, gameplay_user_interface, get_viewport()):
+				return
+		elif hud_input_policy.should_hud_receive_mouse_event(event, hud, get_viewport()):
+			return
 
 	if gameplay_composition == null:
 		return
@@ -124,14 +137,23 @@ func configure_room_state_provider(provider: Callable) -> void:
 		gameplay_composition.configure_room_state_provider(provider)
 
 
+func configure_match_result_provider(provider: Callable) -> void:
+	if gameplay_composition != null:
+		gameplay_composition.configure_match_result_provider(provider)
+
+
 func configure_room_max_players_provider(provider: Callable) -> void:
 	if gameplay_composition != null:
 		gameplay_composition.configure_room_max_players_provider(provider)
 
 
-func refresh_game_over_menu_state() -> void:
+func refresh_match_end_state() -> void:
 	if gameplay_composition != null:
-		gameplay_composition.refresh_game_over_menu_state()
+		gameplay_composition.refresh_match_end_state()
+
+
+func refresh_game_over_menu_state() -> void:
+	refresh_match_end_state()
 
 
 func _on_gameplay_started() -> void:
@@ -157,6 +179,30 @@ func _on_gameplay_return_to_lobby_requested() -> void:
 	if connection_service != null:
 		connection_service.send_return_to_lobby_request()
 	reset()
+
+
+func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
+	_log("Gameplay return to pregame requested: %s" % session_mode)
+	if connection_service != null && connection_service.has_method("begin_graceful_close"):
+		connection_service.begin_graceful_close()
+	reset()
+	if session_context != null:
+		session_context.clear()
+	if shell_boot_flow != null:
+		shell_boot_flow.clear()
+	return_to_pregame_requested.emit(session_mode)
+
+
+func _on_gameplay_replay_requested() -> void:
+	_log("Gameplay replay requested")
+	if connection_service != null && connection_service.has_method("begin_graceful_close"):
+		connection_service.begin_graceful_close()
+	reset()
+	if session_context != null:
+		session_context.clear()
+	if shell_boot_flow != null:
+		shell_boot_flow.clear()
+	replay_requested.emit()
 
 
 func _log(message: String) -> void:

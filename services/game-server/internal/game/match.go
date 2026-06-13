@@ -16,6 +16,10 @@ func (game *Game) MatchDecision() rules.MatchDecision {
 	return game.matchDecisionLocked()
 }
 
+func (game *Game) isMatchOverLocked() bool {
+	return game.matchDecisionLocked().IsOver
+}
+
 func (game *Game) PlayerMatchFacts() []PlayerMatchFact {
 	game.mu.Lock()
 	defer game.mu.Unlock()

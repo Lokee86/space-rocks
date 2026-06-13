@@ -4,6 +4,7 @@
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_2r4sw"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_ohsys"]
 [ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="4_p8cq4"]
+[ext_resource type="Script" uid="uid://wrecxrm4414c" path="res://scripts/ui/match_results/match_result_window.gd" id="5_match_result_window"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_qamjp"]
 font = ExtResource("4_p8cq4")
@@ -19,6 +20,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_match_result_window")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=262359850]
 layout_mode = 1
@@ -62,6 +65,7 @@ offset_left = -0.19999695
 offset_top = -0.19999695
 offset_right = 0.39996338
 offset_bottom = 0.19995117
+mouse_filter = 2
 
 [node name="ScoreContainer" type="VBoxContainer" parent="CenterContainer/Window7/ScoreDisplayArea" unique_id=827501158]
 unique_name_in_owner = true
@@ -134,6 +138,7 @@ layout_mode = 2
 [node name="Spacer" type="Control" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer" unique_id=91650908]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Window7/ScoreDisplayArea" unique_id=820849676]
 layout_mode = 1
@@ -147,6 +152,7 @@ offset_top = -40.0
 offset_right = 20.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 
 [node name="LobbyReplayButton" parent="CenterContainer/Window7/ScoreDisplayArea/HBoxContainer" unique_id=928907867 instance=ExtResource("3_ohsys")]
 unique_name_in_owner = true

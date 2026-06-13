@@ -4,6 +4,7 @@ class_name GameplayHudFlow
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 var hud: Control
+var hidden_for_match_over := false
 var is_dead := false
 var is_game_over := false
 var can_respawn := false
@@ -24,6 +25,9 @@ func configure(hud_ref: Control) -> void:
 
 func show_gameplay() -> void:
 	if hud == null:
+		return
+	if hidden_for_match_over:
+		hud.hide()
 		return
 
 	hud.show()
@@ -46,6 +50,7 @@ func apply_gameplay_state_summary(state: Dictionary) -> void:
 
 
 func reset() -> void:
+	hidden_for_match_over = false
 	if hud != null:
 		set_alive()
 		loadout_display_flow.clear()
@@ -68,6 +73,16 @@ func update(delta: float) -> void:
 
 func can_request_respawn() -> bool:
 	return is_dead && !is_game_over && can_respawn
+
+
+func hide_for_match_over() -> void:
+	hidden_for_match_over = true
+	if hud != null:
+		hud.hide()
+
+
+func clear_match_over_visibility_lock() -> void:
+	hidden_for_match_over = false
 
 
 func set_alive() -> void:

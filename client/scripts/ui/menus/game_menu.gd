@@ -46,15 +46,10 @@ func set_menu_text(_text) -> void:
 
 func configure_for_state(session_mode: String, game_over: bool, room_state: String, has_spectate_targets := false) -> void:
 	var normalized_session_mode := _normalized_state(session_mode)
-	var room_game_over := _normalized_state(room_state) == _normalized_state(Constants.ROOM_STATE_GAME_OVER)
 
 	if normalized_session_mode == Constants.SESSION_MODE_MULTIPLAYER:
 		if game_over:
-			if room_game_over:
-				primary_action = Constants.GAME_MENU_PRIMARY_ACTION_LOBBY
-				set_primary_text("Lobby")
-				set_primary_enabled(true)
-			elif has_spectate_targets:
+			if has_spectate_targets:
 				primary_action = Constants.GAME_MENU_PRIMARY_ACTION_SPECTATE
 				set_primary_text("Spectate")
 				set_primary_enabled(true)
@@ -89,7 +84,6 @@ func _on_primary_action_pressed() -> void:
 
 func _on_menu_pressed() -> void:
 	menu_requested.emit()
-	quit_requested.emit()
 
 
 func _find_button(names: Array) -> BaseButton:

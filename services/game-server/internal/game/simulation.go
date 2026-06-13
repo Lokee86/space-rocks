@@ -29,6 +29,17 @@ func (game *Game) Step(delta float64) {
 	bounds := space.DefaultBounds()
 
 	game.stepPlayerSessions(delta)
+	if game.isMatchOverLocked() {
+		game.stepAsteroids(delta, bounds)
+		game.stepBullets(delta, bounds)
+		game.stepPickups(delta)
+		game.stepRadialEffects(delta)
+		for _, observer := range game.simulationStepObservers {
+			observer(delta)
+		}
+		return
+	}
+
 	game.stepPlayerWeapons(delta)
 	game.stepPlayers(delta, bounds)
 	game.removeReadyPlayers()
