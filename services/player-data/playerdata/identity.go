@@ -6,6 +6,10 @@ const (
 	IdentityKindAuthenticatedAccount = "authenticated_account"
 	IdentityKindLocalProfile         = "local_profile"
 	IdentityKindGuest                = "guest"
+
+	PlayModeSinglePlayer          = "single_player"
+	PlayModeMultiplayer           = "multiplayer"
+	PlayModeMultiplayerSimulation = "multiplayer_simulation"
 )
 
 func IdentityKey(identity protocol.PlayerDataIdentity) string {

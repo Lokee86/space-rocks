@@ -8,6 +8,29 @@ import (
 	"github.com/Lokee86/space-rocks/player-data/protocol"
 )
 
+func testRequestContext(playMode string) protocol.PlayerDataRequestContext {
+	return protocol.PlayerDataRequestContext{PlayMode: playMode}
+}
+
+type countingStore struct {
+	loadStatsCalls          int
+	recordMatchResultCalls  int
+	loadStatsResult         protocol.PlayerDataStats
+	loadStatsFound          bool
+	recordMatchResultResult protocol.PlayerDataStats
+	recordMatchResultDup    bool
+}
+
+func (s *countingStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.PlayerDataStats, bool, error) {
+	s.loadStatsCalls++
+	return s.loadStatsResult, s.loadStatsFound, nil
+}
+
+func (s *countingStore) RecordMatchResult(command protocol.PlayerDataRecordMatchResult) (protocol.PlayerDataStats, bool, error) {
+	s.recordMatchResultCalls++
+	return s.recordMatchResultResult, s.recordMatchResultDup, nil
+}
+
 func TestDispatcherHandle(t *testing.T) {
 	dispatcher := NewDispatcher(NewNoopStore())
 
@@ -46,6 +69,7 @@ func TestDispatcherHandleLoadStats(t *testing.T) {
 	payload, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: identity,
+		Context:  testRequestContext(PlayModeMultiplayer),
 	})
 	if err != nil {
 		t.Fatalf("encode payload: %v", err)
@@ -79,6 +103,7 @@ func TestDispatcherHandleLoadStatsInvalidIdentity(t *testing.T) {
 		Identity: protocol.PlayerDataIdentity{
 			IdentityKind: IdentityKindAuthenticatedAccount,
 		},
+		Context: testRequestContext(PlayModeMultiplayer),
 	})
 	if err != nil {
 		t.Fatalf("encode payload: %v", err)
@@ -104,6 +129,45 @@ func TestDispatcherHandleLoadStatsInvalidIdentity(t *testing.T) {
 	}
 }
 
+func TestDispatcherHandleLoadStatsInvalidModeIdentityRejectsBeforeStore(t *testing.T) {
+	store := &countingStore{}
+	dispatcher := NewDispatcher(store)
+
+	payload, err := codec.Encode(protocol.PlayerDataLoadStats{
+		Type: protocol.PacketTypePlayerDataLoadStats,
+		Identity: protocol.PlayerDataIdentity{
+			IdentityKind: IdentityKindAuthenticatedAccount,
+			AccountID:    "acct-123",
+		},
+		Context: testRequestContext(PlayModeSinglePlayer),
+	})
+	if err != nil {
+		t.Fatalf("encode payload: %v", err)
+	}
+
+	response, err := dispatcher.Handle(payload)
+	if err != nil {
+		t.Fatalf("Handle returned error: %v", err)
+	}
+
+	var packet protocol.PlayerDataLoadStatsResult
+	if err := json.Unmarshal(response, &packet); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if packet.Found {
+		t.Fatal("Found = true, want false")
+	}
+	if packet.ErrorCode != "invalid_mode_identity" {
+		t.Fatalf("ErrorCode = %q, want %q", packet.ErrorCode, "invalid_mode_identity")
+	}
+	if store.loadStatsCalls != 0 {
+		t.Fatalf("LoadStats calls = %d, want 0", store.loadStatsCalls)
+	}
+	if store.recordMatchResultCalls != 0 {
+		t.Fatalf("RecordMatchResult calls = %d, want 0", store.recordMatchResultCalls)
+	}
+}
+
 func TestDispatcherHandleRecordMatchResult(t *testing.T) {
 	store := NewMemoryStore()
 	dispatcher := NewDispatcher(store)
@@ -113,6 +177,7 @@ func TestDispatcherHandleRecordMatchResult(t *testing.T) {
 		ResultID:   "result-1",
 		MatchID:    "match-1",
 		Identity:   protocol.PlayerDataIdentity{IdentityKind: IdentityKindAuthenticatedAccount, AccountID: "acct-123"},
+		Context:    testRequestContext(PlayModeMultiplayer),
 		Score:      11,
 		ShipDeaths: 2,
 		Won:        true,
@@ -152,6 +217,7 @@ func TestDispatcherHandleRecordMatchResultDuplicate(t *testing.T) {
 		ResultID:   "result-1",
 		MatchID:    "match-1",
 		Identity:   protocol.PlayerDataIdentity{IdentityKind: IdentityKindAuthenticatedAccount, AccountID: "acct-123"},
+		Context:    testRequestContext(PlayModeMultiplayer),
 		Score:      11,
 		ShipDeaths: 2,
 		Won:        true,
@@ -168,6 +234,7 @@ func TestDispatcherHandleRecordMatchResultDuplicate(t *testing.T) {
 		ResultID:   "result-1",
 		MatchID:    "match-1",
 		Identity:   protocol.PlayerDataIdentity{IdentityKind: IdentityKindAuthenticatedAccount, AccountID: "acct-123"},
+		Context:    testRequestContext(PlayModeMultiplayer),
 		Score:      99,
 		ShipDeaths: 9,
 		Won:        false,
@@ -206,6 +273,7 @@ func TestDispatcherHandleRecordMatchResultInvalidIdentity(t *testing.T) {
 		Identity: protocol.PlayerDataIdentity{
 			IdentityKind: IdentityKindAuthenticatedAccount,
 		},
+		Context: testRequestContext(PlayModeMultiplayer),
 	})
 	if err != nil {
 		t.Fatalf("encode payload: %v", err)
@@ -228,6 +296,49 @@ func TestDispatcherHandleRecordMatchResultInvalidIdentity(t *testing.T) {
 	}
 }
 
+func TestDispatcherHandleRecordMatchResultInvalidModeIdentityRejectsBeforeStore(t *testing.T) {
+	store := &countingStore{}
+	dispatcher := NewDispatcher(store)
+
+	payload, err := codec.Encode(protocol.PlayerDataRecordMatchResult{
+		Type:     protocol.PacketTypePlayerDataRecordMatchResult,
+		ResultID: "result-1",
+		MatchID:  "match-1",
+		Identity: protocol.PlayerDataIdentity{
+			IdentityKind: IdentityKindGuest,
+		},
+		Context: testRequestContext(PlayModeMultiplayer),
+	})
+	if err != nil {
+		t.Fatalf("encode payload: %v", err)
+	}
+
+	response, err := dispatcher.Handle(payload)
+	if err != nil {
+		t.Fatalf("Handle returned error: %v", err)
+	}
+
+	var packet protocol.PlayerDataRecordMatchResultResult
+	if err := json.Unmarshal(response, &packet); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if packet.Accepted {
+		t.Fatal("Accepted = true, want false")
+	}
+	if packet.Duplicate {
+		t.Fatal("Duplicate = true, want false")
+	}
+	if packet.ErrorCode != "invalid_mode_identity" {
+		t.Fatalf("ErrorCode = %q, want %q", packet.ErrorCode, "invalid_mode_identity")
+	}
+	if store.loadStatsCalls != 0 {
+		t.Fatalf("LoadStats calls = %d, want 0", store.loadStatsCalls)
+	}
+	if store.recordMatchResultCalls != 0 {
+		t.Fatalf("RecordMatchResult calls = %d, want 0", store.recordMatchResultCalls)
+	}
+}
+
 func TestDispatcherHandleRecordMatchResultMissingResultID(t *testing.T) {
 	dispatcher := NewDispatcher(NewMemoryStore())
 
@@ -237,6 +348,7 @@ func TestDispatcherHandleRecordMatchResultMissingResultID(t *testing.T) {
 			IdentityKind: IdentityKindAuthenticatedAccount,
 			AccountID:    "acct-123",
 		},
+		Context: testRequestContext(PlayModeMultiplayer),
 	})
 	if err != nil {
 		t.Fatalf("encode payload: %v", err)

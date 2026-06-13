@@ -9,10 +9,11 @@ import (
 func TestBuildRecordMatchResultCommandsUsesAccountIdentity(t *testing.T) {
 	summary := serverplayerdata.MatchResultSummary{
 		MatchID: "room-1-match-1",
+		Mode:    serverplayerdata.MatchModeMultiplayer,
 		Players: []serverplayerdata.PlayerMatchSummary{
 			{
 				GamePlayerID: "Player-1",
-				AccountID:    "acct-1",
+				AccountID:    "439e2746-9a06-45f1-b36b-b741b5bcfb12",
 				Score:        275,
 				ShipDeaths:   3,
 				Won:          true,
@@ -32,8 +33,11 @@ func TestBuildRecordMatchResultCommandsUsesAccountIdentity(t *testing.T) {
 	if command.Identity.IdentityKind != "authenticated_account" {
 		t.Fatalf("expected IdentityKind %q, got %q", "authenticated_account", command.Identity.IdentityKind)
 	}
-	if command.Identity.AccountID != "acct-1" {
-		t.Fatalf("expected AccountID %q, got %q", "acct-1", command.Identity.AccountID)
+	if command.Identity.AccountID != "439e2746-9a06-45f1-b36b-b741b5bcfb12" {
+		t.Fatalf("expected AccountID %q, got %q", "439e2746-9a06-45f1-b36b-b741b5bcfb12", command.Identity.AccountID)
+	}
+	if command.Context.PlayMode != "multiplayer" {
+		t.Fatalf("expected PlayMode %q, got %q", "multiplayer", command.Context.PlayMode)
 	}
 	if command.Score != 275 {
 		t.Fatalf("expected Score 275, got %d", command.Score)
@@ -49,6 +53,7 @@ func TestBuildRecordMatchResultCommandsUsesAccountIdentity(t *testing.T) {
 func TestBuildRecordMatchResultCommandsUsesLocalProfileIdentity(t *testing.T) {
 	summary := serverplayerdata.MatchResultSummary{
 		MatchID: "room-1-match-1",
+		Mode:    serverplayerdata.MatchModeSinglePlayer,
 		Players: []serverplayerdata.PlayerMatchSummary{
 			{
 				GamePlayerID:   "Player-1",
@@ -72,6 +77,9 @@ func TestBuildRecordMatchResultCommandsUsesLocalProfileIdentity(t *testing.T) {
 	if command.Identity.LocalProfileID != "local-1" {
 		t.Fatalf("expected LocalProfileID %q, got %q", "local-1", command.Identity.LocalProfileID)
 	}
+	if command.Context.PlayMode != "single_player" {
+		t.Fatalf("expected PlayMode %q, got %q", "single_player", command.Context.PlayMode)
+	}
 	if command.Identity.AccountID != "" {
 		t.Fatalf("expected AccountID to be empty, got %q", command.Identity.AccountID)
 	}
@@ -80,6 +88,7 @@ func TestBuildRecordMatchResultCommandsUsesLocalProfileIdentity(t *testing.T) {
 func TestBuildRecordMatchResultCommandsUsesGuestIdentity(t *testing.T) {
 	summary := serverplayerdata.MatchResultSummary{
 		MatchID: "room-1-match-1",
+		Mode:    serverplayerdata.MatchModeSinglePlayer,
 		Players: []serverplayerdata.PlayerMatchSummary{
 			{
 				GamePlayerID: "Player-1",
@@ -103,15 +112,19 @@ func TestBuildRecordMatchResultCommandsUsesGuestIdentity(t *testing.T) {
 	if command.Identity.LocalProfileID != "" {
 		t.Fatalf("expected LocalProfileID to be empty, got %q", command.Identity.LocalProfileID)
 	}
+	if command.Context.PlayMode != "single_player" {
+		t.Fatalf("expected PlayMode %q, got %q", "single_player", command.Context.PlayMode)
+	}
 }
 
 func TestBuildRecordMatchResultCommandsPrefersAccountIdentityOverLocalProfileIdentity(t *testing.T) {
 	summary := serverplayerdata.MatchResultSummary{
 		MatchID: "room-1-match-1",
+		Mode:    serverplayerdata.MatchModeMultiplayer,
 		Players: []serverplayerdata.PlayerMatchSummary{
 			{
 				GamePlayerID:   "Player-1",
-				AccountID:      "acct-1",
+				AccountID:      "439e2746-9a06-45f1-b36b-b741b5bcfb12",
 				LocalProfileID: "local-1",
 			},
 		},
@@ -126,10 +139,13 @@ func TestBuildRecordMatchResultCommandsPrefersAccountIdentityOverLocalProfileIde
 	if command.Identity.IdentityKind != "authenticated_account" {
 		t.Fatalf("expected IdentityKind %q, got %q", "authenticated_account", command.Identity.IdentityKind)
 	}
-	if command.Identity.AccountID != "acct-1" {
-		t.Fatalf("expected AccountID %q, got %q", "acct-1", command.Identity.AccountID)
+	if command.Identity.AccountID != "439e2746-9a06-45f1-b36b-b741b5bcfb12" {
+		t.Fatalf("expected AccountID %q, got %q", "439e2746-9a06-45f1-b36b-b741b5bcfb12", command.Identity.AccountID)
 	}
 	if command.Identity.LocalProfileID != "" {
 		t.Fatalf("expected LocalProfileID to be empty, got %q", command.Identity.LocalProfileID)
+	}
+	if command.Context.PlayMode != "multiplayer" {
+		t.Fatalf("expected PlayMode %q, got %q", "multiplayer", command.Context.PlayMode)
 	}
 }

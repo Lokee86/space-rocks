@@ -79,7 +79,7 @@ func (session *webSocketSession) handleAuthenticateRequest(rawToken string) {
 		return
 	}
 
-	session.SetAuthenticatedAccountIdentity(result.Identity.UserID, result.Identity.DisplayName)
+	session.SetAuthenticatedAccountIdentity(result.Identity.UserID, result.Identity.AccountID, result.Identity.DisplayName)
 	session.EnqueueAuthenticateResult(authenticateResultPacket{
 		Type:          "authenticate_result",
 		Authenticated: true,

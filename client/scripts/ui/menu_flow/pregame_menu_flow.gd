@@ -10,6 +10,9 @@ var create_room_callable: Callable
 var show_join_dialog_callable: Callable
 var logout_callable: Callable
 var clear_for_room_transition_callable: Callable
+var profile_context_provider
+var profile_flow
+var transmission_flow
 var current_mode := ""
 
 
@@ -20,7 +23,10 @@ func configure(
 		create_room_callable_ref: Callable = Callable(),
 		show_join_dialog_callable_ref: Callable = Callable(),
 		logout_callable_ref: Callable = Callable(),
-		clear_for_room_transition_callable_ref: Callable = Callable()) -> void:
+		clear_for_room_transition_callable_ref: Callable = Callable(),
+		profile_context_provider_ref = null,
+		profile_flow_ref = null,
+		transmission_flow_ref = null) -> void:
 	pregame_menu = pregame_menu_ref
 	return_to_main_menu = return_to_main_menu_callable
 	start_single_player_callable = start_single_player_callable_ref
@@ -28,6 +34,9 @@ func configure(
 	show_join_dialog_callable = show_join_dialog_callable_ref
 	logout_callable = logout_callable_ref
 	clear_for_room_transition_callable = clear_for_room_transition_callable_ref
+	profile_context_provider = profile_context_provider_ref
+	profile_flow = profile_flow_ref
+	transmission_flow = transmission_flow_ref
 
 	if pregame_menu != null and pregame_menu.has_signal("back_requested"):
 		if not pregame_menu.back_requested.is_connected(_on_back_requested):
@@ -44,21 +53,29 @@ func configure(
 	if pregame_menu != null and pregame_menu.has_signal("logout_requested"):
 		if not pregame_menu.logout_requested.is_connected(_on_logout_requested):
 			pregame_menu.logout_requested.connect(_on_logout_requested)
+	if pregame_menu != null and pregame_menu.has_signal("profile_requested"):
+		if not pregame_menu.profile_requested.is_connected(_on_profile_requested):
+			pregame_menu.profile_requested.connect(_on_profile_requested)
 
 
 func show_single_player() -> void:
 	current_mode = PregameMenuMode.SINGLE_PLAYER
 	if pregame_menu != null and pregame_menu.has_method("show_single_player_mode"):
 		pregame_menu.show_single_player_mode()
+	_update_callsign_indicator()
 
 
 func show_multiplayer() -> void:
 	current_mode = PregameMenuMode.MULTIPLAYER
 	if pregame_menu != null and pregame_menu.has_method("show_multiplayer_mode"):
 		pregame_menu.show_multiplayer_mode()
+	_update_callsign_indicator()
 
 
 func _on_back_requested() -> void:
+	if transmission_flow != null and transmission_flow.has_active_transmission():
+		transmission_flow.clear()
+		return
 	if return_to_main_menu.is_valid():
 		return_to_main_menu.call()
 
@@ -93,3 +110,18 @@ func _on_logout_requested() -> void:
 		logout_callable.call()
 	if return_to_main_menu.is_valid():
 		return_to_main_menu.call()
+
+
+func _on_profile_requested() -> void:
+	if profile_flow != null and profile_flow.has_method("show_profile"):
+		await profile_flow.show_profile(current_mode)
+
+
+func _update_callsign_indicator() -> void:
+	if pregame_menu == null or !pregame_menu.has_method("set_callsign"):
+		return
+	if profile_context_provider == null or !profile_context_provider.has_method("context_for_mode"):
+		return
+
+	var context: Dictionary = profile_context_provider.context_for_mode(current_mode)
+	pregame_menu.set_callsign(str(context.get("callsign", "Guest")))

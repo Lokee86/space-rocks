@@ -2,6 +2,10 @@ extends GutTest
 
 const MenuFlowController := preload("res://scripts/ui/menu_flow/menu_flow_controller.gd")
 const MenuRoute := preload("res://scripts/ui/menu_flow/menu_route.gd")
+const AuthSession := preload("res://scripts/auth/auth_session.gd")
+const ProfileStatsProvider := preload("res://scripts/profile/profile_stats_provider.gd")
+const PlayerDataProfileApiClient := preload("res://scripts/profile/player_data_profile_api_client.gd")
+const ApiRequestResult := preload("res://scripts/api/api_request_result.gd")
 
 
 class StartSinglePlayerProbe:
@@ -33,6 +37,71 @@ class JoinProbe:
 		last_room_code = room_code
 
 
+class FakeAuthSessionController:
+	extends RefCounted
+
+	var session := AuthSession.new()
+
+	func get_session():
+		return session
+
+
+class FakeProfileStatsProvider:
+	extends RefCounted
+
+	var load_calls := 0
+	var last_context := {}
+	var profile := {
+		"callsign": "Guest",
+		"activity_status": "OFFLINE",
+		"identity_kind": "guest",
+		"stats": {
+			"total_score": 123,
+			"high_score": 99,
+			"ship_deaths": 7,
+			"games_played": 8,
+			"wins": 3,
+		},
+	}
+
+	func load_profile(context: Dictionary):
+		load_calls += 1
+		last_context = context.duplicate(true)
+		return profile.duplicate(true)
+
+
+class FakePlayerDataProfileApiClient:
+	extends RefCounted
+
+	var call_count := 0
+	var last_play_mode := ""
+	var last_identity_kind := ""
+	var last_local_profile_id := ""
+	var last_token := ""
+	var result: ApiRequestResult = ApiRequestResult.success(200, {
+		"profile": {
+			"callsign": "Guest",
+			"activity_status": "OFFLINE",
+			"identity_kind": "guest",
+			"stats": {
+				"total_score": 50,
+				"high_score": 50,
+				"ship_deaths": 2,
+				"games_played": 1,
+				"wins": 1,
+			},
+		}
+	})
+
+	func load_profile(play_mode: String, identity_kind: String, local_profile_id := "", token := ""):
+		call_count += 1
+		last_play_mode = play_mode
+		last_identity_kind = identity_kind
+		last_local_profile_id = local_profile_id
+		last_token = token
+		return result
+
+
 func test_configure_starts_on_main_menu() -> void:
 	var canvas_layer := CanvasLayer.new()
 	var main_menu := Control.new()
@@ -58,10 +127,11 @@ func test_show_single_player_pregame_routes_and_instantiates_menu() -> void:
 	assert_false(controller.main_menu.visible)
 	assert_not_null(pregame_menu)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "SINGLE PLAYER")
+	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Guest"))
 
 
 func test_show_multiplayer_pregame_routes_and_instantiates_menu() -> void:
-	var controller := await _create_controller()
+	var controller := await _create_controller(_signed_in_auth_session_controller("Ada"))
 
 	controller.show_multiplayer_pregame()
 	await get_tree().process_frame
@@ -71,6 +141,7 @@ func test_show_multiplayer_pregame_routes_and_instantiates_menu() -> void:
 	assert_false(controller.main_menu.visible)
 	assert_not_null(pregame_menu)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "MULTIPLAYER")
+	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Ada"))
 
 
 func test_pregame_back_returns_to_main_menu() -> void:
@@ -86,6 +157,127 @@ func test_pregame_back_returns_to_main_menu() -> void:
 	assert_true(controller.main_menu.visible)
 	assert_null(controller.get_pregame_menu())
 	assert_false(is_instance_valid(old_pregame_menu))
+
+
+func test_profile_button_mounts_profile_readout_in_single_player_pregame() -> void:
+	var fake_profile_stats_provider := FakeProfileStatsProvider.new()
+	var controller := await _create_controller(null, fake_profile_stats_provider)
+
+	controller.show_single_player_pregame()
+	await get_tree().process_frame
+
+	var pregame_menu := controller.get_pregame_menu()
+	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen_display := pregame_menu.find_child("ScreenDisplay", true, false) as Control
+	assert_not_null(screen_display)
+	assert_eq(controller.get_current_route(), MenuRoute.PREGAME_MENU)
+	assert_eq(screen_display.get_child_count(), 1)
+	assert_eq(screen_display.get_child(0).name, "ProfileReadout")
+	assert_eq(fake_profile_stats_provider.load_calls, 1)
+	assert_eq(fake_profile_stats_provider.last_context.get("identity_kind", ""), "guest")
+
+
+func test_profile_button_mounts_profile_readout_with_injected_stats_provider() -> void:
+	var fake_profile_stats_provider := FakeProfileStatsProvider.new()
+	fake_profile_stats_provider.profile = {
+		"callsign": "Ada",
+		"activity_status": "ACTIVE",
+		"identity_kind": "authenticated_account",
+		"stats": {
+			"total_score": 123,
+			"high_score": 99,
+			"ship_deaths": 7,
+			"games_played": 8,
+			"wins": 3,
+		},
+	}
+	var controller := await _create_controller(_signed_in_auth_session_controller("Ada"), fake_profile_stats_provider)
+
+	controller.show_multiplayer_pregame()
+	await get_tree().process_frame
+
+	var pregame_menu := controller.get_pregame_menu()
+	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen_display := pregame_menu.find_child("ScreenDisplay", true, false) as Control
+	var profile_readout := screen_display.get_child(0) as Control
+
+	assert_not_null(profile_readout)
+	assert_eq(profile_readout.name, "ProfileReadout")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: Ada")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/ActivityLabel") as Label).text, "STATUS: ACTIVE")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer/TotalScoreValueLabel") as Label).text, "123")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer/HighScoreValueLabel") as Label).text, "99")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer/MissionsValueLabel") as Label).text, "8")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer/WinsValueLabel") as Label).text, "3")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer/ShipLossesValueLabel") as Label).text, "7")
+	assert_eq(fake_profile_stats_provider.load_calls, 1)
+	assert_eq(fake_profile_stats_provider.last_context.get("identity_kind", ""), "authenticated_account")
+
+
+func test_profile_button_uses_profile_api_for_guest_stats() -> void:
+	var profile_stats_provider := ProfileStatsProvider.new()
+	var api_client := FakePlayerDataProfileApiClient.new()
+	profile_stats_provider.configure(null, api_client)
+
+	var controller := await _create_controller(null, profile_stats_provider)
+	controller.show_single_player_pregame()
+	await get_tree().process_frame
+
+	var pregame_menu := controller.get_pregame_menu()
+	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen_display := pregame_menu.find_child("ScreenDisplay", true, false) as Control
+	var profile_readout := screen_display.get_child(0) as Control
+
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer/TotalScoreValueLabel") as Label).text, "50")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer/HighScoreValueLabel") as Label).text, "50")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer/ShipLossesValueLabel") as Label).text, "2")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer/MissionsValueLabel") as Label).text, "1")
+	assert_eq((profile_readout.get_node("ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer/WinsValueLabel") as Label).text, "1")
+	assert_eq(api_client.call_count, 1)
+	assert_eq(api_client.last_play_mode, "single_player")
+	assert_eq(api_client.last_identity_kind, "guest")
+	assert_eq(api_client.last_local_profile_id, "")
+	assert_eq(api_client.last_token, "")
+
+
+func test_back_clears_profile_readout_before_returning_main_menu() -> void:
+	var fake_profile_stats_provider := FakeProfileStatsProvider.new()
+	var controller := await _create_controller(null, fake_profile_stats_provider)
+
+	controller.show_single_player_pregame()
+	await get_tree().process_frame
+
+	var pregame_menu := controller.get_pregame_menu()
+	var screen_display := pregame_menu.find_child("ScreenDisplay", true, false) as Control
+
+	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_not_null(screen_display)
+	assert_eq(screen_display.get_child_count(), 1)
+	assert_eq(screen_display.get_child(0).name, "ProfileReadout")
+
+	(pregame_menu.get_node_or_null("%BackButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_eq(controller.get_current_route(), MenuRoute.PREGAME_MENU)
+	assert_eq(screen_display.get_child_count(), 0)
+	assert_eq(fake_profile_stats_provider.load_calls, 1)
+
+	(pregame_menu.get_node_or_null("%BackButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_eq(controller.get_current_route(), MenuRoute.MAIN_MENU)
 
 
 func test_clear_for_gameplay_removes_pregame_and_keeps_main_menu_hidden() -> void:
@@ -356,7 +548,7 @@ func test_play_endless_from_multiplayer_pregame_does_not_call_start_single_playe
 	assert_eq(start_probe.calls, 0)
 
 
-func _create_controller() -> MenuFlowController:
+func _create_controller(auth_session_controller = null, profile_stats_provider = null) -> MenuFlowController:
 	var canvas_layer := CanvasLayer.new()
 	var main_menu := Control.new()
 	var controller := MenuFlowController.new()
@@ -364,6 +556,15 @@ func _create_controller() -> MenuFlowController:
 	add_child_autofree(canvas_layer)
 	add_child_autofree(main_menu)
 
-	controller.configure(canvas_layer, main_menu)
+	controller.configure(canvas_layer, main_menu, Callable(), Callable(), Callable(), Callable(), Callable(), auth_session_controller, profile_stats_provider)
 	await get_tree().process_frame
 	return controller
+
+
+func _signed_in_auth_session_controller(display_name: String) -> FakeAuthSessionController:
+	var auth_session_controller := FakeAuthSessionController.new()
+	auth_session_controller.session.set_signed_in("bearer-token", {
+		"id": 7,
+		"display_name": display_name,
+	})
+	return auth_session_controller

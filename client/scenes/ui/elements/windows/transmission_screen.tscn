@@ -101,7 +101,7 @@ offset_bottom = -0.13500977
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0.5646202, 0.56462, 0.16862746)
+color = Color(0.011764706, 0.5647059, 0.5764706, 0.28235295)
 
 [node name="TransmissionScreen2" type="TextureRect" parent="." unique_id=580476124]
 clip_contents = true

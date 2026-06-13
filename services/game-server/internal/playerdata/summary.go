@@ -8,3 +8,14 @@ func BuildMatchResultSummary(matchID string, mode MatchMode, players []PlayerMat
 		Players: ResolveWinners(mode, players),
 	}
 }
+
+func (mode MatchMode) PlayerDataPlayMode() string {
+	switch mode {
+	case MatchModeSinglePlayer:
+		return "single_player"
+	case MatchModeMultiplayer:
+		return "multiplayer"
+	default:
+		return ""
+	}
+}

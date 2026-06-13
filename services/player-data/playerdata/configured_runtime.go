@@ -5,7 +5,6 @@ import "errors"
 type RuntimeConfig struct {
 	RailsBaseURL       string
 	RailsInternalToken string
-	RailsBearerToken   string
 	SQLitePath         string
 }
 
@@ -15,7 +14,6 @@ func NewConfiguredRuntime(config RuntimeConfig) (*Runtime, error) {
 		store, err := NewRailsStore(RailsStoreConfig{
 			BaseURL:       config.RailsBaseURL,
 			InternalToken: config.RailsInternalToken,
-			BearerToken:   config.RailsBearerToken,
 		})
 		if err != nil {
 			return nil, err

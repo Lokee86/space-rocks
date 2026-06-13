@@ -7,6 +7,7 @@ var hud: Control
 var is_dead := false
 var is_game_over := false
 var can_respawn := false
+var current_score := 0
 var respawn_countdown_remaining := 0.0
 var respawn_timer_template := ""
 var loadout_display_flow := LoadoutDisplayFlow.new()
@@ -73,6 +74,7 @@ func set_alive() -> void:
 	is_dead = false
 	is_game_over = false
 	can_respawn = false
+	current_score = 0
 	respawn_countdown_remaining = 0.0
 	_hide_hud_child("CenterContainer/VBoxContainer2")
 	_hide_hud_child("CenterContainer/GameOverContainer")
@@ -108,9 +110,14 @@ func set_game_over() -> void:
 
 
 func apply_score(score: int) -> void:
+	current_score = score
 	var score_label := _get_hud_child("MarginContainer/HBoxContainer/MarginContainer/Score") as Label
 	if score_label != null:
 		score_label.text = "SCORE: %d" % score
+
+
+func score() -> int:
+	return current_score
 
 
 func apply_lives(lives: int) -> void:

@@ -27,9 +27,11 @@ func main() {
 		os.Exit(1)
 	}
 	authVerifier := buildAuthVerifierFromEnv()
+	playerDataProfileHandler := newPlayerDataProfileHandler(playerDataRuntime, authVerifier)
 
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporter(rooms, authVerifier, reporter))
+	mux.Handle("POST /api/player-data/profile", playerDataProfileHandler)
 
 	logging.Server.Info("server starting", "addr", ":8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {

@@ -1,6 +1,7 @@
 extends GutTest
 
 const GameplayEventLifecycleFlow = preload("res://scripts/gameplay/events/gameplay_event_lifecycle_flow.gd")
+const GameplayDeathFlow = preload("res://scripts/gameplay/events/gameplay_death_flow.gd")
 
 var _game_owner: FakeNode2D
 var _hud: FakeControl
@@ -50,6 +51,28 @@ class FakeDeathFlow:
 
 	func apply_self_death_event(_event) -> void:
 		apply_self_death_event_call_count += 1
+
+
+class FakeHudFlow:
+	var last_lives := -1
+	var game_over_calls := 0
+	var dead_calls := 0
+
+	func apply_lives(lives) -> void:
+		last_lives = lives
+
+	func set_dead(respawn_delay) -> void:
+		dead_calls += 1
+
+	func set_game_over() -> void:
+		game_over_calls += 1
+
+
+class FakeMenuFlow:
+	var game_over_calls := 0
+
+	func set_game_over() -> void:
+		game_over_calls += 1
 
 
 class FakeNode2D:
@@ -162,3 +185,29 @@ func test_reset_calls_owned_event_flow_reset() -> void:
 	flow.reset()
 
 	assert_eq(event_flow.reset_call_count, 1)
+
+
+func test_apply_self_death_event_final_death_uses_game_over_presentation() -> void:
+	var death_flow := GameplayDeathFlow.new()
+	var hud_flow := FakeHudFlow.new()
+	var menu_flow := FakeMenuFlow.new()
+
+	death_flow.configure(hud_flow, menu_flow, null, null)
+
+	death_flow.apply_self_death_event({"lives": 0})
+
+	assert_eq(hud_flow.last_lives, 0)
+	assert_eq(hud_flow.game_over_calls, 1)
+	assert_eq(menu_flow.game_over_calls, 1)
+
+
+func test_apply_self_death_event_non_final_death_uses_dead_presentation() -> void:
+	var death_flow := GameplayDeathFlow.new()
+	var hud_flow := FakeHudFlow.new()
+
+	death_flow.configure(hud_flow, null, null, null)
+
+	death_flow.apply_self_death_event({"lives": 2})
+
+	assert_eq(hud_flow.last_lives, 2)
+	assert_eq(hud_flow.dead_calls, 1)

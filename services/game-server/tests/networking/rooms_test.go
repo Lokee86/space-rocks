@@ -7,11 +7,56 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Lokee86/space-rocks/server/internal/authclient"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/networking"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
+
+func newAuthenticatedRoomTestServer(t *testing.T, manager *rooms.RoomManager) *httptest.Server {
+	t.Helper()
+
+	verifier := &fakeTokenVerifier{
+		result: authclient.VerifyResult{
+			Valid: true,
+			Identity: authclient.Identity{
+				UserID:      123,
+				AccountID:   "11111111-2222-3333-4444-555555555555",
+				DisplayName: "Ada",
+			},
+		},
+	}
+
+	return httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, verifier))
+}
+
+func dialAuthenticatedRoomWebSocket(t *testing.T, serverURL string) *websocket.Conn {
+	t.Helper()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(serverURL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeAuthenticateRequest, Token: "submitted-token"}); err != nil {
+		t.Fatalf("write authenticate request: %v", err)
+	}
+
+	var authResult struct {
+		Type          string `json:"type"`
+		Authenticated bool   `json:"authenticated"`
+		UserID        int64  `json:"user_id"`
+		DisplayName   string `json:"display_name"`
+		ErrorCode     string `json:"error_code"`
+	}
+	readJSON(t, conn, &authResult)
+	if !authResult.Authenticated {
+		t.Fatal("expected authenticated websocket")
+	}
+
+	return conn
+}
 
 func TestRoomInitializesMemberStorage(t *testing.T) {
 	room := rooms.NewRoom("abc", rooms.RoomStateLobby, nil)
@@ -124,13 +169,10 @@ func TestCreateRoomRequestCreatesLobbyRoomWithoutGame(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -185,13 +227,10 @@ func TestCreateRoomRequestRejectsSessionAlreadyInRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -292,13 +331,10 @@ func TestStartSinglePlayerRequestRejectsSessionAlreadyInRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -586,13 +622,10 @@ func TestJoinRoomRequestJoinsLobbyAndBroadcastsSnapshots(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	creator, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial creator websocket: %v", err)
-	}
+	creator := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer creator.Close()
 	if err := creator.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
@@ -600,10 +633,7 @@ func TestJoinRoomRequestJoinsLobbyAndBroadcastsSnapshots(t *testing.T) {
 	var createdSnapshot servergame.RoomSnapshot
 	readJSON(t, creator, &createdSnapshot)
 
-	joiner, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial joiner websocket: %v", err)
-	}
+	joiner := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer joiner.Close()
 	if err := joiner.WriteJSON(servergame.ClientPacket{
 		Type:     servergame.PacketTypeJoinRoomRequest,
@@ -643,13 +673,10 @@ func TestJoinRoomRequestRejectsNonexistentRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
@@ -670,17 +697,14 @@ func TestJoinRoomRequestRejectsInGameRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
 	room, roomErr := manager.CreateStartedSinglePlayerRoom("session-owner")
 	if roomErr != nil {
 		t.Fatalf("create started single-player room: %v", roomErr)
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
@@ -709,13 +733,10 @@ func TestJoinRoomRequestRejectsFullRoom(t *testing.T) {
 		room.AddMemberSessionID(string(rune('a' + index)))
 	}
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
@@ -760,13 +781,10 @@ func TestLeaveRoomRequestRemovesMemberAndBroadcastsSnapshot(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	creator, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial creator websocket: %v", err)
-	}
+	creator := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer creator.Close()
 	if err := creator.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
@@ -774,10 +792,7 @@ func TestLeaveRoomRequestRemovesMemberAndBroadcastsSnapshot(t *testing.T) {
 	var createdSnapshot servergame.RoomSnapshot
 	readJSON(t, creator, &createdSnapshot)
 
-	joiner, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial joiner websocket: %v", err)
-	}
+	joiner := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer joiner.Close()
 	if err := joiner.WriteJSON(servergame.ClientPacket{
 		Type:     servergame.PacketTypeJoinRoomRequest,
@@ -822,13 +837,10 @@ func TestLeaveRoomRequestSchedulesEmptyRoomCleanup(t *testing.T) {
 	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
@@ -852,13 +864,10 @@ func TestJoinAfterEmptyRoomCleanupFails(t *testing.T) {
 	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
@@ -894,13 +903,10 @@ func TestLeaveRoomRequestClearsSessionRoomAssociation(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -935,13 +941,10 @@ func TestSetReadyRequestUpdatesMemberAndBroadcastsSnapshot(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1019,13 +1022,10 @@ func TestSetReadyRequestRejectsNonLobbyRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1082,13 +1082,10 @@ func TestStartGameRequestRejectsNotReadyRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1112,13 +1109,10 @@ func TestStartGameRequestRejectsDoubleStartState(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1152,13 +1146,10 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1223,13 +1214,10 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1352,13 +1340,10 @@ func TestReturnToLobbyAllowsFreshSecondMatch(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1484,13 +1469,10 @@ func TestReturnToLobbyRequestRejectsNonGameOverRoom(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer conn.Close()
 
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
@@ -1514,13 +1496,10 @@ func TestDisconnectLeavesLobbyAndBroadcastsSnapshot(t *testing.T) {
 	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	creator, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial creator websocket: %v", err)
-	}
+	creator := dialAuthenticatedRoomWebSocket(t, server.URL)
 	defer creator.Close()
 	if err := creator.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
@@ -1528,10 +1507,7 @@ func TestDisconnectLeavesLobbyAndBroadcastsSnapshot(t *testing.T) {
 	var createdSnapshot servergame.RoomSnapshot
 	readJSON(t, creator, &createdSnapshot)
 
-	joiner, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial joiner websocket: %v", err)
-	}
+	joiner := dialAuthenticatedRoomWebSocket(t, server.URL)
 	if err := joiner.WriteJSON(servergame.ClientPacket{
 		Type:     servergame.PacketTypeJoinRoomRequest,
 		RoomCode: createdSnapshot.RoomCode,
@@ -1567,13 +1543,10 @@ func TestDisconnectCleansEmptyLobbyRoom(t *testing.T) {
 	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
 	}
@@ -1595,13 +1568,10 @@ func TestDisconnectCleansEmptyGameOverRoom(t *testing.T) {
 	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
 	}
@@ -1629,13 +1599,10 @@ func TestDisconnectCleansEmptyInGameRoom(t *testing.T) {
 	manager := networking.NewRoomManagerWithCleanupDelay(10 * time.Millisecond)
 	defer manager.StopAll()
 
-	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	server := newAuthenticatedRoomTestServer(t, manager)
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
-	if err != nil {
-		t.Fatalf("dial websocket: %v", err)
-	}
+	conn := dialAuthenticatedRoomWebSocket(t, server.URL)
 	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
 		t.Fatalf("write create room request: %v", err)
 	}

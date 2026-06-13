@@ -96,7 +96,7 @@ offset_right = -0.37902832
 offset_bottom = 0.0949707
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0.5646202, 0.56462, 0.16862746)
+color = Color(0.011764706, 0.5647059, 0.5764706, 0.28235295)
 
 [node name="TransmissionScreen2" type="TextureRect" parent="." unique_id=301062598]
 clip_contents = true

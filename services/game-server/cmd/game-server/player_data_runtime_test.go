@@ -8,7 +8,6 @@ import (
 func TestBuildPlayerDataRuntime(t *testing.T) {
 	t.Setenv("PLAYER_DATA_RAILS_BASE_URL", "")
 	t.Setenv("PLAYER_DATA_RAILS_INTERNAL_TOKEN", "")
-	t.Setenv("PLAYER_DATA_RAILS_BEARER_TOKEN", "")
 	t.Setenv("PLAYER_DATA_SQLITE_PATH", "")
 
 	runtime, err := buildPlayerDataRuntime()
@@ -26,7 +25,6 @@ func TestBuildPlayerDataRuntimeWithSQLitePath(t *testing.T) {
 
 	t.Setenv("PLAYER_DATA_RAILS_BASE_URL", "")
 	t.Setenv("PLAYER_DATA_RAILS_INTERNAL_TOKEN", "")
-	t.Setenv("PLAYER_DATA_RAILS_BEARER_TOKEN", "")
 	t.Setenv("PLAYER_DATA_SQLITE_PATH", tempPath)
 
 	runtime, err := buildPlayerDataRuntime()

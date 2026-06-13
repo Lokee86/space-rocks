@@ -4,6 +4,7 @@ import "time"
 
 type Identity struct {
 	UserID      int64  `json:"id"`
+	AccountID   string `json:"account_id"`
 	DisplayName string `json:"display_name"`
 }
 

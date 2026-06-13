@@ -40,6 +40,7 @@ func TestRuntimeHandleDelegatesLoadStats(t *testing.T) {
 	payload, err := codec.Encode(protocol.PlayerDataLoadStats{
 		Type:     protocol.PacketTypePlayerDataLoadStats,
 		Identity: identity,
+		Context:  protocol.PlayerDataRequestContext{PlayMode: PlayModeMultiplayer},
 	})
 	if err != nil {
 		t.Fatalf("encode payload: %v", err)

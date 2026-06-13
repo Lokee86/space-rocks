@@ -10,6 +10,8 @@ const AppShutdownController := preload("res://scripts/session/app_shutdown_contr
 const AuthSessionController := preload("res://scripts/auth/auth_session_controller.gd")
 const AuthApiClient := preload("res://scripts/auth/auth_api_client.gd")
 const ApiHttpClient := preload("res://scripts/api/api_http_client.gd")
+const PlayerDataProfileApiClient := preload("res://scripts/profile/player_data_profile_api_client.gd")
+const ProfileStatsProvider := preload("res://scripts/profile/profile_stats_provider.gd")
 const MenuFlowController := preload("res://scripts/ui/menu_flow/menu_flow_controller.gd")
 const MultiplayerEntryFlow := preload("res://scripts/ui/menu_flow/multiplayer_entry_flow.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
@@ -36,6 +38,8 @@ var client_config_controller
 var app_shutdown_controller
 var auth_session_controller
 var api_http_client
+var player_data_profile_api_client
+var profile_stats_provider
 var auth_api_client
 var background_controller
 var menu_flow_controller
@@ -55,6 +59,9 @@ func _ready() -> void:
 	api_http_client = ApiHttpClient.new()
 	add_child(api_http_client)
 
+	player_data_profile_api_client = PlayerDataProfileApiClient.new(api_http_client)
+	profile_stats_provider = ProfileStatsProvider.new()
+
 	auth_api_client = AuthApiClient.new(api_http_client)
 
 	auth_session_controller = AuthSessionController.new()
@@ -63,6 +70,7 @@ func _ready() -> void:
 	auth_session_controller.auth_state_changed.connect(_on_auth_state_changed)
 	auth_session_controller.auth_error.connect(_on_auth_error)
 	session_boot_controller.get_connection_service().set_auth_session_controller(auth_session_controller)
+	profile_stats_provider.configure(auth_session_controller, player_data_profile_api_client)
 
 	background_controller = BackgroundController.new()
 	add_child(background_controller)
@@ -134,7 +142,9 @@ func _ready() -> void:
 		Callable(auth_session_controller, "request_discord_sign_in"),
 		Callable(self, "_request_create_room_from_pregame"),
 		Callable(self, "_request_join_room_from_pregame"),
-		Callable(self, "_logout_from_pregame")
+		Callable(self, "_logout_from_pregame"),
+		auth_session_controller,
+		profile_stats_provider
 	)
 	room_session_controller.configure_lobby_leave_return_destination(
 		Callable(menu_flow_controller, "show_multiplayer_pregame")

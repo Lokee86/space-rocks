@@ -235,7 +235,7 @@ func TestMultiplayerResolvedMatchSummaryCopiesAccountIDFromRoomMember(t *testing
 	peer := room.AddMember(NewRoomMember("session-peer"))
 	peer.SetReady(true)
 
-	accountID := "12345"
+	accountID := "11111111-2222-3333-4444-555555555555"
 	if !room.SetMemberAccountIDForSession("session-owner", accountID) {
 		t.Fatal("expected SetMemberAccountIDForSession to succeed")
 	}
@@ -281,6 +281,62 @@ func TestMultiplayerResolvedMatchSummaryCopiesAccountIDFromRoomMember(t *testing
 	}
 
 	room.GameInstance().Stop()
+}
+
+func TestMultiplayerResolvedMatchSummaryCopiesAccountIDAfterPlayerIDRekey(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	room.AddMember(NewRoomMember("session-owner"))
+	accountID := "11111111-2222-3333-4444-555555555555"
+
+	if !room.SetMemberAccountIDForSession("session-owner", accountID) {
+		t.Fatal("expected SetMemberAccountIDForSession to succeed")
+	}
+	if !room.SetMemberPlayerIDForSession("session-owner", "player-1") {
+		t.Fatal("expected SetMemberPlayerIDForSession to succeed")
+	}
+	if ownerID := room.OwnerID(); ownerID != "player-1" {
+		t.Fatalf("expected OwnerID player-1, got %q", ownerID)
+	}
+	if err := room.SetReadyInLobby("player-1", true); err != nil {
+		t.Fatalf("expected ready update to succeed, got %v", err)
+	}
+
+	if err := room.StartGameForMember("player-1", func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("expected multiplayer start to succeed, got %v", err)
+	}
+	defer func() {
+		if gameInstance := room.GameInstance(); gameInstance != nil {
+			gameInstance.Stop()
+		}
+	}()
+
+	gameInstance := room.GameInstance()
+	playerID := gameInstance.AddPlayer()
+	if playerID != "player-1" {
+		t.Fatalf("expected authoritative game player id player-1, got %q", playerID)
+	}
+	gameInstance.SetPlayerScore("player-1", 120)
+	markLifecycleTickTestGameOverForAllPlayers(t, gameInstance)
+
+	if err := room.MarkGameOver(); err != nil {
+		t.Fatalf("expected game over transition to succeed, got %v", err)
+	}
+
+	summary, ok := room.ResolvedMatchSummary()
+	if !ok {
+		t.Fatal("expected resolved match summary to be stored")
+	}
+	if len(summary.Players) != 1 {
+		t.Fatalf("expected 1 player summary, got %d", len(summary.Players))
+	}
+	player := summary.Players[0]
+	if player.GamePlayerID != "player-1" {
+		t.Fatalf("expected GamePlayerID player-1, got %q", player.GamePlayerID)
+	}
+	if player.AccountID != accountID {
+		t.Fatalf("expected AccountID %q, got %q", accountID, player.AccountID)
+	}
+
 }
 
 func TestResolvedMatchSummaryIsNotRebuiltAfterGameOver(t *testing.T) {

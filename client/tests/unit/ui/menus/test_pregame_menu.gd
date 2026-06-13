@@ -115,6 +115,28 @@ func test_join_button_emits_join_game_requested_in_multiplayer_mode() -> void:
 	assert_signal_emitted(menu, "join_game_requested")
 
 
+func test_profile_button_emits_profile_requested_in_single_player_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_single_player_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "profile_requested")
+
+
+func test_profile_button_emits_profile_requested_in_multiplayer_mode() -> void:
+	var menu := await _create_menu()
+
+	menu.show_multiplayer_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "profile_requested")
+
+
 func test_logout_button_emits_logout_requested_in_multiplayer_mode() -> void:
 	var menu := await _create_menu()
 

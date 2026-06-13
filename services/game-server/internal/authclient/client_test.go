@@ -154,7 +154,7 @@ func TestVerifyTokenValidResponse(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"valid":true,"user":{"id":123,"display_name":"Ada"}}`)
+		_, _ = io.WriteString(w, `{"valid":true,"user":{"id":123,"account_id":"11111111-2222-3333-4444-555555555555","display_name":"Ada"}}`)
 	}))
 	defer server.Close()
 
@@ -176,6 +176,9 @@ func TestVerifyTokenValidResponse(t *testing.T) {
 	}
 	if result.Identity.UserID != 123 {
 		t.Fatalf("expected user id 123, got %d", result.Identity.UserID)
+	}
+	if result.Identity.AccountID != "11111111-2222-3333-4444-555555555555" {
+		t.Fatalf("expected account id uuid, got %q", result.Identity.AccountID)
 	}
 	if result.Identity.DisplayName != "Ada" {
 		t.Fatalf("expected display name Ada, got %q", result.Identity.DisplayName)

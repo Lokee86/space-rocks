@@ -57,19 +57,22 @@ func TestRailsStoreNewJSONRequest(t *testing.T) {
 		}
 	})
 
-	t.Run("non-internal bearer auth header", func(t *testing.T) {
+	t.Run("api internal auth header", func(t *testing.T) {
 		store := &RailsStore{
-			BaseURL:     "https://example.com",
-			bearerToken: "bearer-token",
-			httpClient:  http.DefaultClient,
+			BaseURL:       "https://example.com",
+			internalToken: "internal-token",
+			httpClient:    http.DefaultClient,
 		}
 
-		request, err := store.newJSONRequest(http.MethodGet, "/accounts", nil)
+		request, err := store.newJSONRequest(http.MethodPost, "/api/internal/player-data/stats", map[string]string{"account_id": "acct-123"})
 		if err != nil {
 			t.Fatalf("newJSONRequest returned error: %v", err)
 		}
-		if got := request.Header.Get("Authorization"); got != "Bearer bearer-token" {
-			t.Fatalf("Authorization = %q, want %q", got, "Bearer bearer-token")
+		if got := request.Header.Get("Authorization"); got != "Bearer internal-token" {
+			t.Fatalf("Authorization = %q, want %q", got, "Bearer internal-token")
+		}
+		if got := request.Header.Get("Content-Type"); got != "application/json" {
+			t.Fatalf("Content-Type = %q, want %q", got, "application/json")
 		}
 	})
 
@@ -94,20 +97,35 @@ func TestRailsStoreLoadStats(t *testing.T) {
 		var gotAuth string
 		server := newInMemoryHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			gotAuth = r.Header.Get("Authorization")
-			if r.Method != http.MethodGet {
-				t.Fatalf("Method = %q, want %q", r.Method, http.MethodGet)
+			if r.Method != http.MethodPost {
+				t.Fatalf("Method = %q, want %q", r.Method, http.MethodPost)
 			}
-			if r.URL.Path != "/api/player/stats" {
-				t.Fatalf("Path = %q, want %q", r.URL.Path, "/api/player/stats")
+			if r.URL.Path == "/api/player/stats" {
+				t.Fatalf("Path = %q, want API-namespaced internal stats path", r.URL.Path)
+			}
+			if r.URL.Path == "/internal/player-data/stats" {
+				t.Fatalf("Path = %q, want API-namespaced internal stats path", r.URL.Path)
+			}
+			if r.URL.Path != "/api/internal/player-data/stats" {
+				t.Fatalf("Path = %q, want %q", r.URL.Path, "/api/internal/player-data/stats")
+			}
+			var gotBody struct {
+				AccountID string `json:"account_id"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&gotBody); err != nil {
+				t.Fatalf("Decode request body: %v", err)
+			}
+			if gotBody.AccountID != "acct-123" {
+				t.Fatalf("AccountID = %q, want %q", gotBody.AccountID, "acct-123")
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"stats":{"total_score":12,"high_score":9,"ship_deaths":3,"games_played":4,"wins":2}}`))
 		}))
 
 		store := &RailsStore{
-			BaseURL:     server.URL,
-			bearerToken: "bearer-token",
-			httpClient:  server.Client(),
+			BaseURL:       server.URL,
+			internalToken: "internal-token",
+			httpClient:    server.Client(),
 		}
 
 		stats, found, err := store.LoadStats(protocol.PlayerDataIdentity{
@@ -129,8 +147,8 @@ func TestRailsStoreLoadStats(t *testing.T) {
 		}) {
 			t.Fatalf("Stats = %+v, want mapped stats", stats)
 		}
-		if gotAuth != "Bearer bearer-token" {
-			t.Fatalf("Authorization = %q, want %q", gotAuth, "Bearer bearer-token")
+		if gotAuth != "Bearer internal-token" {
+			t.Fatalf("Authorization = %q, want %q", gotAuth, "Bearer internal-token")
 		}
 	})
 
@@ -144,13 +162,13 @@ func TestRailsStoreLoadStats(t *testing.T) {
 		}
 	})
 
-	t.Run("missing bearer token", func(t *testing.T) {
+	t.Run("missing internal token", func(t *testing.T) {
 		store := &RailsStore{}
 		if _, _, err := store.LoadStats(protocol.PlayerDataIdentity{
 			IdentityKind: IdentityKindAuthenticatedAccount,
 			AccountID:    "acct-123",
 		}); err == nil {
-			t.Fatal("LoadStats returned nil error for missing bearer token")
+			t.Fatal("LoadStats returned nil error for missing internal token")
 		}
 	})
 
@@ -161,9 +179,9 @@ func TestRailsStoreLoadStats(t *testing.T) {
 		}))
 
 		store := &RailsStore{
-			BaseURL:     server.URL,
-			bearerToken: "bearer-token",
-			httpClient:  server.Client(),
+			BaseURL:       server.URL,
+			internalToken: "internal-token",
+			httpClient:    server.Client(),
 		}
 
 		if _, _, err := store.LoadStats(protocol.PlayerDataIdentity{
@@ -180,9 +198,9 @@ func TestRailsStoreLoadStats(t *testing.T) {
 		}))
 
 		store := &RailsStore{
-			BaseURL:     server.URL,
-			bearerToken: "bearer-token",
-			httpClient:  server.Client(),
+			BaseURL:       server.URL,
+			internalToken: "internal-token",
+			httpClient:    server.Client(),
 		}
 
 		if _, _, err := store.LoadStats(protocol.PlayerDataIdentity{

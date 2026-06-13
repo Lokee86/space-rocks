@@ -49,7 +49,11 @@ func configure(
 		hud_flow,
 		menu_flow,
 		runtime_context,
-		spectate_menu_state_ref
+		spectate_menu_state_ref,
+		null,
+		null,
+		null,
+		null
 	)
 
 

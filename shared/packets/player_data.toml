@@ -45,6 +45,14 @@ json = "wins"
 type = "int"
 
 [[structs]]
+id = "PlayerDataRequestContext"
+
+[[structs.fields]]
+name = "play_mode"
+json = "play_mode"
+type = "string"
+
+[[structs]]
 id = "PlayerDataRecordMatchResult"
 
 [[structs.fields]]
@@ -66,6 +74,11 @@ type = "string"
 name = "identity"
 json = "identity"
 type = "PlayerDataIdentity"
+
+[[structs.fields]]
+name = "context"
+json = "context"
+type = "PlayerDataRequestContext"
 
 [[structs.fields]]
 name = "score"
@@ -143,6 +156,11 @@ type = "string"
 name = "identity"
 json = "identity"
 type = "PlayerDataIdentity"
+
+[[structs.fields]]
+name = "context"
+json = "context"
+type = "PlayerDataRequestContext"
 
 [[structs]]
 id = "PlayerDataLoadStatsResult"

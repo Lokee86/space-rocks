@@ -25,7 +25,7 @@ path = "services/player-data/protocol/packets.go"
 package = "protocol"
 packet_types = true
 packet_type_ids = ["player_data_record_match_result", "player_data_record_match_result_result", "player_data_load_stats", "player_data_load_stats_result"]
-structs = ["PlayerDataIdentity", "PlayerDataStats", "PlayerDataRecordMatchResult", "PlayerDataRecordMatchResultResult", "PlayerDataLoadStats", "PlayerDataLoadStatsResult"]
+structs = ["PlayerDataIdentity", "PlayerDataStats", "PlayerDataRequestContext", "PlayerDataRecordMatchResult", "PlayerDataRecordMatchResultResult", "PlayerDataLoadStats", "PlayerDataLoadStatsResult"]
 
 [[outputs]]
 id = "client_packets"

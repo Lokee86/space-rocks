@@ -11,12 +11,14 @@ import (
 )
 
 type fakeMatchResultReporter struct {
-	calls int
-	err   error
+	calls       int
+	lastSummary playerdata.MatchResultSummary
+	err         error
 }
 
 func (r *fakeMatchResultReporter) ReportMatchResult(summary playerdata.MatchResultSummary) error {
 	r.calls++
+	r.lastSummary = summary
 	return r.err
 }
 
@@ -145,6 +147,57 @@ func TestReportResolvedMatchResultOnceReturnsFalseOnReporterError(t *testing.T) 
 	if room.MatchResultReported() {
 		t.Fatal("expected room to remain unreported after reporter error")
 	}
+}
+
+func TestRoomGameOverLifecycleReportsMatchResultOnce(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	room.AddMember(NewRoomMember("session-owner"))
+
+	if err := room.StartSinglePlayerGame(func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("expected room start to succeed, got %v", err)
+	}
+
+	gameInstance := room.GameInstance()
+	markLifecycleTickTestGameOver(t, gameInstance)
+
+	broadcasts := 0
+	if !TickRoomGameOverLifecycle(room, func(broadcastRoom *Room) {
+		broadcasts++
+		if broadcastRoom != room {
+			t.Fatal("expected transitioned room to be broadcast")
+		}
+	}) {
+		t.Fatal("expected room game-over lifecycle to advance")
+	}
+	if broadcasts != 1 {
+		t.Fatalf("expected 1 broadcast, got %d", broadcasts)
+	}
+
+	reporter := &fakeMatchResultReporter{}
+	if !ReportResolvedMatchResultOnce(room, reporter) {
+		t.Fatal("expected first report attempt to succeed")
+	}
+	if reporter.calls != 1 {
+		t.Fatalf("expected reporter to be called once, got %d", reporter.calls)
+	}
+	if reporter.lastSummary.MatchID == "" {
+		t.Fatal("expected reporter to capture match summary")
+	}
+	if len(reporter.lastSummary.Players) != 1 {
+		t.Fatalf("expected 1 player summary, got %d", len(reporter.lastSummary.Players))
+	}
+	if !room.MatchResultReported() {
+		t.Fatal("expected room to be marked as reported")
+	}
+
+	if ReportResolvedMatchResultOnce(room, reporter) {
+		t.Fatal("expected second report attempt to return false")
+	}
+	if reporter.calls != 1 {
+		t.Fatalf("expected reporter to still be called once, got %d", reporter.calls)
+	}
+
+	room.GameInstance().Stop()
 }
 
 func markLifecycleTickTestGameOver(t *testing.T, gameInstance *game.Game) {

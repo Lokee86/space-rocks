@@ -2,7 +2,6 @@ package networkingtests
 
 import (
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/authclient"
@@ -76,6 +75,70 @@ func TestWebSocketJoinRoomRequiresAuthentication(t *testing.T) {
 	}
 }
 
+func TestCreateRoomWithMissingAuthVerifierReturnsAuthUnavailable(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeCreateRoomRequest}); err != nil {
+		t.Fatalf("write create room request: %v", err)
+	}
+
+	var roomError struct {
+		Type      string `json:"type"`
+		ErrorCode string `json:"error_code"`
+		Message   string `json:"message"`
+	}
+	readJSON(t, conn, &roomError)
+
+	if roomError.Type != servergame.PacketTypeRoomError {
+		t.Fatalf("expected room error packet, got %q", roomError.Type)
+	}
+	if roomError.ErrorCode != "auth_unavailable" {
+		t.Fatalf("expected error code auth_unavailable, got %q", roomError.ErrorCode)
+	}
+}
+
+func TestJoinRoomWithMissingAuthVerifierReturnsAuthUnavailable(t *testing.T) {
+	manager := networking.NewRoomManager()
+	defer manager.StopAll()
+
+	server := httptest.NewServer(networking.WebSocketHandler(manager))
+	defer server.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	if err != nil {
+		t.Fatalf("dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeJoinRoomRequest, RoomCode: "ABC123"}); err != nil {
+		t.Fatalf("write join room request: %v", err)
+	}
+
+	var roomError struct {
+		Type      string `json:"type"`
+		ErrorCode string `json:"error_code"`
+		Message   string `json:"message"`
+	}
+	readJSON(t, conn, &roomError)
+
+	if roomError.Type != servergame.PacketTypeRoomError {
+		t.Fatalf("expected room error packet, got %q", roomError.Type)
+	}
+	if roomError.ErrorCode != "auth_unavailable" {
+		t.Fatalf("expected error code auth_unavailable, got %q", roomError.ErrorCode)
+	}
+}
+
 func TestWebSocketStartSinglePlayerRequestStillWorksWithoutAuthenticationAdmission(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
@@ -112,6 +175,7 @@ func TestAuthenticatedCreateRoomCreatesLobbyRoom(t *testing.T) {
 			Valid: true,
 			Identity: authclient.Identity{
 				UserID:      123,
+				AccountID:   "11111111-2222-3333-4444-555555555555",
 				DisplayName: "Ada",
 			},
 		},
@@ -165,6 +229,7 @@ func TestAuthenticatedCreateRoomAttachesAccountIDToRoomMember(t *testing.T) {
 			Valid: true,
 			Identity: authclient.Identity{
 				UserID:      123,
+				AccountID:   "11111111-2222-3333-4444-555555555555",
 				DisplayName: "Ada",
 			},
 		},
@@ -213,8 +278,11 @@ func TestAuthenticatedCreateRoomAttachesAccountIDToRoomMember(t *testing.T) {
 	if len(members) != 1 {
 		t.Fatalf("expected 1 room member, got %d", len(members))
 	}
-	if members[0].AccountID != strconv.FormatInt(123, 10) {
-		t.Fatalf("expected AccountID %q, got %q", strconv.FormatInt(123, 10), members[0].AccountID)
+	if members[0].AccountID != "11111111-2222-3333-4444-555555555555" {
+		t.Fatalf("expected AccountID %q, got %q", "11111111-2222-3333-4444-555555555555", members[0].AccountID)
+	}
+	if members[0].AccountID == "123" {
+		t.Fatal("expected AccountID to not use numeric user id")
 	}
 	if members[0].LocalProfileID != "" {
 		t.Fatalf("expected empty LocalProfileID, got %q", members[0].LocalProfileID)
