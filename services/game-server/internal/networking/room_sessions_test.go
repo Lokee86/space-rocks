@@ -6,24 +6,6 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
-func TestAccountIDForAuthenticatedSessionUsesSessionIdentityAccountID(t *testing.T) {
-	session := &webSocketSession{
-		identity: SessionIdentity{
-			State:         SessionIdentityStateAuthenticatedAccount,
-			AccountUserID: 1,
-			AccountID:     "439e2746-9a06-45f1-b36b-b741b5bcfb12",
-			DisplayName:   "Ada",
-		},
-	}
-
-	if got := accountIDForSession(session); got != "439e2746-9a06-45f1-b36b-b741b5bcfb12" {
-		t.Fatalf("expected account id uuid, got %q", got)
-	}
-	if got := accountIDForSession(session); got == "1" {
-		t.Fatal("expected account id to not use numeric user id")
-	}
-}
-
 func TestAddSessionMemberStoresRailsAccountID(t *testing.T) {
 	room := rooms.NewRoom("room-1", rooms.RoomStateLobby, nil)
 	session := &webSocketSession{

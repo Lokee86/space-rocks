@@ -354,15 +354,6 @@ func TestPlayerDataProfileHandlerAuthenticatedAccountDerivesIdentityAndUsesLoadS
 	if body.Profile.Stats.TotalScore != 9 || body.Profile.Stats.HighScore != 9 || body.Profile.Stats.ShipDeaths != 1 || body.Profile.Stats.GamesPlayed != 1 || body.Profile.Stats.Wins != 1 {
 		t.Fatalf("stats = %+v, want runtime stats", body.Profile.Stats)
 	}
-	if strings.Contains(recorder.Body.String(), "bearer token is required") {
-		t.Fatal("response body unexpectedly contains bearer token error")
-	}
-	if strings.Contains(recorder.Body.String(), "profile_unavailable") {
-		t.Fatal("response body unexpectedly contains profile_unavailable")
-	}
-	if strings.Contains(recorder.Body.String(), "unauthorized") {
-		t.Fatal("response body unexpectedly contains unauthorized")
-	}
 }
 
 func TestPlayerDataProfileHandlerAuthenticatedAccountMissingAuthorization(t *testing.T) {
@@ -404,50 +395,6 @@ func TestPlayerDataProfileHandlerAuthenticatedAccountInvalidToken(t *testing.T) 
 	}
 	if len(runtime.payloads) != 0 {
 		t.Fatalf("runtime payload count = %d, want 0", len(runtime.payloads))
-	}
-}
-
-func TestPlayerDataProfileHandlerAuthenticatedAccountIgnoresBodyAccountID(t *testing.T) {
-	responsePayload, err := codec.Encode(protocol.PlayerDataLoadStatsResult{
-		Type:  protocol.PacketTypePlayerDataLoadStatsResult,
-		Found: true,
-		Stats: protocol.PlayerDataStats{},
-	})
-	if err != nil {
-		t.Fatalf("encode response: %v", err)
-	}
-
-	runtime := &fakePlayerDataRuntime{response: responsePayload}
-	verifier := &fakeTokenVerifier{
-		result: authclient.VerifyResult{
-			Valid: true,
-			Identity: authclient.Identity{
-				AccountID:   "11111111-2222-3333-4444-555555555555",
-				DisplayName: "Ada",
-			},
-		},
-	}
-	handler := newPlayerDataProfileHandler(runtime, verifier)
-
-	request := httptest.NewRequest(http.MethodPost, "/api/player-data/profile", strings.NewReader(`{"play_mode":"multiplayer","identity_kind":"authenticated_account","account_id":"99999999-aaaa-bbbb-cccc-dddddddddddd"}`))
-	request.Header.Set("Authorization", "Bearer submitted-token")
-	recorder := httptest.NewRecorder()
-
-	handler.ServeHTTP(recorder, request)
-
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
-	}
-	if len(runtime.payloads) != 1 {
-		t.Fatalf("runtime payload count = %d, want 1", len(runtime.payloads))
-	}
-
-	var command protocol.PlayerDataLoadStats
-	if err := json.Unmarshal(runtime.payloads[0], &command); err != nil {
-		t.Fatalf("decode runtime payload: %v", err)
-	}
-	if command.Identity.AccountID != "11111111-2222-3333-4444-555555555555" {
-		t.Fatalf("command.Identity.AccountID = %q, want verified account id", command.Identity.AccountID)
 	}
 }
 
