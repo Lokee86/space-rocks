@@ -48,9 +48,9 @@ Install these before running or developing Space Rocks locally:
 
 - **Ruby / Rails** for the API server.
   - The Rails API project is in `services/api-server/`.
-  - The current API baseline includes `GET /health`, `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/discord/start`, `GET /api/auth/discord/callback`, `POST /api/auth/discord/login_sessions`, `POST /api/auth/discord/login_sessions/:id/exchange`, `GET /api/auth/me`, and `DELETE /api/auth/logout`.
+  - The current API baseline includes `GET /health`, `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/discord/start`, `GET /api/auth/discord/callback`, `POST /api/auth/discord/login_sessions`, `POST /api/auth/discord/login_sessions/:id/exchange`, `GET /api/auth/me`, `DELETE /api/auth/logout`, `POST /api/internal/player-data/stats`, and the implemented match-result write endpoint.
   - Discord OAuth is implemented at the Rails API level.
-  - Godot login handoff is implemented; game-server token verification remains deferred.
+  - Godot login handoff, game-server authclient verification, websocket auth, and the game-server-hosted player-data profile endpoint are implemented.
   - Auth uses opaque bearer tokens stored hashed in the database.
   - HTTP request/response shapes are documented in [docs/api/http-contracts.md](api/http-contracts.md).
 
@@ -222,7 +222,7 @@ From the repo root:
 
 ```bash
 cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go run ./cmd/game-server); }
+{ (cd services/game-server && set -a && source ../../.env && set +a && go run ./cmd/game-server); }
 ```
 
 Normal local server runs include devtools.
@@ -252,6 +252,44 @@ The server listens on `:8080` and exposes:
 
 - `GET /health`
 - `GET /ws`
+- `POST /api/player-data/profile`
+
+Current player-data runtime env vars:
+
+- `API_SERVER_BASE_URL=http://localhost:3000`
+- `GAME_SERVER_INTERNAL_TOKEN=dev-internal-token`
+- `PLAYER_DATA_RAILS_BASE_URL=http://localhost:3000`
+- `PLAYER_DATA_RAILS_INTERNAL_TOKEN=dev-internal-token`
+- `LOG_LEVEL=debug`
+- `PLAYER_DATA_RAILS_BEARER_TOKEN` is not required for local player-data setup
+
+### Player-data Profile Smoke
+
+Use these checks after starting the game-server and Rails API with the shared `.env` loaded.
+
+```bash
+curl -s http://localhost:8080/health
+curl -s http://localhost:3000/health
+curl -s -X POST http://localhost:8080/api/player-data/profile -H 'Content-Type: application/json' -d '{"play_mode":"single_player","identity_kind":"guest"}'
+```
+
+When testing from WSL, the saved Godot token is under a Windows profile path like:
+
+```text
+/mnt/c/Users/<you>/AppData/Roaming/Godot/app_userdata/<project>/auth_token.json
+```
+
+Read that token value and send it as a bearer token for an authenticated profile smoke check:
+
+```bash
+TOKEN=$(jq -r '.token' /mnt/c/Users/<you>/AppData/Roaming/Godot/app_userdata/<project>/auth_token.json)
+curl -s -X POST http://localhost:8080/api/player-data/profile -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"play_mode":"multiplayer","identity_kind":"authenticated_account"}'
+```
+
+Expected behavior:
+
+- Guest stats are transient and reset when the game-server restarts.
+- Authenticated stats persist in Rails/Postgres.
 
 ## Run The API Server
 
@@ -259,6 +297,7 @@ From the repo root:
 
 ```bash
 cd services/api-server
+set -a && source ../../.env && set +a
 bundle install
 bundle exec rails db:create
 bundle exec rails test
@@ -274,6 +313,7 @@ The API server listens on `:3000` by default and exposes:
 - `POST /api/auth/discord/login_sessions/:id/exchange`
 - `GET /api/auth/me`
 - `DELETE /api/auth/logout`
+- `POST /api/internal/player-data/stats`
 
 ### API Auth Development
 
@@ -282,6 +322,7 @@ Make sure the database is migrated before testing the browser sign-in flow.
 
 ```bash
 cd services/api-server
+set -a && source ../../.env && set +a
 bundle exec rails db:migrate
 RAILS_ENV=test bundle exec rails db:test:prepare
 bundle exec rails test

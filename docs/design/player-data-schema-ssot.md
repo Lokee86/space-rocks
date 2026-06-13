@@ -71,6 +71,18 @@ For V1 multiplayer, the winner is the authenticated player with the highest matc
 Guest summaries use no durable identity.
 Wins remain account/multiplayer-only, and Local Profile excludes wins.
 
+## Read/Write Symmetry
+
+The logical `Stats` contract is used for both writes and reads through the player-data runtime.
+
+- Writes use `RecordMatchResult` through the player-data runtime.
+- Reads use `LoadStats` through the player-data runtime.
+- The runtime selects the backing store after mode and identity validation.
+- Backing store selection is not a client concern.
+- The same logical stats payload is normalized for profile display regardless of whether it came from guest memory, SQLite, or Rails/Postgres.
+- `ship_deaths` comes from authoritative server match facts, not client-side presentation counting.
+- The client must not count or mutate profile stats from game-over presentation.
+
 ## Logical Schema Versus Physical Database Schema
 
 This SSoT is for logical player-data contracts, not raw database DDL.
@@ -91,8 +103,8 @@ Physical schemas may differ because Rails/Postgres and the embedded DB may have 
 
 Physical schemas must still satisfy the shared logical contract.
 
-Go `MatchResultSummary` structs and builders exist in the player-data runtime, and the game-server now reports resolved `MatchResultSummary` through `services/player-data`.
-`services/player-data` routes `RecordMatchResult` by identity kind: Authenticated Account uses Rails/Postgres through `RailsStore`, Local Profile uses embedded SQLite through the local store, and Guest uses guest/no-durable behavior.
+Go `MatchResultSummary` structs and builders exist in the player-data runtime, and the game-server reports resolved `MatchResultSummary` through `services/player-data` for both write and read flows.
+`services/player-data` routes `RecordMatchResult` and `LoadStats` by identity kind: Authenticated Account uses Rails/Postgres through `RailsStore`, Local Profile uses embedded SQLite through the local store, and Guest uses guest/no-durable behavior.
 
 ## Scope
 
@@ -196,5 +208,6 @@ Future contract tests:
 Guest uses singleton in-memory unsaved stats.
 Authenticated Account uses Rails/Postgres physical stats persistence.
 Local Profile uses embedded SQLite physical stats persistence.
+Profile reads are implemented through the data-handler and player-data runtime, not left as future work.
 
 ## Deferred Work
