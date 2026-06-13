@@ -104,6 +104,18 @@ The goal is simple: gameplay can end, the HUD can be hidden, and match-over UI c
 - AppEntry and session-level owners execute route changes.
 - `MatchResultsFlow` and `GameplayMenuFlow` should forward intent, not perform outer navigation.
 
+## Match Results Data Path
+
+The authoritative ownership chain is `room.MarkGameOver / ResolvedMatchSummary -> BuildRoomSnapshot.MatchResult -> room_snapshot.match_result -> RoomSessionController.latest_match_result -> MatchEndFlow provider -> MatchResultsFlow`.
+
+`MatchEndFlow` remains presentation orchestration only.
+
+`MatchResultsFlow` owns mounting, clearing, button-intent forwarding, and row rendering.
+
+The result payload is presentation-safe and excludes `account_id` and `local_profile_id`.
+
+The current Match Results columns are `PLAYER`, `DEATHS`, and `SCORE`. `kills` is not currently displayed or tracked there.
+
 ## What Not To Do
 
 - Do not mount gameplay-session UI under `UserInterface`.
@@ -114,12 +126,5 @@ The goal is simple: gameplay can end, the HUD can be hidden, and match-over UI c
 - Do not make `MatchResultsFlow` own route changes or persistence.
 - Do not make `GameplayMenuFlow` own match-end orchestration.
 - Do not treat local elimination as room match-over.
-- Do not claim authoritative result population is complete unless that specific flow is already implemented.
+- Do not add result data to the ticked gameplay `StatePacket`.
 - Do not bypass the `GameplayUserInterface` input guard by relying on the whole `UserInterface` CanvasLayer.
-## Match Results Data Path
-
-When the game server reaches room `GameOver`, it resolves the authoritative `MatchResultSummary` and includes presentation-safe data in `room_snapshot.match_result`.
-
-`RoomSessionController` caches that payload, `MatchEndFlow` reads it through its provider, and `MatchResultsFlow` renders the rows.
-
-The current Match Results columns are `PLAYER`, `DEATHS`, and `SCORE`. `kills` is not currently shown or tracked there, and `account_id` / `local_profile_id` are not exposed to the UI payload.
