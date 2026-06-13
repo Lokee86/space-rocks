@@ -9,7 +9,7 @@ foreground_background_offset = [480.0, 270.0]
 planet_background_offset = [0.0, 0.0]
 
 [constants.client.presentation.rendering]
-player_interpolation_speed = 18.0
+player_interpolation_speed = 72.0
 asteroid_z_index = 15
 pickup_z_index = 10
 bullet_z_index = 20

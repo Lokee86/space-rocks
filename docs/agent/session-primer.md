@@ -34,7 +34,8 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Client menu-flow Phase 2 is complete and green: Pregame Play Endless starts the old single-player flow, `MenuFlowController` clears menu UI when gameplay starts, and Pregame Back still returns to Main Menu.
 - Client menu-flow Phase 3 is complete and green: signed-out Multiplayer opens `LoginWindow`, Discord login works from the Sign In screen, signed-in Multiplayer routes to Pregame, and successful Discord auth returns to Multiplayer Pregame.
 - Client menu-flow Phase 4 is complete and green: Multiplayer Pregame Create/Join/Logout work, and Lobby Leave returns to Multiplayer Pregame without logging out.
-- Next near-term work is a real end-to-end smoke across Rails + Go + Godot, plus Godot stats fetch/display and Local Profile UX/create/select/save guest profile.
+- Client menu-flow Phase 5 is complete and green: profile readout transmission mounts `profile_readout.tscn` under `TransmissionScreen/ScreenDisplay`, and the readout fills callsign plus stat labels for guest and authenticated account contexts.
+- Next near-term work is Match Results plus the small `GameMenuFlow` fix, then Local Pilot / Guest selector, then final stats refresh smoke.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
@@ -58,9 +59,9 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Keep packet and constants changes flowing through the source-of-truth TOML plus data-sync path.
 - Keep pickup presentation blink client-side from age/lifespan packet state.
 - Profile readout transmission is complete; do not re-open it as the next slice.
-- Local Pilot / Guest selector is deferred unless required by profile context.
-- Match Results is deferred.
-- Stats refresh / final smoke is no longer a blocker for profile readout.
+- Match Results plus the small `GameMenuFlow` fix is the next active slice.
+- Local Pilot / Guest selector is deferred until after Match Results.
+- Stats refresh / final smoke remains the last slice.
 - Active-game and personal-death menu behavior should not change, and multiplayer Lobby Leave should return to Multiplayer Pregame without logging out.
 
 ## Common Mistakes To Avoid

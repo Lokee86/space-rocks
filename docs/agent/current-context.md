@@ -89,10 +89,14 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Valid Join uses the existing join-room path and clears menu UI.
 - Multiplayer Pregame Logout returns to Main Menu signed out.
 - Lobby Leave now returns to Multiplayer Pregame without logging out.
+- Client menu-flow Phase 5 / Profile readout transmission is complete and green.
 - Remaining client work:
-  - Local Pilot / Guest selection
-  - Match Results window
-- Profile readout transmission is complete.
+  - Match Results window plus GameMenuFlow fix
+  - Local Pilot / Guest selector
+  - Stats refresh / final smoke
+- Phase 6 is the next active client slice.
+- Phase 7 is Local Pilot / Guest selector.
+- Phase 8 is final smoke.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.

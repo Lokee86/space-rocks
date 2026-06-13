@@ -2,7 +2,7 @@
 
 This document defines the canonical client menu-flow design for the final Multiplayer V1.1 client slice.
 
-This is not a separate Phase 6. It is the final client slice for Multiplayer V1.1.
+Phase 5 is complete. Phase 6 is the next active client slice for Multiplayer V1.1.
 
 ## Implementation Status
 
@@ -10,6 +10,7 @@ Phase 1 / foundation slice is complete and green.
 Phase 2 / single-player pregame action slice is complete and green.
 Phase 3 / Sign In screen slice is complete and green.
 Phase 4 / Multiplayer pre-lobby actions slice is complete and green.
+Phase 5 / Profile readout transmission slice is complete and green.
 
 Completed Phase 1:
 
@@ -53,12 +54,19 @@ Completed Phase 4:
 - Logout from Multiplayer Pregame returns to Main Menu signed out.
 - Lobby Leave now sends leave-room, clears Lobby, and returns to Multiplayer Pregame without logging out.
 
+Completed Phase 5:
+
+- Profile button opens `profile_readout.tscn` through the transmission seam.
+- Profile readout mounts under `TransmissionScreen/ScreenDisplay`.
+- Profile readout fills callsign, activity status, and stat labels from the profile flow.
+- Single-player guest profile reads are supported.
+- Multiplayer authenticated account profile reads are supported.
+
 ## Remaining Client Slice Plan
 
-1. Profile readout transmission
-2. Local Pilot / Guest selection
-3. Match Results window
-4. Stats refresh / final smoke
+1. Match Results window plus GameMenuFlow fix
+2. Local Pilot / Guest selector
+3. Stats refresh / final smoke
 
 ## Rollout Tracker
 
@@ -71,9 +79,9 @@ Completed Phase 4:
 - [x] Sign In screen
 - [x] Multiplayer Create/Join/Logout from Pregame
 - [x] Lobby Leave returns to Multiplayer Pregame
-- [ ] Local Pilot / Guest selector
-- [ ] Profile readout transmission
+- [x] Profile readout transmission
 - [ ] Match Results window
+- [ ] Local Pilot / Guest selector
 - [ ] Stats refresh / final smoke
 
 ## High-Level Scene Flow
@@ -169,3 +177,4 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 - Multiplayer Lobby uses the existing return-to-lobby flow.
 - `MenuButton` leaves the room and returns to Pregame Menu.
 - `QuitButton` leaves the room and returns to Main Menu.
+- Phase 6 also includes the small `GameMenuFlow` fix needed to keep the match-results path wired correctly.

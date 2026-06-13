@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://412e1vyhip6e"]
 
-[ext_resource type="Script" path="res://scripts/ui/lobby/join_dialog.gd" id="1_l5etu"]
+[ext_resource type="Script" uid="uid://npj4seprn1kk" path="res://scripts/ui/lobby/join_dialog.gd" id="1_l5etu"]
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="2_ofq8e"]
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="3_pxrsk"]
 [ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="4_snkjr"]
@@ -19,66 +19,84 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_l5etu")
 
-[node name="JoinDialogWindow" type="TextureRect" parent="." unique_id=292150501]
-custom_minimum_size = Vector2(550, 350)
+[node name="Control" type="Control" parent="." unique_id=1091081701]
 layout_mode = 2
+
+[node name="JoinDialogWindow" type="TextureRect" parent="Control" unique_id=292150501]
+custom_minimum_size = Vector2(550, 350)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -171.0
+offset_top = -109.0
+offset_right = 379.0
+offset_bottom = 241.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.6, 0.6)
 texture = ExtResource("2_ofq8e")
 expand_mode = 1
 
-[node name="CenterContainer" type="CenterContainer" parent="JoinDialogWindow" unique_id=2108395624]
+[node name="CenterContainer" type="CenterContainer" parent="Control/JoinDialogWindow" unique_id=2108395624]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -1.6666641
+offset_right = -1.666687
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="JoinDialogWindow/CenterContainer" unique_id=1329670556]
+[node name="MarginContainer" type="MarginContainer" parent="Control/JoinDialogWindow/CenterContainer" unique_id=1329670556]
 layout_mode = 2
 theme_override_constants/margin_bottom = 58
 
-[node name="VBoxContainer" type="VBoxContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer" unique_id=1831326785]
+[node name="VBoxContainer" type="VBoxContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer" unique_id=1831326785]
 layout_mode = 2
 theme_override_constants/separation = 38
 
-[node name="MarginContainer2" type="MarginContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer" unique_id=1594363464]
+[node name="MarginContainer2" type="MarginContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer" unique_id=1594363464]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/MarginContainer2" unique_id=515996976]
+[node name="Label" type="Label" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/MarginContainer2" unique_id=515996976]
 layout_mode = 2
 text = "Join Room"
 label_settings = ExtResource("3_pxrsk")
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer" unique_id=610355699]
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer" unique_id=610355699]
 layout_mode = 2
 theme_override_constants/separation = 13
 
-[node name="CenterContainer" type="CenterContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=358964865]
+[node name="CenterContainer" type="CenterContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=358964865]
 layout_mode = 2
 
-[node name="InputPanel" type="VBoxContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer" unique_id=2006584329]
+[node name="InputPanel" type="VBoxContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer" unique_id=2006584329]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="RoomID" type="Label" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=1660372445]
+[node name="RoomID" type="Label" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=1660372445]
 layout_mode = 2
 text = "Room ID"
 label_settings = SubResource("LabelSettings_7yrwt")
 horizontal_alignment = 1
 
-[node name="RoomCodeInput" type="LineEdit" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=535104702]
+[node name="RoomCodeInput" type="LineEdit" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=535104702]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 alignment = 1
 max_length = 9
-unique_name_in_owner = true
 
-[node name="spacer1" type="Control" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=487622310]
+[node name="spacer1" type="Control" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=487622310]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="StatusLabel" type="Label" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=2040638848]
+[node name="StatusLabel" type="Label" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/CenterContainer/InputPanel" unique_id=2040638848]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(225, 80)
 layout_mode = 2
 text = "Create a room or 
@@ -86,18 +104,17 @@ enter an ID to
 join."
 label_settings = ExtResource("3_pxrsk")
 autowrap_mode = 2
-unique_name_in_owner = true
 
-[node name="ButtonPanel" type="VBoxContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1091220375]
+[node name="ButtonPanel" type="VBoxContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1091220375]
 layout_mode = 2
 alignment = 1
 
-[node name="JoinButton" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel" unique_id=928907867 instance=ExtResource("5_y7pkf")]
+[node name="JoinButton" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel" unique_id=928907867 instance=ExtResource("5_y7pkf")]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(220, 80)
 layout_mode = 2
-unique_name_in_owner = true
 
-[node name="CenterContainer" type="CenterContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/JoinButton" unique_id=1545085902]
+[node name="CenterContainer" type="CenterContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/JoinButton" unique_id=1545085902]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -105,12 +122,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/JoinButton/CenterContainer" unique_id=693628587]
+[node name="MarginContainer" type="MarginContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/JoinButton/CenterContainer" unique_id=693628587]
 layout_mode = 2
 theme_override_constants/margin_right = 3
 theme_override_constants/margin_bottom = 6
 
-[node name="Join" type="Label" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/JoinButton/CenterContainer/MarginContainer" unique_id=1276700734]
+[node name="Join" type="Label" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/JoinButton/CenterContainer/MarginContainer" unique_id=1276700734]
 layout_mode = 2
 text = "
 
@@ -118,12 +135,12 @@ text = "
 JOIN"
 label_settings = ExtResource("6_kwgio")
 
-[node name="CancelButton" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel" unique_id=449798243 instance=ExtResource("5_y7pkf")]
+[node name="CancelButton" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel" unique_id=449798243 instance=ExtResource("5_y7pkf")]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(220, 80)
 layout_mode = 2
-unique_name_in_owner = true
 
-[node name="CenterContainer" type="CenterContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/CancelButton" unique_id=1109250174]
+[node name="CenterContainer" type="CenterContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/CancelButton" unique_id=1109250174]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -131,12 +148,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/CancelButton/CenterContainer" unique_id=127693459]
+[node name="MarginContainer" type="MarginContainer" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/CancelButton/CenterContainer" unique_id=127693459]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_bottom = 6
 
-[node name="Cancel" type="Label" parent="JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/CancelButton/CenterContainer/MarginContainer" unique_id=438916337]
+[node name="Cancel" type="Label" parent="Control/JoinDialogWindow/CenterContainer/MarginContainer/VBoxContainer/HBoxContainer/ButtonPanel/CancelButton/CenterContainer/MarginContainer" unique_id=438916337]
 layout_mode = 2
 text = "
 

@@ -24,7 +24,7 @@ const PLANET_BACKGROUND_OFFSET := Vector2(0.0, 0.0)
 # data-sync:end constants.client.presentation.background
 
 # data-sync:start constants.client.presentation.rendering
-const PLAYER_INTERPOLATION_SPEED := 18.0
+const PLAYER_INTERPOLATION_SPEED := 72.0
 const ASTEROID_Z_INDEX := 15
 const PICKUP_Z_INDEX := 10
 const BULLET_Z_INDEX := 20
