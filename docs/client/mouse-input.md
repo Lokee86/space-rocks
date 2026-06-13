@@ -6,6 +6,7 @@ Related references:
 
 - [Canonical targeting reference](../server/targeting.md)
 - [Devtools toggles and player-target controls](../devtools/toggles.md)
+- [Match end and gameplay UI ownership](match-end-and-gameplay-ui.md)
 
 ## Semantic Actions
 
@@ -24,6 +25,16 @@ Pending placement/action has priority over generic target behavior.
 
 - Pending placement/action owns left click until it is completed or canceled.
 - Right click or Escape cancels pending action before generic deselect behavior runs.
+
+## Gameplay UI Input Protection
+
+- `UserInterface` is the CanvasLayer in `client/scenes/game.tscn`.
+- `GameplayUserInterface` is the gameplay-session UI root.
+- HUD, Match Results, and overlay `GameMenu` live under `GameplayUserInterface`.
+- Gameplay input should not consume pressed mouse-button events when the hovered `Control` is `GameplayUserInterface` or one of its descendants.
+- The policy should not protect the whole `UserInterface`, because app/menu/lobby screens are separate ownership.
+- Godot handles topmost `Control` click delivery; the gameplay input policy only gates gameplay input.
+- See [Match End And Gameplay UI](match-end-and-gameplay-ui.md) for the full ownership map.
 
 ## Target Selection and Server Confirmation
 

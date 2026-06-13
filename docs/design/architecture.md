@@ -31,6 +31,7 @@ Current client runtime seams:
 - `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`: gameplay state application seam for packet reading and normalized state application order.
 - `client/scripts/gameplay/runtime/gameplay_process_flow.gd`: per-frame gameplay processing seam for the runtime/input/spectate order.
 - `client/scripts/gameplay/gameplay_composition.gd`: gameplay flow construction and fanout only. `GameplaySessionController` keeps packet gating and outer lifecycle consequences. `GameplayComposition` should not own packet parsing, connection shutdown, session clearing, menu show/hide, or gameplay rules.
+- `client/scripts/gameplay/match_end/`: client match-end orchestration seam. `MatchEndFlow` distinguishes local elimination from authoritative room match-over, coordinates presentation only, and leaves authoritative match-over/results ownership to the server.
 - `client/scripts/gameplay/runtime/`: gameplay runtime composition/delegation context. `GameplayRuntimeContext` stays focused on wiring focused runtime seams rather than acting as a read-model passthrough bucket.
 - `client/scripts/gameplay/state/`: gameplay packet/state readers and normalized state helpers.
 - `client/scripts/gameplay/input/`: local gameplay input polling/routing, including movement, pause/menu, respawn, spectate input routes, and devtools input ownership.
@@ -41,13 +42,15 @@ Current client runtime seams:
 - `client/scripts/devtools/telemetry/`: devtools telemetry seam for debug-only world metrics, overlay flow, RTT tracking, and packet-age display plumbing.
 - `client/scripts/devtools/dev_tools_session_flow.gd`: devtools gameplay session seam for runtime wiring. `GameplaySessionController` delegates devtools input, per-frame processing, and placement routing to this flow.
 - Server hitbox rendering is owned by client devtools. The overlay scene lives under `client/scenes/devtools/`, the drawing/template code lives under `client/scripts/devtools/hitboxes/`, and `WorldSync` exposes read-only draw-entry data only. `GameplayRuntimeContext` does not own or expose that draw-entry data. Normal gameplay entities do not draw their own debug collision outlines.
-- `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing.
+- `client/scripts/gameplay/menu/`: gameplay menu flow and semantic menu lifecycle signal routing. `GameplayMenuFlow` remains the Esc/gameplay menu owner, including overlay match-over behavior.
+- `client/scripts/ui/match_results/`: match result window presentation flow for `match_result_window.tscn`.
 - `client/scripts/gameplay/respawn/`: respawn request and confirmation state.
 - `client/scripts/gameplay/spectate/`: spectate state, menu requests, and view target selection/cycling; it does not own remote camera nodes.
 - `client/scripts/gameplay/spectate/spectate_session_flow.gd`: spectate session wiring. `SpectateSessionFlow` owns `SpectateMenuState` creation, menu/shell configuration, gameplay-state application, and reset delegation.
 - `client/scripts/gameplay/presentation/`: client-side presentation policy, including player hue application and OS indicator hue matching.
 - `client/scripts/gameplay/events/`: server event lane and death/game-over consequences.
-- `client/scripts/gameplay/effects/`: gameplay effects helper used by event/effects flows.
+- `client/scripts/gameplay/effects/`: gameplay effects helper used by event/effects flows. The event/effects/audio path owns game-over sound playback, delay, and one-shot gating.
+- `client/scripts/gameplay/hud/`: gameplay HUD flow and runtime HUD ticking. `GameplayHudFlow` owns HUD visibility mechanics and the match-over visibility lock.
 - `client/scripts/lobby/`: lobby shell/presenter/network action flows.
 - `client/scripts/boot/`: boot flow and pending boot request.
 - `client/scripts/config/`: client config flows.
@@ -61,6 +64,12 @@ Current client runtime seams:
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/generated/networking/packets/packets.gd` and `client/scripts/generated/constants/constants.gd`: generated/shared client packet helpers and constants.
+
+`UserInterface` and `GameplayUserInterface` are the client scene UI roots in `client/scenes/game.tscn`.
+
+- `UserInterface` is the CanvasLayer root for Main Menu, Pregame Menu, LoginWindow, JoinDialog, and MultiplayerLobby.
+- `GameplayUserInterface` is the gameplay-session UI root for HUD, Match Results, overlay `GameMenu`, and future gameplay modals.
+- `GameplayUserInterface` should ignore mouse input so it does not block sibling app/menu screens.
 
 `GameplayDevtoolsContext` is a composition facade for devtools coordination. It constructs the devtools contexts, delegates reset/process/public wrapper methods, and keeps the outer API stable while the owned responsibilities live under `client/scripts/devtools/context/`. It is not owned by gameplay HUD flows and not owned by `gameplay_shell_flow.gd`.
 
@@ -84,6 +93,8 @@ Client runtime flow:
 6. Incoming gameplay state is normalized by `client/scripts/gameplay/state/` and applied by `client/scripts/gameplay/runtime/`.
 7. `client/scripts/world/world_sync.gd` updates renderable player/render-origin state through `PlayerRenderApi` and updates bullet and asteroid state through their focused sync owners.
 8. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
+
+Match-end client presentation is summarized in [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
 
 Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. Normal gameplay follows the active ViewAnchor render origin after initial spawn. Spectate keeps viewport/camera ownership local/client-owned, uses the selected active player as the current view reference only through the ViewAnchor seam, and requires the background/parallax to sample the same view reference as the camera.
 
