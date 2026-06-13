@@ -90,7 +90,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Multiplayer Pregame Logout returns to Main Menu signed out.
 - Lobby Leave now returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 / Profile readout transmission is complete and green.
-- Client match-end Phase 6 is active through `MatchEndFlow`; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
+- Client match-end Phase 6 / Match Results is complete and green; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
 - `UserInterface` is the CanvasLayer in `client/scenes/game.tscn`.
 - `GameplayUserInterface` is the gameplay-session UI root.
 - HUD, Match Results, and overlay `GameMenu` belong under `GameplayUserInterface`.
@@ -126,4 +126,4 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Client packet codec callers now consume `PacketEncodeResult` and `PacketDecodeResult`; the codec at `client/scripts/networking/packets/packet_codec.gd` owns JSON parsing plus envelope validation only.
 ## Current State
 
-Match Results are populated from `room_snapshot.match_result`. `MatchEndFlow` remains presentation orchestration, and `RoomSessionController` owns the cached result payload.
+Match Results are populated from `room_snapshot.match_result`. `RoomSessionController` owns the cached result payload, `MatchEndFlow` remains presentation orchestration, and `MatchResultsFlow` owns result-window presentation.

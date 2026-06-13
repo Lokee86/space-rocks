@@ -2,7 +2,7 @@
 
 This document defines the canonical client menu-flow design for the final Multiplayer V1.1 client slice.
 
-Phase 5 is complete. Phase 6 is the next active client slice for Multiplayer V1.1.
+Phase 5 is complete. Phase 6 / Match Results is complete and green.
 
 ## Implementation Status
 
@@ -62,11 +62,20 @@ Completed Phase 5:
 - Single-player guest profile reads are supported.
 - Multiplayer authenticated account profile reads are supported.
 
+Completed Phase 6:
+
+- Match Results window is complete and green.
+- `room_snapshot.match_result` is the data source.
+- `RoomSessionController` caches the payload.
+- `MatchEndFlow` passes rows to `MatchResultsFlow`.
+- Result rows render as `PLAYER / DEATHS / SCORE`.
+- `kills` is not shown.
+- Result button route execution remains session/AppEntry-owned.
+
 ## Remaining Client Slice Plan
 
-1. Match Results window plus GameMenuFlow fix
-2. Local Pilot / Guest selector
-3. Stats refresh / final smoke
+1. Local Pilot / Guest selector
+2. Stats refresh / final smoke
 
 ## Rollout Tracker
 
@@ -80,7 +89,7 @@ Completed Phase 5:
 - [x] Multiplayer Create/Join/Logout from Pregame
 - [x] Lobby Leave returns to Multiplayer Pregame
 - [x] Profile readout transmission
-- [ ] Match Results window
+- [x] Match Results window
 - [ ] Local Pilot / Guest selector
 - [ ] Stats refresh / final smoke
 
@@ -174,20 +183,12 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 ## Match Results
 
 - `match_result_window.tscn` and `player_score_row.tscn` are used.
-- Match Results replaces authoritative room match-over presentation only.
-- Local player elimination is not room match-over.
-- Active game, personal death, and personal game-over behavior remain unchanged.
-- `LobbyReplayButton` says Replay in single-player and Lobby in multiplayer.
-- Multiplayer Lobby uses the existing return-to-lobby flow.
-- `MenuButton` leaves the room and returns to Pregame Menu.
-- `QuitButton` leaves the room and returns to Main Menu.
-- `MatchEndFlow` owns match-end orchestration and routes match-over presentation through the owning gameplay flows.
-- `MatchResultsFlow` owns the result window presentation.
+- `room_snapshot.match_result` is the data source.
+- `RoomSessionController` caches the payload.
+- `MatchEndFlow` passes rows to `MatchResultsFlow`.
+- `PLAYER / DEATHS / SCORE` are the current columns.
+- `kills` is not shown.
+- `account_id` / `local_profile_id` stay out of the UI payload.
+- Result button route execution remains session/AppEntry-owned.
 - `GameplayMenuFlow` remains the permanent Esc/gameplay menu owner.
-- Result button route execution is session/AppEntry-owned, not scene-owned.
 - See [docs/client/match-end-and-gameplay-ui.md](match-end-and-gameplay-ui.md) for the full match-end and gameplay UI ownership map.
-## Match Results
-
-Match Results are driven by presentation-safe `room_snapshot.match_result` data from the game server. `RoomSessionController` caches the payload, `MatchEndFlow` hands it to `MatchResultsFlow`, and the window renders `PLAYER / DEATHS / SCORE`.
-
-`kills` is not part of the current display, and `account_id` / `local_profile_id` stay out of the UI payload.
