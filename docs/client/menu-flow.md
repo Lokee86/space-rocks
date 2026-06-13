@@ -112,7 +112,10 @@ Mode and state belong outside route names.
 - `ProfileFlow` owns profile queries and view models.
 - `LocalPilotFlow` owns guest/local pilot selection.
 - `MultiplayerFlow` owns sign-in, create, join, and logout routing.
-- `MatchResultsFlow` owns match result population and button behavior.
+- `MatchEndFlow` owns match-end orchestration.
+- `MatchResultsFlow` owns result-window presentation and button intent forwarding.
+- `GameplayMenuFlow` remains the permanent Esc/gameplay menu owner, including overlay match-over behavior.
+- AppEntry and session-level owners execute the actual route changes that result-window and GameMenu intents request.
 
 `pregame_menu.gd` must not own API calls, profile parsing, local profile persistence, room create/join logic, or match row building.
 
@@ -171,10 +174,15 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 ## Match Results
 
 - `match_result_window.tscn` and `player_score_row.tscn` are used.
-- This replaces only room game-over flow.
+- Match Results replaces authoritative room match-over presentation only.
+- Local player elimination is not room match-over.
 - Active game, personal death, and personal game-over behavior remain unchanged.
 - `LobbyReplayButton` says Replay in single-player and Lobby in multiplayer.
 - Multiplayer Lobby uses the existing return-to-lobby flow.
 - `MenuButton` leaves the room and returns to Pregame Menu.
 - `QuitButton` leaves the room and returns to Main Menu.
-- Phase 6 also includes the small `GameMenuFlow` fix needed to keep the match-results path wired correctly.
+- `MatchEndFlow` owns match-end orchestration and routes match-over presentation through the owning gameplay flows.
+- `MatchResultsFlow` owns the result window presentation.
+- `GameplayMenuFlow` remains the permanent Esc/gameplay menu owner.
+- Result button route execution is session/AppEntry-owned, not scene-owned.
+- See [docs/client/match-end-and-gameplay-ui.md](match-end-and-gameplay-ui.md) for the full match-end and gameplay UI ownership map.

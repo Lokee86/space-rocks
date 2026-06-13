@@ -90,11 +90,17 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Multiplayer Pregame Logout returns to Main Menu signed out.
 - Lobby Leave now returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 / Profile readout transmission is complete and green.
+- Client match-end Phase 6 is active through `MatchEndFlow`; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
+- `UserInterface` is the CanvasLayer in `client/scenes/game.tscn`.
+- `GameplayUserInterface` is the gameplay-session UI root.
+- HUD, Match Results, and overlay `GameMenu` belong under `GameplayUserInterface`.
+- Pregame/login/join/lobby screens stay app/menu/lobby UI under `UserInterface`.
+- `MatchEndFlow` distinguishes local elimination from room match-over.
+- Local elimination must not show Match Results.
+- Room `GameOver` shows Match Results and hides/locks HUD.
 - Remaining client work:
-  - Match Results window plus GameMenuFlow fix
   - Local Pilot / Guest selector
   - Stats refresh / final smoke
-- Phase 6 is the next active client slice.
 - Phase 7 is Local Pilot / Guest selector.
 - Phase 8 is final smoke.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.

@@ -35,7 +35,8 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Client menu-flow Phase 3 is complete and green: signed-out Multiplayer opens `LoginWindow`, Discord login works from the Sign In screen, signed-in Multiplayer routes to Pregame, and successful Discord auth returns to Multiplayer Pregame.
 - Client menu-flow Phase 4 is complete and green: Multiplayer Pregame Create/Join/Logout work, and Lobby Leave returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 is complete and green: profile readout transmission mounts `profile_readout.tscn` under `TransmissionScreen/ScreenDisplay`, and the readout fills callsign plus stat labels for guest and authenticated account contexts.
-- Next near-term work is Match Results plus the small `GameMenuFlow` fix, then Local Pilot / Guest selector, then final stats refresh smoke.
+- Client match-end work uses `MatchEndFlow`; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
+- Next near-term work is Local Pilot / Guest selector, then final stats refresh smoke.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
