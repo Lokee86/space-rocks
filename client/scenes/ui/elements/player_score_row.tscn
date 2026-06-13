@@ -1,11 +1,13 @@
 [gd_scene format=3 uid="uid://cpgo7s8d6qjlc"]
 
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_m8y7s"]
+[ext_resource type="Script" path="res://scripts/ui/match_results/player_score_row.gd" id="2_player_score_row"]
 
 [node name="PlayerScoreRow" type="HBoxContainer" unique_id=2027068278]
 offset_right = 40.0
 offset_bottom = 40.0
 theme_override_constants/separation = 3
+script = ExtResource("2_player_score_row")
 
 [node name="PlayerIDLabel" type="Label" parent="." unique_id=81972819]
 unique_name_in_owner = true

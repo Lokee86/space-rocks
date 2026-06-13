@@ -111,7 +111,7 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 	room_session_controller.handle_room_snapshot(packet)
 	if room_session_controller.current_room_state() == Constants.ROOM_STATE_IN_GAME && gameplay_session_controller != null:
 		gameplay_session_controller.begin_accepting_gameplay_packets()
-	_refresh_game_over_menu_state()
+	_refresh_match_end_state()
 
 
 func _on_room_state_changed(packet: Dictionary) -> void:
@@ -120,7 +120,7 @@ func _on_room_state_changed(packet: Dictionary) -> void:
 	room_session_controller.handle_room_state_changed(packet)
 	if room_session_controller.current_room_state() == Constants.ROOM_STATE_IN_GAME && gameplay_session_controller != null:
 		gameplay_session_controller.begin_accepting_gameplay_packets()
-	_refresh_game_over_menu_state()
+	_refresh_match_end_state()
 
 
 func _on_room_error_received(packet: Dictionary) -> void:
@@ -154,9 +154,9 @@ func _on_player_pause_state_received(packet: Dictionary) -> void:
 	gameplay_session_controller.handle_player_pause_state(packet)
 
 
-func _refresh_game_over_menu_state() -> void:
-	if gameplay_session_controller != null && gameplay_session_controller.has_method("refresh_game_over_menu_state"):
-		gameplay_session_controller.refresh_game_over_menu_state()
+func _refresh_match_end_state() -> void:
+	if gameplay_session_controller != null && gameplay_session_controller.has_method("refresh_match_end_state"):
+		gameplay_session_controller.refresh_match_end_state()
 
 
 func _log(message: String) -> void:

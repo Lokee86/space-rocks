@@ -6,6 +6,7 @@ const GameplayFlowComposerScript = preload("res://scripts/gameplay/runtime/gamep
 
 signal gameplay_started
 signal quit_to_main_menu_requested
+signal return_to_pregame_requested(session_mode: String)
 signal return_to_lobby_requested
 
 var runtime_context
@@ -13,6 +14,7 @@ var flow_composer
 var gameplay_pause_state_flow
 var hud_flow
 var menu_flow
+var match_end_flow
 var has_received_state := false
 
 
@@ -26,16 +28,21 @@ func configure(
 	pickups: Node2D,
 	hud_flow_ref,
 	menu_flow_ref,
-	spectate_menu_state_ref = null
+	spectate_menu_state_ref = null,
+	match_end_flow_ref = null
 ) -> void:
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
+	match_end_flow = match_end_flow_ref
 	gameplay_pause_state_flow = GameplayPauseStateFlowScript.new()
 	if menu_flow != null:
 		menu_flow.configure_lifecycle_routes(
 			Callable(self, "_on_quit_to_main_menu_requested"),
 			Callable(self, "_on_return_to_lobby_requested")
-	)
+		)
+		var return_to_pregame_callable := Callable(self, "_on_return_to_pregame_requested")
+		if menu_flow.has_signal("return_to_pregame_requested") && !menu_flow.return_to_pregame_requested.is_connected(return_to_pregame_callable):
+			menu_flow.return_to_pregame_requested.connect(return_to_pregame_callable)
 	runtime_context = GameplayRuntimeContext.new()
 	runtime_context.configure_world(game_owner_ref, player_ref, view_anchor_ref, bullets, asteroids, pickups, gameplay_pause_state_flow.tracker())
 
@@ -53,7 +60,8 @@ func configure(
 		null,
 		null,
 		null,
-		null
+		null,
+		match_end_flow
 	)
 
 
@@ -140,3 +148,7 @@ func _on_quit_to_main_menu_requested() -> void:
 
 func _on_return_to_lobby_requested() -> void:
 	return_to_lobby_requested.emit()
+
+
+func _on_return_to_pregame_requested(session_mode: String) -> void:
+	return_to_pregame_requested.emit(session_mode)

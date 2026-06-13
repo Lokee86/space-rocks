@@ -17,6 +17,7 @@ var shell_boot_flow
 var client_config_sender: Callable
 var logger: Callable
 var latest_room_state := ""
+var latest_match_result := {}
 
 var lobby_flow
 var lobby_network_actions
@@ -93,6 +94,12 @@ func current_room_state() -> String:
 	if lobby_flow == null:
 		return ""
 	return lobby_flow.current_state().room_state
+
+
+func current_match_result() -> Dictionary:
+	if latest_match_result is Dictionary:
+		return latest_match_result
+	return {}
 
 
 func current_max_players() -> int:

@@ -12,7 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://3330785cfyqx" path="res://assets/icons/circle.png" id="12_ortc3"]
 [ext_resource type="Texture2D" uid="uid://bqbc0onmuo01s" path="res://assets/icons/right_arrow.png" id="13_5cktf"]
 [ext_resource type="Texture2D" uid="uid://bb27gnysei0lu" path="res://assets/icons/down_arrow.png" id="14_mbh67"]
-[ext_resource type="Script" path="res://scripts/ui/menus/pregame_menu.gd" id="15_pregame_menu_script"]
+[ext_resource type="Script" uid="uid://dqtfqn0bfia8r" path="res://scripts/ui/menus/pregame_menu.gd" id="15_pregame_menu_script"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_r532d"]
 font = ExtResource("4_avovy")
@@ -30,12 +30,11 @@ font_color = Color(0, 0, 0, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_pwtwa"]
 font = ExtResource("4_avovy")
-font_size = 11
+font_size = 12
 font_color = Color(0, 0, 0, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_sr72t"]
 font = ExtResource("4_avovy")
-font_size = 20
 font_color = Color(0, 0, 0, 1)
 
 [node name="PregameMenu" type="Control" unique_id=406582919]
@@ -286,6 +285,7 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "SELECT PILOT"
 label_settings = SubResource("LabelSettings_pwtwa")
+horizontal_alignment = 1
 
 [node name="MarginContainer2" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/SinglePlayerButtons/SelectPilotLogoutButton/CenterContainer" unique_id=833928836]
 layout_mode = 2

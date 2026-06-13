@@ -8,14 +8,18 @@ func test_single_player_button_routes_to_single_player_pregame() -> void:
 	var game := await _create_game()
 	var main_menu := game.get_node("%MainMenu") as Control
 	var single_player_button := main_menu.get_node("%SinglePlayerButton") as BaseButton
+	var user_interface := game.get_node("UserInterface") as CanvasLayer
+	var gameplay_user_interface := game.get_node("%GameplayUserInterface") as Control
 
 	single_player_button.emit_signal("pressed")
 	await get_tree().process_frame
 	await get_tree().process_frame
 
 	assert_false(main_menu.visible)
-	var pregame_menu := _find_pregame_menu(game.get_node("CanvasLayer") as CanvasLayer)
+	var pregame_menu := _find_pregame_menu(user_interface)
 	assert_not_null(pregame_menu)
+	assert_eq(pregame_menu.get_parent(), user_interface)
+	assert_ne(pregame_menu.get_parent(), gameplay_user_interface)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "SINGLE PLAYER")
 	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Guest"))
 
@@ -29,7 +33,7 @@ func test_single_player_pregame_play_endless_starts_game() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "SINGLE PLAYER")
@@ -54,7 +58,7 @@ func test_multiplayer_button_routes_signed_out_to_login_window() -> void:
 	await get_tree().process_frame
 
 	assert_false(main_menu.visible)
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	assert_not_null(_find_login_window(canvas_layer))
 	assert_null(_find_pregame_menu(canvas_layer))
 
@@ -69,7 +73,7 @@ func test_multiplayer_button_routes_signed_in_to_multiplayer_pregame() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "MULTIPLAYER")
@@ -86,7 +90,7 @@ func test_single_player_pregame_callsign_indicator_is_guest() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Guest"))
@@ -102,7 +106,7 @@ func test_signed_in_multiplayer_pregame_callsign_indicator_uses_display_name() -
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Ada"))
@@ -127,7 +131,7 @@ func test_successful_auth_from_login_window_routes_to_multiplayer_pregame() -> v
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	assert_not_null(_find_login_window(canvas_layer))
 
 	await _force_signed_in(game)
@@ -150,7 +154,7 @@ func test_multiplayer_pregame_create_clears_menu_and_requests_create_room() -> v
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "MULTIPLAYER")
@@ -177,7 +181,7 @@ func test_multiplayer_pregame_join_opens_join_dialog() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 
@@ -199,7 +203,7 @@ func test_join_dialog_valid_code_clears_menu_and_requests_join_room() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 
@@ -233,7 +237,7 @@ func test_join_dialog_cancel_returns_to_multiplayer_pregame() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 
@@ -263,7 +267,7 @@ func test_multiplayer_pregame_logout_returns_to_main_menu_signed_out() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "MULTIPLAYER")
@@ -282,7 +286,7 @@ func test_multiplayer_pregame_logout_returns_to_main_menu_signed_out() -> void:
 func test_lobby_leave_return_destination_opens_multiplayer_pregame() -> void:
 	var game := await _create_game()
 	var main_menu := game.get_node("%MainMenu") as Control
-	var canvas_layer := game.get_node("CanvasLayer") as CanvasLayer
+	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 
 	await _force_signed_in(game)
 	assert_true(main_menu.visible)

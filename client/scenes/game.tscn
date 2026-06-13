@@ -125,11 +125,22 @@ visible = false
 
 [node name="Camera2D" type="Camera2D" parent="ViewAnchor" unique_id=593176064]
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1725241940]
+[node name="UserInterface" type="CanvasLayer" parent="." unique_id=1725241940]
 
-[node name="MainMenu" parent="CanvasLayer" unique_id=1939259662 instance=ExtResource("1_wu7gp")]
+[node name="GameplayUserInterface" type="Control" parent="UserInterface" unique_id=619327408]
 unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
-[node name="HUD" parent="CanvasLayer" unique_id=229965824 instance=ExtResource("7_mdqg4")]
+[node name="HUD" parent="UserInterface/GameplayUserInterface" unique_id=229965824 instance=ExtResource("7_mdqg4")]
 unique_name_in_owner = true
 visible = false
+layout_mode = 1
+
+[node name="MainMenu" parent="UserInterface" unique_id=1939259662 instance=ExtResource("1_wu7gp")]
+unique_name_in_owner = true

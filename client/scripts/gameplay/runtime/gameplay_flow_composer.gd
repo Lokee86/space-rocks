@@ -18,6 +18,7 @@ var spectate_context
 var gameplay_state_apply_flow
 var gameplay_process_flow
 var server_hitbox_overlay_flow
+var match_end_flow
 
 
 func configure(
@@ -31,8 +32,10 @@ func configure(
 	input_context_ref = null,
 	devtools_context_ref = null,
 	gameplay_state_apply_flow_ref = null,
-	gameplay_process_flow_ref = null
+	gameplay_process_flow_ref = null,
+	match_end_flow_ref = null
 ) -> void:
+	match_end_flow = match_end_flow_ref
 	event_lifecycle_flow = GameplayEventLifecycleFlowScript.new()
 	event_lifecycle_flow.configure(
 		game_owner_ref,
@@ -42,7 +45,8 @@ func configure(
 		player_ref,
 		Callable(runtime_context_ref.world_sync, "visual_position_for_server_position"),
 		null,
-		null
+		null,
+		match_end_flow
 	)
 
 	alive_restore_flow = GameplayAliveRestoreFlowScript.new()
@@ -50,7 +54,7 @@ func configure(
 		runtime_context_ref.world_sync,
 		runtime_context_ref.respawn_flow,
 		hud_flow_ref,
-		menu_flow_ref,
+		match_end_flow,
 		player_ref
 	)
 

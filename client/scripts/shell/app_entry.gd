@@ -18,7 +18,8 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 @onready var main_menu: Control = %MainMenu
-@onready var canvas_layer: CanvasLayer = $CanvasLayer
+@onready var user_interface: CanvasLayer = $UserInterface
+@onready var gameplay_user_interface: Control = %GameplayUserInterface
 @onready var repeated_background: TextureRect = %RepeatedBackground
 @onready var repeated_foreground_background: TextureRect = %RepeatedForegroundBackground
 @onready var repeated_planet_background: TextureRect = %RepeatedPlanetBackground
@@ -87,11 +88,14 @@ func _ready() -> void:
 		asteroids,
 		pickups,
 		hud,
+		gameplay_user_interface,
 		main_menu,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_shell_boot_flow(),
 		Callable(self, "_log_shell_status")
 	)
+	gameplay_session_controller.replay_requested.connect(_on_gameplay_replay_requested)
+	gameplay_session_controller.return_to_pregame_requested.connect(_on_gameplay_return_to_pregame_requested)
 
 	session_network_controller = SessionNetworkController.new()
 	session_network_controller.configure(
@@ -107,7 +111,7 @@ func _ready() -> void:
 	room_session_controller = RoomSessionController.new()
 	room_session_controller.configure(
 		main_menu,
-		canvas_layer,
+		user_interface,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_connection_service(),
 		session_boot_controller.get_shell_boot_flow(),
@@ -119,6 +123,9 @@ func _ready() -> void:
 
 	gameplay_session_controller.configure_room_state_provider(
 		Callable(room_session_controller, "current_room_state")
+	)
+	gameplay_session_controller.configure_match_result_provider(
+		Callable(room_session_controller, "current_match_result")
 	)
 	gameplay_session_controller.configure_room_max_players_provider(
 		Callable(room_session_controller, "current_max_players")
@@ -136,7 +143,7 @@ func _ready() -> void:
 
 	menu_flow_controller = MenuFlowController.new()
 	menu_flow_controller.configure(
-		canvas_layer,
+		user_interface,
 		main_menu,
 		Callable(self, "_start_single_player_from_pregame"),
 		Callable(auth_session_controller, "request_discord_sign_in"),
@@ -230,6 +237,22 @@ func _on_single_player_requested() -> void:
 func _on_logout_requested() -> void:
 	_log_shell_status("App entry logout requested")
 	auth_session_controller.logout()
+
+
+func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
+	_log_shell_status("App entry gameplay return to pregame requested: %s" % session_mode)
+	if menu_flow_controller == null:
+		return
+	if session_mode == Constants.SESSION_MODE_MULTIPLAYER:
+		menu_flow_controller.show_multiplayer_pregame()
+		return
+
+	menu_flow_controller.show_single_player_pregame()
+
+
+func _on_gameplay_replay_requested() -> void:
+	_log_shell_status("App entry gameplay replay requested")
+	_start_single_player_from_pregame()
 
 
 func _start_single_player_from_pregame() -> void:
