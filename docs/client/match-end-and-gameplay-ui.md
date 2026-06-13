@@ -116,3 +116,10 @@ The goal is simple: gameplay can end, the HUD can be hidden, and match-over UI c
 - Do not treat local elimination as room match-over.
 - Do not claim authoritative result population is complete unless that specific flow is already implemented.
 - Do not bypass the `GameplayUserInterface` input guard by relying on the whole `UserInterface` CanvasLayer.
+## Match Results Data Path
+
+When the game server reaches room `GameOver`, it resolves the authoritative `MatchResultSummary` and includes presentation-safe data in `room_snapshot.match_result`.
+
+`RoomSessionController` caches that payload, `MatchEndFlow` reads it through its provider, and `MatchResultsFlow` renders the rows.
+
+The current Match Results columns are `PLAYER`, `DEATHS`, and `SCORE`. `kills` is not currently shown or tracked there, and `account_id` / `local_profile_id` are not exposed to the UI payload.

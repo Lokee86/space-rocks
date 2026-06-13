@@ -138,7 +138,7 @@ func _current_match_result_rows() -> Array:
 	elif match_result is Object and match_result.has_method("get"):
 		players = match_result.get("players")
 
-	if players == null:
+	if players == null || players.is_empty():
 		return []
 
 	var rows: Array = []
@@ -149,7 +149,6 @@ func _current_match_result_rows() -> Array:
 				"score": player.get("score", 0),
 				"ship_deaths": player.get("ship_deaths", 0),
 				"won": player.get("won", false),
-				"kills": player.get("kills", 0),
 			})
 	return rows
 

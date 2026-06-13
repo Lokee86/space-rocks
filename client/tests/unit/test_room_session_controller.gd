@@ -1,6 +1,8 @@
 extends GutTest
 
 const RoomSessionController := preload("res://scripts/session/room_session_controller.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 class FakeSessionContext:
@@ -66,6 +68,86 @@ func test_configure_lobby_leave_return_destination_passes_destination_to_lobby_r
 	setup.controller.lobby_return_flow.return_after_leave()
 
 	assert_eq(destination_probe.calls, 1)
+
+
+func test_handle_room_snapshot_caches_valid_match_result() -> void:
+	var setup := _create_controller()
+	var match_result := {
+		Packets.FIELD_MATCH_ID: "room-match-1",
+		Packets.FIELD_MODE: "single_player",
+		Packets.FIELD_PLAYERS: [
+			{
+				Packets.FIELD_GAME_PLAYER_ID: "player-1",
+				Packets.FIELD_SCORE: 450,
+				Packets.FIELD_SHIP_DEATHS: 2,
+				Packets.FIELD_WON: false,
+			}
+		],
+	}
+
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_GAME_OVER,
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+		Packets.FIELD_MATCH_RESULT: match_result,
+	})
+
+	assert_eq(setup.controller.current_match_result(), match_result)
+
+
+func test_handle_room_snapshot_clears_match_result_for_empty_snapshot_object() -> void:
+	var setup := _create_controller()
+	var match_result := {
+		Packets.FIELD_MATCH_ID: "room-match-1",
+		Packets.FIELD_MODE: "single_player",
+		Packets.FIELD_PLAYERS: [],
+	}
+
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_GAME_OVER,
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+		Packets.FIELD_MATCH_RESULT: match_result,
+	})
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_LOBBY,
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+		Packets.FIELD_MATCH_RESULT: {
+			Packets.FIELD_MATCH_ID: "",
+			Packets.FIELD_MODE: "",
+			Packets.FIELD_PLAYERS: [],
+		},
+	})
+
+	assert_eq(setup.controller.current_match_result(), {})
+
+
+func test_handle_room_snapshot_clears_match_result_when_field_missing() -> void:
+	var setup := _create_controller()
+
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_GAME_OVER,
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+		Packets.FIELD_MATCH_RESULT: {
+			Packets.FIELD_MATCH_ID: "room-match-1",
+			Packets.FIELD_MODE: "single_player",
+			Packets.FIELD_PLAYERS: [],
+		},
+	})
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_LOBBY,
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+	})
+
+	assert_eq(setup.controller.current_match_result(), {})
 
 
 func _create_controller() -> Dictionary:

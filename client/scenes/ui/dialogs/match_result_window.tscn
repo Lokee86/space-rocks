@@ -106,16 +106,6 @@ layout_mode = 2
 text = "|"
 label_settings = ExtResource("2_2r4sw")
 
-[node name="Kills" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=816913660]
-layout_mode = 2
-text = " KILLS "
-label_settings = ExtResource("2_2r4sw")
-
-[node name="Separator3" type="Label" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=114014050]
-layout_mode = 2
-text = "|"
-label_settings = ExtResource("2_2r4sw")
-
 [node name="Spacer2" type="Control" parent="CenterContainer/Window7/ScoreDisplayArea/ScoreContainer/SummaryHeader" unique_id=1110729127]
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2

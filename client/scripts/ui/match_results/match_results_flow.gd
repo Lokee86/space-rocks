@@ -39,6 +39,9 @@ func show_results(session_mode: String, rows: Array = []) -> Control:
 
 func clear() -> void:
 	if is_instance_valid(window):
+		var parent: Node = window.get_parent()
+		if parent != null:
+			parent.remove_child(window)
 		window.queue_free()
 	window = null
 

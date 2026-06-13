@@ -34,7 +34,40 @@ func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapsho
 		LocalPlayerID: localPlayerID,
 		OwnerID:       room.OwnerID(),
 		MaxPlayers:    rooms.MaxPlayersPerRoom,
+		MatchResult:   buildRoomMatchResultSummary(room),
 	}
+}
+
+func buildRoomMatchResultSummary(room *rooms.Room) game.RoomMatchResultSummary {
+	if room == nil {
+		return game.RoomMatchResultSummary{}
+	}
+
+	summary, ok := room.ResolvedMatchSummary()
+	if !ok {
+		return game.RoomMatchResultSummary{}
+	}
+
+	matchResult := game.RoomMatchResultSummary{
+		MatchID: summary.MatchID,
+		Mode:    string(summary.Mode),
+	}
+
+	if len(summary.Players) == 0 {
+		return matchResult
+	}
+
+	matchResult.Players = make([]game.RoomPlayerMatchSummary, 0, len(summary.Players))
+	for _, player := range summary.Players {
+		matchResult.Players = append(matchResult.Players, game.RoomPlayerMatchSummary{
+			GamePlayerID: player.GamePlayerID,
+			Score:        player.Score,
+			ShipDeaths:   player.ShipDeaths,
+			Won:          player.Won,
+		})
+	}
+
+	return matchResult
 }
 
 func (session *webSocketSession) EnqueueRoomSnapshot(room *rooms.Room) {

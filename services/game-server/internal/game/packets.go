@@ -98,14 +98,28 @@ type RoomMemberState struct {
 	Connected bool   `json:"connected"`
 }
 
+type RoomPlayerMatchSummary struct {
+	GamePlayerID string `json:"game_player_id"`
+	Score        int    `json:"score"`
+	ShipDeaths   int    `json:"ship_deaths"`
+	Won          bool   `json:"won"`
+}
+
+type RoomMatchResultSummary struct {
+	MatchID string                   `json:"match_id"`
+	Mode    string                   `json:"mode"`
+	Players []RoomPlayerMatchSummary `json:"players"`
+}
+
 type RoomSnapshot struct {
-	Type          string            `json:"type"`
-	RoomCode      string            `json:"room_code"`
-	RoomState     string            `json:"room_state"`
-	Members       []RoomMemberState `json:"members"`
-	LocalPlayerID string            `json:"local_player_id"`
-	OwnerID       string            `json:"owner_id"`
-	MaxPlayers    int               `json:"max_players"`
+	Type          string                 `json:"type"`
+	RoomCode      string                 `json:"room_code"`
+	RoomState     string                 `json:"room_state"`
+	Members       []RoomMemberState      `json:"members"`
+	LocalPlayerID string                 `json:"local_player_id"`
+	OwnerID       string                 `json:"owner_id"`
+	MaxPlayers    int                    `json:"max_players"`
+	MatchResult   RoomMatchResultSummary `json:"match_result"`
 }
 
 type RoomStateChanged struct {
