@@ -92,6 +92,10 @@ Completed Local Pilot / Guest selector:
 - DELETE sends the API delete only after confirmation.
 - DELETE refreshes the selector after a successful delete.
 - DELETE cancel closes the sub-panel and preserves the selected pilot.
+- DELETE confirmation uses `client/scenes/ui/transmission_displays/sub-transmissions/confirm_delete.tscn` and `client/scripts/ui/local_pilots/confirm_delete.gd`.
+- `select_pilot_readout.gd` emits delete intent only.
+- `confirm_delete.gd` emits confirm/cancel intent only.
+- `LocalPilotFlow` mounts the confirmation sub-panel and owns the actual delete API call.
 
 ## Remaining Client Slice Plan
 
