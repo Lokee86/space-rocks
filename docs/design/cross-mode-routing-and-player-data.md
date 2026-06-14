@@ -18,6 +18,7 @@ Implemented foundation:
 - `services/player-data` is the current sibling Go module for player-data routing and packet handling.
 - The game-server hosts the player-data runtime in-process for now.
 - The game-server data-handler facade routes profile reads into the in-process player-data runtime.
+- Local Profile list/create/default loading are implemented through the game-server data-handler and in-process player-data runtime.
 - The game-server routes match-result writes into the in-process player-data runtime.
 - Communication uses player-data packets from the shared packet SSoT across an encoded payload boundary.
 - `services/player-data` has its own codec and does not import game-server internals.
@@ -328,6 +329,7 @@ The game-server should not directly write either account-shaped player-data data
 The current implemented player-data foundation exists to support Local Profile.
 
 Local Profile is durable, account-shaped, and local-only.
+Local Profile list/create/default loading already route through the game-server data-handler and in-process player-data runtime.
 
 `services/player-data` is a sibling Go module, not game-server internals.
 
@@ -660,7 +662,7 @@ Never log bearer tokens, Discord access tokens, OAuth codes, raw OAuth state, or
 6. Admission wiring, initially behavior-preserving where needed.
 7. Create `services/player-data-server` scaffold.
 8. Define the player-data service contract from the shared logical schema.
-9. Local Profile CRUD in `services/player-data-server`.
+9. Local Profile delete/rename in `services/player-data-server`.
 10. SQLite-backed persistence and migrations in `services/player-data-server`.
 11. Game-server consuming `services/player-data-server` APIs for loadout and profile reads plus match-result writes.
 12. Client consuming `services/player-data-server` APIs for local profile UI.
@@ -674,7 +676,7 @@ The first code milestone after docs should still be pure vocabulary and admissio
 
 ## Deferred Work
 
-- local profile creation/list/select/rename/delete
+- local profile delete/rename
 - local profile schema migration/versioning
 - account linking or local-to-online migration
 - online leaderboards

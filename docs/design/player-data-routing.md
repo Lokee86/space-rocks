@@ -32,6 +32,26 @@ Store outcomes:
 
 `ship_deaths` comes from authoritative server match facts, not client-side counting.
 
+## Local Profile Management Flow
+
+Local profile list, create, and default requests enter through the game-server data-handler.
+The player-data runtime/store seam owns SQLite persistence for local profiles.
+The client never writes SQLite directly.
+
+CREATE routing:
+
+1. The client calls the data-handler create route.
+2. The game-server data-handler validates the request and forwards it to the player-data runtime.
+3. The runtime creates the local profile in SQLite.
+4. Guest stats are copied only when `seed_from_guest_stats` is true.
+
+LOAD/default routing:
+
+1. The client persists the selected default through the data-handler.
+2. The game-server data-handler forwards the default request to the player-data runtime.
+3. The runtime stores the default by identity kind and `local_profile_id`, not by display name.
+4. `display_name` remains presentation only.
+
 ## Read Flow
 
 Profile reads follow this path:
