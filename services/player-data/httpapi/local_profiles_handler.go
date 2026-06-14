@@ -31,7 +31,22 @@ type playerDataLocalProfileResponse struct {
 	Profile playerDataLocalProfile `json:"profile"`
 }
 
+type playerDataLocalProfileDefaultRequest struct {
+	IdentityKind   string `json:"identity_kind"`
+	LocalProfileID string `json:"local_profile_id"`
+}
+
+type playerDataLocalProfileDefaultResponse struct {
+	DefaultProfile playerDataLocalProfileDefault `json:"default_profile"`
+}
+
 type playerDataLocalProfile struct {
+	LocalProfileID string `json:"local_profile_id"`
+	DisplayName    string `json:"display_name"`
+}
+
+type playerDataLocalProfileDefault struct {
+	IdentityKind   string `json:"identity_kind"`
 	LocalProfileID string `json:"local_profile_id"`
 	DisplayName    string `json:"display_name"`
 }
@@ -45,9 +60,15 @@ func NewLocalProfilesHandler(runtime *playerdata.Runtime) http.Handler {
 func (h *LocalProfilesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		if r.URL.Path == "/api/player-data/local-profiles/default" {
+			h.serveGetDefault(w)
+			return
+		}
 		h.serveList(w)
 	case http.MethodPost:
 		h.serveCreate(w, r)
+	case http.MethodPut:
+		h.serveSetDefault(w, r)
 	default:
 		writePlayerDataLocalProfilesError(w, http.StatusMethodNotAllowed, "method_not_allowed")
 	}
@@ -138,6 +159,76 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 		Profile: playerDataLocalProfile{
 			LocalProfileID: profile.LocalProfileID,
 			DisplayName:    profile.DisplayName,
+		},
+	})
+}
+
+func (h *LocalProfilesHandler) serveGetDefault(w http.ResponseWriter) {
+	if h == nil || h.runtime == nil {
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+		return
+	}
+
+	defaultProfile, err := h.runtime.GetDefaultLocalProfile()
+	if err != nil {
+		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		return
+	}
+
+	writePlayerDataLocalProfilesJSON(w, http.StatusOK, playerDataLocalProfileDefaultResponse{
+		DefaultProfile: playerDataLocalProfileDefault{
+			IdentityKind:   defaultProfile.IdentityKind,
+			LocalProfileID: defaultProfile.LocalProfileID,
+			DisplayName:    defaultProfile.DisplayName,
+		},
+	})
+}
+
+func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Request) {
+	if h == nil || h.runtime == nil {
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+		return
+	}
+
+	var request playerDataLocalProfileDefaultRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+
+	identityKind := strings.TrimSpace(request.IdentityKind)
+	localProfileID := strings.TrimSpace(request.LocalProfileID)
+	switch identityKind {
+	case playerdata.IdentityKindGuest:
+		if localProfileID != "" {
+			writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+			return
+		}
+	case playerdata.IdentityKindLocalProfile:
+		if localProfileID == "" {
+			writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+			return
+		}
+	default:
+		writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+
+	defaultProfile, err := h.runtime.SetDefaultLocalProfile(identityKind, localProfileID)
+	if err != nil {
+		if err.Error() == "local profile not found" {
+			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
+			return
+		}
+		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		return
+	}
+
+	writePlayerDataLocalProfilesJSON(w, http.StatusOK, playerDataLocalProfileDefaultResponse{
+		DefaultProfile: playerDataLocalProfileDefault{
+			IdentityKind:   defaultProfile.IdentityKind,
+			LocalProfileID: defaultProfile.LocalProfileID,
+			DisplayName:    defaultProfile.DisplayName,
 		},
 	})
 }

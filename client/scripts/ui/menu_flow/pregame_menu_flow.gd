@@ -69,6 +69,10 @@ func show_single_player() -> void:
 	current_mode = PregameMenuMode.SINGLE_PLAYER
 	if pregame_menu != null and pregame_menu.has_method("show_single_player_mode"):
 		pregame_menu.show_single_player_mode()
+	if local_pilot_flow != null and local_pilot_flow.has_method("apply_saved_default"):
+		await local_pilot_flow.apply_saved_default()
+	elif profile_context_provider != null and profile_context_provider.has_method("select_guest_profile"):
+		profile_context_provider.select_guest_profile()
 	_update_callsign_indicator()
 
 

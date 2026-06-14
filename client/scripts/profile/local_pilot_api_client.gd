@@ -15,9 +15,21 @@ func list_profiles(token := ""):
 	return await api_http_client.get_json(ApiConfig.player_data_local_profiles_path(), token)
 
 
+func get_default_profile(token := ""):
+	return await api_http_client.get_json(ApiConfig.player_data_local_profiles_default_path(), token)
+
+
 func create_profile(display_name: String, seed_from_guest_stats: bool, token := ""):
 	var body := {
 		"display_name": display_name,
 		"seed_from_guest_stats": seed_from_guest_stats,
 	}
 	return await api_http_client.post_json(ApiConfig.player_data_local_profiles_path(), body, token)
+
+
+func set_default_profile(identity_kind: String, local_profile_id := "", token := ""):
+	var body := {
+		"identity_kind": identity_kind,
+		"local_profile_id": local_profile_id,
+	}
+	return await api_http_client.put_json(ApiConfig.player_data_local_profiles_default_path(), body, token)

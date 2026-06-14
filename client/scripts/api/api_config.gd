@@ -31,3 +31,7 @@ static func player_data_profile_path() -> String:
 
 static func player_data_local_profiles_path() -> String:
 	return "%s/api/player-data/local-profiles" % DATA_HANDLER_API_BASE_URL
+
+
+static func player_data_local_profiles_default_path() -> String:
+	return "%s/api/player-data/local-profiles/default" % DATA_HANDLER_API_BASE_URL

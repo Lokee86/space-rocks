@@ -55,3 +55,29 @@ func (r *Runtime) CreateLocalProfile(localProfileID string, displayName string, 
 
 	return localProfileStore.CreateLocalProfile(localProfileID, displayName, stats)
 }
+
+func (r *Runtime) GetDefaultLocalProfile() (LocalProfileDefault, error) {
+	if r == nil || r.store == nil {
+		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+	}
+
+	localProfileStore, ok := r.store.(LocalProfileStore)
+	if !ok {
+		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.GetDefaultLocalProfile()
+}
+
+func (r *Runtime) SetDefaultLocalProfile(identityKind string, localProfileID string) (LocalProfileDefault, error) {
+	if r == nil || r.store == nil {
+		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+	}
+
+	localProfileStore, ok := r.store.(LocalProfileStore)
+	if !ok {
+		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.SetDefaultLocalProfile(identityKind, localProfileID)
+}

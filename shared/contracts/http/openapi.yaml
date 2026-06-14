@@ -324,6 +324,67 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/player-data/local-profiles/default:
+    get:
+      summary: Get the default local player profile
+      responses:
+        "200":
+          description: Default local player profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDataLocalProfileDefaultResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Set the default local player profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerDataSetLocalProfileDefaultRequest"
+      responses:
+        "200":
+          description: Default local player profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDataLocalProfileDefaultResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Local profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /internal/auth/verify-token:
     post:
       summary: Verify an internal auth token
@@ -550,6 +611,21 @@ components:
           type: string
         display_name:
           type: string
+    PlayerDataLocalProfileDefault:
+      type: object
+      required:
+        - identity_kind
+        - local_profile_id
+        - display_name
+      properties:
+        identity_kind:
+          $ref: "#/components/schemas/PlayerDataIdentityKind"
+        local_profile_id:
+          type:
+            - string
+            - "null"
+        display_name:
+          type: string
     PlayerDataLocalProfilesResponse:
       type: object
       required:
@@ -569,6 +645,24 @@ components:
           type: string
         seed_from_guest_stats:
           type: boolean
+    PlayerDataLocalProfileDefaultResponse:
+      type: object
+      required:
+        - default_profile
+      properties:
+        default_profile:
+          $ref: "#/components/schemas/PlayerDataLocalProfileDefault"
+    PlayerDataSetLocalProfileDefaultRequest:
+      type: object
+      required:
+        - identity_kind
+      properties:
+        identity_kind:
+          $ref: "#/components/schemas/PlayerDataIdentityKind"
+        local_profile_id:
+          type:
+            - string
+            - "null"
     InternalPlayerDataStatsRequest:
       type: object
       required:

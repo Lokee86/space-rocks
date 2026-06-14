@@ -13,6 +13,10 @@ func post_json(url: String, body: Dictionary = {}, bearer_token: String = "") ->
 	return await _request_json(HTTPClient.METHOD_POST, url, body, bearer_token)
 
 
+func put_json(url: String, body: Dictionary = {}, bearer_token: String = "") -> ApiRequestResult:
+	return await _request_json(HTTPClient.METHOD_PUT, url, body, bearer_token)
+
+
 func delete_json(url: String, body: Dictionary = {}, bearer_token: String = "") -> ApiRequestResult:
 	return await _request_json(HTTPClient.METHOD_DELETE, url, body, bearer_token)
 
