@@ -324,6 +324,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/player-data/local-profiles/{local_profile_id}:
+    delete:
+      summary: Delete a local player profile
+      parameters:
+        - name: local_profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Local player profile deleted
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Local profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/player-data/local-profiles/default:
     get:
       summary: Get the default local player profile

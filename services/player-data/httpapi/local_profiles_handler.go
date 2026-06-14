@@ -69,6 +69,8 @@ func (h *LocalProfilesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		h.serveCreate(w, r)
 	case http.MethodPut:
 		h.serveSetDefault(w, r)
+	case http.MethodDelete:
+		h.serveDelete(w, r)
 	default:
 		writePlayerDataLocalProfilesError(w, http.StatusMethodNotAllowed, "method_not_allowed")
 	}
@@ -231,6 +233,31 @@ func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Re
 			DisplayName:    defaultProfile.DisplayName,
 		},
 	})
+}
+
+func (h *LocalProfilesHandler) serveDelete(w http.ResponseWriter, r *http.Request) {
+	if h == nil || h.runtime == nil {
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+		return
+	}
+
+	localProfileID := strings.TrimSpace(r.PathValue("local_profile_id"))
+	if localProfileID == "" {
+		writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+
+	err := h.runtime.DeleteLocalProfile(localProfileID)
+	if err != nil {
+		if err.Error() == "local profile not found" {
+			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
+			return
+		}
+		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *LocalProfilesHandler) localProfileSeedStats(seedFromGuestStats bool) (protocol.PlayerDataStats, error) {

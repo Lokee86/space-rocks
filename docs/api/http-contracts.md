@@ -36,6 +36,13 @@ This is Level 2 enforcement:
 - `display_name` is presentation, not identity
 - `local_profile_id` is generated server-side
 
+### `DELETE /api/player-data/local-profiles/{local_profile_id}`
+
+- Hosted by the game-server data-handler on `:8080`
+- Deletes the local profile, local stats, and local match results
+- Deleting the default local profile resets the default to Guest
+- Requires `local_profile_id` as the path key
+
 ### `GET /api/player-data/local-profiles/default`
 
 - Hosted by the game-server data-handler on `:8080`

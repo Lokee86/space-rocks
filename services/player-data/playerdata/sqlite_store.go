@@ -363,6 +363,75 @@ func (s *SQLiteStore) CreateLocalProfile(localProfileID string, displayName stri
 	}, nil
 }
 
+func (s *SQLiteStore) DeleteLocalProfile(localProfileID string) error {
+	if s == nil || s.db == nil {
+		return errors.New("sqlite store is not open")
+	}
+	if localProfileID == "" {
+		return errors.New("local_profile_id is required")
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	var found string
+	err = tx.QueryRow(
+		`SELECT local_profile_id
+		 FROM local_profiles
+		 WHERE local_profile_id = ?`,
+		localProfileID,
+	).Scan(&found)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("local profile not found")
+		}
+		return err
+	}
+
+	if _, err := tx.Exec(
+		`DELETE FROM local_player_match_results
+		 WHERE local_profile_id = ?`,
+		localProfileID,
+	); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(
+		`DELETE FROM local_player_stats
+		 WHERE local_profile_id = ?`,
+		localProfileID,
+	); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(
+		`DELETE FROM local_profiles
+		 WHERE local_profile_id = ?`,
+		localProfileID,
+	); err != nil {
+		return err
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+	if _, err := tx.Exec(
+		`INSERT INTO local_profile_default (id, identity_kind, local_profile_id, updated_at)
+		 VALUES (1, ?, ?, ?)
+		 ON CONFLICT(id) DO UPDATE SET
+			identity_kind = excluded.identity_kind,
+			local_profile_id = excluded.local_profile_id,
+			updated_at = excluded.updated_at
+		 WHERE local_profile_default.identity_kind = ? AND local_profile_default.local_profile_id = ?`,
+		IdentityKindGuest, "", now, IdentityKindLocalProfile, localProfileID,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (s *SQLiteStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.PlayerDataStats, bool, error) {
 	if s == nil || s.db == nil {
 		return protocol.PlayerDataStats{}, false, errors.New("sqlite store is not open")

@@ -56,6 +56,19 @@ func (r *Runtime) CreateLocalProfile(localProfileID string, displayName string, 
 	return localProfileStore.CreateLocalProfile(localProfileID, displayName, stats)
 }
 
+func (r *Runtime) DeleteLocalProfile(localProfileID string) error {
+	if r == nil || r.store == nil {
+		return errors.New("local profile management is unavailable")
+	}
+
+	localProfileStore, ok := r.store.(LocalProfileStore)
+	if !ok {
+		return errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.DeleteLocalProfile(localProfileID)
+}
+
 func (r *Runtime) GetDefaultLocalProfile() (LocalProfileDefault, error) {
 	if r == nil || r.store == nil {
 		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
