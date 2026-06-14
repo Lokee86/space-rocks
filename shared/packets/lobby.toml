@@ -6,6 +6,12 @@ name = "type"
 json = "type"
 type = "string"
 
+[[structs.fields]]
+name = "local_profile_id"
+go_name = "LocalProfileID"
+json = "local_profile_id"
+type = "string"
+
 [[structs]]
 id = "JoinRoomRequest"
 
@@ -55,6 +61,12 @@ id = "StartSinglePlayerRequest"
 [[structs.fields]]
 name = "type"
 json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "local_profile_id"
+go_name = "LocalProfileID"
+json = "local_profile_id"
 type = "string"
 
 [[structs]]
@@ -366,9 +378,11 @@ type = "start_game_request"
 
 [[builders]]
 id = "start_single_player_request_packet"
+args = ["local_profile_id"]
 
 [builders.body]
 type = "start_single_player_request"
+local_profile_id = "$local_profile_id"
 
 [[builders]]
 id = "return_to_lobby_request_packet"

@@ -9,7 +9,7 @@ type lobbySession interface {
 	HandleLeaveRoomRequest()
 	HandleSetReadyRequest(ready bool)
 	HandleStartGameRequest()
-	HandleStartSinglePlayerRequest()
+	HandleStartSinglePlayerRequest(localProfileID string)
 	HandleReturnToLobbyRequest()
 }
 
@@ -33,7 +33,7 @@ func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 		session.HandleStartGameRequest()
 		return true
 	case game.PacketTypeStartSinglePlayerRequest:
-		session.HandleStartSinglePlayerRequest()
+		session.HandleStartSinglePlayerRequest(packet.LocalProfileID)
 		return true
 	case game.PacketTypeReturnToLobbyRequest:
 		session.HandleReturnToLobbyRequest()

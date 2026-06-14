@@ -4,21 +4,25 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var request_type := Constants.BOOT_REQUEST_NONE
 var join_room_code := ""
+var local_profile_id := ""
 
 
-func request_single_player() -> void:
+func request_single_player(local_profile_id_value := "") -> void:
 	request_type = Constants.BOOT_REQUEST_SINGLE_PLAYER
 	join_room_code = ""
+	local_profile_id = local_profile_id_value
 
 
 func request_create_room() -> void:
 	request_type = Constants.BOOT_REQUEST_CREATE_ROOM
 	join_room_code = ""
+	local_profile_id = ""
 
 
 func request_join_room(room_code: String) -> void:
 	request_type = Constants.BOOT_REQUEST_JOIN_ROOM
 	join_room_code = room_code
+	local_profile_id = ""
 
 
 func has_request() -> bool:
@@ -41,6 +45,7 @@ func consume_request() -> Dictionary:
 	var request := {
 		"type": request_type,
 		"room_code": join_room_code,
+		"local_profile_id": local_profile_id,
 	}
 	clear()
 	return request
@@ -49,4 +54,5 @@ func consume_request() -> Dictionary:
 func clear() -> void:
 	request_type = Constants.BOOT_REQUEST_NONE
 	join_room_code = ""
+	local_profile_id = ""
 

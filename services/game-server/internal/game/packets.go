@@ -36,6 +36,7 @@ type ClientPacket struct {
 	Input              runtime.InputState   `json:"input"`
 	Config             runtime.ClientConfig `json:"config"`
 	RoomCode           string               `json:"room_code"`
+	LocalProfileID     string               `json:"local_profile_id"`
 	Ready              bool                 `json:"ready"`
 	X                  float64              `json:"x"`
 	Y                  float64              `json:"y"`
@@ -49,7 +50,8 @@ type ClientPacket struct {
 }
 
 type CreateRoomRequest struct {
-	Type string `json:"type"`
+	Type           string `json:"type"`
+	LocalProfileID string `json:"local_profile_id"`
 }
 
 type JoinRoomRequest struct {
@@ -71,7 +73,8 @@ type StartGameRequest struct {
 }
 
 type StartSinglePlayerRequest struct {
-	Type string `json:"type"`
+	Type           string `json:"type"`
+	LocalProfileID string `json:"local_profile_id"`
 }
 
 type ReturnToLobbyRequest struct {

@@ -4,6 +4,9 @@ class_name ProfileContextProvider
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 
 var auth_session_controller
+var selected_single_player_identity_kind := "guest"
+var selected_local_profile_id := ""
+var selected_local_display_name := "Guest"
 
 
 func configure(auth_session_controller_ref) -> void:
@@ -13,7 +16,24 @@ func configure(auth_session_controller_ref) -> void:
 func context_for_mode(mode: String) -> Dictionary:
 	if mode == PregameMenuMode.MULTIPLAYER:
 		return _multiplayer_context()
-	return _guest_context()
+	return _single_player_context()
+
+
+func select_guest_profile() -> void:
+	selected_single_player_identity_kind = "guest"
+	selected_local_profile_id = ""
+	selected_local_display_name = "Guest"
+
+
+func select_local_profile(local_profile_id: String, display_name: String) -> void:
+	if local_profile_id.is_empty():
+		return
+
+	selected_single_player_identity_kind = "local_profile"
+	selected_local_profile_id = local_profile_id
+	selected_local_display_name = display_name
+	if selected_local_display_name.is_empty():
+		selected_local_display_name = "Pilot"
 
 
 func _guest_context() -> Dictionary:
@@ -23,6 +43,18 @@ func _guest_context() -> Dictionary:
 		"callsign": "Guest",
 		"activity_status": "OFFLINE",
 	}
+
+
+func _single_player_context() -> Dictionary:
+	if selected_single_player_identity_kind == "local_profile":
+		return {
+			"play_mode": PregameMenuMode.SINGLE_PLAYER,
+			"identity_kind": "local_profile",
+			"local_profile_id": selected_local_profile_id,
+			"callsign": selected_local_display_name,
+			"activity_status": "LOCAL",
+		}
+	return _guest_context()
 
 
 func _multiplayer_context() -> Dictionary:

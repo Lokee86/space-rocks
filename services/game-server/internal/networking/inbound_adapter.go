@@ -58,8 +58,8 @@ func (a inboundSessionAdapter) HandleStartGameRequest() {
 	a.session.handleStartGameRequest()
 }
 
-func (a inboundSessionAdapter) HandleStartSinglePlayerRequest() {
-	a.session.handleStartSinglePlayerRequest()
+func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string) {
+	a.session.handleStartSinglePlayerRequest(localProfileID)
 }
 
 func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {

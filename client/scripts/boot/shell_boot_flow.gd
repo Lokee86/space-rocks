@@ -22,8 +22,8 @@ func _init(
 	pending_boot_request = PendingBootRequest.new()
 
 
-func request_single_player() -> void:
-	pending_boot_request.request_single_player()
+func request_single_player(local_profile_id := "") -> void:
+	pending_boot_request.request_single_player(local_profile_id)
 
 
 func request_create_room() -> void:
@@ -66,10 +66,11 @@ func send_pending_boot_request() -> void:
 	var request := pending_boot_request.consume_request()
 	var request_type := str(request.get("type", Constants.BOOT_REQUEST_NONE))
 	var room_code := str(request.get("room_code", ""))
+	var local_profile_id := str(request.get("local_profile_id", ""))
 	var request_sent := true
 
 	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
-		connection_service.send_start_single_player_request()
+		connection_service.send_start_single_player_request(local_profile_id)
 		_log("Sent single player request")
 	elif request_type == Constants.BOOT_REQUEST_CREATE_ROOM:
 		connection_service.send_create_room_request()

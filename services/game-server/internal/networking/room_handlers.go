@@ -91,7 +91,8 @@ func (session *webSocketSession) handleStartGameRequest() {
 	BroadcastRoomSnapshot(room)
 }
 
-func (session *webSocketSession) handleStartSinglePlayerRequest() {
+func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string) {
+	_ = localProfileID
 	logging.Network.Debug("StartSinglePlayerRequest received",
 		logging.FieldRoomID, session.currentRoomID,
 		logging.FieldPlayerID, session.currentGamePlayerID,
@@ -115,6 +116,9 @@ func (session *webSocketSession) handleStartSinglePlayerRequest() {
 	session.room = room
 	session.currentRoomID = room.ID
 	session.currentGamePlayerID = ""
+	if localProfileID != "" {
+		room.SetMemberLocalProfileIDForSession(session.sessionID, localProfileID)
+	}
 
 	activateRoomPlayers(room)
 	BroadcastRoomSnapshot(room)
