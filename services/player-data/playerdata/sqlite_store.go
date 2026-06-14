@@ -77,6 +77,12 @@ func (s *SQLiteStore) InitSchema() error {
 			created_at TEXT NOT NULL,
 			updated_at TEXT NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS local_profile_default (
+			id INTEGER PRIMARY KEY CHECK (id = 1),
+			identity_kind TEXT NOT NULL,
+			local_profile_id TEXT NOT NULL DEFAULT '',
+			updated_at TEXT NOT NULL
+		)`,
 		`CREATE TABLE IF NOT EXISTS local_player_stats (
 			local_profile_id TEXT PRIMARY KEY,
 			total_score INTEGER NOT NULL DEFAULT 0,
@@ -172,6 +178,137 @@ func (s *SQLiteStore) ListLocalProfiles() ([]LocalProfileSummary, error) {
 	}
 
 	return profiles, nil
+}
+
+func (s *SQLiteStore) GetDefaultLocalProfile() (LocalProfileDefault, error) {
+	if s == nil || s.db == nil {
+		return LocalProfileDefault{}, errors.New("sqlite store is not open")
+	}
+
+	var defaultProfile LocalProfileDefault
+	err := s.db.QueryRow(
+		`SELECT identity_kind, local_profile_id
+		 FROM local_profile_default
+		 WHERE id = 1`,
+	).Scan(&defaultProfile.IdentityKind, &defaultProfile.LocalProfileID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return guestLocalProfileDefault(), nil
+	}
+	if err != nil {
+		return LocalProfileDefault{}, err
+	}
+
+	switch defaultProfile.IdentityKind {
+	case IdentityKindGuest:
+		return guestLocalProfileDefault(), nil
+	case IdentityKindLocalProfile:
+		if defaultProfile.LocalProfileID == "" {
+			return guestLocalProfileDefault(), nil
+		}
+
+		err = s.db.QueryRow(
+			`SELECT display_name
+			 FROM local_profiles
+			 WHERE local_profile_id = ?`,
+			defaultProfile.LocalProfileID,
+		).Scan(&defaultProfile.DisplayName)
+		if errors.Is(err, sql.ErrNoRows) {
+			return guestLocalProfileDefault(), nil
+		}
+		if err != nil {
+			return LocalProfileDefault{}, err
+		}
+
+		return defaultProfile, nil
+	default:
+		return guestLocalProfileDefault(), nil
+	}
+}
+
+func (s *SQLiteStore) SetDefaultLocalProfile(identityKind string, localProfileID string) (LocalProfileDefault, error) {
+	if s == nil || s.db == nil {
+		return LocalProfileDefault{}, errors.New("sqlite store is not open")
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	switch identityKind {
+	case IdentityKindGuest:
+		tx, err := s.db.Begin()
+		if err != nil {
+			return LocalProfileDefault{}, err
+		}
+		defer func() {
+			_ = tx.Rollback()
+		}()
+
+		if _, err := tx.Exec(
+			`INSERT INTO local_profile_default (id, identity_kind, local_profile_id, updated_at)
+			 VALUES (1, ?, ?, ?)
+			 ON CONFLICT(id) DO UPDATE SET
+				identity_kind = excluded.identity_kind,
+				local_profile_id = excluded.local_profile_id,
+				updated_at = excluded.updated_at`,
+			IdentityKindGuest, "", now,
+		); err != nil {
+			return LocalProfileDefault{}, err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return LocalProfileDefault{}, err
+		}
+
+		return guestLocalProfileDefault(), nil
+	case IdentityKindLocalProfile:
+		if localProfileID == "" {
+			return LocalProfileDefault{}, errors.New("local_profile_id is required")
+		}
+
+		var displayName string
+		if err := s.db.QueryRow(
+			`SELECT display_name
+			 FROM local_profiles
+			 WHERE local_profile_id = ?`,
+			localProfileID,
+		).Scan(&displayName); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return LocalProfileDefault{}, errors.New("local profile not found")
+			}
+			return LocalProfileDefault{}, err
+		}
+
+		tx, err := s.db.Begin()
+		if err != nil {
+			return LocalProfileDefault{}, err
+		}
+		defer func() {
+			_ = tx.Rollback()
+		}()
+
+		if _, err := tx.Exec(
+			`INSERT INTO local_profile_default (id, identity_kind, local_profile_id, updated_at)
+			 VALUES (1, ?, ?, ?)
+			 ON CONFLICT(id) DO UPDATE SET
+				identity_kind = excluded.identity_kind,
+				local_profile_id = excluded.local_profile_id,
+				updated_at = excluded.updated_at`,
+			IdentityKindLocalProfile, localProfileID, now,
+		); err != nil {
+			return LocalProfileDefault{}, err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return LocalProfileDefault{}, err
+		}
+
+		return LocalProfileDefault{
+			IdentityKind:   IdentityKindLocalProfile,
+			LocalProfileID: localProfileID,
+			DisplayName:    displayName,
+		}, nil
+	default:
+		return LocalProfileDefault{}, errors.New("identity_kind must be guest or local_profile")
+	}
 }
 
 func (s *SQLiteStore) CreateLocalProfile(localProfileID string, displayName string, stats protocol.PlayerDataStats) (LocalProfileSummary, error) {
@@ -374,4 +511,12 @@ func (s *SQLiteStore) loadLocalStatsTx(tx *sql.Tx, localProfileID string) (proto
 	}
 	stats.Wins = 0
 	return stats, nil
+}
+
+func guestLocalProfileDefault() LocalProfileDefault {
+	return LocalProfileDefault{
+		IdentityKind:   IdentityKindGuest,
+		LocalProfileID: "",
+		DisplayName:    "Guest",
+	}
 }

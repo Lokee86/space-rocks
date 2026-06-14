@@ -37,9 +37,50 @@ func show_selector() -> Control:
 	return selector
 
 
+func apply_saved_default() -> void:
+	if local_pilot_api_client == null:
+		_apply_guest_default()
+		return
+
+	var result = await local_pilot_api_client.get_default_profile()
+	if result == null or !result.ok or !(result.body is Dictionary):
+		_apply_guest_default()
+		return
+
+	var body: Dictionary = result.body
+	if !body.has("default_profile") or !(body["default_profile"] is Dictionary):
+		_apply_guest_default()
+		return
+
+	var default_profile: Dictionary = body["default_profile"]
+	var identity_kind := str(default_profile.get("identity_kind", ""))
+	if identity_kind == "guest":
+		_apply_guest_default()
+		return
+
+	if identity_kind == "local_profile":
+		var local_profile_id := str(default_profile.get("local_profile_id", ""))
+		var display_name := str(default_profile.get("display_name", ""))
+		if local_profile_id == "" or display_name == "":
+			_apply_guest_default()
+			return
+
+		if profile_context_provider != null and profile_context_provider.has_method("select_local_profile"):
+			profile_context_provider.select_local_profile(local_profile_id, display_name)
+		if callsign_updated_callable.is_valid():
+			callsign_updated_callable.call(display_name)
+		return
+
+	_apply_guest_default()
+
+
 func _on_load_requested(item: Dictionary) -> void:
 	var identity_kind := str(item.get("identity_kind", ""))
 	if identity_kind == "guest":
+		var guest_result = await local_pilot_api_client.set_default_profile("guest", "")
+		if guest_result == null or !guest_result.ok:
+			return
+
 		if profile_context_provider != null and profile_context_provider.has_method("select_guest_profile"):
 			profile_context_provider.select_guest_profile()
 		if callsign_updated_callable.is_valid():
@@ -49,10 +90,21 @@ func _on_load_requested(item: Dictionary) -> void:
 	if identity_kind == "local_profile":
 		var local_profile_id := str(item.get("local_profile_id", ""))
 		var display_name := str(item.get("display_name", ""))
+		var local_profile_result = await local_pilot_api_client.set_default_profile("local_profile", local_profile_id)
+		if local_profile_result == null or !local_profile_result.ok:
+			return
+
 		if profile_context_provider != null and profile_context_provider.has_method("select_local_profile"):
 			profile_context_provider.select_local_profile(local_profile_id, display_name)
 		if callsign_updated_callable.is_valid():
 			callsign_updated_callable.call(display_name)
+
+
+func _apply_guest_default() -> void:
+	if profile_context_provider != null and profile_context_provider.has_method("select_guest_profile"):
+		profile_context_provider.select_guest_profile()
+	if callsign_updated_callable.is_valid():
+		callsign_updated_callable.call("Guest")
 
 
 func _on_create_requested() -> void:
@@ -123,7 +175,25 @@ func _refresh_selector() -> void:
 		var body: Dictionary = result.body
 		if body.has("profiles") and body["profiles"] is Array and selector.has_method("populate_pilots"):
 			selector.populate_pilots(body["profiles"])
+			_select_selector_default_row()
 			return
 
 	if selector.has_method("populate_pilots"):
 		selector.populate_pilots([])
+		_select_selector_default_row()
+
+
+func _select_selector_default_row() -> void:
+	if selector == null or !is_instance_valid(selector):
+		return
+	if !selector.has_method("select_item_by_identity"):
+		return
+
+	var identity_kind := "guest"
+	var local_profile_id := ""
+	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+		var context: Dictionary = profile_context_provider.context_for_mode("single_player")
+		identity_kind = str(context.get("identity_kind", "guest"))
+		local_profile_id = str(context.get("local_profile_id", ""))
+
+	selector.select_item_by_identity(identity_kind, local_profile_id)

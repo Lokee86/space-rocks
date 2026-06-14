@@ -39,6 +39,26 @@ func populate_pilots(local_pilots: Array) -> void:
 	_update_action_buttons()
 
 
+func select_item_by_identity(identity_kind: String, local_profile_id := "") -> void:
+	if pilot_list_view == null:
+		return
+
+	var selected_index := -1
+	if identity_kind == "local_profile":
+		for index in range(pilot_list_view.items.size()):
+			var item: Dictionary = pilot_list_view.items[index]
+			if item.get("identity_kind", "") != "local_profile":
+				continue
+			if str(item.get("local_profile_id", "")) == str(local_profile_id):
+				selected_index = index
+				break
+
+	if identity_kind == "guest" or selected_index == -1:
+		selected_index = max(0, pilot_list_view.items.size() - 1)
+
+	pilot_list_view.select_index(selected_index)
+
+
 func _build_local_pilot_item(local_pilot: Dictionary) -> Dictionary:
 	var display_name := str(local_pilot.get("display_name", ""))
 	return {

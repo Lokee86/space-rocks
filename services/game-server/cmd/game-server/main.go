@@ -38,6 +38,8 @@ func main() {
 	mux.Handle("POST /api/player-data/profile", playerDataProfileHandler)
 	mux.Handle("GET /api/player-data/local-profiles", playerDataLocalProfilesHandler)
 	mux.Handle("POST /api/player-data/local-profiles", playerDataLocalProfilesHandler)
+	mux.Handle("GET /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
+	mux.Handle("PUT /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
 
 	logging.Server.Info("server starting", "addr", ":8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {

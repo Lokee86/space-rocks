@@ -55,6 +55,24 @@ func (r *StoreRouter) CreateLocalProfile(localProfileID string, displayName stri
 	return localProfileStore.CreateLocalProfile(localProfileID, displayName, stats)
 }
 
+func (r *StoreRouter) GetDefaultLocalProfile() (LocalProfileDefault, error) {
+	localProfileStore, ok := r.localStore.(LocalProfileStore)
+	if !ok {
+		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.GetDefaultLocalProfile()
+}
+
+func (r *StoreRouter) SetDefaultLocalProfile(identityKind string, localProfileID string) (LocalProfileDefault, error) {
+	localProfileStore, ok := r.localStore.(LocalProfileStore)
+	if !ok {
+		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.SetDefaultLocalProfile(identityKind, localProfileID)
+}
+
 func (r *StoreRouter) storeForIdentityKind(identityKind string) (Store, error) {
 	switch identityKind {
 	case IdentityKindAuthenticatedAccount:
