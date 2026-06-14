@@ -6,8 +6,10 @@
 [ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="4_iq432"]
 [ext_resource type="StyleBox" uid="uid://dax63si7q02k8" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="5_xl2bn"]
 [ext_resource type="StyleBox" uid="uid://dia0oanl1ge75" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="6_63sd0"]
+[ext_resource type="Script" path="res://scripts/ui/local_pilots/enter_pilot_id.gd" id="7_9f2aa"]
 
 [node name="SubScreenPilotID" type="Control" unique_id=2021787840]
+script = ExtResource("7_9f2aa")
 layout_mode = 3
 anchor_left = 0.021000002
 anchor_top = 0.032
