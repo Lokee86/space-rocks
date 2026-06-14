@@ -72,10 +72,25 @@ Completed Phase 6:
 - `kills` is not shown.
 - Result button route execution remains session/AppEntry-owned.
 
+Completed Local Pilot / Guest selector:
+
+- Select Pilot opens the Local Pilot selector in the primary `TransmissionScreen`.
+- The final selector row is Guest.
+- CREATE opens `enter_pilot_id.tscn` in the subpanel transmission screen.
+- CREATE locks primary transmission input while the subpanel is active.
+- CREATE validates callsign input before creating a profile.
+- CREATE creates a local profile through the data-handler.
+- CREATE seeds from Guest stats only when the loaded identity is Guest.
+- CREATE creates fresh zero stats when the loaded identity is a non-Guest local profile.
+- CREATE refreshes the selector list after a successful create.
+- LOAD stores the selected identity as the active single-player context.
+- LOAD persists the selected local profile/default through the data-handler.
+- LOAD updates the callsign label.
+- LOAD uses `local_profile_id` internally, not display name.
+
 ## Remaining Client Slice Plan
 
-1. Local Pilot / Guest selector
-2. Stats refresh / final smoke
+1. Stats refresh / final smoke
 
 ## Rollout Tracker
 
@@ -90,7 +105,7 @@ Completed Phase 6:
 - [x] Lobby Leave returns to Multiplayer Pregame
 - [x] Profile readout transmission
 - [x] Match Results window
-- [ ] Local Pilot / Guest selector
+- [x] Local Pilot / Guest selector
 - [ ] Stats refresh / final smoke
 
 ## High-Level Scene Flow
@@ -148,8 +163,23 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 - Play Endless clears menu UI for gameplay through the menu-flow seam.
 - Campaign, Loadout, Provisioner, Buy Scrap, and Rankings are disabled.
 - Profile opens `profile_readout.tscn` in `TransmissionScreen/ScreenDisplay`.
-- Select Pilot controls the Guest / Local Pilot / New Pilot flow.
+- Select Pilot opens the Local Pilot selector in the primary `TransmissionScreen`.
 - Callsign defaults to Guest.
+
+### Local Pilot
+
+- The final selector row is Guest.
+- CREATE opens `enter_pilot_id.tscn` in the subpanel transmission screen.
+- CREATE locks primary transmission input while the subpanel is active.
+- CREATE validates callsign input before creating a profile.
+- CREATE creates a local profile through the data-handler.
+- CREATE seeds from Guest stats only when the loaded identity is Guest.
+- CREATE creates fresh zero stats when the loaded identity is a non-Guest local profile.
+- CREATE refreshes the selector list after a successful create.
+- LOAD stores the selected identity as the active single-player context.
+- LOAD persists the selected local profile/default through the data-handler.
+- LOAD updates the callsign label.
+- LOAD uses `local_profile_id` internally, not display name.
 
 ## Multiplayer Mode
 
@@ -170,8 +200,10 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 
 ## Back Behavior
 
-- If a transmission is open, Back closes it and leaves `ScreenDisplay` blank.
-- Otherwise Back returns to Main Menu.
+- Back clears the active subpanel transmission first.
+- If no subpanel is active, Back clears the primary transmission.
+- Clearing the subpanel restores primary transmission input.
+- If neither transmission target is active, Back returns to Main Menu.
 - Back must not log out the online account or clear the selected local pilot.
 
 ## Profile Behavior

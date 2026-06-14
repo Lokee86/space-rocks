@@ -2,6 +2,8 @@
 
 `shared/contracts/http/openapi.yaml` owns all HTTP request and response shapes.
 
+OpenAPI remains the SSoT for request and response shapes.
+
 Rails controllers implement that contract, and Rails integration tests enforce it using `openapi_first`.
 
 This is Level 2 enforcement:
@@ -19,6 +21,32 @@ This is Level 2 enforcement:
 - Authenticated reads use the user bearer token to prove identity to the game-server; guest reads remain unauthenticated
 - Does not call Rails stats directly
 - Does not use `PLAYER_DATA_RAILS_BEARER_TOKEN`
+
+### `GET /api/player-data/local-profiles`
+
+- Hosted by the game-server data-handler on `:8080`
+- Lists local profiles by `local_profile_id` and `display_name`
+- `display_name` is presentation, not identity
+
+### `POST /api/player-data/local-profiles`
+
+- Hosted by the game-server data-handler on `:8080`
+- Creates a local profile
+- Request includes `display_name` and `seed_from_guest_stats`
+- `display_name` is presentation, not identity
+- `local_profile_id` is generated server-side
+
+### `GET /api/player-data/local-profiles/default`
+
+- Hosted by the game-server data-handler on `:8080`
+- Returns the persisted local pilot default
+
+### `PUT /api/player-data/local-profiles/default`
+
+- Hosted by the game-server data-handler on `:8080`
+- Persists Guest or a local profile as the default
+- Guest uses `identity_kind = guest`
+- Local profile uses `identity_kind = local_profile` plus `local_profile_id`
 
 ### `POST /api/internal/player-data/stats`
 
