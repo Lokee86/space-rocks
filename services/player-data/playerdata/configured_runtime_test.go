@@ -35,6 +35,44 @@ func TestNewConfiguredRuntimeDefaultsToMemoryStores(t *testing.T) {
 	}
 }
 
+func TestNewRuntimeFromEnvUsesDefaultSQLitePath(t *testing.T) {
+	gotKeys := make([]string, 0, 2)
+	getenv := func(key string) string {
+		gotKeys = append(gotKeys, key)
+		switch key {
+		case "PLAYER_DATA_RAILS_BASE_URL":
+			return "https://example.test"
+		case "PLAYER_DATA_RAILS_INTERNAL_TOKEN":
+			return "test-internal-token"
+		default:
+			return ""
+		}
+	}
+
+	runtime, err := NewRuntimeFromEnv(getenv)
+	if err != nil {
+		t.Fatalf("NewRuntimeFromEnv returned error: %v", err)
+	}
+	if runtime == nil {
+		t.Fatal("NewRuntimeFromEnv returned nil runtime")
+	}
+
+	if len(gotKeys) != 2 {
+		t.Fatalf("getenv called for %d keys, want 2", len(gotKeys))
+	}
+	if gotKeys[0] != "PLAYER_DATA_RAILS_BASE_URL" || gotKeys[1] != "PLAYER_DATA_RAILS_INTERNAL_TOKEN" {
+		t.Fatalf("getenv keys = %v, want rails keys only", gotKeys)
+	}
+
+	runtimeStore, ok := runtime.dispatcher.store.(*StoreRouter)
+	if !ok {
+		t.Fatalf("dispatcher.store type = %T, want *StoreRouter", runtime.dispatcher.store)
+	}
+	if _, ok := runtimeStore.localStore.(*SQLiteStore); !ok {
+		t.Fatalf("localStore type = %T, want *SQLiteStore", runtimeStore.localStore)
+	}
+}
+
 func TestNewConfiguredRuntimeUsesSQLiteForLocalStore(t *testing.T) {
 	runtime, err := NewConfiguredRuntime(RuntimeConfig{
 		SQLitePath: ":memory:",

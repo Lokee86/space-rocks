@@ -1,6 +1,12 @@
 package playerdata
 
-import "errors"
+import (
+	"errors"
+	"path/filepath"
+	"runtime"
+)
+
+const DefaultSQLiteFilename = "player-data.sqlite3"
 
 type RuntimeConfig struct {
 	RailsBaseURL       string
@@ -12,8 +18,18 @@ func NewRuntimeFromEnv(getenv func(string) string) (*Runtime, error) {
 	return NewConfiguredRuntime(RuntimeConfig{
 		RailsBaseURL:       getenv("PLAYER_DATA_RAILS_BASE_URL"),
 		RailsInternalToken: getenv("PLAYER_DATA_RAILS_INTERNAL_TOKEN"),
-		SQLitePath:         getenv("PLAYER_DATA_SQLITE_PATH"),
+		SQLitePath:         DefaultSQLitePath(),
 	})
+}
+
+func DefaultSQLitePath() string {
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return filepath.Join("services", "player-data", "data", DefaultSQLiteFilename)
+	}
+
+	playerDataDir := filepath.Dir(filepath.Dir(currentFile))
+	return filepath.Join(playerDataDir, "data", DefaultSQLiteFilename)
 }
 
 func NewConfiguredRuntime(config RuntimeConfig) (*Runtime, error) {

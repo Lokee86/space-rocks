@@ -1,4 +1,4 @@
-root = "."
+root = ".."
 testdata_dir = "testdata"
 tmp_dir = "tmp"
 
@@ -7,8 +7,8 @@ cmd = "go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server"
 bin = "./tmp/game-server"
 full_bin = ""
 include_ext = ["go", "tpl", "tmpl", "html"]
-exclude_dir = ["tmp", "vendor", "tests"]
-include_dir = []
+exclude_dir = ["game-server/tmp", "game-server/vendor", "game-server/tests", "game-server/services", "player-data/data"]
+include_dir = ["game-server", "player-data"]
 exclude_file = []
 exclude_regex = ["_test.go"]
 exclude_unchanged = false

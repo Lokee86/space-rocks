@@ -1,6 +1,7 @@
 package playerdata
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -29,6 +30,34 @@ func TestNewSQLiteStore(t *testing.T) {
 		}
 		if err := store.Close(); err != nil {
 			t.Fatalf("Close returned error: %v", err)
+		}
+	})
+
+	t.Run("creates parent directory for file path", func(t *testing.T) {
+		tempDir := t.TempDir()
+		dbPath := filepath.Join(tempDir, "nested", "player-data.sqlite3")
+
+		store, err := NewSQLiteStore(SQLiteStoreConfig{Path: dbPath})
+		if err != nil {
+			t.Fatalf("NewSQLiteStore returned error: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = store.Close()
+		})
+
+		parentDir := filepath.Dir(dbPath)
+		if info, err := os.Stat(parentDir); err != nil {
+			t.Fatalf("parent directory stat failed: %v", err)
+		} else if !info.IsDir() {
+			t.Fatalf("parent path %q is not a directory", parentDir)
+		}
+
+		if err := store.InitSchema(); err != nil {
+			t.Fatalf("InitSchema returned error: %v", err)
+		}
+
+		if _, err := os.Stat(dbPath); err != nil {
+			t.Fatalf("database file stat failed: %v", err)
 		}
 	})
 }
