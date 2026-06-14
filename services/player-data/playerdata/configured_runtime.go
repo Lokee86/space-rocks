@@ -8,6 +8,14 @@ type RuntimeConfig struct {
 	SQLitePath         string
 }
 
+func NewRuntimeFromEnv(getenv func(string) string) (*Runtime, error) {
+	return NewConfiguredRuntime(RuntimeConfig{
+		RailsBaseURL:       getenv("PLAYER_DATA_RAILS_BASE_URL"),
+		RailsInternalToken: getenv("PLAYER_DATA_RAILS_INTERNAL_TOKEN"),
+		SQLitePath:         getenv("PLAYER_DATA_SQLITE_PATH"),
+	})
+}
+
 func NewConfiguredRuntime(config RuntimeConfig) (*Runtime, error) {
 	var accountStore Store
 	if config.RailsBaseURL != "" {

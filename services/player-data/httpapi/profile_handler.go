@@ -1,4 +1,4 @@
-package main
+package httpapi
 
 import (
 	"context"
@@ -10,8 +10,6 @@ import (
 	"github.com/Lokee86/space-rocks/player-data/codec"
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
 	"github.com/Lokee86/space-rocks/player-data/protocol"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/networking"
 )
 
 const (
@@ -23,13 +21,23 @@ const (
 	playerDataProfileActivityStatusOffline         = "OFFLINE"
 )
 
-type playerDataRuntime interface {
-	Handle(payload []byte) ([]byte, error)
+type AuthVerifier interface {
+	VerifyToken(ctx context.Context, rawToken string) (AuthVerificationResult, error)
 }
 
-type playerDataProfileHandler struct {
-	runtime      playerDataRuntime
-	authVerifier networking.TokenVerifier
+type AuthVerificationResult struct {
+	Valid    bool
+	Identity AuthIdentity
+}
+
+type AuthIdentity struct {
+	AccountID   string
+	DisplayName string
+}
+
+type ProfileHandler struct {
+	runtime      *playerdata.Runtime
+	authVerifier AuthVerifier
 }
 
 type playerDataProfileRequest struct {
@@ -53,14 +61,14 @@ type playerDataErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func newPlayerDataProfileHandler(runtime playerDataRuntime, authVerifier networking.TokenVerifier) http.Handler {
-	return &playerDataProfileHandler{
+func NewProfileHandler(runtime *playerdata.Runtime, authVerifier AuthVerifier) http.Handler {
+	return &ProfileHandler{
 		runtime:      runtime,
 		authVerifier: authVerifier,
 	}
 }
 
-func (h *playerDataProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writePlayerDataProfileError(w, http.StatusMethodNotAllowed, "method_not_allowed")
 		return
@@ -85,13 +93,6 @@ func (h *playerDataProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		writePlayerDataProfileError(w, http.StatusBadRequest, "invalid_request")
 		return
 	}
-
-	logging.Server.Debug(
-		"player data profile read started",
-		"operation", "load_profile",
-		"play_mode", request.PlayMode,
-		"identity_kind", request.IdentityKind,
-	)
 
 	identity, callsign, activityStatus, statusCode, err := h.resolveIdentityAndPresentation(r.Context(), r.Header.Get("Authorization"), request)
 	if err != nil {
@@ -125,15 +126,6 @@ func (h *playerDataProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	resultArgs := []any{
-		"operation", "load_profile",
-		"found", result.Found,
-	}
-	if result.ErrorCode != "" {
-		resultArgs = append(resultArgs, "error_code", result.ErrorCode)
-	}
-	logging.Server.Debug("player data profile read completed", resultArgs...)
-
 	if result.ErrorCode != "" {
 		if result.ErrorCode == "invalid_mode_identity" {
 			writePlayerDataProfileError(w, http.StatusUnprocessableEntity, result.Message)
@@ -153,7 +145,7 @@ func (h *playerDataProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-func (h *playerDataProfileHandler) resolveIdentityAndPresentation(ctx context.Context, authorizationHeader string, request playerDataProfileRequest) (protocol.PlayerDataIdentity, string, string, int, error) {
+func (h *ProfileHandler) resolveIdentityAndPresentation(ctx context.Context, authorizationHeader string, request playerDataProfileRequest) (protocol.PlayerDataIdentity, string, string, int, error) {
 	switch request.IdentityKind {
 	case playerdata.IdentityKindGuest:
 		return protocol.PlayerDataIdentity{
