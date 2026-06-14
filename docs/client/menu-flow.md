@@ -87,9 +87,11 @@ Completed Local Pilot / Guest selector:
 - LOAD persists the selected local profile/default through the data-handler.
 - LOAD updates the callsign label.
 - LOAD uses `local_profile_id` internally, not display name.
-- DELETE deletes only local profiles.
+- DELETE is available only for local profiles, not Guest.
+- DELETE opens the delete confirmation sub-panel.
+- DELETE sends the API delete only after confirmation.
 - DELETE refreshes the selector after a successful delete.
-- DELETE cannot remove Guest.
+- DELETE cancel closes the sub-panel and preserves the selected pilot.
 
 ## Remaining Client Slice Plan
 
@@ -183,6 +185,11 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 - LOAD persists the selected local profile/default through the data-handler.
 - LOAD updates the callsign label.
 - LOAD uses `local_profile_id` internally, not display name.
+- DELETE is available only for local profiles, not Guest.
+- DELETE opens the delete confirmation sub-panel.
+- DELETE sends the API delete only after confirmation.
+- DELETE refreshes the selector after a successful delete.
+- DELETE cancel closes the sub-panel and preserves the selected pilot.
 
 ## Multiplayer Mode
 
