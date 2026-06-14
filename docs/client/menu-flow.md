@@ -87,6 +87,9 @@ Completed Local Pilot / Guest selector:
 - LOAD persists the selected local profile/default through the data-handler.
 - LOAD updates the callsign label.
 - LOAD uses `local_profile_id` internally, not display name.
+- DELETE deletes only local profiles.
+- DELETE refreshes the selector after a successful delete.
+- DELETE cannot remove Guest.
 
 ## Remaining Client Slice Plan
 

@@ -1,6 +1,7 @@
 package playerdata
 
 import (
+	"database/sql"
 	"os"
 	"path/filepath"
 	"strings"
@@ -449,6 +450,135 @@ func TestSQLiteStoreRecordMatchResult(t *testing.T) {
 			t.Fatal("RecordMatchResult returned nil error for missing match id")
 		}
 	})
+}
+
+func TestSQLiteStoreDeleteLocalProfileDeletesRelatedRows(t *testing.T) {
+	store, err := NewSQLiteStore(SQLiteStoreConfig{Path: ":memory:"})
+	if err != nil {
+		t.Fatalf("NewSQLiteStore returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = store.Close()
+	})
+
+	if err := store.InitSchema(); err != nil {
+		t.Fatalf("InitSchema returned error: %v", err)
+	}
+
+	_, err = store.CreateLocalProfile("profile-1", "Pilot One", protocol.PlayerDataStats{
+		TotalScore:  7,
+		HighScore:   7,
+		ShipDeaths:  1,
+		GamesPlayed: 1,
+	})
+	if err != nil {
+		t.Fatalf("CreateLocalProfile returned error: %v", err)
+	}
+
+	if _, _, err := store.RecordMatchResult(protocol.PlayerDataRecordMatchResult{
+		ResultID: "result-1",
+		MatchID:  "match-1",
+		Identity: protocol.PlayerDataIdentity{
+			IdentityKind:   IdentityKindLocalProfile,
+			LocalProfileID: "profile-1",
+		},
+		Score:      12,
+		ShipDeaths:  2,
+		Won:        true,
+	}); err != nil {
+		t.Fatalf("RecordMatchResult returned error: %v", err)
+	}
+
+	if err := store.DeleteLocalProfile("profile-1"); err != nil {
+		t.Fatalf("DeleteLocalProfile returned error: %v", err)
+	}
+
+	if err := store.db.QueryRow(
+		`SELECT local_profile_id
+		 FROM local_profiles
+		 WHERE local_profile_id = ?`,
+		"profile-1",
+	).Scan(new(string)); err != sql.ErrNoRows {
+		t.Fatalf("local_profiles row still present or unexpected error: %v", err)
+	}
+	if err := store.db.QueryRow(
+		`SELECT local_profile_id
+		 FROM local_player_stats
+		 WHERE local_profile_id = ?`,
+		"profile-1",
+	).Scan(new(string)); err != sql.ErrNoRows {
+		t.Fatalf("local_player_stats row still present or unexpected error: %v", err)
+	}
+	if err := store.db.QueryRow(
+		`SELECT result_id
+		 FROM local_player_match_results
+		 WHERE local_profile_id = ?`,
+		"profile-1",
+	).Scan(new(string)); err != sql.ErrNoRows {
+		t.Fatalf("local_player_match_results row still present or unexpected error: %v", err)
+	}
+}
+
+func TestSQLiteStoreDeleteLocalProfileResetsDefaultToGuest(t *testing.T) {
+	store, err := NewSQLiteStore(SQLiteStoreConfig{Path: ":memory:"})
+	if err != nil {
+		t.Fatalf("NewSQLiteStore returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = store.Close()
+	})
+
+	if err := store.InitSchema(); err != nil {
+		t.Fatalf("InitSchema returned error: %v", err)
+	}
+
+	_, err = store.CreateLocalProfile("profile-1", "Pilot One", protocol.PlayerDataStats{})
+	if err != nil {
+		t.Fatalf("CreateLocalProfile returned error: %v", err)
+	}
+	if _, err := store.SetDefaultLocalProfile(IdentityKindLocalProfile, "profile-1"); err != nil {
+		t.Fatalf("SetDefaultLocalProfile returned error: %v", err)
+	}
+
+	if err := store.DeleteLocalProfile("profile-1"); err != nil {
+		t.Fatalf("DeleteLocalProfile returned error: %v", err)
+	}
+
+	defaultProfile, err := store.GetDefaultLocalProfile()
+	if err != nil {
+		t.Fatalf("GetDefaultLocalProfile returned error: %v", err)
+	}
+	if defaultProfile.IdentityKind != IdentityKindGuest {
+		t.Fatalf("IdentityKind = %q, want %q", defaultProfile.IdentityKind, IdentityKindGuest)
+	}
+	if defaultProfile.LocalProfileID != "" {
+		t.Fatalf("LocalProfileID = %q, want empty", defaultProfile.LocalProfileID)
+	}
+	if defaultProfile.DisplayName != "Guest" {
+		t.Fatalf("DisplayName = %q, want Guest", defaultProfile.DisplayName)
+	}
+}
+
+func TestSQLiteStoreDeleteLocalProfileMissingID(t *testing.T) {
+	store, err := NewSQLiteStore(SQLiteStoreConfig{Path: ":memory:"})
+	if err != nil {
+		t.Fatalf("NewSQLiteStore returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = store.Close()
+	})
+
+	if err := store.InitSchema(); err != nil {
+		t.Fatalf("InitSchema returned error: %v", err)
+	}
+
+	err = store.DeleteLocalProfile("missing-profile")
+	if err == nil {
+		t.Fatal("DeleteLocalProfile returned nil error for missing local profile")
+	}
+	if !strings.Contains(err.Error(), "local profile not found") {
+		t.Fatalf("DeleteLocalProfile error = %v, want it to contain %q", err, "local profile not found")
+	}
 }
 
 func TestSQLiteStorePersistenceAcrossReopen(t *testing.T) {

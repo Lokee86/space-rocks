@@ -32,6 +32,8 @@ func show_selector() -> Control:
 		selector.connect("load_requested", Callable(self, "_on_load_requested"))
 	if selector.has_signal("create_requested"):
 		selector.connect("create_requested", Callable(self, "_on_create_requested"))
+	if selector.has_signal("delete_requested"):
+		selector.connect("delete_requested", Callable(self, "_on_delete_requested"))
 
 	_refresh_selector()
 	return selector
@@ -157,6 +159,34 @@ func _on_create_confirmed(callsign: String) -> void:
 
 	await _refresh_selector()
 	_on_subpanel_cancel_requested()
+
+
+func _on_delete_requested(item: Dictionary) -> void:
+	if local_pilot_api_client == null:
+		return
+
+	var identity_kind := str(item.get("identity_kind", ""))
+	if identity_kind != "local_profile":
+		return
+
+	var local_profile_id := str(item.get("local_profile_id", ""))
+	if local_profile_id == "":
+		return
+
+	var result = await local_pilot_api_client.delete_profile(local_profile_id)
+	if result == null or !result.ok:
+		return
+
+	var should_apply_guest_default := false
+	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+		var context: Dictionary = profile_context_provider.context_for_mode("single_player")
+		if str(context.get("identity_kind", "")) == "local_profile" and str(context.get("local_profile_id", "")) == local_profile_id:
+			should_apply_guest_default = true
+
+	if should_apply_guest_default:
+		_apply_guest_default()
+
+	await _refresh_selector()
 
 
 func _refresh_selector() -> void:

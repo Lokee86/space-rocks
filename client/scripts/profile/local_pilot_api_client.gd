@@ -27,6 +27,10 @@ func create_profile(display_name: String, seed_from_guest_stats: bool, token := 
 	return await api_http_client.post_json(ApiConfig.player_data_local_profiles_path(), body, token)
 
 
+func delete_profile(local_profile_id: String, token := ""):
+	return await api_http_client.delete_json(ApiConfig.player_data_local_profile_path(local_profile_id), {}, token)
+
+
 func set_default_profile(identity_kind: String, local_profile_id := "", token := ""):
 	var body := {
 		"identity_kind": identity_kind,
