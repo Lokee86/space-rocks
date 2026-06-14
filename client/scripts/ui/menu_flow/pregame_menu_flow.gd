@@ -80,9 +80,15 @@ func show_multiplayer() -> void:
 
 
 func _on_back_requested() -> void:
-	if transmission_flow != null and transmission_flow.has_active_transmission():
-		transmission_flow.clear()
-		return
+	if transmission_flow != null:
+		if transmission_flow.has_method("has_active_subpanel") and transmission_flow.has_active_subpanel():
+			transmission_flow.clear_subpanel()
+			return
+
+		if transmission_flow.has_active_transmission():
+			transmission_flow.clear()
+			return
+
 	if return_to_main_menu.is_valid():
 		return_to_main_menu.call()
 
