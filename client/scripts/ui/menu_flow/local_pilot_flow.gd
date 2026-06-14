@@ -12,6 +12,7 @@ var profile_context_provider
 var local_pilot_api_client
 var selector: Control
 var active_entry_scene: Control
+var active_edit_item: Dictionary = {}
 
 
 func configure(transmission_flow_ref, callsign_updated_callable_ref: Callable = Callable(), profile_context_provider_ref = null) -> void:
@@ -33,6 +34,8 @@ func show_selector() -> Control:
 		selector.connect("load_requested", Callable(self, "_on_load_requested"))
 	if selector.has_signal("create_requested"):
 		selector.connect("create_requested", Callable(self, "_on_create_requested"))
+	if selector.has_signal("edit_requested"):
+		selector.connect("edit_requested", Callable(self, "_on_edit_requested"))
 	if selector.has_signal("delete_requested"):
 		selector.connect("delete_requested", Callable(self, "_on_delete_requested"))
 
@@ -128,11 +131,40 @@ func _on_create_requested() -> void:
 		mounted_scene.connect("confirm_requested", Callable(self, "_on_create_confirmed"))
 
 
+func _on_edit_requested(item: Dictionary) -> void:
+	if transmission_flow == null:
+		return
+
+	var identity_kind := str(item.get("identity_kind", ""))
+	if identity_kind != "local_profile":
+		return
+
+	var local_profile_id := str(item.get("local_profile_id", ""))
+	if local_profile_id == "":
+		return
+
+	var mounted_scene: Control = transmission_flow.mount_subpanel(EnterPilotIdScene)
+	if mounted_scene == null:
+		return
+	active_entry_scene = mounted_scene
+	active_edit_item = item.duplicate(true)
+
+	var display_name := str(item.get("display_name", ""))
+	if mounted_scene.has_method("configure_label"):
+		mounted_scene.configure_label("ENTER NEW CALLSIGN", display_name)
+
+	if mounted_scene.has_signal("cancel_requested"):
+		mounted_scene.connect("cancel_requested", Callable(self, "_on_subpanel_cancel_requested"))
+	if mounted_scene.has_signal("confirm_requested"):
+		mounted_scene.connect("confirm_requested", Callable(self, "_on_edit_confirmed"))
+
+
 func _on_subpanel_cancel_requested() -> void:
 	if transmission_flow == null:
 		return
 
 	active_entry_scene = null
+	active_edit_item = {}
 	transmission_flow.clear_subpanel()
 
 
@@ -159,6 +191,46 @@ func _on_create_confirmed(callsign: String) -> void:
 		return
 
 	await _refresh_selector()
+	_on_subpanel_cancel_requested()
+
+
+func _on_edit_confirmed(callsign: String) -> void:
+	if local_pilot_api_client == null:
+		return
+
+	var identity_kind := str(active_edit_item.get("identity_kind", ""))
+	if identity_kind != "local_profile":
+		return
+
+	var local_profile_id := str(active_edit_item.get("local_profile_id", ""))
+	if local_profile_id == "":
+		return
+
+	if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_submitting"):
+		active_entry_scene.show_submitting("UPDATING...")
+
+	var result = await local_pilot_api_client.update_profile_display_name(local_profile_id, callsign)
+	if result == null or !result.ok:
+		if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_failed"):
+			active_entry_scene.show_failed("UPDATE FAILED")
+		return
+
+	var should_update_active_profile := false
+	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+		var context: Dictionary = profile_context_provider.context_for_mode("single_player")
+		if str(context.get("identity_kind", "")) == "local_profile" and str(context.get("local_profile_id", "")) == local_profile_id:
+			should_update_active_profile = true
+
+	if should_update_active_profile:
+		if profile_context_provider != null and profile_context_provider.has_method("select_local_profile"):
+			profile_context_provider.select_local_profile(local_profile_id, callsign)
+		if callsign_updated_callable.is_valid():
+			callsign_updated_callable.call(callsign)
+
+	await _refresh_selector()
+	if selector != null and is_instance_valid(selector) and selector.has_method("select_item_by_identity"):
+		selector.select_item_by_identity("local_profile", local_profile_id)
+
 	_on_subpanel_cancel_requested()
 
 

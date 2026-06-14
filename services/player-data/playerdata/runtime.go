@@ -69,6 +69,19 @@ func (r *Runtime) DeleteLocalProfile(localProfileID string) error {
 	return localProfileStore.DeleteLocalProfile(localProfileID)
 }
 
+func (r *Runtime) UpdateLocalProfileDisplayName(localProfileID string, displayName string) (LocalProfileSummary, error) {
+	if r == nil || r.store == nil {
+		return LocalProfileSummary{}, errors.New("local profile management is unavailable")
+	}
+
+	localProfileStore, ok := r.store.(LocalProfileStore)
+	if !ok {
+		return LocalProfileSummary{}, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.UpdateLocalProfileDisplayName(localProfileID, displayName)
+}
+
 func (r *Runtime) GetDefaultLocalProfile() (LocalProfileDefault, error) {
 	if r == nil || r.store == nil {
 		return LocalProfileDefault{}, errors.New("local profile management is unavailable")

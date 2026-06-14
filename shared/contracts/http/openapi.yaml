@@ -325,6 +325,51 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
   /api/player-data/local-profiles/{local_profile_id}:
+    put:
+      summary: Update a local player profile display name
+      parameters:
+        - name: local_profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerDataUpdateLocalProfileRequest"
+      responses:
+        "200":
+          description: Local player profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDataLocalProfileResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Local profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       summary: Delete a local player profile
       parameters:
@@ -681,6 +726,13 @@ components:
           type: string
         seed_from_guest_stats:
           type: boolean
+    PlayerDataUpdateLocalProfileRequest:
+      type: object
+      required:
+        - display_name
+      properties:
+        display_name:
+          type: string
     PlayerDataLocalProfileDefaultResponse:
       type: object
       required:

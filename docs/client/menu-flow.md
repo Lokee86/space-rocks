@@ -79,6 +79,9 @@ Completed Local Pilot / Guest selector:
 - CREATE opens `enter_pilot_id.tscn` in the subpanel transmission screen.
 - CREATE locks primary transmission input while the subpanel is active.
 - CREATE validates callsign input before creating a profile.
+- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
+- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
+- CREATE uses `ENTER CALLSIGN`.
 - CREATE creates a local profile through the data-handler.
 - CREATE seeds from Guest stats only when the loaded identity is Guest.
 - CREATE creates fresh zero stats when the loaded identity is a non-Guest local profile.
@@ -96,6 +99,14 @@ Completed Local Pilot / Guest selector:
 - `select_pilot_readout.gd` emits delete intent only.
 - `confirm_delete.gd` emits confirm/cancel intent only.
 - `LocalPilotFlow` mounts the confirmation sub-panel and owns the actual delete API call.
+- EDIT is available only for local profiles, not Guest.
+- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
+- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
+- EDIT opens `enter_pilot_id.tscn` in edit mode through the subpanel transmission.
+- EDIT uses `ENTER NEW CALLSIGN` with the current callsign prefilled.
+- EDIT confirm updates the display name through the data-handler.
+- EDIT cancel preserves the selected pilot and does not call the API.
+- The subpanel emits confirm/cancel intent only; `LocalPilotFlow` owns the create/edit API calls.
 
 ## Remaining Client Slice Plan
 
@@ -181,6 +192,9 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 - CREATE opens `enter_pilot_id.tscn` in the subpanel transmission screen.
 - CREATE locks primary transmission input while the subpanel is active.
 - CREATE validates callsign input before creating a profile.
+- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
+- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
+- CREATE uses `ENTER CALLSIGN`.
 - CREATE creates a local profile through the data-handler.
 - CREATE seeds from Guest stats only when the loaded identity is Guest.
 - CREATE creates fresh zero stats when the loaded identity is a non-Guest local profile.
@@ -194,6 +208,13 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 - DELETE sends the API delete only after confirmation.
 - DELETE refreshes the selector after a successful delete.
 - DELETE cancel closes the sub-panel and preserves the selected pilot.
+- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
+- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
+- EDIT opens `enter_pilot_id.tscn` in edit mode through the subpanel transmission.
+- EDIT uses `ENTER NEW CALLSIGN` with the current callsign prefilled.
+- EDIT confirm updates the display name through the data-handler.
+- EDIT cancel preserves the selected pilot and does not call the API.
+- The subpanel emits confirm/cancel intent only; `LocalPilotFlow` owns the create/edit API calls.
 
 ## Multiplayer Mode
 

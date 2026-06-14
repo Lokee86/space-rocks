@@ -31,6 +31,13 @@ func delete_profile(local_profile_id: String, token := ""):
 	return await api_http_client.delete_json(ApiConfig.player_data_local_profile_path(local_profile_id), {}, token)
 
 
+func update_profile_display_name(local_profile_id: String, display_name: String, token := ""):
+	var body := {
+		"display_name": display_name,
+	}
+	return await api_http_client.put_json(ApiConfig.player_data_local_profile_path(local_profile_id), body, token)
+
+
 func set_default_profile(identity_kind: String, local_profile_id := "", token := ""):
 	var body := {
 		"identity_kind": identity_kind,

@@ -68,7 +68,11 @@ func (h *LocalProfilesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	case http.MethodPost:
 		h.serveCreate(w, r)
 	case http.MethodPut:
-		h.serveSetDefault(w, r)
+		if r.URL.Path == "/api/player-data/local-profiles/default" {
+			h.serveSetDefault(w, r)
+			return
+		}
+		h.serveUpdate(w, r)
 	case http.MethodDelete:
 		h.serveDelete(w, r)
 	default:
@@ -231,6 +235,48 @@ func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Re
 			IdentityKind:   defaultProfile.IdentityKind,
 			LocalProfileID: defaultProfile.LocalProfileID,
 			DisplayName:    defaultProfile.DisplayName,
+		},
+	})
+}
+
+func (h *LocalProfilesHandler) serveUpdate(w http.ResponseWriter, r *http.Request) {
+	if h == nil || h.runtime == nil {
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+		return
+	}
+
+	localProfileID := strings.TrimSpace(r.PathValue("local_profile_id"))
+	if localProfileID == "" {
+		writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+
+	var request playerDataLocalProfilesRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+
+	displayName := strings.TrimSpace(request.DisplayName)
+	if !isValidLocalProfileDisplayName(displayName) {
+		writePlayerDataLocalProfilesError(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+
+	profile, err := h.runtime.UpdateLocalProfileDisplayName(localProfileID, displayName)
+	if err != nil {
+		if err.Error() == "local profile not found" {
+			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
+			return
+		}
+		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		return
+	}
+
+	writePlayerDataLocalProfilesJSON(w, http.StatusOK, playerDataLocalProfileResponse{
+		Profile: playerDataLocalProfile{
+			LocalProfileID: profile.LocalProfileID,
+			DisplayName:    profile.DisplayName,
 		},
 	})
 }

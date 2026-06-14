@@ -11,6 +11,7 @@ type LocalProfileStore interface {
 	ListLocalProfiles() ([]LocalProfileSummary, error)
 	CreateLocalProfile(localProfileID string, displayName string, stats protocol.PlayerDataStats) (LocalProfileSummary, error)
 	DeleteLocalProfile(localProfileID string) error
+	UpdateLocalProfileDisplayName(localProfileID string, displayName string) (LocalProfileSummary, error)
 	GetDefaultLocalProfile() (LocalProfileDefault, error)
 	SetDefaultLocalProfile(identityKind string, localProfileID string) (LocalProfileDefault, error)
 }
