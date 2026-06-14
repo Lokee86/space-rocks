@@ -99,10 +99,13 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Local elimination must not show Match Results.
 - Room `GameOver` shows Match Results and hides/locks HUD.
 - Remaining client work:
-  - Local Pilot / Guest selector
   - Stats refresh / final smoke
-- Phase 7 is Local Pilot / Guest selector.
-- Phase 8 is final smoke.
+- Local Pilot / Guest selector is implemented:
+  - create
+  - load/default
+  - delete
+  - delete confirmation sub-panel
+- Phase 7 is final smoke.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.

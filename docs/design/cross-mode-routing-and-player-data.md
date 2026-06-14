@@ -330,6 +330,7 @@ The current implemented player-data foundation exists to support Local Profile.
 
 Local Profile is durable, account-shaped, and local-only.
 Local Profile list/create/default loading already route through the game-server data-handler and in-process player-data runtime.
+Local Profile delete is implemented through the game-server data-handler facade; `services/player-data` owns the SQLite deletion path, and the game-server does not directly delete SQLite rows.
 
 `services/player-data` is a sibling Go module, not game-server internals.
 
@@ -662,7 +663,7 @@ Never log bearer tokens, Discord access tokens, OAuth codes, raw OAuth state, or
 6. Admission wiring, initially behavior-preserving where needed.
 7. Create `services/player-data-server` scaffold.
 8. Define the player-data service contract from the shared logical schema.
-9. Local Profile delete/rename in `services/player-data-server`.
+9. Local Profile rename in `services/player-data-server`.
 10. SQLite-backed persistence and migrations in `services/player-data-server`.
 11. Game-server consuming `services/player-data-server` APIs for loadout and profile reads plus match-result writes.
 12. Client consuming `services/player-data-server` APIs for local profile UI.
@@ -676,7 +677,7 @@ The first code milestone after docs should still be pure vocabulary and admissio
 
 ## Deferred Work
 
-- local profile delete/rename
+- local profile rename
 - local profile schema migration/versioning
 - account linking or local-to-online migration
 - online leaderboards
