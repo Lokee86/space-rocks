@@ -269,6 +269,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/player-data/local-profiles:
+    get:
+      summary: List local player profiles
+      responses:
+        "200":
+          description: Local player profiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDataLocalProfilesResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      summary: Create a local player profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerDataCreateLocalProfileRequest"
+      responses:
+        "201":
+          description: Local player profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDataLocalProfileResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /internal/auth/verify-token:
     post:
       summary: Verify an internal auth token
@@ -485,6 +540,35 @@ components:
             - string
             - "null"
       additionalProperties: false
+    PlayerDataLocalProfile:
+      type: object
+      required:
+        - local_profile_id
+        - display_name
+      properties:
+        local_profile_id:
+          type: string
+        display_name:
+          type: string
+    PlayerDataLocalProfilesResponse:
+      type: object
+      required:
+        - profiles
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerDataLocalProfile"
+    PlayerDataCreateLocalProfileRequest:
+      type: object
+      required:
+        - display_name
+        - seed_from_guest_stats
+      properties:
+        display_name:
+          type: string
+        seed_from_guest_stats:
+          type: boolean
     InternalPlayerDataStatsRequest:
       type: object
       required:
@@ -516,6 +600,13 @@ components:
       properties:
         profile:
           $ref: "#/components/schemas/PlayerDataProfile"
+    PlayerDataLocalProfileResponse:
+      type: object
+      required:
+        - profile
+      properties:
+        profile:
+          $ref: "#/components/schemas/PlayerDataLocalProfile"
     PlayerStats:
       type: object
       required:
