@@ -23,8 +23,8 @@ static func start_game_request_packet() -> Dictionary:
 	return Packets.start_game_request_packet()
 
 
-static func start_single_player_request_packet() -> Dictionary:
-	return Packets.start_single_player_request_packet()
+static func start_single_player_request_packet(local_profile_id := "") -> Dictionary:
+	return Packets.start_single_player_request_packet(local_profile_id)
 
 
 static func return_to_lobby_request_packet() -> Dictionary:

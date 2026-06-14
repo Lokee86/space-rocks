@@ -352,9 +352,10 @@ static func start_game_request_packet() -> Dictionary:
 	packet[FIELD_TYPE] = "start_game_request"
 	return packet
 
-static func start_single_player_request_packet() -> Dictionary:
+static func start_single_player_request_packet(local_profile_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "start_single_player_request"
+	packet[FIELD_LOCAL_PROFILE_ID] = local_profile_id
 	return packet
 
 static func return_to_lobby_request_packet() -> Dictionary:

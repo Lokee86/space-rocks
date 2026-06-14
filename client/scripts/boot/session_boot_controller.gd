@@ -24,9 +24,9 @@ func _ready() -> void:
 	shell_boot_flow = ShellBootFlow.new(connection_service, websocket_url, logger)
 
 
-func request_single_player() -> void:
+func request_single_player(local_profile_id := "") -> void:
 	session_context.request_single_player()
-	shell_boot_flow.request_single_player()
+	shell_boot_flow.request_single_player(local_profile_id)
 	shell_boot_flow.connect_to_game_server("single player")
 
 

@@ -40,7 +40,7 @@ func configure(
 	profile_flow = profile_flow_ref
 	transmission_flow = transmission_flow_ref
 	local_pilot_flow = LocalPilotFlow.new()
-	local_pilot_flow.configure(transmission_flow, Callable(pregame_menu, "set_callsign"))
+	local_pilot_flow.configure(transmission_flow, Callable(pregame_menu, "set_callsign"), profile_context_provider)
 
 	if pregame_menu != null and pregame_menu.has_signal("back_requested"):
 		if not pregame_menu.back_requested.is_connected(_on_back_requested):
@@ -145,3 +145,14 @@ func _update_callsign_indicator() -> void:
 
 	var context: Dictionary = profile_context_provider.context_for_mode(current_mode)
 	pregame_menu.set_callsign(str(context.get("callsign", "Guest")))
+
+
+func get_single_player_profile_context() -> Dictionary:
+	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+		return profile_context_provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
+
+	return {
+		"play_mode": PregameMenuMode.SINGLE_PLAYER,
+		"identity_kind": "guest",
+		"callsign": "Guest",
+	}

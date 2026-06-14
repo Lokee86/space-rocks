@@ -151,9 +151,9 @@ func send_start_game_request() -> void:
 		network_client.send_raw_packet(LobbyClientPackets.start_game_request_packet())
 
 
-func send_start_single_player_request() -> void:
+func send_start_single_player_request(local_profile_id := "") -> void:
 	if network_client != null:
-		network_client.send_raw_packet(LobbyClientPackets.start_single_player_request_packet())
+		network_client.send_raw_packet(LobbyClientPackets.start_single_player_request_packet(local_profile_id))
 
 
 func send_return_to_lobby_request() -> void:

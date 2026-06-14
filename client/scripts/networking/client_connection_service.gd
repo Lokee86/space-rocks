@@ -71,9 +71,9 @@ func set_auth_session_controller(auth_session_controller_ref) -> void:
 	auth_session_controller = auth_session_controller_ref
 
 
-func send_start_single_player_request() -> void:
+func send_start_single_player_request(local_profile_id := "") -> void:
 	if client_packet_sender != null:
-		client_packet_sender.send_start_single_player_request()
+		client_packet_sender.send_start_single_player_request(local_profile_id)
 
 
 func send_create_room_request() -> void:

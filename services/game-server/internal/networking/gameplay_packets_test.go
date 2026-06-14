@@ -61,6 +61,34 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 	}
 }
 
+func TestHandleLobbyPacketStartSinglePlayerStoresLocalProfileID(t *testing.T) {
+	session := &webSocketSession{
+		sessionID: "session-1",
+		rooms:     rooms.NewRoomManager(),
+		outbound:  make(chan []byte, 4),
+	}
+
+	packet := game.ClientPacket{
+		Type:            game.PacketTypeStartSinglePlayerRequest,
+		LocalProfileID:  "local-profile-1",
+	}
+
+	if !inbound.HandleLobbyPacket(newInboundSessionAdapter(session), packet) {
+		t.Fatal("expected start_single_player packet to be handled")
+	}
+	if session.room == nil {
+		t.Fatal("expected single-player room to be created")
+	}
+
+	members := session.room.MembersSnapshot()
+	if len(members) != 1 {
+		t.Fatalf("expected 1 room member, got %d", len(members))
+	}
+	if members[0].LocalProfileID != "local-profile-1" {
+		t.Fatalf("expected LocalProfileID %q, got %q", "local-profile-1", members[0].LocalProfileID)
+	}
+}
+
 type gameplayPacketTestAdapter struct {
 	session *webSocketSession
 }

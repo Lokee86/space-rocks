@@ -25,6 +25,12 @@ json = "room_code"
 type = "string"
 
 [[structs.fields]]
+name = "local_profile_id"
+go_name = "LocalProfileID"
+json = "local_profile_id"
+type = "string"
+
+[[structs.fields]]
 name = "ready"
 json = "ready"
 type = "bool"

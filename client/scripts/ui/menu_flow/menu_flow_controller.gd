@@ -5,6 +5,7 @@ const PregameMenuScene := preload("res://scenes/ui/pregame_menu.tscn")
 const LoginWindowScene := preload("res://scenes/ui/dialogs/login_window.tscn")
 const JoinDialogScene := preload("res://scenes/ui/dialogs/join_dialog.tscn")
 const MenuRoute := preload("res://scripts/ui/menu_flow/menu_route.gd")
+const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 const PregameMenuFlow := preload("res://scripts/ui/menu_flow/pregame_menu_flow.gd")
 const TransmissionFlow := preload("res://scripts/ui/menu_flow/transmission_flow.gd")
 const ProfileContextProvider := preload("res://scripts/profile/profile_context_provider.gd")
@@ -240,3 +241,18 @@ func get_sign_in_screen() -> Control:
 
 func get_join_dialog() -> Control:
 	return join_dialog
+
+
+func get_single_player_profile_context() -> Dictionary:
+	if pregame_menu_flow != null and pregame_menu_flow.has_method("get_single_player_profile_context"):
+		return pregame_menu_flow.get_single_player_profile_context()
+
+	return {
+		"play_mode": PregameMenuMode.SINGLE_PLAYER,
+		"identity_kind": "guest",
+		"callsign": "Guest",
+	}
+
+
+func get_single_player_context() -> Dictionary:
+	return get_single_player_profile_context()
