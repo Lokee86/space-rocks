@@ -3,6 +3,7 @@ extends RefCounted
 
 const SelectPilotReadoutScene := preload("res://scenes/ui/transmission_displays/select_pilot_readout.tscn")
 const EnterPilotIdScene := preload("res://scenes/ui/transmission_displays/sub-transmissions/enter_pilot_id.tscn")
+const ConfirmDeleteScene := preload("res://scenes/ui/transmission_displays/sub-transmissions/confirm_delete.tscn")
 const LocalPilotApiClient := preload("res://scripts/profile/local_pilot_api_client.gd")
 
 var transmission_flow
@@ -162,6 +163,31 @@ func _on_create_confirmed(callsign: String) -> void:
 
 
 func _on_delete_requested(item: Dictionary) -> void:
+	if transmission_flow == null:
+		return
+
+	var identity_kind := str(item.get("identity_kind", ""))
+	if identity_kind != "local_profile":
+		return
+
+	var local_profile_id := str(item.get("local_profile_id", ""))
+	if local_profile_id == "":
+		return
+
+	var mounted_scene: Control = transmission_flow.mount_subpanel(ConfirmDeleteScene)
+	if mounted_scene == null:
+		return
+	active_entry_scene = mounted_scene
+
+	if mounted_scene.has_method("configure_delete"):
+		mounted_scene.configure_delete(item)
+	if mounted_scene.has_signal("cancel_requested"):
+		mounted_scene.connect("cancel_requested", Callable(self, "_on_subpanel_cancel_requested"))
+	if mounted_scene.has_signal("confirm_requested"):
+		mounted_scene.connect("confirm_requested", Callable(self, "_on_delete_confirmed"))
+
+
+func _on_delete_confirmed(item: Dictionary) -> void:
 	if local_pilot_api_client == null:
 		return
 
@@ -187,6 +213,7 @@ func _on_delete_requested(item: Dictionary) -> void:
 		_apply_guest_default()
 
 	await _refresh_selector()
+	_on_subpanel_cancel_requested()
 
 
 func _refresh_selector() -> void:

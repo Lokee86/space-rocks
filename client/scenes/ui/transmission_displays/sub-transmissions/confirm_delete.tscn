@@ -4,6 +4,7 @@
 [ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="4_4hfm6"]
 [ext_resource type="StyleBox" uid="uid://dax63si7q02k8" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="5_s4v2p"]
 [ext_resource type="StyleBox" uid="uid://dia0oanl1ge75" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="6_k3nyk"]
+[ext_resource type="Script" path="res://scripts/ui/local_pilots/confirm_delete.gd" id="7_9f2aa"]
 
 [node name="SubScreenPilotID" type="Control" unique_id=2021787840]
 layout_mode = 3
@@ -15,6 +16,7 @@ offset_left = 0.35899734
 offset_top = 12.271999
 offset_right = -0.3590088
 offset_bottom = 12.233948
+script = ExtResource("7_9f2aa")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=925183646]
 layout_mode = 1
@@ -27,7 +29,7 @@ grow_vertical = 0
 
 [node name="Label" type="Label" parent="VBoxContainer" unique_id=538834121]
 layout_mode = 2
-text = "ARE YOU SURE YOU WANT TO DELET THIS PROFILE?"
+text = "ARE YOU SURE YOU WANT TO DELETE THIS PROFILE?"
 label_settings = ExtResource("1_7bavv")
 horizontal_alignment = 1
 autowrap_mode = 2
