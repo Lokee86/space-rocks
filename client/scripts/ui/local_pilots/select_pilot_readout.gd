@@ -1,6 +1,5 @@
 extends Control
 
-const PilotSelectRowScene := preload("res://scenes/ui/elements/pilot_select_row.tscn")
 const GUEST_DISPLAY_NAME := "GUEST"
 
 signal load_requested(item: Dictionary)
@@ -8,14 +7,13 @@ signal create_requested
 signal edit_requested(item: Dictionary)
 signal delete_requested(item: Dictionary)
 
-@onready var pilot_list_container: VBoxContainer = %PilotListContainer
+@onready var pilot_list_view: DiscreteListView = %PilotListView
 @onready var load_button: Button = %LoadButton
 @onready var create_button: Button = %CreateButton
 @onready var reset_button: Button = %ResetButton
 @onready var delete_button: Button = %DeleteButton
 
 var selected_item: Dictionary = {"identity_kind": "guest", "display_name": GUEST_DISPLAY_NAME}
-var selected_row: Control
 
 
 func _ready() -> void:
@@ -23,24 +21,22 @@ func _ready() -> void:
 	create_button.pressed.connect(_on_create_pressed)
 	reset_button.pressed.connect(_on_edit_pressed)
 	delete_button.pressed.connect(_on_delete_pressed)
+	pilot_list_view.selection_changed.connect(_on_list_selection_changed)
 	_update_action_buttons()
 
 
 func populate_pilots(local_pilots: Array) -> void:
-	for child in pilot_list_container.get_children():
-		child.queue_free()
-
-	selected_row = null
+	var items: Array = []
 
 	for local_pilot in local_pilots:
-		var local_pilot_data := _build_local_pilot_item(local_pilot)
-		_add_row(local_pilot_data["display_name"], local_pilot_data)
+		items.append(_build_local_pilot_item(local_pilot))
 
 	var guest_item := {"identity_kind": "guest", "display_name": GUEST_DISPLAY_NAME}
-	selected_row = _add_row(GUEST_DISPLAY_NAME, guest_item)
-	_select_item(guest_item)
-	if selected_row != null:
-		selected_row.call_deferred("grab_focus")
+	items.append(guest_item)
+	pilot_list_view.set_items(items)
+	pilot_list_view.select_index(items.size() - 1)
+	selected_item = guest_item.duplicate(true)
+	_update_action_buttons()
 
 
 func _build_local_pilot_item(local_pilot: Dictionary) -> Dictionary:
@@ -52,15 +48,7 @@ func _build_local_pilot_item(local_pilot: Dictionary) -> Dictionary:
 	}
 
 
-func _add_row(display_text: String, item_data: Dictionary) -> Control:
-	var row := PilotSelectRowScene.instantiate()
-	pilot_list_container.add_child(row)
-	row.configure(display_text, item_data)
-	row.selected.connect(_on_row_selected)
-	return row
-
-
-func _on_row_selected(item: Dictionary) -> void:
+func _on_list_selection_changed(item: Dictionary) -> void:
 	_select_item(item)
 
 
