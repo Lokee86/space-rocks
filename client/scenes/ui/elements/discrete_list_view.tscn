@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://cktj3ddmw0pdj"]
+
+[ext_resource type="Script" uid="uid://cchxucynrisq3" path="res://scripts/ui/menus/elements/discrete_list_view.gd" id="1_discrete_list_view"]
+[ext_resource type="Theme" uid="uid://0sepijxkoikx" path="res://assets/ui/themes/transmission_Them.tres" id="2_0oeh8"]
+[ext_resource type="Texture2D" uid="uid://cvjlw4s2c1ycg" path="res://assets/ui/icons/sb_up_normal.png" id="3_fun80"]
+[ext_resource type="Texture2D" uid="uid://dmll8qgxc5x2t" path="res://assets/ui/icons/sb_up_focus.png" id="4_xc5s7"]
+[ext_resource type="Texture2D" uid="uid://df612ld5iqlnc" path="res://assets/ui/icons/sb_up_pressed.png" id="5_p3q2d"]
+[ext_resource type="Texture2D" uid="uid://be1ybri5f8q1l" path="res://assets/ui/icons/sb_down_normal.png" id="6_a082u"]
+[ext_resource type="Texture2D" uid="uid://ghpxe3ipf5mk" path="res://assets/ui/icons/sb_down_focus.png" id="7_30e72"]
+[ext_resource type="Texture2D" uid="uid://ci8n4pc7v8jek" path="res://assets/ui/icons/sb_down_pressed.png" id="8_4ssfp"]
+
+[node name="DiscreteListView" type="Control" unique_id=740242040]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_discrete_list_view")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=636542174]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="RowViewport" type="Control" parent="HBoxContainer" unique_id=442918716]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Rows" type="VBoxContainer" parent="HBoxContainer/RowViewport" unique_id=143008288]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="VScrollBar" type="VScrollBar" parent="HBoxContainer" unique_id=917294900]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("2_0oeh8")
+theme_override_icons/increment = ExtResource("6_a082u")
+theme_override_icons/increment_highlight = ExtResource("7_30e72")
+theme_override_icons/increment_pressed = ExtResource("8_4ssfp")
+theme_override_icons/decrement = ExtResource("3_fun80")
+theme_override_icons/decrement_highlight = ExtResource("4_xc5s7")
+theme_override_icons/decrement_pressed = ExtResource("5_p3q2d")
+step = 1.0

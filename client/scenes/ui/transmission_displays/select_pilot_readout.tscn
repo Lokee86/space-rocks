@@ -1,11 +1,12 @@
 [gd_scene format=3 uid="uid://diuriop873bpt"]
 
 [ext_resource type="LabelSettings" uid="uid://cipb7pygv8h8w" path="res://assets/ui/label_settings/transmission_display.tres" id="1_nymt5"]
-[ext_resource type="Theme" uid="uid://0sepijxkoikx" path="res://assets/ui/themes/transmission_Them.tres" id="2_76dof"]
 [ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="4_ylk83"]
 [ext_resource type="StyleBox" uid="uid://dax63si7q02k8" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="5_oc6gx"]
 [ext_resource type="StyleBox" uid="uid://dia0oanl1ge75" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="6_4xw1t"]
-[ext_resource type="Script" path="res://scripts/ui/local_pilots/select_pilot_readout.gd" id="7_2f4kq"]
+[ext_resource type="Script" uid="uid://b405687ftv0vy" path="res://scripts/ui/local_pilots/select_pilot_readout.gd" id="7_2f4kq"]
+[ext_resource type="PackedScene" uid="uid://cktj3ddmw0pdj" path="res://scenes/ui/elements/discrete_list_view.tscn" id="7_h7n6j"]
+[ext_resource type="PackedScene" uid="uid://dek1tpc5h7o5s" path="res://scenes/ui/elements/pilot_select_row.tscn" id="8_k4q2m"]
 
 [node name="SelectPilotReadout" type="Control" unique_id=443869164]
 layout_mode = 3
@@ -45,13 +46,7 @@ color = Color(0, 1, 1, 1)
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 
-[node name="PilotListScroll" type="ScrollContainer" parent="VBoxContainer" unique_id=1644448157]
-layout_mode = 2
-size_flags_vertical = 3
-theme = ExtResource("2_76dof")
-scroll_hint_mode = 1
-
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/PilotListScroll" unique_id=1778530900]
+[node name="PilotListArea" type="MarginContainer" parent="VBoxContainer" unique_id=1778530900]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -60,12 +55,11 @@ theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="PilotListContainer" type="VBoxContainer" parent="VBoxContainer/PilotListScroll/MarginContainer" unique_id=1460024992]
+[node name="PilotListView" parent="VBoxContainer/PilotListArea" unique_id=272157336 instance=ExtResource("7_h7n6j")]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 10
+row_scene = ExtResource("8_k4q2m")
+row_step_px = 35.0
 
 [node name="Spacer2" type="Control" parent="VBoxContainer" unique_id=412512881]
 custom_minimum_size = Vector2(0, 5)
