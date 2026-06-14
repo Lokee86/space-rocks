@@ -81,14 +81,6 @@ func _on_create_confirmed(callsign: String) -> void:
 
 	var result = await local_pilot_api_client.create_profile(callsign, seed_from_guest_stats)
 	if result == null or !result.ok:
-		if result == null:
-			print("local pilot creation failed: result=null")
-		else:
-			print("local pilot creation failed: status_code=%s error=%s body=%s" % [
-				str(result.status_code),
-				str(result.error_message),
-				str(result.body),
-			])
 		if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_create_failed"):
 			active_entry_scene.show_create_failed("CREATE FAILED")
 		return

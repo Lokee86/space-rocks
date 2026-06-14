@@ -1,6 +1,7 @@
 extends Control
 
 const PilotSelectRowScene := preload("res://scenes/ui/elements/pilot_select_row.tscn")
+const GUEST_DISPLAY_NAME := "GUEST"
 
 signal load_requested(item: Dictionary)
 signal create_requested
@@ -13,7 +14,7 @@ signal delete_requested(item: Dictionary)
 @onready var reset_button: Button = %ResetButton
 @onready var delete_button: Button = %DeleteButton
 
-var selected_item: Dictionary = {"identity_kind": "guest", "display_name": "Play as Guest"}
+var selected_item: Dictionary = {"identity_kind": "guest", "display_name": GUEST_DISPLAY_NAME}
 var selected_row: Control
 
 
@@ -35,8 +36,8 @@ func populate_pilots(local_pilots: Array) -> void:
 		var local_pilot_data := _build_local_pilot_item(local_pilot)
 		_add_row(local_pilot_data["display_name"], local_pilot_data)
 
-	var guest_item := {"identity_kind": "guest", "display_name": "Play as Guest"}
-	selected_row = _add_row("Play as Guest", guest_item)
+	var guest_item := {"identity_kind": "guest", "display_name": GUEST_DISPLAY_NAME}
+	selected_row = _add_row(GUEST_DISPLAY_NAME, guest_item)
 	_select_item(guest_item)
 	if selected_row != null:
 		selected_row.call_deferred("grab_focus")
