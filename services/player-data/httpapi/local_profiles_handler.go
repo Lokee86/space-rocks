@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Lokee86/space-rocks/player-data/codec"
+	"github.com/Lokee86/space-rocks/player-data/logging"
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
 	"github.com/Lokee86/space-rocks/player-data/protocol"
 )
@@ -107,18 +108,28 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 
 	stats, err := h.localProfileSeedStats(request.SeedFromGuestStats)
 	if err != nil {
+		logging.HTTP.Error("local profile create guest stat seeding failed", err,
+			logging.FieldOperation, "create_local_profile",
+		)
 		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
 		return
 	}
 
 	localProfileID, err := generateLocalProfileID()
 	if err != nil {
+		logging.HTTP.Error("local profile create id generation failed", err,
+			logging.FieldOperation, "create_local_profile",
+		)
 		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
 		return
 	}
 
 	profile, err := h.runtime.CreateLocalProfile(localProfileID, displayName, stats)
 	if err != nil {
+		logging.HTTP.Error("local profile create failed", err,
+			logging.FieldOperation, "create_local_profile",
+			logging.FieldLocalProfileID, localProfileID,
+		)
 		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
 		return
 	}

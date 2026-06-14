@@ -2,6 +2,7 @@ extends Node
 class_name ApiHttpClient
 
 const ApiRequestResult := preload("res://scripts/api/api_request_result.gd")
+const REQUEST_TIMEOUT_SECONDS := 5.0
 
 
 func get_json(url: String, bearer_token: String = "") -> ApiRequestResult:
@@ -18,8 +19,14 @@ func delete_json(url: String, body: Dictionary = {}, bearer_token: String = "") 
 
 func _request_json(method: int, url: String, body: Dictionary, bearer_token: String) -> ApiRequestResult:
 	var request := HTTPRequest.new()
-	add_child(request)
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		request.queue_free()
+		return ApiRequestResult.failure(0, "scene_tree_unavailable")
+
+	tree.root.add_child(request)
 	request.use_threads = true
+	request.timeout = REQUEST_TIMEOUT_SECONDS
 
 	var headers := PackedStringArray([
 		"Accept: application/json",
@@ -46,7 +53,7 @@ func _request_json(method: int, url: String, body: Dictionary, bearer_token: Str
 	var body_text := response_body.get_string_from_utf8()
 
 	if result_code != HTTPRequest.RESULT_SUCCESS:
-		return ApiRequestResult.failure(status_code, "network_failure")
+		return ApiRequestResult.failure(status_code, "network_failure_%d" % result_code)
 
 	if body_text.is_empty():
 		if status_code >= 200 and status_code < 300:

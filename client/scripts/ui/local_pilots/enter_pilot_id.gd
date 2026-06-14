@@ -35,6 +35,23 @@ func configure_create() -> void:
 		callsign_input.call_deferred("grab_focus")
 
 
+func show_create_submitting() -> void:
+	if callsign_input != null:
+		callsign_input.placeholder_text = "CREATING..."
+		callsign_input.clear()
+	if confirm_button != null:
+		confirm_button.disabled = true
+
+
+func show_create_failed(message: String = "CREATE FAILED") -> void:
+	if confirm_button != null:
+		confirm_button.disabled = false
+	if callsign_input != null:
+		callsign_input.clear()
+		callsign_input.placeholder_text = message
+		callsign_input.call_deferred("grab_focus")
+
+
 func _on_confirm_pressed() -> void:
 	if callsign_input == null:
 		return

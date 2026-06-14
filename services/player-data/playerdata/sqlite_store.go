@@ -3,6 +3,8 @@ package playerdata
 import (
 	"database/sql"
 	"errors"
+	"os"
+	"path/filepath"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -26,6 +28,14 @@ type LocalProfileSummary struct {
 func NewSQLiteStore(config SQLiteStoreConfig) (*SQLiteStore, error) {
 	if config.Path == "" {
 		return nil, errors.New("path is required")
+	}
+	if config.Path != ":memory:" {
+		parentDir := filepath.Dir(config.Path)
+		if parentDir != "." {
+			if err := os.MkdirAll(parentDir, 0755); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	db, err := sql.Open("sqlite", config.Path)

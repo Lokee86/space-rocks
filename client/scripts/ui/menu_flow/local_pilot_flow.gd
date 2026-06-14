@@ -9,6 +9,7 @@ var transmission_flow
 var callsign_updated_callable: Callable
 var local_pilot_api_client
 var selector: Control
+var active_entry_scene: Control
 
 
 func configure(transmission_flow_ref, callsign_updated_callable_ref: Callable = Callable()) -> void:
@@ -46,6 +47,7 @@ func _on_create_requested() -> void:
 	var mounted_scene: Control = transmission_flow.mount_subpanel(EnterPilotIdScene)
 	if mounted_scene == null:
 		return
+	active_entry_scene = mounted_scene
 
 	if mounted_scene.has_method("configure_create"):
 		mounted_scene.configure_create()
@@ -60,6 +62,7 @@ func _on_subpanel_cancel_requested() -> void:
 	if transmission_flow == null:
 		return
 
+	active_entry_scene = null
 	transmission_flow.clear_subpanel()
 
 
@@ -73,14 +76,21 @@ func _on_create_confirmed(callsign: String) -> void:
 		if selected_item is Dictionary and str(selected_item.get("identity_kind", "")) != "":
 			seed_from_guest_stats = str(selected_item.get("identity_kind", "")) == "guest"
 
+	if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_create_submitting"):
+		active_entry_scene.show_create_submitting()
+
 	var result = await local_pilot_api_client.create_profile(callsign, seed_from_guest_stats)
 	if result == null or !result.ok:
-		var status_code_text := "unknown"
-		var error_message_text := "unknown"
-		if result != null:
-			status_code_text = str(result.get("status_code", "unknown"))
-			error_message_text = str(result.get("error_message", result.get("message", "unknown")))
-		push_warning("local pilot creation failed: status_code=%s error=%s" % [status_code_text, error_message_text])
+		if result == null:
+			print("local pilot creation failed: result=null")
+		else:
+			print("local pilot creation failed: status_code=%s error=%s body=%s" % [
+				str(result.status_code),
+				str(result.error_message),
+				str(result.body),
+			])
+		if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_create_failed"):
+			active_entry_scene.show_create_failed("CREATE FAILED")
 		return
 
 	await _refresh_selector()
