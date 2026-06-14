@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_avovy"]
 [ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="4_avovy"]
 [ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="5_r532d"]
-[ext_resource type="PackedScene" uid="uid://dhpiky6olgnso" path="res://scenes/ui/elements/windows/transmission_screen2.tscn" id="6_sr72t"]
+[ext_resource type="PackedScene" uid="uid://dit0jfue34eju" path="res://scenes/ui/elements/windows/transmission_screen.2.tscn" id="7_il31l"]
 [ext_resource type="Texture2D" uid="uid://ck32p40ykuok" path="res://assets/icons/up_arrow.png" id="10_jln2o"]
 [ext_resource type="Texture2D" uid="uid://dmnhchyf7h61h" path="res://assets/icons/left_arrow.png" id="11_a2c2f"]
 [ext_resource type="Texture2D" uid="uid://3330785cfyqx" path="res://assets/icons/circle.png" id="12_ortc3"]
@@ -313,8 +313,9 @@ layout_mode = 2
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="SubPanelTransmissionScreen" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=344769410 instance=ExtResource("6_sr72t")]
+[node name="SubPanelTransmissionScreen2" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=1263921587 instance=ExtResource("7_il31l")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window8/MainInterface/ScreenStack/SubPanel" unique_id=1155367612]

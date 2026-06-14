@@ -1,0 +1,10 @@
+[gd_resource type="Theme" format=3 uid="uid://0sepijxkoikx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bm43j"]
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0, 0.21715513, 0.10942603, 0.74509805)
+border_color = Color(0, 0.78070253, 0.7807024, 1)
+
+[resource]
+VScrollBar/styles/grabber = SubResource("StyleBoxFlat_bm43j")

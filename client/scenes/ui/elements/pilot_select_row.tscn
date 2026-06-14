@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://dek1tpc5h7o5s"]
+
+[ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="1_bc577"]
+[ext_resource type="Script" uid="uid://dfp48x1f7r4lx" path="res://scripts/ui/menus/elements/pilot_select_row.gd" id="1_m0vmq"]
+[ext_resource type="StyleBox" uid="uid://dia0oanl1ge75" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="2_cq532"]
+[ext_resource type="LabelSettings" uid="uid://cipb7pygv8h8w" path="res://assets/ui/label_settings/transmission_display.tres" id="2_m0vmq"]
+[ext_resource type="StyleBox" uid="uid://dax63si7q02k8" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="3_bayd0"]
+
+[node name="PilotSelectRow" type="HBoxContainer" unique_id=1342354516]
+offset_right = 40.0
+offset_bottom = 40.0
+size_flags_horizontal = 3
+script = ExtResource("1_m0vmq")
+normal_style = ExtResource("1_bc577")
+hover_style = ExtResource("2_cq532")
+focus_style = ExtResource("2_cq532")
+pressed_style = ExtResource("3_bayd0")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=595679130]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("1_bc577")
+
+[node name="Label" type="Label" parent="PanelContainer" unique_id=1454372270]
+unique_name_in_owner = true
+layout_mode = 2
+text = "#. PLAYER_CALLSIGN"
+label_settings = ExtResource("2_m0vmq")

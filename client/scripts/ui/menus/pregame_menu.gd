@@ -9,6 +9,7 @@ signal create_game_requested
 signal join_game_requested
 signal logout_requested
 signal profile_requested
+signal select_pilot_requested
 
 var mode_presenter: PregameModePresenter
 var current_mode: String = ""
@@ -76,3 +77,5 @@ func _on_profile_pressed() -> void:
 func _on_select_pilot_logout_pressed() -> void:
 	if current_mode == PregameMenuMode.MULTIPLAYER:
 		logout_requested.emit()
+	elif current_mode == PregameMenuMode.SINGLE_PLAYER:
+		select_pilot_requested.emit()
