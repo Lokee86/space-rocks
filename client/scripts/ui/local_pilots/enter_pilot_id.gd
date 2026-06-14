@@ -25,31 +25,48 @@ func _ready() -> void:
 
 
 func configure_create() -> void:
+	configure_label("ENTER CALLSIGN", "")
+
+
+func configure_label(label_text: String, initial_callsign := "") -> void:
 	if create_label != null:
+		create_label.text = label_text
 		create_label.visible = true
 	if edit_label != null:
 		edit_label.visible = false
 	if callsign_input != null:
-		callsign_input.clear()
+		callsign_input.text = initial_callsign
 		callsign_input.placeholder_text = ""
 		callsign_input.call_deferred("grab_focus")
+		if initial_callsign != "" and callsign_input.has_method("select_all"):
+			callsign_input.call_deferred("select_all")
+	if confirm_button != null:
+		confirm_button.disabled = false
 
 
-func show_create_submitting() -> void:
+func show_submitting(message: String) -> void:
 	if callsign_input != null:
-		callsign_input.placeholder_text = "CREATING..."
 		callsign_input.clear()
+		callsign_input.placeholder_text = message
 	if confirm_button != null:
 		confirm_button.disabled = true
 
 
-func show_create_failed(message: String = "CREATE FAILED") -> void:
+func show_failed(message: String) -> void:
 	if confirm_button != null:
 		confirm_button.disabled = false
 	if callsign_input != null:
 		callsign_input.clear()
 		callsign_input.placeholder_text = message
 		callsign_input.call_deferred("grab_focus")
+
+
+func show_create_submitting() -> void:
+	show_submitting("CREATING...")
+
+
+func show_create_failed(message: String = "CREATE FAILED") -> void:
+	show_failed(message)
 
 
 func _on_confirm_pressed() -> void:

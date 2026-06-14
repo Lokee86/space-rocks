@@ -559,6 +559,141 @@ func TestSQLiteStoreDeleteLocalProfileResetsDefaultToGuest(t *testing.T) {
 	}
 }
 
+func TestSQLiteStoreUpdateLocalProfileDisplayName(t *testing.T) {
+	store, err := NewSQLiteStore(SQLiteStoreConfig{Path: ":memory:"})
+	if err != nil {
+		t.Fatalf("NewSQLiteStore returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = store.Close()
+	})
+
+	if err := store.InitSchema(); err != nil {
+		t.Fatalf("InitSchema returned error: %v", err)
+	}
+
+	_, err = store.CreateLocalProfile("profile-1", "Pilot One", protocol.PlayerDataStats{
+		TotalScore:  4,
+		HighScore:   4,
+		ShipDeaths:  1,
+		GamesPlayed: 1,
+	})
+	if err != nil {
+		t.Fatalf("CreateLocalProfile returned error: %v", err)
+	}
+
+	if _, _, err := store.RecordMatchResult(protocol.PlayerDataRecordMatchResult{
+		ResultID: "result-1",
+		MatchID:  "match-1",
+		Identity: protocol.PlayerDataIdentity{
+			IdentityKind:   IdentityKindLocalProfile,
+			LocalProfileID: "profile-1",
+		},
+		Score:      9,
+		ShipDeaths: 2,
+		Won:        false,
+	}); err != nil {
+		t.Fatalf("RecordMatchResult returned error: %v", err)
+	}
+
+	profile, err := store.UpdateLocalProfileDisplayName("profile-1", "Ace Pilot")
+	if err != nil {
+		t.Fatalf("UpdateLocalProfileDisplayName returned error: %v", err)
+	}
+	if profile.LocalProfileID != "profile-1" {
+		t.Fatalf("LocalProfileID = %q, want profile-1", profile.LocalProfileID)
+	}
+	if profile.DisplayName != "Ace Pilot" {
+		t.Fatalf("DisplayName = %q, want Ace Pilot", profile.DisplayName)
+	}
+
+	profiles, err := store.ListLocalProfiles()
+	if err != nil {
+		t.Fatalf("ListLocalProfiles returned error: %v", err)
+	}
+	if len(profiles) != 1 {
+		t.Fatalf("ListLocalProfiles length = %d, want 1", len(profiles))
+	}
+	if profiles[0].LocalProfileID != "profile-1" {
+		t.Fatalf("ListLocalProfiles[0].LocalProfileID = %q, want profile-1", profiles[0].LocalProfileID)
+	}
+	if profiles[0].DisplayName != "Ace Pilot" {
+		t.Fatalf("ListLocalProfiles[0].DisplayName = %q, want Ace Pilot", profiles[0].DisplayName)
+	}
+
+	stats, found, err := store.LoadStats(protocol.PlayerDataIdentity{
+		IdentityKind:   IdentityKindLocalProfile,
+		LocalProfileID: "profile-1",
+	})
+	if err != nil {
+		t.Fatalf("LoadStats returned error: %v", err)
+	}
+	if !found {
+		t.Fatal("LoadStats returned found=false")
+	}
+	if stats.TotalScore != 13 {
+		t.Fatalf("TotalScore = %d, want 13", stats.TotalScore)
+	}
+	if stats.HighScore != 9 {
+		t.Fatalf("HighScore = %d, want 9", stats.HighScore)
+	}
+	if stats.ShipDeaths != 3 {
+		t.Fatalf("ShipDeaths = %d, want 3", stats.ShipDeaths)
+	}
+	if stats.GamesPlayed != 2 {
+		t.Fatalf("GamesPlayed = %d, want 2", stats.GamesPlayed)
+	}
+}
+
+func TestSQLiteStoreUpdateLocalProfileDisplayNameMissingID(t *testing.T) {
+	store, err := NewSQLiteStore(SQLiteStoreConfig{Path: ":memory:"})
+	if err != nil {
+		t.Fatalf("NewSQLiteStore returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = store.Close()
+	})
+
+	if err := store.InitSchema(); err != nil {
+		t.Fatalf("InitSchema returned error: %v", err)
+	}
+
+	_, err = store.UpdateLocalProfileDisplayName("missing-profile", "Ace Pilot")
+	if err == nil {
+		t.Fatal("UpdateLocalProfileDisplayName returned nil error for missing local profile")
+	}
+	if !strings.Contains(err.Error(), "local profile not found") {
+		t.Fatalf("UpdateLocalProfileDisplayName error = %v, want it to contain %q", err, "local profile not found")
+	}
+}
+
+func TestSQLiteStoreUpdateLocalProfileDisplayNameRejectsEmptyDisplayName(t *testing.T) {
+	store, err := NewSQLiteStore(SQLiteStoreConfig{Path: ":memory:"})
+	if err != nil {
+		t.Fatalf("NewSQLiteStore returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = store.Close()
+	})
+
+	if err := store.InitSchema(); err != nil {
+		t.Fatalf("InitSchema returned error: %v", err)
+	}
+
+	_, err = store.CreateLocalProfile("profile-1", "Pilot One", protocol.PlayerDataStats{})
+	if err != nil {
+		t.Fatalf("CreateLocalProfile returned error: %v", err)
+	}
+
+	_, err = store.UpdateLocalProfileDisplayName("profile-1", "")
+	if err == nil {
+		t.Fatal("UpdateLocalProfileDisplayName returned nil error for empty display name")
+	}
+	if !strings.Contains(err.Error(), "display_name is required") {
+		t.Fatalf("UpdateLocalProfileDisplayName error = %v, want it to contain %q", err, "display_name is required")
+	}
+}
+
 func TestSQLiteStoreDeleteLocalProfileMissingID(t *testing.T) {
 	store, err := NewSQLiteStore(SQLiteStoreConfig{Path: ":memory:"})
 	if err != nil {

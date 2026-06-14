@@ -59,6 +59,7 @@ custom_minimum_size = Vector2(0, 39)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 1, 1, 1)
 theme_override_colors/caret_color = Color(0.57778305, 0.9999991, 0.99591404, 1)
+theme_override_colors/selection_color = Color(5.7756904e-07, 0.34921336, 0.34930328, 1)
 theme_override_constants/caret_width = 10
 theme_override_fonts/font = ExtResource("2_y4lmf")
 theme_override_styles/normal = ExtResource("3_gh7mv")

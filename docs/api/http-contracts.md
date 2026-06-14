@@ -43,6 +43,14 @@ This is Level 2 enforcement:
 - Deleting the default local profile resets the default to Guest
 - Requires `local_profile_id` as the path key
 
+### `PUT /api/player-data/local-profiles/{local_profile_id}`
+
+- Hosted by the game-server data-handler on `:8080`
+- Updates the local profile display name only
+- Does not reset stats
+- Leaves `local_profile_id` unchanged
+- Request includes `display_name`
+
 ### `GET /api/player-data/local-profiles/default`
 
 - Hosted by the game-server data-handler on `:8080`

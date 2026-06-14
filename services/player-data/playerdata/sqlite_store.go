@@ -363,6 +363,59 @@ func (s *SQLiteStore) CreateLocalProfile(localProfileID string, displayName stri
 	}, nil
 }
 
+func (s *SQLiteStore) UpdateLocalProfileDisplayName(localProfileID string, displayName string) (LocalProfileSummary, error) {
+	if s == nil || s.db == nil {
+		return LocalProfileSummary{}, errors.New("sqlite store is not open")
+	}
+	if localProfileID == "" {
+		return LocalProfileSummary{}, errors.New("local_profile_id is required")
+	}
+	if displayName == "" {
+		return LocalProfileSummary{}, errors.New("display_name is required")
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return LocalProfileSummary{}, err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	var found string
+	err = tx.QueryRow(
+		`SELECT local_profile_id
+		 FROM local_profiles
+		 WHERE local_profile_id = ?`,
+		localProfileID,
+	).Scan(&found)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return LocalProfileSummary{}, errors.New("local profile not found")
+		}
+		return LocalProfileSummary{}, err
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+	if _, err := tx.Exec(
+		`UPDATE local_profiles
+		 SET display_name = ?, updated_at = ?
+		 WHERE local_profile_id = ?`,
+		displayName, now, localProfileID,
+	); err != nil {
+		return LocalProfileSummary{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return LocalProfileSummary{}, err
+	}
+
+	return LocalProfileSummary{
+		LocalProfileID: localProfileID,
+		DisplayName:    displayName,
+	}, nil
+}
+
 func (s *SQLiteStore) DeleteLocalProfile(localProfileID string) error {
 	if s == nil || s.db == nil {
 		return errors.New("sqlite store is not open")

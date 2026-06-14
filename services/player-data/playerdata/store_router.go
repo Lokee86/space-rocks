@@ -64,6 +64,15 @@ func (r *StoreRouter) DeleteLocalProfile(localProfileID string) error {
 	return localProfileStore.DeleteLocalProfile(localProfileID)
 }
 
+func (r *StoreRouter) UpdateLocalProfileDisplayName(localProfileID string, displayName string) (LocalProfileSummary, error) {
+	localProfileStore, ok := r.localStore.(LocalProfileStore)
+	if !ok {
+		return LocalProfileSummary{}, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.UpdateLocalProfileDisplayName(localProfileID, displayName)
+}
+
 func (r *StoreRouter) GetDefaultLocalProfile() (LocalProfileDefault, error) {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
