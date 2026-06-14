@@ -6,3 +6,8 @@ type Store interface {
 	LoadStats(identity protocol.PlayerDataIdentity) (protocol.PlayerDataStats, bool, error)
 	RecordMatchResult(command protocol.PlayerDataRecordMatchResult) (protocol.PlayerDataStats, bool, error)
 }
+
+type LocalProfileStore interface {
+	ListLocalProfiles() ([]LocalProfileSummary, error)
+	CreateLocalProfile(localProfileID string, displayName string, stats protocol.PlayerDataStats) (LocalProfileSummary, error)
+}

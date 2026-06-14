@@ -18,6 +18,11 @@ type SQLiteStore struct {
 	db *sql.DB
 }
 
+type LocalProfileSummary struct {
+	LocalProfileID string
+	DisplayName    string
+}
+
 func NewSQLiteStore(config SQLiteStoreConfig) (*SQLiteStore, error) {
 	if config.Path == "" {
 		return nil, errors.New("path is required")
@@ -127,6 +132,88 @@ func (s *SQLiteStore) ensureLocalProfile(localProfileID string) error {
 	}
 
 	return tx.Commit()
+}
+
+func (s *SQLiteStore) ListLocalProfiles() ([]LocalProfileSummary, error) {
+	if s == nil || s.db == nil {
+		return nil, errors.New("sqlite store is not open")
+	}
+
+	rows, err := s.db.Query(
+		`SELECT local_profile_id, display_name
+		 FROM local_profiles
+		 ORDER BY created_at ASC`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	profiles := make([]LocalProfileSummary, 0)
+	for rows.Next() {
+		var profile LocalProfileSummary
+		if err := rows.Scan(&profile.LocalProfileID, &profile.DisplayName); err != nil {
+			return nil, err
+		}
+		profiles = append(profiles, profile)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
+}
+
+func (s *SQLiteStore) CreateLocalProfile(localProfileID string, displayName string, stats protocol.PlayerDataStats) (LocalProfileSummary, error) {
+	if s == nil || s.db == nil {
+		return LocalProfileSummary{}, errors.New("sqlite store is not open")
+	}
+	if localProfileID == "" {
+		return LocalProfileSummary{}, errors.New("local_profile_id is required")
+	}
+	if displayName == "" {
+		return LocalProfileSummary{}, errors.New("display_name is required")
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return LocalProfileSummary{}, err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	if _, err := tx.Exec(
+		`INSERT INTO local_profiles (local_profile_id, display_name, created_at, updated_at)
+		 VALUES (?, ?, ?, ?)`,
+		localProfileID, displayName, now, now,
+	); err != nil {
+		return LocalProfileSummary{}, err
+	}
+	if _, err := tx.Exec(
+		`INSERT INTO local_player_stats (local_profile_id, total_score, high_score, ship_deaths, games_played, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		localProfileID,
+		stats.TotalScore,
+		stats.HighScore,
+		stats.ShipDeaths,
+		stats.GamesPlayed,
+		now,
+		now,
+	); err != nil {
+		return LocalProfileSummary{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return LocalProfileSummary{}, err
+	}
+
+	return LocalProfileSummary{
+		LocalProfileID: localProfileID,
+		DisplayName:    displayName,
+	}, nil
 }
 
 func (s *SQLiteStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.PlayerDataStats, bool, error) {

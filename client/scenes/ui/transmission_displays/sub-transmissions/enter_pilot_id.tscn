@@ -6,10 +6,9 @@
 [ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="4_iq432"]
 [ext_resource type="StyleBox" uid="uid://dax63si7q02k8" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="5_xl2bn"]
 [ext_resource type="StyleBox" uid="uid://dia0oanl1ge75" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="6_63sd0"]
-[ext_resource type="Script" path="res://scripts/ui/local_pilots/enter_pilot_id.gd" id="7_9f2aa"]
+[ext_resource type="Script" uid="uid://cx66htjth0gu4" path="res://scripts/ui/local_pilots/enter_pilot_id.gd" id="7_9f2aa"]
 
 [node name="SubScreenPilotID" type="Control" unique_id=2021787840]
-script = ExtResource("7_9f2aa")
 layout_mode = 3
 anchor_left = 0.021000002
 anchor_top = 0.032
@@ -19,6 +18,7 @@ offset_left = 0.35899734
 offset_top = 12.271999
 offset_right = -0.3590088
 offset_bottom = 12.233948
+script = ExtResource("7_9f2aa")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=925183646]
 layout_mode = 1
@@ -58,10 +58,11 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 39)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 1, 1, 1)
-theme_override_colors/caret_color = Color(1.3957917e-06, 0.4768315, 0.47683138, 1)
-theme_override_constants/caret_width = 15
+theme_override_colors/caret_color = Color(0.57778305, 0.9999991, 0.99591404, 1)
+theme_override_constants/caret_width = 10
 theme_override_fonts/font = ExtResource("2_y4lmf")
 theme_override_styles/normal = ExtResource("3_gh7mv")
+theme_override_styles/focus = ExtResource("6_63sd0")
 alignment = 1
 max_length = 10
 caret_blink = true

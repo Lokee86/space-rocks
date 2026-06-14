@@ -37,6 +37,24 @@ func (r *StoreRouter) RecordMatchResult(command protocol.PlayerDataRecordMatchRe
 	return store.RecordMatchResult(command)
 }
 
+func (r *StoreRouter) ListLocalProfiles() ([]LocalProfileSummary, error) {
+	localProfileStore, ok := r.localStore.(LocalProfileStore)
+	if !ok {
+		return nil, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.ListLocalProfiles()
+}
+
+func (r *StoreRouter) CreateLocalProfile(localProfileID string, displayName string, stats protocol.PlayerDataStats) (LocalProfileSummary, error) {
+	localProfileStore, ok := r.localStore.(LocalProfileStore)
+	if !ok {
+		return LocalProfileSummary{}, errors.New("local profile management is unavailable")
+	}
+
+	return localProfileStore.CreateLocalProfile(localProfileID, displayName, stats)
+}
+
 func (r *StoreRouter) storeForIdentityKind(identityKind string) (Store, error) {
 	switch identityKind {
 	case IdentityKindAuthenticatedAccount:

@@ -20,18 +20,24 @@ func main() {
 		logging.Server.Error("player-data runtime initialization failed", err)
 		os.Exit(1)
 	}
-	playerDataSink := &hostedPlayerDataSink{runtime: playerDataRuntime}
+	playerDataSink := newPlayerDataSink(playerDataRuntime)
 	reporter, err := matchreporting.NewRuntimeReporter(playerDataSink)
 	if err != nil {
 		logging.Server.Error("player-data reporter initialization failed", err)
 		os.Exit(1)
 	}
 	authVerifier := buildAuthVerifierFromEnv()
-	playerDataProfileHandler := newPlayerDataProfileHandler(playerDataRuntime, authVerifier)
 
+	// Core server routes.
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporter(rooms, authVerifier, reporter))
+
+	// Player-data routes.
+	playerDataProfileHandler := newPlayerDataProfileHTTPHandler(playerDataRuntime, authVerifier)
+	playerDataLocalProfilesHandler := newPlayerDataLocalProfilesHTTPHandler(playerDataRuntime)
 	mux.Handle("POST /api/player-data/profile", playerDataProfileHandler)
+	mux.Handle("GET /api/player-data/local-profiles", playerDataLocalProfilesHandler)
+	mux.Handle("POST /api/player-data/local-profiles", playerDataLocalProfilesHandler)
 
 	logging.Server.Info("server starting", "addr", ":8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
