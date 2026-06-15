@@ -1,6 +1,7 @@
 extends Control
 
 const GUEST_DISPLAY_NAME := "GUEST"
+const ProfileIdentityKind := preload("res://scripts/profile/profile_identity_kind.gd")
 
 signal load_requested(item: Dictionary)
 signal create_requested
@@ -13,7 +14,7 @@ signal delete_requested(item: Dictionary)
 @onready var reset_button: Button = %ResetButton
 @onready var delete_button: Button = %DeleteButton
 
-var selected_item: Dictionary = {"identity_kind": "guest", "display_name": GUEST_DISPLAY_NAME}
+var selected_item: Dictionary = {"identity_kind": ProfileIdentityKind.GUEST, "display_name": GUEST_DISPLAY_NAME}
 
 
 func _ready() -> void:
@@ -31,7 +32,7 @@ func populate_pilots(local_pilots: Array) -> void:
 	for local_pilot in local_pilots:
 		items.append(_build_local_pilot_item(local_pilot))
 
-	var guest_item := {"identity_kind": "guest", "display_name": GUEST_DISPLAY_NAME}
+	var guest_item := {"identity_kind": ProfileIdentityKind.GUEST, "display_name": GUEST_DISPLAY_NAME}
 	items.append(guest_item)
 	pilot_list_view.set_items(items)
 	pilot_list_view.select_index(items.size() - 1)
@@ -44,16 +45,16 @@ func select_item_by_identity(identity_kind: String, local_profile_id := "") -> v
 		return
 
 	var selected_index := -1
-	if identity_kind == "local_profile":
+	if identity_kind == ProfileIdentityKind.LOCAL_PROFILE:
 		for index in range(pilot_list_view.items.size()):
 			var item: Dictionary = pilot_list_view.items[index]
-			if item.get("identity_kind", "") != "local_profile":
+			if item.get("identity_kind", "") != ProfileIdentityKind.LOCAL_PROFILE:
 				continue
 			if str(item.get("local_profile_id", "")) == str(local_profile_id):
 				selected_index = index
 				break
 
-	if identity_kind == "guest" or selected_index == -1:
+	if identity_kind == ProfileIdentityKind.GUEST or selected_index == -1:
 		selected_index = max(0, pilot_list_view.items.size() - 1)
 
 	pilot_list_view.select_index(selected_index)
@@ -62,7 +63,7 @@ func select_item_by_identity(identity_kind: String, local_profile_id := "") -> v
 func _build_local_pilot_item(local_pilot: Dictionary) -> Dictionary:
 	var display_name := str(local_pilot.get("display_name", ""))
 	return {
-		"identity_kind": "local_profile",
+		"identity_kind": ProfileIdentityKind.LOCAL_PROFILE,
 		"local_profile_id": local_pilot.get("local_profile_id"),
 		"display_name": display_name,
 	}
@@ -78,7 +79,7 @@ func _select_item(item: Dictionary) -> void:
 
 
 func _update_action_buttons() -> void:
-	var is_guest: bool = selected_item.get("identity_kind", "guest") == "guest"
+	var is_guest: bool = selected_item.get("identity_kind", ProfileIdentityKind.GUEST) == ProfileIdentityKind.GUEST
 	load_button.disabled = false
 	create_button.disabled = false
 	reset_button.disabled = is_guest
