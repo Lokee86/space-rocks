@@ -13,22 +13,21 @@ var primary_input_locks: Array = []
 
 func configure(pregame_menu_ref: Control) -> void:
 	pregame_menu = pregame_menu_ref
-	primary_screen_display = pregame_menu.get_node_or_null(
-		"CenterContainer/Window8/MainInterface/ScreenStack/TransmissionScreen/TransmissionScreen/ScreenDisplay"
-	) as Control if pregame_menu != null else null
-	subpanel_screen_display = pregame_menu.get_node_or_null(
-		"CenterContainer/Window8/MainInterface/ScreenStack/SubPanel/SubPanelTransmissionScreen2/TransmissionScreen/ScreenDisplay"
-	) as Control if pregame_menu != null else null
-	if primary_screen_display == null and pregame_menu != null:
-		var transmission_screen := pregame_menu.get_node_or_null(
-			"CenterContainer/Window8/MainInterface/ScreenStack/TransmissionScreen"
-		)
-		if transmission_screen != null:
-			primary_screen_display = transmission_screen.get_node_or_null("ScreenDisplay") as Control
-	if primary_screen_display == null and pregame_menu != null:
-		primary_screen_display = pregame_menu.get_node_or_null("%ScreenDisplay") as Control
-	if primary_screen_display == null and pregame_menu != null:
-		primary_screen_display = pregame_menu.find_child("ScreenDisplay", true, false) as Control
+	primary_screen_display = null
+	subpanel_screen_display = null
+
+	if pregame_menu == null:
+		screen_display = null
+		return
+
+	var primary_transmission_root := pregame_menu.get_node_or_null("%TransmissionScreen")
+	if primary_transmission_root != null:
+		primary_screen_display = primary_transmission_root.get_node_or_null("%ScreenDisplay") as Control
+
+	var subpanel_transmission_root := pregame_menu.get_node_or_null("%SubPanelTransmissionScreen2")
+	if subpanel_transmission_root != null:
+		subpanel_screen_display = subpanel_transmission_root.get_node_or_null("%ScreenDisplay") as Control
+
 	screen_display = primary_screen_display
 
 
