@@ -16,13 +16,15 @@ class FakeConnectionService:
 
 	var websocket_auth_authenticated := false
 	var sent_single_player := 0
+	var last_local_profile_id := ""
 	var sent_create_room := 0
 	var sent_join_room_codes: Array[String] = []
 
 	func is_websocket_auth_authenticated() -> bool:
 		return websocket_auth_authenticated
 
-	func send_start_single_player_request() -> void:
+	func send_start_single_player_request(local_profile_id := "") -> void:
+		last_local_profile_id = local_profile_id
 		sent_single_player += 1
 
 	func send_create_room_request() -> void:
@@ -53,6 +55,7 @@ func test_connection_sends_single_player_request_without_websocket_auth() -> voi
 	connection.emit_connected()
 
 	assert_eq(connection.sent_single_player, 1)
+	assert_eq(connection.last_local_profile_id, "")
 	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
 
 
