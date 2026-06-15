@@ -67,6 +67,11 @@ func begin_graceful_close() -> void:
 		network_client.begin_graceful_close()
 
 
+func close_gracefully() -> void:
+	if network_client != null:
+		await network_client.close_gracefully()
+
+
 func set_auth_session_controller(auth_session_controller_ref) -> void:
 	auth_session_controller = auth_session_controller_ref
 

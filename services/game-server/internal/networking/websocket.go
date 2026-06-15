@@ -65,7 +65,23 @@ func handleConnection(session *webSocketSession, remoteAddr string) {
 	writeServerMessages(session, remoteAddr, readErr)
 }
 
+func (session *webSocketSession) reportResolvedMatchBeforeRoomExit(reason string) {
+	if session.room == nil {
+		return
+	}
+
+	if rooms.ReportResolvedMatchResultOnce(session.room, session.matchResultReporter) {
+		logging.Rooms.Debug("reported resolved match result before room exit",
+			logging.FieldRoomID, session.currentRoomID,
+			"session_id", session.sessionID,
+			"reason", reason,
+		)
+	}
+}
+
 func (session *webSocketSession) leaveRequestedRoom() {
+	session.reportResolvedMatchBeforeRoomExit("requested room leave")
+
 	if session.currentRoomID == "" || session.room == nil {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
@@ -104,6 +120,8 @@ func (session *webSocketSession) leaveRequestedRoom() {
 }
 
 func (session *webSocketSession) leaveDisconnectedRoom() {
+	session.reportResolvedMatchBeforeRoomExit("disconnected")
+
 	if session.currentRoomID == "" || session.room == nil {
 		return
 	}
