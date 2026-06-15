@@ -56,14 +56,14 @@ class FakeTransmissionFlow:
 func test_show_profile_combines_context_and_stats() -> void:
 	var context_provider := FakeContextProvider.new()
 	var stats_provider := FakeStatsProvider.new()
-	context_provider.context["play_mode"] = PregameMenuMode.MULTIPLAYER
-	context_provider.context["identity_kind"] = "authenticated_account"
-	context_provider.context["callsign"] = "Ada"
+	context_provider.context["play_mode"] = PregameMenuMode.SINGLE_PLAYER
+	context_provider.context["identity_kind"] = "local_profile"
+	context_provider.context["callsign"] = "ACE"
 	context_provider.context["activity_status"] = "ACTIVE"
 	stats_provider.profile = {
-		"callsign": "Ada",
-		"activity_status": "ACTIVE",
-		"identity_kind": "authenticated_account",
+		"callsign": "Local Pilot",
+		"activity_status": "LOCAL",
+		"identity_kind": "local_profile",
 		"stats": {
 			"total_score": 100,
 			"high_score": 75,
@@ -76,17 +76,52 @@ func test_show_profile_combines_context_and_stats() -> void:
 	var flow := ProfileFlow.new()
 	flow.configure(context_provider, stats_provider, transmission_flow)
 
-	var mounted = await flow.show_profile(PregameMenuMode.MULTIPLAYER)
+	var mounted = await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
 
-	assert_eq(context_provider.last_mode, PregameMenuMode.MULTIPLAYER)
+	assert_eq(context_provider.last_mode, PregameMenuMode.SINGLE_PLAYER)
 	assert_eq(stats_provider.last_context, context_provider.context)
-	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: Ada")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: ACE")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/ActivityLabel") as Label).text, "STATUS: ACTIVE")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer/TotalScoreValueLabel") as Label).text, "100")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer/HighScoreValueLabel") as Label).text, "75")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer/MissionsValueLabel") as Label).text, "4")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer/WinsValueLabel") as Label).text, "2")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer/ShipLossesValueLabel") as Label).text, "3")
+
+
+func test_show_profile_uses_context_readout_fields_with_loaded_stats() -> void:
+	var context_provider := FakeContextProvider.new()
+	context_provider.context["play_mode"] = PregameMenuMode.SINGLE_PLAYER
+	context_provider.context["identity_kind"] = "local_profile"
+	context_provider.context["callsign"] = "ACE"
+	context_provider.context["activity_status"] = "ACTIVE"
+
+	var stats_provider := FakeStatsProvider.new()
+	stats_provider.profile = {
+		"callsign": "Local Pilot",
+		"activity_status": "LOCAL",
+		"identity_kind": "local_profile",
+		"stats": {
+			"total_score": 240,
+			"high_score": 120,
+			"ship_deaths": 5,
+			"games_played": 9,
+			"wins": 6,
+		},
+	}
+	var transmission_flow := FakeTransmissionFlow.new()
+	var flow := ProfileFlow.new()
+	flow.configure(context_provider, stats_provider, transmission_flow)
+
+	var mounted = await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
+
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: ACE")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/ActivityLabel") as Label).text, "STATUS: ACTIVE")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/TotalScoreContainer/VBoxContainer/TotalScoreValueLabel") as Label).text, "240")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/ScoreContainer/HighScoreContainer/VBoxContainer/HighScoreValueLabel") as Label).text, "120")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/MissionsContainer/VBoxContainer/MissionsValueLabel") as Label).text, "9")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/WinsContainer/VBoxContainer/WinsValueLabel") as Label).text, "6")
+	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/StatContainer/ShipLossesContainer/VBoxContainer/ShipLossesValueLabel") as Label).text, "5")
 
 
 func test_show_profile_mounts_profile_readout_scene() -> void:

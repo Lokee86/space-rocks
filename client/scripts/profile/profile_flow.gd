@@ -22,8 +22,8 @@ func show_profile(mode: String) -> Control:
 	var profile: Dictionary = await profile_stats_provider.load_profile(context)
 	var stats: Dictionary = profile.get("stats", {})
 	var profile_for_readout := {
-		"callsign": profile.get("callsign", context.get("callsign", "Guest")),
-		"activity_status": profile.get("activity_status", context.get("activity_status", "OFFLINE")),
+		"callsign": context.get("callsign", profile.get("callsign", "Guest")),
+		"activity_status": context.get("activity_status", profile.get("activity_status", "ACTIVE")),
 		"total_score": stats.get("total_score", 0),
 		"high_score": stats.get("high_score", 0),
 		"games_played": stats.get("games_played", 0),

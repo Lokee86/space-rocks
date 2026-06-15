@@ -30,8 +30,21 @@ func test_single_player_context_returns_guest_offline_guest() -> void:
 
 	assert_eq(context.get("play_mode"), PregameMenuMode.SINGLE_PLAYER)
 	assert_eq(context.get("callsign"), "Guest")
-	assert_eq(context.get("activity_status"), "OFFLINE")
+	assert_eq(context.get("activity_status"), "ACTIVE")
 	assert_eq(context.get("identity_kind"), "guest")
+
+
+func test_single_player_selected_local_profile_returns_active_selected_display_name() -> void:
+	var provider := ProfileContextProvider.new()
+	provider.select_local_profile("local-profile-1", "ACE")
+
+	var context := provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
+
+	assert_eq(context.get("play_mode"), PregameMenuMode.SINGLE_PLAYER)
+	assert_eq(context.get("callsign"), "ACE")
+	assert_eq(context.get("activity_status"), "ACTIVE")
+	assert_eq(context.get("identity_kind"), "local_profile")
+	assert_eq(context.get("local_profile_id"), "local-profile-1")
 
 
 func test_multiplayer_signed_in_returns_display_name_active_authenticated_account() -> void:
