@@ -74,39 +74,10 @@ Completed Phase 6:
 
 Completed Local Pilot / Guest selector:
 
-- Select Pilot opens the Local Pilot selector in the primary `TransmissionScreen`.
-- The final selector row is Guest.
-- CREATE opens `enter_pilot_id.tscn` in the subpanel transmission screen.
-- CREATE locks primary transmission input while the subpanel is active.
-- CREATE validates callsign input before creating a profile.
-- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
-- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
-- CREATE uses `ENTER CALLSIGN`.
-- CREATE creates a local profile through the data-handler.
-- CREATE seeds from Guest stats only when the loaded identity is Guest.
-- CREATE creates fresh zero stats when the loaded identity is a non-Guest local profile.
-- CREATE refreshes the selector list after a successful create.
-- LOAD stores the selected identity as the active single-player context.
-- LOAD persists the selected local profile/default through the data-handler.
-- LOAD updates the callsign label.
-- LOAD uses `local_profile_id` internally, not display name.
-- DELETE is available only for local profiles, not Guest.
-- DELETE opens the delete confirmation sub-panel.
-- DELETE sends the API delete only after confirmation.
-- DELETE refreshes the selector after a successful delete.
-- DELETE cancel closes the sub-panel and preserves the selected pilot.
-- DELETE confirmation uses `client/scenes/ui/transmission_displays/sub-transmissions/confirm_delete.tscn` and `client/scripts/ui/local_pilots/confirm_delete.gd`.
-- `select_pilot_readout.gd` emits delete intent only.
-- `confirm_delete.gd` emits confirm/cancel intent only.
-- `LocalPilotFlow` mounts the confirmation sub-panel and owns the actual delete API call.
-- EDIT is available only for local profiles, not Guest.
-- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
-- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
-- EDIT opens `enter_pilot_id.tscn` in edit mode through the subpanel transmission.
-- EDIT uses `ENTER NEW CALLSIGN` with the current callsign prefilled.
-- EDIT confirm updates the display name through the data-handler.
-- EDIT cancel preserves the selected pilot and does not call the API.
-- The subpanel emits confirm/cancel intent only; `LocalPilotFlow` owns the create/edit API calls.
+- Select Pilot opens the completed Local Pilot selector in the primary `TransmissionScreen`.
+- The detailed create/load/edit/delete/default-selector behavior lives in [local-pilot-flow.md](./local-pilot-flow.md).
+- Guest remains the fallback/default selectable row.
+- `LocalPilotFlow` owns this completed local pilot menu/sub-menu slice only.
 
 ## Remaining Client Slice Plan
 
@@ -152,9 +123,11 @@ Mode and state belong outside route names.
 - `MenuFlowController` owns scene routing.
 - `PregameMenuFlow` owns mode wiring and contextual back behavior.
 - `PregameModePresenter` owns button visibility, labels, and disabled states.
-- `TransmissionFlow` owns `ScreenDisplay` mount and clear behavior.
+- `TransmissionFlow` owns primary and subpanel `ScreenDisplay` mounting and clearing.
+- `TransmissionFlow` resolves its display roots by unique scene node names, not hardcoded scene paths.
 - `ProfileFlow` owns profile queries and view models.
-- `LocalPilotFlow` owns guest/local pilot selection.
+- `ProfileIdentityKind` owns client identity-kind constants.
+- `LocalPilotFlow` owns only the completed local pilot menu/sub-menu flow.
 - `MultiplayerFlow` owns sign-in, create, join, and logout routing.
 - `MatchEndFlow` owns match-end orchestration.
 - `MatchResultsFlow` owns result-window presentation and button intent forwarding.
@@ -188,33 +161,9 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 
 ### Local Pilot
 
-- The final selector row is Guest.
-- CREATE opens `enter_pilot_id.tscn` in the subpanel transmission screen.
-- CREATE locks primary transmission input while the subpanel is active.
-- CREATE validates callsign input before creating a profile.
-- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
-- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
-- CREATE uses `ENTER CALLSIGN`.
-- CREATE creates a local profile through the data-handler.
-- CREATE seeds from Guest stats only when the loaded identity is Guest.
-- CREATE creates fresh zero stats when the loaded identity is a non-Guest local profile.
-- CREATE refreshes the selector list after a successful create.
-- LOAD stores the selected identity as the active single-player context.
-- LOAD persists the selected local profile/default through the data-handler.
-- LOAD updates the callsign label.
-- LOAD uses `local_profile_id` internally, not display name.
-- DELETE is available only for local profiles, not Guest.
-- DELETE opens the delete confirmation sub-panel.
-- DELETE sends the API delete only after confirmation.
-- DELETE refreshes the selector after a successful delete.
-- DELETE cancel closes the sub-panel and preserves the selected pilot.
-- `enter_pilot_id.tscn` is a reusable callsign-entry subpanel.
-- `LocalPilotFlow` configures the prompt through `enter_pilot_id.gd.configure_label()`.
-- EDIT opens `enter_pilot_id.tscn` in edit mode through the subpanel transmission.
-- EDIT uses `ENTER NEW CALLSIGN` with the current callsign prefilled.
-- EDIT confirm updates the display name through the data-handler.
-- EDIT cancel preserves the selected pilot and does not call the API.
-- The subpanel emits confirm/cancel intent only; `LocalPilotFlow` owns the create/edit API calls.
+- The completed Local Pilot selector uses the primary `TransmissionScreen` and the subpanel transmission flow.
+- The detailed create/load/edit/delete/default-selector behavior lives in [local-pilot-flow.md](./local-pilot-flow.md).
+- Guest remains the fallback/default selectable row.
 
 ## Multiplayer Mode
 
@@ -245,6 +194,8 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 
 - `profile_readout.tscn` loads into `TransmissionScreen/ScreenDisplay`.
 - Profile displays the currently shown callsign context.
+- Single-player Guest is `ACTIVE`.
+- Multiplayer signed-out Guest fallback is `OFFLINE`.
 - Profile data is fetched by the profile flow/controller, not by scene scripts.
 
 ## Match Results
