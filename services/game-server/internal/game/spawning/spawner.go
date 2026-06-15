@@ -6,8 +6,9 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/server/internal/game/asteroids"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 )
 
@@ -75,7 +76,7 @@ func (spawner *Spawner) PlanTimedAsteroidSpawn(position physics.Vector2, targetP
 		Position:   position,
 		Velocity:   velocity,
 		Size:       rand.Intn(4) + 1,
-		Variant:    rand.Intn(4),
+		Variant:    asteroids.RandomTimedSpawnVariantIndex(),
 	}
 }
 
@@ -95,7 +96,7 @@ func (spawner *Spawner) PlanAsteroidFragmentSpawns(asteroid *runtime.Asteroid) [
 			Position:   position,
 			Velocity:   direction.Multiply(randomAsteroidSpeed()),
 			Size:       fragmentSize,
-			Variant:    rand.Intn(constants.AsteroidVariants),
+			Variant:    asteroids.RandomFragmentSpawnVariantIndex(),
 		})
 	}
 	return plans

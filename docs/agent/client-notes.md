@@ -46,4 +46,6 @@ Limits and boundaries:
 - Scene and menu code must not pass raw WebSocket URLs.
 - Both targets currently use `/ws` on localhost for development, and the server route remains `/ws`.
 
+Asteroid variant rendering now follows `shared/asteroids/variants.toml` through `client/scripts/generated/asteroids/asteroid_variants.gd`. Variant indexes are zero-based runtime values, while ids like `asteroid_1` stay stable presentation labels, and `index = 0` maps to `asteroid1.png`.
+
 Keep this note short and update it when the auth flow changes.

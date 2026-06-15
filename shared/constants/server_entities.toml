@@ -21,7 +21,6 @@ asteroid_min_speed = 115.0
 asteroid_max_speed = 210.0
 asteroid_aim_randomness_degrees = 30.0
 asteroid_size_scale = 0.35
-asteroid_variants = 8
 
 [constants.server.collision]
 collision_despawn_delay = 0.05

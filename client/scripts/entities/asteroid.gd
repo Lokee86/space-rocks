@@ -1,24 +1,20 @@
 extends CharacterBody2D
 
+const AsteroidVariants = preload("res://scripts/generated/asteroids/asteroid_variants.gd")
+
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var collision: CollisionPolygon2D = $CollisionPolygon2D
 @onready var collision_variants: Node2D = $CollisionVariants
 
-var asteroid_textures := [
-	preload("res://assets/asteroids/asteroid1.png"),
-	preload("res://assets/asteroids/asteroid2.png"),
-	preload("res://assets/asteroids/asteroid3.png"),
-	preload("res://assets/asteroids/asteroid4.png"),
-	preload("res://assets/asteroids/asteroid5.png"),
-	preload("res://assets/asteroids/asteroid6.png"),
-	preload("res://assets/asteroids/asteroid7.png"),
-	preload("res://assets/asteroids/asteroid8.png"),
-]
-
-
 func set_asteroid_variant(index: int) -> void:
-	var variant_index := wrapi(index, 0, asteroid_textures.size())
-	sprite.texture = asteroid_textures[variant_index]
+	var variant_count := AsteroidVariants.count()
+	if variant_count <= 0:
+		return
+
+	var variant_index := wrapi(index, 0, variant_count)
+	var texture_path := AsteroidVariants.texture_path_for_index(index)
+	if texture_path != "":
+		sprite.texture = load(texture_path) as Texture2D
 	collision.disabled = false
 
 	if collision_variants.get_child_count() == 0:

@@ -65,6 +65,8 @@ Current client runtime seams:
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/generated/networking/packets/packets.gd` and `client/scripts/generated/constants/constants.gd`: generated/shared client packet helpers and constants.
 
+Asteroid variant metadata is owned by `shared/asteroids/variants.toml`. Variant `id` values such as `asteroid_1` are stable presentation IDs, while the runtime `index` is zero-based and must match packet/runtime variant values. `index = 0` maps to `asteroid_1`, and server spawn code must use the asteroid variant catalog for variant selection rather than relying on `constants.AsteroidVariants`.
+
 `UserInterface` and `GameplayUserInterface` are the client scene UI roots in `client/scenes/game.tscn`.
 
 - `UserInterface` is the CanvasLayer root for Main Menu, Pregame Menu, LoginWindow, JoinDialog, and MultiplayerLobby.
