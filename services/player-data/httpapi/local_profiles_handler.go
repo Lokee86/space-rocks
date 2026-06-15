@@ -9,10 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Lokee86/space-rocks/player-data/codec"
 	"github.com/Lokee86/space-rocks/player-data/logging"
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
-	"github.com/Lokee86/space-rocks/player-data/protocol"
 )
 
 type LocalProfilesHandler struct {
@@ -138,7 +136,7 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	stats, err := h.localProfileSeedStats(request.SeedFromGuestStats)
+	stats, err := h.runtime.LocalProfileSeedStats(request.SeedFromGuestStats)
 	if err != nil {
 		logging.HTTP.Error("local profile create guest stat seeding failed", err,
 			logging.FieldOperation, "create_local_profile",
@@ -329,43 +327,6 @@ func (h *LocalProfilesHandler) serveDelete(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *LocalProfilesHandler) localProfileSeedStats(seedFromGuestStats bool) (protocol.PlayerDataStats, error) {
-	if !seedFromGuestStats {
-		return protocol.PlayerDataStats{}, nil
-	}
-	if h == nil || h.runtime == nil {
-		return protocol.PlayerDataStats{}, fmt.Errorf("player-data runtime is required")
-	}
-
-	payload, err := codec.Encode(protocol.PlayerDataLoadStats{
-		Type: protocol.PacketTypePlayerDataLoadStats,
-		Context: protocol.PlayerDataRequestContext{
-			PlayMode: playerDataProfilePlayModeSinglePlayer,
-		},
-		Identity: protocol.PlayerDataIdentity{
-			IdentityKind: playerdata.IdentityKindGuest,
-		},
-	})
-	if err != nil {
-		return protocol.PlayerDataStats{}, err
-	}
-
-	responsePayload, err := h.runtime.Handle(payload)
-	if err != nil {
-		return protocol.PlayerDataStats{}, err
-	}
-
-	var result protocol.PlayerDataLoadStatsResult
-	if err := json.Unmarshal(responsePayload, &result); err != nil {
-		return protocol.PlayerDataStats{}, err
-	}
-	if result.ErrorCode != "" || !result.Found {
-		return protocol.PlayerDataStats{}, fmt.Errorf("guest stats unavailable")
-	}
-
-	return result.Stats, nil
 }
 
 func isValidLocalProfileDisplayName(displayName string) bool {

@@ -30,6 +30,30 @@ func (r *Runtime) Handle(payload []byte) ([]byte, error) {
 	return r.dispatcher.Handle(payload)
 }
 
+func (r *Runtime) LoadStats(identity protocol.PlayerDataIdentity) (protocol.PlayerDataStats, bool, error) {
+	if r == nil || r.store == nil {
+		return protocol.PlayerDataStats{}, false, errors.New("player-data runtime is required")
+	}
+
+	return r.store.LoadStats(identity)
+}
+
+func (r *Runtime) LocalProfileSeedStats(seedFromGuestStats bool) (protocol.PlayerDataStats, error) {
+	if !seedFromGuestStats {
+		return protocol.PlayerDataStats{}, nil
+	}
+
+	stats, found, err := r.LoadStats(protocol.PlayerDataIdentity{IdentityKind: IdentityKindGuest})
+	if err != nil {
+		return protocol.PlayerDataStats{}, err
+	}
+	if !found {
+		return protocol.PlayerDataStats{}, errors.New("guest stats unavailable")
+	}
+
+	return stats, nil
+}
+
 func (r *Runtime) ListLocalProfiles() ([]LocalProfileSummary, error) {
 	if r == nil || r.store == nil {
 		return nil, ErrLocalProfileUnavailable

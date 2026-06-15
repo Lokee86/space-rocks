@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Lokee86/space-rocks/player-data/codec"
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
 	"github.com/Lokee86/space-rocks/player-data/protocol"
 )
@@ -100,39 +99,14 @@ func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	command := protocol.PlayerDataLoadStats{
-		Type: protocol.PacketTypePlayerDataLoadStats,
-		Context: protocol.PlayerDataRequestContext{
-			PlayMode: request.PlayMode,
-		},
-		Identity: identity,
-	}
-
-	payload, err := codec.Encode(command)
+	stats, found, err := h.runtime.LoadStats(identity)
 	if err != nil {
 		writePlayerDataProfileError(w, http.StatusInternalServerError, "profile_unavailable")
 		return
 	}
 
-	responsePayload, err := h.runtime.Handle(payload)
-	if err != nil {
-		writePlayerDataProfileError(w, http.StatusInternalServerError, "profile_unavailable")
-		return
-	}
-
-	var result protocol.PlayerDataLoadStatsResult
-	if err := json.Unmarshal(responsePayload, &result); err != nil {
-		writePlayerDataProfileError(w, http.StatusInternalServerError, "profile_unavailable")
-		return
-	}
-
-	if result.ErrorCode != "" {
-		if result.ErrorCode == "invalid_mode_identity" {
-			writePlayerDataProfileError(w, http.StatusUnprocessableEntity, result.Message)
-			return
-		}
-		writePlayerDataProfileError(w, http.StatusInternalServerError, result.Message)
-		return
+	if !found {
+		stats = protocol.PlayerDataStats{}
 	}
 
 	writePlayerDataProfileJSON(w, http.StatusOK, playerDataProfileResponse{
@@ -140,7 +114,7 @@ func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Callsign:       callsign,
 			ActivityStatus: activityStatus,
 			IdentityKind:   request.IdentityKind,
-			Stats:          result.Stats,
+			Stats:          stats,
 		},
 	})
 }
