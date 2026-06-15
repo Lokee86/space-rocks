@@ -41,5 +41,9 @@ Limits and boundaries:
 - `MainMenu` remains dumb.
 - `AppEntry` remains wiring/composition only.
 - `pregame_menu.gd` is a shell only; flow, controller, and presenter code own the real logic.
+- `SessionBootController` chooses the WebSocket target by session mode.
+- `SessionNetworkTarget` maps single-player mode to `SINGLE_PLAYER_WS_URL` and multiplayer mode to `MULTIPLAYER_WS_URL`.
+- Scene and menu code must not pass raw WebSocket URLs.
+- Both targets currently use `/ws` on localhost for development, and the server route remains `/ws`.
 
 Keep this note short and update it when the auth flow changes.

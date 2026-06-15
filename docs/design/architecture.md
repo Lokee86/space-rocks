@@ -124,6 +124,8 @@ Current limitations:
 - There is no implemented client-side prediction beyond interpolation/render smoothing.
 - Local server launch from the Godot client is not implemented.
 
+The server upgrades `/ws`, while the client resolves a WebSocket target by session mode before connecting. Single-player uses `SINGLE_PLAYER_WS_URL` and multiplayer uses `MULTIPLAYER_WS_URL`; both currently point to the same local `/ws` endpoint during development. A future launch multiplayer target may point at deployed infrastructure without changing the server route model. Enforcement of single-player versus multiplayer actions should stay packet- and session-policy-based rather than route-path-based.
+
 ## Game Server Architecture
 
 The game server is a Go module under `services/game-server/`.
