@@ -88,13 +88,14 @@ git lfs pull
 
 ## Client And Server Fit
 
-The Godot client connects to the Go server over websocket:
+The Go server WebSocket route remains `/ws`. The client uses explicit target constants for its launch seam:
 
 ```text
-ws://localhost:8080/ws
+SINGLE_PLAYER_WS_URL
+MULTIPLAYER_WS_URL
 ```
 
-Websocket connection is session-only. Multiplayer rooms are created and joined with generated packets after connecting to `/ws`; the old `room_id` query path is not used by the real UI.
+Both constants currently point to `ws://localhost:8080/ws` for local development. The launch multiplayer target will later point at the deployed multiplayer server URL, while the single-player target should remain local, such as `localhost:8080` or equivalent. WebSocket connection is session-only, and multiplayer rooms are created and joined with generated packets after connecting to `/ws`; the old `room_id` query path is not used by the real UI. Mode-invalid packets should be blocked or declined by session policy later, not by splitting WebSocket route paths.
 
 Legacy direct-room compatibility is quarantined in `services/game-server/internal/rooms`: `GetOrCreate()` and `Join()` create or join already-started direct game rooms and should not be used for lobby-created multiplayer flow. `DefaultRoom()` has been removed; keep any future room lifecycle work on the explicit create/join/start/return APIs.
 
