@@ -2,9 +2,10 @@ extends RefCounted
 class_name ProfileContextProvider
 
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
+const ProfileIdentityKind := preload("res://scripts/profile/profile_identity_kind.gd")
 
 var auth_session_controller
-var selected_single_player_identity_kind := "guest"
+var selected_single_player_identity_kind := ProfileIdentityKind.GUEST
 var selected_local_profile_id := ""
 var selected_local_display_name := "Guest"
 
@@ -20,7 +21,7 @@ func context_for_mode(mode: String) -> Dictionary:
 
 
 func select_guest_profile() -> void:
-	selected_single_player_identity_kind = "guest"
+	selected_single_player_identity_kind = ProfileIdentityKind.GUEST
 	selected_local_profile_id = ""
 	selected_local_display_name = "Guest"
 
@@ -29,27 +30,27 @@ func select_local_profile(local_profile_id: String, display_name: String) -> voi
 	if local_profile_id.is_empty():
 		return
 
-	selected_single_player_identity_kind = "local_profile"
+	selected_single_player_identity_kind = ProfileIdentityKind.LOCAL_PROFILE
 	selected_local_profile_id = local_profile_id
 	selected_local_display_name = display_name
 	if selected_local_display_name.is_empty():
 		selected_local_display_name = "Pilot"
 
 
-func _guest_context() -> Dictionary:
+func _guest_context(activity_status: String = "ACTIVE") -> Dictionary:
 	return {
 		"play_mode": PregameMenuMode.SINGLE_PLAYER,
-		"identity_kind": "guest",
+		"identity_kind": ProfileIdentityKind.GUEST,
 		"callsign": "Guest",
-		"activity_status": "ACTIVE",
+		"activity_status": activity_status,
 	}
 
 
 func _single_player_context() -> Dictionary:
-	if selected_single_player_identity_kind == "local_profile":
+	if selected_single_player_identity_kind == ProfileIdentityKind.LOCAL_PROFILE:
 		return {
 			"play_mode": PregameMenuMode.SINGLE_PLAYER,
-			"identity_kind": "local_profile",
+			"identity_kind": ProfileIdentityKind.LOCAL_PROFILE,
 			"local_profile_id": selected_local_profile_id,
 			"callsign": selected_local_display_name,
 			"activity_status": "ACTIVE",
@@ -61,7 +62,7 @@ func _multiplayer_context() -> Dictionary:
 	var callsign := "Guest"
 	var session = _session()
 	if session == null or !session.is_signed_in():
-		return _guest_context()
+		return _guest_context("OFFLINE")
 
 	callsign = str(session.display_name)
 	if callsign.is_empty():
@@ -69,7 +70,7 @@ func _multiplayer_context() -> Dictionary:
 
 	return {
 		"play_mode": PregameMenuMode.MULTIPLAYER,
-		"identity_kind": "authenticated_account",
+		"identity_kind": ProfileIdentityKind.AUTHENTICATED_ACCOUNT,
 		"callsign": callsign,
 		"activity_status": "ACTIVE",
 	}

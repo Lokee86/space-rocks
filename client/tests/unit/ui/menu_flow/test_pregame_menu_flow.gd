@@ -108,7 +108,7 @@ func test_show_single_player_sets_current_mode_and_calls_menu() -> void:
 
 	add_child_autofree(menu)
 	flow.configure(menu, Callable(), Callable(), Callable(), Callable(), Callable(), Callable(), profile_context_provider)
-	flow.show_single_player()
+	await flow.show_single_player()
 
 	assert_eq(flow.current_mode, PregameMenuMode.SINGLE_PLAYER)
 	assert_eq(menu.single_player_calls, 1)
@@ -188,7 +188,7 @@ func test_play_endless_requested_calls_start_single_player_when_single_player_mo
 
 	add_child_autofree(menu)
 	flow.configure(menu, Callable(), Callable(start_probe, "mark_called"), Callable(), Callable(), Callable(), Callable(), profile_context_provider)
-	flow.show_single_player()
+	await flow.show_single_player()
 
 	menu.play_endless_requested.emit()
 
@@ -267,7 +267,7 @@ func test_profile_requested_calls_profile_flow_with_single_player_mode() -> void
 	add_child_autofree(menu)
 	add_child_autofree(profile_flow)
 	flow.configure(menu, Callable(), Callable(), Callable(), Callable(), Callable(), Callable(), profile_context_provider, profile_flow)
-	flow.show_single_player()
+	await flow.show_single_player()
 
 	menu.profile_requested.emit()
 	await get_tree().process_frame
@@ -336,7 +336,7 @@ func test_multiplayer_create_does_nothing_in_single_player_mode() -> void:
 		Callable(),
 		Callable(clear_probe, "mark_called"),
 		profile_context_provider)
-	flow.show_single_player()
+	await flow.show_single_player()
 
 	menu.create_game_requested.emit()
 
@@ -360,7 +360,7 @@ func test_multiplayer_join_does_nothing_in_single_player_mode() -> void:
 		Callable(),
 		Callable(),
 		profile_context_provider)
-	flow.show_single_player()
+	await flow.show_single_player()
 
 	menu.join_game_requested.emit()
 
@@ -384,7 +384,7 @@ func test_multiplayer_logout_does_nothing_in_single_player_mode() -> void:
 		Callable(logout_probe, "mark_called"),
 		Callable(),
 		profile_context_provider)
-	flow.show_single_player()
+	await flow.show_single_player()
 
 	menu.logout_requested.emit()
 
