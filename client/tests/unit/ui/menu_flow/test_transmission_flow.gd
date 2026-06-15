@@ -44,6 +44,7 @@ func test_mount_replaces_existing_child() -> void:
 	assert_eq(flow.get_screen_display().get_child_count(), 1)
 	assert_eq(flow.get_screen_display().get_child(0), second_mounted)
 	assert_eq(second_mounted.name, "SecondTransmission")
+	await get_tree().process_frame
 
 
 func test_clear_removes_children_and_deactivates_transmission() -> void:
@@ -58,6 +59,7 @@ func test_clear_removes_children_and_deactivates_transmission() -> void:
 
 	assert_eq(flow.get_screen_display().get_child_count(), 0)
 	assert_false(flow.has_active_transmission())
+	await get_tree().process_frame
 
 
 func test_has_active_transmission_false_after_clear() -> void:
@@ -70,6 +72,7 @@ func test_has_active_transmission_false_after_clear() -> void:
 	flow.clear()
 
 	assert_false(flow.has_active_transmission())
+	await get_tree().process_frame
 
 
 func _create_pregame_menu() -> Control:
@@ -85,4 +88,5 @@ func _create_transmission_scene(node_name: String) -> PackedScene:
 	var scene := PackedScene.new()
 	var pack_error := scene.pack(root)
 	assert_eq(pack_error, OK)
+	root.free()
 	return scene
