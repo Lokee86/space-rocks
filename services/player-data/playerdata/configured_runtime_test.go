@@ -3,14 +3,21 @@ package playerdata
 import (
 	"encoding/json"
 	"net/http"
-	"path/filepath"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/player-data/codec"
 	"github.com/Lokee86/space-rocks/player-data/protocol"
 )
 
-func TestNewConfiguredRuntimeDefaultsToMemoryStores(t *testing.T) {
+func newTestMemoryLocalStoreFactory(t *testing.T) LocalStoreFactory {
+	t.Helper()
+
+	return func(path string) (Store, error) {
+		return NewMemoryStore(), nil
+	}
+}
+
+func TestNewConfiguredRuntimeDefaultsToNoopLocalStore(t *testing.T) {
 	runtime, err := NewConfiguredRuntime(RuntimeConfig{})
 	if err != nil {
 		t.Fatalf("NewConfiguredRuntime returned error: %v", err)
@@ -27,15 +34,15 @@ func TestNewConfiguredRuntimeDefaultsToMemoryStores(t *testing.T) {
 	if _, ok := runtimeStore.accountStore.(*MemoryStore); !ok {
 		t.Fatalf("accountStore type = %T, want *MemoryStore", runtimeStore.accountStore)
 	}
-	if _, ok := runtimeStore.localStore.(*MemoryStore); !ok {
-		t.Fatalf("localStore type = %T, want *MemoryStore", runtimeStore.localStore)
+	if _, ok := runtimeStore.localStore.(*NoopStore); !ok {
+		t.Fatalf("localStore type = %T, want *NoopStore", runtimeStore.localStore)
 	}
 	if _, ok := runtimeStore.guestStore.(*GuestMemoryStore); !ok {
 		t.Fatalf("guestStore type = %T, want *GuestMemoryStore", runtimeStore.guestStore)
 	}
 }
 
-func TestNewRuntimeFromEnvUsesDefaultSQLitePath(t *testing.T) {
+func TestNewRuntimeFromEnvUsesRailsEnvAndNoopLocalStore(t *testing.T) {
 	gotKeys := make([]string, 0, 2)
 	getenv := func(key string) string {
 		gotKeys = append(gotKeys, key)
@@ -68,14 +75,27 @@ func TestNewRuntimeFromEnvUsesDefaultSQLitePath(t *testing.T) {
 	if !ok {
 		t.Fatalf("dispatcher.store type = %T, want *StoreRouter", runtime.dispatcher.store)
 	}
-	if _, ok := runtimeStore.localStore.(*SQLiteStore); !ok {
-		t.Fatalf("localStore type = %T, want *SQLiteStore", runtimeStore.localStore)
+	if _, ok := runtimeStore.localStore.(*NoopStore); !ok {
+		t.Fatalf("localStore type = %T, want *NoopStore", runtimeStore.localStore)
 	}
 }
 
-func TestNewConfiguredRuntimeUsesSQLiteForLocalStore(t *testing.T) {
+func TestNewConfiguredRuntimeReturnsErrorWithoutLocalStoreFactory(t *testing.T) {
 	runtime, err := NewConfiguredRuntime(RuntimeConfig{
 		SQLitePath: ":memory:",
+	})
+	if err == nil {
+		t.Fatal("NewConfiguredRuntime returned nil error, want missing local store factory error")
+	}
+	if runtime != nil {
+		t.Fatalf("NewConfiguredRuntime returned runtime = %v, want nil", runtime)
+	}
+}
+
+func TestNewConfiguredRuntimeUsesInjectedLocalStoreForSQLitePath(t *testing.T) {
+	runtime, err := NewConfiguredRuntime(RuntimeConfig{
+		SQLitePath:        ":memory:",
+		LocalStoreFactory: newTestMemoryLocalStoreFactory(t),
 	})
 	if err != nil {
 		t.Fatalf("NewConfiguredRuntime returned error: %v", err)
@@ -89,8 +109,8 @@ func TestNewConfiguredRuntimeUsesSQLiteForLocalStore(t *testing.T) {
 		t.Fatalf("dispatcher.store type = %T, want *StoreRouter", runtime.dispatcher.store)
 	}
 
-	if _, ok := runtimeStore.localStore.(*SQLiteStore); !ok {
-		t.Fatalf("localStore type = %T, want *SQLiteStore", runtimeStore.localStore)
+	if _, ok := runtimeStore.localStore.(*MemoryStore); !ok {
+		t.Fatalf("localStore type = %T, want *MemoryStore", runtimeStore.localStore)
 	}
 	if _, ok := runtimeStore.guestStore.(*GuestMemoryStore); !ok {
 		t.Fatalf("guestStore type = %T, want *GuestMemoryStore", runtimeStore.guestStore)
@@ -181,12 +201,10 @@ func TestNewConfiguredRuntimeRoutesAuthenticatedAccountMatchResultThroughRails(t
 	}
 }
 
-func TestNewConfiguredRuntimeRoutesLocalProfileMatchResultThroughSQLite(t *testing.T) {
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "player-data.sqlite")
-
+func TestNewConfiguredRuntimeRoutesLocalProfileMatchResultThroughInjectedStore(t *testing.T) {
 	runtimeOne, err := NewConfiguredRuntime(RuntimeConfig{
-		SQLitePath: dbPath,
+		SQLitePath:         ":memory:",
+		LocalStoreFactory:   newTestMemoryLocalStoreFactory(t),
 	})
 	if err != nil {
 		t.Fatalf("NewConfiguredRuntime returned error: %v", err)
@@ -225,48 +243,10 @@ func TestNewConfiguredRuntimeRoutesLocalProfileMatchResultThroughSQLite(t *testi
 		t.Fatal("Duplicate = true, want false")
 	}
 	if recordPacket.Stats.TotalScore != 8 || recordPacket.Stats.HighScore != 8 || recordPacket.Stats.ShipDeaths != 2 || recordPacket.Stats.GamesPlayed != 1 {
-		t.Fatalf("Stats = %+v, want sqlite stats", recordPacket.Stats)
+		t.Fatalf("Stats = %+v, want injected store stats", recordPacket.Stats)
 	}
-	if recordPacket.Stats.Wins != 0 {
-		t.Fatalf("Stats.Wins = %d, want 0", recordPacket.Stats.Wins)
-	}
-
-	runtimeTwo, err := NewConfiguredRuntime(RuntimeConfig{
-		SQLitePath: dbPath,
-	})
-	if err != nil {
-		t.Fatalf("NewConfiguredRuntime returned error for reopen: %v", err)
-	}
-
-	loadPayload, err := codec.Encode(protocol.PlayerDataLoadStats{
-		Type: protocol.PacketTypePlayerDataLoadStats,
-		Identity: protocol.PlayerDataIdentity{
-			IdentityKind:   IdentityKindLocalProfile,
-			LocalProfileID: "local-123",
-		},
-		Context: protocol.PlayerDataRequestContext{PlayMode: PlayModeSinglePlayer},
-	})
-	if err != nil {
-		t.Fatalf("encode load payload: %v", err)
-	}
-
-	loadResponse, err := runtimeTwo.Handle(loadPayload)
-	if err != nil {
-		t.Fatalf("runtimeTwo Handle returned error: %v", err)
-	}
-
-	var loadPacket protocol.PlayerDataLoadStatsResult
-	if err := json.Unmarshal(loadResponse, &loadPacket); err != nil {
-		t.Fatalf("unmarshal load response: %v", err)
-	}
-	if !loadPacket.Found {
-		t.Fatal("Found = false, want true")
-	}
-	if loadPacket.Stats.TotalScore != 8 || loadPacket.Stats.HighScore != 8 || loadPacket.Stats.ShipDeaths != 2 || loadPacket.Stats.GamesPlayed != 1 {
-		t.Fatalf("Stats = %+v, want persisted sqlite stats", loadPacket.Stats)
-	}
-	if loadPacket.Stats.Wins != 0 {
-		t.Fatalf("Stats.Wins = %d, want 0", loadPacket.Stats.Wins)
+	if recordPacket.Stats.Wins != 1 {
+		t.Fatalf("Stats.Wins = %d, want 1", recordPacket.Stats.Wins)
 	}
 }
 
@@ -304,13 +284,11 @@ func TestNewConfiguredRuntimeKeepsAccountLocalAndGuestStatsSeparate(t *testing.T
 		}
 	}))
 
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "player-data.sqlite")
-
 	runtime, err := NewConfiguredRuntime(RuntimeConfig{
 		RailsBaseURL:       server.URL,
 		RailsInternalToken: "internal-token",
-		SQLitePath:         dbPath,
+		SQLitePath:         ":memory:",
+		LocalStoreFactory:   newTestMemoryLocalStoreFactory(t),
 	})
 	if err != nil {
 		t.Fatalf("NewConfiguredRuntime returned error: %v", err)

@@ -78,3 +78,6 @@ This document is the focused reference for the completed Local Pilot / Guest sel
 - Scene scripts only emit user intent and present UI state.
 - The data-handler remains the persistence boundary for local profile creation, selection, update, and removal.
 - Selector behavior, default-row behavior, and identity persistence all route through the `LocalPilotFlow` ownership seam.
+- In no-tag/deployment builds, local profile endpoints can return `local_profiles_unavailable`; the flow should treat that as a missing local-profile store rather than a user input error.
+- Guest transient stats stay separate from local-profile persistence.
+- Authenticated account stats continue to come from Rails-backed storage, not local-profile storage.
