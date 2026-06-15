@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,6 +15,9 @@ func TestLocalProfilesHandlerReturnsUnavailableWhenLocalProfileStoreMissing(t *t
 	runtime, err := playerdata.NewConfiguredRuntime(playerdata.RuntimeConfig{})
 	if err != nil {
 		t.Fatalf("NewConfiguredRuntime returned error: %v", err)
+	}
+	if err := runtime.DeleteLocalProfile("missing-profile"); !errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+		t.Fatalf("DeleteLocalProfile error = %v, want ErrLocalProfileUnavailable", err)
 	}
 
 	handler := NewLocalProfilesHandler(runtime)

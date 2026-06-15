@@ -40,7 +40,7 @@ func (r *StoreRouter) RecordMatchResult(command protocol.PlayerDataRecordMatchRe
 func (r *StoreRouter) ListLocalProfiles() ([]LocalProfileSummary, error) {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
-		return nil, errors.New("local profile management is unavailable")
+		return nil, ErrLocalProfileUnavailable
 	}
 
 	return localProfileStore.ListLocalProfiles()
@@ -49,7 +49,7 @@ func (r *StoreRouter) ListLocalProfiles() ([]LocalProfileSummary, error) {
 func (r *StoreRouter) CreateLocalProfile(localProfileID string, displayName string, stats protocol.PlayerDataStats) (LocalProfileSummary, error) {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
-		return LocalProfileSummary{}, errors.New("local profile management is unavailable")
+		return LocalProfileSummary{}, ErrLocalProfileUnavailable
 	}
 
 	return localProfileStore.CreateLocalProfile(localProfileID, displayName, stats)
@@ -58,7 +58,7 @@ func (r *StoreRouter) CreateLocalProfile(localProfileID string, displayName stri
 func (r *StoreRouter) DeleteLocalProfile(localProfileID string) error {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
-		return errors.New("local profile management is unavailable")
+		return ErrLocalProfileUnavailable
 	}
 
 	return localProfileStore.DeleteLocalProfile(localProfileID)
@@ -67,7 +67,7 @@ func (r *StoreRouter) DeleteLocalProfile(localProfileID string) error {
 func (r *StoreRouter) UpdateLocalProfileDisplayName(localProfileID string, displayName string) (LocalProfileSummary, error) {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
-		return LocalProfileSummary{}, errors.New("local profile management is unavailable")
+		return LocalProfileSummary{}, ErrLocalProfileUnavailable
 	}
 
 	return localProfileStore.UpdateLocalProfileDisplayName(localProfileID, displayName)
@@ -76,7 +76,7 @@ func (r *StoreRouter) UpdateLocalProfileDisplayName(localProfileID string, displ
 func (r *StoreRouter) GetDefaultLocalProfile() (LocalProfileDefault, error) {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
-		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+		return LocalProfileDefault{}, ErrLocalProfileUnavailable
 	}
 
 	return localProfileStore.GetDefaultLocalProfile()
@@ -85,7 +85,7 @@ func (r *StoreRouter) GetDefaultLocalProfile() (LocalProfileDefault, error) {
 func (r *StoreRouter) SetDefaultLocalProfile(identityKind string, localProfileID string) (LocalProfileDefault, error) {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
-		return LocalProfileDefault{}, errors.New("local profile management is unavailable")
+		return LocalProfileDefault{}, ErrLocalProfileUnavailable
 	}
 
 	return localProfileStore.SetDefaultLocalProfile(identityKind, localProfileID)

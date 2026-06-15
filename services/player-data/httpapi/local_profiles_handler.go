@@ -3,6 +3,7 @@ package httpapi
 import (
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -98,6 +99,10 @@ func (h *LocalProfilesHandler) serveList(w http.ResponseWriter) {
 
 	profiles, err := h.runtime.ListLocalProfiles()
 	if err != nil {
+		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+			return
+		}
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -153,6 +158,10 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 
 	profile, err := h.runtime.CreateLocalProfile(localProfileID, displayName, stats)
 	if err != nil {
+		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+			return
+		}
 		logging.HTTP.Error("local profile create failed", err,
 			logging.FieldOperation, "create_local_profile",
 			logging.FieldLocalProfileID, localProfileID,
@@ -177,6 +186,10 @@ func (h *LocalProfilesHandler) serveGetDefault(w http.ResponseWriter) {
 
 	defaultProfile, err := h.runtime.GetDefaultLocalProfile()
 	if err != nil {
+		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+			return
+		}
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -222,7 +235,11 @@ func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Re
 
 	defaultProfile, err := h.runtime.SetDefaultLocalProfile(identityKind, localProfileID)
 	if err != nil {
-		if err.Error() == "local profile not found" {
+		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+			return
+		}
+		if errors.Is(err, playerdata.ErrLocalProfileNotFound) {
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
@@ -265,7 +282,11 @@ func (h *LocalProfilesHandler) serveUpdate(w http.ResponseWriter, r *http.Reques
 
 	profile, err := h.runtime.UpdateLocalProfileDisplayName(localProfileID, displayName)
 	if err != nil {
-		if err.Error() == "local profile not found" {
+		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+			return
+		}
+		if errors.Is(err, playerdata.ErrLocalProfileNotFound) {
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
@@ -295,7 +316,11 @@ func (h *LocalProfilesHandler) serveDelete(w http.ResponseWriter, r *http.Reques
 
 	err := h.runtime.DeleteLocalProfile(localProfileID)
 	if err != nil {
-		if err.Error() == "local profile not found" {
+		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
+			return
+		}
+		if errors.Is(err, playerdata.ErrLocalProfileNotFound) {
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}

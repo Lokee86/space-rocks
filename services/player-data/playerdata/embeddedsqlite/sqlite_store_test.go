@@ -4,6 +4,7 @@ package embeddedsqlite
 
 import (
 	"database/sql"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -665,8 +666,8 @@ func TestStoreUpdateLocalProfileDisplayNameMissingID(t *testing.T) {
 	if err == nil {
 		t.Fatal("UpdateLocalProfileDisplayName returned nil error for missing local profile")
 	}
-	if !strings.Contains(err.Error(), "local profile not found") {
-		t.Fatalf("UpdateLocalProfileDisplayName error = %v, want it to contain %q", err, "local profile not found")
+	if !errors.Is(err, playerdata.ErrLocalProfileNotFound) {
+		t.Fatalf("UpdateLocalProfileDisplayName error = %v, want ErrLocalProfileNotFound", err)
 	}
 }
 
@@ -714,8 +715,8 @@ func TestStoreDeleteLocalProfileMissingID(t *testing.T) {
 	if err == nil {
 		t.Fatal("DeleteLocalProfile returned nil error for missing local profile")
 	}
-	if !strings.Contains(err.Error(), "local profile not found") {
-		t.Fatalf("DeleteLocalProfile error = %v, want it to contain %q", err, "local profile not found")
+	if !errors.Is(err, playerdata.ErrLocalProfileNotFound) {
+		t.Fatalf("DeleteLocalProfile error = %v, want ErrLocalProfileNotFound", err)
 	}
 }
 

@@ -270,7 +270,7 @@ func (s *Store) SetDefaultLocalProfile(identityKind string, localProfileID strin
 			localProfileID,
 		).Scan(&displayName); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return playerdata.LocalProfileDefault{}, errors.New("local profile not found")
+				return playerdata.LocalProfileDefault{}, playerdata.ErrLocalProfileNotFound
 			}
 			return playerdata.LocalProfileDefault{}, err
 		}
@@ -389,7 +389,7 @@ func (s *Store) UpdateLocalProfileDisplayName(localProfileID string, displayName
 	).Scan(&found)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return playerdata.LocalProfileSummary{}, errors.New("local profile not found")
+			return playerdata.LocalProfileSummary{}, playerdata.ErrLocalProfileNotFound
 		}
 		return playerdata.LocalProfileSummary{}, err
 	}
@@ -439,7 +439,7 @@ func (s *Store) DeleteLocalProfile(localProfileID string) error {
 	).Scan(&found)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return errors.New("local profile not found")
+			return playerdata.ErrLocalProfileNotFound
 		}
 		return err
 	}

@@ -1,6 +1,10 @@
 package playerdata
 
-import "github.com/Lokee86/space-rocks/player-data/protocol"
+import (
+	"errors"
+
+	"github.com/Lokee86/space-rocks/player-data/protocol"
+)
 
 type Store interface {
 	LoadStats(identity protocol.PlayerDataIdentity) (protocol.PlayerDataStats, bool, error)
@@ -15,6 +19,10 @@ type LocalProfileStore interface {
 	GetDefaultLocalProfile() (LocalProfileDefault, error)
 	SetDefaultLocalProfile(identityKind string, localProfileID string) (LocalProfileDefault, error)
 }
+
+var ErrLocalProfileNotFound = errors.New("local profile not found")
+
+var ErrLocalProfileUnavailable = errors.New("local profile management is unavailable")
 
 type LocalProfileSummary struct {
 	LocalProfileID string
