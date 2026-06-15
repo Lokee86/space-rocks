@@ -41,7 +41,7 @@ func _guest_context() -> Dictionary:
 		"play_mode": PregameMenuMode.SINGLE_PLAYER,
 		"identity_kind": "guest",
 		"callsign": "Guest",
-		"activity_status": "OFFLINE",
+		"activity_status": "ACTIVE",
 	}
 
 
@@ -52,7 +52,7 @@ func _single_player_context() -> Dictionary:
 			"identity_kind": "local_profile",
 			"local_profile_id": selected_local_profile_id,
 			"callsign": selected_local_display_name,
-			"activity_status": "LOCAL",
+			"activity_status": "ACTIVE",
 		}
 	return _guest_context()
 
