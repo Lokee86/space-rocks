@@ -16,7 +16,9 @@ Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separat
 - It does not own HTTP request/response shapes.
 - HTTP request/response shapes live in `shared/contracts/http/openapi.yaml`.
 - Rails migrations own the Rails/Postgres physical schema.
-- Embedded DB migrations own local physical storage.
+- Embedded SQLite physical storage exists only in `embedded_sqlite` builds.
+- No-tag/deployment builds omit embedded SQLite and do not include `modernc.org/sqlite`.
+- Embedded DB migrations own local physical storage when embedded local storage is enabled.
 - Stores must satisfy the logical player-data contract even if physical tables differ.
 - See [Project source-of-truth map](source-of-truth-map.md) for the broader ownership map.
 - If HTTP API payloads are involved, see [HTTP contracts](../api/http-contracts.md).
@@ -27,7 +29,7 @@ Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separat
 - `shared/packets/player_data.toml` defines the player-data packet protocol.
 - `services/player-data/protocol/packets.go` is generated from the packet SSoT.
 - Rails/Postgres physical stats persistence exists for authenticated accounts.
-- Embedded SQLite physical stats persistence exists for local profiles.
+- Embedded SQLite physical stats persistence exists for local profiles only in `embedded_sqlite` builds.
 - Both stores implement the same logical stats contract.
 - Go `MatchResultSummary` structs and builders now exist in the player-data runtime and mirror the shared logical schema.
 - Gameplay-facing code depends on playerdata contracts, not Rails tables or embedded DB tables.
@@ -80,6 +82,7 @@ The logical `Stats` contract is used for both writes and reads through the playe
 - The runtime selects the backing store after mode and identity validation.
 - Backing store selection is not a client concern.
 - The same logical stats payload is normalized for profile display regardless of whether it came from guest memory, SQLite, or Rails/Postgres.
+- Guest memory is transient and separate from local profile persistence.
 - `ship_deaths` comes from authoritative server match facts, not client-side presentation counting.
 - The client must not count or mutate profile stats from game-over presentation.
 
@@ -97,14 +100,14 @@ Logical schema examples:
 Physical schema examples:
 
 - Rails/Postgres tables, indexes, constraints, migrations.
-- Embedded DB tables, indexes, constraints, migrations.
+- Embedded DB tables, indexes, constraints, migrations in `embedded_sqlite` builds.
 
 Physical schemas may differ because Rails/Postgres and the embedded DB may have different storage needs.
 
 Physical schemas must still satisfy the shared logical contract.
 
 Go `MatchResultSummary` structs and builders exist in the player-data runtime, and the game-server reports resolved `MatchResultSummary` through `services/player-data` for both write and read flows.
-`services/player-data` routes `RecordMatchResult` and `LoadStats` by identity kind: Authenticated Account uses Rails/Postgres through `RailsStore`, Local Profile uses embedded SQLite through the local store, and Guest uses guest/no-durable behavior.
+`services/player-data` routes `RecordMatchResult` and `LoadStats` by identity kind: Authenticated Account uses Rails/Postgres through `RailsStore`, Local Profile uses embedded SQLite only in `embedded_sqlite` builds, and Guest uses guest/no-durable behavior.
 
 ## Scope
 
@@ -157,6 +160,8 @@ Rails physical schema should satisfy the shared logical player-data schema.
 
 `account_id` is the authenticated account UUID identity in player-data contracts. Rails `user_id` stays an internal foreign key to `users.id`.
 `local_profile_id` is the local profile identity.
+`playerdata` core owns the logical contract and receives local-store construction through dependency injection.
+`playerdata` core does not import the embedded SQLite package.
 
 Rails should not use raw SQL as the cross-service SSoT.
 
@@ -165,6 +170,7 @@ Rails should not use raw SQL as the cross-service SSoT.
 Embedded DB owns Local Profile persistence.
 
 Embedded DB physical schema may differ from Rails/Postgres.
+Embedded DB physical schema is only present in `embedded_sqlite` builds.
 
 Embedded DB physical schema must satisfy the same logical player-data contract.
 
@@ -207,7 +213,7 @@ Future contract tests:
 `NoDurableStore` for Guest may return defaults or reject durable writes, but should not pretend to persist account-shaped data.
 Guest uses singleton in-memory unsaved stats.
 Authenticated Account uses Rails/Postgres physical stats persistence.
-Local Profile uses embedded SQLite physical stats persistence.
+Local Profile uses embedded SQLite physical stats persistence only in `embedded_sqlite` builds.
 Profile reads are implemented through the data-handler and player-data runtime, not left as future work.
 
 ## Deferred Work

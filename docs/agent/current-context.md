@@ -45,8 +45,11 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Server-side account and local-profile work must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, and gameplay code must not directly choose embedded DB vs Rails/API.
 - Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): `shared/player_data` contracts now exist, `shared/packets/player_data.toml` defines player-data packets, and gameplay code must not depend directly on Rails tables or embedded DB tables.
 - `services/player-data` exists as a sibling Go module with an independent codec, generated protocol packets, and a configured runtime builder.
-- `services/player-data` now has the Phase 4 routes for `authenticated_account` through the Rails adapter, `local_profile` through the SQLite adapter, and `guest` through singleton memory-backed stats.
+- `services/player-data` now has the Phase 4 routes for `authenticated_account` through the Rails adapter, `local_profile` through the SQLite-backed route in `embedded_sqlite` builds, and `guest` through singleton memory-backed stats.
 - `cmd/game-server` can host the configured player-data runtime in-process through composition.
+- Embedded SQLite lives under `services/player-data/playerdata/embeddedsqlite`, compiles only with `-tags embedded_sqlite`, and must not be imported by the core `playerdata` package.
+- No-tag/deployment builds must not import or depend on `modernc.org/sqlite`.
+- Local store construction is injected from the game-server composition root.
 - Phase 4 Go match summary work is complete.
 - Rooms now store one resolved `MatchResultSummary` on `game_over`.
 - `Game` exposes match facts including score and `ship_deaths`.

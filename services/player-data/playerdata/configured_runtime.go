@@ -12,13 +12,15 @@ type RuntimeConfig struct {
 	RailsBaseURL       string
 	RailsInternalToken string
 	SQLitePath         string
+	LocalStoreFactory  LocalStoreFactory
 }
+
+type LocalStoreFactory func(path string) (Store, error)
 
 func NewRuntimeFromEnv(getenv func(string) string) (*Runtime, error) {
 	return NewConfiguredRuntime(RuntimeConfig{
 		RailsBaseURL:       getenv("PLAYER_DATA_RAILS_BASE_URL"),
 		RailsInternalToken: getenv("PLAYER_DATA_RAILS_INTERNAL_TOKEN"),
-		SQLitePath:         DefaultSQLitePath(),
 	})
 }
 
@@ -48,18 +50,18 @@ func NewConfiguredRuntime(config RuntimeConfig) (*Runtime, error) {
 	}
 
 	var localStore Store
-	if config.SQLitePath != "" {
-		store, err := NewSQLiteStore(SQLiteStoreConfig{Path: config.SQLitePath})
+	if config.SQLitePath == "" {
+		localStore = NewNoopStore()
+	} else {
+		if config.LocalStoreFactory == nil {
+			return nil, errors.New("local store factory is required when SQLitePath is set")
+		}
+
+		store, err := config.LocalStoreFactory(config.SQLitePath)
 		if err != nil {
 			return nil, err
 		}
-		if err := store.InitSchema(); err != nil {
-			_ = store.Close()
-			return nil, err
-		}
 		localStore = store
-	} else {
-		localStore = NewMemoryStore()
 	}
 
 	guestStore := NewGuestMemoryStore()

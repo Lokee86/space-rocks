@@ -11,7 +11,12 @@ import (
 )
 
 func buildPlayerDataRuntime() (*playerdata.Runtime, error) {
-	return playerdata.NewRuntimeFromEnv(os.Getenv)
+	return playerdata.NewConfiguredRuntime(playerdata.RuntimeConfig{
+		RailsBaseURL:       os.Getenv("PLAYER_DATA_RAILS_BASE_URL"),
+		RailsInternalToken: os.Getenv("PLAYER_DATA_RAILS_INTERNAL_TOKEN"),
+		SQLitePath:         playerDataLocalStorePath(),
+		LocalStoreFactory:   playerDataLocalStoreFactory(),
+	})
 }
 
 func newPlayerDataSink(runtime *playerdata.Runtime) *playerdata.RuntimeSink {

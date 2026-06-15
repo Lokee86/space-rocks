@@ -16,6 +16,11 @@ type LocalProfileStore interface {
 	SetDefaultLocalProfile(identityKind string, localProfileID string) (LocalProfileDefault, error)
 }
 
+type LocalProfileSummary struct {
+	LocalProfileID string
+	DisplayName    string
+}
+
 type LocalProfileDefault struct {
 	IdentityKind   string
 	LocalProfileID string

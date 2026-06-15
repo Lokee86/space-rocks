@@ -8,12 +8,17 @@ For logical schema ownership, see [Player-Data Schema Source Of Truth](player-da
 For contract ownership, see [Source Of Truth Map](source-of-truth-map.md).
 For HTTP shapes, see [HTTP Contracts](../api/http-contracts.md).
 
+Local-profile durable storage exists only in `embedded_sqlite` builds.
+No-tag/deployment builds exclude `playerdata/embeddedsqlite` and the `modernc.org/sqlite` dependency.
+In no-tag/deployment builds, local profile management returns `local_profiles_unavailable`.
+
 ## Core Rule
 
 All player-data reads and writes route through the game-server data-handler and the in-process player-data runtime.
 
 The client does not choose Rails, SQLite, or guest memory directly.
 The player-data runtime owns identity-based store selection.
+The core playerdata package receives local-store construction through dependency injection and does not import the embedded SQLite package.
 
 ## Write Flow
 
@@ -27,7 +32,7 @@ Match-result writes follow this path:
 Store outcomes:
 
 - `guest` -> in-memory transient stats
-- `local_profile` -> SQLite
+- `local_profile` -> SQLite in `embedded_sqlite` builds, unavailable in no-tag/deployment builds
 - `authenticated_account` -> Rails/Postgres through `RailsStore`
 
 `ship_deaths` comes from authoritative server match facts, not client-side counting.
@@ -35,7 +40,7 @@ Store outcomes:
 ## Local Profile Management Flow
 
 Local profile list, create, and default requests enter through the game-server data-handler.
-The player-data runtime/store seam owns SQLite persistence for local profiles.
+The player-data runtime/store seam owns local-profile persistence only when the embedded SQLite build is present.
 The client never writes SQLite directly.
 
 CREATE routing:
@@ -66,7 +71,7 @@ Profile reads follow this path:
 Store outcomes:
 
 - `guest` -> in-memory transient stats
-- `local_profile` -> SQLite
+- `local_profile` -> SQLite in `embedded_sqlite` builds, unavailable in no-tag/deployment builds
 - `authenticated_account` -> Rails/Postgres through `RailsStore`
 
 The same logical stats payload is normalized for display regardless of backing store.
@@ -108,7 +113,7 @@ The runtime routes by identity kind after mode and identity validation.
 | Identity | Read route | Write route | Backing store |
 | --- | --- | --- | --- |
 | Guest | transient read | transient write | in-memory stats |
-| Local Profile | durable read | durable write | SQLite |
+| Local Profile | durable read | durable write | SQLite in `embedded_sqlite` builds only |
 | Authenticated Account | durable read | durable write | Rails/Postgres |
 
 `account_id` is the authenticated-account UUID identity.

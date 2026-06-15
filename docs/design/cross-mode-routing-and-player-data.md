@@ -22,9 +22,12 @@ Implemented foundation:
 - The game-server routes match-result writes into the in-process player-data runtime.
 - Communication uses player-data packets from the shared packet SSoT across an encoded payload boundary.
 - `services/player-data` has its own codec and does not import game-server internals.
+- `embedded_sqlite` builds inject `playerdata/embeddedsqlite` from the game-server composition root.
+- No-tag/deployment builds do not compile `playerdata/embeddedsqlite` and do not include `modernc.org/sqlite`.
+- The core playerdata package receives local store construction through dependency injection and does not import the embedded SQLite package.
 - The player-data foundation has real backing stores:
   - `authenticated_account` routes through the Rails adapter to `services/api-server`
-  - `local_profile` routes through embedded SQLite inside `services/player-data`
+  - `local_profile` routes through embedded SQLite only in `embedded_sqlite` builds
   - `guest` routes to singleton in-memory unsaved stats
 - The runtime can still become a separate player-data server later by replacing the in-process transport.
 
@@ -77,14 +80,14 @@ Initial server capability profiles:
 Local-capable server profile:
 
 - may allow Guest
-- may allow Local Profile
-- may include embedded DB
+- may allow Local Profile when embedded local storage is enabled
+- may include embedded DB in `embedded_sqlite` builds
 - may also exercise Authenticated Account through multiplayer simulation
 
 Online-authoritative server profile:
 
 - requires Authenticated Account
-- excludes embedded player-data DB path
+- excludes embedded player-data DB path in no-tag/deployment builds
 - rejects Guest and Local Profile gameplay admission
 - routes durable player data to Rails/API
 
@@ -143,8 +146,8 @@ Local-capable lifecycle:
 
 - session may default to Guest
 - client may start local single-player as Guest
-- client may select Local Profile
-- Local Profile packet handling currently flows through the in-process `services/player-data` runtime hosted by game-server.
+- client may select Local Profile when embedded local storage is enabled
+- Local Profile packet handling currently flows through the in-process `services/player-data` runtime hosted by game-server, with local store construction injected from the game-server composition root.
 - client may authenticate account for multiplayer simulation or online route
 
 Local single-player with Guest:
@@ -157,9 +160,9 @@ Local single-player with Local Profile:
 
 - client uses `POST /api/player-data/profile` on the game-server data-handler for profile readout
 - client starts local game-server session with selected `LocalProfileID` or local profile session reference
-- game-server asks the in-process player-data runtime for profile, loadout, and match-result data needed for the match
+- game-server asks the in-process player-data runtime for profile, loadout, and match-result data needed for the match when embedded local storage is enabled
 - game-server reports trusted match results to the player-data runtime
-- the current implementation keeps Local Profile routing inside the in-process `services/player-data` runtime
+- the current implementation keeps Local Profile routing inside the in-process `services/player-data` runtime, and the embedded SQLite package is only present in `embedded_sqlite` builds
 
 The game-server websocket should not become a general local profile management API.
 Profile management UI and profile readout should go through the game-server data-handler facade, not direct Rails calls.
@@ -196,7 +199,7 @@ Local Profile:
 - local-only
 - durable
 - account-shaped
-- stored through the local player-data service backed by embedded SQLite
+- stored through the local player-data service backed by embedded SQLite only in `embedded_sqlite` builds
 - mirrors online account/profile concepts such as profile, loadout, unlocks, progression, stats, and settings if relevant
 
 Authenticated Account:
@@ -247,9 +250,9 @@ The game-server now owns gameplay facts, route admission, and the data-handler f
 
 ### Local Profile Read/Write Behavior
 
-- Local Profile identity uses the embedded SQLite store inside `services/player-data`.
-- Local Profile reads and match-result writes are durable locally.
-- The game-server still does not touch SQLite directly.
+- Local Profile identity uses the embedded SQLite store only when `embedded_sqlite` builds are enabled.
+- Local Profile reads and match-result writes are durable locally when embedded local storage is enabled.
+- The game-server still does not touch SQLite directly or know SQLite table names or schema details.
 
 ### Route Table
 
@@ -296,7 +299,7 @@ The admission matrix stays unchanged: `single_player + guest/local_profile` is a
 - Local Single-Player rejects Authenticated Account.
 - Online Multiplayer requires Authenticated Account.
 - Online Multiplayer rejects Guest and Local Profile.
-- Local Profile is durable, account-shaped, local-only, and stored through the local player-data service backed by SQLite.
+- Local Profile is durable, account-shaped, local-only, and stored through the local player-data service backed by SQLite only in `embedded_sqlite` builds.
 - Authenticated Account is durable, account-shaped, online/API-backed.
 - Guest is temporary/local-only and has no durable account-shaped data.
 
@@ -314,7 +317,7 @@ The admission matrix stays unchanged: `single_player + guest/local_profile` is a
 Initial data destinations:
 
 - Guest singleton in-memory unsaved stats
-- Local player-data service backed by SQLite
+- Local player-data service backed by SQLite only in `embedded_sqlite` builds
 - Online player-data service backed by Postgres
 
 Guest singleton in-memory unsaved stats means the data is session-only, not durable, and is not persisted as account-shaped data.
@@ -328,7 +331,7 @@ The game-server should not directly write either account-shaped player-data data
 
 The current implemented player-data foundation exists to support Local Profile.
 
-Local Profile is durable, account-shaped, and local-only.
+Local Profile is durable, account-shaped, and local-only, with durable storage only in `embedded_sqlite` builds.
 Local Profile list/create/default loading already route through the game-server data-handler and in-process player-data runtime.
 Local Profile delete is implemented through the game-server data-handler facade; `services/player-data` owns the SQLite deletion path, and the game-server does not directly delete SQLite rows.
 
@@ -337,6 +340,7 @@ Local Profile delete is implemented through the game-server data-handler facade;
 The game-server hosts the player-data runtime in-process for now.
 
 SQLite is implemented inside `services/player-data` for Local Profile.
+The embedded SQLite package is only compiled in `embedded_sqlite` builds and is injected from the game-server composition root.
 
 The embedded or local database is not a gameplay concern.
 
@@ -416,7 +420,7 @@ Planned service split:
 
 Symmetry:
 
-- Local Profile path now: `client`/`game-server` -> shared packets -> in-process `services/player-data` runtime -> SQLite.
+- Local Profile path now: `client`/`game-server` -> shared packets -> in-process `services/player-data` runtime -> SQLite only in `embedded_sqlite` builds.
 - Later Local Profile path: `client`/`game-server` -> `services/player-data-server` -> SQLite.
 - Authenticated Account path now: `client`/`game-server` -> Rails adapter -> `services/api-server` -> Postgres.
 
@@ -562,7 +566,7 @@ RecordMatchResult
 Service-route wording:
 
 - Guest uses the singleton in-memory unsaved-stats route.
-- Local Profile uses the in-process `services/player-data` runtime backed by SQLite.
+- Local Profile uses the in-process `services/player-data` runtime backed by SQLite only in `embedded_sqlite` builds.
 - Authenticated Account uses the Rails adapter to `services/api-server`.
 
 Services may implement the contract differently, but they must satisfy the shared logical schema.
@@ -591,13 +595,13 @@ Excluded data categories:
 ## Player-Data Routing
 
 - Guest routes to singleton memory, not durable.
-- Local Profile routes to `services/player-data`, backed by SQLite.
+- Local Profile routes to `services/player-data`, backed by SQLite only in `embedded_sqlite` builds.
 - Authenticated Account routes to `services/player-data` Rails adapter to `services/api-server`/Postgres.
 
 | Identity | Durable account-shaped data | Service route | Backing store |
 | --- | --- | --- | --- |
 | Guest | no | singleton memory | in-memory unsaved stats |
-| Local Profile | yes | `services/player-data` | SQLite |
+| Local Profile | yes | `services/player-data` | SQLite in `embedded_sqlite` builds |
 | Authenticated Account | yes | `services/player-data` Rails adapter to `services/api-server` | Postgres |
 
 Clarifications:
@@ -620,6 +624,7 @@ These states should not be admitted by the routing architecture:
 - game-server directly writing Postgres tables
 - game-server directly writing Local Profile SQLite tables
 - game-server directly writing Authenticated Account Postgres tables
+- game-server knowing SQLite table names or schema details
 - client directly mutating SQLite outside the future player-data server
 - player-data runtime owning live gameplay simulation
 - api-server owning local SQLite Local Profile persistence

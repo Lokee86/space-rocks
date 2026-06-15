@@ -98,7 +98,7 @@ func (h *LocalProfilesHandler) serveList(w http.ResponseWriter) {
 
 	profiles, err := h.runtime.ListLocalProfiles()
 	if err != nil {
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
@@ -138,7 +138,7 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 		logging.HTTP.Error("local profile create guest stat seeding failed", err,
 			logging.FieldOperation, "create_local_profile",
 		)
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 		logging.HTTP.Error("local profile create id generation failed", err,
 			logging.FieldOperation, "create_local_profile",
 		)
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
@@ -157,7 +157,7 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 			logging.FieldOperation, "create_local_profile",
 			logging.FieldLocalProfileID, localProfileID,
 		)
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
@@ -177,7 +177,7 @@ func (h *LocalProfilesHandler) serveGetDefault(w http.ResponseWriter) {
 
 	defaultProfile, err := h.runtime.GetDefaultLocalProfile()
 	if err != nil {
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
@@ -226,7 +226,7 @@ func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Re
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
@@ -269,7 +269,7 @@ func (h *LocalProfilesHandler) serveUpdate(w http.ResponseWriter, r *http.Reques
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
@@ -299,7 +299,7 @@ func (h *LocalProfilesHandler) serveDelete(w http.ResponseWriter, r *http.Reques
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
-		writePlayerDataLocalProfilesError(w, http.StatusInternalServerError, "local_profiles_unavailable")
+		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
