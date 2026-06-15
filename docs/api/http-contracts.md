@@ -27,8 +27,8 @@ This is Level 2 enforcement:
 - Hosted by the game-server data-handler on `:8080`
 - Lists local profiles by `local_profile_id` and `display_name`
 - `display_name` is presentation, not identity
-- In `embedded_sqlite` builds, this route is backed by the embedded SQLite local-profile store
-- In no-tag/deployment builds, the embedded SQLite package and `modernc.org/sqlite` dependency are not present, and local profile management returns `local_profiles_unavailable`
+- In the standard no-tag development build, this route is backed by the embedded SQLite local-profile store
+- In `-tags noembeddedsqlite` deployment/restricted builds, the embedded SQLite package and `modernc.org/sqlite` dependency are not present, and local profile management returns `local_profiles_unavailable`
 
 ### `POST /api/player-data/local-profiles`
 
@@ -58,7 +58,7 @@ This is Level 2 enforcement:
 
 - Hosted by the game-server data-handler on `:8080`
 - Returns the persisted local pilot default
-- Returns `local_profiles_unavailable` in no-tag/deployment builds
+- Returns `local_profiles_unavailable` in `-tags noembeddedsqlite` deployment/restricted builds
 
 ### `PUT /api/player-data/local-profiles/default`
 
@@ -66,7 +66,7 @@ This is Level 2 enforcement:
 - Persists Guest or a local profile as the default
 - Guest uses `identity_kind = guest`
 - Local profile uses `identity_kind = local_profile` plus `local_profile_id`
-- Returns `local_profiles_unavailable` in no-tag/deployment builds
+- Returns `local_profiles_unavailable` in `-tags noembeddedsqlite` deployment/restricted builds
 
 ### `POST /api/internal/player-data/stats`
 
@@ -107,12 +107,12 @@ Player-data runtime packet shape changes must update the relevant `shared/packet
 
 - `cd services/api-server && bundle exec rails test test/contracts/openapi_contract_test.rb`
 - `cd services/api-server && bundle exec rails test test/controllers/api/internal/player_data/stats_controller_test.rb`
-- `cd services/player-data && go test ./...`
-- `cd services/player-data && go list -deps ./... | grep modernc.org/sqlite` should find nothing in no-tag/deployment builds
-- `cd services/game-server && go test -buildvcs=false ./cmd/game-server`
-- `cd services/game-server && go list -deps ./cmd/game-server | grep modernc.org/sqlite` should find nothing in no-tag/deployment builds
-- `cd services/player-data && go test -tags embedded_sqlite ./...`
-- `cd services/game-server && go test -tags embedded_sqlite -buildvcs=false ./cmd/game-server`
+- `cd services/player-data && go test ./...` should include `modernc.org/sqlite`
+- `cd services/player-data && go test -tags noembeddedsqlite ./...`
+- `cd services/player-data && go list -tags noembeddedsqlite -deps ./... | grep modernc.org/sqlite` should find nothing in deployment/restricted builds
+- `cd services/game-server && go test -buildvcs=false ./cmd/game-server` should include `modernc.org/sqlite`
+- `cd services/game-server && go test -tags noembeddedsqlite -buildvcs=false ./cmd/game-server`
+- `cd services/game-server && go list -tags noembeddedsqlite -deps ./cmd/game-server | grep modernc.org/sqlite` should find nothing in deployment/restricted builds
 
 Local profile management endpoints return `local_profiles_unavailable` when embedded local storage is unavailable.
 

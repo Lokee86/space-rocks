@@ -42,9 +42,10 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
 - Pickup presentation blink is client-side and derives from age/lifespan packet state.
-- Player-data foundation is now complete as a sibling `services/player-data` module with shared packet SSoT/generated protocol, independent codec, in-process game-server runtime hosting, Rails adapter for authenticated_account, SQLite-backed local_profile routing in `embedded_sqlite` builds, and singleton memory stats for guest.
-- The embedded SQLite implementation now lives under `services/player-data/playerdata/embeddedsqlite` and is compiled only with `-tags embedded_sqlite`.
-- No-tag/deployment builds must not import or depend on `modernc.org/sqlite`.
+- Player-data foundation is now complete as a sibling `services/player-data` module with shared packet SSoT/generated protocol, independent codec, in-process game-server runtime hosting, Rails adapter for authenticated_account, SQLite-backed local_profile routing in the standard no-tag development build, and singleton memory stats for guest.
+- The embedded SQLite implementation now lives under `services/player-data/playerdata/embeddedsqlite` and is compiled by default, with `-tags noembeddedsqlite` as the explicit restricted build.
+- `-tags noembeddedsqlite` deployment/restricted builds must not import or depend on `modernc.org/sqlite`.
+- This matches the existing devtools pattern of default dev, explicit restricted build.
 - Local store construction is injected from the game-server composition root, and the core `playerdata` package must not import the embedded SQLite package.
 
 ## Fragile Or Moving Areas

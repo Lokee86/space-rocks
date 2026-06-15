@@ -8,9 +8,9 @@ For logical schema ownership, see [Player-Data Schema Source Of Truth](player-da
 For contract ownership, see [Source Of Truth Map](source-of-truth-map.md).
 For HTTP shapes, see [HTTP Contracts](../api/http-contracts.md).
 
-Local-profile durable storage exists only in `embedded_sqlite` builds.
-No-tag/deployment builds exclude `playerdata/embeddedsqlite` and the `modernc.org/sqlite` dependency.
-In no-tag/deployment builds, local profile management returns `local_profiles_unavailable`.
+Local-profile durable storage is present in the standard no-tag development build.
+`-tags noembeddedsqlite` deployment/restricted builds exclude `playerdata/embeddedsqlite` and the `modernc.org/sqlite` dependency.
+In `-tags noembeddedsqlite` builds, local profile management returns `local_profiles_unavailable`.
 
 ## Core Rule
 
@@ -32,7 +32,7 @@ Match-result writes follow this path:
 Store outcomes:
 
 - `guest` -> in-memory transient stats
-- `local_profile` -> SQLite in `embedded_sqlite` builds, unavailable in no-tag/deployment builds
+- `local_profile` -> SQLite in the standard no-tag development build, unavailable in `-tags noembeddedsqlite` builds
 - `authenticated_account` -> Rails/Postgres through `RailsStore`
 
 `ship_deaths` comes from authoritative server match facts, not client-side counting.
@@ -71,7 +71,7 @@ Profile reads follow this path:
 Store outcomes:
 
 - `guest` -> in-memory transient stats
-- `local_profile` -> SQLite in `embedded_sqlite` builds, unavailable in no-tag/deployment builds
+- `local_profile` -> SQLite in the standard no-tag development build, unavailable in `-tags noembeddedsqlite` builds
 - `authenticated_account` -> Rails/Postgres through `RailsStore`
 
 The same logical stats payload is normalized for display regardless of backing store.
@@ -113,7 +113,7 @@ The runtime routes by identity kind after mode and identity validation.
 | Identity | Read route | Write route | Backing store |
 | --- | --- | --- | --- |
 | Guest | transient read | transient write | in-memory stats |
-| Local Profile | durable read | durable write | SQLite in `embedded_sqlite` builds only |
+| Local Profile | durable read | durable write | SQLite in the standard no-tag development build |
 | Authenticated Account | durable read | durable write | Rails/Postgres |
 
 `account_id` is the authenticated-account UUID identity.

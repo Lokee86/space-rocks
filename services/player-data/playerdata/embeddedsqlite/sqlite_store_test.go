@@ -1,4 +1,4 @@
-//go:build embedded_sqlite
+//go:build !noembeddedsqlite
 
 package embeddedsqlite
 
