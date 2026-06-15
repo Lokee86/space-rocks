@@ -1,4 +1,4 @@
-//go:build embedded_sqlite
+//go:build !noembeddedsqlite
 
 package playerdata_test
 
@@ -29,7 +29,7 @@ func newTestEmbeddedSQLiteLocalStoreFactory(t *testing.T) playerdata.LocalStoreF
 	}
 }
 
-func TestNewConfiguredRuntimePersistsLocalProfileStatsWithEmbeddedSQLite(t *testing.T) {
+func TestNewConfiguredRuntimePersistsLocalProfileStatsInDefaultBuild(t *testing.T) {
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "player-data.sqlite")
 
