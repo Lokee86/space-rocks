@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/game/asteroids"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
@@ -20,7 +21,7 @@ func buildDebugAsteroidSpawnPlan(target *game.Game, request SpawnEntityRequest) 
 		Position:   normalizedPosition,
 		Velocity:   direction.Multiply(speed),
 		Size:       rand.Intn(4) + 1,
-		Variant:    rand.Intn(4),
+		Variant:    asteroids.RandomDebugSpawnVariantIndex(),
 	}
 }
 
