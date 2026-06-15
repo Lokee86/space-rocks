@@ -22,6 +22,10 @@ func _init(
 	pending_boot_request = PendingBootRequest.new()
 
 
+func set_websocket_url(url: String) -> void:
+	websocket_url = url
+
+
 func request_single_player(local_profile_id := "") -> void:
 	pending_boot_request.request_single_player(local_profile_id)
 

@@ -175,7 +175,7 @@ func _notification(what: int) -> void:
 
 func _setup_boot_and_config() -> void:
 	session_boot_controller = SessionBootController.new()
-	session_boot_controller.configure(Constants.MULTIPLAYER_WS_URL, Callable(self, "_log_shell_status"))
+	session_boot_controller.configure(Callable(self, "_log_shell_status"))
 	add_child(session_boot_controller)
 
 	client_config_controller = ClientConfigController.new()

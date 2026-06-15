@@ -68,6 +68,7 @@ const OSINDICATOR_TARGET_VISIBILITY_PADDING := 64.0
 # data-sync:end constants.client.presentation.viewport
 
 # data-sync:start constants.client.shell.network
+const SINGLE_PLAYER_WS_URL := "ws://localhost:8080/ws"
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
 const MULTIPLAYER_WS_ORIGIN := "https://space-rocks-client.local"
 const NETWORK_POLL_PROCESS_PRIORITY := -100
