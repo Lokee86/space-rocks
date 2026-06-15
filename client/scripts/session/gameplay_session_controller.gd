@@ -195,8 +195,8 @@ func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
 
 func _on_gameplay_replay_requested() -> void:
 	_log("Gameplay replay requested")
-	if connection_service != null && connection_service.has_method("begin_graceful_close"):
-		connection_service.begin_graceful_close()
+	if connection_service != null && connection_service.has_method("close_gracefully"):
+		await connection_service.close_gracefully()
 	reset()
 	if session_context != null:
 		session_context.clear()

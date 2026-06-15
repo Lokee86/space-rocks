@@ -247,6 +247,9 @@ func get_single_player_profile_context() -> Dictionary:
 	if pregame_menu_flow != null and pregame_menu_flow.has_method("get_single_player_profile_context"):
 		return pregame_menu_flow.get_single_player_profile_context()
 
+	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+		return profile_context_provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
+
 	return {
 		"play_mode": PregameMenuMode.SINGLE_PLAYER,
 		"identity_kind": "guest",

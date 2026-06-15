@@ -102,6 +102,16 @@ class FakePlayerDataProfileApiClient:
 		return result
 
 
+class FakePregameMenuFlow:
+	extends RefCounted
+
+	func configure(_pregame_menu, _return_to_main_menu, _start_single_player, _create_room, _show_join_dialog, _logout, _clear_for_room_transition, _profile_context_provider, _profile_flow, _transmission_flow) -> void:
+		pass
+
+	func show_single_player() -> void:
+		pass
+
+
 func test_configure_starts_on_main_menu() -> void:
 	var canvas_layer := CanvasLayer.new()
 	var main_menu := Control.new()
@@ -294,6 +304,42 @@ func test_clear_for_gameplay_removes_pregame_and_keeps_main_menu_hidden() -> voi
 	assert_false(is_instance_valid(old_pregame_menu))
 	assert_false(controller.main_menu.visible)
 	assert_eq(controller.get_current_route(), "")
+
+
+func test_clear_for_gameplay_keeps_selected_local_profile_for_replay() -> void:
+	var controller := await _create_controller()
+	controller.profile_context_provider.select_local_profile("local-profile-replay", "ACE")
+	controller.pregame_menu = Control.new()
+	add_child_autofree(controller.pregame_menu)
+	controller.pregame_menu_flow = FakePregameMenuFlow.new()
+
+	controller.show_single_player_pregame()
+	await get_tree().process_frame
+
+	controller.clear_for_gameplay()
+	await get_tree().process_frame
+
+	var context := controller.get_single_player_context()
+	assert_eq(context.get("identity_kind", ""), "local_profile")
+	assert_eq(context.get("local_profile_id", ""), "local-profile-replay")
+	assert_eq(context.get("callsign", ""), "ACE")
+
+
+func test_clear_for_gameplay_uses_guest_when_no_local_profile_selected() -> void:
+	var controller := await _create_controller()
+	controller.pregame_menu = Control.new()
+	add_child_autofree(controller.pregame_menu)
+	controller.pregame_menu_flow = FakePregameMenuFlow.new()
+
+	controller.show_single_player_pregame()
+	await get_tree().process_frame
+
+	controller.clear_for_gameplay()
+	await get_tree().process_frame
+
+	var context := controller.get_single_player_context()
+	assert_eq(context.get("identity_kind", ""), "guest")
+	assert_eq(context.get("callsign", ""), "Guest")
 
 
 func test_show_sign_in_screen_routes_and_instantiates_login_window() -> void:
