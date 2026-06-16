@@ -17,11 +17,11 @@ What durable or transient inventory state should BuildEligibility consume?
 
 This doc focuses on ownership state and hangar flow.
 
-It does not own match runtime equipment state, mode filtering, final build eligibility, progression reward policy, shop pricing, or UI layout.
+It does not own match runtime equipment state, final build eligibility, progression reward policy, shop pricing, or UI layout.
 
 ## Ownership Boundary
 
-This doc owns planning for:
+This doc owns:
 
 ```text
 HangarInventory
@@ -65,9 +65,7 @@ Commerce owns pricing, purchases, receipts, refunds, and shop catalog policy.
 
 Player-data owns identity routing and persistence routes.
 
-BuildEligibility owns filtering and selectable-option construction.
-
-Inventory and hangar owns durable owned state and the normalized inventory snapshot consumed by BuildEligibility.
+BuildEligibility consumes the normalized inventory snapshot.
 
 ## Core Architecture
 
@@ -82,26 +80,10 @@ Trusted Source Event
 -> HangarInventory
 ```
 
-Core build-selection flow:
-
-```text
-ModeRules
-+ HangarInventorySnapshot
-+ ShipVariant catalog
-+ WeaponProfile catalog
-+ ModuleProfile catalog
--> BuildEligibility
--> EligibleBuildOptions
--> LoadoutSelection
--> ResolvedPlayerBuild
--> RuntimeShip / RuntimeEquipmentState
-```
-
 Inventory is not the final eligibility system.
 
 Inventory records ownership, access, instance state, and broad availability facts.
-
-BuildEligibility masks that inventory state with selected mode rules, build filters, slot rules, ship rules, weapon rules, module rules, and hardwired-equipment policy.
+It does not resolve build outcomes.
 
 ## Persistent Versus Runtime State
 
@@ -163,6 +145,8 @@ HangarInventory
 `HangarInventory` should be treated as player-owned state, not match state.
 
 It may be backed by guest transient memory, local SQLite, or Rails/Postgres depending on identity and player-data routing.
+
+The fallback/default hangar must keep missing or corrupt data from making the game unplayable.
 
 ## Owned Item Identity
 
@@ -306,15 +290,6 @@ HardwiredEquipment
 
 Hardwiring mutates `OwnedShip` pre-game stats or effects.
 
-Flow:
-
-```text
-OwnedShip.hardwired_equipment
--> BuildEligibility reads allowed hardwired state
--> ResolvedPlayerBuild applies allowed hardwired effects
--> RuntimeShip / RuntimeEquipmentState receive resolved effects
-```
-
 Mode rules may later:
 
 ```text
@@ -417,52 +392,20 @@ reversal
 Examples:
 
 ```text
-Grant
-- grant_kind: unlock
-- target_ref: weapon.railgun
+Grant unlock weapon.railgun
+-> add weapon.railgun to unlocked_content if missing
 
-Effect:
-- add weapon.railgun to unlocked_content if missing
-```
+Grant inventory_item ship.scout x1
+-> create one OwnedShip instance with ship_id = ship.scout
 
-```text
-Grant
-- grant_kind: inventory_item
-- target_ref: ship.scout
-- amount: 1
+Grant inventory_item weapon.railgun x1
+-> create one OwnedWeapon instance with weapon_id = weapon.railgun
 
-Effect:
-- create one OwnedShip instance with ship_id = ship.scout
-```
+Grant inventory_item module.overcharger x1
+-> create one OwnedModule instance with module_id = module.overcharger
 
-```text
-Grant
-- grant_kind: inventory_item
-- target_ref: weapon.railgun
-- amount: 1
-
-Effect:
-- create one OwnedWeapon instance with weapon_id = weapon.railgun
-```
-
-```text
-Grant
-- grant_kind: inventory_item
-- target_ref: module.overcharger
-- amount: 1
-
-Effect:
-- create one OwnedModule instance with module_id = module.overcharger
-```
-
-```text
-Grant
-- grant_kind: ship_part
-- target_ref: item.coolant_fragment
-- amount: 3
-
-Effect:
-- increment StackableInventoryItem quantity for item.coolant_fragment
+Grant ship_part item.coolant_fragment x3
+-> increment StackableInventoryItem quantity for item.coolant_fragment
 ```
 
 New ownership grants target catalog refs.
@@ -486,25 +429,7 @@ Exact reversal behavior is a gametime decision.
 
 ## Acquisition Sources
 
-Inventory can be changed by grants from:
-
-```text
-match rewards
-objective rewards
-mission rewards
-challenge rewards
-achievement rewards
-milestone rewards
-persistent rare drops
-shop purchases
-entitlements
-refunds or reversals
-account migration
-admin grants
-devtools test grants
-seasonal or event rewards
-future reward tracks
-```
+Inventory changes come from grants routed through the owning systems, including match, objective, mission, challenge, achievement, milestone, persistent rare-drop collection, shop, entitlement, refund, migration, admin, devtools, seasonal, and future reward-track paths.
 
 Direct inventory mutation should be avoided outside controlled initialization, repair, migration, or devtools paths.
 
@@ -560,15 +485,7 @@ The difference is storage durability.
 
 Guest inventory, hangar, progression, and other durable-shaped state live in transient memory until and unless they are saved into a new profile through an explicit supported flow.
 
-Guest flow:
-
-```text
-Guest identity
--> transient inventory/hangar route
--> normal HangarInventory behavior
--> normal BuildEligibility handoff
--> normal LoadoutSelection / ResolvedPlayerBuild flow
-```
+Guest flow keeps the same logical inventory behavior through transient storage.
 
 If guest state is saved into a new Local Profile, the supported profile-creation flow may copy transient guest inventory and other durable-shaped state into the new durable profile.
 
@@ -578,70 +495,9 @@ Guest should not require separate gameplay rules.
 
 Inventory/hangar provides a normalized snapshot.
 
-BuildEligibility owns filtering, masking, and selectable-option construction.
+BuildEligibility consumes that snapshot, applies mode and compatibility rules, and produces eligible options in its own seam.
 
-Inventory/hangar should not decide final match eligibility.
-
-BuildEligibility consumes:
-
-```text
-mode rules
-hangar inventory snapshot
-ship variant catalog
-weapon profile catalog
-module profile catalog
-progression/access snapshot if not already normalized into inventory
-```
-
-BuildEligibility produces:
-
-```text
-eligible ships
-eligible weapons by weapon point
-eligible modules by module slot
-blocked reasons
-fallback loadout
-```
-
-Inventory/hangar owns:
-
-```text
-owned ship instances
-owned weapon instances
-owned module instances
-hardwired equipment attached to ships
-unlock/access state relevant to inventory
-stackable inventory items
-acquisition metadata
-```
-
-BuildEligibility owns:
-
-```text
-mode filtering
-slot compatibility
-weapon point compatibility
-module slot compatibility
-ship weight/class restrictions
-weapon size restrictions
-module restrictions
-hardwired equipment allow/disable/normalize policy
-blocked reason generation
-selectable option generation
-server-side validation of submitted selections
-```
-
-ResolvedPlayerBuild owns:
-
-```text
-match-start compiled stats
-selected ship setup
-selected equipment setup
-applied passive effects
-allowed hardwired effects
-starting equipment state
-runtime setup declarations
-```
+Inventory/hangar should not decide final match eligibility or compile a resolved build.
 
 ## Loadout Relationship
 
@@ -680,73 +536,27 @@ ResolvedPlayerBuild applies the allowed hardwired effects after the owned ship a
 
 ## Player-Data Persistence Boundary
 
-Player-data owns identity and route selection.
+Player-data owns the storage route and identity mapping.
 
-Inventory/hangar should be represented as logical player-data concepts that can be implemented by:
+Inventory and hangar owns the logical inventory shape and grant application result.
 
-```text
-guest transient memory
-local SQLite
-Rails/Postgres
-```
-
-Local Profile and Authenticated Account should share the same logical inventory/hangar contract even if their physical storage differs.
-
-Future logical schema sources may include:
-
-```text
-shared/player_data/hangar_inventory.toml
-```
-
-or split files such as:
-
-```text
-shared/player_data/inventory.toml
-shared/player_data/hangar.toml
-```
-
-Exact source file layout is a gametime implementation decision.
-
-Logical contract should cover:
-
-```text
-HangarInventory
-OwnedShip
-OwnedWeapon
-OwnedModule
-HardwiredEquipment
-StackableInventoryItem
-UnlockedContentRef
-```
-
-Physical tables are not decided in this doc.
+This doc stays at the contract boundary and does not specify physical storage mechanics.
 
 ## Planned Player-Data Operations
 
-Likely future player-data operations:
-
 ```text
-LoadHangarInventory(identity)
-ApplyGrantAward(identity, award)
-UpdateOwnedShipHardwiredEquipment(identity, owned_ship_id, changes)
-SaveDefaultOwnedShip(identity, owned_ship_id)
-SaveLoadoutReference(identity, loadout_ref)
+accept routed grants
+load normalized inventory snapshots
+persist owned state
+persist stackable item counts
+persist unlock/access state
+apply guest transient storage when appropriate
+support fallback/default hangar repair behavior
 ```
-
-Initial implementation may start with default-backed reads and grow durable grant application later.
-
-The important seam is that gameplay and client code should not choose the persistence backend directly.
 
 ## Fallback And Corrupt Data Policy
 
 The inventory/hangar path must tolerate missing, corrupt, incomplete, or unavailable inventory data.
-
-Fallback rule:
-
-```text
-Inventory service must be able to return a valid starter/default hangar snapshot.
-BuildEligibility must be able to produce a valid fallback build from that snapshot.
-```
 
 Fallback should be safe and minimal.
 
@@ -764,14 +574,11 @@ Recommended implementation sequence:
 1. Define logical hangar/inventory contracts.
 2. Add default-backed HangarInventory loading.
 3. Add guest transient hangar state.
-4. Add local SQLite and Rails/Postgres logical parity.
-5. Add inventory grant application.
-6. Add owned instance IDs for ships, weapons, and modules.
-7. Add BuildEligibility input snapshot.
-8. Add loadout references to owned instances.
-9. Add hardwired equipment attachment to OwnedShip.
-10. Add mode-rule hardwired masking in BuildEligibility.
-11. Add fallback/corrupt data tests.
+4. Add inventory grant application.
+5. Add owned instance IDs for ships, weapons, and modules.
+6. Add normalized inventory snapshot handoff.
+7. Add hardwired equipment attachment to OwnedShip.
+8. Add fallback/corrupt data tests.
 ```
 
 Early slices should favor seams over complete mechanics.
@@ -787,120 +594,49 @@ starter inventory produces a valid fallback build
 missing inventory data produces a safe fallback snapshot
 corrupt inventory data does not make the game unplayable
 guest inventory behaves like normal inventory but remains transient
-profile creation can save guest transient state when supported
-owned ships are instanced
-owned weapons are instanced
-owned modules are instanced
-duplicate catalog items can exist as separate owned instances
+owned ships, weapons, and modules are instanced
 unlock grants do not create ownership
 ownership grants create owned instances
 purchase grants and reward grants use the same ownership application path
 runtime pickups do not persist into HangarInventory
 persistent rare drops grant ownership only after collection
-BuildEligibility filters unowned equipment out of selectable options
-BuildEligibility masks inventory availability through mode rules
+BuildEligibility consumes a normalized inventory snapshot
 hardwired equipment attaches to one OwnedShip
-hardwired equipment is not reusable across ships
-ResolvedPlayerBuild applies allowed hardwired effects
-mode rules can disable or normalize hardwired effects
 fallback works for unavailable API data
 local and Rails stores satisfy the same logical inventory contract
 ```
 
-## Current Inputs
-
-```text
-HangarInventory
-OwnedShip
-OwnedWeapon
-OwnedModule
-hardwired equipment state
-stackable inventory state
-unlock/access inputs
-acquisition inputs
-GrantAward / Grant inputs
-rare persistent drop inputs
-shop purchase grant inputs
-entitlement inputs
-guest transient state
-BuildEligibility input needs
-fallback/default hangar needs
-```
-
-## Planned Outputs
-
-```text
-clear inventory ownership model
-instanced owned ship/weapon/module planning
-hardwired equipment ownership boundary
-unlock versus ownership rules
-grant application flow
-guest transient inventory behavior
-starter/default hangar policy
-fallback behavior for missing/corrupt/API-unavailable data
-BuildEligibility handoff rules
-player-data persistence boundary
-implementation sequence
-testing direction
-```
-
 ## Related Docs
 
-* [Systems Plan Index](../systems-plan-index.md)
-* [Player Experience Systems](player-experience-systems.md)
-* [Player Build And Loadouts](player-build-and-loadouts.md)
-* [Progression And Rewards](progression-and-rewards.md)
-* [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
-* [Player Data And Persistence](../platform/player-data-and-persistence.md)
-* [Anti-Cheat And Trust Policy](../platform/anti-cheat-and-trust-policy.md)
-* [API Product Surface](../platform/api-product-surface.md)
-* [Source Of Truth Map](../../design/source-of-truth-map.md)
-* [Player-Data Schema Source Of Truth](../../design/player-data-schema-ssot.md)
+- [Progression And Rewards](progression-and-rewards.md)
+- [Player Build And Loadouts](player-build-and-loadouts.md)
+- [Player Data And Persistence](../platform/player-data-and-persistence.md)
 
 ## Open Gametime Decisions
 
-```text
-exact physical table layout
-exact logical schema file layout
-exact starter inventory contents
-exact starter ship and weapon IDs
-exact hardwire install cost
-exact hardwire removal policy
-whether hardwiring later becomes a currency sink
-whether normal equipment install rules later become stricter
-whether normal equipment can later be consumed, bound, or reserved
-exact duplicate item grant behavior beyond structural support
-exact inventory state vocabulary
-exact reversal/refund storage behavior
-exact hangar API endpoints
-exact hangar UI/menu flow
-exact inventory repair/initialization write policy
-```
+- Exact logical schema file layout.
+- Exact starter inventory contents.
+- Exact hardwire install cost.
+- Exact hardwire removal policy.
+- Whether hardwiring later becomes a currency sink.
+- Exact duplicate item grant behavior beyond structural support.
+- Exact inventory repair/initialization write policy.
 
 ## Core Invariants
 
-```text
-Inventory/hangar owns durable owned state.
-Runtime equipment owns live match state.
-Ships, weapons, and modules are instanced owned items.
-Normal owned equipment is reusable unless explicitly made hardwired.
-Hardwired equipment is attached to one OwnedShip.
-Hardwired equipment is not reusable general inventory.
-Hardwiring mutates OwnedShip pre-game stats or effects.
-Unlocks do not equal ownership.
-Unlocks allow access, purchase, eligibility, or acquisition paths.
-Ownership comes from grants.
-Purchases produce grants.
-Non-purchase rewards can also produce ownership grants.
-New ownership grants target catalog refs.
-Mutation/reversal grants may target owned instance refs.
-Inventory exposes owned/access state.
-BuildEligibility filters and masks inventory state into selectable options.
-LoadoutSelection selects from eligible owned options.
-LoadoutSelection does not mutate inventory.
-ResolvedPlayerBuild compiles a legal selected build.
-Runtime pickups and temporary overwrites are never saved to inventory.
-Persistent rare drops become ownership only after collection and grant application.
-Guest inventory behaves normally but stores durable-shaped state in transient memory.
-Fallback/default hangar state must prevent missing or corrupt data from making the game unplayable.
-```
+- Inventory and hangar own durable owned state.
+- Runtime equipment owns live match state.
+- Ships, weapons, and modules are instanced owned items.
+- Normal owned equipment is reusable unless explicitly made hardwired.
+- Hardwired equipment is attached to one OwnedShip.
+- Hardwired equipment is not reusable general inventory.
+- Unlocks do not equal ownership.
+- Ownership comes from grants.
+- Purchases produce grants.
+- Non-purchase rewards can also produce ownership grants.
+- Inventory exposes owned/access state.
+- BuildEligibility consumes a normalized inventory snapshot.
+- Runtime pickups and temporary overwrites are never saved to inventory.
+- Persistent rare drops become ownership only after collection and grant application.
+- Guest inventory behaves normally but stores durable-shaped state in transient memory.
+- Fallback/default hangar state must prevent missing or corrupt data from making the game unplayable.
