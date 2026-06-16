@@ -8,7 +8,9 @@ This doc plans the match-rule seam for how a selected mode becomes a resolved se
 
 This doc owns planning for `ModePreset`, `RoomModeConfig`, and `ResolvedMatchRules`, along with the policy pieces they compose.
 
-It should cover objective policy, scoring policy, match-end policy, spawn profile, damage/team policy, progression eligibility, and result policy.
+It should cover objective policy, scoring policy, match-end policy, progression eligibility, and result policy.
+
+It may select spawn profile IDs or encounter profile IDs, but it does not own detailed enemy, wave, or level content.
 
 ## Current Inputs
 
@@ -18,8 +20,8 @@ It should cover objective policy, scoring policy, match-end policy, spawn profil
 - objective policy inputs
 - scoring policy inputs
 - match-end policy inputs
-- spawn profile inputs
-- damage/team policy inputs
+- spawn profile ID inputs
+- encounter profile ID inputs
 - progression eligibility inputs
 - result policy inputs
 
@@ -42,6 +44,8 @@ Step 1 is an implementation plan, not pure foundation. The foundation must be pr
 - `ModePreset` = named preset or template for a room or match ruleset
 - `RoomModeConfig` = concrete options selected when creating a room
 - `ResolvedMatchRules` = server-validated rules consumed by gameplay
+- spawn profile ID selection
+- encounter profile ID selection
 
 Mode is not the same thing as single-player or multiplayer. Single-player and multiplayer are session or hosting context, while mode governs the match rules.
 
@@ -50,6 +54,7 @@ Mode is not the same thing as single-player or multiplayer. Single-player and mu
 - `ModePreset` is the named ruleset template selected by the player.
 - `RoomModeConfig` is the selected preset plus allowed player-configurable options.
 - `ResolvedMatchRules` is the authoritative server-resolved rules used by the match.
+- Mode policy may point at a spawn profile or encounter profile ID, but does not define the enemy, wave, or level content behind those IDs.
 
 Players configure room options through presets, not arbitrary free-form toggles. Presets define policy-heavy groups.
 
@@ -114,7 +119,7 @@ Baseline mode 2: `score_attack`
 
 Score Attack is preferred because it uses existing score, asteroid destruction, lives and death, match-over evaluation, match results, and room lifecycle.
 
-Score Attack does not require enemies, waves, bosses, teams, PvP damage, new pickups, campaign state, progression grants, or new objective entities.
+Score Attack does not require enemies, waves, bosses, new pickups, campaign state, progression grants, or new objective entities.
 
 Mission support is preparatory and can be implemented before campaign, while campaign itself remains a late future wrapper over missions.
 
@@ -221,6 +226,8 @@ Devtools:
 - Exact room snapshot mode-summary shape.
 - Exact team policy fields.
 - Exact future mission option shape.
+- Exact spawn profile ID vocabulary.
+- Exact encounter profile ID vocabulary.
 
 ## Related Docs
 
@@ -228,6 +235,7 @@ Devtools:
 - [Player Experience Systems](player-experience-systems.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Progression And Rewards](progression-and-rewards.md)
+- [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 - [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md)
 
 ## Open Planning Questions

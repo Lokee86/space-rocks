@@ -31,6 +31,9 @@ It should stay separated from realtime simulation and from game-server transport
 
 - [Systems Plan Index](systems-plan-index.md)
 - [Account And Identity Systems](account-and-identity-systems.md)
+- [Social And Community Systems](social-and-community-systems.md)
+- [Website And Web Presence](website-and-web-presence.md)
+- [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
 - [Player Data And Persistence](player-data-and-persistence.md)
 - [Progression And Rewards](progression-and-rewards.md)
 - [Leaderboards And Rankings](leaderboards-and-rankings.md)

@@ -30,6 +30,7 @@ It should stay focused on account and identity policy, not realtime gameplay or 
 - [Systems Plan Index](systems-plan-index.md)
 - [Player Experience Systems](player-experience-systems.md)
 - [Player Data And Persistence](player-data-and-persistence.md)
+- [Social And Community Systems](social-and-community-systems.md)
 - [API Product Surface](api-product-surface.md)
 - [Progression And Rewards](progression-and-rewards.md)
 

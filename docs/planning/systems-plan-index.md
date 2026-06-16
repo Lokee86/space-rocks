@@ -17,6 +17,7 @@ Use this page to find the owning planning doc for a system area.
 - [Achievements And Milestones](achievements-and-milestones.md) - definitions, trusted facts, and milestone grants.
 - [Inventory And Hangar](inventory-and-hangar.md) - owned ships, weapons, modules, and build eligibility inputs.
 - [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md) - enemies, bosses, waves, and encounter structure.
+- [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md) - levels, missions, challenges, and authored content progression.
 - [Player Build And Loadouts](player-build-and-loadouts.md) - ship variants, weapons, modules, eligibility, and loadout selection.
 
 ### Platform / Backend / Account Systems
@@ -24,6 +25,9 @@ Use this page to find the owning planning doc for a system area.
 - [Account And Identity Systems](account-and-identity-systems.md) - guest, local profile, and authenticated account planning.
 - [Player Data And Persistence](player-data-and-persistence.md) - shared contracts, local SQLite, Rails/Postgres, and service extraction.
 - [Leaderboards And Rankings](leaderboards-and-rankings.md) - leaderboard eligibility, rankings, and persistence.
+- [Website And Web Presence](website-and-web-presence.md) - public website, devlog, and product page planning.
+- [Social And Community Systems](social-and-community-systems.md) - friends, invites, presence, and player relationships.
+- [Shop, Commerce, And Economy](shop-commerce-and-economy.md) - shop catalog, currency economy, purchases, and entitlements.
 - [Matchmaking And Room Discovery](matchmaking-and-room-discovery.md) - matchmaking, discovery metadata, and room creation.
 - [API Product Surface](api-product-surface.md) - API-owned account and profile surfaces.
 - [Anti-Cheat And Trust Policy](anti-cheat-and-trust-policy.md) - trust boundaries for progression and rankings.
