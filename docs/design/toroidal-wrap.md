@@ -153,8 +153,7 @@ Before calling wrap behavior complete after a visual or balance change, manually
 - multiplayer clients near opposite server edges see each other nearby
 - bullet blast and ship death effects spawn near visible entity positions
 
-## Known Follow-Ups
+## Related Limits And Planning
 
-- Full gameplay/network smoke testing is still manual.
-- Consider whether current world dimensions are final for gameplay balance.
-- Vertical despawn behavior is limited by the relationship between world height, visible viewport height, and despawn margin.
+- [Current System Limits](../limits/current-system-limits.md)
+- [Planning Notes](../planning/domain-backlog.md)

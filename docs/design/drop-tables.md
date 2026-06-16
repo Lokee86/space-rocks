@@ -138,10 +138,7 @@
 - `Select-String -Path docs,services,tools,shared -Pattern 'drop_mode'`
 - `Select-String -Path docs,services,tools,shared -Pattern 'MaxDropsPerSource'`
 
-## Future Work
+## Related Limits And Planning
 
-- Multi-drop tables with more than one table entry.
-- Additional drop table definitions for other source types.
-- Minimum drop count policy, if ever needed.
-- More explicit per-source source-type routing.
-- Client-facing presentation polish for drop events, if needed.
+- [Current System Limits](../limits/current-system-limits.md)
+- [Planning Notes](../planning/domain-backlog.md)

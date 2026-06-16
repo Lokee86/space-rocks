@@ -2,7 +2,7 @@
 
 Space Rocks is an Asteroids-inspired game with a Godot client and a Go server. The current direction is server-authoritative for gameplay state where networking is involved: player input is sent to the server, the server advances simulation, and clients render the state they receive.
 
-The project is still in development, so this document describes the architecture that exists now and calls out future notes separately.
+The project is still in development, so this document describes the architecture that exists now.
 
 ## Repository Layout
 
@@ -65,12 +65,12 @@ Current client runtime seams:
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/generated/networking/packets/packets.gd` and `client/scripts/generated/constants/constants.gd`: generated/shared client packet helpers and constants.
 
-Asteroid variant metadata is owned by `shared/asteroids/variants.toml`. Variant `id` values such as `asteroid_1` are stable presentation IDs, while the runtime `index` is zero-based and must match packet/runtime variant values. `index = 0` maps to `asteroid_1`, and server spawn code must use the asteroid variant catalog for variant selection rather than relying on `constants.AsteroidVariants`.
+Asteroid variant metadata is owned by `shared/asteroids/variants.toml`. Variant indexes are zero-based runtime values, server spawn selection uses the asteroid catalog, and client texture selection uses the client catalog. See [Asteroid Variant Contract](asteroid-variants.md) for the full contract details.
 
 `UserInterface` and `GameplayUserInterface` are the client scene UI roots in `client/scenes/game.tscn`.
 
 - `UserInterface` is the CanvasLayer root for Main Menu, Pregame Menu, LoginWindow, JoinDialog, and MultiplayerLobby.
-- `GameplayUserInterface` is the gameplay-session UI root for HUD, Match Results, overlay `GameMenu`, and future gameplay modals.
+- `GameplayUserInterface` is the gameplay-session UI root for HUD, Match Results, overlay `GameMenu`, and additional gameplay modals.
 - `GameplayUserInterface` should ignore mouse input so it does not block sibling app/menu screens.
 
 `GameplayDevtoolsContext` is a composition facade for devtools coordination. It constructs the devtools contexts, delegates reset/process/public wrapper methods, and keeps the outer API stable while the owned responsibilities live under `client/scripts/devtools/context/`. It is not owned by gameplay HUD flows and not owned by `gameplay_shell_flow.gd`.
@@ -120,13 +120,7 @@ It must be treated as a black box.
 
 New code must use `client/scripts/world/player_render`.
 
-Current limitations:
-
-- The client expects a Go server at `ws://localhost:8080/ws`.
-- There is no implemented client-side prediction beyond interpolation/render smoothing.
-- Local server launch from the Godot client is not implemented.
-
-The server upgrades `/ws`, while the client resolves a WebSocket target by session mode before connecting. Single-player uses `SINGLE_PLAYER_WS_URL` and multiplayer uses `MULTIPLAYER_WS_URL`; both currently point to the same local `/ws` endpoint during development. A future launch multiplayer target may point at deployed infrastructure without changing the server route model. Enforcement of single-player versus multiplayer actions should stay packet- and session-policy-based rather than route-path-based.
+The server upgrades `/ws`, while the client resolves a WebSocket target by session mode before connecting. Single-player uses `SINGLE_PLAYER_WS_URL` and multiplayer uses `MULTIPLAYER_WS_URL`; both currently point to the same local `/ws` endpoint during development. A launch multiplayer target may point at deployed infrastructure without changing the server route model. Enforcement of single-player versus multiplayer actions should stay packet- and session-policy-based rather than route-path-based.
 
 ## Game Server Architecture
 
@@ -236,7 +230,7 @@ Weapon profiles carry damage specs, projectile impact metadata may spawn radial 
 The damage package also owns pure area and damage-over-time resolution helpers through `ResolveArea` and `TickDamageOverTime`.
 
 The damage resolver only answers what happened to the target from the damage request. It does not mutate lives, respawn players, award score, spawn fragments, emit events, log, or write packets. Those lifecycle effects remain with combat/session/scoring/spawning and the domain event seam.
-Damage application may lead to future presentation events, but `DamageResult` itself is not the domain event boundary.
+Damage application may lead to presentation events, but `DamageResult` itself is not the domain event boundary.
 Current combat damage can emit `damage_applied`, while `damage_over_time_started` and `damage_over_time_tick` remain adapter-mapped until DoT gameplay ownership is fully wired, as described in [docs/design/damage.md](damage.md).
 Radial effect spawning also emits `radial_effect_started` for the presentation/event flow.
 
@@ -250,7 +244,7 @@ Score/lives mutation is centralized in game-owned player counter seams under `se
 
 Lives and death paths mutate authoritative lives through the lives counter seam. The counter seam keeps persistent player session values and active ship values synchronized.
 
-Future gameplay and devtools adapters should use the same counter mutation seam instead of directly changing session or active-player fields.
+Gameplay and devtools adapters should use the same counter mutation seam instead of directly changing session or active-player fields.
 
 ### Domain Gameplay Events
 
@@ -343,7 +337,7 @@ Important lifecycle rules:
 - `/ws?room_id=...` no longer creates or joins rooms
 - empty rooms schedule cleanup after members/active players leave
 
-Future server-side account and local-profile support should use explicit cross-mode routing seams for admission routing, identity state, and player-data routing. Local Profile stays backed by the embedded DB path, while Authenticated Account stays backed by Rails/API, and gameplay code must not directly choose embedded DB versus Rails/API. See [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
+Server-side account and local-profile support should use explicit cross-mode routing seams for admission routing, identity state, and player-data routing. Local Profile stays backed by the embedded DB path, while Authenticated Account stays backed by Rails/API, and gameplay code must not directly choose embedded DB versus Rails/API. See [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
 
 #### Devtools Command Handling Boundary
 
@@ -368,7 +362,7 @@ Mutation ownership for devtools remains explicit:
 - `PlayerID` must not be converted to UUID.
 - Player-facing room/lobby packet identity fields use `PlayerID`: `player_id`, `local_player_id`, and `owner_id`.
 - `SessionID` is server-internal websocket/session identity and is a target for the upcoming UUID upgrade.
-- `MemberID` is server-internal room-membership identity, currently UUID v4, reserved as the future disconnect/reconnect seam.
+- `MemberID` is server-internal room-membership identity, currently UUID v4, reserved as the disconnect/reconnect seam.
 - `MemberID` should not be exposed in normal room snapshot packets.
 - Server-internal identity values may migrate to UUID, but player-facing identity values must not be swept into that migration.
 - `currentGamePlayerID` is networking-owned active game routing state only; it is not room membership identity and not player-facing identity.
@@ -422,7 +416,7 @@ client/scripts/logging/logger.gd
 
 Use `ClientLogger` for new client lifecycle, UI, networking, packet, HUD, input, and world-sync diagnostics. See [client logging](../client/logging.md).
 
-## Ruby API Server Plan
+## Ruby API Server Architecture
 
 `services/api-server/` is the Ruby/Rails API service for the separate business/backend API layer.
 
@@ -431,7 +425,7 @@ Current API baseline:
 - health endpoint
 - email/password auth
 - opaque bearer access tokens
-- provider identity schema for future OAuth/provider login
+- provider identity schema for OAuth/provider login
 
 Current auth/data model:
 
@@ -442,27 +436,11 @@ Current auth/data model:
 
 Rails migrations under `services/api-server/db/migrate/` own the API database schema. `shared/` is not the source of truth for API auth schema.
 
-The API server should keep business logic physically and technically separate from the real-time Go game server.
-
-Planned API-owned concerns include:
-
-- accounts and authentication
-- profiles
-- persistence and database-backed workflows
-- admin or moderation endpoints
-
-Deferred for now:
-
-- OAuth
-- JWT
-- matchmaking or room discovery metadata
-- leaderboards
-- game-server auth integration
-- game-server token verification through a future explicit API/internal boundary
-
 The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets. The Go game server should not read auth tables directly.
 
-Rails now also owns the Discord OAuth browser login-session handoff used by the Godot client: Godot receives a Space Rocks bearer token through login-session exchange, validates that token with `/api/auth/me`, and keeps single-player independent of Rails auth. The Go game-server auth boundary is still future work and should remain an explicit token-verification seam rather than direct access to Rails tables. See [Ruby API server plan](../api/ruby-api-server.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
+Rails now also owns the Discord OAuth browser login-session handoff used by the Godot client: Godot receives a Space Rocks bearer token through login-session exchange, validates that token with `/api/auth/me`, and keeps single-player independent of Rails auth. The Go game-server auth boundary should remain an explicit token-verification seam rather than direct access to Rails tables. See [Ruby API server](../api/ruby-api-server.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
+
+Current API considerations live in [docs/api/ruby-api-server.md](../api/ruby-api-server.md), [docs/limits/current-system-limits.md](../limits/current-system-limits.md), and [docs/planning/domain-backlog.md](../planning/domain-backlog.md).
 
 ## Data Flow
 
@@ -522,7 +500,7 @@ Generated constants include:
 
 Server-owned constants live under `constants.server.*` and may be omitted from client generated constants. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. World size is intentionally generated to both Go and GDScript because client visual wrapping must use the same bounds as the server. Drop-table generated output is Go-only and lives in `services/game-server/internal/game/drops/drop_tables.go`.
 
-Future account-shaped player data will need a shared logical player-data schema SSoT under `shared/player_data` so Local Profile can stay embedded-DB-backed while Authenticated Account stays Rails/API-backed. That SSoT is logical schema, not raw SQL or Rails migration files; see [player-data schema source of truth](player-data-schema-ssot.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
+Account-shaped player data uses a shared logical player-data schema SSoT under `shared/player_data` so Local Profile can stay embedded-DB-backed while Authenticated Account stays Rails/API-backed. That SSoT is logical schema, not raw SQL or Rails migration files; see [player-data schema source of truth](player-data-schema-ssot.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
 
 Authoritative today:
 
@@ -591,11 +569,9 @@ Telemetry timing ownership notes:
 - `packet_staleness_ms` is local monotonic age since the last received gameplay state packet.
 - `packet_age_ms` is derived in client monotonic clock space using server clock offset estimated from telemetry pong, not raw client wall-clock minus server wall-clock.
 
-Current limitations:
+## Related Limits
 
-- No account, matchmaking, leaderboard, or persistent backend API is implemented.
-- No prediction/reconciliation layer is implemented beyond interpolation.
-- The server is expected to be running separately for the Godot client.
+See [current system limits](../limits/current-system-limits.md) and [planning notes](../planning/domain-backlog.md).
 
 ## Design Rules And Conventions
 
@@ -609,15 +585,3 @@ Current limitations:
 - Do not commit generated recordings or build artifacts. `.gitignore` excludes `tmp/`, Godot export/import state, and `*.avi`.
 - Do not put secrets in client code. The client should be treated as inspectable.
 - Prefer focused tests for game rules that are easy to regress, especially collision, spawning, respawn, rooms, and packet behavior.
-
-## Future Architecture Notes
-
-These are possible directions, not implemented features.
-
-- Local play packaging may eventually launch or bundle the Go game server with the Godot client.
-- A hosted online game server may use the same room/websocket structure with deployment-specific process management.
-- A separate backend API server may be useful for non-gameplay systems such as accounts, matchmaking, leaderboards, persistence, or purchases.
-- Matchmaking/accounts/leaderboards are not current features. If added, they should stay separate from the real-time game simulation unless a clear shared boundary is needed.
-- If prediction/reconciliation is added, keep it explicitly separate from authoritative game rules so the client remains a presentation/prediction layer rather than the source of truth.
-- Invisible toroidal/wrapped playfield is implemented. See [toroidal wrap](toroidal-wrap.md).
-- A thin server-side ship variant foundation exists: runtime ship type, resolved ship stats/modifiers, `ship_type` snapshots, and collision shape ID lookup. Full variants with client scene mapping and keyed collision catalogs remain future work. See [ship variants plan](ship-variants.md).

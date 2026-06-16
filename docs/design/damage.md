@@ -113,7 +113,7 @@
 - It is not a generic status-effect system yet, and there is no `status_effects` package.
 - `TickDamageOverTime` resolves each tick by calling `ResolveSingle` with `DamageCauseDot`.
 - The DoT helper keeps damage math, shield handling, and modifier application in one seam.
-- Future broader status effects can build on this shape later without changing the current ownership split.
+- Broader status effects can build on this shape without changing the current ownership split.
 
 ## Combat Integration
 
@@ -131,13 +131,9 @@
 - Devtools should not create a parallel debug-only damage system or duplicate damage math.
 - Debug damage requests may differ in source and target data, but they still resolve through `services/game-server/internal/game/damage/`.
 
-## Client Presentation Future
+## Related Limits
 
-- Future client rendering should receive damage results or damage events from server output.
-- The client should not calculate damage locally.
-- Future presentation events could include `shield_absorbed`, `damage_immune`, and `damage_area_applied`.
-- `damage_applied`, `damage_over_time_started`, and `damage_over_time_tick` now exist as implemented domain-event names, but client rendering is still not implemented from them here.
-- Generated packet files should not be manually edited.
+- [Current System Limits](../limits/current-system-limits.md)
 
 ## Testing And Verification
 
@@ -146,13 +142,6 @@
 - Focused package tests are useful for small seam changes.
 - Generated packet files should not be manually edited during verification or implementation.
 
-## Future Work
-
-- Future work may add client render events for damage presentation.
-- Future work may add area falloff rules.
-- Future work may extend DoT into broader status effects.
-- Future work may add richer presentation and telemetry around damage outcomes.
-
 ## Damage Events And Presentation
 
 - `DamageResult` is not a domain event.
@@ -160,6 +149,5 @@
 - Game-owned damage application emits damage domain events when useful.
 - Implemented domain-event names include `damage_applied`, `damage_over_time_started`, and `damage_over_time_tick`.
 - `damage_applied` is wired for current live combat damage paths.
-- `damage_over_time_started` and `damage_over_time_tick` have adapters/mapping, but active DoT gameplay ownership is not fully wired here unless the code says otherwise.
-- Possible future presentation events still include `shield_absorbed`, `damage_immune`, and `damage_area_applied`.
+- Presentation event concepts still include `shield_absorbed`, `damage_immune`, and `damage_area_applied`.
 - Those names are presentation concepts unless they are already wired elsewhere.

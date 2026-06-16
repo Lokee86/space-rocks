@@ -95,6 +95,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Lobby Leave now returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 / Profile readout transmission is complete and green.
 - Client match-end Phase 6 / Match Results is complete and green; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
+- Client menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.
 - `UserInterface` is the CanvasLayer in `client/scenes/game.tscn`.
 - `GameplayUserInterface` is the gameplay-session UI root.
 - HUD, Match Results, and overlay `GameMenu` belong under `GameplayUserInterface`.
@@ -102,14 +103,12 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - `MatchEndFlow` distinguishes local elimination from room match-over.
 - Local elimination must not show Match Results.
 - Room `GameOver` shows Match Results and hides/locks HUD.
-- Remaining client work:
-  - Stats refresh / final smoke
 - Local Pilot / Guest selector is implemented:
   - create
   - load/default
   - delete
   - delete confirmation sub-panel
-- Phase 7 is final smoke.
+- Phase 7 / final smoke is complete and green.
 - Godot stats UI, save guest profile, live progression grants, currency, ship parts, unlocks, and achievements remain later work.
 - World Telemetry Overlay is implemented behind the devtools seam and toggled by `DevToggle9` / `9`.
 - Overlay scene: `client/scenes/devtools/world_telemetry_overlay.tscn`; telemetry scripts live under `client/scripts/devtools/telemetry/`.
@@ -134,3 +133,4 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 ## Current State
 
 Match Results are populated from `room_snapshot.match_result`. `RoomSessionController` owns the cached result payload, `MatchEndFlow` remains presentation orchestration, and `MatchResultsFlow` owns result-window presentation.
+The full menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.

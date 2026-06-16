@@ -58,7 +58,7 @@ Online Multiplayer:
 - Authenticated Account required
 - player data routes to Rails/API
 
-Implementation status: the online-multiplayer auth/admission seam and Phase 4 player-data backing stores are now in place with Rails internal token verification, Go authclient, websocket session identity, websocket auth packets, embedded SQLite for Local Profile, and the Rails adapter path for Authenticated Account. Match-result reporting and profile reads are implemented through the player-data runtime and game-server data-handler path; loadout persistence, unlocks, achievements, and broader profile sync remain future work.
+Implementation status: the online-multiplayer auth/admission seam and Phase 4 player-data backing stores are now in place with Rails internal token verification, Go authclient, websocket session identity, websocket auth packets, embedded SQLite for Local Profile, and the Rails adapter path for Authenticated Account. Match-result reporting and profile reads are implemented through the player-data runtime and game-server data-handler path.
 
 Multiplayer Simulation:
 
@@ -385,7 +385,7 @@ Rails/API owns:
 - online player-data writes for leaderboards
 - leaderboards
 - account-owned match history
-- future moderation/admin account data
+- moderation/admin account data
 
 The Go game-server interacts with Rails/API only through explicit API clients or endpoints.
 
@@ -408,7 +408,7 @@ Player-data is not owned by the game-server internals.
 
 The game-server consumes player-data packets through the encoded payload boundary.
 
-The client and any future separate service can consume the same packet contract later.
+The client and any separate service can consume the same packet contract.
 
 The backing store is hidden behind the runtime.
 
@@ -427,73 +427,10 @@ Symmetry:
 This split remains extractable from the current runtime foundation.
 
 ### Live Grant Transport
-
-Live progression grants may use internal HTTP from the game-server to the owning player-data service as the first viable path.
-
-For Authenticated Account, the target service is `services/api-server`.
-
-For future Local Profile, the target service is `services/player-data-server`.
-
-A server-to-server websocket is not required for the first version.
-
-Durable queues and outbox workers are future hardening options, not the starting point.
-
-Live grant writes must be idempotent using a `grant_id` or `event_id`.
-
-Retries must not double-credit rewards.
+See [Current System Limits](../limits/current-system-limits.md) and [Planning Notes](../planning/domain-backlog.md).
 
 ### Progression Ownership
-
-Player-data services own progression persistence, not live gameplay authority.
-
-The game-server owns gameplay facts, match results, and progression-producing events.
-
-Not every player-data write should wait until match end.
-
-Summary-style stats can be finalized at match resolution, while valuable durable rewards should be persisted live or near-live so they are not coupled to the end-of-match summary path.
-
-Examples of match-summary stats:
-
-- total score
-- high score
-- ship deaths
-- games played
-- wins
-
-Examples of live durable grants:
-
-- currency
-- ship parts
-- rare drops
-- unlock tokens
-- account-affecting rewards
-
-Gameplay emits authoritative domain events, but player-data services own persistence of the durable result.
-
-The game-server should not update Rails/SQLite tables directly.
-
-Game-server-owned facts include:
-
-- `MatchCompleted`
-- `AsteroidDestroyed`
-- `BossDefeated`
-- `ScoreEarned`
-- `SurvivalTimeReached`
-- `PickupCollected`
-- `DamageDealt`
-
-Player-data-owned persisted data includes:
-
-- progression state
-- unlock records
-- persistent stats
-- achievement/progress markers
-- match summary history
-- loadout availability
-
-The player-data service should not decide combat or gameplay rules such as whether an asteroid kill grants immediate score.
-
-Account and local-profile progression policies may be applied by the player-data service when processing trusted match results, but gameplay rules remain in gameplay and rules systems.
+See [Current System Limits](../limits/current-system-limits.md) and [Planning Notes](../planning/domain-backlog.md).
 
 ### V1 Persistent Stats
 
@@ -509,7 +446,7 @@ V1 stat fields:
 
 For V1 multiplayer, the winner is the authenticated player with the highest match score.
 
-This V1 stats payload does not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.
+See [Current System Limits](../limits/current-system-limits.md) and [Planning Notes](../planning/domain-backlog.md).
 
 ### Stats Event Pipeline
 
@@ -530,10 +467,7 @@ Likely event inputs include:
 - `PlayerFinished`
 
 Gameplay code should not directly mutate persistent player stats.
-
 For V1, match summary reporting is the commit point for stats.
-
-Live durable rewards use a separate progression-grant style path instead of the stats summary path.
 
 ## Shared Player-Data Schema SSoT
 
@@ -625,7 +559,7 @@ These states should not be admitted by the routing architecture:
 - game-server directly writing Local Profile SQLite tables
 - game-server directly writing Authenticated Account Postgres tables
 - game-server knowing SQLite table names or schema details
-- client directly mutating SQLite outside the future player-data server
+- client directly mutating SQLite outside the player-data runtime
 - player-data runtime owning live gameplay simulation
 - api-server owning local SQLite Local Profile persistence
 - gameplay code directly selecting Rails/API versus embedded DB
@@ -633,7 +567,7 @@ These states should not be admitted by the routing architecture:
 
 ## Failure And Error Model
 
-Possible future error codes:
+Possible error codes:
 
 - `auth_required`
 - `invalid_token`
@@ -658,34 +592,7 @@ Log the mode, identity, admission decision, and data route.
 
 Never log bearer tokens, Discord access tokens, OAuth codes, raw OAuth state, or client secrets.
 
-## Phased Rollout
+## Related Limits
 
-1. Documentation and invariants.
-2. Pure server vocabulary: play mode, identity, capability profile.
-3. Admission package and routing matrix tests.
-4. Room mode field.
-5. Session identity field.
-6. Admission wiring, initially behavior-preserving where needed.
-7. Create `services/player-data-server` scaffold.
-8. Define the player-data service contract from the shared logical schema.
-9. Local Profile rename in `services/player-data-server`.
-10. SQLite-backed persistence and migrations in `services/player-data-server`.
-11. Game-server consuming `services/player-data-server` APIs for loadout and profile reads plus match-result writes.
-12. Client consuming `services/player-data-server` APIs for local profile UI.
-13. Rails token verification endpoint and Go auth client.
-14. Websocket auth handshake.
-15. Enforce online multiplayer admission.
-16. Authenticated Account path in `services/api-server` as the online equivalent.
-17. Store contract tests.
-
-The first code milestone after docs should still be pure vocabulary and admission unless the team deliberately starts the new service first.
-
-## Deferred Work
-
-- local profile rename
-- local profile schema migration/versioning
-- account linking or local-to-online migration
-- online leaderboards
-- anti-cheat/trust policy
-- client token storage
-- store contract tests
+- [Current System Limits](../limits/current-system-limits.md)
+- [Planning Notes](../planning/domain-backlog.md)
