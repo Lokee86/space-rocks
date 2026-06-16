@@ -4,68 +4,49 @@
 
 This doc plans the achievement and milestone seam for long-lived player goals, one-time recognition, threshold progress, live completion feedback, and reward handoff.
 
-Achievements and milestones consume authoritative domain events.
+Achievements and milestones consume authoritative domain events directly.
 
-Achievements and milestones do not own gameplay simulation, match rules, scoring, inventory ownership, currency mutation, reward application, physical persistence routing, or UI layout.
-
-The achievement/milestone system answers:
-
-```text
-Did this player complete a named accomplishment?
-Did this player cross a milestone threshold?
-Should the player receive a live completion notification?
-Should a completion produce a reward intent for the progression pipeline?
-What durable achievement/milestone state must be stored?
-```
+There is no separate trusted-fact emitter for gameplay achievements. Evaluator-local facts are projections, not another emitted gameplay stream.
 
 ## Ownership Boundary
 
-This doc owns planning for:
+This doc owns:
 
-```text
-achievement definitions
-milestone definitions
-shared achievement/milestone catalog source of truth
-definition categories
-definition flags
-domain-event consumption
-achievement and milestone evaluation
-completion detection
-milestone threshold detection
-durable achievement/milestone state
-long-lived progress counters when needed
-live completion notification outputs
-bandwidth-conscious progress notification policy
-Redis-backed short-term processing guards
-reward-intent handoff into progression
-devtools achievement/milestone testing behavior
-```
+* achievement definitions
+* milestone definitions
+* shared achievement/milestone catalog source of truth
+* definition categories and flags
+* domain-event consumption
+* achievement and milestone evaluation
+* completion detection
+* milestone threshold detection
+* durable achievement/milestone state
+* long-lived progress counters when needed
+* live completion notification outputs
+* bandwidth-conscious progress notification policy
+* Redis-backed short-term processing guards
+* reward-intent handoff into progression
+* devtools achievement/milestone testing behavior
 
 This doc does not own:
 
-```text
-domain event emission by gameplay systems
-gameplay simulation
-scoring policy
-match-end rules
-match-result summary construction
-XP formulas
-currency formulas
-inventory mutation
-unlock mutation
-GrantAward construction
-player-data route selection
-physical database table design
-leaderboard eligibility
-UI layout
-HUD placement
-achievement art/audio presentation
-analytics/event history storage
-```
-
-Owning systems emit domain events.
-
-Achievements and milestones consume those events and interpret them against definitions.
+* domain event emission by gameplay systems
+* gameplay simulation
+* scoring policy
+* match-end rules
+* match-result summary construction
+* XP formulas
+* currency formulas
+* inventory mutation
+* unlock mutation
+* GrantAward construction
+* player-data route selection
+* physical database table design
+* leaderboard eligibility
+* UI layout
+* HUD placement
+* achievement art/audio presentation
+* analytics/event history storage
 
 Progression and rewards owns `GrantAward` construction.
 
@@ -89,15 +70,7 @@ Authoritative gameplay system
 -> player-data runtime routes and applies grants idempotently
 ```
 
-Achievements and milestones do not require a separate trusted-fact emitter.
-
-The domain event system is the trusted live input seam.
-
-Evaluator-local facts may be derived from domain events, but those facts are internal projections, not another emitted gameplay stream.
-
 ## Domain Event Input Model
-
-Achievements and milestones consume authoritative domain events directly.
 
 Examples of relevant gameplay domain events:
 
@@ -124,9 +97,7 @@ enemy_destroyed
 asteroid_destroyed
 ```
 
-Not every event needs to exist immediately.
-
-The architecture requirement is that the owning gameplay system emits the event, and achievements consume it later.
+Not every event needs to exist immediately. The owning gameplay system emits the event, and achievements consume it later.
 
 Good ownership:
 
@@ -155,7 +126,7 @@ Bad ownership:
 pickup system grants achievement completion directly
 ```
 
-## Domain Event Identity Requirements
+## Domain Event Identity And Match Result Relationship
 
 Domain events consumed by achievements need stable identity for dedupe, replay protection, and completion locking.
 
@@ -191,11 +162,7 @@ DomainEvent
 
 The domain event system may carry more or fewer fields per event type, but achievements need enough identity and player attribution to process events safely.
 
-## Match Result Relationship
-
-Match results are not the primary source of all achievement progress.
-
-Match-end and match-result systems should emit final domain events such as:
+Match results are not the primary source of all achievement progress, but they may emit final domain events such as:
 
 ```text
 match_completed
@@ -206,9 +173,7 @@ mission_completed
 challenge_completed
 ```
 
-These final events are part of the same domain event model.
-
-They are not a separate trusted-fact pipeline.
+These final events are part of the same domain event model, not a separate trusted-fact pipeline.
 
 Live gameplay achievements should be able to complete before match end when their source event occurs.
 
@@ -244,29 +209,7 @@ shared/progression/milestones.toml
 
 Initial preference is one shared progression catalog unless the file becomes too large or conceptually mixed.
 
-The shared catalog should generate or load equivalent client and server views.
-
-Server responsibilities:
-
-```text
-evaluate authoritative progress
-detect completion
-update durable state
-emit completion/progress outputs
-emit reward intents
-```
-
-Client responsibilities:
-
-```text
-display achievement and milestone catalog data
-display names, descriptions, categories, visibility, and thresholds
-display live completion notifications
-display tracked/pinned progress when provided by server
-never authoritatively complete achievements
-```
-
-The client should receive compact IDs and progress values from the server and resolve display text locally from the shared catalog.
+The shared catalog should generate or load equivalent client and server views. Server authoritatively evaluates progress, detects completion, updates durable state, and emits progress/completion outputs and reward intents. Client consumes the shared catalog for display and tracking, and never authoritatively completes achievements.
 
 Likely data-sync direction:
 
@@ -287,7 +230,7 @@ Achievement
 -> one-time accomplishment
 
 Milestone
--> long-lived threshold progress track
+-> threshold-based long-lived progress track
 ```
 
 Do not use “tiered achievement” language.
@@ -307,11 +250,26 @@ milestone.pickups_collected
 milestone.ship_deaths
 ```
 
-## Definition Categories
+## Definition Model
 
-Initial categories:
+Categories are for organization, display, and filtering; they do not drive trust.
+
+Eligibility and behavior use flags, and the model should avoid lots of one-off fields.
+
+Visibility is catalog-owned.
+
+Achievements are one-time accomplishments.
+
+Milestones are threshold-based long-lived progress tracks.
+
+Do not use “tiered achievement” language.
+
+Examples omit default flags unless the definition differs from defaults.
+
+### Shared Rules
 
 ```text
+Initial categories:
 combat
 survival
 collection
@@ -319,27 +277,13 @@ progression
 mode
 challenge
 hidden
-```
 
 Later categories:
-
-```text
 social
 event
 seasonal
-```
-
-Categories are for organization, display, filtering, and future reward/event grouping.
-
-They should not drive trust or persistence behavior directly.
-
-## Definition Flags
-
-Eligibility and behavior should use flags.
 
 Recommended flags:
-
-```text
 counts_single_player
 counts_multiplayer
 counts_guest
@@ -352,47 +296,22 @@ event_limited
 ranked_only_later
 online_only_later
 local_only_later
-```
 
 Default behavior:
-
-```text
 single-player counts
 multiplayer counts
 guest counts through transient player-data route
 local profile counts through local player-data route
 authenticated account counts through online/account route
 devtools counts unless or until trust policy blocks it
+
+Visibility:
+visible -> shown before completion
+hidden -> slot/category visible, details hidden until completion
+secret -> not shown until completion or discovery
 ```
 
-Flags should be positive behavior markers where possible.
-
-Avoid scattering many one-off boolean fields through the definition model.
-
-## Visibility
-
-Visibility should be catalog-owned.
-
-Recommended visibility behavior:
-
-```text
-visible
--> shown before completion
-
-hidden
--> slot/category visible, details hidden until completion
-
-secret
--> not shown until completion or discovery
-```
-
-Visibility does not determine whether the achievement can progress.
-
-A secret achievement can still evaluate normally from domain events.
-
-## Achievement Definition Shape
-
-Recommended logical shape:
+### AchievementDefinition
 
 ```text
 AchievementDefinition
@@ -406,32 +325,17 @@ AchievementDefinition
 - metadata optional
 ```
 
-Field meanings:
+Inline notes:
 
 ```text
-achievement_id
--> stable catalog ID
-
-category
--> organization/display category
-
-visibility
--> visible, hidden, or secret
-
-flags[]
--> eligibility and behavior flags
-
-event_inputs[]
--> domain event types relevant to this achievement
-
-condition
--> rule evaluated against event/current state
-
-reward_intents[]
--> declarative reward handoff, not direct grants
-
-metadata
--> optional display, balancing, or event metadata
+achievement_id -> stable catalog ID
+category -> organization/display category
+visibility -> visible, hidden, or secret
+flags[] -> eligibility and behavior flags
+event_inputs[] -> relevant domain event types
+condition -> rule evaluated against event/current state
+reward_intents[] -> declarative reward handoff, not direct grants
+metadata -> optional display, balancing, or event metadata
 ```
 
 Example:
@@ -441,13 +345,6 @@ AchievementDefinition
 - achievement_id: achievement.first_match_completed
 - category: progression
 - visibility: visible
-- flags:
-    - counts_single_player
-    - counts_multiplayer
-    - counts_guest
-    - counts_local_profile
-    - counts_authenticated_account
-    - counts_devtools
 - event_inputs:
     - match_completed
 - condition:
@@ -456,29 +353,7 @@ AchievementDefinition
     - source_type: achievement_completion
 ```
 
-Example:
-
-```text
-AchievementDefinition
-- achievement_id: achievement.first_pickup_collected
-- category: collection
-- visibility: visible
-- flags:
-    - counts_single_player
-    - counts_multiplayer
-    - counts_guest
-    - counts_local_profile
-    - counts_authenticated_account
-    - counts_devtools
-- event_inputs:
-    - pickup_collected
-- condition:
-    type: once
-```
-
-## Milestone Definition Shape
-
-Recommended logical shape:
+### MilestoneDefinition
 
 ```text
 MilestoneDefinition
@@ -493,38 +368,21 @@ MilestoneDefinition
 - metadata optional
 ```
 
-Field meanings:
+Inline notes:
 
 ```text
-milestone_id
--> stable catalog ID
-
-category
--> organization/display category
-
-visibility
--> visible, hidden, or secret
-
-flags[]
--> eligibility and behavior flags
-
-event_inputs[]
--> domain event types that can update the milestone
-
-counter
--> named progress counter updated by relevant events
-
-thresholds[]
--> ordered milestone thresholds
-
-reward_intents[]
--> declarative reward handoff
-
-metadata
--> optional display, balancing, or event metadata
+milestone_id -> stable catalog ID
+category -> organization/display category
+visibility -> visible, hidden, or secret
+flags[] -> eligibility and behavior flags
+event_inputs[] -> domain event types that can update the milestone
+counter -> named progress counter updated by relevant events
+thresholds[] -> ordered milestone thresholds
+reward_intents[] -> declarative reward handoff
+metadata -> optional display, balancing, or event metadata
 ```
 
-Threshold shape:
+### MilestoneThreshold
 
 ```text
 MilestoneThreshold
@@ -541,13 +399,6 @@ MilestoneDefinition
 - milestone_id: milestone.matches_completed
 - category: progression
 - visibility: visible
-- flags:
-    - counts_single_player
-    - counts_multiplayer
-    - counts_guest
-    - counts_local_profile
-    - counts_authenticated_account
-    - counts_devtools
 - event_inputs:
     - match_completed
 - counter: matches_completed_total
@@ -560,41 +411,11 @@ MilestoneDefinition
       value: 50
 ```
 
-Example:
-
-```text
-MilestoneDefinition
-- milestone_id: milestone.pickups_collected
-- category: collection
-- visibility: visible
-- flags:
-    - counts_single_player
-    - counts_multiplayer
-    - counts_guest
-    - counts_local_profile
-    - counts_authenticated_account
-    - counts_devtools
-- event_inputs:
-    - pickup_collected
-- counter: pickups_collected_total
-- thresholds:
-    - threshold_id: 10
-      value: 10
-    - threshold_id: 100
-      value: 100
-    - threshold_id: 1000
-      value: 1000
-```
-
-## Reward Intents
-
-Achievement and milestone definitions may declare reward intents.
+### RewardIntent
 
 Reward intents are not grants.
 
-Reward intents describe that a completion should feed the progression reward pipeline.
-
-Recommended shape:
+Progression and rewards owns turning reward intent into `GrantAward`.
 
 ```text
 RewardIntent
@@ -603,21 +424,13 @@ RewardIntent
 - metadata optional
 ```
 
-Examples:
+Example:
 
 ```text
 RewardIntent
 - source_type: achievement_completion
 - reward_ref: reward.first_match_completed
 ```
-
-```text
-RewardIntent
-- source_type: milestone_completion
-- reward_ref: reward.matches_completed_10
-```
-
-Progression and rewards owns turning reward intent into `GrantAward`.
 
 Achievements and milestones must not directly apply XP, currency, unlocks, inventory items, titles, or ship parts.
 
@@ -640,33 +453,13 @@ emit live notification outputs
 emit reward-intent outputs
 ```
 
-Evaluator non-responsibilities:
-
-```text
-emit gameplay domain events
-mutate gameplay state
-decide scoring
-decide match outcome
-construct GrantAward
-apply grants
-route player-data writes
-choose database/backend
-render UI
-```
+It does not mutate gameplay, construct `GrantAward`, route player-data writes, or render UI.
 
 ## Progress Storage Rules
 
 Store completion state always.
 
-Store progress only when it is:
-
-```text
-long-lived
-player-visible
-needed for future evaluation
-not cheaply derivable
-needed for cross-session continuation
-```
+Store progress only when it is long-lived, player-visible, needed for future evaluation, not cheaply derivable, or needed for cross-session continuation.
 
 Do not store every domain event.
 
@@ -693,11 +486,9 @@ Stats are not the general achievement counter store.
 
 Player-data/progression owns long-lived achievement/milestone counters where needed.
 
-Stats may expose readout summaries, but achievement progress should not depend on scraping UI/profile stats.
-
 ## Durable State Shape
 
-Recommended logical state:
+AchievementState and MilestoneState remain the planned logical shapes.
 
 ```text
 AchievementState
@@ -733,9 +524,7 @@ MilestoneState
 - metadata optional
 ```
 
-For ordered milestones, `highest_completed_threshold_id` may be enough.
-
-For non-linear or special milestones, `completed_threshold_ids[]` should be available.
+For ordered milestones, `highest_completed_threshold_id` may be enough. For non-linear or special milestones, `completed_threshold_ids[]` should be available.
 
 Exact physical table layout belongs to player-data persistence.
 
@@ -755,30 +544,17 @@ temporary match/session counters if needed
 ```
 
 Redis should not become the long-term achievement database.
+Durable storage owns completed achievements, completed milestone thresholds, long-lived progress counters, and `GrantAward` receipts.
 
-Durable storage owns:
-
-```text
-completed achievements
-completed milestone thresholds
-long-lived progress counters
-GrantAward receipts
-```
-
-Example Redis key concepts:
-
-```text
-achievement_event_processed:{player_ref}:{event_id}
-achievement_completion_lock:{player_ref}:{achievement_id}
-milestone_completion_lock:{player_ref}:{milestone_id}:{threshold_id}
-achievement_progress_throttle:{player_ref}:{milestone_id}
-```
+Example Redis key concepts: `achievement_event_processed:{player_ref}:{event_id}`, `achievement_completion_lock:{player_ref}:{achievement_id}`, `milestone_completion_lock:{player_ref}:{milestone_id}:{threshold_id}`, `achievement_progress_throttle:{player_ref}:{milestone_id}`.
 
 Exact key naming and TTL values are gametime implementation decisions.
 
-## Completion Outputs
+## Live Notifications And Bandwidth
 
-Achievement completion output:
+Players should see achievement and milestone completions live when possible.
+
+Completion outputs:
 
 ```text
 AchievementCompletion
@@ -787,11 +563,7 @@ AchievementCompletion
 - source_event_ref
 - completed_at
 - reward_intents[]
-```
 
-Milestone completion output:
-
-```text
 MilestoneCompletion
 - player_ref
 - milestone_id
@@ -801,80 +573,17 @@ MilestoneCompletion
 - reward_intents[]
 ```
 
-Completion outputs feed two paths:
-
-```text
-live notification path
-reward handoff path
-```
-
-Live notification path sends compact completion information to the client.
-
-Reward handoff path sends reward intent to progression and rewards.
-
-## Live Notification Policy
-
-Players should see achievement and milestone completions live when possible.
-
-Default server-to-client behavior:
-
-```text
-achievement completion
--> send live completion notification
-
-milestone threshold completion
--> send live completion notification
-
-background milestone progress
--> do not send every increment by default
-```
-
-The client already has the shared catalog, so live packets should be compact.
-
-Recommended completion packet shape:
-
-```text
-AchievementCompleted
-- achievement_id
-- completed_at
-- reward_preview_refs optional
-```
-
-Recommended milestone packet shape:
-
-```text
-MilestoneCompleted
-- milestone_id
-- threshold_id
-- completed_at
-- reward_preview_refs optional
-```
-
-Reward reveal may be separate later.
-
-## Bandwidth-Conscious Progress Updates
-
-Do not broadcast every counter change.
-
-Plan for tracked or pinned milestones.
-
 Default behavior:
 
 ```text
-untracked achievement
--> completion notification only
-
-untracked milestone
--> threshold completion notification only
-
-tracked/pinned milestone
--> throttled progress updates
-
-menu/result refresh
--> can load fuller progress state from player-data
+achievement completion -> send live completion notification
+milestone threshold completion -> send live completion notification
+untracked background progress -> do not send every increment
+tracked/pinned milestone -> throttled progress updates
+menu/result refresh -> can load fuller progress state from player-data
 ```
 
-Progress update packet shape:
+Progress update packet:
 
 ```text
 MilestoneProgressUpdated
@@ -883,256 +592,31 @@ MilestoneProgressUpdated
 - completed_threshold_ids optional
 ```
 
-Send progress updates only when:
+The server should send compact ID/value packets, and the client resolves names, descriptions, thresholds, and visibility from the shared catalog.
 
-```text
-milestone is tracked/pinned
-progress crosses a threshold
-progress crosses a display checkpoint
-server flushes a throttled update
-match ends
-client/menu requests refreshed state
-```
+Tracked or pinned milestones may eventually live in player-data or client preference state, and a small fixed number should be throttled with progress deltas preferred over full state.
 
-The server should send IDs and values.
+Reward reveal may be separate later.
 
-The client resolves display labels, descriptions, thresholds, and visibility from the shared catalog.
+## Reward Intent Handoff
 
-## Tracked And Pinned Milestones
+Achievements and milestones emit reward intents only, and those intents are not grants.
 
-The architecture should allow tracked/pinned milestones even if not implemented immediately.
+Progression And Rewards turns reward intents into `GrantAward`, and player-data applies the resulting grants idempotently.
 
-Tracked state may eventually live in player-data or client preference state.
+Achievements and milestones do not directly mutate XP, currency, unlocks, inventory, titles, or ship parts.
 
-Tracked milestones can receive more frequent progress updates than background milestones.
+## Identity, Trust, And Devtools
 
-Recommended limits:
+Guest achievement and milestone behavior matches normal gameplay behavior, with guest state routed through transient player-data.
 
-```text
-small fixed number of tracked milestones
-server-side throttling
-completion updates always allowed
-progress deltas preferred over full state
-```
+Local Profile and Authenticated Account share the same logical achievement/milestone contract, while player-data owns route selection and persistence application.
 
-Exact UI behavior belongs to client/UI planning.
+Client consumes shared catalog data and never authoritatively completes achievements or milestones. Server authoritatively evaluates completion, updates durable state, and emits compact notifications and reward intents.
 
-## Reward Handoff
+Devtools should support injecting events, triggering progress and completion, exercising reward handoff, and testing notification packets. Devtools-triggered progress is allowed unless or until trust policy blocks it, and early complexity should not be added just to block online/account devtools progress if that makes testing harder.
 
-Achievements and milestones do not mutate rewards directly.
-
-Reward flow:
-
-```text
-AchievementCompletion or MilestoneCompletion
--> reward_intents[]
--> Progression And Rewards
--> GrantAward construction
--> player-data runtime
--> routed durable application
-```
-
-Progression and rewards owns:
-
-```text
-GrantAward shape
-Grant shape
-award_id generation
-grant_id generation
-reward formula policy
-XP grants
-currency grants
-unlock grants
-inventory grants
-ship-part grants
-rare-drop grants
-idempotent award construction
-```
-
-Achievements and milestones own only completion detection and reward-intent output.
-
-## Guest Behavior
-
-Guest achievement and milestone behavior should match non-guest behavior during gameplay.
-
-Difference is storage durability.
-
-Guest flow:
-
-```text
-Guest identity
--> domain events consumed normally
--> achievement/milestone state stored in transient player-data route
--> live notifications work normally
--> rewards apply to guest transient state where supported
-```
-
-If guest state is saved into a new Local Profile through an explicit supported profile creation flow, achievement and milestone state may be copied with other durable-shaped guest state where supported.
-
-Achievements should not invent a separate guest persistence model.
-
-## Local Profile And Authenticated Account Behavior
-
-Local Profile and Authenticated Account should share the same logical achievement/milestone contracts.
-
-Backing storage may differ:
-
-```text
-Local Profile
--> local player-data route / SQLite-backed persistence
-
-Authenticated Account
--> Rails/Postgres-backed route
-
-Guest
--> transient memory route
-```
-
-Achievements should not choose the storage backend.
-
-Player-data runtime owns route selection.
-
-## Devtools Behavior
-
-Devtools should support achievement and milestone testing.
-
-Supported devtools directions:
-
-```text
-inject domain events in dev mode
-trigger progress in dev mode
-trigger completion in dev mode
-exercise reward handoff in dev mode
-test live notification packets
-test GrantAward handoff
-```
-
-Devtools-triggered achievement progress is allowed for testing unless or until trust policy blocks it.
-
-Do not add extra code early just to prevent online/account progress from devtools events if that prevention adds complexity and blocks testing.
-
-Later anti-cheat/trust policy may add stricter rules for ranked, online, or public progression.
-
-## Eligibility And Trust Policy
-
-Achievement definitions should use flags to express intended eligibility.
-
-Anti-cheat and trust policy may later override or restrict progression for:
-
-```text
-ranked modes
-public multiplayer
-devtools events
-admin/testing sessions
-offline/local-only sessions
-modified rooms
-event-limited content
-```
-
-Initial default:
-
-```text
-single-player counts
-multiplayer counts
-guest counts
-local profile counts
-authenticated account counts
-devtools counts unless blocked later
-```
-
-Mode-specific or account-specific restrictions should be definition flags and trust-policy decisions, not hardcoded into gameplay emitters.
-
-## Client Responsibilities
-
-Client owns presentation.
-
-Client should:
-
-```text
-load/generated shared achievement catalog
-display achievement and milestone names
-display descriptions
-display visibility states
-display categories
-display thresholds
-display completion notifications
-display tracked/pinned milestone progress
-request/load full achievement state where needed
-```
-
-Client should not:
-
-```text
-authoritatively complete achievements
-authoritatively increment milestone counters
-award currency
-award XP
-award unlocks
-award inventory
-decide online trust
-```
-
-The client can show local prediction later only if explicitly designed, but server authoritative completion remains the source of truth.
-
-## Server Responsibilities
-
-Server owns authoritative evaluation.
-
-Server should:
-
-```text
-consume authoritative domain events
-evaluate definitions against current state
-apply Redis processing guards where needed
-update achievement/milestone state through player-data route
-emit compact live notifications
-emit reward intents
-handoff reward intents to progression and rewards
-```
-
-Server should not:
-
-```text
-hardcode display strings outside shared catalog
-mutate inventory directly from achievement code
-mutate currency directly from achievement code
-depend on client-side counters
-persist every domain event as achievement history
-```
-
-## Player-Data Contract Direction
-
-Future logical player-data schema should include achievement and milestone state.
-
-Possible future shared logical schema source:
-
-```text
-shared/player_data/achievements.toml
-```
-
-Expected logical concepts:
-
-```text
-AchievementState
-MilestoneState
-TrackedMilestonePreference later
-CompletedAchievement
-CompletedMilestoneThreshold
-AchievementProgressCounter
-```
-
-Likely future player-data operations:
-
-```text
-LoadAchievements(identity)
-ApplyAchievementProgress(identity, progress_update)
-ApplyAchievementCompletion(identity, completion)
-ApplyMilestoneProgress(identity, progress_update)
-ApplyMilestoneCompletion(identity, completion)
-SaveTrackedMilestones(identity, tracked_refs) later
-```
-
-Exact operation names and physical schema are gametime implementation decisions.
+Achievement definitions should use flags to express intended eligibility. Trust policy may later restrict ranked, public multiplayer, online, devtools, offline/local-only, modified-room, or event-limited progression.
 
 ## Initial V0 Set
 
@@ -1162,23 +646,22 @@ Avoid weapon-specialist milestones until weapon usage events and resolved weapon
 Recommended implementation sequence:
 
 ```text
-1. Promote achievements-and-milestones.md out of stubs.
-2. Define shared achievement/milestone catalog file.
-3. Add minimal data-sync support or direct shared loader for the catalog.
-4. Add stable event identity requirements to the domain event seam.
-5. Add pure achievement/milestone evaluator.
-6. Add transient in-memory state for initial evaluator tests.
-7. Add V0 definitions for first-match, first-pickup, first-death, matches-completed, total-score, pickups-collected, and ship-deaths.
-8. Consume existing domain events where available.
-9. Add final match domain events where needed.
-10. Add compact live completion notification packets.
-11. Add milestone progress throttling for tracked/pinned progress.
-12. Add reward-intent output.
-13. Connect reward intent to Progression And Rewards GrantAward construction.
-14. Add player-data logical achievement/milestone contracts.
-15. Add guest/local/account route parity.
-16. Add Redis processing guards where duplicate processing becomes possible.
-17. Add devtools event/progress/completion testing hooks.
+1. Define the shared achievement/milestone catalog.
+2. Add data-sync support or a direct shared loader for that catalog.
+3. Add stable domain event identity requirements.
+4. Add a pure achievement/milestone evaluator.
+5. Add transient in-memory state for early evaluator tests.
+6. Add V0 definitions for first-match, first-pickup, first-death, matches-completed, total-score, pickups-collected, and ship-deaths.
+7. Consume existing domain events where available.
+8. Add final match domain events where needed.
+9. Add compact live completion notifications.
+10. Add tracked/pinned milestone throttling.
+11. Add reward-intent output.
+12. Connect reward intent to Progression And Rewards GrantAward construction.
+13. Add player-data logical achievement/milestone contracts.
+14. Add guest/local/account route parity.
+15. Add Redis processing guards where duplicate processing becomes possible.
+16. Add devtools event/progress/completion hooks.
 ```
 
 Early slices should favor seams over complete catalog size.
@@ -1198,134 +681,65 @@ reward intent can be emitted
 Important future tests:
 
 ```text
-achievement definitions load from shared catalog
-client and server catalogs stay in sync
-achievement completes from domain event
-milestone counter increments from domain event
-milestone threshold completes once
-duplicate event does not duplicate completion
-duplicate completion does not duplicate GrantAward
-completion notification is emitted once
-background progress does not spam live packets
-tracked milestone progress is throttled
-untracked milestone sends threshold completion only
-hidden achievement visibility works
-secret achievement visibility works
-guest progress uses transient route
-local profile progress uses local route
-authenticated account progress uses account route
-devtools can trigger progress/completion
-definition flags filter eligibility
-match_completed domain event can complete achievements
-score_finalized domain event can update score milestones
-progress state persists only where needed
-completion state always persists
-```
+shared catalog
+-> load syncs for client and server
 
-## Current Inputs
+domain event completion
+-> achievements complete from events
+-> milestones increment and complete thresholds from events
 
-```text
-shared achievement/milestone definitions
-domain events
-domain event identity
-player identity
-mode identity
-definition flags
-visibility rules
-current achievement state
-current milestone state
-long-lived progress counters
-Redis processing guards
-reward intents
-devtools event/progress inputs
-```
+duplicate protection
+-> events and completions do not double-apply
 
-## Planned Outputs
+notifications and throttling
+-> completions notify once
+-> background progress does not spam live packets
+-> tracked milestone progress is throttled
+-> untracked milestones only send threshold completion
 
-```text
-shared achievement/milestone source-of-truth plan
-achievement definition shape
-milestone definition shape
-category vocabulary
-flag vocabulary
-domain-event consumption boundary
-event identity requirements
-evaluation runtime boundary
-durable state shape
-Redis idempotency role
-live completion notification policy
-bandwidth-conscious progress update policy
-tracked/pinned milestone planning
-reward-intent handoff shape
-guest/local/account behavior
-devtools behavior
-implementation sequence
-testing direction
+visibility
+-> hidden and secret achievement visibility works
+
+routing and trust
+-> guest/local/account routing works
+-> devtools can trigger progress/completion
+-> definition flags filter eligibility
 ```
 
 ## Related Docs
 
-* [Systems Plan Index](../systems-plan-index.md)
-* [Player Experience Systems](player-experience-systems.md)
-* [Progression And Rewards](progression-and-rewards.md)
 * [Match Outcomes And Results](match-outcomes-and-results.md)
-* [Inventory And Hangar](inventory-and-hangar.md)
-* [Player Build And Loadouts](player-build-and-loadouts.md)
-* [Modes And Match Rules](modes-and-match-rules.md)
+* [Progression And Rewards](progression-and-rewards.md)
 * [Player Data And Persistence](../platform/player-data-and-persistence.md)
 * [Anti-Cheat And Trust Policy](../platform/anti-cheat-and-trust-policy.md)
-* [Source Of Truth Map](../../design/source-of-truth-map.md)
-* [Player-Data Schema Source Of Truth](../../design/player-data-schema-ssot.md)
 
 ## Open Gametime Decisions
 
-```text
-exact TOML schema
-exact generated Go catalog shape
-exact generated GDScript catalog shape
-exact event ID format
-exact Redis key naming
-exact Redis TTL values
-exact progress throttling interval
-exact tracked/pinned milestone limit
-exact V0 reward intents
-exact achievement notification packet fields
-exact milestone notification packet fields
-exact reward reveal timing
-exact player-data logical schema file layout
-exact physical persistence schema
-exact hidden/secret UI treatment
-exact anti-cheat restrictions for public/ranked online progression
-exact devtools safeguards if stricter account protection is needed
-```
+* exact shared catalog file layout
+* exact flag vocabulary for future event-specific rules
+* exact Redis key naming and TTL values
+* exact live notification packet shape for progress throttling
+* exact physical schema for achievement and milestone state
+* exact tracked/pinned milestone preference storage
 
 ## Core Invariants
 
-```text
-Achievements consume domain events.
-Milestones consume domain events.
-There is no separate trusted-fact emitter for gameplay achievements.
-Evaluator-local facts are projections, not another emitted stream.
-Gameplay systems do not know about achievement definitions.
-Domain events do not decide achievement progress.
-Achievements are one-time accomplishments.
-Milestones are threshold-based long-lived progress tracks.
-Definitions are shared data from the start.
-Client displays catalog data and notifications.
-Server authoritatively evaluates completion.
-Completion state is durable.
-Long-lived milestone progress is durable when needed.
-High-frequency domain events are not stored long term by achievements.
-Redis guards short-term processing, locking, dedupe, and throttling.
-Redis is not the achievement database.
-Completion notifications should be live.
-Background progress should not spam packets.
-Tracked/pinned milestones may receive throttled progress updates.
-Achievements and milestones emit reward intents only.
-Progression builds GrantAward records.
-Player-data applies grants idempotently.
-Inventory, currency, unlocks, and XP are never directly mutated by achievement code.
-Guest behavior matches normal gameplay behavior with transient storage.
-Local Profile and Authenticated Account share the same logical achievement/milestone contract.
-Devtools can exercise achievement progress and completion unless trust policy later blocks it.
-```
+* Achievements and milestones consume authoritative domain events directly.
+* There is no separate trusted-fact emitter for gameplay achievements.
+* Evaluator-local facts are projections, not another emitted stream.
+* Definitions are shared source of truth from the start.
+* Client needs the same catalog data for display and tracking.
+* Server authoritatively evaluates completion.
+* Achievements are one-time accomplishments.
+* Milestones are threshold-based long-lived progress tracks.
+* Eligibility and behavior use flags.
+* Completion state is durable.
+* Long-lived progress is durable when needed.
+* High-frequency domain events are not stored long-term by achievements.
+* Redis guards short-term event processing, completion locks, award dispatch, and throttling.
+* Live completion notifications should happen.
+* Untracked background progress should not spam packets.
+* Tracked or pinned milestones can receive throttled progress updates.
+* Achievements and milestones emit reward intents only.
+* Progression and Rewards builds `GrantAward`.
+* Devtools can exercise progress and completion unless trust policy later blocks it.

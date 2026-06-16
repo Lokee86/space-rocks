@@ -2,20 +2,19 @@
 
 ## Purpose
 
-This doc plans the durable progression and reward architecture for player advancement, XP, level-derived rank and insignia, earned reward grants, durable unlocks, ship-part inventory items, rare persistent drops, and reward award construction.
+This doc plans the durable progression and reward architecture for player advancement, XP, level-derived rank and insignia, earned reward grants, durable unlocks, rare persistent drops, and reward award construction.
 
-The core purpose is to define how trusted gameplay, progression, account, or commerce events become durable `GrantAward` records that can be handed to the player-data boundary safely and idempotently.
+The core purpose is to define how trusted gameplay, progression, account, or commerce events become durable `GrantAward` records that can be handed to player-data safely and idempotently.
 
 ## Ownership Boundary
 
-This doc owns planning for:
+This doc owns:
 
 * XP award policy
 * level advancement policy
 * rank and insignia derivation policy
 * earned-currency grant policy
 * unlock reward policy
-* ship-part reward policy
 * rare persistent drop reward policy
 * durable grant-source vocabulary
 * `GrantAward` and `Grant` construction
@@ -38,7 +37,7 @@ This doc does not own:
 
 Currency itself belongs to [Shop, Commerce, And Economy](shop-commerce-and-economy.md).
 
-Player-data routing belongs to [Player Data And Persistence](../platform/player-data-and-persistence.md) and the player-data handler/runtime.
+Player-data routing belongs to [Player Data And Persistence](../platform/player-data-and-persistence.md).
 
 Inventory ownership belongs to [Inventory And Hangar](inventory-and-hangar.md).
 
@@ -79,7 +78,7 @@ The selected player-data destination owns applying the grants.
 
 ## Durable Grant Sources
 
-A durable grant source is a trusted reason to mutate player progression, earned currency balance, unlocks, inventory ownership, ship parts, titles, or other durable player-owned state.
+A durable grant source is a trusted reason to mutate player progression, earned currency balance, unlocks, titles, or other durable player-owned state.
 
 Planned durable grant sources:
 
@@ -108,8 +107,8 @@ Source meanings:
 * `objective_completion` - rewards from trusted objective success when objective rules produce persistent rewards. This will likely be limited to first-time objective completions unless a mode explicitly supports repeatable objective rewards.
 * `mission_completion` - rewards from authored mission completion.
 * `challenge_completion` - rewards from challenge completion.
-* `achievement_completion` - one-time or tiered achievement rewards.
-* `milestone_completion` - long-lived progression milestone rewards.
+* `achievement_completion` - one-time accomplishment rewards.
+* `milestone_completion` - threshold-based track rewards.
 * `rare_drop_collection` - durable collected rare drops only. Normal runtime pickups and runtime-only rare effects are excluded.
 * `content_progression_unlock` - progression rules unlocking ships, weapons, modules, modes, missions, challenges, titles, cosmetics, or other content.
 * `shop_purchase` - grants caused by a completed purchase flow. Purchase flow and pricing belong to commerce/economy.
@@ -146,7 +145,7 @@ runtime-only rare drops
 
 These may affect the current match, but they do not enter the durable progression grant pipeline unless a later design explicitly promotes a specific event into a persistent reward.
 
-`local_profile_import` is intentionally excluded as a normal grant source. Importing local profile state into another durable identity creates trust, duplication, reconciliation, and abuse problems that should be handled by a separate migration design if ever needed.
+`local_profile_import` is intentionally excluded as a normal grant source.
 
 ## GrantAward And Grant Model
 
@@ -274,17 +273,11 @@ Implementation may use a deterministic 128-bit hash or equivalent compact key. E
 
 ## Player-Data Handoff
 
-Progression and rewards emits `GrantAward` records to the player-data handler/runtime.
+Progression and rewards emits `GrantAward` records to player-data.
 
-Progression does not directly apply grants and does not route by backing store.
+Progression does not directly apply grants or choose a backing store.
 
-The player-data handler/runtime owns:
-
-* mode and identity validation
-* Guest versus Local Profile versus Authenticated Account routing
-* routing the whole `GrantAward` to the selected persistence path
-* store/API-specific grant application
-* idempotency receipt or ledger implementation
+Player-data owns route selection and grant application.
 
 ## Idempotency Model
 
@@ -349,9 +342,7 @@ apply balance mutation atomically
 duplicate grant_id must not apply balance delta again
 ```
 
-Short-term idempotency receipts will likely use Redis, especially for online/account paths where retries, reconnects, or API handoff failures may replay the same `GrantAward`.
-
-Redis is a player-data / persistence implementation detail. Progression only supplies stable IDs.
+Short-term idempotency receipts are a player-data implementation detail.
 
 ### Stackable Inventory Grants
 
@@ -403,7 +394,7 @@ Periodic objective completions
 -> timestamped progression state
 ```
 
-First-time objective completion should be stored as durable unique completion state, likely as a database entry/table keyed by player identity and objective reference.
+First-time objective completion should be stored as durable unique completion state, keyed by player identity and objective reference.
 
 ```text
 FirstObjectiveCompletion
@@ -468,23 +459,9 @@ The system should not assume this list is exhaustive.
 
 ## Inventory Rewards, Ship Parts, And Rare Drops
 
-Ship parts are typed direct inventory items.
+Persistent rare drops resolve to inventory items.
 
-In current planning language, ship parts map to module-like inventory items discussed in [Player Build And Loadouts](player-build-and-loadouts.md).
-
-Persistent rare drops always resolve to inventory items.
-
-Persistent rare drops may grant:
-
-```text
-ships
-rare modules
-rare weapons
-rare consumables
-other inventory items
-```
-
-Not all rare drops are persistent. Some rare drops may be runtime-only powerful effects. Runtime-only rare drops do not enter the durable progression grant pipeline.
+Not all rare drops are persistent. Runtime-only rare drops do not enter the durable progression grant pipeline.
 
 ## Earned Currency Boundary
 
@@ -516,11 +493,7 @@ commerce balance
 
 ## Guest Progression Behavior
 
-Guest progression follows existing player-data behavior.
-
-Guest progression is stored in transient memory and may be saved into a new Local Profile during profile creation where existing systems support that flow.
-
-Progression should not invent a separate guest persistence model.
+Guest progression follows existing player-data behavior and uses transient memory until saved into a durable profile through an existing supported flow.
 
 ## Eligibility Inputs
 
@@ -572,7 +545,6 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 * earned-currency grant inputs
 * unlock inputs
 * reward grant inputs
-* ship-part inputs
 * rare persistent drop inputs
 * `GrantAward` construction inputs
 * idempotent award/grant ID inputs
@@ -589,19 +561,16 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 * progression state planning
 * objective completion state planning
 * earned-currency grant boundary
-* ship-part and rare-drop inventory boundary
+* rare-drop inventory boundary
 * player-data handoff expectations
 * idempotency expectations
 
 ## Related Docs
 
-* [Systems Plan Index](../systems-plan-index.md)
-* [Player Experience Systems](player-experience-systems.md)
 * [Match Outcomes And Results](match-outcomes-and-results.md)
 * [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
 * [Player Data And Persistence](../platform/player-data-and-persistence.md)
 * [Anti-Cheat And Trust Policy](../platform/anti-cheat-and-trust-policy.md)
-* [API Product Surface](../platform/api-product-surface.md)
 * [Achievements And Milestones](achievements-and-milestones.md)
 * [Inventory And Hangar](inventory-and-hangar.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
@@ -616,10 +585,8 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 * exact earned-currency amounts
 * exact daily/weekly period policies
 * exact compact ID encoding
-* exact Redis/idempotency implementation
 * exact physical schema for first-time objective completions
 * exact physical schema for periodic completion state
-* exact inventory item catalog format
 * exact UI reward reveal shape
 
 ## Core Invariants
@@ -627,11 +594,9 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 * Progression builds `GrantAward` records.
 * Player-data owns identity/storage routing.
 * Commerce/economy owns currency system policy.
-* Inventory/hangar owns durable owned-item state.
 * Runtime pickups and powerups are not progression grants by default.
-* Persistent rare drops must resolve to inventory items.
+* Persistent rare drops resolve to inventory items.
 * Currency grants require receipt-backed idempotency and atomic balance application.
-* Unique ownership grants dedupe against durable ownership state.
 * Rank and insignia derive from XP level.
 * Custom titles are unlockable content.
 * First-time objective completion state belongs to progression.

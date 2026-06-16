@@ -2,9 +2,41 @@
 
 ## Purpose
 
-This document defines the planning direction for player builds, ship variants, weapons, and loadout composition.
+This doc plans the player-build seam for ship variants, weapon-point rules, module slots, loadout selection, and match-start build resolution.
 
-Owned ship acquisition, inventory state, and hangar persistence belong in [inventory-and-hangar.md](inventory-and-hangar.md).
+## Ownership Boundary
+
+This doc owns:
+
+- ShipVariant model
+- weapon point rules
+- weapon classification
+- module slots
+- BuildEligibility
+- EligibleBuildOptions
+- LoadoutSelection
+- ResolvedPlayerBuild
+- starting ammo planning
+- pickup interaction planning
+- hardwired module relationships
+- shield planning
+- ship variant implementation planning
+- cleanup direction
+
+This doc does not own:
+
+- owned inventory state
+- hangar persistence
+- mode rules
+- progression reward policy
+- runtime equipment state
+- UI layout
+
+Inventory and hangar owns owned state.
+
+BuildEligibility consumes inventory snapshots.
+
+ResolvedPlayerBuild compiles match-start setup.
 
 ## Core Model
 
@@ -19,6 +51,8 @@ Core rule:
 - Ineligible ships, weapons, modules, and loadouts should not be selectable in normal UI flow.
 - Server validation remains the authoritative safety net.
 - Server validation should not be the primary UX path for rejecting normal loadout choices.
+
+Modes can restrict build selection before loadout selection, but they do not own the inventory or hangar model.
 
 ## Ship Variants
 
@@ -289,3 +323,28 @@ Selection planning rule:
 
 - ShipStats should not own weapon projectile tuning.
 - Stale ship-side bullet cooldown, speed, lifetime, spawn-offset, and damage fields should be removed or rerouted through weapon profiles.
+
+## Related Docs
+
+- [Inventory And Hangar](inventory-and-hangar.md)
+- [Modes And Match Rules](modes-and-match-rules.md)
+- [Progression And Rewards](progression-and-rewards.md)
+
+## Open Gametime Decisions
+
+- Exact ship-variant catalog shape.
+- Exact build-option field names for future UI.
+- Exact owned-ship selection shape when inventory-backed ship selection lands.
+- Exact shield stat and shield-regen policy placement.
+- Exact cleanup ordering for old ship-side weapon fields.
+
+## Core Invariants
+
+- Inventory owns owned state.
+- BuildEligibility reads inventory snapshots and mode rules.
+- LoadoutSelection is the player choice, not the runtime state.
+- ResolvedPlayerBuild is the only match-start build object consumed by runtime setup.
+- Runtime equipment owns ammo, cooldowns, and pickup-overwrite state.
+- Hardwired modules stay separate from pre-match loadout selection.
+- `weight_class` stays a loadout-compatibility classification, not physics mass.
+- `primary_1` remains required at match start.
