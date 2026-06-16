@@ -34,6 +34,7 @@ It should focus on what the player owns and how that owned state feeds selection
 - [Player Experience Systems](player-experience-systems.md)
 - [Player Build And Loadouts](player-build-and-loadouts.md)
 - [Progression And Rewards](progression-and-rewards.md)
+- [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
 
 ## Open Planning Questions
 

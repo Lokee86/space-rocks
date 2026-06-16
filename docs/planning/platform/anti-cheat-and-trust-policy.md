@@ -31,6 +31,7 @@ It should define trust boundaries, not the enforcement implementation.
 - [Account And Identity Systems](account-and-identity-systems.md)
 - [Leaderboards And Rankings](leaderboards-and-rankings.md)
 - [Progression And Rewards](progression-and-rewards.md)
+- [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 
 ## Open Planning Questions
