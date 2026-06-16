@@ -1,14 +1,16 @@
+# Local Pilot Flow
+
 ## Purpose
 
-This document is the focused reference for the completed Local Pilot / Guest selector flow.
+This document is the focused reference for the Local Pilot / Guest selector flow.
 
-- `LocalPilotFlow` owns the single menu/sub-menu flow for local pilots.
-- It should not grow beyond the completed create/load/edit/delete/default-selector behavior except for bug fixes.
+- `LocalPilotFlow` owns the local pilot selector menu, its subpanel flow, and local-pilot intent routing.
+- Broader menu routing, profile readout, auth, and match results stay outside this flow.
 - This page carries the detailed behavior that belongs with the Local Pilot flow instead of broad menu-flow documentation.
 
 ## Scene Ownership
 
-- The Local Pilot selector is a completed client menu surface.
+- The Local Pilot selector is a client menu surface.
 - `LocalPilotFlow` owns the selector, its subpanels, and the routing between the main selector and the local-pilot subpanel flow.
 - Scene scripts emit intent only:
   - `select_pilot_readout.gd` emits load/create/edit/delete intent.

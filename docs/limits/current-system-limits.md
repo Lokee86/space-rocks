@@ -43,3 +43,14 @@
 
 - See [Player Build Limits](player-build-limits.md) for current ship-variant and player-build constraints.
 - Weapon UI and equip presentation are not fully implemented yet.
+
+### Client Menu Flow
+
+- Options is not implemented.
+- Campaign is disabled in the single-player pregame menu.
+- Loadout is disabled in the single-player pregame menu.
+- Provisioner is disabled in the single-player pregame menu.
+- Buy Scrap is disabled in the single-player pregame menu.
+- Rankings are disabled in the single-player pregame menu.
+- Manual login is disabled.
+- Google login is disabled.

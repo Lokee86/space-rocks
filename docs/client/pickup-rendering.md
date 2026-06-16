@@ -43,7 +43,6 @@ The `Badge` node must contain children named exactly like packet type strings, f
 - Client owns scene selection, icon visibility, pulse/glow, lifespan blink, audio scene nodes, interpolation, and target-position presentation.
 - Client must not maintain a type-to-class map.
 - Scene paths stay client-side and are not sent in gameplay packets.
-- Devtools pickup selector should share the same presentation/catalog source when implemented.
 
 ## Do Not
 

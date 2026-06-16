@@ -120,6 +120,10 @@ Roadmap phase sequencing belongs in [docs/planning/platform-and-progression-road
 - Add radial-effect presentation.
 - Add richer gameplay effect presentation where tied to implemented server events.
 
+### Devtools Pickup Rendering
+
+- Devtools pickup selector should share the same presentation/catalog source as client pickup rendering when implemented.
+
 ## Infrastructure And Deployment
 
 ### Local Packaging
