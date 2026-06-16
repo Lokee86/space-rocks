@@ -23,7 +23,7 @@ Raw mouse button checks should stay at input binding/translation edges, then map
 
 Pending placement/action has priority over generic target behavior.
 
-- Pending placement/action owns left click until it is completed or canceled.
+- Pending placement/action owns left click until it is resolved or canceled.
 - Right click or Escape cancels pending action before generic deselect behavior runs.
 
 ## Gameplay UI Input Protection

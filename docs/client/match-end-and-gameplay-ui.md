@@ -1,6 +1,6 @@
 # Match End And Gameplay UI
 
-This document defines the intended client-side ownership split for match-end presentation and the gameplay-session UI hierarchy.
+This document defines the client-side ownership split for match-end presentation and the gameplay-session UI hierarchy.
 
 The goal is simple: gameplay can end, the HUD can be hidden, and match-over UI can appear without blurring ownership between app/menu screens and gameplay-session screens.
 
@@ -22,7 +22,7 @@ The goal is simple: gameplay can end, the HUD can be hidden, and match-over UI c
 ## Gameplay UI Roots
 
 - `GameplayUserInterface` is the mount root for gameplay-session UI.
-- `HUD`, Match Results, overlay `GameMenu`, and future gameplay modals live under `GameplayUserInterface`.
+- `HUD`, Match Results, overlay `GameMenu`, and gameplay-session modals live under `GameplayUserInterface`.
 - `GameplayUserInterface` should use `mouse_filter = IGNORE` so it does not block sibling app/menu screens.
 - `UserInterface` remains the parent root for Main Menu, Pregame Menu, LoginWindow, JoinDialog, and MultiplayerLobby.
 - Gameplay-session UI must not be mounted under `UserInterface` by convenience.
