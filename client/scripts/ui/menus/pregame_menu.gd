@@ -1,6 +1,6 @@
 extends Control
 
-const PregameModePresenter := preload("res://scripts/ui/menus/pregame_mode_presenter.gd")
+const PregameModePresenterScript := preload("res://scripts/ui/menus/pregame_mode_presenter.gd")
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 
 signal back_requested
@@ -16,7 +16,7 @@ var current_mode: String = ""
 
 
 func _ready() -> void:
-	mode_presenter = PregameModePresenter.new()
+	mode_presenter = PregameModePresenterScript.new()
 	var back_button := get_node_or_null("%BackButton") as BaseButton
 	if back_button != null:
 		back_button.pressed.connect(_on_back_pressed)

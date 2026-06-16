@@ -2,7 +2,7 @@ class_name PregameMenuFlow
 extends RefCounted
 
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
-const LocalPilotFlow := preload("res://scripts/ui/menu_flow/local_pilot_flow.gd")
+const LocalPilotFlowScript := preload("res://scripts/ui/menu_flow/local_pilot_flow.gd")
 
 var pregame_menu: Control
 var return_to_main_menu: Callable
@@ -39,7 +39,7 @@ func configure(
 	profile_context_provider = profile_context_provider_ref
 	profile_flow = profile_flow_ref
 	transmission_flow = transmission_flow_ref
-	local_pilot_flow = LocalPilotFlow.new()
+	local_pilot_flow = LocalPilotFlowScript.new()
 	local_pilot_flow.configure(transmission_flow, Callable(pregame_menu, "set_callsign"), profile_context_provider)
 
 	if pregame_menu != null and pregame_menu.has_signal("back_requested"):

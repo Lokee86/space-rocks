@@ -10,7 +10,7 @@ func configure(
 	game_owner: Node2D,
 	hud: Control,
 	hud_flow_ref,
-	menu_flow_ref,
+	_menu_flow_ref,
 	player_ref,
 	visual_position_for_server_position: Callable,
 	event_flow_ref = null,

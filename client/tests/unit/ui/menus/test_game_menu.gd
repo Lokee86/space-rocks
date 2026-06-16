@@ -4,14 +4,13 @@ const GameMenuScene := preload("res://scenes/ui/dialogs/game_menu.tscn")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 
-func test_menu_button_emits_menu_requested_but_not_quit_requested() -> void:
+func test_menu_button_emits_menu_requested() -> void:
 	var menu := await _create_menu()
 
 	watch_signals(menu)
 	(_menu_button(menu) as BaseButton).emit_signal("pressed")
 
 	assert_signal_emitted(menu, "menu_requested")
-	assert_signal_not_emitted(menu, "quit_requested")
 
 
 func test_multiplayer_game_over_does_not_set_primary_action_to_lobby() -> void:

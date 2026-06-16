@@ -2,10 +2,10 @@ extends RefCounted
 class_name ProfileContextProvider
 
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
-const ProfileIdentityKind := preload("res://scripts/profile/profile_identity_kind.gd")
+const ProfileIdentityKindScript := preload("res://scripts/profile/profile_identity_kind.gd")
 
 var auth_session_controller
-var selected_single_player_identity_kind := ProfileIdentityKind.GUEST
+var selected_single_player_identity_kind := ProfileIdentityKindScript.GUEST
 var selected_local_profile_id := ""
 var selected_local_display_name := "Guest"
 
@@ -21,7 +21,7 @@ func context_for_mode(mode: String) -> Dictionary:
 
 
 func select_guest_profile() -> void:
-	selected_single_player_identity_kind = ProfileIdentityKind.GUEST
+	selected_single_player_identity_kind = ProfileIdentityKindScript.GUEST
 	selected_local_profile_id = ""
 	selected_local_display_name = "Guest"
 
@@ -30,7 +30,7 @@ func select_local_profile(local_profile_id: String, display_name: String) -> voi
 	if local_profile_id.is_empty():
 		return
 
-	selected_single_player_identity_kind = ProfileIdentityKind.LOCAL_PROFILE
+	selected_single_player_identity_kind = ProfileIdentityKindScript.LOCAL_PROFILE
 	selected_local_profile_id = local_profile_id
 	selected_local_display_name = display_name
 	if selected_local_display_name.is_empty():
@@ -40,17 +40,17 @@ func select_local_profile(local_profile_id: String, display_name: String) -> voi
 func _guest_context(activity_status: String = "ACTIVE") -> Dictionary:
 	return {
 		"play_mode": PregameMenuMode.SINGLE_PLAYER,
-		"identity_kind": ProfileIdentityKind.GUEST,
+		"identity_kind": ProfileIdentityKindScript.GUEST,
 		"callsign": "Guest",
 		"activity_status": activity_status,
 	}
 
 
 func _single_player_context() -> Dictionary:
-	if selected_single_player_identity_kind == ProfileIdentityKind.LOCAL_PROFILE:
+	if selected_single_player_identity_kind == ProfileIdentityKindScript.LOCAL_PROFILE:
 		return {
 			"play_mode": PregameMenuMode.SINGLE_PLAYER,
-			"identity_kind": ProfileIdentityKind.LOCAL_PROFILE,
+			"identity_kind": ProfileIdentityKindScript.LOCAL_PROFILE,
 			"local_profile_id": selected_local_profile_id,
 			"callsign": selected_local_display_name,
 			"activity_status": "ACTIVE",
@@ -70,7 +70,7 @@ func _multiplayer_context() -> Dictionary:
 
 	return {
 		"play_mode": PregameMenuMode.MULTIPLAYER,
-		"identity_kind": ProfileIdentityKind.AUTHENTICATED_ACCOUNT,
+		"identity_kind": ProfileIdentityKindScript.AUTHENTICATED_ACCOUNT,
 		"callsign": callsign,
 		"activity_status": "ACTIVE",
 	}

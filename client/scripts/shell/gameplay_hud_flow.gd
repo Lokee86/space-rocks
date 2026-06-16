@@ -124,11 +124,11 @@ func set_game_over() -> void:
 	_show_hud_child("CenterContainer/GameOverContainer/MarginContainer")
 
 
-func apply_score(score: int) -> void:
-	current_score = score
+func apply_score(score_value: int) -> void:
+	current_score = score_value
 	var score_label := _get_hud_child("MarginContainer/HBoxContainer/MarginContainer/Score") as Label
 	if score_label != null:
-		score_label.text = "SCORE: %d" % score
+		score_label.text = "SCORE: %d" % score_value
 
 
 func score() -> int:

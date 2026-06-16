@@ -106,7 +106,7 @@ Normal gameplay usually keeps the active anchor aligned with `self_id`. Spectate
 
 Do not split camera position from render anchor position. If camera and world rendering use different origins, background and world-copy bugs can return.
 
-See [active player-render README](../../client/scripts/world/player_render/README.md) and [legacy player-render API](../../client/legacy/player_render/API.md).
+See [active player-render README](../../client/scripts/world/player_render/README.md), [legacy player-render quarantine API](../../client/legacy/player_render/API.md), and [legacy quarantine README](../../client/legacy/README.md).
 
 ## Tests
 

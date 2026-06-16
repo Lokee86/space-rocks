@@ -8,6 +8,13 @@ Related references:
 - [Devtools toggles and player-target controls](../devtools/toggles.md)
 - [Match end and gameplay UI ownership](match-end-and-gameplay-ui.md)
 
+## Related Legacy Quarantine
+
+Legacy client code lives under `client/legacy`.
+Quarantine rules are in `client/legacy/README.md` and `client/legacy/AGENTS.md`.
+New client behavior should use active APIs under `client/scripts`, not legacy files directly.
+Player render legacy access is restricted by `client/legacy/player_render/API.md`.
+
 ## Semantic Actions
 
 Current semantic mouse/input concepts:

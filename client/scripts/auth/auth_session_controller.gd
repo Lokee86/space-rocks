@@ -4,9 +4,9 @@ class_name AuthSessionController
 signal auth_state_changed
 signal auth_error(message: String)
 
-const AuthSession := preload("res://scripts/auth/auth_session.gd")
-const AuthTokenStore := preload("res://scripts/auth/auth_token_store.gd")
-const AuthApiClient := preload("res://scripts/auth/auth_api_client.gd")
+const AuthSessionScript := preload("res://scripts/auth/auth_session.gd")
+const AuthTokenStoreScript := preload("res://scripts/auth/auth_token_store.gd")
+const AuthApiClientScript := preload("res://scripts/auth/auth_api_client.gd")
 const DISCORD_POLL_INTERVAL_SECONDS := 1.0
 const DISCORD_POLL_TIMEOUT_SECONDS := 120.0
 
@@ -18,11 +18,11 @@ var _discord_sign_in_request_id := 0
 
 func _ready() -> void:
 	if auth_session == null:
-		auth_session = AuthSession.new()
+		auth_session = AuthSessionScript.new()
 	if auth_token_store == null:
-		auth_token_store = AuthTokenStore.new()
+		auth_token_store = AuthTokenStoreScript.new()
 	if auth_api_client == null:
-		auth_api_client = AuthApiClient.new()
+		auth_api_client = AuthApiClientScript.new()
 
 
 func configure(auth_api_client_ref = null) -> void:
@@ -36,11 +36,11 @@ func get_session() -> AuthSession:
 
 func initialize_from_saved_token() -> void:
 	if auth_session == null:
-		auth_session = AuthSession.new()
+		auth_session = AuthSessionScript.new()
 	if auth_token_store == null:
-		auth_token_store = AuthTokenStore.new()
+		auth_token_store = AuthTokenStoreScript.new()
 	if auth_api_client == null:
-		auth_api_client = AuthApiClient.new()
+		auth_api_client = AuthApiClientScript.new()
 
 	var token := auth_token_store.load_token()
 	if token.is_empty():
@@ -134,11 +134,11 @@ func _logout_remote(token: String) -> void:
 
 func _ensure_auth_objects() -> void:
 	if auth_session == null:
-		auth_session = AuthSession.new()
+		auth_session = AuthSessionScript.new()
 	if auth_token_store == null:
-		auth_token_store = AuthTokenStore.new()
+		auth_token_store = AuthTokenStoreScript.new()
 	if auth_api_client == null:
-		auth_api_client = AuthApiClient.new()
+		auth_api_client = AuthApiClientScript.new()
 
 
 func _validate_saved_token(token: String) -> void:

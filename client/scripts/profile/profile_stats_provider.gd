@@ -1,8 +1,8 @@
 extends RefCounted
 class_name ProfileStatsProvider
 
-const PlayerDataProfileApiClient := preload("res://scripts/profile/player_data_profile_api_client.gd")
-const GuestTransientStatsProvider := preload("res://scripts/profile/guest_transient_stats_provider.gd")
+const PlayerDataProfileApiClientScript := preload("res://scripts/profile/player_data_profile_api_client.gd")
+const GuestTransientStatsProviderScript := preload("res://scripts/profile/guest_transient_stats_provider.gd")
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 
 var auth_session_controller
@@ -13,8 +13,8 @@ var cached_account_stats := {}
 
 func configure(auth_session_controller_ref, player_data_profile_api_client_ref = null, guest_stats_provider_ref = null) -> void:
 	auth_session_controller = auth_session_controller_ref
-	player_data_profile_api_client = player_data_profile_api_client_ref if player_data_profile_api_client_ref != null else PlayerDataProfileApiClient.new()
-	guest_stats_provider = guest_stats_provider_ref if guest_stats_provider_ref != null else GuestTransientStatsProvider.new()
+	player_data_profile_api_client = player_data_profile_api_client_ref if player_data_profile_api_client_ref != null else PlayerDataProfileApiClientScript.new()
+	guest_stats_provider = guest_stats_provider_ref if guest_stats_provider_ref != null else GuestTransientStatsProviderScript.new()
 
 
 func load_stats(context: Dictionary):

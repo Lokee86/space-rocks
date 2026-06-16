@@ -6,7 +6,6 @@ signal lobby_requested
 signal spectate_requested
 signal menu_requested
 signal resume_requested
-signal quit_requested
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 
@@ -44,7 +43,7 @@ func set_menu_text(_text) -> void:
 	_set_button_label_visible(menu_button, "Menu")
 
 
-func configure_for_state(session_mode: String, game_over: bool, room_state: String, has_spectate_targets := false) -> void:
+func configure_for_state(session_mode: String, game_over: bool, _room_state: String, has_spectate_targets := false) -> void:
 	var normalized_session_mode := _normalized_state(session_mode)
 
 	if normalized_session_mode == Constants.SESSION_MODE_MULTIPLAYER:

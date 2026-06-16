@@ -6,12 +6,12 @@ const LoginWindowScene := preload("res://scenes/ui/dialogs/login_window.tscn")
 const JoinDialogScene := preload("res://scenes/ui/dialogs/join_dialog.tscn")
 const MenuRoute := preload("res://scripts/ui/menu_flow/menu_route.gd")
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
-const PregameMenuFlow := preload("res://scripts/ui/menu_flow/pregame_menu_flow.gd")
-const TransmissionFlow := preload("res://scripts/ui/menu_flow/transmission_flow.gd")
-const ProfileContextProvider := preload("res://scripts/profile/profile_context_provider.gd")
-const ProfileStatsProvider := preload("res://scripts/profile/profile_stats_provider.gd")
-const ProfileFlow := preload("res://scripts/profile/profile_flow.gd")
-const JoinDialogFlow := preload("res://scripts/ui/lobby/join_dialog_flow.gd")
+const PregameMenuFlowScript := preload("res://scripts/ui/menu_flow/pregame_menu_flow.gd")
+const TransmissionFlowScript := preload("res://scripts/ui/menu_flow/transmission_flow.gd")
+const ProfileContextProviderScript := preload("res://scripts/profile/profile_context_provider.gd")
+const ProfileStatsProviderScript := preload("res://scripts/profile/profile_stats_provider.gd")
+const ProfileFlowScript := preload("res://scripts/profile/profile_flow.gd")
+const JoinDialogFlowScript := preload("res://scripts/ui/lobby/join_dialog_flow.gd")
 const SignInFlow := preload("res://scripts/ui/sign_in/sign_in_flow.gd")
 
 var canvas_layer: CanvasLayer
@@ -54,13 +54,13 @@ func configure(
 	auth_session_controller = auth_session_controller_ref
 	profile_stats_provider_is_shared = profile_stats_provider_ref != null
 	if profile_context_provider == null:
-		profile_context_provider = ProfileContextProvider.new()
+		profile_context_provider = ProfileContextProviderScript.new()
 	if profile_context_provider != null and profile_context_provider.has_method("configure"):
 		profile_context_provider.configure(auth_session_controller)
 	if profile_stats_provider_ref != null:
 		profile_stats_provider = profile_stats_provider_ref
 	elif profile_stats_provider == null:
-		profile_stats_provider = ProfileStatsProvider.new()
+		profile_stats_provider = ProfileStatsProviderScript.new()
 		if profile_stats_provider != null and profile_stats_provider.has_method("configure"):
 			profile_stats_provider.configure(auth_session_controller)
 	elif !profile_stats_provider_is_shared and profile_stats_provider != null and profile_stats_provider.has_method("configure"):
@@ -123,7 +123,7 @@ func show_join_dialog() -> void:
 		canvas_layer.add_child(join_dialog)
 
 	if join_dialog_flow == null:
-		join_dialog_flow = JoinDialogFlow.new()
+		join_dialog_flow = JoinDialogFlowScript.new()
 
 	join_dialog_flow.configure(
 		join_dialog,
@@ -174,20 +174,20 @@ func _show_pregame() -> void:
 		pregame_menu = PregameMenuScene.instantiate()
 		if canvas_layer != null:
 			canvas_layer.add_child(pregame_menu)
-		pregame_menu_flow = PregameMenuFlow.new()
+		pregame_menu_flow = PregameMenuFlowScript.new()
 
 	if pregame_menu_flow == null:
-		pregame_menu_flow = PregameMenuFlow.new()
+		pregame_menu_flow = PregameMenuFlowScript.new()
 
-	var transmission_flow := TransmissionFlow.new()
+	var transmission_flow := TransmissionFlowScript.new()
 	transmission_flow.configure(pregame_menu)
 
 	if profile_context_provider == null:
-		profile_context_provider = ProfileContextProvider.new()
+		profile_context_provider = ProfileContextProviderScript.new()
 	if profile_context_provider != null and profile_context_provider.has_method("configure"):
 		profile_context_provider.configure(auth_session_controller)
 
-	var profile_flow := ProfileFlow.new()
+	var profile_flow := ProfileFlowScript.new()
 	profile_flow.configure(profile_context_provider, profile_stats_provider, transmission_flow)
 
 	pregame_menu_flow.configure(
