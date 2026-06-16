@@ -114,11 +114,17 @@ Player identity is not automatically the render origin.
 
 ### Legacy PlayerRender Quarantine
 
+`client/legacy/README.md` defines the top-level legacy quarantine rules.
+`client/legacy/AGENTS.md` defines agent and editing rules for quarantined legacy code.
+`client/legacy/player_render/API.md` defines the allowed active API boundary for player_render.
+
 `client/legacy/player_render` contains quarantined legacy implementation details.
 
 It must be treated as a black box.
 
 New code must use `client/scripts/world/player_render`.
+
+Active code must not import `client/legacy/player_render` directly except through the allowed active API files under `client/scripts/world/player_render`.
 
 The server upgrades `/ws`, while the client resolves a WebSocket target by session mode before connecting. Single-player uses `SINGLE_PLAYER_WS_URL` and multiplayer uses `MULTIPLAYER_WS_URL`; both currently point to the same local `/ws` endpoint during development. A launch multiplayer target may point at deployed infrastructure without changing the server route model. Enforcement of single-player versus multiplayer actions should stay packet- and session-policy-based rather than route-path-based.
 

@@ -1,7 +1,7 @@
 extends Node
 class_name ApiHttpClient
 
-const ApiRequestResult := preload("res://scripts/api/api_request_result.gd")
+const ApiRequestResultScript := preload("res://scripts/api/api_request_result.gd")
 const REQUEST_TIMEOUT_SECONDS := 5.0
 
 
@@ -26,7 +26,7 @@ func _request_json(method: int, url: String, body: Dictionary, bearer_token: Str
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null or tree.root == null:
 		request.queue_free()
-		return ApiRequestResult.failure(0, "scene_tree_unavailable")
+		return ApiRequestResultScript.failure(0, "scene_tree_unavailable")
 
 	tree.root.add_child(request)
 	request.use_threads = true
@@ -46,7 +46,7 @@ func _request_json(method: int, url: String, body: Dictionary, bearer_token: Str
 	var request_error := request.request(url, headers, method, payload)
 	if request_error != OK:
 		request.queue_free()
-		return ApiRequestResult.failure(0, "request_failed")
+		return ApiRequestResultScript.failure(0, "request_failed")
 
 	var completed: Array = await request.request_completed
 	request.queue_free()
@@ -57,24 +57,24 @@ func _request_json(method: int, url: String, body: Dictionary, bearer_token: Str
 	var body_text := response_body.get_string_from_utf8()
 
 	if result_code != HTTPRequest.RESULT_SUCCESS:
-		return ApiRequestResult.failure(status_code, "network_failure_%d" % result_code)
+		return ApiRequestResultScript.failure(status_code, "network_failure_%d" % result_code)
 
 	if body_text.is_empty():
 		if status_code >= 200 and status_code < 300:
-			return ApiRequestResult.success(status_code, {})
-		return ApiRequestResult.failure(status_code, "http_%d" % status_code)
+			return ApiRequestResultScript.success(status_code, {})
+		return ApiRequestResultScript.failure(status_code, "http_%d" % status_code)
 
 	var parser := JSON.new()
 	var parse_error := parser.parse(body_text)
 	if parse_error != OK:
-		return ApiRequestResult.failure(status_code, "invalid_json")
+		return ApiRequestResultScript.failure(status_code, "invalid_json")
 
 	if typeof(parser.data) != TYPE_DICTIONARY:
-		return ApiRequestResult.failure(status_code, "invalid_json")
+		return ApiRequestResultScript.failure(status_code, "invalid_json")
 
 	var parsed_body: Dictionary = parser.data
 	if status_code < 200 or status_code >= 300:
 		var error_message: String= parsed_body.get("error", parsed_body.get("message", "http_%d" % status_code))
-		return ApiRequestResult.failure(status_code, str(error_message))
+		return ApiRequestResultScript.failure(status_code, str(error_message))
 
-	return ApiRequestResult.success(status_code, parsed_body)
+	return ApiRequestResultScript.success(status_code, parsed_body)

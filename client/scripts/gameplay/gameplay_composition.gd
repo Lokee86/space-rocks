@@ -2,7 +2,7 @@ extends RefCounted
 class_name GameplayComposition
 
 const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
-const MatchResultsFlow := preload("res://scripts/ui/match_results/match_results_flow.gd")
+const MatchResultsFlowScript := preload("res://scripts/ui/match_results/match_results_flow.gd")
 
 signal gameplay_started
 signal replay_requested
@@ -51,7 +51,7 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_an
 	gameplay_menu_flow.configure_overlay_parent(overlay_parent)
 	match_end_flow = MatchEndFlow.new()
 	match_end_flow.configure(gameplay_hud_flow, gameplay_menu_flow, session_context)
-	match_results_flow = MatchResultsFlow.new()
+	match_results_flow = MatchResultsFlowScript.new()
 	var match_results_mount_parent := gameplay_user_interface
 	if match_results_mount_parent == null:
 		match_results_mount_parent = hud

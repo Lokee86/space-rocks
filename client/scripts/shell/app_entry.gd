@@ -7,13 +7,13 @@ const RoomSessionController := preload("res://scripts/session/room_session_contr
 const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
 const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
 const AppShutdownController := preload("res://scripts/session/app_shutdown_controller.gd")
-const AuthSessionController := preload("res://scripts/auth/auth_session_controller.gd")
-const AuthApiClient := preload("res://scripts/auth/auth_api_client.gd")
-const ApiHttpClient := preload("res://scripts/api/api_http_client.gd")
-const PlayerDataProfileApiClient := preload("res://scripts/profile/player_data_profile_api_client.gd")
-const ProfileStatsProvider := preload("res://scripts/profile/profile_stats_provider.gd")
-const MenuFlowController := preload("res://scripts/ui/menu_flow/menu_flow_controller.gd")
-const MultiplayerEntryFlow := preload("res://scripts/ui/menu_flow/multiplayer_entry_flow.gd")
+const AuthSessionControllerScript := preload("res://scripts/auth/auth_session_controller.gd")
+const AuthApiClientScript := preload("res://scripts/auth/auth_api_client.gd")
+const ApiHttpClientScript := preload("res://scripts/api/api_http_client.gd")
+const PlayerDataProfileApiClientScript := preload("res://scripts/profile/player_data_profile_api_client.gd")
+const ProfileStatsProviderScript := preload("res://scripts/profile/profile_stats_provider.gd")
+const MenuFlowControllerScript := preload("res://scripts/ui/menu_flow/menu_flow_controller.gd")
+const MultiplayerEntryFlowScript := preload("res://scripts/ui/menu_flow/multiplayer_entry_flow.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
@@ -57,15 +57,15 @@ func _ready() -> void:
 	add_child(app_shutdown_controller)
 	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
 
-	api_http_client = ApiHttpClient.new()
+	api_http_client = ApiHttpClientScript.new()
 	add_child(api_http_client)
 
-	player_data_profile_api_client = PlayerDataProfileApiClient.new(api_http_client)
-	profile_stats_provider = ProfileStatsProvider.new()
+	player_data_profile_api_client = PlayerDataProfileApiClientScript.new(api_http_client)
+	profile_stats_provider = ProfileStatsProviderScript.new()
 
-	auth_api_client = AuthApiClient.new(api_http_client)
+	auth_api_client = AuthApiClientScript.new(api_http_client)
 
-	auth_session_controller = AuthSessionController.new()
+	auth_session_controller = AuthSessionControllerScript.new()
 	add_child(auth_session_controller)
 	auth_session_controller.configure(auth_api_client)
 	auth_session_controller.auth_state_changed.connect(_on_auth_state_changed)
@@ -141,7 +141,7 @@ func _ready() -> void:
 		Callable(self, "_log_shell_status")
 	)
 
-	menu_flow_controller = MenuFlowController.new()
+	menu_flow_controller = MenuFlowControllerScript.new()
 	menu_flow_controller.configure(
 		user_interface,
 		main_menu,
@@ -157,7 +157,7 @@ func _ready() -> void:
 		Callable(menu_flow_controller, "show_multiplayer_pregame")
 	)
 
-	multiplayer_entry_flow = MultiplayerEntryFlow.new()
+	multiplayer_entry_flow = MultiplayerEntryFlowScript.new()
 	multiplayer_entry_flow.configure(menu_flow_controller, auth_session_controller)
 
 	_connect_main_menu_signals()
