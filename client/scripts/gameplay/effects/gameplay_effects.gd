@@ -1,4 +1,6 @@
 extends RefCounted
+class_name GameplayEffects
+
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 const BULLET_BLAST_SCENE := preload("res://scenes/animations/bullet_blast.tscn")
