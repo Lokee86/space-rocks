@@ -44,7 +44,7 @@ Hand-writing Rails schema, embedded DB schema, and Go playerdata structs separat
 
 ## V1 Stats Contract
 
-The initial planned logical `Stats` contract is summary-only and intended for match-resolution commits.
+The initial logical `Stats` contract is summary-only and intended for match-resolution commits.
 
 V1 stat fields:
 
@@ -53,9 +53,6 @@ V1 stat fields:
 - `ship_deaths`
 - `games_played`
 - `wins`
-
-This V1 contract does not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.
-
 For V1 multiplayer, the winner is the authenticated player with the highest match score.
 `wins` is account/multiplayer-only; Local Profile uses the shared core stats fields and intentionally excludes `wins`.
 
@@ -93,7 +90,7 @@ This SSoT is for logical player-data contracts, not raw database DDL.
 Logical schema examples:
 
 - `PlayerProfile` has `display_name` and profile metadata.
-- `PlayerLoadout` has selected ship, primary weapon, secondary weapon, and future equipment fields.
+- `PlayerLoadout` has selected ship, primary weapon, secondary weapon, and additional equipment fields.
 - `PlayerProgression` has unlocks, milestones, stats, or progress markers.
 - `MatchResultSummary` has account/profile relevant match summary fields.
 
@@ -111,7 +108,14 @@ Go `MatchResultSummary` structs and builders exist in the player-data runtime, a
 
 ## Scope
 
+- Logical player-data contracts for the current `Stats` and `MatchResultSummary` shapes.
+- Runtime adapters that read and write those logical contracts through `services/player-data`.
+
 ## Non-Goals
+
+- Physical table design details.
+- Gameplay state ownership outside player-data contracts.
+- Transport or packet routing beyond the player-data packet protocol.
 
 ## Source Layout
 
@@ -121,34 +125,6 @@ Current logical schema sources:
 - `shared/player_data/match_result.toml`
 
 These files define logical schema contracts and are not physical database schemas.
-
-## Data-Sync Pipeline Upgrade
-
-Player-data schema support should be added as a new data-sync domain.
-
-Likely future domain flag:
-
-- `-player-data`
-
-This is a future pipeline domain beside:
-
-- constants
-- packets
-- drop_tables
-
-The upgrade should start narrow and should not immediately generate full production migrations end-to-end.
-
-## Generated Outputs
-
-Likely first generated outputs:
-
-- Go playerdata structs/contracts.
-- generated schema reference docs.
-- contract fixtures or schema test fixtures.
-- Rails migration skeletons, later.
-- embedded DB migration skeletons, later.
-
-The first pipeline version should generate low-risk outputs before fully owning migrations.
 
 ## Rails/Postgres Boundary
 
@@ -191,29 +167,13 @@ Parity does not require identical physical tables.
 
 Both stores are implementations of the same player-data contract, not sources of independent domain truth.
 
-## Migration Skeleton Policy
-
-Rails migrations remain human-reviewed because database migrations are operationally sensitive.
-
-Embedded DB migrations also need review because local profile data must be durable and upgradeable.
-
-Generated migration skeletons are still not implemented.
-Migration skeleton generation remains future work if still needed.
-
-## Contract Tests
-
-Future contract tests:
-
-- SSoT schema parses and validates.
-- generated Go structs match SSoT fields.
-- Rails API payloads match SSoT fields through the OpenAPI contract.
-- embedded DB records map to SSoT fields.
-- no store adds independent player-data fields without updating SSoT.
-
 `NoDurableStore` for Guest may return defaults or reject durable writes, but should not pretend to persist account-shaped data.
 Guest uses singleton in-memory unsaved stats.
 Authenticated Account uses Rails/Postgres physical stats persistence.
 Local Profile uses embedded SQLite physical stats persistence in the standard no-tag development build.
-Profile reads are implemented through the data-handler and player-data runtime, not left as future work.
+Profile reads are implemented through the data-handler and player-data runtime.
 
-## Deferred Work
+## Related Limits
+
+- [Current System Limits](../limits/current-system-limits.md)
+- [Planning Notes](../planning/domain-backlog.md)

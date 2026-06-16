@@ -1,8 +1,8 @@
 # Client Menu Flow
 
-This document defines the canonical client menu-flow design for the final Multiplayer V1.1 client slice.
+This document defines the canonical client menu-flow design for the final Multiplayer V1.1 client vertical slice.
 
-Phase 5 is complete. Phase 6 / Match Results is complete and green.
+The full menu-flow/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.
 
 ## Implementation Status
 
@@ -11,6 +11,8 @@ Phase 2 / single-player pregame action slice is complete and green.
 Phase 3 / Sign In screen slice is complete and green.
 Phase 4 / Multiplayer pre-lobby actions slice is complete and green.
 Phase 5 / Profile readout transmission slice is complete and green.
+Phase 6 / Match Results slice is complete and green.
+Stats refresh / final smoke is complete and green.
 
 Completed Phase 1:
 
@@ -79,9 +81,10 @@ Completed Local Pilot / Guest selector:
 - Guest remains the fallback/default selectable row.
 - `LocalPilotFlow` owns this completed local pilot menu/sub-menu slice only.
 
-## Remaining Client Slice Plan
+Completed Stats refresh / final smoke:
 
-1. Stats refresh / final smoke
+- Stats refresh checks are complete and green.
+- Final smoke coverage for the menu-flow/profile/local-pilot/match-results slice is complete and green.
 
 ## Rollout Tracker
 
@@ -97,7 +100,7 @@ Completed Local Pilot / Guest selector:
 - [x] Profile readout transmission
 - [x] Match Results window
 - [x] Local Pilot / Guest selector
-- [ ] Stats refresh / final smoke
+- [x] Stats refresh / final smoke
 
 ## High-Level Scene Flow
 

@@ -8,9 +8,7 @@
 - Pickups have server-authoritative age, lifespan, and expiry.
 - Pickups are targetable.
 - Pickups are devtools-spawnable.
-- Pickup health is current health only.
 - `pickup_collected` and `pickup_effect_applied` are separate events.
-- Bullet/pickup collision damage is not enabled.
 - Pickup end-of-life blink is client presentation.
 - Normal spawning is separate work.
 
@@ -38,8 +36,6 @@ Pickup collision JSON should use class keys such as `powerup` and `weapon`, not 
 - `CollisionBody` uses `CollisionShapeCatalog`.
 - Server collision shape lookup uses `pickup_class`, not pickup type.
 - Scene paths do not belong in server pickup definitions.
-- Health is current health only.
-- There is no pickup `max_health` field.
 
 ## Packet Model
 
@@ -110,14 +106,6 @@ Pickup collision JSON should use class keys such as `powerup` and `weapon`, not 
 - Collection sound should not be owned by the pickup node because sync removal can free the node before sound finishes.
 - `pickup_effect_applied` is better for HUD and feedback sounds tied to the gameplay result.
 
-## Health And Future Damage
-
-- Pickup health exists as current health only.
-- No `max_health` exists for pickups.
-- Bullet/pickup collision damage is not enabled.
-- Future pickup damage should use the damage seam in [docs/design/damage.md](damage.md), build `DamageTarget` values in game-owned adapters, and apply `DamageResult` back to `Pickup.Health` through game-owned adapters.
-- Destroyed pickup behavior should be a later explicit decision.
-
 ## Lifespan And Expiry
 
 - Lifespan and expiry are implemented on the server.
@@ -168,3 +156,7 @@ Pickup collision JSON should use class keys such as `powerup` and `weapon`, not 
 - `Select-String -Path docs,services,client,shared -Pattern 'internal/game/entities/pickups'`
 - `Select-String -Path docs,services,client,shared -Pattern 'StatePacket.pickups'`
 - `Select-String -Path docs,services,client,shared -Pattern 'PickupState'`
+
+## Related Limits
+
+- [Current System Limits](../limits/current-system-limits.md)

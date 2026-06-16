@@ -164,7 +164,10 @@
 
 - The client may render weapon visuals, fire feedback, equipped weapon display, and impact presentation.
 - The client does not own authoritative weapon rules, cooldown, ammo, damage, or projectile creation.
-- This doc does not claim completed UI or equip presentation unless that work is implemented elsewhere.
+
+## Related Limits
+
+- [Current System Limits](../limits/current-system-limits.md)
 
 ## Testing And Verification
 
@@ -172,8 +175,7 @@
 - Broader integration uses `go test ./...` from `services/game-server`.
 - Packet or client checks belong only where weapon state crosses those seams.
 
-## Future Work
+## Related Planning
 
-- Add additional weapon profiles if new weapons are implemented.
-- Add client equip/presentation flows when those systems are implemented.
-- Add focused tests for new fire or profile rules as the weapon seam evolves.
+- [Planning Notes](../planning/domain-backlog.md)
+- [Player Build And Loadouts](../planning/player-build-and-loadouts.md)

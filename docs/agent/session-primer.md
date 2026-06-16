@@ -37,7 +37,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Client menu-flow Phase 5 is complete and green: profile readout transmission mounts `profile_readout.tscn` under `TransmissionScreen/ScreenDisplay`, and the readout fills callsign plus stat labels for guest and authenticated account contexts.
 - Local Pilot / Guest selector is complete: create, load/default, delete, and the delete confirmation sub-panel are implemented.
 - Client match-end work uses `MatchEndFlow`; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
-- Next near-term work is stats refresh / final smoke.
+- The full menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.
 - Pickup entity/drop/collection/lifespan/expiry work is complete through the pickup seam.
@@ -65,8 +65,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Keep packet and constants changes flowing through the source-of-truth TOML plus data-sync path.
 - Keep pickup presentation blink client-side from age/lifespan packet state.
 - Profile readout transmission is complete; do not re-open it as the next slice.
-- Match Results plus the small `GameMenuFlow` fix is the next active slice.
-- Stats refresh / final smoke remains the last slice.
+- Match Results, `GameMenuFlow`, and stats refresh are completed work in the menu-flow vertical slice.
 - Active-game and personal-death menu behavior should not change, and multiplayer Lobby Leave should return to Multiplayer Pregame without logging out.
 
 ## Common Mistakes To Avoid

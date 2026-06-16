@@ -74,9 +74,8 @@
 
 - Target kinds are `asteroid`, `enemy`, `player`, `projectile`, and `pickup`.
 - `TargetFilter.Allows` decides whether a target kind is included.
-- `TargetFilter` is explicit; kinds are either enabled or not enabled.
+- `TargetFilter` is explicit; kinds are either allowed or disallowed.
 - Current torpedo target filter includes asteroids and enemies only.
-- Players, projectiles, and pickups are not currently enabled for torpedo.
 
 ## Candidate And Hit Model
 
@@ -131,7 +130,6 @@
 - `normalizeRadialDamageSpec` supplies area cause when missing.
 - `damage.ResolveSingle` handles the actual damage math.
 - Asteroid damage can cause destruction, scoring, drop, and fragment consequences through existing Game code.
-- Enemy death consequences are not fully wired yet.
 - Player fatal handling routes through existing player fatal damage flow if player target filtering enables players.
 - Weapon and radial code stay out of the damage math itself.
 - See [docs/design/damage.md](damage.md) for the damage seam details.
@@ -145,7 +143,6 @@
 - Current torpedo radial spec uses `CoverageAnnularWave`.
 - Current torpedo radial spec uses `ExpirationSimultaneous`.
 - Current torpedo target filter includes asteroids and enemies.
-- Current torpedo target filter excludes players, projectiles, and pickups.
 - Current torpedo radial damage is explosive area damage.
 - Zone count, zone width, spawn interval, tick interval, total time, and zone lifetime are tunable weapon constants.
 - Repeated radial ticks can damage targets multiple times if they remain in active coverage over time.
@@ -156,7 +153,10 @@
 - Radial effect spawning records `radial_effect_started` for presentation and event flow.
 - `services/game-server/internal/game/events.go` maps the domain event into the presentation event stream.
 - `services/game-server/internal/game/events/events.go` defines the domain event type.
-- The current event flow gives presentation a radial-effect start signal, but this doc does not claim client radial rendering is fully implemented.
+
+## Related Limits
+
+- [Current System Limits](../limits/current-system-limits.md)
 
 ## Testing And Verification
 
@@ -165,18 +165,3 @@
 - Focused tests live under `services/game-server/internal/game/effects/radial/*_test.go` and cover zone building, coverage modes, stepping, store behavior, and target filtering.
 - `services/game-server/internal/game/simulation_radial_effects.go` and `services/game-server/internal/game/radial_spawning.go` are the key integration seams to re-check when radial spawning or hit handling changes.
 - If the broader Go test run is unavailable, run the focused radial package tests first.
-
-## Future Work
-
-- Radial does not implement knockback yet.
-- Radial does not implement status effects yet.
-- Radial does not implement client visuals by itself.
-- Torpedo does not target players, projectiles, or pickups by default.
-- PvP or player radial damage must be explicitly enabled later through target filters or rules.
-- Future possibilities include shockwave or knockback payloads.
-- Future possibilities include expanding hazardous fields.
-- Future possibilities include status-effect payloads.
-- Future possibilities include falloff rules.
-- Future possibilities include richer presentation events.
-- Future possibilities include additional radial weapons.
-- Future work should stay distinct from implemented behavior.
