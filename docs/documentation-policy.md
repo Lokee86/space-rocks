@@ -1,10 +1,11 @@
 ## Documentation Policies
+Parent index: [Docs](!README.md)
 
 ## Purpose
 
 This document defines the documentation policies for Space Rocks.
 
-These policies govern where documentation belongs, how documentation is classified, how folders and README indexes are maintained, how draft documentation is handled, how code and documentation connect, and how stale documentation is removed.
+These policies govern where documentation belongs, how documentation is classified, how folders and `!README.md` indexes are maintained, how draft documentation is handled, how code and documentation connect, and how stale documentation is removed.
 
 The formal documenting procedure is defined separately. These policies describe the rules that procedure must follow.
 
@@ -74,19 +75,19 @@ out of scope
 
 Domain docs must not map code directly.
 
-Domain docs must link to associated technical systems by README index.
+Domain docs must link to associated technical systems by `!README.md` index.
 
 Example:
 
 ```markdown
-- [Game Server](../../services/game-server/README.md)
-- [Client](../../services/client/README.md)
-- [Player Data](../../services/player-data/README.md)
-- [Realtime Protocol](../../protocol/realtime/README.md)
-- [Data Pipeline](../../data/README.md)
+- [Game Server](../../services/game-server/!README.md)
+- [Client](../../services/client/!README.md)
+- [Player Data](../../services/player-data/!README.md)
+- [Realtime Protocol](../../protocol/realtime/!README.md)
+- [Data Pipeline](../../data/!README.md)
 ```
 
-Domain docs should not link directly to code seam READMEs.
+Domain docs should not link directly to code seam `!README.md` files.
 
 ## Service Documentation Policy
 
@@ -188,7 +189,7 @@ entities
 Top-level systems-design keeps broad docs such as:
 
 ```text
-README
+!README.md
 architecture.md
 authority-boundaries.md
 ```
@@ -390,11 +391,13 @@ If the information is temporary, unclear, or not ready to classify, use `docs/no
 
 If the information is incomplete but has a clear eventual home, use a nearby `stubs/` folder.
 
-## README Index Policy
+## `!README.md` Index Policy
 
-Every documentation folder must contain a `README.md`.
+Every documentation folder must contain a `!README.md`.
 
-Every README must index:
+`stubs/` folders are exempt from this index requirement.
+
+Every `!README.md` must index:
 
 ```text
 every markdown file directly in that folder
@@ -409,24 +412,24 @@ Example:
 - [networking.md](networking.md) - Game-server networking responsibilities and runtime flow.
 ```
 
-Subfolders are linked by folder name to the subfolder README.
+Subfolders are linked by folder name to the subfolder `!README.md`.
 
 Example:
 
 ```markdown
-- [Game Server](game-server/README.md) - Go realtime server implementation docs.
-- [Random Subfolder](Random Subfolder/README.md) - Example subfolder index link.
+- [Game Server](game-server/!README.md) - Go realtime server implementation docs.
+- [Random Subfolder](Random Subfolder/!README.md) - Example subfolder index link.
 ```
 
 Rules:
 
 ```text
 No orphan docs.
-No folder without a README.
-Subfolder links must point to the subfolder README.
+No folder without a `!README.md`.
+Subfolder links must point to the subfolder `!README.md`.
 ```
 
-The top-level `docs/README.md` is both:
+The top-level `docs/!README.md` is both:
 
 ```text
 documentation rulebook
@@ -443,9 +446,11 @@ A stub is not canonical documentation.
 
 A stub may be incomplete, exploratory, partial, or waiting for enough detail to become official documentation.
 
-Every `stubs/` folder must have a README.
+`stubs/` folders are exempt from `!README.md` index requirements.
 
-The `stubs/README.md` should explain that docs in the folder are:
+Links to stub files in parent `!README.md` indexes must label the description as a stub.
+
+If a `stubs/` folder has its own index, it should explain that docs in the folder are:
 
 ```text
 drafts
@@ -460,8 +465,8 @@ When a stub becomes canonical:
 
 ```text
 move it from stubs/ into the parent folder
-update the parent README index
-remove it from stubs/README.md
+update the parent `!README.md` index
+remove it from the stubs index, if one exists
 ensure the doc has the required shape for its type
 add related docs
 add code maps if required
@@ -574,6 +579,8 @@ Use `Active issues` only when the doc needs to reference temporary issues, block
 
 Active issues should link to sorted limits backlog headings.
 
+Anything temporary should ideally be kept out of docs and in a work order or to-do list instead.
+
 Example:
 
 ```markdown
@@ -620,23 +627,23 @@ related tests
 important non-ownership boundaries
 ```
 
-## Code Seam README Policy
+## Code Seam `!README.md` Policy
 
-Major code seams should have README indexes in the relevant package or folder.
+Major code seams should have `!README.md` indexes in the relevant package or folder.
 
-Code seam READMEs are discoverable from relevant documentation README indexes and optionally from specific implementation docs.
+Code seam `!README.md` files are discoverable from relevant documentation `!README.md` indexes and optionally from specific implementation docs.
 
 Link direction:
 
 ```text
-documentation README index -> code seam README
-implementation doc -> code seam README when relevant
-code seam README -> related documentation
+documentation `!README.md` index -> code seam `!README.md`
+implementation doc -> code seam `!README.md` when relevant
+code seam `!README.md` -> related documentation
 ```
 
-Domain docs should not link directly to code seam READMEs.
+Domain docs should not link directly to code seam `!README.md` files.
 
-A code seam README should include:
+A code seam `!README.md` should include:
 
 ```text
 Purpose
@@ -650,7 +657,7 @@ Notes
 
 Do not add documentation comments to every source file.
 
-Use source comments only for unusually easy-to-misunderstand seams where a README link is not enough.
+Use source comments only for unusually easy-to-misunderstand seams where a `!README.md` link is not enough.
 
 ## Legacy Removal Policy
 
@@ -661,7 +668,7 @@ A legacy doc is fully deprecated when:
 ```text
 all useful facts have been migrated, rewritten, or intentionally discarded
 current docs no longer depend on it
-no README index presents it as current authority
+no `!README.md` index presents it as current authority
 ```
 
 Stale legacy documentation should not be preserved indefinitely.

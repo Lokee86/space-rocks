@@ -1,4 +1,5 @@
 # Progression And Rewards
+Parent index: [Gameplay Planning](!README.md)
 
 ## Purpose
 

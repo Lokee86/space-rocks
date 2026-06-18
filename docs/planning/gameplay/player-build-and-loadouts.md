@@ -1,4 +1,5 @@
 # Player Build And Loadouts
+Parent index: [Gameplay Planning](!README.md)
 
 ## Purpose
 

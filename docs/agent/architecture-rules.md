@@ -1,4 +1,5 @@
 # Agent Architecture Rules
+Parent index: [Agent](!README.md)
 
 Read this before adding ownership seams, moving packages/folders, changing lifecycle/networking/game-loop responsibilities, or editing known gravity-well files.
 

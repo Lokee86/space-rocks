@@ -1,4 +1,5 @@
 ## Documentation Structure And Governance
+Parent index: [Planning](!README.md)
 
 ## Purpose
 
@@ -33,7 +34,7 @@ Current documentation has several structural issues:
 * Folder indexes are inconsistent or missing.
 * Planned systems do not have a formal graduation path into implemented docs.
 * Code-to-doc linking is not consistently handled.
-* Major package/folder seams do not consistently have README indexes explaining what they own.
+* Major package/folder seams do not consistently have `!README.md` indexes explaining what they own.
 * Data pipeline usage and configuration are not documented as first-class current-system documentation.
 
 ## Documentation Types
@@ -63,18 +64,18 @@ Domain docs answer:
 * What is explicitly out of scope?
 * Which implementation docs explain the participating systems?
 
-Domain docs should not map directly to code files. They should link to the README index for associated technical systems and implementation docs.
+Domain docs should not map directly to code files. They should link to the `!README.md` index for associated technical systems and implementation docs.
 
 Links should mask file names behind the system name.
 
 Example:
 
 ```markdown
-- [Game Server](../../services/game-server/README.md)
-- [Client](../../services/client/README.md)
-- [Player Data](../../services/player-data/README.md)
-- [Realtime Protocol](../../protocol/realtime/README.md)
-- [Data Pipeline](../../data/README.md)
+- [Game Server](../../services/game-server/!README.md)
+- [Client](../../services/client/!README.md)
+- [Player Data](../../services/player-data/!README.md)
+- [Realtime Protocol](../../protocol/realtime/!README.md)
+- [Data Pipeline](../../data/!README.md)
 ```
 
 ### Services
@@ -258,22 +259,22 @@ Rules for `docs/notes.md`:
 
 ## README And Index Rules
 
-The top-level `docs/README.md` should be both:
+The top-level `docs/!README.md` should be both:
 
 * the documentation rulebook
 * the top-level documentation index
 
 Do not create a separate top-level index unless the top-level README becomes too large to serve both purposes.
 
-Every documentation folder must contain a `README.md`.
+Every documentation folder must contain a `!README.md`.
 
-Every `README.md` must, at minimum:
+Every `!README.md` must, at minimum:
 
 * explain what the folder owns
 * explain what does not belong there
 * index every markdown file directly in the folder
 * index every direct subfolder
-* link to each direct subfolder README
+* link to each direct subfolder `!README.md`
 
 This rule applies at every folder level.
 
@@ -285,7 +286,7 @@ Domain docs describe cross-system flows and integration.
 
 Domain docs should not include required code maps.
 
-Domain docs must link to associated system documentation by README index. The link text should be the name of the technical system, not the file name.
+Domain docs must link to associated system documentation by `!README.md` index. The link text should be the name of the technical system, not the file name.
 
 Domain docs should link to:
 
@@ -421,15 +422,15 @@ A code map should list:
 * related tests
 * important non-ownership boundaries
 
-Domain docs should not map code directly. They should link to associated technical system README indexes.
+Domain docs should not map code directly. They should link to associated technical system `!README.md` indexes.
 
 Systems-design docs may include implementation links where useful, but should not become exhaustive code indexes.
 
 ### Code To Documentation
 
-The default code-to-doc link should be a README index in the relevant code package or folder.
+The default code-to-doc link should be a `!README.md` index in the relevant code package or folder.
 
-All major code seams should have a `README.md` in the package/folder that links to relevant documentation for its contents.
+All major code seams should have a `!README.md` in the package/folder that links to relevant documentation for its contents.
 
 Major code seam README files should include:
 
@@ -451,7 +452,7 @@ This applies to major seams such as:
 * major client script folders
 * generated/source-of-truth boundary folders
 
-Source comments should be used only for unusual or easily misunderstood seams where a README link is not enough. Prefer package/folder README indexes over comments inside implementation files.
+Source comments should be used only for unusual or easily misunderstood seams where a `!README.md` link is not enough. Prefer package/folder `!README.md` indexes over comments inside implementation files.
 
 Do not add documentation links to every file, every function, or routine implementation details.
 
@@ -471,16 +472,16 @@ When a planned system becomes implemented or partially implemented:
    * conceptual mechanics/invariants -> systems-design
    * dev/debug tooling -> devtools
    * known current constraint -> limits
-3. Create or update the target folder README index before adding new docs.
+3. Create or update the target folder `!README.md` index before adding new docs.
 4. Create or update the current-system documentation.
-5. Add links from domain docs to associated technical systems by README.
+5. Add links from domain docs to associated technical systems by `!README.md`.
 6. Add code maps only in service, data, protocol, and devtools implementation docs where appropriate.
-7. Add or update package/folder README files for major code seams touched by implementation.
+7. Add or update package/folder `!README.md` files for major code seams touched by implementation.
 8. Remove or reduce duplicated implemented facts from the planning doc.
 9. Add an `Implemented references` section in the planning doc linking to the new current docs.
 10. Leave unresolved decisions, future variants, and sequencing in the planning doc.
-11. Update parent README indexes.
-12. Update `docs/README.md` only if the documentation taxonomy itself changed.
+11. Update parent `!README.md` indexes.
+12. Update `docs/!README.md` only if the documentation taxonomy itself changed.
 
 Planning docs should include a `Graduation targets` section before or during implementation.
 
@@ -560,7 +561,7 @@ The planning document should capture:
 
 ### Phase 2: Create Top-Level Documentation Governance
 
-Create or update `docs/README.md`.
+Create or update `docs/!README.md`.
 
 It should act as both:
 
@@ -605,7 +606,7 @@ The template should include:
 
 ### Phase 5: Rebuild Service Documentation
 
-Analyze actual service structure and create accurate service README indexes.
+Analyze actual service structure and create accurate service `!README.md` indexes.
 
 Initial services:
 
@@ -666,7 +667,7 @@ Initial domain groups:
 * Platform
 * Technical
 
-Domain docs should describe cross-system flows and link to associated technical system README indexes.
+Domain docs should describe cross-system flows and link to associated technical system `!README.md` indexes.
 
 ### Phase 10: Rebuild Devtools Documentation
 
@@ -682,7 +683,7 @@ Use legacy devtools docs as extraction material only.
 
 ### Phase 11: Add Code Seam README Indexes
 
-Add README indexes to major code package/folder seams.
+Add `!README.md` indexes to major code package/folder seams.
 
 These README files should link to relevant docs and explain the package/folder’s ownership.
 
@@ -706,17 +707,17 @@ Keep `docs/notes.md` as a non-authoritative scratchpad and periodically triage i
 
 The restructuring is successful when:
 
-* `docs/README.md` explains documentation types, folder rules, README/index rules, graduation procedure, and code-linking policy.
-* Every documentation folder has a README index.
-* Every README indexes direct files and direct subfolders.
-* Domain docs describe broad cross-system flows and link to associated technical system README indexes.
+* `docs/!README.md` explains documentation types, folder rules, `!README.md` index rules, graduation procedure, and code-linking policy.
+* Every documentation folder has a `!README.md` index.
+* Every `!README.md` indexes direct files and direct subfolders.
+* Domain docs describe broad cross-system flows and link to associated technical system `!README.md` indexes.
 * Domain docs do not directly map code.
 * Protocol docs are first-class and separate from domains.
 * Data docs include source-of-truth, generated output, pipeline usage, pipeline configuration, and validation procedures.
 * `systems-design/` replaces `design/` as the home for conceptual mechanics, authority boundaries, and invariants.
 * Devtools docs are separate from production gameplay docs and split into design, server, and client documentation.
 * Service, data, protocol, and devtools implementation docs include code maps where appropriate.
-* Major code seam packages/folders have README indexes linking to relevant documentation.
+* Major code seam packages/folders have `!README.md` indexes linking to relevant documentation.
 * Planning docs have a real graduation procedure and use `Graduation targets` as they are updated.
 * Legacy docs are not current authority.
 * Legacy docs are deleted once fully deprecated.

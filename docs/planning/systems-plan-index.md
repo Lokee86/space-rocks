@@ -1,4 +1,5 @@
 # Systems Plan Index
+Parent index: [Planning](!README.md)
 
 This is the broad index for major future system plans under `docs/planning`.
 

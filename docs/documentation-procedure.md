@@ -1,10 +1,11 @@
 ## Documentation Procedure
+Parent index: [Docs](!README.md)
 
 ## Purpose
 
 This procedure defines the standard process for creating, updating, moving, and removing Space Rocks documentation.
 
-Use this procedure for all documentation work, including current docs, planning docs, stubs, README indexes, code seam README indexes, limits, notes, and legacy cleanup.
+Use this procedure for all documentation work, including current docs, planning docs, stubs, `!README.md` indexes, code seam `!README.md` indexes, limits, notes, and legacy cleanup.
 
 ## Procedure Summary
 
@@ -14,12 +15,12 @@ Follow these steps in order:
 1. Classify the documentation type.
 2. Choose the owning folder.
 3. Decide whether a new file or folder is needed.
-4. Create or update all relevant README indexes.
+4. Create or update all relevant `!README.md` indexes.
 5. Apply the stub rule if the doc is incomplete.
 6. Write or update the doc using the required shape for its type.
 7. Add related docs, code maps, active issues, and notes.
 8. Update planning docs when planned work becomes current.
-9. Update or create code seam README indexes when needed.
+9. Update or create code seam `!README.md` indexes when needed.
 10. Clean up stale, duplicated, or legacy documentation.
 11. Run a final verification pass.
 ```
@@ -108,7 +109,7 @@ current devtools docs   -> docs/devtools/...
 planning devtools docs  -> docs/planning/devtools/...
 ```
 
-If a planning equivalent folder does not exist yet, create it only when it is a durable boundary that will have multiple related docs. Otherwise use the nearest existing planning folder or a local `stubs/` folder.
+If a planning equivalent folder does not exist yet, create it.
 
 ## 3. Decide Whether a New File or Folder Is Needed
 
@@ -160,17 +161,17 @@ stuff
 gameplay
 ```
 
-## 4. Create or Update All Relevant README Indexes
+## 4. Create or Update All Relevant `!README.md` Indexes
 
 Before writing the doc body, make the location discoverable.
 
 Every documentation folder must contain:
 
 ```text
-README.md
+!README.md
 ```
 
-Every README must index:
+Every `!README.md` must index:
 
 ```text
 every markdown file directly in that folder
@@ -183,17 +184,17 @@ Markdown files are linked directly:
 - [networking.md](networking.md) - Game-server networking responsibilities and runtime flow.
 ```
 
-Subfolders are linked by folder name to the subfolder README:
+Subfolders are linked by folder name to the subfolder `!README.md`:
 
 ```markdown
-- [Game Server](game-server/README.md) - Go realtime server implementation docs.
-- [Random Subfolder](Random Subfolder/README.md) - Example subfolder index link.
+- [Game Server](game-server/!README.md) - Go realtime server implementation docs.
+- [Random Subfolder](Random Subfolder/!README.md) - Example subfolder index link.
 ```
 
 When adding a new file:
 
 ```text
-1. Add the file to the parent README.
+1. Add the file to the parent `!README.md`.
 2. Use the file name as the link text.
 3. Add a one-line description.
 ```
@@ -201,25 +202,25 @@ When adding a new file:
 When adding a new folder:
 
 ```text
-1. Create the folder README.
-2. Add the folder to the parent README.
+1. Create the folder `!README.md`.
+2. Add the folder to the parent `!README.md`.
 3. Use the folder name as the link text.
-4. Link to folder-name/README.md.
+4. Link to folder-name/!README.md.
 5. Add a one-line description.
 ```
 
-When a documentation README should index code seam READMEs, add those links during this step.
+When a documentation `!README.md` should index code seam `!README.md` files, add those links during this step.
 
 Example:
 
 ```markdown
-- [Game package](../../../services/game-server/internal/game/README.md) - Authoritative game simulation package index.
-- [Networking package](../../../services/game-server/internal/networking/README.md) - WebSocket transport and packet routing package index.
+- [Game package](../../../services/game-server/internal/game/!README.md) - Authoritative game simulation package index.
+- [Networking package](../../../services/game-server/internal/networking/!README.md) - WebSocket transport and packet routing package index.
 ```
 
-Domain README indexes should not link directly to code seam READMEs. Domain docs link to associated technical documentation indexes instead.
+Domain `!README.md` indexes should not link directly to code seam `!README.md` files. Domain docs link to associated technical documentation indexes instead.
 
-Update `docs/README.md` only when:
+Update `docs/!README.md` only when:
 
 ```text
 a top-level documentation type changes
@@ -228,11 +229,15 @@ the documenting procedure changes
 the index policy changes
 ```
 
-Do not update `docs/README.md` for every ordinary doc addition.
+Do not update `docs/!README.md` for every ordinary doc addition.
 
 ## 5. Apply the Stub Rule If the Doc Is Incomplete
 
 If the doc is incomplete, place it in the nearest appropriate `stubs/` folder.
+
+`stubs/` folders are exempt from the `!README.md` index requirement.
+
+When a parent `!README.md` indexes a stub file, the link description must start with `Stub:`.
 
 Examples:
 
@@ -242,16 +247,20 @@ docs/services/game-server/stubs/networking.md
 docs/systems-design/combat/stubs/status-effects.md
 ```
 
+Example entry:
+
+```markdown
+- [example.md](stubs/example.md) - Stub: incomplete example documentation.
+```
+
 If the needed `stubs/` folder does not exist:
 
 ```text
 1. Create the stubs/ folder.
-2. Create stubs/README.md.
-3. Index the stubs/ folder from the parent README.
-4. Index the stub file from stubs/README.md.
+2. Add the stub file to the !README index of its parent folder.
 ```
 
-A `stubs/README.md` must state that files in the folder are:
+If a `stubs/` folder has its own index, it must state that files in the folder are:
 
 ```text
 drafts
@@ -264,8 +273,8 @@ When a stub becomes canonical:
 
 ```text
 1. Move it from stubs/ into the parent folder.
-2. Update the parent README index.
-3. Remove it from stubs/README.md.
+2. Update the parent `!README.md` index.
+3. Remove it from the stubs index, if one exists.
 4. Ensure the doc has the required shape for its type.
 5. Add related docs.
 6. Add code maps if required.
@@ -306,7 +315,7 @@ Notes
 
 Domain docs must not include direct code maps.
 
-Domain docs should link to associated technical systems by README index.
+Domain docs should link to associated technical systems by `!README.md` index.
 
 ## Service Doc Shape
 
@@ -506,7 +515,7 @@ agent docs
 
 Use one `Related docs` section unless the doc becomes large enough to justify grouping.
 
-Domain docs should link to technical system README indexes, not code files or code seam READMEs.
+Domain docs should link to technical system `!README.md` indexes, not code files or code seam `!README.md` files.
 
 ## Code Maps
 
@@ -546,7 +555,7 @@ related tests
 important non-ownership boundaries
 ```
 
-Prefer linking to relevant code seam READMEs when those exist.
+Prefer linking to relevant code seam `!README.md` files when those exist.
 
 ## Active Issues
 
@@ -619,7 +628,7 @@ When planned work becomes implemented or partially implemented:
 4. Leave future work, unresolved decisions, and sequencing in planning.
 5. Add an Implemented references section when useful.
 6. Remove stale duplicate current facts from the planning doc.
-7. Update related README indexes.
+7. Update related `!README.md` indexes.
 8. Update related docs as needed.
 ```
 
@@ -636,13 +645,13 @@ Example:
 - [Inventory Loadout Flow](../../domains/player-experience/inventory-loadout-flow.md) - Cross-system flow from ownership to match start.
 ```
 
-## 9. Update or Create Code Seam README Indexes When Needed
+## 9. Update or Create Code Seam `!README.md` Indexes When Needed
 
-When documentation covers a major implementation seam, add or update the code seam README.
+When documentation covers a major implementation seam, add or update the code seam `!README.md`.
 
-Major code seams should have README indexes in the relevant package or folder.
+Major code seams should have `!README.md` indexes in the relevant package or folder.
 
-A code seam README should include:
+A code seam `!README.md` should include:
 
 ```text
 Purpose
@@ -654,21 +663,21 @@ Related tests
 Notes
 ```
 
-Code seam READMEs should be discoverable from relevant documentation README indexes and optionally from specific implementation docs.
+Code seam `!README.md` files should be discoverable from relevant documentation `!README.md` indexes and optionally from specific implementation docs.
 
 Link direction:
 
 ```text
-documentation README index -> code seam README
-implementation doc -> code seam README when relevant
-code seam README -> related documentation
+documentation `!README.md` index -> code seam `!README.md`
+implementation doc -> code seam `!README.md` when relevant
+code seam `!README.md` -> related documentation
 ```
 
-Domain docs should not link directly to code seam READMEs.
+Domain docs should not link directly to code seam `!README.md` files.
 
-Do not duplicate full documentation inside code seam READMEs. Keep them focused on navigation and ownership.
+Do not duplicate full documentation inside code seam `!README.md` files. Keep them focused on navigation and ownership.
 
-Use source comments only for unusually easy-to-misunderstand seams where a README link is not enough.
+Use source comments only for unusually easy-to-misunderstand seams where a `!README.md` link is not enough.
 
 Do not add documentation comments to every source file, every function, or routine implementation detail.
 
@@ -685,7 +694,7 @@ duplicate sections across current docs
 limits that actually describe permanent systems-design rules
 notes that now have a proper home
 stub docs that should graduate or be deleted
-README index entries that point to moved or deleted files
+`!README.md` index entries that point to moved or deleted files
 ```
 
 Legacy docs should be deleted once fully deprecated.
@@ -695,7 +704,7 @@ A legacy doc is fully deprecated when:
 ```text
 all useful facts have been migrated, rewritten, or intentionally discarded
 current docs no longer depend on it
-no README index presents it as current authority
+no `!README.md` index presents it as current authority
 ```
 
 Do not keep stale legacy documentation indefinitely.
@@ -708,17 +717,17 @@ Before considering the documentation change done, verify:
 The documentation type is correct.
 The owning folder is correct.
 No unnecessary file or folder was created.
-All relevant README indexes are updated.
-Subfolder links point to subfolder README files.
+All relevant `!README.md` indexes are updated.
+Subfolder links point to subfolder `!README.md` files.
 Stub policy was followed.
 The doc has Purpose, Overview, Related docs, and Notes.
 The doc has the required type-specific sections.
 Implementation docs have code maps where required.
-Domain docs link to system README indexes, not code.
+Domain docs link to system `!README.md` indexes, not code.
 Active issues link to sorted limits backlog headings.
 Planning docs were updated if planned work became current.
-Code seam README indexes were added or updated when major seams were involved.
+Code seam `!README.md` indexes were added or updated when major seams were involved.
 Legacy docs were deleted if fully deprecated.
 No stale duplicate facts remain.
-docs/README.md was updated only if taxonomy or procedure changed.
+docs/!README.md was updated only if taxonomy or procedure changed.
 ```

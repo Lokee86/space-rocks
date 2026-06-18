@@ -1,4 +1,5 @@
 # Deferred Player Experience Systems
+Parent index: [Gameplay Planning](!README.md)
 
 ## Purpose
 

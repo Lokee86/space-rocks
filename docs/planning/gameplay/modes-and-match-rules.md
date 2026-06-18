@@ -1,4 +1,5 @@
 # Modes And Match Rules
+Parent index: [Gameplay Planning](!README.md)
 
 ## Purpose
 
