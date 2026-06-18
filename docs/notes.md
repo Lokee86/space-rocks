@@ -1,4 +1,5 @@
 # Project Notes
+Parent index: [Docs](!README.md)
 
 This file is a small parking lot for project memory that does not yet belong in a canonical document.
 

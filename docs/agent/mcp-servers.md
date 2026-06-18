@@ -1,4 +1,5 @@
 # Space Rocks MCP Servers
+Parent index: [Agent](!README.md)
 
 This is the permanent agent-facing reference for the Space Rocks MCP split.
 
@@ -189,4 +190,3 @@ Use Write MCP when you need:
 - If the tools do not appear in Codex after a config change, restart the session.
 - If Write MCP is reachable from outside the machine, stop and remove that exposure.
 - If Godot bridge reads fail, check the local bridge state before changing MCP wiring.
-

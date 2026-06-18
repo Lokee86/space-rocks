@@ -1,4 +1,5 @@
 # Data Sync And SSOT Pipeline
+Parent index: [Data](../!README.md)
 
 ## Purpose
 

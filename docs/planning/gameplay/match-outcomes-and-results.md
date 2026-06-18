@@ -1,4 +1,5 @@
 # Match Outcomes And Results
+Parent index: [Gameplay Planning](!README.md)
 
 ## Purpose
 

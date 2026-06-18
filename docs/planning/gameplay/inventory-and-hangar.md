@@ -1,4 +1,5 @@
 # Inventory And Hangar
+Parent index: [Gameplay Planning](!README.md)
 
 ## Purpose
 

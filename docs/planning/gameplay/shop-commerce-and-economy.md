@@ -1,4 +1,5 @@
 # Shop, Commerce, And Economy
+Parent index: [Gameplay Planning](!README.md)
 
 ## Purpose
 
