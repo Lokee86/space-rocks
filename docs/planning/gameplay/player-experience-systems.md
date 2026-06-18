@@ -1,5 +1,5 @@
 # Player Experience Systems
-Parent index: [Gameplay Planning](!README.md)
+Parent index: [Gameplay Planning](./!README.md)
 
 ## Purpose
 

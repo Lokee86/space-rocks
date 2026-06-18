@@ -1,6 +1,6 @@
 ## Internal API Surface
 
-Parent index: [API Server](!README.md)
+Parent index: [API Server](./!README.md)
 
 ## Purpose
 
@@ -71,6 +71,8 @@ The internal API surface participates in these roles:
 * **Contract implementation:** Rails controllers implement HTTP shapes owned by `shared/contracts/http/openapi.yaml`.
 
 ## Protocols and APIs
+
+This surface exposes internal Rails endpoints for game-server and player-data service-to-service calls. The game-server consumes token verification, and the player-data service consumes account-backed stats and match-result operations. Rails owns authenticated-account and token authority behind these endpoints, while the boundary carries internal bearer authentication plus account IDs and minimal identity or stats data. It does not own client session routing, gameplay admission policy, or presentation behavior.
 
 ### Internal request authentication
 
@@ -369,7 +371,7 @@ cd services/player-data && go test ./playerdata
 
 ## Related docs
 
-* [API Server](!README.md)
+* [API Server](./!README.md)
 * [Auth And OAuth](auth-and-oauth.md)
 * [Player Stats And Match Results](player-stats-and-match-results.md)
 

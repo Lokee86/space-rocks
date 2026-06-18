@@ -1,5 +1,5 @@
 # Agent Current Context
-Parent index: [Agent](!README.md)
+Parent index: [Agent](./!README.md)
 
 This file is volatile project memory. Read it only when the task depends on current refactor status, dirty worktree notes, recent Godot/editor changes, or known gaps.
 

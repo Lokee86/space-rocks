@@ -394,8 +394,6 @@ Use the normal client GUT verification flow when changing pickup presentation be
 * [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
 * [Pickup entities](../../../systems-design/entities/stubs/pickup-entities.md) - Stub: pickup entity design documentation.
 * [Collision shape data](../../../data/stubs/collision-shape-data.md) - Stub: collision-shape source-of-truth documentation.
-* [Documentation policy](../../../documentation-policy.md)
-* [Documentation procedure](../../../documentation-procedure.md)
 
 ## Notes
 

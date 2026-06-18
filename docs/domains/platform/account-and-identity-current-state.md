@@ -1,5 +1,5 @@
 # Account And Identity Current State
-Parent index: [Platform](!README.md)
+Parent index: [Platform](./!README.md)
 
 ## Purpose
 
@@ -259,7 +259,7 @@ Future and unresolved policy belongs in planning docs.
 
 ## Related docs
 
-- [Platform domain index](!README.md)
+- [Platform domain index](./!README.md)
 - [Domain index](../!README.md)
 - [Client service index](../../services/client/!README.md)
 - [Game Server service index](../../services/game-server/!README.md)

@@ -1,5 +1,5 @@
 ## Documentation Policies
-Parent index: [Docs](!README.md)
+Parent index: [Docs](./!README.md)
 
 ## Purpose
 
@@ -109,6 +109,7 @@ Service docs should explain:
 what owns the runtime behavior
 what the service implements
 what the service does not own
+what prose summary explains the runtime/API/protocol surface
 what APIs or protocols it exposes or consumes
 what data it persists or mutates
 what domain flows it participates in
@@ -117,6 +118,18 @@ what code paths implement it
 ```
 
 Service docs should include code maps when they document implementation.
+
+When a service doc covers an API, protocol, or other runtime surface, it must include a prose summary that explains:
+
+```text
+what the surface is for
+who calls or consumes it
+who owns authority behind it
+what data crosses the boundary
+what the surface explicitly does not own
+```
+
+Endpoint tables, packet lists, wrapper method lists, and code maps are supporting detail, not a replacement for explanatory text.
 
 Service docs should not describe the entire cross-system domain concept unless that concept is fully owned by the service.
 
@@ -139,6 +152,18 @@ what implementation docs cover the runtime paths
 ```
 
 Protocol docs may include code maps when they cover implementation paths.
+
+When a protocol doc covers a request, message, packet, or transport surface, it must include a prose summary that explains:
+
+```text
+what the surface is for
+who calls or consumes it
+who owns authority behind it
+what data crosses the boundary
+what the surface explicitly does not own
+```
+
+Endpoint tables, packet lists, wrapper method lists, and code maps are supporting detail, not a replacement for explanatory text.
 
 Protocol docs should link to related service docs and data docs for detailed ownership and source-of-truth information.
 
@@ -438,6 +463,8 @@ The top-level `docs/!README.md` is both:
 documentation rulebook
 top-level documentation index
 ```
+
+Files linking to their parent index must use `./!README.md` instead of plain `!README.md` due to relevant pathing issues.
 
 ## Stub Policy
 

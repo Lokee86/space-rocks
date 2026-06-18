@@ -1,5 +1,5 @@
 # Agent Server Notes
-Parent index: [Agent](!README.md)
+Parent index: [Agent](./!README.md)
 
 Use this when changing the Go game server, networking, rooms, gameplay simulation, packet codec, logging, or the planned API boundary.
 

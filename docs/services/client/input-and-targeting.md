@@ -1,6 +1,6 @@
 # Input And Targeting
 
-Parent index: [Client](!README.md)
+Parent index: [Client](./!README.md)
 
 ## Purpose
 
@@ -360,7 +360,7 @@ Documentation/test coverage note:
 
 ## Related docs
 
-* [Client](!README.md)
+* [Client](./!README.md)
 * [Services](../!README.md)
 * [Game Server](../game-server/!README.md)
 * [Realtime Protocol](../../protocol/!README.md)

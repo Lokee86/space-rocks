@@ -26,8 +26,6 @@ This folder owns the devtools documentation indexes for current Space Rocks tool
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 
 ## Notes
 

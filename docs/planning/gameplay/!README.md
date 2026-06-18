@@ -33,8 +33,6 @@ This folder owns planning docs for gameplay and player-experience work that is n
 ## Related Docs
 
 - [Planning index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

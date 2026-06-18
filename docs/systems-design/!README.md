@@ -26,8 +26,6 @@ This folder owns the systems-design documentation indexes for cross-system mecha
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 
 ## Notes
 

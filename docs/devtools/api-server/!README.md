@@ -30,8 +30,6 @@ This folder owns docs for API-server development and debug tooling.
 ## Related Docs
 
 - [Devtools index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

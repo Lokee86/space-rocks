@@ -33,8 +33,6 @@ This folder owns conceptual docs about combat mechanics, authority boundaries, a
 ## Related Docs
 
 - [Systems design index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

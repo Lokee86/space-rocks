@@ -37,8 +37,6 @@ Client gameplay runtime documentation lives here.
 - [Client](../!README.md)
 - [World Sync](../world-sync/!README.md)
 - [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-- [Documentation policy](../../../documentation-policy.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 
 ## Notes
 

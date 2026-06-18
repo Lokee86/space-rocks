@@ -25,8 +25,6 @@ This folder owns client gameplay menu flow documentation.
 - [Hud And Gameplay UI](../hud-and-gameplay-ui.md)
 - [Match End Flow](../match-end-flow/!README.md)
 - [Gameplay Runtime](../gameplay-runtime/!README.md)
-- [Documentation policy](../../../documentation-policy.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 
 ## Notes
 

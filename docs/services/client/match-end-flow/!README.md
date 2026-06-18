@@ -39,8 +39,6 @@ This folder owns the client match-end flow boundary, including orchestration aro
 - [Gameplay Menu Flow](../gameplay-menu-flow/!README.md)
 - [Hud And Gameplay UI](../hud-and-gameplay-ui.md)
 - [Gameplay Runtime](../gameplay-runtime/!README.md)
-- [Documentation policy](../../../documentation-policy.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 
 ## Notes
 

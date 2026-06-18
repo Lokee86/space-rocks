@@ -24,8 +24,6 @@ This folder owns the domain taxonomy and the entry points for cross-system docs.
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 - [Top-level docs index](../!README.md)
 
 ## Notes

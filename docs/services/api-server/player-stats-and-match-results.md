@@ -1,6 +1,6 @@
 # Player Stats And Match Results
 
-Parent index: [API Server](!README.md)
+Parent index: [API Server](./!README.md)
 
 ## Purpose
 
@@ -84,6 +84,8 @@ Current roles:
 The game-server remains the gameplay authority. `services/player-data` remains the routing boundary that decides whether a request goes to guest memory, local profile storage, or Rails/API-backed authenticated-account persistence.
 
 ## Protocols and APIs
+
+This surface exposes the authenticated-account stats and match-result endpoints used by the player-data service and by Rails-authenticated callers. `services/player-data` and the game-server consume these endpoints for account-backed stats reads and match-result writes, while Rails owns the authenticated-account persistence authority behind them. The boundary carries account IDs, stats payloads, and match-result fields; it does not own guest/local-profile routing, gameplay authority, or client presentation state.
 
 ### `GET /api/player/stats`
 

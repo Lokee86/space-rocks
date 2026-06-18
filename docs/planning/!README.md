@@ -32,8 +32,6 @@ This folder owns the planning index for work that has not yet become current doc
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 - [Top-level docs index](../!README.md)
 
 ## Notes

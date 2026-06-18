@@ -1,5 +1,5 @@
 # Space Rocks MCP Servers
-Parent index: [Agent](!README.md)
+Parent index: [Agent](./!README.md)
 
 This is the permanent agent-facing reference for the Space Rocks MCP split.
 

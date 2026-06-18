@@ -1,6 +1,6 @@
 # Gameplay Session Lifecycle
 
-Parent index: [Gameplay Runtime](!README.md)
+Parent index: [Gameplay Runtime](./!README.md)
 
 ## Purpose
 
@@ -292,7 +292,7 @@ Relevant client tests include:
 
 ## Related docs
 
-* [Gameplay Runtime](!README.md)
+* [Gameplay Runtime](./!README.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay state application](gameplay-state-application.md)
 * [Runtime processing](runtime-processing.md)

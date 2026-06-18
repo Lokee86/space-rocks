@@ -1,6 +1,6 @@
 ## HTTP Contract Enforcement
 
-Parent index: [Protocol](!README.md)
+Parent index: [Protocol](./!README.md)
 
 ## Purpose
 
@@ -338,7 +338,7 @@ OpenAPI is not currently runtime middleware.
 
 ## Related docs
 
-* [Protocol](!README.md)
+* [Protocol](./!README.md)
 * [Data](../data/!README.md)
 * [API Server](../services/api-server/!README.md)
 * [Game Server](../services/game-server/!README.md)
