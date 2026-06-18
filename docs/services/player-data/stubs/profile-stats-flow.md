@@ -56,7 +56,6 @@ Stub note: keep this focused on service-owned profile stats flow.
 ## Related docs
 
 - [Player Data](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add profile stats docs when they exist.
 
 ## Notes

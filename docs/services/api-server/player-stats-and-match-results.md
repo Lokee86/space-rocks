@@ -282,8 +282,6 @@ Related non-API-server tests:
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md) - Current HTTP request/response contract enforcement documentation.
 * [Player Data HTTP API](../../protocol/stubs/player-data-http-api.md) - Stub: player-data HTTP API protocol documentation.
 * [Player Data Schema](../../data/stubs/player-data-schema.md) - Stub: player-data schema documentation.
-* [Documentation policy](../../documentation-policy.md)
-* [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

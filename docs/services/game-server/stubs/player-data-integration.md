@@ -58,7 +58,6 @@ Stub note: keep this focused on service integration rather than player-data owne
 ## Related docs
 
 - [Game Server](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add player-data-specific docs when they exist.
 
 ## Notes

@@ -64,7 +64,6 @@ Stub note: keep this focused on smoke-test tooling and diagnostics.
 ## Related docs
 
 - [API Server Devtools](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add Bruno-specific docs when they exist.
 
 ## Notes

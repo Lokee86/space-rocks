@@ -56,7 +56,6 @@ Stub note: keep this focused on server-side reporting responsibility.
 ## Related docs
 
 - [Game Server](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add reporting-specific docs when they exist.
 
 ## Notes

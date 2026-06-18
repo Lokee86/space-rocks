@@ -75,7 +75,6 @@ Stub note: keep this focused on data ownership rather than feature policy.
 ## Related docs
 
 - [Data](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - [Data Sync](../../../tools/data_sync/!README.md)
 - TODO: add source-of-truth-specific docs when they exist.
 

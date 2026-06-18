@@ -106,8 +106,6 @@ POST   /api/auth/discord/login_sessions/{id}/exchange
 
 The client sends JSON HTTP requests through its API HTTP helper. The helper adds JSON accept/content headers, optionally adds an Authorization bearer header, serializes non-GET request bodies as JSON, parses JSON dictionary responses, and converts HTTP or parse failures into request-result failures.
 
-`GET /api/auth/discord/callback` currently has two `200` success shapes: the normal auth response for direct browser OAuth, or a short handoff message after login-session authentication.
-
 Authenticated client requests use the user bearer token.
 
 Internal service-to-service requests use an internal bearer token where required.
@@ -345,8 +343,6 @@ OpenAPI is not currently runtime middleware.
 * [API Server](../services/api-server/!README.md)
 * [Game Server](../services/game-server/!README.md)
 * [Player Data](../services/player-data/!README.md)
-* [Documentation policy](../documentation-policy.md)
-* [Documentation procedure](../documentation-procedure.md)
 
 ## Notes
 

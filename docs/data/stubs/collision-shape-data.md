@@ -62,7 +62,6 @@ Stub note: keep this focused on collision data ownership.
 ## Related docs
 
 - [Data](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - TODO: add collision-specific docs when they exist.
 
 ## Notes

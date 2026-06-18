@@ -28,6 +28,8 @@ Discord OAuth has two implemented entry paths:
 
 The Godot handoff creates an `OauthLoginSession`, returns a public login-session id, a one-time poll secret, a browser login URL, and an expiry. The browser completes Discord OAuth through Rails. The callback either returns the normal auth response or authenticates the login session and returns a short handoff message. Godot then exchanges the login session plus poll secret for the normal auth response.
 
+This describes current controller behavior in `services/api-server/app/controllers/api/auth/discord_controller.rb`; it does not imply a contract-source change.
+
 The Go game-server does not read Rails auth tables directly. When it needs to verify a Space Rocks bearer token, it calls the Rails internal endpoint `POST /internal/auth/verify-token` using the configured `GAME_SERVER_INTERNAL_TOKEN`. Rails returns a minimal authenticated-account identity for valid user tokens and `{ "valid": false }` for invalid, missing, expired, or revoked user tokens.
 
 ## Code root
@@ -347,14 +349,14 @@ The Go auth client consumes the internal verification API. It does not own Rails
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md) - Current HTTP request/response contract enforcement documentation.
 * [API-server internal API surface](internal-api-surface.md)
 * [API-server player stats and match results](player-stats-and-match-results.md)
-* [Documentation policy](../../documentation-policy.md)
-* [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 
 The legacy docs identified the correct high-level boundary: Rails owns authenticated accounts, OAuth identities, and bearer-token verification, while the Go game-server consumes that boundary through explicit API calls. This document rewrites those facts from current code instead of treating the legacy files as current authority.
 
 Direct Discord browser callback returns the normal JSON auth response. The Godot-oriented browser handoff returns a short JSON message after authenticating the login session, then the client receives the normal Space Rocks bearer token after exchange.
+
+This docs pass did not modify `shared/contracts/http/openapi.yaml` or Rails controller tests. HTTP contract-source corrections are separate protocol/contract work, not part of API-server documentation compliance.
 
 `AuthResponse` does not currently include `account_id`; `GET /api/auth/me` and internal verification do include it.
 

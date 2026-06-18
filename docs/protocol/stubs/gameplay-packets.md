@@ -51,7 +51,6 @@ Stub note: keep this focused on gameplay packet behavior, not UI presentation.
 ## Related docs
 
 - [Protocol](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - TODO: add gameplay-specific docs when they exist.
 
 ## Notes

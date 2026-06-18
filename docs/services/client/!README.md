@@ -15,22 +15,22 @@ This folder owns docs for the client runtime and its implementation responsibili
 
 ## Direct Files
 
-- None.
+- [auth-session-flow.md](auth-session-flow.md) - Client auth session flow documentation.
+- [hud-and-gameplay-ui.md](hud-and-gameplay-ui.md) - Client HUD and gameplay UI documentation.
+- [input-and-targeting.md](input-and-targeting.md) - Client input and targeting documentation.
+- [menu-flow.md](menu-flow.md) - Client high-level menu flow documentation.
 
 ## Stub Files
 
-- [auth-session-flow.md](stubs/auth-session-flow.md) - Stub: client auth session flow documentation.
-- [local-pilot-and-profile-flow.md](stubs/local-pilot-and-profile-flow.md) - Stub: client local pilot and profile flow documentation.
-- [hud-and-gameplay-ui.md](stubs/hud-and-gameplay-ui.md) - Stub: client HUD and gameplay UI documentation.
-- [gameplay-runtime-and-world-sync.md](stubs/gameplay-runtime-and-world-sync.md) - Stub: client gameplay runtime and world sync documentation.
-- [match-end-and-gameplay-menu.md](stubs/match-end-and-gameplay-menu.md) - Stub: client match-end and gameplay menu documentation.
-- [menu-flow.md](stubs/menu-flow.md) - Stub: client menu flow documentation.
-- [input-and-targeting.md](stubs/input-and-targeting.md) - Stub: client input and targeting documentation.
-- [pickup-rendering.md](stubs/pickup-rendering.md) - Stub: client pickup rendering documentation.
+- None.
 
 ## Direct Folders
 
-- None.
+- [Gameplay Runtime](gameplay-runtime/!README.md) - Client gameplay runtime composition, state application, lifecycle, and processing documentation.
+- [match-end-flow](match-end-flow/!README.md) - Client match-end orchestration and match-results presentation documentation.
+- [gameplay-menu-flow](gameplay-menu-flow/!README.md) - Client gameplay menu and match-over overlay menu documentation.
+- [World Sync](world-sync/!README.md) - Client world-state rendering, ViewAnchor, visual coordinates, and entity sync documentation.
+- [pregame-menu-flow](pregame-menu-flow/!README.md) - Client pregame menu implementation flows for local pilot selection and profile readout.
 
 ## Related Docs
 

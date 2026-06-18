@@ -11,10 +11,24 @@
             "id": "8e14e5a73915c16b",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "!README.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "!README"
             }
           }
         ]
@@ -91,6 +105,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "!README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,7 +115,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks"
+              "title": "Backlinks for !README"
             }
           },
           {
@@ -109,11 +124,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "!README.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links"
+              "title": "Outgoing links from !README"
             }
           },
           {
@@ -151,12 +167,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "!README.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of !README"
             }
           }
         ]
@@ -179,37 +196,41 @@
   },
   "active": "8e14e5a73915c16b",
   "lastOpenFiles": [
-    "services/api-server/tmp/cache/bootsnap/compile-cache-iseq/1b/22330136a77ab7.tmp.tHTp3m",
+    "docs/services/client/world-sync/stubs/entity-sync-owners.md",
+    "docs/services/client/world-sync/pickup-presentation.md",
+    "docs/services/client/menu-flow.md",
+    "docs/design/toroidal-wrap.md",
+    "!README.md",
+    "docs/design/cross-mode-routing-and-player-data.md",
+    "docs/design/architecture.md",
+    "docs/design",
+    "docs/documentation-procedure.md",
+    "docs/services/client/world-sync/stubs/pickup-presentation.md",
+    "docs/services/client/world-sync/stubs/pickup-rendering.md",
+    "docs/services/client/gameplay-menu-flow/gameplay-menu-flow.md",
+    "docs/services/client/gameplay-menu-flow/!README.md",
+    "docs/services/client/gameplay-menu-flow/stubs",
+    "docs/services/client/gameplay-menu-flow",
+    "docs/services/client/match-end-flow/match-results-presentation.md",
+    "docs/services/client/match-end-flow/match-end-orchestration.md",
+    "docs/services/client/match-end-flow/!README.md",
+    "docs/services/client/match-end-flow/stubs",
+    "docs/services/client/match-end-flow",
+    "docs/services/client/input-and-targeting.md",
+    "docs/services/client/hud-and-gameplay-ui.md",
+    "docs/services/client/auth-session-flow.md",
+    "docs/services/client/stubs/input-and-targeting.md",
+    "docs/services/client/stubs/hud-and-gameplay-ui.md",
+    "docs/services/client/stubs/auth-session-flow.md",
+    "docs/services/client/world-sync/view-anchor-and-visual-coordinates.md",
     "services/api-server/!README.md",
-    "docs/services/api-server/runtime-and-health.md",
-    "docs/planning/platform/account-and-identity-systems.md",
-    "docs/services/api-server/player-stats-and-match-results.md",
-    "docs/services/api-server/auth-and-oauth.md",
-    "docs/services/api-server/internal-api-surface.md",
-    "docs/protocol/http-contract-enforcement.md",
-    "docs/domains/platform/account-and-identity-current-state.md",
-    "docs/domains/technical/stubs/local-singleplayer-routing-flow.md",
-    "docs/domains/technical/stubs/realtime-client-server-flow.md",
-    "docs/domains/technical/stubs/source-of-truth-flow.md",
-    "docs/domains/platform/stubs/account-backed-profile-flow.md",
-    "docs/domains/platform/stubs/player-data-routing-flow.md",
-    "docs/domains/platform/stubs/auth-and-identity-flow.md",
-    "docs/domains/player-experience/stubs/local-pilot-profile-flow.md",
-    "docs/domains/player-experience/stubs/match-end-and-results-flow.md",
-    "docs/domains/player-experience/stubs/gameplay-session-flow.md",
-    "docs/devtools/api-server/stubs/local-auth-smoke-flow.md",
-    "docs/devtools/api-server/stubs/bruno-smoke-tests.md",
-    "docs/devtools/client/stubs/hitbox-overlays.md",
-    "docs/devtools/client/stubs/target-and-placement-debugging.md",
-    "docs/devtools/client/stubs/telemetry-overlays.md",
-    "docs/devtools/client/stubs/devtools-window.md",
-    "docs/devtools/server/stubs/hitbox-and-shape-debugging.md",
-    "docs/devtools/server/stubs/spawn-and-respawn-tools.md",
-    "docs/util/decode_protected_header/functions",
-    "docs/util/decode_protected_header",
-    "docs/util",
-    "docs/jwt/verify/functions",
-    "docs/jwt/verify",
-    "docs/jwt"
+    "docs/services/client/world-sync/entity-sync-owners.md",
+    "docs/services/client/world-sync/world-sync-coordinator.md",
+    "docs/services/client/world-sync/stubs/world-sync-coordinator.md",
+    "docs/services/client/pregame-menu-flow/stubs",
+    "docs/services/client/pregame-menu-flow",
+    "docs/services/client/world-sync/stubs",
+    "docs/services/client/world-sync",
+    "docs/services/client/gameplay-runtime/stubs"
   ]
 }

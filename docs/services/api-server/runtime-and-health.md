@@ -138,8 +138,6 @@ The runtime and health surface does not own auth records, player stats, match re
 * [Auth And OAuth](auth-and-oauth.md)
 * [Internal API Surface](internal-api-surface.md)
 * [Player Stats And Match Results](player-stats-and-match-results.md)
-* [Documentation policy](../../documentation-policy.md)
-* [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

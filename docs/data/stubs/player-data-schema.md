@@ -67,7 +67,6 @@ Stub note: keep this focused on source-of-truth schema behavior.
 ## Related docs
 
 - [Data](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - [Data Sync](../../../tools/data_sync/!README.md)
 - TODO: add player-data-schema-specific docs when they exist.
 

@@ -59,7 +59,6 @@ Stub note: keep this focused on server-owned room behavior.
 ## Related docs
 
 - [Game Server](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add room-specific docs when they exist.
 
 ## Notes

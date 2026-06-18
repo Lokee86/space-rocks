@@ -63,7 +63,6 @@ Stub note: keep this focused on server-side networking responsibility.
 ## Related docs
 
 - [Game Server](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add networking-specific docs when they exist.
 
 ## Notes
