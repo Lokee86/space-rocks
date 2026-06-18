@@ -18,6 +18,12 @@ This folder owns conceptual docs about world behavior, authority boundaries, and
 
 - None.
 
+## Stub Files
+
+- [spawning-and-space.md](stubs/spawning-and-space.md) - Stub: spawning and space systems-design documentation.
+- [toroidal-wrap.md](stubs/toroidal-wrap.md) - Stub: toroidal wrap systems-design documentation.
+- [world-authority.md](stubs/world-authority.md) - Stub: world authority systems-design documentation.
+
 ## Direct Folders
 
 - None.

@@ -15,7 +15,12 @@ This folder owns domain docs about platform-wide flows that span multiple system
 
 ## Direct Files
 
-- None.
+- [account-and-identity-current-state.md](account-and-identity-current-state.md) - Current account, identity, authentication, admission, and player-data routing flow.
+
+## Stub Files
+
+- [account-backed-profile-flow.md](stubs/account-backed-profile-flow.md) - Stub: account-backed profile domain flow documentation.
+- [player-data-routing-flow.md](stubs/player-data-routing-flow.md) - Stub: player-data routing domain flow documentation.
 
 ## Direct Folders
 

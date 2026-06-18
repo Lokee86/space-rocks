@@ -35,7 +35,7 @@ Authenticated Account + trusted MatchOutcome + eligible ModePreset + anti-cheat/
 ## Related Docs
 
 - [Systems Plan Index](systems-plan-index.md)
-- [Account And Identity Systems](account-and-identity-systems.md)
+- [Account And Identity Systems](../account-and-identity-systems.md)
 - [Anti-Cheat And Trust Policy](anti-cheat-and-trust-policy.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [API Product Surface](api-product-surface.md)

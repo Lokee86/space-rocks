@@ -306,7 +306,7 @@ Matchmaking and room discovery owns:
 ## Related Docs
 
 - [Systems Plan Index](../../systems-plan-index.md)
-- [Account And Identity Systems](account-and-identity-systems.md)
+- [Account And Identity Systems](../account-and-identity-systems.md)
 - [Matchmaking And Room Discovery](matchmaking-and-room-discovery.md)
 - [Anti-Cheat And Trust Policy](anti-cheat-and-trust-policy.md)
 - [Realtime Protocol Architecture](../../technical/realtime-protocol-architecture.md)

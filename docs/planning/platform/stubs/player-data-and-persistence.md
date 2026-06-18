@@ -30,7 +30,7 @@ It should stay on the data and storage boundary rather than folding in gameplay 
 ## Related Docs
 
 - [Systems Plan Index](systems-plan-index.md)
-- [Account And Identity Systems](account-and-identity-systems.md)
+- [Account And Identity Systems](../account-and-identity-systems.md)
 - [Progression And Rewards](progression-and-rewards.md)
 - [Player Experience Systems](player-experience-systems.md)
 

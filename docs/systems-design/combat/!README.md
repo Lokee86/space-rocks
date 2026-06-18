@@ -18,6 +18,14 @@ This folder owns conceptual docs about combat mechanics, authority boundaries, a
 
 - None.
 
+## Stub Files
+
+- [damage.md](stubs/damage.md) - Stub: damage systems-design documentation.
+- [pickups.md](stubs/pickups.md) - Stub: pickups systems-design documentation.
+- [targeting.md](stubs/targeting.md) - Stub: targeting systems-design documentation.
+- [radial-effects.md](stubs/radial-effects.md) - Stub: radial effects systems-design documentation.
+- [weapons.md](stubs/weapons.md) - Stub: weapons systems-design documentation.
+
 ## Direct Folders
 
 - None.

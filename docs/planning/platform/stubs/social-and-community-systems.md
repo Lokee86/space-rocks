@@ -55,7 +55,7 @@ Chat would require moderation and reporting planning before implementation.
 ## Related Docs
 
 - [Systems Plan Index](systems-plan-index.md)
-- [Account And Identity Systems](account-and-identity-systems.md)
+- [Account And Identity Systems](../account-and-identity-systems.md)
 - [Matchmaking And Room Discovery](matchmaking-and-room-discovery.md)
 - [API Product Surface](api-product-surface.md)
 - [Player Experience Systems](player-experience-systems.md)
