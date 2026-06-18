@@ -55,7 +55,6 @@ Stub note: keep this focused on server-side logging responsibility, not observab
 ## Related docs
 
 - [Game Server](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add logging-specific docs when they exist.
 
 ## Notes

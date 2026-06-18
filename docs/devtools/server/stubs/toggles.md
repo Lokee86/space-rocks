@@ -60,7 +60,6 @@ Stub note: keep this focused on tooling and diagnostics.
 ## Related docs
 
 - [Server Devtools](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add toggles-specific docs when they exist.
 
 ## Notes

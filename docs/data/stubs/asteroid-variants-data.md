@@ -62,7 +62,6 @@ Stub note: keep this focused on asteroid data ownership.
 ## Related docs
 
 - [Data](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - TODO: add asteroid-specific docs when they exist.
 
 ## Notes

@@ -50,7 +50,6 @@ Stub note: keep this focused on realtime websocket protocol flow.
 ## Related docs
 
 - [Protocol](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - TODO: add websocket-specific docs when they exist.
 
 ## Notes

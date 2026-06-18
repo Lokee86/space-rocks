@@ -47,7 +47,6 @@ Stub note: keep this focused on contract behavior, not implementation detail.
 ## Related docs
 
 - [Protocol](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - TODO: add HTTP-contract-specific docs when they exist.
 
 ## Notes

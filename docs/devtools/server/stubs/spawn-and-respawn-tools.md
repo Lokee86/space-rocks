@@ -65,7 +65,6 @@ Stub note: keep this focused on debug tooling and diagnostics.
 ## Related docs
 
 - [Server Devtools](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add spawn/respawn-specific docs when they exist.
 
 ## Notes

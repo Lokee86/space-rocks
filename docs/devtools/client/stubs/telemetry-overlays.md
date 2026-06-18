@@ -62,7 +62,6 @@ Stub note: keep this focused on tooling and diagnostics.
 ## Related docs
 
 - [Client Devtools](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add telemetry-overlay-specific docs when they exist.
 
 ## Notes

@@ -73,7 +73,6 @@ Stub note: keep this focused on the active constants pipeline.
 ## Related docs
 
 - [Data](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - [Data Sync](../../../tools/data_sync/!README.md)
 - TODO: add constants-specific docs when they exist.
 

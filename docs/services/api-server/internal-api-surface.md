@@ -372,8 +372,6 @@ cd services/player-data && go test ./playerdata
 * [API Server](!README.md)
 * [Auth And OAuth](auth-and-oauth.md)
 * [Player Stats And Match Results](player-stats-and-match-results.md)
-* [Documentation policy](../../documentation-policy.md)
-* [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

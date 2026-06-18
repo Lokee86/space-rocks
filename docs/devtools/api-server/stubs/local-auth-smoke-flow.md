@@ -76,7 +76,6 @@ Stub note: keep this focused on smoke-flow tooling and diagnostics.
 ## Related docs
 
 - [API Server Devtools](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add local-auth-specific docs when they exist.
 
 ## Notes

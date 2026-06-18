@@ -63,7 +63,6 @@ Stub note: keep this focused on diagnostics and internal visibility.
 ## Related docs
 
 - [Server Devtools](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add telemetry-specific docs when they exist.
 
 ## Notes

@@ -52,7 +52,6 @@ Stub note: keep this focused on the small initial public web presence.
 ## Related docs
 
 - [Web](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - [Website and web presence](../../../planning/website-and-web-presence.md)
 - TODO: add devlog-specific docs when they exist.
 

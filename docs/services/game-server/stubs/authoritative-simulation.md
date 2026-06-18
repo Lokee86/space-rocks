@@ -60,7 +60,6 @@ Stub note: keep this focused on runtime authority, not client presentation.
 ## Related docs
 
 - [Game Server](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add simulation-specific docs when they exist.
 
 ## Notes

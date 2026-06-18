@@ -46,7 +46,6 @@ Stub note: keep this focused on protocol behavior, not UI presentation.
 ## Related docs
 
 - [Protocol](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - TODO: add related service and schema docs when they exist.
 
 ## Notes

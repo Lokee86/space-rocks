@@ -55,7 +55,6 @@ Stub note: keep this focused on the local profiles API surface.
 ## Related docs
 
 - [Player Data](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add local-profile-specific docs when they exist.
 
 ## Notes

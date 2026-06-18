@@ -66,7 +66,6 @@ Stub note: keep this focused on drop-table flow.
 ## Related docs
 
 - [Data](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - [Data Sync](../../../tools/data_sync/!README.md)
 - TODO: add drop-table-specific docs when they exist.
 

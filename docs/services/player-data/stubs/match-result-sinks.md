@@ -59,7 +59,6 @@ Stub note: keep this focused on player-data sink behavior.
 ## Related docs
 
 - [Player Data](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add match-result-specific docs when they exist.
 
 ## Notes

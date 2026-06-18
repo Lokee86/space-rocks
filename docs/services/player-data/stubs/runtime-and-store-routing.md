@@ -70,7 +70,6 @@ Stub note: keep this focused on service runtime and store routing.
 ## Related docs
 
 - [Player Data](../!README.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 - TODO: add runtime-specific docs when they exist.
 
 ## Notes

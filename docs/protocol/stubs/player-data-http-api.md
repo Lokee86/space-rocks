@@ -48,7 +48,6 @@ Stub note: keep this focused on service-facing HTTP behavior.
 ## Related docs
 
 - [Protocol](../!README.md)
-- [Documentation procedure](../../documentation-procedure.md)
 - TODO: add player-data HTTP docs when they exist.
 
 ## Notes
