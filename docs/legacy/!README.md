@@ -26,8 +26,6 @@ This folder owns the legacy documentation index and migration-source navigation.
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 - [Top-level docs index](../!README.md)
 
 ## Notes

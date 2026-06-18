@@ -33,8 +33,6 @@ This folder owns conceptual docs about entity roles, behavior, authority boundar
 ## Related Docs
 
 - [Systems design index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

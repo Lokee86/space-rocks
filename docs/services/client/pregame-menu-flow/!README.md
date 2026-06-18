@@ -31,8 +31,6 @@ This folder owns client pregame menu implementation flow docs for local pilot se
 ## Related docs
 
 - [Client](../!README.md)
-- [Documentation policy](../../../documentation-policy.md)
-- [Documentation procedure](../../../documentation-procedure.md)
 
 ## Notes
 

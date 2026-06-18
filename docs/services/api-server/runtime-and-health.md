@@ -1,6 +1,6 @@
 # Runtime And Health
 
-Parent index: [API Server](!README.md)
+Parent index: [API Server](./!README.md)
 
 ## Purpose
 
@@ -58,6 +58,8 @@ The API server runtime participates in these roles:
 These roles are operational rather than gameplay-specific.
 
 ## Protocols and APIs
+
+This surface exposes lightweight runtime and health endpoints for deployment checks, service monitors, and manual verification. Rails owns the health-check implementation and runtime configuration behind the endpoints. The data crossing the boundary is intentionally minimal: success or failure status plus a small JSON payload. The surface does not own application business data, auth state, or gameplay/runtime authority.
 
 ### `GET /health`
 

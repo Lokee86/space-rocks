@@ -1,6 +1,6 @@
 # View Anchor And Visual Coordinates
 
-Parent index: [World Sync](!README.md)
+Parent index: [World Sync](./!README.md)
 
 ## Purpose
 
@@ -359,7 +359,7 @@ The standard client verification path is the Godot headless GUT test suite for `
 
 ## Related docs
 
-* [World Sync](!README.md)
+* [World Sync](./!README.md)
 * [World Sync Coordinator](world-sync-coordinator.md)
 * [Entity Sync Owners](entity-sync-owners.md)
 * [Gameplay Runtime](../gameplay-runtime/!README.md)
@@ -369,8 +369,6 @@ The standard client verification path is the Godot headless GUT test suite for `
 * [World authority](../../../systems-design/world/stubs/world-authority.md) - Stub: world authority design documentation.
 * [Constants pipeline](../../../data/stubs/constants-pipeline.md) - Stub: constants source-of-truth and generated output documentation.
 * [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Documentation policy](../../../documentation-policy.md)
-* [Documentation procedure](../../../documentation-procedure.md)
 
 ## Notes
 

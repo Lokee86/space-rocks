@@ -1,5 +1,5 @@
 ## Documentation Structure And Governance
-Parent index: [Planning](!README.md)
+Parent index: [Planning](./!README.md)
 
 ## Purpose
 

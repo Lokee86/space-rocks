@@ -35,8 +35,6 @@ This folder owns data documentation indexes for current Space Rocks data sources
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 
 ## Notes
 

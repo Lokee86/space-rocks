@@ -1,6 +1,6 @@
 # Auth Session Flow
 
-Parent index: [Client](!README.md)
+Parent index: [Client](./!README.md)
 
 ## Purpose
 

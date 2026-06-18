@@ -1,6 +1,6 @@
 # Match Results Presentation
 
-Parent index: [Match End Flow](!README.md)
+Parent index: [Match End Flow](./!README.md)
 
 ## Purpose
 
@@ -351,7 +351,7 @@ These tests verify:
 
 ## Related docs
 
-- [Match End Flow](!README.md)
+- [Match End Flow](./!README.md)
 - [match-end-orchestration.md](match-end-orchestration.md) - Client match-end orchestration and handoff into result presentation.
 - [Gameplay Menu Flow](../gameplay-menu-flow/!README.md) - Client gameplay menu and match-over overlay menu documentation.
 - [HUD And Gameplay UI](../hud-and-gameplay-ui.md) - Gameplay UI roots, HUD behavior, and match-over HUD visibility locking.

@@ -27,8 +27,6 @@ This folder owns the service documentation indexes for current Space Rocks servi
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 
 ## Notes
 

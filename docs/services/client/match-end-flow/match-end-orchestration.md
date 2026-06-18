@@ -1,6 +1,6 @@
 # Match End Orchestration
 
-Parent index: [match-end-flow](!README.md)
+Parent index: [match-end-flow](./!README.md)
 
 ## Purpose
 
@@ -433,7 +433,7 @@ These tests verify the menu and result collaborators that `MatchEndFlow` coordin
 ## Related docs
 
 * [Client](../!README.md)
-* [Match end flow](!README.md)
+* [Match end flow](./!README.md)
 * [Match results presentation](match-results-presentation.md)
 * [Gameplay menu flow](../gameplay-menu-flow/!README.md)
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md)

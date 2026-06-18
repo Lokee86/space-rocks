@@ -1,6 +1,6 @@
 ## Profile Flow
 
-Parent index: [Pregame Menu Flow](!README.md)
+Parent index: [Pregame Menu Flow](./!README.md)
 
 ## Purpose
 
@@ -209,7 +209,7 @@ Covered stats behavior includes:
 
 ## Related docs
 
-* [pregame-menu-flow](!README.md)
+* [pregame-menu-flow](./!README.md)
 * [local-pilot-flow.md](local-pilot-flow.md)
 * [Client](../!README.md)
 * [Services](../../!README.md)

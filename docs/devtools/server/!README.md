@@ -32,8 +32,6 @@ This folder owns docs for server-side development and debug tooling.
 ## Related Docs
 
 - [Devtools index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

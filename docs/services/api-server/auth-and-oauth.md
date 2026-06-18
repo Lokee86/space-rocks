@@ -1,6 +1,6 @@
 # Auth And OAuth
 
-Parent index: [API Server](!README.md)
+Parent index: [API Server](./!README.md)
 
 ## Purpose
 
@@ -121,6 +121,8 @@ Internal verification is the API-server auth boundary consumed by the Go game-se
 The internal endpoint authenticates the service caller with `GAME_SERVER_INTERNAL_TOKEN`, then verifies the user bearer token passed in the request body. Valid user tokens return a minimal authenticated-account identity. Invalid user tokens return `valid: false` without exposing token internals.
 
 ## Protocols and APIs
+
+This surface exposes Rails auth and OAuth endpoints for the client and for the game-server internal verifier. The client consumes public auth and Discord login flows, while the game-server consumes the internal token-verification endpoint. Rails owns authentication authority, bearer-token issuance and revocation, OAuth login-session state, and the auth response data that crosses the boundary. The surface does not own client session state, game-server admission policy, or gameplay/runtime state.
 
 ### Public auth endpoints
 
@@ -343,7 +345,7 @@ The Go auth client consumes the internal verification API. It does not own Rails
 
 ## Related docs
 
-* [API Server](!README.md)
+* [API Server](./!README.md)
 * [Game Server](../game-server/!README.md)
 * [Player Data](../player-data/!README.md)
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md) - Current HTTP request/response contract enforcement documentation.

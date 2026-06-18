@@ -33,8 +33,6 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 
 ## Notes
 

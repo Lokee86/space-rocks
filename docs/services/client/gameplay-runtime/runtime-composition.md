@@ -1,6 +1,6 @@
 # Runtime Composition
 
-Parent index: [Gameplay Runtime](!README.md)
+Parent index: [Gameplay Runtime](./!README.md)
 
 ## Purpose
 

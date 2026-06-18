@@ -25,8 +25,6 @@ This folder owns the current-limits index for temporary constraints and known ga
 
 ## Related Docs
 
-- [Documentation policy](../documentation-policy.md)
-- [Documentation procedure](../documentation-procedure.md)
 
 ## Notes
 

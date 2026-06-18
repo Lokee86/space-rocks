@@ -1,5 +1,5 @@
 # Agent Godot Notes
-Parent index: [Agent](!README.md)
+Parent index: [Agent](./!README.md)
 
 Use this when changing the Godot client, scenes, UI, GDScript, GUT tests, assets, imports, or developer toggles.
 

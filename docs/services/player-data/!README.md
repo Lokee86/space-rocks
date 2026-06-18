@@ -31,8 +31,6 @@ This folder owns docs for the player-data service runtime and its implementation
 ## Related Docs
 
 - [Services index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

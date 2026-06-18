@@ -36,8 +36,6 @@ This folder owns legacy design source docs for migration reference.
 ## Related Docs
 
 - [Legacy index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

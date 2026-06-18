@@ -1,6 +1,6 @@
 # Gameplay Menu Flow
 
-Parent index: [Gameplay Menu Flow](!README.md)
+Parent index: [Gameplay Menu Flow](./!README.md)
 
 ## Purpose
 

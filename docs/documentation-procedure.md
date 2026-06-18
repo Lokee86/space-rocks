@@ -1,5 +1,5 @@
 ## Documentation Procedure
-Parent index: [Docs](!README.md)
+Parent index: [Docs](./!README.md)
 
 ## Purpose
 
@@ -340,6 +340,18 @@ Related docs
 Notes
 ```
 
+The `Protocols and APIs` section must include a prose summary when the doc covers an API, protocol, or runtime surface. The summary must explain:
+
+```text
+what the surface is for
+who calls or consumes it
+who owns authority behind it
+what data crosses the boundary
+what the surface explicitly does not own
+```
+
+Endpoint tables, packet lists, wrapper method lists, and code maps are supporting detail, not a replacement for explanatory text.
+
 ## Protocol Doc Shape
 
 Use for communication, message flow, packet flow, request/response flow, or transport behavior.
@@ -360,6 +372,18 @@ Notes
 ```
 
 Include a code map when implementation paths are covered.
+
+The `Message or request flow` section must include a prose summary when the doc covers a request, message, packet, or transport surface. The summary must explain:
+
+```text
+what the surface is for
+who calls or consumes it
+who owns authority behind it
+what data crosses the boundary
+what the surface explicitly does not own
+```
+
+Endpoint tables, packet lists, wrapper method lists, and code maps are supporting detail, not a replacement for explanatory text.
 
 ## Data Doc Shape
 

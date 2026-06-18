@@ -1,6 +1,6 @@
 # World Sync Coordinator
 
-Parent index: [World Sync](!README.md)
+Parent index: [World Sync](./!README.md)
 
 ## Purpose
 
@@ -352,7 +352,7 @@ Expected verification should confirm:
 
 ## Related docs
 
-* [World Sync](!README.md)
+* [World Sync](./!README.md)
 * [Gameplay Runtime](../gameplay-runtime/!README.md)
 * [View Anchor And Visual Coordinates](view-anchor-and-visual-coordinates.md)
 * [Entity Sync Owners](entity-sync-owners.md)

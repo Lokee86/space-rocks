@@ -31,8 +31,6 @@ This folder owns conceptual docs about world behavior, authority boundaries, and
 ## Related Docs
 
 - [Systems design index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

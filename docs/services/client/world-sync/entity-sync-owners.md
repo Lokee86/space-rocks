@@ -1,6 +1,6 @@
 # Entity Sync Owners
 
-Parent index: [World Sync](!README.md)
+Parent index: [World Sync](./!README.md)
 
 ## Purpose
 
@@ -334,7 +334,7 @@ Use the normal client GUT verification flow when changing entity sync behavior.
 
 ## Related docs
 
-* [World Sync](!README.md)
+* [World Sync](./!README.md)
 * [Gameplay Runtime](../gameplay-runtime/!README.md)
 * [World sync coordinator](world-sync-coordinator.md)
 * [View anchor and visual coordinates](view-anchor-and-visual-coordinates.md)

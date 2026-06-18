@@ -1,6 +1,6 @@
 # HUD And Gameplay UI
 
-Parent index: [Client](!README.md)
+Parent index: [Client](./!README.md)
 
 ## Purpose
 
@@ -418,7 +418,7 @@ These tests verify gameplay session lifecycle, gameplay menu behavior, and match
 
 ## Related docs
 
-* [Client](!README.md)
+* [Client](./!README.md)
 * [Gameplay Runtime](gameplay-runtime/!README.md)
 * [World Sync](world-sync/!README.md)
 * [Input and targeting](input-and-targeting.md) - Client input and targeting documentation.

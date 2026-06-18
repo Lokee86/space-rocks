@@ -23,8 +23,6 @@ This folder owns planning docs for systems-design work that is not yet current.
 ## Related Docs
 
 - [Planning index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

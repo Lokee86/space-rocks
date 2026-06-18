@@ -1,6 +1,6 @@
 # Gameplay State Application
 
-Parent index: [Gameplay Runtime](!README.md)
+Parent index: [Gameplay Runtime](./!README.md)
 
 ## Purpose
 
@@ -238,7 +238,7 @@ The expected verification path is the client GUT test suite.
 
 ## Related docs
 
-* [Gameplay Runtime](!README.md)
+* [Gameplay Runtime](./!README.md)
 * [World Sync](../world-sync/!README.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)

@@ -33,8 +33,6 @@ This folder owns docs for the game server runtime and its implementation respons
 ## Related Docs
 
 - [Services index](../!README.md)
-- [Documentation policy](../../documentation-policy.md)
-- [Documentation procedure](../../documentation-procedure.md)
 
 ## Notes
 

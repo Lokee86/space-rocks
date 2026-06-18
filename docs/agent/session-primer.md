@@ -1,5 +1,5 @@
 # Session Primer
-Parent index: [Agent](!README.md)
+Parent index: [Agent](./!README.md)
 
 Use this as the short orientation layer for new sessions. It should stay stable enough to be useful, but narrow enough to avoid becoming a second architecture manual.
 
