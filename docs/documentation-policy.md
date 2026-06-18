@@ -390,6 +390,9 @@ gameplay
 If the information is temporary, unclear, or not ready to classify, use `docs/notes.md`.
 
 If the information is incomplete but has a clear eventual home, use a nearby `stubs/` folder.
+Empty folders named exactly `stubs/` may remain in place as reserved draft locations. They are exempt from empty-folder cleanup, do not need their own `!README.md`, and do not need to be listed as a Direct Folder in the parent `!README.md` when there are no stub files to index.
+
+This exception applies only to folders named exactly `stubs/`. All other empty documentation folders remain noncompliant unless they are intentionally populated with a valid `!README.md` and indexed by their parent.
 
 ## `!README.md` Index Policy
 
@@ -447,6 +450,8 @@ A stub is not canonical documentation.
 A stub may be incomplete, exploratory, partial, or waiting for enough detail to become official documentation.
 
 `stubs/` folders are exempt from `!README.md` index requirements.
+Empty `stubs/` folders are also exempt from empty-folder cleanup.
+Only folders named exactly `stubs/` receive this exemption.
 
 Links to stub files in parent `!README.md` indexes must label the description as a stub.
 

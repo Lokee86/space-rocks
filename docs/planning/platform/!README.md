@@ -14,11 +14,10 @@ This folder owns planning docs for platform-facing work that is not yet current.
 
 ## Direct Files
 
-- None.
+- [account-and-identity-systems.md](account-and-identity-systems.md) - Future account and identity policy planning.
 
 ## Stub Files
 
-- [account-and-identity-systems.md](stubs/account-and-identity-systems.md) - Stub: account and identity planning.
 - [anti-cheat-and-trust-policy.md](stubs/anti-cheat-and-trust-policy.md) - Stub: anti-cheat and trust policy planning.
 - [api-product-surface.md](stubs/api-product-surface.md) - Stub: API product surface planning.
 - [leaderboards-and-rankings.md](stubs/leaderboards-and-rankings.md) - Stub: leaderboards and rankings planning.

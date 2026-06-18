@@ -16,7 +16,16 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 
 ## Direct Files
 
-- None.
+- [http-contract-enforcement.md](http-contract-enforcement.md) - HTTP request/response contract ownership and enforcement across services.
+
+## Stub Files
+
+- [http-api-contracts.md](stubs/http-api-contracts.md) - Stub: HTTP API contract documentation.
+- [gameplay-packets.md](stubs/gameplay-packets.md) - Stub: gameplay packet documentation.
+- [lobby-packets.md](stubs/lobby-packets.md) - Stub: lobby packet documentation.
+- [devtools-packets.md](stubs/devtools-packets.md) - Stub: devtools packet documentation.
+- [realtime-websocket-protocol.md](stubs/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
+- [player-data-http-api.md](stubs/player-data-http-api.md) - Stub: player-data HTTP API documentation.
 
 ## Direct Folders
 

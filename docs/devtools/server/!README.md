@@ -18,6 +18,13 @@ This folder owns docs for server-side development and debug tooling.
 
 - None.
 
+## Stub Files
+
+- [hitbox-and-shape-debugging.md](stubs/hitbox-and-shape-debugging.md) - Stub: server hitbox and shape debugging documentation.
+- [telemetry.md](stubs/telemetry.md) - Stub: server devtools telemetry documentation.
+- [spawn-and-respawn-tools.md](stubs/spawn-and-respawn-tools.md) - Stub: server devtools spawn and respawn tools documentation.
+- [toggles.md](stubs/toggles.md) - Stub: server devtools toggles documentation.
+
 ## Direct Folders
 
 - None.

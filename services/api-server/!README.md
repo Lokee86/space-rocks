@@ -1,202 +1,65 @@
 # Space Rocks API Server
 
-This service is the Ruby/Rails API-only server for Space Rocks business and backend concerns.
+## Purpose
 
-The Go game server still owns real-time simulation, including movement, bullets, collisions, scoring, lives, death, respawn, pause safety, rooms, and websocket state.
+This folder is the code seam for the Ruby/Rails API-only service that owns Space Rocks API-server runtime behavior and implementation responsibility.
 
-This API is no longer just a scaffold. The current baseline includes health, email/password auth, Discord OAuth at the Rails API level, Godot Discord login-session handoff, `/api/auth/me` validation, and opaque bearer tokens.
+## What this folder owns
 
-## Local Auth Setup
+This folder owns the API-server code that runs the Rails service, serves HTTP requests, connects to PostgreSQL, and exposes the service-level health and contract surfaces.
 
-Local Discord OAuth secrets live outside git in `.secrets/api-server.env`.
-The `.secrets/` directory is ignored, and secrets must not be committed.
-If this repo's `.envrc` is enabled, `direnv` is the preferred local workflow for exporting them into the shell.
-Rails must be started from a shell where the Discord OAuth variables are already exported.
+It also owns the local service setup needed to boot, test, and smoke-check the API server.
 
-Required environment variables:
+## What this folder does not own
 
-- `DISCORD_CLIENT_ID`
-- `DISCORD_CLIENT_SECRET`
-- `DISCORD_REDIRECT_URI`
+- Go game-server simulation, room flow, or websocket state.
+- Auth, OAuth, or player-stats service details as the canonical documentation source.
+- Planning docs or broader product/domain documentation.
+- Devtools procedures as the primary home for smoke-flow and Bruno collection details.
 
-```bash
-bundle install
-bundle exec rails db:migrate
-bundle exec rails test
-bundle exec rails server
-```
+## Important files and subfolders
 
-If this is a brand-new local database, run `bundle exec rails db:create` once before `db:migrate`.
+- `config/application.rb` - Rails API-only application configuration.
+- `config/routes.rb` - `/health`, `/up`, auth, player-data, and internal route wiring.
+- `config/database.yml` - PostgreSQL configuration and `SPACE_ROCKS_API_DATABASE_*` overrides.
+- `config/puma.rb` - Puma port configuration and `PORT` override.
+- `config/ci.rb` - CI entrypoint and security/test step sequence.
+- `app/controllers/health_controller.rb` - `GET /health` implementation.
+- `test/controllers/health_controller_test.rb` - `GET /health` coverage.
+- `bruno-api/` - Local API smoke collection. Keep usage notes short here; see devtools docs for the working smoke-flow.
 
-The API server runs locally on port `3000` by default.
+## Related documentation
 
-Discord smoke path:
+- [API Server docs index](../../docs/services/api-server/!README.md)
+- [Auth and OAuth](../../docs/services/api-server/auth-and-oauth.md)
+- [Internal API Surface](../../docs/services/api-server/internal-api-surface.md)
+- [Player Stats and Match Results](../../docs/services/api-server/player-stats-and-match-results.md)
+- [Runtime and Health](../../docs/services/api-server/runtime-and-health.md)
+- [HTTP contract enforcement](../../docs/protocol/http-contract-enforcement.md)
+- [API Server devtools](../../docs/devtools/api-server/!README.md)
+- [Documentation policy](../../docs/documentation-policy.md)
+- [Documentation procedure](../../docs/documentation-procedure.md)
 
-1. Ensure the Discord env vars are loaded from `.secrets/` via `direnv` or your shell.
-2. Run `bundle exec rails db:migrate`.
-3. Start Rails with `bundle exec rails server`.
-4. Start Godot.
-5. Click `Sign-in`.
-6. Complete Discord login in the browser.
-7. Return to Godot and confirm the menu shows your display name.
-8. Click `Logout`.
+## Related tests
 
-Troubleshooting:
+- `test/controllers/health_controller_test.rb`
+- `test/contracts/openapi_contract_test.rb`
+- `test/controllers/api/auth/*`
+- `test/controllers/api/player/*`
+- `test/controllers/internal/*`
 
-- `PendingMigrationError` means run `bundle exec rails db:migrate`.
-- Rails reference columns create an index by default, so `add_reference :table, :thing, foreign_key: true` plus `add_index :table, :thing_id` will duplicate the index unless `index: false` is set on the reference.
-- Duplicate index names in new migrations usually mean `add_reference` or `t.references` already created the index and a second `add_index` line was added.
+## Notes
 
-## Health Check
+Local setup is usually:
 
-`GET /health`
+- `bundle install`
+- `bundle exec rails db:create` if the local database is new
+- `bundle exec rails db:migrate`
+- `bundle exec rails test`
+- `bundle exec rails server`
 
-Returns a static JSON response:
+Discord OAuth secrets live outside git in `.secrets/api-server.env`, usually loaded through `direnv`.
 
-```json
-{
-  "status": "ok",
-  "service": "space-rocks-api"
-}
-```
+`GET /health` is the service-specific health check. `GET /up` is the Rails boot/load-balancer health route.
 
-## Auth
-
-The Rails API owns the auth persistence layer at a high level:
-
-- users
-- password credentials
-- provider identities
-- access tokens
-
-The auth endpoints issue opaque bearer tokens for API access. Tokens are stored hashed in the database.
-Both email/password auth and Discord OAuth issue the same opaque bearer access token.
-
-Discord OAuth is implemented in the Rails API and requires the environment variables listed in Local Auth Setup above.
-
-The Rails API also expects `GAME_SERVER_INTERNAL_TOKEN` for internal calls from the Go game-server. Normal clients must never receive this value. `POST /internal/auth/verify-token` requires this bearer token.
-
-### `POST /api/auth/register`
-
-Create a new user with an email/password login.
-
-Request body:
-
-```json
-{
-  "display_name": "Test Pilot",
-  "email": "test@example.com",
-  "password": "password123"
-}
-```
-
-Returns the created user plus a token.
-
-### `POST /api/auth/login`
-
-Log in with an existing email/password credential.
-
-Request body:
-
-```json
-{
-  "email": "test@example.com",
-  "password": "password123"
-}
-```
-
-Returns the current user plus a new token.
-
-### `GET /api/auth/discord/start`
-
-Begin the Discord OAuth flow by redirecting the browser to Discord.
-
-### `GET /api/auth/discord/callback`
-
-Handle the browser-driven Discord OAuth callback after Discord redirects back with `code` and `state`.
-
-Returns the current user plus a new token on success.
-Email may be `null`.
-Discord OAuth and email/password auth both issue the same opaque bearer token.
-
-### `POST /api/auth/discord/login_sessions`
-
-Create a login session for the browser Discord handoff.
-
-Returns `login_session_id`, `poll_secret`, `login_url`, and `expires_at`.
-
-### `POST /api/auth/discord/login_sessions/:id/exchange`
-
-Exchange an authenticated login session for the normal bearer token response.
-
-#### Discord OAuth smoke test
-
-1. Start Rails with the Discord env vars active.
-2. Open `http://localhost:3000/api/auth/discord/start` in a browser.
-3. Approve the Discord login.
-4. Confirm the callback returns user plus token JSON.
-5. Copy the raw token only.
-6. Call `GET /api/auth/me` with `Authorization: Bearer <token>`.
-
-### `GET /api/auth/me`
-
-Return the current authenticated user.
-
-Protected endpoint. Send:
-
-```http
-Authorization: Bearer <token>
-```
-
-Returns the user payload for a valid token.
-This works for bearer tokens issued by either email/password auth or Discord OAuth.
-
-### `DELETE /api/auth/logout`
-
-Revoke the current bearer token.
-
-Protected endpoint. Send:
-
-```http
-Authorization: Bearer <token>
-```
-
-Returns no content on success. The same token should fail on `GET /api/auth/me` after logout.
-
-## HTTP Contract Tests
-
-`shared/contracts/http/openapi.yaml` is the HTTP request/response source of truth for this API.
-Rails controllers implement the contract, and Rails integration tests enforce it with `openapi_first` at test time.
-This is Level 2 enforcement only. It does not generate controllers, replace strong params, or add runtime middleware yet.
-The normal verification command is `bundle exec rails test` from `services/api-server`.
-runtime OpenAPI middleware is not active.
-
-See [HTTP contracts](../../docs/api/http-contracts.md) for the focused contract workflow.
-
-## Bruno Smoke Tests
-
-Use the Bruno collection rooted at `bruno-api/` for local API smoke testing.
-
-Local environment variables:
-
-- `base_url`
-- `email`
-- `password`
-- `display_name`
-- `auth_token`
-
-Suggested smoke-test order:
-
-1. `Health`
-2. `Register` or `Login`
-3. Copy the returned token into `auth_token`
-4. `Me`
-5. `Logout`
-6. `Me` should fail with the same token after logout
-
-The collection is for manual smoke testing only and should not use real secrets or real auth tokens.
-
-Future/deferred:
-
-- JWT
-- game-server token verification boundaries
+For smoke-flow steps and Bruno collection usage, prefer the devtools docs instead of expanding this seam index.

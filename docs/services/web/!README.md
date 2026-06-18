@@ -17,6 +17,11 @@ This folder owns docs for the web service runtime and its implementation respons
 
 - None.
 
+## Stub Files
+
+- [devlog-static-site.md](stubs/devlog-static-site.md) - Stub: web devlog static site documentation.
+- [future-interactive-website.md](stubs/future-interactive-website.md) - Stub: future interactive website documentation.
+
 ## Direct Folders
 
 - None.

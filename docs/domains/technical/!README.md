@@ -17,6 +17,12 @@ This folder owns domain docs about technical flows that span multiple systems.
 
 - None.
 
+## Stub Files
+
+- [local-singleplayer-routing-flow.md](stubs/local-singleplayer-routing-flow.md) - Stub: local singleplayer routing technical domain flow documentation.
+- [realtime-client-server-flow.md](stubs/realtime-client-server-flow.md) - Stub: realtime client-server technical domain flow documentation.
+- [source-of-truth-flow.md](stubs/source-of-truth-flow.md) - Stub: source-of-truth technical domain flow documentation.
+
 ## Direct Folders
 
 - None.

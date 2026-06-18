@@ -18,6 +18,14 @@ This folder owns conceptual docs about entity roles, behavior, authority boundar
 
 - None.
 
+## Stub Files
+
+- [asteroids.md](stubs/asteroids.md) - Stub: asteroid entity systems-design documentation.
+- [pickup-entities.md](stubs/pickup-entities.md) - Stub: pickup entity systems-design documentation.
+- [projectiles.md](stubs/projectiles.md) - Stub: projectile entity systems-design documentation.
+- [ships.md](stubs/ships.md) - Stub: ship entity systems-design documentation.
+- [variants.md](stubs/variants.md) - Stub: entity variants systems-design documentation.
+
 ## Direct Folders
 
 - None.

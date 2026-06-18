@@ -236,6 +236,8 @@ Do not update `docs/!README.md` for every ordinary doc addition.
 If the doc is incomplete, place it in the nearest appropriate `stubs/` folder.
 
 `stubs/` folders are exempt from the `!README.md` index requirement.
+Empty `stubs/` folders may remain in place as reserved draft locations and do not need their own `!README.md` or parent `Direct Folder` listing when no stub files are present.
+Only folders named exactly `stubs/` receive this empty-folder exemption.
 
 When a parent `!README.md` indexes a stub file, the link description must start with `Stub:`.
 
@@ -695,6 +697,7 @@ limits that actually describe permanent systems-design rules
 notes that now have a proper home
 stub docs that should graduate or be deleted
 `!README.md` index entries that point to moved or deleted files
+empty non-stub documentation folders
 ```
 
 Legacy docs should be deleted once fully deprecated.
@@ -720,6 +723,7 @@ No unnecessary file or folder was created.
 All relevant `!README.md` indexes are updated.
 Subfolder links point to subfolder `!README.md` files.
 Stub policy was followed.
+Empty folders named exactly `stubs/` were not flagged as stale or noncompliant.
 The doc has Purpose, Overview, Related docs, and Notes.
 The doc has the required type-specific sections.
 Implementation docs have code maps where required.

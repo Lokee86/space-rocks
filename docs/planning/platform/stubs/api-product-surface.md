@@ -31,7 +31,7 @@ It should stay separated from realtime simulation and from game-server transport
 ## Related Docs
 
 - [Systems Plan Index](systems-plan-index.md)
-- [Account And Identity Systems](account-and-identity-systems.md)
+- [Account And Identity Systems](../account-and-identity-systems.md)
 - [Social And Community Systems](social-and-community-systems.md)
 - [Website And Web Presence](website-and-web-presence.md)
 - [Shop, Commerce, And Economy](shop-commerce-and-economy.md)

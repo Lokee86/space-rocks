@@ -28,7 +28,7 @@ It should stay focused on discovery and entry flow rather than simulation or mat
 ## Related Docs
 
 - [Systems Plan Index](systems-plan-index.md)
-- [Account And Identity Systems](account-and-identity-systems.md)
+- [Account And Identity Systems](../account-and-identity-systems.md)
 - [Social And Community Systems](social-and-community-systems.md)
 - [Player Experience Systems](player-experience-systems.md)
 - [Platform And Progression Roadmap](platform-and-progression-roadmap.md)

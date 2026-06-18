@@ -95,6 +95,40 @@ class Api::Auth::DiscordControllerTest < ActionDispatch::IntegrationTest
     assert_nil me_body["user"]["email"]
   end
 
+  test "GET /api/auth/discord/callback authenticates a login session and returns the handoff message" do
+    profile_result = Struct.new(:success?, :profile).new(
+      true,
+      Auth::Providers::ProviderProfile.new(
+        provider: "discord",
+        provider_user_id: "discord-user-2",
+        email: nil,
+        display_name: "Grace Hopper",
+        avatar_url: nil
+      )
+    )
+    token_result = Struct.new(:success?, :access_token).new(true, "discord-access-token")
+    login_session_result = Auth::OauthLoginSessionIssuer.call(provider: "discord")
+    oauth_login_session = login_session_result[:oauth_login_session]
+    state = Auth::OauthStateIssuer.call(
+      provider: "discord",
+      oauth_login_session: oauth_login_session
+    )[:state]
+
+    with_singleton_method_stub(Auth::Providers::DiscordTokenExchange, :call, ->(*args, **kwargs, &block) { token_result }) do
+      with_singleton_method_stub(Auth::Providers::DiscordCurrentUser, :call, ->(*args, **kwargs, &block) { profile_result }) do
+        assert_difference "User.count", 1 do
+          get "/api/auth/discord/callback", params: { code: "auth-code", state: state }
+        end
+      end
+    end
+
+    assert_response :ok
+    assert_openapi_response!
+    assert_equal "You can return to the game.", JSON.parse(response.body)["message"]
+    assert_predicate oauth_login_session.reload, :authenticated?
+    assert_equal "Grace Hopper", oauth_login_session.user.display_name
+  end
+
   test "GET /api/auth/discord/callback reuses the same user on repeated logins" do
     profile_result = Struct.new(:success?, :profile).new(
       true,

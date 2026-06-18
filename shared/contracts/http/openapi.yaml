@@ -50,7 +50,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                oneOf:
+                  - $ref: "#/components/schemas/AuthResponse"
+                  - $ref: "#/components/schemas/DiscordCallbackMessageResponse"
         "401":
           description: Unauthorized
           content:
@@ -592,6 +594,13 @@ components:
           type: string
         user:
           $ref: "#/components/schemas/AuthUser"
+    DiscordCallbackMessageResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
     RegisterRequest:
       type: object
       required:
