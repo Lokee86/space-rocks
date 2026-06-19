@@ -15,6 +15,7 @@ The local pilot flow lets the player choose whether single-player runs as Guest 
 `LocalPilotFlow` owns the selector flow after that request is accepted. It mounts the local pilot selector, connects selector intent signals, calls the player-data local profile API, updates the active single-player profile context, refreshes selector state, and updates the visible callsign.
 
 The local pilot UI scenes emit intent only. They do not own API calls, persistence, or identity policy.
+The selector helper components handle list scrolling, row focus, row styling, and row selection feedback inside the local pilot selection UI.
 
 ## Code root
 
@@ -27,10 +28,12 @@ Primary implementation areas:
 ```text
 client/scripts/ui/menu_flow/
 client/scripts/ui/local_pilots/
+client/scripts/ui/menus/elements/
 client/scripts/profile/
 client/scripts/api/
 client/scenes/ui/transmission_displays/
 client/scenes/ui/transmission_displays/sub-transmissions/
+client/scenes/ui/elements/
 ```
 
 ## Responsibilities
@@ -147,6 +150,8 @@ Primary scene scripts:
 client/scripts/ui/local_pilots/select_pilot_readout.gd
 client/scripts/ui/local_pilots/enter_pilot_id.gd
 client/scripts/ui/local_pilots/confirm_delete.gd
+client/scripts/ui/menus/elements/discrete_list_view.gd
+client/scripts/ui/menus/elements/pilot_select_row.gd
 ```
 
 Primary scenes:
@@ -155,6 +160,8 @@ Primary scenes:
 client/scenes/ui/transmission_displays/select_pilot_readout.tscn
 client/scenes/ui/transmission_displays/sub-transmissions/enter_pilot_id.tscn
 client/scenes/ui/transmission_displays/sub-transmissions/confirm_delete.tscn
+client/scenes/ui/elements/discrete_list_view.tscn
+client/scenes/ui/elements/pilot_select_row.tscn
 ```
 
 Related tests:

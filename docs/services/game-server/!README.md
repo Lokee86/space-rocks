@@ -24,12 +24,12 @@ This folder owns the service-level documentation indexes for the game server run
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [Integrations](integrations/!README.md) - Game-server external integration boundary documentation index.
-- [Networking](networking/!README.md) - Game-server networking boundary documentation index.
-- [Observability](observability/!README.md) - Game-server observability boundary documentation index.
-- [Process](process/!README.md) - Game-server process boundary documentation index.
-- [Rooms](rooms/!README.md) - Game-server rooms boundary documentation index.
-- [Simulation](simulation/!README.md) - Game-server simulation boundary documentation index.
+- [Integrations](integrations\!README.md) - Game-server external integration boundary documentation index.
+- [Networking](networking\!README.md) - Game-server networking boundary documentation index.
+- [Observability](observability\!README.md) - Game-server observability boundary documentation index.
+- [Process](process\!README.md) - Game-server process boundary documentation index.
+- [Rooms](rooms\!README.md) - Game-server rooms boundary documentation index.
+- [Simulation](simulation\!README.md) - Game-server simulation boundary documentation index.
 <!-- doc-ledger:folders:end -->
 ## Related Docs
 

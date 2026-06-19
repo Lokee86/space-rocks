@@ -21,11 +21,11 @@ This folder owns the service documentation indexes for current Space Rocks servi
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [API Server](api-server/!README.md) - API service documentation index.
-- [Client](client/!README.md) - Client runtime and implementation documentation index.
-- [Game Server](game-server/!README.md) - Game-server runtime and implementation documentation index.
-- [Player Data](player-data/!README.md) - Player-data service documentation index.
-- [Web](web/!README.md) - Web service documentation index.
+- [API Server](api-server\!README.md) - API service documentation index.
+- [Client](client\!README.md) - Client runtime and implementation documentation index.
+- [Game Server](game-server\!README.md) - Game-server runtime and implementation documentation index.
+- [Player Data](player-data\!README.md) - Player-data service documentation index.
+- [Web](web\!README.md) - Web service documentation index.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

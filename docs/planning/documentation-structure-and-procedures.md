@@ -18,7 +18,7 @@ The goal is to create a durable documentation system that clearly separates:
 * agent/editing rules
 * temporary legacy migration material
 
-The current problem is not simply that documentation is missing. The larger problem is that existing documentation does not consistently explain what kind of documentation it is, where new information belongs, how planned systems graduate into implemented documentation, or how documentation relates back to code and code seams.
+The current problem is not simply that documentation is missing. The larger problem is that existing documentation does not consistently explain what kind of documentation it is, where new information belongs, how planned systems graduate into implemented documentation, or how documentation relates back to implementation.
 
 This restructuring should prevent the project from needing another broad documentation reorganization later.
 
@@ -34,7 +34,6 @@ Current documentation has several structural issues:
 * Folder indexes are inconsistent or missing.
 * Planned systems do not have a formal graduation path into implemented docs.
 * Code-to-doc linking is not consistently handled.
-* Major package/folder seams do not consistently have `!README.md` indexes explaining what they own.
 * Data pipeline usage and configuration are not documented as first-class current-system documentation.
 
 ## Documentation Types
@@ -64,7 +63,7 @@ Domain docs answer:
 * What is explicitly out of scope?
 * Which implementation docs explain the participating systems?
 
-Domain docs should not map directly to code files. They should link to the `!README.md` index for associated technical systems and implementation docs.
+Domain docs should not map directly to code files. They should link to associated technical system documentation and implementation docs.
 
 Links should mask file names behind the system name.
 
@@ -200,7 +199,7 @@ Devtools docs answer:
 * What commands or controls exist?
 * What telemetry exists?
 * What is disabled or excluded in non-dev builds?
-* How do devtools route through real gameplay seams?
+* How do devtools route through real gameplay implementation areas?
 
 Devtools implementation docs should include code maps.
 
@@ -404,7 +403,7 @@ Devtools docs should include:
 * command/control behavior
 * telemetry behavior
 * build/runtime gates
-* relationship to real gameplay seams
+* relationship to real gameplay implementation areas
 * code maps for implementation docs
 
 Devtools must not document or encourage parallel debug-only gameplay logic that bypasses real game systems.
@@ -422,37 +421,11 @@ A code map should list:
 * related tests
 * important non-ownership boundaries
 
-Domain docs should not map code directly. They should link to associated technical system `!README.md` indexes.
+Domain docs should not map code directly.
 
 Systems-design docs may include implementation links where useful, but should not become exhaustive code indexes.
 
-### Code To Documentation
-
-The default code-to-doc link should be a `!README.md` index in the relevant code package or folder.
-
-All major code seams should have a `!README.md` in the package/folder that links to relevant documentation for its contents.
-
-Major code seam README files should include:
-
-* what the package/folder owns
-* what it does not own
-* major files and subfolders
-* related docs
-* related tests
-* important architecture or ownership notes
-
-This applies to major seams such as:
-
-* game-server gameplay packages
-* game-server networking packages
-* game-server rooms packages
-* game-server devtools packages
-* game-server protocol/codec packages
-* player-data packages
-* major client script folders
-* generated/source-of-truth boundary folders
-
-Source comments should be used only for unusual or easily misunderstood seams where a `!README.md` link is not enough. Prefer package/folder `!README.md` indexes over comments inside implementation files.
+Source comments should be used only for unusual or easily misunderstood implementation areas where a doc link is not enough.
 
 Do not add documentation links to every file, every function, or routine implementation details.
 
@@ -476,12 +449,11 @@ When a planned system becomes implemented or partially implemented:
 4. Create or update the current-system documentation.
 5. Add links from domain docs to associated technical systems by `!README.md`.
 6. Add code maps only in service, data, protocol, and devtools implementation docs where appropriate.
-7. Add or update package/folder `!README.md` files for major code seams touched by implementation.
-8. Remove or reduce duplicated implemented facts from the planning doc.
-9. Add an `Implemented references` section in the planning doc linking to the new current docs.
-10. Leave unresolved decisions, future variants, and sequencing in the planning doc.
-11. Update parent `!README.md` indexes.
-12. Update `docs/!README.md` only if the documentation taxonomy itself changed.
+7. Remove or reduce duplicated implemented facts from the planning doc.
+8. Add an `Implemented references` section in the planning doc linking to the new current docs.
+9. Leave unresolved decisions, future variants, and sequencing in the planning doc.
+10. Update parent `!README.md` indexes.
+11. Update `docs/!README.md` only if the documentation taxonomy itself changed.
 
 Planning docs should include a `Graduation targets` section before or during implementation.
 
@@ -551,7 +523,7 @@ The planning document should capture:
 * README/index rules
 * domain/service/protocol/data/systems-design/devtools distinctions
 * code/documentation linking rules
-* package/folder README seam rules
+* package/folder documentation index rules
 * graduation procedure
 * rebuild strategy
 * legacy deletion policy
@@ -681,21 +653,13 @@ Initial devtools split:
 
 Use legacy devtools docs as extraction material only.
 
-### Phase 11: Add Code Seam README Indexes
-
-Add `!README.md` indexes to major code package/folder seams.
-
-These README files should link to relevant docs and explain the package/folder’s ownership.
-
-Do this after the owning docs exist.
-
-### Phase 12: Update Planning Docs With Graduation Targets
+### Phase 11: Update Planning Docs With Graduation Targets
 
 As planning docs are touched, add `Graduation targets`.
 
 Do not mass-edit every planning doc before the target docs exist unless the change is small and mechanical.
 
-### Phase 13: Triage Legacy And Notes
+### Phase 12: Triage Legacy And Notes
 
 Use `docs/legacy/` as temporary extraction material.
 
@@ -717,7 +681,6 @@ The restructuring is successful when:
 * `systems-design/` replaces `design/` as the home for conceptual mechanics, authority boundaries, and invariants.
 * Devtools docs are separate from production gameplay docs and split into design, server, and client documentation.
 * Service, data, protocol, and devtools implementation docs include code maps where appropriate.
-* Major code seam packages/folders have `!README.md` indexes linking to relevant documentation.
 * Planning docs have a real graduation procedure and use `Graduation targets` as they are updated.
 * Legacy docs are not current authority.
 * Legacy docs are deleted once fully deprecated.

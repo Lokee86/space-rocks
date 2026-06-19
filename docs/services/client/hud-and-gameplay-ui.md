@@ -176,6 +176,8 @@ That sets the match-over visibility lock. While the lock is active, gameplay sta
 
 It reads player weapon state from server-fed player state fields and creates a display only for weapons registered by `WeaponDisplayRegistry`.
 
+`LoadoutDisplayFlow` instantiates weapon display scene nodes from `weapon_display.tscn`.
+
 Current behavior:
 
 * `torpedo` is displayable.
@@ -185,6 +187,10 @@ Current behavior:
 * Non-limited ammo policies hide the ammo label.
 * Cooldown state is shown through `CooldownOverlay`.
 * Ready transitions can play ring, sweep, and flash effects.
+
+`client/scenes/ui/weapon_displays/weapon_display.tscn` is the scene backing `WeaponDisplay`.
+
+`WeaponDisplay` owns per-slot icon, ammo, cooldown, and ready-effect presentation.
 
 ### Input protection
 
@@ -326,6 +332,7 @@ The loadout display reads generated packet field names and generated client cons
 * `client/scenes/ui/hud.tscn` - HUD scene, score/lives labels, local death/respawn UI, game-over container, embedded game menu, and loadout display container.
 * `client/scenes/ui/dialogs/game_menu.tscn` - Gameplay menu scene used by live gameplay and match-over overlay paths.
 * `client/scenes/ui/dialogs/match_result_window.tscn` - Match results scene mounted under gameplay UI by the match results flow.
+* `client/scenes/ui/weapon_displays/weapon_display.tscn` - Scene backing `WeaponDisplay`.
 
 ### Gameplay composition and session routing
 
@@ -389,6 +396,8 @@ The loadout display reads generated packet field names and generated client cons
 * `client/tests/unit/ui/hud/test_cooldown_overlay.gd`
 
 These tests verify displayable weapon registration, display creation and clearing, ammo label behavior, cooldown overlay behavior, ready effects, and cooldown-finished signaling.
+
+`test_weapon_display.gd` covers the scene-backed `WeaponDisplay` presentation path.
 
 ### Input protection tests
 

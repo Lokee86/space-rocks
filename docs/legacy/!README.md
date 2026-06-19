@@ -20,11 +20,11 @@ This folder owns the legacy documentation index and migration-source navigation.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [API](api/!README.md) - Legacy API source material.
-- [Client](client/!README.md) - Legacy client source material.
-- [Design](design/!README.md) - Legacy design source material.
-- [Devtools](devtools/!README.md) - Legacy devtools source material.
-- [Server](server/!README.md) - Legacy server source material.
+- [API](api\!README.md) - Legacy API source material.
+- [Client](client\!README.md) - Legacy client source material.
+- [Design](design\!README.md) - Legacy design source material.
+- [Devtools](devtools\!README.md) - Legacy devtools source material.
+- [Server](server\!README.md) - Legacy server source material.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

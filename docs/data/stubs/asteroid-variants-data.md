@@ -3,68 +3,52 @@ Parent index: [Data](../!README.md)
 
 ## Purpose
 
-Stub note: this document is incomplete and non-canonical.
-TODO: describe asteroid variant data source documentation.
+This document describes the asteroid variant data source of truth and the generated outputs that consume it.
 
 ## Overview
 
-TODO: summarize how asteroid variant data is authored and consumed by gameplay.
-Stub note: keep this focused on asteroid data ownership.
+`shared/asteroids/variants.toml` is the asteroid variant source data.
+
+That source data defines the variant entries used to generate client and server asteroid variant data. The generated outputs keep the client and game server aligned on variant ids, catalog order, and variant-count expectations.
 
 ## Source files
 
-- `shared/asteroids/variants.toml`
-- TODO: add any other confirmed asteroid variant source files.
-
-## Configuration
-
-- TODO: describe any variant generation configuration if it exists.
-- Stub note: configuration details are not yet confirmed.
+* `shared/asteroids/variants.toml`
 
 ## Generated outputs
 
-- `services/game-server/internal/game/asteroids/variants.go`
-- `services/game-server/internal/game/asteroids/variants_test.go`
-- `services/game-server/internal/game/simulation_asteroids.go`
-- TODO: add any other generated or exported asteroid outputs when they are confirmed.
+* `client/scripts/generated/asteroids/asteroid_variants.gd`
+* `services/game-server/internal/game/asteroids/variants.go`
+* `services/game-server/internal/game/asteroids/variants_test.go`
 
-## Consumers
+## Data role
 
-- Game-server asteroid simulation.
-- Game-server asteroid tests.
-- TODO: add any other confirmed consumers.
+The source data owns the asteroid variant catalog content.
 
-## Pipeline usage
+Generated client and server variant data are derived from the same source and should be treated as outputs, not hand-authored sources.
 
-- TODO: describe the asteroid variant export workflow if it is confirmed.
-- Stub note: keep this focused on the data export path.
+The client output provides generated variant data for client-side consumption.
+The server outputs provide the runtime variant catalog and tests that validate the generated catalog shape.
 
-## Validation commands
+## Validation and failure modes
 
-- `go test ./services/game-server/internal/game/asteroids/...`
-- `go test ./services/game-server/internal/game/...`
-- TODO: add any other verified asteroid validation commands.
+Asteroid variant data should fail fast when the generated outputs drift from the source data or when the source data becomes invalid.
 
-## Failure modes
+Known failure modes include:
 
-- Out-of-sync asteroid variant data.
-- Missing or stale variant outputs after source edits.
-- Invalid asteroid variant source data.
-- TODO: add any other verified failure modes.
-
-## Code or source map
-
-- `shared/asteroids/`
-- `services/game-server/internal/game/asteroids/`
-- `services/game-server/internal/game/simulation_asteroids.go`
-- TODO: add narrower asteroid data source-map entries when they are confirmed.
+* stale generated outputs after source edits
+* invalid variant entries in `shared/asteroids/variants.toml`
+* missing required fields in the source data
+* count mismatches between the source catalog and generated outputs
+* index mismatches between source entries and generated catalogs
 
 ## Related docs
 
-- [Data](../!README.md)
-- TODO: add asteroid-specific docs when they exist.
+* [Client entity sync owners](../../services/client/world-sync/entity-sync-owners.md)
+* [Server asteroid spawning and variants](../../services/game-server/simulation/world/stubs/asteroid-spawning-and-variants.md)
+* [Gameplay packets stub](../../protocol/stubs/gameplay-packets.md)
+* [Data](../!README.md)
 
 ## Notes
 
-Stub note: this document is a placeholder for future asteroid variants data documentation.
-Do not treat it as canonical source material.
+This document stays on data ownership and generated outputs rather than runtime spawning or client presentation behavior.

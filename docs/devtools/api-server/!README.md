@@ -22,8 +22,8 @@ This folder owns docs for API-server development and debug tooling.
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [bruno-smoke-tests.md](stubs/bruno-smoke-tests.md) - Stub: API-server Bruno smoke-test documentation.
-- [local-auth-smoke-flow.md](stubs/local-auth-smoke-flow.md) - Stub: API-server local auth smoke-flow documentation.
+- [bruno-smoke-tests.md](stubs\bruno-smoke-tests.md) - Stub: API-server Bruno smoke-test documentation.
+- [local-auth-smoke-flow.md](stubs\local-auth-smoke-flow.md) - Stub: API-server local auth smoke-flow documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

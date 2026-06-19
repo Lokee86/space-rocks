@@ -20,17 +20,17 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [Agent](agent/!README.md) - Agent workflow and documentation support notes.
-- [Data](data/!README.md) - Data documentation and pipeline references.
-- [design](design/!README.md) - Design documentation.
-- [Devtools](devtools/!README.md) - Development and debug tooling documentation.
-- [Domains](domains/!README.md) - Cross-system domain documentation.
-- [Legacy](legacy/!README.md) - Temporary migration source for deprecated documentation.
-- [Limits](limits/!README.md) - Temporary blockers, gaps, and transitional limitations.
-- [Planning](planning/!README.md) - Future, unresolved, or not-yet-current documentation.
-- [Protocol](protocol/!README.md) - Communication and message flow documentation.
-- [Services](services/!README.md) - Runtime and implementation responsibility documentation.
-- [Systems Design](systems-design/!README.md) - Conceptual mechanics, boundaries, and invariants.
+- [Agent](agent\!README.md) - Agent workflow and documentation support notes.
+- [Data](data\!README.md) - Data documentation and pipeline references.
+- [design](design\!README.md) - Design documentation.
+- [Devtools](devtools\!README.md) - Development and debug tooling documentation.
+- [Domains](domains\!README.md) - Cross-system domain documentation.
+- [Legacy](legacy\!README.md) - Temporary migration source for deprecated documentation.
+- [Limits](limits\!README.md) - Temporary blockers, gaps, and transitional limitations.
+- [Planning](planning\!README.md) - Future, unresolved, or not-yet-current documentation.
+- [Protocol](protocol\!README.md) - Communication and message flow documentation.
+- [Services](services\!README.md) - Runtime and implementation responsibility documentation.
+- [Systems Design](systems-design\!README.md) - Conceptual mechanics, boundaries, and invariants.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

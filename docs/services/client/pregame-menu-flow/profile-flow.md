@@ -12,6 +12,8 @@ The profile flow displays the active player profile context in the pregame menu 
 
 `PregameMenuFlow` routes profile requests to `ProfileFlow.show_profile(current_mode)`. `ProfileFlow` asks `ProfileContextProvider` for the active context for the current pregame mode, asks `ProfileStatsProvider` to load the matching profile data, shapes the display payload, mounts the profile readout scene, and applies the display values.
 
+`ProfileStatsProvider` now loads profile data from the player-data profile endpoint. `GuestTransientStatsProvider` remains a legacy compatibility fallback for older guest-stat behavior, but it is not the source of truth for profile stats.
+
 This flow is separate from local pilot management. Local pilot selection, creation, editing, deletion, and default selection are owned by `LocalPilotFlow`.
 
 ## Code root
@@ -36,6 +38,7 @@ The client profile flow owns:
 * handling pregame profile readout requests
 * resolving the current profile context by pregame mode
 * loading profile data through `ProfileStatsProvider`
+* using `GuestTransientStatsProvider` only as a legacy fallback for guest-stat compatibility
 * shaping the profile readout display payload
 * mounting the profile readout scene in the transmission panel
 * applying callsign, activity status, and stat values to the profile readout UI
@@ -134,6 +137,8 @@ wins
 
 Extra sensitive or unrelated fields from API responses are ignored by the client-side normalization path.
 
+`GuestTransientStatsProvider` is a legacy compatibility fallback provider for old guest-stat behavior. It is injectable by default when guest-stat compatibility is needed, but it is not the profile stats source of truth and it does not make guest stats canonical client persistence.
+
 When profile data is unavailable:
 
 * Guest and local profile paths return zeroed profile data.
@@ -149,6 +154,7 @@ client/scripts/ui/menu_flow/pregame_menu_flow.gd
 client/scripts/profile/profile_flow.gd
 client/scripts/profile/profile_context_provider.gd
 client/scripts/profile/profile_stats_provider.gd
+client/scripts/profile/guest_transient_stats_provider.gd
 client/scripts/profile/player_data_profile_api_client.gd
 client/scripts/profile/profile_readout.gd
 client/scripts/profile/profile_identity_kind.gd
@@ -166,6 +172,7 @@ Related tests:
 ```text
 client/tests/unit/profile/test_profile_context_provider.gd
 client/tests/unit/profile/test_profile_stats_provider.gd
+client/tests/unit/profile/test_guest_transient_stats_provider.gd
 ```
 
 Important non-ownership boundaries:
@@ -187,6 +194,7 @@ Relevant test coverage:
 ```text
 client/tests/unit/profile/test_profile_context_provider.gd
 client/tests/unit/profile/test_profile_stats_provider.gd
+client/tests/unit/profile/test_guest_transient_stats_provider.gd
 ```
 
 Covered context behavior includes:
@@ -206,6 +214,7 @@ Covered stats behavior includes:
 * sensitive field exclusion
 * missing-stat zero fallback
 * authenticated cached-stat fallback after API failure
+* guest transient stats fallback compatibility behavior
 
 ## Related docs
 

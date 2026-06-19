@@ -76,9 +76,35 @@ Those belong to server, protocol, data, devtools, domain, or planning documentat
 
 `GameplayInputContext` translates raw Godot input events into semantic gameplay actions.
 
+### Mouse action names
+
+`MouseActionNames` owns the string/name boundary between Godot input actions and semantic mouse actions.
+
+### Mouse action mapping
+
+`MouseActionMapper` converts input events into semantic mouse actions based on whether a pending mouse-action context exists.
+
+When a pending mouse-action context exists, it allows:
+
+```text
+SpawnEntity
+CancelAction
+```
+
+When no pending mouse-action context exists, it allows:
+
+```text
+SelectTarget
+DeselectTarget
+```
+
+`CancelAction` without a pending mouse-action context returns no semantic mouse action.
+
 ### Mouse action priority
 
-`MouseActionFlow` gives pending mouse actions priority over generic target selection so one click does not both finish a pending action and select a target.
+`MouseActionFlow` coordinates pending mouse actions and generic target selection so one click does not both finish a pending action and select a target.
+
+`MouseActionFlow` remains the coordinator. It does not own the string boundary or event-to-action conversion.
 
 ### Gameplay UI input protection
 
@@ -88,9 +114,27 @@ Those belong to server, protocol, data, devtools, domain, or planning documentat
 
 `GameplayTargetingContext` owns target-selection orchestration and request routing.
 
+### Pointer position provision
+
+`GameplayPointerPositionProvider` reads the current mouse visual position from the game owner.
+
+It converts visual position to server position through the configured converter, and falls back to visual position when no converter is configured.
+
 ### Target candidate construction
 
 `GameplayTargetCandidateFlow` builds candidate targets from the currently rendered or synchronized client state.
+
+### Pickup target radius resolution
+
+`TargetPickRadiusResolver` lets pickup targeting use a rendered pickup node's `collision_radius()` when available and positive.
+
+It falls back to the provided fallback radius otherwise.
+
+### Target request flow
+
+`TargetRequestFlow` owns client-side target select/deselect request sending.
+
+It validates required dependencies, gets candidates, picks a candidate using `TargetVisualPicker`, converts mouse visual position to server position, sends `select_target_at_position_request_packet`, and sends `clear_target_request_packet` for deselect.
 
 ### Canonical target readback
 
@@ -225,8 +269,10 @@ The current client targeting ownership chain is:
 InputEvent
 -> GameplayInputContext
 -> MouseActionFlow
+-> GameplayPointerPositionProvider
 -> GameplayTargetingContext
 -> GameplayTargetCandidateFlow
+-> TargetRequestFlow
 -> TargetPositionSource
 -> packet send
 -> authoritative state confirmation
@@ -238,17 +284,29 @@ Responsibilities by seam:
 GameplayInputContext
 = translates raw input events into gameplay-safe semantic actions
 
+MouseActionNames
+= owns the string/name boundary between Godot input actions and semantic mouse actions
+
+MouseActionMapper
+= converts input events into semantic mouse actions based on pending mouse-action context
+
 MouseActionFlow
 = coordinates pending mouse actions and generic mouse action priority
 
 GameplayTargetingContext
 = owns target selection orchestration
 
+GameplayPointerPositionProvider
+= reads mouse visual position from the game owner and converts it to server position when configured
+
 GameplayTargetCandidateFlow
 = builds selectable candidates from available presentation/sync state
 
+TargetRequestFlow
+= owns client-side target select/deselect request sending
+
 TargetPositionSource
-= exposes targetable position read models
+= exposes authoritative target/read-model state for targeting flows
 
 WorldSync
 = exposes target source data needed by targeting without owning targeting policy
@@ -267,6 +325,8 @@ pickups
 asteroids
 bullets
 ```
+
+Pickup target candidates may derive pick radius from rendered pickup nodes.
 
 The client may use local presentation state to determine what the player can click or inspect, but candidate presence is not authority.
 
@@ -324,11 +384,16 @@ Current implementation paths:
 * `client/scripts/gameplay/input/gameplay_input_flow.gd`
 * `client/scripts/gameplay/input/gameplay_pause_input_flow.gd`
 * `client/scripts/gameplay/input/hud_input_policy.gd`
+* `client/scripts/gameplay/input/mouse_action_names.gd`
+* `client/scripts/gameplay/input/mouse_action_mapper.gd`
 * `client/scripts/gameplay/input/mouse_action_flow.gd`
+* `client/scripts/gameplay/input/gameplay_pointer_position_provider.gd`
 * `client/scripts/gameplay/input/target_visual_candidate.gd`
 * `client/scripts/gameplay/input/target_visual_picker.gd`
 * `client/scripts/gameplay/targeting/gameplay_targeting_context.gd`
 * `client/scripts/gameplay/targeting/gameplay_target_candidate_flow.gd`
+* `client/scripts/gameplay/targeting/target_request_flow.gd`
+* `client/scripts/gameplay/targeting/target_pick_radius_resolver.gd`
 * `client/scripts/gameplay/targeting/target_position_source.gd`
 * `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
 * `client/scripts/session/gameplay_session_controller.gd`
@@ -345,6 +410,7 @@ Current implementation paths:
 Relevant tests include:
 
 * `client/tests/unit/gameplay/input/test_hud_input_policy.gd`
+* `client/tests/unit/test_mouse_action_mapper.gd`
 * `client/tests/unit/test_gameplay_input_context.gd`
 * `client/tests/unit/test_target_request_flow.gd`
 * `client/tests/unit/test_target_visual_picker.gd`

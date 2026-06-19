@@ -18,12 +18,13 @@ This folder owns executable startup, route composition, dependency construction,
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [route-composition.md](route-composition.md) - Route Composition documentation.
+- [service-shutdown.md](service-shutdown.md) - Game-server process shutdown and room-manager cleanup documentation.
+- [service-startup.md](service-startup.md) - Service Startup documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [service-shutdown.md](stubs/service-shutdown.md) - Stub: incomplete process shutdown documentation.
-- [service-startup-and-route-composition.md](stubs/service-startup-and-route-composition.md) - Stub: incomplete process startup and route composition documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
@@ -35,4 +36,4 @@ This folder owns executable startup, route composition, dependency construction,
 
 ## Notes
 
-This folder is intentionally narrow and will later host startup and shutdown documentation only.
+This folder is intentionally narrow and covers process startup, route composition, dependency construction, and shutdown behavior only.

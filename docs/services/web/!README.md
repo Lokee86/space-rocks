@@ -21,8 +21,8 @@ This folder owns docs for the web service runtime and its implementation respons
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [devlog-static-site.md](stubs/devlog-static-site.md) - Stub: web devlog static site documentation.
-- [future-interactive-website.md](stubs/future-interactive-website.md) - Stub: future interactive website documentation.
+- [devlog-static-site.md](stubs\devlog-static-site.md) - Stub: web devlog static site documentation.
+- [future-interactive-website.md](stubs\future-interactive-website.md) - Stub: future interactive website documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

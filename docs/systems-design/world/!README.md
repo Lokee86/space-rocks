@@ -22,9 +22,9 @@ This folder owns conceptual docs about world behavior, authority boundaries, and
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [spawning-and-space.md](stubs/spawning-and-space.md) - Stub: spawning and space systems-design documentation.
-- [toroidal-wrap.md](stubs/toroidal-wrap.md) - Stub: toroidal wrap systems-design documentation.
-- [world-authority.md](stubs/world-authority.md) - Stub: world authority systems-design documentation.
+- [spawning-and-space.md](stubs\spawning-and-space.md) - Stub: spawning and space systems-design documentation.
+- [toroidal-wrap.md](stubs\toroidal-wrap.md) - Stub: toroidal wrap systems-design documentation.
+- [world-authority.md](stubs\world-authority.md) - Stub: world authority systems-design documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
