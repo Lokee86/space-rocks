@@ -1,0 +1,49 @@
+root = "docs"
+index_file = "!README.md"
+
+[markers]
+prefix = "doc-ledger"
+
+[parent_link]
+label = "Parent index"
+folder_indexes = true
+indexed_files = true
+
+[sections.files]
+heading = "Direct Files"
+
+[sections.stubs]
+heading = "Stub Files"
+
+[sections.folders]
+heading = "Direct Folders"
+
+[aliases]
+files = ["Top-Level Files"]
+folders = ["Top-Level Folders"]
+
+[drafts]
+folder = "stubs"
+description_prefix = "Stub: "
+
+[files]
+include_patterns = ["**/*.md"]
+exclude_patterns = []
+
+[editable]
+parent_index_extensions = [".md"]
+
+[descriptions]
+file_template = "{title} documentation."
+folder_template = "{title} documentation."
+
+[watch]
+debounce_seconds = 0.75
+ignored_dirs = [".git", ".cache", "__pycache__"]
+ignored_suffixes = ["~", ".swp", ".tmp", ".bak"]
+
+[template]
+include_ownership = true
+include_does_not_belong = true
+include_related_docs = true
+include_notes = true
