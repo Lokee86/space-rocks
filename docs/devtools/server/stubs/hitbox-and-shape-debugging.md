@@ -1,5 +1,5 @@
 # Hitbox And Shape Debugging
-Parent index: [Server Devtools](../!README.md)
+Parent index: [Server](../!README.md)
 
 ## Purpose
 

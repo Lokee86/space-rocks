@@ -1,5 +1,7 @@
 # Server Devtools
 
+Parent index: [Server Legacy](./!README.md)
+
 Focused reference for the current server devtools command surface and boundaries.
 
 Related references:
@@ -111,4 +113,3 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 data-sync -check -packets -go -gds
 data-sync -diff -packets -go -gds
 ```
-

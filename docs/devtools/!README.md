@@ -1,5 +1,7 @@
 # Devtools
 
+Parent index: [Docs](../!README.md)
+
 Devtools documentation covers debug and development tooling, separate from production gameplay docs.
 
 ## Ownership
@@ -15,14 +17,20 @@ This folder owns the devtools documentation indexes for current Space Rocks tool
 - Stub content as canonical devtools authority.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
 
 - [API Server](api-server/!README.md) - API-server devtools documentation index.
 - [Client](client/!README.md) - Client devtools documentation index.
 - [Server](server/!README.md) - Server devtools documentation index.
+<!-- doc-ledger:folders:end -->
+
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

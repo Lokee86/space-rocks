@@ -1,5 +1,7 @@
 # Combat
 
+Parent index: [Systems Design](../!README.md)
+
 Combat systems-design documentation lives here.
 
 ## Ownership
@@ -15,21 +17,20 @@ This folder owns conceptual docs about combat mechanics, authority boundaries, a
 - Exhaustive code maps unless a doc explicitly needs them.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
+<!-- doc-ledger:stubs:start -->
 
 - [damage.md](stubs/damage.md) - Stub: damage systems-design documentation.
 - [pickups.md](stubs/pickups.md) - Stub: pickups systems-design documentation.
-- [targeting.md](stubs/targeting.md) - Stub: targeting systems-design documentation.
 - [radial-effects.md](stubs/radial-effects.md) - Stub: radial effects systems-design documentation.
+- [targeting.md](stubs/targeting.md) - Stub: targeting systems-design documentation.
 - [weapons.md](stubs/weapons.md) - Stub: weapons systems-design documentation.
-
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Systems design index](../!README.md)

@@ -1,5 +1,7 @@
 # Stub: Lobby And Start Rules
 
+Parent index: [Game Server Rooms](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server lobby and start rules boundary.

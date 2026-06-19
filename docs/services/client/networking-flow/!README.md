@@ -19,19 +19,18 @@ This folder owns client WebSocket connection, packet routing, packet dispatch, a
 - Future planning.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
-- [websocket-connection-lifecycle.md](websocket-connection-lifecycle.md) - Client WebSocket connection lifecycle documentation.
 - [inbound-packet-routing.md](inbound-packet-routing.md) - Client inbound packet routing documentation.
 - [outbound-packet-sending.md](outbound-packet-sending.md) - Client outbound packet sending documentation.
-
+- [websocket-connection-lifecycle.md](websocket-connection-lifecycle.md) - Client WebSocket connection lifecycle documentation.
+<!-- doc-ledger:files:end -->
 ## Stub Files
-
-- None.
-
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Client](../!README.md)

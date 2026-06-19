@@ -1,5 +1,7 @@
 # Stub: Collision Shapes And Physics
 
+Parent index: [Game Server Simulation World](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server collision shapes and physics support boundary.

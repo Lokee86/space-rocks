@@ -1,5 +1,7 @@
 # Damage System
 
+Parent index: [Design Legacy](./!README.md)
+
 ## Status Summary
 
 - Damage is server-authoritative.

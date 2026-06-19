@@ -1,5 +1,7 @@
 # Client
 
+Parent index: [Devtools](../!README.md)
+
 Client devtools documentation lives here.
 
 ## Ownership
@@ -15,20 +17,19 @@ This folder owns docs for client-side development and debug tooling.
 - Stub content as canonical devtools authority.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
+<!-- doc-ledger:stubs:start -->
 
 - [devtools-window.md](stubs/devtools-window.md) - Stub: client devtools window documentation.
 - [hitbox-overlays.md](stubs/hitbox-overlays.md) - Stub: client hitbox overlays documentation.
-- [telemetry-overlays.md](stubs/telemetry-overlays.md) - Stub: client telemetry overlays documentation.
 - [target-and-placement-debugging.md](stubs/target-and-placement-debugging.md) - Stub: client target and placement debugging documentation.
-
+- [telemetry-overlays.md](stubs/telemetry-overlays.md) - Stub: client telemetry overlays documentation.
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Devtools index](../!README.md)

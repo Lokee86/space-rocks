@@ -1,5 +1,7 @@
 # Stub: Player Session And Avatar State
 
+Parent index: [Game Server Simulation Players](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server player session and avatar state boundary.

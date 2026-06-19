@@ -21,18 +21,17 @@ This folder owns the client match-end flow boundary, including orchestration aro
 - Future planning.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [match-end-orchestration.md](match-end-orchestration.md) - Client match-end orchestration documentation.
 - [match-results-presentation.md](match-results-presentation.md) - Client match-results presentation documentation.
-
+<!-- doc-ledger:files:end -->
 ## Stub Files
-
-- None.
-
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Client](../!README.md)

@@ -9,17 +9,20 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 - Top-level docs should stay navigational and policy-oriented, not duplicate full policy detail.
 - Legacy docs are migration-only and should not be treated as current authority.
 
-## Top-Level Files
+## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [developer.md](developer.md) - Developer workflow and environment notes.
 - [documentation-policy.md](documentation-policy.md) - Documentation classification and policy rules.
 - [documentation-procedure.md](documentation-procedure.md) - Standard documentation workflow and required shapes.
 - [notes.md](notes.md) - Cross-cutting notes that do not yet have a better home.
-
-## Top-Level Folders
+<!-- doc-ledger:files:end -->
+## Direct Folders
+<!-- doc-ledger:folders:start -->
 
 - [Agent](agent/!README.md) - Agent workflow and documentation support notes.
 - [Data](data/!README.md) - Data documentation and pipeline references.
+- [design](design/!README.md) - Design documentation.
 - [Devtools](devtools/!README.md) - Development and debug tooling documentation.
 - [Domains](domains/!README.md) - Cross-system domain documentation.
 - [Legacy](legacy/!README.md) - Temporary migration source for deprecated documentation.
@@ -28,6 +31,12 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 - [Protocol](protocol/!README.md) - Communication and message flow documentation.
 - [Services](services/!README.md) - Runtime and implementation responsibility documentation.
 - [Systems Design](systems-design/!README.md) - Conceptual mechanics, boundaries, and invariants.
+<!-- doc-ledger:folders:end -->
+
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Notes
 

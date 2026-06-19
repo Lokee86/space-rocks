@@ -1,5 +1,7 @@
 # Radial Effects
 
+Parent index: [Design Legacy](./!README.md)
+
 ## Status Summary
 
 - Radial effects are server-authoritative runtime effects.

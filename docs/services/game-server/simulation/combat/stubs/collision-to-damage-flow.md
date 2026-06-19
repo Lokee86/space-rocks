@@ -1,5 +1,7 @@
 # Stub: Collision To Damage Flow
 
+Parent index: [Game Server Simulation Combat](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server collision to damage flow boundary.

@@ -1,5 +1,7 @@
 # Client Menu Flow
 
+Parent index: [Client](./!README.md)
+
 ## Purpose
 
 This document describes the high-level client menu flow. It covers how the app enters the menu stack, how top-level routes move between main menu, sign-in, pregame, lobby, gameplay, match results, and shutdown, and which implementation surfaces own those transitions.

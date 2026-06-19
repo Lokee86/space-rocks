@@ -1,5 +1,7 @@
 # Services
 
+Parent index: [Docs](../!README.md)
+
 Service documentation covers runtime, executable, package, and implementation responsibility.
 
 ## Ownership
@@ -14,16 +16,22 @@ This folder owns the service documentation indexes for current Space Rocks servi
 - Stub content as canonical service authority.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
 
 - [API Server](api-server/!README.md) - API service documentation index.
 - [Client](client/!README.md) - Client runtime and implementation documentation index.
 - [Game Server](game-server/!README.md) - Game-server runtime and implementation documentation index.
 - [Player Data](player-data/!README.md) - Player-data service documentation index.
 - [Web](web/!README.md) - Web service documentation index.
+<!-- doc-ledger:folders:end -->
+
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

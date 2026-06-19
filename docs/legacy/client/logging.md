@@ -1,5 +1,7 @@
 # Client Logging
 
+Parent index: [Client Legacy](./!README.md)
+
 The Godot client has a lightweight logging helper at:
 
 ```text

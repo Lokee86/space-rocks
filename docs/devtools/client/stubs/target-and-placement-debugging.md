@@ -1,5 +1,5 @@
 # Target And Placement Debugging
-Parent index: [Client Devtools](../!README.md)
+Parent index: [Client](../!README.md)
 
 ## Purpose
 

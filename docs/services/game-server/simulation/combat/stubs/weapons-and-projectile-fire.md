@@ -1,5 +1,7 @@
 # Stub: Weapons And Projectile Fire
 
+Parent index: [Game Server Simulation Combat](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server weapons and projectile fire boundary.

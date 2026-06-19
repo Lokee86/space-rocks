@@ -1,5 +1,7 @@
 # Stub: Counters Death And Respawn
 
+Parent index: [Game Server Simulation Players](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server counters, death, and respawn boundary.

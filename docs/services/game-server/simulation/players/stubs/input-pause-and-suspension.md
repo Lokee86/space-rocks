@@ -1,5 +1,7 @@
 # Stub: Input Pause And Suspension
 
+Parent index: [Game Server Simulation Players](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server input pause and suspension boundary.

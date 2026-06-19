@@ -1,5 +1,7 @@
 # Design Legacy
 
+Parent index: [Legacy](../!README.md)
+
 Legacy design docs live here as migration source material.
 
 ## Ownership
@@ -13,6 +15,7 @@ This folder owns legacy design source docs for migration reference.
 - Treating legacy files as the current source of truth.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [architecture.md](architecture.md) - Legacy architecture notes.
 - [asteroid-variants.md](asteroid-variants.md) - Legacy asteroid variant notes.
@@ -28,10 +31,15 @@ This folder owns legacy design source docs for migration reference.
 - [targeting.md](targeting.md) - Legacy targeting notes.
 - [toroidal-wrap.md](toroidal-wrap.md) - Legacy toroidal wrap notes.
 - [weapons.md](weapons.md) - Legacy weapons notes.
-
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 
-- None.
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

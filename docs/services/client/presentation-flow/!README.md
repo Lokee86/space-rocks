@@ -19,18 +19,17 @@ This folder owns client non-HUD gameplay presentation, local player presentation
 - Future planning.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [background-and-viewport-presentation.md](background-and-viewport-presentation.md) - Background and viewport presentation documentation.
 - [gameplay-presentation-flow.md](gameplay-presentation-flow.md) - Client gameplay presentation flow documentation.
-
+<!-- doc-ledger:files:end -->
 ## Stub Files
-
-- None.
-
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Client](../!README.md)

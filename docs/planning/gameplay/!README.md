@@ -1,5 +1,7 @@
 # Gameplay Planning
 
+Parent index: [Planning](../!README.md)
+
 This folder contains future gameplay and player-experience planning, not current implementation authority.
 
 ## Ownership
@@ -13,6 +15,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 - Stub content as canonical planning authority.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [achievements-and-milestones.md](achievements-and-milestones.md) - Planned achievement and milestone structure.
 - [deffered-px-systems.md](deffered-px-systems.md) - Deferred player-experience system planning.
@@ -25,10 +28,15 @@ This folder owns planning docs for gameplay and player-experience work that is n
 - [player-experience-systems.md](player-experience-systems.md) - Planned player-experience system grouping.
 - [progression-and-rewards.md](progression-and-rewards.md) - Planned progression and reward structure.
 - [shop-commerce-and-economy.md](shop-commerce-and-economy.md) - Planned shop, commerce, and economy structure.
-
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 
-- None.
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

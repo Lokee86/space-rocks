@@ -1,5 +1,7 @@
 # Stub: State Packet And Event Projection
 
+Parent index: [Game Server Simulation Runtime](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server state packet and event projection boundary.

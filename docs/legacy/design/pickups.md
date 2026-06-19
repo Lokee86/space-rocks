@@ -1,5 +1,7 @@
 # Pickup System
 
+Parent index: [Design Legacy](./!README.md)
+
 ## Status Summary
 
 - `1_up` exists.

@@ -1,5 +1,7 @@
 # Gameplay Runtime
 
+Parent index: [Client](../!README.md)
+
 Client gameplay runtime documentation lives here.
 
 ## Ownership
@@ -18,20 +20,19 @@ Client gameplay runtime documentation lives here.
 - Future planning.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [gameplay-session-lifecycle.md](gameplay-session-lifecycle.md) - Client gameplay packet acceptance, reset, replay, and session-exit behavior.
 - [gameplay-state-application.md](gameplay-state-application.md) - Client gameplay packet normalization and state fanout flow.
 - [runtime-composition.md](runtime-composition.md) - Client gameplay runtime wiring and composition ownership.
 - [runtime-processing.md](runtime-processing.md) - Client per-frame gameplay processing order and runtime tick behavior.
-
+<!-- doc-ledger:files:end -->
 ## Stub Files
-
-- None.
-
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Client](../!README.md)

@@ -1,5 +1,7 @@
 # Stub: Simulation Phase Order
 
+Parent index: [Game Server Simulation Runtime](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server simulation phase order boundary.

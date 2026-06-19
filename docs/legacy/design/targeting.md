@@ -1,5 +1,7 @@
 # Targeting Rule
 
+Parent index: [Design Legacy](./!README.md)
+
 This document defines the targeting quarantine rule that guides the next implementation step.
 
 ## Canonical Target Identity

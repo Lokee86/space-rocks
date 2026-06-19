@@ -1,5 +1,7 @@
 # Game Server Observability
 
+Parent index: [Game Server](../!README.md)
+
 Observability documentation for the game server lives here.
 
 ## Ownership
@@ -15,17 +17,16 @@ This folder owns service diagnostics and logging documentation for the game serv
 - General product or domain notes.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
+<!-- doc-ledger:stubs:start -->
 
 - [logging-and-diagnostics.md](stubs/logging-and-diagnostics.md) - Stub: incomplete logging and diagnostics documentation.
-
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Game Server](../!README.md)

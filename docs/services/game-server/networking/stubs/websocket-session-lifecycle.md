@@ -1,5 +1,7 @@
 # Stub: WebSocket Session Lifecycle
 
+Parent index: [Game Server Networking](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server websocket session lifecycle boundary.

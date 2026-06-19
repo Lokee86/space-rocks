@@ -1,5 +1,7 @@
 # Source Of Truth Map
 
+Parent index: [Design Legacy](./!README.md)
+
 This doc maps where truth lives, what consumes it, how drift is enforced, and what each source does not own.
 
 For a compact player-data routing reference, see [Player-Data Routing Reference](player-data-routing.md).

@@ -1,5 +1,7 @@
 # Current Limits
 
+Parent index: [Docs](../!README.md)
+
 `docs/limits` contains factual current limitations, unavailable features, incomplete integrations, hardcoded fallbacks, and current constraints.
 
 ## Ownership
@@ -15,13 +17,19 @@ This folder owns the current-limits index for temporary constraints and known ga
 - Stub content as canonical limits authority.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [current-system-limits.md](current-system-limits.md) - Current system constraints and unavailable behaviors.
 - [player-build-limits.md](player-build-limits.md) - Current player-build constraints and gaps.
-
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 
-- None.
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

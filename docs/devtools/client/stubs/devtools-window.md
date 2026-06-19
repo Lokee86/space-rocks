@@ -1,5 +1,5 @@
 # Devtools Window
-Parent index: [Client Devtools](../!README.md)
+Parent index: [Client](../!README.md)
 
 ## Purpose
 

@@ -1,5 +1,7 @@
 # Stub: Toroidal Space And Motion
 
+Parent index: [Game Server Simulation World](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server toroidal space and motion boundary.

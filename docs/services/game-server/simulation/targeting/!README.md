@@ -1,5 +1,7 @@
 # Game Server Simulation Targeting
 
+Parent index: [Game Server Simulation](../!README.md)
+
 Targeting documentation for the game server lives here.
 
 ## Ownership
@@ -15,18 +17,17 @@ This folder owns canonical target state, target selection, and target status rea
 - Combat damage or scoring rules.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
+<!-- doc-ledger:stubs:start -->
 
 - [canonical-target-state.md](stubs/canonical-target-state.md) - Stub: incomplete canonical target state documentation.
 - [target-selection-and-status.md](stubs/target-selection-and-status.md) - Stub: incomplete target selection and status documentation.
-
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Game Server Simulation](../!README.md)

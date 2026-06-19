@@ -1,5 +1,5 @@
 # Bruno Smoke Tests
-Parent index: [API Server Devtools](../!README.md)
+Parent index: [API Server](../!README.md)
 
 ## Purpose
 

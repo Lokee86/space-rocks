@@ -1,5 +1,7 @@
 # Stub: Service Startup And Route Composition
 
+Parent index: [Game Server Process](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server process boundary for startup and route composition.

@@ -1,5 +1,7 @@
 # Ship Variants
 
+Parent index: [Design Legacy](./!README.md)
+
 ## Status Summary
 
 Ship variants currently exist as an implemented runtime contract for ship identity, resolved stats, and collision lookup.
