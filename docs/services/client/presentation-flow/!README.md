@@ -20,12 +20,12 @@ This folder owns client non-HUD gameplay presentation, local player presentation
 
 ## Direct Files
 
-- None.
+- [background-and-viewport-presentation.md](background-and-viewport-presentation.md) - Background and viewport presentation documentation.
+- [gameplay-presentation-flow.md](gameplay-presentation-flow.md) - Client gameplay presentation flow documentation.
 
 ## Stub Files
 
-- [gameplay-presentation-flow.md](stubs/gameplay-presentation-flow.md) - Stub: client gameplay presentation flow documentation.
-- [background-and-viewport-presentation.md](stubs/background-and-viewport-presentation.md) - Stub: client background and viewport presentation documentation.
+- None.
 
 ## Direct Folders
 

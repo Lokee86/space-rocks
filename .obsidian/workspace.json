@@ -11,24 +11,10 @@
             "id": "8e14e5a73915c16b",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "!README.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "!README"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -105,7 +91,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "!README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +100,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for !README"
+              "title": "Backlinks"
             }
           },
           {
@@ -124,12 +109,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "!README.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from !README"
+              "title": "Outgoing links"
             }
           },
           {
@@ -167,13 +151,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "!README.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of !README"
+              "title": "Outline"
             }
           }
         ]
@@ -196,41 +179,42 @@
   },
   "active": "8e14e5a73915c16b",
   "lastOpenFiles": [
-    "docs/services/client/world-sync/stubs/entity-sync-owners.md",
-    "docs/services/client/world-sync/pickup-presentation.md",
-    "docs/services/client/menu-flow.md",
-    "docs/design/toroidal-wrap.md",
-    "!README.md",
-    "docs/design/cross-mode-routing-and-player-data.md",
-    "docs/design/architecture.md",
-    "docs/design",
-    "docs/documentation-procedure.md",
-    "docs/services/client/world-sync/stubs/pickup-presentation.md",
-    "docs/services/client/world-sync/stubs/pickup-rendering.md",
-    "docs/services/client/gameplay-menu-flow/gameplay-menu-flow.md",
-    "docs/services/client/gameplay-menu-flow/!README.md",
-    "docs/services/client/gameplay-menu-flow/stubs",
-    "docs/services/client/gameplay-menu-flow",
-    "docs/services/client/match-end-flow/match-results-presentation.md",
-    "docs/services/client/match-end-flow/match-end-orchestration.md",
-    "docs/services/client/match-end-flow/!README.md",
-    "docs/services/client/match-end-flow/stubs",
-    "docs/services/client/match-end-flow",
-    "docs/services/client/input-and-targeting.md",
-    "docs/services/client/hud-and-gameplay-ui.md",
-    "docs/services/client/auth-session-flow.md",
-    "docs/services/client/stubs/input-and-targeting.md",
-    "docs/services/client/stubs/hud-and-gameplay-ui.md",
-    "docs/services/client/stubs/auth-session-flow.md",
-    "docs/services/client/world-sync/view-anchor-and-visual-coordinates.md",
-    "services/api-server/!README.md",
-    "docs/services/client/world-sync/entity-sync-owners.md",
-    "docs/services/client/world-sync/world-sync-coordinator.md",
-    "docs/services/client/world-sync/stubs/world-sync-coordinator.md",
-    "docs/services/client/pregame-menu-flow/stubs",
-    "docs/services/client/pregame-menu-flow",
-    "docs/services/client/world-sync/stubs",
-    "docs/services/client/world-sync",
-    "docs/services/client/gameplay-runtime/stubs"
+    "tools/requirements.txt",
+    "docs/services/game-server/simulation/pickups/stubs/pickup-drop-integration.md",
+    "docs/services/game-server/simulation/pickups/stubs/pickup-collection-and-effects.md",
+    "docs/services/game-server/simulation/pickups/stubs/pickup-entity-lifecycle.md",
+    "docs/services/game-server/simulation/pickups/stubs",
+    "docs/services/game-server/simulation/combat/stubs/radial-effects.md",
+    "docs/services/game-server/simulation/combat/stubs/scoring-and-counter-mutation.md",
+    "docs/services/game-server/simulation/combat/stubs/damage-resolution.md",
+    "docs/services/game-server/simulation/combat/stubs/collision-to-damage-flow.md",
+    "docs/services/game-server/simulation/combat/stubs/weapons-and-projectile-fire.md",
+    "docs/services/game-server/simulation/combat/stubs",
+    "docs/services/game-server/simulation/targeting/stubs/target-selection-and-status.md",
+    "docs/services/game-server/simulation/targeting/stubs/canonical-target-state.md",
+    "docs/services/game-server/simulation/targeting/stubs",
+    "docs/services/game-server/simulation/world/stubs/collision-shapes-and-physics.md",
+    "docs/services/game-server/simulation/world/stubs/asteroid-spawning-variants-and-destruction.md",
+    "docs/services/game-server/simulation/world/stubs/visibility-and-despawn.md",
+    "docs/services/game-server/simulation/world/stubs/toroidal-space-and-motion.md",
+    "docs/services/game-server/simulation/world/stubs",
+    "docs/services/game-server/simulation/players/stubs/camera-view-and-player-world-state.md",
+    "docs/services/game-server/simulation/players/stubs/counters-death-and-respawn.md",
+    "docs/services/game-server/simulation/players/stubs/input-pause-and-suspension.md",
+    "docs/services/game-server/simulation/players/stubs/player-session-and-avatar-state.md",
+    "docs/services/game-server/simulation/players/stubs",
+    "docs/services/game-server/simulation/runtime/stubs/state-packet-and-event-projection.md",
+    "docs/services/game-server/simulation/runtime/stubs/runtime-entity-store.md",
+    "docs/services/game-server/simulation/runtime/stubs/simulation-phase-order.md",
+    "docs/services/game-server/simulation/runtime/stubs/game-aggregate-and-loop.md",
+    "docs/services/game-server/simulation/runtime/stubs",
+    "docs/services/game-server/simulation/pickups/!README.md",
+    "docs/services/game-server/simulation/pickups",
+    "docs/services/game-server/simulation/combat/!README.md",
+    "docs/services/game-server/simulation/combat",
+    "docs/services/game-server/simulation/targeting/!README.md",
+    "docs/services/game-server/simulation/targeting",
+    "docs/services/game-server/simulation/world",
+    "client/assets/units/torpedo.png"
   ]
 }

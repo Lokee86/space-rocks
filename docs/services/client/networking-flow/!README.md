@@ -20,12 +20,13 @@ This folder owns client WebSocket connection, packet routing, packet dispatch, a
 
 ## Direct Files
 
-- None.
+- [websocket-connection-lifecycle.md](websocket-connection-lifecycle.md) - Client WebSocket connection lifecycle documentation.
+- [inbound-packet-routing.md](inbound-packet-routing.md) - Client inbound packet routing documentation.
+- [outbound-packet-sending.md](outbound-packet-sending.md) - Client outbound packet sending documentation.
 
 ## Stub Files
 
-- [websocket-connection-and-packet-routing.md](stubs/websocket-connection-and-packet-routing.md) - Stub: client WebSocket connection and packet routing documentation.
-- [outbound-packet-sending.md](stubs/outbound-packet-sending.md) - Stub: client outbound packet sending documentation.
+- None.
 
 ## Direct Folders
 

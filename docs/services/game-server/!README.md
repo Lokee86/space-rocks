@@ -1,10 +1,10 @@
 # Game Server
 
-Game-server service documentation lives here.
+Game-server service boundary documentation lives here.
 
 ## Ownership
 
-This folder owns docs for the game server runtime and its implementation responsibility.
+This folder owns the service-level documentation indexes for the game server runtime and implementation boundaries.
 
 ## Does Not Belong
 
@@ -19,21 +19,22 @@ This folder owns docs for the game server runtime and its implementation respons
 
 ## Stub Files
 
-- [authoritative-simulation.md](stubs/authoritative-simulation.md) - Stub: game-server authoritative simulation documentation.
-- [match-reporting.md](stubs/match-reporting.md) - Stub: game-server match reporting documentation.
-- [networking-and-sessions.md](stubs/networking-and-sessions.md) - Stub: game-server networking and session documentation.
-- [player-data-integration.md](stubs/player-data-integration.md) - Stub: game-server player-data integration documentation.
-- [rooms-and-lifecycle.md](stubs/rooms-and-lifecycle.md) - Stub: game-server rooms and lifecycle documentation.
-- [server-logging.md](stubs/server-logging.md) - Stub: game-server logging documentation.
+- None.
 
 ## Direct Folders
 
-- None.
+- [Process](process/!README.md) - Game-server process boundary documentation index.
+- [Networking](networking/!README.md) - Game-server networking boundary documentation index.
+- [Rooms](rooms/!README.md) - Game-server rooms boundary documentation index.
+- [Simulation](simulation/!README.md) - Game-server simulation boundary documentation index.
+- [Integrations](integrations/!README.md) - Game-server external integration boundary documentation index.
+- [Observability](observability/!README.md) - Game-server observability boundary documentation index.
 
 ## Related Docs
 
 - [Services index](../!README.md)
+- [Docs index](../../!README.md)
 
 ## Notes
 
-This index stays at the service boundary and does not try to describe unrelated client, protocol, or domain concerns.
+This index stays at the game-server service boundary and does not try to describe unrelated client, protocol, or domain concerns.
