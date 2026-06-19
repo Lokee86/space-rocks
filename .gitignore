@@ -3,6 +3,7 @@ space-rocks-(4.3)/
 .env
 .secrets/
 keys/
+processes.env
 
 .vscode/*
 !.vscode/settings.json
@@ -26,6 +27,7 @@ SourceAssets/
 
 __pycache__/
 *.py[cod]
+*/doc-ledger/
 
 *.avi
 
@@ -35,3 +37,5 @@ tools/space-rocks-mcp/node_modules/
 
 # EngineForge bridge (auto-managed, do not remove)
 addons/engineforge_bridge/
+
+.obsidian/
