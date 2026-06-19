@@ -20,7 +20,7 @@ This folder owns planning docs for devtools work that is not yet current.
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [devtools-and-telemetry.md](stubs/devtools-and-telemetry.md) - Stub: devtools and telemetry planning.
+- [devtools-and-telemetry.md](stubs\devtools-and-telemetry.md) - Stub: devtools and telemetry planning.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

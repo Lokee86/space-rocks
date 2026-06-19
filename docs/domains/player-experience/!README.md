@@ -21,9 +21,9 @@ This folder owns domain docs about player-facing flows that span multiple system
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [gameplay-session-flow.md](stubs/gameplay-session-flow.md) - Stub: gameplay session domain flow documentation.
-- [local-pilot-profile-flow.md](stubs/local-pilot-profile-flow.md) - Stub: local pilot profile domain flow documentation.
-- [match-end-and-results-flow.md](stubs/match-end-and-results-flow.md) - Stub: match end and results domain flow documentation.
+- [gameplay-session-flow.md](stubs\gameplay-session-flow.md) - Stub: gameplay session domain flow documentation.
+- [local-pilot-profile-flow.md](stubs\local-pilot-profile-flow.md) - Stub: local pilot profile domain flow documentation.
+- [match-end-and-results-flow.md](stubs\match-end-and-results-flow.md) - Stub: match end and results domain flow documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

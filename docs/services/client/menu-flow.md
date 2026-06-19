@@ -82,6 +82,12 @@ The high-level menu flow connects:
 
 `match_results_flow.gd` owns match result window population and result-window actions.
 
+### Shared menu UI primitives
+
+`button_long.tscn`, `button_square.tscn`, `window_7.tscn`, and `window_8.tscn` are reusable menu chrome scenes used by multiple menu surfaces.
+
+They provide shared UI primitives for menu presentation, but they do not own route behavior, menu state, auth, lobby behavior, match results, or gameplay flow.
+
 ## Protocols and APIs
 
 The menu flow layer uses local scene and script routing rather than a separate router service.
@@ -163,6 +169,10 @@ It does not own durable account data, profile persistence, room membership autho
 
 ### Primary menu scenes
 
+* `client/scenes/ui/elements/button_long.tscn`
+* `client/scenes/ui/elements/button_square.tscn`
+* `client/scenes/ui/elements/windows/window_7.tscn`
+* `client/scenes/ui/elements/windows/window_8.tscn`
 * `client/scenes/ui/main_menu.tscn`
 * `client/scenes/ui/pregame_menu.tscn`
 * `client/scenes/ui/dialogs/login_window.tscn`

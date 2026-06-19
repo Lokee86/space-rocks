@@ -5,7 +5,7 @@ Parent index: [Docs](./!README.md)
 
 This document defines the documentation policies for Space Rocks.
 
-These policies govern where documentation belongs, how documentation is classified, how folders and `!README.md` indexes are maintained, how draft documentation is handled, how code and documentation connect, and how stale documentation is removed.
+These policies govern where documentation belongs, how documentation is classified, how folders and `!README.md` indexes are maintained, how draft documentation is handled, how documentation connects to implementation, and how stale documentation is removed.
 
 The formal documenting procedure is defined separately. These policies describe the rules that procedure must follow.
 
@@ -86,8 +86,6 @@ Example:
 - [Realtime Protocol](../../protocol/realtime/!README.md)
 - [Data Pipeline](../../data/!README.md)
 ```
-
-Domain docs should not link directly to code seam `!README.md` files.
 
 ## Service Documentation Policy
 
@@ -258,7 +256,7 @@ client presentation
 commands and controls
 telemetry
 build/runtime gates
-relationship to real gameplay seams
+relationship to real gameplay implementation areas
 ```
 
 Devtools must not document or encourage parallel debug-only gameplay logic that bypasses real game systems.
@@ -659,37 +657,9 @@ related tests
 important non-ownership boundaries
 ```
 
-## Code Seam `!README.md` Policy
-
-Major code seams should have `!README.md` indexes in the relevant package or folder.
-
-Code seam `!README.md` files are discoverable from relevant documentation `!README.md` indexes and optionally from specific implementation docs.
-
-Link direction:
-
-```text
-documentation `!README.md` index -> code seam `!README.md`
-implementation doc -> code seam `!README.md` when relevant
-code seam `!README.md` -> related documentation
-```
-
-Domain docs should not link directly to code seam `!README.md` files.
-
-A code seam `!README.md` should include:
-
-```text
-Purpose
-What this folder owns
-What this folder does not own
-Important files and subfolders
-Related documentation
-Related tests
-Notes
-```
-
 Do not add documentation comments to every source file.
 
-Use source comments only for unusually easy-to-misunderstand seams where a `!README.md` link is not enough.
+Use source comments only for unusually easy-to-misunderstand implementation areas where a doc link is not enough.
 
 ## Legacy Removal Policy
 

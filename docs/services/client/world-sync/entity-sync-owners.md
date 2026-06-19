@@ -193,6 +193,7 @@ Current responsibilities include:
 * exposing projectile positions to target-position read models
 
 Projectile sync treats server projectile dictionaries as the source of truth.
+Bullet pulse effects are scene-local presentation owned by `client/scripts/entities/bullet.gd`, not world-sync authority.
 
 Projectile scene selection belongs to:
 
@@ -223,6 +224,7 @@ Current responsibilities include:
 * exposing asteroid positions to target-position read models
 
 Asteroid sync preserves visual continuity for existing asteroids by calculating movement from the asteroid’s previous server position to its current server position using wrapped shortest-delta logic.
+Asteroid variant-specific client presentation should live in the client-side asteroid variant presentation doc when that doc exists; this section only covers the sync-owner boundary.
 
 New asteroids are positioned from the current active anchor basis. First-seen asteroids may appear offscreen when the server intentionally spawns them outside the immediate view area.
 
@@ -280,6 +282,7 @@ Pickup sync does not decide what a pickup does when collected. It only presents 
 
 ### Scene and presentation selection
 
+* `client/scripts/entities/bullet.gd`
 * `client/scripts/world/projectiles/projectile_scene_resolver.gd`
 * `client/scripts/world/pickups/pickup_presentation_catalog.gd`
 

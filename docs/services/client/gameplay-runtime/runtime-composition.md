@@ -50,6 +50,7 @@ The important boundary is that composition wires flows together, but does not co
 * Wire world sync, HUD runtime flow, input context, devtools context, spectate context, event lifecycle flow, targeting context, alive-restore flow, server hitbox overlay flow, and gameplay process flow.
 * Provide a single runtime surface for applying normalized gameplay state.
 * Provide a single runtime surface for applying player pause state.
+* Route player pause packets through pause-state reader and tracker helpers.
 * Provide a single runtime surface for debug status and debug shape catalog packets.
 * Provide a single runtime surface for per-frame gameplay presentation processing.
 * Track whether the first gameplay state has been received.
@@ -155,9 +156,18 @@ Player pause state is forwarded through composition into the shell and pause-sta
 ```text
 GameplayComposition.apply_player_pause_state_packet
 -> GameplayShellFlow.apply_player_pause_state_packet
+-> GameplayPauseStateFlow
+-> PlayerPauseStatePacketReader
+-> PlayerPauseStateTracker
 ```
 
 Composition owns routing, not pause-state parsing details.
+
+The composition routes player pause packets, but it does not own server pause authority.
+
+`PlayerPauseStatePacketReader` identifies `player_pause_state` packets and normalizes `player_id` / `paused`.
+
+`PlayerPauseStateTracker` stores transient per-player pause flags and resets with runtime teardown.
 
 ### Debug packet entry
 
@@ -238,6 +248,8 @@ It does not own durable profile, account, or player progression data.
 * `client/scripts/gameplay/runtime/gameplay_process_flow.gd`
 * `client/scripts/shell/gameplay_runtime_tick_flow.gd`
 * `client/scripts/gameplay/state/gameplay_pause_state_flow.gd`
+* `client/scripts/gameplay/state/player_pause_state_packet_reader.gd`
+* `client/scripts/gameplay/state/player_pause_state_tracker.gd`
 
 ### Presentation collaborators
 
@@ -265,6 +277,8 @@ Runtime-composition-relevant tests include:
 * `client/tests/unit/test_gameplay_session_controller.gd`
 * `client/tests/unit/test_session_network_controller.gd`
 * `client/tests/unit/test_gameplay_state_apply_flow.gd`
+* `client/tests/unit/test_player_pause_state_packet_reader.gd`
+* `client/tests/unit/test_player_pause_state_tracker.gd`
 * `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_lifecycle_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_controller.gd`

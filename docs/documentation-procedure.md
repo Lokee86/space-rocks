@@ -5,7 +5,7 @@ Parent index: [Docs](./!README.md)
 
 This procedure defines the standard process for creating, updating, moving, and removing Space Rocks documentation.
 
-Use this procedure for all documentation work, including current docs, planning docs, stubs, `!README.md` indexes, code seam `!README.md` indexes, limits, notes, and legacy cleanup.
+Use this procedure for all documentation work, including current docs, planning docs, stubs, `!README.md` indexes, limits, notes, and legacy cleanup.
 
 ## Procedure Summary
 
@@ -20,9 +20,8 @@ Follow these steps in order:
 6. Write or update the doc using the required shape for its type.
 7. Add related docs, code maps, active issues, and notes.
 8. Update planning docs when planned work becomes current.
-9. Update or create code seam `!README.md` indexes when needed.
-10. Clean up stale, duplicated, or legacy documentation.
-11. Run a final verification pass.
+9. Clean up stale, duplicated, or legacy documentation.
+10. Run a final verification pass.
 ```
 
 ## 1. Classify the Documentation Type
@@ -208,17 +207,6 @@ When adding a new folder:
 4. Link to folder-name/!README.md.
 5. Add a one-line description.
 ```
-
-When a documentation `!README.md` should index code seam `!README.md` files, add those links during this step.
-
-Example:
-
-```markdown
-- [Game package](../../../services/game-server/internal/game/!README.md) - Authoritative game simulation package index.
-- [Networking package](../../../services/game-server/internal/networking/!README.md) - WebSocket transport and packet routing package index.
-```
-
-Domain `!README.md` indexes should not link directly to code seam `!README.md` files. Domain docs link to associated technical documentation indexes instead.
 
 Update `docs/!README.md` only when:
 
@@ -541,7 +529,7 @@ agent docs
 
 Use one `Related docs` section unless the doc becomes large enough to justify grouping.
 
-Domain docs should link to technical system `!README.md` indexes, not code files or code seam `!README.md` files.
+Domain docs should link to technical system `!README.md` indexes, not code files or implementation files.
 
 ## Code Maps
 
@@ -580,8 +568,6 @@ related generated/source files
 related tests
 important non-ownership boundaries
 ```
-
-Prefer linking to relevant code seam `!README.md` files when those exist.
 
 ## Active Issues
 
@@ -671,43 +657,7 @@ Example:
 - [Inventory Loadout Flow](../../domains/player-experience/inventory-loadout-flow.md) - Cross-system flow from ownership to match start.
 ```
 
-## 9. Update or Create Code Seam `!README.md` Indexes When Needed
-
-When documentation covers a major implementation seam, add or update the code seam `!README.md`.
-
-Major code seams should have `!README.md` indexes in the relevant package or folder.
-
-A code seam `!README.md` should include:
-
-```text
-Purpose
-What this folder owns
-What this folder does not own
-Important files and subfolders
-Related documentation
-Related tests
-Notes
-```
-
-Code seam `!README.md` files should be discoverable from relevant documentation `!README.md` indexes and optionally from specific implementation docs.
-
-Link direction:
-
-```text
-documentation `!README.md` index -> code seam `!README.md`
-implementation doc -> code seam `!README.md` when relevant
-code seam `!README.md` -> related documentation
-```
-
-Domain docs should not link directly to code seam `!README.md` files.
-
-Do not duplicate full documentation inside code seam `!README.md` files. Keep them focused on navigation and ownership.
-
-Use source comments only for unusually easy-to-misunderstand seams where a `!README.md` link is not enough.
-
-Do not add documentation comments to every source file, every function, or routine implementation detail.
-
-## 10. Clean Up Stale, Duplicated, or Legacy Documentation
+## 9. Clean Up Stale, Duplicated, or Legacy Documentation
 
 After adding or updating docs, remove stale or duplicate information.
 
@@ -736,7 +686,7 @@ no `!README.md` index presents it as current authority
 
 Do not keep stale legacy documentation indefinitely.
 
-## 11. Final Verification Pass
+## 10. Final Verification Pass
 
 Before considering the documentation change done, verify:
 
@@ -754,7 +704,6 @@ Implementation docs have code maps where required.
 Domain docs link to system `!README.md` indexes, not code.
 Active issues link to sorted limits backlog headings.
 Planning docs were updated if planned work became current.
-Code seam `!README.md` indexes were added or updated when major seams were involved.
 Legacy docs were deleted if fully deprecated.
 No stale duplicate facts remain.
 docs/!README.md was updated only if taxonomy or procedure changed.

@@ -18,11 +18,11 @@ This folder owns service diagnostics and logging documentation for the game serv
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [logging-and-diagnostics.md](logging-and-diagnostics.md) - Game-server logging categories, environment configuration, and diagnostic policy.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [logging-and-diagnostics.md](stubs/logging-and-diagnostics.md) - Stub: incomplete logging and diagnostics documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

@@ -25,7 +25,9 @@ This folder owns client pregame menu implementation flow docs for local pilot se
 <!-- doc-ledger:files:start -->
 
 - [local-pilot-flow.md](local-pilot-flow.md) - Client local pilot selection flow documentation.
+- [pregame-mode-and-actions.md](pregame-mode-and-actions.md) - Pregame Mode And Actions documentation.
 - [profile-flow.md](profile-flow.md) - Client profile readout flow documentation.
+- [transmission-panel-flow.md](transmission-panel-flow.md) - Transmission Panel Flow documentation.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

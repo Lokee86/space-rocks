@@ -35,6 +35,9 @@ This lifecycle is client presentation/session orchestration only. The server rem
 * Forward devtools debug status packets into gameplay composition.
 * Forward debug shape catalog packets into gameplay composition.
 * Run gameplay composition processing from `_process`.
+* Normalize room-state strings used by client session logic.
+* Extract room state from packet data with fallback room-state behavior.
+* Classify room states that should stop spectating.
 * Route devtools input before normal gameplay input.
 * Apply HUD/gameplay UI mouse gating before gameplay input handling.
 * Reset gameplay packet acceptance, gameplay state flow, and gameplay composition.
@@ -87,6 +90,14 @@ It does not decide whether the server match is over, whether a room may return t
 The controller hides the main menu on `gameplay_started`.
 
 On quit-to-main-menu it resets gameplay/session state and shows the main menu again.
+
+### Room-state helpers
+
+`RoomState` normalizes and classifies Lobby, InGame, and GameOver room-state string variants for client session logic.
+
+`GameplayRoomStateFlow` extracts room state from packet dictionaries and delegates game-over classification to `RoomState`.
+
+These helpers support client session flow, but they do not own server room-state authority.
 
 ## Protocols and APIs
 
@@ -255,6 +266,8 @@ The lifecycle does not own durable player identity, account state, local profile
 * `client/scripts/gameplay/state/gameplay_state_flow.gd`
 * `client/scripts/gameplay/state/gameplay_state_packet_reader.gd`
 * `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`
+* `client/scripts/session/room_state.gd`
+* `client/scripts/gameplay/session/gameplay_room_state_flow.gd`
 
 ### Exit and presentation participants
 
@@ -281,6 +294,7 @@ Relevant client tests include:
 * `client/tests/unit/test_session_network_controller.gd`
 * `client/tests/unit/test_gameplay_state_packet_reader.gd`
 * `client/tests/unit/test_gameplay_state_apply_flow.gd`
+* `client/tests/unit/test_gameplay_room_state_flow.gd`
 * `client/tests/unit/gameplay/match_end/test_match_end_flow.gd`
 * `client/tests/unit/shell/test_gameplay_menu_flow.gd`
 

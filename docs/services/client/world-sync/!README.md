@@ -24,6 +24,7 @@ Client world sync documentation lives here.
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [asteroid-variant-presentation.md](asteroid-variant-presentation.md) - Asteroid Variant Presentation documentation.
 - [entity-sync-owners.md](entity-sync-owners.md) - Projectile, asteroid, and pickup sync owners and scene-node synchronization.
 - [pickup-presentation.md](pickup-presentation.md) - Pickup presentation ownership, sync handoff, and visual behavior.
 - [view-anchor-and-visual-coordinates.md](view-anchor-and-visual-coordinates.md) - ViewAnchor, render-anchor, toroidal wrap, and server/visual coordinate conversion.

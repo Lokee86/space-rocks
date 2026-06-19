@@ -22,9 +22,9 @@ This folder owns planning docs for technical work that is not yet current.
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [deployment-and-packaging.md](stubs/deployment-and-packaging.md) - Stub: deployment and packaging planning.
-- [logging-and-diagnostics.md](stubs/logging-and-diagnostics.md) - Stub: logging and diagnostics planning.
-- [testing-and-smoke-strategy.md](stubs/testing-and-smoke-strategy.md) - Stub: testing and smoke strategy planning.
+- [deployment-and-packaging.md](stubs\deployment-and-packaging.md) - Stub: deployment and packaging planning.
+- [logging-and-diagnostics.md](stubs\logging-and-diagnostics.md) - Stub: logging and diagnostics planning.
+- [testing-and-smoke-strategy.md](stubs\testing-and-smoke-strategy.md) - Stub: testing and smoke strategy planning.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

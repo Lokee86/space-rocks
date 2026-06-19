@@ -22,11 +22,11 @@ This folder owns weapons and projectile fire, collision-to-damage flow, damage r
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [collision-to-damage-flow.md](stubs/collision-to-damage-flow.md) - Stub: incomplete collision to damage flow documentation.
-- [damage-resolution.md](stubs/damage-resolution.md) - Stub: incomplete damage resolution documentation.
-- [radial-effects.md](stubs/radial-effects.md) - Stub: incomplete radial effects documentation.
-- [scoring-and-counter-mutation.md](stubs/scoring-and-counter-mutation.md) - Stub: incomplete scoring and counter mutation documentation.
-- [weapons-and-projectile-fire.md](stubs/weapons-and-projectile-fire.md) - Stub: incomplete weapons and projectile fire documentation.
+- [collision-to-damage-flow.md](stubs\collision-to-damage-flow.md) - Stub: incomplete collision to damage flow documentation.
+- [damage-resolution.md](stubs\damage-resolution.md) - Stub: incomplete damage resolution documentation.
+- [radial-effects.md](stubs\radial-effects.md) - Stub: incomplete radial effects documentation.
+- [scoring-and-counter-mutation.md](stubs\scoring-and-counter-mutation.md) - Stub: incomplete scoring and counter mutation documentation.
+- [weapons-and-projectile-fire.md](stubs\weapons-and-projectile-fire.md) - Stub: incomplete weapons and projectile fire documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

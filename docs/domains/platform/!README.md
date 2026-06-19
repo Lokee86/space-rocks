@@ -23,8 +23,8 @@ This folder owns domain docs about platform-wide flows that span multiple system
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [account-backed-profile-flow.md](stubs/account-backed-profile-flow.md) - Stub: account-backed profile domain flow documentation.
-- [player-data-routing-flow.md](stubs/player-data-routing-flow.md) - Stub: player-data routing domain flow documentation.
+- [account-backed-profile-flow.md](stubs\account-backed-profile-flow.md) - Stub: account-backed profile domain flow documentation.
+- [player-data-routing-flow.md](stubs\player-data-routing-flow.md) - Stub: player-data routing domain flow documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

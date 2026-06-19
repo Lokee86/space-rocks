@@ -18,13 +18,13 @@ This folder owns external-service integration points used by the game server.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [auth-verifier-integration.md](auth-verifier-integration.md) - Game-server API token verification integration documentation.
+- [match-result-reporting.md](match-result-reporting.md) - Game-server match result reporting documentation.
+- [player-data-http-hosting.md](player-data-http-hosting.md) - Game-server player-data HTTP hosting documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [auth-verifier-integration.md](stubs/auth-verifier-integration.md) - Stub: incomplete API token verification integration documentation.
-- [match-result-reporting.md](stubs/match-result-reporting.md) - Stub: incomplete match result reporting documentation.
-- [player-data-http-hosting.md](stubs/player-data-http-hosting.md) - Stub: incomplete player-data HTTP hosting documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

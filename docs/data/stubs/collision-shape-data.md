@@ -3,68 +3,54 @@ Parent index: [Data](../!README.md)
 
 ## Purpose
 
-Stub note: this document is incomplete and non-canonical.
-TODO: describe exported collision shape data documentation.
+This document describes the collision shape data source of truth and the export/generated-output flow that keeps client and server shape names aligned.
 
 ## Overview
 
-TODO: summarize how collision shape data is authored, exported, and consumed.
-Stub note: keep this focused on collision data ownership.
+`client/tools/export_collision_shapes.gd` is the client-side export tool.
+
+The export tool writes the shared collision shape data output to `shared/collisions/collision_shapes.json`. That shared output is then consumed by the server collision-shape generation and verification outputs.
 
 ## Source files
 
-- `shared/collisions/collision_shapes.json`
-- TODO: add any other confirmed collision data source files.
+* `client/tools/export_collision_shapes.gd`
 
-## Configuration
+## Shared output
 
-- TODO: describe any collision export configuration if it exists.
-- Stub note: configuration details are not yet confirmed.
+* `shared/collisions/collision_shapes.json`
 
 ## Generated outputs
 
-- `services/game-server/internal/game/physics/collision_shapes.go`
-- `services/game-server/internal/game/physics/collision_shapes_test.go`
-- `services/game-server/tests/physics/collision_shapes_test.go`
-- TODO: add any other generated or exported collision outputs when they are confirmed.
+* `services/game-server/internal/game/physics/collision_shapes.go`
+* `services/game-server/internal/game/physics/collision_shapes_test.go`
+* `services/game-server/tests/physics/collision_shapes_test.go`
 
-## Consumers
+## Data role
 
-- Game-server physics and collision code.
-- Game-server physics and collision tests.
-- TODO: add any other confirmed consumers.
+The export output owns the shared collision shape names and shape definitions used to keep client-exported collision data and server-consumed collision data in sync.
 
-## Pipeline usage
+Generated client-facing or server-facing collision outputs are derived from the shared JSON output and should be treated as generated data, not hand-authored sources.
 
-- TODO: describe the collision export workflow if it is confirmed.
-- Stub note: keep this focused on the data export path.
+The server outputs provide the collision shape catalog and tests that verify the generated collision shape mapping.
 
-## Validation commands
+## Validation and failure modes
 
-- `go test ./services/game-server/tests/physics/...`
-- `go test ./services/game-server/internal/game/physics/...`
-- TODO: add any other verified collision validation commands.
+Collision shape data should fail fast when the export output or generated outputs drift from the shared source.
 
-## Failure modes
+Known failure modes include:
 
-- Out-of-sync exported collision shapes.
-- Missing or stale collision data after shape edits.
-- Invalid collision shape source data.
-- TODO: add any other verified failure modes.
-
-## Code or source map
-
-- `shared/collisions/`
-- `services/game-server/internal/game/physics/`
-- `services/game-server/tests/physics/`
-- TODO: add narrower collision data source-map entries when they are confirmed.
+* stale exports after source edits
+* missing shapes in the shared collision output
+* invalid JSON in `shared/collisions/collision_shapes.json`
+* client/server collision mismatch
+* shape-name mismatches between the shared output and generated consumers
 
 ## Related docs
 
-- [Data](../!README.md)
-- TODO: add collision-specific docs when they exist.
+* [Server collision shapes and physics stub](../../services/game-server/simulation/world/stubs/collision-shapes-and-physics.md)
+* [Gameplay packets stub](../../protocol/stubs/gameplay-packets.md)
+* [Data](../!README.md)
 
 ## Notes
 
-Stub note: this document is a placeholder for future collision shape data documentation.
-Do not treat it as canonical source material.
+This document stays on collision shape data ownership and export/generated-output flow rather than physics runtime or collision resolution behavior.
