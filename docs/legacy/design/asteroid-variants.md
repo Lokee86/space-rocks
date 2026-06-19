@@ -1,5 +1,7 @@
 # Asteroid Variant Contract
 
+Parent index: [Design Legacy](./!README.md)
+
 ## Purpose
 
 The asteroid variant contract defines the shared metadata for asteroid shapes, textures, drops, and spawn weighting. It keeps the server and client aligned on the same variant list without making either side own the contract independently.

@@ -19,13 +19,19 @@ This folder owns client gameplay event presentation, visual effects, local event
 - Future planning.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [gameplay-audio-flow.md](gameplay-audio-flow.md) - Client gameplay audio documentation.
 - [gameplay-events-and-effects.md](gameplay-events-and-effects.md) - Client gameplay events and visual effects documentation.
-
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 
-- None.
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

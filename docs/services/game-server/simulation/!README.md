@@ -1,5 +1,7 @@
 # Game Server Simulation
 
+Parent index: [Game Server](../!README.md)
+
 Simulation documentation for the game server lives here.
 
 ## Ownership
@@ -15,22 +17,21 @@ This folder owns authoritative game runtime behavior for the game server.
 - Logging policy detail beyond simulation-related diagnostics.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
-
-- None.
-
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
 
-- [Runtime](runtime/!README.md) - Game-server runtime boundary documentation index.
-- [Players](players/!README.md) - Game-server player boundary documentation index.
-- [World](world/!README.md) - Game-server world boundary documentation index.
-- [Targeting](targeting/!README.md) - Game-server targeting boundary documentation index.
 - [Combat](combat/!README.md) - Game-server combat boundary documentation index.
 - [Pickups](pickups/!README.md) - Game-server pickup boundary documentation index.
-
+- [Players](players/!README.md) - Game-server player boundary documentation index.
+- [Runtime](runtime/!README.md) - Game-server runtime boundary documentation index.
+- [Targeting](targeting/!README.md) - Game-server targeting boundary documentation index.
+- [World](world/!README.md) - Game-server world boundary documentation index.
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Game Server](../!README.md)

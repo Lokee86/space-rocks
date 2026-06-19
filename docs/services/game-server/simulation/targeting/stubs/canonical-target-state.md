@@ -1,5 +1,7 @@
 # Stub: Canonical Target State
 
+Parent index: [Game Server Simulation Targeting](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server canonical target state boundary.

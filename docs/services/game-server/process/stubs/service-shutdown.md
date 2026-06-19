@@ -1,5 +1,7 @@
 # Stub: Service Shutdown
 
+Parent index: [Game Server Process](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server process shutdown boundary.

@@ -250,4 +250,3 @@ python3 -m pytest tools/tests/test_client_constants_boundary.py
 - Generated Godot constants/packet files may eventually move into a generated folder, but they currently live under `client/scripts/`.
 - Ship variants are planned but not implemented.
 - Toroidal wrapping is implemented and still needs manual gameplay smoke testing after related changes.
-

@@ -1,5 +1,7 @@
 # Devtools Telemetry Reference
 
+Parent index: [Devtools Legacy](./!README.md)
+
 Telemetry in this document means live debug readouts, not analytics.
 
 Related references:

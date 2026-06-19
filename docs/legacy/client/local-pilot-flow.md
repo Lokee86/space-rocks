@@ -1,5 +1,7 @@
 # Local Pilot Flow
 
+Parent index: [Client Legacy](./!README.md)
+
 ## Purpose
 
 This document is the focused reference for the Local Pilot / Guest selector flow.

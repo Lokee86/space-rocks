@@ -1,6 +1,6 @@
 # Lobby Flow
 
-Parent index: [Client](!README.md)
+Parent index: [Client](../!README.md)
 
 ## Purpose
 
@@ -19,13 +19,19 @@ This folder owns client multiplayer lobby session, room entry, join dialog, and 
 - Future planning.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [lobby-session-and-presentation.md](lobby-session-and-presentation.md) - Client lobby session and presentation documentation.
 - [room-entry-and-join-dialog.md](room-entry-and-join-dialog.md) - Client room entry and join dialog documentation.
-
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 
-- None.
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

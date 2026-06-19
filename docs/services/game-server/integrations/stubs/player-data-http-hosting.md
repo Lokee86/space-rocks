@@ -1,5 +1,7 @@
 # Stub: Player Data HTTP Hosting
 
+Parent index: [Game Server Integrations](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server hosting of player-data HTTP handlers.

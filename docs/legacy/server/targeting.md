@@ -1,5 +1,7 @@
 # Targeting System Reference
 
+Parent index: [Server Legacy](./!README.md)
+
 This document defines targeting terms used by gameplay state, devtools, and telemetry.
 
 Related references:

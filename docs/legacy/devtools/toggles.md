@@ -1,5 +1,7 @@
 # Developer Toggles
 
+Parent index: [Devtools Legacy](./!README.md)
+
 This document covers the developer/debug toggles that currently exist in the project.
 
 These tools are for local development and testing. They are not a player-facing feature and they should stay server-authoritative when they affect gameplay.
@@ -490,4 +492,3 @@ Likely future devtools:
 - developer console command layer
 
 If a real dev console is added later, it should call the same packet path instead of bypassing server authority.
-

@@ -1,5 +1,7 @@
 # Client Menu Flow
 
+Parent index: [Client Legacy](./!README.md)
+
 This document defines the current client menu-flow ownership, route structure, and implemented menu behavior.
 
 It covers main menu routing, pregame routing, sign-in entry, profile readout entry, local pilot selection, match results entry, and stats refresh behavior.

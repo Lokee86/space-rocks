@@ -1,5 +1,7 @@
 # API Server
 
+Parent index: [Devtools](../!README.md)
+
 API-server devtools documentation lives here.
 
 ## Ownership
@@ -15,18 +17,17 @@ This folder owns docs for API-server development and debug tooling.
 - Stub content as canonical devtools authority.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
+<!-- doc-ledger:stubs:start -->
 
 - [bruno-smoke-tests.md](stubs/bruno-smoke-tests.md) - Stub: API-server Bruno smoke-test documentation.
 - [local-auth-smoke-flow.md](stubs/local-auth-smoke-flow.md) - Stub: API-server local auth smoke-flow documentation.
-
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Devtools index](../!README.md)

@@ -7,17 +7,16 @@ Parent index: [Client](../!README.md)
 This folder owns client gameplay menu flow documentation.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
 - [gameplay-menu-flow.md](gameplay-menu-flow.md) - Client gameplay menu flow documentation.
-
+<!-- doc-ledger:files:end -->
 ## Stub Files
-
-- None.
-
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Client](../!README.md)

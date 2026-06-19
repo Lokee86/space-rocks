@@ -1,5 +1,7 @@
 # HTTP Contracts
 
+Parent index: [API Legacy](./!README.md)
+
 `shared/contracts/http/openapi.yaml` owns all HTTP request and response shapes.
 
 OpenAPI remains the SSoT for request and response shapes.

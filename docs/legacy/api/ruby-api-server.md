@@ -1,5 +1,7 @@
 # Ruby API Server Plan
 
+Parent index: [API Legacy](./!README.md)
+
 This is the Ruby/Rails API service for Space Rocks. The current baseline already exists under:
 
 ```text

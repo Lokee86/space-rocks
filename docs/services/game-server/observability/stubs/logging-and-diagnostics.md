@@ -1,5 +1,7 @@
 # Stub: Logging And Diagnostics
 
+Parent index: [Game Server Observability](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server logging and diagnostics boundary.

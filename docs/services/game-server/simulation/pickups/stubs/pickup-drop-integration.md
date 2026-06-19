@@ -1,5 +1,7 @@
 # Stub: Pickup Drop Integration
 
+Parent index: [Game Server Simulation Pickups](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server pickup drop integration boundary.

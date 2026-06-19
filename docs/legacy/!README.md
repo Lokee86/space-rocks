@@ -1,5 +1,7 @@
 # Legacy
 
+Parent index: [Docs](../!README.md)
+
 Legacy docs are temporary migration source material, not current authority.
 
 ## Ownership
@@ -13,16 +15,22 @@ This folder owns the legacy documentation index and migration-source navigation.
 - Treating legacy files as current source of truth.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Direct Folders
+<!-- doc-ledger:folders:start -->
 
 - [API](api/!README.md) - Legacy API source material.
 - [Client](client/!README.md) - Legacy client source material.
 - [Design](design/!README.md) - Legacy design source material.
 - [Devtools](devtools/!README.md) - Legacy devtools source material.
 - [Server](server/!README.md) - Legacy server source material.
+<!-- doc-ledger:folders:end -->
+
+## Stub Files
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 
 ## Related Docs
 

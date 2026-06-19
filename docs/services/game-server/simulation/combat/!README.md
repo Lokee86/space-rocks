@@ -1,5 +1,7 @@
 # Game Server Simulation Combat
 
+Parent index: [Game Server Simulation](../!README.md)
+
 Combat documentation for the game server lives here.
 
 ## Ownership
@@ -15,21 +17,20 @@ This folder owns weapons and projectile fire, collision-to-damage flow, damage r
 - Target state ownership or world motion rules.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
+<!-- doc-ledger:stubs:start -->
 
-- [weapons-and-projectile-fire.md](stubs/weapons-and-projectile-fire.md) - Stub: incomplete weapons and projectile fire documentation.
 - [collision-to-damage-flow.md](stubs/collision-to-damage-flow.md) - Stub: incomplete collision to damage flow documentation.
 - [damage-resolution.md](stubs/damage-resolution.md) - Stub: incomplete damage resolution documentation.
-- [scoring-and-counter-mutation.md](stubs/scoring-and-counter-mutation.md) - Stub: incomplete scoring and counter mutation documentation.
 - [radial-effects.md](stubs/radial-effects.md) - Stub: incomplete radial effects documentation.
-
+- [scoring-and-counter-mutation.md](stubs/scoring-and-counter-mutation.md) - Stub: incomplete scoring and counter mutation documentation.
+- [weapons-and-projectile-fire.md](stubs/weapons-and-projectile-fire.md) - Stub: incomplete weapons and projectile fire documentation.
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Game Server Simulation](../!README.md)

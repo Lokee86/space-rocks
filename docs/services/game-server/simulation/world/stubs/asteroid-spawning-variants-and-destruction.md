@@ -1,5 +1,7 @@
 # Stub: Asteroid Spawning Variants And Destruction
 
+Parent index: [Game Server Simulation World](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server asteroid spawning, variants, and destruction boundary.

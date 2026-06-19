@@ -1,5 +1,7 @@
 # World Sync
 
+Parent index: [Client](../!README.md)
+
 Client world sync documentation lives here.
 
 ## Ownership
@@ -20,20 +22,19 @@ Client world sync documentation lives here.
 - Future planning.
 
 ## Direct Files
+<!-- doc-ledger:files:start -->
 
-- [world-sync-coordinator.md](world-sync-coordinator.md) - WorldSync coordinator ownership, apply order, delegation, interpolation, and read-model exposure.
 - [entity-sync-owners.md](entity-sync-owners.md) - Projectile, asteroid, and pickup sync owners and scene-node synchronization.
-- [view-anchor-and-visual-coordinates.md](view-anchor-and-visual-coordinates.md) - ViewAnchor, render-anchor, toroidal wrap, and server/visual coordinate conversion.
 - [pickup-presentation.md](pickup-presentation.md) - Pickup presentation ownership, sync handoff, and visual behavior.
-
+- [view-anchor-and-visual-coordinates.md](view-anchor-and-visual-coordinates.md) - ViewAnchor, render-anchor, toroidal wrap, and server/visual coordinate conversion.
+- [world-sync-coordinator.md](world-sync-coordinator.md) - WorldSync coordinator ownership, apply order, delegation, interpolation, and read-model exposure.
+<!-- doc-ledger:files:end -->
 ## Stub Files
-
-- None.
-
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Client](../!README.md)

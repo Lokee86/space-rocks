@@ -1,5 +1,7 @@
 # Game Server Process
 
+Parent index: [Game Server](../!README.md)
+
 Process documentation for the game server lives here.
 
 ## Ownership
@@ -15,18 +17,17 @@ This folder owns executable startup, route composition, dependency construction,
 - Logging policy detail beyond the service boundary.
 
 ## Direct Files
-
-- None.
-
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
 ## Stub Files
+<!-- doc-ledger:stubs:start -->
 
-- [service-startup-and-route-composition.md](stubs/service-startup-and-route-composition.md) - Stub: incomplete process startup and route composition documentation.
 - [service-shutdown.md](stubs/service-shutdown.md) - Stub: incomplete process shutdown documentation.
-
+- [service-startup-and-route-composition.md](stubs/service-startup-and-route-composition.md) - Stub: incomplete process startup and route composition documentation.
+<!-- doc-ledger:stubs:end -->
 ## Direct Folders
-
-- None.
-
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
 ## Related Docs
 
 - [Game Server](../!README.md)

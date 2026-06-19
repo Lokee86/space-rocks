@@ -1,5 +1,7 @@
 # Stub: Pickup Collection And Effects
 
+Parent index: [Game Server Simulation Pickups](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server pickup collection and effects boundary.

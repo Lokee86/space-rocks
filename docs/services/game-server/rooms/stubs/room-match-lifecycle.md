@@ -1,5 +1,7 @@
 # Stub: Room Match Lifecycle
 
+Parent index: [Game Server Rooms](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server room match lifecycle boundary.

@@ -1,5 +1,7 @@
 # Cross-Mode Routing And Player Data
 
+Parent index: [Design Legacy](./!README.md)
+
 ## Purpose
 
 This document defines the server-side routing architecture for play modes, identity states, admission, and player-data destinations.

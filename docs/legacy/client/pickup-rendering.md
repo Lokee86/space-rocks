@@ -1,5 +1,7 @@
 # Client Pickup Rendering
 
+Parent index: [Client Legacy](./!README.md)
+
 This document describes the current client-side pickup rendering contract.
 
 ## Data Flow

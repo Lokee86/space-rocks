@@ -1,5 +1,7 @@
 # Toroidal World Wrap
 
+Parent index: [Design Legacy](./!README.md)
+
 Space Rocks now uses a bounded toroidal playfield on the server and continuous visual coordinates on the client.
 
 The design goal is simple: server coordinates stay inside one shared arena, while the client renders motion across edges without an obvious seam.

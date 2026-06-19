@@ -1,5 +1,7 @@
 # Match End And Gameplay UI
 
+Parent index: [Client Legacy](./!README.md)
+
 This document defines the client-side ownership split for match-end presentation and the gameplay-session UI hierarchy.
 
 The goal is simple: gameplay can end, the HUD can be hidden, and match-over UI can appear without blurring ownership between app/menu screens and gameplay-session screens.

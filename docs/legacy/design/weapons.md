@@ -1,5 +1,7 @@
 # Weapon System
 
+Parent index: [Design Legacy](./!README.md)
+
 ## Status Summary
 
 - Weapon support is server-authoritative.

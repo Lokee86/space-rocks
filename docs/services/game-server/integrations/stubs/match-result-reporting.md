@@ -1,5 +1,7 @@
 # Stub: Match Result Reporting
 
+Parent index: [Game Server Integrations](../!README.md)
+
 ## Purpose
 
 This stub is incomplete and non-canonical. It points to the game-server match result reporting boundary.

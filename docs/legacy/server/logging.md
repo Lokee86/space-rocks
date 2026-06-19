@@ -1,5 +1,7 @@
 # Server Logging
 
+Parent index: [Server Legacy](./!README.md)
+
 This document covers only the server logging feature.
 
 ## Problem It Solves
