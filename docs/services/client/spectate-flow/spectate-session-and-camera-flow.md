@@ -104,6 +104,16 @@ client/scripts/gameplay/spectate/spectate_menu_state.gd
 client/scripts/gameplay/spectate/spectate_session_flow.gd
 ```
 
+## Tests
+
+No focused test is documented yet for this flow.
+
+The closest verification boundary is the spectate flow implementation in:
+
+```text
+client/scripts/gameplay/spectate/
+```
+
 ## Related docs
 
 * [Spectate Flow](./!README.md)

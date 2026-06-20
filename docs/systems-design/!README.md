@@ -1,6 +1,6 @@
 # Systems Design
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 Systems-design documentation covers conceptual mechanics, authority boundaries, and invariants.
 

@@ -702,7 +702,7 @@ go test -buildvcs=false ./internal/game/runtime
 * [Player Input Routing](player-input-routing.md)
 * [Player Pause And Suspension](player-pause-and-suspension.md)
 * [Player Camera View State](player-camera-view-state.md)
-* [State Packet Projection](../runtime/stubs/state-packet-projection.md)
+* [State Packet Projection](../runtime/state-packet-projection.md)
 * [Gameplay Packets](../../../../protocol/stubs/gameplay-packets.md)
 * [Data](../../../../data/!README.md)
 

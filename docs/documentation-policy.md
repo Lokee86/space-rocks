@@ -1,5 +1,5 @@
 ## Documentation Policies
-Parent index: [Docs](./!README.md)
+Parent index: [Documentation](./!README.md)
 
 ## Purpose
 

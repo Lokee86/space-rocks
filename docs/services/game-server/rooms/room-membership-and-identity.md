@@ -45,8 +45,8 @@ The membership boundary is intentionally narrow. It owns who is in the room and 
 
 Related player boundaries:
 
-* [Player Session State](../simulation/players/stubs/player-session-state.md)
-* [Active Player Avatar State](../simulation/players/stubs/active-player-avatar-state.md)
+* [Player Session State](../simulation/players/player-session-state.md)
+* [Active Player Avatar State](../simulation/players/active-player-avatar-state.md)
 
 Player session state and active avatar state are owned under the players simulation docs; room membership only bridges to them.
 

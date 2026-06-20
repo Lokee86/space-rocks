@@ -221,9 +221,9 @@ Player docs own the actual input rules, pause mechanics, and respawn implementat
 
 Related player docs:
 
-* [Player Input Routing](../simulation/players/stubs/player-input-routing.md)
-* [Player Pause And Suspension](../simulation/players/stubs/player-pause-and-suspension.md)
-* [Player Respawn](../simulation/players/stubs/player-respawn.md)
+* [Player Input Routing](../simulation/players/player-input-routing.md)
+* [Player Pause And Suspension](../simulation/players/player-pause-and-suspension.md)
+* [Player Respawn](../simulation/players/player-respawn.md)
 
 ## Tests and verification
 

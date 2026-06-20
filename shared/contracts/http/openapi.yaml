@@ -263,8 +263,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Invalid play mode or identity combination
+        "500":
+          description: Profile unavailable
           content:
             application/json:
               schema:
@@ -279,12 +279,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlayerDataLocalProfilesResponse"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "503":
           description: Service unavailable
           content:
@@ -308,12 +302,6 @@ paths:
                 $ref: "#/components/schemas/PlayerDataLocalProfileResponse"
         "400":
           description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal server error
           content:
             application/json:
               schema:
@@ -358,12 +346,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "503":
           description: Service unavailable
           content:
@@ -393,12 +375,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "503":
           description: Service unavailable
           content:
@@ -415,12 +391,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlayerDataLocalProfileDefaultResponse"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "503":
           description: Service unavailable
           content:
@@ -450,12 +420,6 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Local profile not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal server error
           content:
             application/json:
               schema:
@@ -702,9 +666,7 @@ components:
         identity_kind:
           $ref: "#/components/schemas/PlayerDataIdentityKind"
         local_profile_id:
-          type:
-            - string
-            - "null"
+          type: string
         display_name:
           type: string
     PlayerDataLocalProfilesResponse:
@@ -748,9 +710,7 @@ components:
         identity_kind:
           $ref: "#/components/schemas/PlayerDataIdentityKind"
         local_profile_id:
-          type:
-            - string
-            - "null"
+          type: string
     InternalPlayerDataStatsRequest:
       type: object
       required:

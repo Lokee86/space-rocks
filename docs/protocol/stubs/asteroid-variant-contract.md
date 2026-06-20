@@ -37,7 +37,7 @@ At a stub level, compatibility means:
 
 * [Client asteroid variant presentation](../../services/client/world-sync/asteroid-variant-presentation.md)
 * [Asteroid variants data](../../data/stubs/asteroid-variants-data.md)
-* [Server asteroid spawning and variants](../../services/game-server/simulation/world/stubs/asteroid-spawning-and-variants.md)
+* [Server asteroid spawning and variants](../../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
 
 ## Notes
 

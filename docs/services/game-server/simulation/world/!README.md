@@ -18,14 +18,15 @@ This folder owns toroidal space, motion, visibility and despawn, asteroid spawni
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [asteroid-spawning-and-variants.md](asteroid-spawning-and-variants.md) - Asteroid Spawning And Variants documentation.
+- [collision-shapes.md](collision-shapes.md) - Collision Shapes documentation.
+- [physics.md](physics.md) - Physics documentation.
+- [toroidal-space-and-motion.md](toroidal-space-and-motion.md) - Toroidal space and motion documentation.
+- [visibility-and-despawn.md](visibility-and-despawn.md) - Visibility and despawn documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [asteroid-spawning-and-variants.md](stubs/asteroid-spawning-and-variants.md) - Stub: Asteroid Spawning And Variants documentation.
-- [collision-shapes-and-physics.md](stubs/collision-shapes-and-physics.md) - Stub: incomplete collision shapes and physics documentation.
-- [toroidal-space-and-motion.md](stubs/toroidal-space-and-motion.md) - Stub: incomplete toroidal space and motion documentation.
-- [visibility-and-despawn.md](stubs/visibility-and-despawn.md) - Stub: incomplete visibility and despawn documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

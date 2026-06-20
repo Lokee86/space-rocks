@@ -40,9 +40,9 @@ The room does not stop the game instance when it enters `GameOver`. The game ins
 
 Related player and runtime boundaries:
 
-* [Player Death And Despawn](../simulation/players/stubs/player-death-and-despawn.md)
-* [Player Counters](../simulation/players/stubs/player-counters.md)
-* [State Packet Projection](../simulation/runtime/stubs/state-packet-projection.md)
+* [Player Death And Despawn](../simulation/players/player-death-and-despawn.md)
+* [Player Counters](../simulation/players/player-counters.md)
+* [State Packet Projection](../simulation/runtime/state-packet-projection.md)
 
 Room match lifecycle owns phase transitions and match completion. Player death, lives mutation, and runtime state packet projection live in their narrower simulation boundaries.
 
