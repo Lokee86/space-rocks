@@ -11,8 +11,8 @@ This doc owns planning for future logging and diagnostics, while treating the ex
 
 Implemented references:
 
-- [docs/server/logging.md](../server/logging.md)
-- [docs/client/logging.md](../client/logging.md)
+- [docs/services/game-server/observability/logging-and-diagnostics.md](../../../services/game-server/observability/logging-and-diagnostics.md)
+- [docs/services/client/client-logging.md](../../../services/client/client-logging.md)
 
 ## Current Inputs
 

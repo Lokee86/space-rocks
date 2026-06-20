@@ -549,7 +549,7 @@ Direct unit coverage for `inbound.RouteClientPacket` ordering is currently thin.
 
 ## Notes
 
-Legacy architecture notes correctly identified `services/game-server/internal/networking/inbound` as the pure inbound packet family handler boundary. This document rewrites that fact against the current implementation.
+`services/game-server/internal/networking/inbound` is the pure inbound packet family handler boundary.
 
 The current router silently drops valid-envelope packets that are decoded but not handled by any packet family. That is current behavior, not a protocol guarantee.
 

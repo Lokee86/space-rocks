@@ -571,7 +571,7 @@ These tests verify server-side authority that the client consumes but does not o
 
 ## Notes
 
-Legacy client menu-flow notes correctly identified that Join Game opens `join_dialog.tscn`, multiplayer create/join route through multiplayer flow, and lobby behavior begins after create or join succeeds. This document rewrites those facts from the current implementation instead of treating legacy docs as authority.
+Join Game opens `join_dialog.tscn`, multiplayer create/join route through multiplayer flow, and lobby behavior begins after create or join succeeds.
 
 The Join Dialog is a menu route, not the multiplayer lobby. It is cleared before the network join request is sent. Server-side room errors therefore route through the multiplayer dialog status presenter rather than being shown inside the already-cleared Join Dialog.
 

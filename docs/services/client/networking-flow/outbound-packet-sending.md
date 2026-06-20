@@ -725,6 +725,6 @@ No focused `ClientPacketSender` unit test was found during this pass.
 
 ## Notes
 
-Legacy docs correctly identified that WebSocket packet schemas are sourced from `shared/packets/*.toml`, that generated client packet helpers live under `client/scripts/generated/networking/packets/`, and that client input and devtools should send intent while server systems own authority. This document rewrites those facts against the current client implementation.
+WebSocket packet schemas are sourced from `shared/packets/*.toml`, generated client packet helpers live under `client/scripts/generated/networking/packets/`, and client input and devtools send intent while server systems own authority.
 
 `ClientPacketSender` is not the only path that builds outbound packet dictionaries. Target selection, viewport config, and auth use generated helpers closer to their owning flows, then converge at the same raw send path.

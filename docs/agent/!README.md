@@ -6,11 +6,13 @@ Parent index: [Documentation](../!README.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns agent workflow guidance, session memory, MCP usage, testing guidance, and implementation guardrails for working in Space Rocks docs and code.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Implementation details that belong in product, service, planning, or systems docs.
+Legacy migration notes.
+`.obsidian/` content.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -34,8 +36,11 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Documentation](../!README.md)
+- [Documentation Policy](../documentation-policy.md)
+- [Documentation Procedure](../documentation-procedure.md)
+- [Developer Handoff](../developer.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Start here for agent-facing workflow, context, and tool guidance before editing docs or code.

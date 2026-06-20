@@ -446,7 +446,7 @@ These tests verify the menu and result collaborators that `MatchEndFlow` coordin
 
 ## Notes
 
-The old combined legacy topic mixed match-end orchestration, match-results presentation, HUD behavior, gameplay menu behavior, and route execution. The current documentation split keeps this file focused on `MatchEndFlow` and its immediate orchestration boundary.
+This file stays focused on `MatchEndFlow` and its immediate orchestration boundary, while match-results presentation, HUD behavior, gameplay menu behavior, and route execution remain in their own client-service docs.
 
 Local elimination and authoritative room match-over must remain separate. Showing match results from local elimination would be incorrect because the local player can be out of lives before the authoritative room has ended.
 

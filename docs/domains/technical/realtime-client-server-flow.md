@@ -454,9 +454,9 @@ Those details belong in service, protocol, data, devtools, systems-design, plann
 
 ## Notes
 
-The legacy architecture docs correctly identified the durable rule that client input is sent to the server, the server advances simulation, and clients render received state. That rule remains current.
+Client input is sent to the server, the server advances simulation, and clients render received state. That rule remains current.
 
-The same legacy docs also correctly separated WebSocket connection, room membership, and active gameplay participation. The current implementation still depends on that separation.
+WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
 The current realtime flow sends full gameplay presentation state on the server tick path. Future realtime protocol work may introduce lanes, deltas, quantization, bit packing, or binary encoding, but those are planning facts until implemented.
 

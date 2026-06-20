@@ -7,7 +7,7 @@ This file tracks planning and backlog items only.
 
 It is now a parking lot for unscheduled items and should not become the detailed owner for systems that already have dedicated planning docs.
 
-Implemented behavior belongs in docs/design, docs/client, docs/server, docs/api, or docs/devtools.
+Implemented behavior belongs in docs/systems-design, docs/services, docs/protocol, docs/data, docs/devtools, or docs/domains.
 
 Current limitations belong in [docs/limits/current-system-limits.md](../limits/current-system-limits.md) and [docs/limits/player-build-limits.md](../limits/player-build-limits.md).
 

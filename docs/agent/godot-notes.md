@@ -191,7 +191,7 @@ Future/current client rendering should use unwrapped visual positions relative t
 
 See:
 
-- `docs/design/toroidal-wrap.md`
+- `docs/systems-design/world/toroidal-wrap.md`
 - `services/game-server/internal/game/space`
 
 ## Ship Variants
@@ -200,7 +200,7 @@ Future ships may use different client scenes and server collision maps.
 
 See:
 
-- `docs/design/ship-variants.md`
+- `docs/systems-design/entities/variants.md`
 
 ## Client Testing
 

@@ -533,7 +533,7 @@ Run packet generation checks after changing `shared/packets/debug.toml` or `shar
 * [Game Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
-* [Realtime Protocol](../../protocol/realtime/!README.md)
+* [Realtime Protocol](../../protocol/realtime-websocket-protocol.md)
 
 ## Notes
 

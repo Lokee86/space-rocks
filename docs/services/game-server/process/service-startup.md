@@ -526,6 +526,6 @@ cd services/player-data && go test -tags noembeddedsqlite ./...
 
 This document is scoped to startup composition. Route-by-route ownership belongs in route-composition documentation. Process cleanup and shutdown behavior belong in service-shutdown documentation.
 
-The legacy docs correctly identified that the game server currently hosts player-data in-process while `services/player-data` remains a separate service boundary. This document restates that as current implementation fact from the startup code.
+The game server currently hosts player-data in-process while `services/player-data` remains a separate service boundary.
 
 The player-data piggy-back model should not be treated as permission to move player-data persistence into game-server internals. The current implementation co-locates runtime execution, not ownership.

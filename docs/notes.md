@@ -9,7 +9,7 @@ It is not the source of truth for architecture, data-sync, testing, devtools, pa
 
 Use these instead of expanding this file:
 
-- Architecture: `docs/design/architecture.md`
+- Architecture: `docs/systems-design/!README.md`
 - Developer workflow: `docs/developer.md`
 - Testing and verification: `docs/agent/testing.md`
 - Architecture rules: `docs/agent/architecture-rules.md`
@@ -18,10 +18,10 @@ Use these instead of expanding this file:
 - Current volatile context: `docs/agent/current-context.md`
 - Devtools toggles: `docs/devtools/toggles.md`
 - Data sync: `tools/data_sync/README.md`
-- Toroidal wrap: `docs/design/toroidal-wrap.md`
-- Ship variants: `docs/design/ship-variants.md`
-- Client logging: `docs/client/logging.md`
-- Server logging: `docs/server/logging.md`
+- Toroidal wrap: `docs/systems-design/world/toroidal-wrap.md`
+- Ship variants: `docs/systems-design/entities/variants.md`
+- Client logging: `docs/services/client/client-logging.md`
+- Server logging: `docs/services/game-server/observability/logging-and-diagnostics.md`
 
 ## Rules For This File
 

@@ -63,15 +63,15 @@ The planned API service should own business/backend concerns, not real-time simu
 See:
 
 ```text
-docs/api/ruby-api-server.md
+docs/services/api-server/!README.md
 ```
 
 Rails/Godot auth session handoff now exists, and Go websocket auth now has an explicit Rails token-verification boundary plus a Go authclient seam. `services/game-server/internal/authclient` verifies Space Rocks bearer tokens through Rails and returns minimal identity for the game server to use at the websocket boundary, not by reading Rails tables directly.
 The current server-side auth seams are the Go authclient, then the game-server session identity seam, then multiplayer websocket auth/admission.
 The websocket auth handshake uses `authenticate_request` and `authenticate_result`, with `SessionIdentity` remaining separate from `AccountUserID` so the game server can keep session identity distinct from account identity.
 
-Server-side account and local-profile routing must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): `services/player-data` now has the Phase 4 routes for `authenticated_account` through the Rails adapter, `local_profile` through the SQLite-backed route in the standard no-tag development build, and `guest` through singleton memory; `cmd/game-server` hosts the configured player-data runtime in-process for now, gameplay is still not wired to emit player-data packets, and `services/player-data` must not import `services/game-server/internal`. The game-server must still not directly write SQLite or Rails/Postgres tables.
-Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): logical contract work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline remains the packet/schema source of truth.
+Server-side account and local-profile routing must follow [docs/domains/platform/player-data-routing-flow.md](../domains/platform/player-data-routing-flow.md): `services/player-data` now has the Phase 4 routes for `authenticated_account` through the Rails adapter, `local_profile` through the SQLite-backed route in the standard no-tag development build, and `guest` through singleton memory; `cmd/game-server` hosts the configured player-data runtime in-process for now, gameplay is still not wired to emit player-data packets, and `services/player-data` must not import `services/game-server/internal`. The game-server must still not directly write SQLite or Rails/Postgres tables.
+Account-shaped player data must also follow [docs/data/player-data-schema.md](../data/player-data-schema.md): logical contract work must keep Local Profile and Authenticated Account concepts aligned, Rails/Postgres and embedded DB may differ physically but must satisfy the same logical contract, gameplay code must not depend directly on Rails tables or embedded DB tables, and the data-sync pipeline remains the packet/schema source of truth.
 Player-data runtime extraction is later work; the Rails adapter exists now, and the embedded SQLite backing store is present in the standard no-tag development build.
 Embedded SQLite now lives under `services/player-data/playerdata/embeddedsqlite` and is compiled by default, while `-tags noembeddedsqlite` deployment/restricted builds exclude it. `-tags noembeddedsqlite` builds must not import or depend on `modernc.org/sqlite`, the core `playerdata` package must not import the embedded SQLite package, and local-store construction is injected from the game-server composition root.
 
@@ -90,9 +90,9 @@ Embedded SQLite now lives under `services/player-data/playerdata/embeddedsqlite`
 - `networking` may retain websocket session activation/deactivation when it mutates websocket session fields.
 - `game` owns authoritative gameplay simulation, gameplay state mutation, and adapters from game storage into narrower gameplay seams.
 - `game` must not know SQLite table names or schema details for local-profile storage.
-- Asteroid variants follow [Asteroid Variant Contract](../design/asteroid-variants.md): use `services/game-server/internal/game/asteroids` for selection, use the catalog float weights, do not use raw `rand.Intn` pools, and do not reintroduce `constants.AsteroidVariants`.
-- Damage resolution lives in `services/game-server/internal/game/damage/`; it owns pure resolution only. `game` owns the entity mutation adapters, and devtools must route damage through the same real damage seam rather than a parallel debug-only path. See `docs/design/damage.md`.
-- Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`. Weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See `docs/design/weapons.md` and `docs/design/radial-effects.md`.
+- Asteroid variants follow [Asteroid Spawning And Variants](../services/game-server/simulation/world/asteroid-spawning-and-variants.md): use `services/game-server/internal/game/asteroids` for selection, use the catalog float weights, do not use raw `rand.Intn` pools, and do not reintroduce `constants.AsteroidVariants`.
+- Damage resolution lives in `services/game-server/internal/game/damage/`; it owns pure resolution only. `game` owns the entity mutation adapters, and devtools must route damage through the same real damage seam rather than a parallel debug-only path. See [docs/services/game-server/simulation/combat/damage-resolution.md](../services/game-server/simulation/combat/damage-resolution.md).
+- Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`. Weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/services/game-server/simulation/combat/weapons-and-projectile-fire.md](../services/game-server/simulation/combat/weapons-and-projectile-fire.md) and [docs/services/game-server/simulation/combat/radial-effects.md](../services/game-server/simulation/combat/radial-effects.md).
 - Match/mode policy evaluation belongs in `services/game-server/internal/game/rules`, which should receive plain snapshots/facts and return decisions/status.
 - `game` should not own websocket transport, API persistence, account/auth concerns, or lobby UI flow.
 
@@ -182,7 +182,7 @@ Current/future wrapped-world rules:
 See:
 
 ```text
-docs/design/toroidal-wrap.md
+docs/systems-design/world/toroidal-wrap.md
 ```
 
 ## Logging
@@ -226,7 +226,7 @@ Normal lifecycle logs should usually be `Debug`. Warnings are for unusual recove
 See:
 
 ```text
-docs/server/logging.md
+docs/services/game-server/observability/logging-and-diagnostics.md
 ```
 
 ## Server Test Rules

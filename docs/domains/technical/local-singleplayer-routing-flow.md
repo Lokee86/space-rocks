@@ -502,8 +502,6 @@ Those belong in service, protocol, data, planning, limits, or player-experience 
 
 ## Notes
 
-The old local-singleplayer routing stub used the right topic boundary but did not contain current-system facts. This document replaces that placeholder shape with the current cross-system technical flow.
-
-The useful legacy distinction remains valid: `local` is not enough information. A locally running server can host local single-player, multiplayer simulation, or authenticated multiplayer behavior. The current flow is identified by session mode, packet type, room policy, and player-data identity context.
+`local` is not enough information. A locally running server can host local single-player, multiplayer simulation, or authenticated multiplayer behavior. The current flow is identified by session mode, packet type, room policy, and player-data identity context.
 
 Local single-player currently shares infrastructure with multiplayer in several places. That is intentional for the authoritative simulation path and does not make Local Profile, Guest, and Authenticated Account interchangeable.

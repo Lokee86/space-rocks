@@ -51,7 +51,7 @@ Phase A answers whether the current architecture can safely support more entitie
 - `services/game-server/internal/protocol/packetcodec/` owns JSON packet encode/decode.
 - `client/scripts/devtools/telemetry/` owns client-side telemetry models.
 - `client/scenes/devtools/world_telemetry_overlay.tscn` is the devtools-only overlay.
-- `docs/server/logging.md` and `docs/client/logging.md` already define logging rules.
+- `docs/services/game-server/observability/logging-and-diagnostics.md` and `docs/services/client/client-logging.md` already define logging rules.
 
 ### Ownership Rules
 

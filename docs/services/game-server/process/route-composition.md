@@ -413,4 +413,4 @@ The current game-server route table is process-local and hard-coded in `main.go`
 
 The player-data HTTP surface is intentionally documented here only as a route-composition dependency. Detailed hosted-handler behavior belongs in player-data HTTP hosting and player-data service docs.
 
-Legacy documentation correctly identified that the game-server entrypoint should register routes, configure dependencies, and start the process. Reusable simulation, packet routing, player-data behavior, and service integrations should remain outside `main.go`.
+The game-server entrypoint should register routes, configure dependencies, and start the process. Reusable simulation, packet routing, player-data behavior, and service integrations should remain outside `main.go`.

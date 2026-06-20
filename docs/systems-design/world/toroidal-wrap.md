@@ -350,8 +350,8 @@ Manual smoke verification should include crossing every world edge and checking 
 
 ## Notes
 
-The legacy toroidal-wrap notes correctly identified the core split: bounded authoritative server coordinates and continuous client visual coordinates. This document preserves that systems-design rule while leaving service-level implementation detail to the server and client docs.
+The core split is bounded authoritative server coordinates and continuous client visual coordinates. This document preserves that systems-design rule while leaving service-level implementation detail to the server and client docs.
 
-`client/legacy/player_render/` still contains implementation support behind the active player-render API. Current docs should describe the active ViewAnchor/player-render seam and only reference legacy files as implementation backing where necessary.
+`client/legacy/player_render/` still contains implementation support behind the active player-render API. Current docs should describe the active ViewAnchor/player-render seam and only reference implementation backing where necessary.
 
 Toroidal wrap is a world model, not a camera trick. The camera and background benefit from continuous visual coordinates, but authoritative gameplay behavior also depends on wrapped distance, direction, visibility, collision, spawning, and respawn safety.

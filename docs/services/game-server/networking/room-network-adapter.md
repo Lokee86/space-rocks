@@ -261,4 +261,4 @@ go test -buildvcs=false ./services/game-server/internal/networking ./services/ga
 
 ## Notes
 
-The legacy architecture document contained useful source material for the adapter boundary, especially the rule that WebSocket connection, room membership, and active game player routing are separate states. That rule is current and reflected in the implementation.
+WebSocket connection, room membership, and active game player routing are separate states, and the implementation reflects that boundary.

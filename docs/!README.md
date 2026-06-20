@@ -23,7 +23,6 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 - [.obsidian](.obsidian/!README.md) - .obsidian documentation.
 - [Agent](agent/!README.md) - Agent workflow and documentation support notes.
 - [Data](data/!README.md) - Data documentation and pipeline references.
-- [design](design/!README.md) - Design documentation.
 - [Devtools](devtools/!README.md) - Development and debug tooling documentation.
 - [Domains](domains/!README.md) - Cross-system domain documentation.
 - [legacy](legacy/!README.md) - Legacy documentation.

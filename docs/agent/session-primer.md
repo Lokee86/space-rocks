@@ -27,7 +27,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - `websocket_write.go` is outbound/presentation only and no longer advances game-over lifecycle.
 - Targeting orchestration now sits above `MouseActionFlow`; `GameplayTargetingContext` owns selection orchestration and `WorldSync` only exposes `target_source()`.
 - The upgraded damage seam now lives in `services/game-server/internal/game/damage/`; `ResolveSingle` handles modifiers, shields, area damage, and DoT at a high level while `game` owns adapters and entity mutation.
-- Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`; weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/design/weapons.md](../design/weapons.md) and [docs/design/radial-effects.md](../design/radial-effects.md).
+- Weapons live in `services/game-server/internal/game/weapons` and radial effects live in `services/game-server/internal/game/effects/radial`; weapon profiles may carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam. See [docs/services/game-server/simulation/combat/weapons-and-projectile-fire.md](../services/game-server/simulation/combat/weapons-and-projectile-fire.md) and [docs/services/game-server/simulation/combat/radial-effects.md](../services/game-server/simulation/combat/radial-effects.md).
 - Rails internal token verification, Go authclient, websocket session identity, and websocket auth packets now form the completed auth/admission seam for multiplayer admission.
 - Phase 5 match-result reporting is complete: resolved `MatchResultSummary` is reported through `services/player-data`, `account_id` routes to `authenticated_account`, `local_profile_id` routes to `local_profile`, and guest/no durable identity routes to guest behavior.
 - Profile readout is complete: the client calls `POST /api/player-data/profile` on the game-server data-handler, guest reads hit in-process memory, and authenticated reads flow through `RailsStore` to `POST /api/internal/player-data/stats`.
@@ -37,7 +37,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Client menu-flow Phase 4 is complete and green: Multiplayer Pregame Create/Join/Logout work, and Lobby Leave returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 is complete and green: profile readout transmission mounts `profile_readout.tscn` under `TransmissionScreen/ScreenDisplay`, and the readout fills callsign plus stat labels for guest and authenticated account contexts.
 - Local Pilot / Guest selector is complete: create, load/default, delete, and the delete confirmation sub-panel are implemented.
-- Client match-end work uses `MatchEndFlow`; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
+- Client match-end work uses `MatchEndFlow`; see [docs/services/client/match-end-flow/!README.md](../services/client/match-end-flow/!README.md).
 - The full menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.

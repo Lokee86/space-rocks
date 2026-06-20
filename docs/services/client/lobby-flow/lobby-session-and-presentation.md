@@ -488,7 +488,7 @@ Those tests verify room snapshot shape and server-owned room snapshot behavior, 
 
 ## Notes
 
-Legacy documentation correctly identified `client/scripts/lobby/` as the lobby shell, presenter, and network-action flow area, and identified `UserInterface` as the parent root for app/menu/lobby screens. This document rewrites those facts from the current implementation.
+`client/scripts/lobby/` is the lobby shell, presenter, and network-action flow area, and `UserInterface` is the parent root for app/menu/lobby screens.
 
 This document intentionally does not cover the join dialog flow in detail. Join dialog ownership belongs to `room-entry-and-join-dialog.md`.
 
