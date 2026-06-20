@@ -22,9 +22,9 @@ This folder owns the systems-design documentation indexes for cross-system mecha
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [Combat](combat\!README.md) - Conceptual combat mechanics and authority boundaries.
-- [Entities](entities\!README.md) - Conceptual entity behavior, roles, and invariants.
-- [World](world\!README.md) - Conceptual world behavior and authority boundaries.
+- [Combat](combat/!README.md) - Conceptual combat mechanics and authority boundaries.
+- [Entities](entities/!README.md) - Conceptual entity behavior, roles, and invariants.
+- [World](world/!README.md) - Conceptual world behavior and authority boundaries.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

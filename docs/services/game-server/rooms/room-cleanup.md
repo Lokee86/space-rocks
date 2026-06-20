@@ -611,5 +611,3 @@ cd services/game-server && go test -buildvcs=false ./...
 Legacy architecture notes correctly identified `services/game-server/internal/rooms` as owning room lifecycle and cleanup policy, with `roomCleanup` owning the cleanup timer and cleanup version. The current code keeps that ownership split.
 
 Legacy logging notes described cleanup scheduled, skipped, and completed diagnostics. Current observability documentation now owns the broader logging policy; this document only describes the cleanup events relevant to room cleanup behavior.
-
-This file currently lives in a `stubs/` folder. It should become canonical only when moved into the owning rooms folder and indexed as a direct room service document.

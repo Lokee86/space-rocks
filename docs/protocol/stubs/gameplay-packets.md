@@ -1,31 +1,33 @@
 # Gameplay Packets
+
 Parent index: [Protocol](../!README.md)
 
 ## Purpose
 
-Stub note: this document is incomplete and non-canonical.
-TODO: describe gameplay realtime packet documentation.
+This stub is incomplete and non-canonical. It points to gameplay realtime packet behavior between the client and game server.
 
 ## Overview
 
-TODO: summarize the gameplay packet flow between client and game server.
-Stub note: keep this focused on gameplay packet behavior, not UI presentation.
+This stub covers the gameplay packet families at the protocol boundary: input packets, client config packets, pause request packets, respawn request packets, gameplay `state` packets, and gameplay event or presentation packets.
 
 ## Participating systems
 
 - Client gameplay networking.
 - Game-server gameplay networking.
-- TODO: any other packet participants that are confirmed later.
+- Shared packet schema and code generation.
+- TODO: any additional gameplay packet participants that are verified later.
 
 ## Authority
 
-- TODO: describe which side owns gameplay state and which side transports gameplay packets.
-- Stub note: do not invent authority details beyond the known server-authoritative direction.
+- The protocol boundary owns packet shape and packet semantics for the gameplay packet families.
+- The game server owns authoritative gameplay packet contents for server-to-client state and event output.
+- The client owns local packet emission for gameplay requests after input is collected.
 
 ## Message or request flow
 
-- TODO: describe gameplay input, state update, respawn, pause, and other realtime packet flow.
-- TODO: document any request/response or publish/update patterns that are actually used.
+- Client input, config, pause, and respawn packets flow from client to game server.
+- The game server projects the gameplay `state` packet back to the client.
+- The game server emits gameplay event and presentation packets back to the client.
 
 ## Source-of-truth files
 
@@ -34,26 +36,29 @@ Stub note: keep this focused on gameplay packet behavior, not UI presentation.
 - `client/scripts/generated/networking/packets/packets.gd`
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/runtime/packets_generated.go`
-- `services/game-server/internal/networking/gameplay_packets_test.go`
-- TODO: add any other verified packet source files if they become relevant.
 
 ## Service responsibilities
 
-- TODO: describe client and game-server responsibilities for gameplay packet handling.
-- Stub note: keep transport details out of this doc unless they are confirmed.
+- Client gameplay networking routes gameplay requests and packet updates.
+- Game-server networking validates gameplay packet handling and updates gameplay state output.
+- Shared schema files define the packet shapes and generated packet outputs used by both sides.
+- This stub does not include WebSocket lifecycle, room/lobby packet behavior, or client presentation details.
 
 ## Validation and testing
 
 - `services/game-server/internal/networking/gameplay_packets_test.go`
-- TODO: add packet schema, codec, and client-side test references if they are confirmed.
-- Stub note: only list verified tests or checks here.
 
 ## Related docs
 
 - [Protocol](../!README.md)
-- TODO: add gameplay-specific docs when they exist.
+- [Game Server Networking Gameplay Adapter](../../services/game-server/networking/gameplay-network-adapter.md)
+- [Runtime State Packet Projection](../../services/game-server/simulation/runtime/stubs/state-packet-projection.md)
+- [Presentation Event Queue](../../services/game-server/simulation/runtime/stubs/presentation-event-queue.md)
+- [Player Input Routing](../../services/game-server/simulation/players/stubs/player-input-routing.md)
+- [Player Pause And Suspension](../../services/game-server/simulation/players/stubs/player-pause-and-suspension.md)
+- [Player Respawn](../../services/game-server/simulation/players/stubs/player-respawn.md)
 
 ## Notes
 
-Stub note: this document is a placeholder for future gameplay packet documentation.
-Do not treat it as canonical source material.
+This is a protocol stub, not the canonical packet schema source.
+It does not cover game-server implementation details, player session mutation, respawn mechanics, pause gate implementation, or client presentation behavior.

@@ -32,6 +32,13 @@ match result reporter access
 
 The WebSocket connection itself is session-only. It does not imply room membership, authenticated identity, or an active gameplay player.
 
+Related player and room boundaries:
+
+* [Room Membership And Identity](../rooms/room-membership-and-identity.md)
+* [Player Lifecycle Overview](../simulation/players/stubs/player-lifecycle-overview.md)
+
+WebSocket connection identity is not room membership, authenticated identity, or simulation player state.
+
 Current connection lifecycle:
 
 ```text
@@ -111,6 +118,8 @@ The WebSocket session lifecycle does not own:
 * client packet construction
 * client packet routing
 * retry, reconnect, acknowledgement, or durable delivery semantics
+
+This doc stays at the transport/session boundary. Room membership and simulation player state are owned elsewhere.
 
 ## Runtime surface
 

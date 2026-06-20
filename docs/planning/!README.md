@@ -25,13 +25,13 @@ This folder owns the planning index for work that has not yet become current doc
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [Data](data\!README.md) - Planning docs for data work.
-- [design](design\!README.md) - Design documentation.
-- [Devtools](devtools\!README.md) - Planning docs for devtools work.
-- [domains](domains\!README.md) - Domains documentation.
-- [Protocol](protocol\!README.md) - Planning docs for protocol work.
-- [services](services\!README.md) - Services documentation.
-- [Systems Design](systems-design\!README.md) - Planning docs for systems-design work.
+- [Data](data/!README.md) - Planning docs for data work.
+- [design](design/!README.md) - Design documentation.
+- [Devtools](devtools/!README.md) - Planning docs for devtools work.
+- [domains](domains/!README.md) - Domains documentation.
+- [Protocol](protocol/!README.md) - Planning docs for protocol work.
+- [services](services/!README.md) - Services documentation.
+- [Systems Design](systems-design/!README.md) - Planning docs for systems-design work.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

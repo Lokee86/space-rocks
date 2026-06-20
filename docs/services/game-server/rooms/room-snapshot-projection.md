@@ -1,10 +1,10 @@
-# Stub: Room Snapshot Projection
+# Room Snapshot Projection
 
 Parent index: [Game Server Rooms](./!README.md)
 
 ## Purpose
 
-This stub documents the current game-server room snapshot projection boundary.
+This document describes the current game-server room snapshot projection boundary.
 
 It covers how room state, room membership, local player identity, ownership, capacity, and resolved match-result summaries are projected into generated `room_snapshot` packets.
 

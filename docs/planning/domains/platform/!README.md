@@ -22,13 +22,13 @@ This folder owns planning docs for platform-facing work that is not yet current.
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [anti-cheat-and-trust-policy.md](stubs\anti-cheat-and-trust-policy.md) - Stub: anti-cheat and trust policy planning.
-- [api-product-surface.md](stubs\api-product-surface.md) - Stub: API product surface planning.
-- [leaderboards-and-rankings.md](stubs\leaderboards-and-rankings.md) - Stub: leaderboards and rankings planning.
-- [matchmaking-and-room-discovery.md](stubs\matchmaking-and-room-discovery.md) - Stub: matchmaking and room discovery planning.
-- [multiplayer-session-and-lifecycle.md](stubs\multiplayer-session-and-lifecycle.md) - Stub: multiplayer session and lifecycle planning.
-- [player-data-and-persistence.md](stubs\player-data-and-persistence.md) - Stub: player data and persistence planning.
-- [social-and-community-systems.md](stubs\social-and-community-systems.md) - Stub: social and community systems planning.
+- [anti-cheat-and-trust-policy.md](stubs/anti-cheat-and-trust-policy.md) - Stub: anti-cheat and trust policy planning.
+- [api-product-surface.md](stubs/api-product-surface.md) - Stub: API product surface planning.
+- [leaderboards-and-rankings.md](stubs/leaderboards-and-rankings.md) - Stub: leaderboards and rankings planning.
+- [matchmaking-and-room-discovery.md](stubs/matchmaking-and-room-discovery.md) - Stub: matchmaking and room discovery planning.
+- [multiplayer-session-and-lifecycle.md](stubs/multiplayer-session-and-lifecycle.md) - Stub: multiplayer session and lifecycle planning.
+- [player-data-and-persistence.md](stubs/player-data-and-persistence.md) - Stub: player data and persistence planning.
+- [social-and-community-systems.md](stubs/social-and-community-systems.md) - Stub: social and community systems planning.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

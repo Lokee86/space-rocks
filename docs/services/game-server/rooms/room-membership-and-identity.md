@@ -43,6 +43,13 @@ Room snapshots expose `player_id`, `ready`, `connected`, `local_player_id`, and 
 
 The membership boundary is intentionally narrow. It owns who is in the room and which player-facing identity represents each member. It does not own WebSocket transport, authentication verification, player-data persistence, or game simulation mechanics.
 
+Related player boundaries:
+
+* [Player Session State](../simulation/players/stubs/player-session-state.md)
+* [Active Player Avatar State](../simulation/players/stubs/active-player-avatar-state.md)
+
+Player session state and active avatar state are owned under the players simulation docs; room membership only bridges to them.
+
 ## Code root
 
 `services/game-server/internal/rooms/`

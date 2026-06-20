@@ -217,6 +217,14 @@ Important non-ownership boundaries:
 * generated packet code owns packet names and packet field shapes.
 * outbound networking owns state/event delivery back to clients.
 
+Player docs own the actual input rules, pause mechanics, and respawn implementation. This adapter only routes packets into the correct game-side APIs.
+
+Related player docs:
+
+* [Player Input Routing](../simulation/players/stubs/player-input-routing.md)
+* [Player Pause And Suspension](../simulation/players/stubs/player-pause-and-suspension.md)
+* [Player Respawn](../simulation/players/stubs/player-respawn.md)
+
 ## Tests and verification
 
 Expected verification should cover:

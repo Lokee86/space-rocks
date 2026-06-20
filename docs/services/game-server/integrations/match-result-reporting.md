@@ -25,6 +25,14 @@ room game-over lifecycle
 
 The game server does not write player-data stores directly. It maps authoritative match facts into player-data commands and sends those commands across the player-data packet boundary. The player-data runtime validates the mode/identity pairing and routes the command to the correct backing behavior.
 
+Related upstream boundaries:
+
+* [Room Match Lifecycle](../rooms/room-match-lifecycle.md)
+* [Player Counters](../simulation/players/stubs/player-counters.md)
+* [Player Death And Despawn](../simulation/players/stubs/player-death-and-despawn.md)
+
+Match-result reporting owns the reporting integration to player-data, not simulation counter mutation, death flow, room phase transition, or player-data persistence internals.
+
 The current backing behaviors are outside this game-server integration boundary:
 
 * authenticated account -> player-data Rails adapter -> API-server internal match-results endpoint

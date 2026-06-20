@@ -23,9 +23,9 @@ List content that belongs somewhere else.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [Gameplay](gameplay\!README.md) - Planning docs for gameplay work.
-- [Platform](platform\!README.md) - Planning docs for platform work.
-- [Technical](technical\!README.md) - Planning docs for technical work.
+- [Gameplay](gameplay/!README.md) - Planning docs for gameplay work.
+- [Platform](platform/!README.md) - Planning docs for platform work.
+- [Technical](technical/!README.md) - Planning docs for technical work.
 <!-- doc-ledger:folders:end -->
 
 ## Related Docs
