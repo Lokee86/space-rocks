@@ -20,9 +20,9 @@ This folder owns the domain taxonomy and the entry points for cross-system docs.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [Platform](platform\!README.md) - Cross-system flows that cut across services and infrastructure.
-- [Player Experience](player-experience\!README.md) - Cross-system flows for the player-facing experience.
-- [Technical](technical\!README.md) - Cross-system technical flows and integration concerns.
+- [Platform](platform/!README.md) - Cross-system flows that cut across services and infrastructure.
+- [Player Experience](player-experience/!README.md) - Cross-system flows for the player-facing experience.
+- [Technical](technical/!README.md) - Cross-system technical flows and integration concerns.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

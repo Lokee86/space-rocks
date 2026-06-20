@@ -23,12 +23,12 @@ List content that belongs somewhere else.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [integrations](integrations\!README.md) - Integrations documentation.
-- [networking](networking\!README.md) - Networking documentation.
-- [observability](observability\!README.md) - Observability documentation.
-- [process](process\!README.md) - Process documentation.
-- [rooms](rooms\!README.md) - Rooms documentation.
-- [simulation](simulation\!README.md) - Simulation documentation.
+- [integrations](integrations/!README.md) - Integrations documentation.
+- [networking](networking/!README.md) - Networking documentation.
+- [observability](observability/!README.md) - Observability documentation.
+- [process](process/!README.md) - Process documentation.
+- [rooms](rooms/!README.md) - Rooms documentation.
+- [simulation](simulation/!README.md) - Simulation documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Related Docs

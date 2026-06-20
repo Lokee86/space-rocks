@@ -1,4 +1,4 @@
-# Stub: Room Match Lifecycle
+# Room Match Lifecycle
 
 Parent index: [Game Server Rooms](./!README.md)
 
@@ -37,6 +37,14 @@ Current match IDs use this shape:
 When the game aggregate reports that the match is over, the room transitions from `InGame` to `GameOver`. During that transition, the room builds and stores a resolved match summary if one has not already been stored. That summary is then available to room snapshots and the match-result reporting integration.
 
 The room does not stop the game instance when it enters `GameOver`. The game instance is stopped and cleared when the room returns to lobby or when room cleanup removes the room.
+
+Related player and runtime boundaries:
+
+* [Player Death And Despawn](../simulation/players/stubs/player-death-and-despawn.md)
+* [Player Counters](../simulation/players/stubs/player-counters.md)
+* [State Packet Projection](../simulation/runtime/stubs/state-packet-projection.md)
+
+Room match lifecycle owns phase transitions and match completion. Player death, lives mutation, and runtime state packet projection live in their narrower simulation boundaries.
 
 ## Code root
 

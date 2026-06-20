@@ -23,12 +23,12 @@ List content that belongs somewhere else.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [combat](combat\!README.md) - Combat documentation.
-- [pickups](pickups\!README.md) - Pickups documentation.
-- [players](players\!README.md) - Players documentation.
-- [runtime](runtime\!README.md) - Runtime documentation.
-- [targeting](targeting\!README.md) - Targeting documentation.
-- [world](world\!README.md) - World documentation.
+- [combat](combat/!README.md) - Combat documentation.
+- [pickups](pickups/!README.md) - Pickups documentation.
+- [players](players/!README.md) - Players documentation.
+- [runtime](runtime/!README.md) - Runtime documentation.
+- [targeting](targeting/!README.md) - Targeting documentation.
+- [world](world/!README.md) - World documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Related Docs

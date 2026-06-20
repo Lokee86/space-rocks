@@ -10,6 +10,8 @@ This stub documents the current server implementation for asteroid spawning, var
 
 The server owns asteroid variant catalog behavior and the spawn paths that choose variants for new asteroids.
 
+Timed asteroid spawning consumes active camera views when deciding where and when to spawn asteroid batches.
+
 The current implementation keeps the variant catalog in `services/game-server/internal/game/asteroids/variants.go`, uses weighted selection for spawn paths, stores the selected variant on runtime asteroids, and exports the variant id through asteroid runtime state.
 
 ## Responsibilities
@@ -26,6 +28,13 @@ Server-side asteroid spawning and variant ownership includes:
 * looking up collision shapes by asteroid size and variant
 
 Timed and fragment spawn planning is owned by the spawner layer. Variant catalog selection is owned by the asteroid variant helpers.
+
+Related camera boundaries:
+
+* [Player Camera View State](../../players/stubs/player-camera-view-state.md)
+* [Visibility And Despawn](visibility-and-despawn.md)
+
+This stub does not own player camera-view creation, camera config updates, player camera following, or death/respawn camera reattachment.
 
 ## Does not own
 

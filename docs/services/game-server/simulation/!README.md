@@ -25,12 +25,12 @@ This folder owns authoritative game runtime behavior for the game server.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [Combat](combat\!README.md) - Game-server combat boundary documentation index.
-- [Pickups](pickups\!README.md) - Game-server pickup boundary documentation index.
-- [Players](players\!README.md) - Game-server player boundary documentation index.
-- [Runtime](runtime\!README.md) - Game-server runtime boundary documentation index.
-- [Targeting](targeting\!README.md) - Game-server targeting boundary documentation index.
-- [World](world\!README.md) - Game-server world boundary documentation index.
+- [Combat](combat/!README.md) - Game-server combat boundary documentation index.
+- [Pickups](pickups/!README.md) - Game-server pickup boundary documentation index.
+- [Players](players/!README.md) - Game-server player boundary documentation index.
+- [Runtime](runtime/!README.md) - Game-server runtime boundary documentation index.
+- [Targeting](targeting/!README.md) - Game-server targeting boundary documentation index.
+- [World](world/!README.md) - Game-server world boundary documentation index.
 <!-- doc-ledger:folders:end -->
 ## Related Docs
 

@@ -18,13 +18,15 @@ This folder owns pickup entity lifecycle, collection, effects, and drop integrat
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [pickup-collection.md](pickup-collection.md) - Pickup Collection documentation.
+- [pickup-drop-integration.md](pickup-drop-integration.md) - Pickup drop integration documentation.
+- [pickup-effects.md](pickup-effects.md) - Pickup Effects documentation.
+- [pickup-entity-lifecycle.md](pickup-entity-lifecycle.md) - Pickup entity lifecycle documentation.
 <!-- doc-ledger:files:end -->
+
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [pickup-collection-and-effects.md](stubs\pickup-collection-and-effects.md) - Stub: incomplete pickup collection and effects documentation.
-- [pickup-drop-integration.md](stubs\pickup-drop-integration.md) - Stub: incomplete pickup drop integration documentation.
-- [pickup-entity-lifecycle.md](stubs\pickup-entity-lifecycle.md) - Stub: incomplete pickup entity lifecycle documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

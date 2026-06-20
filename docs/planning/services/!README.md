@@ -23,11 +23,11 @@ List content that belongs somewhere else.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [api-server](api-server\!README.md) - Api Server documentation.
-- [client](client\!README.md) - Client documentation.
-- [game-server](game-server\!README.md) - Game Server documentation.
-- [player-data](player-data\!README.md) - Player Data documentation.
-- [web](web\!README.md) - Web documentation.
+- [api-server](api-server/!README.md) - Api Server documentation.
+- [client](client/!README.md) - Client documentation.
+- [game-server](game-server/!README.md) - Game Server documentation.
+- [player-data](player-data/!README.md) - Player Data documentation.
+- [web](web/!README.md) - Web documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Related Docs

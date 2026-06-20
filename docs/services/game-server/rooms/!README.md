@@ -19,13 +19,15 @@ This folder owns room state, membership, lobby/start rules, match lifecycle, cle
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
-- [lobby-and-start-rules.md](lobby-and-start-rules.md) - Incomplete lobby and start rules documentation.
-- [room-cleanup.md](room-cleanup.md) - Incomplete room cleanup documentation.
-- [room-manager.md](room-manager.md) - Incomplete room manager documentation.
+- [lobby-and-start-rules.md](lobby-and-start-rules.md) - Lobby admission, ready state, and start rules documentation.
+- [room-cleanup.md](room-cleanup.md) - Room cleanup, empty-room cleanup, and cleanup timer/version behavior documentation.
+- [room-manager.md](room-manager.md) - Room manager registry and lifecycle entry points documentation.
 - [room-match-lifecycle.md](room-match-lifecycle.md) - Room Match Lifecycle documentation.
 - [room-membership-and-identity.md](room-membership-and-identity.md) - Room Membership And Identity documentation.
 - [room-snapshot-projection.md](room-snapshot-projection.md) - Room Snapshot Projection documentation.
-<!-- doc-ledger:files:end -->## Stub Filesroom-membership-and-identity.md
+<!-- doc-ledger:files:end -->
+
+## Stub Files
 <!-- doc-ledger:stubs:start -->
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders

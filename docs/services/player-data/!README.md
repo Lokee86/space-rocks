@@ -21,10 +21,10 @@ This folder owns docs for the player-data service runtime and its implementation
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [local-profiles-http-api.md](stubs\local-profiles-http-api.md) - Stub: player-data local profiles HTTP API documentation.
-- [match-result-sinks.md](stubs\match-result-sinks.md) - Stub: player-data match result sink documentation.
-- [profile-stats-flow.md](stubs\profile-stats-flow.md) - Stub: player-data profile stats flow documentation.
-- [runtime-and-store-routing.md](stubs\runtime-and-store-routing.md) - Stub: player-data runtime and store routing documentation.
+- [local-profiles-http-api.md](stubs/local-profiles-http-api.md) - Stub: player-data local profiles HTTP API documentation.
+- [match-result-sinks.md](stubs/match-result-sinks.md) - Stub: player-data match result sink documentation.
+- [profile-stats-flow.md](stubs/profile-stats-flow.md) - Stub: player-data profile stats flow documentation.
+- [runtime-and-store-routing.md](stubs/runtime-and-store-routing.md) - Stub: player-data runtime and store routing documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

@@ -1,54 +1,66 @@
 # Lobby Packets
+
 Parent index: [Protocol](../!README.md)
 
 ## Purpose
 
-Stub note: this document is incomplete and non-canonical.
-TODO: describe the lobby and room realtime packet protocol.
+This stub is incomplete and non-canonical. It points to lobby and room realtime packet behavior between the client and game server.
 
 ## Overview
 
-TODO: summarize lobby packet flow for room joining, room state updates, and lobby-to-room transitions.
-Stub note: keep this focused on protocol behavior, not implementation details.
+This stub covers the lobby and room packet families at the protocol boundary: create room, join room, leave room, ready toggle, start game, return to lobby, room snapshot, room error, and room state change or update packets.
 
 ## Participating systems
 
-- Game server networking and room runtime.
-- Client lobby and gameplay networking.
-- TODO: any other packet participants that are confirmed later.
+- Client lobby networking.
+- Client gameplay networking when lobby actions transition into gameplay.
+- Game-server room networking.
+- Shared lobby packet schema and code generation.
+- TODO: any additional lobby packet participants that are verified later.
 
 ## Authority
 
-- TODO: describe which side owns room state and which side renders or requests updates.
-- Stub note: do not invent authority details beyond known server-authoritative direction.
+- The protocol boundary owns packet shape and packet semantics for the lobby and room packet families.
+- The game server owns authoritative room-state packet contents for room snapshots, room state changes, and room errors.
+- The client owns local packet emission for lobby and room requests after user intent is collected.
+- TODO: add any confirmed authority split details that are not yet documented elsewhere.
 
 ## Message or request flow
 
-- TODO: describe lobby join, leave, room snapshot, and state update packet flow.
-- TODO: document any request/response or publish/update patterns that are actually used.
+- Create room and join room requests flow from client to game server.
+- Leave room, ready toggle, start game, and return to lobby requests flow from client to game server.
+- Room snapshot, room state changed, and room error packets flow from game server back to the client.
+- TODO: add any packet-family sequencing details that remain genuinely unknown.
 
 ## Source-of-truth files
 
 - `shared/packets/lobby.toml`
 - `shared/packets/outputs.toml`
+- `client/scripts/generated/networking/packets/packets.gd`
+- `services/game-server/internal/game/packets.go`
+- `services/game-server/internal/game/runtime/packets_generated.go`
 - TODO: add any other verified packet source files if they become relevant.
 
 ## Service responsibilities
 
-- TODO: describe game-server and client responsibilities for lobby packet handling.
-- Stub note: keep transport details out of this doc unless they are confirmed.
+- Client lobby networking routes lobby and room requests.
+- Game-server networking validates room packet handling and updates room-state output.
+- Shared schema files define the packet shapes and generated packet outputs used by both sides.
+- This stub does not include room manager implementation, room membership implementation, WebSocket lifecycle implementation, or client UI behavior.
 
 ## Validation and testing
 
-- TODO: add packet schema, codec, and round-trip test references.
-- Stub note: only list verified tests or checks here.
+- TODO: add packet schema or client/server checks if they become confirmed and relevant.
 
 ## Related docs
 
 - [Protocol](../!README.md)
-- TODO: add related service and schema docs when they exist.
+- [Game Server Room Membership And Identity](../../services/game-server/rooms/room-membership-and-identity.md)
+- [Room Snapshot Projection](../../services/game-server/rooms/room-snapshot-projection.md)
+- [Lobby And Start Rules](../../services/game-server/rooms/lobby-and-start-rules.md)
+- [WebSocket Session Lifecycle](../../services/game-server/networking/websocket-session-lifecycle.md)
 
 ## Notes
 
-Stub note: this document is a placeholder for future lobby packet documentation.
-Do not treat it as canonical source material.
+This is a protocol stub, not the canonical packet schema source.
+It does not cover room manager implementation, room membership storage, WebSocket lifecycle implementation, or client UI behavior.
