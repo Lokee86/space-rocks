@@ -1,6 +1,6 @@
 # App Shutdown Flow
 
-Parent index: [App Shell And Session](./!README.md)
+Parent index: [App Shell And Session](./!INDEX.md)
 
 ## Purpose
 
@@ -224,18 +224,18 @@ These tests do not directly verify OS/window close shutdown or graceful close de
 
 ## Related docs
 
-* [App Shell And Session](./!README.md)
+* [App Shell And Session](./!INDEX.md)
 * [App Entry Composition](app-entry-composition.md)
 * [Session Boot And Network Target](session-boot-and-network-target.md)
 * [Room Session State](room-session-state.md)
 * [Client Viewport Config Flow](client-viewport-config-flow.md)
-* [Client](../!README.md)
+* [Client](../!INDEX.md)
 * [Menu Flow](../menu-flow.md)
-* [Networking Flow](../networking-flow/!README.md)
-* [Lobby Flow](../lobby-flow/!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
-* [Gameplay Menu Flow](../gameplay-menu-flow/!README.md)
-* [Match End Flow](../match-end-flow/!README.md)
+* [Networking Flow](../networking-flow/!INDEX.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md)
+* [Match End Flow](../match-end-flow/!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Telemetry And Packet Routing
 
-Parent index: [Game Server Networking](./!README.md)
+Parent index: [Game Server Networking](./!INDEX.md)
 
 ## Purpose
 
@@ -212,15 +212,15 @@ docs/devtools/
 
 ## Related docs
 
-* [Game Server Integrations](../integrations/!README.md)
-* [Game Server](../!README.md)
-* [Game Server Networking](./!README.md)
+* [Game Server Integrations](../integrations/!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Networking](./!INDEX.md)
 * [Inbound Packet Routing](./inbound-packet-routing.md)
 * [Outbound Packet Routing](./outbound-message-flow.md)
 * [Room Network Adapter](./room-network-adapter.md)
-* [Game Server Observability](../observability/!README.md)
-* [Protocol](../../../protocol/!README.md)
-* [Devtools](../../../devtools/!README.md)
+* [Game Server Observability](../observability/!INDEX.md)
+* [Protocol](../../../protocol/!INDEX.md)
+* [Devtools](../../../devtools/!INDEX.md)
 
 ## Notes
 

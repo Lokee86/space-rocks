@@ -1,11 +1,11 @@
 ## Documentation Procedure
-Parent index: [Documentation](./!README.md)
+Parent index: [Documentation](./!INDEX.md)
 
 ## Purpose
 
 This procedure defines the standard process for creating, updating, moving, and removing Space Rocks documentation.
 
-Use this procedure for all documentation work, including current docs, planning docs, stubs, `!README.md` indexes, limits, notes, and legacy cleanup.
+Use this procedure for all documentation work, including current docs, planning docs, stubs, `!INDEX.md` indexes, limits, notes, and legacy cleanup.
 
 ## Procedure Summary
 
@@ -15,7 +15,7 @@ Follow these steps in order:
 1. Classify the documentation type.
 2. Choose the owning folder.
 3. Decide whether a new file or folder is needed.
-4. Create or update all relevant `!README.md` indexes.
+4. Create or update all relevant `!INDEX.md` indexes.
 5. Apply the stub rule if the doc is incomplete.
 6. Write or update the doc using the required shape for its type.
 7. Add related docs, code maps, active issues, and notes.
@@ -160,17 +160,17 @@ stuff
 gameplay
 ```
 
-## 4. Create or Update All Relevant `!README.md` Indexes
+## 4. Create or Update All Relevant `!INDEX.md` Indexes
 
 Before writing the doc body, make the location discoverable.
 
 Every documentation folder must contain:
 
 ```text
-!README.md
+!INDEX.md
 ```
 
-Every `!README.md` must index:
+Every `!INDEX.md` must index:
 
 ```text
 every markdown file directly in that folder
@@ -183,17 +183,17 @@ Markdown files are linked directly:
 - [networking.md](networking.md) - Game-server networking responsibilities and runtime flow.
 ```
 
-Subfolders are linked by folder name to the subfolder `!README.md`:
+Subfolders are linked by folder name to the subfolder `!INDEX.md`:
 
 ```markdown
-- [Game Server](game-server/!README.md) - Go realtime server implementation docs.
-- [Random Subfolder](Random Subfolder/!README.md) - Example subfolder index link.
+- [Game Server](game-server/!INDEX.md) - Go realtime server implementation docs.
+- [Random Subfolder](Random Subfolder/!INDEX.md) - Example subfolder index link.
 ```
 
 When adding a new file:
 
 ```text
-1. Add the file to the parent `!README.md`.
+1. Add the file to the parent `!INDEX.md`.
 2. Use the file name as the link text.
 3. Add a one-line description.
 ```
@@ -201,14 +201,14 @@ When adding a new file:
 When adding a new folder:
 
 ```text
-1. Create the folder `!README.md`.
-2. Add the folder to the parent `!README.md`.
+1. Create the folder `!INDEX.md`.
+2. Add the folder to the parent `!INDEX.md`.
 3. Use the folder name as the link text.
-4. Link to folder-name/!README.md.
+4. Link to folder-name/!INDEX.md.
 5. Add a one-line description.
 ```
 
-Update `docs/!README.md` only when:
+Update `docs/!INDEX.md` only when:
 
 ```text
 a top-level documentation type changes
@@ -217,17 +217,17 @@ the documenting procedure changes
 the index policy changes
 ```
 
-Do not update `docs/!README.md` for every ordinary doc addition.
+Do not update `docs/!INDEX.md` for every ordinary doc addition.
 
 ## 5. Apply the Stub Rule If the Doc Is Incomplete
 
 If the doc is incomplete, place it in the nearest appropriate `stubs/` folder.
 
-`stubs/` folders are exempt from the `!README.md` index requirement.
-Empty `stubs/` folders may remain in place as reserved draft locations and do not need their own `!README.md` or parent `Direct Folder` listing when no stub files are present.
+`stubs/` folders are exempt from the `!INDEX.md` index requirement.
+Empty `stubs/` folders may remain in place as reserved draft locations and do not need their own `!INDEX.md` or parent `Direct Folder` listing when no stub files are present.
 Only folders named exactly `stubs/` receive this empty-folder exemption.
 
-When a parent `!README.md` indexes a stub file, the link description must start with `Stub:`.
+When a parent `!INDEX.md` indexes a stub file, the link description must start with `Stub:`.
 
 Examples:
 
@@ -247,7 +247,7 @@ If the needed `stubs/` folder does not exist:
 
 ```text
 1. Create the stubs/ folder.
-2. Add the stub file to the !README index of its parent folder.
+2. Add the stub file to the !INDEX index of its parent folder.
 ```
 
 If a `stubs/` folder has its own index, it must state that files in the folder are:
@@ -263,7 +263,7 @@ When a stub becomes canonical:
 
 ```text
 1. Move it from stubs/ into the parent folder.
-2. Update the parent `!README.md` index.
+2. Update the parent `!INDEX.md` index.
 3. Remove it from the stubs index, if one exists.
 4. Ensure the doc has the required shape for its type.
 5. Add related docs.
@@ -305,7 +305,7 @@ Notes
 
 Domain docs must not include direct code maps.
 
-Domain docs should link to associated technical systems by `!README.md` index.
+Domain docs should link to associated technical systems by `!INDEX.md` index.
 
 ## Service Doc Shape
 
@@ -529,7 +529,7 @@ agent docs
 
 Use one `Related docs` section unless the doc becomes large enough to justify grouping.
 
-Domain docs should link to technical system `!README.md` indexes, not code files or implementation files.
+Domain docs should link to technical system `!INDEX.md` indexes, not code files or implementation files.
 
 ## Code Maps
 
@@ -640,7 +640,7 @@ When planned work becomes implemented or partially implemented:
 4. Leave future work, unresolved decisions, and sequencing in planning.
 5. Add an Implemented references section when useful.
 6. Remove stale duplicate current facts from the planning doc.
-7. Update related `!README.md` indexes.
+7. Update related `!INDEX.md` indexes.
 8. Update related docs as needed.
 ```
 
@@ -670,7 +670,7 @@ duplicate sections across current docs
 limits that actually describe permanent systems-design rules
 notes that now have a proper home
 stub docs that should graduate or be deleted
-`!README.md` index entries that point to moved or deleted files
+`!INDEX.md` index entries that point to moved or deleted files
 empty non-stub documentation folders
 ```
 
@@ -681,7 +681,7 @@ A legacy doc is fully deprecated when:
 ```text
 all useful facts have been migrated, rewritten, or intentionally discarded
 current docs no longer depend on it
-no `!README.md` index presents it as current authority
+no `!INDEX.md` index presents it as current authority
 ```
 
 Do not keep stale legacy documentation indefinitely.
@@ -694,17 +694,17 @@ Before considering the documentation change done, verify:
 The documentation type is correct.
 The owning folder is correct.
 No unnecessary file or folder was created.
-All relevant `!README.md` indexes are updated.
-Subfolder links point to subfolder `!README.md` files.
+All relevant `!INDEX.md` indexes are updated.
+Subfolder links point to subfolder `!INDEX.md` files.
 Stub policy was followed.
 Empty folders named exactly `stubs/` were not flagged as stale or noncompliant.
 The doc has Purpose, Overview, Related docs, and Notes.
 The doc has the required type-specific sections.
 Implementation docs have code maps where required.
-Domain docs link to system `!README.md` indexes, not code.
+Domain docs link to system `!INDEX.md` indexes, not code.
 Active issues link to sorted limits backlog headings.
 Planning docs were updated if planned work became current.
 Legacy docs were deleted if fully deprecated.
 No stale duplicate facts remain.
-docs/!README.md was updated only if taxonomy or procedure changed.
+docs/!INDEX.md was updated only if taxonomy or procedure changed.
 ```

@@ -1,6 +1,6 @@
 # Match End Orchestration
 
-Parent index: [Match End Flow](./!README.md)
+Parent index: [Match End Flow](./!INDEX.md)
 
 ## Purpose
 

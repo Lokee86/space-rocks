@@ -1,6 +1,6 @@
 # Developer Toggles
 
-Parent index: [Devtools Legacy](./!README.md)
+Parent index: [Devtools Legacy](./!INDEX.md)
 
 This document covers the developer/debug toggles that currently exist in the project.
 

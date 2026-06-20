@@ -1,6 +1,6 @@
 # Drop Tables
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -469,9 +469,9 @@ services/game-server/internal/game/pickups/
 
 ## Related docs
 
-* [Data](./!README.md)
-* [Data Sync](../../tools/data_sync/!README.md)
-* [Game Server Simulation Pickups](../services/game-server/simulation/pickups/!README.md)
+* [Data](./!INDEX.md)
+* [Data Sync](../../tools/data_sync/!INDEX.md)
+* [Game Server Simulation Pickups](../services/game-server/simulation/pickups/!INDEX.md)
 * [Pickup Drop Integration](../services/game-server/simulation/pickups/pickup-drop-integration.md)
 * [Asteroid Spawning And Variants](../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
 * [Pickup Presentation](../services/client/world-sync/pickup-presentation.md)

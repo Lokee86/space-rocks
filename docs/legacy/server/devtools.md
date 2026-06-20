@@ -1,6 +1,6 @@
 # Server Devtools
 
-Parent index: [Server Legacy](./!README.md)
+Parent index: [Server Legacy](./!INDEX.md)
 
 Focused reference for the current server devtools command surface and boundaries.
 

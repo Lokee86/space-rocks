@@ -1,6 +1,6 @@
 # Local Pilot Profile Flow
 
-Parent index: [Player Experience](./!README.md)
+Parent index: [Player Experience](./!INDEX.md)
 
 ## Purpose
 
@@ -402,14 +402,14 @@ This domain flow does not define:
 
 ## Related docs
 
-* [Player Experience](./!README.md)
+* [Player Experience](./!INDEX.md)
 * [Platform Account And Identity Current State](../platform/account-and-identity-current-state.md)
-* [Client](../../services/client/!README.md)
+* [Client](../../services/client/!INDEX.md)
 * [Client Local Pilot Flow](../../services/client/pregame-menu-flow/local-pilot-flow.md)
 * [Client Profile Flow](../../services/client/pregame-menu-flow/profile-flow.md)
 * [Client HTTP API Flow](../../services/client/client-http-api-flow.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Player Data](../../services/player-data/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Player Data](../../services/player-data/!INDEX.md)
 * [Local Profiles HTTP API](../../services/player-data/local-profiles-http-api.md)
 * [Profile Stats Flow](../../services/player-data/profile-stats-flow.md)
 * [Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)

@@ -1,6 +1,6 @@
 # Target And Placement Debugging
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -453,11 +453,11 @@ Relevant server-side verification includes:
 
 ## Related docs
 
-* [Client Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Client Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Input And Targeting](../../services/client/input-and-targeting.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Realtime Protocol](../../protocol/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Realtime Protocol](../../protocol/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Canonical Target State](../../services/game-server/simulation/targeting/canonical-target-state.md)
 * [Target Selection And Status](../../services/game-server/simulation/targeting/target-selection-and-status.md)

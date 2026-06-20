@@ -1,6 +1,6 @@
 # Runtime Entity Store
 
-Parent index: [Game Server Simulation Runtime](./!README.md)
+Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 ## Purpose
 
@@ -145,15 +145,15 @@ Package-level tests may also exercise entity-map mutation indirectly through sim
 
 ## Related docs
 
-- [Game Server Simulation Runtime](./!README.md)
+- [Game Server Simulation Runtime](./!INDEX.md)
 - [Game Aggregate](game-aggregate.md)
 - [Simulation Loop And Phase Order](simulation-loop-and-phase-order.md)
 - [State Packet Projection](state-packet-projection.md)
 - [Presentation Event Queue](presentation-event-queue.md)
-- [Game Server Simulation Players](../players/!README.md)
-- [Game Server Simulation Combat](../combat/!README.md)
-- [Game Server Simulation Pickups](../pickups/!README.md)
-- [Game Server Simulation World](../world/!README.md)
+- [Game Server Simulation Players](../players/!INDEX.md)
+- [Game Server Simulation Combat](../combat/!INDEX.md)
+- [Game Server Simulation Pickups](../pickups/!INDEX.md)
+- [Game Server Simulation World](../world/!INDEX.md)
 
 ## Notes
 

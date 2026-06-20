@@ -1,6 +1,6 @@
 # Packet Routing And Devtools Input
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -515,18 +515,18 @@ Those server tests verify command classification, build gates, command effects, 
 
 ## Related docs
 
-* [Client Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Server Devtools](../server/!README.md)
-* [Client](../../services/client/!README.md)
-* [Client Networking Flow](../../services/client/networking-flow/!README.md)
+* [Client Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Server Devtools](../server/!INDEX.md)
+* [Client](../../services/client/!INDEX.md)
+* [Client Networking Flow](../../services/client/networking-flow/!INDEX.md)
 * [Outbound Packet Sending](../../services/client/networking-flow/outbound-packet-sending.md)
 * [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md)
 * [Input And Targeting](../../services/client/input-and-targeting.md)
-* [Gameplay Runtime](../../services/client/gameplay-runtime/!README.md)
-* [World Sync](../../services/client/world-sync/!README.md)
+* [Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)
+* [World Sync](../../services/client/world-sync/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 
 ## Notes
 

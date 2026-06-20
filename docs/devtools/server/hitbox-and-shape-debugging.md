@@ -1,6 +1,6 @@
 # Hitbox And Shape Debugging
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -528,17 +528,17 @@ data-sync -check -packets -go -gds
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Hitbox Overlays](../client/hitbox-overlays.md)
-* [Client Devtools](../client/!README.md)
-* [Game Server Networking](../../services/game-server/networking/!README.md)
+* [Client Devtools](../client/!INDEX.md)
+* [Game Server Networking](../../services/game-server/networking/!INDEX.md)
 * [Outbound Packet Routing](../../services/game-server/networking/outbound-message-flow.md)
 * [Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
 * [Server Physics](../../services/game-server/simulation/world/physics.md)
 * [Collision Shape Data](../../data/collision-shape-data.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Protocol](../../protocol/!README.md)
+* [Protocol](../../protocol/!INDEX.md)
 * [Player Build Limits](../../limits/player-build-limits.md)
 
 ## Notes

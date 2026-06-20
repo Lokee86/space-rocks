@@ -1,6 +1,6 @@
 ## Player Targeting And Scopes
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -536,15 +536,15 @@ data-sync -check -packets -go -gds
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Target And Placement Debugging](../client/target-and-placement-debugging.md)
 * [Client Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
 * [Devtools Window](../client/devtools-window.md)
 * [Canonical Target State](../../services/game-server/simulation/targeting/canonical-target-state.md)
 * [Target Selection And Status](../../services/game-server/simulation/targeting/target-selection-and-status.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Realtime Protocol](../../protocol/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Realtime Protocol](../../protocol/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 
 ## Notes

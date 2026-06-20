@@ -1,6 +1,6 @@
 # Source Of Truth Map
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 This doc maps where truth lives, what consumes it, how drift is enforced, and what each source does not own.
 

@@ -1,6 +1,6 @@
 ## Target Selection And Status
 
-Parent index: [Game Server Simulation Targeting](./!README.md)
+Parent index: [Game Server Simulation Targeting](./!INDEX.md)
 
 ## Purpose
 
@@ -646,9 +646,9 @@ data-sync -check -packets -go -gds
 
 ## Related docs
 
-* [Game Server Simulation Targeting](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Targeting](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
 * [Active Player Avatar State](../players/active-player-avatar-state.md)

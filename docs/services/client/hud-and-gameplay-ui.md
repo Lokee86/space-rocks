@@ -1,6 +1,6 @@
 # HUD And Gameplay UI
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 

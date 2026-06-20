@@ -1,6 +1,6 @@
 ## Room Membership And Identity
 
-Parent index: [Game Server Rooms](./!README.md)
+Parent index: [Game Server Rooms](./!INDEX.md)
 
 ## Purpose
 
@@ -343,15 +343,15 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 
 ## Related docs
 
-* [Game Server Rooms](./!README.md)
-* [Game Server Networking](../networking/!README.md)
+* [Game Server Rooms](./!INDEX.md)
+* [Game Server Networking](../networking/!INDEX.md)
 * [Room Network Adapter](../networking/room-network-adapter.md)
 * [WebSocket Session Lifecycle](../networking/websocket-session-lifecycle.md)
-* [Game Server](../!README.md)
-* [Player Data](../../player-data/!README.md)
-* [API Server](../../api-server/!README.md)
-* [Protocol](../../../protocol/!README.md)
-* [Data](../../../data/!README.md)
+* [Game Server](../!INDEX.md)
+* [Player Data](../../player-data/!INDEX.md)
+* [API Server](../../api-server/!INDEX.md)
+* [Protocol](../../../protocol/!INDEX.md)
+* [Data](../../../data/!INDEX.md)
 
 ## Notes
 

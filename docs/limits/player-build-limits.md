@@ -1,5 +1,5 @@
 # Player Build Limits
-Parent index: [Current Limits](./!README.md)
+Parent index: [Current Limits](./!INDEX.md)
 
 ## Ship Variants
 

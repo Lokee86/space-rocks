@@ -1,5 +1,5 @@
 # Agent Server Notes
-Parent index: [Agent](./!README.md)
+Parent index: [Agent](./!INDEX.md)
 
 Use this when changing the Go game server, networking, rooms, gameplay simulation, packet codec, logging, or the planned API boundary.
 
@@ -63,7 +63,7 @@ The planned API service should own business/backend concerns, not real-time simu
 See:
 
 ```text
-docs/services/api-server/!README.md
+docs/services/api-server/!INDEX.md
 ```
 
 Rails/Godot auth session handoff now exists, and Go websocket auth now has an explicit Rails token-verification boundary plus a Go authclient seam. `services/game-server/internal/authclient` verifies Space Rocks bearer tokens through Rails and returns minimal identity for the game server to use at the websocket boundary, not by reading Rails tables directly.

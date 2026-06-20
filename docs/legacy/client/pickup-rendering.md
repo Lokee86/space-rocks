@@ -1,6 +1,6 @@
 # Client Pickup Rendering
 
-Parent index: [Client Legacy](./!README.md)
+Parent index: [Client Legacy](./!INDEX.md)
 
 This document describes the current client-side pickup rendering contract.
 

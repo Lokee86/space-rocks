@@ -1,6 +1,6 @@
 # Player Data HTTP Hosting
 
-Parent index: [Game Server Integrations](./!README.md)
+Parent index: [Game Server Integrations](./!INDEX.md)
 
 ## Purpose
 
@@ -277,9 +277,9 @@ The local profiles handler tests verify unavailable local profile storage behavi
 
 ## Related docs
 
-* [Game Server Integrations](./!README.md)
-* [Game Server](../../!README.md)
-* [Player Data](../../../player-data/!README.md)
+* [Game Server Integrations](./!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Player Data](../../../player-data/!INDEX.md)
 * [Auth Verifier Integration](./auth-verifier-integration.md)
 * [Match Result Reporting](./match-result-reporting.md)
 

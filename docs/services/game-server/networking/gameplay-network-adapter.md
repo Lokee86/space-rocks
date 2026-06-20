@@ -1,6 +1,6 @@
 # Gameplay Network Adapter
 
-Parent index: [Game Server Networking](./!README.md)
+Parent index: [Game Server Networking](./!INDEX.md)
 
 ## Purpose
 
@@ -247,8 +247,8 @@ Useful behavioral checks:
 
 ## Related docs
 
-* [Game Server Networking](./!README.md)
-* [Game Server](../!README.md)
+* [Game Server Networking](./!INDEX.md)
+* [Game Server](../!INDEX.md)
 
 ## Notes
 

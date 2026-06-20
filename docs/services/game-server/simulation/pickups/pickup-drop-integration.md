@@ -1,6 +1,6 @@
 # Pickup Drop Integration
 
-Parent index: [Game Server Simulation Pickups](./!README.md)
+Parent index: [Game Server Simulation Pickups](./!INDEX.md)
 
 ## Purpose
 
@@ -534,25 +534,25 @@ data-sync -validate -drop-tables
 
 ## Related docs
 
-* [Game Server Simulation Pickups](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Simulation Combat](../combat/!README.md)
+* [Game Server Simulation Pickups](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Simulation Combat](../combat/!INDEX.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
-* [Game Server Simulation World](../world/!README.md)
+* [Game Server Simulation World](../world/!INDEX.md)
 * [Asteroid Spawning And Variants](../world/asteroid-spawning-and-variants.md)
-* [Game Server Simulation Runtime](../runtime/!README.md)
+* [Game Server Simulation Runtime](../runtime/!INDEX.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
 * [Pickup Entity Lifecycle](pickup-entity-lifecycle.md)
 * [Pickup Collection](pickup-collection.md)
 * [Pickup Effects](pickup-effects.md)
 * [Drop Table Pipeline](../../../../data/stubs/drop-table-pipeline.md)
-* [Data](../../../../data/!README.md)
-* [Protocol](../../../../protocol/!README.md)
-* [Systems Design Combat](../../../../systems-design/combat/!README.md)
-* [Client World Sync](../../../client/world-sync/!README.md)
+* [Data](../../../../data/!INDEX.md)
+* [Protocol](../../../../protocol/!INDEX.md)
+* [Systems Design Combat](../../../../systems-design/combat/!INDEX.md)
+* [Client World Sync](../../../client/world-sync/!INDEX.md)
 * [Pickup Presentation](../../../client/world-sync/pickup-presentation.md)
-* [Data Sync](../../../../../tools/data_sync/!README.md)
+* [Data Sync](../../../../../tools/data_sync/!INDEX.md)
 
 ## Notes
 

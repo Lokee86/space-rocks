@@ -1,6 +1,6 @@
 # Devtools Window
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -394,12 +394,12 @@ Current test coverage verifies:
 
 ## Related docs
 
-* [Client Devtools](./!README.md)
-* [Server Devtools](../server/!README.md)
-* [Devtools Design](../design/!README.md)
-* [Client Service](../../services/client/!README.md)
-* [Protocol](../../protocol/!README.md)
-* [Data](../../data/!README.md)
+* [Client Devtools](./!INDEX.md)
+* [Server Devtools](../server/!INDEX.md)
+* [Devtools Design](../design/!INDEX.md)
+* [Client Service](../../services/client/!INDEX.md)
+* [Protocol](../../protocol/!INDEX.md)
+* [Data](../../data/!INDEX.md)
 
 ## Notes
 

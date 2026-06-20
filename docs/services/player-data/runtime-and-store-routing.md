@@ -1,6 +1,6 @@
 # Runtime And Store Routing
 
-Parent index: [Player Data](./!README.md)
+Parent index: [Player Data](./!INDEX.md)
 
 ## Purpose
 
@@ -524,13 +524,13 @@ Current verified behavior includes:
 
 ## Related docs
 
-* [Player Data](./!README.md)
+* [Player Data](./!INDEX.md)
 * [Game Server Player Data HTTP Hosting](../game-server/integrations/player-data-http-hosting.md)
 * [Game Server Match Result Reporting](../game-server/integrations/match-result-reporting.md)
 * [API Server Player Stats And Match Results](../api-server/player-stats-and-match-results.md)
 * [Platform Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
-* [Data](../../data/!README.md)
-* [Protocol](../../protocol/!README.md)
+* [Data](../../data/!INDEX.md)
+* [Protocol](../../protocol/!INDEX.md)
 
 ## Notes
 

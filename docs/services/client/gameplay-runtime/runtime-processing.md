@@ -1,6 +1,6 @@
 # Runtime Processing
 
-Parent index: [Gameplay Runtime](./!README.md)
+Parent index: [Gameplay Runtime](./!INDEX.md)
 
 ## Purpose
 
@@ -241,8 +241,8 @@ Use the normal client GUT test run for verification after runtime-processing cha
 
 ## Related docs
 
-* [Gameplay Runtime](./!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Gameplay Runtime](./!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 * [Gameplay state application](gameplay-state-application.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)

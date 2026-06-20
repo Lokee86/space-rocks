@@ -1,6 +1,6 @@
 # Auth Routing
 
-Parent index: [Game Server Networking](./!README.md)
+Parent index: [Game Server Networking](./!INDEX.md)
 
 ## Purpose
 
@@ -269,12 +269,12 @@ Auth failure does not close the WebSocket by itself. The session remains connect
 
 ## Related docs
 
-* [Game Server Networking](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Integrations](../integrations/!README.md)
-* [API Server](../../api-server/!README.md)
+* [Game Server Networking](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Integrations](../integrations/!INDEX.md)
+* [API Server](../../api-server/!INDEX.md)
 * [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
-* [Protocol](../../../protocol/!README.md)
+* [Protocol](../../../protocol/!INDEX.md)
 
 ## Code map
 

@@ -1,5 +1,5 @@
 # Testing And Smoke Strategy
-Parent index: [Technical Planning](../!README.md)
+Parent index: [Technical Planning](../!INDEX.md)
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 # Toroidal Wrap
 
-Parent index: [World](./!README.md)
+Parent index: [World](./!INDEX.md)
 
 ## Purpose
 
@@ -335,7 +335,7 @@ Manual smoke verification should include crossing every world edge and checking 
 
 ## Related docs
 
-* [World](./!README.md)
+* [World](./!INDEX.md)
 * [Spawning And Space](spawning-and-space.md)
 * [World Authority](world-authority.md)
 * [Server Toroidal Space And Motion](../../services/game-server/simulation/world/toroidal-space-and-motion.md)

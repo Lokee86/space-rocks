@@ -1,12 +1,12 @@
 # Client Menu Flow
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
 This document describes the high-level client menu flow. It covers how the app enters the menu stack, how top-level routes move between main menu, sign-in, pregame, lobby, gameplay, match results, and shutdown, and which implementation surfaces own those transitions.
 
-This document is canonical Service documentation for the client menu flow. Pregame-specific profile, local pilot, and transmission behavior is documented separately in [Pregame Menu Flow](pregame-menu-flow/!README.md).
+This document is canonical Service documentation for the client menu flow. Pregame-specific profile, local pilot, and transmission behavior is documented separately in [Pregame Menu Flow](pregame-menu-flow/!INDEX.md).
 
 ## Overview
 
@@ -203,14 +203,14 @@ Use these tests to verify route behavior, menu presentation behavior, shell retu
 * [Auth Session Flow](auth-session-flow.md)
 * [HUD and Gameplay UI](hud-and-gameplay-ui.md)
 * [Input and Targeting](input-and-targeting.md)
-* [Pregame Menu Flow](pregame-menu-flow/!README.md)
+* [Pregame Menu Flow](pregame-menu-flow/!INDEX.md)
 * [Pregame Local Pilot Flow](pregame-menu-flow/local-pilot-flow.md)
 * [Pregame Profile Flow](pregame-menu-flow/profile-flow.md)
-* [Gameplay Runtime](gameplay-runtime/!README.md)
+* [Gameplay Runtime](gameplay-runtime/!INDEX.md)
 * [Gameplay Session Lifecycle](gameplay-runtime/gameplay-session-lifecycle.md)
-* [World Sync](world-sync/!README.md)
-* [Gameplay Menu Flow](gameplay-menu-flow/!README.md)
-* [Match End Flow](match-end-flow/!README.md)
+* [World Sync](world-sync/!INDEX.md)
+* [Gameplay Menu Flow](gameplay-menu-flow/!INDEX.md)
+* [Match End Flow](match-end-flow/!INDEX.md)
 
 ## Notes
 

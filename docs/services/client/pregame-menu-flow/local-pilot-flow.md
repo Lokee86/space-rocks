@@ -1,6 +1,6 @@
 ## Local Pilot Flow
 
-Parent index: [Pregame Menu Flow](./!README.md)
+Parent index: [Pregame Menu Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -198,10 +198,10 @@ The selector and subpanel UI behavior should be covered by focused UI/unit tests
 
 ## Related docs
 
-* [pregame-menu-flow](./!README.md)
+* [pregame-menu-flow](./!INDEX.md)
 * [profile-flow.md](profile-flow.md)
-* [Client](../!README.md)
-* [Services](../../!README.md)
+* [Client](../!INDEX.md)
+* [Services](../../!INDEX.md)
 
 ## Notes
 

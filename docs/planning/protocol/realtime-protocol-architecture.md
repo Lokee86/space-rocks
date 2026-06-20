@@ -1,5 +1,5 @@
 # Realtime Protocol Architecture
-Parent index: [Protocol Planning](./!README.md)
+Parent index: [Protocol Planning](./!INDEX.md)
 
 ## Purpose
 

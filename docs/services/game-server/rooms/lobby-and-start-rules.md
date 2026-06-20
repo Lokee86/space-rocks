@@ -1,6 +1,6 @@
 # Lobby And Start Rules
 
-Parent index: [Game Server Rooms](./!README.md)
+Parent index: [Game Server Rooms](./!INDEX.md)
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 ## Lobby Packets
 
-Parent index: [Protocol](./!README.md)
+Parent index: [Protocol](./!INDEX.md)
 
 ## Purpose
 

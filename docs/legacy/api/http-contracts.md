@@ -1,6 +1,6 @@
 # HTTP Contracts
 
-Parent index: [API Legacy](./!README.md)
+Parent index: [API Legacy](./!INDEX.md)
 
 `shared/contracts/http/openapi.yaml` owns all HTTP request and response shapes.
 

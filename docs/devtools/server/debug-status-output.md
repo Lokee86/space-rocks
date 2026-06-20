@@ -1,6 +1,6 @@
 ## Debug Status Output
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -408,11 +408,11 @@ toggle command effects that feed status output
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Devtools Design](../design/!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Devtools Design](../design/!INDEX.md)
 * [Client Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
 * [Realtime WebSocket Protocol](../../protocol/stubs/realtime-websocket-protocol.md) - Realtime websocket protocol documentation.

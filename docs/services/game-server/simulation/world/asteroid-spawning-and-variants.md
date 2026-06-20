@@ -1,6 +1,6 @@
 # Asteroid Spawning And Variants
 
-Parent index: [Game Server Simulation World](./!README.md)
+Parent index: [Game Server Simulation World](./!INDEX.md)
 
 ## Purpose
 

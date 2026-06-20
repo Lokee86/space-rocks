@@ -1,11 +1,11 @@
 ## Documentation Policies
-Parent index: [Documentation](./!README.md)
+Parent index: [Documentation](./!INDEX.md)
 
 ## Purpose
 
 This document defines the documentation policies for Space Rocks.
 
-These policies govern where documentation belongs, how documentation is classified, how folders and `!README.md` indexes are maintained, how draft documentation is handled, how documentation connects to implementation, and how stale documentation is removed.
+These policies govern where documentation belongs, how documentation is classified, how folders and `!INDEX.md` indexes are maintained, how draft documentation is handled, how documentation connects to implementation, and how stale documentation is removed.
 
 The formal documenting procedure is defined separately. These policies describe the rules that procedure must follow.
 
@@ -77,16 +77,16 @@ out of scope
 
 Domain docs must not map code directly.
 
-Domain docs must link to associated technical systems by `!README.md` index.
+Domain docs must link to associated technical systems by `!INDEX.md` index.
 
 Example:
 
 ```markdown
-- [Game Server](../../services/game-server/!README.md)
-- [Client](../../services/client/!README.md)
-- [Player Data](../../services/player-data/!README.md)
+- [Game Server](../../services/game-server/!INDEX.md)
+- [Client](../../services/client/!INDEX.md)
+- [Player Data](../../services/player-data/!INDEX.md)
 - [Realtime Protocol](../../protocol/realtime-websocket-protocol.md)
-- [Data Pipeline](../../data/!README.md)
+- [Data Pipeline](../../data/!INDEX.md)
 ```
 
 ## Service Documentation Policy
@@ -214,7 +214,7 @@ entities
 Top-level systems-design keeps broad docs such as:
 
 ```text
-!README.md
+!INDEX.md
 architecture.md
 authority-boundaries.md
 ```
@@ -415,17 +415,17 @@ gameplay
 If the information is temporary, unclear, or not ready to classify, use `docs/notes.md`.
 
 If the information is incomplete but has a clear eventual home, use a nearby `stubs/` folder.
-Empty folders named exactly `stubs/` may remain in place as reserved draft locations. They are exempt from empty-folder cleanup, do not need their own `!README.md`, and do not need to be listed as a Direct Folder in the parent `!README.md` when there are no stub files to index.
+Empty folders named exactly `stubs/` may remain in place as reserved draft locations. They are exempt from empty-folder cleanup, do not need their own `!INDEX.md`, and do not need to be listed as a Direct Folder in the parent `!INDEX.md` when there are no stub files to index.
 
-This exception applies only to folders named exactly `stubs/`. All other empty documentation folders remain noncompliant unless they are intentionally populated with a valid `!README.md` and indexed by their parent.
+This exception applies only to folders named exactly `stubs/`. All other empty documentation folders remain noncompliant unless they are intentionally populated with a valid `!INDEX.md` and indexed by their parent.
 
-## `!README.md` Index Policy
+## `!INDEX.md` Index Policy
 
-Every documentation folder must contain a `!README.md`.
+Every documentation folder must contain a `!INDEX.md`.
 
 `stubs/` folders are exempt from this index requirement.
 
-Every `!README.md` must index:
+Every `!INDEX.md` must index:
 
 ```text
 every markdown file directly in that folder
@@ -440,31 +440,31 @@ Example:
 - [networking.md](networking.md) - Game-server networking responsibilities and runtime flow.
 ```
 
-Subfolders are linked by folder name to the subfolder `!README.md`.
+Subfolders are linked by folder name to the subfolder `!INDEX.md`.
 
 Example:
 
 ```markdown
-- [Game Server](game-server/!README.md) - Go realtime server implementation docs.
-- [Random Subfolder](Random Subfolder/!README.md) - Example subfolder index link.
+- [Game Server](game-server/!INDEX.md) - Go realtime server implementation docs.
+- [Random Subfolder](Random Subfolder/!INDEX.md) - Example subfolder index link.
 ```
 
 Rules:
 
 ```text
 No orphan docs.
-No folder without a `!README.md`.
-Subfolder links must point to the subfolder `!README.md`.
+No folder without a `!INDEX.md`.
+Subfolder links must point to the subfolder `!INDEX.md`.
 ```
 
-The top-level `docs/!README.md` is both:
+The top-level `docs/!INDEX.md` is both:
 
 ```text
 documentation rulebook
 top-level documentation index
 ```
 
-Files linking to their parent index must use `./!README.md` instead of plain `!README.md` due to relevant pathing issues.
+Files linking to their parent index must use `./!INDEX.md` instead of plain `!INDEX.md` due to relevant pathing issues.
 
 ## Stub Policy
 
@@ -476,11 +476,11 @@ A stub is not canonical documentation.
 
 A stub may be incomplete, exploratory, partial, or waiting for enough detail to become official documentation.
 
-`stubs/` folders are exempt from `!README.md` index requirements.
+`stubs/` folders are exempt from `!INDEX.md` index requirements.
 Empty `stubs/` folders are also exempt from empty-folder cleanup.
 Only folders named exactly `stubs/` receive this exemption.
 
-Links to stub files in parent `!README.md` indexes must label the description as a stub.
+Links to stub files in parent `!INDEX.md` indexes must label the description as a stub.
 
 If a `stubs/` folder has its own index, it should explain that docs in the folder are:
 
@@ -497,7 +497,7 @@ When a stub becomes canonical:
 
 ```text
 move it from stubs/ into the parent folder
-update the parent `!README.md` index
+update the parent `!INDEX.md` index
 remove it from the stubs index, if one exists
 ensure the doc has the required shape for its type
 add related docs
@@ -672,7 +672,7 @@ A legacy doc is fully deprecated when:
 ```text
 all useful facts have been migrated, rewritten, or intentionally discarded
 current docs no longer depend on it
-no `!README.md` index presents it as current authority
+no `!INDEX.md` index presents it as current authority
 ```
 
 Stale legacy documentation should not be preserved indefinitely.

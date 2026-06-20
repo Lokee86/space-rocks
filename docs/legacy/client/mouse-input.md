@@ -1,6 +1,6 @@
 # Client Mouse Input Reference
 
-Parent index: [Client Legacy](./!README.md)
+Parent index: [Client Legacy](./!INDEX.md)
 
 Mouse input should route through semantic actions, not scattered raw click checks across gameplay scripts.
 

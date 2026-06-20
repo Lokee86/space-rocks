@@ -1,6 +1,6 @@
 # Player-Data Schema Source Of Truth
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 This doc defines the shared logical schema contract for account-shaped player data used by Local Profile and Authenticated Account paths.
 

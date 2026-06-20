@@ -1,6 +1,6 @@
 # Logging And Diagnostics
 
-Parent index: [Game Server Observability](./!README.md)
+Parent index: [Game Server Observability](./!INDEX.md)
 
 ## Purpose
 
@@ -517,18 +517,18 @@ Expected output is `slog` text output on stderr. Category logs include a `catego
 
 ## Related docs
 
-* [Game Server Observability](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Process](../process/!README.md)
-* [Game Server Networking](../networking/!README.md)
-* [Game Server Rooms](../rooms/!README.md)
-* [Game Server Simulation](../simulation/!README.md)
-* [Game Server Integrations](../integrations/!README.md)
+* [Game Server Observability](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Process](../process/!INDEX.md)
+* [Game Server Networking](../networking/!INDEX.md)
+* [Game Server Rooms](../rooms/!INDEX.md)
+* [Game Server Simulation](../simulation/!INDEX.md)
+* [Game Server Integrations](../integrations/!INDEX.md)
 * [Telemetry Packet Routing](../networking/telemetry-packet-routing.md)
 * [Player Data HTTP Hosting](../integrations/player-data-http-hosting.md)
 * [Auth Verifier Integration](../integrations/auth-verifier-integration.md)
 * [Match Result Reporting](../integrations/match-result-reporting.md)
-* [Devtools](../../../devtools/!README.md)
+* [Devtools](../../../devtools/!INDEX.md)
 
 ## Notes
 

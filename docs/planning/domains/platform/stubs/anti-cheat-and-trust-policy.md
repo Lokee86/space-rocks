@@ -1,5 +1,5 @@
 # Anti-Cheat And Trust Policy
-Parent index: [Platform Planning](../!README.md)
+Parent index: [Platform Planning](../!INDEX.md)
 
 ## Purpose
 

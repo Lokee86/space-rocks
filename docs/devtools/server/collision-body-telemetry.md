@@ -1,6 +1,6 @@
 ## Collision Body Telemetry
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -521,8 +521,8 @@ Run collision-shape data checks when changing Godot collision nodes, the collisi
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Hitbox Overlays](../client/hitbox-overlays.md)
 * [Client Telemetry Overlays](../client/telemetry-overlays.md)
 * [Game Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
@@ -530,7 +530,7 @@ Run collision-shape data checks when changing Godot collision nodes, the collisi
 * [Game Server Telemetry And Packet Routing](../../services/game-server/networking/telemetry-packet-routing.md)
 * [Collision Shape Data](../../data/collision-shape-data.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Protocol](../../protocol/!README.md)
+* [Protocol](../../protocol/!INDEX.md)
 
 ## Notes
 

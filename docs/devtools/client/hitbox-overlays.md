@@ -1,6 +1,6 @@
 # Hitbox Overlays
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -321,15 +321,15 @@ Server outbound tests verify that `debug_shape_catalog` responses:
 
 ## Related docs
 
-* [Client Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Server Devtools](../server/!README.md)
-* [Client Gameplay Runtime](../../services/client/gameplay-runtime/!README.md)
-* [Client World Sync](../../services/client/world-sync/!README.md)
-* [Client Networking Flow](../../services/client/networking-flow/!README.md)
+* [Client Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Server Devtools](../server/!INDEX.md)
+* [Client Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)
+* [Client World Sync](../../services/client/world-sync/!INDEX.md)
+* [Client Networking Flow](../../services/client/networking-flow/!INDEX.md)
 * [Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
 * [Collision Shape Data](../../data/collision-shape-data.md)
-* [Protocol](../../protocol/!README.md)
+* [Protocol](../../protocol/!INDEX.md)
 
 ## Notes
 

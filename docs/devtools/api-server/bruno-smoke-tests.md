@@ -1,6 +1,6 @@
 # Bruno Smoke Test
 
-Parent index: [API Server](./!README.md)
+Parent index: [API Server](./!INDEX.md)
 
 ## Purpose
 
@@ -455,8 +455,8 @@ The Bruno collection is useful as a manual local check after the server boots, a
 
 ## Related docs
 
-* [API Server Devtools](./!README.md)
-* [API Server](../../services/api-server/!README.md)
+* [API Server Devtools](./!INDEX.md)
+* [API Server](../../services/api-server/!INDEX.md)
 * [API-server runtime and health](../../services/api-server/runtime-and-health.md)
 * [API-server auth and OAuth](../../services/api-server/auth-and-oauth.md)
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md)

@@ -1,6 +1,6 @@
 # Runtime And Health
 
-Parent index: [API Server](./!README.md)
+Parent index: [API Server](./!INDEX.md)
 
 ## Purpose
 
@@ -136,7 +136,7 @@ The runtime and health surface does not own auth records, player stats, match re
 
 ## Related docs
 
-* [API Server](./!README.md)
+* [API Server](./!INDEX.md)
 * [Auth And OAuth](auth-and-oauth.md)
 * [Internal API Surface](internal-api-surface.md)
 * [Player Stats And Match Results](player-stats-and-match-results.md)

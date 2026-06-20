@@ -1,6 +1,6 @@
 # Auth Verifier Integration
 
-Parent index: [Game Server Integrations](./!README.md)
+Parent index: [Game Server Integrations](./!INDEX.md)
 
 ## Purpose
 
@@ -523,14 +523,14 @@ cd services/api-server && bundle exec rails test test/controllers/internal/auth/
 
 ## Related docs
 
-* [Game Server Integrations](./!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Networking](../../networking/!README.md)
-* [Game Server Rooms](../../rooms/!README.md)
+* [Game Server Integrations](./!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Networking](../../networking/!INDEX.md)
+* [Game Server Rooms](../../rooms/!INDEX.md)
 * [Client Auth Session Flow](../../../client/auth-session-flow.md)
 * [API-server auth and OAuth](../../../api-server/auth-and-oauth.md)
 * [API-server internal API surface](../../../api-server/internal-api-surface.md)
-* [Player Data](../../../player-data/!README.md)
+* [Player Data](../../../player-data/!INDEX.md)
 * [HTTP Contract Enforcement](../../../../protocol/http-contract-enforcement.md)
 * [Account And Identity Current State](../../../../domains/platform/account-and-identity-current-state.md)
 * [Account And Identity Systems planning](../../../../planning/platform/account-and-identity-systems.md)

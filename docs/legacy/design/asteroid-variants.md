@@ -1,6 +1,6 @@
 # Asteroid Variant Contract
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 ## Purpose
 

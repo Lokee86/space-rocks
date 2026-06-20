@@ -1,6 +1,6 @@
 # Player Data HTTP API
 
-Parent index: [Protocol](./!README.md)
+Parent index: [Protocol](./!INDEX.md)
 
 ## Purpose
 

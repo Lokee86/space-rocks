@@ -1,6 +1,6 @@
 # Radial Effects
 
-Parent index: [Combat](./!README.md)
+Parent index: [Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -252,7 +252,7 @@ The presentation event does not grant the client authority to calculate hits, ap
 
 Radial effects participate in these systems:
 
-* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!README.md) owns runtime combat integration.
+* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!INDEX.md) owns runtime combat integration.
 * [Radial Effects](../../services/game-server/simulation/combat/radial-effects.md) documents the game-server service boundary and implementation flow.
 * [Weapons And Projectile Fire](../../services/game-server/simulation/combat/weapons-and-projectile-fire.md) documents projectile impact metadata and the torpedo impact-effect source.
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md) documents how projectile impacts connect to damage and radial impact effects.
@@ -273,8 +273,8 @@ See [Current System Limits](../../limits/current-system-limits.md#combat-systems
 
 ## Related docs
 
-* [Combat](./!README.md)
-* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!README.md)
+* [Combat](./!INDEX.md)
+* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!INDEX.md)
 * [Radial Effects](../../services/game-server/simulation/combat/radial-effects.md)
 * [Weapons And Projectile Fire](../../services/game-server/simulation/combat/weapons-and-projectile-fire.md)
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md)

@@ -1,5 +1,5 @@
 ## Documentation Structure And Governance
-Parent index: [Planning](./!README.md)
+Parent index: [Planning](./!INDEX.md)
 
 ## Purpose
 
@@ -70,11 +70,11 @@ Links should mask file names behind the system name.
 Example:
 
 ```markdown
-- [Game Server](../../services/game-server/!README.md)
-- [Client](../../services/client/!README.md)
-- [Player Data](../../services/player-data/!README.md)
+- [Game Server](../../services/game-server/!INDEX.md)
+- [Client](../../services/client/!INDEX.md)
+- [Player Data](../../services/player-data/!INDEX.md)
 - [Realtime Protocol](../../protocol/realtime-websocket-protocol.md)
-- [Data Pipeline](../../data/!README.md)
+- [Data Pipeline](../../data/!INDEX.md)
 ```
 
 ### Services
@@ -258,22 +258,22 @@ Rules for `docs/notes.md`:
 
 ## README And Index Rules
 
-The top-level `docs/!README.md` should be both:
+The top-level `docs/!INDEX.md` should be both:
 
 * the documentation rulebook
 * the top-level documentation index
 
 Do not create a separate top-level index unless the top-level README becomes too large to serve both purposes.
 
-Every documentation folder must contain a `!README.md`.
+Every documentation folder must contain a `!INDEX.md`.
 
-Every `!README.md` must, at minimum:
+Every `!INDEX.md` must, at minimum:
 
 * explain what the folder owns
 * explain what does not belong there
 * index every markdown file directly in the folder
 * index every direct subfolder
-* link to each direct subfolder `!README.md`
+* link to each direct subfolder `!INDEX.md`
 
 This rule applies at every folder level.
 
@@ -285,7 +285,7 @@ Domain docs describe cross-system flows and integration.
 
 Domain docs should not include required code maps.
 
-Domain docs must link to associated system documentation by `!README.md` index. The link text should be the name of the technical system, not the file name.
+Domain docs must link to associated system documentation by `!INDEX.md` index. The link text should be the name of the technical system, not the file name.
 
 Domain docs should link to:
 
@@ -445,15 +445,15 @@ When a planned system becomes implemented or partially implemented:
    * conceptual mechanics/invariants -> systems-design
    * dev/debug tooling -> devtools
    * known current constraint -> limits
-3. Create or update the target folder `!README.md` index before adding new docs.
+3. Create or update the target folder `!INDEX.md` index before adding new docs.
 4. Create or update the current-system documentation.
-5. Add links from domain docs to associated technical systems by `!README.md`.
+5. Add links from domain docs to associated technical systems by `!INDEX.md`.
 6. Add code maps only in service, data, protocol, and devtools implementation docs where appropriate.
 7. Remove or reduce duplicated implemented facts from the planning doc.
 8. Add an `Implemented references` section in the planning doc linking to the new current docs.
 9. Leave unresolved decisions, future variants, and sequencing in the planning doc.
-10. Update parent `!README.md` indexes.
-11. Update `docs/!README.md` only if the documentation taxonomy itself changed.
+10. Update parent `!INDEX.md` indexes.
+11. Update `docs/!INDEX.md` only if the documentation taxonomy itself changed.
 
 Planning docs should include a `Graduation targets` section before or during implementation.
 
@@ -533,7 +533,7 @@ The planning document should capture:
 
 ### Phase 2: Create Top-Level Documentation Governance
 
-Create or update `docs/!README.md`.
+Create or update `docs/!INDEX.md`.
 
 It should act as both:
 
@@ -578,7 +578,7 @@ The template should include:
 
 ### Phase 5: Rebuild Service Documentation
 
-Analyze actual service structure and create accurate service `!README.md` indexes.
+Analyze actual service structure and create accurate service `!INDEX.md` indexes.
 
 Initial services:
 
@@ -639,7 +639,7 @@ Initial domain groups:
 * Platform
 * Technical
 
-Domain docs should describe cross-system flows and link to associated technical system `!README.md` indexes.
+Domain docs should describe cross-system flows and link to associated technical system `!INDEX.md` indexes.
 
 ### Phase 10: Rebuild Devtools Documentation
 
@@ -671,10 +671,10 @@ Keep `docs/notes.md` as a non-authoritative scratchpad and periodically triage i
 
 The restructuring is successful when:
 
-* `docs/!README.md` explains documentation types, folder rules, `!README.md` index rules, graduation procedure, and code-linking policy.
-* Every documentation folder has a `!README.md` index.
-* Every `!README.md` indexes direct files and direct subfolders.
-* Domain docs describe broad cross-system flows and link to associated technical system `!README.md` indexes.
+* `docs/!INDEX.md` explains documentation types, folder rules, `!INDEX.md` index rules, graduation procedure, and code-linking policy.
+* Every documentation folder has a `!INDEX.md` index.
+* Every `!INDEX.md` indexes direct files and direct subfolders.
+* Domain docs describe broad cross-system flows and link to associated technical system `!INDEX.md` indexes.
 * Domain docs do not directly map code.
 * Protocol docs are first-class and separate from domains.
 * Data docs include source-of-truth, generated output, pipeline usage, pipeline configuration, and validation procedures.

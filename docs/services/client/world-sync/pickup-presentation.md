@@ -1,6 +1,6 @@
 # Pickup Presentation
 
-Parent index: [World Sync](./!README.md)
+Parent index: [World Sync](./!INDEX.md)
 
 ## Purpose
 

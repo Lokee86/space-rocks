@@ -1,6 +1,6 @@
 ## Asteroid Variants Data
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -328,7 +328,7 @@ client/tools/export_collision_shapes.gd
 
 ## Related docs
 
-* [Data](./!README.md)
+* [Data](./!INDEX.md)
 * [Data Sync And SSOT Pipeline](data-sync-and-ssot-pipeline.md)
 * [Source Of Truth Map](source-of-truth-map.md)
 * [Server Asteroid Spawning And Variants](../services/game-server/simulation/world/asteroid-spawning-and-variants.md)

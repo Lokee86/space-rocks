@@ -1,6 +1,6 @@
 # Client Logging
 
-Parent index: [Client Legacy](./!README.md)
+Parent index: [Client Legacy](./!INDEX.md)
 
 The Godot client has a lightweight logging helper at:
 

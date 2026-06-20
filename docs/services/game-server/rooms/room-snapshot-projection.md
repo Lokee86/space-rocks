@@ -1,6 +1,6 @@
 # Room Snapshot Projection
 
-Parent index: [Game Server Rooms](./!README.md)
+Parent index: [Game Server Rooms](./!INDEX.md)
 
 ## Purpose
 
@@ -410,15 +410,15 @@ go test -buildvcs=false ./services/game-server/internal/networking ./services/ga
 
 ## Related docs
 
-* [Game Server Rooms](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Networking](../networking/!README.md)
+* [Game Server Rooms](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Networking](../networking/!INDEX.md)
 * [Room Network Adapter](../networking/room-network-adapter.md)
 * [Outbound Packet Routing](../networking/outbound-message-flow.md)
 * [Match Result Reporting](../integrations/match-result-reporting.md)
-* [Player Data](../../player-data/!README.md)
-* [Protocol](../../../protocol/!README.md)
-* [Data](../../../data/!README.md)
+* [Player Data](../../player-data/!INDEX.md)
+* [Protocol](../../../protocol/!INDEX.md)
+* [Data](../../../data/!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Pickup Entity Lifecycle
 
-Parent index: [Game Server Simulation Pickups](./!README.md)
+Parent index: [Game Server Simulation Pickups](./!INDEX.md)
 
 ## Purpose
 

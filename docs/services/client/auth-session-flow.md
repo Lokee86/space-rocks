@@ -1,6 +1,6 @@
 # Auth Session Flow
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -457,12 +457,12 @@ These backend paths are listed for boundary clarity. The client does not own the
 
 ## Related docs
 
-* [Client](../!README.md)
+* [Client](../!INDEX.md)
 * [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
 * [API-server auth and OAuth](../api-server/auth-and-oauth.md)
 * [API-server internal API surface](../api-server/internal-api-surface.md)
-* [Game Server](../game-server/!README.md)
-* [Player Data](../player-data/!README.md)
+* [Game Server](../game-server/!INDEX.md)
+* [Player Data](../player-data/!INDEX.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)
 * [Current System Limits](../../limits/current-system-limits.md)
 

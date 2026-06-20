@@ -1,6 +1,6 @@
 ## Pickup Entities
 
-Parent index: [Entities](./!README.md)
+Parent index: [Entities](./!INDEX.md)
 
 ## Purpose
 
@@ -351,12 +351,12 @@ See [Current System Limits](../../limits/current-system-limits.md#combat-systems
 
 ## Related docs
 
-* [Entities](./!README.md)
+* [Entities](./!INDEX.md)
 * [Combat Pickups](../combat/pickups.md)
 * [Targeting](../combat/targeting.md)
 * [Weapons](../combat/weapons.md)
 * [Radial Effects](../combat/radial-effects.md)
-* [Game Server Simulation Pickups](../../services/game-server/simulation/pickups/!README.md)
+* [Game Server Simulation Pickups](../../services/game-server/simulation/pickups/!INDEX.md)
 * [Pickup Entity Lifecycle](../../services/game-server/simulation/pickups/pickup-entity-lifecycle.md)
 * [Pickup Collection](../../services/game-server/simulation/pickups/pickup-collection.md)
 * [Pickup Effects](../../services/game-server/simulation/pickups/pickup-effects.md)

@@ -1,6 +1,6 @@
 # Debug Shape Catalog Output
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -474,15 +474,15 @@ go test -buildvcs=false ./...
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Hitbox Overlays](../client/hitbox-overlays.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
 * [Game Server Outbound Packet Routing](../../services/game-server/networking/outbound-message-flow.md)
 * [Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
 * [Collision Shape Data](../../data/collision-shape-data.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Protocol](../../protocol/!README.md)
+* [Protocol](../../protocol/!INDEX.md)
 
 ## Notes
 

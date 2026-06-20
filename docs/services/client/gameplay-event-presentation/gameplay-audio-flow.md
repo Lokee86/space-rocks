@@ -1,6 +1,6 @@
 # Gameplay Audio Flow
 
-Parent index: [Gameplay Event Presentation](./!README.md)
+Parent index: [Gameplay Event Presentation](./!INDEX.md)
 
 ## Purpose
 

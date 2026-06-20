@@ -1,6 +1,6 @@
 ## HTTP API Contracts
 
-Parent index: [Protocol](./!README.md)
+Parent index: [Protocol](./!INDEX.md)
 
 ## Purpose
 

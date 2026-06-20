@@ -1,6 +1,6 @@
 ## Profile Stats Flow
 
-Parent index: [Player Data](./!README.md)
+Parent index: [Player Data](./!INDEX.md)
 
 ## Purpose
 

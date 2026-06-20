@@ -1,11 +1,11 @@
 # Agent Current Context
-Parent index: [Agent](./!README.md)
+Parent index: [Agent](./!INDEX.md)
 
 This file is volatile project memory. Read it only when the task depends on current refactor status, dirty worktree notes, recent Godot/editor changes, or known gaps.
 
 Keep this file shorter than permanent docs. Remove stale notes aggressively.
 
-For stable architecture/runtime maps, use [docs/systems-design/!README.md](../systems-design/!README.md).
+For stable architecture/runtime maps, use [docs/systems-design/!INDEX.md](../systems-design/!INDEX.md).
 For stable current-session orientation, use [docs/agent/session-primer.md](session-primer.md).
 For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](../devtools/toggles.md).
 
@@ -95,7 +95,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Multiplayer Pregame Logout returns to Main Menu signed out.
 - Lobby Leave now returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 / Profile readout transmission is complete and green.
-- Client match-end Phase 6 / Match Results is complete and green; see [docs/services/client/match-end-flow/!README.md](../services/client/match-end-flow/!README.md).
+- Client match-end Phase 6 / Match Results is complete and green; see [docs/services/client/match-end-flow/!INDEX.md](../services/client/match-end-flow/!INDEX.md).
 - Client menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.
 - `UserInterface` is the CanvasLayer in `client/scenes/game.tscn`.
 - `GameplayUserInterface` is the gameplay-session UI root.

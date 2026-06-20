@@ -1,5 +1,5 @@
 # Current System Limits
-Parent index: [Current Limits](./!README.md)
+Parent index: [Current Limits](./!INDEX.md)
 
 ## Architecture / Networking
 

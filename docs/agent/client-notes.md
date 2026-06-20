@@ -1,5 +1,5 @@
 # Client Notes
-Parent index: [Agent](./!README.md)
+Parent index: [Agent](./!INDEX.md)
 
 Current client auth flow:
 

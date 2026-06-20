@@ -1,6 +1,6 @@
 # Player Death And Despawn
 
-Parent index: [Game Server Simulation Players](./!README.md)
+Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 ## Purpose
 
@@ -611,9 +611,9 @@ go test -buildvcs=false ./internal/game -run 'PlayerWorldState|Event|MatchOver'
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Damage Resolution](../combat/damage-resolution.md)
 * [Radial Effects](../combat/radial-effects.md)

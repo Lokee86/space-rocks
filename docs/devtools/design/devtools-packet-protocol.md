@@ -1,6 +1,6 @@
 # Devtools Packet Protocol
 
-Parent index: [Design](./!README.md)
+Parent index: [Design](./!INDEX.md)
 
 ## Purpose
 
@@ -690,17 +690,17 @@ shared/packets/ owns packet shape, not runtime command semantics.
 
 ## Related docs
 
-* [Devtools](../!README.md)
-* [Client Devtools](../client/!README.md)
+* [Devtools](../!INDEX.md)
+* [Client Devtools](../client/!INDEX.md)
 * [Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
 * [Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
 * [Telemetry Overlays](../client/telemetry-overlays.md)
 * [Hitbox Overlays](../client/hitbox-overlays.md)
-* [Server Devtools](../server/!README.md)
+* [Server Devtools](../server/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Client](../../services/client/!README.md)
-* [Client Networking Flow](../../services/client/networking-flow/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Client](../../services/client/!INDEX.md)
+* [Client Networking Flow](../../services/client/networking-flow/!INDEX.md)
 * [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md)
 * [Outbound Packet Sending](../../services/client/networking-flow/outbound-packet-sending.md)
 

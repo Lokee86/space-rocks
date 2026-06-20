@@ -1,6 +1,6 @@
 ## Targeting
 
-Parent index: [Combat](./!README.md)
+Parent index: [Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -323,14 +323,14 @@ The detailed game-server implementation map belongs in the game-server simulatio
 
 ## Related docs
 
-* [Combat](./!README.md)
-* [Game Server Simulation Targeting](../../services/game-server/simulation/targeting/!README.md)
+* [Combat](./!INDEX.md)
+* [Game Server Simulation Targeting](../../services/game-server/simulation/targeting/!INDEX.md)
 * [Canonical Target State](../../services/game-server/simulation/targeting/canonical-target-state.md)
 * [Target Selection And Status](../../services/game-server/simulation/targeting/target-selection-and-status.md)
 * [Input And Targeting](../../services/client/input-and-targeting.md)
 * [Gameplay Packets](../../protocol/gameplay-packets.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Devtools](../../devtools/!README.md)
+* [Devtools](../../devtools/!INDEX.md)
 * [Radial Effects](radial-effects.md)
 * [Pickups](pickups.md)
 * [Weapons](weapons.md)

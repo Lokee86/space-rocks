@@ -1,6 +1,6 @@
 ## Pregame Mode And Actions
 
-Parent index: [Pregame Menu Flow](./!README.md)
+Parent index: [Pregame Menu Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -103,15 +103,15 @@ client/scripts/ui/menus/pregame_menu.gd
 
 ## Related docs
 
-* [Pregame Menu Flow](./!README.md)
+* [Pregame Menu Flow](./!INDEX.md)
 * [Transmission Panel Flow](transmission-panel-flow.md)
 * [Local Pilot Flow](local-pilot-flow.md)
 * [Profile Flow](profile-flow.md)
 * [Client Menu Flow](../menu-flow.md)
-* [Lobby Flow](../lobby-flow/!README.md)
-* [App Shell And Session](../app-shell-and-session/!README.md)
-* [Client](../!README.md)
-* [Services](../../!README.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
+* [App Shell And Session](../app-shell-and-session/!INDEX.md)
+* [Client](../!INDEX.md)
+* [Services](../../!INDEX.md)
 
 ## Notes
 

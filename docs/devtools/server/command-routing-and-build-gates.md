@@ -1,6 +1,6 @@
 # Command Routing And Build Gates
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -659,14 +659,14 @@ The inbound packet-family router itself has thinner direct route-order coverage 
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Client Devtools](../client/!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Client Devtools](../client/!INDEX.md)
 * [Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
 * [Outbound Message Flow](../../services/game-server/networking/outbound-message-flow.md)
-* [Game Server Simulation](../../services/game-server/simulation/!README.md)
+* [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
 * [Player Counters](../../services/game-server/simulation/players/player-counters.md)
 * [Player Respawn](../../services/game-server/simulation/players/player-respawn.md)
 * [Player Pause And Suspension](../../services/game-server/simulation/players/player-pause-and-suspension.md)

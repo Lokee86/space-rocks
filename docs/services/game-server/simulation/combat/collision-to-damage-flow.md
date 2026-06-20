@@ -1,6 +1,6 @@
 # Collision To Damage Flow
 
-Parent index: [Game Server Simulation Combat](./!README.md)
+Parent index: [Game Server Simulation Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -680,14 +680,14 @@ go test -buildvcs=false ./tests/game -run 'Collision|Respawn|Devtools'
 
 ## Related docs
 
-* [Game Server Simulation Combat](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Simulation World](../world/!README.md)
-* [Game Server Simulation Runtime](../runtime/!README.md)
-* [Game Server Simulation Players](../players/!README.md)
-* [Game Server Simulation Pickups](../pickups/!README.md)
-* [Game Server Simulation Scoring](../scoring/!README.md)
+* [Game Server Simulation Combat](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Simulation World](../world/!INDEX.md)
+* [Game Server Simulation Runtime](../runtime/!INDEX.md)
+* [Game Server Simulation Players](../players/!INDEX.md)
+* [Game Server Simulation Pickups](../pickups/!INDEX.md)
+* [Game Server Simulation Scoring](../scoring/!INDEX.md)
 * [Damage Resolution](damage-resolution.md)
 * [Weapons And Projectile Fire](weapons-and-projectile-fire.md)
 * [Radial Effects](radial-effects.md)
@@ -698,8 +698,8 @@ go test -buildvcs=false ./tests/game -run 'Collision|Respawn|Devtools'
 * [Player Counters](../players/player-counters.md)
 * [Player Death And Despawn](../players/player-death-and-despawn.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
-* [Data](../../../../data/!README.md)
-* [Devtools](../../../../devtools/!README.md)
+* [Data](../../../../data/!INDEX.md)
+* [Devtools](../../../../devtools/!INDEX.md)
 
 ## Notes
 

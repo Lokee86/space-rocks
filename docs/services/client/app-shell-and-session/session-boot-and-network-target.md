@@ -1,6 +1,6 @@
 # Session Boot And Network Target
 
-Parent index: [App Shell And Session](./!README.md)
+Parent index: [App Shell And Session](./!INDEX.md)
 
 ## Purpose
 
@@ -381,7 +381,7 @@ This document should not hide that pressure, but it should not prescribe a refac
 * `services/game-server/internal/game/` owns authoritative gameplay simulation.
 * `shared/packets/` owns realtime packet source definitions.
 * `docs/services/client/auth-session-flow.md` owns client auth session documentation.
-* `docs/services/client/networking-flow/!README.md` owns client websocket transport and packet-routing documentation.
+* `docs/services/client/networking-flow/!INDEX.md` owns client websocket transport and packet-routing documentation.
 
 ## Tests
 
@@ -409,13 +409,13 @@ Relevant tests include:
 
 ## Related docs
 
-* [App Shell And Session](./!README.md)
-* [Client](../!README.md)
+* [App Shell And Session](./!INDEX.md)
+* [Client](../!INDEX.md)
 * [Auth Session Flow](../auth-session-flow.md)
 * [Menu Flow](../menu-flow.md)
-* [Networking Flow](../networking-flow/!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
-* [Lobby Flow](../lobby-flow/!README.md)
+* [Networking Flow](../networking-flow/!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
 * [Current System Limits](../../../limits/current-system-limits.md)
 
 ## Notes

@@ -1,6 +1,6 @@
 ## Local Profiles HTTP API
 
-Parent index: [Player Data](./!README.md)
+Parent index: [Player Data](./!INDEX.md)
 
 ## Purpose
 
@@ -514,8 +514,8 @@ When HTTP request or response shapes change, also update `shared/contracts/http/
 
 ## Related docs
 
-* [Player Data](./!README.md)
-* [Services](../!README.md)
+* [Player Data](./!INDEX.md)
+* [Services](../!INDEX.md)
 * [Player Data HTTP Hosting](../game-server/integrations/player-data-http-hosting.md)
 * [Client HTTP API Flow](../client/client-http-api-flow.md)
 * [Local Pilot Flow](../client/pregame-menu-flow/local-pilot-flow.md)

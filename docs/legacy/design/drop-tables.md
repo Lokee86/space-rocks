@@ -1,6 +1,6 @@
 # Drop Table System
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 ## Status Summary
 

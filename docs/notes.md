@@ -1,5 +1,5 @@
 # Project Notes
-Parent index: [Documentation](./!README.md)
+Parent index: [Documentation](./!INDEX.md)
 
 This file is a small parking lot for project memory that does not yet belong in a canonical document.
 
@@ -9,7 +9,7 @@ It is not the source of truth for architecture, data-sync, testing, devtools, pa
 
 Use these instead of expanding this file:
 
-- Architecture: `docs/systems-design/!README.md`
+- Architecture: `docs/systems-design/!INDEX.md`
 - Developer workflow: `docs/developer.md`
 - Testing and verification: `docs/agent/testing.md`
 - Architecture rules: `docs/agent/architecture-rules.md`

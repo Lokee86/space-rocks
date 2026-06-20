@@ -1,6 +1,6 @@
 ## Source Of Truth Map
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -624,13 +624,13 @@ docs/planning/ documents future source-of-truth changes.
 
 ## Related docs
 
-* [Data](./!README.md)
+* [Data](./!INDEX.md)
 * [HTTP Contract Enforcement](../protocol/http-contract-enforcement.md)
-* [API Server](../services/api-server/!README.md)
-* [Client](../services/client/!README.md)
-* [Game Server](../services/game-server/!README.md)
-* [Player Data](../services/player-data/!README.md)
-* [Data Sync](../../tools/data_sync/!README.md)
+* [API Server](../services/api-server/!INDEX.md)
+* [Client](../services/client/!INDEX.md)
+* [Game Server](../services/game-server/!INDEX.md)
+* [Player Data](../services/player-data/!INDEX.md)
+* [Data Sync](../../tools/data_sync/!INDEX.md)
 
 ## Notes
 

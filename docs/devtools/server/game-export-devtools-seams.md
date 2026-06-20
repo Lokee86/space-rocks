@@ -1,6 +1,6 @@
 # Game Export Devtools Seams
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -639,13 +639,13 @@ data-sync -check -packets -go -gds
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
 * [Target And Placement Debugging](../client/target-and-placement-debugging.md)
 * [Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
 * [Hitbox Overlays](../client/hitbox-overlays.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Game Aggregate](../../services/game-server/simulation/runtime/game-aggregate.md)
 * [Simulation Loop And Phase Order](../../services/game-server/simulation/runtime/simulation-loop-and-phase-order.md)
 * [Player Counters](../../services/game-server/simulation/players/player-counters.md)

@@ -1,6 +1,6 @@
 # Weapons
 
-Parent index: [Combat](./!README.md)
+Parent index: [Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -432,15 +432,15 @@ runtime equipment state remains current ammo/cooldown/pickup state
 
 ## Related docs
 
-* [Combat](./!README.md)
-* [Systems Design](../!README.md)
+* [Combat](./!INDEX.md)
+* [Systems Design](../!INDEX.md)
 * [Weapons And Projectile Fire](../../services/game-server/simulation/combat/weapons-and-projectile-fire.md)
 * [Damage Resolution](../../services/game-server/simulation/combat/damage-resolution.md)
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md)
 * [Radial Effects](../../services/game-server/simulation/combat/radial-effects.md)
 * [Pickup Effects](../../services/game-server/simulation/pickups/pickup-effects.md)
 * [HUD And Gameplay UI](../../services/client/hud-and-gameplay-ui.md)
-* [Realtime Protocol](../../protocol/!README.md)
+* [Realtime Protocol](../../protocol/!INDEX.md)
 * [Constants](../../data/constants.md)
 * [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
 * [Player Build And Loadouts](../../planning/domains/gameplay/player-build-and-loadouts.md)
