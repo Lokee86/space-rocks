@@ -35,7 +35,7 @@ The WebSocket connection itself is session-only. It does not imply room membersh
 Related player and room boundaries:
 
 * [Room Membership And Identity](../rooms/room-membership-and-identity.md)
-* [Player Lifecycle Overview](../simulation/players/stubs/player-lifecycle-overview.md)
+* [Player Lifecycle Overview](../simulation/players/player-lifecycle-overview.md)
 
 WebSocket connection identity is not room membership, authenticated identity, or simulation player state.
 

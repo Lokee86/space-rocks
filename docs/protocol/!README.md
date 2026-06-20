@@ -1,6 +1,6 @@
 # Protocol
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 Protocol documentation covers communication and message-flow behavior.
 

@@ -613,7 +613,7 @@ go test -buildvcs=false ./tests/game -run 'Debug.*Freeze|PlayerFrozen'
 * [Player Counters](player-counters.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)
-* [Toroidal Space And Motion](../world/stubs/toroidal-space-and-motion.md)
+* [Toroidal Space And Motion](../world/toroidal-space-and-motion.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
 * [Protocol](../../../../protocol/!README.md)
 * [Devtools](../../../../devtools/!README.md)

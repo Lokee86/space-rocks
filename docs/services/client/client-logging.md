@@ -113,6 +113,16 @@ Primary implementation files:
 client/scripts/logging/logger.gd
 ```
 
+## Tests
+
+No focused test is documented yet for this helper.
+
+The closest verification boundary is the client logging implementation in:
+
+```text
+client/scripts/logging/logger.gd
+```
+
 ## Related docs
 
 * [Client](./!README.md)

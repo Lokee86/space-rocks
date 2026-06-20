@@ -38,7 +38,7 @@ file_template = "{title} documentation."
 folder_template = "{title} documentation."
 
 [watch]
-debounce_seconds = 0.75
+debounce_seconds = 1.25
 ignored_dirs = [".git", ".cache", "__pycache__"]
 ignored_suffixes = ["~", ".swp", ".tmp", ".bak"]
 

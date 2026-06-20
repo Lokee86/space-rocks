@@ -94,6 +94,16 @@ client/scenes/asteroid.tscn
 client/tests/unit/entities/test_asteroid_variants.gd
 ```
 
+## Tests
+
+The focused client test path documented for this flow is:
+
+```text
+client/tests/unit/entities/test_asteroid_variants.gd
+```
+
+It covers generated asteroid variant consumption and wrapping behavior.
+
 ## Related docs
 
 * [Entity Sync Owners](entity-sync-owners.md)

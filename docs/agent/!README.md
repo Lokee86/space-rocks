@@ -2,7 +2,7 @@
 
 This index summarizes the agent docs.
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 ## Ownership
 

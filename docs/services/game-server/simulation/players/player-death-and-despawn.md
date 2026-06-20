@@ -624,8 +624,8 @@ go test -buildvcs=false ./internal/game -run 'PlayerWorldState|Event|MatchOver'
 * [Player Respawn](player-respawn.md)
 * [Player Pause And Suspension](player-pause-and-suspension.md)
 * [Player Lifecycle Overview](player-lifecycle-overview.md)
-* [State Packet Projection](../runtime/stubs/state-packet-projection.md)
-* [Presentation Event Queue](../runtime/stubs/presentation-event-queue.md)
+* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Presentation Event Queue](../runtime/presentation-event-queue.md)
 
 ## Notes
 

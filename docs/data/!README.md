@@ -1,6 +1,6 @@
 # Data
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 Data documentation covers source-of-truth material, generated outputs, schemas, persistence contracts, and data pipelines.
 
@@ -18,18 +18,18 @@ This folder owns data documentation indexes for current Space Rocks data sources
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [asteroid-variants-data.md](asteroid-variants-data.md) - Asteroid Variants Data documentation.
+- [collision-shape-data.md](collision-shape-data.md) - Collision Shape Data documentation.
+- [constants.md](constants.md) - Constants documentation.
+- [data-sync-and-ssot-pipeline.md](data-sync-and-ssot-pipeline.md) - Data sync and SSOT pipeline planning.
+- [drop-tables.md](drop-tables.md) - Drop Tables documentation.
+- [packet-schemas.md](packet-schemas.md) - Packet Schemas documentation.
+- [player-data-schema.md](player-data-schema.md) - Player-data schema documentation.
+- [source-of-truth-map.md](source-of-truth-map.md) - Source-of-truth map documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [asteroid-variants-data.md](stubs/asteroid-variants-data.md) - Stub: Asteroid Variants Data documentation.
-- [collision-shape-data.md](stubs/collision-shape-data.md) - Stub: Collision Shape Data documentation.
-- [constants-pipeline.md](stubs/constants-pipeline.md) - Stub: constants pipeline documentation.
-- [data-sync-and-ssot-pipeline.md](stubs/data-sync-and-ssot-pipeline.md) - Stub: data sync and SSOT pipeline planning.
-- [drop-table-pipeline.md](stubs/drop-table-pipeline.md) - Stub: drop-table pipeline documentation.
-- [packet-schema-pipeline.md](stubs/packet-schema-pipeline.md) - Stub: packet schema pipeline documentation.
-- [player-data-schema.md](stubs/player-data-schema.md) - Stub: player-data schema documentation.
-- [source-of-truth-map.md](stubs/source-of-truth-map.md) - Stub: source-of-truth map documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

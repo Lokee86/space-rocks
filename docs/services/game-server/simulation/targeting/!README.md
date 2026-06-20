@@ -18,12 +18,12 @@ This folder owns canonical target state, target selection, and target status rea
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [canonical-target-state.md](canonical-target-state.md) - Canonical target state documentation.
+- [target-selection-and-status.md](target-selection-and-status.md) - Target selection and target status handling documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [canonical-target-state.md](stubs/canonical-target-state.md) - Stub: incomplete canonical target state documentation.
-- [target-selection-and-status.md](stubs/target-selection-and-status.md) - Stub: incomplete target selection and status documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

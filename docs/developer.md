@@ -1,5 +1,5 @@
 # Developer Handoff
-Parent index: [Docs](./!README.md)
+Parent index: [Documentation](./!README.md)
 
 This document is a practical handoff for future development sessions. It focuses on how to work on the project. For broader architecture, see [docs/design/architecture.md](design/architecture.md). For server logging details, see [docs/server/logging.md](server/logging.md).
 

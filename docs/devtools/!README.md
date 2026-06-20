@@ -1,6 +1,6 @@
 # Devtools
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 Devtools documentation covers debug and development tooling, separate from production gameplay docs.
 

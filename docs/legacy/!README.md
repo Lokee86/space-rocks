@@ -1,6 +1,6 @@
 # Legacy
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 Legacy docs are temporary migration source material, not current authority.
 

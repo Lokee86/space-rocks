@@ -369,7 +369,17 @@ Broader packet-budget work is planned separately. This document describes the cu
 - `shared/packets/lobby.toml`
 - `shared/packets/debug.toml`
 
-### Related tests
+### Important non-ownership boundaries
+
+- `services/game-server/internal/rooms/` owns room state and room lifecycle rules.
+- `services/game-server/internal/game/` owns authoritative simulation state and gameplay packet projection.
+- `services/game-server/internal/devtools/` owns debug status and debug shape payload construction inputs.
+- `services/game-server/internal/protocol/packetcodec/` owns JSON encode/decode mechanics.
+- `docs/planning/protocol/realtime-protocol-architecture.md` owns future realtime protocol delivery policy planning.
+
+## Tests and verification
+
+The documented focused test paths for outbound routing are:
 
 - `services/game-server/internal/networking/outbound/gameplay_presentation_test.go`
 - `services/game-server/internal/networking/outbound/debug_status_presentation_test.go`
@@ -379,14 +389,6 @@ Broader packet-budget work is planned separately. This document describes the cu
 - `services/game-server/internal/networking/room_error_test.go`
 - `services/game-server/internal/networking/session_auth_test.go`
 - `services/game-server/tests/game/pause_test.go`
-
-### Important non-ownership boundaries
-
-- `services/game-server/internal/rooms/` owns room state and room lifecycle rules.
-- `services/game-server/internal/game/` owns authoritative simulation state and gameplay packet projection.
-- `services/game-server/internal/devtools/` owns debug status and debug shape payload construction inputs.
-- `services/game-server/internal/protocol/packetcodec/` owns JSON encode/decode mechanics.
-- `docs/planning/protocol/realtime-protocol-architecture.md` owns future realtime protocol delivery policy planning.
 
 ## Related docs
 

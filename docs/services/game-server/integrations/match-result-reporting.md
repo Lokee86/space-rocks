@@ -28,8 +28,8 @@ The game server does not write player-data stores directly. It maps authoritativ
 Related upstream boundaries:
 
 * [Room Match Lifecycle](../rooms/room-match-lifecycle.md)
-* [Player Counters](../simulation/players/stubs/player-counters.md)
-* [Player Death And Despawn](../simulation/players/stubs/player-death-and-despawn.md)
+* [Player Counters](../simulation/players/player-counters.md)
+* [Player Death And Despawn](../simulation/players/player-death-and-despawn.md)
 
 Match-result reporting owns the reporting integration to player-data, not simulation counter mutation, death flow, room phase transition, or player-data persistence internals.
 

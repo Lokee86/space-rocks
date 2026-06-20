@@ -1,6 +1,6 @@
 # Services
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 Service documentation covers runtime, executable, package, and implementation responsibility.
 
@@ -34,6 +34,9 @@ This folder owns the service documentation indexes for current Space Rocks servi
 <!-- doc-ledger:stubs:end -->
 
 ## Related Docs
+
+- [Docs](../!README.md)
+- [Documentation Policy](../documentation-policy.md)
 
 
 ## Notes

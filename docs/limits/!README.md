@@ -1,6 +1,6 @@
 # Current Limits
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 `docs/limits` contains factual current limitations, unavailable features, incomplete integrations, hardcoded fallbacks, and current constraints.
 

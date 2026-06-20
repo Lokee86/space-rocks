@@ -1,6 +1,6 @@
 # Planning
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 `docs/planning` contains planning docs for future, unresolved, proposed, or not-yet-current work.
 

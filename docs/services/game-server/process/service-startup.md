@@ -2,8 +2,6 @@
 
 Parent index: [Game Server Process](./!README.md)
 
-PaParent index: [Game Server Process](./!README.md)
-
 ## Purpose
 
 This document describes the game-server process startup boundary.

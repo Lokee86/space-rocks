@@ -69,6 +69,16 @@ client/scenes/ui/elements/windows/transmission_screen.tscn
 client/scenes/ui/elements/windows/transmission_screen.2.tscn
 ```
 
+## Tests
+
+No focused test is documented yet for this flow.
+
+The closest verification boundary is the transmission flow implementation in:
+
+```text
+client/scripts/ui/menu_flow/transmission_flow.gd
+```
+
 ## Related docs
 
 * [Pregame Menu Flow](./!README.md)

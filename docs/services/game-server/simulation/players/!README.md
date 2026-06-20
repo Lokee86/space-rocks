@@ -31,11 +31,6 @@ This folder owns simulation-local player session state, active player avatar sta
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [camera-view-and-player-world-state.md](stubs/camera-view-and-player-world-state.md) - Stub: camera view and player world state documentation.
-- [counters-death-and-respawn.md](stubs/counters-death-and-respawn.md) - Stub: counters, death, and respawn documentation.
-- [input-pause-and-suspension.md](stubs/input-pause-and-suspension.md) - Stub: input, pause, and suspension documentation.
-- [player-session-and-avatar-state.md](stubs/player-session-and-avatar-state.md) - Stub: player session and avatar state documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

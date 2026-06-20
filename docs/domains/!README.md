@@ -1,6 +1,6 @@
 # Domains
 
-Parent index: [Docs](../!README.md)
+Parent index: [Documentation](../!README.md)
 
 Domain documentation describes cross-system flows and integration, not implementation ownership.
 

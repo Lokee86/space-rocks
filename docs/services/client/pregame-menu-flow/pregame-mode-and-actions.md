@@ -91,6 +91,16 @@ client/scripts/ui/menus/pregame_mode_presenter.gd
 client/scripts/ui/menu_flow/pregame_menu_mode.gd
 ```
 
+## Tests
+
+No focused test is documented yet for this flow.
+
+The closest verification boundary is the pregame menu implementation in:
+
+```text
+client/scripts/ui/menus/pregame_menu.gd
+```
+
 ## Related docs
 
 * [Pregame Menu Flow](./!README.md)
