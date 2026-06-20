@@ -25,6 +25,8 @@ Technical/service system
 
 Documentation must make that distinction explicit.
 
+When scaffolding documents index descriptions should not contain any extra description or indication of incompleteness. They should be listed as a STUB: along with the final description.
+
 ## Documentation Types
 
 Space Rocks documentation uses these documentation types:
@@ -558,7 +560,7 @@ limits docs
 agent docs
 ```
 
-Docs should link to the most relevant canonical docs, not duplicate their content.
+Docs should link to the most relevant docs, not duplicate their content.
 
 ## Notes Section Policy
 

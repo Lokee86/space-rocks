@@ -1,75 +1,489 @@
-# Drop Table Pipeline
+# Drop Tables
+
 Parent index: [Data](./!README.md)
 
 ## Purpose
 
-Stub note: this document is incomplete and non-canonical.
-TODO: describe drop-table source files and generated outputs.
+This document describes the current drop-table source-of-truth data, data-sync generation path, generated server output, runtime consumers, validation workflow, and ownership boundaries.
 
 ## Overview
 
-TODO: summarize how drop-table TOML becomes generated gameplay drop-table code.
-Stub note: keep this focused on drop-table flow.
+Drop tables define whether a destroyed gameplay source can produce one or more pickup results.
+
+The current drop-table pipeline is:
+
+```text
+shared/drop_tables/basicasteroids.toml
+-> data-sync parses drop-table TOML
+-> data-sync generates Go drop-table data
+-> services/game-server/internal/game/drops/drop_tables.go
+-> Game.New installs drops.GeneratedTables
+-> asteroid destruction evaluates basicasteroids
+-> successful drop result spawns an authoritative pickup
+```
+
+Drop tables are server-authoritative. The client does not roll drop tables, choose pickup results, create authoritative pickups, or receive generated drop-table data.
+
+The generated output is Go-only. Drop tables are separate from constants and packet schemas. They do not generate GDScript constants, packet fields, client scene data, or HTTP contracts.
+
+The current runtime uses one configured table:
+
+```text
+table id    = basicasteroids
+source type = asteroid
+drop mode   = single
+```
+
+The current `basicasteroids` table allows at most one drop result per destroyed asteroid and caps active pickups from that table at two.
 
 ## Source files
 
-- `shared/drop_tables/basicasteroids.toml`
-- TODO: add any other confirmed drop-table source files.
+Configured source-of-truth files live under:
+
+```text
+shared/drop_tables/
+```
+
+Current configured source file:
+
+```text
+shared/drop_tables/basicasteroids.toml
+```
+
+The configured source list is owned by:
+
+```text
+tools/data_sync/config.toml
+```
+
+Current config section:
+
+```toml
+[sot.drop_tables]
+paths = [
+  "shared/drop_tables/basicasteroids.toml",
+]
+```
+
+A drop-table source file has this shape:
+
+```toml
+[table]
+id = "basicasteroids"
+source_type = "asteroid"
+drop_mode = "single"
+max_drops_per_source = 1
+max_active_pickups = 2
+
+[[entries]]
+pickup_type = "1_up"
+chance = 0.01
+min_source_size = 1
+max_source_size = 4
+```
+
+Required table fields:
+
+```text
+id
+source_type
+drop_mode
+max_drops_per_source
+max_active_pickups
+```
+
+Required entry fields:
+
+```text
+pickup_type
+chance
+min_source_size
+max_source_size
+```
+
+Current supported drop modes are:
+
+```text
+single
+multi
+```
+
+`single` returns at most the first successful matching entry.
+
+`multi` can return multiple successful entries until `max_drops_per_source` is reached.
+
+`chance` must be between `0.0` and `1.0`.
+
+`max_drops_per_source` must be at least `1`.
+
+`max_active_pickups` must be greater than or equal to `0`.
+
+`min_source_size` must be less than or equal to `max_source_size`.
+
+Drop table ids must be unique across all configured drop-table TOML paths.
+
+## Current table data
+
+Current `basicasteroids` table:
+
+```text
+id                    = basicasteroids
+source_type           = asteroid
+drop_mode             = single
+max_drops_per_source  = 1
+max_active_pickups    = 2
+```
+
+Current entries:
+
+| Pickup type | Chance | Source size range |
+| ----------- | -----: | ----------------- |
+| `1_up`      | `0.01` | `1` through `4`   |
+| `torpedo`   | `0.15` | `2` through `4`   |
+
+Because the table uses `single` mode, entries are evaluated in source order and evaluation stops after the first successful matching entry.
+
+For source sizes `2` through `4`, `1_up` is checked first. If it succeeds, `torpedo` is not evaluated. If `1_up` fails, `torpedo` may be evaluated. For source size `1`, only `1_up` is in range.
+
+There is no minimum drop count. A destroyed asteroid can produce no pickup.
 
 ## Configuration
 
-- `tools/data_sync/config.toml`
-- `tools/data_sync/!README.md`
-- TODO: add any other drop-table pipeline configuration roots when they are confirmed.
+Drop-table data-sync configuration is owned by:
+
+```text
+tools/data_sync/config.toml
+```
+
+The active drop-table output target is:
+
+```toml
+[drop_tables.go]
+files = ["services/game-server/internal/game/drops/drop_tables.go"]
+sections = []
+owns = []
+outputs = ["server_drop_tables"]
+```
+
+The drop-table domain only supports Go output.
+
+The CLI accepts both spellings for the domain flag:
+
+```text
+-drop-tables
+-drop_tables
+```
+
+Normal project usage should prefer:
+
+```text
+-drop-tables
+```
+
+`-push`, `-diff`, and `-check` require `-go` when `-drop-tables` is selected.
+
+Drop tables are not part of:
+
+```text
+-constants
+-packets
+-gds
+-ts
+```
 
 ## Generated outputs
 
-- `services/game-server/internal/game/drops/drop_tables.go`
-- TODO: add any other generated drop-table outputs when they are confirmed.
+The generated output is:
+
+```text
+services/game-server/internal/game/drops/drop_tables.go
+```
+
+The generated file contains:
+
+```go
+var GeneratedTables = Tables{
+    ByID: map[string]Table{
+        ...
+    },
+}
+```
+
+The generated Go values populate the runtime drop-table model:
+
+```text
+Tables
+Table
+Entry
+DropMode
+SourceType
+```
+
+The generated file is marked:
+
+```text
+// Code generated by tools/data_sync; DO NOT EDIT.
+```
+
+Do not hand-edit the generated file. Change `shared/drop_tables/*.toml`, then regenerate through data-sync.
 
 ## Consumers
 
-- Game-server drop-table gameplay logic.
-- TODO: add any other confirmed consumers.
+The game server consumes generated drop tables at startup:
+
+```text
+Game.New
+-> dropTables: drops.GeneratedTables
+```
+
+Current runtime drop usage is in asteroid destruction:
+
+```text
+projectile destroys asteroid
+-> applyProjectileAsteroidDestruction
+-> spawnAsteroidFragments
+-> maybeDropPickupFromAsteroidLocked
+-> lookup basicasteroids
+-> build drops.Source from asteroid id, size, x, y
+-> roll generated table
+-> spawn pickup for successful result
+-> record pickup_dropped event
+```
+
+The pure evaluator lives in:
+
+```text
+services/game-server/internal/game/drops/
+```
+
+The evaluator returns drop results. It does not mutate game state.
+
+Root game code owns the mutation that turns a drop result into an authoritative pickup entity.
+
+Pickup lifecycle, collection, and effects are separate consumers after a pickup exists. Drop tables choose `pickup_type`; they do not own pickup collection, pickup effects, pickup expiry, player lives, weapon equip state, ammo mutation, packet transport, or client presentation.
+
+The client observes spawned pickups through:
+
+```text
+StatePacket.pickups
+StatePacket.events
+```
+
+The client does not consume drop-table generated output directly.
 
 ## Pipeline usage
 
-- `tools/data_sync -push -drop-tables -go`
-- `tools/data_sync -check -drop-tables -go`
-- `tools/data_sync -validate`
-- TODO: add any other verified drop-table pipeline commands.
+Standard drop-table edit workflow:
+
+```bash
+data-sync -validate -drop-tables
+data-sync -diff -drop-tables -go
+data-sync -push -drop-tables -go
+data-sync -check -drop-tables -go
+```
+
+Use `-diff` before `-push` when reviewing generated output.
+
+Use `-check` in verification paths to detect drift between TOML source and generated Go output.
+
+A focused source edit flow is:
+
+```text
+1. Edit shared/drop_tables/basicasteroids.toml.
+2. Run data-sync validation.
+3. Run drop-table diff.
+4. Review the generated Go diff.
+5. Push the generated Go output.
+6. Check that generated Go output is current.
+7. Run focused data-sync and game-server tests when behavior changed.
+```
+
+Adding a new drop table requires:
+
+```text
+1. Add a new TOML file under shared/drop_tables/.
+2. Give the table a unique [table].id.
+3. Add the file path to [sot.drop_tables].paths in tools/data_sync/config.toml.
+4. Run data-sync -diff -drop-tables -go.
+5. Run data-sync -push -drop-tables -go.
+6. Run data-sync -check -drop-tables -go.
+7. Add or update tests for parser, generator, runtime evaluation, and game integration as needed.
+```
+
+A new table is not active in runtime merely because it is generated. Game-server runtime code must select that table from `game.dropTables.ByID`.
 
 ## Validation commands
 
-- `tools/data_sync -validate`
-- `tools/data_sync -check -drop-tables -go`
-- `tools/data_sync -diff -drop-tables -go`
-- TODO: add any other verified validation commands.
+Data-sync commands:
+
+```bash
+data-sync -validate -drop-tables
+data-sync -diff -drop-tables -go
+data-sync -check -drop-tables -go
+```
+
+`-diff` and `-check` are the drift-enforcing commands for source-to-generated drop-table output because they load the configured drop-table source files, render the generated Go output, and compare it to the configured generated file.
+
+Focused data-sync tests:
+
+```bash
+cd tools/data_sync
+python -m pytest tests/test_drop_tables_toml.py
+python -m pytest tests/test_drop_tables_generators.py
+python -m pytest tests/test_drop_tables_sync.py
+python -m pytest tests/test_final_flows.py
+```
+
+Focused game-server tests:
+
+```bash
+cd services/game-server
+go test -buildvcs=false ./internal/game/drops
+go test -buildvcs=false ./internal/game -run 'Drop|Pickup|AsteroidDestruction'
+```
+
+Broader game-server verification:
+
+```bash
+cd services/game-server
+go test -buildvcs=false ./...
+```
 
 ## Failure modes
 
-- Missing or conflicting drop-table source files.
-- Stale generated drop-table code after source edits.
-- Invalid drop-table schema or unsupported routing configuration.
-- TODO: add any other verified failure modes.
+Common drop-table pipeline failures:
+
+```text
+configured source file missing
+configured generated Go output missing
+invalid TOML syntax
+missing [table] block
+missing required table fields
+missing or invalid [[entries]] data
+duplicate table id across configured source files
+unsupported drop_mode
+chance outside 0.0 through 1.0
+max_drops_per_source lower than 1
+max_active_pickups lower than 0
+min_source_size greater than max_source_size
+stale generated Go output after source edits
+drop table generated but never selected by runtime code
+pickup_type generated but unknown to pickup definitions
+active pickup cap prevents otherwise successful drops from spawning
+source type mismatch returns no results
+source size outside all entry ranges returns no results
+roll values meet or exceed chance and return no results
+```
+
+Runtime no-result cases are not necessarily errors. Missing tables, source mismatches, size mismatches, failed chance rolls, and active pickup caps intentionally produce no pickup.
+
+A generated pickup type must correspond to a server pickup definition before the game can spawn it. If the drop result names an unknown pickup type, spawn fails and no `pickup_dropped` event is recorded for that result.
 
 ## Code or source map
 
-- `shared/drop_tables/`
-- `tools/data_sync/data_sync/drop_tables_toml.py`
-- `tools/data_sync/data_sync/drop_tables_sync.py`
-- `tools/data_sync/data_sync/generators/go_drop_tables.py`
-- `tools/data_sync/data_sync/model/drop_tables.py`
-- `services/game-server/internal/game/drops/`
-- TODO: add narrower drop-table source-map entries when they are confirmed.
+Source data:
+
+```text
+shared/drop_tables/basicasteroids.toml
+tools/data_sync/config.toml
+```
+
+Data-sync parser, model, sync, and generator:
+
+```text
+tools/data_sync/data_sync/drop_tables_toml.py
+tools/data_sync/data_sync/drop_tables_sync.py
+tools/data_sync/data_sync/model/drop_tables.py
+tools/data_sync/data_sync/generators/go_drop_tables.py
+tools/data_sync/data_sync/cli.py
+tools/data_sync/main.py
+```
+
+Generated server output:
+
+```text
+services/game-server/internal/game/drops/drop_tables.go
+```
+
+Runtime drop-table model and evaluator:
+
+```text
+services/game-server/internal/game/drops/table.go
+services/game-server/internal/game/drops/source.go
+services/game-server/internal/game/drops/roll.go
+```
+
+Game-server integration:
+
+```text
+services/game-server/internal/game/game.go
+services/game-server/internal/game/asteroid_destruction.go
+services/game-server/internal/game/pickup_drops.go
+services/game-server/internal/game/pickups.go
+services/game-server/internal/game/events.go
+services/game-server/internal/game/state_packet.go
+```
+
+Pickup support boundaries:
+
+```text
+services/game-server/internal/game/entities/pickups/
+services/game-server/internal/game/pickups/
+```
+
+Relevant tests:
+
+```text
+tools/data_sync/tests/test_drop_tables_toml.py
+tools/data_sync/tests/test_drop_tables_generators.py
+tools/data_sync/tests/test_drop_tables_sync.py
+tools/data_sync/tests/test_final_flows.py
+services/game-server/internal/game/drops/table_test.go
+services/game-server/internal/game/drops/drop_tables_test.go
+services/game-server/internal/game/pickup_drops_test.go
+services/game-server/tests/game/pickups_test.go
+```
+
+Important non-ownership boundaries:
+
+```text
+shared/constants/
+shared/packets/
+client/
+services/game-server/internal/networking/
+services/game-server/internal/game/entities/pickups/
+services/game-server/internal/game/pickups/
+```
+
+`shared/constants/` owns generated constants, not drop-table rules.
+
+`shared/packets/` owns packet shapes, not drop-table rules.
+
+`client/` owns pickup presentation, not drop authority.
+
+`internal/networking/` owns transport, not drop evaluation.
+
+`entities/pickups` owns pickup definitions and entity data.
+
+`game/pickups` owns pickup collection and effect intent resolution.
 
 ## Related docs
 
-- [Data](../!README.md)
-- [Data Sync](../../../tools/data_sync/!README.md)
-- TODO: add drop-table-specific docs when they exist.
+* [Data](./!README.md)
+* [Data Sync](../../tools/data_sync/!README.md)
+* [Game Server Simulation Pickups](../services/game-server/simulation/pickups/!README.md)
+* [Pickup Drop Integration](../services/game-server/simulation/pickups/pickup-drop-integration.md)
+* [Asteroid Spawning And Variants](../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
+* [Pickup Presentation](../services/client/world-sync/pickup-presentation.md)
+* [Current System Limits](../limits/current-system-limits.md)
+* [Domain Backlog](../planning/domain-backlog.md)
 
 ## Notes
 
-Stub note: this document is a placeholder for future drop-table pipeline documentation.
-Do not treat it as canonical source material.
+Asteroid variant source data includes a `drop_table` field, and generated server asteroid variants retain that field. Current pickup drop integration does not select the table from the runtime asteroid variant. It uses `basicasteroids` directly.
+
+Only `basicasteroids` exists today.
+
+Drop-table generated output is currently Go-only.
+
+Drop-table events are presentation events after successful authoritative spawn. `pickup_dropped` does not mean the pickup was collected, consumed, expired, or applied to a player.

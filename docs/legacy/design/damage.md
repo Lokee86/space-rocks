@@ -135,7 +135,7 @@ Parent index: [Design Legacy](./!README.md)
 
 ## Related Limits
 
-- [Current System Limits](../limits/current-system-limits.md)
+- [Current System Limits](./../limits/current-system-limits.md)
 
 ## Testing And Verification
 

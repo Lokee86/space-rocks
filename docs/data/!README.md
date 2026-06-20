@@ -22,7 +22,7 @@ This folder owns data documentation indexes for current Space Rocks data sources
 - [asteroid-variants-data.md](asteroid-variants-data.md) - Asteroid Variants Data documentation.
 - [collision-shape-data.md](collision-shape-data.md) - Collision Shape Data documentation.
 - [constants.md](constants.md) - Constants documentation.
-- [data-sync-and-ssot-pipeline.md](data-sync-and-ssot-pipeline.md) - Data sync and SSOT pipeline planning.
+- [data-sync-and-ssot-pipeline.md](data-sync-and-ssot-pipeline.md) - Data sync and source-of-truth pipeline documentation.
 - [drop-tables.md](drop-tables.md) - Drop Tables documentation.
 - [packet-schemas.md](packet-schemas.md) - Packet Schemas documentation.
 - [player-data-schema.md](player-data-schema.md) - Player-data schema documentation.

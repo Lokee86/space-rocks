@@ -169,7 +169,7 @@ Parent index: [Design Legacy](./!README.md)
 
 ## Related Limits
 
-- [Current System Limits](../limits/current-system-limits.md)
+- [Current System Limits](./../limits/current-system-limits.md)
 
 ## Testing And Verification
 
@@ -179,5 +179,5 @@ Parent index: [Design Legacy](./!README.md)
 
 ## Related Planning
 
-- [Planning Notes](../planning/domain-backlog.md)
-- [Player Build And Loadouts](../planning/player-build-and-loadouts.md)
+- [Planning Notes](./../planning/domain-backlog.md)
+- [Player Build And Loadouts](./../planning/player-build-and-loadouts.md)

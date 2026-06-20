@@ -146,11 +146,11 @@ Why this rule exists:
 
 ## Implemented Developer Toggles
 
-Current hardcoded dev toggles use number keys (`DevToggle0` through `DevToggle9`). Use the canonical map in `docs/devtools/toggles.md`.
+Current hardcoded dev toggles use number keys (`DevToggle0` through `DevToggle9`). Use the current scaffolding references in [client packet routing and devtools input](../devtools/client/stubs/packet-routing-and-devtools-input.md) and [server toggles](../devtools/server/stubs/toggles.md), not a graduated canonical toggles doc.
 
 Pause/menu is separate from dev toggles and should route through `OpenMenu`, not `DevToggle4`.
 
-These are server-authoritative toggles sent through generated packets where applicable.
+These are server-authoritative toggles sent through generated packets where applicable. The linked docs are stub references for the current scaffold, not canonical behavior docs.
 
 Devtools must route through real gameplay seams. Do not create parallel debug-only gameplay logic that bypasses damage, lives, spawning, scoring, movement, room/session, or modifier systems.
 
@@ -164,7 +164,7 @@ Player-targeting `OptionButton` nodes in the devtools window should use `Select`
 - `InfiniteLivesSelect`
 - `PlayerFrozenSelect`
 
-Keep `docs/devtools/toggles.md` as the canonical behavior reference.
+Keep the current stub references in sync until the behavior graduates into a canonical doc.
 
 ## Pause / Menu Context
 

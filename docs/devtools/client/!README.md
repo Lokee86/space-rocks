@@ -18,14 +18,17 @@ This folder owns docs for client-side development and debug tooling.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [debug-status-and-target-readmodels.md](debug-status-and-target-readmodels.md) - Client debug status and target readmodels documentation.
+- [devtools-window.md](devtools-window.md) - Client devtools window documentation.
+- [hitbox-overlays.md](hitbox-overlays.md) - Client hitbox overlays documentation.
+- [packet-routing-and-devtools-input.md](packet-routing-and-devtools-input.md) - Client packet routing and devtools input documentation.
+- [player-dev-labels.md](player-dev-labels.md) - Client player dev labels documentation.
+- [target-and-placement-debugging.md](target-and-placement-debugging.md) - Client target and placement debugging documentation.
+- [telemetry-overlays.md](telemetry-overlays.md) - Client telemetry overlays documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [devtools-window.md](stubs/devtools-window.md) - Stub: client devtools window documentation.
-- [hitbox-overlays.md](stubs/hitbox-overlays.md) - Stub: client hitbox overlays documentation.
-- [target-and-placement-debugging.md](stubs/target-and-placement-debugging.md) - Stub: client target and placement debugging documentation.
-- [telemetry-overlays.md](stubs/telemetry-overlays.md) - Stub: client telemetry overlays documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

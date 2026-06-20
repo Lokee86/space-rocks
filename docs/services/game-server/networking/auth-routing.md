@@ -275,7 +275,6 @@ Auth failure does not close the WebSocket by itself. The session remains connect
 * [API Server](../../api-server/!README.md)
 * [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
 * [Protocol](../../../protocol/!README.md)
-* [Documentation Policies](../../../documentation-policy.md)
 
 ## Code map
 

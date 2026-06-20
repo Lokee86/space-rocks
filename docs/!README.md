@@ -13,8 +13,8 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 <!-- doc-ledger:files:start -->
 
 - [developer.md](developer.md) - Developer workflow and environment notes.
-- [documentation-policy.md](documentation-policy.md) - Documentation classification and policy rules.
-- [documentation-procedure.md](documentation-procedure.md) - Standard documentation workflow and required shapes.
+- [documentation-policy.md](documentation-policy.md) - Documentation Policy documentation.
+- [documentation-procedure.md](documentation-procedure.md) - Documentation Procedure documentation.
 - [notes.md](notes.md) - Cross-cutting notes that do not yet have a better home.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
@@ -23,9 +23,10 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 - [.obsidian](.obsidian/!README.md) - .obsidian documentation.
 - [Agent](agent/!README.md) - Agent workflow and documentation support notes.
 - [Data](data/!README.md) - Data documentation and pipeline references.
+- [design](design/!README.md) - Design documentation.
 - [Devtools](devtools/!README.md) - Development and debug tooling documentation.
 - [Domains](domains/!README.md) - Cross-system domain documentation.
-- [Legacy](legacy/!README.md) - Temporary migration source for deprecated documentation.
+- [legacy](legacy/!README.md) - Legacy documentation.
 - [Limits](limits/!README.md) - Temporary blockers, gaps, and transitional limitations.
 - [Planning](planning/!README.md) - Future, unresolved, or not-yet-current documentation.
 - [Protocol](protocol/!README.md) - Communication and message flow documentation.

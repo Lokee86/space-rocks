@@ -32,7 +32,7 @@ This folder owns legacy server source docs for migration reference.
 
 ## Related Docs
 
-- [Legacy index](../!README.md)
+- [Legacy index](./../!README.md)
 
 ## Notes
 
