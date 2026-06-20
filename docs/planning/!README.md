@@ -20,19 +20,18 @@ This folder owns the planning index for work that has not yet become current doc
 - [development-roadmap.md](development-roadmap.md) - High-level roadmap planning.
 - [documentation-structure-and-procedures.md](documentation-structure-and-procedures.md) - Planned documentation structure and procedure work.
 - [domain-backlog.md](domain-backlog.md) - Cross-cutting domain backlog planning.
-- [systems-plan-index.md](systems-plan-index.md) - Broad scaffold for major future system plans.
 - [website-and-web-presence.md](website-and-web-presence.md) - Website and web-presence planning.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
 - [Data](data\!README.md) - Planning docs for data work.
+- [design](design\!README.md) - Design documentation.
 - [Devtools](devtools\!README.md) - Planning docs for devtools work.
-- [Gameplay](gameplay\!README.md) - Planning docs for gameplay work.
-- [Platform](platform\!README.md) - Planning docs for platform work.
+- [domains](domains\!README.md) - Domains documentation.
 - [Protocol](protocol\!README.md) - Planning docs for protocol work.
+- [services](services\!README.md) - Services documentation.
 - [Systems Design](systems-design\!README.md) - Planning docs for systems-design work.
-- [Technical](technical\!README.md) - Planning docs for technical work.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

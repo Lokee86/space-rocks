@@ -18,16 +18,15 @@ This folder owns room state, membership, lobby/start rules, match lifecycle, cle
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
-<!-- doc-ledger:files:end -->
-## Stub Files
-<!-- doc-ledger:stubs:start -->
 
-- [lobby-and-start-rules.md](stubs\lobby-and-start-rules.md) - Stub: incomplete lobby and start rules documentation.
-- [room-cleanup.md](stubs\room-cleanup.md) - Stub: incomplete room cleanup documentation.
-- [room-manager.md](stubs\room-manager.md) - Stub: incomplete room manager documentation.
-- [room-match-lifecycle.md](stubs\room-match-lifecycle.md) - Stub: incomplete room match lifecycle documentation.
-- [room-membership-and-identity.md](stubs\room-membership-and-identity.md) - Stub: incomplete room membership and identity documentation.
-- [room-snapshot-projection.md](stubs\room-snapshot-projection.md) - Stub: incomplete room snapshot projection documentation.
+- [lobby-and-start-rules.md](lobby-and-start-rules.md) - Incomplete lobby and start rules documentation.
+- [room-cleanup.md](room-cleanup.md) - Incomplete room cleanup documentation.
+- [room-manager.md](room-manager.md) - Incomplete room manager documentation.
+- [room-match-lifecycle.md](room-match-lifecycle.md) - Room Match Lifecycle documentation.
+- [room-membership-and-identity.md](room-membership-and-identity.md) - Room Membership And Identity documentation.
+- [room-snapshot-projection.md](room-snapshot-projection.md) - Room Snapshot Projection documentation.
+<!-- doc-ledger:files:end -->## Stub Filesroom-membership-and-identity.md
+<!-- doc-ledger:stubs:start -->
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
