@@ -1,6 +1,6 @@
 # Pickup Collection
 
-Parent index: [Game Server Simulation Pickups](./!README.md)
+Parent index: [Game Server Simulation Pickups](./!INDEX.md)
 
 ## Purpose
 
@@ -591,9 +591,9 @@ go test -buildvcs=false ./internal/game/pickups ./tests/game -run 'Pickup|OneUp|
 
 ## Related docs
 
-* [Game Server Simulation Pickups](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Pickups](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Pickup Effects](pickup-effects.md)
 * [Pickup Entity Lifecycle](pickup-entity-lifecycle.md)
 * [Pickup Drop Integration](pickup-drop-integration.md)
@@ -604,9 +604,9 @@ go test -buildvcs=false ./internal/game/pickups ./tests/game -run 'Pickup|OneUp|
 * [Toroidal Space And Motion](../world/toroidal-space-and-motion.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
 * [Player Pause And Suspension](../players/player-pause-and-suspension.md)
-* [Data](../../../../data/!README.md)
-* [Protocol](../../../../protocol/!README.md)
-* [Devtools](../../../../devtools/!README.md)
+* [Data](../../../../data/!INDEX.md)
+* [Protocol](../../../../protocol/!INDEX.md)
+* [Devtools](../../../../devtools/!INDEX.md)
 
 ## Notes
 

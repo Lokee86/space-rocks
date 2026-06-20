@@ -1,6 +1,6 @@
 ## Packet Schemas
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -528,7 +528,7 @@ Pipeline configuration:
 
 ```text
 tools/data_sync/config.toml
-tools/data_sync/!README.md
+tools/data_sync/!INDEX.md
 tools/data_sync/main.py
 tools/data_sync/data_sync/cli.py
 ```
@@ -588,17 +588,17 @@ shared/player_data/ owns logical player-data schema.
 
 ## Related docs
 
-* [Data](./!README.md)
+* [Data](./!INDEX.md)
 * [Data Sync and SSoT Pipeline](data-sync-and-ssot-pipeline.md)
 * [Source of Truth Map](source-of-truth-map.md)
 * [HTTP Contract Enforcement](../protocol/http-contract-enforcement.md)
-* [Game Server](../services/game-server/!README.md)
-* [Client](../services/client/!README.md)
-* [Player Data](../services/player-data/!README.md)
+* [Game Server](../services/game-server/!INDEX.md)
+* [Client](../services/client/!INDEX.md)
+* [Player Data](../services/player-data/!INDEX.md)
 
 ## Notes
 
-`tools/data_sync/!README.md` describes the packet workflow, but `tools/data_sync/config.toml` is the immediate source for the active configured packet source paths and output targets.
+`tools/data_sync/!INDEX.md` describes the packet workflow, but `tools/data_sync/config.toml` is the immediate source for the active configured packet source paths and output targets.
 
 The GDScript packet output currently renders field constants from the loaded schema and builders selected by `client_packets`. This makes some field constants available even when the client does not own the corresponding runtime packet family.
 

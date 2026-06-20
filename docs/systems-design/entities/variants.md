@@ -1,6 +1,6 @@
 # Variants
 
-Parent index: [Entities](./!README.md)
+Parent index: [Entities](./!INDEX.md)
 
 ## Purpose
 
@@ -217,7 +217,7 @@ These implementation touchpoints are listed to clarify the conceptual boundary. 
 
 ## Related docs
 
-* [Entities](./!README.md)
+* [Entities](./!INDEX.md)
 * [Asteroids](asteroids.md)
 * [Ships](ships.md)
 * [Asteroid Variants Data](../../data/asteroid-variants-data.md)

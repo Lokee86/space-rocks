@@ -1,6 +1,6 @@
 # Devtools Authority and Seams
 
-Parent index: [Design](./!README.md)
+Parent index: [Design](./!INDEX.md)
 
 ## Purpose
 
@@ -574,9 +574,9 @@ Run packet generation checks after changing `shared/packets/debug.toml` or outpu
 
 ## Related docs
 
-* [Devtools](../!README.md)
-* [Devtools Client](../client/!README.md)
-* [Devtools Server](../server/!README.md)
+* [Devtools](../!INDEX.md)
+* [Devtools Client](../client/!INDEX.md)
+* [Devtools Server](../server/!INDEX.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
 * [Client Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
 * [Client Devtools Window](../client/devtools-window.md)
@@ -585,9 +585,9 @@ Run packet generation checks after changing `shared/packets/debug.toml` or outpu
 * [Client Hitbox Overlays](../client/hitbox-overlays.md)
 * [Game Server Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
 * [Game Server Outbound Message Flow](../../services/game-server/networking/outbound-message-flow.md)
-* [Game Server Simulation](../../services/game-server/simulation/!README.md)
-* [Client Gameplay Runtime](../../services/client/gameplay-runtime/!README.md)
-* [Client Networking Flow](../../services/client/networking-flow/!README.md)
+* [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
+* [Client Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)
+* [Client Networking Flow](../../services/client/networking-flow/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Source Of Truth Map](../../data/source-of-truth-map.md)
 

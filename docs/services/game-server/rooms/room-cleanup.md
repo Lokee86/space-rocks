@@ -1,6 +1,6 @@
 # Room Cleanup
 
-Parent index: [Game Server Rooms](./!README.md)
+Parent index: [Game Server Rooms](./!INDEX.md)
 
 ## Purpose
 
@@ -595,15 +595,15 @@ cd services/game-server && go test -buildvcs=false ./...
 
 ## Related docs
 
-* [Game Server Rooms](./!README.md)
-* [Game Server](../!README.md)
+* [Game Server Rooms](./!INDEX.md)
+* [Game Server](../!INDEX.md)
 * [WebSocket Session Lifecycle](../networking/websocket-session-lifecycle.md)
 * [Room Network Adapter](../networking/room-network-adapter.md)
-* [Game Server Process](../process/!README.md)
+* [Game Server Process](../process/!INDEX.md)
 * [Service Shutdown](../process/service-shutdown.md)
-* [Game Server Observability](../observability/!README.md)
+* [Game Server Observability](../observability/!INDEX.md)
 * [Logging And Diagnostics](../observability/logging-and-diagnostics.md)
-* [Game Server Simulation](../simulation/!README.md)
+* [Game Server Simulation](../simulation/!INDEX.md)
 * [Match Result Reporting](../integrations/match-result-reporting.md)
 
 ## Notes

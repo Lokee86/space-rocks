@@ -1,6 +1,6 @@
 # Player-Data Routing Reference
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 This is the compact reference for player-data data-handler routing.
 Use it before touching profile reads, match-result writes, or player-data store selection.

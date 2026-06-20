@@ -1,5 +1,5 @@
 # Enemies, Bosses, And Encounters
-Parent index: [Gameplay Planning](./!README.md)
+Parent index: [Gameplay Planning](./!INDEX.md)
 
 ## Purpose
 

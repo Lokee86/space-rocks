@@ -1,6 +1,6 @@
 # Weapons And Projectile Fire
 
-Parent index: [Game Server Simulation Combat](./!README.md)
+Parent index: [Game Server Simulation Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -432,13 +432,13 @@ Broader verification should include the game-server Go test suite when weapon ch
 
 ## Related docs
 
-* [Game Server Simulation Combat](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Services](../../../!README.md)
-* [Realtime Protocol](../../../../protocol/!README.md)
-* [Data](../../../../data/!README.md)
-* [Systems Design Combat](../../../../systems-design/combat/!README.md)
+* [Game Server Simulation Combat](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Services](../../../!INDEX.md)
+* [Realtime Protocol](../../../../protocol/!INDEX.md)
+* [Data](../../../../data/!INDEX.md)
+* [Systems Design Combat](../../../../systems-design/combat/!INDEX.md)
 * [Player Build Limits](../../../../limits/player-build-limits.md)
 * [Player Build And Loadouts](../../../../planning/domains/gameplay/player-build-and-loadouts.md)
 

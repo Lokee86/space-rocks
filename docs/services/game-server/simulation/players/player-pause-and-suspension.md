@@ -1,6 +1,6 @@
 # Player Pause And Suspension
 
-Parent index: [Game Server Simulation Players](./!README.md)
+Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 ## Purpose
 
@@ -599,12 +599,12 @@ go test -buildvcs=false ./tests/game -run 'Debug.*Freeze|PlayerFrozen'
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Simulation Runtime](../runtime/!README.md)
-* [Game Server Simulation Combat](../combat/!README.md)
-* [Game Server Simulation Scoring](../scoring/!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Simulation Runtime](../runtime/!INDEX.md)
+* [Game Server Simulation Combat](../combat/!INDEX.md)
+* [Game Server Simulation Scoring](../scoring/!INDEX.md)
 * [Player Input Routing](player-input-routing.md)
 * [Player Session State](player-session-state.md)
 * [Active Player Avatar State](active-player-avatar-state.md)
@@ -615,9 +615,9 @@ go test -buildvcs=false ./tests/game -run 'Debug.*Freeze|PlayerFrozen'
 * [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)
 * [Toroidal Space And Motion](../world/toroidal-space-and-motion.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
-* [Protocol](../../../../protocol/!README.md)
-* [Devtools](../../../../devtools/!README.md)
-* [Data](../../../../data/!README.md)
+* [Protocol](../../../../protocol/!INDEX.md)
+* [Devtools](../../../../devtools/!INDEX.md)
+* [Data](../../../../data/!INDEX.md)
 
 ## Notes
 

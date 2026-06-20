@@ -1,6 +1,6 @@
 # Player Data Schema
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -601,8 +601,8 @@ services/game-server/internal/matchreporting/runtime_reporter_test.go
 
 ## Related docs
 
-* [Data](./!README.md)
-* [Player Data service](../services/player-data/!README.md)
+* [Data](./!INDEX.md)
+* [Player Data service](../services/player-data/!INDEX.md)
 * [Player Data Runtime And Store Routing](../services/player-data/runtime-and-store-routing.md)
 * [Profile Stats Flow](../services/player-data/profile-stats-flow.md)
 * [Match Result Sinks](../services/player-data/match-result-sinks.md)
@@ -611,8 +611,8 @@ services/game-server/internal/matchreporting/runtime_reporter_test.go
 * [Game Server Match Result Reporting](../services/game-server/integrations/match-result-reporting.md)
 * [Game Server Player Data HTTP Hosting](../services/game-server/integrations/player-data-http-hosting.md)
 * [HTTP contract enforcement](../protocol/http-contract-enforcement.md)
-* [Protocol](../protocol/!README.md)
-* [Data Sync](../../tools/data_sync/!README.md)
+* [Protocol](../protocol/!INDEX.md)
+* [Data Sync](../../tools/data_sync/!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Player Counters
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -403,14 +403,14 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Client Devtools](../client/!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Client Devtools](../client/!INDEX.md)
 * [Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
 * [Player Counters](../../services/game-server/simulation/players/player-counters.md)
-* [Game Server Simulation Players](../../services/game-server/simulation/players/!README.md)
+* [Game Server Simulation Players](../../services/game-server/simulation/players/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 
 ## Notes

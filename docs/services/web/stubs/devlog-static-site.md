@@ -1,5 +1,5 @@
 # Devlog Static Site
-Parent index: [Web](../!README.md)
+Parent index: [Web](../!INDEX.md)
 
 ## Purpose
 
@@ -51,7 +51,7 @@ Stub note: keep this focused on the small initial public web presence.
 
 ## Related docs
 
-- [Web](../!README.md)
+- [Web](../!INDEX.md)
 - [Website and web presence](../../../planning/website-and-web-presence.md)
 - TODO: add devlog-specific docs when they exist.
 

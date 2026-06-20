@@ -1,6 +1,6 @@
 # Targeting Rule
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 This document defines the targeting quarantine rule that guides the next implementation step.
 

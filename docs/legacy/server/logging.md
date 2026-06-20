@@ -1,6 +1,6 @@
 # Server Logging
 
-Parent index: [Server Legacy](./!README.md)
+Parent index: [Server Legacy](./!INDEX.md)
 
 This document covers only the server logging feature.
 

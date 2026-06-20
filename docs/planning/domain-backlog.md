@@ -1,5 +1,5 @@
 # Domain Backlog
-Parent index: [Planning](./!README.md)
+Parent index: [Planning](./!INDEX.md)
 
 ## Backlog Boundary
 

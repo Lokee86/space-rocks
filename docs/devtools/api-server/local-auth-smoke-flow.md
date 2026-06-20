@@ -1,6 +1,6 @@
 # Local Auth Smoke Flow
 
-Parent index: [API Server](./!README.md)
+Parent index: [API Server](./!INDEX.md)
 
 ## Purpose
 
@@ -467,7 +467,7 @@ Client tests for the Godot handoff consumer:
 
 ## Related docs
 
-* [API Server Devtools](./!README.md)
+* [API Server Devtools](./!INDEX.md)
 * [API-server auth and OAuth](../../services/api-server/auth-and-oauth.md)
 * [API-server runtime and health](../../services/api-server/runtime-and-health.md)
 * [API-server internal API surface](../../services/api-server/internal-api-surface.md)

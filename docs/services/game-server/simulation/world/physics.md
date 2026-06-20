@@ -1,6 +1,6 @@
 ## Physics
 
-Parent index: [Game Server Simulation World](./!README.md)
+Parent index: [Game Server Simulation World](./!INDEX.md)
 
 ## Purpose
 
@@ -477,9 +477,9 @@ Run collision-shape export or data checks when source scene collision nodes or s
 
 ## Related docs
 
-* [Game Server Simulation World](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation World](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Game Aggregate](../runtime/game-aggregate.md)
 * [Simulation Loop And Phase Order](../runtime/simulation-loop-and-phase-order.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
@@ -489,7 +489,7 @@ Run collision-shape export or data checks when source scene collision nodes or s
 * [Collision Shapes](collision-shapes.md)
 * [Toroidal Space And Motion](toroidal-space-and-motion.md)
 * [Collision Shape Data](../../../../data/stubs/collision-shape-data.md)
-* [Devtools](../../../../devtools/!README.md)
+* [Devtools](../../../../devtools/!INDEX.md)
 * [Player Build Limits](../../../../limits/player-build-limits.md)
 
 ## Notes

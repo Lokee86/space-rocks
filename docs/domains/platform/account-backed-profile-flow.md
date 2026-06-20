@@ -1,6 +1,6 @@
 # Account Backed Profile Flow
 
-Parent index: [Platform](./!README.md)
+Parent index: [Platform](./!INDEX.md)
 
 ## Purpose
 
@@ -61,12 +61,12 @@ The API server owns account identity and online persistence. The game server own
 
 ## Associated systems
 
-* [Client](../../services/client/!README.md) - stores the user bearer token, validates saved auth state, starts Discord login-session handoff, sends WebSocket auth, and displays profile state.
-* [API Server](../../services/api-server/!README.md) - owns Rails authenticated accounts, OAuth/password auth, bearer tokens, internal token verification, and Rails/Postgres account-backed stats.
-* [Game Server](../../services/game-server/!README.md) - owns WebSocket sessions, auth verification handoff, multiplayer admission, room lifecycle, gameplay authority, and match-result reporting.
-* [Player Data](../../services/player-data/!README.md) - owns identity-based profile/stat routing across Guest, Local Profile, and Authenticated Account routes.
-* [Protocol](../../protocol/!README.md) - owns documented request, response, packet, and contract behavior.
-* [Data](../../data/!README.md) - owns shared player-data schema and source-of-truth documentation.
+* [Client](../../services/client/!INDEX.md) - stores the user bearer token, validates saved auth state, starts Discord login-session handoff, sends WebSocket auth, and displays profile state.
+* [API Server](../../services/api-server/!INDEX.md) - owns Rails authenticated accounts, OAuth/password auth, bearer tokens, internal token verification, and Rails/Postgres account-backed stats.
+* [Game Server](../../services/game-server/!INDEX.md) - owns WebSocket sessions, auth verification handoff, multiplayer admission, room lifecycle, gameplay authority, and match-result reporting.
+* [Player Data](../../services/player-data/!INDEX.md) - owns identity-based profile/stat routing across Guest, Local Profile, and Authenticated Account routes.
+* [Protocol](../../protocol/!INDEX.md) - owns documented request, response, packet, and contract behavior.
+* [Data](../../data/!INDEX.md) - owns shared player-data schema and source-of-truth documentation.
 
 ## Authority boundaries
 
@@ -480,19 +480,19 @@ This doc does not define:
 
 ## Related docs
 
-* [Platform](./!README.md)
+* [Platform](./!INDEX.md)
 * [Account And Identity Current State](account-and-identity-current-state.md)
-* [Client](../../services/client/!README.md)
+* [Client](../../services/client/!INDEX.md)
 * [Client Auth Session Flow](../../services/client/auth-session-flow.md)
 * [Client Profile Flow](../../services/client/pregame-menu-flow/profile-flow.md)
-* [API Server](../../services/api-server/!README.md)
+* [API Server](../../services/api-server/!INDEX.md)
 * [API-server Auth And OAuth](../../services/api-server/auth-and-oauth.md)
 * [API-server Internal API Surface](../../services/api-server/internal-api-surface.md)
 * [API-server Player Stats And Match Results](../../services/api-server/player-stats-and-match-results.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Game-server Auth Verifier Integration](../../services/game-server/integrations/auth-verifier-integration.md)
 * [Game-server Auth Routing](../../services/game-server/networking/auth-routing.md)
-* [Player Data](../../services/player-data/!README.md)
+* [Player Data](../../services/player-data/!INDEX.md)
 * [Player-data Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)
 * [Player-data Profile Stats Flow](../../services/player-data/profile-stats-flow.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)

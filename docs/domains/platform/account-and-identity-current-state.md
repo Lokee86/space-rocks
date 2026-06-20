@@ -1,5 +1,5 @@
 # Account And Identity Current State
-Parent index: [Platform](./!README.md)
+Parent index: [Platform](./!INDEX.md)
 
 ## Purpose
 

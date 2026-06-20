@@ -1,6 +1,6 @@
 # Player Stats And Match Results
 
-Parent index: [API Server](./!README.md)
+Parent index: [API Server](./!INDEX.md)
 
 ## Purpose
 

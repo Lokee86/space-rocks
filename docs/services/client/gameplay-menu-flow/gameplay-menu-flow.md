@@ -1,6 +1,6 @@
 # Gameplay Menu Flow
 
-Parent index: [Gameplay Menu Flow](./!README.md)
+Parent index: [Gameplay Menu Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -485,16 +485,16 @@ These tests cover match-end coordination, gameplay session route execution, flow
 
 ## Related docs
 
-* [Client](../!README.md)
+* [Client](../!INDEX.md)
 * [Client menu flow](../menu-flow.md)
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md)
 * [Input and targeting](../input-and-targeting.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
-* [Match End Flow](../match-end-flow/!README.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [Match End Flow](../match-end-flow/!INDEX.md)
 * [Match end orchestration](../match-end-flow/match-end-orchestration.md)
 * [Match results presentation](../match-end-flow/match-results-presentation.md)
-* [Pregame Menu Flow](../pregame-menu-flow/!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Pregame Menu Flow](../pregame-menu-flow/!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 
 ## Notes
 

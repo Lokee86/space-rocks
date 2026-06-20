@@ -1,6 +1,6 @@
 # Asteroids
 
-Parent index: [Entities](./!README.md)
+Parent index: [Entities](./!INDEX.md)
 
 ## Purpose
 
@@ -355,8 +355,8 @@ These are current implementation limits, not asteroid entity invariants.
 
 ## Related docs
 
-* [Entities](./!README.md)
-* [Systems Design](../!README.md)
+* [Entities](./!INDEX.md)
+* [Systems Design](../!INDEX.md)
 * [Asteroid Spawning And Variants](../../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
 * [Visibility And Despawn](../../services/game-server/simulation/world/visibility-and-despawn.md)
 * [Toroidal Space And Motion](../../services/game-server/simulation/world/toroidal-space-and-motion.md)

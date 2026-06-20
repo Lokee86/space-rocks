@@ -1,6 +1,6 @@
 # Continuous Bullet Streams
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -484,12 +484,12 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
 * [Target And Placement Debugging](../client/target-and-placement-debugging.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Simulation Loop And Phase Order](../../services/game-server/simulation/runtime/simulation-loop-and-phase-order.md)
 * [Weapons And Projectile Fire](../../services/game-server/simulation/combat/weapons-and-projectile-fire.md)
 

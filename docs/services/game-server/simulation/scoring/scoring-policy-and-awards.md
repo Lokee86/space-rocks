@@ -1,6 +1,6 @@
 # Scoring Policy And Awards
 
-Parent index: [Scoring](./!README.md)
+Parent index: [Scoring](./!INDEX.md)
 
 ## Purpose
 
@@ -362,16 +362,16 @@ go test -buildvcs=false ./tests/scoring ./tests/game -run 'AsteroidDestroyed|Sco
 
 ## Related docs
 
-* [Game Server Simulation Scoring](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Scoring](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Player Counters](../players/player-counters.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Damage Resolution](../combat/damage-resolution.md)
 * [Radial Effects](../combat/radial-effects.md)
 * [Pickup Drop Integration](../pickups/pickup-drop-integration.md)
 * [Game Aggregate](../runtime/game-aggregate.md)
-* [Data](../../../../data/!README.md)
+* [Data](../../../../data/!INDEX.md)
 
 ## Notes
 

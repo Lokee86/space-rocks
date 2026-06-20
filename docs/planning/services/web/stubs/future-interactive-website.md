@@ -1,5 +1,5 @@
 # Future Interactive Website
-Parent index: [Web](../!README.md)
+Parent index: [Web](../!INDEX.md)
 
 ## Purpose
 
@@ -51,7 +51,7 @@ Stub note: keep this focused on the future web presence boundary.
 
 ## Related docs
 
-- [Web](../!README.md)
+- [Web](../!INDEX.md)
 - [Website and web presence](../../../planning/website-and-web-presence.md)
 - TODO: add interactive-site-specific docs when they exist.
 

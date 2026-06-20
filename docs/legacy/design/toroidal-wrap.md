@@ -1,6 +1,6 @@
 # Toroidal World Wrap
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 Space Rocks now uses a bounded toroidal playfield on the server and continuous visual coordinates on the client.
 

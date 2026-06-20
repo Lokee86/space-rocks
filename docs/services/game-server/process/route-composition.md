@@ -1,6 +1,6 @@
 # Route Composition
 
-Parent index: [Game Server Process](./!README.md)
+Parent index: [Game Server Process](./!INDEX.md)
 
 ## Purpose
 
@@ -393,18 +393,18 @@ cd services/player-data && go test ./httpapi ./playerdata/...
 
 ## Related docs
 
-* [Game Server Process](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Networking](../networking/!README.md)
+* [Game Server Process](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Networking](../networking/!INDEX.md)
 * [WebSocket Session Lifecycle](../networking/websocket-session-lifecycle.md)
 * [Inbound Packet Routing](../networking/inbound-packet-routing.md)
 * [Outbound Message Flow](../networking/outbound-message-flow.md)
 * [Auth Verifier Integration](../integrations/auth-verifier-integration.md)
 * [Player Data HTTP Hosting](../integrations/player-data-http-hosting.md)
 * [Match Result Reporting](../integrations/match-result-reporting.md)
-* [Game Server Observability](../observability/!README.md)
-* [Player Data](../../player-data/!README.md)
-* [API Server](../../api-server/!README.md)
+* [Game Server Observability](../observability/!INDEX.md)
+* [Player Data](../../player-data/!INDEX.md)
+* [API Server](../../api-server/!INDEX.md)
 * [HTTP Contract Enforcement](../../../protocol/http-contract-enforcement.md)
 
 ## Notes

@@ -1,6 +1,6 @@
 ## Asteroid Variant Contract
 
-Parent index: [Protocol](./!README.md)
+Parent index: [Protocol](./!INDEX.md)
 
 ## Purpose
 

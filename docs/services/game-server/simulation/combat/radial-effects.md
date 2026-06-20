@@ -1,6 +1,6 @@
 # Radial Effects
 
-Parent index: [Game Server Simulation Combat](./!README.md)
+Parent index: [Game Server Simulation Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -328,13 +328,13 @@ This documentation change does not require generated-file updates.
 
 ## Related docs
 
-* [Game Server Simulation Combat](./!README.md)
+* [Game Server Simulation Combat](./!INDEX.md)
 * [Damage Resolution](damage-resolution.md)
 * [Collision To Damage Flow](collision-to-damage-flow.md)
 * [Weapons And Projectile Fire](weapons-and-projectile-fire.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server Simulation Scoring](../scoring/!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server Simulation Scoring](../scoring/!INDEX.md)
+* [Game Server](../../!INDEX.md)
 
 ## Notes
 

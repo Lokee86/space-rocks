@@ -1,6 +1,6 @@
 # Runtime Composition
 
-Parent index: [Gameplay Runtime](./!README.md)
+Parent index: [Gameplay Runtime](./!INDEX.md)
 
 ## Purpose
 
@@ -289,15 +289,15 @@ Use the normal Godot headless GUT client test run for verification.
 
 ## Related docs
 
-* [Gameplay Runtime](./!README.md)
+* [Gameplay Runtime](./!INDEX.md)
 * [Gameplay State Application](gameplay-state-application.md)
 * [Gameplay Session Lifecycle](gameplay-session-lifecycle.md)
 * [Runtime Processing](runtime-processing.md)
-* [World Sync](../world-sync/!README.md)
+* [World Sync](../world-sync/!INDEX.md)
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md) - Client HUD and gameplay UI documentation.
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.
-* [Match End Flow](../match-end-flow/!README.md) - Client match-end orchestration and match-results presentation documentation.
-* [Gameplay Menu Flow](../gameplay-menu-flow/!README.md) - Client gameplay menu and match-over overlay menu documentation.
+* [Match End Flow](../match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
+* [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
 
 ## Notes
 

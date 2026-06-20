@@ -1,6 +1,6 @@
 ## Game Aggregate
 
-Parent index: [Game Server Simulation Runtime](./!README.md)
+Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 ## Purpose
 

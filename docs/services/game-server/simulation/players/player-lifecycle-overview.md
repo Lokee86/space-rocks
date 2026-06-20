@@ -1,6 +1,6 @@
 # Player Lifecycle Overview
 
-Parent index: [Game Server Simulation Players](./!README.md)
+Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 ## Purpose
 

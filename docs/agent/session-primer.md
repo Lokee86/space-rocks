@@ -1,5 +1,5 @@
 # Session Primer
-Parent index: [Agent](./!README.md)
+Parent index: [Agent](./!INDEX.md)
 
 Use this as the short orientation layer for new sessions. It should stay stable enough to be useful, but narrow enough to avoid becoming a second architecture manual.
 
@@ -37,7 +37,7 @@ Space Rocks has two local MCP servers under `tools/space-rocks-mcp`.
 - Client menu-flow Phase 4 is complete and green: Multiplayer Pregame Create/Join/Logout work, and Lobby Leave returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 is complete and green: profile readout transmission mounts `profile_readout.tscn` under `TransmissionScreen/ScreenDisplay`, and the readout fills callsign plus stat labels for guest and authenticated account contexts.
 - Local Pilot / Guest selector is complete: create, load/default, delete, and the delete confirmation sub-panel are implemented.
-- Client match-end work uses `MatchEndFlow`; see [docs/services/client/match-end-flow/!README.md](../services/client/match-end-flow/!README.md).
+- Client match-end work uses `MatchEndFlow`; see [docs/services/client/match-end-flow/!INDEX.md](../services/client/match-end-flow/!INDEX.md).
 - The full menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.
 - Devtools coordination moved under `client/scripts/devtools/context/` with `GameplayDevtoolsContext` as the facade/composition seam.
 - Continuous bullet stream runtime state was isolated in `services/game-server/internal/devtools/streamruntime`.

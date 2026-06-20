@@ -1,5 +1,5 @@
 # Multiplayer Session And Lifecycle
-Parent index: [Platform Planning](../!README.md)
+Parent index: [Platform Planning](../!INDEX.md)
 
 ## Purpose
 
@@ -312,7 +312,7 @@ Matchmaking and room discovery owns:
 - [Realtime Protocol Architecture](../../technical/realtime-protocol-architecture.md)
 - [Deployment And Packaging](../../technical/stubs/deployment-and-packaging.md)
 - [Modes And Match Rules](../../gameplay/modes-and-match-rules.md)
-- [Systems Design](../../../systems-design/!README.md)
+- [Systems Design](../../../systems-design/!INDEX.md)
 - [Player Data Routing Flow](../../../domains/platform/player-data-routing-flow.md)
 - [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
 

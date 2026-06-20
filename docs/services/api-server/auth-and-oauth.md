@@ -1,6 +1,6 @@
 # Auth And OAuth
 
-Parent index: [API Server](./!README.md)
+Parent index: [API Server](./!INDEX.md)
 
 ## Purpose
 
@@ -345,9 +345,9 @@ The Go auth client consumes the internal verification API. It does not own Rails
 
 ## Related docs
 
-* [API Server](./!README.md)
-* [Game Server](../game-server/!README.md)
-* [Player Data](../player-data/!README.md)
+* [API Server](./!INDEX.md)
+* [Game Server](../game-server/!INDEX.md)
+* [Player Data](../player-data/!INDEX.md)
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md) - Current HTTP request/response contract enforcement documentation.
 * [API-server internal API surface](internal-api-surface.md)
 * [API-server player stats and match results](player-stats-and-match-results.md)

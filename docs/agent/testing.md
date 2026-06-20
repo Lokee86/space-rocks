@@ -1,5 +1,5 @@
 # Agent Testing Rules
-Parent index: [Agent](./!README.md)
+Parent index: [Agent](./!INDEX.md)
 
 Use this document for verification commands, generated data checks, and validation planning.
 

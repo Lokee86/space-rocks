@@ -1,6 +1,6 @@
 # Debug Command Surface
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -669,11 +669,11 @@ go test -buildvcs=false ./internal/devtools ./internal/devtools/streamruntime ./
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Client Devtools](../client/!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Client Devtools](../client/!INDEX.md)
 * [Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
 * [Outbound Message Flow](../../services/game-server/networking/outbound-message-flow.md)
 * [Game Aggregate](../../services/game-server/simulation/runtime/game-aggregate.md)

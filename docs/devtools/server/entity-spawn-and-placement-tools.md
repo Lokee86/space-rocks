@@ -1,6 +1,6 @@
 # Entity Spawn And Placement Tools
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -474,14 +474,14 @@ data-sync -diff -packets -go -gds
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Target And Placement Debugging](../client/target-and-placement-debugging.md)
 * [Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Game Server Networking](../../services/game-server/networking/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Game Server Networking](../../services/game-server/networking/!INDEX.md)
 * [Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
-* [Game Server Simulation](../../services/game-server/simulation/!README.md)
+* [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
 * [Asteroid Spawning And Variants](../../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Asteroid Variants Data](../../data/asteroid-variants-data.md)

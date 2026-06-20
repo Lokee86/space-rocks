@@ -1,6 +1,6 @@
 # Local Pilot Flow
 
-Parent index: [Client Legacy](./!README.md)
+Parent index: [Client Legacy](./!INDEX.md)
 
 ## Purpose
 

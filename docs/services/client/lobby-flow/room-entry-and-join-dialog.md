@@ -1,6 +1,6 @@
 # Room Entry and Join Dialog
 
-Parent index: [Lobby Flow](./!README.md)
+Parent index: [Lobby Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -558,16 +558,16 @@ These tests verify server-side authority that the client consumes but does not o
 
 ## Related docs
 
-- [Lobby Flow](./!README.md)
-- [Client](../!README.md)
+- [Lobby Flow](./!INDEX.md)
+- [Client](../!INDEX.md)
 - [Menu Flow](../menu-flow.md)
-- [Networking Flow](../networking-flow/!README.md)
+- [Networking Flow](../networking-flow/!INDEX.md)
 - [Auth Session Flow](../auth-session-flow.md)
-- [App Shell And Session](../app-shell-and-session/!README.md)
+- [App Shell And Session](../app-shell-and-session/!INDEX.md)
 - [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)
 - [Room Session State](../app-shell-and-session/room-session-state.md)
 - [Lobby Session And Presentation](lobby-session-and-presentation.md)
-- [Game Server](../../game-server/!README.md)
+- [Game Server](../../game-server/!INDEX.md)
 
 ## Notes
 

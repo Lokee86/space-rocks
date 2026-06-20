@@ -1,6 +1,6 @@
 # Projectiles
 
-Parent index: [Entities](./!README.md)
+Parent index: [Entities](./!INDEX.md)
 
 ## Purpose
 
@@ -480,8 +480,8 @@ These limits should not be documented as permanent projectile design constraints
 
 ## Related docs
 
-* [Entities](./!README.md)
-* [Systems Design](../!README.md)
+* [Entities](./!INDEX.md)
+* [Systems Design](../!INDEX.md)
 * [Weapons](../combat/weapons.md)
 * [Damage](../combat/damage.md)
 * [Radial Effects](../combat/radial-effects.md)

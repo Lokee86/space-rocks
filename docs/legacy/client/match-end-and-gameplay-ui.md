@@ -1,6 +1,6 @@
 # Match End And Gameplay UI
 
-Parent index: [Client Legacy](./!README.md)
+Parent index: [Client Legacy](./!INDEX.md)
 
 This document defines the client-side ownership split for match-end presentation and the gameplay-session UI hierarchy.
 

@@ -1,6 +1,6 @@
 ## Player Session State
 
-Parent index: [Game Server Simulation Players](./!README.md)
+Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 ## Purpose
 
@@ -164,13 +164,13 @@ data-sync -check -packets -go -gds
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Simulation Targeting](../targeting/!README.md)
-* [Game Server Simulation Runtime](../runtime/!README.md)
-* [Realtime Protocol](../../../../protocol/!README.md)
-* [Data Pipeline](../../../../data/!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Simulation Targeting](../targeting/!INDEX.md)
+* [Game Server Simulation Runtime](../runtime/!INDEX.md)
+* [Realtime Protocol](../../../../protocol/!INDEX.md)
+* [Data Pipeline](../../../../data/!INDEX.md)
 
 ## Notes
 

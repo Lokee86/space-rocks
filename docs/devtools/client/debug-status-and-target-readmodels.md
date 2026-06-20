@@ -1,6 +1,6 @@
 ## Debug Status And Target Readmodels
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -626,14 +626,14 @@ Run packet generation checks when changing shared packet source files.
 
 ## Related docs
 
-* [Client Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Server Devtools](../server/!README.md)
-* [Devtools Design](../design/!README.md)
+* [Client Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Server Devtools](../server/!INDEX.md)
+* [Devtools Design](../design/!INDEX.md)
 * [Client Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md)
 * [Client Gameplay State Application](../../services/client/gameplay-runtime/gameplay-state-application.md)
 * [Client Input And Targeting](../../services/client/input-and-targeting.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Packet Schema Pipeline](../../data/packet-schemas.md) - shared packet schema and generated output documentation.
 
 ## Notes

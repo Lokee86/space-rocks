@@ -1,6 +1,6 @@
 # Lobby Session and Presentation
 
-Parent index: [Lobby Flow](./!README.md)
+Parent index: [Lobby Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -476,13 +476,13 @@ Those tests verify room snapshot shape and server-owned room snapshot behavior, 
 
 ## Related docs
 
-* [Lobby Flow](./!README.md)
+* [Lobby Flow](./!INDEX.md)
 * [Menu Flow](../menu-flow.md)
 * [Room Session State](../app-shell-and-session/room-session-state.md)
 * [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)
 * [Auth Session Flow](../auth-session-flow.md)
-* [Networking Flow](../networking-flow/!README.md)
-* [Match End Flow](../match-end-flow/!README.md)
+* [Networking Flow](../networking-flow/!INDEX.md)
+* [Match End Flow](../match-end-flow/!INDEX.md)
 * [Lobby Packets](../../protocol/stubs/lobby-packets.md) - Stub: incomplete lobby packet protocol documentation.
 * [Current System Limits](../../limits/current-system-limits.md)
 

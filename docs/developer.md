@@ -1,7 +1,7 @@
 # Developer Handoff
-Parent index: [Documentation](./!README.md)
+Parent index: [Documentation](./!INDEX.md)
 
-This document is a practical handoff for future development sessions. It focuses on how to work on the project. For broader architecture, see [docs/systems-design/!README.md](systems-design/!README.md). For server logging details, see [docs/services/game-server/observability/logging-and-diagnostics.md](services/game-server/observability/logging-and-diagnostics.md).
+This document is a practical handoff for future development sessions. It focuses on how to work on the project. For broader architecture, see [docs/systems-design/!INDEX.md](systems-design/!INDEX.md). For server logging details, see [docs/services/game-server/observability/logging-and-diagnostics.md](services/game-server/observability/logging-and-diagnostics.md).
 
 ## Project Overview
 
@@ -165,7 +165,7 @@ Devtools packet boundary rules:
 
 ## Devtool Hotkeys
 
-For a focused server devtools reference (commands, boundaries, and checks), see [docs/devtools/server/!README.md](devtools/server/!README.md).
+For a focused server devtools reference (commands, boundaries, and checks), see [docs/devtools/server/!INDEX.md](devtools/server/!INDEX.md).
 For semantic mouse input behavior, see [docs/services/client/input-and-targeting.md](services/client/input-and-targeting.md).
 For targeting ownership and boundaries, see [docs/systems-design/combat/targeting.md](systems-design/combat/targeting.md).
 For devtools telemetry readouts and boundaries, see [docs/devtools/server/telemetry.md](devtools/server/telemetry.md).

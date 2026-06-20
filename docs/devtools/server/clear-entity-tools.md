@@ -1,6 +1,6 @@
 # Clear Entity Tools
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -274,13 +274,13 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Game Server Runtime](../../services/game-server/simulation/runtime/!README.md)
-* [World Simulation](../../services/game-server/simulation/world/!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Game Server Runtime](../../services/game-server/simulation/runtime/!INDEX.md)
+* [World Simulation](../../services/game-server/simulation/world/!INDEX.md)
 * [Realtime Protocol](../../protocol/realtime-websocket-protocol.md)
-* [Data](../../data/!README.md)
+* [Data](../../data/!INDEX.md)
 
 ## Notes
 

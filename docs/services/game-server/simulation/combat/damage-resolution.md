@@ -1,6 +1,6 @@
 # Damage Resolution
 
-Parent index: [Game Server Simulation Combat](./!README.md)
+Parent index: [Game Server Simulation Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -292,13 +292,13 @@ This documentation change does not require a generated-file update.
 
 ## Related docs
 
-* [Game Server Simulation Combat](./!README.md)
+* [Game Server Simulation Combat](./!INDEX.md)
 * [Collision To Damage Flow](collision-to-damage-flow.md)
 * [Weapons And Projectile Fire](weapons-and-projectile-fire.md)
 * [Radial Effects](radial-effects.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server Simulation Scoring](../scoring/!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server Simulation Scoring](../scoring/!INDEX.md)
+* [Game Server](../../!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Gameplay Session Flow
 
-Parent index: [Player Experience](./!README.md)
+Parent index: [Player Experience](./!INDEX.md)
 
 ## Purpose
 
@@ -34,12 +34,12 @@ Player-data and API-server systems participate only where identity and result pe
 
 ## Participating systems
 
-* [Client](../../services/client/!README.md) - owns menu intent, session boot, transient room-session cache, gameplay presentation, input collection, match-end UI, and route execution after player intent.
-* [Game Server](../../services/game-server/!README.md) - owns realtime WebSocket handling, room lifecycle, room membership, gameplay simulation, match-over authority, room snapshots, and match-result reporting.
-* [Player Data](../../services/player-data/!README.md) - owns identity-based stats and match-result store routing after the game server reports resolved match facts.
-* [API Server](../../services/api-server/!README.md) - owns authenticated-account auth and Rails/Postgres persistence behind account-backed player-data flows.
-* [Protocol](../../protocol/!README.md) - owns the realtime packet contract used by session boot, room state, gameplay state, auth, and match-result presentation payloads.
-* [Data](../../data/!README.md) - owns generated packet and constants source material consumed by client and game-server session flows.
+* [Client](../../services/client/!INDEX.md) - owns menu intent, session boot, transient room-session cache, gameplay presentation, input collection, match-end UI, and route execution after player intent.
+* [Game Server](../../services/game-server/!INDEX.md) - owns realtime WebSocket handling, room lifecycle, room membership, gameplay simulation, match-over authority, room snapshots, and match-result reporting.
+* [Player Data](../../services/player-data/!INDEX.md) - owns identity-based stats and match-result store routing after the game server reports resolved match facts.
+* [API Server](../../services/api-server/!INDEX.md) - owns authenticated-account auth and Rails/Postgres persistence behind account-backed player-data flows.
+* [Protocol](../../protocol/!INDEX.md) - owns the realtime packet contract used by session boot, room state, gameplay state, auth, and match-result presentation payloads.
+* [Data](../../data/!INDEX.md) - owns generated packet and constants source material consumed by client and game-server session flows.
 
 ## Authority boundaries
 
@@ -484,25 +484,25 @@ Those details belong in service, protocol, data, systems-design, planning, or li
 
 ## Related docs
 
-* [Player Experience](./!README.md)
-* [Client](../../services/client/!README.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Player Data](../../services/player-data/!README.md)
-* [API Server](../../services/api-server/!README.md)
-* [Protocol](../../protocol/!README.md)
-* [Data](../../data/!README.md)
+* [Player Experience](./!INDEX.md)
+* [Client](../../services/client/!INDEX.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Player Data](../../services/player-data/!INDEX.md)
+* [API Server](../../services/api-server/!INDEX.md)
+* [Protocol](../../protocol/!INDEX.md)
+* [Data](../../data/!INDEX.md)
 * [Session Boot And Network Target](../../services/client/app-shell-and-session/session-boot-and-network-target.md)
 * [Room Session State](../../services/client/app-shell-and-session/room-session-state.md)
-* [Lobby Flow](../../services/client/lobby-flow/!README.md)
-* [Gameplay Runtime](../../services/client/gameplay-runtime/!README.md)
+* [Lobby Flow](../../services/client/lobby-flow/!INDEX.md)
+* [Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)
 * [Gameplay Session Lifecycle](../../services/client/gameplay-runtime/gameplay-session-lifecycle.md)
-* [Match End Flow](../../services/client/match-end-flow/!README.md)
-* [Game Server Networking](../../services/game-server/networking/!README.md)
+* [Match End Flow](../../services/client/match-end-flow/!INDEX.md)
+* [Game Server Networking](../../services/game-server/networking/!INDEX.md)
 * [Room Network Adapter](../../services/game-server/networking/room-network-adapter.md)
 * [Auth Routing](../../services/game-server/networking/auth-routing.md)
-* [Game Server Rooms](../../services/game-server/rooms/!README.md)
+* [Game Server Rooms](../../services/game-server/rooms/!INDEX.md)
 * [Room Match Lifecycle](../../services/game-server/rooms/room-match-lifecycle.md)
-* [Game Server Simulation](../../services/game-server/simulation/!README.md)
+* [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
 * [Match Result Reporting](../../services/game-server/integrations/match-result-reporting.md)
 * [Current System Limits](../../limits/current-system-limits.md)
 

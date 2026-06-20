@@ -1,6 +1,6 @@
 # Room Match Lifecycle
 
-Parent index: [Game Server Rooms](./!README.md)
+Parent index: [Game Server Rooms](./!INDEX.md)
 
 ## Purpose
 
@@ -415,16 +415,16 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 
 ## Related docs
 
-* [Game Server Rooms](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Networking](../networking/!README.md)
+* [Game Server Rooms](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Networking](../networking/!INDEX.md)
 * [Room Network Adapter](../networking/room-network-adapter.md)
 * [Match Result Reporting](../integrations/match-result-reporting.md)
-* [Game Server Simulation](../simulation/!README.md)
-* [Player Data](../../player-data/!README.md)
-* [Client Match End Flow](../../client/match-end-flow/!README.md)
-* [Protocol](../../../protocol/!README.md)
-* [Data](../../../data/!README.md)
+* [Game Server Simulation](../simulation/!INDEX.md)
+* [Player Data](../../player-data/!INDEX.md)
+* [Client Match End Flow](../../client/match-end-flow/!INDEX.md)
+* [Protocol](../../../protocol/!INDEX.md)
+* [Data](../../../data/!INDEX.md)
 
 ## Notes
 

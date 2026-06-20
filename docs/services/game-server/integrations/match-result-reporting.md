@@ -1,6 +1,6 @@
 # Match Result Reporting
 
-Parent index: [Game Server Integrations](./!README.md)
+Parent index: [Game Server Integrations](./!INDEX.md)
 
 ## Purpose
 
@@ -311,11 +311,11 @@ Related API-server tests:
 
 ## Related docs
 
-* [Game Server Integrations](./!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Rooms](../../rooms/!README.md)
-* [Game Server Networking](../../networking/!README.md)
-* [Player Data](../../../player-data/!README.md)
+* [Game Server Integrations](./!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Rooms](../../rooms/!INDEX.md)
+* [Game Server Networking](../../networking/!INDEX.md)
+* [Player Data](../../../player-data/!INDEX.md)
 * [Player Stats And Match Results](../../../api-server/player-stats-and-match-results.md)
 
 ## Notes

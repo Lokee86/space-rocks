@@ -1,1 +1,1 @@
-Parent index: [Devtools Legacy](./!README.md)
+Parent index: [Devtools Legacy](./!INDEX.md)

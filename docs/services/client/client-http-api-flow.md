@@ -1,6 +1,6 @@
 ## Client HTTP API Flow
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -381,15 +381,15 @@ Local pilot API wrapper behavior should get focused tests when local profile API
 
 ## Related docs
 
-* [Client](./!README.md)
+* [Client](./!INDEX.md)
 * [auth-session-flow.md](auth-session-flow.md)
 * [local-pilot-flow.md](pregame-menu-flow/local-pilot-flow.md)
 * [profile-flow.md](pregame-menu-flow/profile-flow.md)
-* [Networking Flow](networking-flow/!README.md)
-* [App Shell And Session](app-shell-and-session/!README.md)
+* [Networking Flow](networking-flow/!INDEX.md)
+* [App Shell And Session](app-shell-and-session/!INDEX.md)
 * [API-server auth and OAuth](../api-server/auth-and-oauth.md)
 * [API-server internal API surface](../api-server/internal-api-surface.md)
-* [Player Data](../player-data/!README.md)
+* [Player Data](../player-data/!INDEX.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)
 
 ## Notes

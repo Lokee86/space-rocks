@@ -1,6 +1,6 @@
 # Client Viewport Config Flow
 
-Parent index: [App Shell And Session](./!README.md)
+Parent index: [App Shell And Session](./!INDEX.md)
 
 ## Purpose
 
@@ -328,16 +328,16 @@ Those server tests verify gameplay or visibility behavior that depends on client
 
 ## Related docs
 
-* [App Shell And Session](./!README.md)
+* [App Shell And Session](./!INDEX.md)
 * [App Entry Composition](app-entry-composition.md)
 * [Session Boot And Network Target](session-boot-and-network-target.md)
 * [Room Session State](room-session-state.md)
 * [App Shutdown Flow](app-shutdown-flow.md)
-* [Client](../!README.md)
-* [Networking Flow](../networking-flow/!README.md)
-* [Lobby Flow](../lobby-flow/!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Client](../!INDEX.md)
+* [Networking Flow](../networking-flow/!INDEX.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 
 ## Notes
 

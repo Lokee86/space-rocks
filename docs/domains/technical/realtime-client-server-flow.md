@@ -1,6 +1,6 @@
 # Realtime Client Server Flow
 
-Parent index: [Technical](./!README.md)
+Parent index: [Technical](./!INDEX.md)
 
 ## Purpose
 
@@ -26,13 +26,13 @@ The realtime flow is not the same thing as gameplay session ownership. A WebSock
 
 ## Participating systems
 
-* [Client](../../services/client/!README.md) - owns WebSocket connection startup, polling, local packet construction, inbound packet classification, gameplay packet acceptance gates, and presentation routing.
-* [Game Server](../../services/game-server/!README.md) - owns the `/ws` route, WebSocket upgrade, per-session transport state, inbound packet routing, room/session adapters, authoritative gameplay routing, and outbound server packets.
-* [Protocol](../../protocol/!README.md) - owns communication and message-flow documentation for realtime packets.
-* [Data](../../data/!README.md) - owns packet schema source files and generated packet outputs shared by client and game server.
-* [Devtools](../../devtools/!README.md) - owns debug-only client/server tooling that uses the normal realtime transport.
-* [Player Data](../../services/player-data/!README.md) - owns durable stat/result routing after authoritative match facts leave the live realtime flow.
-* [API Server](../../services/api-server/!README.md) - owns authenticated account auth and Rails-backed persistence outside the live realtime simulation path.
+* [Client](../../services/client/!INDEX.md) - owns WebSocket connection startup, polling, local packet construction, inbound packet classification, gameplay packet acceptance gates, and presentation routing.
+* [Game Server](../../services/game-server/!INDEX.md) - owns the `/ws` route, WebSocket upgrade, per-session transport state, inbound packet routing, room/session adapters, authoritative gameplay routing, and outbound server packets.
+* [Protocol](../../protocol/!INDEX.md) - owns communication and message-flow documentation for realtime packets.
+* [Data](../../data/!INDEX.md) - owns packet schema source files and generated packet outputs shared by client and game server.
+* [Devtools](../../devtools/!INDEX.md) - owns debug-only client/server tooling that uses the normal realtime transport.
+* [Player Data](../../services/player-data/!INDEX.md) - owns durable stat/result routing after authoritative match facts leave the live realtime flow.
+* [API Server](../../services/api-server/!INDEX.md) - owns authenticated account auth and Rails-backed persistence outside the live realtime simulation path.
 
 ## Authority boundaries
 
@@ -434,21 +434,21 @@ Those details belong in service, protocol, data, devtools, systems-design, plann
 
 ## Related docs
 
-* [Technical](./!README.md)
+* [Technical](./!INDEX.md)
 * [Gameplay Session Flow](../player-experience/gameplay-session-flow.md)
-* [Client](../../services/client/!README.md)
-* [Client Networking Flow](../../services/client/networking-flow/!README.md)
+* [Client](../../services/client/!INDEX.md)
+* [Client Networking Flow](../../services/client/networking-flow/!INDEX.md)
 * [Session Boot And Network Target](../../services/client/app-shell-and-session/session-boot-and-network-target.md)
-* [Gameplay Runtime](../../services/client/gameplay-runtime/!README.md)
-* [World Sync](../../services/client/world-sync/!README.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Game Server Networking](../../services/game-server/networking/!README.md)
-* [Game Server Rooms](../../services/game-server/rooms/!README.md)
-* [Game Server Simulation](../../services/game-server/simulation/!README.md)
-* [Protocol](../../protocol/!README.md)
+* [Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)
+* [World Sync](../../services/client/world-sync/!INDEX.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Game Server Networking](../../services/game-server/networking/!INDEX.md)
+* [Game Server Rooms](../../services/game-server/rooms/!INDEX.md)
+* [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
+* [Protocol](../../protocol/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
-* [Data](../../data/!README.md)
-* [Devtools](../../devtools/!README.md)
+* [Data](../../data/!INDEX.md)
+* [Devtools](../../devtools/!INDEX.md)
 * [Realtime Protocol Architecture](../../planning/protocol/realtime-protocol-architecture.md)
 * [Network Observability And Packet Budget](../../planning/domains/technical/network-observability-and-packet-budget.md)
 

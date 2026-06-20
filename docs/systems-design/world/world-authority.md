@@ -1,6 +1,6 @@
 # World Authority
 
-Parent index: [World](./!README.md)
+Parent index: [World](./!INDEX.md)
 
 ## Purpose
 
@@ -562,10 +562,10 @@ For example, a future loadout selection may define which ship and weapons a play
 
 ## Related docs
 
-* [World](./!README.md)
+* [World](./!INDEX.md)
 * [Toroidal Wrap](toroidal-wrap.md)
 * [Spawning And Space](spawning-and-space.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Game Aggregate](../../services/game-server/simulation/runtime/game-aggregate.md)
 * [Simulation Loop And Phase Order](../../services/game-server/simulation/runtime/simulation-loop-and-phase-order.md)
 * [Runtime Entity Store](../../services/game-server/simulation/runtime/runtime-entity-store.md)
@@ -578,7 +578,7 @@ For example, a future loadout selection may define which ship and weapons a play
 * [Player Respawn](../../services/game-server/simulation/players/player-respawn.md)
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md)
 * [Pickup Entity Lifecycle](../../services/game-server/simulation/pickups/pickup-entity-lifecycle.md)
-* [Client](../../services/client/!README.md)
+* [Client](../../services/client/!INDEX.md)
 * [World Sync Coordinator](../../services/client/world-sync/world-sync-coordinator.md)
 * [View Anchor And Visual Coordinates](../../services/client/world-sync/view-anchor-and-visual-coordinates.md)
 * [Entity Sync Owners](../../services/client/world-sync/entity-sync-owners.md)

@@ -1,6 +1,6 @@
 # Player Respawn
 
-Parent index: [Game Server Simulation Players](./!README.md)
+Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 ## Purpose
 
@@ -432,8 +432,8 @@ Useful behavior checks:
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)

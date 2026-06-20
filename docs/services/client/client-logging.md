@@ -1,6 +1,6 @@
 # Client Logging
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -125,11 +125,11 @@ client/scripts/logging/logger.gd
 
 ## Related docs
 
-* [Client](./!README.md)
-* [Client Networking Flow](networking-flow/!README.md)
-* [Gameplay Runtime](gameplay-runtime/!README.md)
+* [Client](./!INDEX.md)
+* [Client Networking Flow](networking-flow/!INDEX.md)
+* [Gameplay Runtime](gameplay-runtime/!INDEX.md)
 * [Input And Targeting](input-and-targeting.md)
-* [Game Server Observability](../game-server/observability/!README.md)
+* [Game Server Observability](../game-server/observability/!INDEX.md)
 * [Telemetry And Packet Routing](../game-server/networking/telemetry-packet-routing.md)
 
 ## Notes

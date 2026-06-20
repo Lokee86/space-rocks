@@ -1,6 +1,6 @@
 # Room Network Adapter
 
-Parent index: [Game Server Networking](./!README.md)
+Parent index: [Game Server Networking](./!INDEX.md)
 
 ## Purpose
 
@@ -252,12 +252,12 @@ go test -buildvcs=false ./services/game-server/internal/networking ./services/ga
 
 ## Related docs
 
-- [Game Server Networking](./!README.md)
-- [Game Server Rooms](../rooms/!README.md)
-- [Game Server](../!README.md)
-- [Protocol](../../../protocol/!README.md)
-- [Data](../../../data/!README.md)
-- [Services](../../../!README.md)
+- [Game Server Networking](./!INDEX.md)
+- [Game Server Rooms](../rooms/!INDEX.md)
+- [Game Server](../!INDEX.md)
+- [Protocol](../../../protocol/!INDEX.md)
+- [Data](../../../data/!INDEX.md)
+- [Services](../../../!INDEX.md)
 
 ## Notes
 

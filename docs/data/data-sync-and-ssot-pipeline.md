@@ -1,6 +1,6 @@
 # Data Sync And SSoT Pipeline
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -461,7 +461,7 @@ client/scenes/
 
 ## Related docs
 
-* [Data](./!README.md)
+* [Data](./!INDEX.md)
 * [Source Of Truth Map](source-of-truth-map.md)
 * [Constants Pipeline](constants.md)
 * [Packet Schema Pipeline](packet-schemas.md)
@@ -470,15 +470,15 @@ client/scenes/
 * [Collision Shape Data](collision-shape-data.md)
 * [Asteroid Variants Data](asteroid-variants-data.md)
 * [HTTP Contract Enforcement](../protocol/http-contract-enforcement.md)
-* [Game Server](../services/game-server/!README.md)
-* [Client](../services/client/!README.md)
-* [Player Data](../services/player-data/!README.md)
-* [API Server](../services/api-server/!README.md)
-* [Data Sync Tool](../../tools/data_sync/!README.md)
+* [Game Server](../services/game-server/!INDEX.md)
+* [Client](../services/client/!INDEX.md)
+* [Player Data](../services/player-data/!INDEX.md)
+* [API Server](../services/api-server/!INDEX.md)
+* [Data Sync Tool](../../tools/data_sync/!INDEX.md)
 
 ## Notes
 
-`tools/data_sync/!README.md` still contains some legacy links to the older docs layout. This data doc uses the current documentation structure.
+`tools/data_sync/!INDEX.md` still contains some legacy links to the older docs layout. This data doc uses the current documentation structure.
 
 `SSoT` in this document means source of truth. It does not imply every source of truth is handled by `tools/data_sync`.
 

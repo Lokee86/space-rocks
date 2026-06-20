@@ -1,6 +1,6 @@
 ## Spectate Session And Camera Flow
 
-Parent index: [Spectate Flow](./!README.md)
+Parent index: [Spectate Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -116,13 +116,13 @@ client/scripts/gameplay/spectate/
 
 ## Related docs
 
-* [Spectate Flow](./!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Spectate Flow](./!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 * [Input And Targeting](../input-and-targeting.md)
-* [Gameplay Menu Flow](../gameplay-menu-flow/!README.md)
-* [Client](../!README.md)
-* [Services](../../!README.md)
+* [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md)
+* [Client](../!INDEX.md)
+* [Services](../../!INDEX.md)
 
 ## Notes
 

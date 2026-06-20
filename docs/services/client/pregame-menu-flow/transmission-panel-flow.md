@@ -1,6 +1,6 @@
 ## Transmission Panel Flow
 
-Parent index: [Pregame Menu Flow](./!README.md)
+Parent index: [Pregame Menu Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -81,11 +81,11 @@ client/scripts/ui/menu_flow/transmission_flow.gd
 
 ## Related docs
 
-* [Pregame Menu Flow](./!README.md)
+* [Pregame Menu Flow](./!INDEX.md)
 * [Local Pilot Flow](local-pilot-flow.md)
 * [Profile Flow](profile-flow.md)
-* [Client](../!README.md)
-* [Services](../../!README.md)
+* [Client](../!INDEX.md)
+* [Services](../../!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Cross-Mode Routing And Player Data
 
-Parent index: [Design Legacy](./!README.md)
+Parent index: [Design Legacy](./!INDEX.md)
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 ## Canonical Target State
 
-Parent index: [Game Server Simulation Targeting](./!README.md)
+Parent index: [Game Server Simulation Targeting](./!INDEX.md)
 
 ## Purpose
 
@@ -645,18 +645,18 @@ data-sync -check -packets -go -gds
 
 ## Related docs
 
-* [Game Server Simulation Targeting](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Targeting](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Active Player Avatar State](../players/active-player-avatar-state.md)
 * [Player Session State](../players/player-session-state.md)
 * [Player Death And Despawn](../players/player-death-and-despawn.md)
 * [Player Respawn](../players/player-respawn.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
 * [Input And Targeting](../../../client/input-and-targeting.md)
-* [Realtime Protocol](../../../../protocol/!README.md)
-* [Data](../../../../data/!README.md)
-* [Devtools](../../../../devtools/!README.md)
+* [Realtime Protocol](../../../../protocol/!INDEX.md)
+* [Data](../../../../data/!INDEX.md)
+* [Devtools](../../../../devtools/!INDEX.md)
 
 ## Notes
 

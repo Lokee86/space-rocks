@@ -1,6 +1,6 @@
 # Damage
 
-Parent index: [Combat](./!README.md)
+Parent index: [Combat](./!INDEX.md)
 
 ## Purpose
 
@@ -314,7 +314,7 @@ The client consumes server events as presentation facts. It should not infer aut
 
 The damage model participates with these systems:
 
-* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!README.md) owns the implementation-side combat docs.
+* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!INDEX.md) owns the implementation-side combat docs.
 * [Damage Resolution](../../services/game-server/simulation/combat/damage-resolution.md) owns the game-server resolver implementation boundary.
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md) owns collision-driven damage application and consequences.
 * [Radial Effects](../../services/game-server/simulation/combat/radial-effects.md) owns radial timing, coverage, and hit-intent behavior.
@@ -353,8 +353,8 @@ Future damage and effect presentation work is tracked in [Domain Backlog](../../
 
 ## Related docs
 
-* [Combat](./!README.md)
-* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!README.md)
+* [Combat](./!INDEX.md)
+* [Game Server Simulation Combat](../../services/game-server/simulation/combat/!INDEX.md)
 * [Damage Resolution](../../services/game-server/simulation/combat/damage-resolution.md)
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md)
 * [Radial Effects](../../services/game-server/simulation/combat/radial-effects.md)

@@ -1,6 +1,6 @@
 # Gameplay State Application
 
-Parent index: [Gameplay Runtime](./!README.md)
+Parent index: [Gameplay Runtime](./!INDEX.md)
 
 ## Purpose
 

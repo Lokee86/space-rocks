@@ -1,5 +1,5 @@
 # Devtools And Telemetry
-Parent index: [Devtools Planning](../!README.md)
+Parent index: [Devtools Planning](../!INDEX.md)
 
 ## Purpose
 

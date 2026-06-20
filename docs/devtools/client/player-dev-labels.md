@@ -1,6 +1,6 @@
 # Player Dev Labels
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -372,13 +372,13 @@ No dedicated player-dev-label formatter or player-dev-label context test file is
 
 ## Related docs
 
-* [Client Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Client Service](../../services/client/!README.md)
+* [Client Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Client Service](../../services/client/!INDEX.md)
 * [Client input and targeting](../../services/client/input-and-targeting.md)
-* [Client world sync](../../services/client/world-sync/!README.md)
-* [Realtime protocol](../../protocol/!README.md)
-* [Data](../../data/!README.md)
+* [Client world sync](../../services/client/world-sync/!INDEX.md)
+* [Realtime protocol](../../protocol/!INDEX.md)
+* [Data](../../data/!INDEX.md)
 
 ## Notes
 

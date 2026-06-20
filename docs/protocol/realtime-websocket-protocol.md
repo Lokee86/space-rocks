@@ -1,6 +1,6 @@
 ## Realtime WebSocket Protocol
 
-Parent index: [Protocol](./!README.md)
+Parent index: [Protocol](./!INDEX.md)
 
 ## Purpose
 

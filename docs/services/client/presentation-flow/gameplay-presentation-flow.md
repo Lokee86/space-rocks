@@ -1,6 +1,6 @@
 # Gameplay Presentation Flow
 
-Parent index: [Presentation Flow](./!README.md)
+Parent index: [Presentation Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -474,19 +474,19 @@ indicator placement follows the active ViewAnchor camera basis
 
 ## Related docs
 
-* [Presentation Flow](./!README.md)
-* [Client](../!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Presentation Flow](./!INDEX.md)
+* [Client](../!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 * [World Sync Coordinator](../world-sync/world-sync-coordinator.md)
 * [View Anchor And Visual Coordinates](../world-sync/view-anchor-and-visual-coordinates.md)
 * [Background And Viewport Presentation](background-and-viewport-presentation.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Runtime Processing](../gameplay-runtime/runtime-processing.md)
 * [HUD And Gameplay UI](../hud-and-gameplay-ui.md)
-* [Gameplay Event Presentation](../gameplay-event-presentation/!README.md)
+* [Gameplay Event Presentation](../gameplay-event-presentation/!INDEX.md)
 * [Gameplay Audio Flow](../gameplay-event-presentation/gameplay-audio-flow.md)
-* [Match End Flow](../match-end-flow/!README.md)
-* [Gameplay Menu Flow](../gameplay-menu-flow/!README.md)
+* [Match End Flow](../match-end-flow/!INDEX.md)
+* [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md)
 * [Constants pipeline](../../../data/stubs/constants-pipeline.md)
 
 ## Notes

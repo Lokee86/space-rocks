@@ -1,6 +1,6 @@
 ## Telemetry
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -521,8 +521,8 @@ Run packet generation checks after changing `shared/packets/debug.toml` or `shar
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Telemetry Overlays](../client/telemetry-overlays.md)
 * [Client Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
 * [Client Hitbox Overlays](../client/hitbox-overlays.md)

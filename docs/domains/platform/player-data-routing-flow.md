@@ -1,6 +1,6 @@
 # Player Data Routing Flow
 
-Parent index: [Platform](./!README.md)
+Parent index: [Platform](./!INDEX.md)
 
 ## Purpose
 
@@ -326,14 +326,14 @@ Those details belong in protocol, data, service, planning, or limits documentati
 
 ## Related docs
 
-* [Platform](./!README.md)
-* [Domains](../!README.md)
-* [Player Data](../../services/player-data/!README.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Client](../../services/client/!README.md)
-* [API Server](../../services/api-server/!README.md)
-* [Protocol](../../protocol/!README.md)
-* [Data](../../data/!README.md)
+* [Platform](./!INDEX.md)
+* [Domains](../!INDEX.md)
+* [Player Data](../../services/player-data/!INDEX.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Client](../../services/client/!INDEX.md)
+* [API Server](../../services/api-server/!INDEX.md)
+* [Protocol](../../protocol/!INDEX.md)
+* [Data](../../data/!INDEX.md)
 * [Account And Identity Current State](account-and-identity-current-state.md)
 * [Player Data Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)
 * [Profile Stats Flow](../../services/player-data/profile-stats-flow.md)

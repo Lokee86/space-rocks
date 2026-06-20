@@ -1,6 +1,6 @@
 ## Telemetry Overlays
 
-Parent index: [Client](./!README.md)
+Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
@@ -343,16 +343,16 @@ The telemetry context test verifies that showing the overlay allows processing t
 
 ## Related docs
 
-* [Client Devtools](./!README.md)
-* [Devtools](../!README.md)
-* [Client Networking Flow](../../services/client/networking-flow/!README.md)
+* [Client Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
+* [Client Networking Flow](../../services/client/networking-flow/!INDEX.md)
 * [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md)
 * [Gameplay State Application](../../services/client/gameplay-runtime/gameplay-state-application.md)
 * [Game Server Telemetry And Packet Routing](../../services/game-server/networking/telemetry-packet-routing.md)
-* [Game Server Networking](../../services/game-server/networking/!README.md)
+* [Game Server Networking](../../services/game-server/networking/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
-* [Protocol](../../protocol/!README.md)
+* [Protocol](../../protocol/!INDEX.md)
 
 ## Notes
 

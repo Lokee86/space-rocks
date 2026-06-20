@@ -1,6 +1,6 @@
 ## Source Of Truth Flow
 
-Parent index: [Technical](./!README.md)
+Parent index: [Technical](./!INDEX.md)
 
 ## Purpose
 
@@ -338,8 +338,8 @@ This document does not define future source-of-truth automation plans. Those bel
 
 ## Related docs
 
-* [Technical](./!README.md)
-* [Data](../../data/!README.md)
+* [Technical](./!INDEX.md)
+* [Data](../../data/!INDEX.md)
 * [Source Of Truth Map](../../data/source-of-truth-map.md)
 * [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
 * [Constants Pipeline](../../data/constants.md)
@@ -349,10 +349,10 @@ This document does not define future source-of-truth automation plans. Those bel
 * [Collision Shape Data](../../data/collision-shape-data.md)
 * [Asteroid Variants Data](../../data/asteroid-variants-data.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)
-* [Client](../../services/client/!README.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Player Data](../../services/player-data/!README.md)
-* [API Server](../../services/api-server/!README.md)
+* [Client](../../services/client/!INDEX.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Player Data](../../services/player-data/!INDEX.md)
+* [API Server](../../services/api-server/!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Match End And Results Flow
 
-Parent index: [Player Experience](./!README.md)
+Parent index: [Player Experience](./!INDEX.md)
 
 ## Purpose
 
@@ -403,20 +403,20 @@ Those belong in service, protocol, data, systems-design, limits, or planning doc
 
 ## Related docs
 
-* [Player Experience](./!README.md)
-* [Platform](../platform/!README.md)
-* [Client](../../services/client/!README.md)
-* [Client Match End Flow](../../services/client/match-end-flow/!README.md)
-* [Gameplay Menu Flow](../../services/client/gameplay-menu-flow/!README.md)
-* [Gameplay Runtime](../../services/client/gameplay-runtime/!README.md)
-* [Game Server](../../services/game-server/!README.md)
-* [Game Server Rooms](../../services/game-server/rooms/!README.md)
-* [Game Server Integrations](../../services/game-server/integrations/!README.md)
-* [Game Server Simulation](../../services/game-server/simulation/!README.md)
-* [Player Data](../../services/player-data/!README.md)
-* [API Server](../../services/api-server/!README.md)
-* [Data](../../data/!README.md)
-* [Protocol](../../protocol/!README.md)
+* [Player Experience](./!INDEX.md)
+* [Platform](../platform/!INDEX.md)
+* [Client](../../services/client/!INDEX.md)
+* [Client Match End Flow](../../services/client/match-end-flow/!INDEX.md)
+* [Gameplay Menu Flow](../../services/client/gameplay-menu-flow/!INDEX.md)
+* [Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Game Server Rooms](../../services/game-server/rooms/!INDEX.md)
+* [Game Server Integrations](../../services/game-server/integrations/!INDEX.md)
+* [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
+* [Player Data](../../services/player-data/!INDEX.md)
+* [API Server](../../services/api-server/!INDEX.md)
+* [Data](../../data/!INDEX.md)
+* [Protocol](../../protocol/!INDEX.md)
 * [Match Outcomes And Results Planning](../../planning/domains/gameplay/match-outcomes-and-results.md)
 
 ## Notes

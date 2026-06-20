@@ -1,5 +1,5 @@
 # Social And Community Systems
-Parent index: [Platform Planning](../!README.md)
+Parent index: [Platform Planning](../!INDEX.md)
 
 ## Purpose
 

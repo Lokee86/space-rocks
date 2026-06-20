@@ -1,6 +1,6 @@
 # Background And Viewport Presentation
 
-Parent index: [Presentation Flow](./!README.md)
+Parent index: [Presentation Flow](./!INDEX.md)
 
 ## Purpose
 
@@ -342,12 +342,12 @@ returning to gameplay after menu/session transitions does not orphan background 
 
 ## Related docs
 
-* [Presentation Flow](./!README.md)
-* [Client](../!README.md)
+* [Presentation Flow](./!INDEX.md)
+* [Client](../!INDEX.md)
 * [App Entry Composition](../app-shell-and-session/app-entry-composition.md)
 * [Client Viewport Config Flow](../app-shell-and-session/client-viewport-config-flow.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 * [View Anchor And Visual Coordinates](../world-sync/view-anchor-and-visual-coordinates.md)
 * [Hud And Gameplay UI](../hud-and-gameplay-ui.md)
 * [Constants pipeline](../../../data/stubs/constants-pipeline.md)

@@ -1,6 +1,6 @@
 # Service Startup
 
-Parent index: [Game Server Process](./!README.md)
+Parent index: [Game Server Process](./!INDEX.md)
 
 ## Purpose
 
@@ -511,16 +511,16 @@ cd services/player-data && go test -tags noembeddedsqlite ./...
 
 ## Related docs
 
-* [Game Server Process](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Integrations](../integrations/!README.md)
+* [Game Server Process](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Integrations](../integrations/!INDEX.md)
 * [Player Data HTTP Hosting](../integrations/player-data-http-hosting.md)
 * [Auth Verifier Integration](../integrations/auth-verifier-integration.md)
 * [Match Result Reporting](../integrations/match-result-reporting.md)
-* [Game Server Networking](../networking/!README.md)
-* [Game Server Rooms](../rooms/!README.md)
-* [Player Data](../../player-data/!README.md)
-* [API Server](../../api-server/!README.md)
+* [Game Server Networking](../networking/!INDEX.md)
+* [Game Server Rooms](../rooms/!INDEX.md)
+* [Player Data](../../player-data/!INDEX.md)
+* [API Server](../../api-server/!INDEX.md)
 
 ## Notes
 

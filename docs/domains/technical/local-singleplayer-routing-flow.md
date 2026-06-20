@@ -1,6 +1,6 @@
 # Local Single-Player Flow
 
-Parent index: [Technical](./!README.md)
+Parent index: [Technical](./!INDEX.md)
 
 ## Purpose
 
@@ -45,12 +45,12 @@ The active implementation keeps single-player boot independent of WebSocket auth
 
 ## Participating systems
 
-* [Client](../../services/client/!README.md) - owns menu intent, active single-player context, session boot, WebSocket target selection, outbound start packet sending, room-state caching, gameplay packet acceptance, presentation, replay, and navigation after match end.
-* [Game Server](../../services/game-server/!README.md) - owns WebSocket session handling, room creation, single-player room start, active game-player activation, authoritative gameplay simulation, room snapshots, match-over state, and match-result reporting.
-* [Player Data](../../services/player-data/!README.md) - owns Guest and Local Profile stat routing after match results are reported and owns Local Profile persistence behind the local profile routes.
-* [API Server](../../services/api-server/!README.md) - owns Authenticated Account auth and Rails-backed persistence, but local single-player startup does not depend on API-server auth admission.
-* [Protocol](../../protocol/!README.md) - owns the generated realtime packet contract used by the client and game server.
-* [Data](../../data/!README.md) - owns packet and constants source material that generate client and server packet helpers.
+* [Client](../../services/client/!INDEX.md) - owns menu intent, active single-player context, session boot, WebSocket target selection, outbound start packet sending, room-state caching, gameplay packet acceptance, presentation, replay, and navigation after match end.
+* [Game Server](../../services/game-server/!INDEX.md) - owns WebSocket session handling, room creation, single-player room start, active game-player activation, authoritative gameplay simulation, room snapshots, match-over state, and match-result reporting.
+* [Player Data](../../services/player-data/!INDEX.md) - owns Guest and Local Profile stat routing after match results are reported and owns Local Profile persistence behind the local profile routes.
+* [API Server](../../services/api-server/!INDEX.md) - owns Authenticated Account auth and Rails-backed persistence, but local single-player startup does not depend on API-server auth admission.
+* [Protocol](../../protocol/!INDEX.md) - owns the generated realtime packet contract used by the client and game server.
+* [Data](../../data/!INDEX.md) - owns packet and constants source material that generate client and server packet helpers.
 
 ## Authority boundaries
 
@@ -482,22 +482,22 @@ Those belong in service, protocol, data, planning, limits, or player-experience 
 
 ## Related docs
 
-* [Technical](./!README.md)
-* [Domains](../!README.md)
+* [Technical](./!INDEX.md)
+* [Domains](../!INDEX.md)
 * [Player Experience Gameplay Session Flow](../player-experience/gameplay-session-flow.md)
 * [Player Experience Local Pilot Profile Flow](../player-experience/local-pilot-profile-flow.md)
 * [Platform Account And Identity Current State](../platform/account-and-identity-current-state.md)
 * [Platform Player Data Routing Flow](../platform/player-data-routing-flow.md)
-* [Client](../../services/client/!README.md)
+* [Client](../../services/client/!INDEX.md)
 * [Client Session Boot And Network Target](../../services/client/app-shell-and-session/session-boot-and-network-target.md)
 * [Client Pregame Mode And Actions](../../services/client/pregame-menu-flow/pregame-mode-and-actions.md)
 * [Client Local Pilot Flow](../../services/client/pregame-menu-flow/local-pilot-flow.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Game Server Room Network Adapter](../../services/game-server/networking/room-network-adapter.md)
 * [Game Server Lobby And Start Rules](../../services/game-server/rooms/lobby-and-start-rules.md)
-* [Player Data](../../services/player-data/!README.md)
-* [Protocol](../../protocol/!README.md)
-* [Data](../../data/!README.md)
+* [Player Data](../../services/player-data/!INDEX.md)
+* [Protocol](../../protocol/!INDEX.md)
+* [Data](../../data/!INDEX.md)
 * [Current System Limits](../../limits/current-system-limits.md)
 
 ## Notes

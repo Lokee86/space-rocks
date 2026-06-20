@@ -1,6 +1,6 @@
 # Ships
 
-Parent index: [Entities](./!README.md)
+Parent index: [Entities](./!INDEX.md)
 
 ## Purpose
 
@@ -516,7 +516,7 @@ Future enemy and boss work may share lower-level concepts such as position, velo
 
 ## Related docs
 
-* [Entities](./!README.md)
+* [Entities](./!INDEX.md)
 * [Weapons](../combat/weapons.md)
 * [Damage](../combat/damage.md)
 * [Targeting](../combat/targeting.md)

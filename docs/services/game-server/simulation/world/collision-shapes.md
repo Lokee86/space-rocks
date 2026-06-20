@@ -1,6 +1,6 @@
 # Collision Shapes
 
-Parent index: [Game Server Simulation World](./!README.md)
+Parent index: [Game Server Simulation World](./!INDEX.md)
 
 ## Purpose
 
@@ -495,9 +495,9 @@ go test -buildvcs=false ./tests/game -run 'Collision|Respawn|Pickup|Devtools|Shi
 
 ## Related docs
 
-* [Game Server Simulation World](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation World](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Pickup Collection](../pickups/pickup-collection.md)
 * [Pickup Entity Lifecycle](../pickups/pickup-entity-lifecycle.md)

@@ -1,6 +1,6 @@
 # Service Shutdown
 
-Parent index: [Game Server Process](./!README.md)
+Parent index: [Game Server Process](./!INDEX.md)
 
 ## Purpose
 
@@ -82,9 +82,9 @@ This document and process boundary do not own:
 * Auth verifier internals.
 * Logging policy beyond process-level shutdown observations.
 
-Room-level cleanup belongs under [Game Server Rooms](../rooms/!README.md).
+Room-level cleanup belongs under [Game Server Rooms](../rooms/!INDEX.md).
 
-WebSocket disconnect behavior belongs under [Game Server Networking](../networking/!README.md).
+WebSocket disconnect behavior belongs under [Game Server Networking](../networking/!INDEX.md).
 
 ## Domain roles
 
@@ -227,13 +227,13 @@ The current test surface verifies the reusable room/game cleanup primitives. It 
 
 ## Related docs
 
-* [Game Server Process](./!README.md)
-* [Game Server Rooms](../rooms/!README.md)
-* [Game Server Networking](../networking/!README.md)
-* [Game Server Observability](../observability/!README.md)
-* [Game Server Integrations](../integrations/!README.md)
-* [Protocol](../../../protocol/!README.md)
-* [Services](../../!README.md)
+* [Game Server Process](./!INDEX.md)
+* [Game Server Rooms](../rooms/!INDEX.md)
+* [Game Server Networking](../networking/!INDEX.md)
+* [Game Server Observability](../observability/!INDEX.md)
+* [Game Server Integrations](../integrations/!INDEX.md)
+* [Protocol](../../../protocol/!INDEX.md)
+* [Services](../../!INDEX.md)
 
 ## Notes
 

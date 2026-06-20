@@ -1,6 +1,6 @@
 # App Entry Composition
 
-Parent index: [App Shell And Session](./!README.md)
+Parent index: [App Shell And Session](./!INDEX.md)
 
 ## Purpose
 
@@ -428,18 +428,18 @@ These tests verify the app-entry route wiring, shared profile-provider compositi
 
 ## Related docs
 
-* [App Shell And Session](./!README.md)
-* [Client](../!README.md)
+* [App Shell And Session](./!INDEX.md)
+* [Client](../!INDEX.md)
 * [Client Menu Flow](../menu-flow.md)
 * [Auth Session Flow](../auth-session-flow.md)
 * [Client HTTP API Flow](../client-http-api-flow.md)
-* [Networking Flow](../networking-flow/!README.md)
-* [Lobby Flow](../lobby-flow/!README.md)
-* [Pregame Menu Flow](../pregame-menu-flow/!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
-* [Gameplay Menu Flow](../gameplay-menu-flow/!README.md)
-* [Match End Flow](../match-end-flow/!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Networking Flow](../networking-flow/!INDEX.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
+* [Pregame Menu Flow](../pregame-menu-flow/!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md)
+* [Match End Flow](../match-end-flow/!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Match Result Sinks
 
-Parent index: [Player Data](./!README.md)
+Parent index: [Player Data](./!INDEX.md)
 
 ## Purpose
 

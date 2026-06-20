@@ -1,6 +1,6 @@
 ## Internal API Surface
 
-Parent index: [API Server](./!README.md)
+Parent index: [API Server](./!INDEX.md)
 
 ## Purpose
 
@@ -371,7 +371,7 @@ cd services/player-data && go test ./playerdata
 
 ## Related docs
 
-* [API Server](./!README.md)
+* [API Server](./!INDEX.md)
 * [Auth And OAuth](auth-and-oauth.md)
 * [Player Stats And Match Results](player-stats-and-match-results.md)
 

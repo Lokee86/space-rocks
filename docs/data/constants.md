@@ -1,6 +1,6 @@
 # Constants Pipeline
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -641,7 +641,7 @@ Do not use server-only verification for shared constants that also affect client
 
 ## Related docs
 
-* [Data](./!README.md)
+* [Data](./!INDEX.md)
 * [Data Sync And SSOT Pipeline](data-sync-and-ssot-pipeline.md)
 * [Source Of Truth Map](source-of-truth-map.md)
 * [Packet Schemas](packet-schemas.md)

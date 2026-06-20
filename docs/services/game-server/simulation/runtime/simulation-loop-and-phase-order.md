@@ -1,6 +1,6 @@
 # Simulation Loop And Phase Order
 
-Parent index: [Game Server Simulation Runtime](./!README.md)
+Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 ## Purpose
 
@@ -568,9 +568,9 @@ go test -buildvcs=false ./internal/game ./tests/game
 
 ## Related docs
 
-* [Game Server Simulation Runtime](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Runtime](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Room Match Lifecycle](../../../rooms/room-match-lifecycle.md)
 * [Player Input Routing](../../players/player-input-routing.md)
 * [Player Pause And Suspension](../../players/player-pause-and-suspension.md)
@@ -584,9 +584,9 @@ go test -buildvcs=false ./internal/game ./tests/game
 * [Runtime Entity Store](runtime-entity-store.md)
 * [State Packet Projection](state-packet-projection.md)
 * [Presentation Event Queue](presentation-event-queue.md)
-* [Realtime Protocol](../../../../../protocol/!README.md)
-* [Data](../../../../../data/!README.md)
-* [Devtools](../../../../../devtools/!README.md)
+* [Realtime Protocol](../../../../../protocol/!INDEX.md)
+* [Data](../../../../../data/!INDEX.md)
+* [Devtools](../../../../../devtools/!INDEX.md)
 
 ## Notes
 

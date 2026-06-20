@@ -1,6 +1,6 @@
 ## Toggles
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -681,13 +681,13 @@ data-sync -diff -packets -go -gds
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
-* [Devtools](../!README.md)
+* [Server Devtools](./!INDEX.md)
+* [Devtools](../!INDEX.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
 * [Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
 * [Devtools Window](../client/devtools-window.md)
 * [Target And Placement Debugging](../client/target-and-placement-debugging.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Game Server Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
 * [Game Server Outbound Message Flow](../../services/game-server/networking/outbound-message-flow.md)
 * [Simulation Loop And Phase Order](../../services/game-server/simulation/runtime/simulation-loop-and-phase-order.md)

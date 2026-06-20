@@ -1,6 +1,6 @@
 # Outbound Packet Routing
 
-Parent index: [Game Server Networking](./!README.md)
+Parent index: [Game Server Networking](./!INDEX.md)
 
 ## Purpose
 
@@ -392,12 +392,12 @@ The documented focused test paths for outbound routing are:
 
 ## Related docs
 
-- [Game Server Networking](./!README.md)
-- [Game Server](../!README.md)
+- [Game Server Networking](./!INDEX.md)
+- [Game Server](../!INDEX.md)
 - [Client Outbound Packet Sending](../../client/networking-flow/outbound-packet-sending.md)
 - [Client Inbound Packet Routing](../../client/networking-flow/inbound-packet-routing.md)
-- [Protocol](../../../protocol/!README.md)
-- [Data](../../../data/!README.md)
+- [Protocol](../../../protocol/!INDEX.md)
+- [Data](../../../data/!INDEX.md)
 - [Realtime Protocol Architecture](../../../planning/protocol/realtime-protocol-architecture.md)
 - [Network Observability And Packet Budget](../../../planning/technical/network-observability-and-packet-budget.md)
 

@@ -1,6 +1,6 @@
 # Toroidal Space And Motion
 
-Parent index: [Game Server Simulation World](./!README.md)
+Parent index: [Game Server Simulation World](./!INDEX.md)
 
 ## Purpose
 
@@ -618,9 +618,9 @@ go test -buildvcs=false ./tests/space ./tests/game -run 'Wrap|Delta|Distance|Dir
 
 ## Related docs
 
-* [Game Server Simulation World](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation World](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Simulation Loop And Phase Order](../runtime/simulation-loop-and-phase-order.md)
 * [Runtime Entity Store](../runtime/runtime-entity-store.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)

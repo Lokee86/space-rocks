@@ -1,6 +1,6 @@
 # Client Menu Flow
 
-Parent index: [Client Legacy](./!README.md)
+Parent index: [Client Legacy](./!INDEX.md)
 
 This document defines the current client menu-flow ownership, route structure, and implemented menu behavior.
 

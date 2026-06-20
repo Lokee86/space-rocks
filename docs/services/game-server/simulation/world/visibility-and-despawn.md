@@ -1,6 +1,6 @@
 # Visibility And Despawn
 
-Parent index: [Game Server Simulation World](./!README.md)
+Parent index: [Game Server Simulation World](./!INDEX.md)
 
 ## Purpose
 
@@ -414,10 +414,10 @@ Relevant behavior to preserve:
 
 ## Related docs
 
-* [Game Server Simulation World](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Services](../../../!README.md)
+* [Game Server Simulation World](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Services](../../../!INDEX.md)
 * [Player Camera View State](../players/player-camera-view-state.md)
 * [Player Death And Despawn](../players/player-death-and-despawn.md)
 * [Active Player Avatar State](../players/active-player-avatar-state.md)
@@ -429,9 +429,9 @@ Relevant behavior to preserve:
 * [Client Viewport Config Flow](../../../client/app-shell-and-session/client-viewport-config-flow.md)
 * [World Sync Coordinator](../../../client/world-sync/world-sync-coordinator.md)
 * [View Anchor And Visual Coordinates](../../../client/world-sync/view-anchor-and-visual-coordinates.md)
-* [Systems Design World](../../../../systems-design/world/!README.md)
-* [Protocol](../../../../protocol/!README.md)
-* [Data](../../../../data/!README.md)
+* [Systems Design World](../../../../systems-design/world/!INDEX.md)
+* [Protocol](../../../../protocol/!INDEX.md)
+* [Data](../../../../data/!INDEX.md)
 
 ## Notes
 

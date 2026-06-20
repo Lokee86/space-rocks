@@ -1,6 +1,6 @@
 # Spawning And Space
 
-Parent index: [World](./!README.md)
+Parent index: [World](./!INDEX.md)
 
 ## Purpose
 
@@ -318,8 +318,8 @@ The relevant current issue is that vertical despawn behavior is limited by the r
 
 ## Related docs
 
-* [World](./!README.md)
-* [Systems Design](../!README.md)
+* [World](./!INDEX.md)
+* [Systems Design](../!INDEX.md)
 * [World Authority](world-authority.md)
 * [Toroidal Wrap](toroidal-wrap.md)
 * [Asteroids](../entities/asteroids.md)

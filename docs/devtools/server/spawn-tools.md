@@ -1,6 +1,6 @@
 # Spawn Tools
 
-Parent index: [Server](./!README.md)
+Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
@@ -653,10 +653,10 @@ data-sync -check -constants -go
 
 ## Related docs
 
-* [Server Devtools](./!README.md)
+* [Server Devtools](./!INDEX.md)
 * [Client Target And Placement Debugging](../client/target-and-placement-debugging.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
-* [Game Server](../../services/game-server/!README.md)
+* [Game Server](../../services/game-server/!INDEX.md)
 * [Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
 * [Asteroid Spawning And Variants](../../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
 * [Pickup Entity Lifecycle](../../services/game-server/simulation/pickups/pickup-entity-lifecycle.md)

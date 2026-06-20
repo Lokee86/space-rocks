@@ -1,6 +1,6 @@
 # Room Manager
 
-Parent index: [Game Server Rooms](./!README.md)
+Parent index: [Game Server Rooms](./!INDEX.md)
 
 ## Purpose
 
@@ -415,19 +415,19 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 
 ## Related docs
 
-* [Game Server Rooms](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Process](../process/!README.md)
+* [Game Server Rooms](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Process](../process/!INDEX.md)
 * [Service Startup](../process/service-startup.md)
 * [Service Shutdown](../process/service-shutdown.md)
-* [Game Server Networking](../networking/!README.md)
+* [Game Server Networking](../networking/!INDEX.md)
 * [Room Network Adapter](../networking/room-network-adapter.md)
-* [Game Server Integrations](../integrations/!README.md)
+* [Game Server Integrations](../integrations/!INDEX.md)
 * [Match Result Reporting](../integrations/match-result-reporting.md)
-* [Game Server Observability](../observability/!README.md)
+* [Game Server Observability](../observability/!INDEX.md)
 * [Logging And Diagnostics](../observability/logging-and-diagnostics.md)
-* [Protocol](../../../protocol/!README.md)
-* [Services index](../../!README.md)
+* [Protocol](../../../protocol/!INDEX.md)
+* [Services index](../../!INDEX.md)
 
 ## Notes
 

@@ -1,6 +1,6 @@
 # Collision Shape Data
 
-Parent index: [Data](./!README.md)
+Parent index: [Data](./!INDEX.md)
 
 ## Purpose
 
@@ -366,7 +366,7 @@ client/scripts/gameplay/
 
 ## Related docs
 
-* [Data](./!README.md)
+* [Data](./!INDEX.md)
 * [Source Of Truth Map](source-of-truth-map.md)
 * [Data Sync And SSOT Pipeline](data-sync-and-ssot-pipeline.md)
 * [Server Collision Shapes](../services/game-server/simulation/world/collision-shapes.md)
