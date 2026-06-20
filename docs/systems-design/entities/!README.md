@@ -18,15 +18,15 @@ This folder owns conceptual docs about entity roles, behavior, authority boundar
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [asteroids.md](asteroids.md) - Asteroid entity systems-design documentation.
+- [pickup-entities.md](pickup-entities.md) - Pickup entity systems-design documentation.
+- [projectiles.md](projectiles.md) - Projectile entity systems-design documentation.
+- [ships.md](ships.md) - Ship entity systems-design documentation.
+- [variants.md](variants.md) - Entity variants systems-design documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [asteroids.md](stubs/asteroids.md) - Stub: asteroid entity systems-design documentation.
-- [pickup-entities.md](stubs/pickup-entities.md) - Stub: pickup entity systems-design documentation.
-- [projectiles.md](stubs/projectiles.md) - Stub: projectile entity systems-design documentation.
-- [ships.md](stubs/ships.md) - Stub: ship entity systems-design documentation.
-- [variants.md](stubs/variants.md) - Stub: entity variants systems-design documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

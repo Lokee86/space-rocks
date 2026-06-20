@@ -43,7 +43,7 @@ This folder owns legacy design source docs for migration reference.
 
 ## Related Docs
 
-- [Legacy index](../!README.md)
+- [Legacy index](./../!README.md)
 
 ## Notes
 

@@ -265,12 +265,10 @@ Future and unresolved policy belongs in planning docs.
 - [Game Server service index](../../services/game-server/!README.md)
 - [API Server service index](../../services/api-server/!README.md)
 - [Player Data service index](../../services/player-data/!README.md)
-- [Account And Identity Systems planning](../../planning/platform/account-and-identity-systems.md)
-- [Multiplayer Session And Lifecycle planning](../../planning/platform/stubs/multiplayer-session-and-lifecycle.md)
-- [Player Data And Persistence planning](../../planning/platform/stubs/player-data-and-persistence.md)
+- [Account And Identity Systems planning](../../planning/domains/platform/account-and-identity-systems.md)
+- [Multiplayer Session And Lifecycle planning](../../planning/domains/platform/stubs/multiplayer-session-and-lifecycle.md)
+- [Player Data And Persistence planning](../../planning/domains/platform/stubs/player-data-and-persistence.md)
 - [Current System Limits](../../limits/current-system-limits.md)
-- [Legacy Cross-Mode Routing And Player Data](../../legacy/design/cross-mode-routing-and-player-data.md)
-- [Legacy Player-Data Routing Reference](../../legacy/design/player-data-routing.md)
 
 ## Notes
 

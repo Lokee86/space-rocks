@@ -135,8 +135,6 @@ GET    /api/player-data/local-profiles/default
 PUT    /api/player-data/local-profiles/default
 ```
 
-The exact Go implementation paths for those player-data HTTP handlers still need confirmation.
-
 ## Source-of-truth files
 
 ```text
@@ -316,15 +314,16 @@ Client HTTP consumer:
 client/scripts/api/api_http_client.gd
 ```
 
-Paths still requiring confirmation:
+Current implementation paths:
 
 ```text
-Rails controller tests that call assert_openapi_contract!
-Go player-data HTTP handler registration
-Go local-profile HTTP handlers
-Go RailsStore authenticated-account HTTP adapter
-Go game-server token verification client
-Go match-result reporting path into player-data
+services/api-server/test/contracts/openapi_contract_test.rb
+services/game-server/cmd/game-server/player_data_http.go
+services/player-data/httpapi/profile_handler.go
+services/player-data/httpapi/local_profiles_handler.go
+services/player-data/playerdata/rails_store.go
+services/game-server/internal/authclient/client.go
+services/game-server/internal/matchreporting/runtime_reporter.go
 ```
 
 Important non-ownership boundaries:
@@ -346,7 +345,7 @@ OpenAPI is not currently runtime middleware.
 
 ## Notes
 
-The Go implementation paths and Rails controller-test coverage still need confirmation.
+Runtime OpenAPI middleware is still not active.
 
 If future work focuses on OpenAPI generation, source updates, generated outputs, or pipeline commands, split that material into a data doc instead of expanding this protocol doc into a data pipeline document.
 

@@ -19,18 +19,16 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [asteroid-variant-contract.md](asteroid-variant-contract.md) - Asteroid Variant Contract documentation.
+- [gameplay-packets.md](gameplay-packets.md) - Gameplay packet documentation.
+- [http-api-contracts.md](http-api-contracts.md) - HTTP API contract documentation.
 - [http-contract-enforcement.md](http-contract-enforcement.md) - HTTP request/response contract ownership and enforcement across services.
+- [lobby-packets.md](lobby-packets.md) - Lobby packet documentation.
+- [player-data-http-api.md](player-data-http-api.md) - Player-data HTTP API documentation.
+- [realtime-websocket-protocol.md](realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [asteroid-variant-contract.md](stubs/asteroid-variant-contract.md) - Stub: Asteroid Variant Contract documentation.
-- [devtools-packets.md](stubs/devtools-packets.md) - Stub: devtools packet documentation.
-- [gameplay-packets.md](stubs/gameplay-packets.md) - Stub: gameplay packet documentation.
-- [http-api-contracts.md](stubs/http-api-contracts.md) - Stub: HTTP API contract documentation.
-- [lobby-packets.md](stubs/lobby-packets.md) - Stub: lobby packet documentation.
-- [player-data-http-api.md](stubs/player-data-http-api.md) - Stub: player-data HTTP API documentation.
-- [realtime-websocket-protocol.md](stubs/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

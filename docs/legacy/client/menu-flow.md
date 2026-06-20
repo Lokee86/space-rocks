@@ -64,7 +64,7 @@ Mode and state belong outside route names.
 - Single Player routes to `pregame_menu.tscn` in single-player mode.
 - Multiplayer routes to `pregame_menu.tscn` in multiplayer mode.
 - Quit remains unchanged.
-- Options is unavailable; see [current system limits](../limits/current-system-limits.md).
+- Options is unavailable; see [current system limits](./../limits/current-system-limits.md).
 
 ## Pregame Menu
 
@@ -76,7 +76,7 @@ It should connect the active mode, route intent, and back behavior, but it shoul
 
 - Play Endless starts the current single-player gameplay flow.
 - Play Endless clears menu UI for gameplay through the menu-flow seam.
-- Unavailable single-player pregame actions are tracked in [current system limits](../limits/current-system-limits.md).
+- Unavailable single-player pregame actions are tracked in [current system limits](./../limits/current-system-limits.md).
 - Profile opens `profile_readout.tscn` in `TransmissionScreen/ScreenDisplay`.
 - Select Pilot opens the Local Pilot selector in the primary `TransmissionScreen`.
 - Callsign defaults to Guest.

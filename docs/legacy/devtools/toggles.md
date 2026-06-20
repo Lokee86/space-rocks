@@ -419,7 +419,7 @@ logging.Game.Info("debug player freeze toggled",
 )
 ```
 
-See [server logging](../server/logging.md) for logging configuration.
+See [server logging](./../server/logging.md) for logging configuration.
 
 ## Testing
 

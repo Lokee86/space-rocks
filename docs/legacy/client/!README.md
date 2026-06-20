@@ -35,7 +35,7 @@ This folder owns legacy client source docs for migration reference.
 
 ## Related Docs
 
-- [Legacy index](../!README.md)
+- [Legacy index](./../!README.md)
 
 ## Notes
 

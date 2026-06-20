@@ -62,7 +62,7 @@ Current client runtime seams:
 - `client/scripts/networking/client_connection_service.gd`: public connection facade and signal bridge; it no longer owns packet-family construction or packet-family routing.
 - `client/scripts/networking/packets/packet_codec.gd`: client packet wire encode/decode wrapper around JSON parsing and `JSON.stringify`. It owns wire parsing and envelope validation only; packet-specific readers validate payload details.
 - `client/scripts/world/world_sync.gd`: coordinator for server-state rendering. It delegates player/render-origin work to `client/scripts/world/player_render/player_render_api.gd` and delegates bullet/asteroid node ownership, packet application, cleanup, and interpolation to the focused sync owners. For targeting, it only exposes `target_source()`; target selection orchestration lives above it in `GameplayTargetingContext`.
-- Pickup rendering rules are documented in [docs/client/pickup-rendering.md](../client/pickup-rendering.md); `world_sync` passes through `pickup_class` for scene-family selection and `pickup_type` for `Badge` icon selection.
+- Pickup rendering rules are documented in [docs/client/pickup-rendering.md](./../client/pickup-rendering.md); `world_sync` passes through `pickup_class` for scene-family selection and `pickup_type` for `Badge` icon selection.
 - `client/scripts/entities/player.gd`: local player node and packet-facing movement/shoot input state.
 - `client/scripts/ui/`: UI nodes/controllers.
 - `client/scripts/generated/networking/packets/packets.gd` and `client/scripts/generated/constants/constants.gd`: generated/shared client packet helpers and constants.
@@ -98,7 +98,7 @@ Client runtime flow:
 7. `client/scripts/world/world_sync.gd` updates renderable player/render-origin state through `PlayerRenderApi` and updates bullet and asteroid state through their focused sync owners.
 8. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
 
-Match-end client presentation is summarized in [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
+Match-end client presentation is summarized in [docs/client/match-end-and-gameplay-ui.md](./../client/match-end-and-gameplay-ui.md).
 
 Rendering is scene/node based in Godot. The client renders the ship, asteroids, bullets, background, UI, animations, and audio. Normal gameplay follows the active ViewAnchor render origin after initial spawn. Spectate keeps viewport/camera ownership local/client-owned, uses the selected active player as the current view reference only through the ViewAnchor seam, and requires the background/parallax to sample the same view reference as the camera.
 
@@ -414,7 +414,7 @@ It uses `log/slog`, logs to stderr, and supports category loggers:
 - `logging.Rooms`
 - `logging.Game`
 
-Configuration is environment-variable based. See [server logging](../server/logging.md).
+Configuration is environment-variable based. See [server logging](./../server/logging.md).
 
 Client logging is implemented in:
 
@@ -422,7 +422,7 @@ Client logging is implemented in:
 client/scripts/logging/logger.gd
 ```
 
-Use `ClientLogger` for new client lifecycle, UI, networking, packet, HUD, input, and world-sync diagnostics. See [client logging](../client/logging.md).
+Use `ClientLogger` for new client lifecycle, UI, networking, packet, HUD, input, and world-sync diagnostics. See [client logging](./../client/logging.md).
 
 ## Ruby API Server Architecture
 
@@ -446,9 +446,9 @@ Rails migrations under `services/api-server/db/migrate/` own the API database sc
 
 The API server should not own real-time game simulation. The Go game server should remain responsible for live rooms, websocket gameplay, collisions, scoring during a match, lives, death, respawn, and authoritative state packets. The Go game server should not read auth tables directly.
 
-Rails now also owns the Discord OAuth browser login-session handoff used by the Godot client: Godot receives a Space Rocks bearer token through login-session exchange, validates that token with `/api/auth/me`, and keeps single-player independent of Rails auth. The Go game-server auth boundary should remain an explicit token-verification seam rather than direct access to Rails tables. See [Ruby API server](../api/ruby-api-server.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
+Rails now also owns the Discord OAuth browser login-session handoff used by the Godot client: Godot receives a Space Rocks bearer token through login-session exchange, validates that token with `/api/auth/me`, and keeps single-player independent of Rails auth. The Go game-server auth boundary should remain an explicit token-verification seam rather than direct access to Rails tables. See [Ruby API server](./../api/ruby-api-server.md) and [cross-mode routing and player data](cross-mode-routing-and-player-data.md).
 
-Current API considerations live in [docs/api/ruby-api-server.md](../api/ruby-api-server.md), [docs/limits/current-system-limits.md](../limits/current-system-limits.md), and [docs/planning/domain-backlog.md](../planning/domain-backlog.md).
+Current API considerations live in [docs/api/ruby-api-server.md](./../api/ruby-api-server.md), [docs/limits/current-system-limits.md](./../limits/current-system-limits.md), and [docs/planning/domain-backlog.md](./../planning/domain-backlog.md).
 
 ## Data Flow
 
@@ -566,7 +566,7 @@ Telemetry seam notes:
 - devtools window owns raw `LocalPlayerTelemetry` and `TargetTelemetry` state inspection
 - world telemetry overlay is a separate devtools seam for glanceable world/performance/network metrics
 
-For key mappings and detailed behavior, see [devtool toggles](../devtools/toggles.md).
+For key mappings and detailed behavior, see [devtool toggles](./../devtools/toggles.md).
 
 Telemetry timing ownership notes:
 
@@ -579,7 +579,7 @@ Telemetry timing ownership notes:
 
 ## Related Limits
 
-See [current system limits](../limits/current-system-limits.md) and [planning notes](../planning/domain-backlog.md).
+See [current system limits](./../limits/current-system-limits.md) and [planning notes](./../planning/domain-backlog.md).
 
 ## Design Rules And Conventions
 

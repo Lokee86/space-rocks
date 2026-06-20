@@ -69,4 +69,4 @@ Do not let the client decide collision behavior. The server owns the selected sh
 
 ## Related Limits
 
-- [Player Build Limits](../limits/player-build-limits.md)
+- [Player Build Limits](./../limits/player-build-limits.md)

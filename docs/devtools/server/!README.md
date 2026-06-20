@@ -18,14 +18,26 @@ This folder owns docs for server-side development and debug tooling.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [clear-entity-tools.md](clear-entity-tools.md) - Server devtools clear entity tools documentation.
+- [collision-body-telemetry.md](collision-body-telemetry.md) - Server devtools collision body telemetry documentation.
+- [command-routing-and-build-gates.md](command-routing-and-build-gates.md) - Server devtools command routing and build gates documentation.
+- [continuous-bullet-streams.md](continuous-bullet-streams.md) - Server devtools continuous bullet streams documentation.
+- [debug-command-surface.md](debug-command-surface.md) - Server devtools debug command surface documentation.
+- [debug-shape-catalog-output.md](debug-shape-catalog-output.md) - Server devtools debug shape catalog output documentation.
+- [debug-status-output.md](debug-status-output.md) - Server devtools debug status output documentation.
+- [entity-spawn-and-placement-tools.md](entity-spawn-and-placement-tools.md) - Server devtools entity spawn and placement tools documentation.
+- [game-export-devtools-seams.md](game-export-devtools-seams.md) - Server game export devtools seams documentation.
+- [hitbox-and-shape-debugging.md](hitbox-and-shape-debugging.md) - Server hitbox and shape debugging documentation.
+- [player-counters.md](player-counters.md) - Server devtools player counters documentation.
+- [player-targeting-and-scopes.md](player-targeting-and-scopes.md) - Server devtools player targeting and scope documentation.
+- [respawn-tools.md](respawn-tools.md) - Server devtools respawn tools documentation.
+- [spawn-tools.md](spawn-tools.md) - Spawn Tools documentation.
+- [telemetry.md](telemetry.md) - Server devtools telemetry documentation.
+- [toggles.md](toggles.md) - Server devtools toggles documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [hitbox-and-shape-debugging.md](stubs/hitbox-and-shape-debugging.md) - Stub: server hitbox and shape debugging documentation.
-- [spawn-and-respawn-tools.md](stubs/spawn-and-respawn-tools.md) - Stub: server devtools spawn and respawn tools documentation.
-- [telemetry.md](stubs/telemetry.md) - Stub: server devtools telemetry documentation.
-- [toggles.md](stubs/toggles.md) - Stub: server devtools toggles documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

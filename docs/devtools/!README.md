@@ -24,6 +24,7 @@ This folder owns the devtools documentation indexes for current Space Rocks tool
 
 - [API Server](api-server/!README.md) - API-server devtools documentation index.
 - [Client](client/!README.md) - Client devtools documentation index.
+- [Design](design/!README.md) - Devtools design documentation index.
 - [Server](server/!README.md) - Server devtools documentation index.
 <!-- doc-ledger:folders:end -->
 

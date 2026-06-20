@@ -34,7 +34,7 @@ This folder owns the legacy documentation index and migration-source navigation.
 
 ## Related Docs
 
-- [Top-level docs index](../!README.md)
+- [Top-level docs index](../../bruno-api/!README.md)
 
 ## Notes
 
