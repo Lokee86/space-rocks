@@ -5,7 +5,7 @@ This file is volatile project memory. Read it only when the task depends on curr
 
 Keep this file shorter than permanent docs. Remove stale notes aggressively.
 
-For stable architecture/runtime maps, use [docs/design/architecture.md](../design/architecture.md).
+For stable architecture/runtime maps, use [docs/systems-design/!README.md](../systems-design/!README.md).
 For stable current-session orientation, use [docs/agent/session-primer.md](session-primer.md).
 For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](../devtools/toggles.md).
 
@@ -30,8 +30,8 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - `GameplayRuntimeContext` is runtime wiring only; do not treat it as a read-model passthrough bucket.
 - Server hitbox overlay data comes through `WorldSync`/devtools seams, not `GameplayRuntimeContext`.
 - Targeting now sits above `MouseActionFlow`; `GameplayTargetingContext` owns target selection orchestration and `WorldSync` only exposes `target_source()`.
-- Weapons live in `services/game-server/internal/game/weapons`; see [docs/design/weapons.md](../design/weapons.md).
-- Radial effects live in `services/game-server/internal/game/effects/radial`; see [docs/design/radial-effects.md](../design/radial-effects.md).
+- Weapons live in `services/game-server/internal/game/weapons`; see [docs/services/game-server/simulation/combat/weapons-and-projectile-fire.md](../services/game-server/simulation/combat/weapons-and-projectile-fire.md).
+- Radial effects live in `services/game-server/internal/game/effects/radial`; see [docs/services/game-server/simulation/combat/radial-effects.md](../services/game-server/simulation/combat/radial-effects.md).
 - Weapon profiles can carry impact effects, torpedo uses a radial impact effect, radial effects emit hit intents, and Game applies radial hits through the damage seam.
 - Room membership/owner state is behind the room membership owner seam.
 - `websocket_write.go` only writes outbound/presentation state now; it does not advance game-over lifecycle.
@@ -43,8 +43,8 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - API/business/backend concerns should remain out of the Go real-time game server unless explicitly redirected.
 - The user strongly prefers small implementation prompts and quick reviewable diffs.
 - The user prefers scalable structure and useful seams over dumping more behavior into existing large files.
-- Server-side account and local-profile work must follow [docs/design/cross-mode-routing-and-player-data.md](../design/cross-mode-routing-and-player-data.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, and gameplay code must not directly choose embedded DB vs Rails/API.
-- Account-shaped player data must also follow [docs/design/player-data-schema-ssot.md](../design/player-data-schema-ssot.md): `shared/player_data` contracts now exist, `shared/packets/player_data.toml` defines player-data packets, and gameplay code must not depend directly on Rails tables or embedded DB tables.
+- Server-side account and local-profile work must follow [docs/domains/platform/player-data-routing-flow.md](../domains/platform/player-data-routing-flow.md): Local Single-Player allows Guest and Local Profile only, rejects Authenticated Account, Online Multiplayer requires Authenticated Account, and gameplay code must not directly choose embedded DB vs Rails/API.
+- Account-shaped player data must also follow [docs/data/player-data-schema.md](../data/player-data-schema.md): `shared/player_data` contracts now exist, `shared/packets/player_data.toml` defines player-data packets, and gameplay code must not depend directly on Rails tables or embedded DB tables.
 - `services/player-data` exists as a sibling Go module with an independent codec, generated protocol packets, and a configured runtime builder.
 - `services/player-data` now has the Phase 4 routes for `authenticated_account` through the Rails adapter, `local_profile` through the SQLite-backed route in the standard no-tag development build, and `guest` through singleton memory-backed stats.
 - `cmd/game-server` can host the configured player-data runtime in-process through composition.
@@ -95,7 +95,7 @@ For current devtool toggle behavior and hotkeys, use [docs/devtools/toggles.md](
 - Multiplayer Pregame Logout returns to Main Menu signed out.
 - Lobby Leave now returns to Multiplayer Pregame without logging out.
 - Client menu-flow Phase 5 / Profile readout transmission is complete and green.
-- Client match-end Phase 6 / Match Results is complete and green; see [docs/client/match-end-and-gameplay-ui.md](../client/match-end-and-gameplay-ui.md).
+- Client match-end Phase 6 / Match Results is complete and green; see [docs/services/client/match-end-flow/!README.md](../services/client/match-end-flow/!README.md).
 - Client menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green.
 - `UserInterface` is the CanvasLayer in `client/scenes/game.tscn`.
 - `GameplayUserInterface` is the gameplay-session UI root.

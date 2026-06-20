@@ -85,7 +85,7 @@ Example:
 - [Game Server](../../services/game-server/!README.md)
 - [Client](../../services/client/!README.md)
 - [Player Data](../../services/player-data/!README.md)
-- [Realtime Protocol](../../protocol/realtime/!README.md)
+- [Realtime Protocol](../../protocol/realtime-websocket-protocol.md)
 - [Data Pipeline](../../data/!README.md)
 ```
 

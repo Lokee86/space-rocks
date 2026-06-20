@@ -305,7 +305,7 @@ The detailed game-server implementation map belongs in the game-server simulatio
 
 * Canonical gameplay target identity is `target_kind` plus `target_id`.
 * New normal gameplay paths must not introduce `target_player_id`.
-* `target_player_id` remains a legacy player-only devtools/debug compatibility surface.
+* `target_player_id` remains a player-only devtools/debug compatibility surface.
 * Client candidate selection is not authority.
 * Server-selected target state must be confirmed through authoritative gameplay state readback.
 * Point-based selection must validate both the requested target identity and server-side collision-body containment.
@@ -338,7 +338,7 @@ The detailed game-server implementation map belongs in the game-server simulatio
 
 ## Notes
 
-The most important legacy rule preserved here is the quarantine boundary: generic gameplay targeting is `target_kind` plus `target_id`; `target_player_id` must not leak back into normal gameplay.
+The quarantine boundary remains: generic gameplay targeting is `target_kind` plus `target_id`; `target_player_id` must not leak back into normal gameplay.
 
 Current selected target readback is attached to active ship state. Session-owned targeting can outlive the active ship, but it is not separately projected through `player_sessions`.
 

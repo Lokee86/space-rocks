@@ -273,7 +273,7 @@ Future and unresolved policy belongs in planning docs.
 ## Notes
 
 - This doc records current production behavior. A future devtools or development override for no-auth multiplayer would be a separate devtools/planning concern.
-- Legacy docs still contain useful historical routing detail, but this doc is the current domain reference for account and identity flow.
+- This doc is the current domain reference for account and identity flow.
 - Local Profile is not a Rails/API cache.
 - Authenticated Account is not a synced Local Profile.
 - Display names and callsigns are presentation identity, not durable routing identity.

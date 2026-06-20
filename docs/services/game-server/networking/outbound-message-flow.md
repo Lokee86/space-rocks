@@ -403,7 +403,7 @@ The documented focused test paths for outbound routing are:
 
 ## Notes
 
-The legacy architecture docs correctly noted that `websocket_write.go` now only writes outbound presentation state and no longer advances game-over lifecycle. Current game-over lifecycle advancement lives in `websocket_gameplay_tick.go`.
+`websocket_write.go` only writes outbound presentation state and no longer advances game-over lifecycle. Current game-over lifecycle advancement lives in `websocket_gameplay_tick.go`.
 
 The current `debug_shape_catalog` send-once behavior is tracked by room ID inside the write loop, not by a durable client acknowledgement.
 

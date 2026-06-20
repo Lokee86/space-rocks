@@ -593,7 +593,7 @@ For example, a future loadout selection may define which ship and weapons a play
 
 ## Notes
 
-Legacy architecture documentation correctly identified the core current rule: gameplay state is server-authoritative, while the client owns presentation.
+Gameplay state is server-authoritative, while the client owns presentation.
 
 The current implementation still keeps many world mutations under the root `game.Game` aggregate. Focused packages provide policy and helper seams, but that does not make them independent world authorities.
 

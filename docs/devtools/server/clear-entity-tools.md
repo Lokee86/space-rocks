@@ -279,7 +279,7 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 * [Game Server](../../services/game-server/!README.md)
 * [Game Server Runtime](../../services/game-server/simulation/runtime/!README.md)
 * [World Simulation](../../services/game-server/simulation/world/!README.md)
-* [Realtime Protocol](../../protocol/realtime/!README.md)
+* [Realtime Protocol](../../protocol/realtime-websocket-protocol.md)
 * [Data](../../data/!README.md)
 
 ## Notes

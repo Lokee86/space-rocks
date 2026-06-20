@@ -470,6 +470,6 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 
 ## Notes
 
-Legacy architecture documentation identified the current boundary correctly: room/domain ownership lives in `services/game-server/internal/rooms`, while WebSocket transport and session routing live in `services/game-server/internal/networking`. This document rewrites that useful legacy fact against the current implementation.
+Room/domain ownership lives in `services/game-server/internal/rooms`, while WebSocket transport and session routing live in `services/game-server/internal/networking`.
 
 The current service path has no implemented lobby countdown. Countdown behavior is planned player-experience work, not current room-service behavior.

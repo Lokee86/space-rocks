@@ -440,9 +440,9 @@ These tests verify gameplay session lifecycle, gameplay menu behavior, and match
 
 ## Notes
 
-Legacy documentation correctly identified the gameplay-session UI split between `UserInterface` and `GameplayUserInterface`, the need for gameplay UI mouse-input protection, and the rule that match-over packets must not reopen the HUD after authoritative room match-over. This document now treats those facts as current canonical service documentation.
+The gameplay-session UI split between `UserInterface` and `GameplayUserInterface`, gameplay UI mouse-input protection, and the rule that match-over packets must not reopen the HUD after authoritative room match-over are current service behavior.
 
-Some legacy notes refer to `client/scripts/gameplay/hud/`. The current implementation does not have that folder. Runtime HUD behavior currently lives in `client/scripts/shell/gameplay_hud_flow.gd`, while HUD widget scripts live in `client/scripts/ui/hud/`.
+The current implementation does not have `client/scripts/gameplay/hud/`. Runtime HUD behavior currently lives in `client/scripts/shell/gameplay_hud_flow.gd`, while HUD widget scripts live in `client/scripts/ui/hud/`.
 
 `HUD` currently has `mouse_filter = PASS` in the scene, while `GameplayUserInterface` has `mouse_filter = IGNORE`. Gameplay input protection is therefore handled by `HudInputPolicy` in `GameplaySessionController`, not by making the whole gameplay UI root consume input.
 

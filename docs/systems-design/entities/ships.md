@@ -539,7 +539,7 @@ Future enemy and boss work may share lower-level concepts such as position, velo
 
 ## Notes
 
-The legacy ship-variants document’s still-current rule is that the server owns ship type resolution, resolved stats, and collision behavior. The client consumes `ship_type`; it does not decide collision behavior.
+The server owns ship type resolution, resolved stats, and collision behavior. The client consumes `ship_type`; it does not decide collision behavior.
 
 The current default ship type and collision shape id are both `v_wing`.
 

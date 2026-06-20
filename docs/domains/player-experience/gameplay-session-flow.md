@@ -508,7 +508,7 @@ Those details belong in service, protocol, data, systems-design, planning, or li
 
 ## Notes
 
-The legacy architecture docs correctly identified the durable rule that WebSocket connection, room membership, and active gameplay participation are separate states. That rule remains central to the current gameplay session flow.
+WebSocket connection, room membership, and active gameplay participation are separate states. That separation remains central to the current gameplay session flow.
 
 The current local development WebSocket targets for single-player and multiplayer may be the same URL. This does not make single-player and multiplayer the same session flow. The server-side room request, admission rules, room joinability, and player-data identity context distinguish them.
 

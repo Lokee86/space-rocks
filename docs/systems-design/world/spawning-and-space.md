@@ -343,7 +343,7 @@ The relevant current issue is that vertical despawn behavior is limited by the r
 
 ## Notes
 
-Legacy documentation correctly identified the key split: the server owns bounded authoritative coordinates and spawn decisions, while the client owns continuous visual presentation.
+The key split is that the server owns bounded authoritative coordinates and spawn decisions, while the client owns continuous visual presentation.
 
 The current implementation has several useful spawn seams already in place, especially asteroid spawn plans, player spawn plans, weapon projectile spawn intent, drop-table pickup results, and game-owned devtools apply hooks. Future spawn work should extend those seams rather than moving spawn authority into packet readers, client presentation, scoring policy, pickup effects, or devtools-only logic.
 

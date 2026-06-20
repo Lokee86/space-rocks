@@ -26,7 +26,6 @@ This folder owns the planning index for work that has not yet become current doc
 <!-- doc-ledger:folders:start -->
 
 - [Data](data/!README.md) - Planning docs for data work.
-- [design](design/!README.md) - Design documentation.
 - [Devtools](devtools/!README.md) - Planning docs for devtools work.
 - [domains](domains/!README.md) - Domains documentation.
 - [Protocol](protocol/!README.md) - Planning docs for protocol work.

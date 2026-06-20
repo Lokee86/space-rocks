@@ -46,6 +46,6 @@ Limits and boundaries:
 - `SessionNetworkTarget` maps single-player mode to `SINGLE_PLAYER_WS_URL` and multiplayer mode to `MULTIPLAYER_WS_URL`.
 - Scene and menu code must not pass raw WebSocket URLs.
 - Both targets currently use `/ws` on localhost for development, and the server route remains `/ws`.
-- Asteroid variants follow [Asteroid Variant Contract](../design/asteroid-variants.md): use `client/scripts/generated/asteroids/asteroid_variants.gd` for texture lookup, do not reintroduce hardcoded asteroid texture arrays, and keep `index = 0` mapped to `asteroid_1` / `asteroid1.png`.
+- Asteroid variants follow [Asteroid Variants Data](../data/asteroid-variants-data.md): use `client/scripts/generated/asteroids/asteroid_variants.gd` for texture lookup, do not reintroduce hardcoded asteroid texture arrays, and keep `index = 0` mapped to `asteroid_1` / `asteroid1.png`.
 
 Keep this note short and update it when the auth flow changes.

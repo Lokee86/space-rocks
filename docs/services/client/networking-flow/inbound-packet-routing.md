@@ -559,7 +559,7 @@ Current direct coverage for `ServerPacketRouter` and `ServerPacketDispatcher` is
 
 ## Notes
 
-Legacy architecture notes correctly identified `client/scripts/networking/inbound/` as the client server-packet classification and dispatch boundary. This document rewrites that fact against the current client implementation.
+`client/scripts/networking/inbound/` is the client server-packet classification and dispatch boundary.
 
 `ClientConnectionService` currently acts as the public networking facade for both inbound and outbound flow. That is current implementation, not a reason to merge inbound and outbound docs. Inbound routing and outbound sending have different call directions, packet ownership, and downstream consequences.
 

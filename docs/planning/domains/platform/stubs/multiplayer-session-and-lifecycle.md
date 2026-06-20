@@ -312,9 +312,9 @@ Matchmaking and room discovery owns:
 - [Realtime Protocol Architecture](../../technical/realtime-protocol-architecture.md)
 - [Deployment And Packaging](../../technical/stubs/deployment-and-packaging.md)
 - [Modes And Match Rules](../../gameplay/modes-and-match-rules.md)
-- [Legacy Architecture](../../../legacy/design/architecture.md)
-- [Legacy Cross-Mode Routing And Player Data](../../../legacy/design/cross-mode-routing-and-player-data.md)
-- [Legacy Player-Data Routing Reference](../../../legacy/design/player-data-routing.md)
+- [Systems Design](../../../systems-design/!README.md)
+- [Player Data Routing Flow](../../../domains/platform/player-data-routing-flow.md)
+- [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
 
 ## Open Planning Questions
 

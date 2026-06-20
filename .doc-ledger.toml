@@ -1,5 +1,5 @@
 root = "docs"
-index_file = "!README.md"
+index_file = "!index.md"
 
 [markers]
 prefix = "doc-ledger"

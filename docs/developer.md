@@ -1,7 +1,7 @@
 # Developer Handoff
 Parent index: [Documentation](./!README.md)
 
-This document is a practical handoff for future development sessions. It focuses on how to work on the project. For broader architecture, see [docs/design/architecture.md](design/architecture.md). For server logging details, see [docs/server/logging.md](server/logging.md).
+This document is a practical handoff for future development sessions. It focuses on how to work on the project. For broader architecture, see [docs/systems-design/!README.md](systems-design/!README.md). For server logging details, see [docs/services/game-server/observability/logging-and-diagnostics.md](services/game-server/observability/logging-and-diagnostics.md).
 
 ## Project Overview
 
@@ -19,7 +19,7 @@ Durable player counters such as score and lives are owned by `playerSession` on 
 
 Pickup ownership is split:
 
-- See [docs/design/pickups.md](design/pickups.md) for the canonical split owner map and two-stage collection flow.
+- See [docs/systems-design/combat/pickups.md](systems-design/combat/pickups.md) for the pickup ownership split and two-stage collection flow.
 - Collection and effect application are two-stage.
 
 This refactor does not enable bullet/pickup collisions.
@@ -29,11 +29,11 @@ The project is in active development. Expect rough edges and incomplete UI aroun
 
 ## Source-Of-Truth Docs
 
-Use [docs/design/source-of-truth-map.md](design/source-of-truth-map.md) first for ownership questions.
+Use [docs/data/source-of-truth-map.md](data/source-of-truth-map.md) first for ownership questions.
 
 - Use [tools/data_sync/README.md](../tools/data_sync/README.md) for constants, packets, and drop_tables commands.
-- Use [docs/api/http-contracts.md](api/http-contracts.md) for OpenAPI and Rails HTTP contract tests.
-- Use [docs/design/player-data-schema-ssot.md](design/player-data-schema-ssot.md) for logical player-data contracts.
+- Use [docs/protocol/http-api-contracts.md](protocol/http-api-contracts.md) for OpenAPI and Rails HTTP contract tests.
+- Use [docs/data/player-data-schema.md](data/player-data-schema.md) for logical player-data contracts.
 
 ## Prerequisites
 
@@ -53,7 +53,7 @@ Install these before running or developing Space Rocks locally:
   - Discord OAuth is implemented at the Rails API level.
   - Godot login handoff, game-server authclient verification, websocket auth, and the game-server-hosted player-data profile endpoint are implemented.
   - Auth uses opaque bearer tokens stored hashed in the database.
-  - HTTP request/response shapes are documented in [docs/api/http-contracts.md](api/http-contracts.md).
+  - HTTP request/response shapes are documented in [docs/protocol/http-api-contracts.md](protocol/http-api-contracts.md).
 
 - **Python 3.10+** for repo tooling and static checks.
   - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.
@@ -165,10 +165,10 @@ Devtools packet boundary rules:
 
 ## Devtool Hotkeys
 
-For a focused server devtools reference (commands, boundaries, and checks), see [docs/server/devtools.md](server/devtools.md).
-For semantic mouse input behavior, see [docs/client/mouse-input.md](client/mouse-input.md).
-For targeting ownership and boundaries, see [docs/server/targeting.md](server/targeting.md).
-For devtools telemetry readouts and boundaries, see [docs/devtools/telemetry.md](devtools/telemetry.md).
+For a focused server devtools reference (commands, boundaries, and checks), see [docs/devtools/server/!README.md](devtools/server/!README.md).
+For semantic mouse input behavior, see [docs/services/client/input-and-targeting.md](services/client/input-and-targeting.md).
+For targeting ownership and boundaries, see [docs/systems-design/combat/targeting.md](systems-design/combat/targeting.md).
+For devtools telemetry readouts and boundaries, see [docs/devtools/server/telemetry.md](devtools/server/telemetry.md).
 
 Canonical gameplay devtool hotkeys:
 
@@ -185,7 +185,7 @@ Canonical gameplay devtool hotkeys:
 
 Devtools window targeting notes:
 
-- canonical gameplay target and per-tool devtools target are separate concepts (see [docs/server/targeting.md](server/targeting.md))
+- canonical gameplay target and per-tool devtools target are separate concepts (see [docs/systems-design/combat/targeting.md](systems-design/combat/targeting.md))
 - player-only commands use `target_player_id` only after resolver compatibility checks
 - invincibility, infinite lives, player freeze, kill, respawn, and score/lives controls can target selected players where wired
 - score/lives controls use active-player target dropdowns

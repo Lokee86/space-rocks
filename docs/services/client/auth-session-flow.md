@@ -468,7 +468,7 @@ These backend paths are listed for boundary clarity. The client does not own the
 
 ## Notes
 
-Legacy source material correctly identified the browser-assisted Discord login-session handoff, saved Godot bearer token path, `/api/auth/me` validation, websocket auth packet flow, and the rule that single-player remains independent of Rails auth. This document rewrites those facts from current client code and current canonical API/domain docs.
+The browser-assisted Discord login-session handoff, saved Godot bearer token path, `/api/auth/me` validation, websocket auth packet flow, and the rule that single-player remains independent of Rails auth are current client behavior.
 
 The current Rails auth response used by login-session exchange does not include `account_id`. `GET /api/auth/me` includes `account_id`, but `AuthSession.set_signed_in()` currently stores only `id`, `display_name`, and `email` from the user payload.
 
