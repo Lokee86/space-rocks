@@ -489,7 +489,7 @@ Limits docs are not for intended architectural limits or permanent design constr
 
 Use for editing, testing, workflow, and architecture rules for agents.
 
-Required sections should match the agent task, but normal agent docs should include:
+Normal agent docs should include these sections:
 
 ```text
 Purpose
@@ -498,6 +498,8 @@ Rules
 Related docs
 Notes
 ```
+
+Agent docs should link to canonical docs for current system facts instead of duplicating implementation, protocol, data, devtools, domain, service, or systems-design details.
 
 ## 7. Add Related Docs, Code Maps, Active Issues, and Notes
 
@@ -699,6 +701,7 @@ Subfolder links point to subfolder `!INDEX.md` files.
 Stub policy was followed.
 Empty folders named exactly `stubs/` were not flagged as stale or noncompliant.
 The doc has Purpose, Overview, Related docs, and Notes.
+Agent docs do not duplicate canonical current-system facts.
 The doc has the required type-specific sections.
 Implementation docs have code maps where required.
 Domain docs link to system `!INDEX.md` indexes, not code.

@@ -361,9 +361,17 @@ dev-blockers.md
 
 ## Agent Documentation Policy
 
-Agent docs describe editing rules, testing expectations, architecture guardrails, and workflow instructions for agents.
+Agent docs describe editing rules, testing expectations, architecture guardrails, tool usage notes, and short session orientation for agents.
+
+Agent docs may summarize a boundary when that summary directly guides safe edits.
 
 Agent docs may link to current docs, but they should not become the main home for system facts.
+
+Agent docs must link to canonical docs for current system facts instead of duplicating those facts.
+
+Long-lived runtime, protocol, data, devtools, domain, service, or systems-design facts must live in the owning current docs.
+
+Volatile status belongs only in `docs/agent/current-context.md` and should be pruned aggressively.
 
 Agent docs should not duplicate implementation documentation that belongs under services, protocol, data, systems-design, domains, or devtools.
 

@@ -1,5 +1,5 @@
 # Website And Web Presence
-Parent index: [Planning](./!INDEX.md)
+Parent index: [Web](./!INDEX.md)
 
 ## Purpose
 

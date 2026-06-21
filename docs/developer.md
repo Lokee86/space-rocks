@@ -1,372 +1,66 @@
-# Developer Handoff
+## Developer Onboarding
+
 Parent index: [Documentation](./!INDEX.md)
 
-This document is a practical handoff for future development sessions. It focuses on how to work on the project. For broader architecture, see [docs/systems-design/!INDEX.md](systems-design/!INDEX.md). For server logging details, see [docs/services/game-server/observability/logging-and-diagnostics.md](services/game-server/observability/logging-and-diagnostics.md).
+## Purpose
 
-## Project Overview
+This document is the Space Rocks developer onboarding and handoff guide.
 
-Space Rocks is an Asteroids-inspired game with:
+It gives new or returning contributors enough context to set up the repo, understand the local development tools, run the main services, verify changes, and find the canonical documentation that owns implementation details.
 
-- a Godot client in `client/`
-- a Go game server in `services/game-server/`
-- a Ruby/Rails API server in `services/api-server/`
-- shared data sources in `shared/`
-- the active constants/packet sync tool in `tools/data_sync/`
+This document is not the source of truth for detailed system behavior. Detailed facts belong in the owning service, protocol, data, devtools, domain, systems-design, planning, or limits docs.
 
-The current direction is server-authoritative for gameplay state. The client collects input and renders/interpolates state; the server owns simulation outcomes such as movement, bullets, asteroid collisions, scoring, lives, death, respawn, room state, and pause safety rules.
+## Overview
 
-Durable player counters such as score and lives are owned by `playerSession` on the server. `runtime.Ship` owns the live world-avatar state that is sent in snapshots and should not carry durable counter ownership.
+Space Rocks is an Asteroids-inspired game project with these major parts:
 
-Pickup ownership is split:
+```text
+client/                 Godot client project
+services/game-server/   Go realtime game server
+services/api-server/    Ruby/Rails API server
+shared/                 Shared source-of-truth data
+tools/data_sync/        Constants, packet, and generated-output sync tooling
+bruno-api/              Bruno collection for local API smoke tests
+docs/                   Project documentation
+```
 
-- See [docs/systems-design/combat/pickups.md](systems-design/combat/pickups.md) for the pickup ownership split and two-stage collection flow.
-- Collection and effect application are two-stage.
+The current development model is server-authoritative for gameplay state. The client collects input and presents world state. The game server owns authoritative gameplay outcomes. Backend/account and player-data concerns are split into service-specific docs.
 
-This refactor does not enable bullet/pickup collisions.
-This refactor does not change normal spawning.
+Use this onboarding guide to get productive. Use the documentation map below to find the current authority for detailed behavior.
 
-The project is in active development. Expect rough edges and incomplete UI around newer systems.
+## Basic Setup
 
-## Source-Of-Truth Docs
+Clone the repository and enter the repo root.
 
-Use [docs/data/source-of-truth-map.md](data/source-of-truth-map.md) first for ownership questions.
+```bash
+git clone <repo-url>
+cd space-rocks
+```
 
-- Use [tools/data_sync/README.md](../tools/data_sync/README.md) for constants, packets, and drop_tables commands.
-- Use [docs/protocol/http-api-contracts.md](protocol/http-api-contracts.md) for OpenAPI and Rails HTTP contract tests.
-- Use [docs/data/player-data-schema.md](data/player-data-schema.md) for logical player-data contracts.
-
-## Prerequisites
-
-Install these before running or developing Space Rocks locally:
-
-- **Godot 4.6** for the client project.
-  - Open/import the `client/` folder as the Godot project.
-  - The configured main scene is `res://scenes/game.tscn`.
-
-- **Go 1.26.3** for the real-time game server.
-  - The Go module is in `services/game-server/`.
-  - The server entrypoint is `services/game-server/cmd/game-server`.
-
-- **Ruby / Rails** for the API server.
-  - The Rails API project is in `services/api-server/`.
-  - The current API baseline includes `GET /health`, `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/discord/start`, `GET /api/auth/discord/callback`, `POST /api/auth/discord/login_sessions`, `POST /api/auth/discord/login_sessions/:id/exchange`, `GET /api/auth/me`, `DELETE /api/auth/logout`, `POST /api/internal/player-data/stats`, and the implemented match-result write endpoint.
-  - Discord OAuth is implemented at the Rails API level.
-  - Godot login handoff, game-server authclient verification, websocket auth, and the game-server-hosted player-data profile endpoint are implemented.
-  - Auth uses opaque bearer tokens stored hashed in the database.
-  - HTTP request/response shapes are documented in [docs/protocol/http-api-contracts.md](protocol/http-api-contracts.md).
-
-- **Python 3.10+** for repo tooling and static checks.
-  - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.
-  - The data-sync tool uses modern Python typing syntax and requires `tomlkit`.
-  - The client constants-boundary test uses `pytest`.
-
-- **Git LFS** for binary/source asset files.
-  - The repo tracks asset patterns such as PNG, WEBP, WAV, and MP3 through Git LFS.
-  - After cloning, run:
+Install Git LFS before opening or running the project.
 
 ```bash
 git lfs install
 git lfs pull
 ```
 
-## Repository Structure
-
-- `client/`: Godot project. Scenes, scripts, assets, audio, shaders, client tools, and generated client constants/packet helpers.
-- `services/game-server/`: Go module for the real-time game server. Main entrypoint is `services/game-server/cmd/game-server/main.go`.
-- `services/api-server/`: Ruby/Rails API server for business/backend systems. It currently owns health and email/password auth.
-- `bruno-api/`: Bruno collection root for local API smoke tests.
-- `shared/`: source data used by both client and server:
-  - `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` for active constants
-  - client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`
-  - `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` for active packets
-  - debug/devtools packet schema lives in `shared/packets/debug.toml`
-  - data-sync output id `server_devtools_packets` generates server devtools packet types into `services/game-server/internal/devtools/packets_generated.go`
-  - `shared/collisions/collision_shapes.json`
-- `tools/data_sync/`: Python sync/generation tool for constants and packet code.
-- `docs/`: Documentation.
-- `SourceAssets/`: Source art files. This path is ignored by Git.
-- `space-rocks-(4.3)/`: ignored older Godot project copy.
-
-## Client And Server Fit
-
-The Go server WebSocket route remains `/ws`. The client uses explicit target constants for its launch seam:
+Install the local development runtimes used by the repo:
 
 ```text
-SINGLE_PLAYER_WS_URL
-MULTIPLAYER_WS_URL
+Godot 4.6.x       client project and GUT tests
+Go 1.26.x         realtime game server
+Ruby / Rails      API server
+Python 3.10+      repo tooling and checks
+Git LFS           binary/source asset files
 ```
 
-Both constants currently point to `ws://localhost:8080/ws` for local development. The launch multiplayer target will later point at the deployed multiplayer server URL, while the single-player target should remain local, such as `localhost:8080` or equivalent. WebSocket connection is session-only, and multiplayer rooms are created and joined with generated packets after connecting to `/ws`; the old `room_id` query path is not used by the real UI. Mode-invalid packets should be blocked or declined by session policy later, not by splitting WebSocket route paths.
-
-Legacy direct-room compatibility is quarantined in `services/game-server/internal/rooms`: `GetOrCreate()` and `Join()` create or join already-started direct game rooms and should not be used for lobby-created multiplayer flow. `DefaultRoom()` has been removed; keep any future room lifecycle work on the explicit create/join/start/return APIs.
-
-Current multiplayer lifecycle:
-
-```text
-Main Menu -> Multiplayer Dialog -> /ws session -> CreateRoomRequest/JoinRoomRequest -> Lobby -> SetReadyRequest -> StartGameRequest -> InGame -> GameOver -> ReturnToLobbyRequest or LeaveRoomRequest
-```
-
-Runtime flow:
-
-1. Session controllers under `client/scripts/session/` coordinate boot, config, room/lobby, and gameplay session flows.
-2. `client/scripts/shell/gameplay_shell_flow.gd` is the narrow gameplay coordinator. It stores references, delegates lane configuration, routes incoming gameplay state packets through `client/scripts/gameplay/state/`, delegates world-state application to `client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd`, delegates runtime composition to `client/scripts/gameplay/runtime/`, delegates HUD/menu/input/respawn/spectate/events/effects to their owned gameplay seams, and emits outer lifecycle signals. `GameplayRuntimeContext` stays focused on runtime wiring rather than packet parsing or read-model passthroughs.
-3. Local gameplay input is routed through `client/scripts/gameplay/input/`. Player movement/shooting packets still originate from `client/scripts/entities/player.gd`, but input polling/routing for pause/menu, respawn, spectate, and devtools is coordinated by the gameplay input seam.
-4. `client/scripts/networking/network_client.gd` sends and receives websocket text and routes packet JSON through `client/scripts/networking/packets/packet_codec.gd`.
-5. `services/game-server/internal/networking/websocket_read.go` reads client packets and decodes packet JSON through `services/game-server/internal/protocol/packetcodec`.
-6. Lobby/lifecycle packets call `services/game-server/internal/rooms` for room membership and lifecycle decisions, while networking sends snapshots/errors.
-7. After a room reaches `InGame`, the room's `*game.Game` handles gameplay packets and advances simulation.
-8. The server encodes state packets through `packetcodec` and sends them at the server tick rate.
-9. `client/scripts/world/world_sync.gd` coordinates sync ordering and delegates node ownership, packet application, and interpolation to the player, bullet, asteroid, and local-visual sync owners under `client/scripts/world/`.
-10. HUD, menu, respawn, spectate, event, death, and effects presentation updates flow through the focused gameplay seams under `client/scripts/gameplay/`.
-
-## Packet Schema And Generated Outputs
-
-Packet schema source of truth is split across:
-
-- `shared/packets/outputs.toml`
-- `shared/packets/gameplay.toml`
-- `shared/packets/debug.toml`
-- `shared/packets/lobby.toml`
-
-Generated packet outputs:
-
-- `services/game-server/internal/game/runtime/packets_generated.go`
-- `services/game-server/internal/game/packets.go`
-- `services/game-server/internal/devtools/packets_generated.go`
-- `client/scripts/generated/networking/packets/packets.gd`
-
-Edit the relevant split packet TOML file for schema/content changes. Edit `shared/packets/outputs.toml` only when changing output routing.
-
-Packet schema drift rule:
-
-- Generated packet files are not the source of truth.
-- Packet struct fields belong in `shared/packets/*.toml`.
-- Output-level Go imports belong in `shared/packets/outputs.toml`.
-- The current generator does not support field-level `go_import` for generated Go output.
-- Before adding packet fields, run `data-sync -check -packets -go -gds`.
-- If check fails, repair schema drift before adding new fields.
-- After schema edits, run `data-sync -push -packets -go -gds` and `go test ./...` from `services/game-server`.
-- Example drift case: `StatePacket.player_sessions` and `PlayerSessionState` are packet-schema-owned read-model fields. Keep packet source-of-truth changes in `shared/packets/gameplay.toml` and regenerate rather than hand-editing generated packet output.
-- Quarantine check: normal gameplay code and schema should use `target_kind` + `target_id`. `target_player_id` hits should be reviewed and justified as devtools/debug player-only quarantine paths, not added to new gameplay systems.
-
-Devtools state wrapping has a separate copy step: when debug status is enabled, `devtools.WrapStatePacket()` wraps `StatePacket` before the client sees it. Any new `StatePacket` fields must be copied through that wrapper too. Pickups were the recent example.
-
-Devtools packet boundary rules:
-
-- devtools packet schema lives in `shared/packets/debug.toml`
-- server devtools packet output lives in `services/game-server/internal/devtools/packets_generated.go`
-- targeted devtools UI packets use `target_player_id` where applicable
-- when adding a new generated GDS packet helper, also add its builder mapping in `shared/packets/outputs.toml`
-- regenerate Go and GDS packet outputs together when shared packet schema changes
-- TS output is currently disabled; do not include TS flags in normal data-sync commands
-- packet schema changes normally require editing the relevant `shared/packets/*.toml` source, editing `shared/packets/outputs.toml` when adding generated output routing, then running `data-sync -push -packets -go -gds`
-- packet pull remains unsupported; edit shared packet TOML and push generated outputs
-- client readers should not depend on generated game packet constants for devtools-only wrapper fields such as `debug_status`
-
-## Devtool Hotkeys
-
-For a focused server devtools reference (commands, boundaries, and checks), see [docs/devtools/server/!INDEX.md](devtools/server/!INDEX.md).
-For semantic mouse input behavior, see [docs/services/client/input-and-targeting.md](services/client/input-and-targeting.md).
-For targeting ownership and boundaries, see [docs/systems-design/combat/targeting.md](systems-design/combat/targeting.md).
-For devtools telemetry readouts and boundaries, see [docs/devtools/server/telemetry.md](devtools/server/telemetry.md).
-
-Canonical gameplay devtool hotkeys:
-
-- `0`: window
-- `1`: invincible (self-targeting hotkey)
-- `2`: infinite lives (self-targeting hotkey)
-- `3`: world freeze
-- `4`: player freeze (self-targeting hotkey)
-- `5`: kill local player
-- `6`: spawn new player
-- `7`: force respawn local player
-- `8`: reserved
-- `9`: reserved
-
-Devtools window targeting notes:
-
-- canonical gameplay target and per-tool devtools target are separate concepts (see [docs/systems-design/combat/targeting.md](systems-design/combat/targeting.md))
-- player-only commands use `target_player_id` only after resolver compatibility checks
-- invincibility, infinite lives, player freeze, kill, respawn, and score/lives controls can target selected players where wired
-- score/lives controls use active-player target dropdowns
-- score/lives target dropdown labels are player IDs only (no ALIVE/DEAD or Active/Inactive status text)
-- world freeze remains room-wide/global
-
-Devtools command behavior notes:
-
-- Set Score sets the exact authoritative score
-- Add Score accepts positive or negative amounts and clamps final score at zero minimum
-- Set Lives sets the exact authoritative lives
-- Add Lives accepts positive or negative amounts and clamps final lives at zero minimum
-- Clear Bullets removes authoritative bullets through normal world sync
-- Clear Asteroids removes authoritative asteroids through normal world sync and does not award score or spawn fragments
-
-Client devtools authority note:
-
-- the client devtools UI sends packets only; it does not mutate HUD, score/lives, bullets, asteroids, or `world_sync` locally
-
-Devtools telemetry handoff note:
-
-- raw `LocalPlayerTelemetry` and `TargetTelemetry` readouts live in the devtools window (see [docs/devtools/telemetry.md](devtools/telemetry.md))
-- the world telemetry overlay is implemented behind the devtools seam and remains separate from HUD
-
-Input/targeting handoff note:
-
-- mouse actions in gameplay/devtools flows use semantic InputMap actions (`SelectTarget`, `DeselectTarget`, `SpawnEntity`, `CancelAction`)
-- raw left/right mouse buttons should remain only in InputMap bindings (`project.godot`)
-- targeting flows `InputEvent` -> `GameplayInputContext` -> `MouseActionFlow` -> `GameplayTargetingContext` -> candidate source / picker / packet send
-- `MouseActionFlow` remains the lowest-level mouse/input action coordinator
-- `WorldSync` only exposes `target_source()` for targeting and no longer owns target-position methods
-
-## Run The Server
-
-From the repo root:
+Install Python development dependencies from the repo root:
 
 ```bash
-cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && set -a && source ../../.env && set +a && go run ./cmd/game-server); }
+python -m pip install -r requirements-dev.txt
 ```
 
-Normal local server runs include devtools.
-
-To run with server devtools disabled:
-
-```bash
-cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go run -tags nodevtools ./cmd/game-server); }
-```
-
-With Air hot reload, if installed:
-
-```bash
-cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && air); }
-```
-
-The Air config is `services/game-server/.air.toml`. It builds:
-
-```bash
-cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server); }
-```
-
-The server listens on `:8080` and exposes:
-
-- `GET /health`
-- `GET /ws`
-- `POST /api/player-data/profile`
-
-Current player-data runtime env vars:
-
-- `API_SERVER_BASE_URL=http://localhost:3000`
-- `GAME_SERVER_INTERNAL_TOKEN=dev-internal-token`
-- `PLAYER_DATA_RAILS_BASE_URL=http://localhost:3000`
-- `PLAYER_DATA_RAILS_INTERNAL_TOKEN=dev-internal-token`
-- `LOG_LEVEL=debug`
-- `PLAYER_DATA_RAILS_BEARER_TOKEN` is not required for local player-data setup
-
-### Player-data Profile Smoke
-
-Use these checks after starting the game-server and Rails API with the shared `.env` loaded.
-
-```bash
-curl -s http://localhost:8080/health
-curl -s http://localhost:3000/health
-curl -s -X POST http://localhost:8080/api/player-data/profile -H 'Content-Type: application/json' -d '{"play_mode":"single_player","identity_kind":"guest"}'
-```
-
-When testing from WSL, the saved Godot token is under a Windows profile path like:
-
-```text
-/mnt/c/Users/<you>/AppData/Roaming/Godot/app_userdata/<project>/auth_token.json
-```
-
-Read that token value and send it as a bearer token for an authenticated profile smoke check:
-
-```bash
-TOKEN=$(jq -r '.token' /mnt/c/Users/<you>/AppData/Roaming/Godot/app_userdata/<project>/auth_token.json)
-curl -s -X POST http://localhost:8080/api/player-data/profile -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"play_mode":"multiplayer","identity_kind":"authenticated_account"}'
-```
-
-Expected behavior:
-
-- Guest stats are transient and reset when the game-server restarts.
-- Authenticated stats persist in Rails/Postgres.
-
-## Run The API Server
-
-From the repo root:
-
-```bash
-cd services/api-server
-set -a && source ../../.env && set +a
-bundle install
-bundle exec rails db:create
-bundle exec rails test
-bundle exec rails server
-```
-
-The API server listens on `:3000` by default and exposes:
-
-- `GET /health`
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/discord/login_sessions`
-- `POST /api/auth/discord/login_sessions/:id/exchange`
-- `GET /api/auth/me`
-- `DELETE /api/auth/logout`
-- `POST /api/internal/player-data/stats`
-
-### API Auth Development
-
-Local Discord OAuth depends on `direnv` loading the `.secrets/` environment files before Rails starts.
-Make sure the database is migrated before testing the browser sign-in flow.
-
-```bash
-cd services/api-server
-set -a && source ../../.env && set +a
-bundle exec rails db:migrate
-RAILS_ENV=test bundle exec rails db:test:prepare
-bundle exec rails test
-bundle exec rails server
-```
-
-```bash
-godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
-```
-
-- Discord OAuth is implemented at the Rails API layer; see [services/api-server/README.md](../services/api-server/README.md) for the full local Discord OAuth smoke flow.
-- `.secrets/api-server.env` is local-only, ignored, and should not be committed.
-- Godot should not require Rails for single-player.
-- Rails reference columns create an index by default, so `add_reference :table, :thing, foreign_key: true` plus `add_index :table, :thing_id` will duplicate the index unless `index: false` is set on the reference.
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `DELETE /api/auth/logout`
-
-### Bruno Smoke Tests
-
-Use the Bruno collection rooted at `bruno-api/` for local API smoke tests.
-
-Local environment variables:
-
-- `base_url`
-- `email`
-- `password`
-- `display_name`
-- `auth_token`
-
-Suggested smoke-test order:
-
-1. `Health`
-2. `Register` or `Login`
-3. Copy the returned token into `auth_token`
-4. `Me`
-5. `Logout`
-6. `Me` should fail with the same token after logout
-
-## Open/Run The Godot Client
-
-Open Godot and import/open:
+Open the Godot project from:
 
 ```text
 client/
@@ -378,135 +72,533 @@ The configured main scene is:
 res://scenes/game.tscn
 ```
 
-If the `godot` command is available locally, this may work:
+The repo path used in many local commands is:
 
-```bash
-godot --path client
+```text
+/mnt/d/!bin/space-rocks
 ```
 
-The client expects the Go server to already be running for gameplay.
-
-## Common Development Commands
-
-Run the server:
+When writing shell commands for that path, escape the exclamation mark:
 
 ```bash
 cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go run ./cmd/game-server); }
 ```
 
-Build the server with devtools disabled:
+## Repository Shape
 
-```bash
-cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server); }
+`client/` contains the active Godot client project: scenes, scripts, assets, tests, generated client packet helpers, and generated constants.
+
+`services/game-server/` contains the Go realtime game server. It owns the live gameplay simulation, websocket handling, room lifecycle, authoritative state snapshots, and server-side gameplay decisions.
+
+`services/api-server/` contains the Rails API server. It owns account/auth and backend HTTP behavior that belongs outside the realtime game server.
+
+`shared/` contains shared source files used by generators and multiple runtimes, including constants, packet schemas, collision data, and related source-of-truth material.
+
+`tools/data_sync/` contains the data-sync tooling used to validate, diff, and regenerate shared outputs.
+
+`bruno-api/` contains the Bruno collection used for local API smoke testing.
+
+`docs/` contains current, planning, limits, agent, and legacy documentation. Current documentation uses `!INDEX.md` files as folder indexes.
+
+`SourceAssets/` contains local source art material and is ignored by Git.
+
+## Development Tools
+
+### data-sync
+
+`data-sync` is the repo generation and synchronization tool for shared data.
+
+It is used for packet schemas, constants, generated Go outputs, generated GDScript outputs, and related shared-source validation.
+
+The implementation lives under:
+
+```text
+tools/data_sync/
 ```
 
-Run all server tests:
+Use data-sync when changing shared packet or constants sources. Do not hand-edit generated outputs as the source of truth.
 
-```bash
-cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go test -buildvcs=false ./...); } 2>&1 | tee /dev/tty | clip.exe
-```
-
-Use an explicit cache path when the shell environment has cache or permission issues:
-
-```bash
-cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...); } 2>&1 | tee /dev/tty | clip.exe
-```
-
-Run client GUT tests, if the `godot` CLI is available:
-
-```bash
-godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
-```
-
-Run the client constants-boundary scan:
-
-```bash
-python3 -m pytest tools/tests/test_client_constants_boundary.py
-```
-
-Check generated constants/packets against shared sources:
+Common validation commands:
 
 ```bash
 data-sync -check -packets -go -gds
 data-sync -check -constants -go -gds
 ```
 
-Show pending generated diffs before pushing:
+Common diff commands:
 
 ```bash
 data-sync -diff -packets -go -gds
 data-sync -diff -constants -go -gds
 ```
 
-Push regenerated outputs:
+Common regeneration commands:
 
 ```bash
 data-sync -push -packets -go -gds
 data-sync -push -constants -go -gds
 ```
 
-Regenerate collision shapes from Godot scenes:
+Use `data-sync` for generated outputs. Do not use it as a replacement for understanding ownership. The owning data docs explain the source files and generated outputs.
+
+### doc-ledger
+
+`doc-ledger` maintains the generated sections in documentation indexes.
+
+It owns the marked blocks inside `!INDEX.md` files, such as:
+
+```markdown
+<!-- doc-ledger:files:start -->
+<!-- doc-ledger:files:end -->
+
+<!-- doc-ledger:folders:start -->
+<!-- doc-ledger:folders:end -->
+
+<!-- doc-ledger:stubs:start -->
+<!-- doc-ledger:stubs:end -->
+```
+
+Use doc-ledger when documentation files or folders are added, moved, renamed, graduated from stubs, or removed.
+
+Do not manually fight generated index blocks. Manual index text belongs outside the doc-ledger marker blocks. If an index is wrong, fix the underlying file/folder placement, doc-ledger configuration, or generated description source rather than hand-editing only the generated block.
+
+Doc-ledger expects normal documentation folders to use:
+
+```text
+!INDEX.md
+```
+
+`stubs/` folders are exempt from requiring their own `!INDEX.md`.
+
+### Bruno
+
+Bruno is the local API smoke-test tool for the Rails API server.
+
+The collection root is:
+
+```text
+bruno-api/
+```
+
+Use Bruno to exercise real local API-server routes during development. Bruno does not replace Rails tests, does not own HTTP contracts, does not bypass application behavior, and must not contain committed secrets.
+
+The local Bruno environment is:
+
+```text
+bruno-api/environments/local.yml
+```
+
+Typical smoke order:
+
+```text
+Health
+Register or Login
+Me
+Logout
+Me should fail with the same token after logout
+```
+
+For API auth and Bruno details, use:
+
+```text
+docs/devtools/api-server/bruno-smoke-tests.md
+docs/devtools/api-server/local-auth-smoke-flow.md
+```
+
+Keep real Discord secrets, bearer tokens, callback codes, and local credentials out of committed Bruno files.
+
+### Git LFS
+
+Git LFS is required for binary and source asset files.
+
+The repo tracks asset patterns such as images and audio through Git LFS. Run LFS setup after cloning:
 
 ```bash
-godot --headless --path client -s res://tools/export_collision_shapes.gd
+git lfs install
+git lfs pull
 ```
 
-## Server Test Layout
+Do not assume assets are valid if Git LFS has not been pulled. Broken or pointer-only assets can cause confusing Godot import and runtime behavior.
 
-Go server tests are kept out of production package folders. Put server tests under:
+### Godot And GUT
+
+Godot is the client editor and runtime.
+
+Open the project at:
 
 ```text
-services/game-server/tests/<area>/
+client/
 ```
 
-Current areas:
+Run the editor from the repo root if the `godot` command is available:
 
-- `services/game-server/tests/game/`
-- `services/game-server/tests/networking/`
-- `services/game-server/tests/physics/`
-- `services/game-server/tests/protocol/`
-- `services/game-server/tests/rooms/`
-- `services/game-server/tests/scoring/`
-- `services/game-server/tests/space/`
-
-Do not add new `*_test.go` files beside production code under `services/game-server/internal/`.
-
-Game simulation tests should use the shared harness:
-
-```text
-services/game-server/tests/game/helpers_test.go
+```bash
+godot --path client
 ```
 
-Keep harness helpers gameplay-oriented and deliberate: create a scenario, add players, send packets, step simulation, decode state, place entities, set collision presets, or adjust session state needed for precise behavior tests. Avoid exposing raw private maps directly to individual tests.
+GUT is the Godot unit test framework used by the client tests.
 
-Use same-package tests under `services/game-server/internal/` only for tiny unexported seams that should not become production API just to make tests compile. Keep those exceptions focused on pure conversion or helper behavior. The current collision detection seam is covered by existing game behavior tests; do not export its helpers only to test them directly.
-
-## Client Test Layout
-
-Godot client tests use GUT and live under:
-
-```text
-client/tests/
-```
-
-Current layout:
-
-- `client/tests/unit/`: focused unit-style GUT tests.
-- `client/tests/fixtures/`: small test data and scene fixtures.
-- `client/tests/helpers/`: reusable test-only helpers.
-
-Keep test-only helpers out of `client/scripts/`. Client tests should focus on generated packets, packet/state reader safety, HUD/menu behavior, `world_sync`, constants-boundary assumptions, and pure client logic. Do not turn these into full gameplay/network integration tests.
-
-Run the GUT suite with:
+Run client unit tests with:
 
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
 
-A passing run may still report Godot ObjectDB/resource cleanup warnings; treat the suite result as passing when GUT reports all tests passed.
+A passing GUT run can still print Godot cleanup or ObjectDB warnings. Treat the run as passing when GUT reports that all tests passed.
 
-Expected missing-field warnings may appear in tests that intentionally verify safe behavior for missing `lives`, `respawn_delay`, or asteroid `scale`; those warnings are fine when the suite passes.
+Use Godot and the EngineForge bridge to inspect scene and UI state before guessing about node paths, tree shape, scene ownership, or editor state.
+
+### Go
+
+Go is used for the realtime game server.
+
+The module root is:
+
+```text
+services/game-server/
+```
+
+Run the server from the repo root with:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go run ./cmd/game-server); }
+```
+
+Run all game-server tests with:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go test -buildvcs=false ./...); } 2>&1 | tee /dev/tty | clip.exe
+```
+
+Use an explicit Go cache if the shell environment has cache or permission problems:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...); } 2>&1 | tee /dev/tty | clip.exe
+```
+
+Do not put broad test catalogs in this onboarding doc. Use agent testing guidance and service docs for detailed test placement rules.
+
+### Rails
+
+Rails is used for the API server.
+
+The service root is:
+
+```text
+services/api-server/
+```
+
+Start from:
+
+```bash
+cd services/api-server
+set -a && source ../../.env && set +a
+bundle install
+bundle exec rails db:create
+bundle exec rails db:migrate
+bundle exec rails test
+bundle exec rails server
+```
+
+The API server listens on port `3000` by default.
+
+Use Rails tests for automated API verification. Use Bruno or curl for local smoke checks.
+
+Do not require Rails for local single-player client work unless the work specifically touches auth, account, backend player-data persistence, or API-server flows.
+
+### Python Checks
+
+Python supports repo tooling and static checks.
+
+Install development dependencies from the repo root:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Run the client constants-boundary scan with:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
+```
+
+Use Python tooling for repo validation and generation support. Do not use ad hoc Python scripts to mutate source-of-truth data when an existing repo tool owns the workflow.
+
+### Air
+
+Air is used for optional Go hot reload when installed.
+
+Run it from the game-server service root:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && air); }
+```
+
+Use Air for local convenience only. A normal `go run` or `go test` path should still work without Air.
+
+## MCP Servers And Godot Bridge
+
+Space Rocks uses local MCP servers and the EngineForge/Godot bridge to support planning, inspection, and bounded implementation workflows.
+
+There are two MCP server roles:
+
+```text
+Info MCP    read/search repo plus read-only Godot bridge diagnostics
+Write MCP   bounded repo writes, allowlisted commands, and Godot bridge mutations
+```
+
+The normal local ports are:
+
+```text
+Info MCP    8789
+Write MCP   8788
+```
+
+Use Info MCP for planning, read-only repo inspection, Godot project info, scene-tree inspection, editor logs, and bridge diagnostics.
+
+Use Write MCP only for intentional implementation work. Keep it local. Do not expose Write MCP through ngrok or other public tunnels.
+
+The EngineForge/Godot bridge runs inside the local Godot project and exposes editor/project/scene capabilities to the MCP servers.
+
+Do not guess bridge command names. The bridge command set comes from the installed plugin capabilities. Read-only bridge diagnostics should use the available MCP tools before making assumptions about Godot scenes, node paths, or editor state.
+
+For detailed MCP server usage, bridge command shape, startup commands, and troubleshooting, use:
+
+```text
+docs/agent/mcp-servers.md
+```
+
+## Running The Project
+
+### Run The Game Server
+
+From the repo root:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && set -a && source ../../.env && set +a && go run ./cmd/game-server); }
+```
+
+The local game server listens on port `8080`.
+
+Normal local runs include devtools.
+
+To run with server devtools disabled:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go run -tags nodevtools ./cmd/game-server); }
+```
+
+### Run The API Server
+
+From the repo root:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/api-server && set -a && source ../../.env && set +a && bundle exec rails server); }
+```
+
+The API server listens on port `3000` by default.
+
+Run migrations and tests before relying on the API server after schema or auth changes:
+
+```bash
+cd services/api-server
+set -a && source ../../.env && set +a
+bundle exec rails db:migrate
+RAILS_ENV=test bundle exec rails db:test:prepare
+bundle exec rails test
+```
+
+### Open The Godot Client
+
+Open or import:
+
+```text
+client/
+```
+
+Or launch with:
+
+```bash
+godot --path client
+```
+
+The client expects the Go game server to be running for gameplay flows.
+
+## Verifying Changes
+
+Use the smallest verification path that covers the files changed.
+
+For Go game-server changes:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{ (cd services/game-server && go test -buildvcs=false ./...); } 2>&1 | tee /dev/tty | clip.exe
+```
+
+For Godot client unit tests:
+
+```bash
+godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+```
+
+For Rails API changes:
+
+```bash
+cd services/api-server
+set -a && source ../../.env && set +a
+bundle exec rails test
+```
+
+For packet or constants generation checks:
+
+```bash
+data-sync -check -packets -go -gds
+data-sync -check -constants -go -gds
+```
+
+For generated-output diffs before pushing:
+
+```bash
+data-sync -diff -packets -go -gds
+data-sync -diff -constants -go -gds
+```
+
+For client constants-boundary checks:
+
+```bash
+python3 -m pytest tools/tests/test_client_constants_boundary.py
+```
+
+For manual API smoke checks, use Bruno from:
+
+```text
+bruno-api/
+```
+
+Use the detailed testing rules in:
+
+```text
+docs/agent/testing.md
+```
+
+## Documentation Map
+
+Use this section to find the owning documentation area. Do not duplicate detailed system facts in this onboarding doc.
+
+* [Agent](agent/!INDEX.md) - Agent workflow guidance, testing expectations, MCP usage, session memory, and implementation guardrails.
+* [Data](data/!INDEX.md) - Source-of-truth files, generated outputs, schemas, persistence contracts, and data-sync pipeline documentation.
+* [Devtools](devtools/!INDEX.md) - Debug and development tooling, including API-server smoke tooling, client/server devtools, telemetry, controls, and debug-only boundaries.
+* [Domains](domains/!INDEX.md) - Cross-system player, platform, and technical flows. Domain docs explain how multiple services participate in larger project behavior.
+* [Limits](limits/!INDEX.md) - Temporary blockers, known bugs, dev-blocked issues, active gaps, and transitional limitations.
+* [Planning](planning/!INDEX.md) - Future, unresolved, proposed, or not-yet-current work. Planning docs should not be treated as current implementation authority.
+* [Protocol](protocol/!INDEX.md) - HTTP, WebSocket, packet, and message-flow contracts between systems.
+* [Services](services/!INDEX.md) - Runtime and implementation documentation for the client, game server, API server, player-data service, and web service.
+* [Systems Design](systems-design/!INDEX.md) - Conceptual mechanics, authority boundaries, durable invariants, and design rules.
+* [Documentation policy](documentation-policy.md) - Rules for where documentation belongs and how documentation types are classified.
+* [Documentation procedure](documentation-procedure.md) - Workflow for creating, updating, moving, graduating, and deleting docs.
+
+## Source-Of-Truth Rules
+
+Generated files are not the source of truth.
+
+Packet fields belong in:
+
+```text
+shared/packets/*.toml
+```
+
+Packet output routing belongs in:
+
+```text
+shared/packets/outputs.toml
+```
+
+Constants belong in:
+
+```text
+shared/constants/
+```
+
+Collision shapes come from the Godot export pipeline and shared collision data.
+
+Use data-sync to check, diff, and regenerate generated outputs.
+
+Protocol docs own message and API contracts.
+
+Service docs own implementation behavior.
+
+Systems-design docs own durable authority rules, invariants, and conceptual mechanics.
+
+Data docs own schemas, persistence contracts, source files, generated outputs, and pipeline behavior.
+
+Devtools docs own debug-only tooling and smoke-test workflows.
+
+Planning docs do not own implemented facts. When planned work becomes current, rewrite or move current facts into the owning current docs.
+
+Limits docs own temporary blockers, known bugs, and transitional issues. They do not own permanent design constraints.
+
+## Development Cautions
+
+Do not hand-edit generated packet or constants outputs as source-of-truth changes.
+
+Do not let the client locally mutate authoritative gameplay state for normal gameplay behavior. The client should present state and send input or request packets; the server owns authoritative outcomes.
+
+Do not use planning docs as current implementation authority.
+
+Do not treat legacy docs as current authority. Legacy docs are migration source material only.
+
+Do not expose the Write MCP server remotely.
+
+Do not guess Godot node paths, scene trees, or bridge command names when the MCP/Godot bridge can inspect the actual project state.
+
+Do not commit real secrets, bearer tokens, Discord OAuth secrets, callback codes, or local credentials.
+
+Do not require Rails for single-player work unless the change explicitly touches account, auth, backend persistence, or API-server integration.
+
+Keep `!INDEX.md` files current when documentation files or folders move. Normal folder indexes use `!INDEX.md`; documentation policy and procedure own the rules and workflow.
+
+## Handoff Notes
+
+Use this section only for short, high-signal warnings that help a returning developer avoid immediate mistakes.
+
+Current handoff points:
+
+* Space Rocks is in active development. Expect rough edges around newer systems.
+* The gameplay model is server-authoritative. Preserve authority boundaries when changing client presentation.
+* Single-player should remain usable without Rails unless the work explicitly touches backend/account behavior.
+* Generated packet and constants files should be regenerated through data-sync, not hand-edited as the source.
+* Godot scene and UI work should be inspected through the editor or bridge before changing node paths or assumptions.
+* Documentation should route detailed facts to the owning docs section instead of making this onboarding guide a second system reference.
+* `docs/!INDEX.md` indexes docs. `documentation-policy.md` defines documentation rules. `documentation-procedure.md` defines documentation workflow.
+
+## Related docs
+
+* [Documentation index](./!INDEX.md)
+* [Documentation policy](documentation-policy.md)
+* [Documentation procedure](documentation-procedure.md)
+* [Agent docs](agent/!INDEX.md)
+* [MCP servers](agent/mcp-servers.md)
+* [Testing](agent/testing.md)
+* [Data docs](data/!INDEX.md)
+* [Source-of-truth map](data/source-of-truth-map.md)
+* [Data sync and source-of-truth pipeline](data/data-sync-and-ssot-pipeline.md)
+* [Devtools docs](devtools/!INDEX.md)
+* [API-server Bruno smoke tests](devtools/api-server/bruno-smoke-tests.md)
+* [Services docs](services/!INDEX.md)
+* [Protocol docs](protocol/!INDEX.md)
+* [Systems-design docs](systems-design/!INDEX.md)
+* [Limits docs](limits/!INDEX.md)
+* [Planning docs](planning/!INDEX.md)
+
+## Notes
+
+This document intentionally repeats only the basic setup and developer workflow information needed for onboarding.
+
+When a detail becomes large enough to explain implementation behavior, move it to the owning service, protocol, data, devtools, domain, systems-design, limits, or planning doc and link to it from here.

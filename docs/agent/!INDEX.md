@@ -6,24 +6,46 @@ Parent index: [Documentation](../!INDEX.md)
 
 ## Ownership
 
-This folder owns agent workflow guidance, session memory, MCP usage, testing guidance, and implementation guardrails for working in Space Rocks docs and code.
+This folder owns:
+
+- agent workflow guidance
+- session orientation
+- volatile context
+- MCP/tool usage
+- repo hygiene
+- generated-file safety
+- documentation editing guidance
+- client/server/Godot editing guardrails
+- testing and verification expectations
+- prompting/reporting expectations
 
 ## Does Not Belong
 
-Implementation details that belong in product, service, planning, or systems docs.
-Legacy migration notes.
-`.obsidian/` content.
+This folder does not own:
+
+- canonical implementation facts
+- service runtime documentation
+- protocol contracts
+- data/source-of-truth docs
+- systems-design invariants
+- domain flows
+- planning/backlog content
+- legacy migration material
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
-- [client-notes.md](client-notes.md) - Client Notes documentation.
-- [current-context.md](current-context.md) - Current Context documentation.
-- [godot-notes.md](godot-notes.md) - Godot Notes documentation.
-- [mcp-servers.md](mcp-servers.md) - Mcp Servers documentation.
-- [server-notes.md](server-notes.md) - Server Notes documentation.
-- [session-primer.md](session-primer.md) - Session Primer documentation.
-- [testing.md](testing.md) - Testing documentation.
+- [client-editing.md](client-editing.md) - Client editing guardrails.
+- [current-context.md](current-context.md) - Volatile current context.
+- [documentation-editing.md](documentation-editing.md) - Documentation editing guidance.
+- [generated-files.md](generated-files.md) - Generated-file handling guidance.
+- [godot-editing.md](godot-editing.md) - Godot editing guardrails.
+- [mcp-servers.md](mcp-servers.md) - MCP server usage guidance.
+- [prompting-and-reporting.md](prompting-and-reporting.md) - Prompt/report expectations.
+- [repo-hygiene.md](repo-hygiene.md) - Repo hygiene guidance.
+- [server-editing.md](server-editing.md) - Server editing guardrails.
+- [session-primer.md](session-primer.md) - Session orientation guidance.
+- [testing.md](testing.md) - Testing and verification guidance.
 <!-- doc-ledger:files:end -->
 
 ## Stub Files
@@ -39,7 +61,7 @@ Legacy migration notes.
 - [Documentation](../!INDEX.md)
 - [Documentation Policy](../documentation-policy.md)
 - [Documentation Procedure](../documentation-procedure.md)
-- [Developer Handoff](../developer.md)
+- [Documentation Structure And Procedures](../planning/documentation-structure-and-procedures.md)
 
 ## Notes
 

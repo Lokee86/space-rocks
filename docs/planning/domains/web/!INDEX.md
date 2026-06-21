@@ -2,7 +2,7 @@
 
 This index summarizes the web docs.
 
-Parent index: [Services](../!INDEX.md)
+Parent index: [Domains](../!INDEX.md)
 
 ## Ownership
 
@@ -14,13 +14,12 @@ List content that belongs somewhere else.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [website-and-web-presence.md](website-and-web-presence.md) - Website and web-presence planning.
 <!-- doc-ledger:files:end -->
 
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
-
-- [devlog-static-site.md](stubs/devlog-static-site.md) - Stub: Devlog Static Site documentation.
-- [interactive-website.md](stubs/interactive-website.md) - Stub: Interactive Website documentation.
 <!-- doc-ledger:stubs:end -->
 
 ## Direct Folders

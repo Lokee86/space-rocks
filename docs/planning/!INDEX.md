@@ -18,9 +18,7 @@ This folder owns the planning index for work that has not yet become current doc
 <!-- doc-ledger:files:start -->
 
 - [development-roadmap.md](development-roadmap.md) - High-level roadmap planning.
-- [documentation-structure-and-procedures.md](documentation-structure-and-procedures.md) - Planned documentation structure and procedure work.
 - [domain-backlog.md](domain-backlog.md) - Cross-cutting domain backlog planning.
-- [website-and-web-presence.md](website-and-web-presence.md) - Website and web-presence planning.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

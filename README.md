@@ -1,163 +1,99 @@
 # Space Rocks
 
-Space Rocks is an Asteroids-inspired game with a Godot client, a Go game server, and a Ruby/Rails API server for business/backend concerns.
+Space Rocks is an Asteroids-inspired game project with a Godot client, a Go realtime game server, and a Ruby/Rails API server for backend account and platform concerns.
 
-Client runtime is split into focused seams for input, targeting, world sync, HUD, and presentation. Target selection flows through `GameplayInputContext`, `MouseActionFlow`, and `GameplayTargetingContext`; `WorldSync` is limited to render/sync ownership and exposes `target_source()` for targeting reads.
+The project is in active development. Expect rough edges while systems, documentation, and tooling continue to move.
 
-## Status
+## Overview
 
-The project is in active development. Current work includes a playable Godot client, a Go websocket game server, room support, split TOML shared data for constants/packets under `shared/`, a Rails API server with health, email/password auth, Discord OAuth, Godot Discord login-session handoff, opaque bearer access tokens, `/auth/me` validation, server-authoritative scoring/lives/respawn logic, asteroid collisions/splitting, HUD updates, audio/effects, and structured server logging.
+Space Rocks uses a server-authoritative gameplay model. The Godot client presents the game and sends player input. The Go game server owns realtime gameplay simulation and authoritative match state. The Rails API server owns backend HTTP concerns such as account, auth, and platform services.
 
-Expect incomplete docs and rough edges while systems are still moving.
+This README is the repository front door. For setup, local development workflow, tools, and handoff notes, start with [Developer onboarding](docs/developer.md).
 
-## Prerequisites
+## Repository Layout
 
-Install these before running or developing Space Rocks locally:
+```text
+client/                 Godot client project
+services/game-server/   Go realtime game server
+services/api-server/    Ruby/Rails API server
+shared/                 Shared source-of-truth data
+tools/data_sync/        Shared data validation and generation tooling
+bruno-api/              Bruno collection for local API smoke tests
+docs/                   Project documentation
+```
 
-- **Godot 4.6** for the client project.
-  - Open/import the `client/` folder as the Godot project.
-  - The configured main scene is `res://scenes/game.tscn`.
+## Getting Started
 
-- **Go 1.26.3** for the real-time game server.
-  - The Go module is in `services/game-server/`.
-  - The server entrypoint is `services/game-server/cmd/game-server`.
+Install the main local development tools:
 
-- **Python 3.10+** for repo tooling and static checks.
-  - Install the repo Python dependencies with `python -m pip install -r requirements-dev.txt`.
-  - The data-sync tool uses modern Python typing syntax and requires `tomlkit`.
-  - The client constants-boundary test uses `pytest`.
+```text
+Godot 4.6.x
+Go 1.26.x
+Ruby / Rails
+Python 3.10+
+Git LFS
+```
 
-- **Git LFS** for binary/source asset files.
-  - The repo tracks asset patterns such as PNG, WEBP, WAV, and MP3 through Git LFS.
-  - After cloning, run:
+After cloning, install and pull Git LFS assets:
 
 ```bash
 git lfs install
 git lfs pull
 ```
 
-## Repository Structure
+Open the Godot project from:
 
-- `client/`: Godot project, scenes, scripts, assets, audio, shaders, and client-side tools.
-- `services/game-server/`: Go game server module. The current game server entrypoint is `services/game-server/cmd/game-server`.
-- `services/api-server/`: Ruby/Rails API server for business/backend concerns. It currently owns health, email/password auth, Discord OAuth, login-session handoff, opaque bearer access tokens, and `/auth/me` validation. It is separate from real-time game simulation.
-- `shared/`: split TOML sources of truth for constants (`shared/constants/*.toml`) and packets (`shared/packets/outputs.toml`, `gameplay.toml`, `debug.toml`, `lobby.toml`), plus collision shape data.
-- `docs/`: Project documentation, including architecture, developer workflow, API plans, devtools, notes, and server logging docs.
-- `bruno-api/`: Bruno API collection for local API smoke testing.
-- `tools/`: Python tools for syncing shared constants and generating packet code.
+```text
+client/
+```
 
-## Run Locally
-
-Start the Go game server:
+Run the game server from:
 
 ```bash
 cd services/game-server
 go run ./cmd/game-server
 ```
 
-Or use Air hot reload if `air` is installed:
-
-```bash
-cd services/game-server
-air
-```
-
-Open the Godot client:
-
-1. Open Godot.
-2. Import/open the `client/` folder as a Godot project.
-3. Run the project. The main scene is configured as `res://scenes/game.tscn`.
-
-If the `godot` command is available locally, this may also work:
-
-```bash
-godot --path client
-```
-
-## Development Commands
-
-Run the game server:
-
-```bash
-cd services/game-server
-go run ./cmd/game-server
-```
-
-Run server tests:
-
-```bash
-cd services/game-server
-go test -buildvcs=false ./...
-```
-
-Build the game server binary:
-
-```bash
-cd services/game-server
-go build -buildvcs=false -o ./tmp/game-server ./cmd/game-server
-```
-
-Validate shared constants:
-
-```bash
-python3 tools/data_sync/main.py -validate -constants
-```
-
-Preview shared constants:
-
-```bash
-python3 tools/data_sync/main.py -diff -constants -go -gds
-```
-
-Apply shared constants:
-
-```bash
-python3 tools/data_sync/main.py -push -constants -go -gds
-```
-
-Validate shared packets:
-
-```bash
-python3 tools/data_sync/main.py -validate -packets
-```
-
-Preview shared packets:
-
-```bash
-python3 tools/data_sync/main.py -diff -packets -go -gds
-```
-
-Apply shared packets:
-
-```bash
-python3 tools/data_sync/main.py -push -packets -go -gds
-```
+For the full setup path, local commands, repo tools, and development cautions, use [Developer onboarding](docs/developer.md).
 
 ## Documentation
 
-- [Architecture](docs/design/architecture.md)
-- [Cross-mode routing and player data](docs/design/cross-mode-routing-and-player-data.md)
-- [Player-data schema source of truth](docs/design/player-data-schema-ssot.md)
-- [Toroidal wrap design](docs/design/toroidal-wrap.md)
-- [Ship variants design](docs/design/ship-variants.md)
-- [Ruby API server plan](docs/api/ruby-api-server.md)
-- [Server logging](docs/server/logging.md)
-- [Client logging](docs/client/logging.md)
-- [Developer toggles](docs/devtools/toggles.md)
-- [Data sync tool](tools/data_sync/README.md)
+Primary documentation entry points:
+
+* [Developer onboarding](docs/developer.md) - Setup, local workflow, development tools, verification, and handoff notes.
+* [Documentation index](docs/!INDEX.md) - Browse the project documentation by area.
+* [Documentation policy](docs/documentation-policy.md) - Rules for where documentation belongs.
+* [Documentation procedure](docs/documentation-procedure.md) - Workflow for creating, moving, updating, graduating, and deleting docs.
+
+Documentation areas:
+
+* [Agent docs](docs/agent/!INDEX.md) - Agent workflow, testing expectations, MCP usage, and implementation guardrails.
+* [Data docs](docs/data/!INDEX.md) - Source-of-truth files, generated outputs, schemas, and data-sync pipelines.
+* [Devtools docs](docs/devtools/!INDEX.md) - Debug and development tooling.
+* [Domain docs](docs/domains/!INDEX.md) - Cross-system player, platform, and technical flows.
+* [Limits docs](docs/limits/!INDEX.md) - Temporary blockers, bugs, and transitional limitations.
+* [Planning docs](docs/planning/!INDEX.md) - Future, unresolved, proposed, or not-yet-current work.
+* [Protocol docs](docs/protocol/!INDEX.md) - HTTP, WebSocket, packet, and message-flow contracts.
+* [Service docs](docs/services/!INDEX.md) - Runtime implementation docs for client, game-server, API server, player-data, and web.
+* [Systems-design docs](docs/systems-design/!INDEX.md) - Conceptual mechanics, authority boundaries, invariants, and durable design rules.
+
+## Development Entry Points
+
+Use these docs instead of expanding this README with detailed workflow instructions:
+
+* [Developer onboarding](docs/developer.md) for setup, tools, and handoff.
+* [Testing](docs/agent/testing.md) for verification expectations.
+* [MCP servers](docs/agent/mcp-servers.md) for Info MCP, Write MCP, and EngineForge/Godot bridge usage.
+* [Source-of-truth map](docs/data/source-of-truth-map.md) for ownership questions.
+* [Data sync and source-of-truth pipeline](docs/data/data-sync-and-ssot-pipeline.md) for generated outputs and shared data workflows.
+* [API-server Bruno smoke tests](docs/devtools/api-server/bruno-smoke-tests.md) for Bruno usage.
 
 ## Assets And Git LFS
 
-Source assets and binary game assets are part of the repo workflow. `.gitattributes` configures Git LFS for asset patterns including PNG, WEBP, WAV, and MP3.
+Source assets and binary game assets are part of the repo workflow. Git LFS is required for asset patterns such as images and audio.
 
-Generated recordings and build artifacts should not be committed. `.gitignore` excludes paths/patterns such as:
-
-- `tmp/`
-- `client/.godot/`
-- `client/.export/`
-- `*.avi`
-- Python cache files
+Generated recordings, local editor state, caches, and build artifacts should not be committed.
 
 ## License
 
-All rights reserved
+All rights reserved.

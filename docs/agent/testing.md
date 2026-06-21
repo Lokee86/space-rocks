@@ -1,19 +1,23 @@
 # Agent Testing Rules
 Parent index: [Agent](./!INDEX.md)
 
-Use this document for verification commands, generated data checks, and validation planning.
+## Purpose
 
-## Terminal Policy
+This document owns testing and verification guidance for agents.
 
-Focused, safe terminal checks are allowed when useful.
+## Overview
 
-- Commands in this document are still usually human-run checkpoints.
+Use this document for test commands, verification checkpoints, generated data checks, and validation planning.
+
+## Rules
+
+- Focused, safe terminal checks are allowed when useful.
+- Commands in this document are usually human-run checkpoints.
 - Avoid destructive git commands, broad cleanup, dependency upgrades, unrelated formatter runs, or expensive commands unless explicitly requested.
-- Prompt reports should not include command results unless the prompt explicitly allowed the agent to run the command.
-- After an agent edit, the user may run the relevant command and paste output back into ChatGPT.
 - If a human-run command fails, stop and diagnose that failure before piling on more changes.
+- Keep collision export guidance tied to verification and the data pipeline, not broad implementation documentation.
 
-## Server Commands
+## Server checks
 
 Run server tests:
 
@@ -62,9 +66,9 @@ This check protects the server devtools boundary: `internal/devtools` owns behav
 
 If the server test command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
 
-## Client / Godot Commands
+## Client checks
 
-Open the Godot project by opening/importing:
+Open the Godot project by opening or importing:
 
 ```text
 client/
@@ -90,33 +94,7 @@ python3 -m pytest tools/tests/test_client_constants_boundary.py
 
 Full gameplay/network smoke testing remains manual for now: opening the game scene, websocket connection, asteroid spawning, shooting/effects, pause/debug flow, and the full gameplay loop.
 
-## Client Auth Smoke
-
-Use this checklist for the Godot auth menu flow:
-
-- Rails API is running on `localhost:3000`
-- Discord env vars are loaded
-- Rails migrations are current
-- Godot client starts
-- Main menu shows `Not Signed In`
-- Logout button is hidden
-- Multiplayer button shows `Sign-in`
-- Click `Sign-in`
-- Browser opens Discord login
-- Complete Discord OAuth
-- Return to Godot
-- Main menu shows display name
-- Logout button appears
-- Click `Logout`
-- Main menu returns to `Not Signed In`
-- Single Player still starts without auth
-
-Expected failures:
-
-- `PendingMigrationError` means the Rails database is not migrated
-- API unavailable should not block Single Player
-
-## Data Sync Commands
+## Data-sync checks
 
 Validate active shared constants:
 
@@ -162,7 +140,16 @@ python3 tools/data_sync/main.py -check -packets -go -gds
 
 Packet validate/diff/push/check commands operate on the split packet SoT under `shared/packets/` (`outputs.toml`, `gameplay.toml`, `debug.toml`, and `lobby.toml`). Packet generation/checks include server devtools packet output in `services/game-server/internal/devtools/packets_generated.go`.
 
-## Server Test Layout
+Export pickup collision shapes with:
+
+```bash
+cd /mnt/d/!bin/space-rocks
+godot --headless --path client -s res://tools/export_collision_shapes.gd
+```
+
+Pickup collision JSON should use class keys such as `powerup` and `weapon`, not per-type keys such as `1_up` or `torpedo`.
+
+## Test Layout
 
 Go server tests live under:
 
@@ -188,8 +175,6 @@ services/game-server/tests/game/helpers_test.go
 ```
 
 Keep new helpers intent-level, such as placing entities or sending packets, instead of exposing raw private maps.
-
-## Client Test Layout
 
 Godot client tests use GUT and live under:
 
@@ -224,47 +209,14 @@ Keep client tests focused on:
 
 Do not put test helpers in `client/scripts/`.
 
-## Human-Run Checkpoint Guidance
+## Related docs
 
-Use broad verification at checkpoints, usually after a small batch of prompts or before a commit.
+- [Generated Files](./generated-files.md)
+- [Repo Hygiene](./repo-hygiene.md)
+- [Documentation Editing](./documentation-editing.md)
 
-For server changes, run:
+## Notes
 
-```bash
-cd services/game-server
-env GOCACHE=/tmp/space-rocks-go-build go test -buildvcs=false ./...
-```
+Human-run checkpoint guidance stays here.
 
-For client changes, run GUT when the `godot` CLI is available:
-
-```bash
-godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
-```
-
-For packet/schema changes, run the relevant `tools/data_sync` validation/diff/push command.
-
-For path moves, renames, deleted APIs, or preload cleanup, use focused `rg` checks. Do not make the agent run those checks unless the prompt explicitly allows terminal commands.
-
-## Collision Export
-
-Export pickup collision shapes with:
-
-```bash
-cd /mnt/d/!bin/space-rocks
-godot --headless --path client -s res://tools/export_collision_shapes.gd
-```
-
-Pickup collision JSON should use class keys such as `powerup` and `weapon`, not per-type keys such as `1_up` or `torpedo`.
-
-## Reporting Expectations
-
-Default agent reports should include:
-
-- changed files
-- unexpected files touched
-- short notes about scope or compatibility wrappers
-- numbered completion heading, when applicable
-
-Do not require the agent to report validation commands, test output, or `git status --short` unless the prompt explicitly allowed terminal commands.
-
-Read-only prompts must not edit files, run formatters, or perform cleanup.
+Prompt/report expectations live in [Prompting And Reporting](./prompting-and-reporting.md).
