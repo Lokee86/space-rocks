@@ -337,8 +337,8 @@ Use the normal client GUT verification flow when changing entity sync behavior.
 
 ## Related docs
 
-* [World Sync](./!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [World Sync](./!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [World sync coordinator](world-sync-coordinator.md)
 * [View anchor and visual coordinates](view-anchor-and-visual-coordinates.md)
 * [Pickup Presentation](pickup-presentation.md) - Client pickup presentation documentation.

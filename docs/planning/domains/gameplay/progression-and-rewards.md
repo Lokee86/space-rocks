@@ -571,6 +571,7 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 * [Match Outcomes And Results](match-outcomes-and-results.md)
 * [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
 * [Player Data And Persistence](../platform/player-data-and-persistence.md)
+* [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md)
 * [Anti-Cheat And Trust Policy](../platform/anti-cheat-and-trust-policy.md)
 * [Achievements And Milestones](achievements-and-milestones.md)
 * [Inventory And Hangar](inventory-and-hangar.md)

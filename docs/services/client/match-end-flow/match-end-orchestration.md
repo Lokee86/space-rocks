@@ -432,12 +432,12 @@ These tests verify the menu and result collaborators that `MatchEndFlow` coordin
 
 ## Related docs
 
-* [Client](../!README.md)
-* [Match end flow](./!README.md)
+* [Client](../!INDEX.md)
+* [Match end flow](./!INDEX.md)
 * [Match results presentation](match-results-presentation.md)
-* [Gameplay menu flow](../gameplay-menu-flow/!README.md)
+* [Gameplay menu flow](../gameplay-menu-flow/!INDEX.md)
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md)
-* [Gameplay runtime](../gameplay-runtime/!README.md)
+* [Gameplay runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay session lifecycle](../gameplay-runtime/gameplay-session-lifecycle.md)
 * [Gameplay state application](../gameplay-runtime/gameplay-state-application.md)
 * [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.

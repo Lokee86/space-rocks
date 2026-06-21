@@ -181,7 +181,7 @@ Never import or transfer these from local/offline into online-trusted account st
 * Guest and Local Profile facts are not online-trusted.
 * Local facts do not become trusted because they are copied, imported, linked, or associated with an account.
 * Preferences/settings are the only possible local/online transfer category, and offline to online transfer requires screening/trust verification.
-* Trust-sensitive imported data policy belongs to Anti-Cheat And Trust Policy, but this document owns the identity boundary.
+* Trust-sensitive imported data policy belongs to [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md), but this document owns the identity boundary.
 
 ### Display-name moderation
 
@@ -338,6 +338,7 @@ Devtools planning owns:
 * [Multiplayer Session And Lifecycle](stubs/multiplayer-session-and-lifecycle.md)
 * [API Product Surface](stubs/api-product-surface.md)
 * [Social And Community Systems](stubs/social-and-community-systems.md)
+* [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md)
 * [Anti-Cheat And Trust Policy](stubs/anti-cheat-and-trust-policy.md)
 
 ## Notes

@@ -464,7 +464,7 @@ This doc does not define:
 * Local Profile-to-account migration
 * local-to-online progression import
 * leaderboard eligibility
-* anti-cheat trust policy
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 * social graph policy
 * matchmaking policy
 * exact Rails physical schema
@@ -488,6 +488,7 @@ This doc does not define:
 * [API Server](../../services/api-server/!INDEX.md)
 * [API-server Auth And OAuth](../../services/api-server/auth-and-oauth.md)
 * [API-server Internal API Surface](../../services/api-server/internal-api-surface.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 * [API-server Player Stats And Match Results](../../services/api-server/player-stats-and-match-results.md)
 * [Game Server](../../services/game-server/!INDEX.md)
 * [Game-server Auth Verifier Integration](../../services/game-server/integrations/auth-verifier-integration.md)

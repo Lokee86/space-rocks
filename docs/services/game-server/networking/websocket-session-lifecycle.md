@@ -671,13 +671,13 @@ cd services/game-server && go test -buildvcs=false ./internal/networking ./inter
 
 ## Related docs
 
-* [Game Server Networking](./!README.md)
-* [Game Server](../!README.md)
-* [Game Server Process](../process/!README.md)
-* [Game Server Rooms](../rooms/!README.md)
-* [Game Server Simulation](../simulation/!README.md)
-* [Game Server Integrations](../integrations/!README.md)
-* [Game Server Observability](../observability/!README.md)
+* [Game Server Networking](./!INDEX.md)
+* [Game Server](../!INDEX.md)
+* [Game Server Process](../process/!INDEX.md)
+* [Game Server Rooms](../rooms/!INDEX.md)
+* [Game Server Simulation](../simulation/!INDEX.md)
+* [Game Server Integrations](../integrations/!INDEX.md)
+* [Game Server Observability](../observability/!INDEX.md)
 * [Inbound Packet Routing](./inbound-packet-routing.md)
 * [Outbound Packet Routing](./outbound-message-flow.md)
 * [Room Network Adapter](./room-network-adapter.md)

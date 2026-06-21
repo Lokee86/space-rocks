@@ -427,16 +427,16 @@ These tests verify gameplay session lifecycle, gameplay menu behavior, and match
 
 ## Related docs
 
-* [Client](./!README.md)
-* [Gameplay Runtime](gameplay-runtime/!README.md)
-* [World Sync](world-sync/!README.md)
+* [Client](./!INDEX.md)
+* [Gameplay Runtime](gameplay-runtime/!INDEX.md)
+* [World Sync](world-sync/!INDEX.md)
 * [Input and targeting](input-and-targeting.md) - Client input and targeting documentation.
-* [Match End Flow](match-end-flow/!README.md) - Client match-end orchestration and match-results presentation documentation.
-* [Gameplay Menu Flow](gameplay-menu-flow/!README.md) - Client gameplay menu and match-over overlay menu documentation.
+* [Match End Flow](match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
+* [Gameplay Menu Flow](gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
 * [Pickup Presentation](world-sync/pickup-presentation.md) - Client pickup presentation documentation.
 * [Realtime websocket protocol](../../protocol/stubs/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
 * [Gameplay packets](../../protocol/stubs/gameplay-packets.md) - Stub: gameplay packet documentation.
-* [Client devtools](../../devtools/client/!README.md)
+* [Client devtools](../../devtools/client/!INDEX.md)
 
 ## Notes
 

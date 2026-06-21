@@ -692,9 +692,9 @@ data-sync -check -packets -go
 
 ## Related docs
 
-* [Game Server Simulation World](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation World](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Visibility And Despawn](visibility-and-despawn.md)
 * [Toroidal Space And Motion](toroidal-space-and-motion.md)
 * [Collision Shapes](collision-shapes.md)

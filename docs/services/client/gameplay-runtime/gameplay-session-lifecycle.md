@@ -306,13 +306,13 @@ Relevant client tests include:
 
 ## Related docs
 
-* [Gameplay Runtime](./!README.md)
+* [Gameplay Runtime](./!INDEX.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay state application](gameplay-state-application.md)
 * [Runtime processing](runtime-processing.md)
 * [Menu flow](../menu-flow.md) - Client menu flow documentation.
-* [Match End Flow](../match-end-flow/!README.md) - Client match-end orchestration and match-results presentation documentation.
-* [Gameplay Menu Flow](../gameplay-menu-flow/!README.md) - Client gameplay menu and match-over overlay menu documentation.
+* [Match End Flow](../match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
+* [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
 * [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
 
 ## Notes

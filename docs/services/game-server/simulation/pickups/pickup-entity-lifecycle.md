@@ -466,9 +466,9 @@ from `services/game-server`.
 * [Pickup Collection](pickup-collection.md)
 * [Pickup Effects](pickup-effects.md)
 * [Pickup Drop Integration](pickup-drop-integration.md)
-* [Game Server Simulation Pickups](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Pickups](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Client Pickup Presentation](../../../client/world-sync/pickup-presentation.md)
 * [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
 * [Constants pipeline](../../../../data/stubs/constants-pipeline.md) - Stub: generated constant data documentation.

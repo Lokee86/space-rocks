@@ -539,11 +539,11 @@ Use the normal client GUT verification flow when changing event/effects presenta
 
 ## Related docs
 
-* [Gameplay Event Presentation](./!README.md)
+* [Gameplay Event Presentation](./!INDEX.md)
 * [Gameplay Audio Flow](gameplay-audio-flow.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
-* [Match End Flow](../match-end-flow/!README.md)
+* [Match End Flow](../match-end-flow/!INDEX.md)
 * [Match End Orchestration](../match-end-flow/match-end-orchestration.md)
 * [Pickup Presentation](../world-sync/pickup-presentation.md)
 * [View Anchor And Visual Coordinates](../world-sync/view-anchor-and-visual-coordinates.md)

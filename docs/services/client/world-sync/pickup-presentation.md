@@ -383,11 +383,11 @@ Use the normal client GUT verification flow when changing pickup presentation be
 
 ## Related docs
 
-* [World Sync](./!README.md)
+* [World Sync](./!INDEX.md)
 * [World Sync Coordinator](./world-sync-coordinator.md)
 * [Entity Sync Owners](./entity-sync-owners.md)
 * [View Anchor And Visual Coordinates](./view-anchor-and-visual-coordinates.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
 * [Input and Targeting](../input-and-targeting.md)
 * [HUD and Gameplay UI](../hud-and-gameplay-ui.md)

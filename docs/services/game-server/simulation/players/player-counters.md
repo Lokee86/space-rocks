@@ -607,10 +607,10 @@ go test -buildvcs=false ./tests/game -run 'PlayerCounter|SetPlayerScore|SetPlaye
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Simulation Scoring](../scoring/!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Simulation Scoring](../scoring/!INDEX.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Damage Resolution](../combat/damage-resolution.md)
 * [Pickup Collection](../pickups/pickup-collection.md)
@@ -623,8 +623,8 @@ go test -buildvcs=false ./tests/game -run 'PlayerCounter|SetPlayerScore|SetPlaye
 * [Player Pause And Suspension](player-pause-and-suspension.md)
 * [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
 * [Devtools packets](../../../../protocol/stubs/devtools-packets.md) - Stub: devtools packet documentation.
-* [Data](../../../../data/!README.md)
-* [Devtools](../../../../devtools/!README.md)
+* [Data](../../../../data/!INDEX.md)
+* [Devtools](../../../../devtools/!INDEX.md)
 
 ## Notes
 

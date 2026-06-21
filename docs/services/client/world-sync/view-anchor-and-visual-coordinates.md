@@ -290,7 +290,7 @@ Debug overlays and telemetry that display world positions should respect the sam
 
 ### Active player-render API
 
-* `client/scripts/world/player_render/!README.md`
+* `client/scripts/world/player_render/!INDEX.md`
 * `client/scripts/world/player_render/player_render_api.gd`
 * `client/scripts/world/player_render/view_anchor_sync.gd`
 * `client/scripts/world/player_render/player_meaning_api.gd`
@@ -359,10 +359,10 @@ The standard client verification path is the Godot headless GUT test suite for `
 
 ## Related docs
 
-* [World Sync](./!README.md)
+* [World Sync](./!INDEX.md)
 * [World Sync Coordinator](world-sync-coordinator.md)
 * [Entity Sync Owners](entity-sync-owners.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.
 * [Toroidal wrap](../../../systems-design/world/stubs/toroidal-wrap.md) - Stub: toroidal world design documentation.

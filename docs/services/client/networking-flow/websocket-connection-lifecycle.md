@@ -420,7 +420,7 @@ The WebSocket transport lifecycle itself depends on Godot `WebSocketPeer` runtim
 
 ## Related docs
 
-- [Networking Flow](./!README.md)
+- [Networking Flow](./!INDEX.md)
 - [Inbound Packet Routing](inbound-packet-routing.md) - Client inbound packet routing documentation.
 - [Outbound Packet Sending](outbound-packet-sending.md)
 - [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)

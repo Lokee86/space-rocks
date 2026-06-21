@@ -276,11 +276,12 @@ Related non-API-server tests:
 
 ## Related docs
 
-* [API Server](./!README.md)
-* [Player Data service](../player-data/!README.md)
-* [Game Server service](../game-server/!README.md)
-* [Client service](../client/!README.md)
+* [API Server](./!INDEX.md)
+* [Player Data service](../player-data/!INDEX.md)
+* [Game Server service](../game-server/!INDEX.md)
+* [Client service](../client/!INDEX.md)
 * [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
+* [Trust And Eligibility Policy](../../domains/platform/trust-and-eligibility-policy.md)
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md) - Current HTTP request/response contract enforcement documentation.
 * [Player Data HTTP API](../../protocol/stubs/player-data-http-api.md) - Stub: player-data HTTP API protocol documentation.
 * [Player Data Schema](../../data/stubs/player-data-schema.md) - Stub: player-data schema documentation.

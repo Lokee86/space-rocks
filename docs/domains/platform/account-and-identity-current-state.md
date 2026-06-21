@@ -243,7 +243,7 @@ This doc does not define or plan:
 - guest-to-online migration
 - account merge
 - leaderboard eligibility
-- anti-cheat trust policy
+- [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 - social graph policy
 - matchmaking policy
 - reconnect behavior
@@ -259,12 +259,13 @@ Future and unresolved policy belongs in planning docs.
 
 ## Related docs
 
-- [Platform domain index](./!README.md)
-- [Domain index](../!README.md)
-- [Client service index](../../services/client/!README.md)
-- [Game Server service index](../../services/game-server/!README.md)
-- [API Server service index](../../services/api-server/!README.md)
-- [Player Data service index](../../services/player-data/!README.md)
+- [Platform domain index](./!INDEX.md)
+- [Domain index](../!INDEX.md)
+- [Client service index](../../services/client/!INDEX.md)
+- [Game Server service index](../../services/game-server/!INDEX.md)
+- [API Server service index](../../services/api-server/!INDEX.md)
+- [Player Data service index](../../services/player-data/!INDEX.md)
+- [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 - [Account And Identity Systems planning](../../planning/domains/platform/account-and-identity-systems.md)
 - [Multiplayer Session And Lifecycle planning](../../planning/domains/platform/stubs/multiplayer-session-and-lifecycle.md)
 - [Player Data And Persistence planning](../../planning/domains/platform/stubs/player-data-and-persistence.md)

@@ -21,6 +21,8 @@ This folder owns planning docs for protocol work that is not yet current.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
+
+- [api-product-surface](api-product-surface/!INDEX.md) - Api Product Surface documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

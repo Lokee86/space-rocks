@@ -397,7 +397,7 @@ This domain flow does not define:
 * Local Profile to Authenticated Account sync
 * progression, unlocks, inventory, achievements, or rewards
 * leaderboard eligibility
-* anti-cheat trust policy
+* [Trust And Eligibility Policy](../platform/trust-and-eligibility-policy.md)
 * future player-data service extraction
 
 ## Related docs
@@ -414,6 +414,7 @@ This domain flow does not define:
 * [Profile Stats Flow](../../services/player-data/profile-stats-flow.md)
 * [Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)
 * [Game Server Player Data HTTP Hosting](../../services/game-server/integrations/player-data-http-hosting.md)
+* [Trust And Eligibility Policy](../platform/trust-and-eligibility-policy.md)
 * [Game Server Match Result Reporting](../../services/game-server/integrations/match-result-reporting.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)
 * [Player Data Schema](../../data/player-data-schema.md)

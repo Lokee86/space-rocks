@@ -21,6 +21,7 @@ This folder owns domain docs about platform-wide flows that span multiple system
 - [account-and-identity-current-state.md](account-and-identity-current-state.md) - Current account, identity, authentication, admission, and player-data routing flow.
 - [account-backed-profile-flow.md](account-backed-profile-flow.md) - Account backed profile domain flow documentation.
 - [player-data-routing-flow.md](player-data-routing-flow.md) - Player-data routing domain flow documentation.
+- [trust-and-eligibility-policy.md](trust-and-eligibility-policy.md) - Trust And Eligibility Policy documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->

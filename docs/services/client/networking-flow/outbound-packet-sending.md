@@ -707,16 +707,16 @@ No focused `ClientPacketSender` unit test was found during this pass.
 
 ## Related docs
 
-* [Networking Flow](./!README.md)
-* [Client](../!README.md)
+* [Networking Flow](./!INDEX.md)
+* [Client](../!INDEX.md)
 * [Input And Targeting](../input-and-targeting.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Client Viewport Config Flow](../app-shell-and-session/client-viewport-config-flow.md)
 * [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)
-* [Lobby Flow](../lobby-flow/!README.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
 * [Room Entry And Join Dialog](../lobby-flow/room-entry-and-join-dialog.md)
 * [Lobby Session And Presentation](../lobby-flow/lobby-session-and-presentation.md)
-* [Game Server](../../game-server/!README.md)
+* [Game Server](../../game-server/!INDEX.md)
 * [Realtime WebSocket Protocol](../../../protocol/stubs/realtime-websocket-protocol.md) - Stub: incomplete realtime protocol documentation.
 * [Gameplay Packets](../../../protocol/stubs/gameplay-packets.md) - Stub: incomplete gameplay packet protocol documentation.
 * [Lobby Packets](../../../protocol/stubs/lobby-packets.md) - Stub: incomplete lobby packet protocol documentation.

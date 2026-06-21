@@ -402,10 +402,10 @@ Broader verification should include the game-server Go test suite when pickup ef
 
 ## Related docs
 
-* [Game Server Simulation Pickups](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Services](../../../!README.md)
+* [Game Server Simulation Pickups](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Services](../../../!INDEX.md)
 * [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)
 * [Pickup Presentation](../../../client/world-sync/pickup-presentation.md)
 * [Gameplay Events And Effects](../../../client/gameplay-event-presentation/gameplay-events-and-effects.md)

@@ -352,8 +352,8 @@ Expected verification should confirm:
 
 ## Related docs
 
-* [World Sync](./!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [World Sync](./!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [View Anchor And Visual Coordinates](view-anchor-and-visual-coordinates.md)
 * [Entity Sync Owners](entity-sync-owners.md)
 * [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.

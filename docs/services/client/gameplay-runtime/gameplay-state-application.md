@@ -238,8 +238,8 @@ The expected verification path is the client GUT test suite.
 
 ## Related docs
 
-* [Gameplay Runtime](./!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Gameplay Runtime](./!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)
 * [Runtime processing](runtime-processing.md)

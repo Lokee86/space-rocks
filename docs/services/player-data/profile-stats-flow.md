@@ -520,7 +520,7 @@ services/api-server/test/models/player_match_result_test.rb
 
 ## Related docs
 
-* [Player Data](./!README.md)
+* [Player Data](./!INDEX.md)
 * [Player Data HTTP Hosting](../game-server/integrations/player-data-http-hosting.md)
 * [Match Result Reporting](../game-server/integrations/match-result-reporting.md)
 * [Player Stats And Match Results](../api-server/player-stats-and-match-results.md)

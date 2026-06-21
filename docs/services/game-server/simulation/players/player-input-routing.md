@@ -470,13 +470,13 @@ Broader verification should include the game-server Go test suite when changing 
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Networking](../../networking/!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Networking](../../networking/!INDEX.md)
 * [Inbound Packet Routing](../../networking/inbound-packet-routing.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
-* [Realtime Protocol](../../../../protocol/!README.md)
+* [Realtime Protocol](../../../../protocol/!INDEX.md)
 * [Gameplay Packets](../../../../protocol/stubs/gameplay-packets.md)
 * [Packet Schema Pipeline](../../../../data/stubs/packet-schema-pipeline.md)
 * [Player Pause And Suspension](player-pause-and-suspension.md)
