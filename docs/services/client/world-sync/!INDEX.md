@@ -40,8 +40,8 @@ Client world sync documentation lives here.
 
 - [Client](../!INDEX.md)
 - [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
-- [Toroidal wrap](../../../systems-design/world/stubs/toroidal-wrap.md) - Stub: toroidal world design documentation.
-- [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
+- [Toroidal wrap](../../../systems-design/world/toroidal-wrap.md) - toroidal world design documentation.
+- [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
 
 ## Notes
 

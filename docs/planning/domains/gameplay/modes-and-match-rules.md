@@ -276,7 +276,7 @@ room snapshots expose the mode summary only if the client needs it
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
+- [Planning](../../!INDEX.md)
 - [Player Experience Systems](player-experience-systems.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Progression And Rewards](progression-and-rewards.md)

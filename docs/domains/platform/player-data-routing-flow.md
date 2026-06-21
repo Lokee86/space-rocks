@@ -313,7 +313,7 @@ This document does not define:
 * guest-to-account migration
 * leaderboard eligibility
 * progression, unlocks, inventory, currency, or loadout persistence
-* anti-cheat policy
+* game integrity policy
 * public match history
 * reconnect behavior
 * deployment topology for a future separate player-data server

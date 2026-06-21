@@ -365,10 +365,10 @@ The standard client verification path is the Godot headless GUT test suite for `
 * [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.
-* [Toroidal wrap](../../../systems-design/world/stubs/toroidal-wrap.md) - Stub: toroidal world design documentation.
-* [World authority](../../../systems-design/world/stubs/world-authority.md) - Stub: world authority design documentation.
-* [Constants pipeline](../../../data/stubs/constants-pipeline.md) - Stub: constants source-of-truth and generated output documentation.
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
+* [Toroidal wrap](../../../systems-design/world/toroidal-wrap.md) - toroidal world design documentation.
+* [World authority](../../../systems-design/world/world-authority.md) - world authority design documentation.
+* [Constants pipeline](../../../data/data-sync-and-ssot-pipeline.md) - constants source-of-truth and generated output documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
 
 ## Notes
 

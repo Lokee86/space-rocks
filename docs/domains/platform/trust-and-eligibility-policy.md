@@ -506,6 +506,6 @@ Protocol shapes belong in protocol docs. Physical data shape belongs in data and
 
 This doc captures current policy implied by the implemented identity, player-data, match-result, and account-backed persistence flows.
 
-It intentionally does not keep the old combined “anti-cheat and trust policy” ownership model. Trust and eligibility policy decides whether a fact is eligible to become trusted. Anti-cheat decides whether gameplay or result generation appears manipulated. Abuse and enforcement decide what happens after suspicious, rejected, or disputed behavior.
+It intentionally does not keep the old combined “game integrity polciy” ownership model. Trust and eligibility policy decides whether a fact is eligible to become trusted. Anti-cheat decides whether gameplay or result generation appears manipulated. Abuse and enforcement decide what happens after suspicious, rejected, or disputed behavior.
 
 Current implementation has the first layer structurally, but not the full future anti-cheat or enforcement layers.

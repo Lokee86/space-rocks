@@ -28,10 +28,10 @@ It should describe the test strategy, not the specific test implementation.
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
+- [Planning](../../../!INDEX.md)
 - [Logging And Diagnostics](logging-and-diagnostics.md)
-- [Network Observability And Packet Budget](network-observability-and-packet-budget.md)
-- [Data Sync And Ssot Pipeline](data-sync-and-ssot-pipeline.md)
+- [Network Observability And Packet Budget](../network-observability-and-packet-budget.md)
+- [Data Sync And SSoT Pipeline](../../../../data/data-sync-and-ssot-pipeline.md)
 
 ## Open Planning Questions
 

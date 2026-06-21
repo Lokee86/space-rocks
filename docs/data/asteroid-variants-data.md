@@ -37,7 +37,7 @@ Primary source:
 shared/asteroids/variants.toml
 ```
 
-The source file contains one `[[variants]]` entry per asteroid variant.
+The source file contains one `\[\[variants\]\]` entry per asteroid variant.
 
 Current fields:
 

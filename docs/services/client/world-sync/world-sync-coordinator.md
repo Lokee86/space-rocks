@@ -356,8 +356,8 @@ Expected verification should confirm:
 * [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [View Anchor And Visual Coordinates](view-anchor-and-visual-coordinates.md)
 * [Entity Sync Owners](entity-sync-owners.md)
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Toroidal wrap](../../../systems-design/world/stubs/toroidal-wrap.md) - Stub: toroidal world design documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Toroidal wrap](../../../systems-design/world/toroidal-wrap.md) - toroidal world design documentation.
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.
 
 ## Notes

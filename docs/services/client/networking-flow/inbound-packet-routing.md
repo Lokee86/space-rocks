@@ -551,11 +551,11 @@ Current direct coverage for `ServerPacketRouter` and `ServerPacketDispatcher` is
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
 * [Gameplay Event Presentation](../gameplay-event-presentation/!INDEX.md)
 * [World Sync](../world-sync/!INDEX.md)
-* [Realtime Websocket Protocol](../../../protocol/stubs/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
-* [Gameplay Packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay packet documentation.
-* [Lobby Packets](../../../protocol/stubs/lobby-packets.md) - Stub: lobby packet documentation.
-* [Devtools Packets](../../../protocol/stubs/devtools-packets.md) - Stub: devtools packet documentation.
-* [Packet Schema Pipeline](../../../data/stubs/packet-schema-pipeline.md) - Stub: shared packet schema and generated output documentation.
+* [Realtime Websocket Protocol](../../../protocol/realtime-websocket-protocol.md) - realtime websocket protocol documentation.
+* [Gameplay Packets](../../../protocol/gameplay-packets.md) - gameplay packet documentation.
+* [Lobby Packets](../../../protocol/lobby-packets.md) - lobby packet documentation.
+* [Devtools Packets]() - devtools packet documentation.
+* [Packet Schema Pipeline](../../../data/packet-schemas.md) - shared packet schema and generated output documentation.
 
 ## Notes
 

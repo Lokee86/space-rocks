@@ -515,9 +515,9 @@ go test -buildvcs=false ./internal/game
 * [Damage Resolution](../combat/damage-resolution.md)
 * [Radial Effects](../combat/radial-effects.md)
 * [Gameplay Events And Effects](../../../client/gameplay-event-presentation/gameplay-events-and-effects.md)
-* [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Gameplay realtime packet documentation.
-* [Realtime websocket protocol](../../../../protocol/stubs/realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
-* [Packet Schema Pipeline](../../../../data/stubs/packet-schema-pipeline.md) - Packet schema generation documentation.
+* [Gameplay packets](../../../../protocol/gameplay-packets.md) - Gameplay realtime packet documentation.
+* [Realtime websocket protocol](../../../../protocol/realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
+* [Packet Schema Pipeline](../../../../data/packet-schemas.md) - Packet schema generation documentation.
 
 ## Notes
 

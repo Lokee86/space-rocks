@@ -470,11 +470,11 @@ from `services/game-server`.
 * [Game Server Simulation](../!INDEX.md)
 * [Game Server](../../!INDEX.md)
 * [Client Pickup Presentation](../../../client/world-sync/pickup-presentation.md)
-* [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Constants pipeline](../../../../data/stubs/constants-pipeline.md) - Stub: generated constant data documentation.
-* [Packet schema pipeline](../../../../data/stubs/packet-schema-pipeline.md) - Stub: packet schema data documentation.
-* [Collision shape data](../../../../data/stubs/collision-shape-data.md) - Stub: collision-shape source-of-truth documentation.
-* [Pickup entities](../../../../systems-design/entities/stubs/pickup-entities.md) - Stub: pickup entity design documentation.
+* [Gameplay packets](../../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Constants pipeline](../../../../data/data-sync-and-ssot-pipeline.md) - generated constant data documentation.
+* [Packet schema pipeline](../../../../data/packet-schemas.md) - packet schema data documentation.
+* [Collision shape data](../../../../data/collision-shape-data.md) - collision-shape source-of-truth documentation.
+* [Pickup entities](../../../../systems-design/entities/pickup-entities.md) - pickup entity design documentation.
 
 ## Notes
 

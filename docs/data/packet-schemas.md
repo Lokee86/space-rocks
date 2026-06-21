@@ -18,7 +18,7 @@ shared/packets/
 
 Those TOML files are the canonical source for generated packet constants, packet structs, packet field names, and client packet builders used by the realtime game, lobby/auth flow, devtools, and player-data runtime protocol.
 
-The packet schema pipeline is owned by `tools/data_sync/`. Packet changes are edited in TOML, validated, diffed, pushed into generated language outputs, and then checked for drift.
+The packet schema pipeline is documented in [Data Sync And SSoT Pipeline](data-sync-and-ssot-pipeline.md). Packet changes are edited in TOML, validated, diffed, pushed into generated language outputs, and then checked for drift.
 
 Current active packet generation targets are:
 
@@ -52,7 +52,7 @@ shared/packets/player_data.toml
 
 `outputs.toml` owns packet generation routing.
 
-Each `[[outputs]]` entry defines a generated file target, language, package/base class, selected packet type constants, selected structs, selected builders, and imports where needed.
+Each `\[\[outputs\]\]` entry defines a generated file target, language, package/base class, selected packet type constants, selected structs, selected builders, and imports where needed.
 
 Current output ids:
 
@@ -528,7 +528,6 @@ Pipeline configuration:
 
 ```text
 tools/data_sync/config.toml
-tools/data_sync/!INDEX.md
 tools/data_sync/main.py
 tools/data_sync/data_sync/cli.py
 ```
@@ -598,7 +597,7 @@ shared/player_data/ owns logical player-data schema.
 
 ## Notes
 
-`tools/data_sync/!INDEX.md` describes the packet workflow, but `tools/data_sync/config.toml` is the immediate source for the active configured packet source paths and output targets.
+The packet workflow is documented in [Data Sync And SSoT Pipeline](data-sync-and-ssot-pipeline.md), but `tools/data_sync/config.toml` is the immediate source for the active configured packet source paths and output targets.
 
 The GDScript packet output currently renders field constants from the loaded schema and builders selected by `client_packets`. This makes some field constants available even when the client does not own the corresponding runtime packet family.
 

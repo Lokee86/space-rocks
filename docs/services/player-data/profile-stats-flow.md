@@ -525,8 +525,8 @@ services/api-server/test/models/player_match_result_test.rb
 * [Match Result Reporting](../game-server/integrations/match-result-reporting.md)
 * [Player Stats And Match Results](../api-server/player-stats-and-match-results.md)
 * [Profile Flow](../client/pregame-menu-flow/profile-flow.md)
-* [Player Data HTTP API](../../protocol/stubs/player-data-http-api.md) - Stub: player-data HTTP API protocol documentation.
-* [Player Data Schema](../../data/stubs/player-data-schema.md) - Stub: player-data schema documentation.
+* [Player Data HTTP API](../../protocol/player-data-http-api.md) - player-data HTTP API protocol documentation.
+* [Player Data Schema](../../data/player-data-schema.md) - player-data schema documentation.
 
 ## Notes
 

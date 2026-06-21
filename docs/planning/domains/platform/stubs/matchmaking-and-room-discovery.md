@@ -27,11 +27,11 @@ It should stay focused on discovery and entry flow rather than simulation or mat
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
+- [Planning](../../../!INDEX.md)
 - [Account And Identity Systems](../account-and-identity-systems.md)
 - [Social And Community Systems](social-and-community-systems.md)
-- [Player Experience Systems](player-experience-systems.md)
-- [Platform And Progression Roadmap](platform-and-progression-roadmap.md)
+- [Player Experience Systems](../../gameplay/player-experience-systems.md)
+- [Development Roadmap](../../../development-roadmap.md)
 
 ## Open Planning Questions
 

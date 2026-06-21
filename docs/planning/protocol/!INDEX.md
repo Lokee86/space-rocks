@@ -17,12 +17,11 @@ This folder owns planning docs for protocol work that is not yet current.
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [api-product-surface.md](api-product-surface.md) - Planned API product surface ownership and future HTTP/API surface map.
 - [realtime-protocol-architecture.md](realtime-protocol-architecture.md) - Planned realtime protocol architecture.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
-
-- [api-product-surface](api-product-surface/!INDEX.md) - Api Product Surface documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

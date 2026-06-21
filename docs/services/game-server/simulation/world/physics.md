@@ -488,7 +488,7 @@ Run collision-shape export or data checks when source scene collision nodes or s
 * [Player Respawn](../players/player-respawn.md)
 * [Collision Shapes](collision-shapes.md)
 * [Toroidal Space And Motion](toroidal-space-and-motion.md)
-* [Collision Shape Data](../../../../data/stubs/collision-shape-data.md)
+* [Collision Shape Data](../../../../data/collision-shape-data.md)
 * [Devtools](../../../../devtools/!INDEX.md)
 * [Player Build Limits](../../../../limits/player-build-limits.md)
 

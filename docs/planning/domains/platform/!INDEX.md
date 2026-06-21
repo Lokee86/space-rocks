@@ -22,7 +22,7 @@ This folder owns planning docs for platform-facing work that is not yet current.
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 
-- [anti-cheat-policy.md](stubs/anti-cheat-policy.md) - Stub: Anti Cheat Policy documentation.
+- [game-integrity-policy.md](stubs/game-integrity-policy.md) - Stub: Game Integrity Policy documentation.
 - [leaderboards-and-rankings.md](stubs/leaderboards-and-rankings.md) - Stub: leaderboards and rankings planning.
 - [matchmaking-and-room-discovery.md](stubs/matchmaking-and-room-discovery.md) - Stub: matchmaking and room discovery planning.
 - [multiplayer-session-and-lifecycle.md](stubs/multiplayer-session-and-lifecycle.md) - Stub: multiplayer session and lifecycle planning.

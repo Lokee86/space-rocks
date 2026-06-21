@@ -239,8 +239,8 @@ docs/systems-design/combat/stubs/status-effects.md
 
 Example entry:
 
-```markdown
-- [example.md](stubs/example.md) - Stub: incomplete example documentation.
+```text
+- `[example.md](stubs/example.md) - Stub: incomplete example documentation.`
 ```
 
 If the needed `stubs/` folder does not exist:

@@ -703,7 +703,7 @@ go test -buildvcs=false ./internal/game/runtime
 * [Player Pause And Suspension](player-pause-and-suspension.md)
 * [Player Camera View State](player-camera-view-state.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
-* [Gameplay Packets](../../../../protocol/stubs/gameplay-packets.md)
+* [Gameplay Packets](../../../../protocol/gameplay-packets.md)
 * [Data](../../../../data/!INDEX.md)
 
 ## Notes

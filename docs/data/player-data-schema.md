@@ -612,7 +612,7 @@ services/game-server/internal/matchreporting/runtime_reporter_test.go
 * [Game Server Player Data HTTP Hosting](../services/game-server/integrations/player-data-http-hosting.md)
 * [HTTP contract enforcement](../protocol/http-contract-enforcement.md)
 * [Protocol](../protocol/!INDEX.md)
-* [Data Sync](../../tools/data_sync/!INDEX.md)
+* [Data Sync](data-sync-and-ssot-pipeline.md)
 
 ## Notes
 

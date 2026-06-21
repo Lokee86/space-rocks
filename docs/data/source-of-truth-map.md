@@ -630,7 +630,7 @@ docs/planning/ documents future source-of-truth changes.
 * [Client](../services/client/!INDEX.md)
 * [Game Server](../services/game-server/!INDEX.md)
 * [Player Data](../services/player-data/!INDEX.md)
-* [Data Sync](../../tools/data_sync/!INDEX.md)
+* [Data Sync](data-sync-and-ssot-pipeline.md)
 
 ## Notes
 

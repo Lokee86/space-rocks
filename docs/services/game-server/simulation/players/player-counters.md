@@ -621,8 +621,7 @@ go test -buildvcs=false ./tests/game -run 'PlayerCounter|SetPlayerScore|SetPlaye
 * [Player Death And Despawn](player-death-and-despawn.md)
 * [Player Respawn](player-respawn.md)
 * [Player Pause And Suspension](player-pause-and-suspension.md)
-* [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Devtools packets](../../../../protocol/stubs/devtools-packets.md) - Stub: devtools packet documentation.
+* [Gameplay packets](../../../../protocol/gameplay-packets.md) - Gameplay realtime packet documentation.
 * [Data](../../../../data/!INDEX.md)
 * [Devtools](../../../../devtools/!INDEX.md)
 

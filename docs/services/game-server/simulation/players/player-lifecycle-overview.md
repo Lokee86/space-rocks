@@ -814,8 +814,8 @@ go test -buildvcs=false ./internal/game ./internal/game/player ./internal/game/r
 * [Room Snapshot Projection](../../rooms/room-snapshot-projection.md)
 * [Game Server Networking](../../networking/!INDEX.md)
 * [Gameplay State Application](../../../client/gameplay-runtime/gameplay-state-application.md)
-* [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Constants pipeline](../../../../data/stubs/constants-pipeline.md) - Stub: generated constant data documentation.
+* [Gameplay packets](../../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Constants pipeline](../../../../data/data-sync-and-ssot-pipeline.md) - generated constant data documentation.
 
 ## Notes
 

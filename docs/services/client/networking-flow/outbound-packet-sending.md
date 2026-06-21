@@ -717,11 +717,11 @@ No focused `ClientPacketSender` unit test was found during this pass.
 * [Room Entry And Join Dialog](../lobby-flow/room-entry-and-join-dialog.md)
 * [Lobby Session And Presentation](../lobby-flow/lobby-session-and-presentation.md)
 * [Game Server](../../game-server/!INDEX.md)
-* [Realtime WebSocket Protocol](../../../protocol/stubs/realtime-websocket-protocol.md) - Stub: incomplete realtime protocol documentation.
-* [Gameplay Packets](../../../protocol/stubs/gameplay-packets.md) - Stub: incomplete gameplay packet protocol documentation.
-* [Lobby Packets](../../../protocol/stubs/lobby-packets.md) - Stub: incomplete lobby packet protocol documentation.
-* [Devtools Packets](../../../protocol/stubs/devtools-packets.md) - Stub: incomplete devtools packet protocol documentation.
-* [Packet Schema Pipeline](../../../data/stubs/packet-schema-pipeline.md) - Stub: incomplete packet schema pipeline documentation.
+* [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md) - incomplete realtime protocol documentation.
+* [Gameplay Packets](../../../protocol/gameplay-packets.md) - incomplete gameplay packet protocol documentation.
+* [Lobby Packets](../../../protocol/lobby-packets.md) - incomplete lobby packet protocol documentation.
+* [Devtools Packets]() - incomplete devtools packet protocol documentation.
+* [Packet Schema Pipeline](../../../data/packet-schemas.md) - incomplete packet schema pipeline documentation.
 
 ## Notes
 

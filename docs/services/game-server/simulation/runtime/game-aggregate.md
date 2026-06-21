@@ -658,8 +658,8 @@ Expected behavioral coverage includes:
 * [Simulation Loop And Phase Order](simulation-loop-and-phase-order.md)
 * [State Packet Projection](state-packet-projection.md)
 * [Presentation Event Queue](presentation-event-queue.md)
-* [Gameplay Packets](../../../../protocol/stubs/gameplay-packets.md)
-* [Realtime WebSocket Protocol](../../../../protocol/stubs/realtime-websocket-protocol.md)
+* [Gameplay Packets](../../../../protocol/gameplay-packets.md)
+* [Realtime WebSocket Protocol](../../../../protocol/realtime-websocket-protocol.md)
 * [Data Pipeline](../../../../data/!INDEX.md)
 
 ## Notes

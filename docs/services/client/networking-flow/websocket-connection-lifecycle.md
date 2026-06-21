@@ -425,8 +425,8 @@ The WebSocket transport lifecycle itself depends on Godot `WebSocketPeer` runtim
 - [Outbound Packet Sending](outbound-packet-sending.md)
 - [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)
 - [Auth Session Flow](../auth-session-flow.md)
-- [Realtime WebSocket Protocol](../../../protocol/stubs/realtime-websocket-protocol.md)
-- [Packet Schema Pipeline](../../../data/stubs/packet-schema-pipeline.md)
+- [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
+- [Packet Schema Pipeline](../../../data/packet-schemas.md)
 
 ## Notes
 

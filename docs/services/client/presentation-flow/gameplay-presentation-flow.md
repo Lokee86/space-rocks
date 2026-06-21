@@ -487,7 +487,7 @@ indicator placement follows the active ViewAnchor camera basis
 * [Gameplay Audio Flow](../gameplay-event-presentation/gameplay-audio-flow.md)
 * [Match End Flow](../match-end-flow/!INDEX.md)
 * [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md)
-* [Constants pipeline](../../../data/stubs/constants-pipeline.md)
+* [Constants pipeline](../../../data/data-sync-and-ssot-pipeline.md)
 
 ## Notes
 

@@ -31,10 +31,10 @@ It should cover lanes, full snapshots, delta snapshots, quantization, bit packin
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
-- [Network Observability And Packet Budget](network-observability-and-packet-budget.md)
-- [Testing And Smoke Strategy](testing-and-smoke-strategy.md)
-- [Platform And Progression Roadmap](platform-and-progression-roadmap.md)
+- [Planning](../../!INDEX.md)
+- [Network Observability And Packet Budget](../domains/technical/network-observability-and-packet-budget.md)
+- [Testing And Smoke Strategy](../domains/technical/stubs/testing-and-smoke-strategy.md)
+- [Development Roadmap](../development-roadmap.md)
 
 ## Open Planning Questions
 

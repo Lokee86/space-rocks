@@ -15,7 +15,7 @@ This doc owns how players relate to other players.
 
 `leaderboards-and-rankings.md` owns competitive comparison.
 
-`api-product-surface.md` owns backend API product and account endpoints.
+`API Product Surface` owns backend API product and account endpoints.
 
 V0 social should stay small:
 
@@ -54,11 +54,11 @@ Chat would require moderation and reporting planning before implementation.
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
+- [Planning](../../../!INDEX.md)
 - [Account And Identity Systems](../account-and-identity-systems.md)
 - [Matchmaking And Room Discovery](matchmaking-and-room-discovery.md)
-- [API Product Surface](api-product-surface.md)
-- [Player Experience Systems](player-experience-systems.md)
+- [API Product Surface](../../../../protocol/api-product-surface.md)
+- [Player Experience Systems](../../gameplay/player-experience-systems.md)
 
 ## Open Planning Questions
 

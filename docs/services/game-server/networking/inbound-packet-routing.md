@@ -541,11 +541,11 @@ Direct unit coverage for `inbound.RouteClientPacket` ordering is currently thin.
 - [Auth Routing](./auth-routing.md) - Authenticate packet routing and auth verifier handoff.
 - [Telemetry Packet Routing](./telemetry-packet-routing.md) - Telemetry ping/pong routing.
 - [Outbound Message Flow](./outbound-message-flow.md) - Outbound server message writing and presentation packet flow.
-- [Realtime Websocket Protocol](../../../protocol/stubs/realtime-websocket-protocol.md) - Realtime WebSocket protocol documentation.
-- [Gameplay Packets](../../../protocol/stubs/gameplay-packets.md) - Gameplay packet documentation.
-- [Lobby Packets](../../../protocol/stubs/lobby-packets.md) - Lobby packet documentation.
-- [Devtools Packets](../../../protocol/stubs/devtools-packets.md) - Devtools packet documentation.
-- [Packet Schema Pipeline](../../../data/stubs/packet-schema-pipeline.md) - Shared packet schema and generated output documentation.
+- [Realtime Websocket Protocol](../../../protocol/realtime-websocket-protocol.md) - Realtime WebSocket protocol documentation.
+- [Gameplay Packets](../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
+- [Lobby Packets](../../../protocol/lobby-packets.md) - Lobby packet documentation.
+- [Devtools Packets]() - Devtools packet documentation.
+- [Packet Schema Pipeline](../../../data/packet-schemas.md) - Shared packet schema and generated output documentation.
 
 ## Notes
 

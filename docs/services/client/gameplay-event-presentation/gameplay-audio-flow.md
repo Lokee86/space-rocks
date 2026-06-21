@@ -500,8 +500,8 @@ Use the normal client GUT verification flow when changing gameplay audio behavio
 * [Pickup Presentation](../world-sync/pickup-presentation.md)
 * [HUD And Gameplay UI](../hud-and-gameplay-ui.md)
 * [Presentation Flow](../presentation-flow/!INDEX.md)
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Constants pipeline](../../../data/stubs/constants-pipeline.md) - Stub: generated constants documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Constants pipeline](../../../data/data-sync-and-ssot-pipeline.md) - generated constants documentation.
 
 ## Notes
 

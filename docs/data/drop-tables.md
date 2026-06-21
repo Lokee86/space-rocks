@@ -359,7 +359,7 @@ configured generated Go output missing
 invalid TOML syntax
 missing [table] block
 missing required table fields
-missing or invalid [[entries]] data
+missing or invalid `\[\[entries\]\]` data
 duplicate table id across configured source files
 unsupported drop_mode
 chance outside 0.0 through 1.0
@@ -470,7 +470,7 @@ services/game-server/internal/game/pickups/
 ## Related docs
 
 * [Data](./!INDEX.md)
-* [Data Sync](../../tools/data_sync/!INDEX.md)
+* [Data Sync](data-sync-and-ssot-pipeline.md)
 * [Game Server Simulation Pickups](../services/game-server/simulation/pickups/!INDEX.md)
 * [Pickup Drop Integration](../services/game-server/simulation/pickups/pickup-drop-integration.md)
 * [Asteroid Spawning And Variants](../services/game-server/simulation/world/asteroid-spawning-and-variants.md)

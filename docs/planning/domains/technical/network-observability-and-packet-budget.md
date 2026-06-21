@@ -27,11 +27,11 @@ It should stay on measurement and observability rather than packet-format redesi
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
-- [Realtime Protocol Architecture](realtime-protocol-architecture.md)
-- [Devtools And Telemetry](devtools-and-telemetry.md)
-- [Logging And Diagnostics](logging-and-diagnostics.md)
-- [Platform And Progression Roadmap](platform-and-progression-roadmap.md)
+- [Planning](../../!INDEX.md)
+- [Realtime Protocol Architecture](../../protocol/realtime-protocol-architecture.md)
+- [Devtools And Telemetry](../../devtools/stubs/devtools-and-telemetry.md)
+- [Logging And Diagnostics](stubs/logging-and-diagnostics.md)
+- [Development Roadmap](../../development-roadmap.md)
 
 ## Open Planning Questions
 

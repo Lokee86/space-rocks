@@ -11,8 +11,8 @@ This doc owns planning for future logging and diagnostics, while treating the ex
 
 Implemented references:
 
-- [docs/services/game-server/observability/logging-and-diagnostics.md](../../../services/game-server/observability/logging-and-diagnostics.md)
-- [docs/services/client/client-logging.md](../../../services/client/client-logging.md)
+- [docs/services/game-server/observability/logging-and-diagnostics.md](../../../../../services/game-server/observability/logging-and-diagnostics.md)
+- [docs/services/client/client-logging.md](../../../../../services/client/client-logging.md)
 
 ## Current Inputs
 
@@ -29,10 +29,10 @@ Implemented references:
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
-- [Network Observability And Packet Budget](network-observability-and-packet-budget.md)
-- [Devtools And Telemetry](devtools-and-telemetry.md)
-- [Testing And Smoke Strategy](testing-and-smoke-strategy.md)
+- [Planning](../../../!INDEX.md)
+- [Network Observability And Packet Budget](../network-observability-and-packet-budget.md)
+- [Devtools And Telemetry](../../../devtools/stubs/devtools-and-telemetry.md)
+- [Testing And Smoke Strategy](../testing-and-smoke-strategy.md)
 
 ## Open Planning Questions
 

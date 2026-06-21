@@ -342,7 +342,7 @@ Use the normal client GUT verification flow when changing entity sync behavior.
 * [World sync coordinator](world-sync-coordinator.md)
 * [View anchor and visual coordinates](view-anchor-and-visual-coordinates.md)
 * [Pickup Presentation](pickup-presentation.md) - Client pickup presentation documentation.
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - Gameplay realtime packet documentation.
 
 ## Notes
 

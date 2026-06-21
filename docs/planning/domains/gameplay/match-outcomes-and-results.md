@@ -542,10 +542,10 @@ Immediate and end-of-match challenge resolutions can both appear in MatchSummary
 
 * [Modes And Match Rules](modes-and-match-rules.md)
 * [Progression And Rewards](progression-and-rewards.md)
-* [Achievements And Milestones](achievements-and-milestones.md)
+* [Progression And Rewards](progression-and-rewards.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
-* [Player Data And Persistence](../platform/player-data-and-persistence.md)
-* [Match End And Gameplay UI](../../client/match-end-and-gameplay-ui.md)
+* [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
+* [Client Match End Flow](../../../services/client/match-end-flow/!INDEX.md)
 
 ## Open Gametime Decisions
 

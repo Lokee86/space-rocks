@@ -391,9 +391,9 @@ Use the normal client GUT verification flow when changing pickup presentation be
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
 * [Input and Targeting](../input-and-targeting.md)
 * [HUD and Gameplay UI](../hud-and-gameplay-ui.md)
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Pickup entities](../../../systems-design/entities/stubs/pickup-entities.md) - Stub: pickup entity design documentation.
-* [Collision shape data](../../../data/stubs/collision-shape-data.md) - Stub: collision-shape source-of-truth documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Pickup entities](../../../systems-design/entities/pickup-entities.md) - pickup entity design documentation.
+* [Collision shape data](../../../data/collision-shape-data.md) - collision-shape source-of-truth documentation.
 
 ## Notes
 

@@ -548,10 +548,10 @@ Use the normal client GUT verification flow when changing event/effects presenta
 * [Pickup Presentation](../world-sync/pickup-presentation.md)
 * [View Anchor And Visual Coordinates](../world-sync/view-anchor-and-visual-coordinates.md)
 * [HUD And Gameplay UI](../hud-and-gameplay-ui.md)
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Realtime websocket protocol](../../../protocol/stubs/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
-* [Radial effects](../../../systems-design/combat/stubs/radial-effects.md) - Stub: radial effects design documentation.
-* [Pickup entities](../../../systems-design/entities/stubs/pickup-entities.md) - Stub: pickup entity design documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Realtime websocket protocol](../../../protocol/realtime-websocket-protocol.md) - realtime websocket protocol documentation.
+* [Radial effects](../../../systems-design/combat/radial-effects.md) - radial effects design documentation.
+* [Pickup entities](../../../systems-design/entities/pickup-entities.md) - pickup entity design documentation.
 
 ## Notes
 

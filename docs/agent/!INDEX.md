@@ -61,7 +61,6 @@ This folder does not own:
 - [Documentation](../!INDEX.md)
 - [Documentation Policy](../documentation-policy.md)
 - [Documentation Procedure](../documentation-procedure.md)
-- [Documentation Structure And Procedures](../planning/documentation-structure-and-procedures.md)
 
 ## Notes
 

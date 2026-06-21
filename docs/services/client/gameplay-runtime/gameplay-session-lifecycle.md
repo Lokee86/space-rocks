@@ -313,7 +313,7 @@ Relevant client tests include:
 * [Menu flow](../menu-flow.md) - Client menu flow documentation.
 * [Match End Flow](../match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
 * [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
 
 ## Notes
 

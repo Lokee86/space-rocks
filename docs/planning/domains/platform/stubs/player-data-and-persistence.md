@@ -29,10 +29,10 @@ It should stay on the data and storage boundary rather than folding in gameplay 
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
+- [Planning](../../../!INDEX.md)
 - [Account And Identity Systems](../account-and-identity-systems.md)
-- [Progression And Rewards](progression-and-rewards.md)
-- [Player Experience Systems](player-experience-systems.md)
+- [Progression And Rewards](../../gameplay/progression-and-rewards.md)
+- [Player Experience Systems](../../gameplay/player-experience-systems.md)
 
 ## Open Planning Questions
 
