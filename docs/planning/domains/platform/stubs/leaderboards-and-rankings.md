@@ -37,7 +37,7 @@ Authenticated Account + trusted MatchOutcome + eligible ModePreset + anti-cheat/
 - [Planning](../../../!INDEX.md)
 - [Account And Identity Systems](../account-and-identity-systems.md)
 - [Trust And Eligibility Policy](../../../../domains/platform/trust-and-eligibility-policy.md)
-- [Anti-Cheat Policy](anti-cheat-policy.md)
+- [Anti-Cheat Policy](game-integrity-policy.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [API Product Surface](../../../../protocol/api-product-surface.md)
 - [Progression And Rewards](progression-and-rewards.md)

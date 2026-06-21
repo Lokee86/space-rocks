@@ -525,8 +525,8 @@ cd services/api-server && bundle exec rails test test/controllers/internal/auth/
 
 * [Game Server Integrations](./!INDEX.md)
 * [Game Server](../../!INDEX.md)
-* [Game Server Networking](../../networking/!INDEX.md)
-* [Game Server Rooms](../../rooms/!INDEX.md)
+* [Game Server Networking](../networking/!INDEX.md)
+* [Game Server Rooms](../rooms/!INDEX.md)
 * [Client Auth Session Flow](../../../client/auth-session-flow.md)
 * [API-server auth and OAuth](../../../api-server/auth-and-oauth.md)
 * [API-server internal API surface](../../../api-server/internal-api-surface.md)

@@ -399,7 +399,7 @@ The documented focused test paths for outbound routing are:
 - [Protocol](../../../protocol/!INDEX.md)
 - [Data](../../../data/!INDEX.md)
 - [Realtime Protocol Architecture](../../../planning/protocol/realtime-protocol-architecture.md)
-- [Network Observability And Packet Budget](../../../planning/technical/network-observability-and-packet-budget.md)
+- [Network Observability And Packet Budget](../../../planning/domains/technical/network-observability-and-packet-budget.md)
 
 ## Notes
 

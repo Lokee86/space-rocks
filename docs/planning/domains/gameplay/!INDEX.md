@@ -17,6 +17,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [achievements-and-milestones.md](achievements-and-milestones.md) - Achievements And Milestones documentation.
 - [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md) - Planned enemy, boss, and encounter structure.
 - [inventory-and-hangar.md](inventory-and-hangar.md) - Planned inventory and hangar structure.
 - [levels-missions-and-content-structure.md](levels-missions-and-content-structure.md) - Planned level, mission, and content structure.

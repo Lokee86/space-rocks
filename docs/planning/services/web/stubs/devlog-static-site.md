@@ -52,7 +52,7 @@ Stub note: keep this focused on the small initial public web presence.
 ## Related docs
 
 - [Web](../!INDEX.md)
-- [Website and web presence](../../domains/web/website-and-web-presence.md)
+- [Website and web presence](../../../domains/web/website-and-web-presence.md)
 - TODO: add devlog-specific docs when they exist.
 
 ## Notes

@@ -465,7 +465,7 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 * [Gameplay Session Lifecycle](../../client/gameplay-runtime/gameplay-session-lifecycle.md)
 * [Lobby Packets](../../../protocol/lobby-packets.md) - incomplete lobby packet protocol documentation.
 * [Packet Schema Pipeline](../../../data/packet-schemas.md) - incomplete packet schema pipeline documentation.
-* [Player Experience Systems](../../../planning/gameplay/player-experience-systems.md)
+* [Player Experience Systems](../../../planning/domains/gameplay/player-experience-systems.md)
 * [Multiplayer Session And Lifecycle](../../../planning/domains/platform/stubs/multiplayer-session-and-lifecycle.md) - incomplete multiplayer session lifecycle planning documentation.
 
 ## Notes

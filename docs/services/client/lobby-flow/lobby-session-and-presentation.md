@@ -484,7 +484,7 @@ Those tests verify room snapshot shape and server-owned room snapshot behavior, 
 * [Networking Flow](../networking-flow/!INDEX.md)
 * [Match End Flow](../match-end-flow/!INDEX.md)
 * [Lobby Packets](../../../protocol/lobby-packets.md) - Stub: incomplete lobby packet protocol documentation.
-* [Current System Limits](../../limits/current-system-limits.md)
+* [Current System Limits](../../../limits/current-system-limits.md)
 
 ## Notes
 

@@ -932,7 +932,7 @@ EligibilityDecision can allow private stats while blocking leaderboards
 * [Account And Identity Current State](../../../../domains/platform/account-and-identity-current-state.md)
 * [Realtime Protocol Architecture](../../../protocol/realtime-protocol-architecture.md)
 * [Progression And Rewards](../../gameplay/progression-and-rewards.md)
-* [Achievements And Milestones](../gameplay/achievements-and-milestones.md)
+* [Achievements And Milestones](../../gameplay/achievements-and-milestones.md)
 * [Match Outcomes And Results](../../gameplay/match-outcomes-and-results.md)
 * [Modes And Match Rules](../../gameplay/modes-and-match-rules.md)
 * [Leaderboards And Rankings](leaderboards-and-rankings.md)

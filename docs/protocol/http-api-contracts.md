@@ -7,7 +7,7 @@ Parent index: [Protocol](./!INDEX.md)
 This document describes HTTP request/response contract ownership, the OpenAPI source of truth, enforcement expectations, and contract-change rules.
 
 For the current API product surface map, see [API Product Surface](api-product-surface.md).
-Future API surface planning belongs in [Planning API Product Surface](../planning/protocol/api-product-surface.md).
+Future API surface planning belongs in [API Product Surface Planning](../planning/protocol/api-product-surface.md).
 
 ## Overview
 
