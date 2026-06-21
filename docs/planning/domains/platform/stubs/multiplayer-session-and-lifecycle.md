@@ -308,12 +308,12 @@ Matchmaking and room discovery owns:
 - [Planning](../../../!INDEX.md)
 - [Account And Identity Systems](../account-and-identity-systems.md)
 - [Matchmaking And Room Discovery](matchmaking-and-room-discovery.md)
-- [Anti-Cheat Policy](anti-cheat-policy.md)
-- [Realtime Protocol Architecture](../../technical/realtime-protocol-architecture.md)
+- [Anti-Cheat Policy](game-integrity-policy.md)
+- [Realtime Protocol Architecture](../../../protocol/realtime-protocol-architecture.md)
 - [Deployment And Packaging](../../technical/stubs/deployment-and-packaging.md)
 - [Modes And Match Rules](../../gameplay/modes-and-match-rules.md)
 - [Systems Design](../../../systems-design/!INDEX.md)
-- [Player Data Routing Flow](../../../domains/platform/player-data-routing-flow.md)
+- [Player Data and Persistence](player-data-and-persistence.md)
 - [Account And Identity Current State](../../../../domains/platform/account-and-identity-current-state.md)
 
 ## Open Planning Questions

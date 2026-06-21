@@ -32,7 +32,7 @@ Implemented references:
 - [Planning](../../../!INDEX.md)
 - [Network Observability And Packet Budget](../network-observability-and-packet-budget.md)
 - [Devtools And Telemetry](../../../devtools/stubs/devtools-and-telemetry.md)
-- [Testing And Smoke Strategy](../testing-and-smoke-strategy.md)
+- [Testing And Smoke Strategy](./testing-and-smoke-strategy.md)
 
 ## Open Planning Questions
 

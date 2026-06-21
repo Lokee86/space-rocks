@@ -12,6 +12,7 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [api-product-surface.md](api-product-surface.md) - Api Product Surface documentation.
 - [developer.md](developer.md) - Developer workflow and environment notes.
 - [documentation-policy.md](documentation-policy.md) - Documentation Policy documentation.
 - [documentation-procedure.md](documentation-procedure.md) - Documentation Procedure documentation.
