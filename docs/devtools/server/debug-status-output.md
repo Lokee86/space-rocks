@@ -415,7 +415,7 @@ toggle command effects that feed status output
 * [Game Server](../../services/game-server/!INDEX.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
-* [Realtime WebSocket Protocol](../../protocol/stubs/realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
+* [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
 
 ## Notes
 

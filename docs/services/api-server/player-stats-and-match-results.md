@@ -283,8 +283,8 @@ Related non-API-server tests:
 * [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
 * [Trust And Eligibility Policy](../../domains/platform/trust-and-eligibility-policy.md)
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md) - Current HTTP request/response contract enforcement documentation.
-* [Player Data HTTP API](../../protocol/stubs/player-data-http-api.md) - Stub: player-data HTTP API protocol documentation.
-* [Player Data Schema](../../data/stubs/player-data-schema.md) - Stub: player-data schema documentation.
+* [Player Data HTTP API](../../protocol/player-data-http-api.md) - player-data HTTP API protocol documentation.
+* [Player Data Schema](../../data/player-data-schema.md) - player-data schema documentation.
 
 ## Notes
 

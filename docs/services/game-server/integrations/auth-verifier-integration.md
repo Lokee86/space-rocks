@@ -531,9 +531,9 @@ cd services/api-server && bundle exec rails test test/controllers/internal/auth/
 * [API-server auth and OAuth](../../../api-server/auth-and-oauth.md)
 * [API-server internal API surface](../../../api-server/internal-api-surface.md)
 * [Player Data](../../../player-data/!INDEX.md)
-* [HTTP Contract Enforcement](../../../../protocol/http-contract-enforcement.md)
-* [Account And Identity Current State](../../../../domains/platform/account-and-identity-current-state.md)
-* [Account And Identity Systems planning](../../../../planning/platform/account-and-identity-systems.md)
+* [HTTP Contract Enforcement](../../../protocol/http-contract-enforcement.md)
+* [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
+* [Account And Identity Systems planning](../../../planning/domains/platform/account-and-identity-systems.md)
 * [Current System Limits](../../../../limits/current-system-limits.md)
 
 ## Notes

@@ -13,7 +13,7 @@ Because those systems now intersect more tightly, seams and ownership boundaries
 
 This roadmap coordinates phase order, dependency order, and decision gates for the platform and progression track.
 
-Detailed system ownership belongs in the system-specific planning docs linked from `systems-plan-index.md`.
+Detailed system ownership belongs in the system-specific planning docs linked from `docs/planning/!INDEX.md`.
 
 ## Roadmap Purpose
 
@@ -50,11 +50,11 @@ Phase A determines the priority and order of Phase B work, not whether launch-gr
 
 ## Phase A
 
-Phase A remains the packet-budget and observability gate for later realtime protocol work. The detailed packet budget, diagnostics, devtools visibility, completion criteria, and decision gate now live in [network-observability-and-packet-budget.md](network-observability-and-packet-budget.md).
+Phase A remains the packet-budget and observability gate for later realtime protocol work. The detailed packet budget, diagnostics, devtools visibility, completion criteria, and decision gate now live in [network-observability-and-packet-budget.md](domains/technical/network-observability-and-packet-budget.md).
 
 ## Phase B
 
-Phase B remains the realtime protocol seam for authoritative multiplayer state delivery. The detailed lanes, snapshot model, quantization path, and protobuf target now live in [realtime-protocol-architecture.md](realtime-protocol-architecture.md).
+Phase B remains the realtime protocol seam for authoritative multiplayer state delivery. The detailed lanes, snapshot model, quantization path, and protobuf target now live in [realtime-protocol-architecture.md](protocol/realtime-protocol-architecture.md).
 
 ## Phase C - Player Experience Foundation
 
@@ -66,33 +66,32 @@ Phase C defines the player-facing game structure: what kind of room or match the
 
 ### Step 1 - Preset-Driven Room Mode Foundation
 
-The detailed mode and match-rules plan now lives in [modes-and-match-rules.md](modes-and-match-rules.md).
+The detailed mode and match-rules plan now lives in [modes-and-match-rules.md](domains/gameplay/modes-and-match-rules.md).
 
 That doc owns `ModePreset`, `RoomModeConfig`, `ResolvedMatchRules`, preset-owned policy groups, the `survival_arcade` and `score_attack` baseline modes, affected systems, Step 1 completion criteria, and the open gametime decisions.
 
 ### Step 2 - Player Build And Loadout Foundation
 
-Step 2 planning now lives in [player-build-and-loadouts.md](player-build-and-loadouts.md).
+Step 2 planning now lives in [player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md).
 
 That doc owns the detailed build flow, `ShipVariant`, `weight_class`, weapon points, weapon classification, module slots, `BuildEligibility`, `EligibleBuildOptions`, `LoadoutSelection`, `ResolvedPlayerBuild`, `RuntimeEquipmentState`, shield support, `OwnedShip` and hardwired module boundaries, and pickup interaction.
 
-Inventory and hangar acquisition details belong in [inventory-and-hangar.md](inventory-and-hangar.md) when you need the ownership and acquisition layer.
+Inventory and hangar acquisition details belong in [inventory-and-hangar.md](domains/gameplay/inventory-and-hangar.md) when you need the ownership and acquisition layer.
 
 ## Phase D - Progression Foundation
 
 Phase D carries the trusted post-match and progression systems that depend on the player experience flow. The detailed planning now lives in:
 
-- [Match Outcomes And Results](match-outcomes-and-results.md)
-- [Progression And Rewards](progression-and-rewards.md)
-- [Achievements And Milestones](achievements-and-milestones.md)
-- [Inventory And Hangar](inventory-and-hangar.md)
-- [Player Data And Persistence](player-data-and-persistence.md)
+- [Match Outcomes And Results](domains/gameplay/match-outcomes-and-results.md)
+- [Progression And Rewards](domains/gameplay/progression-and-rewards.md)
+- [Inventory And Hangar](domains/gameplay/inventory-and-hangar.md)
+- [Player Data And Persistence](domains/platform/stubs/player-data-and-persistence.md)
 
 ## Phase E - Gameplay Expansion
 
 Phase E carries the gameplay growth track that depends on the earlier system seams. The detailed planning now lives in:
 
-- [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md)
-- [Modes And Match Rules](modes-and-match-rules.md)
-- [Network Observability And Packet Budget](network-observability-and-packet-budget.md)
-- [Realtime Protocol Architecture](realtime-protocol-architecture.md)
+- [Enemies, Bosses, And Encounters](domains/gameplay/enemies-bosses-and-encounters.md)
+- [Modes And Match Rules](domains/gameplay/modes-and-match-rules.md)
+- [Network Observability And Packet Budget](domains/technical/network-observability-and-packet-budget.md)
+- [Realtime Protocol Architecture](protocol/realtime-protocol-architecture.md)

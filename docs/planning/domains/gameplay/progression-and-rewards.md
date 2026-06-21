@@ -38,13 +38,13 @@ This doc does not own:
 
 Currency itself belongs to [Shop, Commerce, And Economy](shop-commerce-and-economy.md).
 
-Player-data routing belongs to [Player Data And Persistence](../platform/player-data-and-persistence.md).
+Player-data routing belongs to [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md).
 
 Inventory ownership belongs to [Inventory And Hangar](inventory-and-hangar.md).
 
 Trusted match facts belong to [Match Outcomes And Results](match-outcomes-and-results.md).
 
-Achievement and milestone definitions belong to [Achievements And Milestones](achievements-and-milestones.md).
+Achievement and milestone reward definitions belong to this doc.
 
 ## Core Architecture
 
@@ -515,7 +515,7 @@ period key when relevant
 trust policy result
 ```
 
-Anti-cheat and trust policy owns which sources are trusted for online progression, which debug/devtools grants are excluded, and which local facts are not online-trusted.
+Game integrity polciy owns which sources are trusted for online progression, which debug/devtools grants are excluded, and which local facts are not online-trusted.
 
 ## Reward Formula Policy
 
@@ -570,10 +570,9 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 
 * [Match Outcomes And Results](match-outcomes-and-results.md)
 * [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
-* [Player Data And Persistence](../platform/player-data-and-persistence.md)
+* [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
 * [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md)
-* [Anti-Cheat And Trust Policy](../platform/anti-cheat-and-trust-policy.md)
-* [Achievements And Milestones](achievements-and-milestones.md)
+* [Game Integrity Policy](../platform/stubs/game-integrity-policy.md)
 * [Inventory And Hangar](inventory-and-hangar.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 

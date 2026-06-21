@@ -11,9 +11,9 @@ Implemented behavior belongs in docs/systems-design, docs/services, docs/protoco
 
 Current limitations belong in [docs/limits/current-system-limits.md](../limits/current-system-limits.md) and [docs/limits/player-build-limits.md](../limits/player-build-limits.md).
 
-Detailed player build and loadout planning belongs in [docs/planning/player-build-and-loadouts.md](player-build-and-loadouts.md).
+Detailed player build and loadout planning belongs in [docs/planning/player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md).
 
-Roadmap phase sequencing belongs in [docs/planning/platform-and-progression-roadmap.md](platform-and-progression-roadmap.md).
+Roadmap phase sequencing belongs in [docs/planning/development-roadmap.md](development-roadmap.md).
 
 ## Combat Systems
 
@@ -23,7 +23,7 @@ Roadmap phase sequencing belongs in [docs/planning/platform-and-progression-road
 - Add client equip and presentation flows.
 - Add focused tests for new fire and profile rules.
 
-Owner docs: [player-build-and-loadouts.md](player-build-and-loadouts.md), [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md).
+Owner docs: [player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md), [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md).
 
 ### Damage
 
@@ -32,7 +32,7 @@ Owner docs: [player-build-and-loadouts.md](player-build-and-loadouts.md), [enemi
 - Extend DoT into broader status-effect handling.
 - Add richer presentation and telemetry for damage outcomes.
 
-Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md), [player-experience-systems.md](player-experience-systems.md).
+Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md), [player-experience-systems.md](domains/gameplay/player-experience-systems.md).
 
 ### Radial Effects
 
@@ -43,7 +43,7 @@ Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md)
 - Add richer presentation events.
 - Add additional radial weapons.
 
-Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md), [player-experience-systems.md](player-experience-systems.md).
+Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md), [player-experience-systems.md](domains/gameplay/player-experience-systems.md).
 
 ### Drop Tables
 
@@ -53,7 +53,7 @@ Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md)
 - Add explicit per-source routing.
 - Add client-facing presentation polish for drop events.
 
-Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md), [progression-and-rewards.md](progression-and-rewards.md).
+Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md), [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md).
 
 ### Asteroid Variants
 
@@ -61,7 +61,7 @@ Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md)
 - Add per-variant drop behavior through `drop_table`.
 - Add rare variant weighting through lower nonzero weights.
 
-Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md).
+Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md).
 
 ## Player Data And Progression
 
@@ -74,7 +74,7 @@ Owner docs: [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md)
 - Add player-data contract tests.
 - Add schema-drift enforcement for player-data contracts.
 
-Owner docs: [data-sync-and-ssot-pipeline.md](data-sync-and-ssot-pipeline.md), [player-data-and-persistence.md](player-data-and-persistence.md).
+Owner docs: [data-sync-and-ssot-pipeline.md](../data/data-sync-and-ssot-pipeline.md), [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md).
 
 ### Service Boundaries
 
@@ -90,7 +90,7 @@ Owner docs: [data-sync-and-ssot-pipeline.md](data-sync-and-ssot-pipeline.md), [p
 - Add store contract tests.
 - Add local profile schema migration/versioning.
 
-Owner docs: [player-data-and-persistence.md](player-data-and-persistence.md), [account-and-identity-systems.md](account-and-identity-systems.md), [api-product-surface.md](api-product-surface.md).
+Owner docs: [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md), [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md), [API Product Surface](../protocol/api-product-surface.md).
 
 ### Auth And Account Routing
 
@@ -103,7 +103,7 @@ Owner docs: [player-data-and-persistence.md](player-data-and-persistence.md), [a
 - Harden game-server auth integration.
 - Client token storage.
 
-Owner docs: [account-and-identity-systems.md](account-and-identity-systems.md), [api-product-surface.md](api-product-surface.md), [anti-cheat-and-trust-policy.md](anti-cheat-and-trust-policy.md).
+Owner docs: [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md), [API Product Surface](../protocol/api-product-surface.md), [game-integrity-policy.md](domains/platform/stubs/game-integrity-policy.md).
 
 ### Progression Grants
 
@@ -114,7 +114,7 @@ Owner docs: [account-and-identity-systems.md](account-and-identity-systems.md), 
 - Make grant writes idempotent with `grant_id` or `event_id`.
 - Decouple durable rewards from end-of-match summary handling.
 
-Owner docs: [progression-and-rewards.md](progression-and-rewards.md), [match-outcomes-and-results.md](match-outcomes-and-results.md).
+Owner docs: [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md), [match-outcomes-and-results.md](domains/gameplay/match-outcomes-and-results.md).
 
 ### Account Product Surface
 
@@ -127,7 +127,7 @@ Owner docs: [progression-and-rewards.md](progression-and-rewards.md), [match-out
 - Unlock tokens.
 - Account-affecting rewards.
 
-Owner docs: [account-and-identity-systems.md](account-and-identity-systems.md), [api-product-surface.md](api-product-surface.md), [leaderboards-and-rankings.md](leaderboards-and-rankings.md), [anti-cheat-and-trust-policy.md](anti-cheat-and-trust-policy.md).
+Owner docs: [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md), [API Product Surface](../protocol/api-product-surface.md), [leaderboards-and-rankings.md](domains/platform/stubs/leaderboards-and-rankings.md), [game-integrity-policy.md](domains/platform/stubs/game-integrity-policy.md).
 
 ## Client Presentation
 
@@ -137,7 +137,7 @@ Owner docs: [account-and-identity-systems.md](account-and-identity-systems.md), 
 - Add equip presentation.
 - Add player-build and loadout UI once the build model exists.
 
-Owner docs: [player-build-and-loadouts.md](player-build-and-loadouts.md), [inventory-and-hangar.md](inventory-and-hangar.md).
+Owner docs: [player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md), [inventory-and-hangar.md](domains/gameplay/inventory-and-hangar.md).
 
 ### Damage And Effect Presentation
 
@@ -145,7 +145,7 @@ Owner docs: [player-build-and-loadouts.md](player-build-and-loadouts.md), [inven
 - Add radial-effect presentation.
 - Add richer gameplay effect presentation where tied to implemented server events.
 
-Owner docs: [player-experience-systems.md](player-experience-systems.md), [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md).
+Owner docs: [player-experience-systems.md](domains/gameplay/player-experience-systems.md), [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md).
 
 ### Devtools Pickup Rendering
 
@@ -157,25 +157,25 @@ Owner docs: [player-experience-systems.md](player-experience-systems.md), [enemi
 
 - Add local play packaging that may launch or bundle the Go game server with the Godot client.
 
-Owner docs: [deployment-and-packaging.md](deployment-and-packaging.md).
+Owner docs: [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md).
 
 ### Hosted Multiplayer
 
 - Add hosted online game-server deployment using the room/websocket structure.
 - Add matchmaking or room discovery metadata if selected later.
 
-Owner docs: [deployment-and-packaging.md](deployment-and-packaging.md), [matchmaking-and-room-discovery.md](matchmaking-and-room-discovery.md).
+Owner docs: [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md), [matchmaking-and-room-discovery.md](domains/platform/stubs/matchmaking-and-room-discovery.md).
 
 ### Networking And Prediction
 
 - Add prediction/reconciliation as an explicit separate client layer if added.
 - Keep prediction separate from authoritative game rules.
 
-Owner docs: [realtime-protocol-architecture.md](realtime-protocol-architecture.md).
+Owner docs: [realtime-protocol-architecture.md](../protocol/realtime-protocol-architecture.md).
 
 ### Smoke And Verification
 
 - Add full gameplay/network smoke testing hardening.
 - Review world-dimension balance for gameplay.
 
-Owner docs: [testing-and-smoke-strategy.md](testing-and-smoke-strategy.md), [network-observability-and-packet-budget.md](network-observability-and-packet-budget.md).
+Owner docs: [testing-and-smoke-strategy.md](domains/technical/stubs/testing-and-smoke-strategy.md), [network-observability-and-packet-budget.md](domains/technical/network-observability-and-packet-budget.md).

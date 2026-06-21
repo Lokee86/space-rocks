@@ -19,10 +19,13 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [api-product-surface.md](api-product-surface.md) - API product surface documentation.
 - [asteroid-variant-contract.md](asteroid-variant-contract.md) - Asteroid Variant Contract documentation.
 - [gameplay-packets.md](gameplay-packets.md) - Gameplay packet documentation.
+- [http-api-contracts.md](http-api-contracts.md) - HTTP API contract documentation.
 - [http-contract-enforcement.md](http-contract-enforcement.md) - HTTP request/response contract ownership and enforcement across services.
 - [lobby-packets.md](lobby-packets.md) - Lobby packet documentation.
+- [player-data-http-api.md](player-data-http-api.md) - Player-data HTTP API documentation.
 - [realtime-websocket-protocol.md](realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
@@ -30,10 +33,10 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
-
-- [api-product-surface](api-product-surface/!INDEX.md) - Api Product Surface documentation.
 <!-- doc-ledger:folders:end -->
 ## Related Docs
+
+- [API Product Surface](api-product-surface.md)
 
 
 ## Notes

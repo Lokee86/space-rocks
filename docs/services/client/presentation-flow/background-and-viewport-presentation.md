@@ -350,7 +350,7 @@ returning to gameplay after menu/session transitions does not orphan background 
 * [World Sync](../world-sync/!INDEX.md)
 * [View Anchor And Visual Coordinates](../world-sync/view-anchor-and-visual-coordinates.md)
 * [Hud And Gameplay UI](../hud-and-gameplay-ui.md)
-* [Constants pipeline](../../../data/stubs/constants-pipeline.md)
+* [Constants pipeline](../../../data/data-sync-and-ssot-pipeline.md)
 
 ## Notes
 

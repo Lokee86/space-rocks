@@ -683,8 +683,8 @@ cd services/game-server && go test -buildvcs=false ./internal/networking ./inter
 * [Room Network Adapter](./room-network-adapter.md)
 * [Gameplay Network Adapter](./gameplay-network-adapter.md)
 * [Auth Routing](./auth-routing.md)
-* [Realtime WebSocket Protocol](../../../protocol/stubs/realtime-websocket-protocol.md)
-* [Packet Schema Pipeline](../../../data/stubs/packet-schema-pipeline.md)
+* [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
+* [Packet Schema Pipeline](../../../data/packet-schemas.md)
 
 ## Notes
 

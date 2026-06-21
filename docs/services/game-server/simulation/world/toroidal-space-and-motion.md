@@ -631,9 +631,9 @@ go test -buildvcs=false ./tests/space ./tests/game -run 'Wrap|Delta|Distance|Dir
 * [Radial Effects](../combat/radial-effects.md)
 * [Pickup Entity Lifecycle](../pickups/pickup-entity-lifecycle.md)
 * [View Anchor And Visual Coordinates](../../../client/world-sync/view-anchor-and-visual-coordinates.md)
-* [Toroidal Wrap](../../../../systems-design/world/stubs/toroidal-wrap.md)
-* [World Authority](../../../../systems-design/world/stubs/world-authority.md)
-* [Constants Pipeline](../../../../data/stubs/constants-pipeline.md)
+* [Toroidal Wrap](../../../../systems-design/world/toroidal-wrap.md)
+* [World Authority](../../../../systems-design/world/world-authority.md)
+* [Constants Pipeline](../../../../data/data-sync-and-ssot-pipeline.md)
 
 ## Notes
 

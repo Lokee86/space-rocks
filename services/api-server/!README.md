@@ -30,13 +30,13 @@ It also owns the local service setup needed to boot, test, and smoke-check the A
 
 ## Related documentation
 
-- [API Server docs index](../../docs/services/api-server/!README.md)
+- [API Server docs index](../../docs/services/api-server/!INDEX.md)
 - [Auth and OAuth](../../docs/services/api-server/auth-and-oauth.md)
 - [Internal API Surface](../../docs/services/api-server/internal-api-surface.md)
 - [Player Stats and Match Results](../../docs/services/api-server/player-stats-and-match-results.md)
 - [Runtime and Health](../../docs/services/api-server/runtime-and-health.md)
 - [HTTP contract enforcement](../../docs/protocol/http-contract-enforcement.md)
-- [API Server devtools](../../docs/devtools/api-server/!README.md)
+- [API Server devtools](../../docs/devtools/api-server/!INDEX.md)
 - [Documentation policy](../../docs/documentation-policy.md)
 - [Documentation procedure](../../docs/documentation-procedure.md)
 

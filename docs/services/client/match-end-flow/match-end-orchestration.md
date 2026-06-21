@@ -440,9 +440,9 @@ These tests verify the menu and result collaborators that `MatchEndFlow` coordin
 * [Gameplay runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay session lifecycle](../gameplay-runtime/gameplay-session-lifecycle.md)
 * [Gameplay state application](../gameplay-runtime/gameplay-state-application.md)
-* [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Realtime websocket protocol](../../../protocol/stubs/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
-* [Match end and results flow](../../../domains/player-experience/stubs/match-end-and-results-flow.md) - Stub: cross-system player-experience match-end flow.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Realtime websocket protocol](../../../protocol/realtime-websocket-protocol.md) - realtime websocket protocol documentation.
+* [Match end and results flow](../../../domains/player-experience/match-end-and-results-flow.md) - cross-system player-experience match-end flow.
 
 ## Notes
 

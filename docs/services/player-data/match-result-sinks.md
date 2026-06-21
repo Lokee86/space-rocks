@@ -412,8 +412,8 @@ Related API-server tests:
 * [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
 * [Trust And Eligibility Policy](../../domains/platform/trust-and-eligibility-policy.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)
-* [Player Data HTTP API](../../protocol/stubs/player-data-http-api.md) - Stub: player-data HTTP protocol surface.
-* [Player Data Schema](../../data/stubs/player-data-schema.md) - Stub: shared player-data schema and source documentation.
+* [Player Data HTTP API](../../protocol/player-data-http-api.md) - player-data HTTP protocol surface.
+* [Player Data Schema](../../data/player-data-schema.md) - shared player-data schema and source documentation.
 
 ## Notes
 

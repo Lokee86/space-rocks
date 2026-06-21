@@ -27,10 +27,10 @@ It should stay focused on internal visibility rather than player-facing UI desig
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
-- [Network Observability And Packet Budget](network-observability-and-packet-budget.md)
-- [Logging And Diagnostics](logging-and-diagnostics.md)
-- [Testing And Smoke Strategy](testing-and-smoke-strategy.md)
+- [Planning](../../!INDEX.md)
+- [Network Observability And Packet Budget](../../domains/technical/network-observability-and-packet-budget.md)
+- [Logging And Diagnostics](../../domains/technical/stubs/logging-and-diagnostics.md)
+- [Testing And Smoke Strategy](../../domains/technical/stubs/testing-and-smoke-strategy.md)
 
 ## Open Planning Questions
 

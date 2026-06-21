@@ -474,11 +474,11 @@ client/scenes/
 * [Client](../services/client/!INDEX.md)
 * [Player Data](../services/player-data/!INDEX.md)
 * [API Server](../services/api-server/!INDEX.md)
-* [Data Sync Tool](../../tools/data_sync/!INDEX.md)
+
 
 ## Notes
 
-`tools/data_sync/!INDEX.md` still contains some legacy links to the older docs layout. This data doc uses the current documentation structure.
+Legacy data-sync docs layout links should now point at this document for workflow guidance, or at `tools/data_sync/config.toml` when the configuration file itself is the subject.
 
 `SSoT` in this document means source of truth. It does not imply every source of truth is handled by `tools/data_sync`.
 

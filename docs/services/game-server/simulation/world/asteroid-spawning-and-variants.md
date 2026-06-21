@@ -702,8 +702,8 @@ data-sync -check -packets -go
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Pickup Drop Integration](../pickups/pickup-drop-integration.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
-* [Asteroid Variants Data](../../../../data/stubs/asteroid-variants-data.md)
-* [Asteroid Variant Contract](../../../../protocol/stubs/asteroid-variant-contract.md)
+* [Asteroid Variants Data](../../../../data/asteroid-variants-data.md)
+* [Asteroid Variant Contract](../../../../protocol/asteroid-variant-contract.md)
 * [Client Asteroid Variant Presentation](../../../client/world-sync/asteroid-variant-presentation.md)
 * [Current System Limits](../../../../limits/current-system-limits.md)
 

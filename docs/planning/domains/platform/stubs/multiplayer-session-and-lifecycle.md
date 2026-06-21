@@ -305,16 +305,16 @@ Matchmaking and room discovery owns:
 
 ## Related Docs
 
-- [Systems Plan Index](../../systems-plan-index.md)
+- [Planning](../../../!INDEX.md)
 - [Account And Identity Systems](../account-and-identity-systems.md)
 - [Matchmaking And Room Discovery](matchmaking-and-room-discovery.md)
-- [Anti-Cheat And Trust Policy](anti-cheat-and-trust-policy.md)
+- [Anti-Cheat Policy](anti-cheat-policy.md)
 - [Realtime Protocol Architecture](../../technical/realtime-protocol-architecture.md)
 - [Deployment And Packaging](../../technical/stubs/deployment-and-packaging.md)
 - [Modes And Match Rules](../../gameplay/modes-and-match-rules.md)
 - [Systems Design](../../../systems-design/!INDEX.md)
 - [Player Data Routing Flow](../../../domains/platform/player-data-routing-flow.md)
-- [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
+- [Account And Identity Current State](../../../../domains/platform/account-and-identity-current-state.md)
 
 ## Open Planning Questions
 

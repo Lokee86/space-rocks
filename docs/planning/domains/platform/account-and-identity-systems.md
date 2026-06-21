@@ -8,7 +8,7 @@ This document plans future account and identity policy that is not yet current i
 
 It owns policy for authenticated accounts, OAuth provider expansion, manual signup and login, email verification, account recovery, provider linking and unlinking, account display identity, display-name moderation, account deletion and deactivation, token/session upgrades, preferences transfer, and development-only auth bypass behavior.
 
-Current implemented account and identity behavior belongs to [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md). This document should not duplicate the current login, WebSocket auth, admission, or player-data routing flows except where current behavior constrains future planning.
+Current implemented account and identity behavior belongs to [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md). This document should not duplicate the current login, WebSocket auth, admission, or player-data routing flows except where current behavior constrains future planning.
 
 ## Overview
 
@@ -333,13 +333,13 @@ Devtools planning owns:
 
 ## Related docs
 
-* [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
+* [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
 * [Player Data And Persistence](stubs/player-data-and-persistence.md)
 * [Multiplayer Session And Lifecycle](stubs/multiplayer-session-and-lifecycle.md)
-* [API Product Surface](stubs/api-product-surface.md)
+* [API Product Surface](../../../protocol/api-product-surface.md)
 * [Social And Community Systems](stubs/social-and-community-systems.md)
 * [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md)
-* [Anti-Cheat And Trust Policy](stubs/anti-cheat-and-trust-policy.md)
+* [Game Intgerity Policy](stubs/game-integrity-policy.md)
 
 ## Notes
 

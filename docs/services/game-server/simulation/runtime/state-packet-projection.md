@@ -692,8 +692,8 @@ Run client state-reader and state-application tests after changing packet fields
 * [Gameplay State Application](../../../client/gameplay-runtime/gameplay-state-application.md)
 * [World Sync Coordinator](../../../client/world-sync/world-sync-coordinator.md)
 * [Gameplay Events And Effects](../../../client/gameplay-event-presentation/gameplay-events-and-effects.md)
-* [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Gameplay realtime packet documentation.
-* [Packet schema pipeline](../../../../data/stubs/packet-schema-pipeline.md) - Packet schema data documentation.
+* [Gameplay packets](../../../../protocol/gameplay-packets.md) - Gameplay realtime packet documentation.
+* [Packet schema pipeline](../../../../data/packet-schemas.md) - Packet schema data documentation.
 * [Realtime Protocol Architecture](../../../../planning/protocol/realtime-protocol-architecture.md)
 
 ## Notes

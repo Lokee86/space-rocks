@@ -17,7 +17,7 @@ Use these instead of expanding this file:
 - Server-specific notes: `docs/agent/server-notes.md`
 - Current volatile context: `docs/agent/current-context.md`
 - Devtools toggles: `docs/devtools/toggles.md`
-- Data sync: `tools/data_sync/README.md`
+- Data sync: `docs/data/data-sync-and-ssot-pipeline.md`
 - Toroidal wrap: `docs/systems-design/world/toroidal-wrap.md`
 - Ship variants: `docs/systems-design/entities/variants.md`
 - Client logging: `docs/services/client/client-logging.md`
@@ -27,7 +27,7 @@ Use these instead of expanding this file:
 
 - Do not duplicate canonical architecture or workflow details here.
 - Do not document generated file paths here unless this file is being used only as a temporary parking lot.
-- Do not document packet schema locations here; use `docs/developer.md` and `tools/data_sync/README.md`.
+- Do not document packet schema locations here; use `docs/developer.md` and `docs/data/data-sync-and-ssot-pipeline.md`.
 - Do not document devtool key bindings here; use `docs/devtools/toggles.md`.
 - Delete or move notes once they become stable enough for a focused doc.
 

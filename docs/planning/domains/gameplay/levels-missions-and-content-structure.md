@@ -508,7 +508,7 @@ Arena policy defaults safely to current toroidal behavior.
 
 ## Related Docs
 
-* [Systems Plan Index](../systems-plan-index.md)
+* [Planning](../../!INDEX.md)
 * [Player Experience Systems](player-experience-systems.md)
 * [Modes And Match Rules](modes-and-match-rules.md)
 * [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md)

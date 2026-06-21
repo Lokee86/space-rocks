@@ -413,14 +413,14 @@ tools/data_sync/
 ## Related docs
 
 * [Protocol](./!INDEX.md)
-* [Asteroid Variants Data](../../data/asteroid-variants-data.md)
-* [Packet Schemas](../../data/packet-schemas.md)
-* [Source Of Truth Map](../../data/source-of-truth-map.md)
-* [Server Asteroid Spawning And Variants](../../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
-* [Client Asteroid Variant Presentation](../../services/client/world-sync/asteroid-variant-presentation.md)
-* [Client Entity Sync Owners](../../services/client/world-sync/entity-sync-owners.md)
-* [Game Server](../../services/game-server/!INDEX.md)
-* [Client](../../services/client/!INDEX.md)
+* [Asteroid Variants Data](../data/asteroid-variants-data.md)
+* [Packet Schemas](../data/packet-schemas.md)
+* [Source Of Truth Map](../data/source-of-truth-map.md)
+* [Server Asteroid Spawning And Variants](../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
+* [Client Asteroid Variant Presentation](../services/client/world-sync/asteroid-variant-presentation.md)
+* [Client Entity Sync Owners](../services/client/world-sync/entity-sync-owners.md)
+* [Game Server](../services/game-server/!INDEX.md)
+* [Client](../services/client/!INDEX.md)
 
 ## Notes
 

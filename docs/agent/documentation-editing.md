@@ -24,7 +24,6 @@ Agents must classify documentation by type before editing so each fact lands in 
 
 - [Documentation Policy](../documentation-policy.md)
 - [Documentation Procedure](../documentation-procedure.md)
-- [Documentation Structure And Governance](../planning/documentation-structure-and-procedures.md)
 
 ## Notes
 

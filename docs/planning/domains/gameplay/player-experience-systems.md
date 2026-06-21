@@ -595,20 +595,18 @@ achievement notification can appear whenever achievement completion is received
 
 ## Related Docs
 
-* [Systems Plan Index](../systems-plan-index.md)
+* [Planning](../../!INDEX.md)
 * [Modes And Match Rules](modes-and-match-rules.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Inventory And Hangar](inventory-and-hangar.md)
 * [Match Outcomes And Results](match-outcomes-and-results.md)
 * [Progression And Rewards](progression-and-rewards.md)
-* [Achievements And Milestones](achievements-and-milestones.md)
 * [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
-* [Deferred Player Experience Systems](deffered-px-systems.md)
 * [Account And Identity Systems](../platform/account-and-identity-systems.md)
-* [Player Data And Persistence](../platform/player-data-and-persistence.md)
-* [Multiplayer Session And Lifecycle](../platform/multiplayer-session-and-lifecycle.md)
-* [Matchmaking And Room Discovery](../platform/matchmaking-and-room-discovery.md)
+* [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
+* [Multiplayer Session And Lifecycle](../platform/stubs/multiplayer-session-and-lifecycle.md)
+* [Matchmaking And Room Discovery](../platform/stubs/matchmaking-and-room-discovery.md)
 
 ## Open Gametime Decisions
 

@@ -1,6 +1,6 @@
 # Player Data HTTP API
 
-Parent index: [Api Product Surface](./!INDEX.md)
+Parent index: [Protocol](./!INDEX.md)
 
 ## Purpose
 
@@ -11,6 +11,8 @@ It covers the client-facing player-data HTTP facade hosted by the game-server pr
 ## Overview
 
 The player-data HTTP API is a JSON HTTP boundary for profile readout and local profile management.
+
+This document is the detailed protocol doc for the player-data HTTP subset. The centralized API product surface map lives in [API Product Surface](api-product-surface.md).
 
 Current client-facing player-data routes are hosted by the game-server process on the data-handler base URL:
 
@@ -974,17 +976,18 @@ shared/player_data/*.toml
 
 ## Related docs
 
-* [Protocol](../!INDEX.md)
-* [HTTP Contract Enforcement](../http-contract-enforcement.md)
-* [Player Data](../../services/player-data/!INDEX.md)
-* [Local Profiles HTTP API](../../services/player-data/local-profiles-http-api.md)
-* [Profile Stats Flow](../../services/player-data/profile-stats-flow.md)
-* [Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)
-* [Game Server Player Data HTTP Hosting](../../services/game-server/integrations/player-data-http-hosting.md)
-* [Client HTTP API Flow](../../services/client/client-http-api-flow.md)
-* [API Server Player Stats And Match Results](../../services/api-server/player-stats-and-match-results.md)
-* [Player Data Schema](../../data/player-data-schema.md)
-* [Player Data Routing Flow](../../domains/platform/player-data-routing-flow.md)
+* [Protocol](./!INDEX.md)
+* [API Product Surface](api-product-surface.md)
+* [HTTP Contract Enforcement](./http-contract-enforcement.md)
+* [Player Data](../services/player-data/!INDEX.md)
+* [Local Profiles HTTP API](../services/player-data/local-profiles-http-api.md)
+* [Profile Stats Flow](../services/player-data/profile-stats-flow.md)
+* [Runtime And Store Routing](../services/player-data/runtime-and-store-routing.md)
+* [Game Server Player Data HTTP Hosting](../services/game-server/integrations/player-data-http-hosting.md)
+* [Client HTTP API Flow](../services/client/client-http-api-flow.md)
+* [API Server Player Stats And Match Results](../services/api-server/player-stats-and-match-results.md)
+* [Player Data Schema](../data/player-data-schema.md)
+* [Player Data Routing Flow](../domains/platform/player-data-routing-flow.md)
 
 ## Notes
 

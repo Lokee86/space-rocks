@@ -825,17 +825,17 @@ unknown encounter_profile_id fails safely or falls back explicitly
 
 ## Related Docs
 
-* [Systems Plan Index](../systems-plan-index.md)
+* [Planning](../../!INDEX.md)
 * [Player Experience Systems](player-experience-systems.md)
 * [Modes And Match Rules](modes-and-match-rules.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Progression And Rewards](progression-and-rewards.md)
-* [Achievements And Milestones](achievements-and-milestones.md)
-* [Damage](../../design/damage.md)
-* [Weapons](../../design/weapons.md)
-* [Asteroid Variant Contract](../../design/asteroid-variants.md)
-* [Drop Table System](../../design/drop-tables.md)
+* [Progression And Rewards](progression-and-rewards.md)
+* [Damage](../../../systems-design/combat/damage.md)
+* [Weapons](../../../systems-design/combat/weapons.md)
+* [Asteroid Variant Contract](../../../protocol/asteroid-variant-contract.md)
+* [Drop Table System](../../../data/drop-tables.md)
 
 ## Open Gametime Decisions
 

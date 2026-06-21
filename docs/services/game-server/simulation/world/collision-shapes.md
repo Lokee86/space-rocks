@@ -505,7 +505,7 @@ go test -buildvcs=false ./tests/game -run 'Collision|Respawn|Pickup|Devtools|Shi
 * [Active Player Avatar State](../players/active-player-avatar-state.md)
 * [Player Respawn](../players/player-respawn.md)
 * [Radial Effects](../combat/radial-effects.md)
-* [Collision Shape Data](../../../../data/stubs/collision-shape-data.md)
+* [Collision Shape Data](../../../../data/collision-shape-data.md)
 * [Player Build Limits](../../../../limits/player-build-limits.md)
 
 ## Notes

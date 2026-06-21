@@ -9,7 +9,7 @@ This doc owns planning for the public Space Rocks web presence, including the ma
 
 This doc owns the public web and product experience.
 
-`api-product-surface.md` owns backend and API account or product data surfaces.
+`API Product Surface` owns backend and API account or product data surfaces.
 
 `deployment-and-packaging.md` owns hosting, packaging, and deployment mechanics.
 
@@ -40,8 +40,8 @@ V0 should not include a full blog system, accounts, CMS, comments, newsletter ba
 
 ## Related Docs
 
-- [Systems Plan Index](systems-plan-index.md)
-- [API Product Surface](api-product-surface.md)
+- [Planning](../../!INDEX.md)
+- [API Product Surface](../../../protocol/api-product-surface.md)
 - [Deployment And Packaging](deployment-and-packaging.md)
 
 ## Open Planning Questions

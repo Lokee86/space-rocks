@@ -546,13 +546,13 @@ data-sync -validate -drop-tables
 * [Pickup Entity Lifecycle](pickup-entity-lifecycle.md)
 * [Pickup Collection](pickup-collection.md)
 * [Pickup Effects](pickup-effects.md)
-* [Drop Table Pipeline](../../../../data/stubs/drop-table-pipeline.md)
+* [Drop Table Pipeline](../../../../data/drop-tables.md)
 * [Data](../../../../data/!INDEX.md)
 * [Protocol](../../../../protocol/!INDEX.md)
 * [Systems Design Combat](../../../../systems-design/combat/!INDEX.md)
 * [Client World Sync](../../../client/world-sync/!INDEX.md)
 * [Pickup Presentation](../../../client/world-sync/pickup-presentation.md)
-* [Data Sync](../../../../../tools/data_sync/!INDEX.md)
+* [Data Sync](../../../../data/data-sync-and-ssot-pipeline.md)
 
 ## Notes
 

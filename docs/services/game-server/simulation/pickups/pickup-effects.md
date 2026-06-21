@@ -409,11 +409,11 @@ Broader verification should include the game-server Go test suite when pickup ef
 * [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)
 * [Pickup Presentation](../../../client/world-sync/pickup-presentation.md)
 * [Gameplay Events And Effects](../../../client/gameplay-event-presentation/gameplay-events-and-effects.md)
-* [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
-* [Constants pipeline](../../../../data/stubs/constants-pipeline.md) - Stub: constants pipeline documentation.
-* [Packet schema pipeline](../../../../data/stubs/packet-schema-pipeline.md) - Stub: packet schema pipeline documentation.
-* [Drop-table pipeline](../../../../data/stubs/drop-table-pipeline.md) - Stub: drop-table pipeline documentation.
-* [Pickup entities](../../../../systems-design/entities/stubs/pickup-entities.md) - Stub: pickup entity design documentation.
+* [Gameplay packets](../../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Constants pipeline](../../../../data/data-sync-and-ssot-pipeline.md) - constants pipeline documentation.
+* [Packet schema pipeline](../../../../data/packet-schemas.md) - packet schema pipeline documentation.
+* [Drop-table pipeline](../../../../data/drop-tables.md) - drop-table pipeline documentation.
+* [Pickup entities](../../../../systems-design/entities/pickup-entities.md) - pickup entity design documentation.
 
 ## Notes
 
