@@ -81,14 +81,9 @@ Use these from the Write MCP server when you are intentionally changing Godot st
 
 These are the practical write-side commands to reach for first.
 
-## Startup Notes
+## Startup notes
 
 Both MCP servers depend on the local EngineForge/Godot bridge plugin that runs inside the Godot project.
-
-- The bridge command set comes from `/capabilities` and the installed plugin.
-- Do not assume guessed command names exist.
-- Do not use stale names like `scene.current` or `scene.tree`.
-- For bridge diagnostics, prefer the read-only MCP tools first.
 
 Run these from `tools/space-rocks-mcp/`.
 
@@ -140,9 +135,7 @@ npm run start:info-next
 npm run start:write
 ```
 
-## Troubleshooting
-
-## Codex VS Code Connection Notes
+## Codex connection notes
 
 - Point Codex at the Write MCP server for implementation work.
 - Use the local HTTP MCP endpoint on port `8788`.
@@ -150,20 +143,20 @@ npm run start:write
 - Session reload matters: Codex needed a new session before it could see the MCP tools.
 - If the server is running but Codex still shows an old tool list, assume the session cache is stale before debugging the server itself.
 
-## ChatGPT / This Assistant Connection Notes
+## ChatGPT connection notes
 
 - Use the Info MCP server for planning, inspection, and read-only diagnostics.
 - Use the local HTTP MCP endpoint on port `8789`.
 - Keep ChatGPT and other planning agents off the write server.
 - If you are only reading repo state or checking the Godot bridge, Info MCP is the correct server.
 
-## Ngrok Rule
+## Ngrok rule
 
 - Info MCP only may be exposed through ngrok.
 - Never expose Write MCP through ngrok.
 - Write MCP is meant to stay local and bounded to implementation work.
 
-## Practical Usage Guide
+## Practical usage guide
 
 Use Info MCP when you need:
 
@@ -182,7 +175,7 @@ Use Write MCP when you need:
 - resource creation
 - play/stop actions in the editor bridge
 
-## Troubleshooting Checklist
+## Troubleshooting
 
 - Confirm the right server is running on the right port.
 - Confirm the consumer is using the correct server: ChatGPT/planning on Info MCP, Codex/implementation on Write MCP.

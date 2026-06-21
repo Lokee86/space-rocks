@@ -149,7 +149,7 @@ godot --headless --path client -s res://tools/export_collision_shapes.gd
 
 Pickup collision JSON should use class keys such as `powerup` and `weapon`, not per-type keys such as `1_up` or `torpedo`.
 
-## Test Layout
+## Test layout
 
 Go server tests live under:
 

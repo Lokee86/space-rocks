@@ -457,8 +457,8 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 
 ## Related docs
 
-* [Game Server Rooms](./!README.md)
-* [Game Server](../!README.md)
+* [Game Server Rooms](./!INDEX.md)
+* [Game Server](../!INDEX.md)
 * [Room Network Adapter](../networking/room-network-adapter.md)
 * [Inbound Packet Routing](../networking/inbound-packet-routing.md)
 * [Lobby Session and Presentation](../../client/lobby-flow/lobby-session-and-presentation.md)

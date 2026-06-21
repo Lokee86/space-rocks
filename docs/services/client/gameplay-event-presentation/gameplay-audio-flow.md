@@ -492,14 +492,14 @@ Use the normal client GUT verification flow when changing gameplay audio behavio
 
 ## Related docs
 
-* [Gameplay Event Presentation](./!README.md)
-* [Client](../!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [Gameplay Event Presentation](./!INDEX.md)
+* [Client](../!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
 * [Match End Orchestration](../match-end-flow/match-end-orchestration.md)
 * [Pickup Presentation](../world-sync/pickup-presentation.md)
 * [HUD And Gameplay UI](../hud-and-gameplay-ui.md)
-* [Presentation Flow](../presentation-flow/!README.md)
+* [Presentation Flow](../presentation-flow/!INDEX.md)
 * [Gameplay packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
 * [Constants pipeline](../../../data/stubs/constants-pipeline.md) - Stub: generated constants documentation.
 

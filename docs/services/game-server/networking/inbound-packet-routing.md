@@ -530,11 +530,11 @@ Direct unit coverage for `inbound.RouteClientPacket` ordering is currently thin.
 
 ## Related docs
 
-- [Game Server Networking](./!README.md)
-- [Game Server](../!README.md)
-- [Game Server Rooms](../rooms/!README.md)
-- [Game Server Simulation](../simulation/!README.md)
-- [Game Server Integrations](../integrations/!README.md)
+- [Game Server Networking](./!INDEX.md)
+- [Game Server](../!INDEX.md)
+- [Game Server Rooms](../rooms/!INDEX.md)
+- [Game Server Simulation](../simulation/!INDEX.md)
+- [Game Server Integrations](../integrations/!INDEX.md)
 - [WebSocket Session Lifecycle](./websocket-session-lifecycle.md) - WebSocket upgrade, session lifecycle, and read/write loop ownership.
 - [Room Network Adapter](./room-network-adapter.md) - Room/session adapter behavior behind lobby packet routing.
 - [Gameplay Network Adapter](./gameplay-network-adapter.md) - Gameplay adapter behavior behind input, respawn, pause, target, and client config routing.

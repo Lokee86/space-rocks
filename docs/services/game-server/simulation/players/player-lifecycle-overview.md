@@ -798,9 +798,9 @@ go test -buildvcs=false ./internal/game ./internal/game/player ./internal/game/r
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Player Session State](player-session-state.md)
 * [Active Player Avatar State](active-player-avatar-state.md)
 * [Player Counters](player-counters.md)
@@ -812,7 +812,7 @@ go test -buildvcs=false ./internal/game ./internal/game/player ./internal/game/r
 * [Room Match Lifecycle](../../rooms/room-match-lifecycle.md)
 * [Room Membership And Identity](../../rooms/room-membership-and-identity.md)
 * [Room Snapshot Projection](../../rooms/room-snapshot-projection.md)
-* [Game Server Networking](../../networking/!README.md)
+* [Game Server Networking](../../networking/!INDEX.md)
 * [Gameplay State Application](../../../client/gameplay-runtime/gameplay-state-application.md)
 * [Gameplay packets](../../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
 * [Constants pipeline](../../../../data/stubs/constants-pipeline.md) - Stub: generated constant data documentation.

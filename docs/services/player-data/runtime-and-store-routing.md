@@ -71,7 +71,6 @@ The player-data runtime does not own:
 * live gameplay state
 * asteroid, projectile, pickup, ship, room, or simulation entities
 * leaderboard eligibility
-* online account trust policy
 
 The game server remains the gameplay authority. Rails/API remains the authenticated-account identity and online persistence authority. Player-data owns routing and store-facing player-data behavior.
 
@@ -529,6 +528,7 @@ Current verified behavior includes:
 * [Game Server Match Result Reporting](../game-server/integrations/match-result-reporting.md)
 * [API Server Player Stats And Match Results](../api-server/player-stats-and-match-results.md)
 * [Platform Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
+* [Trust And Eligibility Policy](../../domains/platform/trust-and-eligibility-policy.md)
 * [Data](../../data/!INDEX.md)
 * [Protocol](../../protocol/!INDEX.md)
 

@@ -109,9 +109,9 @@ It covers generated asteroid variant consumption and wrapping behavior.
 * [Entity Sync Owners](entity-sync-owners.md)
 * [Asteroid Variants Data](../../../data/stubs/asteroid-variants-data.md)
 * [Gameplay Packets Stub](../../../protocol/stubs/gameplay-packets.md)
-* [World Sync](./!README.md)
-* [Client](../!README.md)
-* [Services](../../!README.md)
+* [World Sync](./!INDEX.md)
+* [Client](../!INDEX.md)
+* [Services](../../!INDEX.md)
 
 ## Notes
 

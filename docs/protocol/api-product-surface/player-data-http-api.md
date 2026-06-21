@@ -1,6 +1,6 @@
 # Player Data HTTP API
 
-Parent index: [Protocol](./!INDEX.md)
+Parent index: [Api Product Surface](./!INDEX.md)
 
 ## Purpose
 
@@ -83,7 +83,7 @@ shared/contracts/http/openapi.yaml
 
 Owns the HTTP request and response contract.
 
-## Protocol authority
+## Authority
 
 OpenAPI owns HTTP request and response shapes.
 
@@ -113,7 +113,7 @@ OpenAPI runtime middleware
 generated HTTP clients
 ```
 
-## Request flow
+## Message or request flow
 
 ### Hosted profile read
 
@@ -974,17 +974,17 @@ shared/player_data/*.toml
 
 ## Related docs
 
-* [Protocol](./!README.md)
-* [HTTP Contract Enforcement](./http-contract-enforcement.md)
-* [Player Data](../services/player-data/!README.md)
-* [Local Profiles HTTP API](../services/player-data/local-profiles-http-api.md)
-* [Profile Stats Flow](../services/player-data/profile-stats-flow.md)
-* [Runtime And Store Routing](../services/player-data/runtime-and-store-routing.md)
-* [Game Server Player Data HTTP Hosting](../services/game-server/integrations/player-data-http-hosting.md)
-* [Client HTTP API Flow](../services/client/client-http-api-flow.md)
-* [API Server Player Stats And Match Results](../services/api-server/player-stats-and-match-results.md)
-* [Player Data Schema](../data/player-data-schema.md)
-* [Player Data Routing Flow](../domains/platform/player-data-routing-flow.md)
+* [Protocol](../!INDEX.md)
+* [HTTP Contract Enforcement](../http-contract-enforcement.md)
+* [Player Data](../../services/player-data/!INDEX.md)
+* [Local Profiles HTTP API](../../services/player-data/local-profiles-http-api.md)
+* [Profile Stats Flow](../../services/player-data/profile-stats-flow.md)
+* [Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)
+* [Game Server Player Data HTTP Hosting](../../services/game-server/integrations/player-data-http-hosting.md)
+* [Client HTTP API Flow](../../services/client/client-http-api-flow.md)
+* [API Server Player Stats And Match Results](../../services/api-server/player-stats-and-match-results.md)
+* [Player Data Schema](../../data/player-data-schema.md)
+* [Player Data Routing Flow](../../domains/platform/player-data-routing-flow.md)
 
 ## Notes
 

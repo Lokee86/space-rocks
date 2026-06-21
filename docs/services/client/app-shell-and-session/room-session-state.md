@@ -370,13 +370,13 @@ Game-server room snapshot tests verify that room snapshots include room state, c
 
 ## Related docs
 
-* [App Shell And Session](./!README.md)
-* [Client](../!README.md)
-* [Networking Flow](../networking-flow/!README.md)
-* [Lobby Flow](../lobby-flow/!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [App Shell And Session](./!INDEX.md)
+* [Client](../!INDEX.md)
+* [Networking Flow](../networking-flow/!INDEX.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay Session Lifecycle](../gameplay-runtime/gameplay-session-lifecycle.md)
-* [Match End Flow](../match-end-flow/!README.md)
+* [Match End Flow](../match-end-flow/!INDEX.md)
 * [Match End Orchestration](../match-end-flow/match-end-orchestration.md)
 * [Match Results Presentation](../match-end-flow/match-results-presentation.md)
 * [Menu Flow](../menu-flow.md)

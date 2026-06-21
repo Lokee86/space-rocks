@@ -405,11 +405,12 @@ Related API-server tests:
 
 ## Related docs
 
-* [Player Data](./!README.md)
+* [Player Data](./!INDEX.md)
 * [Game-server match result reporting](../game-server/integrations/match-result-reporting.md)
 * [API-server player stats and match results](../api-server/player-stats-and-match-results.md)
 * [API-server internal API surface](../api-server/internal-api-surface.md)
 * [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
+* [Trust And Eligibility Policy](../../domains/platform/trust-and-eligibility-policy.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)
 * [Player Data HTTP API](../../protocol/stubs/player-data-http-api.md) - Stub: player-data HTTP protocol surface.
 * [Player Data Schema](../../data/stubs/player-data-schema.md) - Stub: shared player-data schema and source documentation.

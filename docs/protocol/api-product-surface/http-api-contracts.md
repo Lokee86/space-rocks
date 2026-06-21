@@ -1,6 +1,6 @@
 ## HTTP API Contracts
 
-Parent index: [Protocol](./!INDEX.md)
+Parent index: [Api Product Surface](./!INDEX.md)
 
 ## Purpose
 
@@ -56,7 +56,7 @@ client/
 
 Consumes HTTP routes through Godot JSON API clients. The client builds endpoint URLs, sends JSON requests, attaches bearer tokens when supplied, parses dictionary JSON responses, and maps request failures into client request results.
 
-## Protocol authority
+## Authority
 
 OpenAPI owns the shape of HTTP messages.
 
@@ -142,7 +142,7 @@ Authorization: Bearer <GAME_SERVER_INTERNAL_TOKEN>
 
 The game server uses `API_SERVER_BASE_URL` and `GAME_SERVER_INTERNAL_TOKEN` to construct its auth verifier. The player-data Rails adapter uses `PLAYER_DATA_RAILS_BASE_URL` and `PLAYER_DATA_RAILS_INTERNAL_TOKEN` for authenticated-account stats and match-result calls.
 
-## Request and response flow
+## Message or request flow
 
 ### Client auth flow
 
@@ -544,7 +544,7 @@ match-result authority
 OAuth provider secrets
 ```
 
-## Compatibility and validation
+## Validation and testing
 
 HTTP request or response shape changes must update the OpenAPI source and affected implementation/tests in the same change.
 
@@ -713,22 +713,22 @@ client/scenes/
 
 ## Related docs
 
-* [Protocol](./!README.md)
-* [HTTP Contract Enforcement](http-contract-enforcement.md)
-* [Source Of Truth Map](../data/source-of-truth-map.md)
-* [Data](../data/!README.md)
-* [API Server](../services/api-server/!README.md)
-* [API-server Auth And OAuth](../services/api-server/auth-and-oauth.md)
-* [API-server Internal API Surface](../services/api-server/internal-api-surface.md)
-* [API-server Player Stats And Match Results](../services/api-server/player-stats-and-match-results.md)
-* [Client HTTP API Flow](../services/client/client-http-api-flow.md)
-* [Game Server](../services/game-server/!README.md)
-* [Game-server Player Data HTTP Hosting](../services/game-server/integrations/player-data-http-hosting.md)
-* [Game-server Route Composition](../services/game-server/process/route-composition.md)
-* [Player Data](../services/player-data/!README.md)
-* [Player-data Local Profiles HTTP API](../services/player-data/local-profiles-http-api.md)
-* [Player-data Profile Stats Flow](../services/player-data/profile-stats-flow.md)
-* [Player-data Runtime And Store Routing](../services/player-data/runtime-and-store-routing.md)
+* [Protocol](../!INDEX.md)
+* [HTTP Contract Enforcement](../http-contract-enforcement.md)
+* [Source Of Truth Map](../../data/source-of-truth-map.md)
+* [Data](../../data/!INDEX.md)
+* [API Server](../../services/api-server/!INDEX.md)
+* [API-server Auth And OAuth](../../services/api-server/auth-and-oauth.md)
+* [API-server Internal API Surface](../../services/api-server/internal-api-surface.md)
+* [API-server Player Stats And Match Results](../../services/api-server/player-stats-and-match-results.md)
+* [Client HTTP API Flow](../../services/client/client-http-api-flow.md)
+* [Game Server](../../services/game-server/!INDEX.md)
+* [Game-server Player Data HTTP Hosting](../../services/game-server/integrations/player-data-http-hosting.md)
+* [Game-server Route Composition](../../services/game-server/process/route-composition.md)
+* [Player Data](../../services/player-data/!INDEX.md)
+* [Player-data Local Profiles HTTP API](../../services/player-data/local-profiles-http-api.md)
+* [Player-data Profile Stats Flow](../../services/player-data/profile-stats-flow.md)
+* [Player-data Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)
 
 ## Notes
 

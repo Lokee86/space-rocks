@@ -540,17 +540,17 @@ Current direct coverage for `ServerPacketRouter` and `ServerPacketDispatcher` is
 
 ## Related docs
 
-* [Networking Flow](./!README.md)
+* [Networking Flow](./!INDEX.md)
 * [WebSocket Connection Lifecycle](websocket-connection-lifecycle.md) - Raw client WebSocket lifecycle and packet decode/encode boundary.
 * [Outbound Packet Sending](outbound-packet-sending.md) - Client outbound packet construction and send handoff.
 * [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)
 * [Room Session State](../app-shell-and-session/room-session-state.md)
 * [Auth Session Flow](../auth-session-flow.md)
-* [Lobby Flow](../lobby-flow/!README.md)
-* [Gameplay Runtime](../gameplay-runtime/!README.md)
+* [Lobby Flow](../lobby-flow/!INDEX.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
-* [Gameplay Event Presentation](../gameplay-event-presentation/!README.md)
-* [World Sync](../world-sync/!README.md)
+* [Gameplay Event Presentation](../gameplay-event-presentation/!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
 * [Realtime Websocket Protocol](../../../protocol/stubs/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
 * [Gameplay Packets](../../../protocol/stubs/gameplay-packets.md) - Stub: gameplay packet documentation.
 * [Lobby Packets](../../../protocol/stubs/lobby-packets.md) - Stub: lobby packet documentation.

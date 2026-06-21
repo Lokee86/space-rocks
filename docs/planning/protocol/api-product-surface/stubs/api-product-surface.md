@@ -1,5 +1,5 @@
 # API Product Surface
-Parent index: [Platform Planning](../!INDEX.md)
+Parent index: [Api Product Surface](../!INDEX.md)
 
 ## Purpose
 

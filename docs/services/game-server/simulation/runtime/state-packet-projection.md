@@ -674,9 +674,9 @@ Run client state-reader and state-application tests after changing packet fields
 
 ## Related docs
 
-* [Game Server Simulation Runtime](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Runtime](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Outbound Packet Routing](../../networking/outbound-message-flow.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
 * [Player Session State](../players/player-session-state.md)

@@ -503,9 +503,9 @@ go test -buildvcs=false ./internal/game
 
 ## Related docs
 
-* [Game Server Simulation Runtime](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
+* [Game Server Simulation Runtime](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
 * [Player Lifecycle Overview](../players/player-lifecycle-overview.md)
 * [Player Death And Despawn](../players/player-death-and-despawn.md)
 * [Pickup Collection](../pickups/pickup-collection.md)

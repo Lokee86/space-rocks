@@ -684,15 +684,15 @@ go test -buildvcs=false ./internal/game/runtime
 
 ## Related docs
 
-* [Game Server Simulation Players](./!README.md)
-* [Game Server Simulation](../!README.md)
-* [Game Server](../../!README.md)
-* [Game Server Networking](../../networking/!README.md)
+* [Game Server Simulation Players](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
+* [Game Server](../../!INDEX.md)
+* [Game Server Networking](../../networking/!INDEX.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
 * [Room Match Lifecycle](../../rooms/room-match-lifecycle.md)
 * [Room Membership And Identity](../../rooms/room-membership-and-identity.md)
-* [Game Server Simulation Runtime](../runtime/!README.md)
-* [Game Server Simulation Combat](../combat/!README.md)
+* [Game Server Simulation Runtime](../runtime/!INDEX.md)
+* [Game Server Simulation Combat](../combat/!INDEX.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)
 * [Player Session State](player-session-state.md)
@@ -704,7 +704,7 @@ go test -buildvcs=false ./internal/game/runtime
 * [Player Camera View State](player-camera-view-state.md)
 * [State Packet Projection](../runtime/state-packet-projection.md)
 * [Gameplay Packets](../../../../protocol/stubs/gameplay-packets.md)
-* [Data](../../../../data/!README.md)
+* [Data](../../../../data/!INDEX.md)
 
 ## Notes
 

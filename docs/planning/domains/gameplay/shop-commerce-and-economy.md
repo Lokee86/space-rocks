@@ -618,6 +618,7 @@ admin/devtools mutations use explicit source tags
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Player Data And Persistence](../platform/player-data-and-persistence.md)
 * [API Product Surface](../platform/api-product-surface.md)
+* [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md)
 * [Anti-Cheat And Trust Policy](../platform/anti-cheat-and-trust-policy.md)
 * [Deployment And Packaging](../technical/deployment-and-packaging.md)
 * [Data Sync And Ssot Pipeline](../technical/data-sync-and-ssot-pipeline.md)
