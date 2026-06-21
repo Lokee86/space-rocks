@@ -26,6 +26,7 @@ List content that belongs somewhere else.
 - [Gameplay](gameplay/!INDEX.md) - Planning docs for gameplay work.
 - [platform](platform/!INDEX.md) - Platform documentation.
 - [technical](technical/!INDEX.md) - Technical documentation.
+- [web](web/!INDEX.md) - Web documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Related Docs

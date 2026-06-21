@@ -1,18 +1,15 @@
 # Space Rocks MCP Servers
 Parent index: [Agent](./!INDEX.md)
 
+## Purpose
+
 This is the permanent agent-facing reference for the Space Rocks MCP split.
+
+## Overview
 
 Use this as the first stop when you need to decide which MCP server to connect to, which bridge commands are safe, and how to start the local services.
 
-## Server Split
-
-| Server | Port | Entry file | Consumer | Role |
-|---|---:|---|---|---|
-| Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Read/search repo plus read-only Godot bridge diagnostics |
-| Write MCP | 8788 | server-write.js | Codex / implementation | Bounded repo writes, allowlisted commands, Godot bridge mutations |
-
-## What Each Server Is For
+## Rules
 
 - Info MCP is the planning and read-only server.
 - Write MCP is the implementation server.
@@ -22,17 +19,19 @@ Use this as the first stop when you need to decide which MCP server to connect t
 - Write MCP should stay local only.
 - Do not expose Write MCP through ngrok.
 - If you need to publish one server for remote access, only expose Info MCP.
-
-## EngineForge / Godot Bridge Dependency
-
-Both MCP servers depend on the local EngineForge/Godot bridge plugin that runs inside the Godot project.
-
 - The bridge command set comes from `/capabilities` and the installed plugin.
 - Do not assume guessed command names exist.
 - Do not use stale names like `scene.current` or `scene.tree`.
 - For bridge diagnostics, prefer the read-only MCP tools first.
 
-## Bridge Command Format
+## Server Split
+
+| Server | Port | Entry file | Consumer | Role |
+|---|---:|---|---|---|
+| Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Read/search repo plus read-only Godot bridge diagnostics |
+| Write MCP | 8788 | server-write.js | Codex / implementation | Bounded repo writes, allowlisted commands, Godot bridge mutations |
+
+## Bridge Usage
 
 EngineForge bridge commands use this shape:
 
@@ -45,8 +44,6 @@ EngineForge bridge commands use this shape:
 ```
 
 Think of the command as `category/action/params`.
-
-## Confirmed Read-Only Bridge Commands
 
 Use these from the Info MCP server when you need diagnostics or a safe read path:
 
@@ -68,8 +65,6 @@ Practical use:
 - `console.getLogs` for editor log inspection.
 - `node.getProperties` for inspecting a node by path.
 
-## Confirmed Write Bridge Commands
-
 Use these from the Write MCP server when you are intentionally changing Godot state:
 
 - `scene.open`
@@ -86,7 +81,14 @@ Use these from the Write MCP server when you are intentionally changing Godot st
 
 These are the practical write-side commands to reach for first.
 
-## Startup Commands
+## Startup Notes
+
+Both MCP servers depend on the local EngineForge/Godot bridge plugin that runs inside the Godot project.
+
+- The bridge command set comes from `/capabilities` and the installed plugin.
+- Do not assume guessed command names exist.
+- Do not use stale names like `scene.current` or `scene.tree`.
+- For bridge diagnostics, prefer the read-only MCP tools first.
 
 Run these from `tools/space-rocks-mcp/`.
 
@@ -137,6 +139,8 @@ npm run start:info-next
 ```powershell
 npm run start:write
 ```
+
+## Troubleshooting
 
 ## Codex VS Code Connection Notes
 
@@ -190,3 +194,14 @@ Use Write MCP when you need:
 - If the tools do not appear in Codex after a config change, restart the session.
 - If Write MCP is reachable from outside the machine, stop and remove that exposure.
 - If Godot bridge reads fail, check the local bridge state before changing MCP wiring.
+
+## Related docs
+
+- [Session Primer](./session-primer.md)
+- [Repo Hygiene](./repo-hygiene.md)
+- [Godot Editing](./godot-editing.md)
+- [Prompting And Reporting](./prompting-and-reporting.md)
+
+## Notes
+
+This doc owns agent-facing MCP usage, not general Godot/client implementation facts.
