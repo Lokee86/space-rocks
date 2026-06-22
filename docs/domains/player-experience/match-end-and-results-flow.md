@@ -395,7 +395,7 @@ This document does not define:
 * database schema details
 * HTTP endpoint contract details
 * leaderboard eligibility
-* [Trust And Eligibility Policy](../platform/trust-and-eligibility-policy.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 * reconnect behavior
 * future `EndOfMatchFlow`, `MatchSummary`, or `MatchSummaryDispatcher` implementation details
 
@@ -414,7 +414,7 @@ Those belong in service, protocol, data, systems-design, limits, or planning doc
 * [Game Server Integrations](../../services/game-server/integrations/!INDEX.md)
 * [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
 * [Player Data](../../services/player-data/!INDEX.md)
-* [Trust And Eligibility Policy](../platform/trust-and-eligibility-policy.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 * [API Server](../../services/api-server/!INDEX.md)
 * [Data](../../data/!INDEX.md)
 * [Protocol](../../protocol/!INDEX.md)

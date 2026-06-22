@@ -528,7 +528,7 @@ Current verified behavior includes:
 * [Game Server Match Result Reporting](../game-server/integrations/match-result-reporting.md)
 * [API Server Player Stats And Match Results](../api-server/player-stats-and-match-results.md)
 * [Platform Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
-* [Trust And Eligibility Policy](../../domains/platform/trust-and-eligibility-policy.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 * [Data](../../data/!INDEX.md)
 * [Protocol](../../protocol/!INDEX.md)
 

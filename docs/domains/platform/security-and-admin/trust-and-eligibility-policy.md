@@ -1,6 +1,6 @@
 # Trust And Eligibility Policy
 
-Parent index: [Platform](./!INDEX.md)
+Parent index: [Security And Admin](./!INDEX.md)
 
 ## Purpose
 
@@ -487,20 +487,20 @@ Protocol shapes belong in protocol docs. Physical data shape belongs in data and
 
 ## Related docs
 
-* [Platform](./!INDEX.md)
+* [Platform](domains/platform/!INDEX.md)
 * [Account And Identity Current State](account-and-identity-current-state.md)
 * [Account Backed Profile Flow](account-backed-profile-flow.md)
 * [Player Data Routing Flow](player-data-routing-flow.md)
-* [Gameplay Session Flow](../player-experience/gameplay-session-flow.md)
-* [Match End And Results Flow](../player-experience/match-end-and-results-flow.md)
-* [Local Pilot Profile Flow](../player-experience/local-pilot-profile-flow.md)
-* [Realtime Client Server Flow](../technical/realtime-client-server-flow.md)
-* [Player-data Match Result Sinks](../../services/player-data/match-result-sinks.md)
-* [Player-data Runtime And Store Routing](../../services/player-data/runtime-and-store-routing.md)
-* [API-server Player Stats And Match Results](../../services/api-server/player-stats-and-match-results.md)
-* [Game-server Match Result Reporting](../../services/game-server/integrations/match-result-reporting.md)
-* [Current System Limits](../../limits/current-system-limits.md)
-* [Account And Identity Systems planning](../../planning/domains/platform/account-and-identity-systems.md)
+* [Gameplay Session Flow](gameplay-session-flow.md)
+* [Match End And Results Flow](match-end-and-results-flow.md)
+* [Local Pilot Profile Flow](local-pilot-profile-flow.md)
+* [Realtime Client Server Flow](realtime-client-server-flow.md)
+* [Player-data Match Result Sinks](match-result-sinks.md)
+* [Player-data Runtime And Store Routing](runtime-and-store-routing.md)
+* [API-server Player Stats And Match Results](player-stats-and-match-results.md)
+* [Game-server Match Result Reporting](match-result-reporting.md)
+* [Current System Limits](current-system-limits.md)
+* [Account And Identity Systems planning](account-and-identity-systems.md)
 
 ## Notes
 

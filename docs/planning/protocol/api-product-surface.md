@@ -1,62 +1,55 @@
+<!-- documentation-policy-exempt: planned API surface map; intentionally uses the same lightweight map shape as the current API surface map because full planning sections would blur its purpose. -->
 # API Product Surface
 
 Parent index: [Protocol Planning](./!INDEX.md)
 
 ## Purpose
 
-This document owns the planned API product surface map for Space Rocks.
-
-It is planning-owned and non-current. The current surface map lives in [API Product Surface](../../protocol/api-product-surface.md), and exact HTTP shape continues to live in [HTTP API Contracts](../../protocol/http-api-contracts.md).
+This document maps planned API product surfaces for Space Rocks.
+It is planning-owned and non-current.
+Current implemented surfaces live in ../../protocol/api-product-surface.md.
+Exact HTTP shape lives in ../../protocol/http-api-contracts.md and shared/contracts/http/openapi.yaml.
 
 ## Overview
 
-This document tracks future API product surface ownership and the planned split between likely consumers, hosts, and behavior owners.
-
-It does not define exact request or response shape, and it does not replace the current protocol doc.
+This doc tracks likely future product API surface areas and their rough ownership.
+It does not define endpoints, methods, schemas, request bodies, response bodies, status codes, or implementation flow.
 
 ## Current Status
 
-The API product surface split is established:
+Current API product surfaces are mapped in current protocol docs.
+This doc only tracks planned surfaces that are not yet current.
+Planned rows should move into the current map only when implemented.
 
-- current surface inventory lives in current protocol docs
-- planned surface ownership lives here
-- exact HTTP shape remains owned by OpenAPI and HTTP contract docs
+## Planned Surface Map
 
-This planning doc is intentionally non-current.
-
-## Decisions Made
-
-- The current protocol doc owns current surface mapping only.
-- Planned API product surfaces should live in planning docs until they become current.
-- Exact HTTP shape stays with OpenAPI and the HTTP contract docs.
-- Future product surfaces should stay separate from implementation detail and service code maps.
-
-## Open Decisions
-
-- Which future planned surfaces become current first.
-- Which planned surfaces require dedicated service ownership docs before implementation.
-- Which planned surfaces should split into smaller planning docs once they gain detailed behavior.
-- Which planned surfaces remain deferred until the product direction is confirmed.
-
-## Expected Ownership
-
-| Surface | Status | Consumer | Host | Behavior owner | Detail docs |
+| Surface | Status | Consumer | Likely host | Behavior owner | Planning docs |
 | --- | --- | --- | --- | --- | --- |
-| Room browser / matchmaking discovery | Planned | Client lobby and room discovery UI | TBD | TBD | TBD |
-| Shop / wallet / purchase surface | Planned | Client commerce and ownership UI | TBD | TBD | TBD |
-| Inventory / hangar / loadout surface | Planned | Client collection and setup UI | TBD | TBD | TBD |
-| Leaderboards / rankings surface | Planned | Client ranking and comparison UI | TBD | TBD | TBD |
-| Social / community surface | Planned | Client social and community UI | TBD | TBD | TBD |
-| Website / account portal surface | Planned | Web account and support portal | TBD | TBD | TBD |
-| Admin / support / moderation surface | Planned | Internal admin and support tooling | TBD | TBD | TBD |
+| Room browser / matchmaking discovery | Planned | Client lobby and discovery UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md) |
+| Matchmaking queue / status | Planned | Client queue and status UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md) |
+| Room invite / join-code support | Planned | Client invite and room entry UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md) |
+| Leaderboards / rankings | Planned | Client ranking and comparison UI | TBD | TBD | [Leaderboards and Rankings](../domains/platform/stubs/leaderboards-and-rankings.md) |
+| Match history / recent matches | Planned | Client match history UI | TBD | TBD | TBD |
+| Public profile / profile visibility | Planned | Client profile and visibility UI | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
+| Friends / blocks / recent players | Planned | Client social management UI | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
+| Party invites / party presence | Planned | Client party and presence UI | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
+| Reports / moderation intake | Planned | Client report and support flows | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
+| Inventory / hangar | Planned | Client collection and setup UI | TBD | TBD | [Inventory and Hangar](../domains/gameplay/inventory-and-hangar.md) |
+| Loadout save / load | Planned | Client loadout management UI | TBD | TBD | [Inventory and Hangar](../domains/gameplay/inventory-and-hangar.md) |
+| Progression / unlocks | Planned | Client progression UI | TBD | TBD | [Progression and Rewards](../domains/gameplay/progression-and-rewards.md) |
+| Wallet / shop / purchase / receipts | Planned | Client commerce and ownership UI | TBD | TBD | [Shop Commerce and Economy](../domains/gameplay/shop-commerce-and-economy.md) |
+| Website account portal | Planned | Web account and support portal | TBD | TBD | [Website and Web Presence](../domains/web/website-and-web-presence.md) |
+| Admin / support tools | Planned | Internal admin and support tooling | TBD | TBD | TBD |
 
-## Implementation Sequence
+## Does Not Belong
 
-1. Keep the current protocol surface map authoritative for implemented HTTP and API behavior.
-2. Grow a dedicated current service or protocol doc only when a planned surface becomes real.
-3. Move a planned row into current protocol docs when the surface is implemented.
-4. Add or update service docs for the owning runtime once implementation begins.
-5. Keep OpenAPI and service docs aligned when planned surfaces become current.
+- exact endpoint paths
+- HTTP methods
+- request or response schemas
+- status-code catalogs
+- OpenAPI enforcement details
+- service implementation internals
+- realtime WebSocket packet details
 
 ## Related Docs
 
@@ -64,18 +57,15 @@ This planning doc is intentionally non-current.
 - [API Product Surface](../../protocol/api-product-surface.md)
 - [HTTP API Contracts](../../protocol/http-api-contracts.md)
 - [Player Data HTTP API](../../protocol/player-data-http-api.md)
-- [Auth And OAuth](../../services/api-server/auth-and-oauth.md)
-- [Internal API Surface](../../services/api-server/internal-api-surface.md)
-- [Player Stats And Match Results](../../services/api-server/player-stats-and-match-results.md)
-- [Runtime And Health](../../services/api-server/runtime-and-health.md)
-- [Client HTTP API Flow](../../services/client/client-http-api-flow.md)
-- [Local Profiles HTTP API](../../services/player-data/local-profiles-http-api.md)
-- [Profile Stats Flow](../../services/player-data/profile-stats-flow.md)
-- [Match Result Sinks](../../services/player-data/match-result-sinks.md)
-- [Route Composition](../../services/game-server/process/route-composition.md)
+- [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md)
+- [Leaderboards and Rankings](../domains/platform/stubs/leaderboards-and-rankings.md)
+- [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md)
+- [Inventory and Hangar](../domains/gameplay/inventory-and-hangar.md)
+- [Progression and Rewards](../domains/gameplay/progression-and-rewards.md)
+- [Shop Commerce and Economy](../domains/gameplay/shop-commerce-and-economy.md)
+- [Website and Web Presence](../domains/web/website-and-web-presence.md)
 
 ## Notes
 
-This planning doc stays focused on future surface ownership and avoids exact endpoint shape.
-
-When a planned surface becomes current, move its authoritative surface mapping into the current protocol doc and keep its detailed behavior in the owning service docs.
+This doc is a planned-surface map, not an endpoint design.
+When a planned surface becomes real, move its current mapping into ../../protocol/api-product-surface.md and keep exact HTTP shape in OpenAPI / HTTP API Contracts.

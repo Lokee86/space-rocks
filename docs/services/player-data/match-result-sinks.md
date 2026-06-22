@@ -410,7 +410,7 @@ Related API-server tests:
 * [API-server player stats and match results](../api-server/player-stats-and-match-results.md)
 * [API-server internal API surface](../api-server/internal-api-surface.md)
 * [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
-* [Trust And Eligibility Policy](../../domains/platform/trust-and-eligibility-policy.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 * [HTTP Contract Enforcement](../../protocol/http-contract-enforcement.md)
 * [Player Data HTTP API](../../protocol/player-data-http-api.md) - player-data HTTP protocol surface.
 * [Player Data Schema](../../data/player-data-schema.md) - shared player-data schema and source documentation.

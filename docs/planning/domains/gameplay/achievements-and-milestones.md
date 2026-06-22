@@ -712,8 +712,8 @@ routing and trust
 * [Match Outcomes And Results](match-outcomes-and-results.md)
 * [Progression And Rewards](progression-and-rewards.md)
 * [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
-* [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md)
-* [Anti-Cheat And Trust Policy](../platform/stubs/game-integrity-policy.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
+* [Anti-Cheat And Trust Policy](game-integrity-policy.md)
 
 ## Open Gametime Decisions
 

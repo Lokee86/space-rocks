@@ -618,8 +618,8 @@ admin/devtools mutations use explicit source tags
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
 * [API Product Surface](../../../protocol/api-product-surface.md)
-* [Trust And Eligibility Policy](../../../domains/platform/trust-and-eligibility-policy.md)
-* [Game Integrity Policy](../platform/stubs/game-integrity-policy.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
+* [Game Integrity Policy](game-integrity-policy.md)
 * [Deployment And Packaging](../technical/stubs/deployment-and-packaging.md)
 * [Data Sync And SSoT Pipeline](../../../data/data-sync-and-ssot-pipeline.md)
 
