@@ -18,7 +18,7 @@ This folder owns the planning index for work that has not yet become current doc
 <!-- doc-ledger:files:start -->
 
 - [development-roadmap.md](development-roadmap.md) - High-level roadmap planning.
-- [domain-backlog.md](domain-backlog.md) - Cross-cutting domain backlog planning.
+- [domain-backlog.md](domain-backlog.md) - Cross-domain planning triage and routing.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

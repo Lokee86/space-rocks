@@ -18,19 +18,19 @@ This folder owns planning docs for platform-facing work that is not yet current.
 <!-- doc-ledger:files:start -->
 
 - [account-and-identity-systems.md](account-and-identity-systems.md) - Future account and identity policy planning.
-<!-- doc-ledger:files:end -->
-## Stub Files
-<!-- doc-ledger:stubs:start -->
+- [leaderboards-and-rankings.md](leaderboards-and-rankings.md) - Leaderboards And Rankings documentation.
+<!-- doc-ledger:files:end -->- [game-integrity-policy.md](game-integrity-policy.md) - Game Integrity Policy docu[game-integrity-policy.md](game-integrity-policy.md)<!-- doc-ledger:stubs:start -->
 
-- [game-integrity-policy.md](stubs/game-integrity-policy.md) - Stub: Game Integrity Policy documentation.
-- [leaderboards-and-rankings.md](stubs/leaderboards-and-rankings.md) - Stub: leaderboards and rankings planning.
-- [matchmaking-and-room-discovery.md](stubs/matchmaking-and-room-discovery.md) - Stub: matchmaking and room discovery planning.
-- [multiplayer-session-and-lifecycle.md](stubs/multiplayer-session-and-lifecycle.md) - Stub: multiplayer session and lifecycle planning.
-- [player-data-and-persistence.md](stubs/player-data-and-persistence.md) - Stub: player data and persistence planning.
-- [social-and-community-systems.md](stubs/social-and-community-systems.md) - Stub: social and community systems planning.
+- [matchmaking-and-room-discovery.md](stubs/matchmaking-and-room-discovery.md) - Stub: Matchmaking And Room Discovery documentation.
+- [multiplayer-session-and-lifecycle.md](stubs/multiplayer-session-and-lifecycle.md) - Stub: Multiplayer Session And Lifecycle documentation.
+- [player-data-and-persistence.md](stubs/player-data-and-persistence.md) - Stub: Player Data And Persistence documentation.
+- [season-format-and-progression.md](stubs/season-format-and-progression.md) - Stub: Season Format And Progression documentation.
+- [social-and-community-systems.md](stubs/social-and-community-systems.md) - Stub: Social And Community Systems documentation.
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
+
+- [security-and-admin](security-and-admin/!INDEX.md) - Security And Admin documentation.
 <!-- doc-ledger:folders:end -->
 ## Related Docs
 

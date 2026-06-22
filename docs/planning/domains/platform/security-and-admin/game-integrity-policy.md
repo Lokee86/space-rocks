@@ -1,6 +1,6 @@
 # Game Integrity Policy
 
-Parent index: [Platform Planning](../!INDEX.md)
+Parent index: [Security And Admin](./!INDEX.md)
 
 ## Purpose
 
@@ -110,7 +110,7 @@ transport encryption
 
 Realtime protocol hardening belongs to [Realtime Protocol Architecture](../../../protocol/realtime-protocol-architecture.md).
 
-Current identity, mode, and trusted-fact eligibility belongs to [Trust And Eligibility Policy](../../../../domains/platform/trust-and-eligibility-policy.md).
+Current identity, mode, and trusted-fact eligibility belongs to [Trust And Eligibility Policy](trust-and-eligibility-policy.md).
 
 Future account capability fields belong to account and identity planning.
 
@@ -926,15 +926,15 @@ EligibilityDecision can allow private stats while blocking leaderboards
 
 ## Related docs
 
-* [Platform Planning](../!INDEX.md)
-* [Account And Identity Systems](../account-and-identity-systems.md)
-* [Trust And Eligibility Policy](../../../../domains/platform/trust-and-eligibility-policy.md)
+* [[Platform Planning](planning/domains/platform/!INDEX.md)
+* [[Account And Identity Systems](account-and-identity-systems.md)
+* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 * [Account And Identity Current State](../../../../domains/platform/account-and-identity-current-state.md)
 * [Realtime Protocol Architecture](../../../protocol/realtime-protocol-architecture.md)
-* [Progression And Rewards](../../gameplay/progression-and-rewards.md)
-* [Achievements And Milestones](../../gameplay/achievements-and-milestones.md)
-* [Match Outcomes And Results](../../gameplay/match-outcomes-and-results.md)
-* [Modes And Match Rules](../../gameplay/modes-and-match-rules.md)
+* [[Progression And Rewards](progression-and-rewards.md)
+* [[Achievements And Milestones](achievements-and-milestones.md)
+* [[Match Outcomes And Results](match-outcomes-and-results.md)
+* [[Modes And Match Rules](modes-and-match-rules.md)
 * [Leaderboards And Rankings](leaderboards-and-rankings.md)
 * [Player Data And Persistence](player-data-and-persistence.md)
 * [Multiplayer Session And Lifecycle](multiplayer-session-and-lifecycle.md)

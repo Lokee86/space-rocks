@@ -1,13 +1,11 @@
 # Domain Backlog
 Parent index: [Planning](./!INDEX.md)
 
-## Backlog Boundary
+## Role
 
-This file tracks planning and backlog items only.
+This file tracks unscheduled, cross-domain, or not-yet-routed planning items.
 
-It is now a parking lot for unscheduled items and should not become the detailed owner for systems that already have dedicated planning docs.
-
-Implemented behavior belongs in docs/systems-design, docs/services, docs/protocol, docs/data, docs/devtools, or docs/domains.
+It is a triage and routing document, not a feature backlog. Detailed system plans belong in the owner docs for the relevant domain, service, protocol, data, or devtools area.
 
 Current limitations belong in [docs/limits/current-system-limits.md](../limits/current-system-limits.md) and [docs/limits/player-build-limits.md](../limits/player-build-limits.md).
 
@@ -15,167 +13,80 @@ Detailed player build and loadout planning belongs in [docs/planning/player-buil
 
 Roadmap phase sequencing belongs in [docs/planning/development-roadmap.md](development-roadmap.md).
 
-## Combat Systems
+## How To Use This File
 
-### Weapons
+Use this file to capture an item only until it has a clear owner, a stable decision, or a better home in another doc.
 
-- Add additional weapon profiles.
-- Add client equip and presentation flows.
-- Add focused tests for new fire and profile rules.
+When an item is routed, move it to the owning document and remove it from this file.
 
-Owner docs: [player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md), [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md).
+If an item is already fully specified in an owner doc, do not duplicate it here.
 
-### Damage
+## Triage States
 
-- Add client render events for damage presentation.
-- Add area falloff rules.
-- Extend DoT into broader status-effect handling.
-- Add richer presentation and telemetry for damage outcomes.
+`Needs owner`: the item has no clear owning doc or system yet.
 
-Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md), [player-experience-systems.md](domains/gameplay/player-experience-systems.md).
+`Active decision`: the item needs an unresolved cross-domain decision before routing can continue.
 
-### Radial Effects
+`Blocked`: the item cannot move forward because another dependency or constraint must land first.
 
-- Add shockwave or knockback payloads.
-- Expand hazardous fields.
-- Add status-effect payloads.
-- Add falloff rules.
-- Add richer presentation events.
-- Add additional radial weapons.
+`Parked`: the item is acknowledged but intentionally deferred for now.
 
-Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md), [player-experience-systems.md](domains/gameplay/player-experience-systems.md).
+`Routed`: the item has a clear owner doc and should be moved there.
 
-### Drop Tables
+`Cut`: the item is no longer being pursued and should be removed from active planning.
 
-- Add multi-drop tables with more than one table entry.
-- Add additional drop table definitions for other source types.
-- Add a minimum drop count policy if needed.
-- Add explicit per-source routing.
-- Add client-facing presentation polish for drop events.
+## Retention Rules
 
-Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md), [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md).
+Keep an item in this file only if it blocks another system, protects correctness/security/trust, defines ownership or service boundaries, represents an unresolved decision, or lacks a better owner doc.
 
-### Asteroid Variants
+Once an item has a clearer owner, move it out of this file instead of letting it linger as backlog.
 
-- Add per-variant stats behavior through `stats_profile`.
-- Add per-variant drop behavior through `drop_table`.
-- Add rare variant weighting through lower nonzero weights.
+Do not use this file to accumulate feature ideas, implementation notes, or detailed subsystem plans.
 
-Owner docs: [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md).
+## Active Cross-Domain Decisions
 
-## Player Data And Progression
+| Decision | Why It Matters | Blocks | Owner |
+| --- | --- | --- | --- |
+| Player-data contract enforcement | Prevents schema drift across local profile, account, game-server, and API surfaces. | Durable progression, profile migration, loadout persistence. | [data-sync-and-ssot-pipeline.md](../data/data-sync-and-ssot-pipeline.md) and [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md) |
+| Player-data service boundary | Decides whether player-data remains in-process or becomes an extracted service. | Local profile persistence, match-result writes, loadout reads. | [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md) and [API Product Surface](protocol/api-product-surface.md) |
+| Online admission and auth routing | Multiplayer cannot be trusted until identity and admission rules are explicit. | Hosted multiplayer, account rewards, rankings. | [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md) and [game-integrity-policy.md](domains/platform/game-integrity-policy.md) |
+| Durable progression grants | Match results and durable rewards need idempotent grant writes. | Currency, unlocks, account progression, profile progression. | [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md) and [match-outcomes-and-results.md](domains/gameplay/match-outcomes-and-results.md) |
 
-### Player-Data Pipeline
+## Parked But Accepted
 
-- Add `-player-data` to the data-sync domain set.
-- Add likely generated player-data outputs.
-- Add Rails migration skeleton generation.
-- Add embedded DB migration skeleton generation.
-- Add player-data contract tests.
-- Add schema-drift enforcement for player-data contracts.
+| Item | State | Reopen When | Owner |
+| --- | --- | --- | --- |
+| Prediction/reconciliation layer | Parked | packet budget/protocol work proves client prediction is needed. | [realtime-protocol-architecture.md](protocol/realtime-protocol-architecture.md) |
+| Local play packaging | Parked | local distribution becomes a release target. | [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md) |
+| Hosted game-server deployment | Parked | online multiplayer moves from local/dev to hosted. | [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md) |
+| Matchmaking or room discovery metadata | Parked | public rooms or non-direct-join flows are planned. | [matchmaking-and-room-discovery.md](domains/platform/stubs/matchmaking-and-room-discovery.md) |
 
-Owner docs: [data-sync-and-ssot-pipeline.md](../data/data-sync-and-ssot-pipeline.md), [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md).
+## Routed Gameplay Areas
 
-### Service Boundaries
+| Area | Owner Doc | Notes |
+| --- | --- | --- |
+| Weapons and loadouts | [player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md) | Route weapon selection, loadout, and equip ownership here. |
+| Enemy, boss, encounter, asteroid variant, and drop behavior | [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md) | Keep simulation, encounter, and enemy-behavior planning in the owner doc. |
+| Damage/effect presentation and player-facing feedback | [player-experience-systems.md](domains/gameplay/player-experience-systems.md) | Route feedback, presentation, and player-visible outcome work here. |
+| Progression rewards and reward-bearing drops | [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md) | Use this doc for reward flow and durable progression routing. |
+| Inventory and hangar ownership/acquisition | [inventory-and-hangar.md](domains/gameplay/inventory-and-hangar.md) | Keep acquisition and ownership rules in the inventory owner doc. |
 
-- Add `services/player-data-server` extraction if the in-process runtime is split.
-- Define the player-data service contract from the shared logical schema.
-- Add SQLite-backed persistence and migrations for the extracted local service.
-- Make the game-server consume player-data service APIs for loadout and profile reads plus match-result writes.
-- Make the client consume player-data service APIs for local profile UI.
-- Add admission package and routing matrix tests.
-- Add room mode and session identity fields.
-- Add behavior-preserving admission wiring where needed.
-- Handle the Local Profile rename in `services/player-data-server`.
-- Add store contract tests.
-- Add local profile schema migration/versioning.
+## Routed Platform And Progression Areas
 
-Owner docs: [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md), [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md), [API Product Surface](../protocol/api-product-surface.md).
+| Area | Owner Doc | Notes |
+| --- | --- | --- |
+| Account product surface | [API Product Surface](protocol/api-product-surface.md) | Route exposed account-facing surface work here instead of backlog bullets. |
+| Leaderboards | [leaderboards-and-rankings.md](domains/platform/stubs/leaderboards-and-rankings.md) | Keep ranking and board ownership in the dedicated stub doc. |
+| Currency and economy | [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md) | Use this doc for durable reward flow and economy routing. |
+| Rewards | [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md) | Route reward-bearing progression here. |
+| Inventory | [inventory-and-hangar.md](domains/gameplay/inventory-and-hangar.md) | Keep ownership and acquisition in the inventory owner doc. |
+| Account identity | [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md) | Route identity, linking, and admission-adjacent ownership here. |
 
-### Auth And Account Routing
+## Routed Technical Areas
 
-- Rails token verification hardening.
-- Go auth client hardening.
-- Websocket auth handshake hardening.
-- Enforce online multiplayer admission.
-- Expand OAuth support.
-- Add JWT only if selected later.
-- Harden game-server auth integration.
-- Client token storage.
-
-Owner docs: [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md), [API Product Surface](../protocol/api-product-surface.md), [game-integrity-policy.md](domains/platform/stubs/game-integrity-policy.md).
-
-### Progression Grants
-
-- Add live progression grant transport.
-- Add an internal HTTP grant path from the game-server to the owning player-data service.
-- Add authenticated-account grant transport to `services/api-server`.
-- Add local-profile grant transport to extracted `services/player-data-server` if that service exists.
-- Make grant writes idempotent with `grant_id` or `event_id`.
-- Decouple durable rewards from end-of-match summary handling.
-
-Owner docs: [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md), [match-outcomes-and-results.md](domains/gameplay/match-outcomes-and-results.md).
-
-### Account Product Surface
-
-- Account linking or local-to-online migration.
-- Online leaderboards.
-- Anti-cheat/trust policy.
-- Currency.
-- Ship parts.
-- Rare drops.
-- Unlock tokens.
-- Account-affecting rewards.
-
-Owner docs: [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md), [API Product Surface](../protocol/api-product-surface.md), [leaderboards-and-rankings.md](domains/platform/stubs/leaderboards-and-rankings.md), [game-integrity-policy.md](domains/platform/stubs/game-integrity-policy.md).
-
-## Client Presentation
-
-### Weapon And Equipment UI
-
-- Add weapon UI.
-- Add equip presentation.
-- Add player-build and loadout UI once the build model exists.
-
-Owner docs: [player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md), [inventory-and-hangar.md](domains/gameplay/inventory-and-hangar.md).
-
-### Damage And Effect Presentation
-
-- Add client render events for damage presentation.
-- Add radial-effect presentation.
-- Add richer gameplay effect presentation where tied to implemented server events.
-
-Owner docs: [player-experience-systems.md](domains/gameplay/player-experience-systems.md), [enemies-bosses-and-encounters.md](domains/gameplay/enemies-bosses-and-encounters.md).
-
-### Devtools Pickup Rendering
-
-- Devtools pickup selector should share the same presentation/catalog source as client pickup rendering when implemented.
-
-## Infrastructure And Deployment
-
-### Local Packaging
-
-- Add local play packaging that may launch or bundle the Go game server with the Godot client.
-
-Owner docs: [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md).
-
-### Hosted Multiplayer
-
-- Add hosted online game-server deployment using the room/websocket structure.
-- Add matchmaking or room discovery metadata if selected later.
-
-Owner docs: [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md), [matchmaking-and-room-discovery.md](domains/platform/stubs/matchmaking-and-room-discovery.md).
-
-### Networking And Prediction
-
-- Add prediction/reconciliation as an explicit separate client layer if added.
-- Keep prediction separate from authoritative game rules.
-
-Owner docs: [realtime-protocol-architecture.md](../protocol/realtime-protocol-architecture.md).
-
-### Smoke And Verification
-
-- Add full gameplay/network smoke testing hardening.
-- Review world-dimension balance for gameplay.
-
-Owner docs: [testing-and-smoke-strategy.md](domains/technical/stubs/testing-and-smoke-strategy.md), [network-observability-and-packet-budget.md](domains/technical/network-observability-and-packet-budget.md).
+| Area | Owner Doc | Notes |
+| --- | --- | --- |
+| Realtime protocol | [realtime-protocol-architecture.md](protocol/realtime-protocol-architecture.md) | Keep protocol ownership here instead of in backlog items. |
+| Network observability and packet budget | [network-observability-and-packet-budget.md](domains/technical/network-observability-and-packet-budget.md) | Route packet sizing, measurement, and observability work here. |
+| Testing and smoke strategy | [testing-and-smoke-strategy.md](domains/technical/stubs/testing-and-smoke-strategy.md) | Keep smoke-test and verification planning in the owner doc. |
+| Deployment and packaging | [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md) | Route packaging and deployment details here. |
