@@ -6,11 +6,11 @@ Parent index: [Game Server](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for game-server networking, including websocket transport, packet routing, and connection/session boundaries.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Simulation rules, room policy, and observability analysis belong in their respective planning homes.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Game Server](../!INDEX.md)
+- [Development Roadmap](../../development-roadmap.md)
+- [Domain Backlog](../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Use this folder for networking ownership and routing boundaries, not for gameplay logic.

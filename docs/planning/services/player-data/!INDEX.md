@@ -6,11 +6,11 @@ Parent index: [Services](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for player-data contracts, persistence boundaries, progression, and related account-facing backend concerns.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Client presentation, realtime gameplay, and game-server simulation details belong in the relevant service or domain docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Services](../!INDEX.md)
+- [Domain Backlog](../../domain-backlog.md)
+- [Development Roadmap](../../development-roadmap.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on durable player-data planning and ownership boundaries.

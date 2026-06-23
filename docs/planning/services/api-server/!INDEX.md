@@ -6,11 +6,11 @@ Parent index: [Services](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder holds planning docs for the future API server surface, especially account, web, and durable backend responsibilities.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Client runtime details, game-server simulation, and service implementation notes belong in their own service docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Services](../!INDEX.md)
+- [Domain Backlog](../../domain-backlog.md)
+- [Development Roadmap](../../development-roadmap.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on API-server planning, not on current game-server or client implementation details.

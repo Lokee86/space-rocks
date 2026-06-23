@@ -47,9 +47,9 @@ Do not use this file to accumulate feature ideas, implementation notes, or detai
 
 | Decision | Why It Matters | Blocks | Owner |
 | --- | --- | --- | --- |
-| Player-data contract enforcement | Prevents schema drift across local profile, account, game-server, and API surfaces. | Durable progression, profile migration, loadout persistence. | [data-sync-and-ssot-pipeline.md](../data/data-sync-and-ssot-pipeline.md) and [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md) |
-| Player-data service boundary | Decides whether player-data remains in-process or becomes an extracted service. | Local profile persistence, match-result writes, loadout reads. | [player-data-and-persistence.md](domains/platform/stubs/player-data-and-persistence.md) and [API Product Surface](protocol/api-product-surface.md) |
-| Online admission and auth routing | Multiplayer cannot be trusted until identity and admission rules are explicit. | Hosted multiplayer, account rewards, rankings. | [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md) and [game-integrity-policy.md](domains/platform/game-integrity-policy.md) |
+| Player-data contract enforcement | Prevents schema drift across local profile, account, game-server, and API surfaces. | Durable progression, profile migration, loadout persistence. | [data-sync-and-ssot-pipeline.md](../data/data-sync-and-ssot-pipeline.md) and [Player Data And Persistence](../services/player-data/!INDEX.md) |
+| Player-data service boundary | Decides whether player-data remains in-process or becomes an extracted service. | Local profile persistence, match-result writes, loadout reads. | [Player Data And Persistence](../services/player-data/!INDEX.md) and [API Product Surface](protocol/api-product-surface.md) |
+| Online admission and auth routing | Multiplayer cannot be trusted until identity and admission rules are explicit. | Hosted multiplayer, account rewards, rankings. | [account-and-identity-systems.md](domains/platform/account-and-identity-systems.md) and [game-integrity-policy.md](domains/platform/security-and-admin/game-integrity-policy.md) |
 | Durable progression grants | Match results and durable rewards need idempotent grant writes. | Currency, unlocks, account progression, profile progression. | [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md) and [match-outcomes-and-results.md](domains/gameplay/match-outcomes-and-results.md) |
 
 ## Parked But Accepted
@@ -57,9 +57,9 @@ Do not use this file to accumulate feature ideas, implementation notes, or detai
 | Item | State | Reopen When | Owner |
 | --- | --- | --- | --- |
 | Prediction/reconciliation layer | Parked | packet budget/protocol work proves client prediction is needed. | [realtime-protocol-architecture.md](protocol/realtime-protocol-architecture.md) |
-| Local play packaging | Parked | local distribution becomes a release target. | [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md) |
-| Hosted game-server deployment | Parked | online multiplayer moves from local/dev to hosted. | [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md) |
-| Matchmaking or room discovery metadata | Parked | public rooms or non-direct-join flows are planned. | [matchmaking-and-room-discovery.md](domains/platform/stubs/matchmaking-and-room-discovery.md) |
+| Local play packaging | Parked | local distribution becomes a release target. | [Build Release And Environment Matrix](domains/technical/build-release-and-environment-matrix.md) |
+| Hosted game-server deployment | Parked | online multiplayer moves from local/dev to hosted. | [Build Release And Environment Matrix](domains/technical/build-release-and-environment-matrix.md) |
+| Matchmaking or room discovery metadata | Parked | public rooms or non-direct-join flows are planned. | [Matchmaking And Room Discovery](domains/platform/matchmaking-and-room-discovery.md) |
 
 ## Routed Gameplay Areas
 
@@ -76,7 +76,7 @@ Do not use this file to accumulate feature ideas, implementation notes, or detai
 | Area | Owner Doc | Notes |
 | --- | --- | --- |
 | Account product surface | [API Product Surface](protocol/api-product-surface.md) | Route exposed account-facing surface work here instead of backlog bullets. |
-| Leaderboards | [leaderboards-and-rankings.md](domains/platform/stubs/leaderboards-and-rankings.md) | Keep ranking and board ownership in the dedicated stub doc. |
+| Leaderboards | [Leaderboards And Rankings](domains/platform/leaderboards-and-rankings.md) | Keep ranking and board ownership in the dedicated stub doc. |
 | Currency and economy | [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md) | Use this doc for durable reward flow and economy routing. |
 | Rewards | [progression-and-rewards.md](domains/gameplay/progression-and-rewards.md) | Route reward-bearing progression here. |
 | Inventory | [inventory-and-hangar.md](domains/gameplay/inventory-and-hangar.md) | Keep ownership and acquisition in the inventory owner doc. |
@@ -88,5 +88,5 @@ Do not use this file to accumulate feature ideas, implementation notes, or detai
 | --- | --- | --- |
 | Realtime protocol | [realtime-protocol-architecture.md](protocol/realtime-protocol-architecture.md) | Keep protocol ownership here instead of in backlog items. |
 | Network observability and packet budget | [network-observability-and-packet-budget.md](domains/technical/network-observability-and-packet-budget.md) | Route packet sizing, measurement, and observability work here. |
-| Testing and smoke strategy | [testing-and-smoke-strategy.md](domains/technical/stubs/testing-and-smoke-strategy.md) | Keep smoke-test and verification planning in the owner doc. |
-| Deployment and packaging | [deployment-and-packaging.md](domains/technical/stubs/deployment-and-packaging.md) | Route packaging and deployment details here. |
+| Testing and smoke strategy | [Verification And Quality Gates](domains/technical/verification-and-quality-gates.md) | Keep smoke-test and verification planning in the owner doc. |
+| Build Release And Environment Matrix | [Build Release And Environment Matrix](domains/technical/build-release-and-environment-matrix.md) | Route packaging and deployment details here. |

@@ -6,11 +6,11 @@ Parent index: [Game Server](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder is reserved for planning docs about external integrations that affect the game server, such as auth, persistence, telemetry, or service handoffs.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Core simulation, room policy, and transport implementation details belong in their owning game-server subfolders.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Game Server](../!INDEX.md)
+- [Development Roadmap](../../development-roadmap.md)
+- [Domain Backlog](../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on integration planning boundaries rather than implementation detail.

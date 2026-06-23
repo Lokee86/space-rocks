@@ -554,7 +554,7 @@ Current direct coverage for `ServerPacketRouter` and `ServerPacketDispatcher` is
 * [Realtime Websocket Protocol](../../../protocol/realtime-websocket-protocol.md) - realtime websocket protocol documentation.
 * [Gameplay Packets](../../../protocol/gameplay-packets.md) - gameplay packet documentation.
 * [Lobby Packets](../../../protocol/lobby-packets.md) - lobby packet documentation.
-* [Devtools Packets]() - devtools packet documentation.
+* [Devtools Packets](../../../devtools/design/devtools-packet-protocol.md) - devtools packet documentation.
 * [Packet Schema Pipeline](../../../data/packet-schemas.md) - shared packet schema and generated output documentation.
 
 ## Notes

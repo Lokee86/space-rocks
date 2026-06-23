@@ -281,13 +281,17 @@ Planning docs should cover:
 purpose
 overview
 current status
-decisions made
-open decisions
-expected ownership
+ownership boundary or expected ownership
+type-specific planning sections
 implementation sequence
+open decisions
 related docs
 notes
 ```
+
+Planning docs may use either `Ownership boundary` or `Expected ownership`, depending on whether the document defines ownership limits or assigns future implementation work.
+
+Planning docs do not need a literal `Decisions made` heading to capture decided direction.
 
 Planning docs should clearly distinguish:
 

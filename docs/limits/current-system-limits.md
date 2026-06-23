@@ -1,7 +1,17 @@
 # Current System Limits
 Parent index: [Current Limits](./!INDEX.md)
 
-## Architecture / Networking
+## Purpose
+
+This file captures the active, known constraints in the current client and server system.
+
+## Overview
+
+It serves as the current-limits ledger for incomplete wiring, hard caps, and intentionally unsupported behavior that still applies today.
+
+## Issue list or backlog
+
+### Architecture / Networking
 
 - No prediction/reconciliation layer is implemented beyond interpolation.
 - The server is expected to be running separately for the Godot client.
@@ -10,7 +20,7 @@ Parent index: [Current Limits](./!INDEX.md)
 - `start_single_player_request` does not currently reject an already-authenticated WebSocket session at the server boundary. The intended identity model is still Guest or Local Profile for local single-player, and player-data mode validation rejects `single_player + authenticated_account`, but the WebSocket start-single-player path does not enforce that rejection directly yet.
 - Vertical despawn behavior is limited by the relationship between world height, visible viewport height, and despawn margin.
 
-## Combat Systems
+### Combat Systems
 
 - The client should not calculate damage locally.
 - Client rendering from damage events is not fully implemented in the damage design path.
@@ -30,7 +40,7 @@ Parent index: [Current Limits](./!INDEX.md)
 - Pickups have no `max_health` field.
 - Bullet/pickup collision damage is not enabled.
 
-## Player Data
+### Player Data
 
 - Matchmaking and leaderboards are not implemented.
 - The Rails API/auth path exists, but broader account product surfaces and durable progression systems are incomplete.
@@ -41,12 +51,12 @@ Parent index: [Current Limits](./!INDEX.md)
 - Currency, ship parts, unlocks, achievements, and loadout persistence are not implemented.
 - V1 stats payloads do not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.
 
-## Client Presentation
+### Client Presentation
 
 - See [Player Build Limits](player-build-limits.md) for current ship-variant and player-build constraints.
 - Weapon UI and equip presentation are not fully implemented yet.
 
-### Client Menu Flow
+#### Client Menu Flow
 
 - Options is not implemented.
 - Campaign is disabled in the single-player pregame menu.
@@ -56,3 +66,27 @@ Parent index: [Current Limits](./!INDEX.md)
 - Rankings are disabled in the single-player pregame menu.
 - Manual login is disabled.
 - Google login is disabled.
+
+## Affected docs/systems
+
+- [Player Build Limits](player-build-limits.md)
+- [Development Roadmap](../planning/development-roadmap.md)
+- [Domain Backlog](../planning/domain-backlog.md)
+- [Realtime Protocol Architecture](../planning/protocol/realtime-protocol-architecture.md)
+- [Verification And Quality Gates](../planning/domains/technical/verification-and-quality-gates.md)
+
+## Status
+
+Active current-limits document. The entries below describe present-day constraints and incomplete behavior in the live system.
+
+## Related docs
+
+- [Current Limits index](./!INDEX.md)
+- [Player Build Limits](player-build-limits.md)
+- [Development Roadmap](../planning/development-roadmap.md)
+- [Domain Backlog](../planning/domain-backlog.md)
+- [Verification And Quality Gates](../planning/domains/technical/verification-and-quality-gates.md)
+
+## Notes
+
+Keep this file focused on current constraints and missing behavior. Use planning docs for future work, not for active limits.

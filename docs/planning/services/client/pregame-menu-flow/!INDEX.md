@@ -6,11 +6,11 @@ Parent index: [Client](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for the client pregame menu flow, including pre-match menu state and route handoff before gameplay begins.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Gameplay runtime menus, lobby flows, and server-start rules belong in their own docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Client](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder centered on pregame menu planning and route policy.

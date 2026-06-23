@@ -6,11 +6,11 @@ Parent index: [Simulation](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for combat simulation behavior, including damage, weapons, projectiles, and combat resolution boundaries.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Networking transport, room policy, and client presentation belong elsewhere.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Simulation](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on combat simulation planning and authoritative combat ownership.

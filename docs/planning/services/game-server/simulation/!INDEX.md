@@ -6,11 +6,11 @@ Parent index: [Game Server](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for authoritative game-server simulation, including combat, players, targeting, pickups, runtime, and world behavior.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Networking transport, client presentation, and non-simulation service planning belong in their respective docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -33,8 +33,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Game Server](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder centered on simulation ownership and behavior boundaries.

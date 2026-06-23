@@ -6,11 +6,11 @@ Parent index: [Client](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for client app-shell/session coordination, including session state, shell transitions, and session-scoped routing.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Server authority, menu presentation details, and gameplay runtime specifics belong in the relevant service or flow docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Client](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on app-shell/session planning boundaries and not on runtime implementation detail.

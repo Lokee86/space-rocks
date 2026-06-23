@@ -434,8 +434,8 @@ These tests verify gameplay session lifecycle, gameplay menu behavior, and match
 * [Match End Flow](match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
 * [Gameplay Menu Flow](gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
 * [Pickup Presentation](world-sync/pickup-presentation.md) - Client pickup presentation documentation.
-* [Realtime websocket protocol](../../protocol/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
-* [Gameplay packets](../../protocol/gameplay-packets.md) - Stub: gameplay packet documentation.
+* [Realtime websocket protocol](../../protocol/realtime-websocket-protocol.md) - Realtime WebSocket protocol documentation.
+* [Gameplay packets](../../protocol/gameplay-packets.md) - Gameplay packet documentation.
 * [Client devtools](../../devtools/client/!INDEX.md)
 
 ## Notes

@@ -544,7 +544,7 @@ Direct unit coverage for `inbound.RouteClientPacket` ordering is currently thin.
 - [Realtime Websocket Protocol](../../../protocol/realtime-websocket-protocol.md) - Realtime WebSocket protocol documentation.
 - [Gameplay Packets](../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
 - [Lobby Packets](../../../protocol/lobby-packets.md) - Lobby packet documentation.
-- [Devtools Packets]() - Devtools packet documentation.
+- [Devtools Packets](../../../devtools/design/devtools-packet-protocol.md) - Devtools packet documentation.
 - [Packet Schema Pipeline](../../../data/packet-schemas.md) - Shared packet schema and generated output documentation.
 
 ## Notes

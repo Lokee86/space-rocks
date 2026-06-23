@@ -1,16 +1,23 @@
 # Web
 
-This index summarizes the web docs.
+This folder owns product and domain-level web planning for Space Rocks.
+
+It covers the website as a product surface, including the public web presence plan, staged web directions, and domain boundaries that sit above service implementation.
 
 Parent index: [Domains](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder is owned by web-domain planning.
+Use it for product direction, surface boundaries, and web-facing scope decisions that are not yet tied to a specific service implementation.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+- Web service implementation plans.
+- Deployment or hosting mechanics.
+- API contracts.
+- Generated web assets or runtime code.
+- Stub content that has a clearer home in service planning.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -28,8 +35,9 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Planning index](../!INDEX.md)
+- [Website And Web Presence](website-and-web-presence.md) - Product and public web presence planning.
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder at the domain-planning level so it can guide the web surface without overlapping service implementation.

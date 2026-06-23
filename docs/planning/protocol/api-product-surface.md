@@ -25,15 +25,15 @@ Planned rows should move into the current map only when implemented.
 
 | Surface | Status | Consumer | Likely host | Behavior owner | Planning docs |
 | --- | --- | --- | --- | --- | --- |
-| Room browser / matchmaking discovery | Planned | Client lobby and discovery UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md) |
-| Matchmaking queue / status | Planned | Client queue and status UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md) |
-| Room invite / join-code support | Planned | Client invite and room entry UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md) |
-| Leaderboards / rankings | Planned | Client ranking and comparison UI | TBD | TBD | [Leaderboards and Rankings](../domains/platform/stubs/leaderboards-and-rankings.md) |
+| Room browser / matchmaking discovery | Planned | Client lobby and discovery UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/matchmaking-and-room-discovery.md) |
+| Matchmaking queue / status | Planned | Client queue and status UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/matchmaking-and-room-discovery.md) |
+| Room invite / join-code support | Planned | Client invite and room entry UI | TBD | TBD | [Matchmaking and Room Discovery](../domains/platform/matchmaking-and-room-discovery.md) |
+| Leaderboards / rankings | Planned | Client ranking and comparison UI | TBD | TBD | [Leaderboards and Rankings](../domains/platform/leaderboards-and-rankings.md) |
 | Match history / recent matches | Planned | Client match history UI | TBD | TBD | TBD |
-| Public profile / profile visibility | Planned | Client profile and visibility UI | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
-| Friends / blocks / recent players | Planned | Client social management UI | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
-| Party invites / party presence | Planned | Client party and presence UI | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
-| Reports / moderation intake | Planned | Client report and support flows | TBD | TBD | [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md) |
+| Public profile / profile visibility | Planned | Client profile and visibility UI | TBD | TBD | [Social and Community Systems](../domains/platform/social-and-community-systems.md) |
+| Friends / blocks / recent players | Planned | Client social management UI | TBD | TBD | [Social and Community Systems](../domains/platform/social-and-community-systems.md) |
+| Party invites / party presence | Planned | Client party and presence UI | TBD | TBD | [Social and Community Systems](../domains/platform/social-and-community-systems.md) |
+| Reports / moderation intake | Planned | Client report and support flows | TBD | TBD | [Social and Community Systems](../domains/platform/social-and-community-systems.md) |
 | Inventory / hangar | Planned | Client collection and setup UI | TBD | TBD | [Inventory and Hangar](../domains/gameplay/inventory-and-hangar.md) |
 | Loadout save / load | Planned | Client loadout management UI | TBD | TBD | [Inventory and Hangar](../domains/gameplay/inventory-and-hangar.md) |
 | Progression / unlocks | Planned | Client progression UI | TBD | TBD | [Progression and Rewards](../domains/gameplay/progression-and-rewards.md) |
@@ -57,9 +57,9 @@ Planned rows should move into the current map only when implemented.
 - [API Product Surface](../../protocol/api-product-surface.md)
 - [HTTP API Contracts](../../protocol/http-api-contracts.md)
 - [Player Data HTTP API](../../protocol/player-data-http-api.md)
-- [Matchmaking and Room Discovery](../domains/platform/stubs/matchmaking-and-room-discovery.md)
-- [Leaderboards and Rankings](../domains/platform/stubs/leaderboards-and-rankings.md)
-- [Social and Community Systems](../domains/platform/stubs/social-and-community-systems.md)
+- [Matchmaking and Room Discovery](../domains/platform/matchmaking-and-room-discovery.md)
+- [Leaderboards and Rankings](../domains/platform/leaderboards-and-rankings.md)
+- [Social and Community Systems](../domains/platform/social-and-community-systems.md)
 - [Inventory and Hangar](../domains/gameplay/inventory-and-hangar.md)
 - [Progression and Rewards](../domains/gameplay/progression-and-rewards.md)
 - [Shop Commerce and Economy](../domains/gameplay/shop-commerce-and-economy.md)
