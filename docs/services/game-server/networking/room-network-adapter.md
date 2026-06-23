@@ -257,7 +257,7 @@ go test -buildvcs=false ./services/game-server/internal/networking ./services/ga
 - [Game Server](../!INDEX.md)
 - [Protocol](../../../protocol/!INDEX.md)
 - [Data](../../../data/!INDEX.md)
-- [Services](../../../!INDEX.md)
+- [Services](../../!INDEX.md)
 
 ## Notes
 

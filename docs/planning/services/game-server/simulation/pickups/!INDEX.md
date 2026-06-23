@@ -6,11 +6,11 @@ Parent index: [Simulation](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for pickup simulation, including collection rules, pickup state, and pickup lifecycle boundaries.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Combat, room policy, and client presentation belong in the relevant owning docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Simulation](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Use this folder for pickup-specific simulation planning and ownership.

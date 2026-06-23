@@ -1,97 +1,785 @@
-# Platform And Progression Roadmap
+<!-- policy-exempt: roadmap sequencing document -->
+
+# Development Roadmap
+
 Parent index: [Planning](./!INDEX.md)
 
-## Opening Context
+## Purpose
 
-The menu/profile/local-pilot/match-results/stats-refresh vertical slice is complete and green. That is an important milestone, but it also marks a shift in how the project needs to be planned.
+This document defines the actionable development sequence for Space Rocks after the documentation and planning overhaul.
 
-We have reached the point where isolated feature slices are no longer enough on their own. Future work will overlap more across auth, observability, packet strategy, progression, enemies, bullet hell, ship variants, unlocks, and account surfaces.
+It coordinates implementation priority across technical foundations, public web presence, gameplay systems, platform systems, progression, multiplayer, and launch-facing surfaces.
 
-Because those systems now intersect more tightly, seams and ownership boundaries need to be planned before more feature growth lands. The goal is to keep the codebase scalable and avoid coupling the next wave of systems into the wrong layers.
+Detailed ownership remains in the system-specific planning documents. This document owns sequencing, dependency order, phase gates, and priority relationships.
 
-## Roadmap Role
+## Current Baseline
 
-This roadmap coordinates phase order, dependency order, and decision gates for the platform and progression track.
+The current project has a useful vertical-slice baseline:
 
-Detailed system ownership belongs in the system-specific planning docs linked from `docs/planning/!INDEX.md`.
+```text
+local pilot/profile flow
+match result presentation
+stats refresh
+authenticated multiplayer admission
+room create/join/ready/start flow
+single-player flow
+player-data routing
+initial devtools telemetry overlay
+known gameplay packet pressure
+```
 
-## Roadmap Purpose
+The next development work should stop treating isolated feature slices as enough. Several future systems now depend on shared technical seams:
 
-This document coordinates the larger phases that follow the completed menu-flow vertical slice. It frames the work that needs to happen next, highlights the dependencies between the major areas, and sets up the order in which the platform and progression systems should be planned.
+```text
+packet budget
+realtime protocol
+mode rules
+match result finalization
+player-data contracts
+progression grants
+account trust
+multiplayer lifecycle
+public website surfaces
+```
 
-## Major Planning Pillars
+## Top Priorities
 
-- Network budget and runtime observability
-- Realtime protocol architecture and state delivery strategy
-- Auth and account surface completion
-- Player experience structure and system boundaries
-- Progression, rewards, unlocks, and player-data contracts
-- Gameplay expansion
+The top priority systems are:
 
-## Current Completed Baseline
+```text
+devlog static site
+network observability and packet budget
+realtime protocol architecture
+```
 
-- Discord auth works through the Godot browser handoff.
-- Rails owns bearer token issuance and `/api/auth/me`.
-- The Go game-server verifies tokens through Rails for websocket auth.
-- Local Profile and Authenticated Account stats route through the player-data runtime.
-- Match results and stats refresh are complete.
-- The World Telemetry Overlay exists behind devtools.
-- Gameplay packets are known to exceed 4KB at times before enemies or bullet hell exist.
+Recommended order:
 
-## Phase Order
+```text
+1. Devlog static site, capped as V0 only.
+2. Network observability and packet budget.
+3. Realtime protocol architecture.
+```
 
-- Phase A - Network Budget + Runtime Observability Foundation
-- Phase B - Realtime Protocol Architecture
-- Phase C - Player Experience Foundation
-- Phase D - Progression Foundation
-- Phase E - Gameplay Expansion
+The devlog site may go first because it is isolated and public-facing. It must remain capped. If it starts expanding into launch website, account portal, commerce, CMS, or support work, stop and defer that scope.
 
-Phase A determines the priority and order of Phase B work, not whether launch-grade realtime protocol work is expected.
+Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
-## Phase A
+## Roadmap Rules
 
-Phase A remains the packet-budget and observability gate for later realtime protocol work. The detailed packet budget, diagnostics, devtools visibility, completion criteria, and decision gate now live in [network-observability-and-packet-budget.md](domains/technical/network-observability-and-packet-budget.md).
+```text
+Do not add entity-heavy gameplay before packet observability and realtime protocol work.
 
-## Phase B
+Do not add progression rewards before trusted match summaries, integrity decisions, idempotent grants, and player-data contracts are stable.
 
-Phase B remains the realtime protocol seam for authoritative multiplayer state delivery. The detailed lanes, snapshot model, quantization path, and protobuf target now live in [realtime-protocol-architecture.md](protocol/realtime-protocol-architecture.md).
+Do not add leaderboards before durable eligible results and public profile identity exist.
 
-## Phase C - Player Experience Foundation
+Do not add ranked PvP matchmaking before Combat Rating and ranked eligibility exist.
 
-Phase C plans the player-facing game structure before progression persistence. Phase C starts with preset-driven room mode configuration.
+Do not turn the V0 devlog site into the launch website.
 
-### Purpose
+Do not start with protobuf before lanes, snapshots, deltas, priority policy, quantization, and packet ownership are proven.
 
-Phase C defines the player-facing game structure: what kind of room or match the player creates, what rules govern that match, what options are configurable, what systems are affected by those rules, and what later progression must consume.
+Do not let devtooling-suite planning block the roadmap, but do implement telemetry required by packet-budget work.
+```
 
-### Step 1 - Preset-Driven Room Mode Foundation
+## Phase P0 - Devlog Static Site
 
-The detailed mode and match-rules plan now lives in [modes-and-match-rules.md](domains/gameplay/modes-and-match-rules.md).
+### Goal
 
-That doc owns `ModePreset`, `RoomModeConfig`, `ResolvedMatchRules`, preset-owned policy groups, the `survival_arcade` and `score_attack` baseline modes, affected systems, Step 1 completion criteria, and the open gametime decisions.
+Establish the first public Space Rocks web presence without dragging launch website scope into the work.
 
-### Step 2 - Player Build And Loadout Foundation
+### Scope
 
-Step 2 planning now lives in [player-build-and-loadouts.md](domains/gameplay/player-build-and-loadouts.md).
+```text
+services/web/
+static site implementation
+homepage / devlog landing
+devlog archive
+individual devlog post pages
+404 page
+sitemap.xml
+rss.xml and/or feed.xml
+static assets
+basic metadata
+Open Graph metadata
+basic analytics
+responsive layout smoke
+```
 
-That doc owns the detailed build flow, `ShipVariant`, `weight_class`, weapon points, weapon classification, module slots, `BuildEligibility`, `EligibleBuildOptions`, `LoadoutSelection`, `ResolvedPlayerBuild`, `RuntimeEquipmentState`, shield support, `OwnedShip` and hardwired module boundaries, and pickup interaction.
+### Non-Goals
 
-Inventory and hangar acquisition details belong in [inventory-and-hangar.md](domains/gameplay/inventory-and-hangar.md) when you need the ownership and acquisition layer.
+```text
+accounts
+account portal
+CMS runtime
+comments
+newsletter backend
+commerce
+Steam linking
+download access
+leaderboards
+profiles
+support portal
+appeal portal
+admin portal
+```
 
-## Phase D - Progression Foundation
+### Completion Criteria
 
-Phase D carries the trusted post-match and progression systems that depend on the player experience flow. The detailed planning now lives in:
+```text
+static build succeeds
+homepage renders
+archive renders
+published posts render
+draft posts are excluded
+404 exists
+sitemap/feed output exists
+internal links resolve
+basic metadata exists
+Open Graph metadata exists
+basic responsive smoke passes
+static hosting is possible without runtime server
+```
 
-- [Match Outcomes And Results](domains/gameplay/match-outcomes-and-results.md)
-- [Progression And Rewards](domains/gameplay/progression-and-rewards.md)
-- [Inventory And Hangar](domains/gameplay/inventory-and-hangar.md)
-- [Player Data And Persistence](domains/platform/stubs/player-data-and-persistence.md)
+## Phase P1 - Network Observability And Packet Budget
 
-## Phase E - Gameplay Expansion
+### Goal
 
-Phase E carries the gameplay growth track that depends on the earlier system seams. The detailed planning now lives in:
+Make packet pressure measurable before adding systems that increase entity count, event count, or realtime state size.
 
-- [Enemies, Bosses, And Encounters](domains/gameplay/enemies-bosses-and-encounters.md)
-- [Modes And Match Rules](domains/gameplay/modes-and-match-rules.md)
-- [Network Observability And Packet Budget](domains/technical/network-observability-and-packet-budget.md)
-- [Realtime Protocol Architecture](protocol/realtime-protocol-architecture.md)
+This phase is measurement and diagnostics, not optimization.
+
+### Scope
+
+```text
+gameplay packet byte measurement
+large-packet diagnostics
+slow-write diagnostics
+contributor counts
+client inbound message byte tracking
+devtools packet telemetry display
+packet-pressure smoke scenario
+```
+
+### Implementation Sequence
+
+```text
+1. Preserve the current 4KB gameplay packet warning.
+2. Add 8KB danger/blocker classification.
+3. Expand server-side large-packet diagnostics.
+4. Add contributor counts for players, sessions, lifecycle entries, asteroids, bullets, pickups, enemies, events, and spawned asteroid totals.
+5. Add encode, build, and write duration where cheap and localized.
+6. Add client inbound raw message byte tracking by packet type.
+7. Surface latest and max packet bytes in the World Telemetry Overlay.
+8. Add optional average packet bytes if cheap.
+9. Add large-packet warning count if cheap.
+10. Add a packet-pressure smoke checklist.
+11. Update logging and telemetry docs as implementation becomes current.
+```
+
+### Completion Criteria
+
+```text
+large gameplay packets explain their contributors
+slow writes include useful route context
+client and server packet metrics can be compared
+World Telemetry Overlay shows packet pressure
+manual smoke can demonstrate packet growth as entities increase
+no packet format has changed
+no gameplay behavior has changed
+```
+
+### Decision Gate
+
+```text
+If normal gameplay packets often exceed 4KB or spike toward 8KB:
+-> proceed directly to realtime protocol architecture.
+
+If packet size is acceptable but timing, jitter, or build/write cost is unclear:
+-> harden runtime observability before protocol changes.
+
+If packet size stays under budget and timing is clean:
+-> platform/account work may move ahead before deeper optimization.
+```
+
+## Phase P2 - Realtime Protocol Architecture
+
+### Goal
+
+Replace the current full-state-per-tick delivery model with an explicit realtime protocol boundary.
+
+### Ownership Rule
+
+```text
+networking/outbound owns delivery mechanics.
+protocol/realtime owns delivery policy.
+protocol/packetcodec owns byte representation.
+```
+
+### Scope
+
+```text
+server protocol/realtime package
+client protocol/realtime scripts
+client packetcodec relocation
+lane vocabulary
+full snapshots
+delta snapshots
+baseline tracking
+sequence numbers
+create/update/delete records
+priority policy
+resync path
+quantization rules
+bit-packing rules
+protobuf as later target
+```
+
+### Implementation Sequence
+
+```text
+1. Create the server realtime protocol boundary.
+2. Create the client realtime protocol boundary.
+3. Move client packet codec files under client/scripts/protocol/packetcodec/.
+4. Keep networking/outbound focused on delivery mechanics.
+5. Define reliable control, realtime state, event, slow world, and debug/telemetry lanes.
+6. Add full snapshot semantics.
+7. Add baseline IDs and sequence numbers.
+8. Add delta snapshot semantics.
+9. Add create, update, and delete records.
+10. Add stale update discard and explicit resync.
+11. Add priority policy.
+12. Split high-frequency state from slow/debug/event state.
+13. Add quantization rules.
+14. Add bit packing where evidence justifies it.
+15. Stage protobuf after the protocol shape is proven.
+```
+
+### Completion Criteria
+
+```text
+realtime protocol policy is separate from outbound delivery
+full and delta snapshots exist
+per-session baselines exist
+sequence handling exists
+lane and reliability classes exist
+debug/telemetry data is separate from normal state packets
+high-frequency state no longer depends on one full reliable packet every tick
+protobuf remains staged after the model is stable
+```
+
+## Phase P3 - Technical Release Foundation
+
+### Goal
+
+Make future work release-shaped instead of only editor/dev-runner-shaped.
+
+### Scope
+
+```text
+verification and quality gates
+build/release/environment matrix
+compatibility, versioning, and migrations
+operational readiness and failure modes
+runtime performance and scale budget
+observability, logging, and diagnostics
+```
+
+### Priority Order
+
+```text
+1. Verification and quality gates.
+2. Build/release/environment matrix.
+3. Compatibility, versioning, and migrations.
+4. Operational readiness and failure modes.
+5. Runtime performance and scale budget.
+6. Logging and diagnostics hardening.
+```
+
+### Completion Criteria
+
+```text
+local development sanity gate exists
+documentation and contract gate exists
+local packaged single-player beta gate exists
+dev-hosted multiplayer gate exists
+hosted staging gate is defined
+production candidate blockers are explicit
+runtime-heavy features require measurement before release-shaped expansion
+```
+
+## Phase P4 - Player Experience Foundation
+
+### Goal
+
+Define what a match is, how rules are resolved, how results are finalized, and how player builds enter a match.
+
+### Priority Order
+
+```text
+1. Modes and match rules.
+2. Match outcomes and results.
+3. Player build and loadouts.
+4. Inventory and hangar foundation.
+5. Player-experience presentation seams.
+```
+
+### Required Mode Slice
+
+```text
+survival_arcade
+score_attack
+ModePreset
+RoomModeConfig
+ResolvedMatchRules
+configured lives
+target_score for score_attack
+mode identity in match result
+```
+
+### Required Match-End Slice
+
+```text
+EndOfMatchFlow
+MatchSummary
+MatchSummaryDispatcher
+persistence slice
+presentation-safe result slice
+future progression slice
+future achievement fact slice
+```
+
+### Required Build Slice
+
+```text
+ShipVariant
+BuildEligibility
+EligibleBuildOptions
+LoadoutSelection
+ResolvedPlayerBuild
+RuntimeEquipmentState boundary
+weapon-point rules
+module slots
+shield support
+```
+
+### Completion Criteria
+
+```text
+current play works through survival_arcade
+score_attack proves the rules seam
+match end locks once
+result output is presentation-safe
+build eligibility has an authoritative seam
+runtime mutable state is not stored as loadout state
+```
+
+## Phase P5 - Trusted Results, Progression, And Player-Data Grants
+
+### Goal
+
+Make durable rewards safe, idempotent, and correctly routed.
+
+### Priority Order
+
+```text
+1. Player-data contract enforcement.
+2. MatchSummary to persistence-compatible result slice.
+3. IntegrityEvaluation and EligibilityDecision.
+4. GrantAward and Grant model.
+5. Stable award_id and grant_id rules.
+6. Idempotent player-data grant application.
+7. XP, level, rank, and title derivation.
+8. Earned Orebits grants.
+9. Unlock grants.
+10. Inventory item grants.
+11. Achievement and milestone fact pipeline.
+```
+
+### Required Preconditions
+
+```text
+mode-aware trusted result facts
+EndOfMatchFlow
+player identity routing
+result idempotency
+integrity classification
+player-data contract stability
+```
+
+### Deferred Until Later
+
+```text
+leaderboards
+seasonal boards
+public rankings
+commerce-backed inventory
+rare persistent drops
+large economy sinks
+```
+
+### Completion Criteria
+
+```text
+progression emits GrantAward records
+player-data owns storage routing and application
+grants are idempotent
+currency grants cannot duplicate on retry
+debug/test/ineligible results do not silently enter normal rewards
+guest, local profile, and authenticated account routes remain distinct
+```
+
+## Phase P6 - Account, Identity, Trust, And Moderation Foundation
+
+### Goal
+
+Finish the online identity and trust surface before expanding online platform systems.
+
+### Priority Order
+
+```text
+1. Account display identity policy.
+2. Strict display-name moderation.
+3. Manual signup and login.
+4. Email verification.
+5. Online multiplayer block for unverified manual accounts.
+6. Password reset and account recovery.
+7. Token/session upgrade.
+8. Google OAuth.
+9. Provider linking and unlinking.
+10. Account deletion and deactivation behavior.
+11. Development-only auth bypass, build-flagged and environment-gated.
+```
+
+### Parallel Security/Admin Work
+
+```text
+game-integrity classification
+room_title moderation
+audit logs
+appeal/review support for major actions
+admin/devtool-like enforcement visibility
+```
+
+### Completion Criteria
+
+```text
+production online play requires Authenticated Account identity
+display names are moderated
+room titles are moderated
+manual accounts cannot bypass verification
+dev auth bypass cannot exist on live deployments
+integrity decisions can classify result eligibility
+```
+
+## Phase P7 - Multiplayer Lifecycle V2
+
+### Goal
+
+Make room/session lifecycle robust before matchmaking tries to place players into rooms automatically.
+
+### Priority Order
+
+```text
+1. Clarify SessionID, AccountID, MemberID, and PlayerID roles.
+2. Add join order tracking.
+3. Add disconnected member state.
+4. Route active disconnect through the pause seam.
+5. Add reconnect claim and active ship-control restoration.
+6. Make Starting a real synchronized handoff state.
+7. Add loading confirmation and timeout behavior.
+8. Add queued join reservations.
+9. Add mid-session join structure.
+10. Add spectator capacity and lifecycle state.
+11. Add member-local return-to-lobby.
+12. Add GameOver result-viewing join behavior.
+13. Add no-action timeouts outside lobby and queue states.
+14. Split kick and room-lifetime ban.
+15. Add owner transfer by join order.
+16. Add lifecycle diagnostics.
+```
+
+### Completion Criteria
+
+```text
+disconnect is not leave
+active reconnect works
+Starting is a real lock/loading handoff
+return-to-lobby is member-local
+queued joins reserve capacity
+kick and ban are separate
+results do not mutate during reconnect, return, or cleanup
+```
+
+## Phase P8 - Matchmaking And Room Discovery
+
+### Goal
+
+Add browser, queue, assignment, and discovery after lifecycle/admission can safely receive assigned players.
+
+### Priority Order
+
+```text
+1. API-server-owned matchmaking, search, and queue boundary.
+2. Game-server-owned room registry summary boundary.
+3. RoomDiscoverySummary.
+4. room_title or room_name naming.
+5. Joinable-room browser.
+6. Initial filters.
+7. Queue state and status.
+8. Assignment target.
+9. User confirmation timeout.
+10. Assignment token or reservation semantics.
+11. Fallback room creation.
+12. Room title moderation handoff.
+13. Social and Discord invite seams.
+14. Hosted registry, region, and capacity prep.
+```
+
+### Deferred Until Ratings Exist
+
+```text
+ranked PvP matchmaking
+rating-band matching
+party rating aggregation
+Combat Rating matchmaking
+```
+
+### Completion Criteria
+
+```text
+API server owns discovery and assignment
+game server remains authoritative for room instances and final joins
+browser lists requester-visible joinable rooms by default
+queue can create fallback rooms quickly
+assignment requires confirmation
+final joins use the normal game-server lifecycle path
+```
+
+## Phase P9 - Metered Gameplay Expansion
+
+### Goal
+
+Add only enough gameplay expansion to support, test, and justify the systems around it.
+
+The near-term purpose of gameplay expansion is not to build the final game content suite. The near-term purpose is to create enough real gameplay pressure to validate the portfolio systems around it:
+
+```text
+packet budget
+realtime protocol
+runtime performance gates
+mode rules
+match outcomes
+progression grants
+inventory/loadouts
+leaderboards
+website presentation
+devtools and diagnostics
+```
+
+Actual broad gameplay expansion can wait until the surrounding systems justify and support it.
+
+### Metering Rule
+
+Gameplay expansion should be metered. Add the smallest useful amount of new gameplay content that proves a system seam.
+
+Examples:
+
+```text
+one second baseline mode instead of many modes
+one enemy family instead of a full bestiary
+one boss prototype instead of a boss roster
+one mission shape instead of a campaign
+one loadout expansion path instead of a full arsenal
+one rare persistent reward path instead of a full loot table
+one bullet-pressure scenario instead of full bullet hell content
+```
+
+### Priority Order
+
+```text
+1. Safer ship, weapon, and module expansion.
+2. Minimal enemy and encounter proof.
+3. Minimal level/mission/content structure proof.
+4. Minimal boss proof.
+5. Bullet-pressure scenario.
+6. Drones, mines, or radial timed area effects only when they prove specific systems.
+7. Runtime rare drops.
+8. Persistent rare drops only after progression and inventory grants are stable.
+```
+
+### Hard Gates
+
+```text
+No entity-heavy gameplay expansion before packet observability and realtime protocol work.
+
+No progression-bearing gameplay expansion before trusted results, integrity, grants, and player-data routing are stable.
+
+No leaderboard-facing gameplay expansion before ranking eligibility and board definitions exist.
+
+No large content suite before the systems around it are proven.
+```
+
+### Completion Criteria
+
+```text
+new gameplay content proves at least one planned system seam
+packet and runtime pressure are measurable
+mode/result/progression effects are explicit
+content remains small enough to replace or expand later
+portfolio-relevant systems are strengthened by the gameplay slice
+```
+
+## Phase P10 - Leaderboards, Rankings, Seasons, And Campaign Structure
+
+### Goal
+
+Expose durable comparison and seasonal/campaign play after results are trusted and modes are mature enough.
+
+### Priority Order
+
+```text
+1. Board definition model and source of truth.
+2. public_profile_id behavior.
+3. Ranking privacy settings.
+4. Initial board catalog from mature modes.
+5. Local profile rankings.
+6. Online account rankings.
+7. Post-match ranking impact.
+8. In-game ranking browser.
+9. Website leaderboard and public profile surfaces.
+10. Seasonal and archived board lifecycle.
+11. Skill aggregate boards with sample thresholds.
+12. Pilot Rating.
+13. Combat Rating.
+14. Ad-hoc team boards.
+```
+
+### Season/Campaign Preconditions
+
+```text
+mode rules exist
+mission/content structure exists
+progression rewards exist
+leaderboard/ranking policy exists where relevant
+website can present season/campaign pages
+```
+
+### Exclusions
+
+```text
+no account resets
+no seasonal exclusivity
+no RMT seasonal pressure
+no XP reward spam
+```
+
+### Completion Criteria
+
+```text
+boards derive from eligible durable facts
+client and website do not maintain separate board catalogs
+privacy settings affect public display
+local and online ranking contexts remain distinct
+season/campaign surfaces are FOMO-light and RMT-free
+```
+
+## Phase P11 - Launch Website And Commerce Platform
+
+### Goal
+
+Grow beyond the V0 devlog site into the full launch web and product platform surface.
+
+This phase is separate from the V0 devlog site.
+
+### Priority Order
+
+```text
+1. Product homepage.
+2. Roadmap/status pages.
+3. Media, gallery, lore, and deeper content.
+4. CMS scaffold if still justified.
+5. Account portal.
+6. Ownership status.
+7. Direct purchase surface.
+8. Payment-provider handoff.
+9. Steam linking presentation.
+10. Steam ownership verification presentation.
+11. Perpetual direct-download entitlement presentation.
+12. Account-gated download access.
+13. Support and recovery routes.
+14. Legal, policy, and disclosure pages.
+15. Launch analytics and conversion measurement.
+16. Leaderboard, profile, season, and campaign website surfaces when their platform systems are ready.
+```
+
+### Required Dependencies
+
+```text
+account identity
+commerce and economy policy
+build/release artifact policy
+entitlement model
+support/admin visibility
+safe failure states
+```
+
+### Completion Criteria
+
+```text
+launch homepage is product-first, not devlog-first
+account portal exists
+ownership status is visible
+direct purchase flow has safe handoff
+Steam ownership verification can grant direct-download entitlement
+download access is account-gated
+support/recovery routes exist
+website is not authoritative for payment, entitlement, account, ranking, or moderation state
+```
+
+## Dependency Chain
+
+The intended dependency chain is:
+
+```text
+P0 Devlog V0
+-> P1 Network observability and packet budget
+-> P2 Realtime protocol architecture
+-> P3 Technical release foundation
+-> P4 Player experience foundation
+-> P5 Trusted results, progression, and player-data grants
+-> P6 Account, identity, trust, and moderation foundation
+-> P7 Multiplayer lifecycle V2
+-> P8 Matchmaking and room discovery
+-> P9 Metered gameplay expansion
+-> P10 Leaderboards, rankings, seasons, and campaigns
+-> P11 Launch website and commerce platform
+```
+
+Some phases can overlap, but dependency rules should not be violated.
+
+## Related Docs
+
+* [Network Observability And Packet Budget](domains/technical/network-observability-and-packet-budget.md)
+* [Realtime Protocol Architecture](protocol/realtime-protocol-architecture.md)
+* [Devlog Static Site](domains/web/devlog-static-site.md)
+* [Website And Web Presence](domains/web/website-and-web-presence.md)
+* [Verification And Quality Gates](domains/technical/verification-and-quality-gates.md)
+* [Build Release And Environment Matrix](domains/technical/build-release-and-environment-matrix.md)
+* [Modes And Match Rules](domains/gameplay/modes-and-match-rules.md)
+* [Match Outcomes And Results](domains/gameplay/match-outcomes-and-results.md)
+* [Player Build And Loadouts](domains/gameplay/player-build-and-loadouts.md)
+* [Progression And Rewards](domains/gameplay/progression-and-rewards.md)
+* [Account And Identity Systems](domains/platform/account-and-identity-systems.md)
+* [Multiplayer Session And Lifecycle](domains/platform/multiplayer-session-and-lifecycle.md)
+* [Matchmaking And Room Discovery](domains/platform/matchmaking-and-room-discovery.md)
+* [Leaderboards And Rankings](domains/platform/leaderboards-and-rankings.md)
+* [Season Format And Progression](domains/platform/season-format-and-progression.md)
+
+## Notes
+
+This roadmap is not a feature backlog.
+
+It should remain a sequencing and dependency document. Detailed scope belongs in the owner documents for each domain, service, protocol, data, or devtools area.
+
+When implementation changes make a planned system current, update the relevant current documentation instead of expanding this roadmap with implementation details.

@@ -381,7 +381,7 @@ Game-server room snapshot tests verify that room snapshots include room state, c
 * [Match Results Presentation](../match-end-flow/match-results-presentation.md)
 * [Menu Flow](../menu-flow.md)
 * [Auth Session Flow](../auth-session-flow.md)
-* [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md) - Stub: realtime websocket protocol documentation.
+* [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md) - Realtime WebSocket protocol documentation.
 
 ## Notes
 

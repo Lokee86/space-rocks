@@ -6,11 +6,11 @@ Parent index: [Platform](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns platform planning docs for trust, eligibility, and admin-adjacent policy.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Gameplay simulation, client presentation, and service implementation details belong in other domain or service docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -28,8 +28,9 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Platform](../!INDEX.md)
+- [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on platform trust and admin policy boundaries.

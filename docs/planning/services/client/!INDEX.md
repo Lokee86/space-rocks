@@ -6,11 +6,11 @@ Parent index: [Services](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder holds planning docs for client-facing systems such as gameplay presentation, session flow, UI, networking, and world sync.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Server authority, backend service design, and implementation-specific client code belong in the appropriate service or runtime docs instead.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -38,8 +38,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Services](../!INDEX.md)
+- [Development Roadmap](../../development-roadmap.md)
+- [Domain Backlog](../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Use this index for client planning ownership, not for current runtime implementation notes.

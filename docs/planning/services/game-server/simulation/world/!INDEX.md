@@ -6,11 +6,11 @@ Parent index: [Simulation](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for world simulation, including world-state rules, spatial behavior, and authoritative world boundaries.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Networking transport, client rendering, and non-world simulation concerns belong elsewhere.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Simulation](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder centered on world simulation planning and authority boundaries.

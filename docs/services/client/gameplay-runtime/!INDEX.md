@@ -37,7 +37,7 @@ Client gameplay runtime documentation lives here.
 
 - [Client](../!INDEX.md)
 - [World Sync](../world-sync/!INDEX.md)
-- [Gameplay packets](../../../protocol/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
+- [Gameplay packets](../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
 
 ## Notes
 

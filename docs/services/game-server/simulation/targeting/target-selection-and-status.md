@@ -659,8 +659,8 @@ data-sync -check -packets -go -gds
 * [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)
 * [Input And Targeting](../../../client/input-and-targeting.md)
 * [Outbound Packet Sending](../../../client/networking-flow/outbound-packet-sending.md)
-* [Gameplay Packets](../../../../protocol/gameplay-packets.md) - incomplete gameplay packet protocol documentation.
-* [Packet Schema Pipeline](../../../../data/packet-schemas.md) - incomplete packet schema pipeline documentation.
+* [Gameplay Packets](../../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
+* [Packet Schema Pipeline](../../../../data/packet-schemas.md) - Packet schema and generated output documentation.
 * [Canonical Target State](canonical-target-state.md) - Canonical target state documentation.
 
 ## Notes

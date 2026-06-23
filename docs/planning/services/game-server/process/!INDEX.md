@@ -6,11 +6,11 @@ Parent index: [Game Server](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder is reserved for planning docs about the game-server process lifecycle, run modes, startup, shutdown, and operational sequencing.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Gameplay simulation, networking transport, and room-policy details belong in the relevant owning docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Game Server](../!INDEX.md)
+- [Development Roadmap](../../development-roadmap.md)
+- [Domain Backlog](../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Use this folder as the reserved home for process planning and lifecycle ownership.

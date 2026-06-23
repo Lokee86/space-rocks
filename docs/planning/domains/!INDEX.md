@@ -6,11 +6,11 @@ Parent index: [Planning](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for domain-level design across gameplay, platform, technical, and web areas.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Implementation details, service code, and finished owner docs belong in the relevant service or domain subfolder instead.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -31,8 +31,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Planning](../!INDEX.md)
+- [Development Roadmap](../development-roadmap.md)
+- [Domain Backlog](../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Use this index as the planning entry point for domain ownership and routing.

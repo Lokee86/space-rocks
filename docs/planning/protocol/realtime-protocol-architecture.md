@@ -31,9 +31,9 @@ It should cover lanes, full snapshots, delta snapshots, quantization, bit packin
 
 ## Related Docs
 
-- [Planning](../../!INDEX.md)
+- [Planning](../!INDEX.md)
 - [Network Observability And Packet Budget](../domains/technical/network-observability-and-packet-budget.md)
-- [Testing And Smoke Strategy](../domains/technical/stubs/testing-and-smoke-strategy.md)
+- [Testing And Smoke Strategy](../domains/technical/verification-and-quality-gates.md)
 - [Development Roadmap](../development-roadmap.md)
 
 ## Open Planning Questions

@@ -444,13 +444,19 @@ Required sections:
 Purpose
 Overview
 Current status
-Decisions made
-Open decisions
-Expected ownership
+Ownership boundary or Expected ownership
+Type-specific planning sections
 Implementation sequence
+Open decisions
 Related docs
 Notes
 ```
+
+Use `Ownership boundary` for domain plans that define what the plan owns and does not own.
+
+Use `Expected ownership` for plans that mainly assign future implementation responsibilities.
+
+`Decisions made` is optional, not universally required. Many completed planning-domain docs distribute decisions through domain-specific sections instead.
 
 Use `Current status` to identify whether the plan is:
 

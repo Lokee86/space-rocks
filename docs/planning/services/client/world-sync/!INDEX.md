@@ -6,11 +6,11 @@ Parent index: [Client](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for client world sync, including entity sync, interpolation boundaries, and world-state application.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Server simulation authority, UI-only flow docs, and packet schema ownership belong elsewhere.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Client](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Use this folder for world-sync planning only, especially client-side sync ownership and presentation boundaries.

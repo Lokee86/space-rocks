@@ -483,7 +483,7 @@ Those tests verify room snapshot shape and server-owned room snapshot behavior, 
 * [Auth Session Flow](../auth-session-flow.md)
 * [Networking Flow](../networking-flow/!INDEX.md)
 * [Match End Flow](../match-end-flow/!INDEX.md)
-* [Lobby Packets](../../../protocol/lobby-packets.md) - Stub: incomplete lobby packet protocol documentation.
+* [Lobby Packets](../../../protocol/lobby-packets.md) - Lobby packet documentation.
 * [Current System Limits](../../../limits/current-system-limits.md)
 
 ## Notes

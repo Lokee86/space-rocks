@@ -6,11 +6,11 @@ Parent index: [Client](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for the in-game gameplay menu flow, including pause/menu overlays and match-over menu routing.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Lobby menus, pregame menus, and server-owned match state belong in their own docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Client](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on gameplay-menu planning and avoid mixing in unrelated session or lobby concerns.

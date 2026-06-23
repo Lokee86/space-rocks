@@ -6,11 +6,11 @@ Parent index: [Client](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for client presentation flow, including scene presentation, view-state handoff, and client-visible presentation policy.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Server authority, transport mechanics, and feature-specific UI ownership belong in the relevant docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Client](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on presentation planning and not on simulation or networking implementation.

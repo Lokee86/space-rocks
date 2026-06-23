@@ -856,8 +856,8 @@ Underlying durable results are not deleted merely because a board entry is hidde
 
 * [Platform Planning](./!INDEX.md)
 * [Account And Identity Systems](account-and-identity-systems.md)
-* [Game Integrity Policy](game-integrity-policy.md)
-* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
+* [Game Integrity Policy](security-and-admin/game-integrity-policy.md)
+* [Trust And Eligibility Policy](../../../domains/platform/security-and-admin/trust-and-eligibility-policy.md)
 * [API Product Surface](../../protocol/api-product-surface.md)
 * [Website And Web Presence](../web/website-and-web-presence.md)
 

@@ -6,11 +6,11 @@ Parent index: [Planning](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder is maintained as the planning home for service-level documentation across client, game server, player-data, API, and web surfaces.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Implementation details, runtime behavior, and service source code belong in the owning service docs or code tree instead of here.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -32,8 +32,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Development Roadmap](../development-roadmap.md)
+- [Domain Backlog](../domain-backlog.md)
+- [Planning](../!INDEX.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Use this index as the top-level planner for service documentation ownership and routing.

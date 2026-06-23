@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
@@ -9,16 +12,59 @@ const CLIENT_INFO = {
 let clientPromise = null;
 let activeClient = null;
 
-function npxCommand() {
-  return process.platform === "win32" ? "npx.cmd" : "npx";
+const packageRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  ".."
+);
+
+function chromeDevtoolsBinPath() {
+  const packageJsonPath = path.join(
+    packageRoot,
+    "node_modules",
+    "chrome-devtools-mcp",
+    "package.json"
+  );
+
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+  const bin =
+    typeof packageJson.bin === "string"
+      ? packageJson.bin
+      : packageJson.bin?.["chrome-devtools-mcp"];
+
+  if (!bin) {
+    throw new Error("chrome-devtools-mcp package does not expose a bin entry");
+  }
+
+  return path.resolve(path.dirname(packageJsonPath), bin);
+}
+
+function chromeDevtoolsCommand() {
+  return process.execPath;
+}
+
+function chromeDevtoolsArgs() {
+  return [chromeDevtoolsBinPath(), "--no-usage-statistics"];
+}
+
+function chromeDevtoolsEnv() {
+  const env = { ...process.env };
+
+  if (process.platform === "win32") {
+    env.SystemRoot ??= "C:\\Windows";
+    env.PROGRAMFILES ??= "C:\\Program Files";
+    env["PROGRAMFILES(X86)"] ??= "C:\\Program Files (x86)";
+  }
+
+  return env;
 }
 
 async function createChromeDevtoolsClient() {
   const client = new Client(CLIENT_INFO);
 
   const transport = new StdioClientTransport({
-    command: npxCommand(),
-    args: ["chrome-devtools-mcp@latest", "--no-usage-statistics"],
+    command: chromeDevtoolsCommand(),
+    args: chromeDevtoolsArgs(),
+    env: chromeDevtoolsEnv(),
   });
 
   await client.connect(transport);

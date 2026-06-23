@@ -19,14 +19,15 @@ This folder owns planning docs for platform-facing work that is not yet current.
 
 - [account-and-identity-systems.md](account-and-identity-systems.md) - Future account and identity policy planning.
 - [leaderboards-and-rankings.md](leaderboards-and-rankings.md) - Leaderboards And Rankings documentation.
-<!-- doc-ledger:files:end -->- [game-integrity-policy.md](game-integrity-policy.md) - Game Integrity Policy docu[game-integrity-policy.md](game-integrity-policy.md)<!-- doc-ledger:stubs:start -->
+- [matchmaking-and-room-discovery.md](matchmaking-and-room-discovery.md) - Matchmaking And Room Discovery documentation.
+- [multiplayer-session-and-lifecycle.md](multiplayer-session-and-lifecycle.md) - Multiplayer Session And Lifecycle documentation.
+- [season-format-and-progression.md](season-format-and-progression.md) - Season Format And Progression documentation.
+- [social-and-community-systems.md](social-and-community-systems.md) - Social And Community Systems documentation.
+<!-- doc-ledger:files:end -->
 
-- [matchmaking-and-room-discovery.md](stubs/matchmaking-and-room-discovery.md) - Stub: Matchmaking And Room Discovery documentation.
-- [multiplayer-session-and-lifecycle.md](stubs/multiplayer-session-and-lifecycle.md) - Stub: Multiplayer Session And Lifecycle documentation.
-- [player-data-and-persistence.md](stubs/player-data-and-persistence.md) - Stub: Player Data And Persistence documentation.
-- [season-format-and-progression.md](stubs/season-format-and-progression.md) - Stub: Season Format And Progression documentation.
-- [social-and-community-systems.md](stubs/social-and-community-systems.md) - Stub: Social And Community Systems documentation.
+<!-- doc-ledger:stubs:start -->
 <!-- doc-ledger:stubs:end -->
+
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
@@ -38,4 +39,4 @@ This folder owns planning docs for platform-facing work that is not yet current.
 
 ## Notes
 
-Keep this folder at the high-level future-platform scope and leave detailed work in its owned planning stubs until it is ready to graduate.
+Keep this folder at the high-level future-platform scope.

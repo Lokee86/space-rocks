@@ -243,7 +243,7 @@ The expected verification path is the client GUT test suite.
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)
 * [Runtime processing](runtime-processing.md)
-* [Gameplay packets](../../../protocol/gameplay-packets.md) - Stub: gameplay realtime packet documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md) - Client HUD and gameplay UI documentation.
 

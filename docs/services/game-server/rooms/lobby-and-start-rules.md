@@ -463,10 +463,10 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 * [Inbound Packet Routing](../networking/inbound-packet-routing.md)
 * [Lobby Session and Presentation](../../client/lobby-flow/lobby-session-and-presentation.md)
 * [Gameplay Session Lifecycle](../../client/gameplay-runtime/gameplay-session-lifecycle.md)
-* [Lobby Packets](../../../protocol/lobby-packets.md) - incomplete lobby packet protocol documentation.
-* [Packet Schema Pipeline](../../../data/packet-schemas.md) - incomplete packet schema pipeline documentation.
+* [Lobby Packets](../../../protocol/lobby-packets.md) - Lobby packet documentation.
+* [Packet Schema Pipeline](../../../data/packet-schemas.md) - Packet schema and generated output documentation.
 * [Player Experience Systems](../../../planning/domains/gameplay/player-experience-systems.md)
-* [Multiplayer Session And Lifecycle](../../../planning/domains/platform/stubs/multiplayer-session-and-lifecycle.md) - incomplete multiplayer session lifecycle planning documentation.
+* [Multiplayer Session And Lifecycle](../../../planning/domains/platform/multiplayer-session-and-lifecycle.md) - Multiplayer session and lifecycle planning documentation.
 
 ## Notes
 

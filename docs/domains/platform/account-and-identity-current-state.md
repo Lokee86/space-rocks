@@ -243,7 +243,7 @@ This doc does not define or plan:
 - guest-to-online migration
 - account merge
 - leaderboard eligibility
-- [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
+- [Trust And Eligibility Policy](security-and-admin/trust-and-eligibility-policy.md)
 - social graph policy
 - matchmaking policy
 - reconnect behavior
@@ -265,10 +265,10 @@ Future and unresolved policy belongs in planning docs.
 - [Game Server service index](../../services/game-server/!INDEX.md)
 - [API Server service index](../../services/api-server/!INDEX.md)
 - [Player Data service index](../../services/player-data/!INDEX.md)
-- [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
+- [Trust And Eligibility Policy](security-and-admin/trust-and-eligibility-policy.md)
 - [Account And Identity Systems planning](../../planning/domains/platform/account-and-identity-systems.md)
-- [Multiplayer Session And Lifecycle planning](../../planning/domains/platform/stubs/multiplayer-session-and-lifecycle.md)
-- [Player Data And Persistence planning](../../planning/domains/platform/stubs/player-data-and-persistence.md)
+- [Multiplayer Session And Lifecycle planning](../../planning/domains/platform/multiplayer-session-and-lifecycle.md)
+- [Player Data And Persistence planning](../../planning/services/player-data/!INDEX.md)
 - [Current System Limits](../../limits/current-system-limits.md)
 
 ## Notes

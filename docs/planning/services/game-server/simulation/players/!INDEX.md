@@ -6,11 +6,11 @@ Parent index: [Simulation](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+This folder owns planning docs for player simulation, including lifecycle state, player-owned runtime data, and server-side player behavior boundaries.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Room policy, transport, and client UI ownership belong in their own docs.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
@@ -26,8 +26,10 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Simulation](../!INDEX.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Keep this folder focused on player simulation ownership and state boundaries.

@@ -5,6 +5,14 @@ Parent index: [Technical Planning](./!INDEX.md)
 
 This doc plans the network-visibility and packet-budget seam for future growth in gameplay and realtime state delivery.
 
+## Overview
+
+This doc keeps packet-size observability, contributor counts, and large-message diagnostics aligned so network pressure can be measured before protocol changes are chosen.
+
+## Current status
+
+Active planning.
+
 ## Ownership Boundary
 
 This doc owns planning for gameplay packet budget, outbound byte metrics, large-packet diagnostics, contributor counts, and devtools visibility.
@@ -24,20 +32,6 @@ It should stay on measurement and observability rather than packet-format redesi
 - packet-budget planning boundaries
 - diagnostic expectations for large gameplay packets
 - visibility requirements for devtools and logging
-
-## Related Docs
-
-- [Planning](../../!INDEX.md)
-- [Realtime Protocol Architecture](../../protocol/realtime-protocol-architecture.md)
-- [Devtools And Telemetry](../../devtools/stubs/devtools-and-telemetry.md)
-- [Logging And Diagnostics](stubs/logging-and-diagnostics.md)
-- [Development Roadmap](../../development-roadmap.md)
-
-## Open Planning Questions
-
-- Which packet sizes should remain warnings versus blockers?
-- Which contributor counts are worth tracking long term?
-- Which packet metrics should stay devtools-only versus also land in logs?
 
 ## Phase A
 
@@ -187,3 +181,29 @@ Likely optimization families under Route 1, without choosing one:
 - Shared room snapshot plus per-client overlay, if most state is duplicated per client but only small portions are player-specific.
 
 The next planning work after Phase A should be selected by evidence from the decision gate, not by feature visibility alone.
+
+## Implementation sequence
+
+1. Document the packet budget policy and keep the current 4KB and 8KB thresholds provisional.
+2. Extend outbound gameplay presentation metrics with contributor-count diagnostics.
+3. Surface packet byte pressure in the World Telemetry Overlay and logging inventory.
+4. Measure enough packet behavior to choose the next route after Phase A evidence lands.
+
+## Open decisions
+
+- Which packet sizes should remain warnings versus blockers?
+- Which contributor counts are worth tracking long term?
+- Which packet metrics should stay devtools-only versus also land in logs?
+- Whether Phase A evidence pushes the next step toward network optimization, more observability hardening, or other planning.
+
+## Related docs
+
+- [Planning](../../!INDEX.md)
+- [Realtime Protocol Architecture](../../protocol/realtime-protocol-architecture.md)
+- [Devtools And Telemetry](devtools-and-telemetry.md)
+- [Logging And Diagnostics](observability-logging-and-diagnostics.md)
+- [Development Roadmap](../../development-roadmap.md)
+
+## Notes
+
+Preserve the packet-budget policy and Phase A structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
