@@ -27,8 +27,8 @@ Simulation mechanics, transport, and client presentation belong in their respect
 ## Related Docs
 
 - [Game Server](../!INDEX.md)
-- [Development Roadmap](../../development-roadmap.md)
-- [Domain Backlog](../../domain-backlog.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 

@@ -38,7 +38,7 @@ This doc does not own:
 
 Currency itself belongs to [Shop, Commerce, And Economy](shop-commerce-and-economy.md).
 
-Player-data routing belongs to [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md).
+Player-data routing belongs to [Player Data And Persistence](../../services/player-data/!INDEX.md).
 
 Inventory ownership belongs to [Inventory And Hangar](inventory-and-hangar.md).
 
@@ -570,9 +570,9 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 
 * [Match Outcomes And Results](match-outcomes-and-results.md)
 * [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
-* [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
-* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
-* [Game Integrity Policy](game-integrity-policy.md)
+* [Player Data And Persistence](../../services/player-data/!INDEX.md)
+* [Trust And Eligibility Policy](../../../domains/platform/security-and-admin/trust-and-eligibility-policy.md)
+* [Game Integrity Policy](../platform/security-and-admin/game-integrity-policy.md)
 * [Inventory And Hangar](inventory-and-hangar.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 

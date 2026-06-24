@@ -27,8 +27,8 @@ Room rules, simulation behavior, and transport mechanics belong in their own doc
 ## Related Docs
 
 - [Game Server](../!INDEX.md)
-- [Development Roadmap](../../development-roadmap.md)
-- [Domain Backlog](../../domain-backlog.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 

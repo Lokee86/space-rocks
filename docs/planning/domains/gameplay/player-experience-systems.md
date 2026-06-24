@@ -604,9 +604,9 @@ achievement notification can appear whenever achievement completion is received
 * [Progression And Rewards](progression-and-rewards.md)
 * [Shop, Commerce, And Economy](shop-commerce-and-economy.md)
 * [Account And Identity Systems](../platform/account-and-identity-systems.md)
-* [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
-* [Multiplayer Session And Lifecycle](../platform/stubs/multiplayer-session-and-lifecycle.md)
-* [Matchmaking And Room Discovery](../platform/stubs/matchmaking-and-room-discovery.md)
+* [Player Data And Persistence](../../services/player-data/!INDEX.md)
+* [Multiplayer Session And Lifecycle](../platform/multiplayer-session-and-lifecycle.md)
+* [Matchmaking And Room Discovery](../platform/matchmaking-and-room-discovery.md)
 
 ## Open Gametime Decisions
 

@@ -27,8 +27,8 @@ Gameplay simulation, networking transport, and room-policy details belong in the
 ## Related Docs
 
 - [Game Server](../!INDEX.md)
-- [Development Roadmap](../../development-roadmap.md)
-- [Domain Backlog](../../domain-backlog.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 

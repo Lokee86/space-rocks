@@ -968,7 +968,7 @@ Release-shaped builds should verify that:
 * [Runtime Performance And Scale Budget](runtime-performance-and-scale-budget.md)
 * [Compatibility Versioning And Migrations](compatibility-versioning-and-migrations.md)
 * [Build Release And Environment Matrix](build-release-and-environment-matrix.md)
-* [Devtools And Telemetry](devtools-and-telemetry.md)
+* [Devtools And Telemetry](../../devtools/devtools-and-telemetry.md)
 * [Data Sync And SSoT Pipeline](../../../data/data-sync-and-ssot-pipeline.md)
 * [Game Server Logging And Diagnostics](../../../services/game-server/observability/logging-and-diagnostics.md)
 * [Client Logging](../../../services/client/client-logging.md)

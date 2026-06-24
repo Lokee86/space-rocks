@@ -27,8 +27,8 @@ Networking transport, client rendering, and non-world simulation concerns belong
 ## Related Docs
 
 - [Simulation](../!INDEX.md)
-- [Development Roadmap](../../../development-roadmap.md)
-- [Domain Backlog](../../../domain-backlog.md)
+- [Development Roadmap](../../../../development-roadmap.md)
+- [Domain Backlog](../../../../domain-backlog.md)
 
 ## Notes
 

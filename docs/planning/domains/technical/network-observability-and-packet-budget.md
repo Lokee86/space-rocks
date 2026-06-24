@@ -200,7 +200,7 @@ The next planning work after Phase A should be selected by evidence from the dec
 
 - [Planning](../../!INDEX.md)
 - [Realtime Protocol Architecture](../../protocol/realtime-protocol-architecture.md)
-- [Devtools And Telemetry](devtools-and-telemetry.md)
+- [Devtools And Telemetry](../../devtools/devtools-and-telemetry.md)
 - [Logging And Diagnostics](observability-logging-and-diagnostics.md)
 - [Development Roadmap](../../development-roadmap.md)
 

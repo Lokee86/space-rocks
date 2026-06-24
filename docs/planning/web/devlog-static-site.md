@@ -782,9 +782,9 @@ Netlify is the likely hosting target, but deployment mechanics belong elsewhere.
 ## Related docs
 
 * [Web Planning](../../domains/web/website-and-web-presence.md)
-* [Web Services](./!INDEX.md)
+* [Web Services](planning/web/!INDEX.md)
 * [Build Release And Environment Matrix](../../domains/technical/build-release-and-environment-matrix.md)
-* [API Product Surface](../../protocol/api-product-surface.md)
+* [API Product Surface](planning/protocol/api-product-surface.md)
 * [Current API Product Surface](../../../protocol/api-product-surface.md)
 
 ## Notes

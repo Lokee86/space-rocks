@@ -611,7 +611,7 @@ local and Rails stores satisfy the same logical inventory contract
 
 - [Progression And Rewards](progression-and-rewards.md)
 - [Player Build And Loadouts](player-build-and-loadouts.md)
-- [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
+- [Player Data And Persistence](../../services/player-data/!INDEX.md)
 
 ## Open Gametime Decisions
 

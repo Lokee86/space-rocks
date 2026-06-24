@@ -27,8 +27,8 @@ Room policy, networking transport, and client presentation belong in their own d
 ## Related Docs
 
 - [Simulation](../!INDEX.md)
-- [Development Roadmap](../../../development-roadmap.md)
-- [Domain Backlog](../../../domain-backlog.md)
+- [Development Roadmap](../../../../development-roadmap.md)
+- [Domain Backlog](../../../../domain-backlog.md)
 
 ## Notes
 

@@ -5,7 +5,6 @@
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_5kvch"]
 [ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="3_gy3bv"]
 [ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="3_q85j6"]
-[ext_resource type="Texture2D" uid="uid://bjfpt5avmrn30" path="res://assets/ui/title!.png" id="3_x2yvf"]
 [ext_resource type="Texture2D" uid="uid://clkc3vojcm4uo" path="res://assets/ui/indicator.png" id="4_8g5eo"]
 [ext_resource type="Texture2D" uid="uid://dext0jx4eaxel" path="res://assets/ui/title.png" id="4_uhagc"]
 [ext_resource type="Script" uid="uid://bp5tllbsbp63m" path="res://scripts/ui/menus/main_menu.gd" id="10_n3gqj"]
