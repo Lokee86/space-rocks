@@ -4,10 +4,10 @@
   width: 100%;
   aspect-ratio: var(--crt-aspect-ratio, 16 / 9);
   isolation: isolate;
-  --crt-screen-inset-left: 5.4%;
-  --crt-screen-inset-right: 5.4%;
-  --crt-screen-inset-top: 12.8%;
-  --crt-screen-inset-bottom: 13.2%;
+  --crt-screen-inset-left: 5.0%;
+  --crt-screen-inset-right: 5.0%;
+  --crt-screen-inset-top: 11.8%;
+  --crt-screen-inset-bottom: 12.4%;
 }
 
 .shell {
@@ -89,6 +89,27 @@
   pointer-events: none;
   user-select: none;
   z-index: 3;
+}
+
+.controls {
+  position: absolute;
+  left: 50%;
+  bottom: 0.4%;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  gap: clamp(2px, 0.75%, 8px);
+  width: min(31%, 210px);
+  min-width: 132px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.controls .controlButton {
+  width: 31%;
+  height: auto;
+  aspect-ratio: 68 / 46;
+  pointer-events: auto;
 }
 
 .caption {
