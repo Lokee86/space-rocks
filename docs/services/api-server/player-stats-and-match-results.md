@@ -281,7 +281,7 @@ Related non-API-server tests:
 * [Game Server service](../game-server/!INDEX.md)
 * [Client service](../client/!INDEX.md)
 * [Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
-* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
+* [Trust And Eligibility Policy](../../domains/platform/security-and-admin/trust-and-eligibility-policy.md)
 * [HTTP contract enforcement](../../protocol/http-contract-enforcement.md) - Current HTTP request/response contract enforcement documentation.
 * [Player Data HTTP API](../../protocol/player-data-http-api.md) - player-data HTTP API protocol documentation.
 * [Player Data Schema](../../data/player-data-schema.md) - player-data schema documentation.

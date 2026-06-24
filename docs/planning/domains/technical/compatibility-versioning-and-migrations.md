@@ -198,7 +198,7 @@ Exact checks may vary by build shape.
 * [Data Planning](../../data/!INDEX.md)
 * [Services Planning](../../services/!INDEX.md)
 * [Build Release And Environment Matrix](build-release-and-environment-matrix.md)
-* [Realtime Protocol Architecture](../../../protocol/realtime-protocol-architecture.md)
+* [Realtime Protocol Architecture](../../protocol/realtime-protocol-architecture.md)
 
 ## Open decisions
 

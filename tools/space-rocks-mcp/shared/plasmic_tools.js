@@ -20,6 +20,23 @@ async function evaluateInChrome(functionSource) {
   });
 }
 
+async function callPlasmicAiTool(toolName, args = {}) {
+  const toolNameJson = safeJsonForScript(toolName);
+  const argsJson = safeJsonForScript(args);
+
+  return evaluateInChrome(`async () => {
+    if (!window.PLASMIC_AI_TOOLS) {
+      throw new Error("window.PLASMIC_AI_TOOLS is not available");
+    }
+
+    if (typeof window.PLASMIC_AI_TOOLS[${toolNameJson}] !== "function") {
+      throw new Error("window.PLASMIC_AI_TOOLS does not expose " + ${toolNameJson});
+    }
+
+    return await window.PLASMIC_AI_TOOLS[${toolNameJson}](${argsJson});
+  }`);
+}
+
 function requireProjectId(projectId) {
   if (typeof projectId !== "string" || projectId.trim() === "") {
     throw new Error("project_id must be a non-empty string");
@@ -88,15 +105,7 @@ export function registerPlasmicReadTools(server) {
       skill = "space-rocks-plasmic-bridge@0.1.0",
     }) => {
       const payload = { model, client, skill };
-      const payloadJson = safeJsonForScript(payload);
-
-      const result = await evaluateInChrome(`() => {
-        if (!window.PLASMIC_AI_TOOLS) {
-          throw new Error("window.PLASMIC_AI_TOOLS is not available");
-        }
-
-        return window.PLASMIC_AI_TOOLS.identify(${payloadJson});
-      }`);
+      const result = await callPlasmicAiTool("identify", payload);
 
       return jsonTextResponse(result);
     }
@@ -108,30 +117,142 @@ export function registerPlasmicReadTools(server) {
       title: "Read Plasmic canvas",
       description: "Reads Plasmic Studio state through window.PLASMIC_AI_TOOLS.read().",
       inputSchema: {
-        query: z.string().optional(),
-        include_screenshot: z.boolean().optional(),
+        project: z
+          .object({
+            components: z.boolean().optional(),
+            screenBreakpoints: z.boolean().optional(),
+            globalVariants: z.boolean().optional(),
+            tokens: z.boolean().optional(),
+            animations: z.boolean().optional(),
+          })
+          .optional(),
+        components: z.array(z.string()).optional(),
+        elements: z
+          .array(
+            z.object({
+              componentUuid: z.string(),
+              elementUuid: z.string(),
+            })
+          )
+          .optional(),
+        tokens: z.array(z.string()).optional(),
+        animations: z.array(z.string()).optional(),
       },
     },
-    async ({ query, include_screenshot }) => {
+    async ({ project, components, elements, tokens, animations }) => {
       const options = {};
 
-      if (query !== undefined) {
-        options.query = query;
+      if (project !== undefined) {
+        options.project = project;
       }
 
-      if (include_screenshot !== undefined) {
-        options.includeScreenshot = include_screenshot;
+      if (components !== undefined) {
+        options.components = components;
       }
 
-      const optionsJson = safeJsonForScript(options);
+      if (elements !== undefined) {
+        options.elements = elements;
+      }
 
-      const result = await evaluateInChrome(`() => {
-        if (!window.PLASMIC_AI_TOOLS) {
-          throw new Error("window.PLASMIC_AI_TOOLS is not available");
-        }
+      if (tokens !== undefined) {
+        options.tokens = tokens;
+      }
 
-        return window.PLASMIC_AI_TOOLS.read(${optionsJson});
-      }`);
+      if (animations !== undefined) {
+        options.animations = animations;
+      }
+
+      const result = await callPlasmicAiTool("read", options);
+      return jsonTextResponse(result);
+    }
+  );
+}
+
+export function registerPlasmicWriteTools(server) {
+  server.registerTool(
+    "plasmic_insert_html",
+    {
+      title: "Insert Plasmic HTML",
+      description: "Inserts HTML into a Plasmic element through window.PLASMIC_AI_TOOLS.insertHtml().",
+      inputSchema: {
+        html: z.string(),
+        componentUuid: z.string(),
+        tplUuid: z.string(),
+        variantUuids: z.array(z.string()).optional(),
+        insertRelLoc: z
+          .enum(["before", "prepend", "append", "after", "wrap", "replace"])
+          .optional(),
+      },
+    },
+    async ({ html, componentUuid, tplUuid, variantUuids, insertRelLoc }) => {
+      const args = {
+        html,
+        componentUuid,
+        tplUuid,
+      };
+
+      if (variantUuids !== undefined) {
+        args.variantUuids = variantUuids;
+      }
+
+      if (insertRelLoc !== undefined) {
+        args.insertRelLoc = insertRelLoc;
+      }
+
+      const result = await callPlasmicAiTool("insertHtml", args);
+      return jsonTextResponse(result);
+    }
+  );
+
+  server.registerTool(
+    "plasmic_change_element",
+    {
+      title: "Change Plasmic element",
+      description: "Updates a Plasmic element through window.PLASMIC_AI_TOOLS.changeElement().",
+      inputSchema: {
+        componentUuid: z.string(),
+        variantUuids: z.array(z.string()).optional(),
+        changes: z.array(
+          z.object({
+            tplUuid: z.string(),
+            name: z.string().nullable().optional(),
+            styles: z.record(z.string().nullable()).optional(),
+            props: z.record(z.any()).optional(),
+            unsetProps: z.array(z.string()).optional(),
+          })
+        ),
+      },
+    },
+    async ({ componentUuid, variantUuids, changes }) => {
+      const args = {
+        componentUuid,
+        changes,
+      };
+
+      if (variantUuids !== undefined) {
+        args.variantUuids = variantUuids;
+      }
+
+      const result = await callPlasmicAiTool("changeElement", args);
+      return jsonTextResponse(result);
+    }
+  );
+
+  server.registerTool(
+    "plasmic_delete_element",
+    {
+      title: "Delete Plasmic element",
+      description: "Deletes a Plasmic element through window.PLASMIC_AI_TOOLS.deleteElement().",
+      inputSchema: {
+        componentUuid: z.string(),
+        tplUuid: z.string(),
+      },
+    },
+    async ({ componentUuid, tplUuid }) => {
+      const result = await callPlasmicAiTool("deleteElement", {
+        componentUuid,
+        tplUuid,
+      });
 
       return jsonTextResponse(result);
     }

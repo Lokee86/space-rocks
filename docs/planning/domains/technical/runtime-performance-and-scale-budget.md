@@ -282,7 +282,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 * [Operational Readiness And Failure Modes](operational-readiness-and-failure-modes.md)
 * [Compatibility Versioning And Migrations](compatibility-versioning-and-migrations.md)
 * [Build Release And Environment Matrix](build-release-and-environment-matrix.md)
-* [Devtools And Telemetry](devtools-and-telemetry.md)
+* [Devtools And Telemetry](../../devtools/devtools-and-telemetry.md)
 * [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
 * [Game Server Networking](../../services/game-server/networking/!INDEX.md)
 * [Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)

@@ -27,8 +27,8 @@ Combat, room policy, and client presentation belong in the relevant owning docs.
 ## Related Docs
 
 - [Simulation](../!INDEX.md)
-- [Development Roadmap](../../../development-roadmap.md)
-- [Domain Backlog](../../../domain-backlog.md)
+- [Development Roadmap](../../../../development-roadmap.md)
+- [Domain Backlog](../../../../domain-backlog.md)
 
 ## Notes
 

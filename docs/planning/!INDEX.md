@@ -29,6 +29,7 @@ This folder owns the planning index for work that has not yet become current doc
 - [protocol](protocol/!INDEX.md) - Protocol documentation.
 - [services](services/!INDEX.md) - Services documentation.
 - [systems-design](systems-design/!INDEX.md) - Systems Design documentation.
+- [web](web/!INDEX.md) - Web documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Stub Files

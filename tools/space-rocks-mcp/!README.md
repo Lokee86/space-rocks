@@ -34,6 +34,8 @@ The main shared modules are:
 ## Chrome DevTools / Plasmic bridge
 
 The info/read MCP server can optionally expose Chrome DevTools and read-only Plasmic tools.
+In this chat setup, `server-info-next.js` is the local MCP app used by ChatGPT for Plasmic work, and its Plasmic read/edit tools are exposed there behind `ENABLE_CHROME_DEVTOOLS=1`.
+`server-write.js` is not the active ChatGPT Plasmic tool surface in this setup and should not be changed for Plasmic unless explicitly requested later.
 
 Start it from `tools/space-rocks-mcp`:
 
@@ -66,6 +68,20 @@ cd D:\!bin\space-rocks\tools\space-rocks-mcp
 node server-info-next.js
 node server-write.js
 ```
+
+## Plasmic write bridge
+
+Plasmic mutation tools are exposed only from `server-write.js`.
+Set `ENABLE_CHROME_DEVTOOLS=1` to enable the Chrome DevTools / Plasmic bridge.
+
+Initial write tools:
+
+- `plasmic_insert_html`
+- `plasmic_change_element`
+- `plasmic_delete_element`
+
+Broader tools such as `createComponent`, token mutation, animation mutation, and page meta are intentionally deferred.
+Test edits on a small known element before making larger changes.
 
 Note:
 

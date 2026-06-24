@@ -4,7 +4,7 @@ This folder owns web service implementation planning for Space Rocks.
 
 It covers the future `services/web/` implementation, including the V0 devlog static site and any service-level web runtime decisions that belong under service planning.
 
-Parent index: [Services](../!INDEX.md)
+Parent index: [Planning](../!INDEX.md)
 
 ## Ownership
 
@@ -37,7 +37,7 @@ Use it for implementation shape, route structure, static generation, content loa
 
 ## Related Docs
 
-- [Planning index](../!INDEX.md)
+- [Planning index](planning/services/!INDEX.md)
 - [Website And Web Presence](../../domains/web/website-and-web-presence.md) - Product-level web direction that feeds this service plan.
 - [Devlog Static Site](devlog-static-site.md) - V0 devlog static-site service plan.
 

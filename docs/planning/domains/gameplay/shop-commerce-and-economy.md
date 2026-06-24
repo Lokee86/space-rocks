@@ -616,11 +616,11 @@ admin/devtools mutations use explicit source tags
 * [Inventory And Hangar](inventory-and-hangar.md)
 * [Progression And Rewards](progression-and-rewards.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
-* [Player Data And Persistence](../platform/stubs/player-data-and-persistence.md)
+* [Player Data And Persistence](../../services/player-data/!INDEX.md)
 * [API Product Surface](../../../protocol/api-product-surface.md)
-* [Trust And Eligibility Policy](trust-and-eligibility-policy.md)
-* [Game Integrity Policy](game-integrity-policy.md)
-* [Deployment And Packaging](../technical/stubs/deployment-and-packaging.md)
+* [Trust And Eligibility Policy](../../../domains/platform/security-and-admin/trust-and-eligibility-policy.md)
+* [Game Integrity Policy](../platform/security-and-admin/game-integrity-policy.md)
+* [Build Release And Environment Matrix](../technical/build-release-and-environment-matrix.md)
 * [Data Sync And SSoT Pipeline](../../../data/data-sync-and-ssot-pipeline.md)
 
 ## Open Gametime Decisions

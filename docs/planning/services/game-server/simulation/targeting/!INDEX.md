@@ -27,8 +27,8 @@ Client input handling, combat resolution, and room policy belong in their own do
 ## Related Docs
 
 - [Simulation](../!INDEX.md)
-- [Development Roadmap](../../../development-roadmap.md)
-- [Domain Backlog](../../../domain-backlog.md)
+- [Development Roadmap](../../../../development-roadmap.md)
+- [Domain Backlog](../../../../domain-backlog.md)
 
 ## Notes
 

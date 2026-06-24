@@ -27,7 +27,6 @@ Implementation details, runtime behavior, and service source code belong in the 
 - [client](client/!INDEX.md) - Client documentation.
 - [game-server](game-server/!INDEX.md) - Game Server documentation.
 - [player-data](player-data/!INDEX.md) - Player Data documentation.
-- [web](web/!INDEX.md) - Web documentation.
 <!-- doc-ledger:folders:end -->
 
 ## Related Docs

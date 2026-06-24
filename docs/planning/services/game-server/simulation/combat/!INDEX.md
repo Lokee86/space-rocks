@@ -27,8 +27,8 @@ Networking transport, room policy, and client presentation belong elsewhere.
 ## Related Docs
 
 - [Simulation](../!INDEX.md)
-- [Development Roadmap](../../../development-roadmap.md)
-- [Domain Backlog](../../../domain-backlog.md)
+- [Development Roadmap](../../../../development-roadmap.md)
+- [Domain Backlog](../../../../domain-backlog.md)
 
 ## Notes
 

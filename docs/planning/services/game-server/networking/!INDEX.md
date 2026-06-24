@@ -27,8 +27,8 @@ Simulation rules, room policy, and observability analysis belong in their respec
 ## Related Docs
 
 - [Game Server](../!INDEX.md)
-- [Development Roadmap](../../development-roadmap.md)
-- [Domain Backlog](../../domain-backlog.md)
+- [Development Roadmap](../../../development-roadmap.md)
+- [Domain Backlog](../../../domain-backlog.md)
 
 ## Notes
 
