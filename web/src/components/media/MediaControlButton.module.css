@@ -1,0 +1,73 @@
+.root {
+  --button-frame-x: 0%;
+  --icon-x: 0%;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 68px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background:
+    url("/assets/ui/media_buttons.png") var(--button-frame-x) 0 / 300% 100%
+      no-repeat;
+  color: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+
+.root:not(:disabled):hover,
+.root:not(:disabled):focus-visible {
+  --button-frame-x: 50%;
+}
+
+.root:not(:disabled):focus-visible {
+  outline: 2px solid rgba(0, 229, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.root:not(:disabled):active,
+.root:not(:disabled)[aria-pressed="true"] {
+  --button-frame-x: 100%;
+  transform: translateY(1px);
+}
+
+.root:disabled {
+  cursor: default;
+  filter: grayscale(1) brightness(0.58);
+  opacity: 0.62;
+}
+
+.icon {
+  display: block;
+  width: 86.7647%;
+  height: auto;
+  aspect-ratio: 59 / 34;
+  background:
+    url("/assets/ui/media_icons.png") var(--icon-x) 0 / 600% 100% no-repeat;
+  pointer-events: none;
+}
+
+.root[data-variant="rewind"] {
+  --icon-x: 0%;
+}
+
+.root[data-variant="play"] {
+  --icon-x: 20%;
+}
+
+.root[data-variant="pause"] {
+  --icon-x: 40%;
+}
+
+.root[data-variant="fastForward"] {
+  --icon-x: 60%;
+}
+
+.root[data-variant="previous"] {
+  --icon-x: 80%;
+}
+
+.root[data-variant="next"] {
+  --icon-x: 100%;
+}
