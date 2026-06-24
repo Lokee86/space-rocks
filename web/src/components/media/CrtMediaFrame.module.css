@@ -2,19 +2,33 @@
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: var(--crt-aspect-ratio, 16 / 9);
+  max-width: 100%;
+  margin: 0;
   isolation: isolate;
   --crt-screen-inset-left: 5.0%;
   --crt-screen-inset-right: 5.0%;
   --crt-screen-inset-top: 11.8%;
-  --crt-screen-inset-bottom: 12.4%;
+  --crt-screen-inset-bottom: 15.8%;
 }
 
 .shell {
   position: relative;
   width: 100%;
-  aspect-ratio: inherit;
+  max-width: 100%;
+  margin-inline: auto;
+  aspect-ratio: var(--crt-aspect-ratio, 16 / 9);
   overflow: hidden;
+  container-type: size;
+  --frame-top-height: min(11.832061cqh, 9.064327cqw);
+  --frame-bottom-height: min(16.030534cqh, 12.280702cqw);
+  --frame-top-cap-width: min(30.534351cqh, 23.391813cqw);
+  --frame-top-badge-width: min(40.839695cqh, 31.28655cqw);
+  --frame-top-badge-half: min(20.419847cqh, 15.643275cqw);
+  --frame-side-width: min(8.778626cqh, 6.725146cqw);
+  --frame-bottom-cap-width: min(18.320611cqh, 14.035088cqw);
+  --frame-tray-width: min(46.183206cqh, 35.380117cqw);
+  --frame-tray-half: min(23.091603cqh, 17.690058cqw);
+  --frame-seam-overlap: 1px;
 }
 
 .viewport {
@@ -25,6 +39,7 @@
   left: var(--crt-screen-inset-left);
   overflow: hidden;
   background: #020617;
+  contain: paint;
   z-index: 1;
 }
 
@@ -83,32 +98,147 @@
 .frame {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
   pointer-events: none;
   user-select: none;
   z-index: 3;
+  overflow: hidden;
+}
+
+.framePiece {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.framePieceImage {
+  position: absolute;
+  left: var(--frame-piece-image-left);
+  top: var(--frame-piece-image-top);
+  display: block;
+  width: var(--frame-piece-image-width);
+  height: var(--frame-piece-image-height);
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.frameTopLeft {
+  top: 0;
+  left: 0;
+  width: var(--frame-top-cap-width);
+  height: var(--frame-top-height);
+}
+
+.frameTopRailLeft {
+  top: 0;
+  left: var(--frame-top-cap-width);
+  right: calc(50% + var(--frame-top-badge-half));
+  height: var(--frame-top-height);
+}
+
+.frameTopBadge {
+  top: 0;
+  left: 50%;
+  width: var(--frame-top-badge-width);
+  height: var(--frame-top-height);
+  transform: translateX(-50%);
+}
+
+.frameTopRailRight {
+  top: 0;
+  left: calc(50% + var(--frame-top-badge-half));
+  right: var(--frame-top-cap-width);
+  height: var(--frame-top-height);
+}
+
+.frameTopRight {
+  top: 0;
+  right: 0;
+  width: var(--frame-top-cap-width);
+  height: var(--frame-top-height);
+}
+
+.frameLeft {
+  top: var(--frame-top-height);
+  bottom: var(--frame-bottom-height);
+  left: 0;
+  width: var(--frame-side-width);
+}
+
+.frameRight {
+  top: var(--frame-top-height);
+  right: 0;
+  bottom: var(--frame-bottom-height);
+  width: var(--frame-side-width);
+}
+
+.frameBottomLeft {
+  bottom: 0;
+  left: 0;
+  width: calc(var(--frame-bottom-cap-width) + var(--frame-seam-overlap));
+  height: calc(var(--frame-bottom-height) + var(--frame-seam-overlap));
+}
+
+.frameBottomRailLeft {
+  bottom: 0;
+  left: calc(var(--frame-bottom-cap-width) - var(--frame-seam-overlap));
+  right: calc(50% + var(--frame-tray-half) - var(--frame-seam-overlap));
+  height: calc(var(--frame-bottom-height) + var(--frame-seam-overlap));
+}
+
+.frameBottomTray {
+  top: calc(-1 * var(--frame-seam-overlap));
+  right: calc(-1 * var(--frame-seam-overlap));
+  bottom: 0;
+  left: calc(-1 * var(--frame-seam-overlap));
+  z-index: 1;
+}
+
+.frameBottomRailRight {
+  bottom: 0;
+  left: calc(50% + var(--frame-tray-half) - var(--frame-seam-overlap));
+  right: calc(var(--frame-bottom-cap-width) - var(--frame-seam-overlap));
+  height: calc(var(--frame-bottom-height) + var(--frame-seam-overlap));
+}
+
+.frameBottomRight {
+  right: 0;
+  bottom: 0;
+  width: calc(var(--frame-bottom-cap-width) + var(--frame-seam-overlap));
+  height: calc(var(--frame-bottom-height) + var(--frame-seam-overlap));
+}
+
+.bottomTraySlot {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--frame-tray-width);
+  height: var(--frame-bottom-height);
+  transform: translateX(-50%);
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
 }
 
 .controls {
   position: absolute;
-  left: 50%;
-  bottom: 0.4%;
-  z-index: 4;
-  display: flex;
-  justify-content: center;
-  gap: clamp(2px, 0.75%, 8px);
-  width: min(31%, 210px);
-  min-width: 132px;
-  transform: translateX(-50%);
+  inset: 0;
+  z-index: 2;
   pointer-events: none;
 }
 
-.controls .controlButton {
-  width: 31%;
-  height: auto;
-  aspect-ratio: 68 / 46;
+.buttonRow {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  pointer-events: none;
+}
+
+.buttonRow .controlButton {
+  width: 100%;
+  height: 100%;
   pointer-events: auto;
 }
 

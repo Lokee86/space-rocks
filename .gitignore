@@ -5,6 +5,9 @@ space-rocks-(4.3)/
 keys/
 processes.env
 
+web/.next/
+web/out/
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
