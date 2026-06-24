@@ -3,10 +3,16 @@ import { initPlasmicLoader } from "@plasmicapp/loader-nextjs";
 import { CardFrame } from "@/src/components/card/CardFrame";
 import { CrtMediaFrame } from "@/src/components/media/CrtMediaFrame";
 
-const projectId =
-  process.env.NEXT_PUBLIC_PLASMIC_PROJECT_ID ?? "plasmic-placeholder-project-id";
-const projectToken =
-  process.env.NEXT_PUBLIC_PLASMIC_PROJECT_TOKEN ?? "plasmic-placeholder-project-token";
+const projectId = process.env.NEXT_PUBLIC_PLASMIC_PROJECT_ID;
+const projectToken = process.env.NEXT_PUBLIC_PLASMIC_PROJECT_TOKEN;
+
+if (!projectId) {
+  throw new Error("Missing required env var NEXT_PUBLIC_PLASMIC_PROJECT_ID");
+}
+
+if (!projectToken) {
+  throw new Error("Missing required env var NEXT_PUBLIC_PLASMIC_PROJECT_TOKEN");
+}
 
 export const PLASMIC = initPlasmicLoader({
   projects: [
@@ -15,7 +21,7 @@ export const PLASMIC = initPlasmicLoader({
       token: projectToken,
     },
   ],
-  preview: true,
+  preview: process.env.NODE_ENV !== "production",
 });
 
 PLASMIC.registerComponent(CrtMediaFrame, {
@@ -58,7 +64,7 @@ PLASMIC.registerComponent(CrtMediaFrame, {
     },
     screenInsetBottom: {
       type: "number",
-      defaultValue: 12.4,
+      defaultValue: 15.8,
       min: 0,
       max: 25,
       step: 0.1,
@@ -96,15 +102,46 @@ PLASMIC.registerComponent(CrtMediaFrame, {
       options: ["cyan", "yellow", "red"],
       defaultValue: "cyan",
     },
+    mediaMode: {
+      type: "choice",
+      options: ["imageList", "video"],
+    },
+    imageItems: {
+      type: "string",
+      defaultValue: "",
+    },
+    videoSrc: {
+      type: "string",
+      defaultValue: "",
+    },
+    autoAdvanceMs: {
+      type: "number",
+      defaultValue: 5000,
+      min: 100,
+      max: 60000,
+      step: 100,
+    },
+    seekSeconds: {
+      type: "number",
+      defaultValue: 10,
+      min: 1,
+      max: 120,
+      step: 1,
+    },
+    initialIndex: {
+      type: "number",
+      defaultValue: 0,
+      min: 0,
+      max: 100,
+      step: 1,
+    },
     showControls: {
       type: "boolean",
       defaultValue: false,
     },
     disabledControls: {
-      type: "choice",
-      options: ["previous", "rewind", "play", "pause", "fastForward", "next"],
-      multiSelect: true,
-      defaultValue: [],
+      type: "string",
+      defaultValue: "",
     },
     scanlineCount: {
       type: "number",
