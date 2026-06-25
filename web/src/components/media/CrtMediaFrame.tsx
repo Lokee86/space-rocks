@@ -4,34 +4,11 @@ import { CrtShaderCanvas } from "./CrtShaderCanvas";
 import { MediaControlButton, type MediaControlVariant } from "./MediaControlButton";
 import styles from "./CrtMediaFrame.module.css";
 
-type SourceRect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 const CONTROL_VARIANTS = ["previous", "play", "next"] as const satisfies readonly MediaControlVariant[];
 const ALL_CONTROL_VARIANTS: MediaControlVariant[] = ["previous", "rewind", "play", "pause", "fastForward", "next"];
-const FRAME_IMAGE_SRC = "/assets/ui/media_frame.png";
 
 // Source-image coordinates for media_frame.png.
-const FRAME_SOURCE_WIDTH = 684;
-const FRAME_SOURCE_HEIGHT = 524;
-const FRAME_SLICES = [
-  { key: "topLeft", className: "frameTopLeft", rect: { x: 0, y: 0, width: 160, height: 62 } },
-  { key: "topRailLeft", className: "frameTopRailLeft", rect: { x: 160, y: 0, width: 76, height: 62 } },
-  { key: "topBadge", className: "frameTopBadge", rect: { x: 236, y: 0, width: 214, height: 62 } },
-  { key: "topRailRight", className: "frameTopRailRight", rect: { x: 450, y: 0, width: 74, height: 62 } },
-  { key: "topRight", className: "frameTopRight", rect: { x: 524, y: 0, width: 160, height: 62 } },
-  { key: "left", className: "frameLeft", rect: { x: 0, y: 62, width: 46, height: 378 } },
-  { key: "right", className: "frameRight", rect: { x: 638, y: 62, width: 46, height: 378 } },
-  { key: "bottomLeft", className: "frameBottomLeft", rect: { x: 0, y: 440, width: 96, height: 84 } },
-  { key: "bottomRailLeft", className: "frameBottomRailLeft", rect: { x: 96, y: 440, width: 124, height: 84 } },
-  { key: "bottomRailRight", className: "frameBottomRailRight", rect: { x: 462, y: 440, width: 126, height: 84 } },
-  { key: "bottomRight", className: "frameBottomRight", rect: { x: 588, y: 440, width: 96, height: 84 } },
-] as const satisfies readonly { key: string; className: string; rect: SourceRect }[];
-const CONTROL_TRAY_SOURCE = { x: 220, y: 440, width: 242, height: 84 };
+const BOTTOM_STRIP_SOURCE = { x: 46, y: 440, width: 592, height: 84 };
 // playCenterX/Y are aligned to the red anchor pixel in media_frame.png.
 const CONTROL_SOURCE = { playCenterX: 334, playCenterY: 494, buttonPitch: 68, buttonWidth: 68, buttonHeight: 46 };
 const CONTROL_ROW_SOURCE = {
@@ -73,23 +50,16 @@ function clampIndex(index: number, length: number) {
 }
 
 function buttonRowStyle(): CSSProperties {
-  const x = (value: number) => percent(value / CONTROL_TRAY_SOURCE.width);
-  const y = (value: number) => percent(value / CONTROL_TRAY_SOURCE.height);
+  const x = (value: number) => percent(value / BOTTOM_STRIP_SOURCE.width);
+  const y = (value: number) => percent(value / BOTTOM_STRIP_SOURCE.height);
+  const rowLeft = CONTROL_ROW_SOURCE.x - BOTTOM_STRIP_SOURCE.x;
+  const rowTop = CONTROL_ROW_SOURCE.y - BOTTOM_STRIP_SOURCE.y;
 
   return {
-    left: x(CONTROL_ROW_SOURCE.x - CONTROL_TRAY_SOURCE.x),
-    top: y(CONTROL_ROW_SOURCE.y - CONTROL_TRAY_SOURCE.y),
+    left: x(rowLeft),
+    top: y(rowTop),
     width: x(CONTROL_ROW_SOURCE.width),
     height: y(CONTROL_ROW_SOURCE.height),
-  };
-}
-
-function framePieceStyle(rect: SourceRect): CSSProperties {
-  return {
-    ["--frame-piece-image-left" as string]: `-${percent(rect.x / rect.width)}`,
-    ["--frame-piece-image-top" as string]: `-${percent(rect.y / rect.height)}`,
-    ["--frame-piece-image-width" as string]: percent(FRAME_SOURCE_WIDTH / rect.width),
-    ["--frame-piece-image-height" as string]: percent(FRAME_SOURCE_HEIGHT / rect.height),
   };
 }
 
@@ -290,35 +260,8 @@ export function CrtMediaFrame({
             lineWarpStrength={lineWarpStrength}
           />
         </div>
-        <div className={styles.frame} aria-hidden="true">
-          {FRAME_SLICES.map((slice) => (
-            <span
-              key={slice.key}
-              className={`${styles.framePiece} ${styles[slice.className]}`}
-              style={framePieceStyle(slice.rect)}
-            >
-              <img
-                className={styles.framePieceImage}
-                src={FRAME_IMAGE_SRC}
-                alt=""
-                draggable={false}
-              />
-            </span>
-          ))}
-        </div>
+        <div className={styles.frame} aria-hidden="true" />
         <div className={styles.bottomTraySlot}>
-          <span
-            className={`${styles.framePiece} ${styles.frameBottomTray}`}
-            aria-hidden="true"
-            style={framePieceStyle(CONTROL_TRAY_SOURCE)}
-          >
-            <img
-              className={styles.framePieceImage}
-              src={FRAME_IMAGE_SRC}
-              alt=""
-              draggable={false}
-            />
-          </span>
           {showControls ? (
             <div
               className={styles.controls}
