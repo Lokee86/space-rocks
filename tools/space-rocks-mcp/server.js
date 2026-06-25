@@ -35,9 +35,23 @@ const TEXT_EXTENSIONS = new Set([
   ".gd",
   ".ts",
   ".js",
+  ".tsx",
+  ".jsx",
   ".mjs",
+  ".cjs",
+  ".mts",
+  ".cts",
   ".py",
   ".pyi",
+
+  // Web / styling
+  ".astro",
+  ".css",
+  ".scss",
+  ".sass",
+  ".less",
+  ".html",
+  ".mdx",
 
   // Ruby / Rails
   ".rb",
