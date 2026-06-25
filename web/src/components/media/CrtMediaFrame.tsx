@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import { CrtShaderCanvas } from "./CrtShaderCanvas";
+import { CrtShaderCanvas, type CrtShaderCanvasProps } from "./CrtShaderCanvas";
 import { MediaControlButton, type MediaControlVariant } from "./MediaControlButton";
 import styles from "./CrtMediaFrame.module.css";
 
@@ -20,6 +20,8 @@ const CONTROL_ROW_SOURCE = {
 type MediaMode = "imageList" | "video";
 type ControlSlot = (typeof CONTROL_VARIANTS)[number];
 type ControlConfig = { slot: ControlSlot; variant: MediaControlVariant; disabled: boolean; label: string; onClick?: () => void };
+type InsetValue = string | number;
+type ShaderProps = Omit<CrtShaderCanvasProps, "className" | "enabled">;
 
 function percent(value: number) {
   return `${value * 100}%`;
@@ -47,6 +49,10 @@ function parseImageItems(imageItems: string | string[] | undefined) {
 function clampIndex(index: number, length: number) {
   if (length <= 0) return 0;
   return Math.min(Math.max(Math.trunc(index), 0), length - 1);
+}
+
+function formatInsetValue(value: InsetValue) {
+  return typeof value === "number" ? `${value}%` : value;
 }
 
 function buttonRowStyle(): CSSProperties {
@@ -77,16 +83,18 @@ type CrtMediaFrameProps = {
   seekSeconds?: number;
   initialIndex?: number;
   enabled?: boolean;
+  shaderEnabled?: boolean;
+} & ShaderProps & {
   scanlineStrength?: number;
   rollStrength?: number;
   shimmerStrength?: number;
   vignetteStrength?: number;
   edgeGlowStrength?: number;
   lineWarpStrength?: number;
-  screenInsetLeft?: number;
-  screenInsetRight?: number;
-  screenInsetTop?: number;
-  screenInsetBottom?: number;
+  screenInsetLeft?: InsetValue;
+  screenInsetRight?: InsetValue;
+  screenInsetTop?: InsetValue;
+  screenInsetBottom?: InsetValue;
   showControls?: boolean;
   disabledControls?: string | string[];
   children?: ReactNode;
@@ -106,17 +114,58 @@ export function CrtMediaFrame({
   seekSeconds = 10,
   initialIndex = 0,
   enabled = true,
+  shaderEnabled = true,
+  shaderDebug = false,
+  freezeShaderTime = false,
   scanlineStrength = 0.22,
   rollStrength = 0.12,
   shimmerStrength = 0.1,
   vignetteStrength = 0.32,
   edgeGlowStrength = 0.12,
   lineWarpStrength = 1.0,
-  screenInsetLeft = 5.0,
-  screenInsetRight = 5.0,
-  screenInsetTop = 11.8,
-  screenInsetBottom = 15.8,
-  showControls = false,
+  baseColor = "#020617",
+  glowColor = "#00e5ff",
+  scanlineColor = "#7dd3fc",
+  scanlineCount = 480,
+  scanlineHardness = 1.65,
+  scanlineBreakupStrength = 0.16,
+  scanlineBreakupSegments = 36,
+  scanlineBreakupCutoff = 0.46,
+  scanlineBreakupSoftness = 0.18,
+  scanlineLineVarianceStrength = 0.08,
+  waveStrength = 1,
+  waveSpeed = 1,
+  waveSlowScale = 18,
+  waveMediumScale = 63,
+  waveFineScale = 210,
+  lineJitterStrength = 0.0012,
+  flickerStrength = 0.025,
+  flickerSpeed = 18,
+  flickerSpeedVariance = 0.55,
+  flickerVarianceSpeed = 1.35,
+  flickerSecondaryStrength = 0.35,
+  rollInterval = 5,
+  rollDuration = 1.2,
+  rollWidth = 0.1,
+  rollSpeed = 1,
+  rollHorizontalVariation = 0.15,
+  horizontalShimmerStrength,
+  horizontalShimmerSpeed = 1.8,
+  horizontalShimmerCount = 42,
+  edgeGlowWidth = 0.01,
+  edgeCornerGlowWidth = 0.055,
+  edgeCornerGlowPower = 2.2,
+  edgeGlowSoftness = 0.018,
+  vignetteEdgeBypassStrength = 1,
+  vignetteEdgeBypassWidth = 0.035,
+  effectCutoff = 0.018,
+  effectGain = 1.25,
+  animationSpeed = 1,
+  screenInsetLeft = "5%",
+  screenInsetRight = "5%",
+  screenInsetTop = "5%",
+  screenInsetBottom = "10%",
+  showControls = true,
   disabledControls = "",
   children,
 }: CrtMediaFrameProps) {
@@ -138,12 +187,16 @@ export function CrtMediaFrame({
   const imageItemsKey = imageSources.join("\n");
   const mediaAlt = src ? alt : "";
   const disabledControlSet = parseDisabledControls(disabledControls);
-  const style: CSSProperties = {
+  const frameStyle: CSSProperties = {
     ["--crt-aspect-ratio" as string]: aspectRatio,
-    ["--crt-screen-inset-left" as string]: `${screenInsetLeft}%`,
-    ["--crt-screen-inset-right" as string]: `${screenInsetRight}%`,
-    ["--crt-screen-inset-top" as string]: `${screenInsetTop}%`,
-    ["--crt-screen-inset-bottom" as string]: `${screenInsetBottom}%`,
+  };
+  const shaderIsEnabled = enabled && shaderEnabled;
+  const resolvedHorizontalShimmerStrength = horizontalShimmerStrength ?? shimmerStrength ?? 0.055;
+  const viewportStyle: CSSProperties = {
+    ["--crt-screen-inset-left" as string]: formatInsetValue(screenInsetLeft),
+    ["--crt-screen-inset-right" as string]: formatInsetValue(screenInsetRight),
+    ["--crt-screen-inset-top" as string]: formatInsetValue(screenInsetTop),
+    ["--crt-screen-inset-bottom" as string]: formatInsetValue(screenInsetBottom),
   };
   const currentImage = imageSources[clampIndex(currentIndex, imageSources.length)];
   const hasMultipleImages = imageSources.length > 1;
@@ -225,9 +278,9 @@ export function CrtMediaFrame({
         ];
 
   return (
-    <figure className={styles.root} data-tint={tint} style={style}>
+    <figure className={styles.root} data-tint={tint} style={frameStyle}>
       <div className={styles.shell}>
-        <div className={styles.viewport} data-fit={fit}>
+        <div className={styles.viewport} data-fit={fit} style={viewportStyle}>
           <div className={styles.mediaLayer}>
             {isVideoMode ? (
               <video
@@ -250,12 +303,52 @@ export function CrtMediaFrame({
           </div>
           <CrtShaderCanvas
             className={styles.shaderCanvas}
-            enabled={enabled}
+            enabled={shaderIsEnabled}
             tint={tint}
+            baseColor={baseColor}
+            glowColor={glowColor}
+            scanlineColor={scanlineColor}
+            scanlineCount={scanlineCount}
             scanlineStrength={scanlineStrength}
+            scanlineHardness={scanlineHardness}
+            scanlineBreakupStrength={scanlineBreakupStrength}
+            scanlineBreakupSegments={scanlineBreakupSegments}
+            scanlineBreakupCutoff={scanlineBreakupCutoff}
+            scanlineBreakupSoftness={scanlineBreakupSoftness}
+            scanlineLineVarianceStrength={scanlineLineVarianceStrength}
+            waveStrength={waveStrength}
+            waveSpeed={waveSpeed}
+            waveSlowScale={waveSlowScale}
+            waveMediumScale={waveMediumScale}
+            waveFineScale={waveFineScale}
+            lineJitterStrength={lineJitterStrength}
+            flickerStrength={flickerStrength}
+            flickerSpeed={flickerSpeed}
+            flickerSpeedVariance={flickerSpeedVariance}
+            flickerVarianceSpeed={flickerVarianceSpeed}
+            flickerSecondaryStrength={flickerSecondaryStrength}
             rollStrength={rollStrength}
+            rollInterval={rollInterval}
+            rollDuration={rollDuration}
+            rollWidth={rollWidth}
+            rollSpeed={rollSpeed}
+            rollHorizontalVariation={rollHorizontalVariation}
+            horizontalShimmerStrength={resolvedHorizontalShimmerStrength}
+            horizontalShimmerSpeed={horizontalShimmerSpeed}
+            horizontalShimmerCount={horizontalShimmerCount}
             shimmerStrength={shimmerStrength}
+            edgeGlowWidth={edgeGlowWidth}
+            edgeCornerGlowWidth={edgeCornerGlowWidth}
+            edgeCornerGlowPower={edgeCornerGlowPower}
+            edgeGlowSoftness={edgeGlowSoftness}
             vignetteStrength={vignetteStrength}
+            vignetteEdgeBypassStrength={vignetteEdgeBypassStrength}
+            vignetteEdgeBypassWidth={vignetteEdgeBypassWidth}
+            effectCutoff={effectCutoff}
+            effectGain={effectGain}
+            animationSpeed={animationSpeed}
+            shaderDebug={shaderDebug}
+            freezeShaderTime={freezeShaderTime}
             edgeGlowStrength={edgeGlowStrength}
             lineWarpStrength={lineWarpStrength}
           />
