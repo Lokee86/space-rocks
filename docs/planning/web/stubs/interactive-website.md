@@ -8,51 +8,51 @@ TODO: describe the later larger interactive website documentation home.
 
 ## Overview
 
-TODO: summarize the future interactive website scope and how it differs from the V0 static devlog site.
-Stub note: keep this focused on the future web presence boundary.
+TODO: summarize the future interactive website scope and boundaries.
+
+See the Plasmic/Astro workflow doc for parked-host context.
+The `tools/parked-plasmic-next-host/` app can be recycled, replaced, or promoted when the interactive website is established.
 
 ## Code root
 
-- TODO: web implementation root not yet established.
+- TODO: implementation root not yet established.
 
 ## Responsibilities
 
-- TODO: describe the interactive website shell, public pages, and future navigation responsibilities.
+- TODO: describe the interactive website shell, public pages, and navigation responsibilities.
 
 ## Does not own
 
 - API product surface ownership.
 - Hosting or deployment mechanics.
-- TODO: any other boundaries that belong outside the interactive website doc home.
+- TODO: add other boundaries as they are confirmed.
 
 ## Domain roles
 
-- TODO: define the web roles that participate in the interactive website.
-- Stub note: do not invent role names until they are confirmed from code or design docs.
+- TODO: define the roles that participate in the interactive website.
 
 ## Protocols and APIs
 
-- TODO: describe page routes, content loading, and any API-backed website interactions if they exist.
-- Stub note: this is intentionally incomplete.
+- TODO: describe page routes, content loading, and any API-backed website interactions.
 
 ## Data ownership
 
 - TODO: identify what content, configuration, or site state the future website owns.
-- Stub note: do not assume backend or CMS details here.
 
 ## Code map
 
-- TODO: add code or content paths when the future website implementation root exists.
+- TODO: add code or content paths when the implementation root exists.
 
 ## Tests
 
-- TODO: add website tests or checks if they are confirmed.
-- Stub note: only list verified tests here.
+- TODO: add website tests or checks when they are confirmed.
 
 ## Related docs
 
-- [Web](planning/web/!INDEX.md)
-- [Website and web presence](../../../domains/web/website-and-web-presence.md)
+- [Web](../!INDEX.md)
+- [Website and web presence](../../domains/web/website-and-web-presence.md)
+- [Plasmic / Astro Workflow](../../../services/web/plasmic-astro-workflow.md)
+- [Devlog Static Site](../../../services/web/devlog-static-site.md)
 - TODO: add interactive-site-specific docs when they exist.
 
 ## Notes

@@ -17,6 +17,9 @@ This folder owns docs for the web service runtime and its implementation respons
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [crt-media-frame.md](crt-media-frame.md) - Crt Media Frame documentation.
+- [plasmic-astro-workflow.md](plasmic-astro-workflow.md) - Plasmic Astro Workflow documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->

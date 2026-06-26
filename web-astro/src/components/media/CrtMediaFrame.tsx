@@ -210,7 +210,7 @@ type CrtMediaFrameProps = {
   src?: string;
   alt?: string;
   caption?: string;
-  aspectRatio?: "16 / 9" | "4 / 3" | "1 / 1";
+  aspectRatio?: "16 / 9" | "16 / 10.95" | "4 / 3" | "1 / 1";
   fit?: "cover" | "contain";
   tint?: "cyan" | "yellow" | "red";
   mediaMode?: MediaMode;
@@ -243,7 +243,6 @@ export function CrtMediaFrame({
   src,
   alt = "",
   caption,
-  aspectRatio = "16 / 9",
   fit = "cover",
   tint = "cyan",
   mediaMode,
@@ -302,10 +301,11 @@ export function CrtMediaFrame({
   effectCutoff = 0.018,
   effectGain = 1.25,
   animationSpeed = 1,
+  aspectRatio = "16 / 10.95",
   screenInsetLeft = "5%",
   screenInsetRight = "5%",
-  screenInsetTop = "5%",
-  screenInsetBottom = "10%",
+  screenInsetTop = "11%",
+  screenInsetBottom = "15%",
   showControls = true,
   disabledControls = "",
   children,
