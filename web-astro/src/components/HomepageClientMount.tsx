@@ -2,8 +2,15 @@ import { useEffect, useRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 import Homepage from "./Homepage";
+import type { HomepageContent } from "../content/homepageContent";
 
-export default function HomepageClientMount() {
+type HomepageClientMountProps = {
+  content: Partial<HomepageContent>;
+};
+
+export default function HomepageClientMount({
+  content,
+}: HomepageClientMountProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<Root | null>(null);
 
@@ -15,7 +22,7 @@ export default function HomepageClientMount() {
 
     const root = createRoot(mountNode);
     rootRef.current = root;
-    root.render(<Homepage />);
+    root.render(<Homepage content={content} />);
 
     return () => {
       rootRef.current?.unmount();
