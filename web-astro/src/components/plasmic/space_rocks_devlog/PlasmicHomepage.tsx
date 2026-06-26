@@ -117,6 +117,7 @@ export type PlasmicHomepage__OverridesType = {
   nav?: Flex__<"nav">;
   hero?: Flex__<"section">;
   screenStack?: Flex__<"div">;
+  heroMediaFrame?: Flex__<typeof CrtMediaFrame>;
   heroLine1Media?: Flex__<"span">;
   heroLine2Media?: Flex__<"span">;
   heroLine3Media?: Flex__<"span">;
@@ -128,6 +129,7 @@ export type PlasmicHomepage__OverridesType = {
   articleTitle?: Flex__<"h1">;
   introText?: Flex__<"p">;
   screenStack2?: Flex__<"div">;
+  articleMediaFrame?: Flex__<typeof CrtMediaFrame>;
   whatChangedText?: Flex__<"p">;
   blockquote?: Flex__<"blockquote">;
   calloutText?: Flex__<"span">;
@@ -410,15 +412,14 @@ function PlasmicHomepage__RenderFunc(props: {
                 }
               >
                 <CrtMediaFrame
+                  data-plasmic-name={"heroMediaFrame"}
+                  data-plasmic-override={overrides.heroMediaFrame}
                   alt={""}
                   animationSpeed={1}
                   aspectRatio={"16 / 9"}
                   autoAdvanceMs={5000}
                   baseColor={"#020617"}
-                  className={classNames(
-                    "__wab_instance",
-                    sty.crtMediaFrame__wGtqv
-                  )}
+                  className={classNames("__wab_instance", sty.heroMediaFrame)}
                   disabledControls={""}
                   edgeCornerGlowPower={2.2}
                   edgeCornerGlowWidth={0.055}
@@ -877,6 +878,8 @@ function PlasmicHomepage__RenderFunc(props: {
                     id={"Fe-CSVAjzAup"}
                   >
                     <CrtMediaFrame
+                      data-plasmic-name={"articleMediaFrame"}
+                      data-plasmic-override={overrides.articleMediaFrame}
                       alt={""}
                       animationSpeed={1}
                       aspectRatio={"16 / 9"}
@@ -884,7 +887,7 @@ function PlasmicHomepage__RenderFunc(props: {
                       baseColor={"#020617"}
                       className={classNames(
                         "__wab_instance",
-                        sty.crtMediaFrame___69LEq
+                        sty.articleMediaFrame
                       )}
                       disabledControls={""}
                       edgeCornerGlowPower={2.2}
@@ -1540,6 +1543,7 @@ const PlasmicDescendants = {
     "nav",
     "hero",
     "screenStack",
+    "heroMediaFrame",
     "heroLine1Media",
     "heroLine2Media",
     "heroLine3Media",
@@ -1551,6 +1555,7 @@ const PlasmicDescendants = {
     "articleTitle",
     "introText",
     "screenStack2",
+    "articleMediaFrame",
     "whatChangedText",
     "blockquote",
     "calloutText",
@@ -1568,6 +1573,7 @@ const PlasmicDescendants = {
   hero: [
     "hero",
     "screenStack",
+    "heroMediaFrame",
     "heroLine1Media",
     "heroLine2Media",
     "heroLine3Media",
@@ -1577,10 +1583,12 @@ const PlasmicDescendants = {
   ],
   screenStack: [
     "screenStack",
+    "heroMediaFrame",
     "heroLine1Media",
     "heroLine2Media",
     "heroLine3Media"
   ],
+  heroMediaFrame: ["heroMediaFrame"],
   heroLine1Media: ["heroLine1Media"],
   heroLine2Media: ["heroLine2Media"],
   heroLine3Media: ["heroLine3Media"],
@@ -1593,6 +1601,7 @@ const PlasmicDescendants = {
     "articleTitle",
     "introText",
     "screenStack2",
+    "articleMediaFrame",
     "whatChangedText",
     "blockquote",
     "calloutText",
@@ -1601,7 +1610,8 @@ const PlasmicDescendants = {
   articleLabel: ["articleLabel"],
   articleTitle: ["articleTitle"],
   introText: ["introText"],
-  screenStack2: ["screenStack2"],
+  screenStack2: ["screenStack2", "articleMediaFrame"],
+  articleMediaFrame: ["articleMediaFrame"],
   whatChangedText: ["whatChangedText"],
   blockquote: ["blockquote", "calloutText"],
   calloutText: ["calloutText"],
@@ -1623,6 +1633,7 @@ type NodeDefaultElementType = {
   nav: "nav";
   hero: "section";
   screenStack: "div";
+  heroMediaFrame: typeof CrtMediaFrame;
   heroLine1Media: "span";
   heroLine2Media: "span";
   heroLine3Media: "span";
@@ -1634,6 +1645,7 @@ type NodeDefaultElementType = {
   articleTitle: "h1";
   introText: "p";
   screenStack2: "div";
+  articleMediaFrame: typeof CrtMediaFrame;
   whatChangedText: "p";
   blockquote: "blockquote";
   calloutText: "span";
@@ -1713,6 +1725,7 @@ export const PlasmicHomepage = Object.assign(
     nav: makeNodeComponent("nav"),
     hero: makeNodeComponent("hero"),
     screenStack: makeNodeComponent("screenStack"),
+    heroMediaFrame: makeNodeComponent("heroMediaFrame"),
     heroLine1Media: makeNodeComponent("heroLine1Media"),
     heroLine2Media: makeNodeComponent("heroLine2Media"),
     heroLine3Media: makeNodeComponent("heroLine3Media"),
@@ -1724,6 +1737,7 @@ export const PlasmicHomepage = Object.assign(
     articleTitle: makeNodeComponent("articleTitle"),
     introText: makeNodeComponent("introText"),
     screenStack2: makeNodeComponent("screenStack2"),
+    articleMediaFrame: makeNodeComponent("articleMediaFrame"),
     whatChangedText: makeNodeComponent("whatChangedText"),
     blockquote: makeNodeComponent("blockquote"),
     calloutText: makeNodeComponent("calloutText"),

@@ -297,7 +297,7 @@
     margin: 0px auto;
   }
 }
-.crtMediaFrame__wGtqv:global(.__wab_instance) {
+.heroMediaFrame:global(.__wab_instance) {
   width: 100%;
   max-width: 100%;
   object-fit: cover;
@@ -684,7 +684,7 @@
     padding-right: 0px;
   }
 }
-.crtMediaFrame___69LEq:global(.__wab_instance) {
+.articleMediaFrame:global(.__wab_instance) {
   width: 100%;
   max-width: 100%;
   object-fit: cover;
