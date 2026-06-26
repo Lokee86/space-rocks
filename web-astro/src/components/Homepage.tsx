@@ -3,6 +3,8 @@
 import * as React from "react";
 import { PlasmicHomepage } from "./plasmic/space_rocks_devlog/PlasmicHomepage";
 import type { DefaultHomepageProps } from "./plasmic/space_rocks_devlog/PlasmicHomepage";
+import type { HomepageContent } from "../content/homepageContent";
+import { normalizeHomepageContent } from "../content/homepageContent";
 
 // Your component props start with props for variants and slots you defined
 // in Plasmic, but you can add more here, like event handlers that you can
@@ -17,7 +19,9 @@ import type { DefaultHomepageProps } from "./plasmic/space_rocks_devlog/PlasmicH
 //
 // You can also stop extending from DefaultHomepageProps altogether and have
 // total control over the props for your component.
-export interface HomepageProps extends DefaultHomepageProps {}
+export interface HomepageProps extends DefaultHomepageProps {
+  content?: Partial<HomepageContent>;
+}
 
 function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
   // Use PlasmicHomepage to render this component as it was
@@ -35,7 +39,30 @@ function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
   // By default, we are just piping all HomepageProps here, but feel free
   // to do whatever works for you.
 
-  return <PlasmicHomepage {...props} />;
+  const content = normalizeHomepageContent(props.content ?? {});
+
+  return (
+    <PlasmicHomepage
+      {...props}
+      heroLine1Media={{ children: content.heroLine1 }}
+      heroLine1Desktop={{ children: content.heroLine1 }}
+      heroLine2Media={{ children: content.heroLine2 }}
+      heroLine2Desktop={{ children: content.heroLine2 }}
+      heroLine3Media={{ children: content.heroLine3 }}
+      heroLine3Desktop={{ children: content.heroLine3 }}
+      articleLabel={{ children: content.articleLabel }}
+      articleTitle={{ children: content.articleTitle }}
+      introText={{ children: content.intro }}
+      whatChangedText={{ children: content.whatChanged }}
+      calloutText={{ children: content.callout }}
+      whatsNextText={{ children: content.whatsNext }}
+      finishedBody={{ children: content.finishedBody }}
+      nowBody={{ children: content.nowBody }}
+      comingUpBody={{ children: content.comingUpBody }}
+      utilityText={{ children: content.utilityText }}
+      finePrint={{ children: content.finePrint }}
+    />
+  );
 }
 
 const Homepage = React.forwardRef(Homepage_);

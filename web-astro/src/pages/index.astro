@@ -1,5 +1,6 @@
 ---
 import HomepageClientMount from '../components/HomepageClientMount';
+import { frontmatter as homepageContent } from "../content/devlog/0001-building-the-space-rocks-devlog.md";
 import '../components/plasmic/plasmic__default_style.css';
 import '../components/plasmic/space_rocks_devlog/plasmic.css';
 ---
@@ -25,6 +26,6 @@ import '../components/plasmic/space_rocks_devlog/plasmic.css';
 		</style>
 	</head>
 	<body>
-		<HomepageClientMount client:only="react" />
+		<HomepageClientMount content={homepageContent} client:only="react" />
 	</body>
 </html>
