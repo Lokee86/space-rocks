@@ -1,0 +1,44 @@
+---
+import { getCollection } from "astro:content";
+import HomepageClientMount from "../../components/HomepageClientMount";
+import "../../components/plasmic/plasmic__default_style.css";
+import "../../components/plasmic/space_rocks_devlog/plasmic.css";
+
+export async function getStaticPaths() {
+	const devlogEntries = await getCollection("devlog");
+
+	return devlogEntries.map((entry) => ({
+		params: {
+			slug: entry.id.replace(/\.md$/, ""),
+		},
+		props: {
+			entry,
+		},
+	}));
+}
+
+const { entry } = Astro.props;
+const homepageContent = entry.data;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>{entry.data.title}</title>
+		<style is:global>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				background: #05070d;
+			}
+		</style>
+	</head>
+	<body>
+		<HomepageClientMount content={homepageContent} client:only="react" />
+	</body>
+</html>
