@@ -1,0 +1,111 @@
+{
+  "platform": "react",
+  "code": {
+    "lang": "ts",
+    "scheme": "blackbox",
+    "reactRuntime": "classic"
+  },
+  "style": {
+    "scheme": "css-modules",
+    "defaultStyleCssFilePath": "plasmic/plasmic__default_style.css"
+  },
+  "images": {
+    "scheme": "inlined",
+    "publicDir": "../public",
+    "publicUrlPrefix": "/static/"
+  },
+  "tokens": {
+    "scheme": "theo",
+    "tokensFilePath": "plasmic-tokens.theo.json"
+  },
+  "srcDir": "src/components",
+  "defaultPlasmicDir": "./plasmic",
+  "projects": [
+    {
+      "projectId": "uNJepqX5kmDcUn9dDb3UVD",
+      "projectApiToken": "jk3ZDuiFpGChYcJaMPcewIrRGLxCf153tJjM5AWjDs528gLlN1AEmgIRCrR4e0xtHxNg3q4MFEhmCSkmA",
+      "projectName": "Space Rocks Devlog",
+      "version": "latest",
+      "cssFilePath": "plasmic/space_rocks_devlog/plasmic.css",
+      "components": [
+        {
+          "id": "I3TbBX3qgAwU",
+          "name": "Homepage",
+          "type": "managed",
+          "projectId": "uNJepqX5kmDcUn9dDb3UVD",
+          "renderModuleFilePath": "plasmic/space_rocks_devlog/PlasmicHomepage.tsx",
+          "importSpec": {
+            "modulePath": "Homepage.tsx"
+          },
+          "cssFilePath": "plasmic/space_rocks_devlog/PlasmicHomepage.module.css",
+          "scheme": "blackbox",
+          "componentType": "page",
+          "path": "/"
+        },
+        {
+          "id": "jbxoeWnqZPbP",
+          "name": "Archive",
+          "type": "managed",
+          "projectId": "uNJepqX5kmDcUn9dDb3UVD",
+          "renderModuleFilePath": "plasmic/space_rocks_devlog/PlasmicArchive.tsx",
+          "importSpec": {
+            "modulePath": "Archive.tsx"
+          },
+          "cssFilePath": "plasmic/space_rocks_devlog/PlasmicArchive.module.css",
+          "scheme": "blackbox",
+          "componentType": "page",
+          "path": "/archive"
+        }
+      ],
+      "icons": [],
+      "images": [],
+      "indirect": false,
+      "globalContextsFilePath": "",
+      "splitsProviderFilePath": "",
+      "styleTokensProviderFilePath": "plasmic/space_rocks_devlog/PlasmicStyleTokensProvider.tsx",
+      "dataTokensFilePath": "",
+      "projectModuleFilePath": "plasmic/space_rocks_devlog/plasmic.tsx",
+      "codeComponents": [
+        {
+          "id": "S_Lqfgq4vzxV",
+          "name": "CrtMediaFrame",
+          "displayName": "CrtMediaFrame",
+          "componentImportPath": "@/src/components/media/CrtMediaFrame"
+        },
+        {
+          "id": "czcVNA0nbuG7",
+          "name": "CardFrame",
+          "displayName": "CardFrame",
+          "componentImportPath": "@/src/components/card/CardFrame"
+        },
+        {
+          "id": "rbj27uTOL9rH",
+          "name": "PlasmicHead",
+          "displayName": "hostless-plasmic-head",
+          "componentImportPath": "@plasmicapp/react-web"
+        },
+        {
+          "id": "cy-spnNuyKpr",
+          "name": "Fetcher",
+          "displayName": "plasmic-data-source-fetcher",
+          "componentImportPath": "@plasmicapp/react-web/lib/data-sources"
+        }
+      ],
+      "customFunctions": []
+    }
+  ],
+  "globalVariants": {
+    "variantGroups": [
+      {
+        "id": "t0mnnasaXT_R",
+        "name": "Screen",
+        "projectId": "uNJepqX5kmDcUn9dDb3UVD",
+        "contextFilePath": "plasmic/space_rocks_devlog/PlasmicGlobalVariant__Screen.tsx"
+      }
+    ]
+  },
+  "wrapPagesWithGlobalContexts": true,
+  "preserveJsImportExtensions": false,
+  "cliVersion": "0.1.364",
+  "$schema": "https://unpkg.com/@plasmicapp/cli@0.1.364/dist/plasmic.schema.json"
+}

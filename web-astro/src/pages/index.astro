@@ -1,5 +1,7 @@
 ---
-
+import HomepageClientMount from '../components/HomepageClientMount';
+import '../components/plasmic/plasmic__default_style.css';
+import '../components/plasmic/space_rocks_devlog/plasmic.css';
 ---
 
 <html lang="en">
@@ -9,9 +11,20 @@
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<title>Space Rocks Devlog</title>
+		<style is:global>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				background: #05070d;
+			}
+		</style>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<HomepageClientMount client:only="react" />
 	</body>
 </html>

@@ -1,0 +1,132 @@
+.root {
+  --button-body-x: 0%;
+  --icon-x: 0%;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 68px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-image: url("/assets/ui/media_buttons.png");
+  background-position: var(--button-body-x) 0;
+  background-repeat: no-repeat;
+  background-size: 300% 100%;
+  color: transparent;
+  cursor: pointer;
+  isolation: isolate;
+  overflow: visible;
+  appearance: none;
+}
+
+.root::before,
+.root::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image: url("/assets/ui/media_buttons.png");
+  background-position: 50% 0;
+  background-repeat: no-repeat;
+  background-size: 300% 100%;
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.root::before {
+  z-index: 1;
+}
+
+.root::after {
+  z-index: 2;
+  background-position: 100% 0;
+}
+
+.root:hover:not(:disabled)::before,
+.root:focus-visible:not(:disabled)::before {
+  opacity: 1;
+}
+
+.root:not(:disabled):focus-visible {
+  outline: 2px solid rgba(0, 229, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.root:active:not(:disabled),
+.root[aria-pressed="true"]:not(:disabled) {
+  --button-body-x: 100%;
+}
+
+.root:active:not(:disabled)::before,
+.root[aria-pressed="true"]:not(:disabled)::before {
+  opacity: 0;
+}
+
+.root:active:not(:disabled)::after,
+.root[aria-pressed="true"]:not(:disabled)::after {
+  opacity: 0.35;
+}
+
+.root:disabled {
+  cursor: default;
+  filter: brightness(0.72) saturate(0.45);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.root:disabled::before,
+.root:disabled::after {
+  opacity: 0;
+}
+
+.root:disabled .icon {
+  opacity: 0.32;
+  filter: brightness(0.75) saturate(0.4);
+}
+
+.icon {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: 58%;
+  height: auto;
+  aspect-ratio: 59 / 34;
+  background:
+    url("/assets/ui/media_icons.png") var(--icon-x) 0 / 600% 100% no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0.86;
+  pointer-events: none;
+}
+
+@supports (mix-blend-mode: plus-lighter) {
+  .root::before,
+  .root::after,
+  .icon {
+    mix-blend-mode: plus-lighter;
+  }
+}
+
+.root[data-variant="rewind"] {
+  --icon-x: 0%;
+}
+
+.root[data-variant="play"] {
+  --icon-x: 20%;
+}
+
+.root[data-variant="pause"] {
+  --icon-x: 40%;
+}
+
+.root[data-variant="fastForward"] {
+  --icon-x: 60%;
+}
+
+.root[data-variant="previous"] {
+  --icon-x: 80%;
+}
+
+.root[data-variant="next"] {
+  --icon-x: 100%;
+}

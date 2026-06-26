@@ -8,6 +8,33 @@
     "dist"
   ],
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@plasmicapp/react-web": [
+        "./src/compat/plasmic-react-web.ts"
+      ],
+      "@plasmicapp/react-web/lib/host": [
+        "./node_modules/@plasmicapp/react-web/lib/host/index.js"
+      ],
+      "@plasmicapp/react-web/lib/query": [
+        "./node_modules/@plasmicapp/react-web/lib/query/index.js"
+      ],
+      "@plasmicapp/react-web/lib/plasmic.css": [
+        "./node_modules/@plasmicapp/react-web/lib/plasmic.css"
+      ],
+      "next/head": [
+        "./src/compat/next-head.tsx"
+      ],
+      "next/link": [
+        "./src/compat/next-link.tsx"
+      ],
+      "next/router": [
+        "./src/compat/next-router.ts"
+      ]
+    },
     "jsx": "react-jsx",
     "jsxImportSource": "react"
   }

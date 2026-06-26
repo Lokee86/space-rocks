@@ -1,0 +1,160 @@
+.root {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  isolation: isolate;
+}
+
+.shell {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+  aspect-ratio: var(--crt-aspect-ratio, 16 / 9);
+  overflow: hidden;
+  container-type: size;
+  --frame-top-height: min(11.832061cqh, 9.064327cqw);
+  --frame-bottom-height: min(16.030534cqh, 12.280702cqw);
+  --frame-side-width: min(8.778626cqh, 6.725146cqw);
+  --frame-tray-width: min(46.183206cqh, 35.380117cqw);
+  --frame-tray-half: min(23.091603cqh, 17.690058cqw);
+}
+
+.viewport {
+  position: absolute;
+  top: var(--crt-screen-inset-top);
+  right: var(--crt-screen-inset-right);
+  bottom: var(--crt-screen-inset-bottom);
+  left: var(--crt-screen-inset-left);
+  overflow: hidden;
+  background: #020617;
+  contain: paint;
+  z-index: 1;
+}
+
+.mediaLayer,
+.media,
+.children {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mediaLayer {
+  overflow: hidden;
+  background: #020617;
+  z-index: 0;
+}
+
+.media {
+  display: block;
+  z-index: 0;
+  object-fit: inherit;
+}
+
+.children {
+  display: grid;
+  place-items: center;
+  z-index: 0;
+  color: #cbd5e1;
+}
+
+.viewport[data-fit="cover"] .media {
+  object-fit: cover;
+}
+
+.viewport[data-fit="contain"] .media {
+  object-fit: contain;
+}
+
+.shaderCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  mix-blend-mode: normal;
+  pointer-events: none;
+  display: block;
+}
+
+.overlay {
+  display: none;
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  user-select: none;
+  box-sizing: border-box;
+  border-style: solid;
+  border-width:
+    var(--frame-top-height)
+    var(--frame-side-width)
+    var(--frame-bottom-height)
+    var(--frame-side-width);
+  border-image-source: url("/assets/ui/media_frame.png");
+  border-image-slice: 62 46 84 46;
+  border-image-repeat: stretch;
+  overflow: hidden;
+}
+
+.bottomTraySlot {
+  position: absolute;
+  bottom: 0;
+  left: var(--frame-side-width);
+  right: var(--frame-side-width);
+  height: var(--frame-bottom-height);
+  width: auto;
+  transform: none;
+  z-index: 4;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+}
+
+.controls {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.buttonRow {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  pointer-events: none;
+}
+
+.buttonRow .controlButton {
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.caption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.root.ratio16x9 {
+  aspect-ratio: 16 / 9;
+}
+
+.root.ratio4x3 {
+  aspect-ratio: 4 / 3;
+}
+
+.root.ratio1x1 {
+  aspect-ratio: 1 / 1;
+}
