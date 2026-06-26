@@ -3,6 +3,9 @@
 import * as React from "react";
 import { PlasmicArchive } from "./plasmic/space_rocks_devlog/PlasmicArchive";
 import type { DefaultArchiveProps } from "./plasmic/space_rocks_devlog/PlasmicArchive";
+import type { HTMLElementRefOf } from "@plasmicapp/react-web";
+import type { ArchiveContent } from "../content/archiveContent";
+import { normalizeArchiveContent } from "../content/archiveContent";
 
 // Your component props start with props for variants and slots you defined
 // in Plasmic, but you can add more here, like event handlers that you can
@@ -17,9 +20,11 @@ import type { DefaultArchiveProps } from "./plasmic/space_rocks_devlog/PlasmicAr
 //
 // You can also stop extending from DefaultArchiveProps altogether and have
 // total control over the props for your component.
-export interface ArchiveProps extends DefaultArchiveProps {}
+export interface ArchiveProps extends DefaultArchiveProps {
+  content?: Partial<ArchiveContent>;
+}
 
-function Archive_(props: ArchiveProps, _ref: React.ForwardedRef<unknown>) {
+function Archive_(props: ArchiveProps, ref: HTMLElementRefOf<"main">) {
   // Use PlasmicArchive to render this component as it was
   // designed in Plasmic, by activating the appropriate variants,
   // attaching the appropriate event handlers, etc.  You
@@ -35,7 +40,37 @@ function Archive_(props: ArchiveProps, _ref: React.ForwardedRef<unknown>) {
   // By default, we are just piping all ArchiveProps here, but feel free
   // to do whatever works for you.
 
-  return <PlasmicArchive {...props} />;
+  const content = normalizeArchiveContent(props.content ?? {});
+
+  return (
+    <PlasmicArchive
+      {...props}
+      root={{ ref }}
+      h1={{ children: "All Posts" }}
+      p={{ children: "All development posts for Space Rocks." }}
+      article={{
+        children: (
+          <>
+            <h1>All Posts</h1>
+            <p>All development posts for Space Rocks.</p>
+            {content.entries.length === 0 ? (
+              <p>No devlog entries yet.</p>
+            ) : (
+              <ul>
+                {content.entries.map((entry) => (
+                  <li key={entry.id}>
+                    <a href={entry.href}>{entry.title}</a>
+                    <p>{entry.date}</p>
+                    <p>{entry.summary}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ),
+      }}
+    />
+  );
 }
 
 const Archive = React.forwardRef(Archive_);

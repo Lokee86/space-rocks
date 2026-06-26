@@ -1,4 +1,7 @@
 ---
+title: "Building the Space Rocks devlog"
+date: 2026-06-25
+summary: "The first public devlog shell is moving from Plasmic prototype to Astro static site."
 heroLine1: "DEVLOG ONLINE"
 heroLine2: "ARCADE CHAOS IN PROGRESS"
 heroLine3: "XENOBIA NEEDS RANGERS"
@@ -16,3 +19,5 @@ finePrint: "Space Rocks! is an active development project. All media, features, 
 ---
 
 This is the first placeholder devlog body. The homepage currently reads frontmatter only; full Markdown body rendering will be wired later.
+
+Navigation note: the archive lives at /archive/ and the latest devlog entry is at /devlog/0001-building-the-space-rocks-devlog/.

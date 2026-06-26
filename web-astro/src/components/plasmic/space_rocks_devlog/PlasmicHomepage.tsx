@@ -88,9 +88,14 @@ export type PageCtx = {
 
 export function generateDynamicMetadata($q: any, $ctx: PageCtx) {
   return {
-    openGraph: {},
+    title: "Devlog Archive",
+
+    openGraph: {
+      title: "Devlog Archive"
+    },
     twitter: {
-      card: "summary" as const
+      card: "summary" as const,
+      title: "Devlog Archive"
     }
   };
 }
@@ -303,7 +308,7 @@ function PlasmicHomepage__RenderFunc(props: {
             >
               <PlasmicLink__
                 className={classNames("all", "a", "a__uNJep", sty.link__jyTn4)}
-                href={"#latest"}
+                href={"/"}
                 id={"9d3FT6XjLgDj"}
                 platform={"react"}
               >
@@ -313,16 +318,15 @@ function PlasmicHomepage__RenderFunc(props: {
                     "span",
                     "span__uNJep",
                     "__wab_text",
-                    sty.span__jkler
+                    sty.span__b4VVy
                   )}
-                  id={"rPs-U--Ym39L"}
                 >
-                  {"Devlog"}
+                  {"Home"}
                 </span>
               </PlasmicLink__>
               <PlasmicLink__
                 className={classNames("all", "a", "a__uNJep", sty.link__isIz)}
-                href={"#archive"}
+                href={"/archive/"}
                 id={"rW8um3abfDUl"}
                 platform={"react"}
               >
@@ -341,7 +345,7 @@ function PlasmicHomepage__RenderFunc(props: {
               </PlasmicLink__>
               <PlasmicLink__
                 className={classNames("all", "a", "a__uNJep", sty.link__t6Ksv)}
-                href={"#"}
+                href={"https://github.com/Lokee86/space-rocks"}
                 id={"gbV0TczdRWrh"}
                 platform={"react"}
               >

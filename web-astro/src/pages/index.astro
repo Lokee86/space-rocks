@@ -1,8 +1,18 @@
 ---
+import { getCollection } from "astro:content";
 import HomepageClientMount from '../components/HomepageClientMount';
-import { frontmatter as homepageContent } from "../content/devlog/0001-building-the-space-rocks-devlog.md";
 import '../components/plasmic/plasmic__default_style.css';
 import '../components/plasmic/space_rocks_devlog/plasmic.css';
+
+const devlogEntries = await getCollection("devlog");
+const latestDevlog = devlogEntries
+	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())[0];
+
+if (!latestDevlog) {
+	throw new Error("No devlog entries found in the devlog content collection.");
+}
+
+const homepageContent = latestDevlog.data;
 ---
 
 <html lang="en">

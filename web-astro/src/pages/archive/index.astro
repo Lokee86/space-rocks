@@ -1,0 +1,41 @@
+---
+import { getCollection } from "astro:content";
+import ArchiveClientMount from "../../components/ArchiveClientMount";
+import "../../components/plasmic/plasmic__default_style.css";
+import "../../components/plasmic/space_rocks_devlog/plasmic.css";
+
+const devlogEntries = await getCollection("devlog");
+const entries = devlogEntries
+	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+	.map((entry) => ({
+		id: entry.id,
+		title: entry.data.title,
+		date: entry.data.date.toISOString().slice(0, 10),
+		summary: entry.data.summary,
+		href: `/devlog/${entry.id}/`,
+	}));
+
+const archiveContent = { entries };
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Space Rocks Devlog Archive</title>
+		<style is:global>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				background: #05070d;
+			}
+		</style>
+	</head>
+	<body>
+		<ArchiveClientMount content={archiveContent} client:only="react" />
+	</body>
+</html>
