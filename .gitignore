@@ -5,8 +5,8 @@ space-rocks-(4.3)/
 keys/
 processes.env
 
-web/.next/
-web/out/
+tools/parked-plasmic-next-host/.next/
+tools/parked-plasmic-next-host/out/
 
 .vscode/*
 !.vscode/settings.json

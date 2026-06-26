@@ -86,16 +86,23 @@ Do not let devtooling-suite planning block the roadmap, but do implement telemet
 
 ### Goal
 
-Establish the first public Space Rocks web presence without dragging launch website scope into the work.
+Keep the first public Space Rocks web presence scoped to remaining P0 web work without dragging launch website scope into the work.
 
 ### Scope
 
+Implemented baseline:
+
 ```text
-services/web/
-static site implementation
-homepage / devlog landing
+homepage
 devlog archive
 individual devlog post pages
+content-driven devlog entries
+current Astro static devlog implementation
+```
+
+Remaining future P0 work:
+
+```text
 404 page
 sitemap.xml
 rss.xml and/or feed.xml
@@ -762,7 +769,7 @@ Some phases can overlap, but dependency rules should not be violated.
 
 * [Network Observability And Packet Budget](domains/technical/network-observability-and-packet-budget.md)
 * [Realtime Protocol Architecture](protocol/realtime-protocol-architecture.md)
-* [Devlog Static Site](domains/web/devlog-static-site.md)
+* [Devlog Static Site](../services/web/devlog-static-site.md)
 * [Website And Web Presence](domains/web/website-and-web-presence.md)
 * [Verification And Quality Gates](domains/technical/verification-and-quality-gates.md)
 * [Build Release And Environment Matrix](domains/technical/build-release-and-environment-matrix.md)

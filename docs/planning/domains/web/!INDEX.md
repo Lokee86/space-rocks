@@ -22,7 +22,7 @@ Use it for product direction, surface boundaries, and web-facing scope decisions
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
-- [website-and-web-presence.md](website-and-web-presence.md) - Website and web-presence planning.
+- [website-and-web-presence.md](website-and-web-presence.md) - Website And Web Presence documentation.
 <!-- doc-ledger:files:end -->
 
 ## Stub Files
@@ -35,7 +35,7 @@ Use it for product direction, surface boundaries, and web-facing scope decisions
 
 ## Related Docs
 
-- [Planning index](../!INDEX.md)
+- [Planning index](../../!INDEX.md)
 - [Website And Web Presence](website-and-web-presence.md) - Product and public web presence planning.
 
 ## Notes
