@@ -3,7 +3,10 @@
 import * as React from "react";
 import { PlasmicHomepage } from "./plasmic/space_rocks_devlog/PlasmicHomepage";
 import type { DefaultHomepageProps } from "./plasmic/space_rocks_devlog/PlasmicHomepage";
-import type { HomepageContent } from "../content/homepageContent";
+import type {
+  HomepageContent,
+  HomepageMediaKind,
+} from "../content/homepageContent";
 import { normalizeHomepageContent } from "../content/homepageContent";
 
 // Your component props start with props for variants and slots you defined
@@ -21,6 +24,37 @@ import { normalizeHomepageContent } from "../content/homepageContent";
 // total control over the props for your component.
 export interface HomepageProps extends DefaultHomepageProps {
   content?: Partial<HomepageContent>;
+}
+
+function getMediaFrameProps(
+  mediaKind: HomepageMediaKind,
+  images: string[],
+  youtubeUrl: string,
+  mediaAlt: string,
+) {
+  if (mediaKind === "images") {
+    return {
+      mediaMode: "imageList" as const,
+      imageItems: images,
+      alt: mediaAlt,
+      youtubeUrl: undefined,
+    };
+  }
+
+  if (mediaKind === "youtube") {
+    return {
+      youtubeUrl,
+      youtubeTitle: mediaAlt,
+      alt: mediaAlt,
+      mediaMode: undefined,
+      imageItems: [],
+    };
+  }
+
+  return {
+    imageItems: [],
+    youtubeUrl: undefined,
+  };
 }
 
 function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
@@ -50,9 +84,21 @@ function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
       heroLine2Desktop={{ children: content.heroLine2 }}
       heroLine3Media={{ children: content.heroLine3 }}
       heroLine3Desktop={{ children: content.heroLine3 }}
+      heroMediaFrame={getMediaFrameProps(
+        content.heroMediaKind,
+        content.heroImages,
+        content.heroYoutubeUrl,
+        content.heroMediaAlt,
+      )}
       articleLabel={{ children: content.articleLabel }}
       articleTitle={{ children: content.articleTitle }}
       introText={{ children: content.intro }}
+      articleMediaFrame={getMediaFrameProps(
+        content.articleMediaKind,
+        content.articleImages,
+        content.articleYoutubeUrl,
+        content.articleMediaAlt,
+      )}
       whatChangedText={{ children: content.whatChanged }}
       calloutText={{ children: content.callout }}
       whatsNextText={{ children: content.whatsNext }}

@@ -46,6 +46,38 @@ function parseImageItems(imageItems: string | string[] | undefined) {
   return values.map((value) => value.trim()).filter(Boolean);
 }
 
+function getYouTubeEmbedUrl(youtubeUrl: string | undefined) {
+  if (!youtubeUrl) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(youtubeUrl);
+    const host = url.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const videoId = url.pathname.split("/").filter(Boolean)[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (url.pathname === "/watch") {
+        const videoId = url.searchParams.get("v");
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
+      }
+
+      const embedMatch = url.pathname.match(/^\/embed\/([^/?#]+)/);
+      if (embedMatch?.[1]) {
+        return `https://www.youtube.com/embed/${embedMatch[1]}`;
+      }
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}
+
 function clampIndex(index: number, length: number) {
   if (length <= 0) return 0;
   return Math.min(Math.max(Math.trunc(index), 0), length - 1);
@@ -79,6 +111,8 @@ type CrtMediaFrameProps = {
   mediaMode?: MediaMode;
   imageItems?: string | string[];
   videoSrc?: string;
+  youtubeUrl?: string;
+  youtubeTitle?: string;
   autoAdvanceMs?: number;
   seekSeconds?: number;
   initialIndex?: number;
@@ -110,6 +144,8 @@ export function CrtMediaFrame({
   mediaMode,
   imageItems,
   videoSrc,
+  youtubeUrl,
+  youtubeTitle,
   autoAdvanceMs = 5000,
   seekSeconds = 10,
   initialIndex = 0,
@@ -174,8 +210,11 @@ export function CrtMediaFrame({
   const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const parsedImageItems = parseImageItems(imageItems);
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(youtubeUrl);
   const effectiveMediaMode =
-    mediaMode ?? (videoSrc ? "video" : parsedImageItems.length > 0 ? "imageList" : undefined);
+    youtubeEmbedUrl
+      ? undefined
+      : mediaMode ?? (videoSrc ? "video" : parsedImageItems.length > 0 ? "imageList" : undefined);
   const imageSources =
     effectiveMediaMode === "imageList"
       ? parsedImageItems.length > 0
@@ -200,8 +239,24 @@ export function CrtMediaFrame({
   };
   const currentImage = imageSources[clampIndex(currentIndex, imageSources.length)];
   const hasMultipleImages = imageSources.length > 1;
+  const isYouTubeMode = Boolean(youtubeEmbedUrl);
   const isImageMode = effectiveMediaMode === "imageList";
   const isVideoMode = effectiveMediaMode === "video" && Boolean(videoSrc);
+  const mediaKind = isYouTubeMode
+    ? "youtube"
+    : isImageMode
+      ? "images"
+      : isVideoMode
+        ? "video"
+        : "empty";
+  const hasRenderableMedia =
+    isYouTubeMode ||
+    (isImageMode && Boolean(currentImage)) ||
+    isVideoMode ||
+    Boolean(src) ||
+    Boolean(children);
+  const shouldShowControls =
+    showControls && hasRenderableMedia && (isImageMode || isVideoMode || isYouTubeMode);
 
   useEffect(() => {
     setCurrentIndex(clampIndex(initialIndex, imageSources.length));
@@ -259,6 +314,12 @@ export function CrtMediaFrame({
         },
         { slot: "next", variant: "next", disabled: isControlDisabled("next", !hasMultipleImages, "next"), label: "Next image", onClick: () => setCurrentIndex((index) => (index + 1) % imageSources.length) },
       ]
+    : isYouTubeMode
+      ? [
+          { slot: "previous", variant: "rewind", disabled: true, label: "Rewind unavailable for YouTube embed" },
+          { slot: "play", variant: "play", disabled: true, label: "Playback controlled by YouTube embed" },
+          { slot: "next", variant: "fastForward", disabled: true, label: "Fast forward unavailable for YouTube embed" },
+        ]
     : isVideoMode
       ? [
           { slot: "previous", variant: "rewind", disabled: isControlDisabled("rewind", false, "previous"), label: `Rewind ${seekSeconds} seconds`, onClick: () => seekVideo(-seekSeconds) },
@@ -280,9 +341,22 @@ export function CrtMediaFrame({
   return (
     <figure className={styles.root} data-tint={tint} style={frameStyle}>
       <div className={styles.shell}>
-        <div className={styles.viewport} data-fit={fit} style={viewportStyle}>
+        <div
+          className={styles.viewport}
+          data-fit={fit}
+          data-media-kind={mediaKind}
+          style={viewportStyle}
+        >
           <div className={styles.mediaLayer}>
-            {isVideoMode ? (
+            {isYouTubeMode ? (
+              <iframe
+                className={`${styles.media} ${styles.iframe}`}
+                src={youtubeEmbedUrl}
+                title={youtubeTitle || alt || "YouTube video"}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : isVideoMode ? (
               <video
                 ref={videoRef}
                 className={styles.media}
@@ -355,7 +429,7 @@ export function CrtMediaFrame({
         </div>
         <div className={styles.frame} aria-hidden="true" />
         <div className={styles.bottomTraySlot}>
-          {showControls ? (
+          {shouldShowControls ? (
             <div
               className={styles.controls}
               role="group"
