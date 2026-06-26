@@ -6,6 +6,7 @@ import styles from "./CrtMediaFrame.module.css";
 
 const CONTROL_VARIANTS = ["previous", "play", "next"] as const satisfies readonly MediaControlVariant[];
 const ALL_CONTROL_VARIANTS: MediaControlVariant[] = ["previous", "rewind", "play", "pause", "fastForward", "next"];
+const YOUTUBE_IFRAME_API_SRC = "https://www.youtube.com/iframe_api";
 
 // Source-image coordinates for media_frame.png.
 const BOTTOM_STRIP_SOURCE = { x: 46, y: 440, width: 592, height: 84 };
@@ -22,6 +23,99 @@ type ControlSlot = (typeof CONTROL_VARIANTS)[number];
 type ControlConfig = { slot: ControlSlot; variant: MediaControlVariant; disabled: boolean; label: string; onClick?: () => void };
 type InsetValue = string | number;
 type ShaderProps = Omit<CrtShaderCanvasProps, "className" | "enabled">;
+type YouTubePlayerState = {
+  PLAYING: number;
+  PAUSED: number;
+  ENDED: number;
+};
+type YouTubePlayer = new (
+  elementId: string | HTMLElement,
+  options?: {
+    events?: {
+      onReady?: (event: { target: YouTubePlayerInstance }) => void;
+      onStateChange?: (event: { data: number; target: YouTubePlayerInstance }) => void;
+      onError?: (event: unknown) => void;
+    };
+  },
+) => YouTubePlayerInstance;
+type YouTubePlayerInstance = {
+  destroy?: () => void;
+  getCurrentTime?: () => number;
+  seekTo?: (seconds: number, allowSeekAhead: boolean) => void;
+  pauseVideo?: () => void;
+  playVideo?: () => void;
+};
+type YouTubeApi = {
+  Player: YouTubePlayer;
+  PlayerState?: YouTubePlayerState;
+};
+
+declare global {
+  interface Window {
+    YT?: YouTubeApi;
+    onYouTubeIframeAPIReady?: (() => void) | undefined;
+  }
+}
+
+let youtubeApiReadyPromise: Promise<YouTubeApi> | null = null;
+
+function loadYouTubeIframeApi(): Promise<YouTubeApi> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("YouTube iframe API can only load in the browser"));
+  }
+
+  if (window.YT?.Player) {
+    return Promise.resolve(window.YT);
+  }
+
+  if (youtubeApiReadyPromise) {
+    return youtubeApiReadyPromise;
+  }
+
+  youtubeApiReadyPromise = new Promise<YouTubeApi>((resolve, reject) => {
+    const existingReady = window.onYouTubeIframeAPIReady;
+    const finalizeReady = () => {
+      if (window.YT?.Player) {
+        resolve(window.YT);
+        return;
+      }
+      youtubeApiReadyPromise = null;
+      reject(new Error("YouTube iframe API did not expose window.YT.Player"));
+    };
+
+    window.onYouTubeIframeAPIReady = () => {
+      existingReady?.();
+      finalizeReady();
+    };
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src="${YOUTUBE_IFRAME_API_SRC}"]`,
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener(
+        "error",
+        () => {
+          youtubeApiReadyPromise = null;
+          reject(new Error("Failed to load YouTube iframe API"));
+        },
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = YOUTUBE_IFRAME_API_SRC;
+    script.async = true;
+    script.onerror = () => {
+      youtubeApiReadyPromise = null;
+      reject(new Error("Failed to load YouTube iframe API"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return youtubeApiReadyPromise;
+}
 
 function percent(value: number) {
   return `${value * 100}%`;
@@ -54,21 +148,32 @@ function getYouTubeEmbedUrl(youtubeUrl: string | undefined) {
   try {
     const url = new URL(youtubeUrl);
     const host = url.hostname.replace(/^www\./, "");
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+    const buildEmbedUrl = (videoId: string) => {
+      const embedUrl = new URL(`https://www.youtube.com/embed/${videoId}`);
+      embedUrl.searchParams.set("enablejsapi", "1");
+
+      if (origin) {
+        embedUrl.searchParams.set("origin", origin);
+      }
+
+      return embedUrl.toString();
+    };
 
     if (host === "youtu.be") {
       const videoId = url.pathname.split("/").filter(Boolean)[0];
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
+      return videoId ? buildEmbedUrl(videoId) : undefined;
     }
 
     if (host === "youtube.com" || host === "m.youtube.com") {
       if (url.pathname === "/watch") {
         const videoId = url.searchParams.get("v");
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
+        return videoId ? buildEmbedUrl(videoId) : undefined;
       }
 
       const embedMatch = url.pathname.match(/^\/embed\/([^/?#]+)/);
       if (embedMatch?.[1]) {
-        return `https://www.youtube.com/embed/${embedMatch[1]}`;
+        return buildEmbedUrl(embedMatch[1]);
       }
     }
   } catch {
@@ -206,9 +311,15 @@ export function CrtMediaFrame({
   children,
 }: CrtMediaFrameProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const youtubePlayerRef = useRef<YouTubePlayerInstance | null>(null);
   const [currentIndex, setCurrentIndex] = useState(() => clampIndex(initialIndex, 1));
-  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(false);
+  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(
+    () => parseImageItems(imageItems).length > 1,
+  );
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isYouTubeReady, setIsYouTubeReady] = useState(false);
+  const [isYouTubePlaying, setIsYouTubePlaying] = useState(false);
   const parsedImageItems = parseImageItems(imageItems);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(youtubeUrl);
   const effectiveMediaMode =
@@ -224,7 +335,7 @@ export function CrtMediaFrame({
           : []
       : [];
   const imageItemsKey = imageSources.join("\n");
-  const mediaAlt = src ? alt : "";
+  const mediaAlt = alt;
   const disabledControlSet = parseDisabledControls(disabledControls);
   const frameStyle: CSSProperties = {
     ["--crt-aspect-ratio" as string]: aspectRatio,
@@ -260,7 +371,7 @@ export function CrtMediaFrame({
 
   useEffect(() => {
     setCurrentIndex(clampIndex(initialIndex, imageSources.length));
-    setIsSlideshowPlaying(false);
+    setIsSlideshowPlaying(imageSources.length > 1);
   }, [imageItemsKey, initialIndex, imageSources.length]);
 
   useEffect(() => {
@@ -272,6 +383,69 @@ export function CrtMediaFrame({
 
     return () => window.clearInterval(intervalId);
   }, [autoAdvanceMs, imageSources.length, isImageMode, isSlideshowPlaying]);
+
+  useEffect(() => {
+    let isDisposed = false;
+
+    if (!youtubeEmbedUrl || !youtubeIframeRef.current) {
+      youtubePlayerRef.current?.destroy?.();
+      youtubePlayerRef.current = null;
+      setIsYouTubeReady(false);
+      setIsYouTubePlaying(false);
+      return;
+    }
+
+    setIsYouTubeReady(false);
+    setIsYouTubePlaying(false);
+
+    loadYouTubeIframeApi()
+      .then((youtubeApi) => {
+        if (isDisposed || !youtubeIframeRef.current) {
+          return;
+        }
+
+        youtubePlayerRef.current?.destroy?.();
+        youtubePlayerRef.current = new youtubeApi.Player(youtubeIframeRef.current, {
+          events: {
+            onReady: () => {
+              if (!isDisposed) {
+                setIsYouTubeReady(true);
+              }
+            },
+            onStateChange: (event) => {
+              if (isDisposed) {
+                return;
+              }
+
+              const playerState = youtubeApi.PlayerState;
+              const isPlayingState = event.data === playerState?.PLAYING;
+              const isPausedState = event.data === playerState?.PAUSED;
+              const isEndedState = event.data === playerState?.ENDED;
+
+              if (isPlayingState) {
+                setIsYouTubePlaying(true);
+              } else if (isPausedState || isEndedState) {
+                setIsYouTubePlaying(false);
+              }
+            },
+          },
+        });
+      })
+      .catch(() => {
+        if (!isDisposed) {
+          setIsYouTubeReady(false);
+          setIsYouTubePlaying(false);
+        }
+      });
+
+    return () => {
+      isDisposed = true;
+      youtubePlayerRef.current?.destroy?.();
+      youtubePlayerRef.current = null;
+      setIsYouTubeReady(false);
+      setIsYouTubePlaying(false);
+    };
+  }, [youtubeEmbedUrl]);
 
   const seekVideo = (delta: number) => {
     const video = videoRef.current;
@@ -295,6 +469,28 @@ export function CrtMediaFrame({
     video.pause();
   };
 
+  const seekYouTube = (delta: number) => {
+    const player = youtubePlayerRef.current;
+    if (!player || !isYouTubeReady) return;
+
+    const currentTime = player.getCurrentTime?.();
+    if (typeof currentTime !== "number" || Number.isNaN(currentTime)) return;
+
+    player.seekTo?.(Math.max(currentTime + delta, 0), true);
+  };
+
+  const toggleYouTubePlayback = () => {
+    const player = youtubePlayerRef.current;
+    if (!player || !isYouTubeReady) return;
+
+    if (isYouTubePlaying) {
+      player.pauseVideo?.();
+      return;
+    }
+
+    player.playVideo?.();
+  };
+
   const isControlDisabled = (variant: MediaControlVariant, automaticDisabled: boolean, slot?: ControlSlot) =>
     automaticDisabled ||
     disabledControlSet.has(variant) ||
@@ -316,9 +512,15 @@ export function CrtMediaFrame({
       ]
     : isYouTubeMode
       ? [
-          { slot: "previous", variant: "rewind", disabled: true, label: "Rewind unavailable for YouTube embed" },
-          { slot: "play", variant: "play", disabled: true, label: "Playback controlled by YouTube embed" },
-          { slot: "next", variant: "fastForward", disabled: true, label: "Fast forward unavailable for YouTube embed" },
+          { slot: "previous", variant: "rewind", disabled: !isYouTubeReady, label: `Rewind ${seekSeconds} seconds`, onClick: () => seekYouTube(-seekSeconds) },
+          {
+            slot: "play",
+            variant: isYouTubePlaying ? "pause" : "play",
+            disabled: !isYouTubeReady,
+            label: isYouTubePlaying ? "Pause YouTube video" : "Play YouTube video",
+            onClick: toggleYouTubePlayback,
+          },
+          { slot: "next", variant: "fastForward", disabled: !isYouTubeReady, label: `Fast forward ${seekSeconds} seconds`, onClick: () => seekYouTube(seekSeconds) },
         ]
     : isVideoMode
       ? [
@@ -350,6 +552,7 @@ export function CrtMediaFrame({
           <div className={styles.mediaLayer}>
             {isYouTubeMode ? (
               <iframe
+                ref={youtubeIframeRef}
                 className={`${styles.media} ${styles.iframe}`}
                 src={youtubeEmbedUrl}
                 title={youtubeTitle || alt || "YouTube video"}
@@ -368,9 +571,17 @@ export function CrtMediaFrame({
                 onEnded={() => setIsVideoPlaying(false)}
               />
             ) : isImageMode && currentImage ? (
-              <img className={styles.media} src={currentImage} alt={mediaAlt} />
+              <img
+                className={`${styles.media} ${styles.imageMedia}`}
+                src={currentImage}
+                alt={mediaAlt}
+              />
             ) : src ? (
-              <img className={styles.media} src={src} alt={mediaAlt} />
+              <img
+                className={`${styles.media} ${styles.imageMedia}`}
+                src={src}
+                alt={mediaAlt}
+              />
             ) : children ? (
               <div className={styles.children}>{children}</div>
             ) : null}
