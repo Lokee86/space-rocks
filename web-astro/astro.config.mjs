@@ -10,6 +10,7 @@ const projectRoot = fileURLToPath(new URL('./', import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://space-rocks.pages.dev',
   integrations: [react(), mdx()],
   vite: {
     resolve: {

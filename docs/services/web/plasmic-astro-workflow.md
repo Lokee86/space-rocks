@@ -53,6 +53,20 @@ Custom behavior MUST go in owned wrapper/source files, always.
 
 Generated Plasmic files are layout output. They must not become customization surfaces.
 
+The current Plasmic codegen command is:
+
+```text
+npx @plasmicapp/cli@0.1.365 sync -p uNJepqX5kmDcUn9dDb3UVD --yes
+```
+
+Run codegen from:
+
+```text
+web-astro/
+```
+
+Generated Plasmic files must not be hand-edited.
+
 ## Code root
 
 Current deployable site:
@@ -109,6 +123,13 @@ preserving a future reuse path for the interactive website
 ```
 
 The workflow exists to keep visual layout work and deployable site behavior connected without turning generated Plasmic output into the project’s behavior layer.
+
+Final ownership rule:
+
+```text
+Plasmic owns visual layout and named slots.
+Owned wrappers/components own custom behavior.
+```
 
 ## Does not own
 
@@ -191,6 +212,8 @@ Astro route
 ```
 
 Generated Plasmic files may define named override slots and instantiate code components. Owned wrappers should use those seams to pass data and behavior in, rather than editing generated files.
+
+The exposed progress-card title slots are `finishedTitle`, `nowTitle`, `comingUpTitle`, and `utilityTitle` when present.
 
 ## Data ownership
 
@@ -355,6 +378,10 @@ local development dependencies
 
 The parked host should remain conspicuous and separate from the deployable Astro site.
 
+Plasmic Studio currently uses `tools/parked-plasmic-next-host/`.
+The deployable site uses `web-astro/`.
+If code-component copies diverge, Studio and the rendered site can disagree.
+
 Operational meaning:
 
 ```text
@@ -392,6 +419,10 @@ ArchiveClientMount
 This split allows Astro to own routing and content collection loading while React/Plasmic handle the current visual layout.
 
 Astro also owns the static build output. The parked Next/Plasmic host is not part of the static deployment path.
+
+The devlog body is now MDX and is inserted by owned wrapper code after the article CRT media frame.
+
+The article body stack should render the owned `CrtMediaFrame` directly, not a reinserted Plasmic node component, because the Plasmic node wrapper caused excess layout height.
 
 ## Code map
 
@@ -500,6 +531,8 @@ Relevant commands for the deployable site are run from:
 web-astro/
 ```
 
+Media-frame sizing should inherit from the component contract, not hardcoded Plasmic `aspectRatio` props.
+
 Current package scripts include:
 
 ```text
@@ -527,5 +560,7 @@ The parked host may have its own local commands, but those are workflow-host com
 The parked Next/Plasmic host exists because Plasmic Studio workflow and the deployable Astro site currently need different support surfaces. This is a workaround, not the product architecture target.
 
 The important durable rule is that custom behavior belongs in owned wrapper/source files. Generated Plasmic output should stay visual/layout-focused and replaceable.
+
+The devlog body stack should keep using the owned wrapper insertion path after the article CRT media frame so the MDX body stays in owned source and the generated layout stays thin.
 
 The future interactive website may reuse the parked host, but that should be decided when the interactive website becomes current implementation work.

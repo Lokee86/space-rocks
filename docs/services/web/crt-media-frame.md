@@ -262,11 +262,21 @@ empty
 
 ## Viewport and frame model
 
-The CRT shell is sized by aspect ratio:
+`aspectRatio` now means the desired visible viewport ratio, not the outer shell ratio.
+
+The component computes the required outer shell ratio from the viewport target and the screen insets:
 
 ```text
-aspectRatio default: 16 / 9
+shellAspectRatio = viewportAspectRatio * (1 - topInset - bottomInset) / (1 - leftInset - rightInset)
 ```
+
+The default visible viewport target is:
+
+```text
+16 / 9
+```
+
+The media frame width should come from the parent layout, while the height should come from the component's computed aspect ratio.
 
 The media viewport is absolutely positioned inside the shell using inset props:
 
@@ -299,8 +309,9 @@ bottom: 15%
 
 Those values define the visible media screen inside the CRT frame art. They are visual calibration values, not normal page margins.
 
-The frame art and bottom tray are separate from the viewport. The frame uses `border-image` sourced from:
+Plasmic instances should not hardcode `aspectRatio` just to make the shell look right. `aspectRatio` is the visible viewport contract, so shell sizing should follow from the viewport target plus the insets.
 
+The frame art and bottom tray are separate from the viewport. The frame uses `border-image` sourced from:
 ```text
 /assets/ui/media_frame.png
 ```
@@ -416,13 +427,9 @@ left + right inset = 10%
 top + bottom inset = 26%
 ```
 
-With a `16 / 9` shell, the visible viewport is approximately:
+With a `16 / 9` visible viewport target and the current insets, the outer shell is wider than the viewport and is sized by the computed shell ratio. Avoid using an old shell-ratio shortcut such as `16 / 10.95`; that was the stale contract.
 
-```text
-width  = 90% of shell
-height = 74% of shell
-ratio  ≈ 2.16:1
-```
+Plasmic Studio can render stale behavior if its parked host component copy differs from `web-astro`, so verify the live host wiring when the studio preview and runtime disagree.
 
 Useful practical image sizes for frame-filling media are approximately:
 

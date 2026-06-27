@@ -1,43 +1,29 @@
-# Astro Starter Kit: Minimal
+# Space Rocks Web
 
-```sh
-npm create astro@latest -- --template minimal
-```
+Current Astro site for the Space Rocks devlog.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Quickstart
 
-## 🚀 Project Structure
+Run these from `web-astro/`.
 
-Inside of your Astro project, you'll see the following folders and files:
+- `npm install` if dependencies are missing
+- `npm run dev` for local Astro development
+- `npm run build` for build verification
+- Plasmic codegen when Studio changes require it:
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+npx @plasmicapp/cli@0.1.365 sync -p uNJepqX5kmDcUn9dDb3UVD --yes
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Content and assets
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+- Live devlog content: `src/content/devlog/`
+- Devlog media assets: `public/media/devlog/<slug>/`
+- Deployment root: `web-astro/`
+- Deployment output: `dist`
 
-Any static assets, like images, can be placed in the `public/` directory.
+## More detail
 
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- [Devlog Static Site](../docs/services/web/devlog-static-site.md)
+- [Cloudflare Pages Deployment](../docs/services/web/cloudflare-pages-deployment.md)
+- [Plasmic / Astro Workflow](../docs/services/web/plasmic-astro-workflow.md)

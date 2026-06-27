@@ -18,7 +18,9 @@ This folder owns docs for the web service runtime and its implementation respons
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [cloudflare-pages-deployment.md](cloudflare-pages-deployment.md) - Cloudflare Pages Deployment documentation.
 - [crt-media-frame.md](crt-media-frame.md) - Crt Media Frame documentation.
+- [devlog-static-site.md](devlog-static-site.md) - Devlog Static Site documentation.
 - [plasmic-astro-workflow.md](plasmic-astro-workflow.md) - Plasmic Astro Workflow documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
