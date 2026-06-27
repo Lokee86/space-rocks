@@ -196,6 +196,16 @@ Astro
 
 If Astro is not available, use no preset/manual settings and set the build command/output directory directly.
 
+## Social preview metadata
+
+The deployed static devlog pages should include standard title and description metadata, Open Graph metadata, and Twitter card metadata so shared links render as full preview cards instead of plain thumbnails.
+
+Preview images must be publicly reachable from the deployed site.
+
+When testing preview metadata changes, a cache-busting query string such as `?v=og3` can help confirm whether external scrapers have picked up the updated metadata or image.
+
+This is a deployment concern, not a layout concern, and it belongs in the Astro page head/server-rendered metadata path.
+
 ## Pre-deploy checklist
 
 Before triggering or relying on a Cloudflare deploy, ensure the local repo state is committed and pushed.
