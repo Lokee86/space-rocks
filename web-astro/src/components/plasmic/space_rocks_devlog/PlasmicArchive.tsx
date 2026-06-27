@@ -118,6 +118,7 @@ export type PlasmicArchive__OverridesType = {
   article?: Flex__<"article">;
   h1?: Flex__<"h1">;
   p?: Flex__<"p">;
+  archiveList?: Flex__<"div">;
   footer?: Flex__<"footer">;
   finePrint?: Flex__<"span">;
 };
@@ -420,7 +421,11 @@ function PlasmicArchive__RenderFunc(props: {
                       }
                     </p>
                   </div>
-                  <div className={classNames("all", sty.freeBox__vlwdl)}>
+                  <div
+                    data-plasmic-name={"archiveList"}
+                    data-plasmic-override={overrides.archiveList}
+                    className={classNames("all", sty.archiveList)}
+                  >
                     <PlasmicLink__
                       className={classNames(
                         "all",
@@ -655,15 +660,17 @@ const PlasmicDescendants = {
     "article",
     "h1",
     "p",
+    "archiveList",
     "footer",
     "finePrint"
   ],
   header: ["header", "nav"],
   nav: ["nav"],
-  section: ["section", "article", "h1", "p"],
-  article: ["article", "h1", "p"],
+  section: ["section", "article", "h1", "p", "archiveList"],
+  article: ["article", "h1", "p", "archiveList"],
   h1: ["h1"],
   p: ["p"],
+  archiveList: ["archiveList"],
   footer: ["footer"],
   finePrint: ["finePrint"]
 } as const;
@@ -678,6 +685,7 @@ type NodeDefaultElementType = {
   article: "article";
   h1: "h1";
   p: "p";
+  archiveList: "div";
   footer: "footer";
   finePrint: "span";
 };
@@ -750,6 +758,7 @@ export const PlasmicArchive = Object.assign(
     article: makeNodeComponent("article"),
     h1: makeNodeComponent("h1"),
     p: makeNodeComponent("p"),
+    archiveList: makeNodeComponent("archiveList"),
     footer: makeNodeComponent("footer"),
     finePrint: makeNodeComponent("finePrint"),
 

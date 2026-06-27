@@ -8,11 +8,12 @@ const devlogEntries = await getCollection("devlog");
 const latestDevlog = devlogEntries
 	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())[0];
 
-if (!latestDevlog) {
-	throw new Error("No devlog entries found in the devlog content collection.");
-}
-
-const homepageContent = latestDevlog.data;
+const homepageContent = latestDevlog
+	? {
+		...latestDevlog.data,
+		body: latestDevlog.body ?? "",
+	}
+	: undefined;
 ---
 
 <html lang="en">

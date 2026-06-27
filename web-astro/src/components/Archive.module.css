@@ -1,0 +1,35 @@
+.archiveList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.archiveItem {
+  padding: 16px 18px;
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  background: rgba(0, 229, 255, 0.04);
+}
+
+.archiveLink {
+  display: inline-block;
+  color: rgb(255, 255, 255);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.archiveDate {
+  margin: 6px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+  text-transform: uppercase;
+}
+
+.archiveSummary {
+  max-width: 90ch;
+  margin: 8px 0 0;
+  line-height: 1.55;
+}
