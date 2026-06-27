@@ -47,7 +47,6 @@ public website surfaces
 The top priority systems are:
 
 ```text
-devlog static site
 network observability and packet budget
 realtime protocol architecture
 ```
@@ -55,12 +54,11 @@ realtime protocol architecture
 Recommended order:
 
 ```text
-1. Devlog static site, capped as V0 only.
-2. Network observability and packet budget.
-3. Realtime protocol architecture.
+1. Network observability and packet budget.
+2. Realtime protocol architecture.
 ```
 
-The devlog site may go first because it is isolated and public-facing. It must remain capped. If it starts expanding into launch website, account portal, commerce, CMS, or support work, stop and defer that scope.
+Network observability is the current next priority. Realtime protocol work remains the next architectural step after packet-budget and observability work.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -82,15 +80,15 @@ Do not start with protobuf before lanes, snapshots, deltas, priority policy, qua
 Do not let devtooling-suite planning block the roadmap, but do implement telemetry required by packet-budget work.
 ```
 
-## Phase P0 - Devlog Static Site
+## Phase P0 - Completed V0 Public-Devlog Baseline
 
 ### Goal
 
-Keep the first public Space Rocks web presence scoped to remaining P0 web work without dragging launch website scope into the work.
+The first public Space Rocks web presence is complete as a V0 public-devlog baseline and must stay capped away from the future launch website.
 
 ### Scope
 
-Implemented baseline:
+Completed baseline:
 
 ```text
 homepage
@@ -100,18 +98,7 @@ content-driven devlog entries
 current Astro static devlog implementation
 ```
 
-Remaining future P0 work:
-
-```text
-404 page
-sitemap.xml
-rss.xml and/or feed.xml
-static assets
-basic metadata
-Open Graph metadata
-basic analytics
-responsive layout smoke
-```
+The V0 devlog site must not turn into the future launch website.
 
 ### Non-Goals
 
@@ -139,14 +126,11 @@ homepage renders
 archive renders
 published posts render
 draft posts are excluded
-404 exists
-sitemap/feed output exists
 internal links resolve
-basic metadata exists
-Open Graph metadata exists
-basic responsive smoke passes
 static hosting is possible without runtime server
 ```
+
+Remaining web polish and SEO/shareability planning live in the web planning docs, not in this roadmap sequence.
 
 ## Phase P1 - Network Observability And Packet Budget
 
@@ -749,8 +733,7 @@ website is not authoritative for payment, entitlement, account, ranking, or mode
 The intended dependency chain is:
 
 ```text
-P0 Devlog V0
--> P1 Network observability and packet budget
+P1 Network observability and packet budget
 -> P2 Realtime protocol architecture
 -> P3 Technical release foundation
 -> P4 Player experience foundation
@@ -762,6 +745,8 @@ P0 Devlog V0
 -> P10 Leaderboards, rankings, seasons, and campaigns
 -> P11 Launch website and commerce platform
 ```
+
+P0 remains the completed public-devlog baseline and is not part of the active dependency chain.
 
 Some phases can overlap, but dependency rules should not be violated.
 

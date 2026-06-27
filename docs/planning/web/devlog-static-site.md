@@ -11,17 +11,19 @@ See the current web service docs for implementation details:
 - `docs/services/web/devlog-static-site.md`
 - `docs/services/web/plasmic-astro-workflow.md`
 - `docs/services/web/crt-media-frame.md`
+- `docs/services/web/cloudflare-pages-deployment.md`
 
 ## Current status
 
-Open planning for unresolved static-site improvements.
+The public devlog V0 exists. Implementation facts now live in the service docs.
+
+Cloudflare Web Analytics is the current baseline analytics path for the static devlog site.
 
 ## Remaining scope
 
 - 404 behavior
 - sitemap/feed generation
-- metadata and Open Graph completion
-- analytics wiring
+- SEO/shareability hygiene
 - validation, link checking, and static build checks
 - static-site quality gates
 
@@ -34,6 +36,8 @@ Open planning for unresolved static-site improvements.
 - content schema details
 - media asset conventions
 - Plasmic/Astro workflow mechanics
+- metadata/Open Graph implementation details
+- analytics wiring beyond the current Cloudflare Web Analytics baseline
 
 ## Open decisions
 
@@ -45,6 +49,7 @@ Open planning for unresolved static-site improvements.
 - [Devlog Static Site](../../services/web/devlog-static-site.md)
 - [Plasmic / Astro Workflow](../../services/web/plasmic-astro-workflow.md)
 - [CRT Media Frame](../../services/web/crt-media-frame.md)
+- [Cloudflare Pages Deployment](../../services/web/cloudflare-pages-deployment.md)
 - [Website and web presence](../domains/web/website-and-web-presence.md)
 
 ## Notes

@@ -147,6 +147,8 @@ The launch website should provide help routes for:
 
 ## Analytics And SEO
 
+The current static devlog can use Cloudflare Web Analytics as its baseline visit/page-view analytics path.
+
 Launch analytics should measure website/product engagement and conversion.
 
 Useful metrics include page views, content views, media clicks, sign-ups, sign-ins, purchase starts/completions, Steam link starts/completions, direct-download license grants, download clicks, community clicks, and support/contact starts.
