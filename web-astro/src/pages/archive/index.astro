@@ -16,13 +16,32 @@ const entries = devlogEntries
 	}));
 
 const archiveContent = { entries };
+
+const shareImageUrl = new URL("/assets/ui/thumbnail.png", Astro.site).toString();
+const shareUrl = new URL("/archive/", Astro.site).toString();
+const shareTitle = "Space Rocks Devlog Archive";
+const shareDescription = "All development posts for Space Rocks.";
 ---
 
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
+		<link rel="icon" type="image/png" href="/assets/ui/favicon.png" />
 		<meta name="viewport" content="width=device-width" />
-		<title>Space Rocks Devlog Archive</title>
+		<meta name="theme-color" content="#00e5ff" />
+		<title>{shareTitle}</title>
+		<meta property="og:site_name" content="Laughing Skull Entertainment" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={shareTitle} />
+		<meta property="og:description" content={shareDescription} />
+		<meta property="og:url" content={shareUrl} />
+		<meta property="og:image" content={shareImageUrl} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={shareTitle} />
+		<meta name="twitter:description" content={shareDescription} />
+		<meta name="twitter:image" content={shareImageUrl} />
 		<style is:global>
 			html,
 			body {
