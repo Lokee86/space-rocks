@@ -85,12 +85,13 @@ Phase A answers whether the current architecture can safely support more entitie
 
 | Threshold | Policy |
 | --- | --- |
-| Gameplay packet warning: 4KB | Structured warning with contributor counts. |
+| Gameplay packet warning: 4KB | Serious current-model pressure; structured warning with contributor counts. |
 | Gameplay packet danger: 8KB | Treat as a blocker before entity-heavy feature growth. |
 | Slow gameplay write: 20ms | Structured warning with packet size and route context. |
-| Target steady-state gameplay packet: under 4KB | Preferred normal gameplay state. |
+| Preferred frequent realtime packet target: 300-600 bytes | Long-term optimized target for frequent realtime state. |
+| Frequent gameplay packet over ~1KB | Require justification, lower frequency, splitting, or later protocol work. |
 
-These thresholds are provisional. Phase A measures whether they are realistic.
+These thresholds are provisional and describe the current JSON/full-state diagnostic model, not the long-term optimized realtime target. Under 4KB is not automatically good enough; it only says the current architecture has not yet crossed the warning line. Phase A measures how far the current model is from the future target.
 
 ### Required Large-Packet Diagnostics
 
