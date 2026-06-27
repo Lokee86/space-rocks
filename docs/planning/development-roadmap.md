@@ -138,6 +138,10 @@ Remaining web polish and SEO/shareability planning live in the web planning docs
 
 Make packet pressure measurable before adding systems that increase entity count, event count, or realtime state size.
 
+This phase measures how far the current JSON/full-state packet model is from a future optimized realtime target. The current 4KB and 8KB thresholds are diagnostic alarms for the present architecture, not acceptable long-term packet targets.
+
+Preferred frequent realtime packets should land around 300-600 bytes. Frequent packets over about 1KB should require justification, lower frequency, splitting, or later protocol work.
+
 This phase is measurement and diagnostics, not optimization.
 
 ### Scope
@@ -155,8 +159,8 @@ packet-pressure smoke scenario
 ### Implementation Sequence
 
 ```text
-1. Preserve the current 4KB gameplay packet warning.
-2. Add 8KB danger/blocker classification.
+1. Preserve the current 4KB gameplay packet warning as a current-architecture diagnostic alarm.
+2. Add 8KB danger/blocker classification before entity-heavy feature growth.
 3. Expand server-side large-packet diagnostics.
 4. Add contributor counts for players, sessions, lifecycle entries, asteroids, bullets, pickups, enemies, events, and spawned asteroid totals.
 5. Add encode, build, and write duration where cheap and localized.
