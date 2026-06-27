@@ -5,7 +5,7 @@ const mediaKind = z.enum(["", "images", "youtube"]).default("");
 
 const devlog = defineCollection({
   loader: glob({
-    pattern: "**/*.md",
+    pattern: "**/*.{md,mdx}",
     base: "./src/content/devlog",
   }),
   schema: z.object({
@@ -26,12 +26,13 @@ const devlog = defineCollection({
     articleImages: z.array(z.string()).default([]),
     articleYoutubeUrl: z.string().default(""),
     articleMediaAlt: z.string().default(""),
-    whatChanged: z.string(),
-    callout: z.string(),
-    whatsNext: z.string(),
+    finishedTitle: z.string(),
+    nowTitle: z.string(),
+    comingUpTitle: z.string(),
     finishedBody: z.string(),
     nowBody: z.string(),
     comingUpBody: z.string(),
+    utilityTitle: z.string().default("Utility"),
     utilityText: z.string(),
     finePrint: z.string(),
   }),

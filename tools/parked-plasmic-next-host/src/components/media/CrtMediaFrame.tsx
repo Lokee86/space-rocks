@@ -6,6 +6,7 @@ import styles from "./CrtMediaFrame.module.css";
 
 const CONTROL_VARIANTS = ["previous", "play", "next"] as const satisfies readonly MediaControlVariant[];
 const ALL_CONTROL_VARIANTS: MediaControlVariant[] = ["previous", "rewind", "play", "pause", "fastForward", "next"];
+const YOUTUBE_IFRAME_API_SRC = "https://www.youtube.com/iframe_api";
 
 // Source-image coordinates for media_frame.png.
 const BOTTOM_STRIP_SOURCE = { x: 46, y: 440, width: 592, height: 84 };
@@ -22,6 +23,99 @@ type ControlSlot = (typeof CONTROL_VARIANTS)[number];
 type ControlConfig = { slot: ControlSlot; variant: MediaControlVariant; disabled: boolean; label: string; onClick?: () => void };
 type InsetValue = string | number;
 type ShaderProps = Omit<CrtShaderCanvasProps, "className" | "enabled">;
+type YouTubePlayerState = {
+  PLAYING: number;
+  PAUSED: number;
+  ENDED: number;
+};
+type YouTubePlayer = new (
+  elementId: string | HTMLElement,
+  options?: {
+    events?: {
+      onReady?: (event: { target: YouTubePlayerInstance }) => void;
+      onStateChange?: (event: { data: number; target: YouTubePlayerInstance }) => void;
+      onError?: (event: unknown) => void;
+    };
+  },
+) => YouTubePlayerInstance;
+type YouTubePlayerInstance = {
+  destroy?: () => void;
+  getCurrentTime?: () => number;
+  seekTo?: (seconds: number, allowSeekAhead: boolean) => void;
+  pauseVideo?: () => void;
+  playVideo?: () => void;
+};
+type YouTubeApi = {
+  Player: YouTubePlayer;
+  PlayerState?: YouTubePlayerState;
+};
+
+declare global {
+  interface Window {
+    YT?: YouTubeApi;
+    onYouTubeIframeAPIReady?: (() => void) | undefined;
+  }
+}
+
+let youtubeApiReadyPromise: Promise<YouTubeApi> | null = null;
+
+function loadYouTubeIframeApi(): Promise<YouTubeApi> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("YouTube iframe API can only load in the browser"));
+  }
+
+  if (window.YT?.Player) {
+    return Promise.resolve(window.YT);
+  }
+
+  if (youtubeApiReadyPromise) {
+    return youtubeApiReadyPromise;
+  }
+
+  youtubeApiReadyPromise = new Promise<YouTubeApi>((resolve, reject) => {
+    const existingReady = window.onYouTubeIframeAPIReady;
+    const finalizeReady = () => {
+      if (window.YT?.Player) {
+        resolve(window.YT);
+        return;
+      }
+      youtubeApiReadyPromise = null;
+      reject(new Error("YouTube iframe API did not expose window.YT.Player"));
+    };
+
+    window.onYouTubeIframeAPIReady = () => {
+      existingReady?.();
+      finalizeReady();
+    };
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src="${YOUTUBE_IFRAME_API_SRC}"]`,
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener(
+        "error",
+        () => {
+          youtubeApiReadyPromise = null;
+          reject(new Error("Failed to load YouTube iframe API"));
+        },
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = YOUTUBE_IFRAME_API_SRC;
+    script.async = true;
+    script.onerror = () => {
+      youtubeApiReadyPromise = null;
+      reject(new Error("Failed to load YouTube iframe API"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return youtubeApiReadyPromise;
+}
 
 function percent(value: number) {
   return `${value * 100}%`;
@@ -46,6 +140,49 @@ function parseImageItems(imageItems: string | string[] | undefined) {
   return values.map((value) => value.trim()).filter(Boolean);
 }
 
+function getYouTubeEmbedUrl(youtubeUrl: string | undefined) {
+  if (!youtubeUrl) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(youtubeUrl);
+    const host = url.hostname.replace(/^www\./, "");
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+    const buildEmbedUrl = (videoId: string) => {
+      const embedUrl = new URL(`https://www.youtube.com/embed/${videoId}`);
+      embedUrl.searchParams.set("enablejsapi", "1");
+
+      if (origin) {
+        embedUrl.searchParams.set("origin", origin);
+      }
+
+      return embedUrl.toString();
+    };
+
+    if (host === "youtu.be") {
+      const videoId = url.pathname.split("/").filter(Boolean)[0];
+      return videoId ? buildEmbedUrl(videoId) : undefined;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (url.pathname === "/watch") {
+        const videoId = url.searchParams.get("v");
+        return videoId ? buildEmbedUrl(videoId) : undefined;
+      }
+
+      const embedMatch = url.pathname.match(/^\/embed\/([^/?#]+)/);
+      if (embedMatch?.[1]) {
+        return buildEmbedUrl(embedMatch[1]);
+      }
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}
+
 function clampIndex(index: number, length: number) {
   if (length <= 0) return 0;
   return Math.min(Math.max(Math.trunc(index), 0), length - 1);
@@ -53,6 +190,68 @@ function clampIndex(index: number, length: number) {
 
 function formatInsetValue(value: InsetValue) {
   return typeof value === "number" ? `${value}%` : value;
+}
+
+function parseRatio(value: string) {
+  const match = value.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
+  if (!match) return undefined;
+
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return undefined;
+  }
+
+  return width / height;
+}
+
+function parsePercentInset(value: InsetValue) {
+  const percentValue =
+    typeof value === "number"
+      ? value
+      : /^\s*\d+(?:\.\d+)?%\s*$/.test(value)
+        ? Number.parseFloat(value)
+        : Number.NaN;
+  const inset = percentValue / 100;
+
+  return Number.isFinite(inset) && inset >= 0 && inset < 1 ? inset : undefined;
+}
+
+function getShellAspectRatio(
+  aspectRatio: string,
+  leftInsetValue: InsetValue,
+  rightInsetValue: InsetValue,
+  topInsetValue: InsetValue,
+  bottomInsetValue: InsetValue,
+) {
+  const viewportAspectRatio = parseRatio(aspectRatio);
+  const leftInset = parsePercentInset(leftInsetValue);
+  const rightInset = parsePercentInset(rightInsetValue);
+  const topInset = parsePercentInset(topInsetValue);
+  const bottomInset = parsePercentInset(bottomInsetValue);
+
+  if (
+    viewportAspectRatio === undefined ||
+    leftInset === undefined ||
+    rightInset === undefined ||
+    topInset === undefined ||
+    bottomInset === undefined
+  ) {
+    return aspectRatio;
+  }
+
+  const viewportWidthFraction = 1 - leftInset - rightInset;
+  const viewportHeightFraction = 1 - topInset - bottomInset;
+  if (viewportWidthFraction <= 0 || viewportHeightFraction <= 0) {
+    return aspectRatio;
+  }
+
+  const shellAspectRatio =
+    viewportAspectRatio * viewportHeightFraction / viewportWidthFraction;
+
+  return Number.isFinite(shellAspectRatio) && shellAspectRatio > 0
+    ? shellAspectRatio
+    : aspectRatio;
 }
 
 function buttonRowStyle(): CSSProperties {
@@ -73,12 +272,14 @@ type CrtMediaFrameProps = {
   src?: string;
   alt?: string;
   caption?: string;
-  aspectRatio?: "16 / 9" | "4 / 3" | "1 / 1";
+  aspectRatio?: "16 / 9" | "16 / 10.95" | "4 / 3" | "1 / 1";
   fit?: "cover" | "contain";
   tint?: "cyan" | "yellow" | "red";
   mediaMode?: MediaMode;
   imageItems?: string | string[];
   videoSrc?: string;
+  youtubeUrl?: string;
+  youtubeTitle?: string;
   autoAdvanceMs?: number;
   seekSeconds?: number;
   initialIndex?: number;
@@ -104,12 +305,13 @@ export function CrtMediaFrame({
   src,
   alt = "",
   caption,
-  aspectRatio = "16 / 9",
   fit = "cover",
   tint = "cyan",
   mediaMode,
   imageItems,
   videoSrc,
+  youtubeUrl,
+  youtubeTitle,
   autoAdvanceMs = 5000,
   seekSeconds = 10,
   initialIndex = 0,
@@ -161,21 +363,31 @@ export function CrtMediaFrame({
   effectCutoff = 0.018,
   effectGain = 1.25,
   animationSpeed = 1,
+  aspectRatio = "16 / 9",
   screenInsetLeft = "5%",
   screenInsetRight = "5%",
-  screenInsetTop = "5%",
-  screenInsetBottom = "10%",
+  screenInsetTop = "11%",
+  screenInsetBottom = "15%",
   showControls = true,
   disabledControls = "",
   children,
 }: CrtMediaFrameProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const youtubePlayerRef = useRef<YouTubePlayerInstance | null>(null);
   const [currentIndex, setCurrentIndex] = useState(() => clampIndex(initialIndex, 1));
-  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(false);
+  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(
+    () => parseImageItems(imageItems).length > 1,
+  );
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isYouTubeReady, setIsYouTubeReady] = useState(false);
+  const [isYouTubePlaying, setIsYouTubePlaying] = useState(false);
   const parsedImageItems = parseImageItems(imageItems);
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(youtubeUrl);
   const effectiveMediaMode =
-    mediaMode ?? (videoSrc ? "video" : parsedImageItems.length > 0 ? "imageList" : undefined);
+    youtubeEmbedUrl
+      ? undefined
+      : mediaMode ?? (videoSrc ? "video" : parsedImageItems.length > 0 ? "imageList" : undefined);
   const imageSources =
     effectiveMediaMode === "imageList"
       ? parsedImageItems.length > 0
@@ -185,10 +397,17 @@ export function CrtMediaFrame({
           : []
       : [];
   const imageItemsKey = imageSources.join("\n");
-  const mediaAlt = src ? alt : "";
+  const mediaAlt = alt;
   const disabledControlSet = parseDisabledControls(disabledControls);
+  const shellAspectRatio = getShellAspectRatio(
+    aspectRatio,
+    screenInsetLeft,
+    screenInsetRight,
+    screenInsetTop,
+    screenInsetBottom,
+  );
   const frameStyle: CSSProperties = {
-    ["--crt-aspect-ratio" as string]: aspectRatio,
+    ["--crt-aspect-ratio" as string]: shellAspectRatio,
   };
   const shaderIsEnabled = enabled && shaderEnabled;
   const resolvedHorizontalShimmerStrength = horizontalShimmerStrength ?? shimmerStrength ?? 0.055;
@@ -200,12 +419,28 @@ export function CrtMediaFrame({
   };
   const currentImage = imageSources[clampIndex(currentIndex, imageSources.length)];
   const hasMultipleImages = imageSources.length > 1;
+  const isYouTubeMode = Boolean(youtubeEmbedUrl);
   const isImageMode = effectiveMediaMode === "imageList";
   const isVideoMode = effectiveMediaMode === "video" && Boolean(videoSrc);
+  const mediaKind = isYouTubeMode
+    ? "youtube"
+    : isImageMode
+      ? "images"
+      : isVideoMode
+        ? "video"
+        : "empty";
+  const hasRenderableMedia =
+    isYouTubeMode ||
+    (isImageMode && Boolean(currentImage)) ||
+    isVideoMode ||
+    Boolean(src) ||
+    Boolean(children);
+  const shouldShowControls =
+    showControls && hasRenderableMedia && (isImageMode || isVideoMode || isYouTubeMode);
 
   useEffect(() => {
     setCurrentIndex(clampIndex(initialIndex, imageSources.length));
-    setIsSlideshowPlaying(false);
+    setIsSlideshowPlaying(imageSources.length > 1);
   }, [imageItemsKey, initialIndex, imageSources.length]);
 
   useEffect(() => {
@@ -217,6 +452,69 @@ export function CrtMediaFrame({
 
     return () => window.clearInterval(intervalId);
   }, [autoAdvanceMs, imageSources.length, isImageMode, isSlideshowPlaying]);
+
+  useEffect(() => {
+    let isDisposed = false;
+
+    if (!youtubeEmbedUrl || !youtubeIframeRef.current) {
+      youtubePlayerRef.current?.destroy?.();
+      youtubePlayerRef.current = null;
+      setIsYouTubeReady(false);
+      setIsYouTubePlaying(false);
+      return;
+    }
+
+    setIsYouTubeReady(false);
+    setIsYouTubePlaying(false);
+
+    loadYouTubeIframeApi()
+      .then((youtubeApi) => {
+        if (isDisposed || !youtubeIframeRef.current) {
+          return;
+        }
+
+        youtubePlayerRef.current?.destroy?.();
+        youtubePlayerRef.current = new youtubeApi.Player(youtubeIframeRef.current, {
+          events: {
+            onReady: () => {
+              if (!isDisposed) {
+                setIsYouTubeReady(true);
+              }
+            },
+            onStateChange: (event) => {
+              if (isDisposed) {
+                return;
+              }
+
+              const playerState = youtubeApi.PlayerState;
+              const isPlayingState = event.data === playerState?.PLAYING;
+              const isPausedState = event.data === playerState?.PAUSED;
+              const isEndedState = event.data === playerState?.ENDED;
+
+              if (isPlayingState) {
+                setIsYouTubePlaying(true);
+              } else if (isPausedState || isEndedState) {
+                setIsYouTubePlaying(false);
+              }
+            },
+          },
+        });
+      })
+      .catch(() => {
+        if (!isDisposed) {
+          setIsYouTubeReady(false);
+          setIsYouTubePlaying(false);
+        }
+      });
+
+    return () => {
+      isDisposed = true;
+      youtubePlayerRef.current?.destroy?.();
+      youtubePlayerRef.current = null;
+      setIsYouTubeReady(false);
+      setIsYouTubePlaying(false);
+    };
+  }, [youtubeEmbedUrl]);
 
   const seekVideo = (delta: number) => {
     const video = videoRef.current;
@@ -240,6 +538,28 @@ export function CrtMediaFrame({
     video.pause();
   };
 
+  const seekYouTube = (delta: number) => {
+    const player = youtubePlayerRef.current;
+    if (!player || !isYouTubeReady) return;
+
+    const currentTime = player.getCurrentTime?.();
+    if (typeof currentTime !== "number" || Number.isNaN(currentTime)) return;
+
+    player.seekTo?.(Math.max(currentTime + delta, 0), true);
+  };
+
+  const toggleYouTubePlayback = () => {
+    const player = youtubePlayerRef.current;
+    if (!player || !isYouTubeReady) return;
+
+    if (isYouTubePlaying) {
+      player.pauseVideo?.();
+      return;
+    }
+
+    player.playVideo?.();
+  };
+
   const isControlDisabled = (variant: MediaControlVariant, automaticDisabled: boolean, slot?: ControlSlot) =>
     automaticDisabled ||
     disabledControlSet.has(variant) ||
@@ -259,6 +579,18 @@ export function CrtMediaFrame({
         },
         { slot: "next", variant: "next", disabled: isControlDisabled("next", !hasMultipleImages, "next"), label: "Next image", onClick: () => setCurrentIndex((index) => (index + 1) % imageSources.length) },
       ]
+    : isYouTubeMode
+      ? [
+          { slot: "previous", variant: "rewind", disabled: !isYouTubeReady, label: `Rewind ${seekSeconds} seconds`, onClick: () => seekYouTube(-seekSeconds) },
+          {
+            slot: "play",
+            variant: isYouTubePlaying ? "pause" : "play",
+            disabled: !isYouTubeReady,
+            label: isYouTubePlaying ? "Pause YouTube video" : "Play YouTube video",
+            onClick: toggleYouTubePlayback,
+          },
+          { slot: "next", variant: "fastForward", disabled: !isYouTubeReady, label: `Fast forward ${seekSeconds} seconds`, onClick: () => seekYouTube(seekSeconds) },
+        ]
     : isVideoMode
       ? [
           { slot: "previous", variant: "rewind", disabled: isControlDisabled("rewind", false, "previous"), label: `Rewind ${seekSeconds} seconds`, onClick: () => seekVideo(-seekSeconds) },
@@ -280,9 +612,23 @@ export function CrtMediaFrame({
   return (
     <figure className={styles.root} data-tint={tint} style={frameStyle}>
       <div className={styles.shell}>
-        <div className={styles.viewport} data-fit={fit} style={viewportStyle}>
+        <div
+          className={styles.viewport}
+          data-fit={fit}
+          data-media-kind={mediaKind}
+          style={viewportStyle}
+        >
           <div className={styles.mediaLayer}>
-            {isVideoMode ? (
+            {isYouTubeMode ? (
+              <iframe
+                ref={youtubeIframeRef}
+                className={`${styles.media} ${styles.iframe}`}
+                src={youtubeEmbedUrl}
+                title={youtubeTitle || alt || "YouTube video"}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : isVideoMode ? (
               <video
                 ref={videoRef}
                 className={styles.media}
@@ -294,9 +640,17 @@ export function CrtMediaFrame({
                 onEnded={() => setIsVideoPlaying(false)}
               />
             ) : isImageMode && currentImage ? (
-              <img className={styles.media} src={currentImage} alt={mediaAlt} />
+              <img
+                className={`${styles.media} ${styles.imageMedia}`}
+                src={currentImage}
+                alt={mediaAlt}
+              />
             ) : src ? (
-              <img className={styles.media} src={src} alt={mediaAlt} />
+              <img
+                className={`${styles.media} ${styles.imageMedia}`}
+                src={src}
+                alt={mediaAlt}
+              />
             ) : children ? (
               <div className={styles.children}>{children}</div>
             ) : null}
@@ -355,7 +709,7 @@ export function CrtMediaFrame({
         </div>
         <div className={styles.frame} aria-hidden="true" />
         <div className={styles.bottomTraySlot}>
-          {showControls ? (
+          {shouldShowControls ? (
             <div
               className={styles.controls}
               role="group"

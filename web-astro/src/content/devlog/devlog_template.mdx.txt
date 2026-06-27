@@ -1,0 +1,171 @@
+---
+
+# Browser/archive title for the post.
+
+title: "Devlog 0001: Actual Post Title"
+
+# Publish date. Used for sorting/latest-post selection.
+# Format: YYYY-MM-DD
+
+date: 2026-06-26
+
+# Short archive/feed/preview summary.
+# Plain text. Not the same as the visible utility panel.
+
+summary: "Short archive/feed summary for this post."
+
+# Hero copy shown over/near the hero media.
+# Plain text. Keep short and punchy.
+
+heroLine1: "Big punchy"
+heroLine2: "hero copy"
+heroLine3: "goes here"
+
+# Hero media type.
+# Options:
+# - "images"  = use heroImages
+# - "youtube" = use heroYoutubeUrl
+# - ""        = no hero media
+
+heroMediaKind: "images"
+
+# Hero image list.
+# Used only when heroMediaKind is "images".
+# Paths should point to public assets, usually /media/devlog/<post-folder>/<file>.
+
+heroImages:
+
+* "/media/devlog/0001-actual-post/hero.png"
+
+# Hero YouTube URL.
+# Used only when heroMediaKind is "youtube".
+
+heroYoutubeUrl: ""
+
+# Alt/title text for hero media.
+# Plain text. Required for accessibility and video title fallback.
+
+heroMediaAlt: "Space Rocks gameplay screenshot."
+
+# Article eyebrow text above the article title.
+# Plain text.
+# Example: "Devlog Entry - 0001"
+
+articleLabel: "Devlog Entry - 0001"
+
+# Visible article title.
+# Plain text.
+
+articleTitle: "Actual Article Title"
+
+# Short intro/deck paragraph shown above the article media frame.
+# Plain text or simple Markdown only if this field is wired through Markdown rendering.
+
+intro: "Short intro paragraph shown above the article media frame."
+
+# Article media type.
+# Options:
+# - "images"  = use articleImages
+# - "youtube" = use articleYoutubeUrl
+# - ""        = no article media
+
+articleMediaKind: "youtube"
+
+# Article image list.
+# Used only when articleMediaKind is "images".
+
+articleImages: []
+
+# Article YouTube URL.
+# Used only when articleMediaKind is "youtube".
+
+articleYoutubeUrl: "https://www.youtube.com/watch?v=VIDEO_ID"
+
+# Alt/title text for article media.
+# Plain text. Required for accessibility and video title fallback.
+
+articleMediaAlt: "Gameplay video for this devlog."
+
+# Progress card secondary title.
+# Category label stays fixed as "Finished".
+# Plain text.
+
+finishedTitle: "Client V2"
+
+# Progress card body.# Markdown-capable if wired through Markdown rendering.
+
+finishedBody: "Current client foundation."
+
+# Progress card secondary title.
+# Category label stays fixed as "Now".
+
+# Plain text.
+
+nowTitle: "Devlog"
+
+# Progress card body.
+# Markdown-capable if wired through Markdown rendering.
+
+nowBody: "Website and presentation pass."
+
+# Progress card secondary title.
+# Category label stays fixed as "Coming Up".
+
+# Plain text.
+
+comingUpTitle: "Protocol"
+
+# Progress card body.
+# Markdown-capable if wired through Markdown rendering.
+
+comingUpBody: "Realtime packet cleanup."
+
+# Utility panel title.
+# Include this only if the title is exposed from Plasmic.
+
+# Otherwise keep the visible label hardcoded as "Utility".
+
+utilityTitle: "Utility"
+
+# Utility panel body.
+# Use this for visible sidebar status / mission brief / post signal.
+# Markdown-capable if wired through Markdown rendering.
+
+utilityText: >
+Optional sidebar summary text.
+
+Supports **bold**, *italic*, and links if the wrapper renders this field as Markdown.
+
+# Fine print shown below the footer/page shell.
+# Usually boring global work-in-progress copy.
+# Markdown-capable if wired through Markdown rendering, but keep simple.
+
+finePrint: >
+Space Rocks! is an active development project. All media, features, and content
+are work in progress and subject to change before final release.
+----------------------------------------------------------------
+
+## What changed
+
+This is the real article body.
+
+It should be inserted **immediately after `articleMediaFrame`** in the Plasmic article layout.
+
+You can use normal Markdown here:
+
+* Bullet lists
+* **Bold**
+* *Italic*
+* Links
+* Images
+* Code blocks
+
+> This can become a styled blockquote/callout through CSS.
+
+## Notes
+
+More body content here.
+
+## What’s next
+
+Future work, follow-up tasks, or next devlog tease.

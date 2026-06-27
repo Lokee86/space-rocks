@@ -130,14 +130,14 @@ export type PlasmicHomepage__OverridesType = {
   introText?: Flex__<"p">;
   screenStack2?: Flex__<"div">;
   articleMediaFrame?: Flex__<typeof CrtMediaFrame>;
-  whatChangedText?: Flex__<"p">;
-  blockquote?: Flex__<"blockquote">;
-  calloutText?: Flex__<"span">;
-  whatsNextText?: Flex__<"p">;
   aside?: Flex__<"aside">;
+  finishedTitle?: Flex__<"span">;
   finishedBody?: Flex__<"p">;
+  nowTitle?: Flex__<"span">;
   nowBody?: Flex__<"p">;
+  comingUpTitle?: Flex__<"span">;
   comingUpBody?: Flex__<"p">;
+  utilityTitle?: Flex__<"span">;
   utilityText?: Flex__<"p">;
   footer?: Flex__<"footer">;
   finePrint?: Flex__<"span">;
@@ -457,10 +457,10 @@ function PlasmicHomepage__RenderFunc(props: {
                   scanlineHardness={1.65}
                   scanlineLineVarianceStrength={0.08}
                   scanlineStrength={0.24}
-                  screenInsetBottom={11}
-                  screenInsetLeft={2}
-                  screenInsetRight={1}
-                  screenInsetTop={8}
+                  screenInsetBottom={12}
+                  screenInsetLeft={3}
+                  screenInsetRight={2}
+                  screenInsetTop={9}
                   seekSeconds={10}
                   shaderDebug={false}
                   shaderEnabled={true}
@@ -926,10 +926,10 @@ function PlasmicHomepage__RenderFunc(props: {
                       scanlineHardness={1.65}
                       scanlineLineVarianceStrength={0.08}
                       scanlineStrength={0.24}
-                      screenInsetBottom={11}
-                      screenInsetLeft={2}
-                      screenInsetRight={1}
-                      screenInsetTop={8}
+                      screenInsetBottom={12}
+                      screenInsetLeft={3}
+                      screenInsetRight={2}
+                      screenInsetTop={9}
                       seekSeconds={10}
                       shaderDebug={false}
                       shaderEnabled={true}
@@ -946,81 +946,6 @@ function PlasmicHomepage__RenderFunc(props: {
                       waveStrength={1}
                     />
                   </div>
-                  <h2
-                    className={classNames(
-                      "all",
-                      "h2",
-                      "h2__uNJep",
-                      "__wab_text",
-                      sty.h2__in94K
-                    )}
-                    id={"Ae5U6wXArW_l"}
-                  >
-                    {"What changed"}
-                  </h2>
-                  <p
-                    data-plasmic-name={"whatChangedText"}
-                    data-plasmic-override={overrides.whatChangedText}
-                    className={classNames(
-                      "all",
-                      "p",
-                      "p__uNJep",
-                      "__wab_text",
-                      sty.whatChangedText
-                    )}
-                    id={"OEGT_uR78XFv"}
-                  >
-                    {
-                      "Use this content panel for the current article. Body text, bullet lists, screenshots, GIFs, and comparison images all live here."
-                    }
-                  </p>
-                  <blockquote
-                    data-plasmic-name={"blockquote"}
-                    data-plasmic-override={overrides.blockquote}
-                    className={classNames("all", sty.blockquote)}
-                    id={"yDJN7vxc91bA"}
-                  >
-                    <span
-                      data-plasmic-name={"calloutText"}
-                      data-plasmic-override={overrides.calloutText}
-                      className={classNames(
-                        "all",
-                        "span",
-                        "span__uNJep",
-                        "__wab_text",
-                        sty.calloutText
-                      )}
-                      id={"ksvrQbBLRcHG"}
-                    >
-                      {"Callout / quote / patch note highlight goes here."}
-                    </span>
-                  </blockquote>
-                  <h2
-                    className={classNames(
-                      "all",
-                      "h2",
-                      "h2__uNJep",
-                      "__wab_text",
-                      sty.h2__vg9B
-                    )}
-                    id={"E0-KynfStX4T"}
-                  >
-                    {"What\u2019s next"}
-                  </h2>
-                  <p
-                    data-plasmic-name={"whatsNextText"}
-                    data-plasmic-override={overrides.whatsNextText}
-                    className={classNames(
-                      "all",
-                      "p",
-                      "p__uNJep",
-                      "__wab_text",
-                      sty.whatsNextText
-                    )}
-                    id={"FlNdghLeU55C"}
-                  >
-                    {"Next steps, rough roadmap, and developer notes go here."}
-                  </p>
                 </div>
               </article>
               <aside
@@ -1119,12 +1044,14 @@ function PlasmicHomepage__RenderFunc(props: {
                       }}
                     >
                       <span
+                        data-plasmic-name={"finishedTitle"}
+                        data-plasmic-override={overrides.finishedTitle}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span__eKbhG
+                          sty.finishedTitle
                         )}
                       >
                         {"Client V2"}
@@ -1223,12 +1150,14 @@ function PlasmicHomepage__RenderFunc(props: {
                       }}
                     >
                       <span
+                        data-plasmic-name={"nowTitle"}
+                        data-plasmic-override={overrides.nowTitle}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span___11XoU
+                          sty.nowTitle
                         )}
                       >
                         {"Devlog"}
@@ -1327,12 +1256,14 @@ function PlasmicHomepage__RenderFunc(props: {
                       }}
                     >
                       <span
+                        data-plasmic-name={"comingUpTitle"}
+                        data-plasmic-override={overrides.comingUpTitle}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span__fi2Y
+                          sty.comingUpTitle
                         )}
                       >
                         {"Protocol"}
@@ -1391,12 +1322,14 @@ function PlasmicHomepage__RenderFunc(props: {
                     }}
                   >
                     <span
+                      data-plasmic-name={"utilityTitle"}
+                      data-plasmic-override={overrides.utilityTitle}
                       className={classNames(
                         "all",
                         "span",
                         "span__uNJep",
                         "__wab_text",
-                        sty.span__txctb
+                        sty.utilityTitle
                       )}
                       id={"ouzuXoWOEzne"}
                     >
@@ -1556,14 +1489,14 @@ const PlasmicDescendants = {
     "introText",
     "screenStack2",
     "articleMediaFrame",
-    "whatChangedText",
-    "blockquote",
-    "calloutText",
-    "whatsNextText",
     "aside",
+    "finishedTitle",
     "finishedBody",
+    "nowTitle",
     "nowBody",
+    "comingUpTitle",
     "comingUpBody",
+    "utilityTitle",
     "utilityText",
     "footer",
     "finePrint"
@@ -1601,25 +1534,31 @@ const PlasmicDescendants = {
     "articleTitle",
     "introText",
     "screenStack2",
-    "articleMediaFrame",
-    "whatChangedText",
-    "blockquote",
-    "calloutText",
-    "whatsNextText"
+    "articleMediaFrame"
   ],
   articleLabel: ["articleLabel"],
   articleTitle: ["articleTitle"],
   introText: ["introText"],
   screenStack2: ["screenStack2", "articleMediaFrame"],
   articleMediaFrame: ["articleMediaFrame"],
-  whatChangedText: ["whatChangedText"],
-  blockquote: ["blockquote", "calloutText"],
-  calloutText: ["calloutText"],
-  whatsNextText: ["whatsNextText"],
-  aside: ["aside", "finishedBody", "nowBody", "comingUpBody", "utilityText"],
+  aside: [
+    "aside",
+    "finishedTitle",
+    "finishedBody",
+    "nowTitle",
+    "nowBody",
+    "comingUpTitle",
+    "comingUpBody",
+    "utilityTitle",
+    "utilityText"
+  ],
+  finishedTitle: ["finishedTitle"],
   finishedBody: ["finishedBody"],
+  nowTitle: ["nowTitle"],
   nowBody: ["nowBody"],
+  comingUpTitle: ["comingUpTitle"],
   comingUpBody: ["comingUpBody"],
+  utilityTitle: ["utilityTitle"],
   utilityText: ["utilityText"],
   footer: ["footer"],
   finePrint: ["finePrint"]
@@ -1646,14 +1585,14 @@ type NodeDefaultElementType = {
   introText: "p";
   screenStack2: "div";
   articleMediaFrame: typeof CrtMediaFrame;
-  whatChangedText: "p";
-  blockquote: "blockquote";
-  calloutText: "span";
-  whatsNextText: "p";
   aside: "aside";
+  finishedTitle: "span";
   finishedBody: "p";
+  nowTitle: "span";
   nowBody: "p";
+  comingUpTitle: "span";
   comingUpBody: "p";
+  utilityTitle: "span";
   utilityText: "p";
   footer: "footer";
   finePrint: "span";
@@ -1738,14 +1677,14 @@ export const PlasmicHomepage = Object.assign(
     introText: makeNodeComponent("introText"),
     screenStack2: makeNodeComponent("screenStack2"),
     articleMediaFrame: makeNodeComponent("articleMediaFrame"),
-    whatChangedText: makeNodeComponent("whatChangedText"),
-    blockquote: makeNodeComponent("blockquote"),
-    calloutText: makeNodeComponent("calloutText"),
-    whatsNextText: makeNodeComponent("whatsNextText"),
     aside: makeNodeComponent("aside"),
+    finishedTitle: makeNodeComponent("finishedTitle"),
     finishedBody: makeNodeComponent("finishedBody"),
+    nowTitle: makeNodeComponent("nowTitle"),
     nowBody: makeNodeComponent("nowBody"),
+    comingUpTitle: makeNodeComponent("comingUpTitle"),
     comingUpBody: makeNodeComponent("comingUpBody"),
+    utilityTitle: makeNodeComponent("utilityTitle"),
     utilityText: makeNodeComponent("utilityText"),
     footer: makeNodeComponent("footer"),
     finePrint: makeNodeComponent("finePrint"),

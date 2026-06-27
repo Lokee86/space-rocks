@@ -332,7 +332,7 @@
   line-height: 1.7;
   margin: 0px 0px 10px;
 }
-.freeBox__vlwdl {
+.archiveList {
   display: flex;
   flex-direction: column;
   width: 100%;

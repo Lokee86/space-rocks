@@ -192,6 +192,68 @@ function formatInsetValue(value: InsetValue) {
   return typeof value === "number" ? `${value}%` : value;
 }
 
+function parseRatio(value: string) {
+  const match = value.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
+  if (!match) return undefined;
+
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return undefined;
+  }
+
+  return width / height;
+}
+
+function parsePercentInset(value: InsetValue) {
+  const percentValue =
+    typeof value === "number"
+      ? value
+      : /^\s*\d+(?:\.\d+)?%\s*$/.test(value)
+        ? Number.parseFloat(value)
+        : Number.NaN;
+  const inset = percentValue / 100;
+
+  return Number.isFinite(inset) && inset >= 0 && inset < 1 ? inset : undefined;
+}
+
+function getShellAspectRatio(
+  aspectRatio: string,
+  leftInsetValue: InsetValue,
+  rightInsetValue: InsetValue,
+  topInsetValue: InsetValue,
+  bottomInsetValue: InsetValue,
+) {
+  const viewportAspectRatio = parseRatio(aspectRatio);
+  const leftInset = parsePercentInset(leftInsetValue);
+  const rightInset = parsePercentInset(rightInsetValue);
+  const topInset = parsePercentInset(topInsetValue);
+  const bottomInset = parsePercentInset(bottomInsetValue);
+
+  if (
+    viewportAspectRatio === undefined ||
+    leftInset === undefined ||
+    rightInset === undefined ||
+    topInset === undefined ||
+    bottomInset === undefined
+  ) {
+    return aspectRatio;
+  }
+
+  const viewportWidthFraction = 1 - leftInset - rightInset;
+  const viewportHeightFraction = 1 - topInset - bottomInset;
+  if (viewportWidthFraction <= 0 || viewportHeightFraction <= 0) {
+    return aspectRatio;
+  }
+
+  const shellAspectRatio =
+    viewportAspectRatio * viewportHeightFraction / viewportWidthFraction;
+
+  return Number.isFinite(shellAspectRatio) && shellAspectRatio > 0
+    ? shellAspectRatio
+    : aspectRatio;
+}
+
 function buttonRowStyle(): CSSProperties {
   const x = (value: number) => percent(value / BOTTOM_STRIP_SOURCE.width);
   const y = (value: number) => percent(value / BOTTOM_STRIP_SOURCE.height);
@@ -301,7 +363,7 @@ export function CrtMediaFrame({
   effectCutoff = 0.018,
   effectGain = 1.25,
   animationSpeed = 1,
-  aspectRatio = "16 / 10.95",
+  aspectRatio = "16 / 9",
   screenInsetLeft = "5%",
   screenInsetRight = "5%",
   screenInsetTop = "11%",
@@ -337,8 +399,15 @@ export function CrtMediaFrame({
   const imageItemsKey = imageSources.join("\n");
   const mediaAlt = alt;
   const disabledControlSet = parseDisabledControls(disabledControls);
+  const shellAspectRatio = getShellAspectRatio(
+    aspectRatio,
+    screenInsetLeft,
+    screenInsetRight,
+    screenInsetTop,
+    screenInsetBottom,
+  );
   const frameStyle: CSSProperties = {
-    ["--crt-aspect-ratio" as string]: aspectRatio,
+    ["--crt-aspect-ratio" as string]: shellAspectRatio,
   };
   const shaderIsEnabled = enabled && shaderEnabled;
   const resolvedHorizontalShimmerStrength = horizontalShimmerStrength ?? shimmerStrength ?? 0.055;

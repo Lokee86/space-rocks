@@ -5,7 +5,7 @@ import Homepage from "./Homepage";
 import type { HomepageContent } from "../content/homepageContent";
 
 type HomepageClientMountProps = {
-  content: Partial<HomepageContent>;
+  content?: Partial<HomepageContent>;
 };
 
 export default function HomepageClientMount({

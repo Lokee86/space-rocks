@@ -15,12 +15,14 @@ export type HomepageContent = {
   articleImages: string[];
   articleYoutubeUrl: string;
   articleMediaAlt: string;
-  whatChanged: string;
-  callout: string;
-  whatsNext: string;
+  finishedTitle: string;
+  nowTitle: string;
+  comingUpTitle: string;
   finishedBody: string;
   nowBody: string;
   comingUpBody: string;
+  body: string;
+  utilityTitle: string;
   utilityText: string;
   finePrint: string;
 };
@@ -36,12 +38,14 @@ const textContentFields: (keyof HomepageContent)[] = [
   "intro",
   "articleYoutubeUrl",
   "articleMediaAlt",
-  "whatChanged",
-  "callout",
-  "whatsNext",
+  "finishedTitle",
+  "nowTitle",
+  "comingUpTitle",
   "finishedBody",
   "nowBody",
   "comingUpBody",
+  "body",
+  "utilityTitle",
   "utilityText",
   "finePrint",
 ];

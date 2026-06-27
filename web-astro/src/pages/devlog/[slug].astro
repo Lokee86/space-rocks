@@ -1,31 +1,33 @@
 ---
 import { getCollection } from "astro:content";
-import HomepageClientMount from "../../components/HomepageClientMount";
-import "../../components/plasmic/plasmic__default_style.css";
-import "../../components/plasmic/space_rocks_devlog/plasmic.css";
+import HomepageClientMount from '../../components/HomepageClientMount';
+import '../../components/plasmic/plasmic__default_style.css';
+import '../../components/plasmic/space_rocks_devlog/plasmic.css';
 
 export async function getStaticPaths() {
 	const devlogEntries = await getCollection("devlog");
 
 	return devlogEntries.map((entry) => ({
-		params: {
-			slug: entry.id.replace(/\.md$/, ""),
-		},
-		props: {
-			entry,
-		},
+		params: { slug: entry.id },
+		props: { entry },
 	}));
 }
 
 const { entry } = Astro.props;
-const homepageContent = entry.data;
+const homepageContent = {
+	...entry.data,
+	body: entry.body ?? "",
+};
 ---
 
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
-		<title>{entry.data.title}</title>
+		<meta name="generator" content={Astro.generator} />
+		<title>Space Rocks Devlog</title>
 		<style is:global>
 			html,
 			body {

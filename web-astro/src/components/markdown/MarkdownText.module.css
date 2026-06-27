@@ -1,0 +1,16 @@
+.root p {
+  margin: 0 0 1.05em;
+}
+
+.root > :last-child {
+  margin-bottom: 0;
+}
+
+.fullWidth {
+  width: 100%;
+  max-width: none;
+}
+
+.fullWidth > :where(p, ul, ol, blockquote, h1, h2, h3, h4, h5, h6) {
+  max-width: none;
+}
