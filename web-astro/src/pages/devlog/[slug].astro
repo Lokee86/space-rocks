@@ -19,7 +19,7 @@ const homepageContent = {
 	body: entry.body ?? "",
 };
 
-const shareImageUrl = new URL("/assets/ui/thumbnail.png", Astro.site).toString();
+const shareImageUrl = new URL("/assets/ui/thumbnailv2.png", Astro.site).toString();
 const shareUrl = new URL(`/devlog/${entry.id}/`, Astro.site).toString();
 const shareTitle = entry.data.title;
 const shareDescription = entry.data.summary;
