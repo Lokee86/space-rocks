@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-Network observability is the current next priority. Realtime protocol work remains the next architectural step after packet-budget and observability work.
+The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Remaining telemetry and logging work stays deferred until it is useful during P2 validation or after packet-size reduction.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -75,7 +75,7 @@ Do not add ranked PvP matchmaking before Combat Rating and ranked eligibility ex
 
 Do not turn the V0 devlog site into the launch website.
 
-Do not start with protobuf before lanes, snapshots, deltas, priority policy, quantization, and packet ownership are proven.
+Do not start with protobuf before lanes, snapshots, deltas, priority policy, and packet ownership are proven.
 
 Do not let devtooling-suite planning block the roadmap, but do implement telemetry required by packet-budget work.
 ```
@@ -138,7 +138,7 @@ Remaining web polish and SEO/shareability planning live in the web planning docs
 
 Make packet pressure measurable before adding systems that increase entity count, event count, or realtime state size.
 
-This phase measures how far the current JSON/full-state packet model is from a future optimized realtime target. The current 4KB and 8KB thresholds are diagnostic alarms for the present architecture, not acceptable long-term packet targets.
+This phase measures how far the current JSON/full-state packet model is from the lane-scoped realtime target.
 
 Preferred frequent realtime packets should land around 300-600 bytes. Frequent packets over about 1KB should require justification, lower frequency, splitting, or later protocol work.
 
@@ -156,22 +156,6 @@ devtools packet telemetry display
 packet-pressure smoke scenario
 ```
 
-### Implementation Sequence
-
-```text
-1. Preserve the current 4KB gameplay packet warning as a current-architecture diagnostic alarm.
-2. Add 8KB danger/blocker classification before entity-heavy feature growth.
-3. Expand server-side large-packet diagnostics.
-4. Add contributor counts for players, sessions, lifecycle entries, asteroids, bullets, pickups, enemies, events, and spawned asteroid totals.
-5. Add encode, build, and write duration where cheap and localized.
-6. Add client inbound raw message byte tracking by packet type.
-7. Surface latest and max packet bytes in the World Telemetry Overlay.
-8. Add optional average packet bytes if cheap.
-9. Add large-packet warning count if cheap.
-10. Add a packet-pressure smoke checklist.
-11. Update logging and telemetry docs as implementation becomes current.
-```
-
 ### Completion Criteria
 
 ```text
@@ -187,7 +171,7 @@ no gameplay behavior has changed
 ### Decision Gate
 
 ```text
-If normal gameplay packets often exceed 4KB or spike toward 8KB:
+If normal gameplay packets are too large for the target budget:
 -> proceed directly to realtime protocol architecture.
 
 If packet size is acceptable but timing, jitter, or build/write cost is unclear:
@@ -196,7 +180,6 @@ If packet size is acceptable but timing, jitter, or build/write cost is unclear:
 If packet size stays under budget and timing is clean:
 -> platform/account work may move ahead before deeper optimization.
 ```
-
 ## Phase P2 - Realtime Protocol Architecture
 
 ### Goal
@@ -215,8 +198,8 @@ protocol/packetcodec owns byte representation.
 
 ```text
 server protocol/realtime package
+services/game-server/internal/protocol/realtime/packets_generated.go
 client protocol/realtime scripts
-client packetcodec relocation
 lane vocabulary
 full snapshots
 delta snapshots
@@ -225,29 +208,49 @@ sequence numbers
 create/update/delete records
 priority policy
 resync path
+shadow verification
+cutover
+old state deletion
+```
+
+### P2 Validation Support
+
+Deferred network telemetry and logging work can resume during P2 when it helps validate protocol changes:
+
+```text
+client inbound packet byte tracking when useful
+World Telemetry Overlay packet display when useful
+client/server packet comparison if needed
+packet-pressure smoke checks for protocol changes
+logging refinements needed to validate packet-size reduction
+```
+
+This support work belongs to P2 when it helps validate lanes, snapshots, deltas, baseline handling, packet-size improvements, or realtime protocol behavior.
+
+### Deferred Next-Phase Codec And Compact Representation Work
+
+```text
+client packetcodec relocation
 quantization rules
 bit-packing rules
-protobuf as later target
+protobuf
+binary/bitpacking work targets the new lane protocol, not old state
+compact representation targets the new lane protocol, not old state
 ```
 
 ### Implementation Sequence
 
 ```text
-1. Create the server realtime protocol boundary.
-2. Create the client realtime protocol boundary.
-3. Move client packet codec files under client/scripts/protocol/packetcodec/.
-4. Keep networking/outbound focused on delivery mechanics.
-5. Define reliable control, realtime state, event, slow world, and debug/telemetry lanes.
-6. Add full snapshot semantics.
-7. Add baseline IDs and sequence numbers.
-8. Add delta snapshot semantics.
-9. Add create, update, and delete records.
-10. Add stale update discard and explicit resync.
-11. Add priority policy.
-12. Split high-frequency state from slow/debug/event state.
-13. Add quantization rules.
-14. Add bit packing where evidence justifies it.
-15. Stage protobuf after the protocol shape is proven.
+1. Schema/data-sync packet families and planning doc normalization.
+2. Server projections/full/delta/baselines plus non-draining snapshot/event API. Projection, scheduling, and encoding do not drain; shadow may peek/copy pending events but never drains.
+3. Priority scheduler and budget planner.
+4. Generic lane metrics and removal of legacy state packet warning noise.
+5. Client protocol/realtime lane caches and compatibility read model.
+6. Shadow encode/measure/parity with no send and no event drain. Shadow never drains; active `event_batch` drains only after socket write/enqueue success.
+7. Runtime cutover behind a temporary dev-only switch.
+8. Delete old `state` path and temporary switch.
+9. Replace compatibility read model with lane-native presentation adapters.
+10. Next phase: codec move plus compact/binary representation.
 ```
 
 ### Completion Criteria
@@ -256,13 +259,15 @@ protobuf as later target
 realtime protocol policy is separate from outbound delivery
 full and delta snapshots exist
 per-session baselines exist
+shared-world and per-session overlay baselines exist
 sequence handling exists
-lane and reliability classes exist
-debug/telemetry data is separate from normal state packets
-high-frequency state no longer depends on one full reliable packet every tick
-protobuf remains staged after the model is stable
+priority policy exists
+lane/priority metrics exist
+old state path is removed after cutover
+high-frequency state no longer depends on one full combined packet every tick
+stable event identity exists before event_batch cutover
+event_batch duplicate suppression and control-path/event-drain ordering are defined after active socket write/enqueue success
 ```
-
 ## Phase P3 - Technical Release Foundation
 
 ### Goal
@@ -779,3 +784,6 @@ This roadmap is not a feature backlog.
 It should remain a sequencing and dependency document. Detailed scope belongs in the owner documents for each domain, service, protocol, data, or devtools area.
 
 When implementation changes make a planned system current, update the relevant current documentation instead of expanding this roadmap with implementation details.
+
+
+
