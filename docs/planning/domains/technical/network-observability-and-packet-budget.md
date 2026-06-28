@@ -19,6 +19,18 @@ This doc owns planning for gameplay packet budget, outbound byte metrics, large-
 
 It should stay on measurement and observability rather than packet-format redesign.
 
+## Canonical Packet Budget
+
+These are the current project policy numbers for realtime gameplay traffic:
+
+- Client input packets target 32-64 B.
+- Client input packets warn above 128 B.
+- Normal server snapshots target 250-500 B.
+- Busy server snapshots may reach 500-800 B.
+- Sustained server snapshots above 800 B should warn.
+- Realtime gameplay datagrams must stay below roughly 1,100-1,200 B.
+- Non-realtime, control, and debug payloads are separate from gameplay packet budgets and must not redefine the realtime budget.
+
 ## Current Inputs
 
 - gameplay packet budget inputs
@@ -33,13 +45,13 @@ It should stay on measurement and observability rather than packet-format redesi
 - diagnostic expectations for large gameplay packets
 - visibility requirements for devtools and logging
 
-## Phase A
+## Phase P1 - Network Observability And Packet Budget
 
-Phase A answers whether the current architecture can safely support more entities, enemies, bullet hell patterns, progression events, and online play without flying blind. Phase A is measurement and diagnostics, not optimization. Phase A should make later optimization choices evidence-based.
+P1 answers whether the current architecture can safely support more entities and realtime state growth without flying blind. P1 is now a server-side packet evidence checkpoint. P1 records enough pressure and contributor data to select Phase P2 realtime protocol architecture. P1 is measurement and instrumentation, not optimization.
 
 ### Existing Baseline
 
-- `services/game-server/internal/networking/outbound/gameplay_state_metrics.go` already warns on gameplay presentation packets over 4KB.
+- `services/game-server/internal/networking/packetmetrics/` owns gameplay packet severity classification, large-packet diagnostics, contributor counts, and slow-write metric context.
 - The same outbound path warns on gameplay presentation writes slower than 20ms.
 - `services/game-server/internal/networking/outbound/` owns outbound gameplay presentation helpers.
 - `services/game-server/internal/protocol/packetcodec/` owns JSON packet encode/decode.
@@ -61,7 +73,7 @@ Phase A answers whether the current architecture can safely support more entitie
 - Define an initial gameplay packet budget.
 - Measure outbound gameplay packet byte size.
 - Identify contributor counts for large gameplay packets.
-- Surface packet byte pressure in devtools telemetry.
+- Surface packet byte pressure in devtools telemetry when useful during P2 validation.
 - Keep observability separate from gameplay behavior.
 - Preserve JSON encoding until measurements identify the bottleneck.
 - Provide evidence for later packet strategy work.
@@ -81,17 +93,14 @@ Phase A answers whether the current architecture can safely support more entitie
 - No raw full-payload packet dumps by default.
 - No gameplay behavior changes.
 
-### Initial Packet Budget
+### Initial Guidance
 
-| Threshold | Policy |
-| --- | --- |
-| Gameplay packet warning: 4KB | Serious current-model pressure; structured warning with contributor counts. |
-| Gameplay packet danger: 8KB | Treat as a blocker before entity-heavy feature growth. |
-| Slow gameplay write: 20ms | Structured warning with packet size and route context. |
-| Preferred frequent realtime packet target: 300-600 bytes | Long-term optimized target for frequent realtime state. |
-| Frequent gameplay packet over ~1KB | Require justification, lower frequency, splitting, or later protocol work. |
-
-These thresholds are provisional and describe the current JSON/full-state diagnostic model, not the long-term optimized realtime target. Under 4KB is not automatically good enough; it only says the current architecture has not yet crossed the warning line. Phase A measures how far the current model is from the future target.
+- Gameplay snapshots have a tight budget on the realtime path.
+- Non-realtime, control, and debug payloads are separate from gameplay packet budgets.
+- Large gameplay packets are diagnostic signals, not a steady-state allowance.
+- The canonical budget lives here; remaining telemetry and logging work is paused until packet-size reduction makes it useful again.
+- Preferred frequent realtime packets should stay small and predictable.
+- Packets that grow noticeably should be justified, lowered in frequency, split, or deferred to later protocol work.
 
 ### Required Large-Packet Diagnostics
 
@@ -116,7 +125,8 @@ These thresholds are provisional and describe the current JSON/full-state diagno
 
 Raw packet payloads should not be logged by default.
 
-### Devtools Display Requirements
+### Phase P2 Validation Display Requirements
+These display requirements are deferred until they are useful during Phase P2 validation; they are not Phase P1 completion blockers.
 
 - The World Telemetry Overlay should show latest gameplay packet bytes.
 - The World Telemetry Overlay should show max gameplay packet bytes.
@@ -125,39 +135,37 @@ Raw packet payloads should not be logged by default.
 - Existing entity counts and timing values should remain.
 - This remains devtools-only and must not affect gameplay.
 
-### Likely Phase A Workstreams
+### Likely Phase P1 Workstreams
 
 1. Document packet budget policy.
 2. Extend server contributor metrics in the outbound gameplay presentation path.
-3. Measure client-side inbound raw message byte length by packet type.
-4. Surface packet byte metrics in the world telemetry overlay.
-5. Update telemetry/logging docs and add a smoke checklist.
+3. Add cheap build, encode, and write duration context.
+4. Keep remaining telemetry/logging paused until P2 validation needs it.
 
-### Phase A Completion Criteria
+### Phase P1 Completion Criteria
 
 - Packet budget policy is documented.
 - Large gameplay packets include contributor-count diagnostics.
 - Slow writes include useful context.
-- Devtools overlay exposes packet byte pressure.
-- Manual smoke can demonstrate packet size changes as bullets and asteroids increase.
+- Server evidence is enough to select realtime protocol work.
 - No packet format has changed.
 - No gameplay behavior has changed.
 - No feature work is mixed in.
 
-### Post-Phase-A Decision Gate
+### Phase P1 Decision Gate
 
-Phase A does not automatically choose the Phase B emphasis. Phase A exists to decide what the next major route inside Phase B should be. Network optimization and related protocol work is the most likely next route if Phase A confirms current packet pressure, because gameplay packets are already known to exceed 4KB at times before enemies or bullet hell mechanics exist.
+Phase P1 uses server-side packet evidence to decide whether Phase P2 should start immediately. Realtime protocol architecture is the selected Phase P2 route when current packet pressure is confirmed, because gameplay packets are already over budget before enemies or bullet hell mechanics exist.
 
-Route 1 - Network optimization immediately
+Outcome 1 - Start Phase P2 realtime protocol work immediately
 
-- Choose this if normal gameplay packets are often over 4KB.
-- Choose this if packets spike toward or past 8KB.
+- Choose this if normal gameplay packets are often large.
+- Choose this if packets spike upward under gameplay load.
 - Choose this if packet size grows predictably with bullets, asteroids, pickups, or players.
 - Choose this if write times or jitter correlate with packet size.
 - Choose this if entity-heavy features would clearly make packet pressure worse.
-- This is the likely route if Phase A confirms the current concern.
+- This is the likely outcome if Phase P1 confirms the current concern.
 
-Route 2 - More observability hardening before optimization
+Outcome 2 - Add only the observability needed before protocol work
 
 - Choose this if packet size is measured but contributors are unclear.
 - Choose this if client overlay and server logs disagree.
@@ -165,37 +173,51 @@ Route 2 - More observability hardening before optimization
 - Choose this if packet size is acceptable but tick, build, or write timing is not.
 - Choose this if instrumentation is too noisy or incomplete to justify a protocol change.
 
-Route 3 - Move to auth and account identity planning before optimization
+Outcome 3 - Move to account identity planning before protocol work
 
-- Choose this only if normal gameplay packets stay below 4KB.
+- Choose this only if normal gameplay packets stay modest and are not trending upward.
 - Choose this only if spikes are rare and explainable.
 - Choose this only if write timing and jitter show no packet-size pressure.
 - Choose this only if packet size is not blocking enemies, bullet hell, or progression soon.
 
-Likely optimization families under Route 1, without choosing one:
+Likely protocol work families under Phase P2, without choosing one:
 
 - Compact wire shape or generated short field names, if JSON key overhead dominates.
 - Delta snapshots, if repeated full entity state dominates.
-- Fast/slow packet lane split, if all data is being sent at the same frequency.
-- Event queue trimming or acknowledgement, if events accumulate or repeat too long.
+- Session lane split, if all data is being sent at the same frequency.
+- Event batching, event IDs, batch IDs, duplicate suppression, and drain-after-active-socket-write/enqueue-success behavior if presentation events accumulate or repeat too long.
 - Debug lane separation, if debug or devtools data leaks into normal gameplay packets.
 - Shared room snapshot plus per-client overlay, if most state is duplicated per client but only small portions are player-specific.
 
-The next planning work after Phase A should be selected by evidence from the decision gate, not by feature visibility alone.
+The next planning work after Phase P1 should be selected by evidence from the decision gate, not by feature visibility alone.
+### P2 Validation Support
+
+During P2, deferred network telemetry and logging work can resume when it helps validate protocol changes:
+
+```text
+client inbound packet byte tracking when useful
+World Telemetry Overlay packet display when useful
+client/server packet comparison if needed
+packet-pressure smoke checks for protocol changes
+logging refinements needed to validate packet-size reduction
+```
+
+This support work belongs to P2 when it helps validate lanes, snapshots, deltas, baseline handling, packet-size improvements, or realtime protocol behavior.
 
 ## Implementation sequence
 
-1. Document the packet budget policy and keep the current 4KB and 8KB thresholds provisional.
+1. Document the canonical packet budget and keep measurement and diagnostics current.
 2. Extend outbound gameplay presentation metrics with contributor-count diagnostics.
-3. Surface packet byte pressure in the World Telemetry Overlay and logging inventory.
-4. Measure enough packet behavior to choose the next route after Phase A evidence lands.
+3. Add cheap build, encode, and write duration context.
+4. Use server-side packet evidence to select realtime protocol work.
+5. Resume remaining telemetry/logging during P2 when it helps validate protocol changes.
 
 ## Open decisions
 
 - Which packet sizes should remain warnings versus blockers?
 - Which contributor counts are worth tracking long term?
 - Which packet metrics should stay devtools-only versus also land in logs?
-- Whether Phase A evidence pushes the next step toward network optimization, more observability hardening, or other planning.
+- Whether Phase P1 evidence pushes the next step toward realtime protocol work, more observability hardening, or other planning.
 
 ## Related docs
 
@@ -207,4 +229,7 @@ The next planning work after Phase A should be selected by evidence from the dec
 
 ## Notes
 
-Preserve the packet-budget policy and Phase A structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
+Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
+
+
+

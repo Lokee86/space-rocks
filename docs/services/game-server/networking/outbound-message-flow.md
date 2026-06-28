@@ -151,7 +151,7 @@ That helper:
 2. Calls `gameInstance.StatePacket(playerID)`.
 3. Stamps `server_sent_msec`.
 4. Encodes the packet through `packetcodec.Encode()`.
-5. Logs a warning if the encoded gameplay packet is larger than 4KB.
+5. Logs a warning if the encoded gameplay packet is unusually large.
 6. Returns the encoded bytes to the write loop.
 
 After writing the packet, the write loop logs a warning if the gameplay presentation write took longer than 20ms.
@@ -333,7 +333,7 @@ The session outbound queue is not a durable delivery guarantee. It is a bounded 
 
 Gameplay presentation packets currently emit two outbound diagnostics:
 
-- A warning when encoded gameplay state is larger than 4KB.
+- A warning when encoded gameplay state is unusually large.
 - A warning when the gameplay state WebSocket write takes longer than 20ms.
 
 The warning context includes room ID, player ID, and remote address.

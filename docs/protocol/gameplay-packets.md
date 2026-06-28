@@ -370,7 +370,7 @@ The packet reports the server-owned pause state for the active player on that se
 
 ### Embedded `events`
 
-Gameplay presentation events are embedded in `StatePacket.events`.
+Gameplay presentation events are embedded in `StatePacket.events`, and stable event identity is required before `event_batch` cutover. Future `event_batch` delivery must not drain events on projection, scheduling, shadow, or encode; it drains only after active socket write/enqueue success.
 
 Current event payload shape:
 
@@ -412,7 +412,7 @@ The server stores pending packet-facing events in:
 pendingPresentationEvents[playerID]
 ```
 
-`Game.StatePacket(playerID)` copies the requesting player's pending events into `StatePacket.events` and then drains only that player's queue.
+Event IDs are assigned when pending presentation events enter the pending event queue, not during projection. `Game.StatePacket(playerID)` copies the requesting player's pending events into `StatePacket.events`; shadow projection may peek and copy pending events, but it must never drain them. Active event drain happens only after the active send path selects the records and they are successfully encoded for active send.
 
 The event lane is transient presentation state. It is not a durable event log, not a guaranteed-delivery queue, and not the domain event source of truth.
 
@@ -667,7 +667,7 @@ NetworkClient.poll
 -> HUD, world sync, alive/respawn restore, event presentation, devtools state
 ```
 
-The client normalizes gameplay state before applying it. Broad presentation code should consume normalized gameplay state rather than scattering raw packet field access.
+The client normalizes gameplay state before applying it. Broad presentation code should consume normalized gameplay state rather than scattering raw packet field access. The old `has_received_gameplay_state` / `has_received_state` readiness concept becomes required lane baseline sync, and the docs should refer to both `GameplayStateFlow.has_received_gameplay_state` and `GameplayShellFlow.has_received_state` when naming client readiness.
 
 ## Session-state requirements
 
@@ -1020,3 +1020,5 @@ Owns player-data routing and persistence, not gameplay state packets.
 The current server inbound route silently drops packets that decode but are not consumed by a packet-family handler. That is current behavior, not a compatibility promise.
 
 New state packet fields must be copied through any wrapper, adapter, debug, or presentation path that re-emits state. Do not assume a new `StatePacket` field automatically survives every outbound path.
+
+
