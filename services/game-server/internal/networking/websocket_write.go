@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
+	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
 )
 
 const debugStatusWriteIntervalTicks = 8
@@ -36,7 +37,7 @@ func writeServerMessages(
 				continue
 			}
 
-			response, ok := outbound.BuildGameplayPresentationStateResponse(session.room, session.currentGamePlayerID, session.currentRoomID, remoteAddr)
+			response, packetMetrics, ok := outbound.BuildGameplayPresentationStateResponse(session.room, session.currentGamePlayerID, session.currentRoomID, remoteAddr)
 			if !ok {
 				continue
 			}
@@ -47,7 +48,7 @@ func writeServerMessages(
 			}) {
 				return
 			}
-			outbound.LogSlowGameplayPresentationWrite(time.Since(writeStarted), session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			packetmetrics.LogSlowGameplayPresentationWrite(time.Since(writeStarted), packetMetrics, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 			lastDebugShapeCatalogRoomID = writeDebugShapeCatalogMessage(session, remoteAddr, lastDebugShapeCatalogRoomID)
 			debugStatusTick++
 			if debugStatusTick >= debugStatusWriteIntervalTicks {
