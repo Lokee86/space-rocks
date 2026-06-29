@@ -18,6 +18,45 @@ class FakeEventSink:
 		})
 
 
+class FakeReadiness:
+	func is_gameplay_ready() -> bool:
+		return true
+
+
+class FakePresentationTarget:
+	var last_world_lane_state = null
+	var last_overlay_lane_state = null
+	var last_session_lane_state = null
+
+	func apply_world_lane_state(world_sync, world_lane_state, self_id: String) -> void:
+		last_world_lane_state = world_lane_state
+
+	func apply_overlay_lane_state(hud_flow, overlay_lane_state) -> void:
+		last_overlay_lane_state = overlay_lane_state
+
+	func apply_session_lane_state(hud_flow, session_lane_state, self_id: String) -> void:
+		last_session_lane_state = session_lane_state
+
+
+class FakeEventFlow:
+	var apply_server_events_call_count := 0
+	var received_event_count := 0
+	var received_event_types: Array = []
+
+	func apply_server_events(events: Array, self_id: String) -> void:
+		apply_server_events_call_count += 1
+		received_event_count += events.size()
+		for event in events:
+			received_event_types.append(str(event.get("type", "")))
+
+
+class FakeRouter:
+	var world_lane_state = null
+	var overlay_lane_state = null
+	var session_lane_state = null
+	var event_batch_applier = null
+
+
 func test_event_batch_applies_events_once() -> void:
 	var applier := EventBatchApplier.new()
 	var sink := FakeEventSink.new()
@@ -35,6 +74,39 @@ func test_event_batch_applies_events_once() -> void:
 	assert_true(applied)
 	assert_eq(sink.handled_events.size(), 1)
 	assert_eq(sink.handled_events[0]["type"], "spark")
+
+
+func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow() -> void:
+	var applier := EventBatchApplier.new()
+	var router := FakeRouter.new()
+	var presentation_adapter := PresentationAdapter.new()
+	var readiness := FakeReadiness.new()
+	var world_sync := FakePresentationTarget.new()
+	var hud_flow := FakePresentationTarget.new()
+	var event_flow := FakeEventFlow.new()
+
+	router.world_lane_state = {}
+	router.overlay_lane_state = {}
+	router.session_lane_state = {}
+	router.event_batch_applier = applier
+	presentation_adapter.bind_gameplay_readiness(readiness)
+
+	applier.apply_event_batch(
+		{
+			"batch_id": "batch-1",
+			"events": [
+				{"event_id": "event-1", "type": "bullet_blast", "payload": {"value": 1}},
+			],
+		},
+		null
+	)
+
+	presentation_adapter.fanout_lane_states(router, world_sync, hud_flow, event_flow)
+	presentation_adapter.fanout_lane_states(router, world_sync, hud_flow, event_flow)
+
+	assert_eq(event_flow.apply_server_events_call_count, 1)
+	assert_eq(event_flow.received_event_count, 1)
+	assert_eq(event_flow.received_event_types[0], "bullet_blast")
 
 
 func test_duplicate_batch_id_is_suppressed() -> void:

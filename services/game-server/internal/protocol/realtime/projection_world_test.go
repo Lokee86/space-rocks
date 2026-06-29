@@ -105,7 +105,7 @@ func TestBuildWorldFullPacketUsesMetadataAndSortedProjection(t *testing.T) {
 	if packet.Type != PacketFamilyWorldFull {
 		t.Fatalf("expected world full packet type, got %q", packet.Type)
 	}
-	if packet.Metadata.Lane != LaneWorld || packet.Metadata.Sequence != 9 || packet.Metadata.SnapshotID != "snapshot-1" || packet.Metadata.ServerSentMsec != 123 || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
+	if packet.Metadata.Lane != LaneWorld || packet.Metadata.Sequence != 9 || packet.Metadata.BaselineID != "snapshot-1" || packet.Metadata.SnapshotID != "snapshot-1" || packet.Metadata.ServerSentMsec != 123 || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
 		t.Fatalf("expected metadata to be populated, got %#v", packet.Metadata)
 	}
 	if len(packet.Ships) != 2 || packet.Ships[0].ID != "ship-a" || packet.Ships[1].ID != "ship-b" {

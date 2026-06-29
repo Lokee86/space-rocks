@@ -4,8 +4,10 @@ const LobbyClientPackets = preload("res://scripts/networking/outbound/lobby_clie
 const GameplayClientPackets = preload("res://scripts/networking/outbound/gameplay_client_packets.gd")
 const DevtoolsClientPackets = preload("res://scripts/networking/outbound/devtools_client_packets.gd")
 const TelemetryClientPackets = preload("res://scripts/networking/outbound/telemetry_client_packets.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var network_client: NetworkClient
+var _logged_respawn_packet_send := false
 
 
 func _init(client: NetworkClient = null) -> void:
@@ -28,6 +30,9 @@ func send_input_packet(packet: Dictionary) -> void:
 # Gameplay
 func send_respawn_request() -> void:
 	if network_client != null:
+		if !_logged_respawn_packet_send:
+			_logged_respawn_packet_send = true
+			ClientLogger.network_info("respawn packet sent: type=respawn")
 		network_client.send_raw_packet(GameplayClientPackets.respawn_packet())
 
 

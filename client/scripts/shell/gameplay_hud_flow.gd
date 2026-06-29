@@ -12,6 +12,8 @@ var current_score := 0
 var respawn_countdown_remaining := 0.0
 var respawn_timer_template := ""
 var loadout_display_flow := LoadoutDisplayFlow.new()
+var _logged_set_dead_diagnostics := false
+var _logged_respawn_available := false
 
 
 func configure(hud_ref: Control) -> void:
@@ -102,6 +104,8 @@ func apply_session_lane_state(session_lane_state, self_id := "") -> void:
 			show_gameplay()
 func reset() -> void:
 	hidden_for_match_over = false
+	_logged_set_dead_diagnostics = false
+	_logged_respawn_available = false
 	if hud != null:
 		set_alive()
 		loadout_display_flow.clear()
@@ -151,6 +155,9 @@ func set_dead(respawn_delay: float) -> void:
 	is_game_over = false
 	can_respawn = false
 	respawn_countdown_remaining = maxf(respawn_delay, 0.0)
+	if !_logged_set_dead_diagnostics:
+		print("GameplayHudFlow.set_dead: respawn_delay=%s can_respawn=%s" % [str(respawn_countdown_remaining), str(can_respawn)])
+		_logged_set_dead_diagnostics = true
 	_show_hud_child("CenterContainer/VBoxContainer2")
 	_hide_hud_child("CenterContainer/GameOverContainer")
 
@@ -219,6 +226,9 @@ func _respawn_timer_text(respawn_delay: float) -> String:
 
 func _make_respawn_available() -> void:
 	can_respawn = true
+	if !_logged_respawn_available:
+		print("GameplayHudFlow._make_respawn_available: can_respawn=%s" % str(can_respawn))
+		_logged_respawn_available = true
 	var respawn_timer_label := _respawn_timer_label()
 	if respawn_timer_label != null:
 		respawn_timer_label.text = ""

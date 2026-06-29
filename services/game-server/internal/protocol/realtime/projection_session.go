@@ -70,6 +70,7 @@ func BuildSessionFullPacket(snapshot game.GameplayPresentationSnapshot, sequence
 		Metadata: Metadata{
 			Lane:           LaneSession,
 			Sequence:       sequence,
+			BaselineID:     snapshot.SelfID,
 			SnapshotID:     snapshot.SelfID,
 			ServerSentMsec: snapshot.ServerSentMsec,
 			SnapshotKind:   SnapshotKind("full"),

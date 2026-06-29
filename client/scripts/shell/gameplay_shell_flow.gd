@@ -81,6 +81,12 @@ func reset() -> void:
 
 func set_required_lane_baselines_synced(value: bool) -> void:
 	has_received_lane_baselines_synced = value
+
+func get_event_lifecycle_flow():
+	if flow_composer == null:
+		return null
+	return flow_composer.get_event_lifecycle_flow()
+
 func apply_gameplay_state(state: Dictionary) -> void:
 	if flow_composer == null:
 		return

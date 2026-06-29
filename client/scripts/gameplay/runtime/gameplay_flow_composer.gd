@@ -137,6 +137,9 @@ func configure_gameplay_readiness(gameplay_readiness) -> void:
 		return
 	gameplay_state_apply_flow.gameplay_readiness = gameplay_readiness
 
+func get_event_lifecycle_flow():
+	return event_lifecycle_flow
+
 
 func apply_gameplay_state(state: Dictionary, required_lane_baselines_synced: bool) -> GameplayStateApplyResult:
 	if gameplay_state_apply_flow == null:
@@ -209,4 +212,5 @@ func reset() -> void:
 		spectate_context.reset()
 	if server_hitbox_overlay_flow != null:
 		server_hitbox_overlay_flow.reset()
+
 

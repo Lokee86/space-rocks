@@ -193,6 +193,19 @@ func TestActiveWirePacketEncodingUsesLowercaseEventShape(t *testing.T) {
 							EffectType: "blast",
 						},
 					},
+					{
+						EventID: "event-2",
+						Event: game.EventState{
+							Type:         "ship_death",
+							PlayerID:     "player-1",
+							Lives:        2,
+							RespawnDelay: 3.5,
+							X:            4,
+							Y:            5,
+							SourceID:     "ship-2",
+							EffectType:   "death",
+						},
+					},
 				},
 			},
 		},
@@ -203,9 +216,24 @@ func TestActiveWirePacketEncodingUsesLowercaseEventShape(t *testing.T) {
 	assertStringValue(t, wire, "type", PacketFamilyEventBatch)
 	assertContainsKey(t, wire, "events")
 	events := mustSliceValue(t, wire, "events")
-	event := mustMapValue(t, events[0])
-	assertStringValue(t, event, "event_id", "event-1")
-	assertStringValue(t, event, "type", "bullet_blast")
+	bulletBlast := mustMapValue(t, events[0])
+	assertStringValue(t, bulletBlast, "event_id", "event-1")
+	assertStringValue(t, bulletBlast, "type", "bullet_blast")
+	assertFloatValue(t, bulletBlast, "x", 1)
+	assertFloatValue(t, bulletBlast, "y", 2)
+	assertStringValue(t, bulletBlast, "source_id", "ship-1")
+	assertStringValue(t, bulletBlast, "effect_type", "blast")
+
+	shipDeath := mustMapValue(t, events[1])
+	assertStringValue(t, shipDeath, "event_id", "event-2")
+	assertStringValue(t, shipDeath, "type", "ship_death")
+	assertStringValue(t, shipDeath, "player_id", "player-1")
+	assertIntValue(t, shipDeath, "lives", 2)
+	assertFloatValue(t, shipDeath, "respawn_delay", 3.5)
+	assertFloatValue(t, shipDeath, "x", 4)
+	assertFloatValue(t, shipDeath, "y", 5)
+	assertStringValue(t, shipDeath, "source_id", "ship-2")
+	assertStringValue(t, shipDeath, "effect_type", "death")
 }
 
 func mustEncodeWirePacket(t *testing.T, candidate RealtimeLaneCandidate) []byte {
@@ -329,3 +357,4 @@ func TestWireLanePacketContainsLowercaseKeysOnly(t *testing.T) {
 		}
 	}
 }
+

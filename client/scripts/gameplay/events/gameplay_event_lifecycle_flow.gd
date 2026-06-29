@@ -4,6 +4,7 @@ class_name GameplayEventLifecycleFlow
 var event_flow
 var death_flow
 var match_end_flow
+var _logged_server_events_received := false
 
 
 func configure(
@@ -32,6 +33,12 @@ func configure(
 
 
 func apply_server_events(server_events: Array, self_id: String) -> void:
+	if !_logged_server_events_received:
+		_logged_server_events_received = true
+		var event_types := []
+		for event in server_events:
+			event_types.append(str(event.get("type", "")))
+		print("[event_batch][info] lifecycle received server events: count=%d self_id=%s event_types=%s" % [server_events.size(), self_id, ",".join(event_types)])
 	if event_flow != null:
 		event_flow.apply_server_events(server_events, self_id)
 
@@ -45,3 +52,4 @@ func apply_server_events_from_state(state: Dictionary) -> void:
 func reset() -> void:
 	if event_flow != null:
 		event_flow.reset()
+

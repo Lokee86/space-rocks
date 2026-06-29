@@ -42,9 +42,9 @@ func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 		})
 	} else {
 		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane:  LaneWorld,
-			Kind:  RealtimeLaneCandidateKindDelta,
-			Delta: ProjectWorldLane(snapshot),
+			Lane: LaneWorld,
+			Kind: RealtimeLaneCandidateKindFull,
+			Full: BuildWorldFullPacket(snapshot, worldState.Sequence),
 		})
 	}
 
@@ -58,9 +58,9 @@ func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 		})
 	} else {
 		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane:  LaneOverlay,
-			Kind:  RealtimeLaneCandidateKindDelta,
-			Delta: ProjectOverlayLane(snapshot, state.ReceiverID),
+			Lane: LaneOverlay,
+			Kind: RealtimeLaneCandidateKindFull,
+			Full: BuildOverlayFullPacket(snapshot, state.ReceiverID, overlayState.Sequence),
 		})
 	}
 
@@ -74,18 +74,20 @@ func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 		})
 	} else {
 		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane:  LaneSession,
-			Kind:  RealtimeLaneCandidateKindDelta,
-			Delta: ProjectSessionLane(snapshot),
+			Lane: LaneSession,
+			Kind: RealtimeLaneCandidateKindFull,
+			Full: BuildSessionFullPacket(snapshot, sessionState.Sequence),
 		})
 	}
 
-	eventState, _ := state.LaneState(LaneEvent)
-	candidates = append(candidates, RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: BuildEventBatchPacket(snapshot.PendingEvents, eventState.Sequence, snapshot.ServerSentMsec),
-	})
+	if len(snapshot.PendingEvents) > 0 {
+		eventState, _ := state.LaneState(LaneEvent)
+		candidates = append(candidates, RealtimeLaneCandidate{
+			Lane: LaneEvent,
+			Kind: RealtimeLaneCandidateKindEventBatch,
+			Full: BuildEventBatchPacket(snapshot.PendingEvents, eventState.Sequence, snapshot.ServerSentMsec),
+		})
+	}
 
 	return RealtimeLanePlan{Candidates: candidates}
 }

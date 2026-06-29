@@ -4,9 +4,19 @@ import (
 	"fmt"
 
 	"github.com/Lokee86/space-rocks/server/internal/game/events"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
 func (game *Game) recordDomainEvent(event events.Event) {
+	if event.Type == events.EventShipDeath {
+		logging.Network.Debug("ship death domain event recorded",
+			logging.FieldPlayerID, event.PlayerID,
+			"lives", event.Lives,
+			"respawn_delay", event.RespawnDelay,
+			"x", event.X,
+			"y", event.Y,
+		)
+	}
 	game.broadcastEvent(eventStateForDomainEvent(event))
 }
 
