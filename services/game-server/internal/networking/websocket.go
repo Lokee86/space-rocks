@@ -70,7 +70,7 @@ func (session *webSocketSession) reportResolvedMatchBeforeRoomExit(reason string
 		return
 	}
 
-	if rooms.ReportResolvedMatchResultOnce(session.room, session.matchResultReporter) {
+	if rooms.ReportResolvedMatchResultOnceForReason(session.room, session.matchResultReporter, reason) {
 		logging.Rooms.Debug("reported resolved match result before room exit",
 			logging.FieldRoomID, session.currentRoomID,
 			"session_id", session.sessionID,

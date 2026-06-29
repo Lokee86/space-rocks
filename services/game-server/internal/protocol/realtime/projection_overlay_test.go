@@ -15,8 +15,12 @@ func TestProjectOverlayLaneUsesReceiverLocalFields(t *testing.T) {
 			"player-1": {
 				ID:                         "player-1",
 				ShipType:                   "v_wing",
+				PrimaryWeaponID:            "laser",
+				PrimaryAmmoPolicy:          "limited",
 				PrimaryCooldownRemaining:   12,
 				PrimaryAmmoRemaining:       3,
+				SecondaryWeaponID:          "torpedo",
+				SecondaryAmmoPolicy:        "limited",
 				SecondaryCooldownRemaining: 7,
 				SecondaryAmmoRemaining:     1,
 			},
@@ -64,8 +68,8 @@ func TestProjectOverlayLaneUsesReceiverLocalFields(t *testing.T) {
 	if receiver.PrimaryCooldownRemaining != 12 || receiver.PrimaryAmmoRemaining != 3 {
 		t.Fatalf("expected local primary cooldown/ammo from receiver ship, got %#v", receiver)
 	}
-	if receiver.SecondaryWeaponID != "mine" || receiver.SecondaryAmmoPolicy != "infinite" {
-		t.Fatalf("expected secondary weapon policy fields, got %#v", receiver)
+	if receiver.SecondaryWeaponID != "torpedo" || receiver.SecondaryAmmoPolicy != "limited" {
+		t.Fatalf("expected active secondary weapon policy fields from receiver ship, got %#v", receiver)
 	}
 	if receiver.SecondaryCooldownRemaining != 7 || receiver.SecondaryAmmoRemaining != 1 {
 		t.Fatalf("expected local secondary cooldown/ammo from receiver ship, got %#v", receiver)

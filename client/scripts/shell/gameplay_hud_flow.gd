@@ -93,10 +93,6 @@ func apply_session_lane_state(session_lane_state, self_id := "") -> void:
 				var respawn_cooldown := float(self_session.get(Packets.FIELD_RESPAWN_COOLDOWN, 0.0))
 				if respawn_cooldown > 0.0:
 					set_dead(respawn_cooldown)
-				else:
-					set_alive()
-				if self_session.has(Packets.FIELD_PRIMARY_WEAPON_ID) or self_session.has(Packets.FIELD_SECONDARY_WEAPON_ID):
-					loadout_display_flow.apply_player_state(self_session)
 
 	if session_lane_state.total_asteroids != null:
 		var total_asteroids := int(session_lane_state.total_asteroids)
@@ -148,6 +144,15 @@ func set_alive() -> void:
 	respawn_countdown_remaining = 0.0
 	_hide_hud_child("CenterContainer/VBoxContainer2")
 	_hide_hud_child("CenterContainer/GameOverContainer")
+
+
+func clear_dead_presentation() -> void:
+	is_dead = false
+	can_respawn = false
+	respawn_countdown_remaining = 0.0
+	_hide_hud_child("CenterContainer/VBoxContainer2")
+	if !hidden_for_match_over:
+		_hide_hud_child("CenterContainer/GameOverContainer")
 
 
 func set_dead(respawn_delay: float) -> void:
@@ -222,6 +227,10 @@ func _respawn_timer_text(respawn_delay: float) -> String:
 	if template == "":
 		template = "Respawn in X"
 	return template.replace("X", str(ceili(respawn_delay)))
+
+
+func _has_dead_presentation() -> bool:
+	return is_dead or can_respawn
 
 
 func _make_respawn_available() -> void:

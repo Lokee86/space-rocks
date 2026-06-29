@@ -12,15 +12,15 @@ func clear_session() -> void:
 func apply_full_session(session_packet: Dictionary) -> void:
 	clear_session()
 	_apply_session_fields(session_packet)
-	_replace_records(player_sessions, session_packet.get("player_sessions", []))
+	_replace_records(player_sessions, session_packet.get("players", session_packet.get("player_sessions", [])))
 	_replace_records(player_lifecycle, session_packet.get("player_lifecycle", []))
 
 func apply_session_delta(session_packet: Dictionary) -> void:
 	_apply_session_fields(session_packet)
-	_apply_creates(player_sessions, session_packet.get("player_session_creates", []))
+	_apply_creates(player_sessions, session_packet.get("players", session_packet.get("player_session_creates", [])))
 	_apply_updates(player_sessions, session_packet.get("player_session_updates", []))
 	_apply_deletes(player_sessions, session_packet.get("player_session_deletes", []))
-	_apply_creates(player_lifecycle, session_packet.get("player_lifecycle_creates", []))
+	_apply_creates(player_lifecycle, session_packet.get("player_lifecycle", session_packet.get("player_lifecycle_creates", [])))
 	_apply_updates(player_lifecycle, session_packet.get("player_lifecycle_updates", []))
 	_apply_deletes(player_lifecycle, session_packet.get("player_lifecycle_deletes", []))
 
@@ -42,13 +42,23 @@ func _apply_updates(target: Dictionary, records: Array) -> void:
 
 func _apply_deletes(target: Dictionary, records: Array) -> void:
 	for record in records:
-		var id = record.get("id")
+		var id = _record_key(record)
+		if id == null and record is String:
+			id = record
 		if id != null:
 			target.erase(id)
 
 func _apply_upsert(target: Dictionary, record: Dictionary) -> void:
-	var id = record.get("id")
+	var id = _record_key(record)
 	if id == null:
 		return
 	target[id] = record.duplicate(true)
+
+func _record_key(record) -> Variant:
+	if record is Dictionary:
+		if record.has("id"):
+			return record.get("id")
+		if record.has("player_id"):
+			return record.get("player_id")
+	return null
 

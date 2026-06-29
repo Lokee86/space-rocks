@@ -248,6 +248,29 @@ func test_world_delta_wrong_baseline_marks_resync_needed() -> void:
 	assert_true(baseline_tracker.needs_resync(LaneMetadata.LANE_WORLD))
 
 
+func test_world_full_preserves_bullet_projectile_type_for_torpedo_presentation() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [_bullet_packet("bullet-torpedo", 5, 6, "torpedo")],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	assert_eq(world_lane_state.bullets["bullet-torpedo"]["projectile_type"], "torpedo")
+	assert_eq(world_lane_state.bullets["bullet-torpedo"]["weapon_id"], "torpedo")
+
+
 static func _ship_packet(id: String, x: int, y: int) -> Dictionary:
 	return {
 		"id": id,
@@ -262,7 +285,7 @@ static func _ship_packet(id: String, x: int, y: int) -> Dictionary:
 	}
 
 
-static func _bullet_packet(id: String, x: int, y: int) -> Dictionary:
+static func _bullet_packet(id: String, x: int, y: int, projectile_type: String = "bullet") -> Dictionary:
 	return {
 		"id": id,
 		"x": x,
@@ -272,6 +295,8 @@ static func _bullet_packet(id: String, x: int, y: int) -> Dictionary:
 		"rotation": 0.0,
 		"owner_id": "ship-1",
 		"lifespan_seconds": 1.0,
+		"weapon_id": projectile_type,
+		"projectile_type": projectile_type,
 	}
 
 

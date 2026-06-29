@@ -60,8 +60,15 @@ func _process(_delta: float) -> void:
 
 
 func connect_to_server(url: String) -> Error:
+	reset_realtime_protocol_state()
 	has_started_connection = true
 	return network_client.connect_to_server(url)
+
+
+func reset_realtime_protocol_state() -> void:
+	realtime_router = RealtimeRouter.new()
+	_lane_route_log_emitted.clear()
+	ClientLogger.network_info("realtime protocol state reset")
 
 
 func is_server_connected() -> bool:
@@ -226,6 +233,7 @@ func _on_connected() -> void:
 
 
 func _on_closed() -> void:
+	reset_realtime_protocol_state()
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = null
 	websocket_auth_display_name = ""

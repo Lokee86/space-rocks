@@ -17,32 +17,47 @@ func TickRoomGameOverLifecycle(room *Room, broadcastRoomSnapshot func(*Room)) bo
 }
 
 func ReportResolvedMatchResultOnce(room *Room, reporter MatchResultReporter) bool {
+	return ReportResolvedMatchResultOnceForReason(room, reporter, "game_over")
+}
+
+func ReportResolvedMatchResultOnceForReason(room *Room, reporter MatchResultReporter, reason string) bool {
 	if room == nil {
 		return false
 	}
 	if reporter == nil {
 		logging.Rooms.Warn("match result reporter missing; using noop reporter",
 			logging.FieldRoomID, room.ID,
+			"reason", reason,
 		)
 		reporter = NoopMatchResultReporter{}
 	}
 	if room.MatchResultReported() {
 		logging.Rooms.Info("match result report skipped: already reported",
 			logging.FieldRoomID, room.ID,
+			"reason", reason,
 		)
 		return false
 	}
 
 	summary, ok := room.ResolvedMatchSummary()
 	if !ok {
-		logging.Rooms.Warn("match result report skipped: missing resolved summary",
-			logging.FieldRoomID, room.ID,
-		)
+		if reason == "game_over" {
+			logging.Rooms.Warn("match result report skipped: missing resolved summary",
+				logging.FieldRoomID, room.ID,
+				"reason", reason,
+			)
+		} else {
+			logging.Rooms.Debug("match result report skipped: missing resolved summary during cleanup",
+				logging.FieldRoomID, room.ID,
+				"reason", reason,
+			)
+		}
 		return false
 	}
 
 	logging.Rooms.Info("match result report started",
 		logging.FieldRoomID, room.ID,
+		"reason", reason,
 		"match_id", summary.MatchID,
 		"mode", summary.Mode,
 		"player_count", len(summary.Players),
@@ -51,6 +66,7 @@ func ReportResolvedMatchResultOnce(room *Room, reporter MatchResultReporter) boo
 		logging.Rooms.Error("room match result report failed",
 			err,
 			logging.FieldRoomID, room.ID,
+			"reason", reason,
 			"match_id", summary.MatchID,
 			"player_count", len(summary.Players),
 		)
@@ -60,6 +76,7 @@ func ReportResolvedMatchResultOnce(room *Room, reporter MatchResultReporter) boo
 	room.MarkMatchResultReported()
 	logging.Rooms.Info("match result report succeeded",
 		logging.FieldRoomID, room.ID,
+		"reason", reason,
 		"match_id", summary.MatchID,
 		"player_count", len(summary.Players),
 	)
