@@ -38,12 +38,14 @@ class FakeHudFlow:
 		set_alive_calls += 1
 
 
-class FakeMenuFlow:
-	var is_game_over := false
-	var set_alive_calls := 0
+class FakeMatchEndFlow:
+	var handle_alive_restored_calls := 0
 
-	func set_alive() -> void:
-		set_alive_calls += 1
+	func has_stale_dead_presentation() -> bool:
+		return false
+
+	func handle_alive_restored() -> void:
+		handle_alive_restored_calls += 1
 
 
 class FakePlayer:
@@ -54,11 +56,11 @@ func _make_flow(
 	world_sync,
 	respawn_flow,
 	hud_flow,
-	menu_flow,
+	match_end_flow,
 	player
 ) -> GameplayAliveRestoreFlow:
 	var flow := GameplayAliveRestoreFlow.new()
-	flow.configure(world_sync, respawn_flow, hud_flow, menu_flow, player)
+	flow.configure(world_sync, respawn_flow, hud_flow, match_end_flow, player)
 	return flow
 
 
@@ -68,27 +70,57 @@ func _state() -> Dictionary:
 		"server_players": {
 			"player-1": {}
 		},
+		"player_lifecycle": {
+			"player-1": "active",
+		},
 	}
 
 
-func test_should_restore_alive_hud_requires_awaiting_confirmation_and_confirmed_lane_state() -> void:
-	var respawn_flow := GameplayAliveRestoreFlow.new()
+func test_apply_state_rejects_when_respawn_flow_says_not_ready() -> void:
+	var world_sync := FakeWorldSync.new()
+	var respawn_flow := FakeRespawnFlow.new()
+	var hud_flow := FakeHudFlow.new()
+	var match_end_flow := FakeMatchEndFlow.new()
 	var player := FakePlayer.new()
-	var state := _state()
+	var flow := _make_flow(world_sync, respawn_flow, hud_flow, match_end_flow, player)
 
-	assert_false(respawn_flow.should_restore_alive_hud(state, player))
+	flow.apply_state(_state())
 
-	var awaiting_respawn_flow := FakeRespawnFlow.new()
-	awaiting_respawn_flow.awaiting_confirmation = true
-	assert_true(awaiting_respawn_flow.should_restore_alive_hud(state, player))
+	assert_eq(respawn_flow.should_restore_calls, 1)
+	assert_eq(world_sync.clear_view_target_player_calls, 0)
+	assert_eq(hud_flow.set_alive_calls, 0)
+	assert_eq(match_end_flow.handle_alive_restored_calls, 0)
+	assert_eq(respawn_flow.clear_awaiting_confirmation_calls, 0)
 
-	var inactive_state := _state()
-	inactive_state["player_lifecycle"] = {"player-1": "pending_respawn"}
-	assert_false(awaiting_respawn_flow.should_restore_alive_hud(inactive_state, player))
 
-	var missing_ship_state := _state()
-	missing_ship_state["server_players"] = {}
-	assert_false(awaiting_respawn_flow.should_restore_alive_hud(missing_ship_state, player))
+func test_apply_state_restores_alive_when_respawn_flow_allows_it() -> void:
+	var world_sync := FakeWorldSync.new()
+	var respawn_flow := FakeRespawnFlow.new()
+	respawn_flow.should_restore_result = true
+	var hud_flow := FakeHudFlow.new()
+	var match_end_flow := FakeMatchEndFlow.new()
+	var player := FakePlayer.new()
+	var flow := _make_flow(world_sync, respawn_flow, hud_flow, match_end_flow, player)
 
-	var stale_flow := FakeRespawnFlow.new()
-	assert_true(stale_flow.should_restore_alive_hud(state, player, true))
+	flow.apply_state(_state())
+
+	assert_eq(respawn_flow.should_restore_calls, 1)
+	assert_eq(world_sync.clear_view_target_player_calls, 1)
+	assert_eq(hud_flow.set_alive_calls, 1)
+	assert_eq(match_end_flow.handle_alive_restored_calls, 1)
+	assert_eq(respawn_flow.clear_awaiting_confirmation_calls, 1)
+
+
+func test_apply_state_without_match_end_flow_still_restores_alive() -> void:
+	var world_sync := FakeWorldSync.new()
+	var respawn_flow := FakeRespawnFlow.new()
+	respawn_flow.should_restore_result = true
+	var hud_flow := FakeHudFlow.new()
+	var player := FakePlayer.new()
+	var flow := _make_flow(world_sync, respawn_flow, hud_flow, null, player)
+
+	flow.apply_state(_state())
+
+	assert_eq(world_sync.clear_view_target_player_calls, 1)
+	assert_eq(hud_flow.set_alive_calls, 1)
+	assert_eq(respawn_flow.clear_awaiting_confirmation_calls, 1)

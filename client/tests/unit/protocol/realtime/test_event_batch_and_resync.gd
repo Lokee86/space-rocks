@@ -6,6 +6,9 @@ const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_track
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const PresentationAdapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd")
 const GameplayReadiness := preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
+const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
+const OverlayLaneState := preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
+const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_state.gd")
 
 
 class FakeEventSink:
@@ -24,13 +27,13 @@ class FakePresentationTarget:
 	var last_overlay_lane_state = null
 	var last_session_lane_state = null
 
-	func apply_world_lane_state(world_sync, world_lane_state, self_id: String) -> void:
+	func apply_world_lane_state(world_lane_state) -> void:
 		last_world_lane_state = world_lane_state
 
-	func apply_overlay_lane_state(hud_flow, overlay_lane_state) -> void:
+	func apply_overlay_lane_state(overlay_lane_state) -> void:
 		last_overlay_lane_state = overlay_lane_state
 
-	func apply_session_lane_state(hud_flow, session_lane_state, self_id: String) -> void:
+	func apply_session_lane_state(session_lane_state, self_id: String) -> void:
 		last_session_lane_state = session_lane_state
 
 
@@ -84,9 +87,10 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 	var hud_flow := FakePresentationTarget.new()
 	var event_flow := FakeEventFlow.new()
 
-	router.world_lane_state = {}
-	router.overlay_lane_state = {}
-	router.session_lane_state = {}
+	router.world_lane_state = WorldLaneState.new()
+	router.overlay_lane_state = OverlayLaneState.new()
+	router.overlay_lane_state.self_id = "player-1"
+	router.session_lane_state = SessionLaneState.new()
 	router.event_batch_applier = applier
 	presentation_adapter.bind_gameplay_readiness(readiness)
 

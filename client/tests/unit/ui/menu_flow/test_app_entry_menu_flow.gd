@@ -21,7 +21,7 @@ func test_single_player_button_routes_to_single_player_pregame() -> void:
 	assert_eq(pregame_menu.get_parent(), user_interface)
 	assert_ne(pregame_menu.get_parent(), gameplay_user_interface)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "SINGLE PLAYER")
-	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Guest"))
+	_assert_callsign_label_matches_single_player_context(pregame_menu, game.menu_flow_controller)
 
 
 func test_single_player_pregame_play_endless_starts_game() -> void:
@@ -81,7 +81,7 @@ func test_multiplayer_button_routes_signed_in_to_multiplayer_pregame() -> void:
 	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Ada"))
 
 
-func test_single_player_pregame_callsign_indicator_is_guest() -> void:
+func test_single_player_pregame_callsign_indicator_matches_selected_profile() -> void:
 	var game := await _create_game()
 	var main_menu := game.get_node("%MainMenu") as Control
 	var single_player_button := main_menu.get_node("%SinglePlayerButton") as BaseButton
@@ -93,7 +93,7 @@ func test_single_player_pregame_callsign_indicator_is_guest() -> void:
 	var canvas_layer := game.get_node("UserInterface") as CanvasLayer
 	var pregame_menu := _find_pregame_menu(canvas_layer)
 	assert_not_null(pregame_menu)
-	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Guest"))
+	_assert_callsign_label_matches_single_player_context(pregame_menu, game.menu_flow_controller)
 
 
 func test_signed_in_multiplayer_pregame_callsign_indicator_uses_display_name() -> void:
@@ -352,3 +352,10 @@ func _force_signed_in(game) -> void:
 	game.auth_session_controller.get_session().set_signed_in("test-token", {"id": 7, "display_name": "Ada"})
 	game.auth_session_controller.auth_state_changed.emit()
 	await get_tree().process_frame
+
+
+func _assert_callsign_label_matches_single_player_context(pregame_menu: Control, controller) -> void:
+	var expected_callsign := str(controller.get_single_player_context().get("callsign", ""))
+	assert_true(expected_callsign != "")
+	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains(expected_callsign))
+

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func TestMaybeWriteDebugShapeCatalogSendsOncePerRoomSession(t *testing.T) {
+func TestMaybeWriteDebugShapeCatalogSendsOnlyOnceForSameRoom(t *testing.T) {
 	originalCanSend := canSendDebugShapeCatalog
 	originalBuilder := buildDebugShapeCatalogResponse
 	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
@@ -32,9 +32,9 @@ func TestMaybeWriteDebugShapeCatalogSendsOncePerRoomSession(t *testing.T) {
 
 	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, game.New())
 	session := &webSocketSession{
-		conn:      serverConn,
-		room:      room,
-		rooms:     rooms.NewRoomManager(),
+		conn:         serverConn,
+		room:         room,
+		rooms:        rooms.NewRoomManager(),
 		currentRoomID: "room-1",
 	}
 
@@ -47,10 +47,33 @@ func TestMaybeWriteDebugShapeCatalogSendsOncePerRoomSession(t *testing.T) {
 		// no-op send still returns true; verify no duplicate packet instead.
 	}
 	assertNoMessageWithin(t, clientConn)
+}
 
-	room2 := rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New())
-	session.room = room2
-	session.currentRoomID = "room-2"
+func TestMaybeWriteDebugShapeCatalogSendsAgainForNewRoomAfterReset(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	originalBuilder := buildDebugShapeCatalogResponse
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return true
+	}
+	buildDebugShapeCatalogResponse = func(room *rooms.Room, roomID string, remoteAddr string) ([]byte, bool) {
+		return []byte(`{"type":"debug_shape_catalog","shapes":{}}`), true
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+		buildDebugShapeCatalogResponse = originalBuilder
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	session := &webSocketSession{
+		conn:                  serverConn,
+		room:                  rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New()),
+		rooms:                 rooms.NewRoomManager(),
+		currentRoomID:         "room-2",
+		debugShapeCatalogSentRoomID: "room-1",
+	}
 	session.resetDebugShapeCatalogSent()
 
 	if !maybeWriteDebugShapeCatalog(session, "127.0.0.1:1234") {

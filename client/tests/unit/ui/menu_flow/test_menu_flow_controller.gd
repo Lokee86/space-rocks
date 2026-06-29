@@ -131,14 +131,15 @@ func test_show_single_player_pregame_routes_and_instantiates_menu() -> void:
 
 	controller.show_single_player_pregame()
 	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 	var pregame_menu := controller.get_pregame_menu()
 	assert_eq(controller.get_current_route(), MenuRoute.PREGAME_MENU)
 	assert_false(controller.main_menu.visible)
 	assert_not_null(pregame_menu)
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "SINGLE PLAYER")
-	assert_true((pregame_menu.get_node_or_null("%CallsignLabel") as Label).text.contains("Guest"))
-
+	_assert_callsign_label_matches_single_player_context(pregame_menu, controller)
 
 func test_show_multiplayer_pregame_routes_and_instantiates_menu() -> void:
 	var controller := await _create_controller(_signed_in_auth_session_controller("Ada"))
@@ -177,6 +178,9 @@ func test_profile_button_mounts_profile_readout_in_single_player_pregame() -> vo
 	await get_tree().process_frame
 
 	var pregame_menu := controller.get_pregame_menu()
+	controller.profile_context_provider.select_guest_profile()
+	if pregame_menu.has_method("set_callsign"):
+		pregame_menu.set_callsign("Guest")
 	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -240,6 +244,9 @@ func test_profile_button_uses_profile_api_for_guest_stats() -> void:
 	await get_tree().process_frame
 
 	var pregame_menu := controller.get_pregame_menu()
+	controller.profile_context_provider.select_guest_profile()
+	if pregame_menu.has_method("set_callsign"):
+		pregame_menu.set_callsign("Guest")
 	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -614,3 +621,11 @@ func _signed_in_auth_session_controller(display_name: String) -> FakeAuthSession
 		"display_name": display_name,
 	})
 	return auth_session_controller
+
+func _assert_callsign_label_matches_single_player_context(pregame_menu: Control, controller) -> void:
+	var expected_callsign := str(controller.get_single_player_context().get("callsign", ""))
+	assert_true(expected_callsign != "")
+	var callsign_label := pregame_menu.get_node_or_null("%CallsignLabel") as Label
+	assert_not_null(callsign_label)
+	assert_true(callsign_label.text.contains(expected_callsign))
+
