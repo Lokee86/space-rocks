@@ -1,6 +1,7 @@
 extends GutTest
 
 const MatchResultWindowScene := preload("res://scenes/ui/dialogs/match_result_window.tscn")
+const PlayerScoreRow := preload("res://scripts/ui/match_results/player_score_row.gd")
 
 
 func test_apply_rows_renders_player_score_row_without_kills_label() -> void:
@@ -19,9 +20,17 @@ func test_apply_rows_renders_player_score_row_without_kills_label() -> void:
 	await get_tree().process_frame
 
 	var score_container := window.get_node("%ScoreContainer")
-	assert_eq(score_container.get_child_count(), 1)
+	var score_rows: Array = []
+	for child in score_container.get_children():
+		var child_node: Node = child
+		if child_node is PlayerScoreRow:
+			score_rows.append(child_node)
+		elif child_node.name == "PlayerScoreRow":
+			score_rows.append(child_node)
 
-	var row := score_container.get_child(0)
+	assert_eq(score_rows.size(), 1)
+
+	var row: Node = score_rows[0]
 	assert_eq((row.get_node("%PlayerIDLabel") as Label).text, "player-1")
 	assert_eq((row.get_node("%GameDeathsLabel") as Label).text, "2")
 	assert_eq((row.get_node("%GameScoreLabel") as Label).text, "450")

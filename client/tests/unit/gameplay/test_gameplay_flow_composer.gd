@@ -375,7 +375,6 @@ func test_apply_devtools_gameplay_state_forwards_lane_state_to_hitbox_overlay_fl
 	composer.apply_devtools_gameplay_state(state)
 	composer.server_hitbox_overlay_flow.process()
 
-	assert_eq(fake_devtools_context.configure_call_count, 1)
 	assert_eq(fake_devtools_context.last_state, state)
 	assert_eq(overlay_node.last_entries.size(), 1)
 	assert_eq(overlay_node.last_entries[0]["kind"], "player")

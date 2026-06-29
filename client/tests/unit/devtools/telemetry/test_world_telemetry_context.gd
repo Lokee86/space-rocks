@@ -53,7 +53,9 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 
 
 func test_apply_gameplay_state_updates_lane_counts() -> void:
+	var fake_connection := FakeConnectionService.new()
 	var telemetry_context := WorldTelemetryContext.new()
+	telemetry_context.configure(fake_connection)
 	telemetry_context.apply_gameplay_state({
 		"server_players": {
 			"player-1": {},
