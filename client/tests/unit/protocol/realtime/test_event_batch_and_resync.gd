@@ -5,6 +5,7 @@ const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
 const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const PresentationAdapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd")
+const GameplayReadiness := preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
 
 class FakeEventSink:
@@ -16,11 +17,6 @@ class FakeEventSink:
 			"payload": payload,
 			"packet": event_packet,
 		})
-
-
-class FakeReadiness:
-	func is_gameplay_ready() -> bool:
-		return true
 
 
 class FakePresentationTarget:
@@ -80,7 +76,10 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 	var applier := EventBatchApplier.new()
 	var router := FakeRouter.new()
 	var presentation_adapter := PresentationAdapter.new()
-	var readiness := FakeReadiness.new()
+	var readiness := GameplayReadiness.new()
+	readiness.mark_world_baseline_synced()
+	readiness.mark_overlay_baseline_synced()
+	readiness.mark_session_baseline_synced()
 	var world_sync := FakePresentationTarget.new()
 	var hud_flow := FakePresentationTarget.new()
 	var event_flow := FakeEventFlow.new()

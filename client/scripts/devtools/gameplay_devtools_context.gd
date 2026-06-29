@@ -115,6 +115,11 @@ func configure_placement_request_route(route: Callable) -> void:
 		placement_context.configure_placement_request_route(route)
 
 
+func configure_local_respawn_confirmation_marker(marker: Callable) -> void:
+	if command_context != null:
+		command_context.configure_local_respawn_confirmation_marker(marker)
+
+
 func handle_placement_result(result: Dictionary) -> void:
 	if self.placement_context != null:
 		self.placement_context.handle_placement_result(result)

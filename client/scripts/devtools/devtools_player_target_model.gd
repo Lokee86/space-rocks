@@ -95,7 +95,7 @@ func target_rows() -> Array:
 	var rows: Array = []
 	for player_id in union_ids.keys():
 		var player_id_text: String = str(player_id)
-		var lifecycle_status: String = str(player_lifecycle.get(player_id_text, ""))
+		var lifecycle_status: String = _lifecycle_status_for_player(player_id_text)
 		var alive: bool = lifecycle_status == "active"
 		if lifecycle_status == "":
 			alive = server_players.has(player_id_text)
@@ -111,6 +111,13 @@ func target_rows() -> Array:
 		})
 
 	return rows
+
+
+func _lifecycle_status_for_player(player_id: String) -> String:
+	var value = player_lifecycle.get(player_id, "")
+	if value is Dictionary:
+		return str(value.get("status", ""))
+	return str(value)
 
 
 func active_player_target_rows() -> Array:

@@ -50,3 +50,31 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 	if is_instance_valid(overlay_node):
 		overlay_node.queue_free()
 
+
+
+func test_apply_gameplay_state_updates_lane_counts() -> void:
+	var telemetry_context := WorldTelemetryContext.new()
+	telemetry_context.apply_gameplay_state({
+		"server_players": {
+			"player-1": {},
+			"player-2": {},
+		},
+		"server_asteroids": {
+			"asteroid-1": {},
+		},
+		"server_bullets": {
+			"bullet-1": {},
+			"bullet-2": {},
+		},
+		"server_pickups": {
+			"pickup-1": {},
+		},
+		"total_asteroids": 7,
+	})
+
+	var snapshot: Dictionary = telemetry_context.telemetry_snapshot()
+	assert_eq(snapshot["players"], 2)
+	assert_eq(snapshot["asteroids"], 1)
+	assert_eq(snapshot["bullets"], 2)
+	assert_eq(snapshot["pickups"], 1)
+	assert_eq(snapshot["total_asteroids"], 7)

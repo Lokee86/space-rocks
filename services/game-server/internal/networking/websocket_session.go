@@ -22,7 +22,8 @@ type webSocketSession struct {
 	identity            SessionIdentity
 	authVerifier        TokenVerifier
 	matchResultReporter rooms.MatchResultReporter
-	realtimeState       realtime.RealtimeSessionState
+	realtimeState               realtime.RealtimeSessionState
+	debugShapeCatalogSentRoomID string
 }
 
 func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
@@ -48,4 +49,8 @@ func (session *webSocketSession) SessionIdentity() SessionIdentity {
 
 func (session *webSocketSession) SetAuthenticatedAccountIdentity(userID int64, accountID string, displayName string) {
 	session.identity = NewAuthenticatedAccountIdentity(userID, accountID, displayName)
+}
+
+func (session *webSocketSession) resetDebugShapeCatalogSent() {
+	session.debugShapeCatalogSentRoomID = ""
 }

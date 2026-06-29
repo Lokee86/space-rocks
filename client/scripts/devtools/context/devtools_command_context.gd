@@ -8,6 +8,7 @@ var connection_service
 var dev_connection_service
 var debug_flow
 var state_context
+var local_respawn_confirmation_marker: Callable
 
 
 func configure(debug_flow_ref, state_context_ref) -> void:
@@ -21,6 +22,10 @@ func configure_connection(connection_service_ref) -> void:
 
 func configure_dev_connection(dev_connection_service_ref) -> void:
 	dev_connection_service = dev_connection_service_ref
+
+
+func configure_local_respawn_confirmation_marker(marker: Callable) -> void:
+	local_respawn_confirmation_marker = marker
 
 
 func process(required_lane_baselines_synced: bool) -> void:
@@ -86,6 +91,15 @@ func request_respawn_player(target_scope: String = DevtoolsTargetResolver.TARGET
 		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, dev_connection_service is unavailable")
 		return
 	dev_connection_service.send_respawn_player(target_scope, target_player_id)
+	var includes_local_player := target_scope == DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS
+	if !includes_local_player and state_context != null:
+		includes_local_player = target_player_id == state_context.get_local_player_id()
+	if includes_local_player:
+		if local_respawn_confirmation_marker.is_valid():
+			ClientLogger.game_info("devtools local respawn confirmation marker called")
+			local_respawn_confirmation_marker.call()
+		else:
+			ClientLogger.game_info("devtools local respawn confirmation marker missing")
 
 
 func request_respawn_local_player() -> void:

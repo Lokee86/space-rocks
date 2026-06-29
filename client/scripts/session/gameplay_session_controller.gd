@@ -1,5 +1,8 @@
 extends Node
 
+const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
+const DevtoolsLaneStateAdapter := preload("res://scripts/protocol/realtime/devtools_lane_state_adapter.gd")
+
 var connection_service
 var hud: Control
 var gameplay_user_interface: Control
@@ -11,6 +14,7 @@ var logger: Callable
 var gameplay_composition
 var gameplay_state_flow
 var gameplay_presentation_adapter
+var devtools_lane_state_adapter
 var gameplay_realtime_router
 
 var accepts_gameplay_packets := false
@@ -19,6 +23,8 @@ var _gameplay_readiness
 var _logged_gameplay_ready := false
 var _logged_first_fanout := false
 var _logged_event_lifecycle_flow_ready := false
+var _logged_stale_dead_hud_clear := false
+var _logged_debug_shape_catalog_received := false
 
 signal return_to_pregame_requested(session_mode: String)
 signal replay_requested
@@ -48,6 +54,7 @@ func configure(
 	logger = logger_callable
 
 	gameplay_presentation_adapter = preload("res://scripts/protocol/realtime/presentation_adapter.gd").new()
+	devtools_lane_state_adapter = DevtoolsLaneStateAdapter.new()
 	gameplay_composition = GameplayComposition.new()
 	gameplay_composition.configure(
 		connection_service,
@@ -125,7 +132,11 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 		if gameplay_composition != null:
 			gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
 		gameplay_presentation_adapter.fanout_lane_states(gameplay_realtime_router, world_sync, gameplay_hud_flow, event_lifecycle_flow)
+		if gameplay_composition != null and devtools_lane_state_adapter != null:
+			var devtools_state: Dictionary = devtools_lane_state_adapter.build_state(gameplay_realtime_router)
+			gameplay_composition.apply_devtools_gameplay_state(devtools_state)
 		_confirm_respawn_restored_alive_hud(gameplay_hud_flow)
+		_clear_stale_dead_presentation_from_lane_state(gameplay_hud_flow)
 		if !_lane_presentation_fanned_out:
 			gameplay_presentation_adapter.mark_fanned_out()
 			_lane_presentation_fanned_out = true
@@ -181,6 +192,13 @@ func handle_debug_status_packet(packet: Dictionary) -> void:
 
 
 func handle_debug_shape_catalog_packet(packet: Dictionary) -> void:
+	if !_logged_debug_shape_catalog_received:
+		var shape_count := 0
+		var shapes = packet.get("shapes", {})
+		if shapes is Dictionary:
+			shape_count = shapes.size()
+		_log("debug shape catalog received: shape_count=%d" % shape_count)
+		_logged_debug_shape_catalog_received = true
 	if gameplay_composition != null:
 		gameplay_composition.apply_debug_shape_catalog_packet(packet)
 
@@ -238,6 +256,7 @@ func reset() -> void:
 	_logged_gameplay_ready = false
 	_logged_first_fanout = false
 	_logged_event_lifecycle_flow_ready = false
+	_logged_debug_shape_catalog_received = false
 	if gameplay_state_flow != null:
 		gameplay_state_flow.reset()
 	if gameplay_composition != null:
@@ -320,3 +339,42 @@ func _on_gameplay_replay_requested() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
+
+func _clear_stale_dead_presentation_from_lane_state(gameplay_hud_flow) -> void:
+	if gameplay_hud_flow == null or gameplay_realtime_router == null:
+		return
+	if gameplay_hud_flow.hidden_for_match_over or gameplay_hud_flow.is_game_over:
+		return
+	if !gameplay_hud_flow._has_dead_presentation():
+		return
+	if gameplay_composition == null or gameplay_composition.gameplay_shell_flow == null:
+		return
+	var runtime_context = gameplay_composition.gameplay_shell_flow.runtime_context
+	if runtime_context == null:
+		return
+	var self_id := ""
+	if gameplay_realtime_router.overlay_lane_state != null and gameplay_realtime_router.overlay_lane_state.self_id != null:
+		self_id = str(gameplay_realtime_router.overlay_lane_state.self_id)
+	if self_id == "":
+		return
+	var lifecycle = null
+	if gameplay_realtime_router.session_lane_state != null and gameplay_realtime_router.session_lane_state.player_lifecycle != null:
+		lifecycle = gameplay_realtime_router.session_lane_state.player_lifecycle.get(self_id)
+	var lifecycle_status := ""
+	if lifecycle is Dictionary:
+		lifecycle_status = str(lifecycle.get("status", ""))
+	else:
+		lifecycle_status = str(lifecycle)
+	if lifecycle_status != "active":
+		return
+	if gameplay_realtime_router.world_lane_state == null or gameplay_realtime_router.world_lane_state.ships == null:
+		return
+	if !gameplay_realtime_router.world_lane_state.ships.has(self_id):
+		return
+	var respawn_flow = runtime_context.respawn_flow
+	if respawn_flow != null and respawn_flow.has_method("clear_awaiting_confirmation"):
+		respawn_flow.clear_awaiting_confirmation()
+	if !_logged_stale_dead_hud_clear:
+		_logged_stale_dead_hud_clear = true
+		_log("stale dead HUD cleared from confirmed alive lane state")
+	gameplay_hud_flow.clear_dead_presentation()

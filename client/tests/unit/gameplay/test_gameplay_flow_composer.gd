@@ -2,6 +2,7 @@ extends GutTest
 
 const GameplayFlowComposer = preload("res://scripts/gameplay/runtime/gameplay_flow_composer.gd")
 const GameplayHudFlow = preload("res://scripts/shell/gameplay_hud_flow.gd")
+const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
 var nodes_to_free: Array[Node] = []
 
@@ -26,6 +27,7 @@ class FakeGameplayStateApplyFlow:
 	var apply_state_call_count := 0
 	var last_state = null
 	var last_required_lane_baselines_synced = null
+	var gameplay_readiness = null
 	var return_result := GameplayStateApplyResult.new()
 
 	func apply_state(state: Dictionary, required_lane_baselines_synced: bool) -> GameplayStateApplyResult:
@@ -55,9 +57,32 @@ class FakeResettableFlow:
 
 class FakeDevtoolsContext:
 	var configure_call_count := 0
+	var last_state = null
 
 	func configure(_connection_service_ref) -> void:
 		configure_call_count += 1
+
+	func apply_gameplay_state(state: Dictionary) -> void:
+		last_state = state
+
+
+class FakeHitboxOverlay:
+	extends Node
+
+	var last_entries: Array = []
+
+	func _init() -> void:
+		name = "ServerHitboxOverlay"
+
+	func is_enabled() -> bool:
+		return true
+
+	func set_hitbox_entries(entries: Array) -> void:
+		last_entries = entries
+
+
+class FakeOverlay:
+	extends FakeHitboxOverlay
 
 
 class FakeWorldSync:
@@ -247,31 +272,111 @@ func test_configure_creates_core_owned_flows() -> void:
 	assert_not_null(composer.input_context)
 	assert_not_null(composer.devtools_context)
 	assert_not_null(composer.gameplay_state_apply_flow)
-func test_configure_accepts_gameplay_hud_flow_in_shell_argument_slot() -> void:
+
+
+func test_configure_uses_current_signature_and_owns_core_flows() -> void:
 	var composer = GameplayFlowComposer.new()
-	var hud := Control.new()
-	var gameplay_ui := Control.new()
+	var hud := _tracked(Control.new())
+	var hud_flow := GameplayHudFlow.new()
+	hud_flow.configure(hud)
+	var menu_flow := RefCounted.new()
 	var scene_root := Node2D.new()
 	var player := Player.new()
-	var view_anchor := Node2D.new()
-	var bullets := Node2D.new()
-	var asteroids := Node2D.new()
-	var pickups := Node2D.new()
-	var session_context := RefCounted.new()
+	var runtime_context := FakeRuntimeContext.new()
+	var fake_input_context = FakeInputContext.new()
+	var fake_devtools_context = FakeDevtoolsContext.new()
+	var fake_gameplay_state_apply_flow = FakeGameplayStateApplyFlow.new()
+	var fake_process_flow = FakeProcessFlow.new()
 
 	composer.configure(
 		null,
 		_tracked(scene_root),
 		_tracked(player),
-		_tracked(view_anchor),
-		_tracked(bullets),
-		_tracked(asteroids),
-		_tracked(pickups),
-		hud,
-		gameplay_ui,
-		session_context,
-		Callable()
+		hud_flow,
+		menu_flow,
+		runtime_context,
+		null,
+		fake_input_context,
+		fake_devtools_context,
+		fake_gameplay_state_apply_flow,
+		fake_process_flow
 	)
 
-	assert_not_null(composer.gameplay_shell_flow)
-	assert_true(composer.gameplay_shell_flow.gameplay_hud_flow is GameplayHudFlow)
+	assert_not_null(composer.event_lifecycle_flow)
+	assert_not_null(composer.alive_restore_flow)
+	assert_not_null(composer.targeting_context)
+	assert_not_null(composer.input_context)
+	assert_not_null(composer.devtools_context)
+	assert_not_null(composer.gameplay_state_apply_flow)
+	assert_not_null(composer.server_hitbox_overlay_flow)
+
+func test_apply_devtools_gameplay_state_forwards_lane_state_to_hitbox_overlay_flow() -> void:
+	var composer = GameplayFlowComposer.new()
+	var fake_input_context = FakeInputContext.new()
+	var fake_devtools_context = FakeDevtoolsContext.new()
+	var fake_gameplay_state_apply_flow = FakeGameplayStateApplyFlow.new()
+	var fake_process_flow = FakeProcessFlow.new()
+	var runtime_context := FakeRuntimeContext.new()
+	var readiness := GameplayReadiness.new()
+	readiness.mark_world_baseline_synced()
+	readiness.mark_overlay_baseline_synced()
+	readiness.mark_session_baseline_synced()
+	var game_owner := _tracked(Node2D.new())
+	var overlay_node := FakeOverlay.new()
+	game_owner.add_child(overlay_node)
+	var fake_world_sync := FakeWorldSync.new()
+	runtime_context.world_sync = fake_world_sync
+	composer.configure(
+		null,
+		game_owner,
+		_tracked(Player.new()),
+		null,
+		null,
+		runtime_context,
+		null,
+		fake_input_context,
+		fake_devtools_context,
+		fake_gameplay_state_apply_flow,
+		fake_process_flow
+	)
+	composer.configure_gameplay_readiness(readiness)
+	assert_eq(fake_gameplay_state_apply_flow.gameplay_readiness, readiness)
+	composer.apply_debug_shape_catalog_packet({
+		"shapes": {
+			"player:v_wing": {
+				"id": "player:v_wing",
+				"kind": "player",
+				"shape_type": "polygon",
+				"points": [
+					{"x": -1.0, "y": 0.0},
+					{"x": 1.0, "y": 0.0},
+					{"x": 0.0, "y": 1.0},
+				],
+			}
+		}
+	})
+
+	var state := {
+		"self_id": "player-1",
+		"server_players": {
+			"player-1": {"ship_type": "v_wing", "x": 10.0, "y": 20.0, "rotation": 0.0},
+		},
+		"server_asteroids": {
+			"asteroid-1": {"x": 30.0, "y": 40.0, "variant": 1, "scale": 1.0},
+		},
+		"server_bullets": {
+			"bullet-1": {"x": 50.0, "y": 60.0, "rotation": 0.0},
+		},
+		"server_pickups": {
+			"pickup-1": {"x": 70.0, "y": 80.0},
+		},
+	}
+
+	composer.apply_devtools_gameplay_state(state)
+	composer.server_hitbox_overlay_flow.process()
+
+	assert_eq(fake_devtools_context.configure_call_count, 1)
+	assert_eq(fake_devtools_context.last_state, state)
+	assert_eq(overlay_node.last_entries.size(), 1)
+	assert_eq(overlay_node.last_entries[0]["kind"], "player")
+	assert_eq(overlay_node.last_entries[0]["id"], "player:v_wing")

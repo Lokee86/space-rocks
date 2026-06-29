@@ -13,9 +13,9 @@ class FakeViewport:
 
 
 func test_gameplay_ui_root_hover_returns_true() -> void:
-	var policy := HudInputPolicy.new()
+	var policy := add_child_autofree(HudInputPolicy.new())
 	var gameplay_ui_root := _create_gameplay_ui_root()
-	var viewport := _create_viewport(gameplay_ui_root)
+	var viewport: FakeViewport = _create_viewport(gameplay_ui_root)
 
 	assert_true(
 		policy.should_gameplay_ui_receive_mouse_event(
@@ -27,11 +27,11 @@ func test_gameplay_ui_root_hover_returns_true() -> void:
 
 
 func test_gameplay_ui_descendant_hover_returns_true() -> void:
-	var policy := HudInputPolicy.new()
+	var policy := add_child_autofree(HudInputPolicy.new())
 	var gameplay_ui_root := _create_gameplay_ui_root()
 	var descendant_button := Button.new()
 	gameplay_ui_root.add_child(descendant_button)
-	var viewport := _create_viewport(descendant_button)
+	var viewport: FakeViewport = _create_viewport(descendant_button)
 
 	assert_true(
 		policy.should_gameplay_ui_receive_mouse_event(
@@ -43,9 +43,9 @@ func test_gameplay_ui_descendant_hover_returns_true() -> void:
 
 
 func test_gameplay_ui_mouse_event_rejects_non_pressed_button() -> void:
-	var policy := HudInputPolicy.new()
+	var policy := add_child_autofree(HudInputPolicy.new())
 	var gameplay_ui_root := _create_gameplay_ui_root()
-	var viewport := _create_viewport(gameplay_ui_root)
+	var viewport: FakeViewport = _create_viewport(gameplay_ui_root)
 
 	assert_false(
 		policy.should_gameplay_ui_receive_mouse_event(
@@ -57,8 +57,8 @@ func test_gameplay_ui_mouse_event_rejects_non_pressed_button() -> void:
 
 
 func test_gameplay_ui_mouse_event_rejects_null_gameplay_ui_root() -> void:
-	var policy := HudInputPolicy.new()
-	var viewport := _create_viewport(null)
+	var policy := add_child_autofree(HudInputPolicy.new())
+	var viewport: FakeViewport = _create_viewport(null)
 
 	assert_false(
 		policy.should_gameplay_ui_receive_mouse_event(
@@ -70,7 +70,7 @@ func test_gameplay_ui_mouse_event_rejects_null_gameplay_ui_root() -> void:
 
 
 func test_gameplay_ui_mouse_event_rejects_null_viewport() -> void:
-	var policy := HudInputPolicy.new()
+	var policy := add_child_autofree(HudInputPolicy.new())
 	var gameplay_ui_root := _create_gameplay_ui_root()
 
 	assert_false(
@@ -83,12 +83,12 @@ func test_gameplay_ui_mouse_event_rejects_null_viewport() -> void:
 
 
 func test_gameplay_ui_mouse_event_rejects_hover_outside_gameplay_ui() -> void:
-	var policy := HudInputPolicy.new()
+	var policy := add_child_autofree(HudInputPolicy.new())
 	var gameplay_ui_root := _create_gameplay_ui_root()
 	var outside_root := Control.new()
 	var outside_button := Button.new()
 	outside_root.add_child(outside_button)
-	var viewport := _create_viewport(outside_button)
+	var viewport: FakeViewport = _create_viewport(outside_button)
 
 	add_child_autofree(outside_root)
 
@@ -107,7 +107,7 @@ func _create_gameplay_ui_root() -> Control:
 	return gameplay_ui_root
 
 
-func _create_viewport(hovered_control: Control):
+func _create_viewport(hovered_control: Control) -> FakeViewport:
 	var viewport := FakeViewport.new()
 	viewport.hovered_control = hovered_control
 	return viewport

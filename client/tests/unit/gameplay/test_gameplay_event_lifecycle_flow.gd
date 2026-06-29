@@ -38,19 +38,26 @@ class FakeDeathFlow:
 	var configure_call_count := 0
 	var last_hud_flow
 	var last_menu_flow
-	var last_event_flow
 	var last_player
 	var apply_self_death_event_call_count := 0
 
-	func configure(hud_flow_ref, menu_flow_ref, event_flow_ref, player_ref) -> void:
+	func configure(hud_flow_ref, menu_flow_ref, player_ref = null) -> void:
 		configure_call_count += 1
 		last_hud_flow = hud_flow_ref
 		last_menu_flow = menu_flow_ref
-		last_event_flow = event_flow_ref
 		last_player = player_ref
 
 	func apply_self_death_event(_event) -> void:
 		apply_self_death_event_call_count += 1
+
+
+class FakeMatchEndFlow:
+	var local_player_eliminated_call_count := 0
+	var last_event: Dictionary = {}
+
+	func handle_local_player_eliminated(event: Dictionary) -> void:
+		local_player_eliminated_call_count += 1
+		last_event = event
 
 
 class FakeHudFlow:
@@ -125,7 +132,6 @@ func test_configure_creates_event_and_death_flows() -> void:
 	assert_eq(flow.death_flow, death_flow)
 	assert_eq(event_flow.configure_call_count, 1)
 	assert_eq(death_flow.configure_call_count, 1)
-	assert_eq(death_flow.last_event_flow, event_flow)
 	assert_eq(death_flow.last_player, player)
 
 
@@ -154,7 +160,7 @@ func test_apply_server_events_forwards_state_fields() -> void:
 		"server_events": [{"type": "test_event"}],
 		"self_id": "player-1",
 	}
-	flow.apply_server_events(state)
+	flow.apply_server_events_from_state(state)
 
 	assert_eq(event_flow.apply_server_events_call_count, 1)
 	assert_eq(event_flow.last_server_events, state["server_events"])
@@ -187,25 +193,25 @@ func test_reset_calls_owned_event_flow_reset() -> void:
 	assert_eq(event_flow.reset_call_count, 1)
 
 
-func test_apply_self_death_event_final_death_uses_game_over_presentation() -> void:
+func test_apply_self_death_event_final_death_uses_game_end_handoff() -> void:
 	var death_flow := GameplayDeathFlow.new()
 	var hud_flow := FakeHudFlow.new()
-	var menu_flow := FakeMenuFlow.new()
+	var match_end_flow := FakeMatchEndFlow.new()
 
-	death_flow.configure(hud_flow, menu_flow, null, null)
+	death_flow.configure(hud_flow, match_end_flow, null)
 
 	death_flow.apply_self_death_event({"lives": 0})
 
 	assert_eq(hud_flow.last_lives, 0)
-	assert_eq(hud_flow.game_over_calls, 1)
-	assert_eq(menu_flow.game_over_calls, 1)
+	assert_eq(match_end_flow.local_player_eliminated_call_count, 1)
+	assert_eq(match_end_flow.last_event["lives"], 0)
 
 
 func test_apply_self_death_event_non_final_death_uses_dead_presentation() -> void:
 	var death_flow := GameplayDeathFlow.new()
 	var hud_flow := FakeHudFlow.new()
 
-	death_flow.configure(hud_flow, null, null, null)
+	death_flow.configure(hud_flow, null)
 
 	death_flow.apply_self_death_event({"lives": 2})
 

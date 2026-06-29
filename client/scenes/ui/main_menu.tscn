@@ -178,3 +178,15 @@ MULTI-
 
 PLAYER"
 label_settings = ExtResource("3_gy3bv")
+
+[node name="Sign-in" type="Label" parent="CenterContainer/VBoxContainer/HBoxContainer/MultiplayerButton/CenterContainer/MarginContainer" unique_id=603375815]
+visible = false
+layout_mode = 2
+text = "
+
+MULTI-
+
+
+
+PLAYER"
+label_settings = ExtResource("3_gy3bv")
