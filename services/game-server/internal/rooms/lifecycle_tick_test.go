@@ -79,6 +79,14 @@ func TestReportResolvedMatchResultOnceReturnsFalseWithoutSummary(t *testing.T) {
 	}
 }
 
+func TestReportResolvedMatchResultOnceForReasonReturnsFalseWithoutSummaryDuringCleanup(t *testing.T) {
+	room := NewRoom("room", RoomStateGameOver, nil)
+
+	if ReportResolvedMatchResultOnceForReason(room, &fakeMatchResultReporter{}, "disconnected") {
+		t.Fatal("expected cleanup room without resolved summary to return false")
+	}
+}
+
 func TestReportResolvedMatchResultOnceReportsAndMarksOnce(t *testing.T) {
 	room := NewRoom("room", RoomStateGameOver, nil)
 	room.match.SetResolvedSummary(playerdata.MatchResultSummary{

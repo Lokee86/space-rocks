@@ -14,18 +14,18 @@ func ProjectOverlayLane(snapshot game.GameplayPresentationSnapshot, receiverPlay
 
 	return OverlayLaneProjection{
 		Receiver: OverlayReceiverRecord{
-			SelfID:                    snapshot.SelfID,
-			Lives:                     snapshot.Lives,
-			Score:                     receiverSession.Score,
-			RespawnCooldown:           receiverSession.RespawnCooldown,
-			PrimaryWeaponID:           receiverSession.PrimaryWeaponID,
-			PrimaryAmmoPolicy:         receiverSession.PrimaryAmmoPolicy,
-			PrimaryCooldownRemaining:  receiverShip.PrimaryCooldownRemaining,
-			PrimaryAmmoRemaining:      receiverShip.PrimaryAmmoRemaining,
-			SecondaryWeaponID:         receiverSession.SecondaryWeaponID,
-			SecondaryAmmoPolicy:       receiverSession.SecondaryAmmoPolicy,
+			SelfID:                     snapshot.SelfID,
+			Lives:                      snapshot.Lives,
+			Score:                      receiverSession.Score,
+			RespawnCooldown:            receiverSession.RespawnCooldown,
+			PrimaryWeaponID:            receiverShip.PrimaryWeaponID,
+			PrimaryAmmoPolicy:          receiverShip.PrimaryAmmoPolicy,
+			PrimaryCooldownRemaining:   receiverShip.PrimaryCooldownRemaining,
+			PrimaryAmmoRemaining:       receiverShip.PrimaryAmmoRemaining,
+			SecondaryWeaponID:          receiverShip.SecondaryWeaponID,
+			SecondaryAmmoPolicy:        receiverShip.SecondaryAmmoPolicy,
 			SecondaryCooldownRemaining: receiverShip.SecondaryCooldownRemaining,
-			SecondaryAmmoRemaining:    receiverShip.SecondaryAmmoRemaining,
+			SecondaryAmmoRemaining:     receiverShip.SecondaryAmmoRemaining,
 		},
 	}
 }

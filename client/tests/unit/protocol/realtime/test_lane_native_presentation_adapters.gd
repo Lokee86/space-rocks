@@ -5,10 +5,13 @@ const OverlayPresentationAdapter := preload("res://scripts/protocol/realtime/ove
 const SessionPresentationAdapter := preload("res://scripts/protocol/realtime/session_presentation_adapter.gd")
 const EventPresentationAdapter := preload("res://scripts/protocol/realtime/event_presentation_adapter.gd")
 const DebugPresentationAdapter := preload("res://scripts/protocol/realtime/debug_presentation_adapter.gd")
+const GameplayHudFlow := preload("res://scripts/shell/gameplay_hud_flow.gd")
+const HudScene := preload("res://scenes/ui/hud.tscn")
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const OverlayLaneState := preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
 const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_state.gd")
 const EventBatchApplier := preload("res://scripts/protocol/realtime/event_batch_applier.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 class FakeWorldSync:
@@ -81,6 +84,91 @@ func test_session_adapter_updates_hud_from_session_lane() -> void:
 
 	assert_eq(hud_flow.session_lane_state, session_lane_state)
 	assert_eq(hud_flow.applied_self_id, "player-1")
+
+
+func test_gameplay_hud_flow_clears_respawn_presentation_from_active_session_lane_state() -> void:
+	var hud := HudScene.instantiate()
+	add_child_autofree(hud)
+	var hud_flow := GameplayHudFlow.new()
+	hud_flow.configure(hud)
+	hud_flow.apply_score(120)
+	hud_flow.set_dead(0.0)
+
+	var session_lane_state := SessionLaneState.new()
+	session_lane_state.player_sessions = {
+		"player-1": {
+			"score": 120,
+			"lives": 2,
+			"respawn_cooldown": 0.0,
+		}
+	}
+	session_lane_state.player_lifecycle = {
+		"player-1": {
+			"status": "active",
+		}
+	}
+
+	hud_flow.apply_session_lane_state(session_lane_state, "player-1")
+
+	assert_false(hud_flow.is_dead)
+	assert_false(hud_flow.can_respawn)
+	assert_eq(hud_flow.respawn_countdown_remaining, 0.0)
+	assert_false((hud.get_node("CenterContainer/VBoxContainer2") as CanvasItem).visible)
+	assert_eq(hud_flow.score(), 120)
+
+
+func test_gameplay_hud_flow_overlay_lane_shows_torpedo_loadout_with_cooldown() -> void:
+	var hud := HudScene.instantiate()
+	add_child_autofree(hud)
+	var hud_flow := GameplayHudFlow.new()
+	hud_flow.configure(hud)
+	var overlay_lane_state := OverlayLaneState.new()
+	overlay_lane_state.self_id = "player-1"
+	overlay_lane_state.secondary_weapon_id = "torpedo"
+	overlay_lane_state.secondary_ammo_policy = "limited"
+	overlay_lane_state.secondary_ammo_remaining = 3
+	overlay_lane_state.secondary_cooldown_remaining = 4.0
+
+	hud_flow.apply_overlay_lane_state(overlay_lane_state)
+
+	var loadout_container := hud.get_node("%LoadoutContainer") as HBoxContainer
+	assert_eq(loadout_container.get_child_count(), 1)
+	var display := loadout_container.get_child(0)
+	assert_true((display.get_node("%CooldownOverlay") as CanvasItem).visible)
+	assert_eq((display.get_node("%CooldownOverlay/CooldownLabel") as Label).text, "4.0")
+	assert_true((display.get_node("%AmmoLabel") as CanvasItem).visible)
+
+
+func test_gameplay_hud_flow_session_lane_does_not_overwrite_overlay_owned_torpedo_loadout() -> void:
+	var hud := HudScene.instantiate()
+	add_child_autofree(hud)
+	var hud_flow := GameplayHudFlow.new()
+	hud_flow.configure(hud)
+	var overlay_lane_state := OverlayLaneState.new()
+	overlay_lane_state.self_id = "player-1"
+	overlay_lane_state.secondary_weapon_id = "torpedo"
+	overlay_lane_state.secondary_ammo_policy = "limited"
+	overlay_lane_state.secondary_ammo_remaining = 2
+	overlay_lane_state.secondary_cooldown_remaining = 3.0
+	hud_flow.apply_overlay_lane_state(overlay_lane_state)
+
+	var session_lane_state := SessionLaneState.new()
+	session_lane_state.player_sessions = {
+		"player-1": {
+			Packets.FIELD_SCORE: 120,
+			Packets.FIELD_LIVES: 2,
+			Packets.FIELD_SECONDARY_WEAPON_ID: "mine",
+			Packets.FIELD_SECONDARY_AMMO_POLICY: "infinite",
+		}
+	}
+	hud_flow.apply_session_lane_state(session_lane_state, "player-1")
+
+	var loadout_container := hud.get_node("%LoadoutContainer") as HBoxContainer
+	assert_eq(loadout_container.get_child_count(), 1)
+	var display := loadout_container.get_child(0)
+	assert_true((display.get_node("%CooldownOverlay") as CanvasItem).visible)
+	assert_eq((display.get_node("%CooldownOverlay/CooldownLabel") as Label).text, "3.0")
+	assert_eq((display.get_node("%AmmoLabel") as Label).text, "x2")
 
 
 func test_event_adapter_displays_once_and_suppresses_duplicates() -> void:

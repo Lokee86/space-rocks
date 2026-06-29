@@ -69,12 +69,18 @@ func configure(
 	gameplay_composition.return_to_lobby_requested.connect(_on_gameplay_return_to_lobby_requested)
 	gameplay_state_flow = GameplayStateFlow.new()
 	gameplay_state_flow.configure(gameplay_composition)
+	_bind_realtime_protocol_dependencies()
+
+
+func _bind_realtime_protocol_dependencies() -> void:
+	_gameplay_readiness = null
 	if connection_service != null and connection_service.has_method("get_gameplay_readiness"):
 		_gameplay_readiness = connection_service.get_gameplay_readiness()
-		if _gameplay_readiness != null:
-			gameplay_presentation_adapter.bind_gameplay_readiness(_gameplay_readiness)
-			if gameplay_state_flow != null:
-				gameplay_state_flow.set_gameplay_readiness(_gameplay_readiness)
+	if gameplay_presentation_adapter != null and _gameplay_readiness != null:
+		gameplay_presentation_adapter.bind_gameplay_readiness(_gameplay_readiness)
+	if gameplay_state_flow != null:
+		gameplay_state_flow.set_gameplay_readiness(_gameplay_readiness)
+	gameplay_realtime_router = null
 	if connection_service != null and connection_service.has_method("get_realtime_router"):
 		gameplay_realtime_router = connection_service.get_realtime_router()
 
@@ -119,9 +125,47 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 		if gameplay_composition != null:
 			gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
 		gameplay_presentation_adapter.fanout_lane_states(gameplay_realtime_router, world_sync, gameplay_hud_flow, event_lifecycle_flow)
+		_confirm_respawn_restored_alive_hud(gameplay_hud_flow)
 		if !_lane_presentation_fanned_out:
 			gameplay_presentation_adapter.mark_fanned_out()
 			_lane_presentation_fanned_out = true
+
+
+func _confirm_respawn_restored_alive_hud(gameplay_hud_flow) -> void:
+	if gameplay_hud_flow == null or gameplay_realtime_router == null:
+		return
+	if gameplay_composition == null or gameplay_composition.gameplay_shell_flow == null:
+		return
+	var runtime_context = gameplay_composition.gameplay_shell_flow.runtime_context
+	if runtime_context == null:
+		return
+	var respawn_flow = runtime_context.respawn_flow
+	if respawn_flow == null or !respawn_flow.has_method("is_awaiting_confirmation"):
+		return
+	if !respawn_flow.is_awaiting_confirmation():
+		return
+	var self_id := ""
+	if gameplay_realtime_router.overlay_lane_state != null and gameplay_realtime_router.overlay_lane_state.self_id != null:
+		self_id = str(gameplay_realtime_router.overlay_lane_state.self_id)
+	if self_id == "":
+		return
+	var lifecycle = null
+	if gameplay_realtime_router.session_lane_state != null and gameplay_realtime_router.session_lane_state.player_lifecycle != null:
+		lifecycle = gameplay_realtime_router.session_lane_state.player_lifecycle.get(self_id)
+	var lifecycle_status := ""
+	if lifecycle is Dictionary:
+		lifecycle_status = str(lifecycle.get("status", ""))
+	else:
+		lifecycle_status = str(lifecycle)
+	if lifecycle_status != "active":
+		return
+	if gameplay_realtime_router.world_lane_state == null or gameplay_realtime_router.world_lane_state.ships == null:
+		return
+	if !gameplay_realtime_router.world_lane_state.ships.has(self_id):
+		return
+	gameplay_hud_flow.clear_dead_presentation()
+	respawn_flow.clear_awaiting_confirmation()
+	_log("respawn confirmation restored alive HUD")
 
 
 func handle_player_pause_state(packet: Dictionary) -> void:
@@ -142,6 +186,13 @@ func handle_debug_shape_catalog_packet(packet: Dictionary) -> void:
 
 
 func begin_accepting_gameplay_packets() -> void:
+	_bind_realtime_protocol_dependencies()
+	_log(
+		"accepting gameplay packets: gameplay_readiness_null=%s realtime_router_null=%s" % [
+			str(_gameplay_readiness == null),
+			str(gameplay_realtime_router == null)
+		]
+	)
 	accepts_gameplay_packets = true
 
 
@@ -184,7 +235,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func reset() -> void:
 	accepts_gameplay_packets = false
 	_lane_presentation_fanned_out = false
-	_gameplay_readiness = null
 	_logged_gameplay_ready = false
 	_logged_first_fanout = false
 	_logged_event_lifecycle_flow_ready = false

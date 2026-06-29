@@ -116,13 +116,13 @@ func test_session_full_updates_score_lives_and_lifecycle_cache() -> void:
 			"sequence": 1,
 			"snapshot_id": "session-snapshot-1",
 			"total_asteroids": 4,
-			"player_sessions": [
+			"players": [
 				{"id": "player-1", "score": 120, "lives": 3},
 				{"id": "player-2", "score": 90, "lives": 2},
 			],
 			"player_lifecycle": [
-				{"id": "player-1", "state": "active"},
-				{"id": "player-2", "state": "pending_respawn"},
+				{"player_id": "player-1", "state": "active"},
+				{"player_id": "player-2", "state": "pending_respawn"},
 			],
 			"is_final_chunk": true,
 		}
@@ -145,13 +145,13 @@ func test_session_delta_updates_and_deletes_records_without_clearing_missing_rec
 		{
 			"baseline_id": "session-baseline-1",
 			"sequence": 1,
-			"player_sessions": [
+			"players": [
 				{"id": "player-1", "score": 120, "lives": 3},
 				{"id": "player-2", "score": 90, "lives": 2},
 			],
 			"player_lifecycle": [
-				{"id": "player-1", "state": "active"},
-				{"id": "player-2", "state": "pending_respawn"},
+				{"player_id": "player-1", "state": "active"},
+				{"player_id": "player-2", "state": "pending_respawn"},
 			],
 			"is_final_chunk": true,
 		}
@@ -168,7 +168,7 @@ func test_session_delta_updates_and_deletes_records_without_clearing_missing_rec
 				{"id": "player-1", "score": 150},
 			],
 			"player_lifecycle_updates": [
-				{"id": "player-2", "state": "active"},
+				{"player_id": "player-2", "state": "active"},
 			],
 		}
 	)
@@ -190,11 +190,11 @@ func test_session_delta_delete_removes_record() -> void:
 		{
 			"baseline_id": "session-baseline-1",
 			"sequence": 1,
-			"player_sessions": [
+			"players": [
 				{"id": "player-1", "score": 120, "lives": 3},
 			],
 			"player_lifecycle": [
-				{"id": "player-1", "state": "active"},
+				{"player_id": "player-1", "state": "active"},
 			],
 			"is_final_chunk": true,
 		}
@@ -211,13 +211,56 @@ func test_session_delta_delete_removes_record() -> void:
 				{"id": "player-1"},
 			],
 			"player_lifecycle_deletes": [
-				{"id": "player-1"},
+				{"player_id": "player-1"},
 			],
 		}
 	)
 
 	assert_false(session_lane_state.player_sessions.has("player-1"))
 	assert_false(session_lane_state.player_lifecycle.has("player-1"))
+
+
+func test_session_delta_accepts_players_and_player_lifecycle_keys() -> void:
+	var applier := SessionLaneApplier.new()
+	var session_lane_state := SessionLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_session_full(
+		session_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_SESSION,
+		{
+			"baseline_id": "session-baseline-1",
+			"sequence": 1,
+			"players": [
+				{"id": "player-1", "score": 120, "lives": 3},
+			],
+			"player_lifecycle": [
+				{"player_id": "player-1", "state": "pending_respawn"},
+			],
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_session_delta(
+		session_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_SESSION,
+		{
+			"baseline_id": "session-baseline-1",
+			"sequence": 2,
+			"players": [
+				{"id": "player-1", "score": 150, "lives": 2},
+			],
+			"player_lifecycle": [
+				{"player_id": "player-1", "state": "active"},
+			],
+		}
+	)
+
+	assert_true(applied)
+	assert_eq(session_lane_state.player_sessions["player-1"]["score"], 150)
+	assert_eq(session_lane_state.player_sessions["player-1"]["lives"], 2)
+	assert_eq(session_lane_state.player_lifecycle["player-1"]["state"], "active")
 
 
 func test_overlay_only_does_not_mark_gameplay_ready() -> void:
@@ -254,11 +297,11 @@ func test_session_only_does_not_mark_gameplay_ready() -> void:
 		{
 			"baseline_id": "session-baseline-1",
 			"sequence": 1,
-			"player_sessions": [
+			"players": [
 				{"id": "player-1", "score": 120, "lives": 3},
 			],
 			"player_lifecycle": [
-				{"id": "player-1", "state": "active"},
+				{"player_id": "player-1", "state": "active"},
 			],
 			"is_final_chunk": true,
 		}

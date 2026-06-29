@@ -51,6 +51,10 @@ func clear_awaiting_confirmation() -> void:
 	awaiting_respawn_confirmation = false
 
 
+func is_awaiting_confirmation() -> bool:
+	return awaiting_respawn_confirmation
+
+
 func should_restore_alive_hud(
 	state: Dictionary,
 	player,
