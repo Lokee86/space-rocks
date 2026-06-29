@@ -31,3 +31,4 @@ func reset() -> void:
 	if spectate_menu_state == null:
 		return
 	spectate_menu_state.reset()
+

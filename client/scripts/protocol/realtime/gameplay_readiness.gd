@@ -22,14 +22,6 @@ func mark_overlay_baseline_synced() -> void:
 func mark_session_baseline_synced() -> void:
 	set_lane_synced(LaneMetadata.LANE_SESSION, true)
 
-func mark_legacy_state_compatibility_ready() -> void:
-	mark_world_baseline_synced()
-	mark_overlay_baseline_synced()
-	mark_session_baseline_synced()
-
-func apply_legacy_state_compatibility_baseline() -> void:
-	mark_legacy_state_compatibility_ready()
-
 func clear_world_baseline_synced() -> void:
 	set_lane_synced(LaneMetadata.LANE_WORLD, false)
 
@@ -41,4 +33,3 @@ func clear_session_baseline_synced() -> void:
 
 func is_gameplay_ready() -> bool:
 	return _lane_synced[LaneMetadata.LANE_WORLD] and _lane_synced[LaneMetadata.LANE_OVERLAY] and _lane_synced[LaneMetadata.LANE_SESSION]
-

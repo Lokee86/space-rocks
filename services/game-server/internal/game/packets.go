@@ -6,7 +6,6 @@ import runtime "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 const (
 	PacketTypeInput                         = "input"
 	PacketTypeClientConfig                  = "client_config"
-	PacketTypeState                         = "state"
 	PacketTypeBulletBlast                   = "bullet_blast"
 	PacketTypeShipDeath                     = "ship_death"
 	PacketTypeRespawn                       = "respawn"
@@ -183,19 +182,4 @@ type PickupState struct {
 	Health          int     `json:"health"`
 	AgeSeconds      float64 `json:"age_seconds"`
 	LifespanSeconds float64 `json:"lifespan_seconds"`
-}
-
-type StatePacket struct {
-	Type            string                           `json:"type"`
-	SelfID          string                           `json:"self_id"`
-	Lives           int                              `json:"lives"`
-	Players         map[string]runtime.ShipState     `json:"players"`
-	PlayerSessions  map[string]PlayerSessionState    `json:"player_sessions"`
-	PlayerLifecycle map[string]string                `json:"player_lifecycle"`
-	Bullets         map[string]runtime.BulletState   `json:"bullets"`
-	Asteroids       map[string]runtime.AsteroidState `json:"asteroids"`
-	Pickups         map[string]runtime.PickupState   `json:"pickups"`
-	TotalAsteroids  int                              `json:"total_asteroids"`
-	Events          []EventState                     `json:"events"`
-	ServerSentMsec  int                              `json:"server_sent_msec"`
 }

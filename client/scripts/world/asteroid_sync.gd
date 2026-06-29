@@ -10,6 +10,7 @@ var asteroids_layer: Node2D
 var asteroid_nodes := {}
 var initialized_asteroids := {}
 var warned_missing_asteroid_scale := {}
+var warned_missing_asteroid_variant := {}
 var target_asteroid_positions := {}
 var asteroid_server_positions := {}
 var asteroid_visual_positions := {}
@@ -27,6 +28,7 @@ func reset() -> void:
 	asteroid_nodes.clear()
 	initialized_asteroids.clear()
 	warned_missing_asteroid_scale.clear()
+	warned_missing_asteroid_variant.clear()
 	target_asteroid_positions.clear()
 	asteroid_server_positions.clear()
 	asteroid_visual_positions.clear()
@@ -92,7 +94,11 @@ func apply(
 		if !initialized_asteroids.has(asteroid_id):
 			initialized_asteroids[asteroid_id] = true
 			asteroid_node.global_position = visual_position
-			asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
+			if state.has(Packets.FIELD_VARIANT):
+				asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
+			elif !warned_missing_asteroid_variant.has(asteroid_id):
+				warned_missing_asteroid_variant[asteroid_id] = true
+				push_warning("Asteroid state missing variant for %s" % asteroid_id)
 
 
 func remove_missing(server_asteroids: Dictionary) -> void:
@@ -103,6 +109,7 @@ func remove_missing(server_asteroids: Dictionary) -> void:
 		asteroid_nodes[asteroid_id].queue_free()
 		asteroid_nodes.erase(asteroid_id)
 		warned_missing_asteroid_scale.erase(asteroid_id)
+		warned_missing_asteroid_variant.erase(asteroid_id)
 		initialized_asteroids.erase(asteroid_id)
 		target_asteroid_positions.erase(asteroid_id)
 		asteroid_server_positions.erase(asteroid_id)

@@ -68,14 +68,14 @@ func reset() -> void:
 		world_telemetry_context.reset()
 
 
-func process(has_received_state: bool) -> void:
+func process(required_lane_baselines_synced: bool) -> void:
 	if player_dev_labels_context != null and world_telemetry_context != null:
 		if world_telemetry_context.has_method("telemetry_snapshot") and player_dev_labels_context.has_method("apply_network_metrics"):
 			player_dev_labels_context.apply_network_metrics(world_telemetry_context.telemetry_snapshot())
 	if player_dev_labels_context != null && player_dev_labels_context.has_method("sync_remote_labels"):
 		player_dev_labels_context.sync_remote_labels()
 	if world_telemetry_context != null:
-		world_telemetry_context.process(has_received_state, 0.0)
+		world_telemetry_context.process(required_lane_baselines_synced, 0.0)
 
 
 func apply_gameplay_state(state: Dictionary) -> void:

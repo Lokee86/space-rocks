@@ -1,8 +1,11 @@
 package inbound
 
 import (
+	"sync"
+
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	targeting "github.com/Lokee86/space-rocks/server/internal/game/targeting"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
@@ -11,6 +14,8 @@ type gameplaySession interface {
 	CurrentGamePlayerID() string
 	EnqueuePlayerPauseState()
 }
+
+var loggedInputPackets sync.Map
 
 func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) bool {
 	if packet.Type != game.PacketTypeInput && packet.Type != game.PacketTypeRespawn && packet.Type != game.PacketTypeClientConfig {
@@ -49,6 +54,21 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 		return true
 	}
 
-	room.GameInstance().HandlePacket(session.CurrentGamePlayerID(), packet)
+	gamePlayerID := session.CurrentGamePlayerID()
+	if _, loaded := loggedInputPackets.LoadOrStore(gamePlayerID, true); !loaded {
+		logging.Network.Info("gameplay input packet received",
+			logging.FieldPlayerID, gamePlayerID,
+			"packet_type", packet.Type,
+			"forward", packet.Input.Forward,
+			"back", packet.Input.Back,
+			"left", packet.Input.Left,
+			"right", packet.Input.Right,
+			"primary_fire", packet.Input.PrimaryFire,
+			"secondary_fire", packet.Input.SecondaryFire,
+		)
+	}
+
+	room.GameInstance().HandlePacket(gamePlayerID, packet)
 	return true
 }
+

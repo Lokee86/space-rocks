@@ -2,12 +2,16 @@ extends RefCounted
 
 var _applied_batch_ids := {}
 var _applied_event_ids := {}
+var _applied_events := []
 
 func has_applied_batch(batch_id) -> bool:
 	return _applied_batch_ids.has(batch_id)
 
 func has_applied_event(event_id) -> bool:
 	return _applied_event_ids.has(event_id)
+
+func get_applied_events() -> Array:
+	return _applied_events.duplicate(true)
 
 func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
 	var batch_id = event_batch_packet.get("batch_id")
@@ -38,6 +42,9 @@ func _apply_event(event_sink, event: Dictionary) -> bool:
 		event_sink.apply_presentation_event(event_type, payload, event)
 
 	if event_id != null:
-		_applied_event_ids[event_id] = true
+		_event_id_record(event_id)
+	_applied_events.append(event.duplicate(true))
 	return true
 
+func _event_id_record(event_id) -> void:
+	_applied_event_ids[event_id] = true

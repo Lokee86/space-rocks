@@ -1,11 +1,11 @@
 package protocoltests
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
+	realtime "github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
 )
 
 func TestDecodeClientInputPacket(t *testing.T) {
@@ -33,19 +33,115 @@ func TestDecodeClientInputPacket(t *testing.T) {
 	}
 }
 
-func TestEncodeStatePacket(t *testing.T) {
-	raw, err := packetcodec.Encode(game.StatePacket{Type: game.PacketTypeState})
-	if err != nil {
-		t.Fatalf("encode state packet: %v", err)
+func TestEncodeDecodeLanePackets(t *testing.T) {
+	tests := []struct {
+		name  string
+		packet any
+	}{
+		{
+			name: "world_full",
+			packet: realtime.WorldFullPacket{
+				Type: realtime.PacketTypeWorldFull,
+				Metadata: realtime.Metadata{Lane: realtime.Lane("world"), Sequence: 1, SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true},
+				Ships: []realtime.WorldShipRecord{{ID: "player-1"}},
+			},
+		},
+		{
+			name: "world_delta",
+			packet: realtime.WorldFullPacket{
+				Type: realtime.PacketTypeWorldDelta,
+				Metadata: realtime.Metadata{Lane: realtime.Lane("world"), Sequence: 2, SnapshotKind: realtime.SnapshotKind("delta"), IsFinalChunk: true},
+				Ships: []realtime.WorldShipRecord{{ID: "player-1"}},
+			},
+		},
+		{
+			name: "overlay_full",
+			packet: realtime.OverlayFullPacket{
+				Type: realtime.PacketTypeOverlayFull,
+				Metadata: realtime.Metadata{Lane: realtime.Lane("overlay"), Sequence: 1, SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true},
+				Receiver: realtime.OverlayReceiverRecord{SelfID: "player-1"},
+			},
+		},
+		{
+			name: "overlay_delta",
+			packet: realtime.OverlayFullPacket{
+				Type: realtime.PacketTypeOverlayDelta,
+				Metadata: realtime.Metadata{Lane: realtime.Lane("overlay"), Sequence: 2, SnapshotKind: realtime.SnapshotKind("delta"), IsFinalChunk: true},
+				Receiver: realtime.OverlayReceiverRecord{SelfID: "player-1"},
+			},
+		},
+		{
+			name: "session_full",
+			packet: realtime.SessionFullPacket{
+				Type: realtime.PacketTypeSessionFull,
+				Metadata: realtime.Metadata{Lane: realtime.Lane("session"), Sequence: 1, SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true},
+				Players: []realtime.SessionPlayerRecord{{ID: "player-1"}},
+			},
+		},
+		{
+			name: "session_delta",
+			packet: realtime.SessionFullPacket{
+				Type: realtime.PacketTypeSessionDelta,
+				Metadata: realtime.Metadata{Lane: realtime.Lane("session"), Sequence: 2, SnapshotKind: realtime.SnapshotKind("delta"), IsFinalChunk: true},
+				Players: []realtime.SessionPlayerRecord{{ID: "player-1"}},
+			},
+		},
+		{
+			name: "event_batch",
+			packet: realtime.EventBatchPacket{
+				Type: realtime.PacketTypeEventBatch,
+				Metadata: realtime.Metadata{Lane: realtime.Lane("event"), Sequence: 1, SnapshotKind: realtime.SnapshotKind("batch"), IsFinalChunk: true},
+				Batch: realtime.EventBatchRecord{Events: []realtime.EventRecord{{EventID: "event-1"}}},
+			},
+		},
 	}
 
-	var packet struct {
-		Type string `json:"type"`
-	}
-	if err := json.Unmarshal(raw, &packet); err != nil {
-		t.Fatalf("decode encoded state packet: %v", err)
-	}
-	if packet.Type != game.PacketTypeState {
-		t.Fatalf("expected packet type %q, got %q", game.PacketTypeState, packet.Type)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded, err := packetcodec.Encode(tc.packet)
+			if err != nil {
+				t.Fatalf("encode %s packet: %v", tc.name, err)
+			}
+			if len(encoded) == 0 {
+				t.Fatalf("expected encoded %s packet bytes", tc.name)
+			}
+
+			switch want := tc.packet.(type) {
+			case realtime.WorldFullPacket:
+				var decoded realtime.WorldFullPacket
+				if err := packetcodec.Decode(encoded, &decoded); err != nil {
+					t.Fatalf("decode %s packet: %v", tc.name, err)
+				}
+				if decoded.Type != want.Type || decoded.Metadata != want.Metadata || len(decoded.Ships) != len(want.Ships) {
+					t.Fatalf("expected %s packet to round-trip, got %+v", tc.name, decoded)
+				}
+			case realtime.OverlayFullPacket:
+				var decoded realtime.OverlayFullPacket
+				if err := packetcodec.Decode(encoded, &decoded); err != nil {
+					t.Fatalf("decode %s packet: %v", tc.name, err)
+				}
+				if decoded.Type != want.Type || decoded.Metadata != want.Metadata || decoded.Receiver.SelfID != want.Receiver.SelfID {
+					t.Fatalf("expected %s packet to round-trip, got %+v", tc.name, decoded)
+				}
+			case realtime.SessionFullPacket:
+				var decoded realtime.SessionFullPacket
+				if err := packetcodec.Decode(encoded, &decoded); err != nil {
+					t.Fatalf("decode %s packet: %v", tc.name, err)
+				}
+				if decoded.Type != want.Type || decoded.Metadata != want.Metadata || len(decoded.Players) != len(want.Players) {
+					t.Fatalf("expected %s packet to round-trip, got %+v", tc.name, decoded)
+				}
+			case realtime.EventBatchPacket:
+				var decoded realtime.EventBatchPacket
+				if err := packetcodec.Decode(encoded, &decoded); err != nil {
+					t.Fatalf("decode %s packet: %v", tc.name, err)
+				}
+				if decoded.Type != want.Type || decoded.Metadata != want.Metadata || len(decoded.Batch.Events) != len(want.Batch.Events) {
+					t.Fatalf("expected %s packet to round-trip, got %+v", tc.name, decoded)
+				}
+			default:
+				t.Fatalf("unexpected packet type %T", tc.packet)
+			}
+		})
 	}
 }

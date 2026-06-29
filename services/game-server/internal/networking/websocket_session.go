@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"sync/atomic"
 
+	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
@@ -21,6 +22,7 @@ type webSocketSession struct {
 	identity            SessionIdentity
 	authVerifier        TokenVerifier
 	matchResultReporter rooms.MatchResultReporter
+	realtimeState       realtime.RealtimeSessionState
 }
 
 func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {

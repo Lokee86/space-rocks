@@ -79,3 +79,4 @@ func _log_has_spectate_targets(result: bool) -> void:
 		"Spectate menu state trace: self_id=%s lifecycle_keys=%s has_spectate_targets=%s"
 		% [self_id, player_lifecycle.keys(), result]
 	)
+

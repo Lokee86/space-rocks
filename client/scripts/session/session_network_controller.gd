@@ -45,7 +45,7 @@ func connect_room_signals() -> void:
 
 
 func connect_gameplay_signals() -> void:
-	_connect_connection_signal("gameplay_state_received", Callable(self, "_on_gameplay_state_received"))
+	_connect_connection_signal("gameplay_packet_received", Callable(self, "_on_gameplay_packet_received"))
 	_connect_connection_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
 	_connect_connection_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
 	_connect_connection_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
@@ -129,10 +129,10 @@ func _on_room_error_received(packet: Dictionary) -> void:
 	room_session_controller.handle_room_error(packet)
 
 
-func _on_gameplay_state_received(packet: Dictionary) -> void:
+func _on_gameplay_packet_received(packet: Dictionary) -> void:
 	if gameplay_session_controller == null:
 		return
-	gameplay_session_controller.handle_gameplay_state(packet)
+	gameplay_session_controller.handle_gameplay_packet(packet)
 
 
 func _on_debug_shape_catalog_received(packet: Dictionary) -> void:
@@ -163,3 +163,14 @@ func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
 
+
+func get_protocol_mode() -> String:
+	if connection_service == null:
+		return "legacy_state"
+	return connection_service.get_protocol_mode()
+
+
+func set_protocol_mode(protocol_mode: String) -> void:
+	if connection_service == null:
+		return
+	connection_service.set_protocol_mode(protocol_mode)

@@ -58,23 +58,24 @@ func reset() -> void:
 		mouse_action_flow.clear_pending_context()
 
 
-func handle_unhandled_input(event: InputEvent, has_received_state: bool) -> bool:
-	if !has_received_state:
+func handle_unhandled_input(event: InputEvent, required_lane_baselines_synced: bool) -> bool:
+	if !required_lane_baselines_synced:
 		return false
 	if mouse_action_flow == null:
 		return false
 	return mouse_action_flow.handle_input_event(event)
 
 
-func process(has_received_state: bool) -> void:
+func process(required_lane_baselines_synced: bool) -> void:
 	var open_menu_consumed := false
 	if pause_input_flow != null:
-		open_menu_consumed = pause_input_flow.process(has_received_state)
+		open_menu_consumed = pause_input_flow.process(required_lane_baselines_synced)
 	if Input.is_action_just_pressed("Respawn") && !respawn_request_route.is_null():
-		respawn_request_route.call(has_received_state)
+		respawn_request_route.call(required_lane_baselines_synced)
 	if input_flow != null:
-		input_flow.process(has_received_state)
+		input_flow.process(required_lane_baselines_synced)
 	if !open_menu_consumed && Input.is_action_just_pressed("OpenMenu") && !open_spectate_menu_route.is_null():
 		open_spectate_menu_route.call()
 	if Input.is_action_just_pressed("SwitchCamera") && !cycle_spectate_target_route.is_null():
 		cycle_spectate_target_route.call()
+

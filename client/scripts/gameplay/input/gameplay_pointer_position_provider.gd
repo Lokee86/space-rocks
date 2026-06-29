@@ -20,3 +20,4 @@ func server_position_for_visual_position(visual_position: Vector2) -> Vector2:
 	if server_position_for_visual_position_provider.is_null():
 		return visual_position
 	return server_position_for_visual_position_provider.call(visual_position)
+

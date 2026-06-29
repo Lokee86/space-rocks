@@ -6,7 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/rules"
 )
 
-func TestStatePacketIncludesPlayerLifecycleForAllSessions(t *testing.T) {
+func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllSessions(t *testing.T) {
 	scenario := newScenario(t)
 	activePlayerID := scenario.addPlayer()
 	pendingPlayerID := scenario.addPlayer()
@@ -16,25 +16,25 @@ func TestStatePacketIncludesPlayerLifecycleForAllSessions(t *testing.T) {
 	scenario.setPlayerLives(eliminatedPlayerID, 0)
 	scenario.removePlayerEntity(eliminatedPlayerID)
 
-	packet := scenario.state(activePlayerID)
+	snapshot := scenario.snapshot(activePlayerID)
 
 	wantLifecycle := map[string]string{
 		activePlayerID:     string(rules.PlayerActive),
 		pendingPlayerID:    string(rules.PlayerPendingRespawn),
 		eliminatedPlayerID: string(rules.PlayerEliminated),
 	}
-	if len(packet.PlayerLifecycle) != len(wantLifecycle) {
-		t.Fatalf("expected %d lifecycle entries, got %d", len(wantLifecycle), len(packet.PlayerLifecycle))
+	if len(snapshot.PlayerLifecycle) != len(wantLifecycle) {
+		t.Fatalf("expected %d lifecycle entries, got %d", len(wantLifecycle), len(snapshot.PlayerLifecycle))
 	}
 	for playerID, wantStatus := range wantLifecycle {
-		if gotStatus := packet.PlayerLifecycle[playerID]; gotStatus != wantStatus {
+		if gotStatus := snapshot.PlayerLifecycle[playerID]; gotStatus != wantStatus {
 			t.Fatalf("expected %q lifecycle %q, got %q", playerID, wantStatus, gotStatus)
 		}
 	}
-	if _, ok := packet.Players[pendingPlayerID]; ok {
+	if _, ok := snapshot.Players[pendingPlayerID]; ok {
 		t.Fatalf("expected pending player %q not to have active ship state", pendingPlayerID)
 	}
-	if _, ok := packet.Players[eliminatedPlayerID]; ok {
+	if _, ok := snapshot.Players[eliminatedPlayerID]; ok {
 		t.Fatalf("expected eliminated player %q not to have active ship state", eliminatedPlayerID)
 	}
 }

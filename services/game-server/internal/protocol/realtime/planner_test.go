@@ -44,7 +44,9 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneWorld, Metadata{Sequence: 2, BaselineID: "world-baseline", IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
 	state.UpdateLane(LaneSession, Metadata{Sequence: 3, BaselineID: "session-baseline", IsFinalChunk: true})
+	state.MarkBaselineReady(LaneSession)
 	state.UpdateLane(LaneEvent, Metadata{Sequence: 9, IsFinalChunk: true})
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
@@ -209,7 +211,7 @@ func TestRealtimeOwnershipParityAcrossLanes(t *testing.T) {
 	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
 	for _, candidate := range plan.Candidates {
 		if candidate.Lane == LaneControl {
-			t.Fatalf("planner used slow lane: %#v", candidate)
+			t.Fatalf("planner used session lane: %#v", candidate)
 		}
 	}
 }
@@ -232,7 +234,7 @@ func TestRealtimePlannerUsesGameplayPresentationSnapshotInput(t *testing.T) {
 
 	for _, candidate := range plan.Candidates {
 		if candidate.Lane == LaneControl {
-			t.Fatalf("planner should not depend on Game.StatePacket/statePacket control flow: %#v", candidate)
+			t.Fatalf("planner should not depend on old state packet control flow: %#v", candidate)
 		}
 	}
 }

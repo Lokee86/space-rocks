@@ -94,6 +94,9 @@ func configure_gameplay_readiness(gameplay_readiness) -> void:
 		return
 	gameplay_shell_flow.gameplay_state_flow.gameplay_readiness = gameplay_readiness
 
+func set_required_lane_baselines_synced(value: bool) -> void:
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.set_required_lane_baselines_synced(value)
 func apply_gameplay_state(state: Dictionary) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.apply_devtools_gameplay_state(state)
@@ -119,13 +122,13 @@ func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
 		return
 	gameplay_shell_flow.apply_debug_shape_catalog_packet(packet)
 
-func process(delta: float, has_received_gameplay_state: bool) -> void:
+func process(delta: float, required_lane_baselines_synced: bool) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.process(delta)
 	if dev_tools_session_flow != null:
 		dev_tools_session_flow.process(delta)
 	if gameplay_presentation_flow != null:
-		gameplay_presentation_flow.process(delta, has_received_gameplay_state)
+		gameplay_presentation_flow.process(delta, required_lane_baselines_synced)
 
 func handle_devtools_input(event: InputEvent) -> bool:
 	if dev_tools_session_flow == null:

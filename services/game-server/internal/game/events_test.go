@@ -379,28 +379,7 @@ func TestPendingPresentationEventsDrainRemovesOnlySelectedIDs(t *testing.T) {
 	}
 }
 
-func TestStateDrainsDomainEventPacketEvents(t *testing.T) {
-	game := New()
-	playerID := game.AddPlayer()
-	game.recordDomainEvent(events.Event{
-		Type: events.EventBulletBlast,
-		X:    12.5,
-		Y:    34.75,
-	})
 
-	packet := game.StatePacket(playerID)
-	if len(packet.Events) != 1 {
-		t.Fatalf("expected first state packet to include 1 event, got %d", len(packet.Events))
-	}
-	if packet.Events[0].Type != PacketTypeBulletBlast {
-		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, packet.Events[0].Type)
-	}
-
-	flushed := game.StatePacket(playerID)
-	if len(flushed.Events) != 0 {
-		t.Fatalf("expected later state packet to include 0 events, got %d", len(flushed.Events))
-	}
-}
 
 func TestDamageAppliedEventForResultCreatesEvent(t *testing.T) {
 	event, ok := damageAppliedEventForResult(damage.DamageResult{

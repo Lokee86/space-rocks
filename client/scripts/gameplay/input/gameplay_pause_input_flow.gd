@@ -13,17 +13,18 @@ func reset() -> void:
 	pending_open_menu_before_spawn = false
 
 
-func process(has_received_state: bool) -> bool:
+func process(required_lane_baselines_synced: bool) -> bool:
 	if menu_flow == null:
 		return false
-	if !has_received_state && Input.is_action_just_pressed("OpenMenu"):
+	if !required_lane_baselines_synced && Input.is_action_just_pressed("OpenMenu"):
 		pending_open_menu_before_spawn = true
 		return true
-	elif has_received_state:
-		if menu_flow.handle_open_menu_pressed(has_received_state):
+	elif required_lane_baselines_synced:
+		if menu_flow.handle_open_menu_pressed(required_lane_baselines_synced):
 			return true
-	if pending_open_menu_before_spawn && has_received_state:
+	if pending_open_menu_before_spawn && required_lane_baselines_synced:
 		pending_open_menu_before_spawn = false
 		menu_flow.open_live_pause_from_request(true)
 		return true
 	return false
+

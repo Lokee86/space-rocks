@@ -36,10 +36,10 @@ func show_gameplay() -> void:
 
 func apply_gameplay_state_summary(state: Dictionary) -> void:
 	show_gameplay()
-	if state["has_lives"]:
-		apply_lives(state["lives"])
+	if state.get("has_lives", false):
+		apply_lives(int(state.get("lives", 0)))
 	var player_sessions: Dictionary = state.get("player_sessions", {})
-	var self_id: String = state["self_id"]
+	var self_id: String = str(state.get("self_id", ""))
 	var self_session_state = player_sessions.get(self_id, {})
 	if self_session_state is Dictionary and self_session_state.has(Packets.FIELD_SCORE):
 		apply_score(int(self_session_state.get(Packets.FIELD_SCORE, 0)))
@@ -49,6 +49,57 @@ func apply_gameplay_state_summary(state: Dictionary) -> void:
 		loadout_display_flow.apply_player_state(self_player_state)
 
 
+func apply_overlay_lane_state(overlay_lane_state) -> void:
+	if overlay_lane_state == null:
+		return
+
+	show_gameplay()
+	if overlay_lane_state.self_id != null:
+		var self_id := str(overlay_lane_state.self_id)
+		if self_id != "":
+			loadout_display_flow.clear()
+	if overlay_lane_state.lives != null:
+		apply_lives(int(overlay_lane_state.lives))
+	if overlay_lane_state.score != null:
+		apply_score(int(overlay_lane_state.score))
+
+	var player_state := {
+		"primary_weapon_id": overlay_lane_state.primary_weapon_id,
+		"secondary_weapon_id": overlay_lane_state.secondary_weapon_id,
+		"primary_ammo_policy": overlay_lane_state.primary_ammo_policy,
+		"secondary_ammo_policy": overlay_lane_state.secondary_ammo_policy,
+		"primary_cooldown_remaining": overlay_lane_state.primary_cooldown_remaining,
+		"secondary_cooldown_remaining": overlay_lane_state.secondary_cooldown_remaining,
+		"primary_ammo_remaining": overlay_lane_state.primary_ammo_remaining,
+		"secondary_ammo_remaining": overlay_lane_state.secondary_ammo_remaining,
+	}
+	loadout_display_flow.apply_player_state(player_state)
+
+func apply_session_lane_state(session_lane_state, self_id := "") -> void:
+	if session_lane_state == null:
+		return
+
+	show_gameplay()
+	if self_id != "" and session_lane_state.player_sessions != null and session_lane_state.player_sessions.has(self_id):
+		var self_session = session_lane_state.player_sessions[self_id]
+		if self_session is Dictionary:
+			if self_session.has(Packets.FIELD_SCORE):
+				apply_score(int(self_session.get(Packets.FIELD_SCORE, 0)))
+			if self_session.has(Packets.FIELD_LIVES):
+				apply_lives(int(self_session.get(Packets.FIELD_LIVES, 0)))
+			if self_session.has(Packets.FIELD_RESPAWN_COOLDOWN):
+				var respawn_cooldown := float(self_session.get(Packets.FIELD_RESPAWN_COOLDOWN, 0.0))
+				if respawn_cooldown > 0.0:
+					set_dead(respawn_cooldown)
+				else:
+					set_alive()
+				if self_session.has(Packets.FIELD_PRIMARY_WEAPON_ID) or self_session.has(Packets.FIELD_SECONDARY_WEAPON_ID):
+					loadout_display_flow.apply_player_state(self_session)
+
+	if session_lane_state.total_asteroids != null:
+		var total_asteroids := int(session_lane_state.total_asteroids)
+		if total_asteroids >= 0:
+			show_gameplay()
 func reset() -> void:
 	hidden_for_match_over = false
 	if hud != null:

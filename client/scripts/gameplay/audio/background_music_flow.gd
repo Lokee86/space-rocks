@@ -17,3 +17,4 @@ func stop_music() -> void:
 func ensure_music_playing() -> void:
 	if not playing:
 		play()
+

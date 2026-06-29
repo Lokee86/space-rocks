@@ -177,7 +177,7 @@ func TestPickupRemoveReturnsFalseForMissingPickup(t *testing.T) {
 	}
 }
 
-func TestStatePacketIncludesSpawnedPickups(t *testing.T) {
+func TestGameplayPresentationSnapshotIncludesSpawnedPickups(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
@@ -189,14 +189,14 @@ func TestStatePacketIncludesSpawnedPickups(t *testing.T) {
 		t.Fatal("expected pickup spawn to return ok")
 	}
 
-	packet := scenario.state(playerID)
-	if len(packet.Pickups) != 1 {
-		t.Fatalf("expected one pickup in state packet, got %d", len(packet.Pickups))
+	snapshot := scenario.snapshot(playerID)
+	if len(snapshot.Pickups) != 1 {
+		t.Fatalf("expected one pickup in gameplay snapshot, got %d", len(snapshot.Pickups))
 	}
 
-	pickup, ok := packet.Pickups[spawnedPickup.ID]
+	pickup, ok := snapshot.Pickups[spawnedPickup.ID]
 	if !ok {
-		t.Fatalf("expected state packet to include pickup %q", spawnedPickup.ID)
+		t.Fatalf("expected gameplay snapshot to include pickup %q", spawnedPickup.ID)
 	}
 	if pickup.ID != spawnedPickup.ID {
 		t.Fatalf("expected pickup id %q, got %q", spawnedPickup.ID, pickup.ID)
@@ -218,7 +218,7 @@ func TestStatePacketIncludesSpawnedPickups(t *testing.T) {
 	}
 }
 
-func TestPickupStateAgeAdvancesInStatePacket(t *testing.T) {
+func TestPickupStateAgeAdvancesInGameplayPresentationSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
@@ -232,10 +232,10 @@ func TestPickupStateAgeAdvancesInStatePacket(t *testing.T) {
 
 	scenario.game.Step(0.25)
 
-	packet := scenario.state(playerID)
-	pickup, ok := packet.Pickups[spawnedPickup.ID]
+	snapshot := scenario.snapshot(playerID)
+	pickup, ok := snapshot.Pickups[spawnedPickup.ID]
 	if !ok {
-		t.Fatalf("expected state packet to include pickup %q", spawnedPickup.ID)
+		t.Fatalf("expected gameplay snapshot to include pickup %q", spawnedPickup.ID)
 	}
 	if pickup.AgeSeconds <= 0 {
 		t.Fatalf("expected pickup age to increase, got %f", pickup.AgeSeconds)
@@ -245,16 +245,16 @@ func TestPickupStateAgeAdvancesInStatePacket(t *testing.T) {
 	}
 }
 
-func TestStatePacketUsesEmptyPickupStateWhenNoPickupsExist(t *testing.T) {
+func TestGameplayPresentationSnapshotUsesEmptyPickupStateWhenNoPickupsExist(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	packet := scenario.state(playerID)
-	if packet.Pickups == nil {
-		t.Fatal("expected state packet pickups map to be initialized")
+	snapshot := scenario.snapshot(playerID)
+	if snapshot.Pickups == nil {
+		t.Fatal("expected gameplay snapshot pickups map to be initialized")
 	}
-	if len(packet.Pickups) != 0 {
-		t.Fatalf("expected empty pickup state, got %d pickups", len(packet.Pickups))
+	if len(snapshot.Pickups) != 0 {
+		t.Fatalf("expected empty pickup state, got %d pickups", len(snapshot.Pickups))
 	}
 }
 
@@ -326,7 +326,7 @@ func TestOneUpPickupIncrementsPlayerSessionLives(t *testing.T) {
 	}
 }
 
-func TestOneUpPickupStatePacketReportsNewLives(t *testing.T) {
+func TestOneUpPickupSnapshotReportsNewLives(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 	player := scenario.playerState(playerID, playerID)
@@ -343,13 +343,13 @@ func TestOneUpPickupStatePacketReportsNewLives(t *testing.T) {
 	scenario.useCircleCollisionShapes()
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	session, ok := packet.PlayerSessions[playerID]
+	snapshot := scenario.snapshot(playerID)
+	session, ok := snapshot.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected state packet to include player session %q", playerID)
+		t.Fatalf("expected gameplay snapshot to include player session %q", playerID)
 	}
 	if session.Lives != 3 {
-		t.Fatalf("expected state packet player session lives 3, got %d", session.Lives)
+		t.Fatalf("expected gameplay snapshot player session lives 3, got %d", session.Lives)
 	}
 }
 
@@ -415,7 +415,7 @@ func TestOneUpPickupCollectionEmitsPickupCollectedAndEffectAppliedEvents(t *test
 	}
 }
 
-func TestPickupExpiryEmitsPickupExpiredEventAndRemovesPickupFromStatePacket(t *testing.T) {
+func TestPickupExpiryEmitsPickupExpiredEventAndRemovesPickupFromGameplayPresentationSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
@@ -429,9 +429,9 @@ func TestPickupExpiryEmitsPickupExpiredEventAndRemovesPickupFromStatePacket(t *t
 
 	scenario.game.Step(spawnedPickup.LifespanSeconds)
 
-	packet := scenario.state(playerID)
+	snapshot := scenario.snapshot(playerID)
 	foundExpiredEvent := false
-	for _, event := range packet.Events {
+	for _, event := range snapshot.PendingEvents {
 		if event.Type != "pickup_expired" {
 			continue
 		}
@@ -448,10 +448,10 @@ func TestPickupExpiryEmitsPickupExpiredEventAndRemovesPickupFromStatePacket(t *t
 		break
 	}
 	if !foundExpiredEvent {
-		t.Fatal("expected pickup_expired event in state packet")
+		t.Fatal("expected pickup_expired event in gameplay snapshot")
 	}
 
-	if _, ok := packet.Pickups[spawnedPickup.ID]; ok {
-		t.Fatalf("expected expired pickup %q to be absent from state packet pickups", spawnedPickup.ID)
+	if _, ok := snapshot.Pickups[spawnedPickup.ID]; ok {
+		t.Fatalf("expected expired pickup %q to be absent from gameplay snapshot pickups", spawnedPickup.ID)
 	}
 }

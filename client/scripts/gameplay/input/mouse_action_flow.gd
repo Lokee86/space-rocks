@@ -40,3 +40,4 @@ func handle_input_event(event: InputEvent) -> bool:
 		return true
 
 	return false
+

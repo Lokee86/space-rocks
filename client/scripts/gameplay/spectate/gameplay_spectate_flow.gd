@@ -52,3 +52,4 @@ func begin_spectating() -> void:
 		var focused: bool = bool(world_sync.focus_camera_on_player(target_id))
 		if focused:
 			is_spectating = true
+

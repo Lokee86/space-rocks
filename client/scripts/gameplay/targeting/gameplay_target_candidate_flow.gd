@@ -95,3 +95,4 @@ func target_visual_candidates() -> Array:
 		candidates.append(bullet_candidate)
 
 	return candidates
+

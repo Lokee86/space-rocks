@@ -68,3 +68,4 @@ func _visual_position_for_event(event: Dictionary, event_name: String):
 
 	var event_position := Vector2(event_x, event_y)
 	return visual_position_for_server_position.call(event_position)
+

@@ -92,40 +92,7 @@ func TestMaybeDropPickupFromAsteroidLockedDoesNotCreatePickupWhenChanceIsZero(t 
 	}
 }
 
-func TestMaybeDropPickupFromAsteroidLockedProjectsPickupIntoStatePacket(t *testing.T) {
-	game := New()
-	playerID := game.AddPlayer()
-	game.dropTables = basicAsteroidsDropTablesWithChance(1.0)
 
-	asteroid := &runtime.Asteroid{
-		ID:   "asteroid-1",
-		Size: 2,
-		X:    123,
-		Y:    456,
-	}
-
-	game.mu.Lock()
-	game.maybeDropPickupFromAsteroidLocked(asteroid)
-	game.mu.Unlock()
-
-	packet := game.StatePacket(playerID)
-
-	if len(packet.Pickups) != 1 {
-		t.Fatalf("expected one projected pickup, got %d", len(packet.Pickups))
-	}
-
-	var pickup runtime.PickupState
-	for _, value := range packet.Pickups {
-		pickup = value
-	}
-
-	if pickup.Type != "1_up" {
-		t.Fatalf("expected pickup type 1_up, got %q", pickup.Type)
-	}
-	if pickup.X != asteroid.X || pickup.Y != asteroid.Y {
-		t.Fatalf("expected pickup position %v,%v, got %v,%v", asteroid.X, asteroid.Y, pickup.X, pickup.Y)
-	}
-}
 
 func TestApplyProjectileAsteroidHitConsequencesDropsPickup(t *testing.T) {
 	game := New()

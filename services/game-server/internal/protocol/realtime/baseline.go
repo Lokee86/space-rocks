@@ -8,18 +8,33 @@ type RealtimeLaneState struct {
 	SnapshotID   string
 	ChunkIndex   int
 	ChunkCount   int
-	IsFinalChunk  bool
+	IsFinalChunk bool
+}
+
+func (state RealtimeLaneState) Metadata() Metadata {
+	return Metadata{
+		Lane:         state.Lane,
+		Sequence:     state.Sequence,
+		BaselineID:   state.BaselineID,
+		SnapshotID:   state.SnapshotID,
+		SnapshotKind: state.SnapshotKind,
+		ChunkIndex:   state.ChunkIndex,
+		ChunkCount:   state.ChunkCount,
+		IsFinalChunk: state.IsFinalChunk,
+	}
 }
 
 type RealtimeSessionState struct {
-	ReceiverID string
-	Lanes      map[Lane]RealtimeLaneState
+	ReceiverID    string
+	Lanes         map[Lane]RealtimeLaneState
+	BaselineReady map[Lane]bool
 }
 
 func NewRealtimeSessionState(receiverID string) RealtimeSessionState {
 	return RealtimeSessionState{
-		ReceiverID: receiverID,
-		Lanes:      make(map[Lane]RealtimeLaneState),
+		ReceiverID:    receiverID,
+		Lanes:         make(map[Lane]RealtimeLaneState),
+		BaselineReady: make(map[Lane]bool),
 	}
 }
 
@@ -39,9 +54,39 @@ func (state *RealtimeSessionState) UpdateLane(lane Lane, metadata Metadata) {
 	}
 }
 
+func (state *RealtimeSessionState) MarkBaselineReady(lane Lane) {
+	if state.BaselineReady == nil {
+		state.BaselineReady = make(map[Lane]bool)
+	}
+	state.BaselineReady[lane] = true
+}
+
 func (state RealtimeSessionState) LaneState(lane Lane) (RealtimeLaneState, bool) {
 	laneState, ok := state.Lanes[lane]
 	return laneState, ok
+}
+
+func (state RealtimeSessionState) LaneBaselineReady(lane Lane) bool {
+	return state.BaselineReady[lane]
+}
+
+func CandidateMetadata(candidate RealtimeLaneCandidate, state RealtimeSessionState) (Metadata, bool) {
+	switch packet := candidate.Full.(type) {
+	case WorldFullPacket:
+		return packet.Metadata, true
+	case OverlayFullPacket:
+		return packet.Metadata, true
+	case SessionFullPacket:
+		return packet.Metadata, true
+	case EventBatchPacket:
+		return packet.Metadata, true
+	}
+
+	laneState, ok := state.LaneState(candidate.Lane)
+	if !ok {
+		return Metadata{}, false
+	}
+	return laneState.Metadata(), true
 }
 
 func (state RealtimeSessionState) SharedWorldSnapshotID(snapshotID string, payloadsIdentical bool) string {

@@ -70,7 +70,7 @@ func TestDebugInvincibleAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 	}
 }
 
-func TestStatePacketDebugStatusReflectsDebugToggles(t *testing.T) {
+func TestDebugStatusReflectsDebugToggles(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
@@ -847,7 +847,7 @@ func TestDebugSetScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	}
 }
 
-func TestSetPlayerScoreExportsSessionOwnedScoreInStatePacket(t *testing.T) {
+func TestSetPlayerScoreExportsSessionOwnedScoreInSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
@@ -858,11 +858,11 @@ func TestSetPlayerScoreExportsSessionOwnedScoreInStatePacket(t *testing.T) {
 
 	session := scenario.playerSessionState(playerID, playerID)
 	if session.Score != 37 {
-		t.Fatalf("expected state packet player session score 37, got %d", session.Score)
+		t.Fatalf("expected snapshot player session score 37, got %d", session.Score)
 	}
 }
 
-func TestSetPlayerLivesExportsSessionOwnedLivesInStatePacket(t *testing.T) {
+func TestSetPlayerLivesExportsSessionOwnedLivesInSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
@@ -874,13 +874,13 @@ func TestSetPlayerLivesExportsSessionOwnedLivesInStatePacket(t *testing.T) {
 	packet := scenario.state(playerID)
 	session, ok := packet.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected state packet for %q to include player session %q", playerID, playerID)
+		t.Fatalf("expected snapshot for %q to include player session %q", playerID, playerID)
 	}
 	if session.Lives != 6 {
-		t.Fatalf("expected state packet player lives 6, got %d", session.Lives)
+		t.Fatalf("expected snapshot player lives 6, got %d", session.Lives)
 	}
 	if packet.Lives != 6 {
-		t.Fatalf("expected top-level packet lives 6, got %d", packet.Lives)
+		t.Fatalf("expected top-level snapshot lives 6, got %d", packet.Lives)
 	}
 }
 

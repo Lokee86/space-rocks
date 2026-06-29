@@ -38,8 +38,9 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert game_output.language == "go"
     assert game_output.package == "game"
     assert game_output.packet_types is True
-    for required_struct in ("ClientPacket", "EventState", "StatePacket"):
-        assert required_struct in game_output.structs
+    assert "ClientPacket" in game_output.structs
+    assert "EventState" in game_output.structs
+    assert "StatePacket" not in game_output.structs
     assert any(name in game_output.structs for name in ("RoomSnapshot", "CreateRoomRequest"))
     assert game_output.imports == {
         "runtime": "github.com/Lokee86/space-rocks/server/internal/game/runtime",
@@ -79,26 +80,23 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
 def test_loads_migrated_structs_and_field_overrides(tmp_path: Path) -> None:
     schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
-    state_packet = schema.struct("StatePacket")
-    fields = {field.name: field for field in state_packet.fields}
+    with pytest.raises(KeyError):
+        schema.struct("StatePacket")
 
-    assert fields["players"].type == "map"
-    assert fields["players"].key_type == "string"
-    assert fields["players"].value_type == "ShipState"
-    assert fields["players"].go_value_type == "runtime.ShipState"
-    assert fields["events"].type == "array"
-    assert fields["events"].item_type == "EventState"
-    assert fields["self_id"].go_name == "SelfID"
+    fields = {field.name: field for field in schema.struct("ClientPacket").fields}
+
+    assert fields["input"].type == "InputState"
+    assert fields["input"].go_type == "runtime.InputState"
 
 
 def test_loads_packet_types_and_builders(tmp_path: Path) -> None:
     schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
-    assert [packet_type.id for packet_type in schema.packet_types][:3] == [
+    assert [packet_type.id for packet_type in schema.packet_types][:2] == [
         "input",
         "client_config",
-        "state",
     ]
+    assert "state" not in {packet_type.id for packet_type in schema.packet_types}
 
     builder = schema.builder("input_packet")
     assert builder.args == ("forward", "back", "right", "left", "primary_fire", "secondary_fire")
@@ -460,4 +458,3 @@ shoot = "bool"
 
     with pytest.raises(PacketTomlError):
         load_packet_schema_files((legacy,))
-

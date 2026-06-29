@@ -179,3 +179,4 @@ func _shape_definition_visual_points(shape_definition: Dictionary, x: float, y: 
 		draw_points.append(world_sync.visual_position_for_server_position(server_position))
 
 	return draw_points
+

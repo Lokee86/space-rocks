@@ -31,9 +31,15 @@ func configure(
 	event_flow.self_death_event.connect(Callable(death_flow, "apply_self_death_event"))
 
 
-func apply_server_events(state: Dictionary) -> void:
+func apply_server_events(server_events: Array, self_id: String) -> void:
 	if event_flow != null:
-		event_flow.apply_server_events(state["server_events"], state["self_id"])
+		event_flow.apply_server_events(server_events, self_id)
+
+
+func apply_server_events_from_state(state: Dictionary) -> void:
+	if state == null:
+		return
+	apply_server_events(state.get("server_events", []), str(state.get("self_id", "")))
 
 
 func reset() -> void:

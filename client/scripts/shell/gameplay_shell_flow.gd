@@ -15,7 +15,7 @@ var gameplay_pause_state_flow
 var hud_flow
 var menu_flow
 var match_end_flow
-var has_received_state := false
+var has_received_lane_baselines_synced := false
 
 
 func configure(
@@ -66,7 +66,7 @@ func configure(
 
 
 func reset() -> void:
-	has_received_state = false
+	has_received_lane_baselines_synced = false
 	if runtime_context != null:
 		runtime_context.reset()
 	if hud_flow != null:
@@ -79,11 +79,13 @@ func reset() -> void:
 		flow_composer.reset()
 
 
+func set_required_lane_baselines_synced(value: bool) -> void:
+	has_received_lane_baselines_synced = value
 func apply_gameplay_state(state: Dictionary) -> void:
 	if flow_composer == null:
 		return
-	var result: GameplayStateApplyResult = flow_composer.apply_gameplay_state(state, has_received_state)
-	has_received_state = result.has_received_state
+	var result: GameplayStateApplyResult = flow_composer.apply_gameplay_state(state, has_received_lane_baselines_synced)
+	has_received_lane_baselines_synced = result.gameplay_ready
 	if result.started_gameplay:
 		gameplay_started.emit()
 
@@ -109,7 +111,7 @@ func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
 func handle_unhandled_input(event: InputEvent) -> bool:
 	if flow_composer == null:
 		return false
-	return flow_composer.handle_unhandled_input(event, has_received_state)
+	return flow_composer.handle_unhandled_input(event, has_received_lane_baselines_synced)
 
 
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
@@ -139,7 +141,7 @@ func refresh_devtools_spawn_player_slots(max_players: int) -> void:
 func process(_delta: float) -> void:
 	if flow_composer == null:
 		return
-	flow_composer.process(_delta, has_received_state)
+	flow_composer.process(_delta, has_received_lane_baselines_synced)
 
 
 func _on_quit_to_main_menu_requested() -> void:

@@ -79,3 +79,13 @@ func test_decode_allows_type_without_payload() -> void:
 
 	assert_true(decoded.ok)
 	assert_eq(decoded.packet["type"], "example_packet")
+
+
+func test_decode_accepts_lowercase_lane_packet_fixture() -> void:
+	var decoded = PacketCodec.decode(
+		"{\"type\":\"world_full\",\"lane\":\"world\",\"sequence\":7,\"baseline_id\":\"baseline-1\",\"snapshot_id\":\"snapshot-1\",\"chunk_index\":0,\"chunk_count\":1,\"is_final_chunk\":true,\"ships\":[{\"id\":\"ship-1\",\"ship_type\":\"v_wing\",\"x\":1,\"y\":2,\"rotation\":0,\"health\":100,\"shields\":0,\"thrusting\":false,\"target_kind\":\"player\",\"target_id\":\"player-1\"}],\"bullets\":[],\"asteroids\":[],\"pickups\":[]}"
+	)
+
+	assert_true(decoded.ok)
+	assert_eq(decoded.packet["type"], "world_full")
+	assert_eq(decoded.packet["ships"][0]["ship_type"], "v_wing")

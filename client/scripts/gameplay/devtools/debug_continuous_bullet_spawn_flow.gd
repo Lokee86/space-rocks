@@ -79,3 +79,4 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 
 func process(_delta: float) -> void:
 	return
+

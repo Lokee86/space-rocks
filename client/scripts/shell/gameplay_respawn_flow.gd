@@ -17,8 +17,8 @@ func reset() -> void:
 	awaiting_respawn_confirmation = false
 
 
-func request_respawn(has_received_state: bool) -> void:
-	if !has_received_state || connection_service == null || hud_flow == null:
+func request_respawn(required_lane_baselines_synced: bool) -> void:
+	if !required_lane_baselines_synced || connection_service == null || hud_flow == null:
 		return
 	if !hud_flow.can_request_respawn():
 		return

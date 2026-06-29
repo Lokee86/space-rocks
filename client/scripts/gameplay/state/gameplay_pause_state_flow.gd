@@ -20,3 +20,4 @@ func apply_packet(packet: Dictionary) -> void:
 		return
 	var state := PlayerPauseStatePacketReader.read(packet)
 	player_pause_state_tracker.apply_state(state)
+

@@ -42,7 +42,6 @@ func LogSlowGameplayPresentationWrite(duration time.Duration, metrics GameplayPr
 		logging.FieldRemoteAddr, remoteAddr,
 		"write_duration_ms", duration.Milliseconds(),
 		"packet_size", metrics.PacketSize,
-		"room_state", metrics.Contributors.RoomState,
 		"players", metrics.Contributors.Players,
 		"player_sessions", metrics.Contributors.PlayerSessions,
 		"player_lifecycle", metrics.Contributors.PlayerLifecycle,

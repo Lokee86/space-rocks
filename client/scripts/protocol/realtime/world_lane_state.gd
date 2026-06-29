@@ -2,7 +2,7 @@ extends RefCounted
 
 const SHIP_FIELDS := ["id", "x", "y", "rotation", "velocity_x", "velocity_y", "thrusting", "health", "shields"]
 const BULLET_FIELDS := ["id", "x", "y", "velocity_x", "velocity_y", "rotation", "owner_id", "lifespan_seconds"]
-const ASTEROID_FIELDS := ["id", "x", "y", "velocity_x", "velocity_y", "rotation", "size", "health"]
+const ASTEROID_FIELDS := ["id", "x", "y", "velocity_x", "velocity_y", "rotation", "size", "health", "scale", "variant"]
 const PICKUP_FIELDS := ["id", "x", "y", "pickup_type"]
 
 var ships := {}
@@ -76,3 +76,4 @@ func _narrow_record(record: Dictionary, fields: Array) -> Dictionary:
 		if record.has(field):
 			narrowed[field] = record[field]
 	return narrowed
+

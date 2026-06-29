@@ -99,16 +99,7 @@ func summarizeSendPlan(included []ScheduleRecord, deferred []ScheduleRecord) Sen
 
 func scheduleRank(record ScheduleRecord) int {
 	if isRequiredRecord(record) {
-		return 0
-	}
-	if record.RecordKind == "delete" {
-		return 1
-	}
-	if record.RecordKind == "create" {
-		return 2
-	}
-	if record.Lane == LaneOverlay && record.EntityFamily == "self" {
-		return 3
+		return laneBootstrapRank(record)
 	}
 	if record.DeliveryClass == DeliveryClassEventOnce || record.PacketFamily == PacketFamilyEventBatch {
 		return 4
@@ -125,6 +116,18 @@ func scheduleRank(record ScheduleRecord) int {
 	return 8
 }
 
+func laneBootstrapRank(record ScheduleRecord) int {
+	switch record.Lane {
+	case LaneWorld:
+		return 0
+	case LaneOverlay:
+		return 1
+	case LaneSession:
+		return 2
+	default:
+		return 3
+	}
+}
 func isRequiredRecord(record ScheduleRecord) bool {
 	if record.DeliveryClass == DeliveryClassRequired {
 		return true
@@ -133,6 +136,9 @@ func isRequiredRecord(record ScheduleRecord) bool {
 		return true
 	}
 	if record.Lane == LaneControl {
+		return true
+	}
+	if record.PacketFamily == PacketFamilyWorldFull || record.PacketFamily == PacketFamilyOverlayFull || record.PacketFamily == PacketFamilySessionFull {
 		return true
 	}
 	if record.PacketFamily == PacketFamilyResyncRequest || record.PacketFamily == PacketFamilyResyncRequired {

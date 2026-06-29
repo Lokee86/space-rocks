@@ -12,6 +12,7 @@ var projectile_sync
 var pickup_sync
 var player_render_api
 var target_position_source
+var world_lane_state
 var view_anchor: Node2D
 var local_player: Player
 var current_self_id := ""
@@ -42,6 +43,32 @@ func configure(
 	asteroids.z_index = Constants.ASTEROID_Z_INDEX
 	pickups.z_index = Constants.PICKUP_Z_INDEX
 	bullets.z_index = Constants.BULLET_Z_INDEX
+
+
+
+func set_current_self_id(self_id: String) -> void:
+	current_self_id = self_id
+	if target_position_source != null:
+		target_position_source.set_current_self_id(self_id)
+
+
+func apply_world_lane_state(world_lane_state_ref) -> void:
+	if world_lane_state_ref == null:
+		return
+
+	world_lane_state = world_lane_state_ref
+	if player_render_api != null:
+		player_render_api.remove_missing(world_lane_state.ships, current_self_id)
+		player_render_api.apply_state(current_self_id, world_lane_state.ships)
+	if projectile_sync != null:
+		projectile_sync.remove_missing(world_lane_state.bullets)
+		projectile_sync.apply(world_lane_state.bullets, player_render_api.visual_position(), player_render_api.server_position())
+	if asteroid_sync != null:
+		asteroid_sync.remove_missing(world_lane_state.asteroids)
+		asteroid_sync.apply(world_lane_state.asteroids, player_render_api.visual_position(), player_render_api.server_position())
+	if pickup_sync != null:
+		pickup_sync.remove_missing(world_lane_state.pickups)
+		pickup_sync.apply(world_lane_state.pickups, player_render_api.visual_position(), player_render_api.server_position())
 
 
 func reset() -> void:

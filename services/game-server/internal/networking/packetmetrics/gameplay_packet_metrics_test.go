@@ -7,7 +7,6 @@ import (
 
 func TestNewGameplayPresentationPacketMetrics(t *testing.T) {
 	contributors := GameplayPacketContributors{
-		RoomState:       "in_game",
 		Players:         3,
 		PlayerSessions:  4,
 		PlayerLifecycle: 2,
