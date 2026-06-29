@@ -63,3 +63,27 @@ func TestBuildEventBatchPacketUsesMetadataAndPreservesEventIDs(t *testing.T) {
 		t.Fatalf("expected source slice to remain unchanged after packet build, got %#v before %#v", pending, before)
 	}
 }
+func TestSuccessiveEventBatchPacketsUseDifferentBatchIDs(t *testing.T) {
+	pending := []game.PendingPresentationEvent{
+		{EventID: "evt-a", Event: game.EventState{Type: "bullet_blast"}},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	first := BuildEventBatchPacket(pending, 0, 1234)
+	state.UpdateLane(LaneEvent, AdvanceMetadataForSuccessfulWrite(LaneEvent, first.Metadata))
+	laneState, ok := state.LaneState(LaneEvent)
+	if !ok {
+		t.Fatal("expected event lane state after first batch write")
+	}
+	second := BuildEventBatchPacket(pending, laneState.Sequence, 1234)
+
+	if first.Batch.BatchID != "event-batch-0" {
+		t.Fatalf("first batch id = %q, want event-batch-0", first.Batch.BatchID)
+	}
+	if second.Batch.BatchID != "event-batch-1" {
+		t.Fatalf("second batch id = %q, want event-batch-1", second.Batch.BatchID)
+	}
+	if first.Batch.BatchID == second.Batch.BatchID {
+		t.Fatalf("expected successive event batches to use different ids, got %q and %q", first.Batch.BatchID, second.Batch.BatchID)
+	}
+}

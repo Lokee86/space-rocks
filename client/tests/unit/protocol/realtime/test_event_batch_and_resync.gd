@@ -109,7 +109,7 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 	assert_eq(event_flow.received_event_types[0], "bullet_blast")
 
 
-func test_duplicate_batch_id_is_suppressed() -> void:
+func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
 	var applier := EventBatchApplier.new()
 	var sink := FakeEventSink.new()
 
@@ -127,6 +127,34 @@ func test_duplicate_batch_id_is_suppressed() -> void:
 			"batch_id": "batch-1",
 			"events": [
 				{"event_id": "event-2", "type": "spark", "payload": {"value": 2}},
+			],
+		},
+		sink
+	)
+
+	assert_true(applied)
+	assert_eq(sink.handled_events.size(), 2)
+	assert_eq(sink.handled_events[1]["type"], "spark")
+
+
+func test_repeated_batch_id_skips_missing_event_id_defensively() -> void:
+	var applier := EventBatchApplier.new()
+	var sink := FakeEventSink.new()
+
+	applier.apply_event_batch(
+		{
+			"batch_id": "batch-1",
+			"events": [
+				{"type": "spark", "payload": {"value": 1}},
+			],
+		},
+		sink
+	)
+	var applied := applier.apply_event_batch(
+		{
+			"batch_id": "batch-1",
+			"events": [
+				{"type": "spark", "payload": {"value": 2}},
 			],
 		},
 		sink

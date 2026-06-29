@@ -95,3 +95,12 @@ func (state RealtimeSessionState) SharedWorldSnapshotID(snapshotID string, paylo
 	}
 	return ""
 }
+
+func AdvanceMetadataForSuccessfulWrite(lane Lane, metadata Metadata) Metadata {
+	if lane != LaneEvent {
+		return metadata
+	}
+	metadata.Sequence += 1
+	metadata.SnapshotID = sequenceBackedBatchID(metadata.Sequence)
+	return metadata
+}

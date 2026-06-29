@@ -140,7 +140,8 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			}
 		}
 		if metadata, ok := realtime.CandidateMetadata(candidate, session.realtimeState); ok {
-			session.realtimeState.UpdateLane(candidate.Lane, metadata)
+			persistedMetadata := realtime.AdvanceMetadataForSuccessfulWrite(candidate.Lane, metadata)
+			session.realtimeState.UpdateLane(candidate.Lane, persistedMetadata)
 			if metadata.IsFinalChunk && candidate.Kind == realtime.RealtimeLaneCandidateKindFull {
 				session.realtimeState.MarkBaselineReady(candidate.Lane)
 			}
