@@ -1,10 +1,11 @@
 package networking
 
 import (
+	"strings"
 	"time"
 
+	game "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/devtools"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
 	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
@@ -21,9 +22,6 @@ func writeServerMessages(
 	ticker := time.NewTicker(time.Second / time.Duration(constants.ServerTickRate))
 	defer ticker.Stop()
 
-	debugStatusTick := 0
-	lastDebugShapeCatalogRoomID := ""
-
 	for {
 		select {
 		case err := <-readErr:
@@ -36,84 +34,111 @@ func writeServerMessages(
 				return
 			}
 		case <-ticker.C:
-			if session.currentGamePlayerID == "" || !outbound.CanSendGameplayPresentationState(session.room) {
-				continue
-			}
-
-			response, packetMetrics, ok := outbound.BuildGameplayPresentationStateResponse(session.room, session.currentGamePlayerID, session.currentRoomID, remoteAddr)
-			if !ok {
-				continue
-			}
-
-			writeStarted := time.Now()
-			if !outbound.WriteServerMessage(session.conn, response, func(err error) {
-				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
-			}) {
+			if !writeGameplayLaneProtocolMessage(session, remoteAddr) {
 				return
-			}
-			packetmetrics.LogSlowGameplayPresentationWrite(time.Since(writeStarted), packetMetrics, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
-			if devtools.Enabled() {
-				runShadowRealtimeMeasurement(session, remoteAddr)
-			}
-			lastDebugShapeCatalogRoomID = writeDebugShapeCatalogMessage(session, remoteAddr, lastDebugShapeCatalogRoomID)
-			debugStatusTick++
-			if debugStatusTick >= debugStatusWriteIntervalTicks {
-				debugStatusTick = 0
-				writeDebugStatusMessage(session, remoteAddr)
 			}
 		}
 	}
 }
 
-func runShadowRealtimeMeasurement(session *webSocketSession, remoteAddr string) {
+func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr string) bool {
 	if session.room == nil || session.currentGamePlayerID == "" || session.room.GameInstance() == nil {
-		return
+		return true
 	}
 
-	snapshot := session.room.GameInstance().GameplayPresentationSnapshot(session.currentGamePlayerID)
-	result := realtime.BuildShadowRealtimeResult(snapshot, realtime.NewRealtimeSessionState(session.currentGamePlayerID))
-	packetmetrics.LogShadowLaneMetrics(realtime.ShadowLaneMetricRecords(result), session.currentRoomID, session.currentGamePlayerID, remoteAddr)
-	fields := []any{
+	if session.realtimeState.ReceiverID == "" || session.realtimeState.ReceiverID != session.currentGamePlayerID {
+		session.realtimeState = realtime.NewRealtimeSessionState(session.currentGamePlayerID)
+	}
+
+	result, err := realtime.BuildActiveRealtimeResultForGame(session.room.GameInstance(), session.currentGamePlayerID, session.realtimeState)
+	if err != nil {
+		logging.Network.Error("lane protocol gameplay build failed", err,
+			logging.FieldRoomID, session.currentRoomID,
+			logging.FieldPlayerID, session.currentGamePlayerID,
+			logging.FieldRemoteAddr, remoteAddr,
+		)
+		return false
+	}
+
+	drainedEventCount := 0
+	for _, candidate := range result.Candidates {
+		encodedPacket := result.EncodedPackets[candidate.Lane]
+		if len(encodedPacket) == 0 {
+			continue
+		}
+		if !outbound.WriteServerMessage(session.conn, encodedPacket, func(writeErr error) {
+			logging.Network.Error("lane protocol gameplay write failed", writeErr,
+				logging.FieldRoomID, session.currentRoomID,
+				logging.FieldPlayerID, session.currentGamePlayerID,
+				logging.FieldRemoteAddr, remoteAddr,
+				"lane", candidate.Lane,
+			)
+		}) {
+			return false
+		}
+		if candidate.Kind == realtime.RealtimeLaneCandidateKindEventBatch {
+			if drained := drainActiveEventBatchAfterWrite(session.room.GameInstance(), session.currentGamePlayerID, result.EventBatchEventIDs); len(drained) > 0 {
+				drainedEventCount += len(drained)
+				logging.Network.Debug("lane protocol event batch drained",
+					logging.FieldRoomID, session.currentRoomID,
+					logging.FieldPlayerID, session.currentGamePlayerID,
+					logging.FieldRemoteAddr, remoteAddr,
+					"event_count", len(drained),
+				)
+			}
+		}
+		if metadata, ok := realtime.CandidateMetadata(candidate, session.realtimeState); ok {
+			session.realtimeState.UpdateLane(candidate.Lane, metadata)
+			if metadata.IsFinalChunk && candidate.Kind == realtime.RealtimeLaneCandidateKindFull {
+				session.realtimeState.MarkBaselineReady(candidate.Lane)
+			}
+		}
+	}
+
+	packetmetrics.LogSentLaneMetrics(result.MetricSummaries, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+	logging.Network.Debug("lane protocol gameplay written",
 		logging.FieldRoomID, session.currentRoomID,
 		logging.FieldPlayerID, session.currentGamePlayerID,
 		logging.FieldRemoteAddr, remoteAddr,
-	}
-	fields = append(fields, realtime.ShadowRealtimeSummaryFields(result)...)
-	logging.Network.Debug("shadow realtime summary", fields...)
+		"lane_packet_families", lanePacketFamilySummary(result.MetricSummaries),
+		"baseline_full_count", countLaneCandidateKinds(result.Candidates, realtime.RealtimeLaneCandidateKindFull),
+		"baseline_chunk_count", 0,
+		"delta_blocked_count", len(result.SendPlan.Deferred),
+		"event_batch_written", len(result.EventBatchEventIDs) > 0,
+		"event_batch_drained_count", drainedEventCount,
+		"candidate_count", len(result.Candidates),
+		"packet_count", len(result.MetricSummaries),
+		"encoded_bytes", result.TotalEncodedBytes,
+	)
+	return true
 }
 
-func writeDebugStatusMessage(session *webSocketSession, remoteAddr string) {
-	if session.currentGamePlayerID == "" || !outbound.CanSendDebugStatus(session.room) {
-		return
+func countLaneCandidateKinds(candidates []realtime.RealtimeLaneCandidate, kind realtime.RealtimeLaneCandidateKind) int {
+	count := 0
+	for _, candidate := range candidates {
+		if candidate.Kind == kind {
+			count++
+		}
 	}
-
-	response, ok := outbound.BuildDebugStatusResponse(session.room, session.currentGamePlayerID, session.currentRoomID, remoteAddr)
-	if !ok {
-		return
-	}
-
-	if !outbound.WriteServerMessage(session.conn, response, func(err error) {
-		logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
-	}) {
-		return
-	}
+	return count
 }
 
-func writeDebugShapeCatalogMessage(session *webSocketSession, remoteAddr string, lastSentRoomID string) string {
-	if session.currentRoomID == "" || session.currentRoomID == lastSentRoomID || !outbound.CanSendDebugShapeCatalog(session.room) {
-		return lastSentRoomID
+func lanePacketFamilySummary(records []packetmetrics.PacketMetricRecord) string {
+	if len(records) == 0 {
+		return ""
 	}
 
-	response, ok := outbound.BuildDebugShapeCatalogResponse(session.room, session.currentRoomID, remoteAddr)
-	if !ok {
-		return lastSentRoomID
+	families := make([]string, 0, len(records))
+	for _, record := range records {
+		families = append(families, record.PacketFamily)
+	}
+	return strings.Join(families, ",")
+}
+
+func drainActiveEventBatchAfterWrite(gameInstance *game.Game, playerID string, eventIDs []string) []game.PendingPresentationEvent {
+	if gameInstance == nil || len(eventIDs) == 0 {
+		return nil
 	}
 
-	if !outbound.WriteServerMessage(session.conn, response, func(err error) {
-		logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
-	}) {
-		return lastSentRoomID
-	}
-
-	return session.currentRoomID
+	return gameInstance.DrainPendingPresentationEvents(playerID, eventIDs...)
 }

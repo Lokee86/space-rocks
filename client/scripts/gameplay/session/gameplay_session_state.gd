@@ -27,3 +27,4 @@ static func is_game_over(session_mode: String, room_state: String, hud_is_game_o
 		return true
 
 	return is_multiplayer_session(session_mode) && is_room_game_over(room_state)
+

@@ -41,3 +41,4 @@ func reset() -> void:
 
 func _on_self_death_event(event: Dictionary) -> void:
 	self_death_event.emit(event)
+

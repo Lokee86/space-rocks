@@ -23,9 +23,9 @@ func configure_dev_connection(dev_connection_service_ref) -> void:
 	dev_connection_service = dev_connection_service_ref
 
 
-func process(has_received_state: bool) -> void:
+func process(required_lane_baselines_synced: bool) -> void:
 	if debug_flow != null:
-		debug_flow.process(has_received_state)
+		debug_flow.process(required_lane_baselines_synced)
 
 
 func request_toggle_invincible(target_scope: String = "", target_player_id: String = "") -> void:

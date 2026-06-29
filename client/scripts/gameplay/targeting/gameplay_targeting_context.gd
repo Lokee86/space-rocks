@@ -40,3 +40,4 @@ func select_target() -> bool:
 func deselect_target() -> void:
 	if target_request_flow != null:
 		target_request_flow.deselect_target()
+

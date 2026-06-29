@@ -3,7 +3,6 @@ extends RefCounted
 
 const TYPE_INPUT := "input"
 const TYPE_CLIENT_CONFIG := "client_config"
-const TYPE_STATE := "state"
 const TYPE_BULLET_BLAST := "bullet_blast"
 const TYPE_SHIP_DEATH := "ship_death"
 const TYPE_RESPAWN := "respawn"

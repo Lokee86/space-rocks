@@ -19,12 +19,12 @@ func reset() -> void:
 	debug_invincible_toggle_was_pressed = false
 
 
-func process(has_received_state: bool) -> void:
+func process(required_lane_baselines_synced: bool) -> void:
 	var toggle_pressed := Input.is_action_just_pressed("DevToggle1")
 	var infinite_lives_toggle_pressed := Input.is_action_just_pressed("DevToggle2")
 	var world_freeze_toggle_pressed := Input.is_action_just_pressed("DevToggle3")
 	var player_freeze_toggle_pressed := Input.is_action_just_pressed("DevToggle4")
-	if !has_received_state || connection_service == null:
+	if !required_lane_baselines_synced || connection_service == null:
 		debug_invincible_toggle_was_pressed = toggle_pressed
 		return
 

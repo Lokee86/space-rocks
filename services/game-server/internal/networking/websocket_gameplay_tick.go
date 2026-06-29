@@ -5,7 +5,6 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 )
 
@@ -18,7 +17,7 @@ func tickSessionGameplayLifecycle(session *webSocketSession, done <-chan struct{
 		case <-done:
 			return
 		case <-ticker.C:
-			if session.currentGamePlayerID == "" || !outbound.CanSendGameplayPresentationState(session.room) {
+			if session.currentGamePlayerID == "" {
 				continue
 			}
 

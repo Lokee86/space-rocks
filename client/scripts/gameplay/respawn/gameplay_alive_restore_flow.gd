@@ -37,3 +37,4 @@ func apply_state(state: Dictionary) -> void:
 	if match_end_flow != null && match_end_flow.has_method("handle_alive_restored"):
 		match_end_flow.handle_alive_restored()
 	respawn_flow.clear_awaiting_confirmation()
+

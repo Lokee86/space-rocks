@@ -206,3 +206,4 @@ func _queue_free_effect_node_once(effect_node: Node) -> void:
 func _on_game_over_sound_delay_timeout(token: int) -> void:
 	if token == game_over_sound_token:
 		_play_game_over_sound()
+

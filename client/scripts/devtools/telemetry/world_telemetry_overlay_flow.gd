@@ -79,7 +79,7 @@ func world_packet_metrics_snapshot() -> Dictionary:
 	return metrics.snapshot()
 
 
-func process(_has_received_state: bool, _delta: float = 0.0) -> void:
+func process(_required_lane_baselines_synced: bool, _delta: float = 0.0) -> void:
 	if not is_instance_valid(overlay) or not overlay.visible:
 		return
 

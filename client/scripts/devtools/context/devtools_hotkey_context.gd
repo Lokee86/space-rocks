@@ -14,7 +14,7 @@ func configure(state_context_ref, overlay_context_ref, hotkey_flow_ref, window_t
 	window_toggle_route = window_toggle_route_ref
 
 
-func process(has_received_state: bool) -> void:
+func process(required_lane_baselines_synced: bool) -> void:
 	if Input.is_action_just_pressed("DevToggle0"):
 		if !window_toggle_route.is_null():
 			window_toggle_route.call()
@@ -36,4 +36,4 @@ func process(has_received_state: bool) -> void:
 	if Input.is_action_just_pressed("DevToggle9") and overlay_context != null:
 		overlay_context.toggle_world_telemetry_overlay()
 	if hotkey_flow != null:
-		hotkey_flow.process(has_received_state)
+		hotkey_flow.process(required_lane_baselines_synced)

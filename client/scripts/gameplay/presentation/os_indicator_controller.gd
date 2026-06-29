@@ -121,3 +121,4 @@ func _apply_indicator_hue(indicator: Control, hue: float) -> void:
 	graphic.material = shader_material.duplicate() as ShaderMaterial
 	(graphic.material as ShaderMaterial).set_shader_parameter("hue_shift", hue)
 
+

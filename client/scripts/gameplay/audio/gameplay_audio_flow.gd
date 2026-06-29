@@ -81,3 +81,4 @@ func stop_game_over_sound() -> void:
 	if !is_instance_valid(game_over_sound):
 		return
 	game_over_sound.stop()
+

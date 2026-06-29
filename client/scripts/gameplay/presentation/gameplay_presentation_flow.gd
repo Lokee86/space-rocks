@@ -29,8 +29,8 @@ func reset() -> void:
 	local_player_presentation_controller.reset()
 
 
-func process(_delta: float, has_received_state: bool) -> void:
-	local_player_presentation_controller.process(has_received_state)
+func process(_delta: float, required_lane_baselines_synced: bool) -> void:
+	local_player_presentation_controller.process(required_lane_baselines_synced)
 	if (
 		camera_provider.is_null()
 		|| remote_positions_provider.is_null()
@@ -42,3 +42,4 @@ func process(_delta: float, has_received_state: bool) -> void:
 	var positions = remote_positions_provider.call()
 	var remote_hues = remote_hues_provider.call()
 	os_indicator_controller.update_indicators(camera, positions, remote_hues)
+

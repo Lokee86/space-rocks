@@ -21,3 +21,4 @@ static func is_player_active(lifecycle: Dictionary, player_id: String) -> bool:
 
 	return str(lifecycle.get(str(player_id), "")) == STATUS_ACTIVE
 
+

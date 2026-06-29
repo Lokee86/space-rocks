@@ -1,7 +1,6 @@
 extends RefCounted
 class_name GameplayStateFlow
 
-const GameplayStatePacketReader := preload("res://scripts/gameplay/state/gameplay_state_packet_reader.gd")
 const GameplayReadiness := preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
 var gameplay_composition
@@ -19,14 +18,14 @@ func set_gameplay_readiness(readiness: GameplayReadiness) -> void:
 
 
 func handle_gameplay_state_packet(packet: Dictionary) -> void:
-	var state = GameplayStatePacketReader.read(packet)
 	if gameplay_composition != null:
-		gameplay_composition.apply_gameplay_state(state)
+		gameplay_composition.apply_gameplay_state(packet)
 
 
-func has_received_state() -> bool:
+func is_gameplay_ready() -> bool:
 	return gameplay_readiness.is_gameplay_ready()
 
 
 func reset() -> void:
 	gameplay_readiness = GameplayReadiness.new()
+

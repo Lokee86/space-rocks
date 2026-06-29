@@ -35,12 +35,12 @@ func apply_gameplay_state(state: Dictionary) -> void:
 		overlay_flow.apply_gameplay_state(state)
 
 
-func process(has_received_state: bool, delta: float = 0.0) -> void:
+func process(required_lane_baselines_synced: bool, delta: float = 0.0) -> void:
 	if overlay_flow != null:
 		if network_metrics != null:
 			overlay_flow.set_network_metrics(network_metrics.snapshot())
 			_process_ping()
-		overlay_flow.process(has_received_state, delta)
+		overlay_flow.process(required_lane_baselines_synced, delta)
 
 
 func toggle_overlay() -> void:

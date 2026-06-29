@@ -64,15 +64,15 @@ func reset() -> void:
 		state_context.reset_game_target()
 
 
-func process(has_received_state: bool) -> void:
+func process(required_lane_baselines_synced: bool) -> void:
 	if state_context != null:
-		state_context.set_has_gameplay_readiness(has_received_state)
+		state_context.set_has_gameplay_readiness(required_lane_baselines_synced)
 	if hotkey_context != null:
-		hotkey_context.process(has_received_state)
+		hotkey_context.process(required_lane_baselines_synced)
 	if command_context != null:
-		command_context.process(has_received_state)
+		command_context.process(required_lane_baselines_synced)
 	if overlay_context != null:
-		overlay_context.process(has_received_state)
+		overlay_context.process(required_lane_baselines_synced)
 
 
 func toggle_devtools_window() -> void:

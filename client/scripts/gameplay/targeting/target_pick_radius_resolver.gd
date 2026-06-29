@@ -10,3 +10,4 @@ static func pickup_radius(position_entry: Dictionary, fallback: float) -> float:
 			return radius
 
 	return fallback
+

@@ -56,3 +56,4 @@ func pickup_positions() -> Dictionary:
 	if pickup_sync == null:
 		return {}
 	return pickup_sync.pickup_position_entries()
+

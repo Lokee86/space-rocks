@@ -11,3 +11,4 @@ var pick_rank := 0
 
 func is_valid() -> bool:
 	return target_kind != "" and target_id != "" and pick_radius > 0.0
+

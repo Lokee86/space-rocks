@@ -526,89 +526,6 @@ name = "paused"
 json = "paused"
 type = "bool"
 
-[[structs]]
-id = "StatePacket"
-
-[[structs.fields]]
-name = "type"
-json = "type"
-type = "string"
-
-[[structs.fields]]
-name = "self_id"
-go_name = "SelfID"
-json = "self_id"
-type = "string"
-
-[[structs.fields]]
-name = "lives"
-json = "lives"
-type = "int"
-
-[[structs.fields]]
-name = "players"
-json = "players"
-type = "map"
-key_type = "string"
-value_type = "ShipState"
-go_value_type = "runtime.ShipState"
-
-[[structs.fields]]
-name = "player_sessions"
-json = "player_sessions"
-type = "map"
-key_type = "string"
-value_type = "PlayerSessionState"
-
-[[structs.fields]]
-name = "player_lifecycle"
-go_name = "PlayerLifecycle"
-json = "player_lifecycle"
-type = "map"
-key_type = "string"
-value_type = "string"
-
-[[structs.fields]]
-name = "bullets"
-json = "bullets"
-type = "map"
-key_type = "string"
-value_type = "BulletState"
-go_value_type = "runtime.BulletState"
-
-[[structs.fields]]
-name = "asteroids"
-json = "asteroids"
-type = "map"
-key_type = "string"
-value_type = "AsteroidState"
-go_value_type = "runtime.AsteroidState"
-
-[[structs.fields]]
-name = "pickups"
-json = "pickups"
-type = "map"
-key_type = "string"
-value_type = "PickupState"
-go_value_type = "runtime.PickupState"
-
-[[structs.fields]]
-name = "total_asteroids"
-json = "total_asteroids"
-type = "int"
-
-[[structs.fields]]
-name = "events"
-json = "events"
-type = "array"
-item_type = "EventState"
-
-[[structs.fields]]
-name = "server_sent_msec"
-go_name = "ServerSentMsec"
-json = "server_sent_msec"
-type = "int"
-
 [[packet_types]]
 id = "input"
 value = "input"
@@ -616,46 +533,6 @@ value = "input"
 [[packet_types]]
 id = "client_config"
 value = "client_config"
-
-[[packet_types]]
-id = "state"
-value = "state"
-
-[[packet_types]]
-id = "world_full"
-value = "world_full"
-
-[[packet_types]]
-id = "world_delta"
-value = "world_delta"
-
-[[packet_types]]
-id = "overlay_full"
-value = "overlay_full"
-
-[[packet_types]]
-id = "overlay_delta"
-value = "overlay_delta"
-
-[[packet_types]]
-id = "session_full"
-value = "session_full"
-
-[[packet_types]]
-id = "session_delta"
-value = "session_delta"
-
-[[packet_types]]
-id = "event_batch"
-value = "event_batch"
-
-[[packet_types]]
-id = "resync_request"
-value = "resync_request"
-
-[[packet_types]]
-id = "resync_required"
-value = "resync_required"
 
 [[packet_types]]
 id = "bullet_blast"
@@ -696,6 +573,42 @@ value = "select_target_at_position_request"
 [[packet_types]]
 id = "clear_target_request"
 value = "clear_target_request"
+
+[[packet_types]]
+id = "world_full"
+value = "world_full"
+
+[[packet_types]]
+id = "world_delta"
+value = "world_delta"
+
+[[packet_types]]
+id = "overlay_full"
+value = "overlay_full"
+
+[[packet_types]]
+id = "overlay_delta"
+value = "overlay_delta"
+
+[[packet_types]]
+id = "session_full"
+value = "session_full"
+
+[[packet_types]]
+id = "session_delta"
+value = "session_delta"
+
+[[packet_types]]
+id = "event_batch"
+value = "event_batch"
+
+[[packet_types]]
+id = "resync_request"
+value = "resync_request"
+
+[[packet_types]]
+id = "resync_required"
+value = "resync_required"
 
 [[builders]]
 id = "input_packet"

@@ -123,6 +123,21 @@ def test_validate_packets_rejects_unknown_output_packet_type_id(tmp_path: Path) 
     assert run(["-validate", "-packets", "-config", str(config_path)]) == 1
 
 
+def test_validate_packets_rejects_unknown_output_builder_reference(tmp_path: Path) -> None:
+    config_path = write_project(tmp_path)
+    packets_path = tmp_path / "shared/packets/packets.toml"
+    packets_path.write_text(
+        packets_path.read_text(encoding="utf-8").replace(
+            'builders = ["input_packet"]',
+            'builders = ["missing_packet_builder"]',
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    assert run(["-validate", "-packets", "-config", str(config_path)]) == 1
+
+
 def append_packet_toml(tmp_path: Path, text: str) -> None:
     packets_path = tmp_path / "shared/packets/packets.toml"
     packets_path.write_text(
@@ -179,3 +194,4 @@ args = []
 [builders.body]
 type = "state"
 """.lstrip()
+

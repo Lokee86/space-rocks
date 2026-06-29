@@ -27,3 +27,4 @@ func current_position() -> Dictionary:
 		"valid": false,
 		"visual_position": visual_position,
 	}
+

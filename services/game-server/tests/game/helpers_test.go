@@ -43,19 +43,19 @@ func (scenario *scenario) step(delta float64) {
 	scenario.game.Step(delta)
 }
 
-func (scenario *scenario) state(playerID string) servergame.StatePacket {
+func (scenario *scenario) presentationSnapshot(playerID string) servergame.GameplayPresentationSnapshot {
 	scenario.t.Helper()
 
-	return scenario.game.StatePacket(playerID)
+	return scenario.game.GameplayPresentationSnapshot(playerID)
 }
 
 func (scenario *scenario) playerState(viewerID string, playerID string) runtime.ShipState {
 	scenario.t.Helper()
 
-	packet := scenario.state(viewerID)
-	player, ok := packet.Players[playerID]
+	snapshot := scenario.presentationSnapshot(viewerID)
+	player, ok := snapshot.Players[playerID]
 	if !ok {
-		scenario.t.Fatalf("expected state packet for %q to include player %q", viewerID, playerID)
+		scenario.t.Fatalf("expected gameplay snapshot for %q to include player %q", viewerID, playerID)
 	}
 
 	return player
@@ -64,10 +64,10 @@ func (scenario *scenario) playerState(viewerID string, playerID string) runtime.
 func (scenario *scenario) playerSessionState(requestingPlayerID string, targetPlayerID string) servergame.PlayerSessionState {
 	scenario.t.Helper()
 
-	packet := scenario.state(requestingPlayerID)
-	session, ok := packet.PlayerSessions[targetPlayerID]
+	snapshot := scenario.presentationSnapshot(requestingPlayerID)
+	session, ok := snapshot.PlayerSessions[targetPlayerID]
 	if !ok {
-		scenario.t.Fatalf("expected state packet for %q to include player session %q", requestingPlayerID, targetPlayerID)
+		scenario.t.Fatalf("expected gameplay snapshot for %q to include player session %q", requestingPlayerID, targetPlayerID)
 	}
 
 	return session
@@ -76,7 +76,12 @@ func (scenario *scenario) playerSessionState(requestingPlayerID string, targetPl
 func (scenario *scenario) events(playerID string) []servergame.EventState {
 	scenario.t.Helper()
 
-	return scenario.state(playerID).Events
+	snapshot := scenario.presentationSnapshot(playerID)
+	events := make([]servergame.EventState, 0, len(snapshot.PendingEvents))
+	for _, pending := range snapshot.PendingEvents {
+		events = append(events, pending.Event)
+	}
+	return events
 }
 
 func countEventsOfType(events []servergame.EventState, eventType string) int {

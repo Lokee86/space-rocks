@@ -10,6 +10,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/authclient"
 	servergame "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/networking"
+	realtimemode "github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
@@ -256,7 +257,7 @@ func TestCreateRoomRequestRejectsSessionAlreadyInRoom(t *testing.T) {
 	}
 }
 
-func TestStartSinglePlayerRequestCreatesInGameRoomAndStartsState(t *testing.T) {
+func TestStartSinglePlayerRequestCreatesInGameRoomAndBootstrapsLane(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
@@ -311,20 +312,7 @@ func TestStartSinglePlayerRequestCreatesInGameRoomAndStartsState(t *testing.T) {
 		t.Fatalf("expected single-player room active players 1, got %d", room.ActivePlayerCount())
 	}
 
-	var state servergame.StatePacket
-	readJSON(t, conn, &state)
-	if state.Type != servergame.PacketTypeState {
-		t.Fatalf("expected state packet, got %q", state.Type)
-	}
-	if state.SelfID == "" {
-		t.Fatal("expected state packet self id")
-	}
-	if len(state.Players) != 1 {
-		t.Fatalf("expected state packet with 1 player, got %d", len(state.Players))
-	}
-	if _, ok := state.Players[state.SelfID]; !ok {
-		t.Fatalf("expected state packet players to include self id %q", state.SelfID)
-	}
+	readLaneBootstrapPackets(t, conn)
 }
 
 func TestStartSinglePlayerRequestRejectsSessionAlreadyInRoom(t *testing.T) {
@@ -356,7 +344,7 @@ func TestStartSinglePlayerRequestRejectsSessionAlreadyInRoom(t *testing.T) {
 	}
 }
 
-func TestSetTargetPlayerRequestUpdatesCanonicalTargetInState(t *testing.T) {
+func TestSetTargetPlayerRequestUpdatesCanonicalTarget(t *testing.T) {
 	manager := networking.NewRoomManager()
 	defer manager.StopAll()
 
@@ -375,28 +363,26 @@ func TestSetTargetPlayerRequestUpdatesCanonicalTargetInState(t *testing.T) {
 
 	var snapshot servergame.RoomSnapshot
 	readJSON(t, conn, &snapshot)
-	var initialState servergame.StatePacket
-	readJSON(t, conn, &initialState)
+	room, ok := manager.Find(snapshot.RoomCode)
+	if !ok {
+		t.Fatalf("expected room %q to exist", snapshot.RoomCode)
+	}
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:       servergame.PacketTypeSetTargetPlayerRequest,
 		TargetKind: "player",
-		TargetID:   initialState.SelfID,
+		TargetID:   snapshot.LocalPlayerID,
 	}); err != nil {
 		t.Fatalf("write set target player request: %v", err)
 	}
 
-	var updatedState servergame.StatePacket
-	readJSON(t, conn, &updatedState)
-	selfState, ok := updatedState.Players[updatedState.SelfID]
-	if !ok {
-		t.Fatalf("expected updated state to include self player %q", updatedState.SelfID)
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "player", snapshot.LocalPlayerID)
+	targetKind, targetID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if targetKind != "player" {
+		t.Fatalf("expected target_kind %q, got %q", "player", targetKind)
 	}
-	if selfState.TargetKind != "player" {
-		t.Fatalf("expected target_kind %q, got %q", "player", selfState.TargetKind)
-	}
-	if selfState.TargetID != updatedState.SelfID {
-		t.Fatalf("expected target_id %q, got %q", updatedState.SelfID, selfState.TargetID)
+	if targetID != snapshot.LocalPlayerID {
+		t.Fatalf("expected target_id %q, got %q", snapshot.LocalPlayerID, targetID)
 	}
 }
 
@@ -419,18 +405,26 @@ func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *te
 
 	var snapshot servergame.RoomSnapshot
 	readJSON(t, conn, &snapshot)
-	var initialState servergame.StatePacket
-	readJSON(t, conn, &initialState)
+	room, ok := manager.Find(snapshot.RoomCode)
+	if !ok {
+		t.Fatalf("expected room %q to exist", snapshot.RoomCode)
+	}
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:       servergame.PacketTypeSetTargetPlayerRequest,
 		TargetKind: "player",
-		TargetID:   initialState.SelfID,
+		TargetID:   snapshot.LocalPlayerID,
 	}); err != nil {
 		t.Fatalf("write valid set target player request: %v", err)
 	}
-	var targetedState servergame.StatePacket
-	readJSON(t, conn, &targetedState)
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "player", snapshot.LocalPlayerID)
+	validKind, validID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if validKind != "player" {
+		t.Fatalf("expected valid target_kind %q, got %q", "player", validKind)
+	}
+	if validID != snapshot.LocalPlayerID {
+		t.Fatalf("expected valid target_id %q, got %q", snapshot.LocalPlayerID, validID)
+	}
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:       servergame.PacketTypeSetTargetPlayerRequest,
@@ -439,18 +433,13 @@ func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *te
 	}); err != nil {
 		t.Fatalf("write invalid set target player request: %v", err)
 	}
-	var afterInvalidState servergame.StatePacket
-	readJSON(t, conn, &afterInvalidState)
-
-	selfState, ok := afterInvalidState.Players[afterInvalidState.SelfID]
-	if !ok {
-		t.Fatalf("expected state to include self player %q", afterInvalidState.SelfID)
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, validKind, validID)
+	invalidKind, invalidID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if invalidKind != validKind {
+		t.Fatalf("expected invalid request to keep target_kind %q, got %q", validKind, invalidKind)
 	}
-	if selfState.TargetKind != "player" {
-		t.Fatalf("expected invalid request to keep target_kind %q, got %q", "player", selfState.TargetKind)
-	}
-	if selfState.TargetID != afterInvalidState.SelfID {
-		t.Fatalf("expected invalid request to keep target_id %q, got %q", afterInvalidState.SelfID, selfState.TargetID)
+	if invalidID != validID {
+		t.Fatalf("expected invalid request to keep target_id %q, got %q", validID, invalidID)
 	}
 }
 
@@ -473,18 +462,26 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 
 	var snapshot servergame.RoomSnapshot
 	readJSON(t, conn, &snapshot)
-	var initialState servergame.StatePacket
-	readJSON(t, conn, &initialState)
+	room, ok := manager.Find(snapshot.RoomCode)
+	if !ok {
+		t.Fatalf("expected room %q to exist", snapshot.RoomCode)
+	}
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:       servergame.PacketTypeSetTargetPlayerRequest,
 		TargetKind: "player",
-		TargetID:   initialState.SelfID,
+		TargetID:   snapshot.LocalPlayerID,
 	}); err != nil {
 		t.Fatalf("write set target player request: %v", err)
 	}
-	var targetedState servergame.StatePacket
-	readJSON(t, conn, &targetedState)
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "player", snapshot.LocalPlayerID)
+	setKind, setID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if setKind != "player" {
+		t.Fatalf("expected target_kind %q, got %q", "player", setKind)
+	}
+	if setID != snapshot.LocalPlayerID {
+		t.Fatalf("expected target_id %q, got %q", snapshot.LocalPlayerID, setID)
+	}
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:       servergame.PacketTypeSetTargetPlayerRequest,
@@ -493,18 +490,13 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("write clear target player request: %v", err)
 	}
-	var clearedState servergame.StatePacket
-	readJSON(t, conn, &clearedState)
-
-	selfState, ok := clearedState.Players[clearedState.SelfID]
-	if !ok {
-		t.Fatalf("expected state to include self player %q", clearedState.SelfID)
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "", "")
+	clearedKind, clearedID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if clearedKind != "" {
+		t.Fatalf("expected clear target request to produce empty target_kind, got %q", clearedKind)
 	}
-	if selfState.TargetKind != "" {
-		t.Fatalf("expected clear target request to produce empty target_kind, got %q", selfState.TargetKind)
-	}
-	if selfState.TargetID != "" {
-		t.Fatalf("expected clear target request to produce empty target_id, got %q", selfState.TargetID)
+	if clearedID != "" {
+		t.Fatalf("expected clear target request to produce empty target_id, got %q", clearedID)
 	}
 }
 
@@ -527,35 +519,29 @@ func TestSelectTargetAtPositionRequestRoutesToServerTargetSelection(t *testing.T
 
 	var snapshot servergame.RoomSnapshot
 	readJSON(t, conn, &snapshot)
-	var initialState servergame.StatePacket
-	readJSON(t, conn, &initialState)
-
-	selfState, ok := initialState.Players[initialState.SelfID]
+	room, ok := manager.Find(snapshot.RoomCode)
 	if !ok {
-		t.Fatalf("expected initial state to include self player %q", initialState.SelfID)
+		t.Fatalf("expected room %q to exist", snapshot.RoomCode)
 	}
+
+	_, _, x, y := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:       servergame.PacketTypeSelectTargetAtPositionRequest,
-		X:          selfState.X,
-		Y:          selfState.Y,
+		X:          x,
+		Y:          y,
 		TargetKind: "player",
-		TargetID:   initialState.SelfID,
+		TargetID:   snapshot.LocalPlayerID,
 	}); err != nil {
 		t.Fatalf("write select target at position request: %v", err)
 	}
 
-	var updatedState servergame.StatePacket
-	readJSON(t, conn, &updatedState)
-	updatedSelfState, ok := updatedState.Players[updatedState.SelfID]
-	if !ok {
-		t.Fatalf("expected updated state to include self player %q", updatedState.SelfID)
+	targetKind, targetID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if targetKind != "player" {
+		t.Fatalf("expected target_kind %q, got %q", "player", targetKind)
 	}
-	if updatedSelfState.TargetKind != "player" {
-		t.Fatalf("expected target_kind %q, got %q", "player", updatedSelfState.TargetKind)
-	}
-	if updatedSelfState.TargetID != updatedState.SelfID {
-		t.Fatalf("expected target_id %q, got %q", updatedState.SelfID, updatedSelfState.TargetID)
+	if targetID != snapshot.LocalPlayerID {
+		t.Fatalf("expected target_id %q, got %q", snapshot.LocalPlayerID, targetID)
 	}
 }
 
@@ -578,43 +564,41 @@ func TestClearTargetRequestClearsGenericTarget(t *testing.T) {
 
 	var snapshot servergame.RoomSnapshot
 	readJSON(t, conn, &snapshot)
-	var initialState servergame.StatePacket
-	readJSON(t, conn, &initialState)
-
-	selfState, ok := initialState.Players[initialState.SelfID]
+	room, ok := manager.Find(snapshot.RoomCode)
 	if !ok {
-		t.Fatalf("expected initial state to include self player %q", initialState.SelfID)
+		t.Fatalf("expected room %q to exist", snapshot.RoomCode)
 	}
+
+	_, _, x, y := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type:       servergame.PacketTypeSelectTargetAtPositionRequest,
-		X:          selfState.X,
-		Y:          selfState.Y,
+		X:          x,
+		Y:          y,
 		TargetKind: "player",
-		TargetID:   initialState.SelfID,
+		TargetID:   snapshot.LocalPlayerID,
 	}); err != nil {
 		t.Fatalf("write select target at position request: %v", err)
 	}
-	var targetedState servergame.StatePacket
-	readJSON(t, conn, &targetedState)
+	setKind, setID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if setKind != "player" {
+		t.Fatalf("expected target_kind %q, got %q", "player", setKind)
+	}
+	if setID != snapshot.LocalPlayerID {
+		t.Fatalf("expected target_id %q, got %q", snapshot.LocalPlayerID, setID)
+	}
 
 	if err := conn.WriteJSON(servergame.ClientPacket{
 		Type: servergame.PacketTypeClearTargetRequest,
 	}); err != nil {
 		t.Fatalf("write clear target request: %v", err)
 	}
-	var clearedState servergame.StatePacket
-	readJSON(t, conn, &clearedState)
-
-	clearedSelfState, ok := clearedState.Players[clearedState.SelfID]
-	if !ok {
-		t.Fatalf("expected cleared state to include self player %q", clearedState.SelfID)
+	clearedKind, clearedID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
+	if clearedKind != "" {
+		t.Fatalf("expected cleared target_kind to be empty, got %q", clearedKind)
 	}
-	if clearedSelfState.TargetKind != "" {
-		t.Fatalf("expected cleared target_kind to be empty, got %q", clearedSelfState.TargetKind)
-	}
-	if clearedSelfState.TargetID != "" {
-		t.Fatalf("expected cleared target_id to be empty, got %q", clearedSelfState.TargetID)
+	if clearedID != "" {
+		t.Fatalf("expected cleared target_id to be empty, got %q", clearedID)
 	}
 }
 
@@ -1180,18 +1164,6 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, inGameSnapshot.RoomState)
 	}
 
-	var state servergame.StatePacket
-	readJSON(t, conn, &state)
-	if state.Type != servergame.PacketTypeState {
-		t.Fatalf("expected gameplay state packet after start, got %q", state.Type)
-	}
-	if state.SelfID == "" {
-		t.Fatal("expected started player self id")
-	}
-	if len(state.Players) != 1 {
-		t.Fatalf("expected 1 active game player, got %d", len(state.Players))
-	}
-
 	room, ok := manager.Find(createdSnapshot.RoomCode)
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
@@ -1208,6 +1180,8 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 	if readySnapshot.RoomState != string(rooms.RoomStateLobby) {
 		t.Fatalf("expected ready snapshot to remain lobby, got %q", readySnapshot.RoomState)
 	}
+
+	readLaneBootstrapPackets(t, conn)
 }
 
 func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
@@ -1246,12 +1220,6 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	if firstInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
 		t.Fatalf("expected first start room state %q, got %q", rooms.RoomStateInGame, firstInGameSnapshot.RoomState)
 	}
-	var firstState servergame.StatePacket
-	readJSON(t, conn, &firstState)
-	if len(firstState.Players) != 1 {
-		t.Fatalf("expected first match to spawn 1 player, got %d", len(firstState.Players))
-	}
-
 	room, ok := manager.Find(createdSnapshot.RoomCode)
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
@@ -1317,17 +1285,6 @@ func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
 	if secondInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
 		t.Fatalf("expected second start room state %q, got %q", rooms.RoomStateInGame, secondInGameSnapshot.RoomState)
 	}
-	var secondState servergame.StatePacket
-	readJSON(t, conn, &secondState)
-	if secondState.SelfID == "" {
-		t.Fatal("expected second match self id")
-	}
-	if len(secondState.Players) != 1 {
-		t.Fatalf("expected second match to spawn 1 fresh player, got %d", len(secondState.Players))
-	}
-	if _, ok := secondState.Players[secondState.SelfID]; !ok {
-		t.Fatalf("expected second match state to include self player %q", secondState.SelfID)
-	}
 	if room.ActivePlayerCount() != 1 {
 		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayerCount())
 	}
@@ -1372,18 +1329,6 @@ func TestReturnToLobbyAllowsFreshSecondMatch(t *testing.T) {
 	if firstInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
 		t.Fatalf("expected first start room state %q, got %q", rooms.RoomStateInGame, firstInGameSnapshot.RoomState)
 	}
-	var firstState servergame.StatePacket
-	readJSON(t, conn, &firstState)
-	if firstState.SelfID == "" {
-		t.Fatal("expected first match self id")
-	}
-	if firstState.SelfID != "player-1" {
-		t.Fatalf("expected first fresh game player id %q, got %q", "player-1", firstState.SelfID)
-	}
-	if _, ok := firstState.Players[firstState.SelfID]; !ok {
-		t.Fatalf("expected first match state to include self player %q", firstState.SelfID)
-	}
-
 	room, ok := manager.Find(createdSnapshot.RoomCode)
 	if !ok {
 		t.Fatalf("expected room %q to exist", createdSnapshot.RoomCode)
@@ -1421,20 +1366,6 @@ func TestReturnToLobbyAllowsFreshSecondMatch(t *testing.T) {
 	readJSON(t, conn, &secondInGameSnapshot)
 	if secondInGameSnapshot.RoomState != string(rooms.RoomStateInGame) {
 		t.Fatalf("expected second start room state %q, got %q", rooms.RoomStateInGame, secondInGameSnapshot.RoomState)
-	}
-	var secondState servergame.StatePacket
-	readJSON(t, conn, &secondState)
-	if secondState.SelfID == "" {
-		t.Fatal("expected second match self id")
-	}
-	if secondState.SelfID != "player-1" {
-		t.Fatalf("expected second fresh game player id %q, got %q", "player-1", secondState.SelfID)
-	}
-	if _, ok := secondState.Players[secondState.SelfID]; !ok {
-		t.Fatalf("expected second match state to include self player %q", secondState.SelfID)
-	}
-	if len(secondState.Players) != 1 {
-		t.Fatalf("expected second match to create 1 active player, got %d", len(secondState.Players))
 	}
 	if room.ActivePlayerCount() != 1 {
 		t.Fatalf("expected second match active players 1, got %d", room.ActivePlayerCount())
@@ -1655,6 +1586,113 @@ func waitUntil(timeout time.Duration, condition func() bool) bool {
 
 func webSocketURL(httpURL string) string {
 	return "ws" + strings.TrimPrefix(httpURL, "http")
+}
+
+func readLaneBootstrapPackets(t *testing.T, conn *websocket.Conn) {
+	t.Helper()
+
+	required := []string{
+		string(realtimemode.PacketFamilyWorldFull),
+		string(realtimemode.PacketFamilyOverlayFull),
+		string(realtimemode.PacketFamilySessionFull),
+	}
+	seen := map[string]bool{}
+	deadline := time.Now().Add(time.Second)
+
+	for {
+		if seen[required[0]] && seen[required[1]] && seen[required[2]] {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for lane bootstrap packets; required=%v seen=%v", required, seenPacketFamilies(seen))
+		}
+
+		if err := conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond)); err != nil {
+			t.Fatalf("set websocket read deadline: %v", err)
+		}
+
+		var envelope struct {
+			Type string `json:"type"`
+		}
+		if err := conn.ReadJSON(&envelope); err != nil {
+			if isWebSocketTimeout(err) {
+				continue
+			}
+			t.Fatalf("read lane bootstrap packet envelope: %v", err)
+		}
+
+		if err := conn.SetReadDeadline(time.Time{}); err != nil {
+			t.Fatalf("clear websocket read deadline: %v", err)
+		}
+
+		if envelope.Type == "state" {
+			t.Fatal("unexpected state packet during lane bootstrap")
+		}
+
+		seen[envelope.Type] = true
+	}
+}
+
+func seenPacketFamilies(seen map[string]bool) []string {
+	families := make([]string, 0, len(seen))
+	for family := range seen {
+		families = append(families, family)
+	}
+	return families
+}
+
+func isWebSocketTimeout(err error) bool {
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "i/o timeout") || strings.Contains(message, "deadline exceeded")
+}
+
+func playerPresentationForRoom(t *testing.T, room *rooms.Room, playerID string) (string, string, float64, float64) {
+	t.Helper()
+
+	instance := room.GameInstance()
+	if instance == nil {
+		t.Fatal("expected room game instance")
+	}
+
+	snapshot := instance.GameplayPresentationSnapshot(playerID)
+	player, ok := snapshot.Players[playerID]
+	if !ok {
+		t.Fatalf("expected presentation snapshot to include player %q", playerID)
+	}
+
+	return player.TargetKind, player.TargetID, player.X, player.Y
+}
+
+func waitForPlayerTarget(t *testing.T, room *rooms.Room, playerID, expectedKind, expectedID string) {
+	t.Helper()
+
+	if !waitUntil(200*time.Millisecond, func() bool {
+		instance := room.GameInstance()
+		if instance == nil {
+			return false
+		}
+
+		snapshot := instance.GameplayPresentationSnapshot(playerID)
+		player, ok := snapshot.Players[playerID]
+		if !ok {
+			return false
+		}
+
+		return player.TargetKind == expectedKind && player.TargetID == expectedID
+	}) {
+		instance := room.GameInstance()
+		if instance == nil {
+			t.Fatalf("expected room game instance when waiting for player %q target kind %q id %q", playerID, expectedKind, expectedID)
+		}
+
+		snapshot := instance.GameplayPresentationSnapshot(playerID)
+		player, ok := snapshot.Players[playerID]
+		if !ok {
+			t.Fatalf("expected presentation snapshot to include player %q while waiting for target kind %q id %q", playerID, expectedKind, expectedID)
+		}
+
+		t.Fatalf("expected player %q target to reach kind %q id %q, got kind %q id %q", playerID, expectedKind, expectedID, player.TargetKind, player.TargetID)
+	}
 }
 
 func readJSON(t *testing.T, conn *websocket.Conn, value any) {

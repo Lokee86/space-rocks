@@ -43,6 +43,7 @@ func process(delta: float) -> void:
 		world_sync.interpolate(delta)
 
 
-func request_respawn(has_received_state: bool) -> void:
+func request_respawn(required_lane_baselines_synced: bool) -> void:
 	if respawn_flow != null:
-		respawn_flow.request_respawn(has_received_state)
+		respawn_flow.request_respawn(required_lane_baselines_synced)
+

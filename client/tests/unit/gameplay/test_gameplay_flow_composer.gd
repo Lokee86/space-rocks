@@ -9,13 +9,13 @@ var nodes_to_free: Array[Node] = []
 class FakeInputContext:
 	var handle_unhandled_input_call_count := 0
 	var last_event = null
-	var last_has_received_state = null
+	var last_required_lane_baselines_synced = null
 	var configure_spectate_routes_call_count := 0
 
-	func handle_unhandled_input(event, has_received_state) -> bool:
+	func handle_unhandled_input(event, required_lane_baselines_synced) -> bool:
 		handle_unhandled_input_call_count += 1
 		last_event = event
-		last_has_received_state = has_received_state
+		last_required_lane_baselines_synced = required_lane_baselines_synced
 		return true
 
 	func configure_spectate_routes(_open_spectate_menu, _cycle_target) -> void:
@@ -25,25 +25,25 @@ class FakeInputContext:
 class FakeGameplayStateApplyFlow:
 	var apply_state_call_count := 0
 	var last_state = null
-	var last_has_received_state = null
+	var last_required_lane_baselines_synced = null
 	var return_result := GameplayStateApplyResult.new()
 
-	func apply_state(state: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:
+	func apply_state(state: Dictionary, required_lane_baselines_synced: bool) -> GameplayStateApplyResult:
 		apply_state_call_count += 1
 		last_state = state
-		last_has_received_state = has_received_state
+		last_required_lane_baselines_synced = required_lane_baselines_synced
 		return return_result
 
 
 class FakeProcessFlow:
 	var process_call_count := 0
 	var last_delta := -1.0
-	var last_has_received_state = null
+	var last_required_lane_baselines_synced = null
 
-	func process(delta: float, has_received_state: bool) -> void:
+	func process(delta: float, required_lane_baselines_synced: bool) -> void:
 		process_call_count += 1
 		last_delta = delta
-		last_has_received_state = has_received_state
+		last_required_lane_baselines_synced = required_lane_baselines_synced
 
 
 class FakeResettableFlow:
@@ -78,7 +78,7 @@ class FakeRuntimeContext:
 	var world_sync := FakeWorldSync.new()
 	var respawn_flow := RefCounted.new()
 
-	func request_respawn(_has_received_state: bool) -> void:
+	func request_respawn(_required_lane_baselines_synced: bool) -> void:
 		pass
 
 	func remote_player_nodes() -> Dictionary:
@@ -100,7 +100,7 @@ func _tracked(node: Node) -> Node:
 func test_apply_gameplay_state_delegates_to_injected_flow() -> void:
 	var composer = GameplayFlowComposer.new()
 	var fake_state_apply_flow = FakeGameplayStateApplyFlow.new()
-	fake_state_apply_flow.return_result.has_received_state = true
+	fake_state_apply_flow.return_result.gameplay_ready = true
 	fake_state_apply_flow.return_result.started_gameplay = true
 	composer.configure(
 		null,
@@ -121,9 +121,9 @@ func test_apply_gameplay_state_delegates_to_injected_flow() -> void:
 
 	assert_eq(fake_state_apply_flow.apply_state_call_count, 1)
 	assert_eq(fake_state_apply_flow.last_state, state)
-	assert_eq(fake_state_apply_flow.last_has_received_state, false)
+	assert_eq(fake_state_apply_flow.last_required_lane_baselines_synced, false)
 	assert_eq(result, fake_state_apply_flow.return_result)
-	assert_true(result.has_received_state)
+	assert_true(result.gameplay_ready)
 	assert_true(result.started_gameplay)
 
 
@@ -150,7 +150,7 @@ func test_handle_unhandled_input_delegates_to_injected_input_context() -> void:
 	assert_true(handled)
 	assert_eq(fake_input_context.handle_unhandled_input_call_count, 1)
 	assert_eq(fake_input_context.last_event, event)
-	assert_eq(fake_input_context.last_has_received_state, true)
+	assert_eq(fake_input_context.last_required_lane_baselines_synced, true)
 
 
 func test_handle_unhandled_input_returns_false_without_input_context() -> void:
@@ -189,7 +189,7 @@ func test_process_delegates_to_injected_process_flow() -> void:
 
 	assert_eq(fake_process_flow.process_call_count, 1)
 	assert_eq(fake_process_flow.last_delta, 0.25)
-	assert_true(fake_process_flow.last_has_received_state)
+	assert_true(fake_process_flow.last_required_lane_baselines_synced)
 
 
 func test_reset_calls_owned_flow_resets() -> void:
@@ -275,6 +275,3 @@ func test_configure_accepts_gameplay_hud_flow_in_shell_argument_slot() -> void:
 
 	assert_not_null(composer.gameplay_shell_flow)
 	assert_true(composer.gameplay_shell_flow.gameplay_hud_flow is GameplayHudFlow)
-
-
-

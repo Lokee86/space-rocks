@@ -7,13 +7,13 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 )
 
-func TestCompareShadowRealtimeCoverageCoversOldStateOwnership(t *testing.T) {
+func TestCompareShadowRealtimeCoverageCoversLaneOwnershipAndMetadata(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID:         "player-1",
 		Lives:          3,
 		ServerSentMsec: 1234,
 		Players: map[string]runtime.ShipState{
-			"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-2"},
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-2", PrimaryCooldownRemaining: 99, PrimaryAmmoRemaining: 88, SecondaryCooldownRemaining: 77, SecondaryAmmoRemaining: 66},
 		},
 		PlayerSessions: map[string]game.PlayerSessionState{
 			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 9, Lives: 3, RespawnCooldown: 1.5, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite", SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "limited", SpawnX: 7, SpawnY: 8},
@@ -41,9 +41,10 @@ func TestCompareShadowRealtimeCoverageCoversOldStateOwnership(t *testing.T) {
 	if len(issues) != 0 {
 		t.Fatalf("coverage issues: %#v", issues)
 	}
-	for _, lane := range []Lane{world.Metadata.Lane, overlay.Metadata.Lane, session.Metadata.Lane, events.Metadata.Lane} {
-		if lane == LaneControl || lane == "slow" {
-			t.Fatalf("unexpected slow lane name in coverage packets: %q", lane)
-		}
+	if world.Metadata.Lane != LaneWorld || overlay.Metadata.Lane != LaneOverlay || session.Metadata.Lane != LaneSession || events.Metadata.Lane != LaneEvent {
+		t.Fatalf("expected packet lanes to match ownership, got world=%q overlay=%q session=%q events=%q", world.Metadata.Lane, overlay.Metadata.Lane, session.Metadata.Lane, events.Metadata.Lane)
+	}
+	if world.Metadata.ServerSentMsec != snapshot.ServerSentMsec || overlay.Metadata.ServerSentMsec != snapshot.ServerSentMsec || session.Metadata.ServerSentMsec != snapshot.ServerSentMsec || events.Metadata.ServerSentMsec != snapshot.ServerSentMsec {
+		t.Fatalf("expected server_sent_msec metadata to be preserved, got world=%d overlay=%d session=%d events=%d", world.Metadata.ServerSentMsec, overlay.Metadata.ServerSentMsec, session.Metadata.ServerSentMsec, events.Metadata.ServerSentMsec)
 	}
 }

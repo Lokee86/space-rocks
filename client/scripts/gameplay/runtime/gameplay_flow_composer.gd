@@ -138,11 +138,11 @@ func configure_gameplay_readiness(gameplay_readiness) -> void:
 	gameplay_state_apply_flow.gameplay_readiness = gameplay_readiness
 
 
-func apply_gameplay_state(state: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:
+func apply_gameplay_state(state: Dictionary, required_lane_baselines_synced: bool) -> GameplayStateApplyResult:
 	if gameplay_state_apply_flow == null:
 		return GameplayStateApplyResult.new()
 
-	var result: GameplayStateApplyResult = gameplay_state_apply_flow.apply_state(state, has_received_state)
+	var result: GameplayStateApplyResult = gameplay_state_apply_flow.apply_state(state, required_lane_baselines_synced)
 	if server_hitbox_overlay_flow != null:
 		server_hitbox_overlay_flow.apply_gameplay_state(state)
 	return result
@@ -166,10 +166,10 @@ func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
 	server_hitbox_overlay_flow.apply_debug_shape_catalog_packet(packet)
 
 
-func handle_unhandled_input(event: InputEvent, has_received_state: bool) -> bool:
+func handle_unhandled_input(event: InputEvent, required_lane_baselines_synced: bool) -> bool:
 	if input_context == null:
 		return false
-	return input_context.handle_unhandled_input(event, has_received_state)
+	return input_context.handle_unhandled_input(event, required_lane_baselines_synced)
 
 
 func configure_placement_request_route(route: Callable) -> void:
@@ -190,10 +190,10 @@ func refresh_devtools_spawn_player_slots(max_players: int) -> void:
 	devtools_context.refresh_spawn_player_slots(max_players)
 
 
-func process(delta: float, has_received_state: bool) -> void:
+func process(delta: float, required_lane_baselines_synced: bool) -> void:
 	if gameplay_process_flow == null:
 		return
-	gameplay_process_flow.process(delta, has_received_state)
+	gameplay_process_flow.process(delta, required_lane_baselines_synced)
 
 
 func reset() -> void:
@@ -209,3 +209,4 @@ func reset() -> void:
 		spectate_context.reset()
 	if server_hitbox_overlay_flow != null:
 		server_hitbox_overlay_flow.reset()
+

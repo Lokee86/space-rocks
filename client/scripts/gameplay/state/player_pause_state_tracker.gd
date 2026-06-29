@@ -18,3 +18,4 @@ func is_paused(player_id: String) -> bool:
 	if !pause_states.has(player_id):
 		return false
 	return bool(pause_states[player_id])
+

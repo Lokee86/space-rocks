@@ -58,29 +58,7 @@ func TestSetPlayerTargetMissingTargetDoesNotOverwriteExistingTarget(t *testing.T
 	}
 }
 
-func TestStatePacketIncludesTargetKindAndTargetID(t *testing.T) {
-	game := New()
-	playerA := game.AddPlayer()
-	playerB := game.AddPlayer()
-
-	if !game.SetPlayerTarget(playerA, playerB) {
-		t.Fatal("expected SetPlayerTarget to succeed for existing requester/target")
-	}
-
-	packet := game.StatePacket(playerA)
-	playerState, ok := packet.Players[playerA]
-	if !ok {
-		t.Fatalf("expected state packet to include player %q", playerA)
-	}
-	if playerState.TargetKind != "player" {
-		t.Fatalf("expected target kind %q, got %q", "player", playerState.TargetKind)
-	}
-	if playerState.TargetID != playerB {
-		t.Fatalf("expected target id %q, got %q", playerB, playerState.TargetID)
-	}
-}
-
-func TestSetPlayerTargetReflectedInStatePacket(t *testing.T) {
+func TestSetPlayerTargetReflectedInGameplayPresentationSnapshot(t *testing.T) {
 	game := New()
 	shooterID := game.AddPlayer()
 	targetID := game.AddPlayer()
@@ -89,10 +67,10 @@ func TestSetPlayerTargetReflectedInStatePacket(t *testing.T) {
 		t.Fatal("expected SetPlayerTarget to succeed for existing requester/target")
 	}
 
-	packet := game.StatePacket(shooterID)
-	shooterState, ok := packet.Players[shooterID]
+	snapshot := game.GameplayPresentationSnapshot(shooterID)
+	shooterState, ok := snapshot.Players[shooterID]
 	if !ok {
-		t.Fatalf("expected state packet to include shooter %q", shooterID)
+		t.Fatalf("expected gameplay snapshot to include shooter %q", shooterID)
 	}
 	if shooterState.TargetKind != "player" {
 		t.Fatalf("expected target kind %q, got %q", "player", shooterState.TargetKind)

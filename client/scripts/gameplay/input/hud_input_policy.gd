@@ -36,3 +36,4 @@ func should_hud_receive_mouse_event(event: InputEvent, hud: Control, viewport: V
 		return true
 
 	return hud.is_ancestor_of(hovered_control)
+

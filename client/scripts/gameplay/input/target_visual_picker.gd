@@ -49,3 +49,4 @@ static func _target_kind_priority(target_kind: String) -> int:
 			return TARGET_KIND_PRIORITY_BULLET
 		_:
 			return 0
+

@@ -32,20 +32,18 @@ func configure(
 	gameplay_readiness = gameplay_readiness_ref
 
 
-func apply_state(state: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:
+func apply_state(state: Dictionary, required_lane_baselines_synced: bool) -> GameplayStateApplyResult:
 	var result: GameplayStateApplyResult = GameplayStateApplyResultScript.new()
 	if devtools_context != null:
 		devtools_context.apply_gameplay_state(state)
 	if hud_flow != null:
 		hud_flow.apply_gameplay_state_summary(state)
 	if world_state_apply_flow != null:
-		world_state_apply_flow.apply_world_state(state, has_received_state)
+		world_state_apply_flow.apply_world_state(state, required_lane_baselines_synced)
 	if alive_restore_flow != null:
 		alive_restore_flow.apply_state(state)
 	if event_lifecycle_flow != null:
-		event_lifecycle_flow.apply_server_events(state)
-	if gameplay_readiness != null:
-		gameplay_readiness.apply_legacy_state_compatibility_baseline()
-	result.has_received_state = has_received_state if gameplay_readiness == null else gameplay_readiness.is_gameplay_ready()
-	result.started_gameplay = result.has_received_state
+		event_lifecycle_flow.apply_server_events_from_state(state)
+	result.gameplay_ready = required_lane_baselines_synced if gameplay_readiness == null else gameplay_readiness.is_gameplay_ready()
+	result.started_gameplay = result.gameplay_ready
 	return result

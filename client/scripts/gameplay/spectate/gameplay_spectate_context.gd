@@ -54,3 +54,4 @@ func request_cycle_target() -> void:
 
 func _on_spectate_requested() -> void:
 	begin_spectating()
+

@@ -13,3 +13,4 @@ static func read(packet: Dictionary) -> Dictionary:
 		"paused": bool(packet.get(Packets.FIELD_PAUSED, false)),
 	}
 
+

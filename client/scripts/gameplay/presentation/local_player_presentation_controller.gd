@@ -13,10 +13,11 @@ func reset() -> void:
 		player.set_afterburner_active(false)
 
 
-func process(has_received_state: bool) -> void:
-	if !has_received_state:
+func process(required_lane_baselines_synced: bool) -> void:
+	if !required_lane_baselines_synced:
 		return
 	if player == null || !player.visible:
 		return
 
 	player.set_afterburner_active(Input.is_action_pressed(player.move_forward_action))
+

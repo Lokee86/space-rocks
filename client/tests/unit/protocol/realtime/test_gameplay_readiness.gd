@@ -100,18 +100,18 @@ func test_wrong_baseline_resync_needed_clears_readiness() -> void:
 	assert_false(readiness.is_gameplay_ready())
 
 
-func test_old_has_received_state_semantics_redirect_to_lane_readiness() -> void:
+func test_required_lane_baselines_synced_redirects_to_gameplay_readiness() -> void:
 	var flow := GameplayStateFlow.new()
 	var readiness := GameplayReadiness.new()
 	var tracker := BaselineTracker.new()
 	tracker.bind_readiness(readiness)
 	flow.set_gameplay_readiness(readiness)
 
-	assert_false(flow.has_received_state())
+	assert_false(flow.is_gameplay_ready())
 	tracker.record_full_packet(LaneMetadata.LANE_WORLD, "baseline-1", 1, "snapshot-1", 0, 1, true)
 	tracker.record_full_packet(LaneMetadata.LANE_OVERLAY, "baseline-1", 1, "snapshot-1", 0, 1, true)
 	tracker.record_full_packet(LaneMetadata.LANE_SESSION, "baseline-1", 1, "snapshot-1", 0, 1, true)
-	assert_true(flow.has_received_state())
+	assert_true(flow.is_gameplay_ready())
 
 
 class _FakeEventSink:
