@@ -97,6 +97,12 @@ func configure_gameplay_readiness(gameplay_readiness) -> void:
 func set_required_lane_baselines_synced(value: bool) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.set_required_lane_baselines_synced(value)
+
+func get_event_lifecycle_flow():
+	if gameplay_shell_flow == null:
+		return null
+	return gameplay_shell_flow.get_event_lifecycle_flow()
+
 func apply_gameplay_state(state: Dictionary) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.apply_devtools_gameplay_state(state)

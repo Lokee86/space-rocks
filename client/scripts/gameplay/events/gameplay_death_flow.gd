@@ -19,12 +19,13 @@ func apply_self_death_event(event: Dictionary) -> void:
 		player.stop_transient_effects()
 
 	var lives := int(event.get(Packets.FIELD_LIVES, 0))
+	var respawn_delay := 0.0
+	if event.has(Packets.FIELD_RESPAWN_DELAY):
+		respawn_delay = float(event.get(Packets.FIELD_RESPAWN_DELAY, 0.0))
+	print("GameplayDeathFlow.apply_self_death_event: lives=%s respawn_delay=%s" % [str(lives), str(respawn_delay)])
 	if hud_flow != null:
 		hud_flow.apply_lives(lives)
 	if lives > 0:
-		var respawn_delay := 0.0
-		if event.has(Packets.FIELD_RESPAWN_DELAY):
-			respawn_delay = float(event[Packets.FIELD_RESPAWN_DELAY])
 		if hud_flow != null:
 			hud_flow.set_dead(respawn_delay)
 		return

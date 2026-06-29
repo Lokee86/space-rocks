@@ -84,7 +84,7 @@ func TestProjectSessionLaneUsesSharedFactsAndDeterministicOrder(t *testing.T) {
 	if packet.Type != PacketFamilySessionFull {
 		t.Fatalf("expected session full packet type, got %q", packet.Type)
 	}
-	if packet.Metadata.Lane != LaneSession || packet.Metadata.Sequence != 5 || packet.Metadata.SnapshotID != "snapshot-1" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
+	if packet.Metadata.Lane != LaneSession || packet.Metadata.Sequence != 5 || packet.Metadata.BaselineID != "snapshot-1" || packet.Metadata.SnapshotID != "snapshot-1" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
 		t.Fatalf("expected session metadata to be populated, got %#v", packet.Metadata)
 	}
 	if len(packet.Players) != 2 || packet.Players[0].ID != "player-a" || packet.Players[1].ID != "player-b" {

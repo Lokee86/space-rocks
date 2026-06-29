@@ -4,6 +4,7 @@ const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 var effects
 var visual_position_for_server_position: Callable
+var _logged_ship_death_diagnostics := false
 
 
 func configure(effects_object, visual_position_converter: Callable) -> void:
@@ -16,7 +17,21 @@ func apply_server_events(server_events: Array, self_id: String, apply_self_death
 		if event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_BULLET_BLAST:
 			apply_bullet_blast(event)
 		elif event.get(Packets.FIELD_TYPE, "") == Packets.TYPE_SHIP_DEATH:
-			if event[Packets.FIELD_PLAYER_ID] == self_id:
+			var event_player_id := str(event.get(Packets.FIELD_PLAYER_ID, ""))
+			var self_id_string := str(self_id)
+			var is_self_death := event_player_id == self_id_string
+			if !_logged_ship_death_diagnostics:
+				print(
+					"Gameplay ship_death diagnostics: event.player_id=%s self_id=%s is_self_death=%s lives=%s respawn_delay=%s" % [
+						event_player_id,
+						self_id_string,
+						str(is_self_death),
+						str(event.get(Packets.FIELD_LIVES, "")),
+						str(event.get(Packets.FIELD_RESPAWN_DELAY, ""))
+					]
+				)
+				_logged_ship_death_diagnostics = true
+			if is_self_death:
 				apply_self_death_event.call(event)
 			apply_ship_death(event)
 		elif event.get(Packets.FIELD_TYPE, "") == "radial_effect_started":

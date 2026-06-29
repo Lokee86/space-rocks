@@ -37,6 +37,7 @@ func BuildOverlayFullPacket(snapshot game.GameplayPresentationSnapshot, receiver
 		Metadata: Metadata{
 			Lane:           LaneOverlay,
 			Sequence:       sequence,
+			BaselineID:     snapshot.SelfID,
 			SnapshotID:     snapshot.SelfID,
 			ServerSentMsec: snapshot.ServerSentMsec,
 			SnapshotKind:   SnapshotKind("full"),

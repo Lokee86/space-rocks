@@ -18,6 +18,7 @@ var _lane_presentation_fanned_out := false
 var _gameplay_readiness
 var _logged_gameplay_ready := false
 var _logged_first_fanout := false
+var _logged_event_lifecycle_flow_ready := false
 
 signal return_to_pregame_requested(session_mode: String)
 signal replay_requested
@@ -88,11 +89,36 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 		_log("Gameplay lane baselines ready")
 		_logged_gameplay_ready = true
 
+	var event_lifecycle_flow = null
+	if packet.get("type") == "event_batch" and gameplay_composition != null and gameplay_composition.has_method("get_event_lifecycle_flow"):
+		event_lifecycle_flow = gameplay_composition.get_event_lifecycle_flow()
+		if !_logged_event_lifecycle_flow_ready and event_lifecycle_flow != null:
+			_log("Gameplay event fanout target ready: event_lifecycle_flow_null=%s" % str(event_lifecycle_flow == null))
+			_logged_event_lifecycle_flow_ready = true
+		var events = packet.get("events", [])
+		var event_types = []
+		for event in events:
+			event_types.append(str(event.get("type", "")))
+		_log(
+			"Gameplay event batch diagnostics: batch_id=%s events_size=%d event_types=%s event_lifecycle_flow_null=%s" % [
+				str(packet.get("batch_id", "")),
+				events.size(),
+				str(event_types),
+				str(event_lifecycle_flow == null)
+			]
+		)
+
 	if gameplay_realtime_router != null and gameplay_presentation_adapter.can_fanout():
 		if !_logged_first_fanout:
 			_log("Gameplay presentation fanout started")
 			_logged_first_fanout = true
-		gameplay_presentation_adapter.fanout_lane_states(gameplay_realtime_router, gameplay_composition.gameplay_shell_flow.runtime_context.world_sync, gameplay_composition.gameplay_hud_flow)
+		var world_sync = null
+		if gameplay_composition != null and gameplay_composition.gameplay_shell_flow != null and gameplay_composition.gameplay_shell_flow.runtime_context != null:
+			world_sync = gameplay_composition.gameplay_shell_flow.runtime_context.world_sync
+		var gameplay_hud_flow = null
+		if gameplay_composition != null:
+			gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
+		gameplay_presentation_adapter.fanout_lane_states(gameplay_realtime_router, world_sync, gameplay_hud_flow, event_lifecycle_flow)
 		if !_lane_presentation_fanned_out:
 			gameplay_presentation_adapter.mark_fanned_out()
 			_lane_presentation_fanned_out = true
@@ -161,6 +187,7 @@ func reset() -> void:
 	_gameplay_readiness = null
 	_logged_gameplay_ready = false
 	_logged_first_fanout = false
+	_logged_event_lifecycle_flow_ready = false
 	if gameplay_state_flow != null:
 		gameplay_state_flow.reset()
 	if gameplay_composition != null:

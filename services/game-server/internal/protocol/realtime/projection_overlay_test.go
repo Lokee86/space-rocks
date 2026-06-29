@@ -75,7 +75,7 @@ func TestProjectOverlayLaneUsesReceiverLocalFields(t *testing.T) {
 	if packet.Type != PacketFamilyOverlayFull {
 		t.Fatalf("expected overlay full packet type, got %q", packet.Type)
 	}
-	if packet.Metadata.Lane != LaneOverlay || packet.Metadata.Sequence != 4 || packet.Metadata.SnapshotID != "player-1" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
+	if packet.Metadata.Lane != LaneOverlay || packet.Metadata.Sequence != 4 || packet.Metadata.BaselineID != "player-1" || packet.Metadata.SnapshotID != "player-1" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
 		t.Fatalf("expected overlay metadata to be populated, got %#v", packet.Metadata)
 	}
 	if packet.Receiver != receiver {

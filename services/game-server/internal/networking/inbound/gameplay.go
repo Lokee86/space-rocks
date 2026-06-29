@@ -16,6 +16,7 @@ type gameplaySession interface {
 }
 
 var loggedInputPackets sync.Map
+var loggedRespawnPackets sync.Map
 
 func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) bool {
 	if packet.Type != game.PacketTypeInput && packet.Type != game.PacketTypeRespawn && packet.Type != game.PacketTypeClientConfig {
@@ -55,6 +56,14 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 	}
 
 	gamePlayerID := session.CurrentGamePlayerID()
+	if packet.Type == game.PacketTypeRespawn {
+		if _, loaded := loggedRespawnPackets.LoadOrStore(gamePlayerID, true); !loaded {
+			logRespawnPacketReceived(gamePlayerID, packet)
+		}
+		room.GameInstance().HandlePacket(gamePlayerID, packet)
+		return true
+	}
+
 	if _, loaded := loggedInputPackets.LoadOrStore(gamePlayerID, true); !loaded {
 		logging.Network.Info("gameplay input packet received",
 			logging.FieldPlayerID, gamePlayerID,
@@ -72,3 +81,9 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 	return true
 }
 
+func logRespawnPacketReceived(gamePlayerID string, packet game.ClientPacket) {
+	logging.Network.Info("gameplay respawn packet received",
+		logging.FieldPlayerID, gamePlayerID,
+		"packet_type", packet.Type,
+	)
+}

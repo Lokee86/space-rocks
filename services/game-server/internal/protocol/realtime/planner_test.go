@@ -57,10 +57,10 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	if got, want := plan.Candidates[0].Lane, Lane(LaneWorld); got != want {
 		t.Fatalf("world lane = %q, want %q", got, want)
 	}
-	if got, ok := plan.Candidates[0].Delta.(WorldLaneProjection); !ok {
-		t.Fatalf("world candidate delta type = %T, want WorldLaneProjection", plan.Candidates[0].Delta)
-	} else if len(got.Ships) != 1 || got.Ships[0].ID != "player-1" {
-		t.Fatalf("world delta = %#v, want player-1 ship", got)
+	if got, ok := plan.Candidates[0].Full.(WorldFullPacket); !ok {
+		t.Fatalf("world candidate full type = %T, want WorldFullPacket", plan.Candidates[0].Full)
+	} else if got.Metadata.Lane != LaneWorld || len(got.Ships) != 1 || got.Ships[0].ID != "player-1" {
+		t.Fatalf("world full packet = %#v, want player-1 ship", got)
 	}
 
 	if got, want := plan.Candidates[1].Lane, Lane(LaneOverlay); got != want {
@@ -75,10 +75,10 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	if got, want := plan.Candidates[2].Lane, Lane(LaneSession); got != want {
 		t.Fatalf("session lane = %q, want %q", got, want)
 	}
-	if got, ok := plan.Candidates[2].Delta.(SessionLaneProjection); !ok {
-		t.Fatalf("session candidate delta type = %T, want SessionLaneProjection", plan.Candidates[2].Delta)
-	} else if len(got.Players) != 1 || got.Players[0].ID != "player-1" {
-		t.Fatalf("session delta = %#v, want player-1 session", got)
+	if got, ok := plan.Candidates[2].Full.(SessionFullPacket); !ok {
+		t.Fatalf("session candidate full type = %T, want SessionFullPacket", plan.Candidates[2].Full)
+	} else if got.Metadata.Lane != LaneSession || len(got.Players) != 1 || got.Players[0].ID != "player-1" {
+		t.Fatalf("session full packet = %#v, want player-1 session", got)
 	}
 
 	if got, want := plan.Candidates[3].Lane, Lane(LaneEvent); got != want {
@@ -92,6 +92,74 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 
 	if len(snapshot.PendingEvents) != 1 || snapshot.PendingEvents[0].EventID != "event-1" {
 		t.Fatalf("planner mutated pending events: %#v", snapshot.PendingEvents)
+	}
+	for _, candidate := range plan.Candidates {
+		if packetFamilyForCandidate(candidate) == "" {
+			t.Fatalf("expected non-empty packet family for lane=%q kind=%q", candidate.Lane, candidate.Kind)
+		}
+		wire := WireLanePacket(candidate)
+		if gotType, ok := wire["type"].(string); !ok || gotType == "" {
+			t.Fatalf("expected top-level type in wired packet for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
+		}
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsValidPacketEnvelopesAfterFinalFullMetadataPersists(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing"},
+		},
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {
+				ID:                "player-1",
+				ShipType:          "v_wing",
+				Score:             10,
+				Lives:             3,
+				PrimaryWeaponID:   "laser",
+				PrimaryAmmoPolicy: "infinite",
+			},
+		},
+		PlayerLifecycle: map[string]string{"player-1": "active"},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 1, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneOverlay)
+	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 1, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneSession)
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	if got, want := len(plan.Candidates), 3; got != want {
+		t.Fatalf("candidate count = %d, want %d", got, want)
+	}
+	for _, candidate := range plan.Candidates {
+		if candidate.Kind != RealtimeLaneCandidateKindFull {
+			t.Fatalf("expected valid full packet candidate after persisted final full metadata, got lane=%q kind=%q", candidate.Lane, candidate.Kind)
+		}
+		if packetFamilyForCandidate(candidate) == "" {
+			t.Fatalf("expected non-empty packet family for lane=%q kind=%q", candidate.Lane, candidate.Kind)
+		}
+		wire := WireLanePacket(candidate)
+		if gotType, ok := wire["type"].(string); !ok || gotType == "" {
+			t.Fatalf("expected top-level type in wired packet for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
+		}
+	}
+}
+
+
+func TestAssembleRealtimeLaneCandidatesSkipsEventBatchWhenNoPendingEvents(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+	}
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
+	for _, candidate := range plan.Candidates {
+		if candidate.Lane == LaneEvent {
+			t.Fatalf("unexpected event lane candidate with no pending events: %#v", candidate)
+		}
 	}
 }
 

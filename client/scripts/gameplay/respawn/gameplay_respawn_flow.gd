@@ -2,10 +2,13 @@ extends RefCounted
 class_name GameplayRespawnFlow
 
 const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var connection_service
 var hud_flow
 var awaiting_respawn_confirmation := false
+var _logged_respawn_send := false
+var _logged_respawn_blocked := {}
 
 
 func configure(connection_service_ref, hud_flow_ref) -> void:
@@ -15,14 +18,27 @@ func configure(connection_service_ref, hud_flow_ref) -> void:
 
 func reset() -> void:
 	awaiting_respawn_confirmation = false
+	_logged_respawn_send = false
+	_logged_respawn_blocked.clear()
 
 
 func request_respawn(required_lane_baselines_synced: bool) -> void:
-	if !required_lane_baselines_synced || connection_service == null || hud_flow == null:
+	if !required_lane_baselines_synced:
+		_log_respawn_blocked_once("readiness false")
+		return
+	if connection_service == null:
+		_log_respawn_blocked_once("connection_service null")
+		return
+	if hud_flow == null:
+		_log_respawn_blocked_once("hud_flow null")
 		return
 	if !hud_flow.can_request_respawn():
+		_log_respawn_blocked_once("can_request_respawn false")
 		return
 
+	if !_logged_respawn_send:
+		_logged_respawn_send = true
+		ClientLogger.network_info("sending respawn request to network client")
 	connection_service.send_respawn_request()
 	mark_awaiting_confirmation()
 
@@ -58,3 +74,9 @@ func should_restore_alive_hud(
 		has_valid_server_state = !self_state_dictionary.is_empty()
 	return (player != null && player.visible) || has_valid_server_state
 
+
+func _log_respawn_blocked_once(reason: String) -> void:
+	if _logged_respawn_blocked.has(reason):
+		return
+	_logged_respawn_blocked[reason] = true
+	ClientLogger.network_info("respawn request blocked: %s" % reason)

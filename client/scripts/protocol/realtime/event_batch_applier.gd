@@ -3,6 +3,7 @@ extends RefCounted
 var _applied_batch_ids := {}
 var _applied_event_ids := {}
 var _applied_events := []
+var _logged_applied_batch_ids := {}
 
 func has_applied_batch(batch_id) -> bool:
 	return _applied_batch_ids.has(batch_id)
@@ -12,6 +13,11 @@ func has_applied_event(event_id) -> bool:
 
 func get_applied_events() -> Array:
 	return _applied_events.duplicate(true)
+
+func drain_applied_events() -> Array:
+	var events := _applied_events.duplicate(true)
+	_applied_events.clear()
+	return events
 
 func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
 	var batch_id = event_batch_packet.get("batch_id")
@@ -27,6 +33,12 @@ func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
 
 	if batch_id != null:
 		_applied_batch_ids[batch_id] = true
+	if applied_any and batch_id != null and !_logged_applied_batch_ids.has(batch_id):
+		_logged_applied_batch_ids[batch_id] = true
+		var applied_event_types := []
+		for event in _applied_events:
+			applied_event_types.append(str(event.get("type", "")))
+		print("[event_batch][info] applied new events: batch_id=%s new_event_count=%d event_types=%s" % [str(batch_id), _applied_events.size(), ",".join(applied_event_types)])
 	return applied_any
 
 func _apply_event(event_sink, event: Dictionary) -> bool:
