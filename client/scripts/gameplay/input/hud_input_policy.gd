@@ -1,7 +1,7 @@
 extends Node
 
 
-func should_gameplay_ui_receive_mouse_event(event: InputEvent, gameplay_ui_root: Control, viewport: Viewport) -> bool:
+func should_gameplay_ui_receive_mouse_event(event: InputEvent, gameplay_ui_root: Control, viewport) -> bool:
 	if not event is InputEventMouseButton or not event.pressed:
 		return false
 
@@ -21,7 +21,7 @@ func should_gameplay_ui_receive_mouse_event(event: InputEvent, gameplay_ui_root:
 	return gameplay_ui_root.is_ancestor_of(hovered_control)
 
 
-func should_hud_receive_mouse_event(event: InputEvent, hud: Control, viewport: Viewport) -> bool:
+func should_hud_receive_mouse_event(event: InputEvent, hud: Control, viewport) -> bool:
 	if not event is InputEventMouseButton or not event.pressed:
 		return false
 

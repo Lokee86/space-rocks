@@ -17,6 +17,9 @@ const debugStatusWriteIntervalTicks = 8
 
 var loggedEventBatchWriteIDs = map[string]bool{}
 
+var canSendDebugShapeCatalog = outbound.CanSendDebugShapeCatalog
+var buildDebugShapeCatalogResponse = outbound.BuildDebugShapeCatalogResponse
+
 func writeServerMessages(
 	session *webSocketSession,
 	remoteAddr string,
@@ -47,6 +50,10 @@ func writeServerMessages(
 func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr string) bool {
 	if session.room == nil || session.currentGamePlayerID == "" || session.room.GameInstance() == nil {
 		return true
+	}
+
+	if !maybeWriteDebugShapeCatalog(session, remoteAddr) {
+		return false
 	}
 
 	if session.realtimeState.ReceiverID == "" || session.realtimeState.ReceiverID != session.currentGamePlayerID {
@@ -194,4 +201,35 @@ func drainActiveEventBatchAfterWrite(gameInstance *game.Game, playerID string, e
 	}
 
 	return gameInstance.DrainPendingPresentationEvents(playerID, eventIDs...)
+}
+
+
+func maybeWriteDebugShapeCatalog(session *webSocketSession, remoteAddr string) bool {
+	if session == nil || session.room == nil {
+		return true
+	}
+	if session.debugShapeCatalogSentRoomID == session.currentRoomID {
+		return true
+	}
+	if !canSendDebugShapeCatalog(session.room) {
+		return true
+	}
+
+	response, ok := buildDebugShapeCatalogResponse(session.room, session.currentRoomID, remoteAddr)
+	if !ok {
+		return true
+	}
+	if !outbound.WriteServerMessage(session.conn, response, func(err error) {
+		logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+	}) {
+		return false
+	}
+
+	logging.Network.Debug("debug shape catalog written",
+		logging.FieldRoomID, session.currentRoomID,
+		logging.FieldPlayerID, session.currentGamePlayerID,
+		logging.FieldRemoteAddr, remoteAddr,
+	)
+	session.debugShapeCatalogSentRoomID = session.currentRoomID
+	return true
 }

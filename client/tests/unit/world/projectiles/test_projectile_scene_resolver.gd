@@ -44,8 +44,6 @@ func test_scene_for_state_returns_torpedo_scene_for_world_lane_torpedo_bullet_st
 		Packets.FIELD_ID: "bullet-1",
 		Packets.FIELD_X: 10.0,
 		Packets.FIELD_Y: 20.0,
-		Packets.FIELD_VELOCITY_X: 0.0,
-		Packets.FIELD_VELOCITY_Y: 0.0,
 		Packets.FIELD_ROTATION: 0.0,
 		Packets.FIELD_OWNER_ID: "player-1",
 		Packets.FIELD_LIFESPAN_SECONDS: 1.0,

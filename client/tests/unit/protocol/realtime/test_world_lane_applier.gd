@@ -271,6 +271,28 @@ func test_world_full_preserves_bullet_projectile_type_for_torpedo_presentation()
 	assert_eq(world_lane_state.bullets["bullet-torpedo"]["weapon_id"], "torpedo")
 
 
+
+func test_world_lane_state_preserves_ship_target_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_ship({
+		"id": "ship-1",
+		"x": 10,
+		"y": 20,
+		"rotation": 0.0,
+		"velocity_x": 0.0,
+		"velocity_y": 0.0,
+		"thrusting": false,
+		"health": 100,
+		"shields": 0,
+		"ship_type": "v_wing",
+		"target_kind": "player",
+		"target_id": "player-2",
+	})
+
+	assert_eq(world_lane_state.ships["ship-1"]["ship_type"], "v_wing")
+	assert_eq(world_lane_state.ships["ship-1"]["target_kind"], "player")
+	assert_eq(world_lane_state.ships["ship-1"]["target_id"], "player-2")
+
 static func _ship_packet(id: String, x: int, y: int) -> Dictionary:
 	return {
 		"id": id,

@@ -13,5 +13,9 @@ func shape_for_id(shape_id: String) -> Dictionary:
 	return shape if shape is Dictionary else {}
 
 
+func shape_count() -> int:
+	return shapes.size()
+
+
 func reset() -> void:
 	shapes.clear()

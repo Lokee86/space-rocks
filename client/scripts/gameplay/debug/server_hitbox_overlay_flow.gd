@@ -1,6 +1,7 @@
 extends RefCounted
 class_name ServerHitboxOverlayFlow
 
+const Log := preload("res://scripts/logging/logger.gd")
 const DebugShapeCatalogPacketReader := preload("res://scripts/devtools/hitboxes/debug_shape_catalog_packet_reader.gd")
 const DebugShapeCatalogStore := preload("res://scripts/devtools/hitboxes/debug_shape_catalog_store.gd")
 const DebugShapeIdResolver := preload("res://scripts/devtools/hitboxes/debug_shape_id_resolver.gd")
@@ -10,6 +11,9 @@ var world_sync
 var shape_catalog_store
 var latest_debug_collision_bodies: Array = []
 var latest_gameplay_state: Dictionary = {}
+var _logged_waiting_for_shape_catalog := false
+var _logged_waiting_for_gameplay_state := false
+var _logged_entries_generated := false
 
 
 func configure(game_owner: Node2D, world_sync_ref) -> void:
@@ -22,6 +26,9 @@ func configure(game_owner: Node2D, world_sync_ref) -> void:
 func reset() -> void:
 	latest_debug_collision_bodies = []
 	latest_gameplay_state = {}
+	_logged_waiting_for_shape_catalog = false
+	_logged_waiting_for_gameplay_state = false
+	_logged_entries_generated = false
 	if shape_catalog_store != null:
 		shape_catalog_store.reset()
 	if overlay != null && is_instance_valid(overlay) and overlay.has_method("set_hitbox_entries"):
@@ -45,6 +52,16 @@ func process() -> void:
 	if !overlay.has_method("is_enabled") or !overlay.is_enabled():
 		return
 	if world_sync == null:
+		return
+	if latest_gameplay_state.is_empty():
+		if !_logged_waiting_for_gameplay_state:
+			_logged_waiting_for_gameplay_state = true
+			Log.world_sync_debug("server hitbox overlay waiting for gameplay state")
+		return
+	if shape_catalog_store == null or shape_catalog_store.shape_count() == 0:
+		if !_logged_waiting_for_shape_catalog:
+			_logged_waiting_for_shape_catalog = true
+			Log.world_sync_debug("server hitbox overlay waiting for shape catalog")
 		return
 
 	var draw_entries: Array = []
@@ -179,4 +196,3 @@ func _shape_definition_visual_points(shape_definition: Dictionary, x: float, y: 
 		draw_points.append(world_sync.visual_position_for_server_position(server_position))
 
 	return draw_points
-

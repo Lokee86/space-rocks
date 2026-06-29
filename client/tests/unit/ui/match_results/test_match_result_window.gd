@@ -27,8 +27,6 @@ func test_apply_rows_renders_player_score_row_without_kills_label() -> void:
 	assert_eq((row.get_node("%GameScoreLabel") as Label).text, "450")
 	assert_null(row.get_node_or_null("%GameKillsLabel"))
 
-const MatchResultWindowScene := preload("res://scenes/ui/dialogs/match_result_window.tscn")
-
 
 func test_lobby_replay_button_emits_lobby_replay_requested() -> void:
 	var window := await _create_window()

@@ -9,14 +9,15 @@ const BULLET_ID := "bullet-1"
 
 
 static func state() -> Dictionary:
+	return snapshot()
+
+
+static func snapshot() -> Dictionary:
 	return {
-		Packets.FIELD_TYPE: Packets.TYPE_STATE,
 		Packets.FIELD_SELF_ID: LOCAL_PLAYER_ID,
-		Packets.FIELD_LIVES: 3,
 		Packets.FIELD_PLAYERS: players(),
 		Packets.FIELD_ASTEROIDS: asteroids(),
 		Packets.FIELD_BULLETS: bullets(),
-		Packets.FIELD_EVENTS: [],
 	}
 
 

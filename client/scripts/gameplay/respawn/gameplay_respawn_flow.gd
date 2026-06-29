@@ -45,6 +45,7 @@ func request_respawn(required_lane_baselines_synced: bool) -> void:
 
 func mark_awaiting_confirmation() -> void:
 	awaiting_respawn_confirmation = true
+	ClientLogger.network_info("respawn awaiting confirmation marked")
 
 
 func clear_awaiting_confirmation() -> void:
@@ -76,7 +77,7 @@ func should_restore_alive_hud(
 	if self_state is Dictionary:
 		var self_state_dictionary: Dictionary = self_state
 		has_valid_server_state = !self_state_dictionary.is_empty()
-	return (player != null && player.visible) || has_valid_server_state
+	return (player != null && player.visible) or has_valid_server_state
 
 
 func _log_respawn_blocked_once(reason: String) -> void:

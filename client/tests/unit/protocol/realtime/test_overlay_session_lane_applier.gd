@@ -7,6 +7,7 @@ const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_
 const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const PresentationAdapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd")
+const GameplayReadiness := preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
 
 func test_overlay_full_updates_readout_cache() -> void:
@@ -266,7 +267,9 @@ func test_session_delta_accepts_players_and_player_lifecycle_keys() -> void:
 func test_overlay_only_does_not_mark_gameplay_ready() -> void:
 	var overlay_lane_state := OverlayLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
+	var readiness := GameplayReadiness.new()
 	var presentation_adapter := PresentationAdapter.new()
+	presentation_adapter.bind_gameplay_readiness(readiness)
 
 	OverlayLaneApplier.new().apply_overlay_full(
 		overlay_lane_state,
@@ -280,7 +283,7 @@ func test_overlay_only_does_not_mark_gameplay_ready() -> void:
 			"is_final_chunk": true,
 		}
 	)
-	presentation_adapter.mark_lane_synced(LaneMetadata.LANE_OVERLAY)
+	readiness.mark_overlay_baseline_synced()
 
 	assert_false(presentation_adapter.is_presentable())
 
@@ -288,7 +291,9 @@ func test_overlay_only_does_not_mark_gameplay_ready() -> void:
 func test_session_only_does_not_mark_gameplay_ready() -> void:
 	var session_lane_state := SessionLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
+	var readiness := GameplayReadiness.new()
 	var presentation_adapter := PresentationAdapter.new()
+	presentation_adapter.bind_gameplay_readiness(readiness)
 
 	SessionLaneApplier.new().apply_session_full(
 		session_lane_state,
@@ -306,7 +311,7 @@ func test_session_only_does_not_mark_gameplay_ready() -> void:
 			"is_final_chunk": true,
 		}
 	)
-	presentation_adapter.mark_lane_synced(LaneMetadata.LANE_SESSION)
+	readiness.mark_session_baseline_synced()
 
 	assert_false(presentation_adapter.is_presentable())
 

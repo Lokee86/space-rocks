@@ -76,6 +76,8 @@ func configure(
 	if devtools_context == null:
 		devtools_context = GameplayDevtoolsContext.new()
 		devtools_context.configure(connection_service_ref)
+	if runtime_context_ref != null and runtime_context_ref.respawn_flow != null and runtime_context_ref.respawn_flow.has_method("mark_awaiting_confirmation") and devtools_context != null and devtools_context.has_method("configure_local_respawn_confirmation_marker"):
+		devtools_context.configure_local_respawn_confirmation_marker(Callable(runtime_context_ref.respawn_flow, "mark_awaiting_confirmation"))
 
 	input_context = input_context_ref
 	if input_context == null:
@@ -152,9 +154,10 @@ func apply_gameplay_state(state: Dictionary, required_lane_baselines_synced: boo
 
 
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
-	if devtools_context == null:
-		return
-	devtools_context.apply_gameplay_state(state)
+	if devtools_context != null:
+		devtools_context.apply_gameplay_state(state)
+	if server_hitbox_overlay_flow != null:
+		server_hitbox_overlay_flow.apply_gameplay_state(state)
 
 
 func apply_devtools_debug_status_packet(packet: Dictionary) -> void:

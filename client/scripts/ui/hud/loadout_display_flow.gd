@@ -45,15 +45,15 @@ func apply_player_state(player_state: Dictionary) -> void:
 		"slot": SLOT_PRIMARY,
 		"weapon_id": str(player_state.get(Packets.FIELD_PRIMARY_WEAPON_ID, "")),
 		"ammo_policy": str(player_state.get(Packets.FIELD_PRIMARY_AMMO_POLICY, "")),
-		"ammo_remaining": int(player_state.get(Packets.FIELD_PRIMARY_AMMO_REMAINING, 0)),
-		"cooldown_remaining": float(player_state.get(Packets.FIELD_PRIMARY_COOLDOWN_REMAINING, 0.0)),
+		"ammo_remaining": _int_or_default(player_state.get(Packets.FIELD_PRIMARY_AMMO_REMAINING, 0), 0),
+		"cooldown_remaining": _float_or_default(player_state.get(Packets.FIELD_PRIMARY_COOLDOWN_REMAINING, 0.0), 0.0),
 	})
 	_apply_slot({
 		"slot": SLOT_SECONDARY,
 		"weapon_id": str(player_state.get(Packets.FIELD_SECONDARY_WEAPON_ID, "")),
 		"ammo_policy": str(player_state.get(Packets.FIELD_SECONDARY_AMMO_POLICY, "")),
-		"ammo_remaining": int(player_state.get(Packets.FIELD_SECONDARY_AMMO_REMAINING, 0)),
-		"cooldown_remaining": float(player_state.get(Packets.FIELD_SECONDARY_COOLDOWN_REMAINING, 0.0)),
+		"ammo_remaining": _int_or_default(player_state.get(Packets.FIELD_SECONDARY_AMMO_REMAINING, 0), 0),
+		"cooldown_remaining": _float_or_default(player_state.get(Packets.FIELD_SECONDARY_COOLDOWN_REMAINING, 0.0), 0.0),
 	})
 
 
@@ -65,6 +65,17 @@ func _clear_slot(slot: String) -> void:
 	displayed_weapon_ids[slot] = ""
 	previous_cooldown_remaining[slot] = 0.0
 	ready_effect_played_for_cooldown[slot] = true
+
+func _int_or_default(value, default_value: int) -> int:
+	if value == null:
+		return default_value
+	return int(value)
+
+
+func _float_or_default(value, default_value: float) -> float:
+	if value == null:
+		return default_value
+	return float(value)
 
 
 func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScene) -> Node:

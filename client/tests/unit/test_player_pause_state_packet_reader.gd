@@ -14,7 +14,7 @@ func test_is_player_pause_state_returns_true_for_player_pause_state() -> void:
 
 func test_is_player_pause_state_returns_false_for_state_packet() -> void:
 	var packet := {
-		Packets.FIELD_TYPE: Packets.TYPE_STATE,
+		Packets.FIELD_TYPE: Packets.TYPE_WORLD_FULL,
 	}
 
 	assert_false(PlayerPauseStatePacketReader.is_player_pause_state(packet))
