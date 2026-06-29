@@ -38,12 +38,13 @@ exclude = [".git/**", "**/.godot/**", "**/node_modules/**"]
 files = [
   "services/game-server/internal/game/runtime/packets_generated.go",
   "services/game-server/internal/game/packets.go",
+  "services/game-server/internal/protocol/realtime/packets_generated.go",
   "services/game-server/internal/devtools/packets_generated.go",
   "services/player-data/protocol/packets.go",
 ]
 sections = ["packets"]
 owns = []
-outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets", "player_data_packets"]
+outputs = ["server_entities_packets", "server_game_packets", "server_realtime_packets", "server_devtools_packets", "player_data_packets"]
 
 [packets.gds]
 files = ["client/scripts/generated/networking/packets/packets.gd"]

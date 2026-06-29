@@ -4,7 +4,6 @@ class_name GameplayInputFlow
 var connection_service
 var player
 var menu_flow
-var has_received_gameplay_state := false
 
 
 func configure(connection_service_ref, player_ref, menu_flow_ref) -> void:
@@ -14,15 +13,11 @@ func configure(connection_service_ref, player_ref, menu_flow_ref) -> void:
 
 
 func reset() -> void:
-	has_received_gameplay_state = false
+	pass
 
 
-func mark_gameplay_state_received() -> void:
-	has_received_gameplay_state = true
-
-
-func process() -> void:
-	if !has_received_gameplay_state:
+func process(has_received_state: bool) -> void:
+	if !has_received_state:
 		return
 	if player == null:
 		return

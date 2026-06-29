@@ -3,6 +3,7 @@ class_name GameplayComposition
 
 const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
 const MatchResultsFlowScript := preload("res://scripts/ui/match_results/match_results_flow.gd")
+const GameplayShellFlowScript := preload("res://scripts/shell/gameplay_shell_flow.gd")
 
 signal gameplay_started
 signal replay_requested
@@ -87,6 +88,11 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_an
 	_connect_match_end_signal(&"return_to_pregame_requested", Callable(self, "_on_match_end_return_to_pregame_requested"))
 	_connect_match_end_signal(&"quit_to_main_menu_requested", Callable(self, "_on_match_end_quit_to_main_menu_requested"))
 	_configure_gameplay_presentation_flow()
+
+func configure_gameplay_readiness(gameplay_readiness) -> void:
+	if gameplay_shell_flow == null or gameplay_shell_flow.gameplay_state_flow == null:
+		return
+	gameplay_shell_flow.gameplay_state_flow.gameplay_readiness = gameplay_readiness
 
 func apply_gameplay_state(state: Dictionary) -> void:
 	if gameplay_shell_flow != null:

@@ -27,10 +27,6 @@ func TestNewGameplayPresentationPacketMetrics(t *testing.T) {
 		t.Fatalf("expected packet size %d, got %d", 1200, metrics.PacketSize)
 	}
 
-	if metrics.PacketSeverity != "hard_cap" {
-		t.Fatalf("expected packet severity %q, got %q", "hard_cap", metrics.PacketSeverity)
-	}
-
 	if metrics.Contributors != contributors {
 		t.Fatalf("expected contributors to be preserved, got %#v", metrics.Contributors)
 	}

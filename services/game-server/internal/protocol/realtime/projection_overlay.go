@@ -1,0 +1,50 @@
+package realtime
+
+import (
+	game "github.com/Lokee86/space-rocks/server/internal/game"
+)
+
+type OverlayLaneProjection struct {
+	Receiver OverlayReceiverRecord
+}
+
+func ProjectOverlayLane(snapshot game.GameplayPresentationSnapshot, receiverPlayerID string) OverlayLaneProjection {
+	receiverSession := snapshot.PlayerSessions[receiverPlayerID]
+	receiverShip := snapshot.Players[receiverPlayerID]
+
+	return OverlayLaneProjection{
+		Receiver: OverlayReceiverRecord{
+			SelfID:                    snapshot.SelfID,
+			Lives:                     snapshot.Lives,
+			Score:                     receiverSession.Score,
+			RespawnCooldown:           receiverSession.RespawnCooldown,
+			PrimaryWeaponID:           receiverSession.PrimaryWeaponID,
+			PrimaryAmmoPolicy:         receiverSession.PrimaryAmmoPolicy,
+			PrimaryCooldownRemaining:  receiverShip.PrimaryCooldownRemaining,
+			PrimaryAmmoRemaining:      receiverShip.PrimaryAmmoRemaining,
+			SecondaryWeaponID:         receiverSession.SecondaryWeaponID,
+			SecondaryAmmoPolicy:       receiverSession.SecondaryAmmoPolicy,
+			SecondaryCooldownRemaining: receiverShip.SecondaryCooldownRemaining,
+			SecondaryAmmoRemaining:    receiverShip.SecondaryAmmoRemaining,
+		},
+	}
+}
+
+func BuildOverlayFullPacket(snapshot game.GameplayPresentationSnapshot, receiverPlayerID string, sequence int) OverlayFullPacket {
+	projection := ProjectOverlayLane(snapshot, receiverPlayerID)
+	return OverlayFullPacket{
+		Type: PacketFamilyOverlayFull,
+		Metadata: Metadata{
+			Lane:           LaneOverlay,
+			Sequence:       sequence,
+			SnapshotID:     snapshot.SelfID,
+			ServerSentMsec: snapshot.ServerSentMsec,
+			SnapshotKind:   SnapshotKind("full"),
+			ChunkIndex:     0,
+			ChunkCount:     1,
+			IsFinalChunk:   true,
+		},
+		Receiver: projection.Receiver,
+	}
+}
+

@@ -149,11 +149,14 @@ func TestRecordDomainEventQueuesBulletBlastPacketEvent(t *testing.T) {
 		t.Fatalf("expected 1 queued event, got %d", len(queuedEvents))
 	}
 	event := queuedEvents[0]
-	if event.Type != PacketTypeBulletBlast {
-		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, event.Type)
+	if event.EventID == "" {
+		t.Fatal("expected queued event to have an EventID")
 	}
-	if event.X != 12.5 || event.Y != 34.75 {
-		t.Fatalf("expected bullet blast coordinates (12.5, 34.75), got (%v, %v)", event.X, event.Y)
+	if event.Event.Type != PacketTypeBulletBlast {
+		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, event.Event.Type)
+	}
+	if event.Event.X != 12.5 || event.Event.Y != 34.75 {
+		t.Fatalf("expected bullet blast coordinates (12.5, 34.75), got (%v, %v)", event.Event.X, event.Event.Y)
 	}
 }
 
@@ -173,11 +176,14 @@ func TestRecordDomainEventQueuesBulletBlastForDurableSessionWithoutLiveShip(t *t
 		t.Fatalf("expected 1 queued event, got %d", len(queuedEvents))
 	}
 	event := queuedEvents[0]
-	if event.Type != PacketTypeBulletBlast {
-		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, event.Type)
+	if event.EventID == "" {
+		t.Fatal("expected queued event to have an EventID")
 	}
-	if event.X != 12.5 || event.Y != 34.75 {
-		t.Fatalf("expected bullet blast coordinates (12.5, 34.75), got (%v, %v)", event.X, event.Y)
+	if event.Event.Type != PacketTypeBulletBlast {
+		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, event.Event.Type)
+	}
+	if event.Event.X != 12.5 || event.Event.Y != 34.75 {
+		t.Fatalf("expected bullet blast coordinates (12.5, 34.75), got (%v, %v)", event.Event.X, event.Event.Y)
 	}
 }
 
@@ -199,20 +205,177 @@ func TestRecordDomainEventQueuesShipDeathPacketEvent(t *testing.T) {
 		t.Fatalf("expected 1 queued event, got %d", len(queuedEvents))
 	}
 	event := queuedEvents[0]
-	if event.Type != PacketTypeShipDeath {
-		t.Fatalf("expected event type %q, got %q", PacketTypeShipDeath, event.Type)
+	if event.EventID == "" {
+		t.Fatal("expected queued event to have an EventID")
 	}
-	if event.PlayerID != "player-1" {
-		t.Fatalf("expected player ID %q, got %q", "player-1", event.PlayerID)
+	if event.Event.Type != PacketTypeShipDeath {
+		t.Fatalf("expected event type %q, got %q", PacketTypeShipDeath, event.Event.Type)
 	}
-	if event.Lives != 2 {
-		t.Fatalf("expected lives 2, got %d", event.Lives)
+	if event.Event.PlayerID != "player-1" {
+		t.Fatalf("expected player ID %q, got %q", "player-1", event.Event.PlayerID)
 	}
-	if event.RespawnDelay != 1.25 {
-		t.Fatalf("expected respawn delay 1.25, got %v", event.RespawnDelay)
+	if event.Event.Lives != 2 {
+		t.Fatalf("expected lives 2, got %d", event.Event.Lives)
 	}
-	if event.X != 45.5 || event.Y != 67.75 {
-		t.Fatalf("expected ship death coordinates (45.5, 67.75), got (%v, %v)", event.X, event.Y)
+	if event.Event.RespawnDelay != 1.25 {
+		t.Fatalf("expected respawn delay 1.25, got %v", event.Event.RespawnDelay)
+	}
+	if event.Event.X != 45.5 || event.Event.Y != 67.75 {
+		t.Fatalf("expected ship death coordinates (45.5, 67.75), got (%v, %v)", event.Event.X, event.Event.Y)
+	}
+}
+
+func TestPendingPresentationEventsPeekDoesNotDrain(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
+		X:    12.5,
+		Y:    34.75,
+	})
+
+	firstPeek := game.PendingPresentationEvents(playerID)
+	if len(firstPeek) != 1 {
+		t.Fatalf("expected 1 pending event on first peek, got %d", len(firstPeek))
+	}
+	if firstPeek[0].EventID == "" {
+		t.Fatal("expected pending event to have an EventID")
+	}
+	if firstPeek[0].Event.Type != PacketTypeBulletBlast {
+		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, firstPeek[0].Event.Type)
+	}
+
+	secondPeek := game.PendingPresentationEvents(playerID)
+	if len(secondPeek) != 1 {
+		t.Fatalf("expected 1 pending event on second peek, got %d", len(secondPeek))
+	}
+	if secondPeek[0].EventID != firstPeek[0].EventID {
+		t.Fatalf("expected EventID to remain stable, got %q then %q", firstPeek[0].EventID, secondPeek[0].EventID)
+	}
+	if secondPeek[0].Event.Type != PacketTypeBulletBlast {
+		t.Fatalf("expected event type %q, got %q", PacketTypeBulletBlast, secondPeek[0].Event.Type)
+	}
+}
+
+
+func TestPendingPresentationEventsEventIDStaysStableAcrossPeeks(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
+		X:    12.5,
+		Y:    34.75,
+	})
+
+	firstPeek := game.PendingPresentationEvents(playerID)
+	if len(firstPeek) != 1 {
+		t.Fatalf("expected 1 pending event on first peek, got %d", len(firstPeek))
+	}
+	firstID := firstPeek[0].EventID
+	if firstID == "" {
+		t.Fatal("expected pending event to have an EventID")
+	}
+
+	secondPeek := game.PendingPresentationEvents(playerID)
+	if len(secondPeek) != 1 {
+		t.Fatalf("expected 1 pending event on second peek, got %d", len(secondPeek))
+	}
+	if secondPeek[0].EventID != firstID {
+		t.Fatalf("expected EventID to remain stable across peeks, got %q then %q", firstID, secondPeek[0].EventID)
+	}
+}
+
+func TestGameplayPresentationSnapshotCopiesPendingEventsWithoutDraining(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
+		X:    12.5,
+		Y:    34.75,
+	})
+
+	firstSnapshot := game.GameplayPresentationSnapshot(playerID)
+	if len(firstSnapshot.PendingEvents) != 1 {
+		t.Fatalf("expected 1 pending event in first snapshot, got %d", len(firstSnapshot.PendingEvents))
+	}
+	firstID := firstSnapshot.PendingEvents[0].EventID
+	if firstID == "" {
+		t.Fatal("expected snapshot pending event to have an EventID")
+	}
+	if firstSnapshot.PendingEvents[0].Event.Type != PacketTypeBulletBlast {
+		t.Fatalf("expected pending event type %q, got %q", PacketTypeBulletBlast, firstSnapshot.PendingEvents[0].Event.Type)
+	}
+
+	secondSnapshot := game.GameplayPresentationSnapshot(playerID)
+	if len(secondSnapshot.PendingEvents) != 1 {
+		t.Fatalf("expected 1 pending event in second snapshot, got %d", len(secondSnapshot.PendingEvents))
+	}
+	if secondSnapshot.PendingEvents[0].EventID != firstID {
+		t.Fatalf("expected EventID to remain stable across snapshots, got %q then %q", firstID, secondSnapshot.PendingEvents[0].EventID)
+	}
+	if secondSnapshot.PendingEvents[0].Event.Type != PacketTypeBulletBlast {
+		t.Fatalf("expected pending event type %q, got %q", PacketTypeBulletBlast, secondSnapshot.PendingEvents[0].Event.Type)
+	}
+}
+
+func TestPendingPresentationEventsDrainRemovesOnlySelectedIDs(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	game.recordDomainEvent(events.Event{
+		Type: events.EventBulletBlast,
+		X:    12.5,
+		Y:    34.75,
+	})
+	game.recordDomainEvent(events.Event{
+		Type: events.EventShipDeath,
+		PlayerID:     "player-1",
+		Lives:        2,
+		RespawnDelay: 1.25,
+		X:            45.5,
+		Y:            67.75,
+	})
+
+	firstPeek := game.PendingPresentationEvents(playerID)
+	if len(firstPeek) != 2 {
+		t.Fatalf("expected 2 pending events on first peek, got %d", len(firstPeek))
+	}
+	firstID := firstPeek[0].EventID
+	secondID := firstPeek[1].EventID
+	if firstID == "" || secondID == "" {
+		t.Fatal("expected pending events to have EventIDs")
+	}
+
+	drained := game.DrainPendingPresentationEvents(playerID, firstID)
+	if len(drained) != 1 {
+		t.Fatalf("expected 1 drained event, got %d", len(drained))
+	}
+	if drained[0].EventID != firstID {
+		t.Fatalf("expected drained EventID %q, got %q", firstID, drained[0].EventID)
+	}
+
+	secondPeek := game.PendingPresentationEvents(playerID)
+	if len(secondPeek) != 1 {
+		t.Fatalf("expected 1 pending event after draining one ID, got %d", len(secondPeek))
+	}
+	if secondPeek[0].EventID != secondID {
+		t.Fatalf("expected remaining EventID %q, got %q", secondID, secondPeek[0].EventID)
+	}
+
+	repeatDrain := game.DrainPendingPresentationEvents(playerID, firstID)
+	if len(repeatDrain) != 0 {
+		t.Fatalf("expected repeated drain of already-drained ID to remove 0 events, got %d", len(repeatDrain))
+	}
+
+	finalPeek := game.PendingPresentationEvents(playerID)
+	if len(finalPeek) != 1 {
+		t.Fatalf("expected 1 pending event after repeated drain, got %d", len(finalPeek))
+	}
+	if finalPeek[0].EventID != secondID {
+		t.Fatalf("expected unrelated EventID %q to remain, got %q", secondID, finalPeek[0].EventID)
 	}
 }
 

@@ -1,6 +1,7 @@
 extends GutTest
 
 const GameplayFlowComposer = preload("res://scripts/gameplay/runtime/gameplay_flow_composer.gd")
+const GameplayHudFlow = preload("res://scripts/shell/gameplay_hud_flow.gd")
 
 var nodes_to_free: Array[Node] = []
 
@@ -246,3 +247,34 @@ func test_configure_creates_core_owned_flows() -> void:
 	assert_not_null(composer.input_context)
 	assert_not_null(composer.devtools_context)
 	assert_not_null(composer.gameplay_state_apply_flow)
+func test_configure_accepts_gameplay_hud_flow_in_shell_argument_slot() -> void:
+	var composer = GameplayFlowComposer.new()
+	var hud := Control.new()
+	var gameplay_ui := Control.new()
+	var scene_root := Node2D.new()
+	var player := Player.new()
+	var view_anchor := Node2D.new()
+	var bullets := Node2D.new()
+	var asteroids := Node2D.new()
+	var pickups := Node2D.new()
+	var session_context := RefCounted.new()
+
+	composer.configure(
+		null,
+		_tracked(scene_root),
+		_tracked(player),
+		_tracked(view_anchor),
+		_tracked(bullets),
+		_tracked(asteroids),
+		_tracked(pickups),
+		hud,
+		gameplay_ui,
+		session_context,
+		Callable()
+	)
+
+	assert_not_null(composer.gameplay_shell_flow)
+	assert_true(composer.gameplay_shell_flow.gameplay_hud_flow is GameplayHudFlow)
+
+
+

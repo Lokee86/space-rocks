@@ -137,8 +137,9 @@ old
 
 
 def packet_toml(*, include_output_ids: bool = False) -> str:
-    go_id = 'id = "server_game_packets"\n' if include_output_ids else ""
-    gds_id = 'id = "client_packets"\n' if include_output_ids else ""
+    go_id = 'id = "server_game_packets\n"' if include_output_ids else ""
+    realtime_id = 'id = "server_realtime_packets\n"' if include_output_ids else ""
+    gds_id = 'id = "client_packets\n"' if include_output_ids else ""
     return """
 [[outputs]]
 {go_id}language = "go"
@@ -146,6 +147,13 @@ path = "go/packets.go"
 package = "packets"
 packet_types = true
 structs = ["PlayerInputPacket"]
+
+[[outputs]]
+{realtime_id}language = "go"
+path = "go/realtime_packets.go"
+package = "realtime"
+packet_types = true
+structs = []
 
 [[outputs]]
 {gds_id}language = "gdscript"
@@ -303,7 +311,7 @@ def test_packet_push_uses_configured_output_ids(tmp_path: Path) -> None:
     config_path = write_project(
         tmp_path,
         packet_output_ids=True,
-        packet_target_outputs=("server_game_packets",),
+        packet_target_outputs=("server_game_packets", "server_realtime_packets"),
     )
     gds_before = (tmp_path / "gds/packets.gd").read_text(encoding="utf-8")
 

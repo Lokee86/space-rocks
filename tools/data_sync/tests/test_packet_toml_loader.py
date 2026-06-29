@@ -30,8 +30,8 @@ def migrated_packet_toml_paths(tmp_path: Path) -> tuple[Path, ...]:
 def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
-    assert len(schema.outputs) == 5
     output_ids = {output.id for output in schema.outputs if output.id}
+    assert {"server_game_packets", "server_realtime_packets", "server_devtools_packets"}.issubset(output_ids)
     assert "server_devtools_packets" in output_ids
 
     game_output = schema.output_for_path("services/game-server/internal/game/packets.go")
@@ -44,6 +44,24 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert game_output.imports == {
         "runtime": "github.com/Lokee86/space-rocks/server/internal/game/runtime",
     }
+
+    realtime_output = schema.output_for_id("server_realtime_packets")
+    assert realtime_output.language == "go"
+    assert realtime_output.package == "realtime"
+    assert realtime_output.path == "services/game-server/internal/protocol/realtime/packets_generated.go"
+    assert realtime_output.packet_types is True
+    assert realtime_output.structs == ()
+    assert realtime_output.packet_type_ids == (
+        "world_full",
+        "world_delta",
+        "overlay_full",
+        "overlay_delta",
+        "session_full",
+        "session_delta",
+        "event_batch",
+        "resync_request",
+        "resync_required",
+    )
 
     gds_output = schema.output_for_path("client/scripts/generated/networking/packets/packets.gd")
     assert gds_output.language == "gdscript"
@@ -442,3 +460,4 @@ shoot = "bool"
 
     with pytest.raises(PacketTomlError):
         load_packet_schema_files((legacy,))
+

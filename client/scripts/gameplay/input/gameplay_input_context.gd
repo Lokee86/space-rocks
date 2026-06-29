@@ -58,10 +58,6 @@ func reset() -> void:
 		mouse_action_flow.clear_pending_context()
 
 
-func mark_gameplay_state_received() -> void:
-	if input_flow != null:
-		input_flow.mark_gameplay_state_received()
-
 func handle_unhandled_input(event: InputEvent, has_received_state: bool) -> bool:
 	if !has_received_state:
 		return false
@@ -77,7 +73,7 @@ func process(has_received_state: bool) -> void:
 	if Input.is_action_just_pressed("Respawn") && !respawn_request_route.is_null():
 		respawn_request_route.call(has_received_state)
 	if input_flow != null:
-		input_flow.process()
+		input_flow.process(has_received_state)
 	if !open_menu_consumed && Input.is_action_just_pressed("OpenMenu") && !open_spectate_menu_route.is_null():
 		open_spectate_menu_route.call()
 	if Input.is_action_just_pressed("SwitchCamera") && !cycle_spectate_target_route.is_null():
