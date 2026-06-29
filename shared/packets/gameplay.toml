@@ -622,6 +622,42 @@ id = "state"
 value = "state"
 
 [[packet_types]]
+id = "world_full"
+value = "world_full"
+
+[[packet_types]]
+id = "world_delta"
+value = "world_delta"
+
+[[packet_types]]
+id = "overlay_full"
+value = "overlay_full"
+
+[[packet_types]]
+id = "overlay_delta"
+value = "overlay_delta"
+
+[[packet_types]]
+id = "session_full"
+value = "session_full"
+
+[[packet_types]]
+id = "session_delta"
+value = "session_delta"
+
+[[packet_types]]
+id = "event_batch"
+value = "event_batch"
+
+[[packet_types]]
+id = "resync_request"
+value = "resync_request"
+
+[[packet_types]]
+id = "resync_required"
+value = "resync_required"
+
+[[packet_types]]
 id = "bullet_blast"
 value = "bullet_blast"
 

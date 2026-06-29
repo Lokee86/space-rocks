@@ -2,6 +2,71 @@ package game
 
 import "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 
+// PendingPresentationEvent keeps the queued event ID alongside the event payload
+// in the game-facing presentation layer.
+type PendingPresentationEvent struct {
+	EventID string
+	Event   EventState
+}
+
+func (game *Game) pendingPresentationEventStates(playerID string) []EventState {
+	pending := game.pendingPresentationEvents[playerID]
+	events := make([]EventState, 0, len(pending))
+	for _, pendingEvent := range pending {
+		events = append(events, pendingEvent.Event)
+	}
+	return events
+}
+
+// PendingPresentationEvents returns a copy of the queued presentation events without draining them.
+func (game *Game) PendingPresentationEvents(playerID string) []PendingPresentationEvent {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	pending := game.pendingPresentationEvents[playerID]
+	if len(pending) == 0 {
+		return nil
+	}
+
+	events := make([]PendingPresentationEvent, len(pending))
+	copy(events, pending)
+	return events
+}
+
+// DrainPendingPresentationEvents removes only the matching pending presentation events for the player.
+func (game *Game) DrainPendingPresentationEvents(playerID string, eventIDs ...string) []PendingPresentationEvent {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	pending := game.pendingPresentationEvents[playerID]
+	if len(pending) == 0 || len(eventIDs) == 0 {
+		return nil
+	}
+
+	wanted := make(map[string]struct{}, len(eventIDs))
+	for _, eventID := range eventIDs {
+		wanted[eventID] = struct{}{}
+	}
+
+	kept := make([]PendingPresentationEvent, 0, len(pending))
+	drained := make([]PendingPresentationEvent, 0, len(pending))
+	for _, pendingEvent := range pending {
+		if _, ok := wanted[pendingEvent.EventID]; ok {
+			drained = append(drained, pendingEvent)
+			continue
+		}
+		kept = append(kept, pendingEvent)
+	}
+
+	if len(kept) == 0 {
+		game.pendingPresentationEvents[playerID] = nil
+	} else {
+		game.pendingPresentationEvents[playerID] = kept
+	}
+
+	return drained
+}
+
 func (game *Game) StatePacket(playerID string) StatePacket {
 	game.mu.Lock()
 	defer game.mu.Unlock()
@@ -34,7 +99,7 @@ func (game *Game) statePacket(playerID string) StatePacket {
 	for id, bullet := range game.entities.Projectiles {
 		bullets[id] = bullet.State()
 	}
-	events := append(make([]EventState, 0, len(game.pendingPresentationEvents[playerID])), game.pendingPresentationEvents[playerID]...)
+	events := game.pendingPresentationEventStates(playerID)
 
 	return StatePacket{
 		Type:            PacketTypeState,

@@ -132,6 +132,12 @@ func configure(
 		)
 
 
+func configure_gameplay_readiness(gameplay_readiness) -> void:
+	if gameplay_state_apply_flow == null:
+		return
+	gameplay_state_apply_flow.gameplay_readiness = gameplay_readiness
+
+
 func apply_gameplay_state(state: Dictionary, has_received_state: bool) -> GameplayStateApplyResult:
 	if gameplay_state_apply_flow == null:
 		return GameplayStateApplyResult.new()

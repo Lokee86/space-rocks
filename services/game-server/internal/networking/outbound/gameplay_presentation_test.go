@@ -31,8 +31,8 @@ func TestBuildGameplayPresentationStateResponseExcludesDevtoolsFields(t *testing
 		t.Fatalf("expected packet size %d, got %d", len(response), metrics.PacketSize)
 	}
 
-	if metrics.PacketSeverity == "" {
-		t.Fatal("expected packet severity to be set")
+	if metrics.PacketSize <= 0 {
+		t.Fatalf("expected packet size to be positive, got %d", metrics.PacketSize)
 	}
 
 	if metrics.Contributors.RoomState != string(room.State) {

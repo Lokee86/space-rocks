@@ -3,6 +3,7 @@ package outbound
 import (
 	"time"
 
+	game "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
@@ -20,7 +21,7 @@ func BuildGameplayPresentationStateResponse(room *rooms.Room, playerID string, r
 	buildStarted := time.Now()
 	statePacket := gameInstance.StatePacket(playerID)
 	statePacket.ServerSentMsec = int(time.Now().UnixMilli())
-	contributors := packetmetrics.BuildGameplayPacketContributors(string(room.State), statePacket)
+	contributors := buildGameplayPacketContributors(string(room.State), gameInstance.GameplayPresentationSnapshot(playerID))
 	buildDuration := time.Since(buildStarted)
 
 	encodeStarted := time.Now()
@@ -39,4 +40,19 @@ func BuildGameplayPresentationStateResponse(room *rooms.Room, playerID string, r
 	packetmetrics.LogGameplayPresentationPacketSize(metrics, roomID, playerID, remoteAddr)
 
 	return response, metrics, true
+}
+
+func buildGameplayPacketContributors(roomState string, snapshot game.GameplayPresentationSnapshot) packetmetrics.GameplayPacketContributors {
+	return packetmetrics.GameplayPacketContributors{
+		RoomState:      roomState,
+		Players:        len(snapshot.Players),
+		PlayerSessions: len(snapshot.PlayerSessions),
+		PlayerLifecycle: len(snapshot.PlayerLifecycle),
+		Asteroids:      len(snapshot.Asteroids),
+		Bullets:        len(snapshot.Bullets),
+		Pickups:        len(snapshot.Pickups),
+		Enemies:        0,
+		Events:         len(snapshot.PendingEvents),
+		TotalAsteroids: snapshot.TotalAsteroids,
+	}
 }

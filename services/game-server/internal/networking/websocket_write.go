@@ -4,8 +4,11 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	"github.com/Lokee86/space-rocks/server/internal/devtools"
+	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
 	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
+	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
 )
 
 const debugStatusWriteIntervalTicks = 8
@@ -49,6 +52,9 @@ func writeServerMessages(
 				return
 			}
 			packetmetrics.LogSlowGameplayPresentationWrite(time.Since(writeStarted), packetMetrics, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+			if devtools.Enabled() {
+				runShadowRealtimeMeasurement(session, remoteAddr)
+			}
 			lastDebugShapeCatalogRoomID = writeDebugShapeCatalogMessage(session, remoteAddr, lastDebugShapeCatalogRoomID)
 			debugStatusTick++
 			if debugStatusTick >= debugStatusWriteIntervalTicks {
@@ -57,6 +63,23 @@ func writeServerMessages(
 			}
 		}
 	}
+}
+
+func runShadowRealtimeMeasurement(session *webSocketSession, remoteAddr string) {
+	if session.room == nil || session.currentGamePlayerID == "" || session.room.GameInstance() == nil {
+		return
+	}
+
+	snapshot := session.room.GameInstance().GameplayPresentationSnapshot(session.currentGamePlayerID)
+	result := realtime.BuildShadowRealtimeResult(snapshot, realtime.NewRealtimeSessionState(session.currentGamePlayerID))
+	packetmetrics.LogShadowLaneMetrics(realtime.ShadowLaneMetricRecords(result), session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+	fields := []any{
+		logging.FieldRoomID, session.currentRoomID,
+		logging.FieldPlayerID, session.currentGamePlayerID,
+		logging.FieldRemoteAddr, remoteAddr,
+	}
+	fields = append(fields, realtime.ShadowRealtimeSummaryFields(result)...)
+	logging.Network.Debug("shadow realtime summary", fields...)
 }
 
 func writeDebugStatusMessage(session *webSocketSession, remoteAddr string) {

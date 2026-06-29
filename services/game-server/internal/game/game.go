@@ -19,6 +19,7 @@ type Game struct {
 	stopSimulationOnce        sync.Once
 	nextID                    int
 	nextPickupID              int
+	nextPresentationEventID   int
 	spawner                   *spawning.Spawner
 	scoringPolicy             scoring.Policy
 	dropTables                drops.Tables
@@ -30,7 +31,7 @@ type Game struct {
 	simulationStepObservers   []func(float64)
 	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
-	pendingPresentationEvents map[string][]EventState
+	pendingPresentationEvents map[string][]PendingPresentationEvent
 }
 
 func New() *Game {
@@ -44,7 +45,7 @@ func New() *Game {
 		stopSimulation:            make(chan struct{}),
 		cameraViews:               make(map[string]*runtime.CameraView),
 		playerSessions:            make(map[string]*playerSession),
-		pendingPresentationEvents: make(map[string][]EventState),
+		pendingPresentationEvents: make(map[string][]PendingPresentationEvent),
 		spawner:                   spawning.New(),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
 		dropTables:                drops.GeneratedTables,

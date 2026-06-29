@@ -1,6 +1,10 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/events"
+import (
+	"fmt"
+
+	"github.com/Lokee86/space-rocks/server/internal/game/events"
+)
 
 func (game *Game) recordDomainEvent(event events.Event) {
 	game.broadcastEvent(eventStateForDomainEvent(event))
@@ -104,6 +108,14 @@ func eventStateForDomainEvent(event events.Event) EventState {
 
 func (game *Game) broadcastEvent(event EventState) {
 	for playerID := range game.playerSessions {
-		game.pendingPresentationEvents[playerID] = append(game.pendingPresentationEvents[playerID], event)
+		game.nextPresentationEventID++
+		game.pendingPresentationEvents[playerID] = append(game.pendingPresentationEvents[playerID], PendingPresentationEvent{
+			EventID: formatPresentationEventID(game.nextPresentationEventID),
+			Event:   event,
+		})
 	}
+}
+
+func formatPresentationEventID(id int) string {
+	return fmt.Sprintf("presentation-event-%d", id)
 }

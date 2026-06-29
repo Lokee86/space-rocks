@@ -66,7 +66,7 @@ func reset() -> void:
 
 func process(has_received_state: bool) -> void:
 	if state_context != null:
-		state_context.set_has_received_gameplay_state(has_received_state)
+		state_context.set_has_gameplay_readiness(has_received_state)
 	if hotkey_context != null:
 		hotkey_context.process(has_received_state)
 	if command_context != null:
