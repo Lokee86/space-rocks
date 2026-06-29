@@ -144,3 +144,29 @@ func TestRealtimeSessionStateIgnoresStaleSequencesAndTracksWrongBaselineResync(t
 		t.Fatalf("expected wrong baseline resync decision, got %#v", decision)
 	}
 }
+
+func TestAdvanceMetadataForSuccessfulWriteAdvancesEventLaneSequence(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	metadata := Metadata{
+		Lane:         LaneEvent,
+		Sequence:     0,
+		SnapshotID:   "event-batch-0",
+		SnapshotKind: SnapshotKind("batch"),
+		ChunkIndex:   0,
+		ChunkCount:   1,
+		IsFinalChunk: true,
+	}
+
+	state.UpdateLane(LaneEvent, AdvanceMetadataForSuccessfulWrite(LaneEvent, metadata))
+
+	laneState, ok := state.LaneState(LaneEvent)
+	if !ok {
+		t.Fatal("expected event lane state after successful write metadata persists")
+	}
+	if laneState.Sequence != 1 {
+		t.Fatalf("event lane sequence = %d, want 1", laneState.Sequence)
+	}
+	if laneState.SnapshotID != "event-batch-1" {
+		t.Fatalf("event lane snapshot id = %q, want event-batch-1", laneState.SnapshotID)
+	}
+}
