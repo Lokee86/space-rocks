@@ -19,10 +19,10 @@ func TestActiveLaneMetricsRecordBytesAndCounts(t *testing.T) {
 	}
 
 	result := ActiveRealtimeResult{
-		Candidates: []RealtimeLaneCandidate{{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull}},
-		SendPlan: SendPlan{Summary: summary},
-		EncodedBytes: map[Lane]int{LaneWorld: 128},
-		Mode: "active",
+		SelectedCandidates: []RealtimeLaneCandidate{{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull}},
+		SendPlan:           SendPlan{Summary: summary},
+		EncodedBytes:       map[Lane]int{LaneWorld: 128},
+		Mode:               "active",
 	}
 
 	records := ActiveLaneMetricRecords(result)
@@ -36,8 +36,8 @@ func TestActiveLaneMetricsRecordBytesAndCounts(t *testing.T) {
 
 func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
-		SelfID: "player-1",
-		Lives: 3,
+		SelfID:         "player-1",
+		Lives:          3,
 		ServerSentMsec: 1234,
 		Players: map[string]runtime.ShipState{
 			"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5},
@@ -69,8 +69,11 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	if len(result.Candidates) == 0 {
 		t.Fatal("expected active realtime result to emit candidates")
 	}
+	if len(result.SelectedCandidates) != len(result.Candidates) {
+		t.Fatalf("expected selected candidates to match candidates in this baseline case, got %d selected and %d candidates", len(result.SelectedCandidates), len(result.Candidates))
+	}
 
-	for _, candidate := range result.Candidates {
+	for _, candidate := range result.SelectedCandidates {
 		encodedPacket, ok := result.EncodedPackets[candidate.Lane]
 		if !ok || len(encodedPacket) == 0 {
 			t.Fatalf("expected encoded packet for lane=%q kind=%q", candidate.Lane, candidate.Kind)
@@ -83,6 +86,64 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 			t.Fatalf("expected non-empty top-level lane for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
 		}
 		assertNotNakedLanePayload(t, candidate.Lane, wire)
+	}
+}
+
+func TestIncludedRealtimeLaneCandidatesSkipsDeferredRecordsInOrder(t *testing.T) {
+	candidates := []RealtimeLaneCandidate{
+		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
+		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
+		{Lane: LaneSession, Kind: RealtimeLaneCandidateKindEventBatch},
+	}
+	included := []ScheduleRecord{
+		{CandidateIndex: 2},
+		{CandidateIndex: 0},
+	}
+	deferred := []ScheduleRecord{
+		{CandidateIndex: 1},
+	}
+
+	if len(deferred) != 1 {
+		t.Fatalf("expected 1 deferred record, got %d", len(deferred))
+	}
+
+	selected := IncludedRealtimeLaneCandidates(candidates, included)
+	if len(selected) != 2 {
+		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
+	}
+	if selected[0].Lane != LaneSession || selected[1].Lane != LaneWorld {
+		t.Fatalf("selected candidates = %#v, want session then world", selected)
+	}
+}
+
+func TestBuildActiveRealtimeResultUsesSelectedCandidatesOnly(t *testing.T) {
+	result := ActiveRealtimeResult{
+		SelectedCandidates: []RealtimeLaneCandidate{
+			{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
+		},
+		SendPlan: SendPlan{
+			Summary: SendPlanSummary{IncludedCount: 1},
+		},
+		EncodedPackets: map[Lane][]byte{
+			LaneOverlay: []byte(`{"type":"overlay_full","lane":"overlay"}`),
+		},
+		EncodedBytes: map[Lane]int{
+			LaneOverlay: 42,
+		},
+	}
+
+	records := ActiveLaneMetricRecords(result)
+	if len(records) != 1 {
+		t.Fatalf("expected 1 metric record, got %d", len(records))
+	}
+	if records[0].Lane != LaneOverlay {
+		t.Fatalf("expected metric record for overlay, got lane=%q", records[0].Lane)
+	}
+	if _, ok := result.EncodedPackets[LaneWorld]; ok {
+		t.Fatal("expected world packet to be absent when not selected")
+	}
+	if _, ok := result.EncodedPackets[LaneOverlay]; !ok {
+		t.Fatal("expected overlay packet to be present when selected")
 	}
 }
 
@@ -116,4 +177,83 @@ func hasOnlyKeys(wire map[string]any, keys []string) bool {
 		}
 	}
 	return true
+}
+
+func TestIncludedRealtimeLaneCandidatesReturnsOnlyIncludedCandidates(t *testing.T) {
+	candidates := []RealtimeLaneCandidate{
+		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
+		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
+		{Lane: LaneSession, Kind: RealtimeLaneCandidateKindEventBatch},
+	}
+	included := []ScheduleRecord{
+		{CandidateIndex: 0},
+		{CandidateIndex: 2},
+	}
+
+	selected := IncludedRealtimeLaneCandidates(candidates, included)
+	if len(selected) != 2 {
+		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
+	}
+	if selected[0].Lane != LaneWorld || selected[1].Lane != LaneSession {
+		t.Fatalf("selected candidates = %#v, want world then session", selected)
+	}
+}
+
+func TestIncludedRealtimeLaneCandidatesPreservesIncludedOrder(t *testing.T) {
+	candidates := []RealtimeLaneCandidate{
+		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
+		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
+		{Lane: LaneSession, Kind: RealtimeLaneCandidateKindEventBatch},
+	}
+	included := []ScheduleRecord{
+		{CandidateIndex: 2},
+		{CandidateIndex: 0},
+	}
+
+	selected := IncludedRealtimeLaneCandidates(candidates, included)
+	if len(selected) != 2 {
+		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
+	}
+	if selected[0].Lane != LaneSession || selected[1].Lane != LaneWorld {
+		t.Fatalf("selected candidates = %#v, want session then world", selected)
+	}
+}
+
+func TestIncludedRealtimeLaneCandidatesDeduplicatesRepeatedCandidateIndexes(t *testing.T) {
+	candidates := []RealtimeLaneCandidate{
+		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
+		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
+	}
+	included := []ScheduleRecord{
+		{CandidateIndex: 1},
+		{CandidateIndex: 1},
+		{CandidateIndex: 0},
+	}
+
+	selected := IncludedRealtimeLaneCandidates(candidates, included)
+	if len(selected) != 2 {
+		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
+	}
+	if selected[0].Lane != LaneOverlay || selected[1].Lane != LaneWorld {
+		t.Fatalf("selected candidates = %#v, want overlay then world", selected)
+	}
+}
+
+func TestIncludedRealtimeLaneCandidatesSkipsInvalidIndexes(t *testing.T) {
+	candidates := []RealtimeLaneCandidate{
+		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
+	}
+	included := []ScheduleRecord{
+		{CandidateIndex: -1},
+		{CandidateIndex: 1},
+		{CandidateIndex: 0},
+	}
+
+	selected := IncludedRealtimeLaneCandidates(candidates, included)
+	if len(selected) != 1 {
+		t.Fatalf("expected 1 selected candidate, got %d", len(selected))
+	}
+	if selected[0].Lane != LaneWorld {
+		t.Fatalf("selected candidates = %#v, want world", selected)
+	}
 }

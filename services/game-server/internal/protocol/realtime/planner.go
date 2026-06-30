@@ -96,8 +96,8 @@ func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state R
 	candidatePlan := AssembleRealtimeLaneCandidates(snapshot, state)
 
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
-	for _, candidate := range candidatePlan.Candidates {
-		records = append(records, scheduleRecordForCandidate(candidate))
+	for i, candidate := range candidatePlan.Candidates {
+		records = append(records, scheduleRecordForCandidate(i, candidate))
 	}
 
 	return RealtimeSendPrepared{
@@ -173,10 +173,11 @@ func priorityForCandidate(candidate RealtimeLaneCandidate) Priority {
 	return PriorityCritical
 }
 
-func scheduleRecordForCandidate(candidate RealtimeLaneCandidate) ScheduleRecord {
+func scheduleRecordForCandidate(candidateIndex int, candidate RealtimeLaneCandidate) ScheduleRecord {
 	packetFamily := packetFamilyForCandidate(candidate)
 	record := ScheduleRecord{
 		Lane:           candidate.Lane,
+		CandidateIndex: candidateIndex,
 		PacketFamily:   packetFamily,
 		RecordKind:     string(candidate.Kind),
 		Priority:       priorityForCandidate(candidate),

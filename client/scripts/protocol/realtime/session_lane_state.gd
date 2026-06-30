@@ -61,4 +61,3 @@ func _record_key(record) -> Variant:
 		if record.has("player_id"):
 			return record.get("player_id")
 	return null
-
