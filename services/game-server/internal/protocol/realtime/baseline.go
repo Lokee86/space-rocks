@@ -25,16 +25,18 @@ func (state RealtimeLaneState) Metadata() Metadata {
 }
 
 type RealtimeSessionState struct {
-	ReceiverID    string
-	Lanes         map[Lane]RealtimeLaneState
-	BaselineReady map[Lane]bool
+	ReceiverID          string
+	Lanes               map[Lane]RealtimeLaneState
+	BaselineReady       map[Lane]bool
+	baselineProjections map[Lane]any
 }
 
 func NewRealtimeSessionState(receiverID string) RealtimeSessionState {
 	return RealtimeSessionState{
-		ReceiverID:    receiverID,
-		Lanes:         make(map[Lane]RealtimeLaneState),
-		BaselineReady: make(map[Lane]bool),
+		ReceiverID:          receiverID,
+		Lanes:               make(map[Lane]RealtimeLaneState),
+		BaselineReady:       make(map[Lane]bool),
+		baselineProjections: make(map[Lane]any),
 	}
 }
 
@@ -61,6 +63,31 @@ func (state *RealtimeSessionState) MarkBaselineReady(lane Lane) {
 	state.BaselineReady[lane] = true
 }
 
+func (state *RealtimeSessionState) StoreBaselineProjection(lane Lane, projection any) {
+	if projection == nil {
+		return
+	}
+	if state.baselineProjections == nil {
+		state.baselineProjections = make(map[Lane]any)
+	}
+	state.baselineProjections[lane] = projection
+}
+
+func (state RealtimeSessionState) BaselineProjection(lane Lane) (any, bool) {
+	if state.baselineProjections == nil {
+		return nil, false
+	}
+	projection, ok := state.baselineProjections[lane]
+	return projection, ok
+}
+
+func (state *RealtimeSessionState) ClearBaselineProjection(lane Lane) {
+	if state.baselineProjections == nil {
+		return
+	}
+	delete(state.baselineProjections, lane)
+}
+
 func (state RealtimeSessionState) LaneState(lane Lane) (RealtimeLaneState, bool) {
 	laneState, ok := state.Lanes[lane]
 	return laneState, ok
@@ -68,6 +95,13 @@ func (state RealtimeSessionState) LaneState(lane Lane) (RealtimeLaneState, bool)
 
 func (state RealtimeSessionState) LaneBaselineReady(lane Lane) bool {
 	return state.BaselineReady[lane]
+}
+
+func NextLaneSequence(state RealtimeLaneState, synced bool) int {
+	if !synced || state.Sequence < 1 {
+		return 1
+	}
+	return state.Sequence + 1
 }
 
 func CandidateMetadata(candidate RealtimeLaneCandidate, state RealtimeSessionState) (Metadata, bool) {
@@ -79,6 +113,15 @@ func CandidateMetadata(candidate RealtimeLaneCandidate, state RealtimeSessionSta
 	case SessionFullPacket:
 		return packet.Metadata, true
 	case EventBatchPacket:
+		return packet.Metadata, true
+	}
+
+	switch packet := candidate.Delta.(type) {
+	case WorldDeltaPacket:
+		return packet.Metadata, true
+	case OverlayLaneDelta:
+		return packet.Metadata, true
+	case SessionLaneDelta:
 		return packet.Metadata, true
 	}
 

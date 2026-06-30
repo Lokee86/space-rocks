@@ -25,11 +25,18 @@ func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: Basel
 	if not baseline_tracker.record_delta(lane, baseline_id, sequence):
 		return false
 
-	_apply_entity_deltas(world_lane_state, world_packet.get("ship_creates", []), world_packet.get("ship_updates", []), world_packet.get("ship_deletes", []), "ship")
-	_apply_entity_deltas(world_lane_state, world_packet.get("bullet_creates", []), world_packet.get("bullet_updates", []), world_packet.get("bullet_deletes", []), "bullet")
-	_apply_entity_deltas(world_lane_state, world_packet.get("asteroid_creates", []), world_packet.get("asteroid_updates", []), world_packet.get("asteroid_deletes", []), "asteroid")
-	_apply_entity_deltas(world_lane_state, world_packet.get("pickup_creates", []), world_packet.get("pickup_updates", []), world_packet.get("pickup_deletes", []), "pickup")
+	_apply_entity_deltas(world_lane_state, _array_field(world_packet, "ship_creates"), _array_field(world_packet, "ship_updates"), _array_field(world_packet, "ship_deletes"), "ship")
+	_apply_entity_deltas(world_lane_state, _array_field(world_packet, "bullet_creates"), _array_field(world_packet, "bullet_updates"), _array_field(world_packet, "bullet_deletes"), "bullet")
+	_apply_entity_deltas(world_lane_state, _array_field(world_packet, "asteroid_creates"), _array_field(world_packet, "asteroid_updates"), _array_field(world_packet, "asteroid_deletes"), "asteroid")
+	_apply_entity_deltas(world_lane_state, _array_field(world_packet, "pickup_creates"), _array_field(world_packet, "pickup_updates"), _array_field(world_packet, "pickup_deletes"), "pickup")
 	return true
+
+
+func _array_field(packet: Dictionary, key: String) -> Array:
+	var value = packet.get(key, [])
+	if value is Array:
+		return value
+	return []
 
 func _apply_entity_deltas(world_lane_state: WorldLaneState, creates: Array, updates: Array, deletes: Array, entity_kind: String) -> void:
 	for record in creates:
@@ -63,5 +70,3 @@ func _apply_entity_delete(world_lane_state: WorldLaneState, id, entity_kind: Str
 			world_lane_state.delete_asteroid(id)
 		"pickup":
 			world_lane_state.delete_pickup(id)
-
-

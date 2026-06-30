@@ -10,6 +10,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
@@ -123,6 +124,107 @@ func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
 	}
 
 	assertLanePacket(t, clientConn)
+}
+
+func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessfulWrite(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return false
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	playerID := "player-1"
+	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	}
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	}
+
+	state := realtime.NewRealtimeSessionState(playerID)
+	state.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneWorld)
+	state.UpdateLane(realtime.LaneOverlay, realtime.Metadata{Lane: realtime.LaneOverlay, Sequence: 1, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneOverlay)
+	state.UpdateLane(realtime.LaneSession, realtime.Metadata{Lane: realtime.LaneSession, Sequence: 1, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneSession)
+
+	if projection, ok := state.BaselineProjection(realtime.LaneWorld); ok || projection != nil {
+		t.Fatalf("expected no stored world projection before write, got %#v, %t", projection, ok)
+	}
+	if projection, ok := state.BaselineProjection(realtime.LaneOverlay); ok || projection != nil {
+		t.Fatalf("expected no stored overlay projection before write, got %#v, %t", projection, ok)
+	}
+	if projection, ok := state.BaselineProjection(realtime.LaneSession); ok || projection != nil {
+		t.Fatalf("expected no stored session projection before write, got %#v, %t", projection, ok)
+	}
+
+	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance)
+	session := &webSocketSession{
+		conn:                serverConn,
+		room:                room,
+		rooms:               rooms.NewRoomManager(),
+		currentRoomID:       room.ID,
+		currentGamePlayerID: playerID,
+		realtimeState:       state,
+	}
+
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to succeed")
+	}
+
+	assertLanePacket(t, clientConn)
+	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneWorld, "world_full")
+	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneOverlay, "overlay_full")
+	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneSession, "session_full")
+}
+
+
+func assertStoredBaselineProjectionType(t *testing.T, state realtime.RealtimeSessionState, lane realtime.Lane, wantType string) {
+	t.Helper()
+	projection, ok := state.BaselineProjection(lane)
+	if !ok {
+		t.Fatalf("expected stored projection for lane=%q", lane)
+	}
+
+	switch lane {
+	case realtime.LaneWorld:
+		packet, ok := projection.(realtime.WorldFullPacket)
+		if !ok {
+			t.Fatalf("expected world projection to be realtime.WorldFullPacket, got %#v", projection)
+		}
+		if packet.Type != wantType {
+			t.Fatalf("expected world projection type=%q, got %q", wantType, packet.Type)
+		}
+	case realtime.LaneOverlay:
+		packet, ok := projection.(realtime.OverlayFullPacket)
+		if !ok {
+			t.Fatalf("expected overlay projection to be realtime.OverlayFullPacket, got %#v", projection)
+		}
+		if packet.Type != wantType {
+			t.Fatalf("expected overlay projection type=%q, got %q", wantType, packet.Type)
+		}
+	case realtime.LaneSession:
+		packet, ok := projection.(realtime.SessionFullPacket)
+		if !ok {
+			t.Fatalf("expected session projection to be realtime.SessionFullPacket, got %#v", projection)
+		}
+		if packet.Type != wantType {
+			t.Fatalf("expected session projection type=%q, got %q", wantType, packet.Type)
+		}
+	default:
+		t.Fatalf("unexpected lane for stored projection assertion: %q", lane)
+	}
 }
 
 func newWebSocketTestConn(t *testing.T) (*websocket.Conn, *websocket.Conn) {

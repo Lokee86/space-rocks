@@ -13,10 +13,11 @@ const (
 )
 
 type RealtimeLaneCandidate struct {
-	Lane  Lane
-	Kind  RealtimeLaneCandidateKind
-	Full  any
-	Delta any
+	Lane       Lane
+	Kind       RealtimeLaneCandidateKind
+	Full       any
+	Projection any
+	Delta      any
 }
 
 type RealtimeLanePlan struct {
@@ -34,50 +35,113 @@ func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 
 	worldState, worldSynced := state.LaneState(LaneWorld)
 	worldReady := state.LaneBaselineReady(LaneWorld)
-	if !worldReady || !worldSynced || !worldState.IsFinalChunk || worldState.BaselineID == "" {
+	worldSequence := NextLaneSequence(worldState, worldSynced)
+	worldFull := BuildWorldFullPacket(snapshot, worldSequence)
+	worldProjection, worldHasProjection := state.BaselineProjection(LaneWorld)
+	worldCanUseProjection := worldReady && worldSynced && worldState.IsFinalChunk && worldState.BaselineID != "" && worldHasProjection
+	if !worldCanUseProjection {
 		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane: LaneWorld,
-			Kind: RealtimeLaneCandidateKindFull,
-			Full: BuildWorldFullPacket(snapshot, worldState.Sequence),
+			Lane:       LaneWorld,
+			Kind:       RealtimeLaneCandidateKindFull,
+			Full:       worldFull,
+			Projection: worldFull,
 		})
 	} else {
-		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane: LaneWorld,
-			Kind: RealtimeLaneCandidateKindFull,
-			Full: BuildWorldFullPacket(snapshot, worldState.Sequence),
-		})
+		previousWorldFull, ok := worldProjection.(WorldFullPacket)
+		if !ok {
+			candidates = append(candidates, RealtimeLaneCandidate{
+				Lane:       LaneWorld,
+				Kind:       RealtimeLaneCandidateKindFull,
+				Full:       worldFull,
+				Projection: worldFull,
+			})
+		} else if !ProjectionChanged(previousWorldFull, worldFull) {
+			// No world candidate when the projection is unchanged.
+		} else {
+			worldDelta := BuildWorldDeltaPacket(previousWorldFull, worldFull)
+			if WorldDeltaHasChanges(worldDelta) {
+				candidates = append(candidates, RealtimeLaneCandidate{
+					Lane:       LaneWorld,
+					Kind:       RealtimeLaneCandidateKindDelta,
+					Delta:      worldDelta,
+					Projection: worldFull,
+				})
+			}
+		}
 	}
 
 	overlayState, overlaySynced := state.LaneState(LaneOverlay)
 	overlayReady := state.LaneBaselineReady(LaneOverlay)
-	if !overlayReady || !overlaySynced || !overlayState.IsFinalChunk || overlayState.BaselineID == "" {
+	overlaySequence := NextLaneSequence(overlayState, overlaySynced)
+	overlayFull := BuildOverlayFullPacket(snapshot, state.ReceiverID, overlaySequence)
+	overlayProjection, overlayHasProjection := state.BaselineProjection(LaneOverlay)
+	overlayCanUseProjection := overlayReady && overlaySynced && overlayState.IsFinalChunk && overlayState.BaselineID != "" && overlayHasProjection
+	if !overlayCanUseProjection {
 		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane: LaneOverlay,
-			Kind: RealtimeLaneCandidateKindFull,
-			Full: BuildOverlayFullPacket(snapshot, state.ReceiverID, overlayState.Sequence),
+			Lane:       LaneOverlay,
+			Kind:       RealtimeLaneCandidateKindFull,
+			Full:       overlayFull,
+			Projection: overlayFull,
 		})
 	} else {
-		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane: LaneOverlay,
-			Kind: RealtimeLaneCandidateKindFull,
-			Full: BuildOverlayFullPacket(snapshot, state.ReceiverID, overlayState.Sequence),
-		})
+		previousOverlayFull, ok := overlayProjection.(OverlayFullPacket)
+		if !ok {
+			candidates = append(candidates, RealtimeLaneCandidate{
+				Lane:       LaneOverlay,
+				Kind:       RealtimeLaneCandidateKindFull,
+				Full:       overlayFull,
+				Projection: overlayFull,
+			})
+		} else if !ProjectionChanged(previousOverlayFull, overlayFull) {
+			// No overlay candidate when the projection is unchanged.
+		} else {
+			overlayDelta := BuildOverlayDeltaPacket(previousOverlayFull, overlayFull)
+			if OverlayDeltaHasChanges(overlayDelta) {
+				candidates = append(candidates, RealtimeLaneCandidate{
+					Lane:       LaneOverlay,
+					Kind:       RealtimeLaneCandidateKindDelta,
+					Delta:      overlayDelta,
+					Projection: overlayFull,
+				})
+			}
+		}
 	}
 
 	sessionState, sessionSynced := state.LaneState(LaneSession)
 	sessionReady := state.LaneBaselineReady(LaneSession)
-	if !sessionReady || !sessionSynced || !sessionState.IsFinalChunk || sessionState.BaselineID == "" {
+	sessionSequence := NextLaneSequence(sessionState, sessionSynced)
+	sessionFull := BuildSessionFullPacket(snapshot, sessionSequence)
+	sessionProjection, sessionHasProjection := state.BaselineProjection(LaneSession)
+	sessionCanUseProjection := sessionReady && sessionSynced && sessionState.IsFinalChunk && sessionState.BaselineID != "" && sessionHasProjection
+	if !sessionCanUseProjection {
 		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane: LaneSession,
-			Kind: RealtimeLaneCandidateKindFull,
-			Full: BuildSessionFullPacket(snapshot, sessionState.Sequence),
+			Lane:       LaneSession,
+			Kind:       RealtimeLaneCandidateKindFull,
+			Full:       sessionFull,
+			Projection: sessionFull,
 		})
 	} else {
-		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane: LaneSession,
-			Kind: RealtimeLaneCandidateKindFull,
-			Full: BuildSessionFullPacket(snapshot, sessionState.Sequence),
-		})
+		previousSessionFull, ok := sessionProjection.(SessionFullPacket)
+		if !ok {
+			candidates = append(candidates, RealtimeLaneCandidate{
+				Lane:       LaneSession,
+				Kind:       RealtimeLaneCandidateKindFull,
+				Full:       sessionFull,
+				Projection: sessionFull,
+			})
+		} else if !ProjectionChanged(previousSessionFull, sessionFull) {
+			// No session candidate when the projection is unchanged.
+		} else {
+			sessionDelta := BuildSessionDeltaPacket(previousSessionFull, sessionFull)
+			if SessionDeltaHasChanges(sessionDelta) {
+				candidates = append(candidates, RealtimeLaneCandidate{
+					Lane:       LaneSession,
+					Kind:       RealtimeLaneCandidateKindDelta,
+					Delta:      sessionDelta,
+					Projection: sessionFull,
+				})
+			}
+		}
 	}
 
 	if len(snapshot.PendingEvents) > 0 {
@@ -195,4 +259,14 @@ func scheduleRecordForCandidate(candidateIndex int, candidate RealtimeLaneCandid
 	}
 
 	return record
+}
+
+func CandidateProjection(candidate RealtimeLaneCandidate) (any, bool) {
+	if candidate.Kind == RealtimeLaneCandidateKindEventBatch {
+		return nil, false
+	}
+	if candidate.Projection == nil {
+		return nil, false
+	}
+	return candidate.Projection, true
 }

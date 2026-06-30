@@ -9,6 +9,8 @@ func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
 	switch packet := candidate.Full.(type) {
 	case WorldFullPacket:
 		return wireWorldFullPacket(packet)
+	case WorldDeltaPacket:
+		return wireWorldDeltaPacket(packet)
 	case OverlayFullPacket:
 		return wireOverlayFullPacket(packet)
 	case SessionFullPacket:
@@ -18,7 +20,16 @@ func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
 	}
 
 	if candidate.Delta != nil {
-		return wireLaneDelta(candidate.Delta)
+		switch packet := candidate.Delta.(type) {
+		case WorldDeltaPacket:
+			return wireWorldDeltaPacket(packet)
+		case OverlayLaneDelta:
+			return wireOverlayDeltaPacket(packet)
+		case SessionLaneDelta:
+			return wireSessionDeltaPacket(packet)
+		default:
+			return wireLaneDelta(candidate.Delta)
+		}
 	}
 
 	return map[string]any{}
@@ -56,6 +67,58 @@ func wireEventBatchPacket(packet EventBatchPacket) map[string]any {
 	return wire
 }
 
+func wireRecordArray(records any) any {
+	items := wireRecords(records)
+	if items == nil {
+		return []any{}
+	}
+	return items
+}
+
+func wireStringArray(records []string) any {
+	if records == nil {
+		return []string{}
+	}
+	return records
+}
+
+func wireWorldDeltaPacket(packet WorldDeltaPacket) map[string]any {
+	wire := wireMetadataPacket(packet.Type, packet.Metadata)
+	wire["ship_creates"] = wireRecordArray(packet.Ships.Creates)
+	wire["ship_updates"] = wireRecordArray(packet.Ships.Updates)
+	wire["ship_deletes"] = wireStringArray(packet.Ships.Deletes)
+	wire["bullet_creates"] = wireRecordArray(packet.Bullets.Creates)
+	wire["bullet_updates"] = wireRecordArray(packet.Bullets.Updates)
+	wire["bullet_deletes"] = wireStringArray(packet.Bullets.Deletes)
+	wire["asteroid_creates"] = wireRecordArray(packet.Asteroids.Creates)
+	wire["asteroid_updates"] = wireRecordArray(packet.Asteroids.Updates)
+	wire["asteroid_deletes"] = wireStringArray(packet.Asteroids.Deletes)
+	wire["pickup_creates"] = wireRecordArray(packet.Pickups.Creates)
+	wire["pickup_updates"] = wireRecordArray(packet.Pickups.Updates)
+	wire["pickup_deletes"] = wireStringArray(packet.Pickups.Deletes)
+	return wire
+}
+
+func wireOverlayDeltaPacket(packet OverlayLaneDelta) map[string]any {
+	wire := wireMetadataPacket(PacketTypeOverlayDelta, packet.Metadata)
+	wire["receiver_creates"] = wireRecords(packet.Receiver.Creates)
+	wire["receiver_updates"] = wireRecords(packet.Receiver.Updates)
+	wire["receiver_deletes"] = packet.Receiver.Deletes
+	return wire
+}
+
+func wireSessionDeltaPacket(packet SessionLaneDelta) map[string]any {
+	wire := wireMetadataPacket(PacketTypeSessionDelta, packet.Metadata)
+	wire["players"] = wireRecordArray(packet.Players.Creates)
+	wire["player_session_updates"] = wireRecordArray(packet.Players.Updates)
+	wire["player_session_deletes"] = wireStringArray(packet.Players.Deletes)
+	wire["player_lifecycle"] = wireRecordArray(packet.PlayerLifecycle.Creates)
+	wire["player_lifecycle_updates"] = wireRecordArray(packet.PlayerLifecycle.Updates)
+	wire["player_lifecycle_deletes"] = wireStringArray(packet.PlayerLifecycle.Deletes)
+	wire["total_asteroids"] = firstSessionTotalAsteroids(packet.TotalAsteroids)
+	return wire
+}
+
 func wireLaneDelta(delta any) map[string]any {
 	switch packet := delta.(type) {
 	case WorldLaneDelta:
@@ -81,9 +144,13 @@ func wireLaneDelta(delta any) map[string]any {
 		}
 	case SessionLaneDelta:
 		return map[string]any{
-			"players":          wireRecords(packet.Players.Creates),
-			"player_lifecycle": wireRecords(packet.PlayerLifecycle.Creates),
-			"total_asteroids":  firstSessionTotalAsteroids(packet.TotalAsteroids),
+			"players":                 wireRecordArray(packet.Players.Creates),
+			"player_session_updates":   wireRecordArray(packet.Players.Updates),
+			"player_session_deletes":   wireStringArray(packet.Players.Deletes),
+			"player_lifecycle":         wireRecordArray(packet.PlayerLifecycle.Creates),
+			"player_lifecycle_updates": wireRecordArray(packet.PlayerLifecycle.Updates),
+			"player_lifecycle_deletes": wireStringArray(packet.PlayerLifecycle.Deletes),
+			"total_asteroids":          firstSessionTotalAsteroids(packet.TotalAsteroids),
 		}
 	default:
 		return map[string]any{}

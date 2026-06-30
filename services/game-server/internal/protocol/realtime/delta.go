@@ -1,6 +1,9 @@
 package realtime
 
-import "sort"
+import (
+	"reflect"
+	"sort"
+)
 
 type RecordDelta[T any] struct {
 	Creates []T
@@ -16,10 +19,12 @@ type WorldLaneDelta struct {
 }
 
 type OverlayLaneDelta struct {
+	Metadata Metadata
 	Receiver RecordDelta[OverlayReceiverRecord]
 }
 
 type SessionLaneDelta struct {
+	Metadata        Metadata
 	Players         RecordDelta[SessionPlayerRecord]
 	PlayerLifecycle RecordDelta[SessionLifecycleRecord]
 	TotalAsteroids  RecordDelta[SessionTotalAsteroidsRecord]
@@ -28,6 +33,15 @@ type SessionLaneDelta struct {
 type SessionTotalAsteroidsRecord struct {
 	ID    string
 	Count int
+}
+
+type WorldDeltaPacket struct {
+	Type      string
+	Metadata  Metadata
+	Ships     RecordDelta[WorldShipRecord]
+	Bullets   RecordDelta[WorldBulletRecord]
+	Asteroids RecordDelta[WorldAsteroidRecord]
+	Pickups   RecordDelta[WorldPickupRecord]
 }
 
 func CompareLaneRecords[T any](previous []T, current []T, recordID func(T) string, equal func(T, T) bool) RecordDelta[T] {
@@ -72,4 +86,89 @@ func CompareLaneRecords[T any](previous []T, current []T, recordID func(T) strin
 	}
 
 	return delta
+}
+
+func ProjectionChanged(previous any, current any) bool {
+	if previous == nil || current == nil {
+		return true
+	}
+	return !reflect.DeepEqual(previous, current)
+}
+
+func BuildWorldDeltaPacket(previous WorldFullPacket, current WorldFullPacket) WorldDeltaPacket {
+	metadata := current.Metadata
+	metadata.SnapshotKind = SnapshotKind("delta")
+	return WorldDeltaPacket{
+		Type:     PacketTypeWorldDelta,
+		Metadata: metadata,
+		Ships: CompareLaneRecords(previous.Ships, current.Ships,
+			func(record WorldShipRecord) string { return record.ID },
+			func(left, right WorldShipRecord) bool { return left == right },
+		),
+		Bullets: CompareLaneRecords(previous.Bullets, current.Bullets,
+			func(record WorldBulletRecord) string { return record.ID },
+			func(left, right WorldBulletRecord) bool { return left == right },
+		),
+		Asteroids: CompareLaneRecords(previous.Asteroids, current.Asteroids,
+			func(record WorldAsteroidRecord) string { return record.ID },
+			func(left, right WorldAsteroidRecord) bool { return left == right },
+		),
+		Pickups: CompareLaneRecords(previous.Pickups, current.Pickups,
+			func(record WorldPickupRecord) string { return record.ID },
+			func(left, right WorldPickupRecord) bool { return left == right },
+		),
+	}
+}
+
+func WorldDeltaHasChanges(delta WorldDeltaPacket) bool {
+	return len(delta.Ships.Creates) > 0 || len(delta.Ships.Updates) > 0 || len(delta.Ships.Deletes) > 0 ||
+		len(delta.Bullets.Creates) > 0 || len(delta.Bullets.Updates) > 0 || len(delta.Bullets.Deletes) > 0 ||
+		len(delta.Asteroids.Creates) > 0 || len(delta.Asteroids.Updates) > 0 || len(delta.Asteroids.Deletes) > 0 ||
+		len(delta.Pickups.Creates) > 0 || len(delta.Pickups.Updates) > 0 || len(delta.Pickups.Deletes) > 0
+}
+
+func BuildOverlayDeltaPacket(previous OverlayFullPacket, current OverlayFullPacket) OverlayLaneDelta {
+	previousRecords := []OverlayReceiverRecord{previous.Receiver}
+	currentRecords := []OverlayReceiverRecord{current.Receiver}
+	metadata := current.Metadata
+	metadata.SnapshotKind = SnapshotKind("delta")
+	return OverlayLaneDelta{
+		Metadata: metadata,
+		Receiver: CompareLaneRecords(previousRecords, currentRecords,
+			func(record OverlayReceiverRecord) string { return record.SelfID },
+			func(left, right OverlayReceiverRecord) bool { return left == right },
+		),
+	}
+}
+
+func OverlayDeltaHasChanges(delta OverlayLaneDelta) bool {
+	return len(delta.Receiver.Creates) > 0 || len(delta.Receiver.Updates) > 0 || len(delta.Receiver.Deletes) > 0
+}
+
+func BuildSessionDeltaPacket(previous SessionFullPacket, current SessionFullPacket) SessionLaneDelta {
+	previousTotal := []SessionTotalAsteroidsRecord{{ID: previous.Metadata.SnapshotID, Count: previous.TotalAsteroids}}
+	currentTotal := []SessionTotalAsteroidsRecord{{ID: current.Metadata.SnapshotID, Count: current.TotalAsteroids}}
+	metadata := current.Metadata
+	metadata.SnapshotKind = SnapshotKind("delta")
+	return SessionLaneDelta{
+		Metadata: metadata,
+		Players: CompareLaneRecords(previous.Players, current.Players,
+			func(record SessionPlayerRecord) string { return record.ID },
+			func(left, right SessionPlayerRecord) bool { return left == right },
+		),
+		PlayerLifecycle: CompareLaneRecords(previous.PlayerLifecycle, current.PlayerLifecycle,
+			func(record SessionLifecycleRecord) string { return record.PlayerID },
+			func(left, right SessionLifecycleRecord) bool { return left == right },
+		),
+		TotalAsteroids: CompareLaneRecords(previousTotal, currentTotal,
+			func(record SessionTotalAsteroidsRecord) string { return record.ID },
+			func(left, right SessionTotalAsteroidsRecord) bool { return left == right },
+		),
+	}
+}
+
+func SessionDeltaHasChanges(delta SessionLaneDelta) bool {
+	return len(delta.Players.Creates) > 0 || len(delta.Players.Updates) > 0 || len(delta.Players.Deletes) > 0 ||
+		len(delta.PlayerLifecycle.Creates) > 0 || len(delta.PlayerLifecycle.Updates) > 0 || len(delta.PlayerLifecycle.Deletes) > 0 ||
+		len(delta.TotalAsteroids.Creates) > 0 || len(delta.TotalAsteroids.Updates) > 0 || len(delta.TotalAsteroids.Deletes) > 0
 }

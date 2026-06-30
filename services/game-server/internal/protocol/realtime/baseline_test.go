@@ -13,6 +13,69 @@ func TestRealtimeSessionStateStartsUnsynced(t *testing.T) {
 	}
 }
 
+func TestNextLaneSequenceReturnsOneForUnsyncedLane(t *testing.T) {
+	if got := NextLaneSequence(RealtimeLaneState{Sequence: 7}, false); got != 1 {
+		t.Fatalf("NextLaneSequence(unsynced) = %d, want 1", got)
+	}
+}
+
+func TestNextLaneSequenceReturnsOneForZeroSequence(t *testing.T) {
+	if got := NextLaneSequence(RealtimeLaneState{Sequence: 0}, true); got != 1 {
+		t.Fatalf("NextLaneSequence(zero) = %d, want 1", got)
+	}
+}
+
+func TestNextLaneSequenceReturnsTwoForSequenceOne(t *testing.T) {
+	if got := NextLaneSequence(RealtimeLaneState{Sequence: 1}, true); got != 2 {
+		t.Fatalf("NextLaneSequence(1) = %d, want 2", got)
+	}
+}
+
+func TestNextLaneSequenceReturnsEightForSequenceSeven(t *testing.T) {
+	if got := NextLaneSequence(RealtimeLaneState{Sequence: 7}, true); got != 8 {
+		t.Fatalf("NextLaneSequence(7) = %d, want 8", got)
+	}
+}
+
+func TestRealtimeSessionStateStartsWithNoBaselineProjection(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+
+	if projection, ok := state.BaselineProjection(LaneWorld); ok || projection != nil {
+		t.Fatalf("expected no baseline projection on new state, got %#v, %t", projection, ok)
+	}
+}
+
+func TestRealtimeSessionStateStoresReadsAndClearsBaselineProjection(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+
+	state.StoreBaselineProjection(LaneWorld, "world-projection")
+
+	projection, ok := state.BaselineProjection(LaneWorld)
+	if !ok {
+		t.Fatal("expected baseline projection to be stored")
+	}
+	if projection != "world-projection" {
+		t.Fatalf("expected stored projection to be returned, got %#v", projection)
+	}
+
+	state.ClearBaselineProjection(LaneWorld)
+
+	projection, ok = state.BaselineProjection(LaneWorld)
+	if ok || projection != nil {
+		t.Fatalf("expected baseline projection to be cleared, got %#v, %t", projection, ok)
+	}
+}
+
+func TestRealtimeSessionStateIgnoresNilBaselineProjection(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+
+	state.StoreBaselineProjection(LaneWorld, nil)
+
+	if projection, ok := state.BaselineProjection(LaneWorld); ok || projection != nil {
+		t.Fatalf("expected nil baseline projection to be ignored, got %#v, %t", projection, ok)
+	}
+}
+
 func TestRealtimeSessionStateAcceptsFullLaneBaseline(t *testing.T) {
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneWorld, Metadata{
@@ -142,6 +205,59 @@ func TestRealtimeSessionStateIgnoresStaleSequencesAndTracksWrongBaselineResync(t
 	decision := DecideResync(state, LaneWorld, "baseline-wrong", "baseline-required", laneState, true)
 	if decision.Kind != ResyncDecisionWrongBaseline {
 		t.Fatalf("expected wrong baseline resync decision, got %#v", decision)
+	}
+}
+
+func TestCandidateMetadataReturnsWorldDeltaMetadata(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	candidate := RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: WorldDeltaPacket{Type: PacketTypeWorldDelta, Metadata: Metadata{Lane: LaneWorld, Sequence: 12, BaselineID: "world-baseline", SnapshotID: "world-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}}
+
+	metadata, ok := CandidateMetadata(candidate, state)
+	if !ok {
+		t.Fatal("expected world delta metadata to be returned")
+	}
+	if metadata.Lane != LaneWorld || metadata.Sequence != 12 || metadata.BaselineID != "world-baseline" || metadata.SnapshotID != "world-snapshot" || metadata.SnapshotKind != SnapshotKind("delta") {
+		t.Fatalf("unexpected world delta metadata: %#v", metadata)
+	}
+}
+
+func TestCandidateMetadataReturnsOverlayDeltaMetadata(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	candidate := RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindDelta, Delta: OverlayLaneDelta{Metadata: Metadata{Lane: LaneOverlay, Sequence: 7, BaselineID: "overlay-baseline", SnapshotID: "overlay-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}}
+
+	metadata, ok := CandidateMetadata(candidate, state)
+	if !ok {
+		t.Fatal("expected overlay delta metadata to be returned")
+	}
+	if metadata.Lane != LaneOverlay || metadata.Sequence != 7 || metadata.BaselineID != "overlay-baseline" || metadata.SnapshotID != "overlay-snapshot" || metadata.SnapshotKind != SnapshotKind("delta") {
+		t.Fatalf("unexpected overlay delta metadata: %#v", metadata)
+	}
+}
+
+func TestCandidateMetadataReturnsSessionDeltaMetadata(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	candidate := RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindDelta, Delta: SessionLaneDelta{Metadata: Metadata{Lane: LaneSession, Sequence: 5, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}}
+
+	metadata, ok := CandidateMetadata(candidate, state)
+	if !ok {
+		t.Fatal("expected session delta metadata to be returned")
+	}
+	if metadata.Lane != LaneSession || metadata.Sequence != 5 || metadata.BaselineID != "session-baseline" || metadata.SnapshotID != "session-snapshot" || metadata.SnapshotKind != SnapshotKind("delta") {
+		t.Fatalf("unexpected session delta metadata: %#v", metadata)
+	}
+}
+
+func TestCandidateMetadataFallsBackToLaneStateForUnsupportedDeltaShape(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 22, BaselineID: "world-baseline", SnapshotID: "world-snapshot", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	candidate := RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta}
+
+	metadata, ok := CandidateMetadata(candidate, state)
+	if !ok {
+		t.Fatal("expected fallback metadata to be returned")
+	}
+	if metadata.Sequence != 22 || metadata.BaselineID != "world-baseline" || metadata.SnapshotID != "world-snapshot" || metadata.SnapshotKind != SnapshotKind("full") {
+		t.Fatalf("unexpected fallback metadata: %#v", metadata)
 	}
 }
 

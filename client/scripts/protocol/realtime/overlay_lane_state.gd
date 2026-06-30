@@ -33,6 +33,12 @@ func apply_full_overlay(overlay_packet: Dictionary) -> void:
 
 func apply_overlay_delta(overlay_packet: Dictionary) -> void:
 	_apply_overlay_fields(overlay_packet)
+	for record in _array_field(overlay_packet, "receiver_creates"):
+		if record is Dictionary:
+			_apply_overlay_fields(record)
+	for record in _array_field(overlay_packet, "receiver_updates"):
+		if record is Dictionary:
+			_apply_overlay_fields(record)
 
 func _apply_overlay_fields(overlay_packet: Dictionary) -> void:
 	if overlay_packet.has("self_id"):
@@ -59,4 +65,10 @@ func _apply_overlay_fields(overlay_packet: Dictionary) -> void:
 		primary_ammo_remaining = overlay_packet.get("primary_ammo_remaining")
 	if overlay_packet.has("secondary_ammo_remaining"):
 		secondary_ammo_remaining = overlay_packet.get("secondary_ammo_remaining")
+
+func _array_field(packet: Dictionary, key: String) -> Array:
+	var value = packet.get(key)
+	if value is Array:
+		return value
+	return []
 

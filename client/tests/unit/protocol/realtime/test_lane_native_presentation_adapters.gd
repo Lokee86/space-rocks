@@ -133,7 +133,7 @@ func test_gameplay_hud_flow_overlay_lane_shows_torpedo_loadout_with_cooldown() -
 	overlay_lane_state.secondary_weapon_id = "torpedo"
 	overlay_lane_state.secondary_ammo_policy = "limited"
 	overlay_lane_state.secondary_ammo_remaining = 3
-	overlay_lane_state.respawn_cooldown = 4.0
+	overlay_lane_state.secondary_cooldown_remaining = 4.0
 
 	hud_flow.apply_overlay_lane_state(overlay_lane_state)
 
@@ -155,7 +155,7 @@ func test_gameplay_hud_flow_session_lane_does_not_overwrite_overlay_owned_torped
 	overlay_lane_state.secondary_weapon_id = "torpedo"
 	overlay_lane_state.secondary_ammo_policy = "limited"
 	overlay_lane_state.secondary_ammo_remaining = 2
-	overlay_lane_state.respawn_cooldown = 3.0
+	overlay_lane_state.secondary_cooldown_remaining = 3.0
 	hud_flow.apply_overlay_lane_state(overlay_lane_state)
 
 	var session_lane_state := SessionLaneState.new()

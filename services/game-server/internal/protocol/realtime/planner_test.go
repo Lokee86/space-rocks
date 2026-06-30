@@ -104,6 +104,118 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	}
 }
 
+func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceForUnsyncedFull(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1"}
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
+	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatalf("expected world candidate")
+	}
+	full, ok := candidate.Full.(WorldFullPacket)
+	if !ok {
+		t.Fatalf("world candidate full type = %T, want WorldFullPacket", candidate.Full)
+	}
+	if got, want := full.Metadata.Sequence, 1; got != want {
+		t.Fatalf("world full sequence = %d, want %d", got, want)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesUsesNextOverlaySequenceForUnsyncedFull(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1"}}}
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
+	candidate, ok := findCandidateByLane(plan.Candidates, LaneOverlay)
+	if !ok {
+		t.Fatalf("expected overlay candidate")
+	}
+	full, ok := candidate.Full.(OverlayFullPacket)
+	if !ok {
+		t.Fatalf("overlay candidate full type = %T, want OverlayFullPacket", candidate.Full)
+	}
+	if got, want := full.Metadata.Sequence, 1; got != want {
+		t.Fatalf("overlay full sequence = %d, want %d", got, want)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesUsesNextSessionSequenceForUnsyncedFull(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1", ShipType: "v_wing"}}}
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
+	candidate, ok := findCandidateByLane(plan.Candidates, LaneSession)
+	if !ok {
+		t.Fatalf("expected session candidate")
+	}
+	full, ok := candidate.Full.(SessionFullPacket)
+	if !ok {
+		t.Fatalf("session candidate full type = %T, want SessionFullPacket", candidate.Full)
+	}
+	if got, want := full.Metadata.Sequence, 1; got != want {
+		t.Fatalf("session full sequence = %d, want %d", got, want)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsNextSequenceWorldDeltaForChangedBaseline(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 12, Y: 34},
+		},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, WorldFullPacket{
+		Type: PacketTypeWorldFull,
+		Metadata: Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true},
+		Ships: []WorldShipRecord{{ID: "player-1", ShipType: "v_wing"}},
+	})
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatalf("expected world candidate")
+	}
+	if candidate.Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("world candidate kind = %q, want delta", candidate.Kind)
+	}
+	delta, ok := candidate.Delta.(WorldDeltaPacket)
+	if !ok {
+		t.Fatalf("world candidate delta type = %T, want WorldDeltaPacket", candidate.Delta)
+	}
+	if got, want := delta.Metadata.Sequence, 2; got != want {
+		t.Fatalf("world delta sequence = %d, want %d", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotKind, SnapshotKind("delta"); got != want {
+		t.Fatalf("world delta snapshot kind = %q, want %q", got, want)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceWhenStoredBaselineExists(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing"}},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatalf("expected world candidate")
+	}
+	full, ok := candidate.Full.(WorldFullPacket)
+	if !ok {
+		t.Fatalf("world candidate full type = %T, want WorldFullPacket", candidate.Full)
+	}
+	if got, want := full.Metadata.Sequence, 2; got != want {
+		t.Fatalf("world full sequence = %d, want %d", got, want)
+	}
+}
+
 func TestAssembleRealtimeLaneCandidatesEmitsValidPacketEnvelopesAfterFinalFullMetadataPersists(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID: "player-1",
@@ -304,5 +416,201 @@ func TestRealtimePlannerUsesGameplayPresentationSnapshotInput(t *testing.T) {
 		if candidate.Lane == LaneControl {
 			t.Fatalf("planner should not depend on old combined packet control flow: %#v", candidate)
 		}
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsWorldFullWhenNoBaseline(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing"},
+		},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Sequence: 1, IsFinalChunk: true})
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatal("expected world candidate when no usable baseline exists")
+	}
+	if world.Kind != RealtimeLaneCandidateKindFull {
+		t.Fatalf("expected world full candidate, got kind=%q", world.Kind)
+	}
+	if _, ok := world.Full.(WorldFullPacket); !ok {
+		t.Fatalf("expected world full packet, got %T", world.Full)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesOmitsWorldWhenStoredBaselineMatches(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing"},
+		},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, BuildWorldFullPacket(snapshot, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneWorld); ok {
+		t.Fatalf("expected no world candidate when stored baseline matches, got %#v", plan.Candidates)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 2},
+		},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, BuildWorldFullPacket(game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1}}}, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatal("expected world delta candidate when stored baseline differs")
+	}
+	if world.Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected world delta candidate, got kind=%q", world.Kind)
+	}
+	if _, ok := world.Delta.(WorldDeltaPacket); !ok {
+		t.Fatalf("expected world delta packet, got %T", world.Delta)
+	}
+	if _, ok := world.Projection.(WorldFullPacket); !ok {
+		t.Fatalf("expected current world full projection to be carried, got %T", world.Projection)
+	}
+}
+
+func findCandidateByLane(candidates []RealtimeLaneCandidate, lane Lane) (RealtimeLaneCandidate, bool) {
+	for _, candidate := range candidates {
+		if candidate.Lane == lane {
+			return candidate, true
+		}
+	}
+	return RealtimeLaneCandidate{}, false
+}
+
+func TestAssembleRealtimeLaneCandidatesOmitsOverlayWhenStoredBaselineMatches(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing"},
+		},
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 1, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"},
+		},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneOverlay, Metadata{Sequence: 4, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneOverlay)
+	state.StoreBaselineProjection(LaneOverlay, BuildOverlayFullPacket(snapshot, "player-1", 4))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneOverlay); ok {
+		t.Fatalf("expected no overlay candidate when stored baseline matches, got %#v", plan.Candidates)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsOverlayDeltaWhenStoredBaselineDiffers(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing"},
+		},
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 2, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"},
+		},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneOverlay, Metadata{Sequence: 5, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneOverlay)
+	state.StoreBaselineProjection(LaneOverlay, BuildOverlayFullPacket(game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing"}},
+		PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1", ShipType: "v_wing", Score: 1, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"}},
+	}, "player-1", 4))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	overlay, ok := findCandidateByLane(plan.Candidates, LaneOverlay)
+	if !ok {
+		t.Fatal("expected overlay delta candidate when stored baseline differs")
+	}
+	if overlay.Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected overlay delta candidate, got kind=%q", overlay.Kind)
+	}
+	if _, ok := overlay.Delta.(OverlayLaneDelta); !ok {
+		t.Fatalf("expected overlay delta packet, got %T", overlay.Delta)
+	}
+	if _, ok := overlay.Projection.(OverlayFullPacket); !ok {
+		t.Fatalf("expected current overlay full projection to be carried, got %T", overlay.Projection)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesOmitsSessionWhenStoredBaselineMatches(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 5, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"},
+		},
+		PlayerLifecycle: map[string]string{"player-1": "active"},
+		TotalAsteroids: 5,
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneSession, Metadata{Sequence: 7, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneSession)
+	state.StoreBaselineProjection(LaneSession, BuildSessionFullPacket(snapshot, 7))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneSession); ok {
+		t.Fatalf("expected no session candidate when stored baseline matches, got %#v", plan.Candidates)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsSessionDeltaWhenStoredBaselineDiffers(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 9, Lives: 2, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"},
+		},
+		PlayerLifecycle: map[string]string{"player-1": "respawning"},
+		TotalAsteroids: 8,
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneSession, Metadata{Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneSession)
+	state.StoreBaselineProjection(LaneSession, BuildSessionFullPacket(game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1", ShipType: "v_wing", Score: 5, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"}},
+		PlayerLifecycle: map[string]string{"player-1": "active"},
+		TotalAsteroids: 5,
+	}, 7))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	session, ok := findCandidateByLane(plan.Candidates, LaneSession)
+	if !ok {
+		t.Fatal("expected session delta candidate when stored baseline differs")
+	}
+	if session.Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected session delta candidate, got kind=%q", session.Kind)
+	}
+	if _, ok := session.Delta.(SessionLaneDelta); !ok {
+		t.Fatalf("expected session delta packet, got %T", session.Delta)
+	}
+	if _, ok := session.Projection.(SessionFullPacket); !ok {
+		t.Fatalf("expected current session full projection to be carried, got %T", session.Projection)
 	}
 }

@@ -34,6 +34,50 @@ func TestActiveLaneMetricsRecordBytesAndCounts(t *testing.T) {
 	}
 }
 
+func TestCandidateProjectionReturnsProjectionForFullCandidate(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane:       LaneWorld,
+		Kind:       RealtimeLaneCandidateKindFull,
+		Full:       "wire-full",
+		Projection: "baseline-projection",
+	}
+
+	projection, ok := CandidateProjection(candidate)
+	if !ok {
+		t.Fatal("expected full candidate projection to be returned")
+	}
+	if projection != "baseline-projection" {
+		t.Fatalf("expected projection to match stored value, got %#v", projection)
+	}
+}
+
+func TestCandidateProjectionReturnsFalseForNilProjection(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneOverlay,
+		Kind: RealtimeLaneCandidateKindFull,
+		Full: "wire-full",
+	}
+
+	projection, ok := CandidateProjection(candidate)
+	if ok || projection != nil {
+		t.Fatalf("expected nil projection to be ignored, got %#v, %t", projection, ok)
+	}
+}
+
+func TestCandidateProjectionReturnsFalseForEventBatchCandidate(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane:       LaneEvent,
+		Kind:       RealtimeLaneCandidateKindEventBatch,
+		Full:       "event-batch",
+		Projection: "should-be-ignored",
+	}
+
+	projection, ok := CandidateProjection(candidate)
+	if ok || projection != nil {
+		t.Fatalf("expected event-batch candidate to have no projection, got %#v, %t", projection, ok)
+	}
+}
+
 func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID:         "player-1",
@@ -86,6 +130,107 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 			t.Fatalf("expected non-empty top-level lane for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
 		}
 		assertNotNakedLanePayload(t, candidate.Lane, wire)
+	}
+}
+
+func TestBuildActiveRealtimeResultSelectsFullPacketsWithoutStoredBaselines(t *testing.T) {
+	snapshot := tinyActiveBoundarySnapshot()
+	result := BuildActiveRealtimeResult(snapshot, NewRealtimeSessionState("player-1"))
+
+	assertSelectedCandidate(t, result, LaneWorld, RealtimeLaneCandidateKindFull)
+	assertSelectedCandidate(t, result, LaneOverlay, RealtimeLaneCandidateKindFull)
+	assertSelectedCandidate(t, result, LaneSession, RealtimeLaneCandidateKindFull)
+
+	assertEncodedPacketTypeAndLane(t, result, LaneWorld, PacketFamilyWorldFull, string(LaneWorld))
+	assertEncodedPacketTypeAndLane(t, result, LaneOverlay, PacketFamilyOverlayFull, string(LaneOverlay))
+	assertEncodedPacketTypeAndLane(t, result, LaneSession, PacketFamilySessionFull, string(LaneSession))
+}
+
+func TestBuildActiveRealtimeResultEmitsNoWorldOverlayOrSessionPacketsWhenStoredBaselinesMatch(t *testing.T) {
+	snapshot := tinyActiveBoundarySnapshot()
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, BuildWorldFullPacket(snapshot, 1))
+	state.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 1, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneOverlay)
+	state.StoreBaselineProjection(LaneOverlay, BuildOverlayFullPacket(snapshot, "player-1", 1))
+	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 1, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneSession)
+	state.StoreBaselineProjection(LaneSession, BuildSessionFullPacket(snapshot, 1))
+
+	result := BuildActiveRealtimeResult(snapshot, state)
+	assertNoSelectedCandidate(t, result, LaneWorld)
+	assertNoSelectedCandidate(t, result, LaneOverlay)
+	assertNoSelectedCandidate(t, result, LaneSession)
+}
+
+func TestBuildActiveRealtimeResultSelectsDeltaPacketsForChangedStoredBaselines(t *testing.T) {
+	snapshot := tinyActiveBoundarySnapshot()
+	snapshot.Players["player-1"] = runtime.ShipState{ID: "player-1", ShipType: "v_wing", X: 2, Y: 1, Rotation: 0, Health: 5, Shields: 0}
+	snapshot.PlayerSessions["player-1"] = game.PlayerSessionState{ID: "player-1", ShipType: "v_wing", Score: 7, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"}
+	snapshot.PlayerLifecycle["player-1"] = "active"
+	snapshot.TotalAsteroids = 1
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, BuildWorldFullPacket(game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 1, Rotation: 0, Health: 5, Shields: 0}}}, 1))
+
+	result := BuildActiveRealtimeResult(snapshot, state)
+	assertSelectedCandidate(t, result, LaneWorld, RealtimeLaneCandidateKindDelta)
+	assertEncodedPacketTypeAndLane(t, result, LaneWorld, PacketTypeWorldDelta, string(LaneWorld))
+}
+
+func tinyActiveBoundarySnapshot() game.GameplayPresentationSnapshot {
+	return game.GameplayPresentationSnapshot{
+		SelfID:         "player-1",
+		Lives:          3,
+		ServerSentMsec: 1234,
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 1, Rotation: 0, Health: 5, Shields: 0},
+		},
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 5, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"},
+		},
+		PlayerLifecycle: map[string]string{"player-1": "active"},
+	}
+}
+
+func assertSelectedCandidate(t *testing.T, result ActiveRealtimeResult, lane Lane, kind RealtimeLaneCandidateKind) {
+	t.Helper()
+	for _, candidate := range result.SelectedCandidates {
+		if candidate.Lane == lane && candidate.Kind == kind {
+			return
+		}
+	}
+	t.Fatalf("expected selected candidate lane=%q kind=%q, got %#v", lane, kind, result.SelectedCandidates)
+}
+
+func assertNoSelectedCandidate(t *testing.T, result ActiveRealtimeResult, lane Lane) {
+	t.Helper()
+	for _, candidate := range result.SelectedCandidates {
+		if candidate.Lane == lane {
+			t.Fatalf("expected no selected candidate for lane=%q, got %#v", lane, result.SelectedCandidates)
+		}
+	}
+	if _, ok := result.EncodedPackets[lane]; ok {
+		t.Fatalf("expected no encoded packet for lane=%q, got %#v", lane, result.EncodedPackets[lane])
+	}
+}
+
+func assertEncodedPacketTypeAndLane(t *testing.T, result ActiveRealtimeResult, lane Lane, wantType string, wantLane string) {
+	t.Helper()
+	encoded, ok := result.EncodedPackets[lane]
+	if !ok || len(encoded) == 0 {
+		t.Fatalf("expected encoded packet for lane=%q", lane)
+	}
+	wire := mustDecodeWirePacket(t, encoded)
+	if got, ok := wire["type"].(string); !ok || got != wantType {
+		t.Fatalf("expected type=%q for lane=%q, got %#v", wantType, lane, wire)
+	}
+	if got, ok := wire["lane"].(string); !ok || got != wantLane {
+		t.Fatalf("expected lane=%q for lane=%q, got %#v", wantLane, lane, wire)
 	}
 }
 

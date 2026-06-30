@@ -86,6 +86,21 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		}) {
 			return false
 		}
+		wire := realtime.WireLanePacket(candidate)
+		logging.Network.Debug("lane protocol gameplay wire packet written",
+			logging.FieldRoomID, session.currentRoomID,
+			logging.FieldPlayerID, session.currentGamePlayerID,
+			logging.FieldRemoteAddr, remoteAddr,
+			"wire_type", fmt.Sprint(wire["type"]),
+			"candidate_lane", candidate.Lane,
+			"candidate_kind", candidate.Kind,
+			"wire_lane", fmt.Sprint(wire["lane"]),
+			"sequence", fmt.Sprint(wire["sequence"]),
+			"baseline_id", fmt.Sprint(wire["baseline_id"]),
+			"snapshot_id", fmt.Sprint(wire["snapshot_id"]),
+			"snapshot_kind", fmt.Sprint(wire["snapshot_kind"]),
+			"encoded_bytes", len(encodedPacket),
+		)
 		if candidate.Kind == realtime.RealtimeLaneCandidateKindEventBatch {
 			encodedEventCount := len(result.EventBatchEventIDs)
 			eventTypes := make([]string, 0, encodedEventCount)
@@ -149,6 +164,9 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		if metadata, ok := realtime.CandidateMetadata(candidate, session.realtimeState); ok {
 			persistedMetadata := realtime.AdvanceMetadataForSuccessfulWrite(candidate.Lane, metadata)
 			session.realtimeState.UpdateLane(candidate.Lane, persistedMetadata)
+			if projection, ok := realtime.CandidateProjection(candidate); ok {
+				session.realtimeState.StoreBaselineProjection(candidate.Lane, projection)
+			}
 			if metadata.IsFinalChunk && candidate.Kind == realtime.RealtimeLaneCandidateKindFull {
 				session.realtimeState.MarkBaselineReady(candidate.Lane)
 			}
