@@ -21,28 +21,29 @@ func TestBulletAsteroidCollisionsDelayHitDespawns(t *testing.T) {
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	if _, ok := packet.Bullets["bullet-1"]; !ok {
+	snapshot := scenario.presentationSnapshot(playerID)
+	if _, ok := snapshot.Bullets["bullet-1"]; !ok {
 		t.Fatal("expected hit bullet to remain during despawn delay")
 	}
 	if !scenario.bulletPendingDespawn("bullet-1") {
 		t.Fatal("expected hit bullet to be marked for delayed despawn")
 	}
-	if _, ok := packet.Asteroids["asteroid-1"]; !ok {
+	if _, ok := snapshot.Asteroids["asteroid-1"]; !ok {
 		t.Fatal("expected hit asteroid to remain during despawn delay")
 	}
 	if !scenario.asteroidPendingDespawn("asteroid-1") {
 		t.Fatal("expected hit asteroid to be marked for delayed despawn")
 	}
-	if _, ok := packet.Asteroids["asteroid-2"]; !ok {
+	if _, ok := snapshot.Asteroids["asteroid-2"]; !ok {
 		t.Fatal("expected untouched asteroid to remain")
 	}
-	if len(packet.Events) != 2 {
-		t.Fatalf("expected 2 events in state packet, got %d", len(packet.Events))
+	if len(snapshot.PendingEvents) != 2 {
+		t.Fatalf("expected 2 events in gameplay snapshot event batch, got %d", len(snapshot.PendingEvents))
 	}
 	foundBulletBlast := false
 	foundDamageApplied := false
-	for _, event := range packet.Events {
+	for _, pending := range snapshot.PendingEvents {
+		event := pending.Event
 		switch event.Type {
 		case servergame.PacketTypeBulletBlast:
 			foundBulletBlast = true
@@ -56,21 +57,26 @@ func TestBulletAsteroidCollisionsDelayHitDespawns(t *testing.T) {
 	if !foundDamageApplied {
 		t.Fatal("expected damage_applied event")
 	}
-	if score := packet.PlayerSessions[playerID].Score; score != constants.BaseScore {
+	if score := snapshot.PlayerSessions[playerID].Score; score != constants.BaseScore {
 		t.Fatalf("expected player score %d, got %d", constants.BaseScore, score)
 	}
 
-	flushed := scenario.state(playerID)
-	if len(flushed.Events) != 0 {
-		t.Fatalf("expected flushed state packet to have 0 events, got %d", len(flushed.Events))
+	drained := scenario.game.DrainPendingPresentationEvents(playerID, pendingEventIDs(snapshot.PendingEvents)...)
+	if len(drained) != 2 {
+		t.Fatalf("expected 2 drained events, got %d", len(drained))
+	}
+
+	flushedSnapshot := scenario.presentationSnapshot(playerID)
+	if len(flushedSnapshot.PendingEvents) != 0 {
+		t.Fatalf("expected flushed gameplay snapshot event batch to have 0 events, got %d", len(flushedSnapshot.PendingEvents))
 	}
 
 	scenario.step(constants.CollisionDespawnDelay)
-	packet = scenario.state(playerID)
-	if _, ok := packet.Bullets["bullet-1"]; ok {
+	snapshot = scenario.presentationSnapshot(playerID)
+	if _, ok := snapshot.Bullets["bullet-1"]; ok {
 		t.Fatal("expected hit bullet to be removed after despawn delay")
 	}
-	if _, ok := packet.Asteroids["asteroid-1"]; ok {
+	if _, ok := snapshot.Asteroids["asteroid-1"]; ok {
 		t.Fatal("expected hit asteroid to be removed after despawn delay")
 	}
 }
@@ -85,7 +91,7 @@ func TestBulletAsteroidCollisionsSplitLargerAsteroid(t *testing.T) {
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	asteroids := scenario.state(playerID).Asteroids
+	asteroids := scenario.presentationSnapshot(playerID).Asteroids
 	if len(asteroids) != 3 {
 		t.Fatalf("expected hit asteroid plus 2 fragments, got %d asteroids", len(asteroids))
 	}
@@ -140,8 +146,8 @@ func TestBulletAsteroidCollisionNonfatalDamageDoesNotDestroyScoreOrFragment(t *t
 	if score := scenario.playerSessionState(playerID, playerID).Score; score != 0 {
 		t.Fatalf("expected no score for non-destroying hit, got %d", score)
 	}
-	if len(scenario.state(playerID).Asteroids) != 1 {
-		t.Fatalf("expected no spawned fragments for non-destroying hit, got %d asteroids", len(scenario.state(playerID).Asteroids))
+	if len(scenario.presentationSnapshot(playerID).Asteroids) != 1 {
+		t.Fatalf("expected no spawned fragments for non-destroying hit, got %d asteroids", len(scenario.presentationSnapshot(playerID).Asteroids))
 	}
 }
 
@@ -175,9 +181,10 @@ func TestBulletAsteroidCollisionEmitsDamageAppliedEvent(t *testing.T) {
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	events := scenario.state(playerID).Events
+	events := scenario.pendingPresentationEvents(playerID)
 	found := false
-	for _, event := range events {
+	for _, pending := range events {
+		event := pending.Event
 		if event.Type == "damage_applied" {
 			found = true
 			if event.SourceType != "projectile" {
@@ -297,18 +304,20 @@ func TestShipAsteroidCollisionsDelayPlayerRemovalAndBroadcastDeath(t *testing.T)
 		t.Fatal("expected untouched player to remain")
 	}
 
+	playerSnapshot := scenario.presentationSnapshot(playerID)
 	for _, viewerID := range []string{playerID, otherPlayerID} {
 		if events := scenario.pendingEventCount(viewerID); events != 2 {
 			t.Fatalf("expected 2 queued events for %s, got %d", viewerID, events)
 		}
 
-		packet := scenario.state(viewerID)
-		if len(packet.Events) != 2 {
-			t.Fatalf("expected 2 events in state packet for %s, got %d", viewerID, len(packet.Events))
+		snapshot := scenario.presentationSnapshot(viewerID)
+		if len(snapshot.PendingEvents) != 2 {
+			t.Fatalf("expected 2 events in gameplay snapshot event batch for %s, got %d", viewerID, len(snapshot.PendingEvents))
 		}
 		foundShipDeath := false
 		foundDamageApplied := false
-		for _, event := range packet.Events {
+		for _, pending := range snapshot.PendingEvents {
+			event := pending.Event
 			switch event.Type {
 			case servergame.PacketTypeShipDeath:
 				foundShipDeath = true
@@ -330,8 +339,13 @@ func TestShipAsteroidCollisionsDelayPlayerRemovalAndBroadcastDeath(t *testing.T)
 		}
 	}
 
-	if flushed := scenario.state(playerID); len(flushed.Events) != 0 {
-		t.Fatalf("expected flushed state packet to have 0 events, got %d", len(flushed.Events))
+	drained := scenario.game.DrainPendingPresentationEvents(playerID, pendingEventIDs(playerSnapshot.PendingEvents)...)
+	if len(drained) != 2 {
+		t.Fatalf("expected 2 drained events, got %d", len(drained))
+	}
+
+	if flushedSnapshot := scenario.presentationSnapshot(playerID); len(flushedSnapshot.PendingEvents) != 0 {
+		t.Fatalf("expected flushed gameplay snapshot event batch to have 0 events, got %d", len(flushedSnapshot.PendingEvents))
 	}
 
 	scenario.step(constants.CollisionDespawnDelay)
@@ -394,10 +408,11 @@ func TestShipAsteroidCollisionNonfatalDamageReducesHealthWithoutDeath(t *testing
 	if scenario.playerHealth(playerID) >= initialHealth {
 		t.Fatalf("expected player health to be reduced from %d, got %d", initialHealth, scenario.playerHealth(playerID))
 	}
-	events := scenario.state(playerID).Events
+	events := scenario.pendingPresentationEvents(playerID)
 	foundShipDeath := false
 	foundDamageApplied := false
-	for _, event := range events {
+	for _, pending := range events {
+		event := pending.Event
 		switch event.Type {
 		case servergame.PacketTypeShipDeath:
 			foundShipDeath = true
@@ -449,9 +464,10 @@ func TestShipAsteroidCollisionEmitsDamageAppliedEvent(t *testing.T) {
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	events := scenario.state(playerID).Events
+	events := scenario.pendingPresentationEvents(playerID)
 	found := false
-	for _, event := range events {
+	for _, pending := range events {
+		event := pending.Event
 		if event.Type == "damage_applied" {
 			found = true
 			if event.SourceType != "asteroid" {
@@ -518,7 +534,8 @@ func TestShipAsteroidCollisionKillsAfterInvulnerabilityExpires(t *testing.T) {
 		t.Fatalf("expected two events after invulnerability expires, got %d", events)
 	}
 	var foundShipDeath, foundDamageApplied bool
-	for _, event := range scenario.state(playerID).Events {
+	for _, pending := range scenario.pendingPresentationEvents(playerID) {
+		event := pending.Event
 		switch event.Type {
 		case servergame.PacketTypeShipDeath:
 			foundShipDeath = true

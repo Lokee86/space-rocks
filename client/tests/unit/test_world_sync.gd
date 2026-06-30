@@ -1,8 +1,8 @@
 extends GutTest
 
-const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldSyncScript := preload("res://scripts/world/world_sync.gd")
 const PlayerScene := preload("res://scenes/player.tscn")
 
@@ -117,13 +117,13 @@ func test_apply_state_starts_bullet_firing_sound_on_first_projectile_creation() 
 
 
 func test_apply_state_creates_torpedo_scene_for_torpedo_projectile_type() -> void:
-	var state := WorldStateFixture.state()
-	state[Packets.FIELD_BULLETS] = {
+	var state := WorldStateFixture.snapshot()
+	state["bullets"] = {
 		WorldStateFixture.BULLET_ID: {
-			Packets.FIELD_X: 420.0,
-			Packets.FIELD_Y: 440.0,
-			Packets.FIELD_ROTATION: 1.25,
-			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+			"x": 420.0,
+			"y": 440.0,
+			"rotation": 1.25,
+			"projectile_type": "torpedo",
 		},
 	}
 
@@ -135,13 +135,13 @@ func test_apply_state_creates_torpedo_scene_for_torpedo_projectile_type() -> voi
 
 
 func test_apply_state_starts_torpedo_firing_sound_on_first_projectile_creation() -> void:
-	var state := WorldStateFixture.state()
-	state[Packets.FIELD_BULLETS] = {
+	var state := WorldStateFixture.snapshot()
+	state["bullets"] = {
 		WorldStateFixture.BULLET_ID: {
-			Packets.FIELD_X: 420.0,
-			Packets.FIELD_Y: 440.0,
-			Packets.FIELD_ROTATION: 1.25,
-			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+			"x": 420.0,
+			"y": 440.0,
+			"rotation": 1.25,
+			"projectile_type": "torpedo",
 		},
 	}
 
@@ -155,13 +155,13 @@ func test_apply_state_starts_torpedo_firing_sound_on_first_projectile_creation()
 
 
 func test_apply_state_defaults_unknown_projectile_type_to_bullet_scene() -> void:
-	var state := WorldStateFixture.state()
-	state[Packets.FIELD_BULLETS] = {
+	var state := WorldStateFixture.snapshot()
+	state["bullets"] = {
 		WorldStateFixture.BULLET_ID: {
-			Packets.FIELD_X: 420.0,
-			Packets.FIELD_Y: 440.0,
-			Packets.FIELD_ROTATION: 1.25,
-			Packets.FIELD_PROJECTILE_TYPE: "mystery",
+			"x": 420.0,
+			"y": 440.0,
+			"rotation": 1.25,
+			"projectile_type": "mystery",
 		},
 	}
 
@@ -173,14 +173,14 @@ func test_apply_state_defaults_unknown_projectile_type_to_bullet_scene() -> void
 
 
 func test_apply_state_exposes_pickup_target_positions() -> void:
-	var state := WorldStateFixture.state()
-	state[Packets.FIELD_PICKUPS] = {
+	var state := WorldStateFixture.snapshot()
+	state["pickups"] = {
 		"pickup-1": {
-			Packets.FIELD_ID: "pickup-1",
-			Packets.FIELD_TYPE: "1_up",
-			Packets.FIELD_PICKUP_CLASS: "powerup",
-			Packets.FIELD_X: 520.0,
-			Packets.FIELD_Y: 540.0,
+			"id": "pickup-1",
+			"type": "1_up",
+			"pickup_class": "powerup",
+			"x": 520.0,
+			"y": 540.0,
 		},
 	}
 
@@ -242,7 +242,7 @@ func test_apply_state_updates_existing_entity_targets() -> void:
 
 
 func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation() -> void:
-	var state := WorldStateFixture.state()
+	var state := WorldStateFixture.snapshot()
 	state[Packets.FIELD_PLAYERS] = {
 		WorldStateFixture.LOCAL_PLAYER_ID: WorldStateFixture.player_state(656.0, 320.0, 0.0),
 		WorldStateFixture.REMOTE_PLAYER_ID: WorldStateFixture.player_state(656.0, 320.0, 0.0),
@@ -335,7 +335,7 @@ func test_apply_state_removes_stale_bullet_node() -> void:
 
 
 func test_apply_state_missing_asteroid_scale_warns_once_and_does_not_crash() -> void:
-	var state := WorldStateFixture.state()
+	var state := WorldStateFixture.snapshot()
 	state[Packets.FIELD_ASTEROIDS] = {
 		WorldStateFixture.ASTEROID_ID: _asteroid_state_without_scale(),
 	}
@@ -350,7 +350,7 @@ func test_apply_state_missing_asteroid_scale_warns_once_and_does_not_crash() -> 
 
 
 func test_apply_state_applies_asteroid_packet_scale() -> void:
-	var state := WorldStateFixture.state()
+	var state := WorldStateFixture.snapshot()
 
 	assert_true(state[Packets.FIELD_ASTEROIDS][WorldStateFixture.ASTEROID_ID].has(Packets.FIELD_SCALE))
 
@@ -373,7 +373,7 @@ func test_apply_state_applies_asteroid_packet_scale() -> void:
 
 
 func _apply_fixture_state() -> void:
-	_apply_state(WorldStateFixture.state())
+	_apply_state(WorldStateFixture.snapshot())
 
 
 func _projectile_nodes() -> Dictionary:
@@ -419,7 +419,7 @@ func _apply_state(state: Dictionary) -> void:
 
 
 func _updated_state() -> Dictionary:
-	var state := WorldStateFixture.state()
+	var state := WorldStateFixture.snapshot()
 	state[Packets.FIELD_PLAYERS] = {
 		WorldStateFixture.LOCAL_PLAYER_ID: WorldStateFixture.player_state(150.0, 170.0, 0.5, 15),
 		WorldStateFixture.REMOTE_PLAYER_ID: WorldStateFixture.player_state(260.0, 280.0, 1.75, 25),
@@ -434,7 +434,7 @@ func _updated_state() -> Dictionary:
 
 
 func _state_without_remote_player() -> Dictionary:
-	var state := WorldStateFixture.state()
+	var state := WorldStateFixture.snapshot()
 	state[Packets.FIELD_PLAYERS] = {
 		WorldStateFixture.LOCAL_PLAYER_ID: WorldStateFixture.player_state(100.0, 120.0, 0.25, 10),
 	}
@@ -442,13 +442,13 @@ func _state_without_remote_player() -> Dictionary:
 
 
 func _state_without_asteroid() -> Dictionary:
-	var state := WorldStateFixture.state()
+	var state := WorldStateFixture.snapshot()
 	state[Packets.FIELD_ASTEROIDS] = {}
 	return state
 
 
 func _state_without_bullet() -> Dictionary:
-	var state := WorldStateFixture.state()
+	var state := WorldStateFixture.snapshot()
 	state[Packets.FIELD_BULLETS] = {}
 	return state
 

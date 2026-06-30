@@ -18,22 +18,22 @@ func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	if packet.Lives != constants.PlayerStartingLives-1 {
-		t.Fatalf("expected state packet lives %d after death, got %d", constants.PlayerStartingLives-1, packet.Lives)
+	snapshot := scenario.presentationSnapshot(playerID)
+	if snapshot.Lives != constants.PlayerStartingLives-1 {
+		t.Fatalf("expected gameplay snapshot overlay/session lives %d after death, got %d", constants.PlayerStartingLives-1, snapshot.Lives)
 	}
-	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
-		t.Fatalf("expected 1 death event, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
+	if countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected 1 death event, got %d", countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath))
 	}
 	var deathEvent *servergame.EventState
-	for i := range packet.Events {
-		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
-			deathEvent = &packet.Events[i]
+	for i := range snapshot.PendingEvents {
+		if snapshot.PendingEvents[i].Event.Type == servergame.PacketTypeShipDeath {
+			deathEvent = &snapshot.PendingEvents[i].Event
 			break
 		}
 	}
 	if deathEvent == nil {
-		t.Fatal("expected ship_death event in packet")
+		t.Fatal("expected ship_death event in gameplay snapshot")
 	}
 	if deathEvent.Lives != constants.PlayerStartingLives-1 {
 		t.Fatalf("expected death event lives %d, got %d", constants.PlayerStartingLives-1, deathEvent.Lives)
@@ -41,7 +41,14 @@ func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {
 	if deathEvent.RespawnDelay != constants.PlayerRespawnDelay {
 		t.Fatalf("expected respawn delay %v, got %v", constants.PlayerRespawnDelay, deathEvent.RespawnDelay)
 	}
-	if !hasEventOfType(packet.Events, "damage_applied") {
+	foundDamageApplied := false
+	for _, pending := range snapshot.PendingEvents {
+		if pending.Event.Type == "damage_applied" {
+			foundDamageApplied = true
+			break
+		}
+	}
+	if !foundDamageApplied {
 		t.Fatal("expected damage_applied event for asteroid collision death")
 	}
 
@@ -49,8 +56,8 @@ func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {
 	if scenario.playerExists(playerID, playerID) {
 		t.Fatal("expected dead player entity to be removed before respawn")
 	}
-	if packet := scenario.state(playerID); packet.Lives != constants.PlayerStartingLives-1 {
-		t.Fatalf("expected state packet lives %d after player removal, got %d", constants.PlayerStartingLives-1, packet.Lives)
+	if snapshot := scenario.presentationSnapshot(playerID); snapshot.Lives != constants.PlayerStartingLives-1 {
+		t.Fatalf("expected gameplay snapshot overlay/session lives %d after player removal, got %d", constants.PlayerStartingLives-1, snapshot.Lives)
 	}
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
@@ -94,8 +101,8 @@ func TestAddedLivesPersistThroughDeathAndRespawn(t *testing.T) {
 	if respawnedSession.Lives != expectedLives {
 		t.Fatalf("expected respawned player to keep %d lives, got %d", expectedLives, respawnedSession.Lives)
 	}
-	if packet := scenario.state(playerID); packet.Lives != expectedLives {
-		t.Fatalf("expected state packet lives %d after respawn, got %d", expectedLives, packet.Lives)
+	if snapshot := scenario.presentationSnapshot(playerID); snapshot.Lives != expectedLives {
+		t.Fatalf("expected gameplay snapshot overlay/session lives %d after respawn, got %d", expectedLives, snapshot.Lives)
 	}
 }
 
@@ -109,35 +116,48 @@ func TestPlayerWithNoLivesCannotRespawn(t *testing.T) {
 
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	if packet.Lives != 0 {
-		t.Fatalf("expected 0 lives after final death, got %d", packet.Lives)
+	snapshot := scenario.presentationSnapshot(playerID)
+	if snapshot.Lives != 0 {
+		t.Fatalf("expected 0 lives after final death, got %d", snapshot.Lives)
 	}
-	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
-		t.Fatalf("expected 1 death event, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
+	if countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected 1 death event, got %d", countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath))
 	}
 	var deathEvent *servergame.EventState
-	for i := range packet.Events {
-		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
-			deathEvent = &packet.Events[i]
+	for i := range snapshot.PendingEvents {
+		if snapshot.PendingEvents[i].Event.Type == servergame.PacketTypeShipDeath {
+			deathEvent = &snapshot.PendingEvents[i].Event
 			break
 		}
 	}
 	if deathEvent == nil {
-		t.Fatal("expected ship_death event in packet")
+		t.Fatal("expected ship_death event in gameplay snapshot")
 	}
 	if deathEvent.Lives != 0 {
 		t.Fatalf("expected game-over death event with 0 lives, got %d", deathEvent.Lives)
 	}
-	if !hasEventOfType(packet.Events, "damage_applied") {
+	foundDamageApplied := false
+	for _, pending := range snapshot.PendingEvents {
+		if pending.Event.Type == "damage_applied" {
+			foundDamageApplied = true
+			break
+		}
+	}
+	if !foundDamageApplied {
 		t.Fatal("expected damage_applied event for asteroid collision death")
 	}
 
 	scenario.step(constants.CollisionDespawnDelay)
 	scenario.advanceRespawnTimer(playerID, constants.PlayerRespawnDelay)
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
-	if scenario.playerExists(playerID, playerID) {
-		t.Fatal("expected respawn to be blocked with no lives")
+	if !scenario.playerPendingDespawn(playerID) {
+		t.Fatal("expected respawn to remain blocked with no lives")
+	}
+	if snapshot := scenario.presentationSnapshot(playerID); snapshot.Lives != 0 {
+		t.Fatalf("expected no-lives respawn attempt to keep snapshot lives 0, got %d", snapshot.Lives)
+	}
+	if lives := scenario.playerSessionState(playerID, playerID).Lives; lives != 0 {
+		t.Fatalf("expected no-lives respawn attempt to keep session lives 0, got %d", lives)
 	}
 }
 

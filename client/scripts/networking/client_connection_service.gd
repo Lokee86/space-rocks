@@ -209,7 +209,7 @@ func _route_gameplay_packet(packet: Dictionary) -> void:
 	if realtime_router == null:
 		return
 
-	realtime_router.route_packet_for_protocol_mode(packet, "lane_protocol")
+	realtime_router.route_lane_packet(packet)
 	var packet_type := str(packet.get("type", packet.get("Type", "")))
 	if !_lane_route_log_emitted.has(packet_type):
 		_lane_route_log_emitted[packet_type] = true

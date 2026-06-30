@@ -370,10 +370,10 @@ func TestHandleDebugSetScoreFallsBackToCallingPlayerWhenTargetEmpty(t *testing.T
 func assertPlayerPacketScore(t *testing.T, target *game.Game, playerID string, expected int) {
 	t.Helper()
 
-	packet := target.StatePacket(playerID)
-	session, ok := packet.PlayerSessions[playerID]
+	snapshot := target.GameplayPresentationSnapshot(playerID)
+	session, ok := snapshot.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected player session %q in state packet", playerID)
+		t.Fatalf("expected player session %q in gameplay snapshot", playerID)
 	}
 	if session.Score != expected {
 		t.Fatalf("expected player score %d, got %d", expected, session.Score)
@@ -383,13 +383,13 @@ func assertPlayerPacketScore(t *testing.T, target *game.Game, playerID string, e
 func assertPlayerPacketLives(t *testing.T, target *game.Game, playerID string, expected int) {
 	t.Helper()
 
-	packet := target.StatePacket(playerID)
-	session, ok := packet.PlayerSessions[playerID]
+	snapshot := target.GameplayPresentationSnapshot(playerID)
+	session, ok := snapshot.PlayerSessions[playerID]
 	if !ok {
-		t.Fatalf("expected player session %q in state packet", playerID)
+		t.Fatalf("expected player session %q in gameplay snapshot", playerID)
 	}
-	if packet.Lives != expected {
-		t.Fatalf("expected packet lives %d, got %d", expected, packet.Lives)
+	if snapshot.Lives != expected {
+		t.Fatalf("expected gameplay snapshot lives %d, got %d", expected, snapshot.Lives)
 	}
 	if session.Lives != expected {
 		t.Fatalf("expected player lives %d, got %d", expected, session.Lives)

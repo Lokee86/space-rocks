@@ -97,7 +97,7 @@ func test_refresh_gameplay_state_forwards_target_kind_target_id_and_raw_target_s
 	assert_eq(controller.received_target_state, expected_target_state)
 
 
-func test_refresh_gameplay_state_defaults_to_state_packet_sources_when_selectors_missing() -> void:
+func test_refresh_gameplay_state_defaults_to_lane_sources_when_selectors_missing() -> void:
 	var controller := FakeWindowControllerWithoutTelemetrySources.new()
 	var flow := DevtoolsDisplayRefreshFlow.new()
 	flow.configure(controller)

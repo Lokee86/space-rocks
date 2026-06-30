@@ -24,7 +24,6 @@ GO_PRIMITIVES = {
 GDSCRIPT_PACKET_TYPE_CONSTANTS = {
     "input": "TYPE_INPUT",
     "client_config": "TYPE_CLIENT_CONFIG",
-    "state": "TYPE_STATE",
     "bullet_blast": "TYPE_BULLET_BLAST",
     "ship_death": "TYPE_SHIP_DEATH",
     "respawn": "TYPE_RESPAWN",

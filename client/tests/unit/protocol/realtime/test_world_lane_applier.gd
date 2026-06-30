@@ -6,7 +6,7 @@ const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_track
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 
 
-func test_world_full_replaces_lane_and_removes_missing_entities() -> void:
+func test_world_full_replaces_lane_and_removes_missing_entities_by_ownership() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
@@ -37,7 +37,7 @@ func test_world_full_replaces_lane_and_removes_missing_entities() -> void:
 	assert_false(baseline_tracker.needs_resync(LaneMetadata.LANE_WORLD))
 
 
-func test_world_delta_updates_creates_and_deletes_entities() -> void:
+func test_world_delta_updates_creates_and_deletes_entities_by_ownership() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
@@ -84,7 +84,7 @@ func test_world_delta_updates_creates_and_deletes_entities() -> void:
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
 
 
-func test_world_delta_missing_entities_leave_lane_unchanged() -> void:
+func test_world_delta_missing_entities_leave_lane_unchanged_by_ownership() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
@@ -128,7 +128,7 @@ func test_world_delta_missing_entities_leave_lane_unchanged() -> void:
 	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
 
 
-func test_world_delta_delete_removes_entity() -> void:
+func test_world_delta_delete_removes_entity_by_ownership() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	var baseline_tracker := BaselineTracker.new()

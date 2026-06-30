@@ -344,6 +344,29 @@ func assertNotContainsKey(t *testing.T, wire map[string]any, key string) {
 	}
 }
 
+func TestWireLanePacketRoundTripsWorldFullFamily(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindFull,
+		Full: WorldFullPacket{
+			Type: PacketFamilyWorldFull,
+			Metadata: Metadata{Lane: LaneWorld, Sequence: 21},
+			Ships: []WorldShipRecord{{ID: "ship-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}},
+			Bullets: []WorldBulletRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 6, Y: 7, Rotation: 8, WeaponID: "pulse", ProjectileType: "laser"}},
+			Asteroids: []WorldAsteroidRecord{{ID: "asteroid-1", X: 9, Y: 10, Size: 2, Health: 11, Scale: 1.5, Variant: 3}},
+			Pickups: []WorldPickupRecord{{ID: "pickup-1", Type: "shield", PickupClass: "armor", X: 12, Y: 13, Health: 1, AgeSeconds: 4.5, LifespanSeconds: 9.5}},
+		},
+	}
+
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
+
+	assertStringValue(t, wire, "type", PacketFamilyWorldFull)
+	assertContainsKey(t, wire, "ships")
+	assertContainsKey(t, wire, "bullets")
+	assertContainsKey(t, wire, "asteroids")
+	assertContainsKey(t, wire, "pickups")
+}
+
 func TestWireLanePacketContainsLowercaseKeysOnly(t *testing.T) {
 	wire := WireLanePacket(RealtimeLaneCandidate{
 		Lane: LaneWorld,

@@ -302,7 +302,7 @@ func TestRealtimePlannerUsesGameplayPresentationSnapshotInput(t *testing.T) {
 
 	for _, candidate := range plan.Candidates {
 		if candidate.Lane == LaneControl {
-			t.Fatalf("planner should not depend on old state packet control flow: %#v", candidate)
+			t.Fatalf("planner should not depend on old combined packet control flow: %#v", candidate)
 		}
 	}
 }

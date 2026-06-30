@@ -16,7 +16,7 @@ func configure_placement_request_route(route: Callable) -> void:
 
 
 func request_placement_action(action_name: StringName, placement_context: Dictionary = {}) -> void:
-	if state_context == null or !state_context.has_gameplay_state():
+	if state_context == null or !state_context.has_lane_baseline_sync():
 		return
 	if placement_request_route.is_null():
 		return

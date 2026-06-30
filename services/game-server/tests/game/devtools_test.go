@@ -153,7 +153,7 @@ func TestDebugInvinciblePlayerDoesNotDieFromAsteroidCollision(t *testing.T) {
 	if scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected invincible player not to be marked for despawn")
 	}
-	if lives := scenario.state(playerID).Lives; lives != constants.PlayerStartingLives {
+	if lives := scenario.presentationSnapshot(playerID).Lives; lives != constants.PlayerStartingLives {
 		t.Fatalf("expected invincible player to keep %d lives, got %d", constants.PlayerStartingLives, lives)
 	}
 	if events := scenario.pendingEventCount(playerID); events != 0 {
@@ -235,27 +235,34 @@ func TestDebugInfiniteLivesPlayerDiesWithoutLosingLife(t *testing.T) {
 	if !scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected infinite-lives player to still die and despawn")
 	}
-	packet := scenario.state(playerID)
-	if packet.Lives != constants.PlayerStartingLives {
-		t.Fatalf("expected infinite-lives player to keep %d lives, got %d", constants.PlayerStartingLives, packet.Lives)
+	snapshot := scenario.presentationSnapshot(playerID)
+	if snapshot.Lives != constants.PlayerStartingLives {
+		t.Fatalf("expected infinite-lives player to keep %d lives, got %d", constants.PlayerStartingLives, snapshot.Lives)
 	}
-	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
-		t.Fatalf("expected death event for infinite-lives player, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
+	if countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected death event for infinite-lives player, got %d", countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath))
 	}
 	var deathEvent *servergame.EventState
-	for i := range packet.Events {
-		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
-			deathEvent = &packet.Events[i]
+	for i := range snapshot.PendingEvents {
+		if snapshot.PendingEvents[i].Event.Type == servergame.PacketTypeShipDeath {
+			deathEvent = &snapshot.PendingEvents[i].Event
 			break
 		}
 	}
 	if deathEvent == nil {
-		t.Fatal("expected ship_death event in packet")
+		t.Fatal("expected ship_death event in gameplay snapshot")
 	}
 	if deathEvent.Lives != constants.PlayerStartingLives {
 		t.Fatalf("expected death event to keep %d lives, got %d", constants.PlayerStartingLives, deathEvent.Lives)
 	}
-	if !hasEventOfType(packet.Events, "damage_applied") {
+	foundDamageApplied := false
+	for _, pending := range snapshot.PendingEvents {
+		if pending.Event.Type == "damage_applied" {
+			foundDamageApplied = true
+			break
+		}
+	}
+	if !foundDamageApplied {
 		t.Fatal("expected damage_applied event for infinite-lives player death")
 	}
 
@@ -401,7 +408,7 @@ func TestDebugFrozenWorldDoesNotMoveAsteroids(t *testing.T) {
 	})
 	scenario.step(1)
 
-	asteroid := scenario.state(playerID).Asteroids["asteroid-1"]
+	asteroid := scenario.presentationSnapshot(playerID).Asteroids["asteroid-1"]
 	if asteroid.X != 10 || asteroid.Y != 20 {
 		t.Fatalf("expected frozen asteroid to stay at (10, 20), got (%v, %v)", asteroid.X, asteroid.Y)
 	}
@@ -429,12 +436,12 @@ func TestDebugFreezeAsteroidsOnlyStopsAsteroidMovement(t *testing.T) {
 	})
 	scenario.step(1)
 
-	asteroid := scenario.state(playerID).Asteroids["asteroid-1"]
+	asteroid := scenario.presentationSnapshot(playerID).Asteroids["asteroid-1"]
 	if asteroid.X != 10 || asteroid.Y != 20 {
 		t.Fatalf("expected asteroid-only freeze to keep asteroid at (10, 20), got (%v, %v)", asteroid.X, asteroid.Y)
 	}
 
-	bullet := scenario.state(playerID).Bullets["bullet-1"]
+	bullet := scenario.presentationSnapshot(playerID).Bullets["bullet-1"]
 	if bullet.X == 200 && bullet.Y == 300 {
 		t.Fatalf("expected bullet not to remain fully frozen at (200, 300), got (%v, %v)", bullet.X, bullet.Y)
 	}
@@ -472,7 +479,7 @@ func TestDebugFrozenWorldDoesNotMoveOrExpireBullets(t *testing.T) {
 	})
 	scenario.step(startLife + 1)
 
-	bullet, ok := scenario.state(playerID).Bullets["bullet-1"]
+	bullet, ok := scenario.presentationSnapshot(playerID).Bullets["bullet-1"]
 	if !ok {
 		t.Fatal("expected frozen bullet not to expire")
 	}
@@ -501,7 +508,7 @@ func TestDebugFreezeBulletsOnlyStopsBulletMovementAndExpiry(t *testing.T) {
 	})
 	scenario.step(startLife + 1)
 
-	bullet, ok := scenario.state(playerID).Bullets["bullet-1"]
+	bullet, ok := scenario.presentationSnapshot(playerID).Bullets["bullet-1"]
 	if !ok {
 		t.Fatal("expected bullets-only freeze to keep bullet from expiring")
 	}
@@ -541,7 +548,7 @@ func TestDebugFrozenWorldDoesNotSpawnBullets(t *testing.T) {
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	if bullets := scenario.state(playerID).Bullets; len(bullets) != 0 {
+	if bullets := scenario.presentationSnapshot(playerID).Bullets; len(bullets) != 0 {
 		t.Fatalf("expected frozen world not to spawn bullets, got %d", len(bullets))
 	}
 }
@@ -556,7 +563,7 @@ func TestDebugFrozenWorldDoesNotSpawnAsteroids(t *testing.T) {
 	})
 	scenario.step(constants.AsteroidSpawnInterval)
 
-	if asteroids := scenario.state(playerID).Asteroids; len(asteroids) != 0 {
+	if asteroids := scenario.presentationSnapshot(playerID).Asteroids; len(asteroids) != 0 {
 		t.Fatalf("expected frozen world not to spawn asteroids, got %d", len(asteroids))
 	}
 	if elapsed := scenario.asteroidSpawnElapsed(); elapsed != constants.AsteroidSpawnInterval {
@@ -575,7 +582,7 @@ func TestDebugFreezeSpawningOnlyStopsAsteroidSpawning(t *testing.T) {
 	})
 	scenario.step(constants.AsteroidSpawnInterval)
 
-	if asteroids := scenario.state(playerID).Asteroids; len(asteroids) != 0 {
+	if asteroids := scenario.presentationSnapshot(playerID).Asteroids; len(asteroids) != 0 {
 		t.Fatalf("expected spawning-only freeze not to spawn asteroids, got %d", len(asteroids))
 	}
 	if elapsed := scenario.asteroidSpawnElapsed(); elapsed != constants.AsteroidSpawnInterval {
@@ -665,8 +672,8 @@ func TestDebugFrozenWorldDoesNotRunShipAsteroidCollisions(t *testing.T) {
 	if scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected frozen world not to mark colliding player for despawn")
 	}
-	if packet := scenario.state(playerID); packet.Lives != constants.PlayerStartingLives {
-		t.Fatalf("expected frozen world to preserve %d lives, got %d", constants.PlayerStartingLives, packet.Lives)
+	if snapshot := scenario.presentationSnapshot(playerID); snapshot.Lives != constants.PlayerStartingLives {
+		t.Fatalf("expected frozen world to preserve %d lives, got %d", constants.PlayerStartingLives, snapshot.Lives)
 	}
 	if events := scenario.pendingEventCount(playerID); events != 0 {
 		t.Fatalf("expected no ship death events while frozen, got %d", events)
@@ -689,8 +696,8 @@ func TestDebugFreezeCollisionsOnlyStopsCollisionConsequences(t *testing.T) {
 	if scenario.playerPendingDespawn(playerID) {
 		t.Fatal("expected collisions-only freeze not to mark colliding player for despawn")
 	}
-	if packet := scenario.state(playerID); packet.Lives != constants.PlayerStartingLives {
-		t.Fatalf("expected collisions-only freeze to preserve %d lives, got %d", constants.PlayerStartingLives, packet.Lives)
+	if snapshot := scenario.presentationSnapshot(playerID); snapshot.Lives != constants.PlayerStartingLives {
+		t.Fatalf("expected collisions-only freeze to preserve %d lives, got %d", constants.PlayerStartingLives, snapshot.Lives)
 	}
 	if events := scenario.pendingEventCount(playerID); events != 0 {
 		t.Fatalf("expected no ship death events while collisions are frozen, got %d", events)
@@ -738,7 +745,7 @@ func TestDebugFrozenWorldDoesNotRunBulletAsteroidCollisionsOrScore(t *testing.T)
 	if events := scenario.pendingEventCount(playerID); events != 0 {
 		t.Fatalf("expected no bullet impact events while frozen, got %d", events)
 	}
-	if asteroids := scenario.state(playerID).Asteroids; len(asteroids) != 1 {
+	if asteroids := scenario.presentationSnapshot(playerID).Asteroids; len(asteroids) != 1 {
 		t.Fatalf("expected no asteroid fragments while frozen, got %d asteroids", len(asteroids))
 	}
 }
@@ -757,14 +764,14 @@ func TestDebugKillPlayerMarksDespawnQueuesDeathAndReducesLives(t *testing.T) {
 	if events := scenario.pendingEventCount(playerID); events != 1 {
 		t.Fatalf("expected one queued ship death event, got %d", events)
 	}
-	packet := scenario.state(playerID)
-	if countEventsOfType(packet.Events, servergame.PacketTypeShipDeath) != 1 {
-		t.Fatalf("expected one ship death event in packet, got %d", countEventsOfType(packet.Events, servergame.PacketTypeShipDeath))
+	snapshot := scenario.presentationSnapshot(playerID)
+	if countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath) != 1 {
+		t.Fatalf("expected one ship death event in packet, got %d", countPendingEventsOfType(snapshot.PendingEvents, servergame.PacketTypeShipDeath))
 	}
 	var deathEvent *servergame.EventState
-	for i := range packet.Events {
-		if packet.Events[i].Type == servergame.PacketTypeShipDeath {
-			deathEvent = &packet.Events[i]
+	for i := range snapshot.PendingEvents {
+		if snapshot.PendingEvents[i].Event.Type == servergame.PacketTypeShipDeath {
+			deathEvent = &snapshot.PendingEvents[i].Event
 			break
 		}
 	}
@@ -772,8 +779,8 @@ func TestDebugKillPlayerMarksDespawnQueuesDeathAndReducesLives(t *testing.T) {
 		t.Fatal("expected ship death event in packet")
 	}
 	expectedLives := constants.PlayerStartingLives - 1
-	if packet.Lives != expectedLives {
-		t.Fatalf("expected debug kill to reduce lives to %d, got %d", expectedLives, packet.Lives)
+	if snapshot.Lives != expectedLives {
+		t.Fatalf("expected debug kill to reduce lives to %d, got %d", expectedLives, snapshot.Lives)
 	}
 }
 
@@ -793,20 +800,20 @@ func TestDebugKillPlayerCanKillAnotherActivePlayer(t *testing.T) {
 	if !scenario.playerPendingDespawn(playerB) {
 		t.Fatal("expected target player to be marked pending despawn")
 	}
-	packetA := scenario.state(playerA)
-	if len(packetA.Events) != 1 {
-		t.Fatalf("expected one ship death event in source view, got %d", len(packetA.Events))
+	snapshotA := scenario.presentationSnapshot(playerA)
+	if len(snapshotA.PendingEvents) != 1 {
+		t.Fatalf("expected one ship death event in source view, got %d", len(snapshotA.PendingEvents))
 	}
-	if packetA.Events[0].Type != servergame.PacketTypeShipDeath {
-		t.Fatalf("expected ship death event type %q, got %q", servergame.PacketTypeShipDeath, packetA.Events[0].Type)
+	if snapshotA.PendingEvents[0].Event.Type != servergame.PacketTypeShipDeath {
+		t.Fatalf("expected ship death event type %q, got %q", servergame.PacketTypeShipDeath, snapshotA.PendingEvents[0].Event.Type)
 	}
-	if packetA.Events[0].PlayerID != playerB {
-		t.Fatalf("expected ship death event player id %q, got %q", playerB, packetA.Events[0].PlayerID)
+	if snapshotA.PendingEvents[0].Event.PlayerID != playerB {
+		t.Fatalf("expected ship death event player id %q, got %q", playerB, snapshotA.PendingEvents[0].Event.PlayerID)
 	}
-	packetB := scenario.state(playerB)
+	snapshotB := scenario.presentationSnapshot(playerB)
 	expectedLives := constants.PlayerStartingLives - 1
-	if packetB.Lives != expectedLives {
-		t.Fatalf("expected target debug kill to reduce lives to %d, got %d", expectedLives, packetB.Lives)
+	if snapshotB.Lives != expectedLives {
+		t.Fatalf("expected target debug kill to reduce lives to %d, got %d", expectedLives, snapshotB.Lives)
 	}
 }
 
@@ -871,16 +878,16 @@ func TestSetPlayerLivesExportsSessionOwnedLivesInSnapshot(t *testing.T) {
 		t.Fatalf("expected SetPlayerLives to find player %q", playerID)
 	}
 
-	packet := scenario.state(playerID)
-	session, ok := packet.PlayerSessions[playerID]
+	snapshot := scenario.presentationSnapshot(playerID)
+	session, ok := snapshot.PlayerSessions[playerID]
 	if !ok {
 		t.Fatalf("expected snapshot for %q to include player session %q", playerID, playerID)
 	}
 	if session.Lives != 6 {
 		t.Fatalf("expected snapshot player lives 6, got %d", session.Lives)
 	}
-	if packet.Lives != 6 {
-		t.Fatalf("expected top-level snapshot lives 6, got %d", packet.Lives)
+	if snapshot.Lives != 6 {
+		t.Fatalf("expected top-level snapshot lives 6, got %d", snapshot.Lives)
 	}
 }
 

@@ -103,11 +103,11 @@ def test_gdscript_field_constants_and_leaf_values_match_current_generator() -> N
 def test_rich_gds_packet_type_ids_scopes_packet_type_constants() -> None:
     schema = PacketSchema(
         outputs=(),
-        structs=(PacketStruct(id="StatePacket", fields=(field("type", "string"),)),),
+        structs=(PacketStruct(id="ExamplePacket", fields=(field("type", "string"),)),),
         packet_types=(
             PacketType(id="input", value="input"),
             PacketType(id="respawn", value="respawn"),
-            PacketType(id="state", value="state"),
+            PacketType(id="client_config", value="client_config"),
         ),
         builders=(PacketBuilder(id="input_packet", args=(), body={"type": "input"}),),
     )
@@ -115,14 +115,14 @@ def test_rich_gds_packet_type_ids_scopes_packet_type_constants() -> None:
         id="client_packets",
         language="gdscript",
         path="client/scripts/generated/networking/packets/packets.gd",
-        packet_type_ids=("input", "state"),
+        packet_type_ids=("input", "client_config"),
         builders=("input_packet",),
     )
 
     rendered = render_gdscript_output(schema, output)
 
     assert 'const TYPE_INPUT := "input"' in rendered
-    assert 'const TYPE_STATE := "state"' in rendered
+    assert 'const TYPE_CLIENT_CONFIG := "client_config"' in rendered
     assert "TYPE_RESPAWN" not in rendered
 
 

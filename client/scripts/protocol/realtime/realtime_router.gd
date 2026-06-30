@@ -48,11 +48,6 @@ func route_packet(packet: Dictionary) -> Dictionary:
 			_route_resync(packet)
 	return {}
 
-func route_packet_for_protocol_mode(packet: Dictionary, protocol_mode: String) -> Dictionary:
-	if protocol_mode == "lane_protocol":
-		return route_lane_packet(packet)
-	return route_packet(packet)
-
 func route_lane_packet(packet: Dictionary) -> Dictionary:
 	var packet_type = packet.get("type")
 	match packet_type:

@@ -39,7 +39,7 @@ func TestBulletAcrossWorldEdgeIsNearCameraView(t *testing.T) {
 
 	scenario.step(0)
 
-	if _, ok := scenario.state("observer").Bullets["bullet-1"]; !ok {
+	if _, ok := scenario.bulletSnapshot("observer", "bullet-1"); !ok {
 		t.Fatal("expected cross-edge nearby bullet to remain visible")
 	}
 }
@@ -75,7 +75,7 @@ func TestFarBulletStillDespawns(t *testing.T) {
 
 	scenario.step(0)
 
-	if _, ok := scenario.state("observer").Bullets["bullet-1"]; ok {
+	if _, ok := scenario.bulletSnapshot("observer", "bullet-1"); ok {
 		t.Fatal("expected far bullet to despawn")
 	}
 }

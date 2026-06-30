@@ -189,7 +189,7 @@ func TestGameplayPresentationSnapshotIncludesSpawnedPickups(t *testing.T) {
 		t.Fatal("expected pickup spawn to return ok")
 	}
 
-	snapshot := scenario.snapshot(playerID)
+	snapshot := scenario.presentationSnapshot(playerID)
 	if len(snapshot.Pickups) != 1 {
 		t.Fatalf("expected one pickup in gameplay snapshot, got %d", len(snapshot.Pickups))
 	}
@@ -232,7 +232,7 @@ func TestPickupStateAgeAdvancesInGameplayPresentationSnapshot(t *testing.T) {
 
 	scenario.game.Step(0.25)
 
-	snapshot := scenario.snapshot(playerID)
+	snapshot := scenario.presentationSnapshot(playerID)
 	pickup, ok := snapshot.Pickups[spawnedPickup.ID]
 	if !ok {
 		t.Fatalf("expected gameplay snapshot to include pickup %q", spawnedPickup.ID)
@@ -249,7 +249,7 @@ func TestGameplayPresentationSnapshotUsesEmptyPickupStateWhenNoPickupsExist(t *t
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	snapshot := scenario.snapshot(playerID)
+	snapshot := scenario.presentationSnapshot(playerID)
 	if snapshot.Pickups == nil {
 		t.Fatal("expected gameplay snapshot pickups map to be initialized")
 	}
@@ -343,7 +343,7 @@ func TestOneUpPickupSnapshotReportsNewLives(t *testing.T) {
 	scenario.useCircleCollisionShapes()
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	snapshot := scenario.snapshot(playerID)
+	snapshot := scenario.presentationSnapshot(playerID)
 	session, ok := snapshot.PlayerSessions[playerID]
 	if !ok {
 		t.Fatalf("expected gameplay snapshot to include player session %q", playerID)
@@ -370,11 +370,11 @@ func TestOneUpPickupCollectionEmitsPickupCollectedAndEffectAppliedEvents(t *test
 	scenario.useCircleCollisionShapes()
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	events := scenario.state(playerID).Events
+	events := scenario.pendingPresentationEvents(playerID)
 	if len(events) != 2 {
 		t.Fatalf("expected two pickup events, got %d", len(events))
 	}
-	collectedEvent := events[0]
+	collectedEvent := events[0].Event
 	if collectedEvent.Type != "pickup_collected" {
 		t.Fatalf("expected first event type %q, got %q", "pickup_collected", collectedEvent.Type)
 	}
@@ -391,7 +391,7 @@ func TestOneUpPickupCollectionEmitsPickupCollectedAndEffectAppliedEvents(t *test
 		t.Fatalf("expected pickup_collected position (%v, %v), got (%v, %v)", player.X, player.Y, collectedEvent.X, collectedEvent.Y)
 	}
 
-	effectEvent := events[1]
+	effectEvent := events[1].Event
 	if effectEvent.Type != "pickup_effect_applied" {
 		t.Fatalf("expected second event type %q, got %q", "pickup_effect_applied", effectEvent.Type)
 	}
@@ -429,9 +429,10 @@ func TestPickupExpiryEmitsPickupExpiredEventAndRemovesPickupFromGameplayPresenta
 
 	scenario.game.Step(spawnedPickup.LifespanSeconds)
 
-	snapshot := scenario.snapshot(playerID)
+	snapshot := scenario.presentationSnapshot(playerID)
 	foundExpiredEvent := false
-	for _, event := range snapshot.PendingEvents {
+	for _, pending := range snapshot.PendingEvents {
+		event := pending.Event
 		if event.Type != "pickup_expired" {
 			continue
 		}

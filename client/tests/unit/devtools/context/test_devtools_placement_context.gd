@@ -25,10 +25,10 @@ class FakeRoute:
 
 
 class FakeStateContext:
-	var gameplay_state := false
+	var lane_baseline_sync := false
 
-	func has_gameplay_state() -> bool:
-		return gameplay_state
+	func has_lane_baseline_sync() -> bool:
+		return lane_baseline_sync
 
 
 func test_request_placement_action_does_nothing_before_gameplay_state() -> void:
@@ -46,7 +46,7 @@ func test_request_placement_action_does_nothing_before_gameplay_state() -> void:
 
 func test_request_placement_action_does_nothing_with_null_route() -> void:
 	var state_context := FakeStateContext.new()
-	state_context.gameplay_state = true
+	state_context.lane_baseline_sync = true
 	var dev_connection_service := FakeDevConnectionService.new()
 	var context := DevtoolsPlacementContext.new()
 	context.configure(state_context, dev_connection_service)

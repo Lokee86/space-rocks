@@ -28,7 +28,7 @@ func test_handle_unhandled_input_returns_false_when_gameplay_state_not_received(
 	assert_false(consumed)
 	assert(fake_mouse_flow.call_count == 0)
 
-func test_handle_unhandled_input_delegates_to_mouse_action_flow_when_gameplay_state_received() -> void:
+func test_handle_unhandled_input_delegates_to_mouse_action_flow_when_lane_baseline_sync_received() -> void:
 	var input_context := GameplayInputContext.new()
 	var fake_mouse_flow := FakeMouseActionFlow.new()
 	fake_mouse_flow.return_value = true

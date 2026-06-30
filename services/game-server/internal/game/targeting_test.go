@@ -72,6 +72,12 @@ func TestSetPlayerTargetReflectedInGameplayPresentationSnapshot(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected gameplay snapshot to include shooter %q", shooterID)
 	}
+	if _, ok := snapshot.PlayerSessions[shooterID]; !ok {
+		t.Fatalf("expected gameplay snapshot to include player session for %q", shooterID)
+	}
+	if _, ok := snapshot.PlayerLifecycle[shooterID]; !ok {
+		t.Fatalf("expected gameplay snapshot to include player lifecycle for %q", shooterID)
+	}
 	if shooterState.TargetKind != "player" {
 		t.Fatalf("expected target kind %q, got %q", "player", shooterState.TargetKind)
 	}
