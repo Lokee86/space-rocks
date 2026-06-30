@@ -26,7 +26,7 @@ func test_overlay_full_updates_readout_cache() -> void:
 			"self_id": "player-1",
 			"lives": 3,
 			"score": 120,
-			"respawn": {"delay": 2},
+			"respawn_cooldown": 2.0,
 			"primary_weapon_id": "laser",
 			"secondary_weapon_id": "burst",
 			"primary_ammo_policy": "finite",
@@ -42,7 +42,7 @@ func test_overlay_full_updates_readout_cache() -> void:
 	assert_eq(overlay_lane_state.self_id, "player-1")
 	assert_eq(overlay_lane_state.lives, 3)
 	assert_eq(overlay_lane_state.score, 120)
-	assert_eq(overlay_lane_state.respawn, {"delay": 2})
+	assert_eq(overlay_lane_state.respawn_cooldown, 2.0)
 	assert_eq(overlay_lane_state.primary_weapon_id, "laser")
 	assert_eq(overlay_lane_state.secondary_weapon_id, "burst")
 	assert_eq(overlay_lane_state.primary_ammo_policy, "finite")
@@ -219,6 +219,32 @@ func test_session_delta_delete_removes_record() -> void:
 
 	assert_false(session_lane_state.player_sessions.has("player-1"))
 	assert_false(session_lane_state.player_lifecycle.has("player-1"))
+
+
+func test_session_full_rejects_legacy_player_sessions_packet_input() -> void:
+	var applier := SessionLaneApplier.new()
+	var session_lane_state := SessionLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+
+	applier.apply_session_full(
+		session_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_SESSION,
+		{
+			"baseline_id": "session-baseline-1",
+			"sequence": 1,
+			"player_sessions": [
+				{"id": "player-1", "score": 120, "lives": 3},
+			],
+			"player_lifecycle": [
+				{"player_id": "player-1", "state": "active"},
+			],
+			"is_final_chunk": true,
+		}
+	)
+
+	assert_false(session_lane_state.player_sessions.has("player-1"))
+	assert_eq(session_lane_state.player_lifecycle["player-1"]["state"], "active")
 
 
 func test_session_delta_accepts_players_and_player_lifecycle_keys() -> void:

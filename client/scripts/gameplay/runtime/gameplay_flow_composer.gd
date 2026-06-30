@@ -15,7 +15,6 @@ var input_context
 var devtools_context
 var runtime_tick_flow
 var spectate_context
-var gameplay_state_apply_flow
 var gameplay_process_flow
 var server_hitbox_overlay_flow
 var match_end_flow
@@ -31,7 +30,6 @@ func configure(
 	spectate_menu_state_ref = null,
 	input_context_ref = null,
 	devtools_context_ref = null,
-	gameplay_state_apply_flow_ref = null,
 	gameplay_process_flow_ref = null,
 	match_end_flow_ref = null
 ) -> void:
@@ -93,18 +91,6 @@ func configure(
 			Callable(runtime_context_ref.world_sync, "remote_player_nodes")
 		)
 
-	gameplay_state_apply_flow = gameplay_state_apply_flow_ref
-	if gameplay_state_apply_flow == null:
-		gameplay_state_apply_flow = GameplayStateApplyFlow.new()
-		gameplay_state_apply_flow.configure(
-			input_context,
-			devtools_context,
-			hud_flow_ref,
-			runtime_context_ref.world_sync,
-			event_lifecycle_flow,
-			alive_restore_flow
-		)
-
 	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
 	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context_ref.world_sync)
 
@@ -134,23 +120,8 @@ func configure(
 		)
 
 
-func configure_gameplay_readiness(gameplay_readiness) -> void:
-	if gameplay_state_apply_flow == null:
-		return
-	gameplay_state_apply_flow.gameplay_readiness = gameplay_readiness
-
 func get_event_lifecycle_flow():
 	return event_lifecycle_flow
-
-
-func apply_gameplay_state(state: Dictionary, required_lane_baselines_synced: bool) -> GameplayStateApplyResult:
-	if gameplay_state_apply_flow == null:
-		return GameplayStateApplyResult.new()
-
-	var result: GameplayStateApplyResult = gameplay_state_apply_flow.apply_state(state, required_lane_baselines_synced)
-	if server_hitbox_overlay_flow != null:
-		server_hitbox_overlay_flow.apply_gameplay_state(state)
-	return result
 
 
 func apply_devtools_gameplay_state(state: Dictionary) -> void:

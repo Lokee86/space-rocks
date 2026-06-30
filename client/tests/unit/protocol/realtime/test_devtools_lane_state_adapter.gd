@@ -3,7 +3,7 @@ extends GutTest
 const DevtoolsLaneStateAdapter := preload("res://scripts/protocol/realtime/devtools_lane_state_adapter.gd")
 
 
-func test_build_state_returns_devtools_compatible_keys_from_lane_state() -> void:
+func test_build_state_returns_lane_native_nested_state() -> void:
 	var adapter := DevtoolsLaneStateAdapter.new()
 	var router := {
 		"overlay_lane_state": {"self_id": "player-1"},
@@ -30,19 +30,22 @@ func test_build_state_returns_devtools_compatible_keys_from_lane_state() -> void
 
 	var state := adapter.build_state(router)
 
-	assert_eq(state.get("self_id"), "player-1")
-	assert_true(state.get("server_players", {}) is Dictionary)
-	assert_true(state.get("player_sessions", {}) is Dictionary)
-	assert_true(state.get("server_asteroids", {}) is Dictionary)
-	assert_true(state.get("server_bullets", {}) is Dictionary)
-	assert_true(state.get("server_pickups", {}) is Dictionary)
-	assert_true(state.get("player_lifecycle", {}) is Dictionary)
-	assert_eq(state["server_players"]["player-1"]["x"], 10)
-	assert_eq(state["server_players"]["player-2"]["x"], 20)
-	assert_eq(state["player_sessions"]["player-1"]["score"], 1)
-	assert_eq(state["player_sessions"]["player-2"]["score"], 2)
-	assert_eq(state["server_asteroids"].size(), 1)
-	assert_eq(state["server_bullets"].size(), 1)
-	assert_eq(state["server_pickups"].size(), 1)
-	assert_eq(state["player_lifecycle"]["player-1"], "active")
-	assert_eq(state["player_lifecycle"]["player-2"], "active")
+	assert_true(state.has("world"))
+	assert_true(state.has("session"))
+	assert_true(state.has("overlay"))
+	assert_eq(state["overlay"]["self_id"], "player-1")
+	assert_eq(state["world"]["ships"]["player-1"]["x"], 10)
+	assert_eq(state["world"]["ships"]["player-2"]["x"], 20)
+	assert_eq(state["world"]["asteroids"].size(), 1)
+	assert_eq(state["world"]["bullets"].size(), 1)
+	assert_eq(state["world"]["pickups"].size(), 1)
+	assert_eq(state["session"]["players"]["player-1"]["score"], 1)
+	assert_eq(state["session"]["players"]["player-2"]["score"], 2)
+	assert_eq(state["session"]["player_lifecycle"]["player-1"], "active")
+	assert_eq(state["session"]["player_lifecycle"]["player-2"], "active")
+	assert_false(state.has("server_players"))
+	assert_false(state.has("player_sessions"))
+	assert_false(state.has("server_asteroids"))
+	assert_false(state.has("server_bullets"))
+	assert_false(state.has("server_pickups"))
+	assert_false(state.has("player_lifecycle"))

@@ -18,7 +18,6 @@ func TestPacketMetricRecordCloneReturnsCopy(t *testing.T) {
 		BudgetTarget:    256,
 		BudgetStatus:    "within_budget",
 		SendReason:      "delta",
-		ShadowVsSent:    "shadow",
 		ChunkDecision:   "chunked",
 		ResyncDecision:  "not_required",
 	}
@@ -37,10 +36,3 @@ func TestPacketMetricRecordCapturesLaneAndPacketFamily(t *testing.T) {
 	}
 }
 
-func TestPacketMetricRecordShadowVsSentDistinguishesValues(t *testing.T) {
-	shadow := PacketMetricRecord{ShadowVsSent: "shadow"}
-	sent := PacketMetricRecord{ShadowVsSent: "sent"}
-	if shadow.ShadowVsSent == sent.ShadowVsSent {
-		t.Fatalf("shadow_vs_sent should distinguish shadow from sent")
-	}
-}

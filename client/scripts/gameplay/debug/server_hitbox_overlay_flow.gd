@@ -65,7 +65,8 @@ func process() -> void:
 		return
 
 	var draw_entries: Array = []
-	var players_value = latest_gameplay_state.get("server_players", {})
+	var world_value = latest_gameplay_state.get("world", {})
+	var players_value = world_value.get("ships", {}) if world_value is Dictionary else {}
 	if players_value is Dictionary:
 		for player_id in players_value:
 			var player_state_value = players_value[player_id]
@@ -90,7 +91,7 @@ func process() -> void:
 				"points": points,
 			})
 
-	var asteroids_value = latest_gameplay_state.get("server_asteroids", {})
+	var asteroids_value = world_value.get("asteroids", {}) if world_value is Dictionary else {}
 	if asteroids_value is Dictionary:
 		for asteroid_id in asteroids_value:
 			var asteroid_state_value = asteroids_value[asteroid_id]
@@ -119,7 +120,7 @@ func process() -> void:
 				"points": points,
 			})
 
-	var bullets_value = latest_gameplay_state.get("server_bullets", {})
+	var bullets_value = world_value.get("bullets", {}) if world_value is Dictionary else {}
 	if bullets_value is Dictionary:
 		for bullet_id in bullets_value:
 			var bullet_state_value = bullets_value[bullet_id]
@@ -144,7 +145,7 @@ func process() -> void:
 				"points": points,
 			})
 
-	var pickups_value = latest_gameplay_state.get("server_pickups", {})
+	var pickups_value = world_value.get("pickups", {}) if world_value is Dictionary else {}
 	if pickups_value is Dictionary:
 		for pickup_id in pickups_value:
 			var pickup_state_value = pickups_value[pickup_id]

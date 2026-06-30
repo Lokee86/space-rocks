@@ -3,14 +3,14 @@ package packetmetrics
 import "github.com/Lokee86/space-rocks/server/internal/logging"
 
 func LogShadowLaneMetrics(records []PacketMetricRecord, roomID string, playerID string, remoteAddr string) {
-	logLaneMetrics(records, roomID, playerID, remoteAddr, "shadow")
+	logLaneMetrics(records, roomID, playerID, remoteAddr)
 }
 
 func LogSentLaneMetrics(records []PacketMetricRecord, roomID string, playerID string, remoteAddr string) {
-	logLaneMetrics(records, roomID, playerID, remoteAddr, "sent")
+	logLaneMetrics(records, roomID, playerID, remoteAddr)
 }
 
-func logLaneMetrics(records []PacketMetricRecord, roomID string, playerID string, remoteAddr string, shadowVsSent string) {
+func logLaneMetrics(records []PacketMetricRecord, roomID string, playerID string, remoteAddr string) {
 	for _, record := range records {
 		logging.Network.Debug("realtime lane metric",
 			logging.FieldRoomID, roomID,
@@ -29,7 +29,6 @@ func logLaneMetrics(records []PacketMetricRecord, roomID string, playerID string
 			"required_count", record.RequiredCount,
 			"budget_target", record.BudgetTarget,
 			"budget_status", record.BudgetStatus,
-			"shadow_vs_sent", shadowVsSent,
 		)
 	}
 }

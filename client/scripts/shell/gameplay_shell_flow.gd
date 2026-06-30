@@ -60,7 +60,6 @@ func configure(
 		null,
 		null,
 		null,
-		null,
 		match_end_flow
 	)
 
@@ -86,15 +85,6 @@ func get_event_lifecycle_flow():
 	if flow_composer == null:
 		return null
 	return flow_composer.get_event_lifecycle_flow()
-
-func apply_gameplay_state(state: Dictionary) -> void:
-	if flow_composer == null:
-		return
-	var result: GameplayStateApplyResult = flow_composer.apply_gameplay_state(state, has_received_lane_baselines_synced)
-	has_received_lane_baselines_synced = result.gameplay_ready
-	if result.started_gameplay:
-		gameplay_started.emit()
-
 
 func apply_player_pause_state_packet(packet: Dictionary) -> void:
 	if gameplay_pause_state_flow == null:

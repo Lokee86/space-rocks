@@ -103,15 +103,6 @@ func get_event_lifecycle_flow():
 		return null
 	return gameplay_shell_flow.get_event_lifecycle_flow()
 
-func apply_gameplay_state(state: Dictionary) -> void:
-	if gameplay_shell_flow != null:
-		gameplay_shell_flow.apply_devtools_gameplay_state(state)
-		gameplay_shell_flow.refresh_devtools_spawn_player_slots(_current_room_max_players())
-	if spectate_session_flow != null:
-		spectate_session_flow.apply_gameplay_state(state)
-	if gameplay_shell_flow != null:
-		gameplay_shell_flow.apply_gameplay_state(state)
-
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	if gameplay_shell_flow == null:
 		return

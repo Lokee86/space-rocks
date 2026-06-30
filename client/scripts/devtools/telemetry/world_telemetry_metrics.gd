@@ -74,19 +74,13 @@ func apply_gameplay_state(state: Dictionary) -> void:
 		previous_packet_interval_ms = -1
 		jitter_ms = -1
 
-	var server_players_variant: Variant = state.get("server_players", null)
-	players = server_players_variant.size() if server_players_variant is Dictionary else 0
-
-	var server_asteroids_variant: Variant = state.get("server_asteroids", null)
-	asteroids = server_asteroids_variant.size() if server_asteroids_variant is Dictionary else 0
-
-	var server_pickups_variant: Variant = state.get("server_pickups", null)
-	pickups = server_pickups_variant.size() if server_pickups_variant is Dictionary else 0
+	var world: Dictionary = _dict_or_empty(state.get("world", null))
+	players = _count_dictionary(world.get("ships", null))
+	asteroids = _count_dictionary(world.get("asteroids", null))
+	pickups = _count_dictionary(world.get("pickups", null))
+	bullets = _count_dictionary(world.get("bullets", null))
 
 	total_asteroids = int(state.get("total_asteroids", 0))
-
-	var server_bullets_variant: Variant = state.get("server_bullets", null)
-	bullets = server_bullets_variant.size() if server_bullets_variant is Dictionary else 0
 
 	var server_enemies_variant: Variant = state.get("server_enemies", null)
 	if server_enemies_variant is Dictionary:
@@ -95,3 +89,10 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 	var enemies_variant: Variant = state.get("enemies", null)
 	enemies = enemies_variant.size() if enemies_variant is Dictionary else 0
+
+
+func _count_dictionary(value) -> int:
+	return value.size() if value is Dictionary else 0
+
+func _dict_or_empty(value) -> Dictionary:
+	return value if value is Dictionary else {}

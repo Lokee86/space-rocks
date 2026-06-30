@@ -6,7 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/rules"
 )
 
-func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllSessions(t *testing.T) {
+func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllPlayers(t *testing.T) {
 	scenario := newScenario(t)
 	activePlayerID := scenario.addPlayer()
 	pendingPlayerID := scenario.addPlayer()
@@ -32,9 +32,9 @@ func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllSessions(t *te
 		}
 	}
 	if _, ok := snapshot.Players[pendingPlayerID]; ok {
-		t.Fatalf("expected pending player %q not to have active ship state", pendingPlayerID)
+		t.Fatalf("expected pending player %q not to have active world ship state", pendingPlayerID)
 	}
 	if _, ok := snapshot.Players[eliminatedPlayerID]; ok {
-		t.Fatalf("expected eliminated player %q not to have active ship state", eliminatedPlayerID)
+		t.Fatalf("expected eliminated player %q not to have active world ship state", eliminatedPlayerID)
 	}
 }

@@ -13,14 +13,18 @@ class FakeWorldSync:
 class FakeRespawnFlow:
 	var should_restore_result := false
 	var should_restore_calls := 0
-	var last_state
+	var last_world_ships: Dictionary = {}
+	var last_player_lifecycle: Dictionary = {}
+	var last_self_id := ""
 	var last_player
 	var last_has_stale_dead_presentation := false
 	var clear_awaiting_confirmation_calls := 0
 
-	func should_restore_alive_hud(state: Dictionary, player, has_stale_dead_presentation := false) -> bool:
+	func should_restore_alive_hud(world_ships: Dictionary, player_lifecycle: Dictionary, self_id: String, player, has_stale_dead_presentation := false) -> bool:
 		should_restore_calls += 1
-		last_state = state
+		last_world_ships = world_ships
+		last_player_lifecycle = player_lifecycle
+		last_self_id = self_id
 		last_player = player
 		last_has_stale_dead_presentation = has_stale_dead_presentation
 		return should_restore_result
@@ -67,11 +71,15 @@ func _make_flow(
 func _state() -> Dictionary:
 	return {
 		"self_id": "player-1",
-		"server_players": {
-			"player-1": {}
+		"world": {
+			"ships": {
+				"player-1": {}
+			}
 		},
-		"player_lifecycle": {
-			"player-1": "active",
+		"session": {
+			"player_lifecycle": {
+				"player-1": "active",
+			},
 		},
 	}
 

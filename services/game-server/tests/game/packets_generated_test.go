@@ -49,7 +49,7 @@ func TestGeneratedLobbyRequestPacketFields(t *testing.T) {
 	}
 }
 
-func TestGeneratedLobbyStatePacketFields(t *testing.T) {
+func TestGeneratedLobbyPacketFields(t *testing.T) {
 	snapshot := servergame.RoomSnapshot{
 		Type:          servergame.PacketTypeRoomSnapshot,
 		RoomCode:      "TEST",
@@ -63,7 +63,7 @@ func TestGeneratedLobbyStatePacketFields(t *testing.T) {
 		MaxPlayers: 8,
 	}
 	if snapshot.RoomState != "Lobby" {
-		t.Fatalf("expected room snapshot state field, got %q", snapshot.RoomState)
+		t.Fatalf("expected room snapshot packet field, got %q", snapshot.RoomState)
 	}
 	if len(snapshot.Members) != 2 {
 		t.Fatalf("expected room snapshot members, got %d", len(snapshot.Members))

@@ -2,7 +2,7 @@ package realtime
 
 import "github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
 
-func (summary SendPlanSummary) ToPacketMetricRecord(packetFamily string, lane Lane, priorityBand string, budgetTarget int, budgetStatus string, shadowVsSent string) packetmetrics.PacketMetricRecord {
+func (summary SendPlanSummary) ToPacketMetricRecord(packetFamily string, lane Lane, priorityBand string, budgetTarget int, budgetStatus string) packetmetrics.PacketMetricRecord {
 	return packetmetrics.PacketMetricRecord{
 		PacketFamily:    packetFamily,
 		Lane:            string(lane),
@@ -16,6 +16,5 @@ func (summary SendPlanSummary) ToPacketMetricRecord(packetFamily string, lane La
 		RequiredCount:   summary.RequiredCount,
 		BudgetTarget:    budgetTarget,
 		BudgetStatus:    budgetStatus,
-		ShadowVsSent:    shadowVsSent,
 	}
 }

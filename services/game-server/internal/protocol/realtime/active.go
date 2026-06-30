@@ -53,7 +53,7 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 		EventBatchEventIDs: activeEventBatchEventIDs(snapshot.PendingEvents),
 		Mode:             "active",
 	}
-	result.MetricRecord = result.SendPlan.Summary.ToPacketMetricRecord("active", LaneWorld, "unspecified", HardCapBytes, "sent", "sent")
+	result.MetricRecord = result.SendPlan.Summary.ToPacketMetricRecord("active", LaneWorld, "unspecified", HardCapBytes, "sent")
 	totalEncodedBytes := 0
 	for _, recordedBytes := range encodedBytes {
 		totalEncodedBytes += recordedBytes
@@ -69,7 +69,7 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.PacketMetricRecord {
 	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.Candidates))
 	for _, candidate := range result.Candidates {
-		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane, "unspecified", HardCapBytes, "sent", "sent")
+		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane, "unspecified", HardCapBytes, "sent")
 		record.Bytes = result.EncodedBytes[candidate.Lane]
 		records = append(records, record)
 	}
@@ -78,7 +78,6 @@ func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.Packet
 
 func ActiveRealtimeSummaryFields(result ActiveRealtimeResult) []any {
 	fields := []any{
-		"shadow_vs_sent", "sent",
 		"lane_packet_families", laneFamilySummary(result.PlannedRecords),
 		"encoded_bytes", result.TotalEncodedBytes,
 		"included_count", len(result.SendPlan.Included),

@@ -57,19 +57,21 @@ func test_apply_gameplay_state_updates_lane_counts() -> void:
 	var telemetry_context := WorldTelemetryContext.new()
 	telemetry_context.configure(fake_connection)
 	telemetry_context.apply_gameplay_state({
-		"server_players": {
-			"player-1": {},
-			"player-2": {},
-		},
-		"server_asteroids": {
-			"asteroid-1": {},
-		},
-		"server_bullets": {
-			"bullet-1": {},
-			"bullet-2": {},
-		},
-		"server_pickups": {
-			"pickup-1": {},
+		"world": {
+			"ships": {
+				"player-1": {},
+				"player-2": {},
+			},
+			"asteroids": {
+				"asteroid-1": {},
+			},
+			"bullets": {
+				"bullet-1": {},
+				"bullet-2": {},
+			},
+			"pickups": {
+				"pickup-1": {},
+			},
 		},
 		"total_asteroids": 7,
 	})

@@ -24,11 +24,17 @@ func apply_state(state: Dictionary) -> void:
 	if hud_flow == null || respawn_flow == null:
 		return
 
+	var world_value: Dictionary = state.get("world", {}) if state.has("world") and state["world"] is Dictionary else {}
+	var session_value: Dictionary = state.get("session", {}) if state.has("session") and state["session"] is Dictionary else {}
+	var world_ships: Dictionary = world_value.get("ships", {}) if world_value.has("ships") and world_value["ships"] is Dictionary else {}
+	var player_lifecycle: Dictionary = session_value.get("player_lifecycle", {}) if session_value.has("player_lifecycle") and session_value["player_lifecycle"] is Dictionary else {}
+	var self_id: String = str(state.get("self_id", ""))
+
 	var has_stale_dead_presentation: bool = false
 	if match_end_flow != null && match_end_flow.has_method("has_stale_dead_presentation"):
 		has_stale_dead_presentation = match_end_flow.has_stale_dead_presentation()
 
-	if !respawn_flow.should_restore_alive_hud(state, player, has_stale_dead_presentation):
+	if !respawn_flow.should_restore_alive_hud(world_ships, player_lifecycle, self_id, player, has_stale_dead_presentation):
 		return
 
 	if world_sync != null:
