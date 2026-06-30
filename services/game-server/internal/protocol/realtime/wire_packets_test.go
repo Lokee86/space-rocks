@@ -92,6 +92,190 @@ func TestActiveWirePacketEncodingUsesLowercaseWorldShape(t *testing.T) {
 	assertIntValue(t, asteroid, "variant", 3)
 }
 
+
+func TestWireWorldDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
+	wire := wireWorldDeltaPacket(WorldDeltaPacket{Type: PacketTypeWorldDelta})
+
+	fields := []string{"ship_creates", "ship_updates", "ship_deletes", "bullet_creates", "bullet_updates", "bullet_deletes", "asteroid_creates", "asteroid_updates", "asteroid_deletes", "pickup_creates", "pickup_updates", "pickup_deletes"}
+	for _, field := range fields {
+		value, ok := wire[field]
+		if !ok {
+			t.Fatalf("expected field %q to be present", field)
+		}
+		if value == nil {
+			t.Fatalf("expected field %q to be encoded as an array, got nil", field)
+		}
+	}
+}
+
+func TestWireWorldDeltaPacketJSONDoesNotContainNullForEmptyDelta(t *testing.T) {
+	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{Type: PacketTypeWorldDelta}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+	if strings.Contains(string(encoded), "null") {
+		t.Fatalf("expected empty world delta JSON not to contain null, got %s", string(encoded))
+	}
+}
+
+func TestWireSessionDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
+	wire := wireSessionDeltaPacket(SessionLaneDelta{Metadata: Metadata{Lane: LaneSession}, TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{}})
+
+	fields := []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes"}
+	for _, field := range fields {
+		value, ok := wire[field]
+		if !ok {
+			t.Fatalf("expected field %q to be present", field)
+		}
+		if value == nil {
+			t.Fatalf("expected field %q to be encoded as an array, got nil", field)
+		}
+	}
+}
+
+func TestWireSessionDeltaPacketEncodesPlayerSessionUpdates(t *testing.T) {
+	wire := wireSessionDeltaPacket(SessionLaneDelta{
+		Metadata: Metadata{Lane: LaneSession},
+		Players: RecordDelta[SessionPlayerRecord]{Updates: []SessionPlayerRecord{{ID: "player-1", Score: 10}}},
+	})
+
+	updates := mustSliceValue(t, wire, "player_session_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one player session update, got %#v", updates)
+	}
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "id", "player-1")
+	assertIntValue(t, update, "score", 10)
+}
+
+func TestWireSessionDeltaPacketEncodesPlayerLifecycleUpdates(t *testing.T) {
+	wire := wireSessionDeltaPacket(SessionLaneDelta{
+		Metadata: Metadata{Lane: LaneSession},
+		PlayerLifecycle: RecordDelta[SessionLifecycleRecord]{Updates: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "respawning"}}},
+	})
+
+	updates := mustSliceValue(t, wire, "player_lifecycle_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one player lifecycle update, got %#v", updates)
+	}
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "player_id", "player-1")
+	assertStringValue(t, update, "status", "respawning")
+}
+
+func TestWireSessionDeltaPacketEncodesPlayerLifecycleDeletes(t *testing.T) {
+	wire := wireSessionDeltaPacket(SessionLaneDelta{
+		Metadata: Metadata{Lane: LaneSession},
+		PlayerLifecycle: RecordDelta[SessionLifecycleRecord]{Deletes: []string{"player-1"}},
+	})
+
+	deletes := wire["player_lifecycle_deletes"]
+	items, ok := deletes.([]string)
+	if !ok {
+		t.Fatalf("expected player_lifecycle_deletes to be a string array, got %#v", deletes)
+	}
+	if len(items) != 1 || items[0] != "player-1" {
+		t.Fatalf("expected one player lifecycle delete, got %#v", items)
+	}
+}
+
+func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{
+				Lane:         LaneWorld,
+				Sequence:     9,
+				BaselineID:   "baseline-9",
+				SnapshotID:   "snapshot-9",
+				SnapshotKind: SnapshotKind("delta"),
+			},
+			Ships: RecordDelta[WorldShipRecord]{Creates: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}},
+			Bullets: RecordDelta[WorldBulletRecord]{Updates: []WorldBulletRecord{{ID: "bullet-a", X: 4, Y: 5}}},
+			Asteroids: RecordDelta[WorldAsteroidRecord]{Deletes: []string{"asteroid-a"}},
+			Pickups: RecordDelta[WorldPickupRecord]{},
+		},
+	}
+
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
+
+	assertStringValue(t, wire, "type", PacketTypeWorldDelta)
+	assertStringValue(t, wire, "lane", string(LaneWorld))
+	assertIntValue(t, wire, "sequence", 9)
+	assertStringValue(t, wire, "baseline_id", "baseline-9")
+	assertStringValue(t, wire, "snapshot_id", "snapshot-9")
+	assertStringValue(t, wire, "snapshot_kind", "delta")
+	assertContainsKey(t, wire, "ship_creates")
+	assertContainsKey(t, wire, "bullet_updates")
+	assertContainsKey(t, wire, "asteroid_deletes")
+	assertContainsKey(t, wire, "pickup_creates")
+	assertNotNakedDeltaPayload(t, wire)
+}
+
+func TestActiveWirePacketEncodingUsesOverlayDeltaEnvelope(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneOverlay,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: OverlayLaneDelta{
+			Metadata: Metadata{
+				Lane:         LaneOverlay,
+				Sequence:     12,
+				BaselineID:   "overlay-baseline-12",
+				SnapshotID:   "overlay-snapshot-12",
+				SnapshotKind: SnapshotKind("delta"),
+			},
+			Receiver: RecordDelta[OverlayReceiverRecord]{Updates: []OverlayReceiverRecord{{SelfID: "player-1", Lives: 3, Score: 10}}},
+		},
+	}
+
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
+
+	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
+	assertStringValue(t, wire, "lane", string(LaneOverlay))
+	assertIntValue(t, wire, "sequence", 12)
+	assertStringValue(t, wire, "baseline_id", "overlay-baseline-12")
+	assertStringValue(t, wire, "snapshot_id", "overlay-snapshot-12")
+	assertStringValue(t, wire, "snapshot_kind", "delta")
+	assertContainsKey(t, wire, "receiver_updates")
+	assertNotNakedOverlayDeltaPayload(t, wire)
+}
+
+func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneSession,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: SessionLaneDelta{
+			Metadata: Metadata{
+				Lane:         LaneSession,
+				Sequence:     14,
+				BaselineID:   "session-baseline-14",
+				SnapshotID:   "session-snapshot-14",
+				SnapshotKind: SnapshotKind("delta"),
+			},
+			Players: RecordDelta[SessionPlayerRecord]{Updates: []SessionPlayerRecord{{ID: "player-1", ShipType: "v_wing", Score: 10, Lives: 2}}},
+			PlayerLifecycle: RecordDelta[SessionLifecycleRecord]{Updates: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "respawning"}}},
+			TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{Updates: []SessionTotalAsteroidsRecord{{ID: "session-14", Count: 8}}},
+		},
+	}
+
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
+
+	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
+	assertStringValue(t, wire, "lane", string(LaneSession))
+	assertIntValue(t, wire, "sequence", 14)
+	assertStringValue(t, wire, "baseline_id", "session-baseline-14")
+	assertStringValue(t, wire, "snapshot_id", "session-snapshot-14")
+	assertStringValue(t, wire, "snapshot_kind", "delta")
+	assertContainsKey(t, wire, "players")
+	assertContainsKey(t, wire, "player_session_updates")
+	assertContainsKey(t, wire, "player_lifecycle")
+	assertContainsKey(t, wire, "player_lifecycle_updates")
+	assertContainsKey(t, wire, "total_asteroids")
+	assertNotNakedSessionDeltaPayload(t, wire)
+}
+
 func TestActiveWirePacketEncodingUsesLowercaseOverlayShape(t *testing.T) {
 	candidate := RealtimeLaneCandidate{
 		Lane: LaneOverlay,
@@ -339,12 +523,21 @@ func assertIntValue(t *testing.T, wire map[string]any, key string, want int) {
 	if !ok {
 		t.Fatalf("expected key %q to exist", key)
 	}
-	got, ok := value.(float64)
-	if !ok {
+
+	var got int
+	switch typed := value.(type) {
+	case int:
+		got = typed
+	case int64:
+		got = int(typed)
+	case float64:
+		got = int(typed)
+	default:
 		t.Fatalf("expected key %q to be numeric, got %#v", key, value)
 	}
-	if int(got) != want {
-		t.Fatalf("key %q = %v, want %d", key, got, want)
+
+	if got != want {
+		t.Fatalf("key %q = %v, want %d", key, value, want)
 	}
 }
 
@@ -401,3 +594,24 @@ func TestWireLanePacketContainsLowercaseKeysOnly(t *testing.T) {
 	}
 }
 
+
+func assertNotNakedDeltaPayload(t *testing.T, wire map[string]any) {
+	t.Helper()
+	if hasOnlyKeys(wire, []string{"ship_creates", "ship_updates", "ship_deletes", "bullet_creates", "bullet_updates", "bullet_deletes", "asteroid_creates", "asteroid_updates", "asteroid_deletes", "pickup_creates", "pickup_updates", "pickup_deletes"}) {
+		t.Fatalf("world delta payload encoded without envelope: %#v", wire)
+	}
+}
+
+func assertNotNakedOverlayDeltaPayload(t *testing.T, wire map[string]any) {
+	t.Helper()
+	if hasOnlyKeys(wire, []string{"receiver_creates", "receiver_updates", "receiver_deletes"}) {
+		t.Fatalf("overlay delta payload encoded without envelope: %#v", wire)
+	}
+}
+
+func assertNotNakedSessionDeltaPayload(t *testing.T, wire map[string]any) {
+	t.Helper()
+	if hasOnlyKeys(wire, []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes", "total_asteroids"}) {
+		t.Fatalf("session delta payload encoded without envelope: %#v", wire)
+	}
+}

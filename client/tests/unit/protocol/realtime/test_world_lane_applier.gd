@@ -172,6 +172,101 @@ func test_world_delta_delete_removes_entity_by_ownership() -> void:
 	assert_false(world_lane_state.ships.has("ship-1"))
 
 
+func test_world_delta_treats_null_arrays_as_empty_and_applies_deletes() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [_ship_packet("ship-1", 10, 20)],
+			"bullets": [_bullet_packet("bullet-1", 5, 6)],
+			"asteroids": [_asteroid_packet("asteroid-1", 7, 8)],
+			"pickups": [_pickup_packet("pickup-1", 9, 10)],
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": null,
+			"ship_updates": null,
+			"ship_deletes": ["ship-1"],
+			"bullet_creates": null,
+			"bullet_updates": null,
+			"bullet_deletes": ["bullet-1"],
+			"asteroid_creates": null,
+			"asteroid_updates": null,
+			"asteroid_deletes": ["asteroid-1"],
+			"pickup_creates": null,
+			"pickup_updates": null,
+			"pickup_deletes": ["pickup-1"],
+		}
+	)
+
+	assert_true(applied)
+	assert_false(world_lane_state.ships.has("ship-1"))
+	assert_false(world_lane_state.bullets.has("bullet-1"))
+	assert_false(world_lane_state.asteroids.has("asteroid-1"))
+	assert_false(world_lane_state.pickups.has("pickup-1"))
+
+
+func test_world_delta_applies_valid_arrays_normally() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [_ship_packet("ship-1", 10, 20)],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [_ship_packet("ship-2", 30, 40)],
+			"ship_updates": [_ship_packet("ship-1", 11, 21)],
+			"ship_deletes": [],
+			"bullet_creates": [_bullet_packet("bullet-1", 5, 6)],
+			"bullet_updates": [],
+			"bullet_deletes": [],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	assert_true(applied)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 11)
+	assert_eq(world_lane_state.ships["ship-2"]["x"], 30)
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
+
+
 func test_world_delta_rejected_when_unsynced() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
