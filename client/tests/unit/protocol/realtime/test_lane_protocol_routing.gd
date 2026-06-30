@@ -33,7 +33,7 @@ func test_lowercase_lane_fixtures_route_directly() -> void:
 	router.route_lane_packet(world_packet)
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
 
-	var overlay_packet = _decode_fixture("{\"type\":\"overlay_full\",\"lane\":\"overlay\",\"sequence\":2,\"baseline_id\":\"overlay-baseline-1\",\"snapshot_id\":\"overlay-snapshot-1\",\"chunk_index\":0,\"chunk_count\":1,\"is_final_chunk\":true,\"self_id\":\"player-1\",\"lives\":3,\"score\":120,\"respawn\":{\"delay\":2},\"primary_weapon_id\":\"laser\",\"primary_ammo_policy\":\"finite\",\"primary_cooldown_remaining\":1.5,\"primary_ammo_remaining\":9,\"secondary_weapon_id\":\"burst\",\"secondary_ammo_policy\":\"infinite\",\"secondary_cooldown_remaining\":0.5,\"secondary_ammo_remaining\":99}")
+	var overlay_packet = _decode_fixture("{\"type\":\"overlay_full\",\"lane\":\"overlay\",\"sequence\":2,\"baseline_id\":\"overlay-baseline-1\",\"snapshot_id\":\"overlay-snapshot-1\",\"chunk_index\":0,\"chunk_count\":1,\"is_final_chunk\":true,\"self_id\":\"player-1\",\"lives\":3,\"score\":120,\"respawn_cooldown\":2,\"primary_weapon_id\":\"laser\",\"primary_ammo_policy\":\"finite\",\"primary_cooldown_remaining\":1.5,\"primary_ammo_remaining\":9,\"secondary_weapon_id\":\"burst\",\"secondary_ammo_policy\":\"infinite\",\"secondary_cooldown_remaining\":0.5,\"secondary_ammo_remaining\":99}")
 	assert_eq(overlay_packet["type"], "overlay_full")
 	router.route_lane_packet(overlay_packet)
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_OVERLAY))

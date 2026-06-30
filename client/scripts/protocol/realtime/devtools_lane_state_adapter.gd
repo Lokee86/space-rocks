@@ -2,30 +2,36 @@ extends RefCounted
 
 func build_state(router) -> Dictionary:
 	var state := {
-		"self_id": "",
-		"server_players": {},
-		"player_sessions": {},
-		"server_asteroids": {},
-		"server_bullets": {},
-		"server_pickups": {},
-		"player_lifecycle": {},
+		"world": {
+			"ships": {},
+			"asteroids": {},
+			"bullets": {},
+			"pickups": {},
+		},
+		"session": {
+			"players": {},
+			"player_lifecycle": {},
+		},
+		"overlay": {
+			"self_id": "",
+		},
 	}
 
 	if router == null:
 		return state
 
 	if router.overlay_lane_state != null and router.overlay_lane_state.self_id != null:
-		state["self_id"] = str(router.overlay_lane_state.self_id)
+		state["overlay"]["self_id"] = str(router.overlay_lane_state.self_id)
 
 	if router.world_lane_state != null:
-		state["server_players"] = _duplicate_dictionary(router.world_lane_state.ships)
-		state["server_asteroids"] = _duplicate_dictionary(router.world_lane_state.asteroids)
-		state["server_bullets"] = _duplicate_dictionary(router.world_lane_state.bullets)
-		state["server_pickups"] = _duplicate_dictionary(router.world_lane_state.pickups)
+		state["world"]["ships"] = _duplicate_dictionary(router.world_lane_state.ships)
+		state["world"]["asteroids"] = _duplicate_dictionary(router.world_lane_state.asteroids)
+		state["world"]["bullets"] = _duplicate_dictionary(router.world_lane_state.bullets)
+		state["world"]["pickups"] = _duplicate_dictionary(router.world_lane_state.pickups)
 
 	if router.session_lane_state != null:
-		state["player_sessions"] = _duplicate_dictionary(router.session_lane_state.player_sessions)
-		state["player_lifecycle"] = _duplicate_dictionary(router.session_lane_state.player_lifecycle)
+		state["session"]["players"] = _duplicate_dictionary(router.session_lane_state.player_sessions)
+		state["session"]["player_lifecycle"] = _duplicate_dictionary(router.session_lane_state.player_lifecycle)
 
 	return state
 

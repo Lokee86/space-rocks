@@ -475,6 +475,7 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 		t.Fatalf("write set target player request: %v", err)
 	}
 	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "player", snapshot.LocalPlayerID)
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "player", snapshot.LocalPlayerID)
 	setKind, setID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
 	if setKind != "player" {
 		t.Fatalf("expected target_kind %q, got %q", "player", setKind)
@@ -490,6 +491,7 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("write clear target player request: %v", err)
 	}
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "", "")
 	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "", "")
 	clearedKind, clearedID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
 	if clearedKind != "" {
@@ -536,6 +538,7 @@ func TestSelectTargetAtPositionRequestRoutesToServerTargetSelection(t *testing.T
 		t.Fatalf("write select target at position request: %v", err)
 	}
 
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "player", snapshot.LocalPlayerID)
 	targetKind, targetID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
 	if targetKind != "player" {
 		t.Fatalf("expected target_kind %q, got %q", "player", targetKind)
@@ -580,6 +583,7 @@ func TestClearTargetRequestClearsGenericTarget(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("write select target at position request: %v", err)
 	}
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "player", snapshot.LocalPlayerID)
 	setKind, setID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
 	if setKind != "player" {
 		t.Fatalf("expected target_kind %q, got %q", "player", setKind)
@@ -593,6 +597,7 @@ func TestClearTargetRequestClearsGenericTarget(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("write clear target request: %v", err)
 	}
+	waitForPlayerTarget(t, room, snapshot.LocalPlayerID, "", "")
 	clearedKind, clearedID, _, _ := playerPresentationForRoom(t, room, snapshot.LocalPlayerID)
 	if clearedKind != "" {
 		t.Fatalf("expected cleared target_kind to be empty, got %q", clearedKind)

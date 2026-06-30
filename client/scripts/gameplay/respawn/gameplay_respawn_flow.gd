@@ -57,22 +57,22 @@ func is_awaiting_confirmation() -> bool:
 
 
 func should_restore_alive_hud(
-	state: Dictionary,
+	world_ships: Dictionary,
+	player_lifecycle: Dictionary,
+	self_id: String,
 	player,
 	has_stale_dead_presentation := false
 ) -> bool:
 	if !awaiting_respawn_confirmation && !has_stale_dead_presentation:
 		return false
 
-	if !PlayerLifecycle.is_player_active(state["player_lifecycle"], state["self_id"]):
+	if !PlayerLifecycle.is_player_active(player_lifecycle, self_id):
 		return false
 
-	var server_players: Dictionary = state["server_players"]
-	var self_id: String = state["self_id"]
-	if !server_players.has(self_id):
+	if !world_ships.has(self_id):
 		return false
 
-	var self_state = server_players[self_id]
+	var self_state = world_ships[self_id]
 	var has_valid_server_state := false
 	if self_state is Dictionary:
 		var self_state_dictionary: Dictionary = self_state

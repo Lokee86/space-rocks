@@ -21,13 +21,6 @@ func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
 		return wireLaneDelta(candidate.Delta)
 	}
 
-	if candidate.Full != nil {
-		if packet, ok := candidate.Full.(map[string]any); ok {
-			return packet
-		}
-		return wireStructToMap(candidate.Full)
-	}
-
 	return map[string]any{}
 }
 
@@ -44,9 +37,6 @@ func wireOverlayFullPacket(packet OverlayFullPacket) map[string]any {
 	wire := wireMetadataPacket(packet.Type, packet.Metadata)
 	for key, value := range wireStructToMap(packet.Receiver) {
 		wire[key] = value
-	}
-	if respawnCooldown, ok := wire["respawn_cooldown"]; ok {
-		wire["respawn"] = respawnCooldown
 	}
 	return wire
 }
@@ -91,15 +81,12 @@ func wireLaneDelta(delta any) map[string]any {
 		}
 	case SessionLaneDelta:
 		return map[string]any{
-			"players":         wireRecords(packet.Players.Creates),
+			"players":          wireRecords(packet.Players.Creates),
 			"player_lifecycle": wireRecords(packet.PlayerLifecycle.Creates),
 			"total_asteroids":  firstSessionTotalAsteroids(packet.TotalAsteroids),
 		}
 	default:
-		if packet, ok := delta.(map[string]any); ok {
-			return packet
-		}
-		return wireStructToMap(delta)
+		return map[string]any{}
 	}
 }
 

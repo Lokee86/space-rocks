@@ -16,7 +16,6 @@ type PacketMetricRecord struct {
 	BudgetTarget    int
 	BudgetStatus    string
 	SendReason      string
-	ShadowVsSent    string
 	ChunkDecision   string
 	ResyncDecision  string
 }
@@ -27,5 +26,5 @@ func (r PacketMetricRecord) Clone() PacketMetricRecord {
 }
 
 func NewPacketMetricRecord() PacketMetricRecord {
-	return PacketMetricRecord{ShadowVsSent: "shadow"}
+	return PacketMetricRecord{}
 }

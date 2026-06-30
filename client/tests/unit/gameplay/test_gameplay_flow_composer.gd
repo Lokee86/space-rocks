@@ -23,20 +23,6 @@ class FakeInputContext:
 		configure_spectate_routes_call_count += 1
 
 
-class FakeGameplayStateApplyFlow:
-	var apply_state_call_count := 0
-	var last_state = null
-	var last_required_lane_baselines_synced = null
-	var gameplay_readiness = null
-	var return_result := GameplayStateApplyResult.new()
-
-	func apply_state(state: Dictionary, required_lane_baselines_synced: bool) -> GameplayStateApplyResult:
-		apply_state_call_count += 1
-		last_state = state
-		last_required_lane_baselines_synced = required_lane_baselines_synced
-		return return_result
-
-
 class FakeProcessFlow:
 	var process_call_count := 0
 	var last_delta := -1.0
@@ -122,36 +108,6 @@ func _tracked(node: Node) -> Node:
 	return node
 
 
-func test_apply_gameplay_state_delegates_to_injected_flow() -> void:
-	var composer = GameplayFlowComposer.new()
-	var fake_state_apply_flow = FakeGameplayStateApplyFlow.new()
-	fake_state_apply_flow.return_result.gameplay_ready = true
-	fake_state_apply_flow.return_result.started_gameplay = true
-	composer.configure(
-		null,
-		_tracked(Node2D.new()),
-		_tracked(Player.new()),
-		null,
-		null,
-		FakeRuntimeContext.new(),
-		null,
-		null,
-		null,
-		fake_state_apply_flow,
-		null
-	)
-
-	var state := {"phase": 9}
-	var result: GameplayStateApplyResult = composer.apply_gameplay_state(state, false)
-
-	assert_eq(fake_state_apply_flow.apply_state_call_count, 1)
-	assert_eq(fake_state_apply_flow.last_state, state)
-	assert_eq(fake_state_apply_flow.last_required_lane_baselines_synced, false)
-	assert_eq(result, fake_state_apply_flow.return_result)
-	assert_true(result.gameplay_ready)
-	assert_true(result.started_gameplay)
-
-
 func test_handle_unhandled_input_delegates_to_injected_input_context() -> void:
 	var composer = GameplayFlowComposer.new()
 	var fake_input_context = FakeInputContext.new()
@@ -164,7 +120,6 @@ func test_handle_unhandled_input_delegates_to_injected_input_context() -> void:
 		FakeRuntimeContext.new(),
 		null,
 		fake_input_context,
-		null,
 		null,
 		null
 	)
@@ -206,7 +161,6 @@ func test_process_delegates_to_injected_process_flow() -> void:
 		null,
 		null,
 		null,
-		null,
 		fake_process_flow
 	)
 
@@ -225,12 +179,7 @@ func test_reset_calls_owned_flow_resets() -> void:
 		_tracked(Player.new()),
 		null,
 		null,
-		FakeRuntimeContext.new(),
-		null,
-		null,
-		null,
-		null,
-		null
+		FakeRuntimeContext.new()
 	)
 	composer.input_context = FakeResettableFlow.new()
 	composer.event_lifecycle_flow = FakeResettableFlow.new()
@@ -261,7 +210,6 @@ func test_configure_creates_core_owned_flows() -> void:
 		null,
 		FakeInputContext.new(),
 		FakeDevtoolsContext.new(),
-		FakeGameplayStateApplyFlow.new(),
 		FakeProcessFlow.new()
 	)
 
@@ -271,50 +219,13 @@ func test_configure_creates_core_owned_flows() -> void:
 	assert_not_null(composer.pointer_position_provider)
 	assert_not_null(composer.input_context)
 	assert_not_null(composer.devtools_context)
-	assert_not_null(composer.gameplay_state_apply_flow)
-
-
-func test_configure_uses_current_signature_and_owns_core_flows() -> void:
-	var composer = GameplayFlowComposer.new()
-	var hud := _tracked(Control.new())
-	var hud_flow := GameplayHudFlow.new()
-	hud_flow.configure(hud)
-	var menu_flow := RefCounted.new()
-	var scene_root := Node2D.new()
-	var player := Player.new()
-	var runtime_context := FakeRuntimeContext.new()
-	var fake_input_context = FakeInputContext.new()
-	var fake_devtools_context = FakeDevtoolsContext.new()
-	var fake_gameplay_state_apply_flow = FakeGameplayStateApplyFlow.new()
-	var fake_process_flow = FakeProcessFlow.new()
-
-	composer.configure(
-		null,
-		_tracked(scene_root),
-		_tracked(player),
-		hud_flow,
-		menu_flow,
-		runtime_context,
-		null,
-		fake_input_context,
-		fake_devtools_context,
-		fake_gameplay_state_apply_flow,
-		fake_process_flow
-	)
-
-	assert_not_null(composer.event_lifecycle_flow)
-	assert_not_null(composer.alive_restore_flow)
-	assert_not_null(composer.targeting_context)
-	assert_not_null(composer.input_context)
-	assert_not_null(composer.devtools_context)
-	assert_not_null(composer.gameplay_state_apply_flow)
 	assert_not_null(composer.server_hitbox_overlay_flow)
+
 
 func test_apply_devtools_gameplay_state_forwards_lane_state_to_hitbox_overlay_flow() -> void:
 	var composer = GameplayFlowComposer.new()
 	var fake_input_context = FakeInputContext.new()
 	var fake_devtools_context = FakeDevtoolsContext.new()
-	var fake_gameplay_state_apply_flow = FakeGameplayStateApplyFlow.new()
 	var fake_process_flow = FakeProcessFlow.new()
 	var runtime_context := FakeRuntimeContext.new()
 	var readiness := GameplayReadiness.new()
@@ -336,11 +247,8 @@ func test_apply_devtools_gameplay_state_forwards_lane_state_to_hitbox_overlay_fl
 		null,
 		fake_input_context,
 		fake_devtools_context,
-		fake_gameplay_state_apply_flow,
 		fake_process_flow
 	)
-	composer.configure_gameplay_readiness(readiness)
-	assert_eq(fake_gameplay_state_apply_flow.gameplay_readiness, readiness)
 	composer.apply_debug_shape_catalog_packet({
 		"shapes": {
 			"player:v_wing": {
@@ -358,17 +266,19 @@ func test_apply_devtools_gameplay_state_forwards_lane_state_to_hitbox_overlay_fl
 
 	var state := {
 		"self_id": "player-1",
-		"server_players": {
-			"player-1": {"ship_type": "v_wing", "x": 10.0, "y": 20.0, "rotation": 0.0},
-		},
-		"server_asteroids": {
-			"asteroid-1": {"x": 30.0, "y": 40.0, "variant": 1, "scale": 1.0},
-		},
-		"server_bullets": {
-			"bullet-1": {"x": 50.0, "y": 60.0, "rotation": 0.0},
-		},
-		"server_pickups": {
-			"pickup-1": {"x": 70.0, "y": 80.0},
+		"world": {
+			"ships": {
+				"player-1": {"ship_type": "v_wing", "x": 10.0, "y": 20.0, "rotation": 0.0},
+			},
+			"asteroids": {
+				"asteroid-1": {"x": 30.0, "y": 40.0, "variant": 1, "scale": 1.0},
+			},
+			"bullets": {
+				"bullet-1": {"x": 50.0, "y": 60.0, "rotation": 0.0},
+			},
+			"pickups": {
+				"pickup-1": {"x": 70.0, "y": 80.0},
+			},
 		},
 	}
 

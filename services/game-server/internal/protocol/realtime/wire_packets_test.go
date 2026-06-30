@@ -123,6 +123,8 @@ func TestActiveWirePacketEncodingUsesLowercaseOverlayShape(t *testing.T) {
 
 	assertStringValue(t, wire, "type", PacketFamilyOverlayFull)
 	assertStringValue(t, wire, "self_id", "player-1")
+	assertContainsKey(t, wire, "respawn_cooldown")
+	assertNotContainsKey(t, wire, "respawn")
 	assertNotContainsKey(t, wire, "Receiver")
 }
 
@@ -234,6 +236,24 @@ func TestActiveWirePacketEncodingUsesLowercaseEventShape(t *testing.T) {
 	assertFloatValue(t, shipDeath, "y", 5)
 	assertStringValue(t, shipDeath, "source_id", "ship-2")
 	assertStringValue(t, shipDeath, "effect_type", "death")
+}
+
+func TestWireLanePacketDropsUnsupportedFullPayloads(t *testing.T) {
+	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: map[string]any{"type": "world_full"}}); len(wire) != 0 {
+		t.Fatalf("expected unsupported full map payload to be dropped, got %#v", wire)
+	}
+	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: struct{ Type string }{Type: "world_full"}}); len(wire) != 0 {
+		t.Fatalf("expected unsupported full struct payload to be dropped, got %#v", wire)
+	}
+}
+
+func TestWireLanePacketDropsUnsupportedDeltaPayloads(t *testing.T) {
+	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: map[string]any{"ship_creates": []any{}}}); len(wire) != 0 {
+		t.Fatalf("expected unsupported delta map payload to be dropped, got %#v", wire)
+	}
+	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: struct{ ShipCreates []any }{ShipCreates: []any{}}}); len(wire) != 0 {
+		t.Fatalf("expected unsupported delta struct payload to be dropped, got %#v", wire)
+	}
 }
 
 func mustEncodeWirePacket(t *testing.T, candidate RealtimeLaneCandidate) []byte {

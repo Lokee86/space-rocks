@@ -36,21 +36,6 @@ func show_gameplay() -> void:
 	_hide_hud_child("RoomID")
 
 
-func apply_gameplay_state_summary(state: Dictionary) -> void:
-	show_gameplay()
-	if state.get("has_lives", false):
-		apply_lives(int(state.get("lives", 0)))
-	var player_sessions: Dictionary = state.get("player_sessions", {})
-	var self_id: String = str(state.get("self_id", ""))
-	var self_session_state = player_sessions.get(self_id, {})
-	if self_session_state is Dictionary and self_session_state.has(Packets.FIELD_SCORE):
-		apply_score(int(self_session_state.get(Packets.FIELD_SCORE, 0)))
-	var server_players: Dictionary = state.get("server_players", {})
-	var self_player_state = server_players.get(self_id, {})
-	if self_player_state is Dictionary:
-		loadout_display_flow.apply_player_state(self_player_state)
-
-
 func apply_overlay_lane_state(overlay_lane_state) -> void:
 	if overlay_lane_state == null:
 		return

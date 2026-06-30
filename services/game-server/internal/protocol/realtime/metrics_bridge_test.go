@@ -17,7 +17,7 @@ func TestSendPlanSummaryToPacketMetricRecordMapsCountsAndBudgets(t *testing.T) {
 		DeleteCount:     1,
 	}
 
-	record := summary.ToPacketMetricRecord(PacketFamilyWorldDelta, LaneWorld, "high", 500, "within_budget", "shadow")
+	record := summary.ToPacketMetricRecord(PacketFamilyWorldDelta, LaneWorld, "high", 500, "within_budget")
 
 	if record.PacketFamily != PacketFamilyWorldDelta || record.Lane != string(LaneWorld) {
 		t.Fatalf("record = %#v, want packet family and lane preserved", record)
@@ -30,14 +30,6 @@ func TestSendPlanSummaryToPacketMetricRecordMapsCountsAndBudgets(t *testing.T) {
 	}
 	if record.BudgetTarget != 500 || record.BudgetStatus != "within_budget" {
 		t.Fatalf("budget fields = %#v, want preserved", record)
-	}
-	if record.ShadowVsSent != "shadow" {
-		t.Fatalf("shadow_vs_sent = %q, want shadow", record.ShadowVsSent)
-	}
-
-	sent := summary.ToPacketMetricRecord(PacketFamilyWorldDelta, LaneWorld, "high", 500, "within_budget", "sent")
-	if sent.ShadowVsSent != "sent" {
-		t.Fatalf("shadow_vs_sent = %q, want sent", sent.ShadowVsSent)
 	}
 
 	_ = packetmetrics.PacketMetricRecord{}

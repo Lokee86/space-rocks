@@ -100,7 +100,7 @@ Client constants use nested subcategory sections under
 `constants.client.presentation.*`, `constants.client.shell.*`, and
 `constants.client.lobby.*`.
 
-New constants and packet schema changes should be made in TOML. Language files are generated from TOML through `-push`.
+New constants and packet schema changes should be made in TOML. Active gameplay packet output is lane-native, and language files are generated from TOML through `-push`.
 
 ## Commands
 
@@ -272,13 +272,13 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-structs = ["ClientPacket", "EventState", "StatePacket"]
+structs = ["ClientPacket", "EventState", "WorldFullPacket"]
 
 [outputs.imports]
 runtime = "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 
 [[structs]]
-id = "StatePacket"
+id = "WorldFullPacket"
 
 [[structs.fields]]
 name = "players"
@@ -295,8 +295,8 @@ type = "array"
 item_type = "EventState"
 
 [[packet_types]]
-id = "state"
-value = "state"
+id = "world_full"
+value = "world_full"
 
 [[builders]]
 id = "input_packet"

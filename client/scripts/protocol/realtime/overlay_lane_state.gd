@@ -3,7 +3,7 @@ extends RefCounted
 var self_id = null
 var lives = null
 var score = null
-var respawn = null
+var respawn_cooldown = null
 var primary_weapon_id = null
 var secondary_weapon_id = null
 var primary_ammo_policy = null
@@ -17,7 +17,7 @@ func clear_overlay() -> void:
 	self_id = null
 	lives = null
 	score = null
-	respawn = null
+	respawn_cooldown = null
 	primary_weapon_id = null
 	secondary_weapon_id = null
 	primary_ammo_policy = null
@@ -41,8 +41,8 @@ func _apply_overlay_fields(overlay_packet: Dictionary) -> void:
 		lives = overlay_packet.get("lives")
 	if overlay_packet.has("score"):
 		score = overlay_packet.get("score")
-	if overlay_packet.has("respawn"):
-		respawn = overlay_packet.get("respawn")
+	if overlay_packet.has("respawn_cooldown"):
+		respawn_cooldown = overlay_packet.get("respawn_cooldown")
 	if overlay_packet.has("primary_weapon_id"):
 		primary_weapon_id = overlay_packet.get("primary_weapon_id")
 	if overlay_packet.has("secondary_weapon_id"):

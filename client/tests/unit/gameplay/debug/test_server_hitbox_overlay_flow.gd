@@ -40,12 +40,14 @@ func test_process_draws_player_hitbox_from_catalog_and_gameplay_state() -> void:
 		}
 	})
 	flow.apply_gameplay_state({
-		"server_players": {
-			"player-1": {
-				"ship_type": "v_wing",
-				"x": 10.0,
-				"y": 20.0,
-				"rotation": 0.0,
+		"world": {
+			"ships": {
+				"player-1": {
+					"ship_type": "v_wing",
+					"x": 10.0,
+					"y": 20.0,
+					"rotation": 0.0,
+				}
 			}
 		}
 	})
@@ -66,12 +68,14 @@ func test_process_uses_no_entries_when_catalog_missing() -> void:
 	flow.configure(null, world_sync)
 	flow.overlay = overlay
 	flow.apply_gameplay_state({
-		"server_players": {
-			"player-1": {
-				"ship_type": "v_wing",
-				"x": 10.0,
-				"y": 20.0,
-				"rotation": 0.0,
+		"world": {
+			"ships": {
+				"player-1": {
+					"ship_type": "v_wing",
+					"x": 10.0,
+					"y": 20.0,
+					"rotation": 0.0,
+				}
 			}
 		}
 	})

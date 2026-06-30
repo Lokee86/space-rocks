@@ -3,17 +3,21 @@ extends GutTest
 const WorldTelemetryMetrics = preload("res://scripts/devtools/telemetry/world_telemetry_metrics.gd")
 
 
-func test_counts_players_asteroids_and_bullets_from_server_dictionaries() -> void:
+func test_counts_players_asteroids_pickups_and_bullets_from_lane_native_dictionaries() -> void:
 	var metrics := WorldTelemetryMetrics.new()
 
 	metrics.apply_gameplay_state({
-		"server_players": {"p1": {}, "p2": {}},
-		"server_asteroids": {"a1": {}, "a2": {}, "a3": {}},
-		"server_bullets": {"b1": {}},
+		"world": {
+			"ships": {"p1": {}, "p2": {}},
+			"asteroids": {"a1": {}, "a2": {}, "a3": {}},
+			"pickups": {"pk1": {}},
+			"bullets": {"b1": {}},
+		},
 	})
 
 	assert_eq(metrics.players, 2)
 	assert_eq(metrics.asteroids, 3)
+	assert_eq(metrics.pickups, 1)
 	assert_eq(metrics.bullets, 1)
 
 
@@ -42,15 +46,19 @@ func test_missing_or_non_dictionary_sources_result_in_zero_counts() -> void:
 	var metrics := WorldTelemetryMetrics.new()
 
 	metrics.apply_gameplay_state({
-		"server_players": ["not", "a", "dictionary"],
-		"server_asteroids": 42,
-		"server_bullets": null,
+		"world": {
+			"ships": ["not", "a", "dictionary"],
+			"asteroids": 42,
+			"pickups": null,
+			"bullets": false,
+		},
 		"server_enemies": "invalid",
 		"enemies": false,
 	})
 
 	assert_eq(metrics.players, 0)
 	assert_eq(metrics.asteroids, 0)
+	assert_eq(metrics.pickups, 0)
 	assert_eq(metrics.bullets, 0)
 	assert_eq(metrics.enemies, 0)
 

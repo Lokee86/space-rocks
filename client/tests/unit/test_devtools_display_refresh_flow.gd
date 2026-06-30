@@ -47,16 +47,21 @@ func test_refresh_gameplay_state_forwards_game_target_state_to_window_controller
 
 	flow.refresh_gameplay_state({
 		"self_id": "Player-1",
-		"server_players": {
-			"Player-1": {
-				"target_kind": "player",
-				"target_id": "Player-2",
+		"world": {
+			"ships": {
+				"Player-1": {
+					"target_kind": "player",
+					"target_id": "Player-2",
+				},
+				"Player-2": {},
 			},
-			"Player-2": {},
 		},
-		"player_lifecycle": {
-			"Player-1": "active",
-			"Player-2": "active",
+		"session": {
+			"players": {},
+			"player_lifecycle": {
+				"Player-1": "active",
+				"Player-2": "active",
+			},
 		},
 		"debug_statuses": {},
 	})
@@ -77,17 +82,22 @@ func test_refresh_gameplay_state_forwards_target_kind_target_id_and_raw_target_s
 	}
 	flow.refresh_gameplay_state({
 		"self_id": "Player-1",
-		"server_players": {
-			"Player-1": {
-				"target_kind": "asteroid",
-				"target_id": "asteroid-3",
+		"world": {
+			"ships": {
+				"Player-1": {
+					"target_kind": "asteroid",
+					"target_id": "asteroid-3",
+				},
+			},
+			"asteroids": {
+				"asteroid-3": expected_target_state,
 			},
 		},
-		"server_asteroids": {
-			"asteroid-3": expected_target_state,
-		},
-		"player_lifecycle": {
-			"Player-1": "active",
+		"session": {
+			"players": {},
+			"player_lifecycle": {
+				"Player-1": "active",
+			},
 		},
 		"debug_statuses": {},
 	})
@@ -104,31 +114,35 @@ func test_refresh_gameplay_state_defaults_to_lane_sources_when_selectors_missing
 
 	flow.refresh_gameplay_state({
 		"self_id": "Player-1",
-		"server_players": {
-			"Player-1": {
-				"target_kind": "player",
-				"target_id": "Player-2",
-			},
-			"Player-2": {
-				"score": 7,
-				"lives": 2,
-			},
-		},
-		"player_sessions": {
-			"Player-1": {
-				"id": "Player-1",
-				"score": 9,
-				"lives": 3,
-			},
-			"Player-2": {
-				"id": "Player-2",
-				"score": 11,
-				"lives": 1,
+		"world": {
+			"ships": {
+				"Player-1": {
+					"target_kind": "player",
+					"target_id": "Player-2",
+				},
+				"Player-2": {
+					"score": 7,
+					"lives": 2,
+				},
 			},
 		},
-		"player_lifecycle": {
-			"Player-1": "active",
-			"Player-2": "active",
+		"session": {
+			"players": {
+				"Player-1": {
+					"id": "Player-1",
+					"score": 9,
+					"lives": 3,
+				},
+				"Player-2": {
+					"id": "Player-2",
+					"score": 11,
+					"lives": 1,
+				},
+			},
+			"player_lifecycle": {
+				"Player-1": "active",
+				"Player-2": "active",
+			},
 		},
 		"debug_statuses": {},
 	})
