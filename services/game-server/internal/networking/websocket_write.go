@@ -71,7 +71,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 	}
 
 	drainedEventCount := 0
-	for _, candidate := range result.Candidates {
+	for _, candidate := range result.SelectedCandidates {
 		encodedPacket := result.EncodedPackets[candidate.Lane]
 		if len(encodedPacket) == 0 {
 			continue
@@ -161,12 +161,13 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		logging.FieldPlayerID, session.currentGamePlayerID,
 		logging.FieldRemoteAddr, remoteAddr,
 		"lane_packet_families", lanePacketFamilySummary(result.MetricSummaries),
-		"baseline_full_count", countLaneCandidateKinds(result.Candidates, realtime.RealtimeLaneCandidateKindFull),
+		"baseline_full_count", countLaneCandidateKinds(result.SelectedCandidates, realtime.RealtimeLaneCandidateKindFull),
 		"baseline_chunk_count", 0,
 		"delta_blocked_count", len(result.SendPlan.Deferred),
 		"event_batch_written", len(result.EventBatchEventIDs) > 0,
 		"event_batch_drained_count", drainedEventCount,
 		"candidate_count", len(result.Candidates),
+		"included_count", len(result.SelectedCandidates),
 		"packet_count", len(result.MetricSummaries),
 		"encoded_bytes", result.TotalEncodedBytes,
 	)
@@ -202,7 +203,6 @@ func drainActiveEventBatchAfterWrite(gameInstance *game.Game, playerID string, e
 
 	return gameInstance.DrainPendingPresentationEvents(playerID, eventIDs...)
 }
-
 
 func maybeWriteDebugShapeCatalog(session *webSocketSession, remoteAddr string) bool {
 	if session == nil || session.room == nil {

@@ -10,18 +10,19 @@ import (
 )
 
 type ActiveRealtimeResult struct {
-	Snapshot          game.GameplayPresentationSnapshot
-	SessionState      RealtimeSessionState
-	Candidates        []RealtimeLaneCandidate
-	PlannedRecords    []ScheduleRecord
-	SendPlan          SendPlan
-	MetricRecord      packetmetrics.PacketMetricRecord
-	MetricSummaries   []packetmetrics.PacketMetricRecord
-	EncodedPackets    map[Lane][]byte
-	EncodedBytes      map[Lane]int
+	Snapshot           game.GameplayPresentationSnapshot
+	SessionState       RealtimeSessionState
+	Candidates         []RealtimeLaneCandidate
+	SelectedCandidates []RealtimeLaneCandidate
+	PlannedRecords     []ScheduleRecord
+	SendPlan           SendPlan
+	MetricRecord       packetmetrics.PacketMetricRecord
+	MetricSummaries    []packetmetrics.PacketMetricRecord
+	EncodedPackets     map[Lane][]byte
+	EncodedBytes       map[Lane]int
 	EventBatchEventIDs []string
-	TotalEncodedBytes int
-	Mode              string
+	TotalEncodedBytes  int
+	Mode               string
 }
 
 func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, state RealtimeSessionState) (ActiveRealtimeResult, error) {
@@ -32,9 +33,10 @@ func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, 
 
 func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) ActiveRealtimeResult {
 	prepared := prepareRealtimeSendPlan(snapshot, state)
-	encodedPackets := make(map[Lane][]byte, len(prepared.CandidatePlan.Candidates))
-	encodedBytes := make(map[Lane]int, len(prepared.CandidatePlan.Candidates))
-	for _, candidate := range prepared.CandidatePlan.Candidates {
+	selectedCandidates := IncludedRealtimeLaneCandidates(prepared.CandidatePlan.Candidates, prepared.SendPlan.Included)
+	encodedPackets := make(map[Lane][]byte, len(selectedCandidates))
+	encodedBytes := make(map[Lane]int, len(selectedCandidates))
+	for _, candidate := range selectedCandidates {
 		encodedPacket, recordedBytes := encodeLanePacket(candidate)
 		if recordedBytes > 0 {
 			encodedPackets[candidate.Lane] = encodedPacket
@@ -43,15 +45,16 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 	}
 
 	result := ActiveRealtimeResult{
-		Snapshot:         snapshot,
-		SessionState:     state,
-		Candidates:       prepared.CandidatePlan.Candidates,
-		PlannedRecords:   prepared.Records,
-		SendPlan:         prepared.SendPlan,
-		EncodedPackets:   encodedPackets,
-		EncodedBytes:     encodedBytes,
+		Snapshot:           snapshot,
+		SessionState:       state,
+		Candidates:         prepared.CandidatePlan.Candidates,
+		SelectedCandidates: selectedCandidates,
+		PlannedRecords:     prepared.Records,
+		SendPlan:           prepared.SendPlan,
+		EncodedPackets:     encodedPackets,
+		EncodedBytes:       encodedBytes,
 		EventBatchEventIDs: activeEventBatchEventIDs(snapshot.PendingEvents),
-		Mode:             "active",
+		Mode:               "active",
 	}
 	result.MetricRecord = result.SendPlan.Summary.ToPacketMetricRecord("active", LaneWorld, "unspecified", HardCapBytes, "sent")
 	totalEncodedBytes := 0
@@ -66,9 +69,34 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 	return result
 }
 
+func IncludedRealtimeLaneCandidates(candidates []RealtimeLaneCandidate, included []ScheduleRecord) []RealtimeLaneCandidate {
+	if len(candidates) == 0 || len(included) == 0 {
+		return nil
+	}
+
+	selected := make([]RealtimeLaneCandidate, 0, len(included))
+	seen := make(map[int]struct{}, len(included))
+	for _, record := range included {
+		index := record.CandidateIndex
+		if index < 0 || index >= len(candidates) {
+			continue
+		}
+		if _, ok := seen[index]; ok {
+			continue
+		}
+		seen[index] = struct{}{}
+		selected = append(selected, candidates[index])
+	}
+
+	if len(selected) == 0 {
+		return nil
+	}
+	return selected
+}
+
 func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.PacketMetricRecord {
-	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.Candidates))
-	for _, candidate := range result.Candidates {
+	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.SelectedCandidates))
+	for _, candidate := range result.SelectedCandidates {
 		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane, "unspecified", HardCapBytes, "sent")
 		record.Bytes = result.EncodedBytes[candidate.Lane]
 		records = append(records, record)

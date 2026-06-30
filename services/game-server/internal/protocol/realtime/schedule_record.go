@@ -3,6 +3,7 @@ package realtime
 // ScheduleRecord captures a single realtime send-plan decision for later metrics.
 type ScheduleRecord struct {
 	Lane            Lane
+	CandidateIndex  int
 	PacketFamily    string
 	RecordKind      string
 	EntityFamily    string
@@ -63,3 +64,5 @@ func (r ScheduleRecord) Summary() ScheduleSummary {
 
 	return summary
 }
+
+
