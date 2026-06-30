@@ -1,23 +1,17 @@
 extends RefCounted
 
-const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
-
 const LOCAL_PLAYER_ID := "local-player"
 const REMOTE_PLAYER_ID := "remote-player"
 const ASTEROID_ID := "asteroid-1"
 const BULLET_ID := "bullet-1"
 
 
-static func state() -> Dictionary:
-	return snapshot()
-
-
 static func snapshot() -> Dictionary:
 	return {
-		Packets.FIELD_SELF_ID: LOCAL_PLAYER_ID,
-		Packets.FIELD_PLAYERS: players(),
-		Packets.FIELD_ASTEROIDS: asteroids(),
-		Packets.FIELD_BULLETS: bullets(),
+		"self_id": LOCAL_PLAYER_ID,
+		"players": players(),
+		"asteroids": asteroids(),
+		"bullets": bullets(),
 	}
 
 
@@ -42,27 +36,27 @@ static func bullets() -> Dictionary:
 
 static func player_state(x: float, y: float, rotation: float, score: int = 0) -> Dictionary:
 	return {
-		Packets.FIELD_X: x,
-		Packets.FIELD_Y: y,
-		Packets.FIELD_ROTATION: rotation,
-		Packets.FIELD_SCORE: score,
+		"x": x,
+		"y": y,
+		"rotation": rotation,
+		"score": score,
 	}
 
 
 static func asteroid_state(x: float, y: float, variant: int, scale: float) -> Dictionary:
 	return {
-		Packets.FIELD_X: x,
-		Packets.FIELD_Y: y,
-		Packets.FIELD_VARIANT: variant,
-		Packets.FIELD_SCALE: scale,
+		"x": x,
+		"y": y,
+		"variant": variant,
+		"scale": scale,
 	}
 
 
 static func bullet_state(x: float, y: float, rotation: float) -> Dictionary:
 	return {
-		Packets.FIELD_X: x,
-		Packets.FIELD_Y: y,
-		Packets.FIELD_ROTATION: rotation,
-		Packets.FIELD_OWNER_ID: LOCAL_PLAYER_ID,
+		"x": x,
+		"y": y,
+		"rotation": rotation,
+		"owner_id": LOCAL_PLAYER_ID,
 	}
 

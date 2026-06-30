@@ -23,9 +23,9 @@ func TestHandleDebugClearBulletsRemovesAllBullets(t *testing.T) {
 		t.Fatalf("expected HandleCommand to return true")
 	}
 
-	packet := target.StatePacket(playerID)
-	if len(packet.Bullets) != 0 {
-		t.Fatalf("expected 0 bullets after clear, got %d", len(packet.Bullets))
+	snapshot := target.GameplayPresentationSnapshot(playerID)
+	if len(snapshot.Bullets) != 0 {
+		t.Fatalf("expected 0 bullets after clear, got %d", len(snapshot.Bullets))
 	}
 }
 
@@ -38,9 +38,9 @@ func TestHandleDebugClearBulletsIsSafeWhenEmpty(t *testing.T) {
 		t.Fatalf("expected HandleCommand to return true")
 	}
 
-	packet := target.StatePacket(playerID)
-	if len(packet.Bullets) != 0 {
-		t.Fatalf("expected 0 bullets after clear, got %d", len(packet.Bullets))
+	snapshot := target.GameplayPresentationSnapshot(playerID)
+	if len(snapshot.Bullets) != 0 {
+		t.Fatalf("expected 0 bullets after clear, got %d", len(snapshot.Bullets))
 	}
 }
 
@@ -71,13 +71,13 @@ func TestHandleDebugClearAsteroidsRemovesAllAsteroids(t *testing.T) {
 		t.Fatalf("expected HandleCommand to return true")
 	}
 
-	packet := target.StatePacket(playerID)
-	if len(packet.Asteroids) != 0 {
-		t.Fatalf("expected 0 asteroids after clear, got %d", len(packet.Asteroids))
+	snapshot := target.GameplayPresentationSnapshot(playerID)
+	if len(snapshot.Asteroids) != 0 {
+		t.Fatalf("expected 0 asteroids after clear, got %d", len(snapshot.Asteroids))
 	}
-	session, exists := packet.PlayerSessions[playerID]
+	session, exists := snapshot.PlayerSessions[playerID]
 	if !exists {
-		t.Fatalf("expected player session %q in state packet", playerID)
+		t.Fatalf("expected player session %q in gameplay snapshot", playerID)
 	}
 	if session.Score != 25 {
 		t.Fatalf("expected player score to remain 25, got %d", session.Score)
@@ -93,8 +93,8 @@ func TestHandleDebugClearAsteroidsIsSafeWhenEmpty(t *testing.T) {
 		t.Fatalf("expected HandleCommand to return true")
 	}
 
-	packet := target.StatePacket(playerID)
-	if len(packet.Asteroids) != 0 {
-		t.Fatalf("expected 0 asteroids after clear, got %d", len(packet.Asteroids))
+	snapshot := target.GameplayPresentationSnapshot(playerID)
+	if len(snapshot.Asteroids) != 0 {
+		t.Fatalf("expected 0 asteroids after clear, got %d", len(snapshot.Asteroids))
 	}
 }

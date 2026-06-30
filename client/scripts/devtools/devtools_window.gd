@@ -530,9 +530,9 @@ func _selected_telemetry_source(select: OptionButton) -> String:
 
 func _initialize_telemetry_source_select(select: OptionButton) -> void:
 	select.clear()
-	select.add_item("StatePacket.entities")
+	select.add_item("players")
 	select.set_item_metadata(0, TELEMETRY_SOURCE_PLAYERS)
-	select.add_item("StatePacket.player_world_states")
+	select.add_item("player_world_states")
 	select.set_item_metadata(1, TELEMETRY_SOURCE_PLAYER_WORLD_STATES)
 	select.select(0)
 

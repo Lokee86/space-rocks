@@ -3,14 +3,14 @@ extends GutTest
 const DevtoolsStateContext := preload("res://scripts/devtools/context/devtools_state_context.gd")
 
 
-func test_has_gameplay_state_tracks_true_and_false() -> void:
+func test_has_lane_baseline_sync_tracks_true_and_false() -> void:
 	var context := DevtoolsStateContext.new()
 
-	context.set_has_received_gameplay_state(true)
-	assert_true(context.has_gameplay_state())
+	context.set_has_lane_baseline_sync(true)
+	assert_true(context.has_lane_baseline_sync())
 
-	context.set_has_received_gameplay_state(false)
-	assert_false(context.has_gameplay_state())
+	context.set_has_lane_baseline_sync(false)
+	assert_false(context.has_lane_baseline_sync())
 
 
 func test_set_local_player_id_stores_id() -> void:

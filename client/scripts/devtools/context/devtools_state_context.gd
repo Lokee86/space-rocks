@@ -1,7 +1,7 @@
 extends RefCounted
 class_name DevtoolsStateContext
 
-var has_gameplay_readiness := false
+var _has_lane_baseline_sync := false
 var player_dev_label_mode := ""
 var local_player_id := ""
 var game_target_kind := ""
@@ -9,16 +9,12 @@ var game_target_id := ""
 var game_target_player_id := ""
 
 
-func set_has_gameplay_readiness(value: bool) -> void:
-	has_gameplay_readiness = value
+func set_has_lane_baseline_sync(value: bool) -> void:
+	_has_lane_baseline_sync = value
 
 
-func set_has_received_gameplay_state(value: bool) -> void:
-	set_has_gameplay_readiness(value)
-
-
-func has_gameplay_state() -> bool:
-	return has_gameplay_readiness
+func has_lane_baseline_sync() -> bool:
+	return _has_lane_baseline_sync
 
 
 func set_local_player_id(player_id: String) -> void:

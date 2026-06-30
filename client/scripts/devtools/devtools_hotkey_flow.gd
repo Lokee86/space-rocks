@@ -10,8 +10,8 @@ func configure(respawn_route: Callable, placement_route: Callable) -> void:
 	placement_request_route = placement_route
 
 
-func process(has_received_gameplay_state: bool) -> void:
-	if !has_received_gameplay_state:
+func process(has_lane_baseline_sync: bool) -> void:
+	if !has_lane_baseline_sync:
 		return
 
 	if Input.is_action_just_pressed("DevToggle7"):

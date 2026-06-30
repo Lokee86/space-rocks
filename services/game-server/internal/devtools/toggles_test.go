@@ -224,8 +224,8 @@ func assertPlayerFrozen(t *testing.T, target *game.Game, playerID string, expect
 func assertPlayerInactive(t *testing.T, target *game.Game, playerID string) {
 	t.Helper()
 
-	state := target.StatePacket(playerID)
-	status, ok := state.PlayerLifecycle[playerID]
+	snapshot := target.GameplayPresentationSnapshot(playerID)
+	status, ok := snapshot.PlayerLifecycle[playerID]
 	if !ok {
 		t.Fatalf("expected lifecycle for player %q", playerID)
 	}

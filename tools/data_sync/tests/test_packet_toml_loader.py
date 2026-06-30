@@ -40,7 +40,7 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert game_output.packet_types is True
     assert "ClientPacket" in game_output.structs
     assert "EventState" in game_output.structs
-    assert "StatePacket" not in game_output.structs
+    assert "ExcludedPacket" not in game_output.structs
     assert any(name in game_output.structs for name in ("RoomSnapshot", "CreateRoomRequest"))
     assert game_output.imports == {
         "runtime": "github.com/Lokee86/space-rocks/server/internal/game/runtime",
@@ -81,7 +81,7 @@ def test_loads_migrated_structs_and_field_overrides(tmp_path: Path) -> None:
     schema = load_packet_schema_files(migrated_packet_toml_paths(tmp_path))
 
     with pytest.raises(KeyError):
-        schema.struct("StatePacket")
+        schema.struct("ExamplePacket")
 
     fields = {field.name: field for field in schema.struct("ClientPacket").fields}
 
@@ -96,7 +96,6 @@ def test_loads_packet_types_and_builders(tmp_path: Path) -> None:
         "input",
         "client_config",
     ]
-    assert "state" not in {packet_type.id for packet_type in schema.packet_types}
 
     builder = schema.builder("input_packet")
     assert builder.args == ("forward", "back", "right", "left", "primary_fire", "secondary_fire")
@@ -114,10 +113,11 @@ def test_preserves_rich_type_strings(tmp_path: Path) -> None:
 language = "go"
 path = "out.go"
 package = "game"
-structs = ["StatePacket"]
+builders = []
+structs = ["ExamplePacket"]
 
 [[structs]]
-id = "StatePacket"
+id = "ExamplePacket"
 
 [[structs.fields]]
 name = "players"
@@ -130,22 +130,15 @@ json = "events"
 type = "array<EventState>"
 
 [[packet_types]]
-id = "state"
-value = "state"
-
-[[builders]]
-id = "state_packet"
-args = []
-
-[builders.body]
-type = "state"
+id = "client_config"
+value = "client_config"
 """.lstrip(),
         encoding="utf-8",
     )
 
     schema = load_packet_schema(path)
 
-    fields = schema.struct("StatePacket").fields
+    fields = schema.struct("ExamplePacket").fields
     assert fields[0].type == "map<string,ShipState>"
     assert fields[1].type == "array<EventState>"
 
@@ -159,17 +152,19 @@ id = "go_packets"
 language = "go"
 path = "some/path.go"
 package = "game"
-structs = ["StatePacket"]
+builders = []
+structs = ["ExamplePacket"]
 
 [[outputs]]
 id = "gds_packets"
 language = "gdscript"
 path = "some/path.gd"
 base = "RefCounted"
-structs = ["StatePacket"]
+builders = []
+structs = ["ExamplePacket"]
 
 [[structs]]
-id = "StatePacket"
+id = "ExamplePacket"
 
 [[structs.fields]]
 name = "players"
@@ -177,15 +172,8 @@ json = "players"
 type = "map<string,ShipState>"
 
 [[packet_types]]
-id = "state"
-value = "state"
-
-[[builders]]
-id = "state_packet"
-args = []
-
-[builders.body]
-type = "state"
+id = "client_config"
+value = "client_config"
 """.lstrip(),
         encoding="utf-8",
     )
@@ -212,11 +200,11 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-packet_type_ids = ["input", "state"]
-structs = ["StatePacket"]
+packet_type_ids = ["input"]
+structs = ["ExamplePacket"]
 
 [[structs]]
-id = "StatePacket"
+id = "ExamplePacket"
 
 [[structs.fields]]
 name = "type"
@@ -227,9 +215,6 @@ type = "string"
 id = "input"
 value = "input"
 
-[[packet_types]]
-id = "state"
-value = "state"
 """.lstrip(),
         encoding="utf-8",
     )
@@ -237,7 +222,7 @@ value = "state"
     schema = load_packet_schema(path)
 
     output = schema.output_for_id("server_game_packets")
-    assert output.packet_type_ids == ("input", "state")
+    assert output.packet_type_ids == ("input",)
 
 
 def test_output_packet_type_ids_default_empty(tmp_path: Path) -> None:
@@ -252,10 +237,10 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-structs = ["StatePacket"]
+structs = ["ExamplePacket"]
 
 [[structs]]
-id = "StatePacket"
+id = "ExamplePacket"
 
 [[structs.fields]]
 name = "type"
@@ -285,20 +270,17 @@ language = "go"
 path = "services/game-server/internal/game/packets.go"
 package = "game"
 packet_types = true
-packet_type_ids = [1, "state"]
-structs = ["StatePacket"]
+packet_type_ids = [1, "client_config"]
+structs = ["ExamplePacket"]
 
 [[structs]]
-id = "StatePacket"
+id = "ExamplePacket"
 
 [[structs.fields]]
 name = "type"
 json = "type"
 type = "string"
 
-[[packet_types]]
-id = "state"
-value = "state"
 """.lstrip(),
         encoding="utf-8",
     )
@@ -395,16 +377,16 @@ def test_multi_file_rejects_duplicate_packet_type_ids(tmp_path: Path) -> None:
     first.write_text(
         """
 [[packet_types]]
-id = "state"
-value = "state"
+id = "input"
+value = "input"
 """.lstrip(),
         encoding="utf-8",
     )
     second.write_text(
         """
 [[packet_types]]
-id = "state"
-value = "state_two"
+id = "input"
+value = "input_two"
 """.lstrip(),
         encoding="utf-8",
     )

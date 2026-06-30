@@ -16,7 +16,7 @@ func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllSessions(t *te
 	scenario.setPlayerLives(eliminatedPlayerID, 0)
 	scenario.removePlayerEntity(eliminatedPlayerID)
 
-	snapshot := scenario.snapshot(activePlayerID)
+	snapshot := scenario.presentationSnapshot(activePlayerID)
 
 	wantLifecycle := map[string]string{
 		activePlayerID:     string(rules.PlayerActive),

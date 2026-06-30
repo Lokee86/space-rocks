@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from data_sync.generators.rich_go_packets import RichGoPacketGenerationError, render_go_output
@@ -29,7 +31,7 @@ PACKETS = (
         ),
     ),
     PacketDefinition(
-        name="state",
+        name="client_config",
         id=101,
         direction="server_to_client",
         fields=(PacketField("self_id", "string"), PacketField("lives", "int")),
@@ -48,9 +50,9 @@ type PlayerInputPacket struct {
     Shoot    bool
 }
 
-const PacketState = 101
+const PacketClientConfig = 101
 
-type StatePacket struct {
+type ClientConfigPacket struct {
     SelfId string
     Lives  int
 }
@@ -61,8 +63,8 @@ def test_gds_packet_output() -> None:
     assert gds_packets.generate_packets("packets", PACKETS) == """
 const PACKET_PLAYER_INPUT := 100
 const PACKET_PLAYER_INPUT_FIELDS := ["sequence", "turn", "thrust", "shoot"]
-const PACKET_STATE := 101
-const PACKET_STATE_FIELDS := ["self_id", "lives"]
+const PACKET_CLIENT_CONFIG := 101
+const PACKET_CLIENT_CONFIG_FIELDS := ["self_id", "lives"]
 """.strip()
 
 
@@ -77,9 +79,9 @@ export interface PlayerInputPacket {
   shoot: boolean;
 }
 
-export const PACKET_STATE = 101;
+export const PACKET_CLIENT_CONFIG = 101;
 
-export interface StatePacket {
+export interface ClientConfigPacket {
   self_id: string;
   lives: number;
 }
@@ -97,14 +99,14 @@ def test_rich_go_packet_type_ids_scopes_packet_type_constants() -> None:
         outputs=(),
         structs=(
             PacketStruct(
-                id="StatePacket",
+                id="ExamplePacket",
                 fields=(PacketSchemaField(name="type", json="type", type="string"),),
             ),
         ),
         packet_types=(
             PacketType(id="input", value="input"),
             PacketType(id="respawn", value="respawn"),
-            PacketType(id="state", value="state"),
+            PacketType(id="client_config", value="client_config"),
         ),
         builders=(PacketBuilder(id="input_packet", args=(), body={"type": "input"}),),
     )
@@ -114,14 +116,14 @@ def test_rich_go_packet_type_ids_scopes_packet_type_constants() -> None:
         path="services/game-server/internal/game/packets.go",
         package="game",
         packet_types=True,
-        packet_type_ids=("input", "state"),
-        structs=("StatePacket",),
+        packet_type_ids=("input", "client_config"),
+        structs=("ExamplePacket",),
     )
 
     rendered = render_go_output(schema, output)
 
-    assert 'PacketTypeInput = "input"' in rendered
-    assert 'PacketTypeState = "state"' in rendered
+    assert re.search(r'^\s*PacketTypeInput\s*=\s*"input"$', rendered, re.MULTILINE)
+    assert re.search(r'^\s*PacketTypeClientConfig\s*=\s*"client_config"$', rendered, re.MULTILINE)
     assert "PacketTypeRespawn" not in rendered
 
 

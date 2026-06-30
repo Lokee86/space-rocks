@@ -7,7 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 )
 
-func TestCompareShadowRealtimeCoverageCoversLaneOwnershipAndMetadata(t *testing.T) {
+func TestCompareShadowRealtimeOwnershipAndMetadata(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID:         "player-1",
 		Lives:          3,
@@ -37,14 +37,22 @@ func TestCompareShadowRealtimeCoverageCoversLaneOwnershipAndMetadata(t *testing.
 	session := BuildSessionFullPacket(snapshot, 9)
 	events := BuildEventBatchPacket(snapshot.PendingEvents, 10, snapshot.ServerSentMsec)
 
-	issues := CompareShadowRealtimeCoverage(snapshot, world, overlay, session, events)
-	if len(issues) != 0 {
-		t.Fatalf("coverage issues: %#v", issues)
-	}
 	if world.Metadata.Lane != LaneWorld || overlay.Metadata.Lane != LaneOverlay || session.Metadata.Lane != LaneSession || events.Metadata.Lane != LaneEvent {
 		t.Fatalf("expected packet lanes to match ownership, got world=%q overlay=%q session=%q events=%q", world.Metadata.Lane, overlay.Metadata.Lane, session.Metadata.Lane, events.Metadata.Lane)
 	}
 	if world.Metadata.ServerSentMsec != snapshot.ServerSentMsec || overlay.Metadata.ServerSentMsec != snapshot.ServerSentMsec || session.Metadata.ServerSentMsec != snapshot.ServerSentMsec || events.Metadata.ServerSentMsec != snapshot.ServerSentMsec {
 		t.Fatalf("expected server_sent_msec metadata to be preserved, got world=%d overlay=%d session=%d events=%d", world.Metadata.ServerSentMsec, overlay.Metadata.ServerSentMsec, session.Metadata.ServerSentMsec, events.Metadata.ServerSentMsec)
+	}
+	if got := len(world.Ships); got != 1 || world.Ships[0].ID != "player-1" || world.Ships[0].Health != 4 || world.Ships[0].TargetKind != "player" || world.Ships[0].TargetID != "player-2" {
+		t.Fatalf("world lane ownership mismatch: %#v", world.Ships)
+	}
+	if got := overlay.Receiver; got.SelfID != "player-1" || got.Lives != 3 || got.Score != 9 {
+		t.Fatalf("overlay lane ownership mismatch: %#v", overlay.Receiver)
+	}
+	if got := len(session.Players); got != 1 || session.Players[0].ID != "player-1" || session.Players[0].Score != 9 || session.PlayerLifecycle[0].PlayerID != "player-1" {
+		t.Fatalf("session lane ownership mismatch: players=%#v lifecycle=%#v", session.Players, session.PlayerLifecycle)
+	}
+	if got := len(events.Batch.Events); got != 1 || events.Batch.Events[0].EventID != "event-1" || events.Batch.Events[0].Event.Type != "ship_death" {
+		t.Fatalf("event_batch ownership mismatch: %#v", events.Batch.Events)
 	}
 }

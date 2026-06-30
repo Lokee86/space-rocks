@@ -152,7 +152,7 @@ def rich_type_packet_toml() -> str:
 language = "go"
 path = "go/packets.go"
 package = "packets"
-structs = ["ShipState", "EventState", "StatePacket"]
+structs = ["ShipState", "EventState", "ExamplePacket"]
 
 [[structs]]
 id = "ShipState"
@@ -171,7 +171,7 @@ json = "type"
 type = "string"
 
 [[structs]]
-id = "StatePacket"
+id = "ExamplePacket"
 
 [[structs.fields]]
 name = "players"
@@ -184,14 +184,14 @@ json = "events"
 type = "array<EventState>"
 
 [[packet_types]]
-id = "state"
-value = "state"
+id = "client_config"
+value = "client_config"
 
 [[builders]]
-id = "state_packet"
+id = "client_config_packet"
 args = []
 
 [builders.body]
-type = "state"
+type = "client_config"
 """.lstrip()
 

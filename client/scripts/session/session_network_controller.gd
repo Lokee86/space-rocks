@@ -164,13 +164,3 @@ func _log(message: String) -> void:
 		logger.call(message)
 
 
-func get_protocol_mode() -> String:
-	if connection_service == null:
-		return "legacy_state"
-	return connection_service.get_protocol_mode()
-
-
-func set_protocol_mode(protocol_mode: String) -> void:
-	if connection_service == null:
-		return
-	connection_service.set_protocol_mode(protocol_mode)

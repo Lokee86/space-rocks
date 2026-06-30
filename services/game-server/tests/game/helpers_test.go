@@ -73,6 +73,44 @@ func (scenario *scenario) playerSessionState(requestingPlayerID string, targetPl
 	return session
 }
 
+func (scenario *scenario) playerSnapshot(viewerID string, playerID string) (runtime.ShipState, bool) {
+	scenario.t.Helper()
+
+	snapshot := scenario.presentationSnapshot(viewerID)
+	player, ok := snapshot.Players[playerID]
+	return player, ok
+}
+
+func (scenario *scenario) asteroidSnapshot(viewerID string, asteroidID string) (runtime.AsteroidState, bool) {
+	scenario.t.Helper()
+
+	snapshot := scenario.presentationSnapshot(viewerID)
+	asteroid, ok := snapshot.Asteroids[asteroidID]
+	return asteroid, ok
+}
+
+func (scenario *scenario) bulletSnapshot(viewerID string, bulletID string) (runtime.BulletState, bool) {
+	scenario.t.Helper()
+
+	snapshot := scenario.presentationSnapshot(viewerID)
+	bullet, ok := snapshot.Bullets[bulletID]
+	return bullet, ok
+}
+
+func (scenario *scenario) pickupSnapshot(viewerID string, pickupID string) (runtime.PickupState, bool) {
+	scenario.t.Helper()
+
+	snapshot := scenario.presentationSnapshot(viewerID)
+	pickup, ok := snapshot.Pickups[pickupID]
+	return pickup, ok
+}
+
+func (scenario *scenario) pendingPresentationEvents(playerID string) []servergame.PendingPresentationEvent {
+	scenario.t.Helper()
+
+	return scenario.game.PendingPresentationEvents(playerID)
+}
+
 func (scenario *scenario) events(playerID string) []servergame.EventState {
 	scenario.t.Helper()
 
@@ -92,6 +130,24 @@ func countEventsOfType(events []servergame.EventState, eventType string) int {
 		}
 	}
 	return count
+}
+
+func countPendingEventsOfType(events []servergame.PendingPresentationEvent, eventType string) int {
+	count := 0
+	for _, pending := range events {
+		if pending.Event.Type == eventType {
+			count++
+		}
+	}
+	return count
+}
+
+func pendingEventIDs(events []servergame.PendingPresentationEvent) []string {
+	ids := make([]string, 0, len(events))
+	for _, pending := range events {
+		ids = append(ids, pending.EventID)
+	}
+	return ids
 }
 
 func hasEventOfType(events []servergame.EventState, eventType string) bool {
@@ -250,7 +306,7 @@ func (scenario *scenario) removePlayerEntity(playerID string) {
 func (scenario *scenario) playerExists(viewerID string, playerID string) bool {
 	scenario.t.Helper()
 
-	_, ok := scenario.state(viewerID).Players[playerID]
+	_, ok := scenario.playerSnapshot(viewerID, playerID)
 	return ok
 }
 
@@ -294,7 +350,7 @@ func (scenario *scenario) asteroidSpawnElapsed() float64 {
 func (scenario *scenario) pendingEventCount(playerID string) int {
 	scenario.t.Helper()
 
-	events := scenario.pendingPresentationEvents().MapIndex(reflect.ValueOf(playerID))
+	events := scenario.pendingPresentationEventsField().MapIndex(reflect.ValueOf(playerID))
 	if !events.IsValid() {
 		return 0
 	}
@@ -449,31 +505,37 @@ func (scenario *scenario) player(playerID string) *runtime.Ship {
 	return player.Interface().(*runtime.Ship)
 }
 
+func (scenario *scenario) entitiesField(fieldName string) reflect.Value {
+	scenario.t.Helper()
+
+	return exportValue(scenario.gameField("entities").FieldByName(fieldName))
+}
+
 func (scenario *scenario) players() reflect.Value {
 	scenario.t.Helper()
 
-	return scenario.stateField("Players")
-}
-
-func (scenario *scenario) bullets() reflect.Value {
-	scenario.t.Helper()
-
-	return scenario.stateField("Projectiles")
+	return scenario.entitiesField("Players")
 }
 
 func (scenario *scenario) asteroids() reflect.Value {
 	scenario.t.Helper()
 
-	return scenario.stateField("Asteroids")
+	return scenario.entitiesField("Asteroids")
+}
+
+func (scenario *scenario) bullets() reflect.Value {
+	scenario.t.Helper()
+
+	return scenario.entitiesField("Projectiles")
 }
 
 func (scenario *scenario) pickups() reflect.Value {
 	scenario.t.Helper()
 
-	return scenario.stateField("Pickups")
+	return scenario.entitiesField("Pickups")
 }
 
-func (scenario *scenario) pendingPresentationEvents() reflect.Value {
+func (scenario *scenario) pendingPresentationEventsField() reflect.Value {
 	scenario.t.Helper()
 
 	return scenario.gameField("pendingPresentationEvents")
@@ -488,12 +550,6 @@ func (scenario *scenario) sessionField(playerID string, fieldName string) reflec
 	}
 
 	return exportValue(session.Elem().FieldByName(fieldName))
-}
-
-func (scenario *scenario) stateField(fieldName string) reflect.Value {
-	scenario.t.Helper()
-
-	return exportValue(scenario.gameField("entities").FieldByName(fieldName))
 }
 
 func (scenario *scenario) gameField(fieldName string) reflect.Value {

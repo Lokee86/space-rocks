@@ -16,12 +16,6 @@ func set_gameplay_readiness(readiness: GameplayReadiness) -> void:
 		return
 	gameplay_readiness = readiness
 
-
-func handle_gameplay_state_packet(packet: Dictionary) -> void:
-	if gameplay_composition != null:
-		gameplay_composition.apply_gameplay_state(packet)
-
-
 func is_gameplay_ready() -> bool:
 	return gameplay_readiness.is_gameplay_ready()
 

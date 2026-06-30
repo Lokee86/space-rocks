@@ -68,7 +68,7 @@ func TestPauseRequestToggleClearsInputAndIgnoresNewInput(t *testing.T) {
 
 	paused, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet after pause")
+		t.Fatal("expected pause state after pause")
 	}
 	if !paused.Paused {
 		t.Fatal("expected player to be paused")
@@ -80,13 +80,13 @@ func TestPauseRequestToggleClearsInputAndIgnoresNewInput(t *testing.T) {
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	player := packet.Players[playerID]
+	snapshot := scenario.presentationSnapshot(playerID)
+	player := snapshot.Players[playerID]
 	if player.X != start.X || player.Y != start.Y {
 		t.Fatalf("expected paused player to stay at (%v, %v), got (%v, %v)", start.X, start.Y, player.X, player.Y)
 	}
-	if len(packet.Bullets) != 0 {
-		t.Fatalf("expected paused player not to shoot, got %d bullets", len(packet.Bullets))
+	if len(snapshot.Bullets) != 0 {
+		t.Fatalf("expected paused player not to shoot, got %d bullets", len(snapshot.Bullets))
 	}
 }
 
@@ -98,7 +98,7 @@ func TestPauseRequestPacketTogglesPauseState(t *testing.T) {
 
 	paused, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet after pause request")
+		t.Fatal("expected pause state after pause request")
 	}
 	if !paused.Paused {
 		t.Fatal("expected pause request to pause player")
@@ -108,7 +108,7 @@ func TestPauseRequestPacketTogglesPauseState(t *testing.T) {
 
 	resumed, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet after second pause request")
+		t.Fatal("expected pause state after second pause request")
 	}
 	if resumed.Paused {
 		t.Fatal("expected second pause request to resume player")
@@ -121,7 +121,7 @@ func TestPlayerPauseStatePacketReflectsPauseRequestToggle(t *testing.T) {
 
 	fresh, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet for fresh player")
+		t.Fatal("expected pause state for fresh player")
 	}
 	if fresh.Type != servergame.PacketTypePlayerPauseState {
 		t.Fatalf("expected packet type %q, got %q", servergame.PacketTypePlayerPauseState, fresh.Type)
@@ -136,19 +136,19 @@ func TestPlayerPauseStatePacketReflectsPauseRequestToggle(t *testing.T) {
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	paused, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet after pause request")
+		t.Fatal("expected pause state after pause request")
 	}
 	if !paused.Paused {
-		t.Fatal("expected pause state packet to report paused true")
+		t.Fatal("expected pause state to report paused true")
 	}
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypePauseRequest})
 	resumed, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet after second pause request")
+		t.Fatal("expected pause state after second pause request")
 	}
 	if resumed.Paused {
-		t.Fatal("expected pause state packet to report paused false")
+		t.Fatal("expected pause state to report paused false")
 	}
 }
 
@@ -185,7 +185,7 @@ func TestFreshPlayerAcceptsInputAndMoves(t *testing.T) {
 
 	fresh, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet for fresh player")
+		t.Fatal("expected pause state for fresh player")
 	}
 	if fresh.Paused {
 		t.Fatal("expected fresh player not to be paused")
@@ -206,9 +206,9 @@ func TestFreshPlayerCanShoot(t *testing.T) {
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	if len(packet.Bullets) != 1 {
-		t.Fatalf("expected fresh player to shoot, got %d bullets", len(packet.Bullets))
+	snapshot := scenario.presentationSnapshot(playerID)
+	if len(snapshot.Bullets) != 1 {
+		t.Fatalf("expected fresh player to shoot, got %d bullets", len(snapshot.Bullets))
 	}
 }
 
@@ -224,13 +224,13 @@ func TestPausedPlayerDoesNotMoveOrShoot(t *testing.T) {
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	player := packet.Players[playerID]
+	snapshot := scenario.presentationSnapshot(playerID)
+	player := snapshot.Players[playerID]
 	if player.X != start.X || player.Y != start.Y {
 		t.Fatalf("expected paused player to stay at (%v, %v), got (%v, %v)", start.X, start.Y, player.X, player.Y)
 	}
-	if len(packet.Bullets) != 0 {
-		t.Fatalf("expected paused player not to shoot, got %d bullets", len(packet.Bullets))
+	if len(snapshot.Bullets) != 0 {
+		t.Fatalf("expected paused player not to shoot, got %d bullets", len(snapshot.Bullets))
 	}
 }
 
@@ -243,7 +243,7 @@ func TestPauseRequestSecondToggleResumesWithInvulnerabilityAndAllowsShooting(t *
 
 	resumed, ok := scenario.game.PlayerPauseStatePacket(playerID)
 	if !ok {
-		t.Fatal("expected pause state packet after resume")
+		t.Fatal("expected pause state after resume")
 	}
 	if resumed.Paused {
 		t.Fatal("expected player to resume")
@@ -259,9 +259,9 @@ func TestPauseRequestSecondToggleResumesWithInvulnerabilityAndAllowsShooting(t *
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
 
-	packet := scenario.state(playerID)
-	if len(packet.Bullets) != 1 {
-		t.Fatalf("expected resumed invulnerable player to shoot, got %d bullets", len(packet.Bullets))
+	snapshot := scenario.presentationSnapshot(playerID)
+	if len(snapshot.Bullets) != 1 {
+		t.Fatalf("expected resumed invulnerable player to shoot, got %d bullets", len(snapshot.Bullets))
 	}
 }
 

@@ -57,9 +57,9 @@ func TestAsteroidCrossingEdgeWraps(t *testing.T) {
 
 	scenario.step(1)
 
-	asteroid, ok := scenario.state(playerID).Asteroids["asteroid-1"]
+	asteroid, ok := scenario.asteroidSnapshot(playerID, "asteroid-1")
 	if !ok {
-		t.Fatal("expected wrapped asteroid to remain in state")
+		t.Fatal("expected wrapped asteroid to remain in gameplay snapshot")
 	}
 	if asteroid.X != 3 || asteroid.Y != 100 {
 		t.Fatalf("expected asteroid to wrap to (3, 100), got (%v, %v)", asteroid.X, asteroid.Y)
@@ -83,9 +83,9 @@ func TestBulletCrossingEdgeWraps(t *testing.T) {
 
 	scenario.step(1)
 
-	bullet, ok := scenario.state(playerID).Bullets["bullet-1"]
+	bullet, ok := scenario.bulletSnapshot(playerID, "bullet-1")
 	if !ok {
-		t.Fatal("expected wrapped bullet to remain in state")
+		t.Fatal("expected wrapped bullet to remain in gameplay snapshot")
 	}
 	if bullet.X != 3 || bullet.Y != 100 {
 		t.Fatalf("expected bullet to wrap to (3, 100), got (%v, %v)", bullet.X, bullet.Y)

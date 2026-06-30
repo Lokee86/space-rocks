@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
@@ -32,9 +34,9 @@ func TestMaybeWriteDebugShapeCatalogSendsOnlyOnceForSameRoom(t *testing.T) {
 
 	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, game.New())
 	session := &webSocketSession{
-		conn:         serverConn,
-		room:         room,
-		rooms:        rooms.NewRoomManager(),
+		conn:          serverConn,
+		room:          room,
+		rooms:         rooms.NewRoomManager(),
 		currentRoomID: "room-1",
 	}
 
@@ -68,10 +70,10 @@ func TestMaybeWriteDebugShapeCatalogSendsAgainForNewRoomAfterReset(t *testing.T)
 	defer clientConn.Close()
 
 	session := &webSocketSession{
-		conn:                  serverConn,
-		room:                  rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New()),
-		rooms:                 rooms.NewRoomManager(),
-		currentRoomID:         "room-2",
+		conn:                    serverConn,
+		room:                    rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New()),
+		rooms:                   rooms.NewRoomManager(),
+		currentRoomID:           "room-2",
 		debugShapeCatalogSentRoomID: "room-1",
 	}
 	session.resetDebugShapeCatalogSent()
@@ -80,6 +82,47 @@ func TestMaybeWriteDebugShapeCatalogSendsAgainForNewRoomAfterReset(t *testing.T)
 		t.Fatal("expected debug shape catalog write to succeed after reset")
 	}
 	assertDebugShapeCatalogPacket(t, clientConn)
+}
+
+func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return false
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	playerID := "player-1"
+	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	}
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	}
+
+	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance)
+	session := &webSocketSession{
+		conn:                serverConn,
+		room:                room,
+		rooms:               rooms.NewRoomManager(),
+		currentRoomID:       room.ID,
+		currentGamePlayerID: playerID,
+	}
+
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to succeed")
+	}
+
+	assertLanePacket(t, clientConn)
 }
 
 func newWebSocketTestConn(t *testing.T) (*websocket.Conn, *websocket.Conn) {
@@ -118,6 +161,27 @@ func assertDebugShapeCatalogPacket(t *testing.T, conn *websocket.Conn) {
 	}
 	if got := payload["type"]; got != "debug_shape_catalog" {
 		t.Fatalf("expected debug shape catalog packet, got %v", got)
+	}
+}
+
+func assertLanePacket(t *testing.T, conn *websocket.Conn) {
+	t.Helper()
+
+	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		t.Fatalf("expected lane packet: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(msg, &payload); err != nil {
+		t.Fatalf("expected valid json packet: %v", err)
+	}
+
+	packetType, _ := payload["type"].(string)
+	switch packetType {
+	case "world_full", "world_delta", "overlay_full", "overlay_delta", "session_full", "session_delta", "event_batch", "resync_request", "resync_required":
+	default:
+		t.Fatalf("expected lane packet type, got %v", packetType)
 	}
 }
 

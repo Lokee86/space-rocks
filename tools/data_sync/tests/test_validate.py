@@ -57,12 +57,13 @@ direction = "client_to_server"
 sequence = "uint32"
 shoot = "bool"
 
-[packets.state]
+[packets.player_pause_state]
 id = 101
 direction = "server_to_client"
 
-[packets.state.fields]
-self_id = "string"
+[packets.player_pause_state.fields]
+player_id = "string"
+paused = "bool"
 """,
     )
 
@@ -344,12 +345,13 @@ direction = "client_to_server"
 sequence = "uint32"
 shoot = "bool"
 
-[packets.state]
+[packets.player_pause_state]
 id = 101
 direction = "server_to_client"
 
-[packets.state.fields]
-self_id = "string"
+[packets.player_pause_state.fields]
+player_id = "string"
+paused = "bool"
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -439,12 +441,13 @@ direction = "client_to_server"
 sequence = "uint32"
 shoot = "bool"
 
-[packets.state]
+[packets.player_pause_state]
 id = 101
 direction = "server_to_client"
 
-[packets.state.fields]
-self_id = "string"
+[packets.player_pause_state.fields]
+player_id = "string"
+paused = "bool"
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -591,7 +594,7 @@ max_players = 2
 id = 100
 direction = "client_to_server"
 
-[packets.state]
+[packets.player_pause_state]
 id = 100
 direction = "server_to_client"
 """,

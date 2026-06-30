@@ -137,9 +137,9 @@ old
 
 
 def packet_toml(*, include_output_ids: bool = False) -> str:
-    go_id = 'id = "server_game_packets\n"' if include_output_ids else ""
-    realtime_id = 'id = "server_realtime_packets\n"' if include_output_ids else ""
-    gds_id = 'id = "client_packets\n"' if include_output_ids else ""
+    go_id = 'id = "server_game_packets"\n' if include_output_ids else ""
+    realtime_id = 'id = "server_realtime_packets"\n' if include_output_ids else ""
+    gds_id = 'id = "client_packets"\n' if include_output_ids else ""
     return """
 [[outputs]]
 {go_id}language = "go"
@@ -197,7 +197,7 @@ type = "input"
 sequence = "$sequence"
 shoot = "$shoot"
 turn = "$turn"
-""".format(go_id=go_id, gds_id=gds_id).lstrip()
+""".format(go_id=go_id, realtime_id=realtime_id, gds_id=gds_id).lstrip()
 
 
 def config_text(*, packet_target_outputs: tuple[str, ...] = ()) -> str:

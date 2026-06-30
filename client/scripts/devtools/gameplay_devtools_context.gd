@@ -66,7 +66,7 @@ func reset() -> void:
 
 func process(required_lane_baselines_synced: bool) -> void:
 	if state_context != null:
-		state_context.set_has_gameplay_readiness(required_lane_baselines_synced)
+		state_context.set_has_lane_baseline_sync(required_lane_baselines_synced)
 	if hotkey_context != null:
 		hotkey_context.process(required_lane_baselines_synced)
 	if command_context != null:

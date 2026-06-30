@@ -41,13 +41,6 @@ turn = "float32"
 thrust = "bool"
 shoot = "bool"
 
-[packets.state]
-id = "state"
-direction = "server_to_client"
-
-[packets.state.fields]
-self_id = "string"
-lives = "int"
 """.strip()
 
 
@@ -71,7 +64,7 @@ def test_loading_packets(tmp_path: Path) -> None:
 
     packets = store.packets()
 
-    assert [packet.name for packet in packets] == ["player_input", "state"]
+    assert [packet.name for packet in packets] == ["player_input"]
     assert packets[0].id == 100
     assert packets[0].direction == "client_to_server"
     assert packets[0].field_types() == {

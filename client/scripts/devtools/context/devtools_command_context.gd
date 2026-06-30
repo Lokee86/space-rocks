@@ -34,43 +34,43 @@ func process(required_lane_baselines_synced: bool) -> void:
 
 
 func request_toggle_invincible(target_scope: String = "", target_player_id: String = "") -> void:
-	if state_context == null or !state_context.has_gameplay_state() || debug_flow == null:
+	if state_context == null or !state_context.has_lane_baseline_sync() || debug_flow == null:
 		return
 	debug_flow.toggle_invincible(target_scope, target_player_id)
 
 
 func request_toggle_infinite_lives(target_scope: String = "", target_player_id: String = "") -> void:
-	if state_context == null or !state_context.has_gameplay_state() || debug_flow == null:
+	if state_context == null or !state_context.has_lane_baseline_sync() || debug_flow == null:
 		return
 	debug_flow.toggle_infinite_lives(target_scope, target_player_id)
 
 
 func request_toggle_freeze_world(freeze_target: String = "") -> void:
-	if state_context == null or !state_context.has_gameplay_state() || debug_flow == null:
+	if state_context == null or !state_context.has_lane_baseline_sync() || debug_flow == null:
 		return
 	debug_flow.toggle_freeze_world(freeze_target)
 
 
 func request_toggle_freeze_player(target_scope: String = "", target_player_id: String = "") -> void:
-	if state_context == null or !state_context.has_gameplay_state() || debug_flow == null:
+	if state_context == null or !state_context.has_lane_baseline_sync() || debug_flow == null:
 		return
 	debug_flow.toggle_freeze_player(target_scope, target_player_id)
 
 
 func request_clear_bullets() -> void:
-	if state_context == null or !state_context.has_gameplay_state() || debug_flow == null:
+	if state_context == null or !state_context.has_lane_baseline_sync() || debug_flow == null:
 		return
 	debug_flow.clear_bullets()
 
 
 func request_clear_asteroids() -> void:
-	if state_context == null or !state_context.has_gameplay_state() || debug_flow == null:
+	if state_context == null or !state_context.has_lane_baseline_sync() || debug_flow == null:
 		return
 	debug_flow.clear_asteroids()
 
 
 func request_set_game_target(target_player_id: String) -> void:
-	if state_context == null or !state_context.has_gameplay_state():
+	if state_context == null or !state_context.has_lane_baseline_sync():
 		return
 	if connection_service == null:
 		return
@@ -85,7 +85,7 @@ func request_respawn_player(target_scope: String = DevtoolsTargetResolver.TARGET
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, target_player_id is empty")
 		return
-	if state_context == null or !state_context.has_gameplay_state():
+	if state_context == null or !state_context.has_lane_baseline_sync():
 		return
 	if dev_connection_service == null || !dev_connection_service.is_configured():
 		ClientLogger.game_warn("GameplayDevtoolsContext: respawn request ignored, dev_connection_service is unavailable")
@@ -110,7 +110,7 @@ func request_respawn_local_player() -> void:
 
 
 func request_set_score(target_scope: String, target_player_id: String, score: int) -> void:
-	if state_context == null or !state_context.has_gameplay_state():
+	if state_context == null or !state_context.has_lane_baseline_sync():
 		return
 	if debug_flow == null:
 		return
@@ -120,7 +120,7 @@ func request_set_score(target_scope: String, target_player_id: String, score: in
 
 
 func request_add_score(target_scope: String, target_player_id: String, amount: int) -> void:
-	if state_context == null or !state_context.has_gameplay_state():
+	if state_context == null or !state_context.has_lane_baseline_sync():
 		return
 	if debug_flow == null:
 		return
@@ -130,7 +130,7 @@ func request_add_score(target_scope: String, target_player_id: String, amount: i
 
 
 func request_set_lives(target_scope: String, target_player_id: String, lives: int) -> void:
-	if state_context == null or !state_context.has_gameplay_state():
+	if state_context == null or !state_context.has_lane_baseline_sync():
 		return
 	if debug_flow == null:
 		return
@@ -140,7 +140,7 @@ func request_set_lives(target_scope: String, target_player_id: String, lives: in
 
 
 func request_add_lives(target_scope: String, target_player_id: String, amount: int) -> void:
-	if state_context == null or !state_context.has_gameplay_state():
+	if state_context == null or !state_context.has_lane_baseline_sync():
 		return
 	if debug_flow == null:
 		return

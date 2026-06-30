@@ -15,16 +15,16 @@ class FakeConnectionService:
 class FakeDebugFlow:
 	var calls: Array = []
 
-	func process(has_received_state: bool) -> void:
-		calls.append(has_received_state)
+	func process(required_lane_baselines_synced: bool) -> void:
+		calls.append(required_lane_baselines_synced)
 
 
 class FakeStateContext:
-	var gameplay_state := false
+	var lane_baseline_sync := false
 	var local_player_id := ""
 
-	func has_gameplay_state() -> bool:
-		return gameplay_state
+	func has_lane_baseline_sync() -> bool:
+		return lane_baseline_sync
 
 	func get_local_player_id() -> String:
 		return local_player_id
@@ -69,7 +69,7 @@ func test_request_set_game_target_sends_set_target_player_request_packet() -> vo
 	var context := DevtoolsCommandContext.new()
 	context.configure(null, state_context)
 	context.configure_connection(connection)
-	state_context.set_has_received_gameplay_state(true)
+	state_context.set_has_lane_baseline_sync(true)
 
 	context.request_set_game_target("Player-2")
 
@@ -82,7 +82,7 @@ func test_request_set_game_target_sends_set_target_player_request_packet() -> vo
 
 func test_request_respawn_player_marks_local_respawn_confirmation_for_local_and_all_targets() -> void:
 	var state_context := FakeStateContext.new()
-	state_context.gameplay_state = true
+	state_context.lane_baseline_sync = true
 	state_context.local_player_id = "player-1"
 	var dev_connection_service := FakeDevConnectionService.new()
 	var marker := FakeRespawnMarker.new()
