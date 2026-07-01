@@ -10,7 +10,7 @@ It defines what a pickup entity is, how pickup identity is split between class a
 
 ## Overview
 
-Pickup entities are temporary, server-authoritative world entities that exist during a live match. They can be spawned by gameplay systems or devtools, projected to clients through gameplay state packets, collected by players through authoritative collision, or removed by server-owned expiry.
+Pickup entities are temporary, server-authoritative world entities that exist during a live match. They can be spawned by gameplay systems or devtools, projected to clients through world lane pickup records, collected by players through authoritative collision, or removed by server-owned expiry.
 
 A pickup entity is not the same thing as a pickup effect. The entity is the world object: it has an id, position, type, health, age, and lifespan. The effect is the gameplay mutation attempted after a player collects the entity.
 
@@ -34,8 +34,8 @@ The current entity loop is:
 spawn source
 -> authoritative pickup entity created
 -> pickup stored in server entity map
--> pickup projected in StatePacket.pickups
--> client presents pickup from packet state
+-> pickup projected in world lane pickup records
+-> client presents pickup from world lane records
 -> server advances pickup age
 -> pickup is removed by collection or expiry
 -> event lane reports the semantic removal reason
@@ -83,7 +83,7 @@ removal
 
 Creation happens when game-owned code requests a pickup spawn using a known pickup type and position. The server validates the pickup type against pickup definitions, assigns an id, initializes health, age, and lifespan, and inserts the pickup into the active entity map.
 
-Active existence means the pickup remains in authoritative runtime state. While active, it is projected to clients through `StatePacket.pickups`.
+Active existence means the pickup remains in authoritative runtime state. While active, it is projected to clients through world lane pickup records.
 
 Current packet-facing pickup fields are:
 
@@ -104,7 +104,7 @@ Collection removal means a player touched the pickup during authoritative collis
 
 Expiry removal means server-owned age reached lifespan. The server records `pickup_expired` and removes the pickup without applying collection effects.
 
-Removal reason matters. A missing pickup in the next state packet means the entity is no longer active, but events explain whether the meaningful reason was collection, effect application, drop creation, or expiry.
+Removal reason matters. A missing pickup in the next world lane record means the entity is no longer active, but events explain whether the meaningful reason was collection, effect application, drop creation, or expiry.
 
 ## Authority rules
 
@@ -124,13 +124,13 @@ The server owns:
 * pickup collection
 * pickup removal
 * pickup event recording
-* pickup state packet projection
+* world lane pickup record projection
 
 The client owns presentation only.
 
 The client may:
 
-* render a pickup node from `StatePacket.pickups`
+* render a pickup node from world lane pickup records
 * select a local pickup scene family from `pickup_class`
 * select a badge/icon from pickup `type`
 * derive end-of-life blink from `age_seconds` and `lifespan_seconds`
@@ -255,7 +255,7 @@ Pickup entity behavior must preserve these rules:
 game-server pickup entity lifecycle
 ```
 
-Owns authoritative pickup creation, storage, age, expiry, removal, and state projection.
+Owns authoritative pickup creation, storage, age, expiry, removal, and world lane projection.
 
 ```text
 game-server pickup collection
@@ -279,7 +279,7 @@ Owns turning successful drop-table results into authoritative pickup entities.
 realtime gameplay protocol
 ```
 
-Carries pickup state and pickup events from server to client.
+Carries pickup state in world lane pickup records and pickup events from server to client.
 
 ```text
 data pipeline
@@ -315,7 +315,7 @@ services/game-server/internal/game/entities/pickups/definitions.go
 services/game-server/internal/game/entities/pickups/pickup.go
 services/game-server/internal/game/pickups.go
 services/game-server/internal/game/pickup_lifecycle.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 ```
 
 The main adjacent server behavior files are:

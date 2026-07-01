@@ -22,12 +22,12 @@ spawn source
 -> entities.Pickups[pickup_id]
 -> Game.Step
 -> stepPickups(delta)
--> StatePacket.pickups while active
+-> world lane pickup records while active
 -> collection removal or expiry removal
 -> event lane when applicable
 ```
 
-Pickup age and expiry are advanced by the server during simulation. The client receives pickup age and lifespan through `StatePacket.pickups` and derives remaining lifetime locally for presentation. The server does not send a `remaining_lifespan` field.
+Pickup age and expiry are advanced by the server during simulation. The client receives pickup age and lifespan through world lane pickup records and derives remaining lifetime locally for presentation. The server does not send a `remaining_lifespan` field.
 
 A pickup leaves the authoritative entity map in one of two current gameplay paths:
 
@@ -66,7 +66,7 @@ The pickup entity lifecycle boundary owns:
 * Expiring pickups whose positive lifespan has been reached.
 * Removing expired pickups from the active entity map.
 * Recording `pickup_expired` domain events before expiry removal.
-* Projecting active pickup entities into `StatePacket.pickups`.
+* Projecting active pickup entities into world lane pickup records.
 * Providing class-based collision bodies for pickup collision consumers.
 * Keeping pickup scene paths out of server definitions.
 
@@ -189,9 +189,9 @@ When the match is over, the server still advances asteroids, bullets, pickups, a
 
 A non-positive lifespan currently means the pickup does not expire through `stepPickups`.
 
-### State packet surface
+### World lane pickup surface
 
-Active pickups are projected into `StatePacket.pickups`.
+Active pickups are projected into world lane pickup records.
 
 The current packet-facing pickup fields are:
 
@@ -296,7 +296,7 @@ The pickup entity package asks the collision shape catalog for a pickup shape us
 
 Pickup packet state is generated from the shared gameplay packet schema and projected by the game package.
 
-The server sends active pickup state only. Removed pickups disappear from later `StatePacket.pickups` maps, with semantic removal feedback carried by events when applicable.
+The server sends active pickup state only. Removed pickups disappear from later world lane pickup records, with semantic removal feedback carried by events when applicable.
 
 ## Code map
 
@@ -347,10 +347,10 @@ services/game-server/internal/game/simulation.go
 Calls `stepPickups(delta)` during both normal simulation and match-over simulation.
 
 ```text
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 ```
 
-Projects active pickup state into outbound gameplay state packets.
+Projects active pickup state into outbound world lane pickup records.
 
 ### Event adapter
 
@@ -433,7 +433,7 @@ Verifies pickup collision bodies use class-level shape keys.
 services/game-server/internal/game/pickup_drops_test.go
 ```
 
-Verifies drop integration creates pickups, respects active pickup caps, and projects spawned pickups into state packets.
+Verifies drop integration creates pickups, respects active pickup caps, and projects spawned pickups into world lane pickup records.
 
 ```text
 services/game-server/internal/game/events_test.go

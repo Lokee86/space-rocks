@@ -6,18 +6,19 @@ Parent index: [World Sync](./!INDEX.md)
 
 This document describes the client `WorldSync` coordinator.
 
-It explains how the client applies normalized server world state to world presentation seams, how `WorldSync` delegates entity-family synchronization, how interpolation is coordinated, and how targeting and presentation code access world-sync read models.
+It explains how the client applies lane-applied server world state to world presentation seams, how `WorldSync` delegates entity-family synchronization, how interpolation is coordinated, and how targeting and presentation code access world-sync read models.
 
 ## Overview
 
 `WorldSync` is the client-side coordinator for rendering server-authoritative world state.
 
-It does not parse raw packets and does not decide gameplay outcomes. Gameplay runtime passes already-normalized world-state dictionaries into `WorldSync.apply_state`, and `WorldSync` delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
+It does not parse raw packets and does not decide gameplay outcomes. Packet decode and classification route through `RealtimeRouter`, which applies lane state/readiness before passing lane-applied state into `WorldSync.apply_state`. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
 
 The current runtime path is:
 
 ```text
-GameplayStateApplyFlow
+packet decode / classification
+-> RealtimeRouter applies lane state/readiness
 -> GameplayWorldStateApplyFlow
 -> WorldSync.apply_state
 -> PlayerRenderApi
@@ -77,7 +78,7 @@ GameplayRuntimeContext.process(delta)
 * Packet schema source-of-truth files.
 * Raw WebSocket transport.
 * Packet decoding.
-* Gameplay-state packet normalization.
+* Lane packet application and world state readiness.
 * Detailed player-render internals.
 * Detailed projectile, asteroid, or pickup sync internals.
 * Target selection orchestration.
@@ -150,7 +151,7 @@ func apply_state(
 ) -> void:
 ```
 
-These values are passed by `GameplayWorldStateApplyFlow` from the normalized gameplay state dictionary.
+These values are passed by `GameplayWorldStateApplyFlow` from the applied lane-state dictionary.
 
 ### Apply order
 
@@ -291,7 +292,7 @@ Entity-specific node maps, target positions, and interpolation state belong insi
 * `client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd`
 * `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
 * `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`
-* `client/scripts/gameplay/state/gameplay_state_packet_reader.gd`
+* `client/scripts/protocol/realtime/realtime_router.gd`
 
 ### Delegated sync owners
 
@@ -319,7 +320,7 @@ Entity-specific node maps, target positions, and interpolation state belong insi
 ### Non-ownership boundaries
 
 * `client/scripts/gameplay/runtime/` owns gameplay runtime composition and state fanout into world sync.
-* `client/scripts/gameplay/state/` owns gameplay packet normalization and state application ordering before world sync.
+* `client/scripts/gameplay/state/` owns lane packet application and state application ordering before world sync.
 * `client/scripts/gameplay/targeting/` owns target selection and targeting request behavior.
 * `client/scripts/gameplay/input/` owns gameplay input handling.
 * `client/scripts/shell/gameplay_hud_flow.gd` owns runtime HUD presentation.

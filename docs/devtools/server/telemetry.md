@@ -25,7 +25,7 @@ telemetry_ping / telemetry_pong
   client/server timing diagnostic packet pair
 
 state.server_sent_msec
-  server timestamp on normal gameplay presentation state packets
+  server timestamp on normal realtime gameplay lane packets
 ```
 
 These surfaces use the normal realtime packet codec and WebSocket writer path. They do not create a separate debug transport.
@@ -34,7 +34,7 @@ The high-level server flow is:
 
 ```text
 game/runtime state
--> game export seam or packet projection
+-> game export seam or lane-native packet projection
 -> devtools/outbound networking packet builder
 -> packetcodec.Encode
 -> websocket writer
@@ -133,7 +133,7 @@ pickup
 
 `telemetry_ping` and `telemetry_pong` are timing diagnostics only. The server preserves the client ping sequence and client send timestamp, then adds server receive and server send timestamps. The packet pair does not mutate room, player, or simulation state.
 
-Normal gameplay `state` packets are also stamped with `server_sent_msec` before outbound encoding. Client telemetry uses that timestamp together with ping/pong-derived clock offset estimates to calculate packet age.
+Normal gameplay lane packets are also stamped with `server_sent_msec` before outbound encoding. Client telemetry uses that timestamp together with ping/pong-derived clock offset estimates to calculate packet age.
 
 ## Client presentation
 
@@ -182,7 +182,7 @@ debug_shape_catalog
   server sends once per room session when eligible
 
 state.server_sent_msec
-  server stamps every outgoing gameplay presentation state packet
+  server stamps every outgoing realtime gameplay lane packet
 ```
 
 Debug commands can change facts later reported by telemetry, but telemetry is not the command path. For example, toggling invincibility changes server runtime state through the devtools command handler; a later `debug_status` packet reports the new `invincible` value.
@@ -197,7 +197,7 @@ Debug commands can change facts later reported by telemetry, but telemetry is no
 
 Gameplay presentation state is not a devtools packet, but it carries timing data used by devtools telemetry.
 
-Before encoding an outbound gameplay state packet, the server sets:
+Before encoding an outbound gameplay lane packet, the server sets:
 
 ```text
 server_sent_msec
@@ -205,20 +205,20 @@ server_sent_msec
 
 The timestamp is generated in the outbound networking path immediately before packet encoding.
 
-The state packet also contains world data that client telemetry can count:
+The outgoing lane packets also contain world data that client telemetry can count:
 
 ```text
-players
-player_sessions
-player_lifecycle
-bullets
-asteroids
-pickups
-total_asteroids
-events
+world lane ship records
+session lane player records
+session lane lifecycle records
+world lane bullet records
+world lane asteroid records
+world lane pickup records
+session lane total_asteroids
+event_batch
 ```
 
-Client overlays may count these dictionaries, but the server treats them as normal gameplay state projection, not a separate telemetry packet.
+Client overlays may count these lane records, but the server treats them as normal gameplay lane projection, not a separate telemetry packet.
 
 ### Telemetry ping and pong
 
@@ -416,7 +416,7 @@ Game export seams used by telemetry:
 ```text
 services/game-server/internal/game/export_devtools_status.go
 services/game-server/internal/game/export_devtools_collision_telemetry.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/game/world_simulation_options.go
 services/game-server/internal/game/player_counters.go
 services/game-server/internal/game/export_devtools_player_counters.go
@@ -435,7 +435,7 @@ Networking outbound telemetry path:
 
 ```text
 services/game-server/internal/networking/websocket_write.go
-services/game-server/internal/networking/outbound/gameplay_presentation.go
+services/game-server/internal/networking/outbound/realtime_gameplay_presentation.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
 ```
@@ -529,7 +529,7 @@ Run packet generation checks after changing `shared/packets/debug.toml` or `shar
 * [Game Server Telemetry And Packet Routing](../../services/game-server/networking/telemetry-packet-routing.md)
 * [Game Server Outbound Message Flow](../../services/game-server/networking/outbound-message-flow.md)
 * [Game Server Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
-* [Game Server State Packet Projection](../../services/game-server/simulation/runtime/state-packet-projection.md)
+* [Realtime Websocket Protocol](../../protocol/realtime-websocket-protocol.md)
 * [Game Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 * [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
@@ -541,6 +541,6 @@ Telemetry in this document means live debug and diagnostic readouts. It does not
 
 `debug_status`, `debug_shape_catalog`, and gameplay `state` are intentionally separate packet surfaces. Tests should preserve that separation unless the packet contract is deliberately changed.
 
-`packet_staleness_ms` and `packet_age_ms` are client-side calculations. The server supplies timestamps and state packets; the client owns the derived timing readout.
+`packet_staleness_ms` and `packet_age_ms` are client-side calculations. The server supplies timestamps and lane packets; the client owns the derived timing readout.
 
 The server collision body telemetry seam observes real collision bodies. It should stay connected to the authoritative physics/collision implementation rather than duplicating shape facts in client-only debug logic.

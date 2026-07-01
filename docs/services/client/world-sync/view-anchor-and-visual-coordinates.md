@@ -73,7 +73,7 @@ WorldSync
 * Room, match, death, respawn, or spectate authority.
 * Packet schema source-of-truth files.
 * Raw gameplay packet parsing.
-* Gameplay state normalization before world state reaches `WorldSync`.
+* Lane packet application before world state reaches `WorldSync`.
 * Target selection orchestration.
 * Input request sending.
 * HUD or menu behavior.
@@ -85,7 +85,7 @@ WorldSync
 
 ### Server coordinate
 
-A server coordinate is an authoritative bounded position from gameplay state.
+A server coordinate is an authoritative bounded position from lane-applied state.
 
 Server coordinates are the source facts sent by the authoritative game server. They should be used for protocol, simulation, and outbound targeting requests.
 
@@ -115,12 +115,12 @@ Player meaning is the presentation-layer interpretation of player state around t
 
 ### Coordinate ownership boundary
 
-Gameplay runtime forwards normalized world state into `WorldSync`.
+`RealtimeRouter` applies lane state/readiness, then `GameplayWorldStateApplyFlow` forwards lane-applied world state into `WorldSync`.
 
-`WorldSync` then applies that state to player rendering and entity sync. ViewAnchor and visual coordinates are handled inside world sync, not in packet readers or runtime packet fanout.
+`WorldSync` then applies that lane-applied state to player rendering and entity sync. ViewAnchor and visual coordinates are handled inside world sync, not in packet readers or deprecated combined-state fanout.
 
 ```text
-GameplayStatePacketReader
+RealtimeRouter
 -> GameplayStateApplyFlow
 -> GameplayWorldStateApplyFlow
 -> WorldSync
@@ -233,7 +233,7 @@ This state is not durable.
 
 It is not authoritative.
 
-It is cleared or replaced as gameplay state and session lifecycle require.
+It is cleared or replaced as lane-applied state and session lifecycle require.
 
 ## World wrap behavior
 

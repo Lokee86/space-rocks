@@ -12,7 +12,7 @@ It explains which systems own world truth, which systems may request changes, wh
 
 World authority is server-owned.
 
-The authoritative world is the active match-local simulation owned by the game server. It includes live entity state, match-local player session state, world-space positions, movement, spawning, collisions, damage consequences, pickup collection, target state, presentation-event production, and state-packet projection.
+The authoritative world is the active match-local simulation owned by the game server. It includes live entity state, match-local player session state, world-space positions, movement, spawning, collisions, damage consequences, pickup collection, target state, presentation-event production, and lane-native realtime projection inputs.
 
 The current authority split is:
 
@@ -50,8 +50,8 @@ room starts match
 -> clients send input and request intent
 -> Game mutates authoritative world state
 -> Game.Step advances simulation phases
--> Game.StatePacket projects read-only packet state
--> networking sends projected state to clients
+-> protocol/realtime projects read-only lane state
+-> networking sends projected lane packets to clients
 -> clients render and interpolate the projected state
 ```
 
@@ -115,7 +115,7 @@ score and lives mutation
 target selection validation
 pause and suspension effects on simulation
 match-over evaluation inputs
-state-packet projection
+lane packet projection
 server-produced presentation events
 ```
 
@@ -133,7 +133,7 @@ when match result summary is resolved
 when a game instance is stopped and cleared on return to lobby
 ```
 
-Rooms do not own entity movement, collisions, scoring, damage, spawning, or state-packet projection.
+Rooms do not own entity movement, collisions, scoring, damage, spawning, or lane packet projection.
 
 Networking owns transport and routing.
 
@@ -147,7 +147,7 @@ current game-player routing context
 packet-family classification
 decoded gameplay request handoff
 pause-state packet enqueueing
-state-packet write timing
+lane packet write timing
 server_sent_msec stamping
 packet encoding and write errors
 ```
@@ -187,7 +187,7 @@ score
 lives
 match lifecycle
 target validation
-state packet contents
+lane packet contents
 ```
 
 The data pipeline owns shared source material, not runtime decisions.
@@ -239,7 +239,7 @@ The server may accept, ignore, reject, or transform the request according to cur
 The confirmation path is server output:
 
 ```text
-state packet
+lane packet
 player_pause_state packet
 room snapshot
 match result summary
@@ -250,37 +250,37 @@ Client UI state must not be treated as confirmation of world mutation.
 
 ## World-state projection model
 
-`StatePacket` is a projection of authoritative state. It is not the authority itself.
+Lane packets are projections of authoritative state. They are not the authority itself.
 
-Current projected world state includes:
+Current projected world state is organized by lane as follows:
 
 ```text
-self_id
-lives
-players
-player_sessions
-player_lifecycle
-bullets
-asteroids
-pickups
-total_asteroids
-events
-server_sent_msec
+world lane
+= active ship/avatar state, bullets, asteroids, pickups
+
+overlay lane
+= receiver-local overlay and HUD state
+
+session lane
+= match-local durable player session state and lifecycle read models
+
+event_batch
+= transient packet-facing presentation events
 ```
 
 Important projection boundaries:
 
 ```text
-StatePacket.players
+world lane ship records
 = active ship/avatar state only
 
-StatePacket.player_sessions
+session lane player records
 = match-local durable player session state
 
-StatePacket.player_lifecycle
+session lane lifecycle records
 = active, pending_respawn, or eliminated lifecycle read model
 
-StatePacket.events
+event_batch
 = transient packet-facing presentation events
 
 server_sent_msec
@@ -432,7 +432,7 @@ Rooms own Game lifecycle; Game owns simulation mutation.
 
 Networking owns packet transport and routing; Game owns gameplay consequences.
 
-State packets project server state; they are not mutable world storage.
+Lane packets project server state; they are not mutable world storage.
 
 Client world sync renders projected state; it does not create gameplay truth.
 
@@ -465,7 +465,7 @@ Game server rooms
 = match lifecycle, game instance ownership, game-over transition, and reset-to-lobby lifecycle
 
 Game server networking
-= transport, decoded request routing, session context, and state packet writes
+= transport, decoded request routing, session context, and lane packet writes
 
 Realtime protocol
 = packet contract for client intent and server state projection
@@ -496,7 +496,7 @@ The current authoritative implementation is centered on:
 Game Aggregate
 Simulation Loop And Phase Order
 Runtime Entity Store
-State Packet Projection
+Lane Packet Projection
 Toroidal Space And Motion
 Visibility And Despawn
 Asteroid Spawning And Variants
@@ -569,7 +569,7 @@ For example, a future loadout selection may define which ship and weapons a play
 * [Game Aggregate](../../services/game-server/simulation/runtime/game-aggregate.md)
 * [Simulation Loop And Phase Order](../../services/game-server/simulation/runtime/simulation-loop-and-phase-order.md)
 * [Runtime Entity Store](../../services/game-server/simulation/runtime/runtime-entity-store.md)
-* [State Packet Projection](../../services/game-server/simulation/runtime/state-packet-projection.md)
+* [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md)
 * [Toroidal Space And Motion](../../services/game-server/simulation/world/toroidal-space-and-motion.md)
 * [Visibility And Despawn](../../services/game-server/simulation/world/visibility-and-despawn.md)
 * [Asteroid Spawning And Variants](../../services/game-server/simulation/world/asteroid-spawning-and-variants.md)
@@ -600,3 +600,4 @@ The current implementation still keeps many world mutations under the root `game
 The active client ViewAnchor model is intentionally presentation-only. It can change what the player sees and how coordinates are converted, but it does not change world ownership.
 
 World authority should be treated as a permanent design constraint, not a temporary implementation detail.
+

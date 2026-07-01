@@ -17,7 +17,7 @@ The client presents those authoritative facts as Godot scene nodes.
 Pickup presentation has two separate client paths:
 
 ```text
-StatePacket.pickups
+world lane pickup records
 -> WorldSync
 -> PickupSync
 -> pickup scene node
@@ -30,7 +30,7 @@ server event: pickup_collected
 -> pickup_collect effect scene
 ```
 
-`PickupSync` owns persistent pickup node presentation while the pickup exists in server state. It selects a pickup scene family from `pickup_class`, applies the visible badge/icon from `type`, forwards lifespan state to the pickup node, tracks target visual positions, removes stale nodes, and interpolates pickup nodes between authoritative state updates.
+`PickupSync` owns persistent pickup node presentation while the pickup exists in server world lane records. It selects a pickup scene family from `pickup_class`, applies the visible badge/icon from `type`, forwards lifespan state to the pickup node, tracks target visual positions, removes stale nodes, and interpolates pickup nodes between authoritative state updates.
 
 Collection effects are not owned by `PickupSync`. When the server emits `pickup_collected`, gameplay event presentation converts the event's server-space position into visual space and spawns a short-lived collection effect. This allows collected-sound and particle cleanup to outlive the pickup node that may be removed from world sync on the next state application.
 
@@ -76,7 +76,7 @@ Collection effects are not owned by `PickupSync`. When the server emits `pickup_
 
 ### Pickup sync owner
 
-`PickupSync` owns the world-sync presentation state for pickups that currently exist in `StatePacket.pickups`.
+`PickupSync` owns the world-sync presentation state for pickups that currently exist in world lane pickup records.
 
 It creates pickup scene nodes, chooses the scene family through `PickupPresentationCatalog`, applies pickup type presentation to the node, forwards lifespan state, tracks server and visual positions, interpolates nodes, removes stale nodes, and exposes pickup entries for target-position consumers.
 
@@ -107,16 +107,15 @@ It applies badge visibility, reads collision radius from the scene shape for pre
 
 ## Protocols and APIs
 
-### State packet pickup presentation
+### World lane pickup presentation
 
-Pickup node presentation is driven by the pickup dictionary passed through world-sync state application.
+Pickup node presentation is driven by the pickup dictionary passed through world-sync lane application.
 
 Current application path:
 
 ```text
-GameplayStatePacketReader
--> GameplayStateApplyFlow
--> GameplayWorldStateApplyFlow
+RealtimeRouter.route_lane_packet(...)
+-> RealtimeLaneApplier
 -> WorldSync.apply_state(...)
 -> PickupSync.remove_missing(...)
 -> PickupSync.apply(...)

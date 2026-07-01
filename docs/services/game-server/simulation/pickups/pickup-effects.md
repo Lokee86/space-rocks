@@ -167,7 +167,7 @@ amount
 lives_after
 ```
 
-The event is queued into each player session’s pending presentation events and is drained into that player’s next state packet.
+The event is queued into each player session's pending presentation events and is drained into that player's next `event_batch` after successful active write.
 
 ## Current effect intents
 
@@ -266,12 +266,12 @@ The current collision loop breaks after one pickup collision is handled for a pl
 
 Pickup effects do not expose a public client request API.
 
-The runtime surface is an internal game-server call path. Clients consume the results through gameplay state packets.
+The runtime surface is an internal game-server call path. Clients consume the results through world/session lane readback and `event_batch`.
 
 The packet-facing surface is:
 
 ```text
-StatePacket.events[]
+event_batch
 ```
 
 Relevant event types are:
@@ -357,7 +357,7 @@ Primary implementation files:
 * `services/game-server/internal/game/player_counters.go` - Player score/life counter mutation helpers.
 * `services/game-server/internal/game/weapons/types.go` - Weapon IDs, slots, ammo policies, equipped weapon state, and default armory shapes.
 * `services/game-server/internal/game/runtime/ship.go` - Projection of live ship weapon and ammo state.
-* `services/game-server/internal/game/state_packet.go` - State packet construction and event draining.
+* `services/game-server/internal/protocol/realtime/records.go` - Lane record and event batch projection records, while the active websocket write path drains selected event IDs only after successful event batch write.
 * `services/game-server/internal/game/packets.go` - Generated packet-facing event and state structs.
 * `services/game-server/internal/game/entities/pickups/definitions.go` - Pickup definition lookup from generated constants.
 
@@ -396,7 +396,7 @@ Current coverage verifies:
 * Applying a torpedo effect adds ammo to an already equipped secondary weapon.
 * Applying a torpedo effect equips an empty secondary slot and adds one ammo.
 * `pickup_effect_applied` converts to packet-facing event fields.
-* State packets drain queued presentation events after delivery.
+* `event_batch` delivery drains selected pending presentation events after successful active write.
 
 Broader verification should include the game-server Go test suite when pickup effects touch collection, player counters, weapon state, event projection, packet state, or collision integration.
 
@@ -424,3 +424,4 @@ The current effect system is intentionally narrow. It supports lives and runtime
 The torpedo pickup currently changes the active runtime ship, not durable player inventory or future loadout state. Future loadout or inventory work should not be documented here as current behavior until implemented.
 
 The current resolver uses code-defined pickup-type mappings. If pickup effect metadata later becomes fully data-driven, that belongs in the data pipeline documentation as well as this service boundary.
+

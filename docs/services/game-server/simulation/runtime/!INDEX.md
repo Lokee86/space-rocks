@@ -6,7 +6,7 @@ Runtime documentation for the game server simulation lives here.
 
 ## Ownership
 
-This folder owns Game aggregate, simulation loop/phase order, entity store, state packet projection, and presentation event queue documentation for the game server simulation.
+This folder owns Game aggregate, simulation loop/phase order, entity store, lane packet projection, and presentation event queue documentation for the game server simulation.
 
 ## Does Not Belong
 
@@ -23,7 +23,7 @@ This folder owns Game aggregate, simulation loop/phase order, entity store, stat
 - [presentation-event-queue.md](presentation-event-queue.md) - Presentation event queue documentation.
 - [runtime-entity-store.md](runtime-entity-store.md) - Runtime Entity Store documentation.
 - [simulation-loop-and-phase-order.md](simulation-loop-and-phase-order.md) - Simulation loop and phase order documentation.
-- [state-packet-projection.md](state-packet-projection.md) - State packet projection documentation.
+- [lane-packet-projection.md](lane-packet-projection.md) - Lane packet projection documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->

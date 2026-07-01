@@ -22,13 +22,13 @@ spawn trigger
 -> world-space placement rule
 -> runtime entity creation
 -> insertion into server entity store
--> state packet projection
+-> world lane realtime projection
 -> client presentation
 ```
 
 The client may request actions that lead to spawning, such as firing a weapon or requesting respawn, but the client does not decide authoritative spawn validity, final position, entity id, collision safety, asteroid variant, or runtime insertion.
 
-The server owns spawn outcomes. The client observes spawned entities through gameplay state packets and renders them relative to the active view anchor.
+The server owns spawn outcomes. The client observes spawned entities through world lane full/delta packets and renders them relative to the active view anchor.
 
 ## Conceptual model
 
@@ -85,7 +85,7 @@ The client may:
 
 * send input that can lead to server-owned spawn decisions
 * send viewport configuration that informs server camera-view behavior
-* render spawned entities from state packets
+* render spawned entities from world lane full/delta packets
 * interpolate or visually anchor entities across wrap boundaries
 * display events and effects derived from server state
 * use devtools UI to request debug spawn actions when devtools are enabled
@@ -183,7 +183,7 @@ The client sends input. The server checks player state, movement and fire gates,
 
 Projectile spawning must use authoritative ship and weapon facts. The client may display weapon input and local presentation, but it must not create authoritative bullets or decide hit results.
 
-Projectile positions are stored in toroidal server space and later advanced through server motion. Projectile state is projected to clients through gameplay state packets.
+Projectile positions are stored in toroidal server space and later advanced through server motion. Projectile state is projected to clients through world lane full/delta packets.
 
 ## Pickup spawn model
 
@@ -244,7 +244,7 @@ visual position
 
 The client can instantiate asteroid, projectile, pickup, player, and effect nodes from server state or server events. It can interpolate and place them visually. It cannot make them authoritative.
 
-When the server stops sending an entity in state packets, the client should remove or retire the corresponding presentation node according to that entity family's presentation rules.
+When the server stops sending an entity in world lane packets, the client should remove or retire the corresponding presentation node according to that entity family's presentation rules.
 
 ## Participating systems
 
@@ -268,7 +268,7 @@ Spawning and space involves these systems:
 * [Simulation Loop And Phase Order](../../services/game-server/simulation/runtime/simulation-loop-and-phase-order.md) documents when spawn and cleanup phases run.
 * [View Anchor And Visual Coordinates](../../services/client/world-sync/view-anchor-and-visual-coordinates.md) documents client visual-coordinate conversion.
 * [Entity Sync Owners](../../services/client/world-sync/entity-sync-owners.md) documents client entity node ownership.
-* [Gameplay Packets](../../protocol/gameplay-packets.md) documents the packet surface that carries spawned entity state.
+* [Gameplay Packets](../../protocol/gameplay-packets.md) documents the packet surface that carries spawned entity state through world lane records.
 * [Asteroid Variant Contract](../../protocol/asteroid-variant-contract.md) documents the asteroid variant index contract.
 * [Constants Pipeline](../../data/constants.md) documents world-size and spawn-tuning constants.
 * [Asteroid Variants Data](../../data/asteroid-variants-data.md) documents asteroid variant spawn weights and catalog data.

@@ -12,7 +12,7 @@ It documents what a ship is conceptually, what authority owns ship behavior, how
 
 Ships are server-authoritative live world entities.
 
-The current implemented ship entity is the player-controlled runtime avatar stored by the game server in `game.entities.Players`. It represents a player’s active in-world ship during a match.
+The current implemented ship entity is the player-controlled runtime avatar stored by the game server in `game.entities.Players`. It represents a playerâ€™s active in-world ship during a match.
 
 A ship can currently:
 
@@ -39,7 +39,7 @@ playerSession
 runtime.Ship
 = live active avatar/world entity
 
-StatePacket.players
+world lane ship records
 = packet-facing active ship state
 
 client player rendering
@@ -57,7 +57,7 @@ room/networking activation
 -> game creates playerSession
 -> playerSession creates runtime.Ship
 -> simulation mutates runtime.Ship
--> StatePacket.players projects runtime.Ship
+-> realtime projection builds world lane ship records from runtime.Ship
 -> client renders ship presentation
 ```
 
@@ -279,7 +279,7 @@ The durable target selection belongs to player session targeting state. When a t
 
 This keeps targeting stable across death and respawn without making the active ship the durable owner of target selection.
 
-A ship’s presence in active state does not automatically make every target interaction valid. Targetability still depends on server-owned lifecycle, pending-despawn, suspension, and candidate-selection gates.
+A shipâ€™s presence in active state does not automatically make every target interaction valid. Targetability still depends on server-owned lifecycle, pending-despawn, suspension, and candidate-selection gates.
 
 ## Collision model
 
@@ -340,9 +340,9 @@ A runtime ship is live avatar state, not durable player state.
 
 A player session may exist without an active ship.
 
-StatePacket.players is active ship state only.
+world lane ship records are active ship state only.
 
-Player lifecycle must not be inferred only from StatePacket.players.
+Player lifecycle must not be inferred only from world lane ship records.
 
 Durable score, lives, respawn cooldown, and ship death count remain session-owned.
 
@@ -407,19 +407,19 @@ Player Death And Despawn
 Player Input Routing
 Weapons And Projectile Fire
 Collision To Damage Flow
-State Packet Projection
+Lane Packet Projection
 ```
 
 This systems-design document owns the conceptual model and invariants. Service docs own detailed code paths, tests, generated files, runtime flow, and implementation maps.
 
 ## Protocol and data relationships
 
-Ships are projected through realtime gameplay state packets.
+Ships are projected through world lane realtime packets.
 
 The active ship state projection is:
 
 ```text
-StatePacket.players
+world lane ship records
 ```
 
 Current ship-facing packet fields include:
@@ -448,8 +448,8 @@ secondary_ammo_remaining
 Durable per-match player state is projected separately through:
 
 ```text
-StatePacket.player_sessions
-StatePacket.player_lifecycle
+session lane player records
+session lane lifecycle records
 ```
 
 Packet shape source data lives under the gameplay packet source-of-truth files and is generated into both server and client packet helpers.
@@ -528,7 +528,7 @@ Future enemy and boss work may share lower-level concepts such as position, velo
 * [Player Death And Despawn](../../services/game-server/simulation/players/player-death-and-despawn.md)
 * [Weapons And Projectile Fire](../../services/game-server/simulation/combat/weapons-and-projectile-fire.md)
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md)
-* [State Packet Projection](../../services/game-server/simulation/runtime/state-packet-projection.md)
+* [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md)
 * [World Sync Coordinator](../../services/client/world-sync/world-sync-coordinator.md)
 * [View Anchor And Visual Coordinates](../../services/client/world-sync/view-anchor-and-visual-coordinates.md)
 * [Gameplay Packets](../../protocol/gameplay-packets.md)
@@ -544,3 +544,4 @@ The server owns ship type resolution, resolved stats, and collision behavior. Th
 The current default ship type and collision shape id are both `v_wing`.
 
 The current runtime type name `Ship` is also used by a not-yet-active enemy map shape in the entity store. This document describes the implemented player ship/avatar model, not a completed enemy entity model.
+

@@ -12,7 +12,7 @@ It focuses on the cross-system path that turns a local single-player menu reques
 
 Local single-player is a server-backed local session flow.
 
-It is not an offline client simulation. The Godot client still connects to the Go game server over the realtime WebSocket route, sends a generated `start_single_player_request`, receives room snapshots and gameplay state from the server, and renders server-authoritative gameplay packets.
+It is not an offline client simulation. The Godot client still connects to the Go game server over the realtime WebSocket route, sends a generated `start_single_player_request`, receives room snapshots and gameplay lane packets from the server, and renders server-authoritative gameplay lane packets.
 
 The current technical distinction is:
 
@@ -148,7 +148,7 @@ death
 respawn
 player lifecycle
 match-over decisions
-state packet projection
+lane-native realtime projection
 ```
 
 The client renders these facts from server packets. It does not recalculate authoritative outcomes.
@@ -284,7 +284,7 @@ room_snapshot
 
 The client does not process gameplay state as active gameplay until it observes server room state `InGame`.
 
-After the gate opens, gameplay presentation consumes server state packets through the normal gameplay runtime and world-sync paths.
+After the gate opens, gameplay presentation consumes server gameplay lane packets through the normal gameplay runtime and world-sync paths.
 
 ### 8. Gameplay runs through the normal authoritative path
 
@@ -295,7 +295,7 @@ client input
 -> WebSocket packet
 -> game-server gameplay routing
 -> authoritative simulation step
--> state packet
+-> gameplay lane packet
 -> client presentation
 ```
 
@@ -380,7 +380,7 @@ start_single_player_request packet
 non-joinable server room
 active game player routing
 room_snapshot
-gameplay state packets
+gameplay lane packets
 presentation-safe match_result
 player-data match-result command
 Guest or Local Profile stat update
@@ -408,7 +408,7 @@ max_players
 match_result
 ```
 
-The gameplay state path publishes live gameplay presentation state such as:
+The gameplay lane path publishes live gameplay presentation state such as:
 
 ```text
 self_id

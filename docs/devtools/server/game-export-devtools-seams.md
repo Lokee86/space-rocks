@@ -21,7 +21,7 @@ client devtools input
 -> internal/devtools command handler
 -> game-owned devtools export seam or existing public game API
 -> authoritative game state mutation or read
--> normal state/debug output back to clients
+-> lane-native gameplay readback or debug output back to clients
 ```
 
 `services/game-server/internal/devtools/` owns command classification, command dispatch, command-specific payload interpretation, target-scope handling, logging around debug actions, continuous bullet stream runtime state, and generated debug packet types.
@@ -166,7 +166,7 @@ DevtoolsSetPlayerLives
 DevtoolsAddPlayerLives
 ```
 
-Those methods call the normal game counter functions. Counter values are clamped by the shared counter implementation and exported through state packets from session-owned counter state.
+Those methods call the normal game counter functions. Counter values are clamped by the shared counter implementation and visible through session/overlay lane readback from session-owned counter state.
 
 ### Clear entity seams
 
@@ -177,7 +177,7 @@ DevtoolsClearBullets
 DevtoolsClearAsteroids
 ```
 
-These methods mutate authoritative server maps. Clients observe the results through normal state updates after the server removes the entities.
+These methods mutate authoritative server maps. Clients observe the results through lane-native gameplay readback after the server removes the entities.
 
 Continuous debug bullet stream runtime state is separate from the projectile map. Clear-bullet command handling belongs to devtools command behavior; the game export seam only clears current authoritative projectile entities.
 
@@ -219,12 +219,12 @@ This is a read-only devtools seam. It does not mutate gameplay and does not move
 
 Client devtools presentation is separate from server authority.
 
-The client can send debug command packets and render debug outputs, but it does not apply authoritative gameplay effects locally. Visible confirmation comes from server state, debug status packets, debug shape catalog packets, entity sync, or the absence/presence of entities after the authoritative server update.
+The client can send debug command packets and render debug outputs, but it does not apply authoritative gameplay effects locally. Visible confirmation comes from lane-native readback, debug status packets, debug shape catalog packets, entity sync, or the absence/presence of entities after the authoritative server update.
 
 The server-facing outputs tied to these seams include:
 
 ```text
-normal gameplay state packets
+lane-native gameplay readback
 debug_status packets
 debug_shape_catalog packets
 server logs
@@ -661,3 +661,5 @@ Legacy devtools docs correctly identified the core boundary: devtools are client
 The current implementation has both `devtools.ShouldHandleCommand` gate helpers and route-local inbound devtools packet classifiers. Keep those paths synchronized when changing command availability or build-gate behavior.
 
 This document intentionally focuses on the game export seams. Individual command behavior, client controls, packet schema ownership, and overlay presentation belong in their own devtools, protocol, data, or client docs.
+
+

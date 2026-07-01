@@ -23,7 +23,7 @@ projectile destroys asteroid
 -> basic asteroid drop table is evaluated
 -> successful drop result spawns a pickup entity
 -> pickup_dropped event is recorded
--> pickup appears in StatePacket.pickups
+-> pickup appears in world lane pickup records
 -> pickup lifecycle, collection, and effects run through normal pickup systems
 ```
 
@@ -296,11 +296,11 @@ Pickup drop integration has no inbound HTTP or WebSocket API.
 Clients observe drop results through normal game-server state output:
 
 ```text
-StatePacket.pickups
-StatePacket.events
+world lane pickup records
+event_batch
 ```
 
-A dropped pickup appears in `StatePacket.pickups` as a normal pickup state with:
+A dropped pickup appears in world lane pickup records as a normal pickup state with:
 
 ```text
 id
@@ -337,7 +337,7 @@ applyPickupEffectIntentLocked
 -> player/session/weapon mutation
 
 pickupStatesLocked
--> state packet projection
+-> world lane pickup record projection
 ```
 
 This separation preserves a narrow responsibility split:
@@ -421,7 +421,7 @@ services/game-server/internal/game/pickup_drops.go
 services/game-server/internal/game/pickups.go
 services/game-server/internal/game/events.go
 services/game-server/internal/game/events/events.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 ```
 
 Drop-table package:
@@ -511,7 +511,7 @@ Current test coverage includes:
 * asteroid drop integration creates a pickup
 * asteroid drop integration respects `MaxActivePickups`
 * failed drop chance creates no pickup
-* dropped pickups project into state packets
+* dropped pickups project into world lane pickup records
 * projectile asteroid destruction can trigger pickup drops
 * spawned pickups use definitions, lifecycle, state projection, collection, and expiry paths
 
@@ -542,7 +542,7 @@ data-sync -validate -drop-tables
 * [Game Server Simulation World](../world/!INDEX.md)
 * [Asteroid Spawning And Variants](../world/asteroid-spawning-and-variants.md)
 * [Game Server Simulation Runtime](../runtime/!INDEX.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Pickup Entity Lifecycle](pickup-entity-lifecycle.md)
 * [Pickup Collection](pickup-collection.md)
 * [Pickup Effects](pickup-effects.md)
@@ -561,3 +561,4 @@ Asteroid variant source data includes a `drop_table` field, and generated server
 The current `pickup_dropped` event projection records the table id as `basicasteroids` from the integration helper. The drop result also carries a table id, but the current event construction does not read it from the result.
 
 The current drop-table generated output is Go-only. Drop tables are not generated into client constants or packet outputs.
+

@@ -23,7 +23,7 @@ Server-authoritative debug effects remain owned by the game server. The client w
 
 The devtools window is debug tooling for active gameplay sessions. It is separate from production HUD, menu flow, player progression, normal gameplay input, and client presentation state.
 
-The window may display raw gameplay dictionaries, debug status, target rows, player lifecycle rows, pickup selector values, and overlay toggles. It should not translate these into player-facing UI, user progression features, or permanent gameplay state.
+The window may display raw lane-applied gameplay dictionaries, debug status, target rows, player lifecycle rows, pickup selector values, and overlay toggles. It should not translate these into player-facing UI, user progression features, or permanent gameplay state.
 
 Client debug input is gated by `client/scripts/devtools/dev_tools_build_flags.gd`. When `public_build` is enabled, the configured `DevToggle0` through `DevToggle9` input events are erased from the `InputMap`. The server-side command path has its own `nodevtools` build gate; disabling server devtools prevents command handling even if a client can still construct debug packets.
 
@@ -54,7 +54,7 @@ Server-owned gameplay mutations include:
 * clear bullets
 * clear asteroids
 
-The window sends generated packets or packet dictionaries through the normal network client path. It does not directly edit `WorldSync`, player nodes, asteroid nodes, bullet nodes, score values, lives values, or server-state read models.
+The window sends generated packets or packet dictionaries through the normal network client path. It does not directly edit `WorldSync`, player nodes, asteroid nodes, bullet nodes, score values, lives values, or lane-applied server-state read models.
 
 The server remains authoritative for pickup spawn validity. The pickup selector is populated from the client pickup presentation catalog so available debug choices match presentation data, but the selector does not make the client authoritative over pickup types.
 
@@ -138,7 +138,7 @@ Set/Clear Game Target uses the normal target packet path to update the canonical
 
 ## Target rows and read models
 
-`DevtoolsPlayerTargetModel` builds window target rows from current gameplay state and debug status.
+`DevtoolsPlayerTargetModel` builds window target rows from applied gameplay lane state and debug status.
 
 Inputs include:
 
@@ -188,13 +188,13 @@ The devtools window owns raw state inspection. It currently exposes two raw tele
 Each panel can select a source:
 
 ```text
-StatePacket.entities
-StatePacket.player_world_states
+world lane readback
+session lane readback
 ```
 
-The `StatePacket.entities` source reads live entity dictionaries. For the local player, this reads from `server_players`. For targets, it can read from player, asteroid, bullet, pickup, or enemy dictionaries according to canonical `target_kind`.
+The `world lane readback` source reads applied world entity dictionaries. For the local player, this reads from `server_players`. For targets, it can read from player, asteroid, bullet, pickup, or enemy dictionaries according to canonical `target_kind`.
 
-The `StatePacket.player_world_states` source reads durable player/session dictionaries from `player_sessions`. It is only meaningful for player targets. Non-player targets render unavailable output for this source.
+The `session lane readback` source reads durable player/session dictionaries from `player_sessions`. It is only meaningful for player targets. Non-player targets render unavailable output for this source.
 
 Telemetry output is intentionally generic. Dictionary keys are sorted and rendered as key/value lines. Arrays and dictionaries are rendered as JSON strings. Floats are rendered to four decimal places. Target telemetry includes `target_kind` and `target_id` above the raw body when a target is selected.
 
@@ -235,7 +235,7 @@ devtools_window.gd signal
 Gameplay state and debug status flow back into the window through:
 
 ```text
-state/debug packet
+lane/debug packet
 -> GameplayShellFlow
 -> GameplayFlowComposer
 -> GameplayDevtoolsContext

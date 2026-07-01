@@ -6,7 +6,7 @@ Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 This document describes active player avatar state in the game-server simulation.
 
-It explains what `runtime.Ship` and `game.entities.Players` own, how active player ships are created and removed, how they are advanced during the simulation tick, and how their render-facing state is projected into `StatePacket.players`.
+It explains what `runtime.Ship` and `game.entities.Players` own, how active player ships are created and removed, how they are advanced during the simulation tick, and how their render-facing state is projected into world lane ship records.
 
 ## Overview
 
@@ -19,7 +19,7 @@ player session
 -> creates active ship avatar
 -> stores ship in game.entities.Players
 -> simulation mutates ship state
--> StatePacket.players projects active ship/render state
+-> world lane ship records project active ship/render state
 ```
 
 `runtime.Ship` is not the durable player session. It is the active avatar/world entity for a player who currently has a ship in the simulation.
@@ -46,9 +46,9 @@ pending despawn state
 despawn delay
 ```
 
-Durable player facts such as score, lives, respawn cooldown, spawn position, pause/freeze suspension, and long-lived target selection are session-owned. Those facts live in `playerSession` and are projected through `StatePacket.player_sessions` or `StatePacket.player_lifecycle`, not through `StatePacket.players`.
+Durable player facts such as score, lives, respawn cooldown, spawn position, pause/freeze suspension, and long-lived target selection are session-owned. Those facts live in `playerSession` and are projected through `session lane player records` or `session lane lifecycle records`, not through `world lane ship records`.
 
-`StatePacket.players` is therefore active avatar/render state only. Pending-respawn and eliminated players may be absent from `StatePacket.players` while still present in `StatePacket.player_sessions` and `StatePacket.player_lifecycle`.
+world lane ship records are therefore active avatar/render state only. Pending-respawn and eliminated players may be absent from world lane ship records while still present in session lane player records and session lane lifecycle records.
 
 ## Code root
 
@@ -77,7 +77,7 @@ Active player avatar state owns the game-server side of:
 * Marking a live ship pending despawn after fatal player damage.
 * Delaying active ship removal during the collision despawn window.
 * Removing ships from `game.entities.Players` once pending despawn completes.
-* Projecting active avatar state into `StatePacket.players`.
+* Projecting active avatar state into world lane ship records.
 
 ## Does not own
 
@@ -159,7 +159,7 @@ game.entities.Players map[string]*runtime.Ship
 
 The key is the game player ID. The ship `ID` uses the same value.
 
-The map means “this player currently has a ship entity stored in the simulation.” It does not always mean the player is eligible for every behavior. Pending-despawn ships remain in the map during their despawn delay but are blocked from movement, input, targeting candidates, collision damage, pickup collection, and firing.
+The map means Ã¢â‚¬Å“this player currently has a ship entity stored in the simulation.Ã¢â‚¬Â It does not always mean the player is eligible for every behavior. Pending-despawn ships remain in the map during their despawn delay but are blocked from movement, input, targeting candidates, collision damage, pickup collection, and firing.
 
 ## Avatar creation
 
@@ -299,9 +299,9 @@ match lifecycle treats it as not having an active ship
 
 This delayed removal allows death/despawn presentation to observe the ship briefly while gameplay eligibility has already ended.
 
-## State packet projection
+## World lane ship projection
 
-`Game.statePacket` projects active avatars by iterating `game.entities.Players`:
+`protocol/realtime` projects active avatars by iterating `game.entities.Players` and building world lane ship records:
 
 ```go
 players := make(map[string]runtime.ShipState, len(game.entities.Players))
@@ -335,7 +335,7 @@ secondary_cooldown_remaining
 secondary_ammo_remaining
 ```
 
-`StatePacket.players` does not include:
+`world lane ship records` does not include:
 
 ```text
 score
@@ -351,16 +351,16 @@ room membership state
 
 Those belong to other packet fields or service docs.
 
-The same state packet also projects:
+The same world lane packet also projects:
 
 ```text
-StatePacket.player_sessions
-StatePacket.player_lifecycle
+session lane player records
+session lane lifecycle records
 ```
 
 Use those fields for durable session read-model state and lifecycle classification.
 
-Do not infer player lifecycle from `StatePacket.players` alone. A player can be missing from `StatePacket.players` and still be pending respawn, or can be present during a despawn delay while no longer counted as an active participating ship.
+Do not infer player lifecycle from `world lane ship records` alone. A player can be missing from `world lane ship records` and still be pending respawn, or can be present during a despawn delay while no longer counted as an active participating ship.
 
 ## Lifecycle classification interaction
 
@@ -397,19 +397,19 @@ playerSession
 rules.MatchDecision
 = lifecycle classification from plain facts
 
-StatePacket.players
+world lane ship records
 = active avatar/render projection
 
-StatePacket.player_sessions
+session lane player records
 = session read model
 
-StatePacket.player_lifecycle
+session lane lifecycle records
 = lifecycle read model
 ```
 
 ## Targeting interaction
 
-Active avatars carry a copy of the player’s current target fields:
+Active avatars carry a copy of the playerÃ¢â‚¬â„¢s current target fields:
 
 ```text
 TargetKind
@@ -455,7 +455,6 @@ Game.AddPlayer
 Game.RemovePlayer
 Game.HandlePacket
 Game.Step
-Game.StatePacket
 Game.MatchDecision
 ```
 
@@ -465,7 +464,7 @@ Game.MatchDecision
 
 `Game.Step` advances authoritative active avatar state.
 
-`Game.StatePacket` exposes active avatar state to clients through `StatePacket.players`.
+`protocol/realtime` reads game presentation state and projects active avatar state into world lane ship records.
 
 The active avatar protocol surface is for presentation and gameplay synchronization. The client consumes active ship state to render ships, interpolate movement, show health/shield/weapon state, and align local player presentation. The client does not own authoritative active avatar mutation.
 
@@ -508,7 +507,7 @@ camera view position during active movement
 
 It does not persist account/profile data.
 
-Packet shape source data for `ShipState`, `InputState`, `ClientConfig`, `PlayerSessionState`, and `StatePacket` lives under:
+Packet shape source data for `ShipState`, `InputState`, `ClientConfig`, `PlayerSessionState`, and the current lane packet shapes lives under:
 
 ```text
 shared/packets/gameplay.toml
@@ -532,8 +531,8 @@ Active player avatar state must preserve these rules:
 * Match lifecycle must not be inferred from active avatar map presence alone.
 * Pending-despawn ships must not receive input, move normally, fire, collide, or become target candidates.
 * Pending-despawn ships are removed only after their despawn delay completes.
-* State packet active avatar projection must not duplicate durable session ownership.
-* Client rendering observes `StatePacket.players`; it does not own active avatar authority.
+* World lane active avatar projection must not duplicate durable session ownership.
+* Client rendering observes `world lane ship records`; it does not own active avatar authority.
 * Active avatar motion stays server-authoritative.
 * Active avatar creation must use session-owned ship config, stats, armory, damage options, and target selection.
 * Active avatar deletion must clear or update dependent game-owned state through the owning seams.
@@ -550,7 +549,7 @@ services/game-server/internal/game/simulation.go
 services/game-server/internal/game/simulation_players.go
 services/game-server/internal/game/simulation_weapons.go
 services/game-server/internal/game/input.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/game/match.go
 services/game-server/internal/game/player_targeting.go
 services/game-server/internal/game/targeting.go
@@ -648,9 +647,9 @@ Current coverage includes:
 
 * player avatar creation through `Game.AddPlayer`
 * active player movement and toroidal wrapping
-* state packet player projection
+* world lane ship record projection
 * player lifecycle projection for active, pending-respawn, and eliminated players
-* missing active ships not appearing in `StatePacket.players`
+* missing active ships not appearing in `world lane ship records`
 * pending respawn after death and delayed removal
 * respawned avatars preserving session lives
 * respawn safety against asteroids and other players
@@ -672,7 +671,7 @@ Focused verification for active avatar state:
 
 ```bash
 cd services/game-server
-go test -buildvcs=false ./tests/game -run 'StatePacket|MatchDecision|GameOver|Movement|Respawn|Pause|Collision|PlayerCounters|Ship'
+go test -buildvcs=false ./tests/game -run 'MatchDecision|GameOver|Movement|Respawn|Pause|Collision|PlayerCounters|Ship'
 ```
 
 Focused verification for runtime ship state:
@@ -702,12 +701,13 @@ go test -buildvcs=false ./internal/game/runtime
 * [Player Input Routing](player-input-routing.md)
 * [Player Pause And Suspension](player-pause-and-suspension.md)
 * [Player Camera View State](player-camera-view-state.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Gameplay Packets](../../../../protocol/gameplay-packets.md)
 * [Data](../../../../data/!INDEX.md)
 
 ## Notes
 
-The legacy architecture doc’s most relevant migrated rule is that `runtime.Ship` is active ship/world state only. It is not the owner of durable score, lives, respawn, or match lifecycle state.
+The legacy architecture docÃ¢â‚¬â„¢s most relevant migrated rule is that `runtime.Ship` is active ship/world state only. It is not the owner of durable score, lives, respawn, or match lifecycle state.
 
-`StatePacket.players` can temporarily include pending-despawn ships during the despawn delay. Consumers that need gameplay eligibility should use lifecycle/session/read-model fields and server-owned targeting/collision gates rather than treating active avatar packet presence as the complete participation model.
+`world lane ship records` can temporarily include pending-despawn ships during the despawn delay. Consumers that need gameplay eligibility should use lifecycle/session/read-model fields and server-owned targeting/collision gates rather than treating active avatar packet presence as the complete participation model.
+

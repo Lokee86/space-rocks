@@ -24,7 +24,7 @@ WebSocket message
 -> player/session/camera mutation
 -> Game.Step(...)
 -> movement and weapon simulation consume stored input
--> state packet projection
+-> lane-native realtime projection
 ```
 
 Networking owns the active room/player handoff. The game simulation owns what happens after `Game.HandlePacket` receives a `playerID` and decoded `ClientPacket`.
@@ -77,7 +77,7 @@ This boundary does not own:
 * Projectile construction.
 * Respawn eligibility rules beyond routing the request to the respawn path.
 * Pause/suspension semantics beyond calling the pause path and honoring its input gates.
-* State packet write loops or outbound transport.
+* Outbound lane packet delivery or websocket transport.
 * Devtools command routing.
 
 Those responsibilities belong to networking, protocol, data, rooms, client, combat, targeting, respawn, pause/suspension, devtools, or runtime docs as appropriate.

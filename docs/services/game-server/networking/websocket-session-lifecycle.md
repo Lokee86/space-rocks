@@ -102,7 +102,7 @@ The WebSocket session lifecycle does not own:
 * packet schema source-of-truth files
 * packet generation
 * full inbound packet-family routing
-* full outbound packet projection
+* full outbound lane packet delivery
 * room creation, join, leave, ready, or start rules
 * room owner selection
 * room cleanup policy beyond detaching a disconnected session
@@ -142,7 +142,7 @@ current active game player ID
 encoded outbound packet bytes
 ```
 
-The current wire format is JSON text over WebSocket. Encoding and decoding mechanics are delegated to the packet codec and packet-family routing seams.
+The current wire format is JSON text over WebSocket. Encoding and decoding mechanics are delegated to the packet codec and packet-family routing seams. For the current outbound send flow, see [Outbound Message Flow](./outbound-message-flow.md) and [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md).
 
 ## Endpoint and origin policy
 
@@ -314,7 +314,7 @@ constants.ServerTickRate
 Ticker-driven writes include:
 
 ```text
-gameplay presentation state
+lane packet delivery
 debug shape catalog, when eligible
 debug status, when eligible
 ```
@@ -323,7 +323,7 @@ Gameplay presentation writes require:
 
 ```text
 session.currentGamePlayerID is not empty
-outbound.CanSendGameplayPresentationState(session.room)
+outbound lane send gate allows delivery for the current room/session
 ```
 
 Debug status and debug shape catalog writes additionally require devtools eligibility inside the outbound helper package.
@@ -358,7 +358,7 @@ On each server tick, it checks:
 
 ```text
 session.currentGamePlayerID is not empty
-outbound.CanSendGameplayPresentationState(session.room)
+outbound lane send gate allows delivery for the current room/session
 ```
 
 When eligible, it calls:
@@ -617,8 +617,8 @@ The session may carry identity and room references that downstream systems use f
 ### Outbound write helpers
 
 * `services/game-server/internal/networking/outbound/server_message_writer.go` - Writes encoded payloads as WebSocket text messages.
-* `services/game-server/internal/networking/outbound/gameplay_presentation.go` - Builds encoded gameplay state presentation packets.
-* `services/game-server/internal/networking/outbound/gameplay_state_metrics.go` - Logs large gameplay packets and slow writes.
+* `services/game-server/internal/networking/websocket_write.go` - Runs outbound websocket writes for selected lane packets while `services/game-server/internal/protocol/realtime/` plans gameplay presentation output.
+* `services/game-server/internal/networking/packetmetrics/` - Tracks lane packet write metrics and slow-write diagnostics.
 * `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets.
 * `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go` - Builds encoded debug shape catalog packets.
 

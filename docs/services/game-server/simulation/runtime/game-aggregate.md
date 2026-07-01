@@ -6,13 +6,13 @@ Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 This document describes the game-server simulation `Game` aggregate.
 
-The aggregate is the in-memory authoritative runtime owner for one active game instance. It coordinates simulation state, player/session maps, entity stores, runtime dependencies, state-packet projection, presentation event lanes, and the lifecycle shell used by rooms.
+The aggregate is the in-memory authoritative runtime owner for one active game instance. It coordinates simulation state, player/session maps, entity stores, runtime dependencies, lane-native realtime projection inputs, presentation event lanes, and the lifecycle shell used by rooms.
 
 ## Overview
 
 The game-server simulation aggregate is `game.Game` in `services/game-server/internal/game/game.go`.
 
-A `Game` instance represents one running match simulation. It is not the process, not a room, and not a network connection. Rooms own when a game instance is created, started, stopped, cleared, and associated with room lifecycle. Networking owns how decoded client packets reach the current room’s game instance and how projected state packets are encoded and sent to clients.
+A `Game` instance represents one running match simulation. It is not the process, not a room, and not a network connection. Rooms own when a game instance is created, started, stopped, cleared, and associated with room lifecycle. Networking owns how decoded client packets reach the current roomâ€™s game instance and how lane packets are planned by `protocol/realtime` and written to clients through outbound websocket delivery.
 
 Inside the simulation boundary, `Game` owns the mutable runtime state needed to advance authoritative gameplay:
 
@@ -58,9 +58,9 @@ The game aggregate owns:
 * Simulation lifecycle shell through `New`, `Start`, `Stop`, `runSimulation`, and `Step`.
 * The synchronization boundary around simulation state through `Game.mu`.
 * Construction defaults for collision shapes, spawner, scoring policy, drop tables, radial effect store, entity store, and runtime maps.
-* The authoritative game-facing API used by rooms, networking, devtools adapters, tests, and outbound state projection.
+* The authoritative game-facing API used by rooms, networking, devtools adapters, tests, and lane-native outbound projection inputs.
 * Authoritative mutation coordination for player input, respawn, pause, targeting, counters, pickups, combat consequences, radial effects, and world simulation options.
-* State packet projection through `StatePacket`.
+* Lane-native realtime projection inputs consumed by `protocol/realtime`.
 * Match decision and match fact read models through `MatchDecision`, `IsGameOver`, and `PlayerMatchFacts`.
 * Package-local adaptation between pure subsystem results and game-owned state mutation.
 * Simulation step observer registration for narrow devtools/runtime hooks.
@@ -101,7 +101,7 @@ room starts match
 -> networking routes decoded gameplay packets to Game
 -> Game mutates authoritative state
 -> Game.Step advances the simulation
--> outbound networking asks Game for StatePacket
+-> outbound networking consumes lane-native results from protocol/realtime
 -> clients render projected state
 -> rules determine match-over from Game state
 -> room marks game over and resolves summary
@@ -224,7 +224,7 @@ Public methods that read or mutate runtime state lock the aggregate before touch
 AddPlayer
 RemovePlayer
 HandlePacket
-StatePacket
+lane packets
 IsGameOver
 MatchDecision
 PlayerMatchFacts
@@ -257,7 +257,7 @@ Stop
 AddPlayer
 RemovePlayer
 HandlePacket
-StatePacket
+lane packets
 IsGameOver
 MatchDecision
 PlayerMatchFacts
@@ -288,7 +288,7 @@ Devtools-facing surfaces are exposed through `export_devtools_*.go` files. They 
 
 The game aggregate has no HTTP API.
 
-Its runtime surfaces are Go service methods and realtime packet consequences. Networking receives decoded client packets and forwards gameplay requests into the current room’s game instance.
+Its runtime surfaces are Go service methods and realtime packet consequences. Networking receives decoded client packets and forwards gameplay requests into the current roomâ€™s game instance.
 
 Inbound gameplay packets can reach the aggregate through:
 
@@ -304,9 +304,9 @@ clear_target_request
 
 The gameplay network adapter handles routing and request adaptation. The aggregate owns authoritative mutation behind those requests.
 
-Outbound realtime state reaches clients through `Game.StatePacket(playerID)`. Outbound networking calls this method, stamps `server_sent_msec`, encodes the packet through `packetcodec`, and writes it to the websocket session.
+Outbound realtime state reaches clients through lane-native realtime projection. `protocol/realtime` reads game presentation state and builds lane packets, outbound networking writes the selected packet to the websocket session, and `packetcodec` handles encoding.
 
-`StatePacket` projection includes:
+`Lane packet` projection includes:
 
 ```text
 self_id
@@ -322,7 +322,7 @@ events
 server_sent_msec
 ```
 
-`Game.StatePacket` also clears that player’s pending presentation events after copying them into the response. This makes the event lane player-specific and packet-facing.
+`protocol/realtime` projects that player's pending presentation events into `event_batch`, and outbound networking clears only the drained event IDs after the active websocket write succeeds. This makes the event lane player-specific and packet-facing.
 
 ## Data ownership
 
@@ -392,7 +392,7 @@ These dependencies keep policy and data-shape concerns out of the aggregate wher
 
 ## Simulation coordination
 
-`Game.Step(delta)` is the aggregate’s simulation coordinator.
+`Game.Step(delta)` is the aggregateâ€™s simulation coordinator.
 
 It locks the aggregate, chooses default toroidal world bounds, steps player sessions, then either runs the normal active-match phase order or the reduced match-over phase order.
 
@@ -424,9 +424,9 @@ The aggregate stores generated packet-facing presentation events in:
 pendingPresentationEvents map[string][]EventState
 ```
 
-This queue is per player. Domain events are recorded through game-owned event adapters, translated to packet-facing `EventState`, then appended to every current player session’s pending lane.
+This queue is per player. Domain events are recorded through game-owned event adapters, translated to packet-facing `EventState`, then appended to every current player sessionâ€™s pending lane.
 
-`StatePacket(playerID)` copies that player’s pending events into the packet and clears only that player’s lane.
+`protocol/realtime` projects that player's pending events into `event_batch`, and outbound networking clears only that player's drained event IDs after successful active write.
 
 This is not the domain event store. It is a packet presentation queue for client-visible effects such as bullet blasts, ship death, pickup events, radial effect starts, and damage event presentation.
 
@@ -469,7 +469,7 @@ The game aggregate must preserve these rules:
 * Runtime maps remain aggregate-owned even when package helpers mutate them.
 * `runtime` package types are state shapes, not aggregate owners.
 * Pending presentation events are packet-facing event lanes, not the domain event source of truth.
-* `StatePacket` projection must copy state out of aggregate-owned maps instead of exposing mutable map contents directly.
+* Lane-native realtime projection must copy state out of aggregate-owned maps instead of exposing mutable map contents directly.
 * Match decisions are evaluated from aggregate state through the rules package.
 * Durable profile/account state must not be stored in `Game`.
 * Devtools must use narrow exported game-owned adapters and must not become imported aggregate dependencies.
@@ -481,7 +481,7 @@ Primary implementation files:
 ```text
 services/game-server/internal/game/game.go
 services/game-server/internal/game/simulation.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/
 services/game-server/internal/game/players.go
 services/game-server/internal/game/session.go
 services/game-server/internal/game/input.go
@@ -543,7 +543,7 @@ services/game-server/internal/rooms/lifecycle.go
 services/game-server/internal/rooms/leave.go
 services/game-server/internal/networking/player_activation.go
 services/game-server/internal/networking/inbound/gameplay.go
-services/game-server/internal/networking/outbound/gameplay_presentation.go
+services/game-server/internal/networking/websocket_write.go and services/game-server/internal/protocol/realtime/
 ```
 
 Devtools adapter files:
@@ -626,7 +626,7 @@ Expected behavioral coverage includes:
 * room-owned game instance start and stop
 * player activation into a game instance
 * input routing into `Game.HandlePacket`
-* state packet projection through `Game.StatePacket`
+* lane-native realtime projection through `protocol/realtime` and outbound lane packet writing
 * match-over decision evaluation
 * player match fact projection
 * score and lives counter mutation
@@ -656,7 +656,7 @@ Expected behavioral coverage includes:
 * [Game Server Simulation World](../world/!INDEX.md)
 * [Runtime Entity Store](runtime-entity-store.md)
 * [Simulation Loop And Phase Order](simulation-loop-and-phase-order.md)
-* [State Packet Projection](state-packet-projection.md)
+* [Lane Packet Projection](lane-packet-projection.md)
 * [Presentation Event Queue](presentation-event-queue.md)
 * [Gameplay Packets](../../../../protocol/gameplay-packets.md)
 * [Realtime WebSocket Protocol](../../../../protocol/realtime-websocket-protocol.md)
@@ -664,6 +664,7 @@ Expected behavioral coverage includes:
 
 ## Notes
 
-The legacy architecture material’s useful current facts are that gameplay state is server-authoritative, `Game.Start()` launches the simulation loop at the server tick rate, `Game.Step()` is the same-package simulation coordinator, and `pendingPresentationEvents` is a packet-facing presentation queue rather than the domain event queue.
+The legacy architecture materialâ€™s useful current facts are that gameplay state is server-authoritative, `Game.Start()` launches the simulation loop at the server tick rate, `Game.Step()` is the same-package simulation coordinator, and `pendingPresentationEvents` is a packet-facing presentation queue rather than the domain event queue.
 
 This document intentionally does not detail the full simulation phase order, state-packet field projection, entity store shape, or presentation event queue mechanics. Those are adjacent runtime docs so the aggregate doc can stay focused on root ownership, lifecycle, synchronization, and service surfaces.
+

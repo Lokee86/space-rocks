@@ -31,7 +31,7 @@ client devtools respawn request
 -> target player validation
 -> Game.DevtoolsSafeRespawnPosition(...)
 -> Game.DevtoolsForceRespawnPlayer(...)
--> normal state packet projection reflects recreated ship
+-> lane-native readback reflects recreated ship
 ```
 
 Debug respawn uses the game-owned respawn placement and ship recreation seams, but it is not the same as normal gameplay respawn. Normal gameplay respawn requires the player session to have lives remaining, a zero respawn cooldown, and no active ship. Debug respawn is a force tool: it requires a valid target player session and blocks active players, but it resets respawn cooldown and recreates the ship through the devtools export seam.
@@ -167,12 +167,12 @@ or:
 
 The client does not locally recreate a ship. Confirmation comes through normal authoritative server state:
 
-* `StatePacket.players` includes the recreated active ship.
-* `StatePacket.player_lifecycle[playerID]` becomes `active`.
-* `StatePacket.player_sessions[playerID].respawn_cooldown` is zero.
+* World lane ship records include the recreated active ship.
+* Session lane lifecycle records for `playerID` become `active`.
+* Session/overlay lane respawn cooldown readback shows zero.
 * Player camera/world state updates from the server-side camera view.
 
-If the server ignores the command, the client receives no special rejection packet. The next state packet simply continues to reflect the unchanged server state.
+If the server ignores the command, the client receives no special rejection packet. The next lane readback simply continues to reflect the unchanged server state.
 
 ## Commands or controls
 
@@ -473,3 +473,4 @@ The current debug respawn command uses safe server-selected respawn placement. I
 The server-side force-respawn camera path uses a dummy 1280 by 720 camera config when it must create a missing camera view. Normal gameplay respawn uses the existing player camera view and preserves valid client viewport configuration through `setPlayerCameraViewLocked`.
 
 Earlier legacy notes described respawn tools as using the existing per-player respawn guards. Current code uses a debug-specific force-respawn path instead: active players are ignored, invalid targets are ignored, and non-active sessions are recreated through the devtools export seam.
+

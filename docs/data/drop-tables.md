@@ -265,8 +265,8 @@ Pickup lifecycle, collection, and effects are separate consumers after a pickup 
 The client observes spawned pickups through:
 
 ```text
-StatePacket.pickups
-StatePacket.events
+world lane pickup records
+event_batch
 ```
 
 The client does not consume drop-table generated output directly.

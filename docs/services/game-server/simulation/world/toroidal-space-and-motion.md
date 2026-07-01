@@ -12,7 +12,7 @@ It explains how the server keeps authoritative positions inside wrapped world bo
 
 The game server stores authoritative world positions as bounded toroidal coordinates.
 
-A position that moves beyond one edge of the world wraps to the opposite edge. The server does not create ghost entities or duplicate bodies at world seams. Instead, it keeps one authoritative position per entity and uses wrapped spatial helpers when systems need distance, direction, or local collision placement across an edge.
+A position that moves beyond one edge of the world wraps to the opposite edge. The server does not create ghost entities or duplicate bodies at world seams. Instead, it keeps one authoritative position per entity and uses wrapped spatial helpers when systems need distance, direction, or local collision placement across an edge. Current live position publication is through world lane records.
 
 The current world size comes from shared constants:
 
@@ -34,7 +34,7 @@ Game.Step(delta)
 -> bounds := space.DefaultBounds()
 ```
 
-Those bounds are passed into the motion helpers for active players, asteroids, and projectiles.
+Those bounds are passed into the motion helpers for active players, asteroids, and projectiles. The resulting positions are later published through world lane full/delta packets.
 
 The main implementation split is:
 
@@ -99,7 +99,7 @@ Toroidal space and motion does not own:
 * Collision primitive math.
 * Collision consequence handling.
 * Damage, death, scoring, drops, or pickup effects.
-* State packet projection.
+* World lane realtime projection.
 * Client continuous visual coordinates.
 * Camera, background, interpolation, or render-anchor behavior.
 * Shared constant generation.
@@ -119,7 +119,7 @@ store one bounded authoritative position per entity
 advance authoritative motion during simulation
 wrap moved positions into server world bounds
 use shortest wrapped spatial math for cross-edge relationships
-publish bounded positions through state packets
+publish bounded positions through world lane realtime projection
 ```
 
 The client role is separate:
@@ -486,7 +486,7 @@ motion.AdvanceBullet(bullet, delta, bounds)
 
 These surfaces are for server simulation code. They are consumed by the game package and supporting game-server packages.
 
-Clients observe the results indirectly through gameplay state packets. The packet surface carries bounded authoritative positions; it does not expose motion helper calls, internal bounds objects, or server-side shortest-delta calculations.
+Clients observe the results indirectly through world lane realtime projection. The packet surface carries bounded authoritative positions through world lane records; it does not expose motion helper calls, internal bounds objects, or server-side shortest-delta calculations.
 
 ## Invariants
 
@@ -623,7 +623,7 @@ go test -buildvcs=false ./tests/space ./tests/game -run 'Wrap|Delta|Distance|Dir
 * [Game Server](../../!INDEX.md)
 * [Simulation Loop And Phase Order](../runtime/simulation-loop-and-phase-order.md)
 * [Runtime Entity Store](../runtime/runtime-entity-store.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Player Pause And Suspension](../players/player-pause-and-suspension.md)
 * [Player Camera View State](../players/player-camera-view-state.md)
 * [Player Respawn](../players/player-respawn.md)
@@ -642,3 +642,4 @@ Legacy toroidal-wrap documentation correctly identified the key server/client sp
 The server currently has one authoritative position per entity. Cross-edge collision and distance behavior should continue to use wrapped deltas rather than adding duplicate ghost entities to runtime storage.
 
 `space.WrapPosition` returns the input coordinate unchanged when a bound size is non-positive. Current production bounds come from positive generated constants, so that fallback is defensive behavior rather than normal gameplay configuration.
+

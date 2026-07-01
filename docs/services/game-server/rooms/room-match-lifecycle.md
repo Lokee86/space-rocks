@@ -42,9 +42,9 @@ Related player and runtime boundaries:
 
 * [Player Death And Despawn](../simulation/players/player-death-and-despawn.md)
 * [Player Counters](../simulation/players/player-counters.md)
-* [State Packet Projection](../simulation/runtime/state-packet-projection.md)
+* [Lane Packet Projection](../simulation/runtime/lane-packet-projection.md)
 
-Room match lifecycle owns phase transitions and match completion. Player death, lives mutation, and runtime state packet projection live in their narrower simulation boundaries.
+Room match lifecycle owns phase transitions and match completion. Player death, lives mutation, and lane-native realtime projection live in their narrower simulation boundaries.
 
 ## Code root
 
@@ -431,3 +431,4 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 Legacy documentation supplied two still-current ownership rules: the client does not own authoritative match lifecycle, and WebSocket connection, room membership, and active gameplay participation are separate states.
 
 Room game-over state and local player elimination are different concepts. The room reaches `GameOver` only when the server room lifecycle observes that the authoritative game match decision is complete.
+

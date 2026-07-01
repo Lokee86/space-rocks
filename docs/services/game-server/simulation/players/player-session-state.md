@@ -6,7 +6,7 @@ Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 This document describes the game-server simulation’s per-player session state.
 
-Player session state is the server-owned record that persists player match state across active ship creation, death, despawn, respawn, pause gates, and state-packet projection.
+Player session state is the server-owned record that persists player match state across active ship creation, death, despawn, respawn, pause gates, and lane-native realtime projection.
 
 ## Overview
 
@@ -16,7 +16,7 @@ That separation matters because the active ship can be pending despawn, removed,
 
 A new session is created when the simulation adds a player. The session is immediately projected into a `runtime.Ship` for the initial active avatar. Later, respawn uses the same session to create a new ship after cooldown and life checks pass.
 
-Session state is also projected into outbound state packets as `PlayerSessionState`. That packet projection lets clients see player-level state that is not guaranteed to exist on the active ship entity, such as remaining lives, score, respawn cooldown, spawn position, and session armory identifiers.
+Session state is also projected into session lane player records as `PlayerSessionState`. That lane projection lets clients see player-level state that is not guaranteed to exist on the active ship entity, such as remaining lives, score, respawn cooldown, spawn position, and session armory identifiers.
 
 ## Code root
 
@@ -33,7 +33,7 @@ Session state is also projected into outbound state packets as `PlayerSessionSta
 * Gate respawn eligibility with session lives and respawn cooldown.
 * Provide session-backed counter mutation for score and lives.
 * Provide session-backed pause/suspension checks for input, movement, shooting, collision damage, and score receipt.
-* Project session state into `StatePacket.PlayerSessions`.
+* Project session state into session lane player records.
 
 ## Does not own
 
@@ -76,7 +76,7 @@ The client does not own or mutate arbitrary session fields. Client packets can i
 
 `respawn` packets request a respawn. The server uses the session to decide whether respawn is allowed, using remaining lives and cooldown, then creates a new active ship from the stored session state.
 
-`state` packets include a `PlayerSessions` map. Each entry is a projected `PlayerSessionState` containing player-level fields that clients need even when a ship entity is absent or between lifecycle states.
+Session lane packets include player records. Each entry is a projected `PlayerSessionState` containing player-level fields that clients need even when a ship entity is absent or between lifecycle states.
 
 The projected session packet includes:
 
@@ -123,8 +123,8 @@ Primary implementation files:
 * `services/game-server/internal/game/session.go` - Defines `playerSession`, session defaults, cooldown stepping, respawn eligibility, and ship creation from session state.
 * `services/game-server/internal/game/players.go` - Creates and removes sessions through `AddPlayer` and `RemovePlayer`.
 * `services/game-server/internal/game/player_session_state.go` - Projects `playerSession` records into `PlayerSessionState`.
-* `services/game-server/internal/game/state_packet.go` - Includes session projections in outbound `StatePacket`.
-* `services/game-server/internal/game/packets.go` - Defines generated packet structs, including `PlayerSessionState` and `StatePacket`.
+* `services/game-server/internal/protocol/realtime/records.go` - Includes session projections in outbound lane packets.
+* `services/game-server/internal/game/packets.go` - Defines generated packet structs, including `PlayerSessionState` and the lane packet types.
 * `services/game-server/internal/game/input.go` - Applies valid client config packets to the session and routes respawn requests.
 * `services/game-server/internal/game/pause.go` - Stores pause/suspension state on the session and gates player actions from that state.
 * `services/game-server/internal/game/player_counters.go` - Mutates session score and lives.
@@ -144,11 +144,11 @@ Important non-ownership boundaries:
 * `game.entities.Players` owns active ship entities, not persistent player session records.
 * Room code owns room membership and room lifecycle.
 * Networking code owns packet transport.
-* Client code owns presentation of session-state packets.
+* Client code owns presentation of session lane records.
 
 ## Tests
 
-Relevant verification is covered by game-server package tests around player lifecycle, respawn, counters, pause/suspension, targeting, and state packet projection.
+Relevant verification is covered by game-server package tests around player lifecycle, respawn, counters, pause/suspension, targeting, and lane-native realtime projection.
 
 Run the game-server tests after changing this area:
 

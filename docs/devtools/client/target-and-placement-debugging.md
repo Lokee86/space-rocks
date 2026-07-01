@@ -65,9 +65,9 @@ target_kind = "player"
 target_id = <player id>
 ```
 
-The client may request a target from local click state, but the request is not authoritative. The server validates the selected target kind, target ID, click position, and current target body before storing target state. The client then reads the confirmed target back through normal gameplay state.
+The client may request a target from local click state, but the request is not authoritative. The server validates the selected target kind, target ID, click position, and current target body before storing target state. The client then reads the confirmed target back through normal world lane readback or session-lane state, depending on the target kind.
 
-Placement debugging also remains server-authoritative. The client sends a requested entity type, position, direction metadata, and optional player target context. The server decides whether the request applies and mutates the authoritative game state. The client observes the result through normal state packets and world sync.
+Placement debugging also remains server-authoritative. The client sends a requested entity type, position, direction metadata, and optional player target context. The server decides whether the request applies and mutates the authoritative game state. The client observes the result through world lane readback and world sync.
 
 `target_player_id` is a quarantined compatibility field for debug/player-only command paths. It is not the generic gameplay target model and should not be used for normal gameplay targeting, target readouts, or new target-capable gameplay systems.
 
@@ -126,10 +126,10 @@ Target rows are built differently depending on command type:
 Target state lookup depends on the selected telemetry source:
 
 ```text
-StatePacket.entities
-= active player, asteroid, bullet, pickup, or enemy state
+world lane ship records
+= active player, asteroid, bullet, pickup, or enemy readback
 
-StatePacket.player_world_states
+session lane player records
 = durable player/session state for player targets only
 ```
 
@@ -151,7 +151,7 @@ hotkey or window button
 -> DevConnectionService
 -> devtools packet
 -> server devtools command handling
--> normal authoritative state readback
+-> normal authoritative lane readback
 ```
 
 `DevtoolsPlacementContext` refuses placement requests until gameplay state has been received. It also refuses requests when no placement route has been configured.
@@ -354,7 +354,7 @@ TargetRequestFlow
 -> client connection service
 -> server inbound gameplay routing
 -> game targeting validation
--> state packet readback
+-> lane readback
 ```
 
 Placement debugging uses devtools packets, but the server still applies the effects through server-owned game/devtools adapters. Client placement code does not directly create authoritative entities.

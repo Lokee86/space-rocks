@@ -10,7 +10,7 @@ It covers DevToggle hotkeys, devtools window actions, placement input, outbound 
 
 ## Overview
 
-Client devtools are a debug-only input and presentation layer. They collect local development intent, build packets where needed, route those packets through the normal client networking path, and display server-returned diagnostic state. They do not own authoritative gameplay mutation.
+Client devtools are a debug-only input and presentation layer. They collect local development intent, build packets where needed, route those packets through the normal client networking path, and display server-returned diagnostic state and lane-applied read models. They do not own authoritative gameplay mutation.
 
 Current high-level flow:
 
@@ -87,7 +87,7 @@ The server networking inbound router classifies devtools command packets before 
 
 Devtools commands do not route through normal client-side authority and should not be documented as gameplay packet ownership. The client only requests a command. The server decides whether the current session, room, player, target scope, and command payload are valid.
 
-Server-side mutation remains behind server-owned handlers and game-owned export seams. Client confirmation comes back through normal state packets, debug status packets, entity sync, or visible absence/presence of entities after the server applies the command.
+Server-side mutation remains behind server-owned handlers and game-owned export seams. Client confirmation comes back through lane-applied read models, debug status packets, entity sync, or visible absence/presence of entities after the server applies the command.
 
 If the current websocket session has no room or no current game player ID, the server devtools command route consumes the packet without applying a command. This keeps client devtools input from becoming authority when no server gameplay context exists.
 
@@ -105,7 +105,7 @@ Focused ownership is split as follows:
 * `DevtoolsHotkeyContext` owns DevToggle presentation routing for the devtools window, remote player labels, world telemetry overlay, and delegates command hotkeys to `DevtoolsHotkeyFlow`.
 * `DevtoolsPlacementContext` owns placement request routing and placement result forwarding into debug spawn packets.
 * `DevtoolsOverlayContext` owns world telemetry, remote player labels, and server hitbox overlay coordination.
-* `DevtoolsGameplayStateContext` fans gameplay and debug status packets into the devtools window, cached state, target rows, and overlays.
+* `DevtoolsGameplayStateContext` fans lane-applied gameplay and debug status packets into the devtools window, cached state, target rows, and overlays.
 
 The devtools window is lazily instantiated by `DevtoolsWindowController`. The controller caches current debug status, target rows, telemetry source selections, local player state, target state, and hitbox checkbox state so presentation remains stable whether the window is already open or opened later.
 
@@ -298,7 +298,7 @@ The devtools window currently displays:
 * Debug status labels for world and freeze-state controls.
 * Local player raw telemetry.
 * Target raw telemetry.
-* Telemetry source selectors for `StatePacket.entities` and `StatePacket.player_world_states`.
+* Telemetry source selectors for `world lane readback` and `session lane readback`. 
 
 `DebugStatusPacketReader` normalizes inbound `debug_status` and `debug_statuses` fields. Non-dictionary values are treated as empty dictionaries before presentation refresh.
 

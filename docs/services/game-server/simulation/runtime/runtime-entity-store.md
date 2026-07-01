@@ -61,7 +61,7 @@ Those responsibilities live in the game aggregate, neighboring runtime docs, or 
 
 The entity store participates in the server-authoritative gameplay domain as the match-local runtime backing store for live entities.
 
-Rooms and networking do not own the store. They create, start, stop, and observe `Game` instances that contain the store. During a match, simulation code mutates the store and state packet projection reads from it to build per-player snapshots.
+Rooms and networking do not own the store. They create, start, stop, and observe `Game` instances that contain the store. During a match, simulation code mutates the store and lane-native realtime projection reads from it to build per-receiver lane packets.
 
 The store exists only while a game instance exists. It is not a durable domain object and does not outlive the match-local simulation aggregate.
 
@@ -69,9 +69,9 @@ The store exists only while a game instance exists. It is not a durable domain o
 
 The runtime entity store is not a protocol surface.
 
-It is consumed internally by `game.Game`, same-package simulation helpers, and state packet projection. The primary API that creates it is `runtime.NewEntityStore()`, which returns a fully initialized empty store for `Game.New()`.
+It is consumed internally by `game.Game`, same-package simulation helpers, and lane-native realtime projection. The primary API that creates it is `runtime.NewEntityStore()`, which returns a fully initialized empty store for `Game.New()`.
 
-There is no external network contract attached to the store itself. Outbound packets observe copies of its contents through `Game.StatePacket(playerID)`, but the store does not define packet schema or transport behavior.
+There is no external network contract attached to the store itself. Outbound packets observe lane-native readback copies of its contents through `protocol/realtime`, but the store does not define packet schema or transport behavior.
 
 ## Data ownership
 
@@ -82,7 +82,7 @@ The data ownership split is:
 * `game.Game` owns the `entities` field and the lock around it.
 * `runtime` owns the `EntityStore`, `Ship`, `Bullet`, `Asteroid`, and related state-shape types.
 * Simulation and gameplay helpers mutate the maps through the aggregate boundary.
-* `state_packet.go` reads the maps and projects copy-out packet state.
+* `protocol/realtime/records.go` and related projection files read the maps and project lane-native packet state.
 
 The store holds authoritative live entity references for the current match only:
 
@@ -101,7 +101,8 @@ Core runtime files:
 ```text
 services/game-server/internal/game/runtime/state.go
 services/game-server/internal/game/game.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
+services/game-server/internal/protocol/realtime/
 ```
 
 Aggregate and simulation files that create, read, or mutate entity maps:
@@ -119,6 +120,8 @@ services/game-server/internal/game/asteroid_destruction.go
 services/game-server/internal/game/radial_spawning.go
 services/game-server/internal/game/simulation_radial_effects.go
 services/game-server/internal/game/player_world_state.go
+services/game-server/internal/protocol/realtime/records.go
+services/game-server/internal/protocol/realtime/
 ```
 
 Supporting runtime references:
@@ -130,7 +133,7 @@ services/game-server/internal/game/packets.go
 
 ## Tests
 
-Representative tests that cover live-entity behavior and state projection:
+Representative tests that cover live-entity behavior and lane-native projection:
 
 ```text
 services/game-server/tests/game/state_packet_lifecycle_test.go
@@ -148,7 +151,7 @@ Package-level tests may also exercise entity-map mutation indirectly through sim
 - [Game Server Simulation Runtime](./!INDEX.md)
 - [Game Aggregate](game-aggregate.md)
 - [Simulation Loop And Phase Order](simulation-loop-and-phase-order.md)
-- [State Packet Projection](state-packet-projection.md)
+- [Lane Packet Projection](lane-packet-projection.md)
 - [Presentation Event Queue](presentation-event-queue.md)
 - [Game Server Simulation Players](../players/!INDEX.md)
 - [Game Server Simulation Combat](../combat/!INDEX.md)
@@ -159,4 +162,5 @@ Package-level tests may also exercise entity-map mutation indirectly through sim
 
 The store is deliberately simple: one aggregate-owned container for the live entity maps used during a match.
 
-This document stays focused on ownership and map semantics. It does not duplicate player-session, pickup, combat, or state-packet behavior documented elsewhere.
+This document stays focused on ownership and map semantics. It does not duplicate player-session, pickup, combat, or lane-native realtime projection behavior documented elsewhere.
+

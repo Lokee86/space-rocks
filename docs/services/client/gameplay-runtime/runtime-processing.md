@@ -12,7 +12,7 @@ It covers how gameplay runtime work is ticked after gameplay composition exists,
 
 Runtime processing is the client-side frame loop for active gameplay presentation and orchestration.
 
-It is not the authoritative simulation tick. The server owns gameplay simulation, collision outcomes, scoring, lives, death, respawn validity, and match lifecycle. The client runtime processing path only advances local presentation and client-owned runtime helpers between authoritative state packets.
+It is not the authoritative simulation tick. The server owns gameplay simulation, collision outcomes, scoring, lives, death, respawn validity, and match lifecycle. The client runtime processing path only advances local presentation and client-owned runtime helpers between applied lane packets.
 
 The frame path starts in `GameplaySessionController._process(delta)`. The controller asks `GameplayStateFlow` whether any gameplay state has been received, then calls `GameplayComposition.process(delta, has_received_state)`.
 
@@ -51,7 +51,7 @@ This structure keeps frame processing as an ordered orchestration seam. It shoul
 
 * Tick client-owned gameplay runtime work once per Godot frame.
 * Preserve a stable processing order for gameplay presentation helpers.
-* Pass `has_received_state` to flows that must behave differently before the first gameplay state packet.
+* Pass `has_received_state` to flows that must behave differently before required lane baselines are present.
 * Tick world interpolation through `GameplayRuntimeContext`.
 * Tick server hitbox overlay presentation through `ServerHitboxOverlayFlow`.
 * Tick HUD runtime work through `GameplayRuntimeTickFlow`.
@@ -67,7 +67,7 @@ This structure keeps frame processing as an ordered orchestration seam. It shoul
 * Server gameplay authority.
 * Collision, damage, score, lives, respawn validity, or match-over decisions.
 * Raw websocket polling or packet decoding.
-* Gameplay state packet normalization.
+* Lane packet application.
 * World entity node creation, cleanup, and interpolation details.
 * HUD widget internals.
 * Input mapping or input action ownership.
@@ -91,7 +91,7 @@ This includes interpolation, HUD ticking, devtools presentation refresh, input-p
 
 ### State-aware processing bridge
 
-Some processing lanes receive `has_received_state` so they can avoid acting as if gameplay state is available before the first authoritative state packet has been applied.
+Some processing lanes receive `has_received_state` so they can avoid acting as if lane-applied world state is available before required baselines have been applied.
 
 ### World-sync tick bridge
 
@@ -108,7 +108,7 @@ GameplaySessionController._process(delta)
 -> GameplayComposition.process(delta, has_received_state)
 ```
 
-`has_received_state` is read from `GameplayStateFlow.has_received_state()`.
+`has_received_state` is read from the lane application / readiness adapter used by `GameplayStateFlow`.
 
 ### Composition processing path
 
@@ -165,9 +165,9 @@ HUD flow owns the details of HUD updates. Runtime processing only provides the p
 
 ### State-aware process APIs
 
-`GameplayDevtoolsContext.process(has_received_state)` and `GameplayInputContext.process(has_received_state)` receive the gameplay-state flag.
+`GameplayDevtoolsContext.process(has_received_state)` and `GameplayInputContext.process(has_received_state)` receive the lane-readiness flag.
 
-This keeps pre-first-state behavior explicit for flows that may depend on authoritative gameplay state being available.
+This keeps pre-readiness behavior explicit for flows that may depend on required lane-applied gameplay state being available.
 
 ## Data ownership
 
@@ -217,7 +217,7 @@ Runtime processing does not own packet schemas.
 
 ### Non-ownership boundaries
 
-* `client/scripts/gameplay/state/` owns gameplay state reading and state application.
+* `client/scripts/gameplay/state/` owns lane packet reading and state application.
 * `client/scripts/world/` owns world entity sync and interpolation details.
 * `client/scripts/networking/` owns websocket transport, packet decoding, and packet dispatch.
 * `services/game-server/internal/game/` owns authoritative gameplay simulation.

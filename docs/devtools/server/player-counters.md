@@ -46,7 +46,7 @@ Player counter devtools may:
 * Set one player’s lives.
 * Add to or subtract from one player’s lives.
 * Apply the same score or lives command to all known player targets.
-* Use normal state packets as confirmation that the counter changed.
+* Use later lane packet readback as confirmation that the counter changed.
 
 Player counter devtools must not:
 
@@ -199,7 +199,7 @@ Each command iterates all resolved target player IDs and applies the requested c
 
 The handler returns `true` when at least one target player session is found and mutated. It returns `false` when the game instance is nil or no resolved player ID maps to an existing player session.
 
-There is no dedicated success or failure response packet for these commands. Confirmation is observed through subsequent authoritative state packets.
+There is no dedicated success or failure response packet for these commands. Confirmation is observed through subsequent authoritative lane packet readback.
 
 ## Telemetry
 
@@ -208,16 +208,16 @@ Player counter devtools do not emit a dedicated telemetry packet.
 Counter visibility comes from normal server state projection:
 
 ```text
-StatePacket.lives
-StatePacket.player_sessions[player_id].score
-StatePacket.player_sessions[player_id].lives
+lane packet.lives
+lane packet.player_sessions[player_id].score
+lane packet.player_sessions[player_id].lives
 ```
 
-`StatePacket.lives` is the requesting player’s lives convenience projection.
+`overlay lane receiver-local lives/readout` is the requesting player's lives convenience projection.
 
-`StatePacket.player_sessions` is the multi-player read model for durable session counters. Devtools readouts that compare local player or target state should read score and lives from player session state, not from active ship state.
+`session lane player records` is the multi-player read model for durable session counters. Devtools readouts that compare local player or target state should read score and lives from player session state, not from active ship state.
 
-Counter command effects are visible only after the server mutates game state and a later state packet reaches the client. The client should not treat the outgoing command packet as proof that the counter changed.
+Counter command effects are visible only after the server mutates game state and a later lane packet reaches the client. The client should not treat the outgoing command packet as proof that the counter changed.
 
 Debug status packets currently report flags such as invincible, infinite lives, world frozen, and player frozen. They do not carry score or lives values.
 
@@ -266,7 +266,7 @@ The authoritative gameplay counter doc owns the broader score/lives model:
 services/game-server/internal/game/player_counters.go
 ```
 
-That seam is also used by normal gameplay flows such as score awards, fatal damage life loss, pickup life effects, match facts, and state packet projection.
+That seam is also used by normal gameplay flows such as score awards, fatal damage life loss, pickup life effects, match facts, and lane packet projection.
 
 Devtools only supplies an alternate command path into that seam. It does not own:
 
@@ -390,7 +390,7 @@ Server devtools player counter tests cover:
 * Treating unknown scopes as single-player scopes.
 * Default and `nodevtools` devtools gate behavior.
 
-Broader game tests verify that devtools counter mutations appear through state packets and that the same gameplay counter seam remains authoritative for score and lives projection.
+Broader game tests verify that devtools counter mutations appear through lane packet readback and that the same gameplay counter seam remains authoritative for score and lives projection.
 
 Useful focused verification:
 

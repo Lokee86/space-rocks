@@ -12,7 +12,7 @@ It documents projectile identity, runtime state, authority boundaries, movement,
 
 Projectiles are server-authoritative moving combat entities.
 
-A projectile is created by authoritative server behavior, stored in the live runtime entity store, advanced by simulation, projected to clients as state, and removed by server-owned lifetime, visibility, pending-despawn, or collision consequences.
+A projectile is created by authoritative server behavior, stored in the live runtime entity store, advanced by simulation, projected to clients as world lane bullet records, and removed by server-owned lifetime, visibility, pending-despawn, or collision consequences.
 
 The current runtime implementation type is still named `Bullet`, but conceptually a projectile is broader than a basic bullet. Weapon-backed projectiles carry weapon identity and projectile type metadata, so the same runtime entity family can represent:
 
@@ -53,7 +53,7 @@ authoritative fire or debug spawn
 -> projectile spawn intent or direct debug spawn
 -> runtime projectile entity
 -> motion and toroidal wrapping
--> state packet projection
+-> world lane realtime projection
 -> client presentation
 -> collision or expiry
 -> damage and impact-effect handling
@@ -71,7 +71,7 @@ client input intent
 -> runtime projectile
 ```
 
-The weapon fire policy does not create a live entity. It returns an intent. The game aggregate adapts that intent into a runtime projectile, assigns an authoritative projectile id, stores it in `game.entities.Projectiles`, and later projects it through state packets.
+The weapon fire policy does not create a live entity. It returns an intent. The game aggregate adapts that intent into a runtime projectile, assigns an authoritative projectile id, stores it in `game.entities.Projectiles`, and later projects it through world lane bullet records.
 
 ## Projectile identity
 
@@ -149,7 +149,7 @@ damage request adapters use damage spec or legacy damage fallback
 
 impact-effect adapters use impact effect metadata
 
-state projection uses id, owner id, position, rotation, weapon id, and projectile type
+world lane projection uses id, owner id, position, rotation, weapon id, and projectile type
 ```
 
 ## Creation authority
@@ -304,7 +304,7 @@ Projectiles do not step radial effects. Radial effects do not own projectile lif
 
 ## State projection
 
-Projectile state is projected to clients through the normal gameplay state packet.
+Projectile state is projected to clients through world lane full/delta packets.
 
 Current projected projectile fields are:
 
@@ -318,7 +318,7 @@ weapon_id
 projectile_type
 ```
 
-Projectile state packets do not expose:
+Projectile world lane packets do not expose:
 
 ```text
 velocity
@@ -331,7 +331,7 @@ despawn delay
 
 Those are server-side runtime facts. The client receives only the read model needed for presentation and target-position support.
 
-A projectile disappearing from `StatePacket.bullets` means the authoritative server no longer presents that projectile as live. The client should remove its corresponding scene node.
+A projectile disappearing from world lane bullet records means the authoritative server no longer presents that projectile as live. The client should remove its corresponding scene node.
 
 ## Client presentation
 
@@ -450,7 +450,7 @@ Scoring, asteroid destruction, and drops
 = downstream consequences of projectile-driven asteroid destruction
 
 Realtime protocol
-= projectile state projection to clients
+= projectile world lane projection to clients
 
 Client world sync
 = projectile node creation, interpolation, scene selection, and removal
@@ -490,7 +490,7 @@ These limits should not be documented as permanent projectile design constraints
 * [Collision To Damage Flow](../../services/game-server/simulation/combat/collision-to-damage-flow.md)
 * [Radial Effects Service Implementation](../../services/game-server/simulation/combat/radial-effects.md)
 * [Runtime Entity Store](../../services/game-server/simulation/runtime/runtime-entity-store.md)
-* [State Packet Projection](../../services/game-server/simulation/runtime/state-packet-projection.md)
+* [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md)
 * [Toroidal Space And Motion](../../services/game-server/simulation/world/toroidal-space-and-motion.md)
 * [Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
 * [Entity Sync Owners](../../services/client/world-sync/entity-sync-owners.md)
@@ -507,3 +507,4 @@ The implementation still uses `Bullet` in runtime type names, packet field names
 The current client fallback for missing or unknown projectile type is `bullet`. That is presentation fallback behavior, not a rule that every projectile is conceptually a bullet.
 
 Projectile docs should not absorb the full weapon system. Weapons own firing capability and spawn intent. Projectiles own the live entity behavior after creation.
+

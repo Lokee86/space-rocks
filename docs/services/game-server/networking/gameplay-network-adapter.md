@@ -6,7 +6,7 @@ Parent index: [Game Server Networking](./!INDEX.md)
 
 This document covers the game-server inbound gameplay network adapter.
 
-The adapter is the server networking seam that translates already-decoded client gameplay packets into room/game calls. It does not own gameplay rules, simulation behavior, packet decoding, WebSocket transport, or outbound state broadcasting.
+The adapter is the server networking seam that translates already-decoded client gameplay packets into room/game calls. It does not own gameplay rules, simulation behavior, packet decoding, WebSocket transport, or outbound lane packet delivery.
 
 ## Overview
 
@@ -92,7 +92,7 @@ The gameplay network adapter does not own:
 * client viewport/config semantics beyond forwarding valid packets
 * target validation internals
 * pause state implementation
-* outbound state packet construction
+* outbound lane packet construction or delivery
 
 ## Packet handling flow
 
@@ -215,9 +215,9 @@ Important non-ownership boundaries:
 * `game` owns gameplay authority.
 * `rooms` owns room state and room-to-game-instance access.
 * generated packet code owns packet names and packet field shapes.
-* outbound networking owns state/event delivery back to clients.
+* outbound networking owns lane packet delivery back to clients.
 
-Player docs own the actual input rules, pause mechanics, and respawn implementation. This adapter only routes packets into the correct game-side APIs.
+Player docs own the actual input rules, pause mechanics, and respawn implementation. This adapter only routes packets into the correct game-side APIs and does not own lane packet projection.
 
 Related player docs:
 

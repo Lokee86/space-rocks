@@ -405,7 +405,7 @@ response: player id and normal paused flag
 
 The response reports only normal pause state. It does not report dev freeze, aggregate suspension, invulnerability, movement eligibility, or score eligibility.
 
-Pause state is not currently projected into the normal `StatePacket`. It is sent as a direct `player_pause_state` response after pause requests.
+Pause state is not currently projected into the normal lane-native gameplay readback. It is sent as a direct `player_pause_state` response after pause requests.
 
 Dev player freeze uses devtools command/status packets, not the normal `pause_request` protocol.
 
@@ -626,3 +626,4 @@ go test -buildvcs=false ./tests/game -run 'Debug.*Freeze|PlayerFrozen'
 Suspended players still remain active player entities unless another lifecycle path removes them. Pause is not the same as death, pending despawn, respawn cooldown, or elimination.
 
 The movement helper clears input while movement is blocked, but pausing also clears input immediately at the transition. This duplication is intentional defense against stale input from both the transition and later simulation ticks.
+

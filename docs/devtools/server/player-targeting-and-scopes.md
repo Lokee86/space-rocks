@@ -318,16 +318,7 @@ player_frozen
 
 `target_scope` is not itself a durable server state field and is not emitted as telemetry. It is command input used to choose effective targets for the current command.
 
-After mutations, clients observe the result through normal authoritative readback:
-
-```text
-debug_status packets
-state packets
-player lifecycle
-player session score/lives state
-active player ship state
-entity maps
-```
+After mutations, clients observe the result through normal authoritative readback:\r\n\r\n```text\r\ndebug_status packets\r\nworld lane readback for target fields on active ships\r\nsession lane readback for player/session state\r\nplayer lifecycle\r\nplayer session score/lives state\r\nactive player ship state\r\nentity maps\r\n```
 
 The server should not add a separate debug-only state model for player targeting when existing game state and debug status output already expose the result.
 
@@ -556,3 +547,5 @@ Server devtools targeting should stay command-specific. Adding a new player-targ
 `single_player` exists as a named scope constant, but the current server implementation only special-cases `all_players`. Unknown scopes therefore behave like single-player command input.
 
 `Game Target` is a client-side selector concept. The server should not learn about a `__game_target__` sentinel; it should receive either concrete player command fields or no effective command target.
+
+

@@ -49,7 +49,7 @@ The client input and targeting implementation owns:
 * Coordinating pending mouse actions before generic target selection.
 * Building target candidates from currently rendered or synchronized world state.
 * Sending target selection and deselection intent to the server.
-* Reading canonical target identity from server-driven gameplay state.
+* Reading canonical target identity from server-driven lane-applied gameplay state.
 * Preventing gameplay input from also consuming clicks intended for gameplay UI.
 * Keeping gameplay-session UI protection separate from app/menu/lobby screen ownership.
 
@@ -150,7 +150,7 @@ The client-facing packet boundary is intentionally narrow.
 
 Outbound intent flows include movement, firing, respawn, pause, menu, and target-intent packets sent through the client networking layer. These are requests, not authority.
 
-Authoritative state readback comes from gameplay state and target read models. The client reads canonical target identity and targetable positions from server-driven state rather than treating local clicks as durable truth.
+Authoritative state readback comes from lane-applied gameplay state and target read models. The client reads canonical target identity and targetable positions from server-driven state rather than treating local clicks as durable truth.
 
 This document does not define the full packet schema. It only describes how input and targeting code uses the outbound intent path and the authoritative readback path.
 
@@ -219,7 +219,7 @@ Godot input action
 
 The client sends gameplay input only when the session is active enough to accept gameplay input. Paused gameplay, disconnected network state, and blocking UI state should prevent gameplay input packets from being sent.
 
-The server remains authoritative after input is sent. The client updates presentation from incoming state packets rather than treating local input as confirmed gameplay state.
+The server remains authoritative after input is sent. The client updates presentation from incoming lane packets rather than treating local input as confirmed gameplay lane state.
 
 ## Mouse action priority
 
@@ -346,16 +346,16 @@ The target is valid, alive, interactable, or accepted by the server.
 
 Canonical gameplay target state is server-driven.
 
-The client reads canonical target identity from gameplay state fields:
+The client reads canonical target identity from lane-applied gameplay state fields:
 
 ```text
 target_kind
 target_id
 ```
 
-Selection and deselection from the client are requests. The server confirms the canonical target through state updates.
+Selection and deselection from the client are requests. The server confirms the canonical target through lane-applied state updates.
 
-The client should not treat the local clicked candidate as durable target state until the authoritative state confirms it.
+The client should not treat the local clicked candidate as durable target state until the lane-applied authoritative state confirms it.
 
 ## Devtools target boundary
 

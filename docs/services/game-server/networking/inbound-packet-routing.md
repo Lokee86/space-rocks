@@ -28,7 +28,7 @@ webSocketSession connection
 -> session, room, game, auth, telemetry, or devtools boundary
 ```
 
-The routing path owns packet classification and adapter handoff only. It does not own room rules, gameplay simulation authority, auth token verification logic, packet schema source-of-truth files, or outbound presentation packet production.
+The routing path owns packet classification and adapter handoff only. It does not own room rules, gameplay simulation authority, auth token verification logic, packet schema source-of-truth files, or outbound lane packet production.
 
 ## Code root
 
@@ -56,7 +56,7 @@ services/game-server/internal/networking/inbound/
 
 - WebSocket upgrade policy.
 - WebSocket write-loop behavior.
-- Outbound state packet projection.
+- Outbound lane packet projection or delivery.
 - Room membership rules.
 - Room lifecycle rules.
 - Game simulation rules.
@@ -502,7 +502,7 @@ services/game-server/internal/devtools/packets_generated.go
 
 ### Non-ownership boundaries
 
-- `services/game-server/internal/networking/outbound/` owns outbound gameplay and debug presentation write helpers.
+- `services/game-server/internal/networking/outbound/` owns outbound lane gameplay and debug presentation write helpers.
 - `client/scripts/networking/` owns client-side packet construction, send flow, receive flow, and client packet dispatch.
 - `docs/protocol/` owns protocol-level packet behavior.
 - `docs/data/` owns packet source-of-truth and generation pipeline documentation.
