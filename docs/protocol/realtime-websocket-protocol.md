@@ -273,6 +273,41 @@ The canonical server wire shape comes from `services/game-server/internal/protoc
 
 Chunk metadata exists in the wire shape and scheduler records. This document does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
 
+### Field-delta update semantics
+
+Delta lane update arrays are field-delta aware.
+
+Current delta lane record groups use this shape:
+
+```text
+creates
+= full typed records
+
+updates
+= partial field maps containing the identity key plus changed fields only
+
+deletes
+= identity string lists
+```
+
+Current update identity keys are:
+
+```text
+world ship_updates = id
+world bullet_updates = id
+world asteroid_updates = id
+world pickup_updates = id
+overlay receiver_updates = self_id
+session player_session_updates = id
+session player_lifecycle_updates = player_id
+```
+
+For update maps, omitted fields mean unchanged, not cleared. Clients merge update maps into existing lane records and preserve omitted fields. Clearing or removing a record still requires the explicit delete array for that record group.
+
+`total_asteroids` in `session_delta` remains record-level and is not part of the field-delta update-map conversion.
+
+The server compares projected realtime wire records when building deltas. The client does not own authoritative delta decisions.
+
 ### World lane packets
 
 `world_full` carries:
@@ -301,6 +336,15 @@ pickup_updates
 pickup_deletes
 ```
 
+Current `world_delta` update maps are partial maps keyed by id:
+
+```text
+ship_updates
+bullet_updates
+asteroid_updates
+pickup_updates
+```
+
 ### Overlay lane packets
 
 `overlay_full` flattens the receiver/HUD fields from `OverlayReceiverRecord` at top level.
@@ -311,6 +355,12 @@ pickup_deletes
 receiver_creates
 receiver_updates
 receiver_deletes
+```
+
+Current `overlay_delta` update maps are partial maps keyed by `self_id`:
+
+```text
+receiver_updates
 ```
 
 ### Session lane packets
@@ -334,6 +384,15 @@ player_lifecycle_updates
 player_lifecycle_deletes
 total_asteroids
 ```
+
+Current `session_delta` update maps use lane-specific identity keys:
+
+```text
+player_session_updates = id
+player_lifecycle_updates = player_id
+```
+
+`total_asteroids` remains record-level and is not part of the field-delta conversion.
 
 ### Event lane packets
 
