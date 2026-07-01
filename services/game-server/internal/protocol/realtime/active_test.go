@@ -402,3 +402,45 @@ func TestIncludedRealtimeLaneCandidatesSkipsInvalidIndexes(t *testing.T) {
 		t.Fatalf("selected candidates = %#v, want world", selected)
 	}
 }
+func TestEncodeLanePacketCompactsActiveWorldDeltaWireJSON(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{
+				Lane:         LaneWorld,
+				Sequence:     9,
+				BaselineID:   "baseline-9",
+				SnapshotID:   "snapshot-9",
+				SnapshotKind: SnapshotKind("delta"),
+			},
+			Ships: FieldRecordDelta[WorldShipRecord]{
+				Updates: []map[string]any{{
+					"id":        "ship-1",
+					"x":         6,
+					"y":         7,
+					"rotation":  8,
+					"thrusting": true,
+				}},
+			},
+		},
+	}
+
+	encoded, recordedBytes := encodeLanePacket(candidate)
+	if recordedBytes == 0 {
+		t.Fatal("expected encoded bytes for active world delta packet")
+	}
+	if len(encoded) == 0 {
+		t.Fatal("expected non-empty encoded packet")
+	}
+
+	wire := mustDecodeWirePacket(t, encoded)
+	assertStringValue(t, wire, "t", "wd")
+	assertStringValue(t, wire, "l", "w")
+	assertContainsKey(t, wire, "q")
+	assertContainsKey(t, wire, "su")
+	assertNotContainsKey(t, wire, "server_sent_msec")
+	assertNotContainsKey(t, wire, "snapshot_kind")
+	assertNotContainsKey(t, wire, "ship_updates")
+}
