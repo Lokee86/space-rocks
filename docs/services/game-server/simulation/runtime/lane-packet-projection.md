@@ -89,6 +89,45 @@ event batch
 
 `player_pause_state` remains a separate same-session packet and is handled independently from lane packet projection.
 
+## Delta projection behavior
+
+The realtime projection path builds lane records from authoritative game state before delta comparison.
+
+Field-delta comparison is current behavior for these update groups:
+
+```text
+world lane
+= ship, bullet, asteroid, and pickup updates
+
+overlay lane
+= receiver updates
+
+session lane
+= player session and player lifecycle updates
+```
+
+Creates remain full records. Deletes remain identity lists. Update groups carry partial maps with the identity key plus changed fields only.
+
+Client lane state merges partial update maps into existing records and preserves omitted fields. Omitted fields mean unchanged, not cleared.
+
+Numeric wire quantization is not implemented yet. Future numeric quantization should happen in the projection or wire-record layer before delta comparison. It should not truncate authoritative simulation state as a packet-size optimization.
+
+The ownership boundary remains:
+
+```text
+simulation
+= authoritative gameplay state
+
+realtime projection
+= lane packet shaping and delta comparison
+
+packetcodec
+= JSON encode/decode mechanics
+
+networking
+= WebSocket write integration and write success/failure handling
+```
+
 ## Event semantics
 
 Presentation event projection is non-draining until the active send path explicitly drains after successful active handling.

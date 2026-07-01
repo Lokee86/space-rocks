@@ -46,6 +46,40 @@ resync_request / resync_required / control
 
 Current packet families are lane-native, with `event_batch` carrying presentation events separately from world, overlay, and session lanes.
 
+Current lane delta behavior:
+
+```text
+create arrays
+= full records
+
+update arrays
+= identity key plus changed fields only
+
+delete arrays
+= IDs
+```
+
+Current update identity keys are:
+
+```text
+world entity updates
+= id
+
+overlay receiver updates
+= self_id
+
+session player updates
+= id
+
+session lifecycle updates
+= player_id
+```
+
+`world_delta`, `overlay_delta`, and `session_delta` are field-delta aware for update arrays. `event_batch` is not a field-delta lane; it remains transient presentation event delivery. `player_pause_state` remains a separate same-session packet and is not part of lane delta delivery.
+
+Detailed lane metadata, baseline, sequencing, and field-delta semantics belong in [Realtime WebSocket Protocol](realtime-websocket-protocol.md).
+
+
 ## Protocol authority
 
 Packet schema authority lives in:
@@ -132,6 +166,8 @@ event_batch
 ```
 
 `player_pause_state` remains a separate same-session packet and should be treated as a current packet family, not as part of lane event or world-state delivery.
+
+`event_batch` is transient event delivery, not a field-delta lane.
 
 ## Event delivery
 
