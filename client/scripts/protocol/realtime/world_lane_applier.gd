@@ -31,7 +31,6 @@ func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: Basel
 	_apply_entity_deltas(world_lane_state, _array_field(world_packet, "pickup_creates"), _array_field(world_packet, "pickup_updates"), _array_field(world_packet, "pickup_deletes"), "pickup")
 	return true
 
-
 func _array_field(packet: Dictionary, key: String) -> Array:
 	var value = packet.get(key, [])
 	if value is Array:
@@ -59,8 +58,14 @@ func _apply_entity_create(world_lane_state: WorldLaneState, record: Dictionary, 
 
 func _apply_entity_update(world_lane_state: WorldLaneState, record: Dictionary, entity_kind: String) -> void:
 	match entity_kind:
+		"ship":
+			world_lane_state.merge_ship_update(record)
 		"bullet":
 			world_lane_state.merge_bullet_update(record)
+		"asteroid":
+			world_lane_state.merge_asteroid_update(record)
+		"pickup":
+			world_lane_state.merge_pickup_update(record)
 		_:
 			_apply_entity_create(world_lane_state, record, entity_kind)
 

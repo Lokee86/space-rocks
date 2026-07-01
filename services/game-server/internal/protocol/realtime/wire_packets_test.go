@@ -118,6 +118,43 @@ func TestWireWorldDeltaPacketJSONDoesNotContainNullForEmptyDelta(t *testing.T) {
 	}
 }
 
+func TestWireWorldDeltaPacketEncodesShipUpdatesAsPartialFieldPatch(t *testing.T) {
+	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{
+		Type: PacketTypeWorldDelta,
+		Ships: FieldRecordDelta[WorldShipRecord]{
+			Updates: []map[string]any{
+				{
+					"id":         "ship-1",
+					"x":          6,
+					"y":          7,
+					"rotation":   8,
+					"thrusting":  true,
+				},
+			},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	wire := mustDecodeWirePacket(t, encoded)
+	updates := mustSliceValue(t, wire, "ship_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one ship update, got %#v", updates)
+	}
+
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "id", "ship-1")
+	assertFloatValue(t, update, "x", 6)
+	assertFloatValue(t, update, "y", 7)
+	assertFloatValue(t, update, "rotation", 8)
+	assertNotContainsKey(t, update, "ship_type")
+	assertNotContainsKey(t, update, "health")
+	assertNotContainsKey(t, update, "shields")
+	assertNotContainsKey(t, update, "target_kind")
+	assertNotContainsKey(t, update, "target_id")
+}
+
 func TestWireWorldDeltaPacketEncodesBulletUpdatesAsPartialFieldPatch(t *testing.T) {
 	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{
 		Type: PacketTypeWorldDelta,
@@ -175,6 +212,76 @@ func TestWireWorldDeltaPacketEncodesBulletUpdatesWithZeroRotation(t *testing.T) 
 	assertFloatValue(t, update, "rotation", 0)
 	assertNotContainsKey(t, update, "weapon_id")
 	assertNotContainsKey(t, update, "projectile_type")
+}
+
+func TestWireWorldDeltaPacketEncodesAsteroidUpdatesAsPartialFieldPatch(t *testing.T) {
+	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{
+		Type: PacketTypeWorldDelta,
+		Asteroids: FieldRecordDelta[WorldAsteroidRecord]{
+			Updates: []map[string]any{
+				{
+					"id":     "asteroid-1",
+					"x":      6,
+					"y":      7,
+					"size":   2,
+					"health": 11,
+				},
+			},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	wire := mustDecodeWirePacket(t, encoded)
+	updates := mustSliceValue(t, wire, "asteroid_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one asteroid update, got %#v", updates)
+	}
+
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "id", "asteroid-1")
+	assertFloatValue(t, update, "x", 6)
+	assertFloatValue(t, update, "y", 7)
+	assertNotContainsKey(t, update, "size")
+	assertNotContainsKey(t, update, "health")
+	assertNotContainsKey(t, update, "scale")
+	assertNotContainsKey(t, update, "variant")
+}
+
+func TestWireWorldDeltaPacketEncodesPickupUpdatesAsPartialFieldPatch(t *testing.T) {
+	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{
+		Type: PacketTypeWorldDelta,
+		Pickups: FieldRecordDelta[WorldPickupRecord]{
+			Updates: []map[string]any{
+				{
+					"id":          "pickup-1",
+					"x":           6,
+					"y":           7,
+					"age_seconds": 4.5,
+				},
+			},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	wire := mustDecodeWirePacket(t, encoded)
+	updates := mustSliceValue(t, wire, "pickup_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one pickup update, got %#v", updates)
+	}
+
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "id", "pickup-1")
+	assertFloatValue(t, update, "x", 6)
+	assertFloatValue(t, update, "y", 7)
+	assertFloatValue(t, update, "age_seconds", 4.5)
+	assertNotContainsKey(t, update, "type")
+	assertNotContainsKey(t, update, "pickup_class")
+	assertNotContainsKey(t, update, "health")
+	assertNotContainsKey(t, update, "lifespan_seconds")
 }
 
 func TestWireSessionDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
@@ -674,3 +781,4 @@ func assertNotNakedSessionDeltaPayload(t *testing.T, wire map[string]any) {
 		t.Fatalf("session delta payload encoded without envelope: %#v", wire)
 	}
 }
+
