@@ -585,7 +585,7 @@ deltas require a changed projection
 unchanged lane projections produce no candidate
 ```
 
-Scheduling currently treats:
+Scheduling currently treats candidate-level lane metadata, not active record-level prioritization:
 
 ```text
 required full/control/resync packets = required
@@ -595,6 +595,20 @@ session deltas = medium priority / deferrable
 required bootstrap full packets = world, overlay, then session
 ```
 
+The active path currently schedules whole lane candidates:
+
+```text
+world_delta = one candidate
+overlay_delta = one candidate
+session_delta = one candidate
+event_batch = one candidate
+```
+
+The active path does not currently split `world_delta`, `overlay_delta`, or `session_delta` into selected record or field sub-packets.
+
+The byte estimates used by the scheduler are advisory and are not codec-accurate.
+
+Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ## Server inbound routing order
 
 The server inbound routing order is:
@@ -1308,6 +1322,7 @@ The current implementation sends lane-native gameplay output on the server tick 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
+
 
 
 
