@@ -302,7 +302,7 @@ func TestWireSessionDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
 func TestWireSessionDeltaPacketEncodesPlayerSessionUpdates(t *testing.T) {
 	wire := wireSessionDeltaPacket(SessionLaneDelta{
 		Metadata: Metadata{Lane: LaneSession},
-		Players: RecordDelta[SessionPlayerRecord]{Updates: []SessionPlayerRecord{{ID: "player-1", Score: 10}}},
+		Players: FieldRecordDelta[SessionPlayerRecord]{Updates: []map[string]any{{"id": "player-1", "score": 10}}},
 	})
 
 	updates := mustSliceValue(t, wire, "player_session_updates")
@@ -317,7 +317,7 @@ func TestWireSessionDeltaPacketEncodesPlayerSessionUpdates(t *testing.T) {
 func TestWireSessionDeltaPacketEncodesPlayerLifecycleUpdates(t *testing.T) {
 	wire := wireSessionDeltaPacket(SessionLaneDelta{
 		Metadata: Metadata{Lane: LaneSession},
-		PlayerLifecycle: RecordDelta[SessionLifecycleRecord]{Updates: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "respawning"}}},
+		PlayerLifecycle: FieldRecordDelta[SessionLifecycleRecord]{Updates: []map[string]any{{"player_id": "player-1", "status": "respawning"}}},
 	})
 
 	updates := mustSliceValue(t, wire, "player_lifecycle_updates")
@@ -332,7 +332,7 @@ func TestWireSessionDeltaPacketEncodesPlayerLifecycleUpdates(t *testing.T) {
 func TestWireSessionDeltaPacketEncodesPlayerLifecycleDeletes(t *testing.T) {
 	wire := wireSessionDeltaPacket(SessionLaneDelta{
 		Metadata: Metadata{Lane: LaneSession},
-		PlayerLifecycle: RecordDelta[SessionLifecycleRecord]{Deletes: []string{"player-1"}},
+		PlayerLifecycle: FieldRecordDelta[SessionLifecycleRecord]{Creates: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "active"}}, Updates: []map[string]any{{"player_id": "player-1", "status": "respawning"}}, Deletes: []string{"player-1"}},
 	})
 
 	deletes := wire["player_lifecycle_deletes"]
@@ -358,10 +358,10 @@ func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
 				SnapshotID:   "snapshot-9",
 				SnapshotKind: SnapshotKind("delta"),
 			},
-			Ships: RecordDelta[WorldShipRecord]{Creates: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}},
-			Bullets: FieldRecordDelta[WorldBulletRecord]{Updates: []map[string]any{{"id": "bullet-a", "x": 4, "y": 5}}},
-			Asteroids: RecordDelta[WorldAsteroidRecord]{Deletes: []string{"asteroid-a"}},
-			Pickups: RecordDelta[WorldPickupRecord]{},
+			Ships: FieldRecordDelta[WorldShipRecord]{Creates: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}, Updates: []map[string]any{{"id": "ship-a", "x": 2}}, Deletes: []string{"ship-b"}},
+			Bullets: FieldRecordDelta[WorldBulletRecord]{Creates: []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, Rotation: 3, OwnerID: "ship-a", WeaponID: "pulse", ProjectileType: "laser"}}, Updates: []map[string]any{{"id": "bullet-a", "x": 4, "y": 5}}, Deletes: []string{"bullet-z"}},
+			Asteroids: FieldRecordDelta[WorldAsteroidRecord]{Creates: []WorldAsteroidRecord{{ID: "asteroid-a", X: 1, Y: 2, Size: 3, Health: 4, Scale: 5, Variant: 1}}, Updates: []map[string]any{{"id": "asteroid-a", "x": 6}}, Deletes: []string{"asteroid-a"}},
+			Pickups: FieldRecordDelta[WorldPickupRecord]{Creates: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 1, Y: 2, Health: 3, AgeSeconds: 4, LifespanSeconds: 5}}, Updates: []map[string]any{{"id": "pickup-a", "x": 7}}, Deletes: []string{"pickup-a"}},
 		},
 	}
 
@@ -392,7 +392,7 @@ func TestActiveWirePacketEncodingUsesOverlayDeltaEnvelope(t *testing.T) {
 				SnapshotID:   "overlay-snapshot-12",
 				SnapshotKind: SnapshotKind("delta"),
 			},
-			Receiver: RecordDelta[OverlayReceiverRecord]{Updates: []OverlayReceiverRecord{{SelfID: "player-1", Lives: 3, Score: 10}}},
+			Receiver: FieldRecordDelta[OverlayReceiverRecord]{Updates: []map[string]any{{"self_id": "player-1", "score": 10, "primary_cooldown_remaining": 1.25}}},
 		},
 	}
 
@@ -408,6 +408,40 @@ func TestActiveWirePacketEncodingUsesOverlayDeltaEnvelope(t *testing.T) {
 	assertNotNakedOverlayDeltaPayload(t, wire)
 }
 
+func TestWireOverlayDeltaPacketEncodesReceiverUpdatesAsPartialFieldPatch(t *testing.T) {
+	encoded, err := packetcodec.Encode(wireOverlayDeltaPacket(OverlayLaneDelta{
+		Metadata: Metadata{Lane: LaneOverlay, Sequence: 12, BaselineID: "overlay-baseline-12", SnapshotID: "overlay-snapshot-12", SnapshotKind: SnapshotKind("delta")},
+		Receiver: FieldRecordDelta[OverlayReceiverRecord]{Updates: []map[string]any{{"self_id": "player-1", "score": 10, "primary_cooldown_remaining": 1.25}}},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	wire := mustDecodeWirePacket(t, encoded)
+	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
+	assertStringValue(t, wire, "lane", string(LaneOverlay))
+	assertIntValue(t, wire, "sequence", 12)
+	assertStringValue(t, wire, "baseline_id", "overlay-baseline-12")
+	assertStringValue(t, wire, "snapshot_id", "overlay-snapshot-12")
+	assertStringValue(t, wire, "snapshot_kind", "delta")
+
+	updates := mustSliceValue(t, wire, "receiver_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one receiver update, got %#v", updates)
+	}
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "self_id", "player-1")
+	assertIntValue(t, update, "score", 10)
+	assertFloatValue(t, update, "primary_cooldown_remaining", 1.25)
+	assertNotContainsKey(t, update, "lives")
+	assertNotContainsKey(t, update, "primary_weapon_id")
+	assertNotContainsKey(t, update, "secondary_weapon_id")
+	assertNotContainsKey(t, update, "primary_ammo_policy")
+	assertNotContainsKey(t, update, "secondary_ammo_policy")
+	assertNotContainsKey(t, update, "primary_ammo_remaining")
+	assertNotContainsKey(t, update, "secondary_ammo_remaining")
+}
+
 func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
 	candidate := RealtimeLaneCandidate{
 		Lane: LaneSession,
@@ -420,8 +454,8 @@ func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
 				SnapshotID:   "session-snapshot-14",
 				SnapshotKind: SnapshotKind("delta"),
 			},
-			Players: RecordDelta[SessionPlayerRecord]{Updates: []SessionPlayerRecord{{ID: "player-1", ShipType: "v_wing", Score: 10, Lives: 2}}},
-			PlayerLifecycle: RecordDelta[SessionLifecycleRecord]{Updates: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "respawning"}}},
+			Players: FieldRecordDelta[SessionPlayerRecord]{Updates: []map[string]any{{"id": "player-1", "score": 10, "lives": 2}}},
+			PlayerLifecycle: FieldRecordDelta[SessionLifecycleRecord]{Updates: []map[string]any{{"player_id": "player-1", "status": "respawning"}}},
 			TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{Updates: []SessionTotalAsteroidsRecord{{ID: "session-14", Count: 8}}},
 		},
 	}

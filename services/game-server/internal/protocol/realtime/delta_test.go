@@ -550,8 +550,8 @@ func TestBuildSessionDeltaPacketSetsDeltaSnapshotKind(t *testing.T) {
 }
 
 func TestBuildOverlayDeltaPacketEmitsChangedOverlayData(t *testing.T) {
-	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 2, Score: 5, RespawnCooldown: 1.25}}
-	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 3, Score: 9, RespawnCooldown: 0.5}}
+	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 2, Score: 5, RespawnCooldown: 1.25, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 7, PrimaryAmmoRemaining: 3, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 11, SecondaryAmmoRemaining: 4}}
+	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 3, Score: 9, RespawnCooldown: 0.5, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 7, PrimaryAmmoRemaining: 3, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 11, SecondaryAmmoRemaining: 4}}
 
 	delta := BuildOverlayDeltaPacket(previous, current)
 
@@ -561,13 +561,79 @@ func TestBuildOverlayDeltaPacketEmitsChangedOverlayData(t *testing.T) {
 	if len(delta.Receiver.Updates) != 1 {
 		t.Fatalf("expected one overlay update, got %#v", delta.Receiver.Updates)
 	}
-	if got := delta.Receiver.Updates[0]; got.SelfID != "player-1" || got.Lives != 3 || got.Score != 9 || got.RespawnCooldown != 0.5 {
-		t.Fatalf("expected changed overlay receiver to be returned, got %#v", got)
+	if got := delta.Receiver.Updates[0]; len(got) != 4 || got["self_id"] != "player-1" || got["lives"] != 3 || got["score"] != 9 || got["respawn_cooldown"] != 0.5 {
+		t.Fatalf("expected changed overlay receiver patch, got %#v", got)
+	}
+	if _, ok := delta.Receiver.Updates[0]["primary_weapon_id"]; ok {
+		t.Fatalf("expected primary_weapon_id to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+	if _, ok := delta.Receiver.Updates[0]["primary_ammo_policy"]; ok {
+		t.Fatalf("expected primary_ammo_policy to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+	if _, ok := delta.Receiver.Updates[0]["primary_cooldown_remaining"]; ok {
+		t.Fatalf("expected primary_cooldown_remaining to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+	if _, ok := delta.Receiver.Updates[0]["primary_ammo_remaining"]; ok {
+		t.Fatalf("expected primary_ammo_remaining to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+	if _, ok := delta.Receiver.Updates[0]["secondary_weapon_id"]; ok {
+		t.Fatalf("expected secondary_weapon_id to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+	if _, ok := delta.Receiver.Updates[0]["secondary_ammo_policy"]; ok {
+		t.Fatalf("expected secondary_ammo_policy to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+	if _, ok := delta.Receiver.Updates[0]["secondary_cooldown_remaining"]; ok {
+		t.Fatalf("expected secondary_cooldown_remaining to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+	if _, ok := delta.Receiver.Updates[0]["secondary_ammo_remaining"]; ok {
+		t.Fatalf("expected secondary_ammo_remaining to be omitted, got %#v", delta.Receiver.Updates[0])
+	}
+}
+
+func TestBuildOverlayDeltaPacketEmitsScorePatchOnly(t *testing.T) {
+	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Score: 5, Lives: 2, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 4, PrimaryAmmoRemaining: 8, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 6, SecondaryAmmoRemaining: 9}}
+	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Score: 12, Lives: 2, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 4, PrimaryAmmoRemaining: 8, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 6, SecondaryAmmoRemaining: 9}}
+
+	delta := BuildOverlayDeltaPacket(previous, current)
+
+	if len(delta.Receiver.Updates) != 1 {
+		t.Fatalf("expected one overlay update, got %#v", delta.Receiver.Updates)
+	}
+	if got := delta.Receiver.Updates[0]; len(got) != 2 || got["self_id"] != "player-1" || got["score"] != 12 {
+		t.Fatalf("expected self_id and score only, got %#v", got)
+	}
+}
+
+func TestBuildOverlayDeltaPacketEmitsLivesPatchOnly(t *testing.T) {
+	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Score: 5, Lives: 2, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 4, PrimaryAmmoRemaining: 8, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 6, SecondaryAmmoRemaining: 9}}
+	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Score: 5, Lives: 4, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 4, PrimaryAmmoRemaining: 8, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 6, SecondaryAmmoRemaining: 9}}
+
+	delta := BuildOverlayDeltaPacket(previous, current)
+
+	if len(delta.Receiver.Updates) != 1 {
+		t.Fatalf("expected one overlay update, got %#v", delta.Receiver.Updates)
+	}
+	if got := delta.Receiver.Updates[0]; len(got) != 2 || got["self_id"] != "player-1" || got["lives"] != 4 {
+		t.Fatalf("expected self_id and lives only, got %#v", got)
+	}
+}
+
+func TestBuildOverlayDeltaPacketEmitsPrimaryCooldownPatchOnly(t *testing.T) {
+	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Score: 5, Lives: 2, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 1.5, PrimaryAmmoRemaining: 8, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 6, SecondaryAmmoRemaining: 9}}
+	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Score: 5, Lives: 2, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 0, PrimaryAmmoRemaining: 8, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 6, SecondaryAmmoRemaining: 9}}
+
+	delta := BuildOverlayDeltaPacket(previous, current)
+
+	if len(delta.Receiver.Updates) != 1 {
+		t.Fatalf("expected one overlay update, got %#v", delta.Receiver.Updates)
+	}
+	if got := delta.Receiver.Updates[0]; len(got) != 2 || got["self_id"] != "player-1" || got["primary_cooldown_remaining"] != float64(0) {
+		t.Fatalf("expected self_id and primary_cooldown_remaining only, got %#v", got)
 	}
 }
 
 func TestBuildOverlayDeltaPacketReturnsNoChangesForIdenticalOverlayData(t *testing.T) {
-	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 2, Score: 5, RespawnCooldown: 1.25}}
+	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 2, Score: 5, RespawnCooldown: 1.25, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 7, PrimaryAmmoRemaining: 3, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 11, SecondaryAmmoRemaining: 4}}
 
 	delta := BuildOverlayDeltaPacket(current, current)
 
@@ -600,10 +666,10 @@ func TestBuildSessionDeltaPacketEmitsChangedSessionData(t *testing.T) {
 	if !SessionDeltaHasChanges(delta) {
 		t.Fatal("expected session delta to report changes")
 	}
-	if len(delta.Players.Updates) != 1 || delta.Players.Updates[0].Score != 9 || delta.Players.Updates[0].Lives != 2 {
+	if len(delta.Players.Updates) != 1 || delta.Players.Updates[0]["id"] != "player-a" || delta.Players.Updates[0]["score"] != 9 || delta.Players.Updates[0]["lives"] != 2 {
 		t.Fatalf("expected player update, got %#v", delta.Players)
 	}
-	if len(delta.PlayerLifecycle.Updates) != 1 || delta.PlayerLifecycle.Updates[0].Status != "respawning" {
+	if len(delta.PlayerLifecycle.Updates) != 1 || delta.PlayerLifecycle.Updates[0]["player_id"] != "player-a" || delta.PlayerLifecycle.Updates[0]["status"] != "respawning" {
 		t.Fatalf("expected lifecycle update, got %#v", delta.PlayerLifecycle)
 	}
 	if len(delta.TotalAsteroids.Updates) != 1 || delta.TotalAsteroids.Updates[0].Count != 7 {
