@@ -7,7 +7,9 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
+	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime/quantize"
 )
+
 
 type ActiveRealtimeResult struct {
 	Snapshot           game.GameplayPresentationSnapshot
@@ -167,6 +169,9 @@ func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
 	if packet == nil {
 		return nil, 0
 	}
+	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay {
+		quantize.AssertNoRawFloats(string(candidate.Lane), string(candidate.Lane), packet)
+	}
 	encoded, err := packetcodec.Encode(packet)
 	if err != nil {
 		return nil, 0
@@ -185,3 +190,4 @@ func laneFamilySummary(records []ScheduleRecord) string {
 	}
 	return strings.Join(parts, ",")
 }
+

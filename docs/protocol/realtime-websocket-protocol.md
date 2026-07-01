@@ -273,6 +273,31 @@ The canonical server wire shape comes from `services/game-server/internal/protoc
 
 Chunk metadata exists in the wire shape and scheduler records. This document does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
 
+### Numeric wire quantization
+
+Server outbound realtime lane records are quantized in the realtime projection and wire-record path before JSON encoding. Quantization happens before delta comparison, so deltas compare projected wire-shaped values instead of raw simulation float precision.
+
+This currently applies to the server-owned outbound lane state families:
+
+```text
+world_full / world_delta
+overlay_full / overlay_delta
+session_full / session_delta
+```
+
+`event_batch` is not a field-delta state lane. Do not describe event payloads as quantized unless the implementation explicitly quantizes event payload float values.
+
+Known float-like fields use lane- and field-specific policies from `services/game-server/internal/protocol/realtime/quantize/`. The active server code paths include:
+
+- `services/game-server/internal/protocol/realtime/quantize/`
+- `services/game-server/internal/protocol/realtime/quantized_records.go`
+- `services/game-server/internal/protocol/realtime/quantize_world.go`
+- `services/game-server/internal/protocol/realtime/planner.go`
+
+Unmapped float-like fields fall back to `float_generic`, but they should surface dev diagnostics and fail-loud behavior so new float fields do not silently bypass policy review.
+
+This is still JSON-over-WebSocket. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
+
 ### Field-delta update semantics
 
 Delta lane update arrays are field-delta aware.

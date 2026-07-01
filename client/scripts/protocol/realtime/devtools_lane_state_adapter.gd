@@ -1,5 +1,7 @@
 extends RefCounted
 
+const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quantize.gd")
+
 func build_state(router) -> Dictionary:
 	var state := {
 		"world": {
@@ -30,8 +32,9 @@ func build_state(router) -> Dictionary:
 		state["world"]["pickups"] = _duplicate_dictionary(router.world_lane_state.pickups)
 
 	if router.session_lane_state != null:
-		state["session"]["players"] = _duplicate_dictionary(router.session_lane_state.player_sessions)
-		state["session"]["player_lifecycle"] = _duplicate_dictionary(router.session_lane_state.player_lifecycle)
+		var decoded_session_state = RealtimeQuantize.decode_session_state(router.session_lane_state)
+		state["session"]["players"] = _duplicate_dictionary(decoded_session_state.player_sessions)
+		state["session"]["player_lifecycle"] = _duplicate_dictionary(decoded_session_state.player_lifecycle)
 
 	return state
 

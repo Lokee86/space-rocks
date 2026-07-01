@@ -732,3 +732,23 @@ func TestBuildSessionDeltaPacketEmitsDeleteForMissingSessionRecord(t *testing.T)
 }
 
 
+
+func TestBuildWorldWireDeltaPacketEmitsWireChanges(t *testing.T) {
+	previous := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, SnapshotID: "world-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
+	current := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, SnapshotID: "world-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 11, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
+
+	delta := BuildWorldWireDeltaPacket(previous, current)
+
+	if !WorldWireDeltaHasChanges(delta) {
+		t.Fatal("expected world wire delta to report changes")
+	}
+	if got, want := delta.Metadata.SnapshotKind, SnapshotKind("delta"); got != want {
+		t.Fatalf("world wire delta snapshot kind = %q, want %q", got, want)
+	}
+	if len(delta.Ships.Updates) != 1 {
+		t.Fatalf("expected one ship update, got %#v", delta.Ships.Updates)
+	}
+	if got := delta.Ships.Updates[0]; got["id"] != "ship-a" || len(got) != 2 || got["x"] != int64(11) {
+		t.Fatalf("expected id and quantized x only, got %#v", got)
+	}
+}

@@ -10,6 +10,36 @@ import (
 
 var _ func(game.GameplayPresentationSnapshot, RealtimeSessionState) RealtimeLanePlan = AssembleRealtimeLaneCandidates
 
+func mustWorldWireFull(t *testing.T, snapshot game.GameplayPresentationSnapshot, sequence int) WorldWireFullPacket {
+	t.Helper()
+	full := BuildWorldFullPacket(snapshot, sequence)
+	wire, err := quantizeWorldFullPacket(full)
+	if err != nil {
+		t.Fatalf("quantize world full packet: %v", err)
+	}
+	return wire
+}
+
+func mustOverlayWireFull(t *testing.T, snapshot game.GameplayPresentationSnapshot, receiverID string, sequence int) OverlayWireFullPacket {
+	t.Helper()
+	full := BuildOverlayFullPacket(snapshot, receiverID, sequence)
+	wire, err := quantizeOverlayFullPacket(full)
+	if err != nil {
+		t.Fatalf("quantize overlay full packet: %v", err)
+	}
+	return wire
+}
+
+func mustSessionWireFull(t *testing.T, snapshot game.GameplayPresentationSnapshot, sequence int) SessionWireFullPacket {
+	t.Helper()
+	full := BuildSessionFullPacket(snapshot, sequence)
+	wire, err := quantizeSessionFullPacket(full)
+	if err != nil {
+		t.Fatalf("quantize session full packet: %v", err)
+	}
+	return wire
+}
+
 func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID: "player-1",
@@ -57,8 +87,8 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	if got, want := plan.Candidates[0].Lane, Lane(LaneWorld); got != want {
 		t.Fatalf("world lane = %q, want %q", got, want)
 	}
-	if got, ok := plan.Candidates[0].Full.(WorldFullPacket); !ok {
-		t.Fatalf("world candidate full type = %T, want WorldFullPacket", plan.Candidates[0].Full)
+	if got, ok := plan.Candidates[0].Full.(WorldWireFullPacket); !ok {
+		t.Fatalf("world candidate full type = %T, want WorldWireFullPacket", plan.Candidates[0].Full)
 	} else if got.Metadata.Lane != LaneWorld || len(got.Ships) != 1 || got.Ships[0].ID != "player-1" {
 		t.Fatalf("world full packet = %#v, want player-1 ship", got)
 	}
@@ -66,8 +96,8 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	if got, want := plan.Candidates[1].Lane, Lane(LaneOverlay); got != want {
 		t.Fatalf("overlay lane = %q, want %q", got, want)
 	}
-	if got, ok := plan.Candidates[1].Full.(OverlayFullPacket); !ok {
-		t.Fatalf("overlay candidate full type = %T, want OverlayFullPacket", plan.Candidates[1].Full)
+	if got, ok := plan.Candidates[1].Full.(OverlayWireFullPacket); !ok {
+		t.Fatalf("overlay candidate full type = %T, want OverlayWireFullPacket", plan.Candidates[1].Full)
 	} else if got.Metadata.Lane != LaneOverlay || got.Receiver.SelfID != "player-1" {
 		t.Fatalf("overlay packet = %#v, want player-1 overlay packet", got)
 	}
@@ -75,8 +105,8 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	if got, want := plan.Candidates[2].Lane, Lane(LaneSession); got != want {
 		t.Fatalf("session lane = %q, want %q", got, want)
 	}
-	if got, ok := plan.Candidates[2].Full.(SessionFullPacket); !ok {
-		t.Fatalf("session candidate full type = %T, want SessionFullPacket", plan.Candidates[2].Full)
+	if got, ok := plan.Candidates[2].Full.(SessionWireFullPacket); !ok {
+		t.Fatalf("session candidate full type = %T, want SessionWireFullPacket", plan.Candidates[2].Full)
 	} else if got.Metadata.Lane != LaneSession || len(got.Players) != 1 || got.Players[0].ID != "player-1" {
 		t.Fatalf("session full packet = %#v, want player-1 session", got)
 	}
@@ -112,9 +142,9 @@ func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceForUnsyncedFull(t *t
 	if !ok {
 		t.Fatalf("expected world candidate")
 	}
-	full, ok := candidate.Full.(WorldFullPacket)
+	full, ok := candidate.Full.(WorldWireFullPacket)
 	if !ok {
-		t.Fatalf("world candidate full type = %T, want WorldFullPacket", candidate.Full)
+		t.Fatalf("world candidate full type = %T, want WorldWireFullPacket", candidate.Full)
 	}
 	if got, want := full.Metadata.Sequence, 1; got != want {
 		t.Fatalf("world full sequence = %d, want %d", got, want)
@@ -129,9 +159,9 @@ func TestAssembleRealtimeLaneCandidatesUsesNextOverlaySequenceForUnsyncedFull(t 
 	if !ok {
 		t.Fatalf("expected overlay candidate")
 	}
-	full, ok := candidate.Full.(OverlayFullPacket)
+	full, ok := candidate.Full.(OverlayWireFullPacket)
 	if !ok {
-		t.Fatalf("overlay candidate full type = %T, want OverlayFullPacket", candidate.Full)
+		t.Fatalf("overlay candidate full type = %T, want OverlayWireFullPacket", candidate.Full)
 	}
 	if got, want := full.Metadata.Sequence, 1; got != want {
 		t.Fatalf("overlay full sequence = %d, want %d", got, want)
@@ -146,9 +176,9 @@ func TestAssembleRealtimeLaneCandidatesUsesNextSessionSequenceForUnsyncedFull(t 
 	if !ok {
 		t.Fatalf("expected session candidate")
 	}
-	full, ok := candidate.Full.(SessionFullPacket)
+	full, ok := candidate.Full.(SessionWireFullPacket)
 	if !ok {
-		t.Fatalf("session candidate full type = %T, want SessionFullPacket", candidate.Full)
+		t.Fatalf("session candidate full type = %T, want SessionWireFullPacket", candidate.Full)
 	}
 	if got, want := full.Metadata.Sequence, 1; got != want {
 		t.Fatalf("session full sequence = %d, want %d", got, want)
@@ -166,11 +196,13 @@ func TestAssembleRealtimeLaneCandidatesEmitsNextSequenceWorldDeltaForChangedBase
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
-	state.StoreBaselineProjection(LaneWorld, WorldFullPacket{
-		Type: PacketTypeWorldFull,
-		Metadata: Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true},
-		Ships: []WorldShipRecord{{ID: "player-1", ShipType: "v_wing"}},
-	})
+	previousSnapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 11, Y: 34},
+		},
+	}
+state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
@@ -180,9 +212,9 @@ func TestAssembleRealtimeLaneCandidatesEmitsNextSequenceWorldDeltaForChangedBase
 	if candidate.Kind != RealtimeLaneCandidateKindDelta {
 		t.Fatalf("world candidate kind = %q, want delta", candidate.Kind)
 	}
-	delta, ok := candidate.Delta.(WorldDeltaPacket)
+	delta, ok := candidate.Delta.(WorldWireDeltaPacket)
 	if !ok {
-		t.Fatalf("world candidate delta type = %T, want WorldDeltaPacket", candidate.Delta)
+		t.Fatalf("world candidate delta type = %T, want WorldWireDeltaPacket", candidate.Delta)
 	}
 	if got, want := delta.Metadata.Sequence, 2; got != want {
 		t.Fatalf("world delta sequence = %d, want %d", got, want)
@@ -207,9 +239,9 @@ func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceWhenStoredBaselineEx
 	if !ok {
 		t.Fatalf("expected world candidate")
 	}
-	full, ok := candidate.Full.(WorldFullPacket)
+	full, ok := candidate.Full.(WorldWireFullPacket)
 	if !ok {
-		t.Fatalf("world candidate full type = %T, want WorldFullPacket", candidate.Full)
+		t.Fatalf("world candidate full type = %T, want WorldWireFullPacket", candidate.Full)
 	}
 	if got, want := full.Metadata.Sequence, 2; got != want {
 		t.Fatalf("world full sequence = %d, want %d", got, want)
@@ -438,7 +470,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldFullWhenNoBaseline(t *testing.T
 	if world.Kind != RealtimeLaneCandidateKindFull {
 		t.Fatalf("expected world full candidate, got kind=%q", world.Kind)
 	}
-	if _, ok := world.Full.(WorldFullPacket); !ok {
+	if _, ok := world.Full.(WorldWireFullPacket); !ok {
 		t.Fatalf("expected world full packet, got %T", world.Full)
 	}
 }
@@ -454,7 +486,7 @@ func TestAssembleRealtimeLaneCandidatesOmitsWorldWhenStoredBaselineMatches(t *te
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneWorld, Metadata{Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
-	state.StoreBaselineProjection(LaneWorld, BuildWorldFullPacket(snapshot, 1))
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	if _, ok := findCandidateByLane(plan.Candidates, LaneWorld); ok {
@@ -473,7 +505,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneWorld, Metadata{Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
-	state.StoreBaselineProjection(LaneWorld, BuildWorldFullPacket(game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1}}}, 1))
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 0, Rotation: 0}}}, 1))
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
@@ -483,10 +515,10 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(
 	if world.Kind != RealtimeLaneCandidateKindDelta {
 		t.Fatalf("expected world delta candidate, got kind=%q", world.Kind)
 	}
-	if _, ok := world.Delta.(WorldDeltaPacket); !ok {
+	if _, ok := world.Delta.(WorldWireDeltaPacket); !ok {
 		t.Fatalf("expected world delta packet, got %T", world.Delta)
 	}
-	if _, ok := world.Projection.(WorldFullPacket); !ok {
+	if _, ok := world.Projection.(WorldWireFullPacket); !ok {
 		t.Fatalf("expected current world full projection to be carried, got %T", world.Projection)
 	}
 }
@@ -514,7 +546,7 @@ func TestAssembleRealtimeLaneCandidatesOmitsOverlayWhenStoredBaselineMatches(t *
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneOverlay, Metadata{Sequence: 4, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneOverlay)
-	state.StoreBaselineProjection(LaneOverlay, BuildOverlayFullPacket(snapshot, "player-1", 4))
+	state.StoreBaselineProjection(LaneOverlay, mustOverlayWireFull(t, snapshot, "player-1", 4))
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	if _, ok := findCandidateByLane(plan.Candidates, LaneOverlay); ok {
@@ -536,7 +568,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsOverlayDeltaWhenStoredBaselineDiffer
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneOverlay, Metadata{Sequence: 5, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneOverlay)
-	state.StoreBaselineProjection(LaneOverlay, BuildOverlayFullPacket(game.GameplayPresentationSnapshot{
+	state.StoreBaselineProjection(LaneOverlay, mustOverlayWireFull(t, game.GameplayPresentationSnapshot{
 		SelfID: "player-1",
 		Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing"}},
 		PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1", ShipType: "v_wing", Score: 1, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"}},
@@ -550,10 +582,10 @@ func TestAssembleRealtimeLaneCandidatesEmitsOverlayDeltaWhenStoredBaselineDiffer
 	if overlay.Kind != RealtimeLaneCandidateKindDelta {
 		t.Fatalf("expected overlay delta candidate, got kind=%q", overlay.Kind)
 	}
-	if _, ok := overlay.Delta.(OverlayLaneDelta); !ok {
+	if _, ok := overlay.Delta.(OverlayWireLaneDelta); !ok {
 		t.Fatalf("expected overlay delta packet, got %T", overlay.Delta)
 	}
-	if _, ok := overlay.Projection.(OverlayFullPacket); !ok {
+	if _, ok := overlay.Projection.(OverlayWireFullPacket); !ok {
 		t.Fatalf("expected current overlay full projection to be carried, got %T", overlay.Projection)
 	}
 }
@@ -571,7 +603,7 @@ func TestAssembleRealtimeLaneCandidatesOmitsSessionWhenStoredBaselineMatches(t *
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneSession, Metadata{Sequence: 7, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneSession)
-	state.StoreBaselineProjection(LaneSession, BuildSessionFullPacket(snapshot, 7))
+	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, snapshot, 7))
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	if _, ok := findCandidateByLane(plan.Candidates, LaneSession); ok {
@@ -592,7 +624,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsSessionDeltaWhenStoredBaselineDiffer
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneSession, Metadata{Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneSession)
-	state.StoreBaselineProjection(LaneSession, BuildSessionFullPacket(game.GameplayPresentationSnapshot{
+	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, game.GameplayPresentationSnapshot{
 		SelfID: "player-1",
 		PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1", ShipType: "v_wing", Score: 5, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"}},
 		PlayerLifecycle: map[string]string{"player-1": "active"},
@@ -607,10 +639,10 @@ func TestAssembleRealtimeLaneCandidatesEmitsSessionDeltaWhenStoredBaselineDiffer
 	if session.Kind != RealtimeLaneCandidateKindDelta {
 		t.Fatalf("expected session delta candidate, got kind=%q", session.Kind)
 	}
-	if _, ok := session.Delta.(SessionLaneDelta); !ok {
+	if _, ok := session.Delta.(SessionWireLaneDelta); !ok {
 		t.Fatalf("expected session delta packet, got %T", session.Delta)
 	}
-	if _, ok := session.Projection.(SessionFullPacket); !ok {
+	if _, ok := session.Projection.(SessionWireFullPacket); !ok {
 		t.Fatalf("expected current session full projection to be carried, got %T", session.Projection)
 	}
 }

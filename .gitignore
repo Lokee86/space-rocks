@@ -42,3 +42,6 @@ tools/space-rocks-mcp/node_modules/
 addons/engineforge_bridge/
 
 .obsidian/
+
+# Local player-data runtime DB
+services/player-data/data/player-data.sqlite3

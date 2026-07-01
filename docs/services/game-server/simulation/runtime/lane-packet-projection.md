@@ -31,7 +31,7 @@ services/game-server/internal/protocol/realtime/
 services/game-server/internal/networking/websocket_write.go
 ```
 
-The realtime package owns candidate construction, scheduling, metadata, and wire packet assembly. The websocket write loop owns successful delivery and post-write state changes.
+The realtime package owns candidate construction, scheduling, metadata, wire packet assembly, numeric wire quantization, and delta comparison. The websocket write loop owns successful delivery and post-write state changes.
 
 ## Responsibilities
 
@@ -110,7 +110,7 @@ Creates remain full records. Deletes remain identity lists. Update groups carry 
 
 Client lane state merges partial update maps into existing records and preserves omitted fields. Omitted fields mean unchanged, not cleared.
 
-Numeric wire quantization is not implemented yet. Future numeric quantization should happen in the projection or wire-record layer before delta comparison. It should not truncate authoritative simulation state as a packet-size optimization.
+Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/` and `services/game-server/internal/protocol/realtime/quantize_world.go` as the quantization boundary for outbound lane projection. It should not truncate authoritative simulation state for packet-size savings.
 
 The ownership boundary remains:
 

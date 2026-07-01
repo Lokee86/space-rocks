@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	game "github.com/Lokee86/space-rocks/server/internal/game"
+	runtime "github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 )
 
@@ -92,6 +93,91 @@ func TestActiveWirePacketEncodingUsesLowercaseWorldShape(t *testing.T) {
 	assertIntValue(t, asteroid, "variant", 3)
 }
 
+
+func TestWorldQuantizationReachesEncodedWireJSON(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"ship-1": {
+				ID:       "ship-1",
+				ShipType: "v_wing",
+				X:        123.456789,
+				Y:        987.654321,
+				Rotation: 3.1415926535,
+			},
+		},
+		Bullets: map[string]runtime.BulletState{
+			"bullet-1": {
+				ID:       "bullet-1",
+				OwnerID:  "ship-1",
+				X:        11.111111,
+				Y:        22.222222,
+				Rotation: 1.23456789,
+			},
+		},
+		Asteroids: map[string]runtime.AsteroidState{
+			"asteroid-1": {
+				ID:    "asteroid-1",
+				X:     333.333333,
+				Y:     444.444444,
+				Scale: 1.23456789,
+			},
+		},
+		Pickups: map[string]runtime.PickupState{
+			"pickup-1": {
+				ID:              "pickup-1",
+				Type:            "shield",
+				X:               55.555555,
+				Y:               66.666666,
+				AgeSeconds:      7.891234,
+				LifespanSeconds: 12.345678,
+			},
+		},
+	}
+
+	full := BuildWorldFullPacket(snapshot, 1)
+	wire, err := quantizeWorldFullPacket(full)
+	if err != nil {
+		t.Fatalf("quantize world full packet: %v", err)
+	}
+
+	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: wire}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+	encodedString := string(encoded)
+	for _, fragment := range []string{"123.456789", "987.654321", "3.1415926535", "1.23456789", "7.891234", "12.345678"} {
+		if strings.Contains(encodedString, fragment) {
+			t.Fatalf("expected encoded JSON to not contain raw fragment %q, got %s", fragment, encodedString)
+		}
+	}
+
+	decoded := mustDecodeWirePacket(t, encoded)
+	ships := mustSliceValue(t, decoded, "ships")
+	ship := mustMapValue(t, ships[0])
+	assertJSONIntValue(t, ship, "x", 1235)
+	assertJSONIntValue(t, ship, "y", 9877)
+	assertJSONIntValue(t, ship, "rotation", 3142)
+
+	bullets := mustSliceValue(t, decoded, "bullets")
+	bullet := mustMapValue(t, bullets[0])
+	assertJSONIntValue(t, bullet, "x", 111)
+	assertJSONIntValue(t, bullet, "y", 222)
+	assertJSONIntValue(t, bullet, "rotation", 1235)
+
+	asteroids := mustSliceValue(t, decoded, "asteroids")
+	asteroid := mustMapValue(t, asteroids[0])
+	assertJSONIntValue(t, asteroid, "x", 3333)
+	assertJSONIntValue(t, asteroid, "y", 4444)
+	assertJSONIntValue(t, asteroid, "scale", 1235)
+
+	pickups := mustSliceValue(t, decoded, "pickups")
+	pickup := mustMapValue(t, pickups[0])
+	assertJSONIntValue(t, pickup, "x", 555)
+	assertJSONIntValue(t, pickup, "y", 667)
+	assertJSONIntValue(t, pickup, "age_seconds", 7891)
+	assertJSONIntValue(t, pickup, "lifespan_seconds", 12346)
+}
 
 func TestWireWorldDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
 	wire := wireWorldDeltaPacket(WorldDeltaPacket{Type: PacketTypeWorldDelta})
@@ -442,6 +528,53 @@ func TestWireOverlayDeltaPacketEncodesReceiverUpdatesAsPartialFieldPatch(t *test
 	assertNotContainsKey(t, update, "secondary_ammo_remaining")
 }
 
+func TestWireOverlayWireFullPacketEncodesIntegerCooldownFields(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneOverlay,
+		Kind: RealtimeLaneCandidateKindFull,
+		Full: OverlayWireFullPacket{
+			Type: PacketFamilyOverlayFull,
+			Metadata: Metadata{Lane: LaneOverlay, Sequence: 3},
+			Receiver: OverlayReceiverWireRecord{
+			SelfID:                    "player-1",
+			Lives:                     2,
+			Score:                     9,
+			RespawnCooldown:           1250,
+			PrimaryWeaponID:           "pulse",
+			PrimaryAmmoPolicy:         "limited",
+			PrimaryCooldownRemaining:   500,
+			PrimaryAmmoRemaining:      12,
+			SecondaryWeaponID:         "mine",
+			SecondaryAmmoPolicy:       "infinite",
+			SecondaryCooldownRemaining: 750,
+			SecondaryAmmoRemaining:    3,
+			},
+		},
+	})
+
+	assertInt64Value(t, wire, "respawn_cooldown", 1250)
+	assertInt64Value(t, wire, "primary_cooldown_remaining", 500)
+	assertInt64Value(t, wire, "secondary_cooldown_remaining", 750)
+}
+
+func TestWireOverlayWireDeltaPacketEncodesIntegerCooldownUpdates(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneOverlay,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: OverlayWireLaneDelta{
+			Metadata: Metadata{Lane: LaneOverlay, Sequence: 12, BaselineID: "overlay-baseline-12", SnapshotID: "overlay-snapshot-12", SnapshotKind: SnapshotKind("delta")},
+			Receiver: FieldRecordDelta[OverlayReceiverWireRecord]{Updates: []map[string]any{{"self_id": "player-1", "primary_cooldown_remaining": int64(500)}}},
+		},
+	})
+
+	updates := mustSliceValue(t, wire, "receiver_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one receiver update, got %#v", updates)
+	}
+	update := mustMapValue(t, updates[0])
+	assertInt64Value(t, update, "primary_cooldown_remaining", 500)
+}
+
 func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
 	candidate := RealtimeLaneCandidate{
 		Lane: LaneSession,
@@ -716,8 +849,40 @@ func assertFloatValue(t *testing.T, wire map[string]any, key string, want float6
 	}
 }
 
-func assertIntValue(t *testing.T, wire map[string]any, key string, want int) {
+func assertInt64Value(t *testing.T, wire map[string]any, key string, want int64) {
 	t.Helper()
+
+	value, ok := wire[key]
+	if !ok {
+		t.Fatalf("expected key %q to exist", key)
+	}
+	got, ok := value.(int64)
+	if !ok {
+		t.Fatalf("expected key %q to be int64, got %#v", key, value)
+	}
+	if got != want {
+		t.Fatalf("key %q = %v, want %d", key, got, want)
+	}
+}
+
+func assertJSONIntValue(t *testing.T, wire map[string]any, key string, want int64) {
+	t.Helper()
+
+	value, ok := wire[key]
+	if !ok {
+		t.Fatalf("expected key %q to exist", key)
+	}
+	got, ok := value.(float64)
+	if !ok {
+		t.Fatalf("expected key %q to be numeric, got %#v", key, value)
+	}
+	if got != float64(want) {
+		t.Fatalf("key %q = %v, want %d", key, got, want)
+	}
+	if got != float64(int64(got)) {
+		t.Fatalf("expected key %q to be an integer value, got %v", key, got)
+	}
+}
 
 	value, ok := wire[key]
 	if !ok {
@@ -780,6 +945,41 @@ func TestWireLanePacketRoundTripsWorldFullFamily(t *testing.T) {
 	assertContainsKey(t, wire, "pickups")
 }
 
+func TestWireSessionWireFullPacketEncodesIntegerCooldownFields(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneSession,
+		Kind: RealtimeLaneCandidateKindFull,
+		Full: SessionWireFullPacket{
+			Type: PacketFamilySessionFull,
+			Metadata: Metadata{Lane: LaneSession, Sequence: 5},
+			Players: []SessionPlayerWireRecord{{
+				ID:                  "player-1",
+				ShipType:            "v_wing",
+				Score:               8,
+				Lives:               3,
+				RespawnCooldown:     250,
+				PrimaryWeaponID:     "pulse",
+				PrimaryAmmoPolicy:   "limited",
+				SecondaryWeaponID:   "mine",
+				SecondaryAmmoPolicy: "infinite",
+				SpawnX:              10,
+				SpawnY:              20,
+			}},
+			PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "active"}},
+			TotalAsteroids: 42,
+		},
+	})
+
+
+	players := mustSliceValue(t, wire, "players")
+	if len(players) != 1 {
+		t.Fatalf("expected one player, got %#v", players)
+	}
+	player := mustMapValue(t, players[0])
+	assertInt64Value(t, player, "respawn_cooldown", 250)
+	assertInt64Value(t, player, "spawn_x", 10)
+	assertInt64Value(t, player, "spawn_y", 20)
+}
 func TestWireLanePacketContainsLowercaseKeysOnly(t *testing.T) {
 	wire := WireLanePacket(RealtimeLaneCandidate{
 		Lane: LaneWorld,
@@ -814,5 +1014,70 @@ func assertNotNakedSessionDeltaPayload(t *testing.T, wire map[string]any) {
 	if hasOnlyKeys(wire, []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes", "total_asteroids"}) {
 		t.Fatalf("session delta payload encoded without envelope: %#v", wire)
 	}
+}
+
+
+func TestCandidateMetadataReturnsWorldWirePacketMetadata(t *testing.T) {
+	full := WorldWireFullPacket{Type: PacketFamilyWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 21, SnapshotKind: SnapshotKind("full")}}
+	fullMetadata, ok := CandidateMetadata(RealtimeLaneCandidate{Lane: LaneWorld, Full: full}, NewRealtimeSessionState("player-1"))
+	if !ok {
+		t.Fatal("expected world wire full metadata to be found")
+	}
+	if fullMetadata != full.Metadata {
+		t.Fatalf("full metadata = %#v, want %#v", fullMetadata, full.Metadata)
+	}
+
+	delta := WorldWireDeltaPacket{Type: PacketTypeWorldDelta, Metadata: Metadata{Lane: LaneWorld, Sequence: 22, SnapshotKind: SnapshotKind("delta")}}
+	deltaMetadata, ok := CandidateMetadata(RealtimeLaneCandidate{Lane: LaneWorld, Delta: delta}, NewRealtimeSessionState("player-1"))
+	if !ok {
+		t.Fatal("expected world wire delta metadata to be found")
+	}
+	if deltaMetadata != delta.Metadata {
+		t.Fatalf("delta metadata = %#v, want %#v", deltaMetadata, delta.Metadata)
+	}
+}
+
+func TestWireWorldWireFullPacketEncodesIntegerWorldFields(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindFull,
+		Full: WorldWireFullPacket{
+			Type: PacketFamilyWorldFull,
+			Metadata: Metadata{Lane: LaneWorld, Sequence: 7},
+			Ships: []WorldShipWireRecord{{ID: "ship-1", ShipType: "v_wing", X: 10, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}},
+			Bullets: []WorldBulletWireRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 6, Y: 7, Rotation: 8, WeaponID: "pulse", ProjectileType: "laser"}},
+			Asteroids: []WorldAsteroidWireRecord{{ID: "asteroid-1", X: 9, Y: 10, Size: 2, Health: 11, Scale: 15, Variant: 3}},
+			Pickups: []WorldPickupWireRecord{{ID: "pickup-1", Type: "shield", PickupClass: "armor", X: 12, Y: 13, Health: 1, AgeSeconds: 4, LifespanSeconds: 9}},
+		},
+	})
+
+	ships := mustSliceValue(t, wire, "ships")
+	ship := mustMapValue(t, ships[0])
+	assertInt64Value(t, ship, "x", 10)
+	assertInt64Value(t, ship, "y", 20)
+	assertInt64Value(t, ship, "rotation", 30)
+
+	asteroids := mustSliceValue(t, wire, "asteroids")
+	asteroid := mustMapValue(t, asteroids[0])
+	assertInt64Value(t, asteroid, "scale", 15)
+}
+
+func TestWireWorldWireDeltaPacketEncodesIntegerWorldFieldUpdates(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldWireDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{Lane: LaneWorld, Sequence: 9, SnapshotKind: SnapshotKind("delta")},
+			Ships: FieldRecordDelta[WorldShipWireRecord]{Updates: []map[string]any{{"id": "ship-1", "x": int64(10), "y": int64(20), "rotation": int64(30), "thrusting": true}}},
+		},
+	})
+
+	updates := mustSliceValue(t, wire, "ship_updates")
+	update := mustMapValue(t, updates[0])
+	assertInt64Value(t, update, "x", 10)
+	assertInt64Value(t, update, "y", 20)
+	assertInt64Value(t, update, "rotation", 30)
+	assertNotContainsKey(t, update, "ship_type")
 }
 

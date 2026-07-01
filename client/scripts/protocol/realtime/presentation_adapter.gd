@@ -5,6 +5,7 @@ const WorldPresentationAdapter = preload("res://scripts/protocol/realtime/world_
 const OverlayPresentationAdapter = preload("res://scripts/protocol/realtime/overlay_presentation_adapter.gd")
 const SessionPresentationAdapter = preload("res://scripts/protocol/realtime/session_presentation_adapter.gd")
 const EventPresentationAdapter = preload("res://scripts/protocol/realtime/event_presentation_adapter.gd")
+const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quantize.gd")
 
 var gameplay_readiness := GameplayReadiness.new()
 var world_adapter := WorldPresentationAdapter.new()
@@ -35,8 +36,8 @@ func fanout_lane_states(router, world_sync_ref = null, gameplay_hud_flow_ref = n
 		self_id = str(router.overlay_lane_state.self_id)
 
 	world_adapter.apply_world_lane_state(world_sync_ref, router.world_lane_state, self_id)
-	overlay_adapter.apply_overlay_lane_state(gameplay_hud_flow_ref, router.overlay_lane_state)
-	session_adapter.apply_session_lane_state(gameplay_hud_flow_ref, router.session_lane_state, self_id)
+	overlay_adapter.apply_overlay_lane_state(gameplay_hud_flow_ref, RealtimeQuantize.decode_overlay_state(router.overlay_lane_state))
+	session_adapter.apply_session_lane_state(gameplay_hud_flow_ref, RealtimeQuantize.decode_session_state(router.session_lane_state), self_id)
 
 	var event_flow = null
 	if event_flow_ref != null and event_flow_ref.has_method("apply_server_events"):
