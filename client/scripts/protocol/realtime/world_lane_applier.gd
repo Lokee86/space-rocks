@@ -58,7 +58,11 @@ func _apply_entity_create(world_lane_state: WorldLaneState, record: Dictionary, 
 			world_lane_state.upsert_pickup(record)
 
 func _apply_entity_update(world_lane_state: WorldLaneState, record: Dictionary, entity_kind: String) -> void:
-	_apply_entity_create(world_lane_state, record, entity_kind)
+	match entity_kind:
+		"bullet":
+			world_lane_state.merge_bullet_update(record)
+		_:
+			_apply_entity_create(world_lane_state, record, entity_kind)
 
 func _apply_entity_delete(world_lane_state: WorldLaneState, id, entity_kind: String) -> void:
 	match entity_kind:

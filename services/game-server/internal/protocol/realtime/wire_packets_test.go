@@ -118,6 +118,65 @@ func TestWireWorldDeltaPacketJSONDoesNotContainNullForEmptyDelta(t *testing.T) {
 	}
 }
 
+func TestWireWorldDeltaPacketEncodesBulletUpdatesAsPartialFieldPatch(t *testing.T) {
+	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{
+		Type: PacketTypeWorldDelta,
+		Bullets: FieldRecordDelta[WorldBulletRecord]{
+			Updates: []map[string]any{
+				{
+					"id":       "bullet-1",
+					"x":        6,
+					"y":        7,
+					"rotation": 8,
+				},
+			},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	wire := mustDecodeWirePacket(t, encoded)
+	updates := mustSliceValue(t, wire, "bullet_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one bullet update, got %#v", updates)
+	}
+
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "id", "bullet-1")
+	assertFloatValue(t, update, "x", 6)
+	assertFloatValue(t, update, "y", 7)
+	assertFloatValue(t, update, "rotation", 8)
+	assertNotContainsKey(t, update, "owner_id")
+	assertNotContainsKey(t, update, "weapon_id")
+	assertNotContainsKey(t, update, "projectile_type")
+}
+
+func TestWireWorldDeltaPacketEncodesBulletUpdatesWithZeroRotation(t *testing.T) {
+	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{
+		Type: PacketTypeWorldDelta,
+		Bullets: FieldRecordDelta[WorldBulletRecord]{
+			Updates: []map[string]any{
+				{
+					"id":       "bullet-1",
+					"x":        6,
+					"y":        7,
+					"rotation": 0,
+				},
+			},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	wire := mustDecodeWirePacket(t, encoded)
+	update := mustMapValue(t, mustSliceValue(t, wire, "bullet_updates")[0])
+	assertFloatValue(t, update, "rotation", 0)
+	assertNotContainsKey(t, update, "weapon_id")
+	assertNotContainsKey(t, update, "projectile_type")
+}
+
 func TestWireSessionDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
 	wire := wireSessionDeltaPacket(SessionLaneDelta{Metadata: Metadata{Lane: LaneSession}, TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{}})
 
@@ -193,7 +252,7 @@ func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
 				SnapshotKind: SnapshotKind("delta"),
 			},
 			Ships: RecordDelta[WorldShipRecord]{Creates: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}},
-			Bullets: RecordDelta[WorldBulletRecord]{Updates: []WorldBulletRecord{{ID: "bullet-a", X: 4, Y: 5}}},
+			Bullets: FieldRecordDelta[WorldBulletRecord]{Updates: []map[string]any{{"id": "bullet-a", "x": 4, "y": 5}}},
 			Asteroids: RecordDelta[WorldAsteroidRecord]{Deletes: []string{"asteroid-a"}},
 			Pickups: RecordDelta[WorldPickupRecord]{},
 		},

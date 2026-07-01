@@ -49,7 +49,7 @@ func test_world_delta_updates_creates_and_deletes_entities_by_ownership() -> voi
 			"baseline_id": "baseline-1",
 			"sequence": 1,
 			"ships": [_ship_packet("ship-1", 10, 20)],
-			"bullets": [],
+			"bullets": [_bullet_packet("bullet-1", 5, 6)],
 			"asteroids": [],
 			"pickups": [],
 			"is_final_chunk": true,
@@ -66,9 +66,9 @@ func test_world_delta_updates_creates_and_deletes_entities_by_ownership() -> voi
 			"ship_creates": [_ship_packet("ship-2", 30, 40)],
 			"ship_updates": [_ship_packet("ship-1", 11, 21)],
 			"ship_deletes": ["ship-3"],
-			"bullet_creates": [_bullet_packet("bullet-1", 5, 6)],
-			"bullet_updates": [],
-			"bullet_deletes": [],
+			"bullet_creates": [_bullet_packet("bullet-2", 15, 16)],
+			"bullet_updates": [{"id": "bullet-1", "x": 99, "rotation": 0.0}],
+			"bullet_deletes": ["bullet-2"],
 			"asteroid_creates": [],
 			"asteroid_updates": [],
 			"asteroid_deletes": [],
@@ -81,7 +81,13 @@ func test_world_delta_updates_creates_and_deletes_entities_by_ownership() -> voi
 	assert_true(applied)
 	assert_eq(world_lane_state.ships["ship-1"]["x"], 11)
 	assert_eq(world_lane_state.ships["ship-2"]["x"], 30)
-	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 99)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "ship-1")
+	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "bullet")
+	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "bullet")
+	assert_false(world_lane_state.bullets.has("bullet-2"))
 
 
 func test_world_delta_missing_entities_leave_lane_unchanged_by_ownership() -> void:
@@ -365,6 +371,92 @@ func test_world_full_preserves_bullet_projectile_type_for_torpedo_presentation()
 	assert_eq(world_lane_state.bullets["bullet-torpedo"]["projectile_type"], "torpedo")
 	assert_eq(world_lane_state.bullets["bullet-torpedo"]["weapon_id"], "torpedo")
 
+
+
+func test_world_lane_state_merges_bullet_updates_without_dropping_omitted_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_bullet({
+		"id": "bullet-1",
+		"owner_id": "ship-1",
+		"x": 5,
+		"y": 6,
+		"rotation": 7,
+		"weapon_id": "pulse",
+		"projectile_type": "laser",
+	})
+
+	world_lane_state.merge_bullet_update({"id": "bullet-1", "x": 99})
+
+	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "ship-1")
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 99)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 7)
+	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "pulse")
+	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
+
+
+func test_world_lane_state_merges_bullet_updates_with_provided_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_bullet({
+		"id": "bullet-1",
+		"owner_id": "ship-1",
+		"x": 5,
+		"y": 6,
+		"rotation": 7,
+		"weapon_id": "pulse",
+		"projectile_type": "laser",
+	})
+
+	world_lane_state.merge_bullet_update({"id": "bullet-1", "x": 99, "y": 100, "rotation": 101})
+
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 99)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 100)
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 101)
+
+
+func test_world_lane_state_ignores_unknown_bullet_ids_for_merge() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.merge_bullet_update({"id": "bullet-unknown", "x": 99})
+
+	assert_false(world_lane_state.bullets.has("bullet-unknown"))
+
+
+func test_world_lane_state_ignores_bullet_updates_without_id() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_bullet({
+		"id": "bullet-1",
+		"owner_id": "ship-1",
+		"x": 5,
+		"y": 6,
+		"rotation": 7,
+		"weapon_id": "pulse",
+		"projectile_type": "laser",
+	})
+
+	world_lane_state.merge_bullet_update({"x": 99})
+
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
+	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "ship-1")
+	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "pulse")
+	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
+
+
+func test_world_lane_state_merges_bullet_updates_with_zero_rotation_and_preserved_projectile_type() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_bullet({
+		"id": "bullet-1",
+		"owner_id": "ship-1",
+		"x": 5,
+		"y": 6,
+		"rotation": 7,
+		"weapon_id": "pulse",
+		"projectile_type": "laser",
+	})
+
+	world_lane_state.merge_bullet_update({"id": "bullet-1", "rotation": 0})
+
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
 
 
 func test_world_lane_state_preserves_ship_target_fields() -> void:

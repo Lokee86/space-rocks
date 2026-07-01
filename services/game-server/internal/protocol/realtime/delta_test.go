@@ -113,6 +113,112 @@ func TestProjectionChangedReturnsTrueForNilCurrent(t *testing.T) {
 	}
 }
 
+func TestCompareLaneRecordFieldsHandlesWorldBulletCreatesUpdatesDeletes(t *testing.T) {
+	previous := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, WeaponID: "pulse"}}
+	current := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, WeaponID: "pulse"}, {ID: "bullet-b", X: 4, Y: 5, WeaponID: "laser"}}
+
+	delta := CompareLaneRecordFields(previous, current, func(record WorldBulletRecord) string { return record.ID }, "id")
+
+	if len(delta.Creates) != 1 || delta.Creates[0].ID != "bullet-b" {
+		t.Fatalf("expected bullet-b create, got %#v", delta.Creates)
+	}
+	if len(delta.Updates) != 0 {
+		t.Fatalf("expected no updates for unchanged bullets, got %#v", delta.Updates)
+	}
+	if len(delta.Deletes) != 0 {
+		t.Fatalf("expected no deletes, got %#v", delta.Deletes)
+	}
+}
+
+func TestCompareLaneRecordFieldsEmitsDeleteForMissingWorldBullet(t *testing.T) {
+	previous := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, WeaponID: "pulse"}}
+	current := []WorldBulletRecord{}
+
+	delta := CompareLaneRecordFields(previous, current, func(record WorldBulletRecord) string { return record.ID }, "id")
+
+	if len(delta.Creates) != 0 || len(delta.Updates) != 0 {
+		t.Fatalf("expected only delete, got %#v", delta)
+	}
+	if len(delta.Deletes) != 1 || delta.Deletes[0] != "bullet-a" {
+		t.Fatalf("expected bullet-a delete, got %#v", delta.Deletes)
+	}
+}
+
+func TestCompareLaneRecordFieldsEmitsUpdateForChangedWorldBulletX(t *testing.T) {
+	previous := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, WeaponID: "pulse"}}
+	current := []WorldBulletRecord{{ID: "bullet-a", X: 3, Y: 2, WeaponID: "pulse"}}
+
+	delta := CompareLaneRecordFields(previous, current, func(record WorldBulletRecord) string { return record.ID }, "id")
+
+	if len(delta.Creates) != 0 || len(delta.Deletes) != 0 {
+		t.Fatalf("expected only update, got %#v", delta)
+	}
+	if len(delta.Updates) != 1 {
+		t.Fatalf("expected one update, got %#v", delta.Updates)
+	}
+	if got := delta.Updates[0]; got["id"] != "bullet-a" || len(got) != 2 || got["x"] != float64(3) {
+		t.Fatalf("expected id and x only, got %#v", got)
+	}
+}
+
+func TestCompareLaneRecordFieldsIncludesZeroValueBulletRotationChange(t *testing.T) {
+	previous := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, Rotation: 9, WeaponID: "pulse"}}
+	current := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, Rotation: 0, WeaponID: "pulse"}}
+
+	delta := CompareLaneRecordFields(previous, current, func(record WorldBulletRecord) string { return record.ID }, "id")
+
+	if len(delta.Updates) != 1 {
+		t.Fatalf("expected one update, got %#v", delta.Updates)
+	}
+	if got := delta.Updates[0]; got["id"] != "bullet-a" || len(got) != 2 || got["rotation"] != float64(0) {
+		t.Fatalf("expected id and zero rotation only, got %#v", got)
+	}
+}
+
+func TestCompareLaneRecordFieldsEmitsUpdateForChangedWorldBulletWeaponID(t *testing.T) {
+	previous := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, WeaponID: "pulse"}}
+	current := []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, WeaponID: "laser"}}
+
+	delta := CompareLaneRecordFields(previous, current, func(record WorldBulletRecord) string { return record.ID }, "id")
+
+	if len(delta.Creates) != 0 || len(delta.Deletes) != 0 {
+		t.Fatalf("expected only update, got %#v", delta)
+	}
+	if len(delta.Updates) != 1 {
+		t.Fatalf("expected one update, got %#v", delta.Updates)
+	}
+	if got := delta.Updates[0]; got["id"] != "bullet-a" || len(got) != 2 || got["weapon_id"] != "laser" {
+		t.Fatalf("expected id and weapon_id only, got %#v", got)
+	}
+}
+
+func TestCompareLaneRecordFieldsOrdersUpdatesDeterministically(t *testing.T) {
+	previous := []WorldBulletRecord{
+		{ID: "bullet-c", X: 1, Y: 2, WeaponID: "pulse"},
+		{ID: "bullet-b", X: 4, Y: 2, WeaponID: "pulse"},
+		{ID: "bullet-a", X: 3, Y: 2, WeaponID: "laser"},
+	}
+	current := []WorldBulletRecord{
+		{ID: "bullet-b", X: 5, Y: 2, WeaponID: "pulse"},
+		{ID: "bullet-a", X: 6, Y: 2, WeaponID: "laser"},
+	}
+
+	delta := CompareLaneRecordFields(previous, current, func(record WorldBulletRecord) string { return record.ID }, "id")
+
+	if len(delta.Creates) != 0 {
+		t.Fatalf("expected no creates, got %#v", delta.Creates)
+	}
+	if len(delta.Updates) != 2 {
+		t.Fatalf("expected two updates, got %#v", delta.Updates)
+	}
+	if delta.Updates[0]["id"] != "bullet-a" || delta.Updates[1]["id"] != "bullet-b" {
+		t.Fatalf("expected updates sorted by id, got %#v", delta.Updates)
+	}
+	if len(delta.Deletes) != 1 || delta.Deletes[0] != "bullet-c" {
+		t.Fatalf("expected delete for bullet-c, got %#v", delta.Deletes)
+	}
+}
+
 func TestBuildWorldDeltaPacketEmitsCreate(t *testing.T) {
 	previous := WorldFullPacket{Type: PacketTypeWorldFull}
 	current := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}}
@@ -131,19 +237,70 @@ func TestBuildWorldDeltaPacketEmitsCreate(t *testing.T) {
 }
 
 func TestBuildWorldDeltaPacketEmitsUpdate(t *testing.T) {
-	previous := WorldFullPacket{Type: PacketTypeWorldFull, Bullets: []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2}}}
-	current := WorldFullPacket{Type: PacketTypeWorldFull, Bullets: []WorldBulletRecord{{ID: "bullet-a", X: 3, Y: 4}}}
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Bullets: []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, Rotation: 3, OwnerID: "ship-a", WeaponID: "pulse", ProjectileType: "laser"}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Bullets: []WorldBulletRecord{{ID: "bullet-a", X: 3, Y: 4, Rotation: 5, OwnerID: "ship-a", WeaponID: "pulse", ProjectileType: "laser"}}}
 
 	delta := BuildWorldDeltaPacket(previous, current)
 
 	if !WorldDeltaHasChanges(delta) {
 		t.Fatal("expected world delta to report changes for update")
 	}
-	if len(delta.Bullets.Updates) != 1 || delta.Bullets.Updates[0].ID != "bullet-a" || delta.Bullets.Updates[0].X != 3 || delta.Bullets.Updates[0].Y != 4 {
-		t.Fatalf("expected bullet update, got %#v", delta.Bullets.Updates)
+	if len(delta.Bullets.Updates) != 1 {
+		t.Fatalf("expected one bullet update, got %#v", delta.Bullets.Updates)
+	}
+	if got := delta.Bullets.Updates[0]; got["id"] != "bullet-a" || len(got) != 4 || got["x"] != float64(3) || got["y"] != float64(4) || got["rotation"] != float64(5) {
+		t.Fatalf("expected partial bullet update, got %#v", got)
+	}
+	if _, ok := delta.Bullets.Updates[0]["owner_id"]; ok {
+		t.Fatalf("expected owner_id to be omitted, got %#v", delta.Bullets.Updates[0])
+	}
+	if _, ok := delta.Bullets.Updates[0]["weapon_id"]; ok {
+		t.Fatalf("expected weapon_id to be omitted, got %#v", delta.Bullets.Updates[0])
+	}
+	if _, ok := delta.Bullets.Updates[0]["projectile_type"]; ok {
+		t.Fatalf("expected projectile_type to be omitted, got %#v", delta.Bullets.Updates[0])
 	}
 	if len(delta.Bullets.Creates) != 0 || len(delta.Bullets.Deletes) != 0 {
 		t.Fatalf("expected only bullet update, got %#v", delta.Bullets)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsBulletCreateAsTypedRecord(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Bullets: []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, Rotation: 3, OwnerID: "ship-a", WeaponID: "pulse", ProjectileType: "laser"}}}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Bullets.Creates) != 1 || delta.Bullets.Creates[0].ID != "bullet-a" {
+		t.Fatalf("expected bullet create, got %#v", delta.Bullets.Creates)
+	}
+	if len(delta.Bullets.Updates) != 0 || len(delta.Bullets.Deletes) != 0 {
+		t.Fatalf("expected only bullet create, got %#v", delta.Bullets)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsBulletDeleteAsID(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Bullets: []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, Rotation: 3, OwnerID: "ship-a", WeaponID: "pulse", ProjectileType: "laser"}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Bullets.Deletes) != 1 || delta.Bullets.Deletes[0] != "bullet-a" {
+		t.Fatalf("expected bullet delete, got %#v", delta.Bullets.Deletes)
+	}
+	if len(delta.Bullets.Creates) != 0 || len(delta.Bullets.Updates) != 0 {
+		t.Fatalf("expected only bullet delete, got %#v", delta.Bullets)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsShipUpdatesAsFullRecords(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 1}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 4}}}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Ships.Updates) != 1 || delta.Ships.Updates[0].ID != "ship-a" || delta.Ships.Updates[0].X != 4 {
+		t.Fatalf("expected full ship update record, got %#v", delta.Ships.Updates)
 	}
 }
 
