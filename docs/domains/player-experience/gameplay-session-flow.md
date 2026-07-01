@@ -73,7 +73,7 @@ lives
 death
 respawn
 match-over decision
-state packet projection
+lane packet projection
 ```
 
 The client owns only local presentation and routing consequences:
@@ -89,7 +89,7 @@ match results window
 local reset and navigation after player intent
 ```
 
-The API server owns account authentication and account persistence. It does not own live rooms, WebSocket gameplay, match lifecycle, collisions, score during a match, lives, death, respawn, or authoritative state packets.
+The API server owns account authentication and account persistence. It does not own live rooms, WebSocket gameplay, match lifecycle, collisions, score during a match, lives, death, respawn, or authoritative gameplay lane packets.
 
 Player-data owns match-result/stat storage routing. It does not own live room state, gameplay packet routing, or match-over decisions.
 
@@ -201,7 +201,7 @@ The server activates connected room members into active game players after start
 
 ### 6. Client begins gameplay presentation
 
-The client does not process gameplay state packets as active gameplay until server-observed room state reaches `InGame`.
+The client does not process gameplay lane packets as active gameplay until server-observed room state reaches `InGame`.
 
 Room snapshots and room-state-change packets update the client room-session cache. After that update, the client session network controller opens the gameplay packet gate when the current room state is `InGame`.
 
@@ -212,7 +212,7 @@ room snapshot or room-state-change
 -> room-session cache updates current room state
 -> room state is InGame
 -> gameplay-session lifecycle begins accepting gameplay packets
--> gameplay state packets apply to runtime and world presentation
+-> gameplay lane packets apply to runtime and world presentation
 ```
 
 The client then presents gameplay through world sync, HUD, input, audio/effects, devtools presentation, gameplay menu, respawn, spectate, and match-end flows.
@@ -221,7 +221,7 @@ The client then presents gameplay through world sync, HUD, input, audio/effects,
 
 During live gameplay, the client sends input and gameplay requests through the realtime protocol. The game server routes those packets only when the session is attached to a room and has an active game player ID.
 
-The game server advances simulation and emits authoritative gameplay presentation state. The client renders from those packets and does not recalculate authoritative outcomes.
+The game server advances simulation and emits authoritative gameplay lane packets. The client renders from those packets and does not recalculate authoritative outcomes.
 
 Current authoritative gameplay facts include:
 
@@ -424,13 +424,13 @@ authenticate_result
 room_snapshot
 room_error
 room_state_changed
-gameplay state packets
-player pause state packets
+gameplay lane packets
+player pause lane packets
 debug/status packets when relevant
 telemetry responses when relevant
 ```
 
-Room snapshots are the main cross-session state envelope. Gameplay state packets are the main live simulation presentation envelope.
+Room snapshots are the main cross-session state envelope. Gameplay lane packets are the main live simulation presentation envelope.
 
 ## Durable outputs
 

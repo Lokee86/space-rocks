@@ -31,7 +31,7 @@ asteroid
 bullet
 ```
 
-Targeting is server-authoritative. The client may build local visual candidates and send target intent, but the game server decides whether the target is accepted. Accepted target state is confirmed only when it appears in authoritative gameplay state readback.
+Targeting is server-authoritative. The client may build local visual candidates and send target intent, but the game server decides whether the target is accepted. Accepted target state is confirmed only when it appears in authoritative world lane readback.
 
 A selected target is not automatically combat behavior. Targeting records intent or focus. It does not, by itself, damage the target, collect the pickup, fire a weapon, command an entity, validate a devtools command, or make an entity eligible for every targeting consumer.
 
@@ -130,7 +130,7 @@ local input
 -> server collision-body point check
 -> session-owned target state update
 -> active ship target copy when present
--> StatePacket.players[*].target_kind / target_id
+-> world lane ship records[*].target_kind / target_id
 -> client readback
 ```
 
@@ -162,13 +162,13 @@ playerSession.Targeting
 runtime.Ship.TargetKind / TargetID
 = active avatar copy
 
-StatePacket.players[*].target_kind / target_id
+world lane ship records[*].target_kind / target_id
 = client readback for active ships
 ```
 
 This split matters because a player can have a session without an active ship. A dead or pending-respawn player can still hold, update, or clear selected target state. When the player respawns, the newly created ship receives the session-owned target copy.
 
-`StatePacket.players` only contains active avatar state. Session-owned target state can exist while absent from that active-ship readback.
+`world lane ship records` only contains active avatar state. Session-owned target state can exist while absent from that active-ship readback.
 
 ## Target status and lifecycle
 
@@ -307,7 +307,7 @@ The detailed game-server implementation map belongs in the game-server simulatio
 * New normal gameplay paths must not introduce `target_player_id`.
 * `target_player_id` remains a player-only devtools/debug compatibility surface.
 * Client candidate selection is not authority.
-* Server-selected target state must be confirmed through authoritative gameplay state readback.
+* Server-selected target state must be confirmed through authoritative world lane readback.
 * Point-based selection must validate both the requested target identity and server-side collision-body containment.
 * Invalid target selection must not overwrite the previous accepted target.
 * Empty target clearing is explicit.

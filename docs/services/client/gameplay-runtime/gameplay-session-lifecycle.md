@@ -27,10 +27,10 @@ This lifecycle is client presentation/session orchestration only. The server rem
 ## Responsibilities
 
 * Configure gameplay composition from scene, network, session, HUD, world, and UI references.
-* Create and connect `GameplayStateFlow`.
-* Gate gameplay state and player pause packets behind `accepts_gameplay_packets`.
+* Create and connect `GameplayStateFlow` for lane packet routing.
+* Gate gameplay lane packets and player pause packets behind `accepts_gameplay_packets`.
 * Begin accepting gameplay packets after room state enters `InGame`.
-* Forward gameplay state packets into `GameplayStateFlow`.
+* Forward gameplay lane packets into `GameplayStateFlow`.
 * Forward player pause packets into gameplay composition.
 * Forward devtools debug status packets into gameplay composition.
 * Forward debug shape catalog packets into gameplay composition.
@@ -67,7 +67,7 @@ This lifecycle is client presentation/session orchestration only. The server rem
 
 ### Gameplay packet gate
 
-`GameplaySessionController` owns the local client gate that decides whether gameplay and pause packets should be applied.
+`GameplaySessionController` owns the local client gate that decides whether gameplay lane packets and pause packets should be applied.
 
 The gate starts closed. `SessionNetworkController` opens it by calling `begin_accepting_gameplay_packets()` when room state reaches `Constants.ROOM_STATE_IN_GAME`.
 
@@ -123,22 +123,22 @@ ClientConnectionService.room_state_changed
 
 Both paths also refresh match-end state after room state is applied.
 
-### Gameplay state packets
+### Gameplay lane packets
 
-Gameplay state packets are forwarded only when the gameplay packet gate is open.
+Gameplay lane packets are forwarded only when the gameplay packet gate is open.
 
 ```text
-ClientConnectionService.gameplay_state_received
--> SessionNetworkController._on_gameplay_state_received
--> GameplaySessionController.handle_gameplay_state
--> GameplayStateFlow.handle_gameplay_state_packet
+ClientConnectionService.gameplay_packet_received
+-> SessionNetworkController._on_gameplay_packet_received
+-> GameplaySessionController.handle_gameplay_packet
+-> GameplayStateFlow.handle_gameplay_packet
 ```
 
 If `accepts_gameplay_packets` is false, the packet is ignored by `GameplaySessionController`.
 
 ### Player pause packets
 
-Player pause packets use the same acceptance gate as gameplay state packets.
+Player pause packets use the same acceptance gate as gameplay lane packets.
 
 ```text
 ClientConnectionService.player_pause_state_received
@@ -261,10 +261,9 @@ The lifecycle does not own durable player identity, account state, local profile
 * `client/scripts/networking/inbound/server_packet_dispatcher.gd`
 * `client/scripts/networking/inbound/server_packet_router.gd`
 
-### Runtime state participants
+### Runtime lane state participants
 
 * `client/scripts/gameplay/state/gameplay_state_flow.gd`
-* `client/scripts/gameplay/state/gameplay_state_packet_reader.gd`
 * `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`
 * `client/scripts/session/room_state.gd`
 * `client/scripts/gameplay/session/gameplay_room_state_flow.gd`
@@ -292,7 +291,6 @@ Relevant client tests include:
 * `client/tests/unit/test_gameplay_session_controller.gd`
 * `client/tests/unit/test_gameplay_session_state.gd`
 * `client/tests/unit/test_session_network_controller.gd`
-* `client/tests/unit/test_gameplay_state_packet_reader.gd`
 * `client/tests/unit/test_gameplay_state_apply_flow.gd`
 * `client/tests/unit/test_gameplay_room_state_flow.gd`
 * `client/tests/unit/gameplay/match_end/test_match_end_flow.gd`
@@ -313,7 +311,7 @@ Relevant client tests include:
 * [Menu flow](../menu-flow.md) - Client menu flow documentation.
 * [Match End Flow](../match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
 * [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
-* [Gameplay packets](../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
+* [Gameplay packets](../../../protocol/gameplay-packets.md) - Gameplay lane packet documentation.
 
 ## Notes
 

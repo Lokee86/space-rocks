@@ -232,4 +232,3 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
 
 
-

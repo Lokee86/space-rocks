@@ -6,13 +6,13 @@ Parent index: [Client](./!INDEX.md)
 
 This document describes the current client HUD and gameplay-session UI implementation.
 
-It documents how the Godot client mounts gameplay UI, updates HUD presentation from gameplay state and events, protects gameplay UI from gameplay mouse input, presents local death and respawn state, and renders weapon/loadout HUD state.
+It documents how the Godot client mounts gameplay UI, updates HUD presentation from lane-applied gameplay state and events, protects gameplay UI from gameplay mouse input, presents local death and respawn state, and renders weapon/loadout HUD state.
 
 ## Overview
 
 The client owns HUD and gameplay UI as presentation only.
 
-The authoritative facts shown by the HUD come from server-driven gameplay state, room state, and gameplay events. The client reads those facts, converts them into local presentation state, and updates Godot scenes and controls. It does not decide score, lives, match-over state, respawn validity, weapon state, cooldown truth, or match results.
+The authoritative facts shown by the HUD come from server-driven lane-applied gameplay state, room state, and gameplay events. The client reads those facts, converts them into local presentation state, and updates Godot scenes and controls. It does not decide score, lives, match-over state, respawn validity, weapon state, cooldown truth, or match results.
 
 The main client scene is:
 
@@ -39,7 +39,7 @@ client/scenes/ui/hud.tscn
 
 It contains the visible gameplay HUD controls for score, lives, local death/respawn text, game-over presentation, the embedded live gameplay menu path, and the loadout display container.
 
-Runtime HUD behavior is coordinated by `GameplayHudFlow`. Gameplay state updates call into `GameplayHudFlow` through the gameplay state application flow. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams.
+Runtime HUD behavior is coordinated by `GameplayHudFlow`. Packet decode and classification route through `RealtimeRouter`, which applies lane state/readiness before `GameplayStateApplyFlow` fans current lane-applied summary state into the HUD. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams.
 
 ## Code root
 
@@ -60,7 +60,7 @@ The client HUD and gameplay UI implementation owns:
 * Presenting local death state.
 * Presenting the respawn countdown.
 * Exposing whether the client can request respawn through HUD presentation state.
-* Showing the “Press R to Respawn” prompt only after the respawn countdown reaches zero.
+* Showing the â€œPress R to Respawnâ€ prompt only after the respawn countdown reaches zero.
 * Clearing stale death presentation when the local player is restored to active state.
 * Hiding and locking the HUD after authoritative room match-over.
 * Preventing repeated `GameOver` snapshots from reopening normal HUD presentation.
@@ -126,7 +126,7 @@ These are client presentation facts only. They do not become authoritative gamep
 
 ### State-summary presenter
 
-`GameplayStateApplyFlow` applies normalized gameplay state to the HUD by calling:
+`GameplayStateApplyFlow` receives lane-applied summary state and calls:
 
 ```text
 hud_flow.apply_gameplay_state_summary(state)
@@ -166,9 +166,9 @@ For authoritative room match-over, it asks the HUD to hide through:
 GameplayHudFlow.hide_for_match_over()
 ```
 
-That sets the match-over visibility lock. While the lock is active, gameplay state packets cannot re-show the HUD through normal `show_gameplay()` calls.
+That sets the match-over visibility lock. While the lock is active, gameplay lane packets cannot re-show the HUD through normal `show_gameplay()` calls.
 
-`MatchEndFlow.reset()` clears the lock, but it does not re-show the HUD. Normal gameplay state must start again before the HUD is shown.
+`MatchEndFlow.reset()` clears the lock, but it does not re-show the HUD. Normal gameplay lane state must start again before the HUD is shown.
 
 ### Loadout display presenter
 
@@ -204,9 +204,9 @@ This policy protects gameplay UI only. It does not protect the whole `UserInterf
 
 ### Gameplay state input
 
-HUD presentation is updated from normalized gameplay state.
+HUD presentation is updated from lane-applied gameplay state.
 
-The state reader produces values such as:
+The lane-applied state reader produces values such as:
 
 ```text
 self_id
@@ -347,8 +347,8 @@ The loadout display reads generated packet field names and generated client cons
 
 * `client/scripts/shell/gameplay_hud_flow.gd` - Main HUD presentation flow for score, lives, local death, respawn countdown, game-over presentation, loadout display, reset, and match-over visibility lock.
 * `client/scripts/shell/gameplay_runtime_tick_flow.gd` - Ticks HUD countdown presentation each frame.
-* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd` - Applies normalized gameplay state to HUD, world sync, respawn restore, and event lifecycle flows.
-* `client/scripts/gameplay/state/gameplay_state_packet_reader.gd` - Normalizes gameplay packet state before presentation flows consume it.
+* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd` - Applies lane-applied gameplay state to HUD, world sync, respawn restore, and event lifecycle flows.
+* `client/scripts/protocol/realtime/realtime_router.gd` - Routes gameplay lane packets into presentation flows.
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires server events into event and death presentation flows.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Handles local self-death presentation and delegates final elimination to match-end flow.
 * `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Restores alive HUD presentation after respawn confirmation or stale death state.

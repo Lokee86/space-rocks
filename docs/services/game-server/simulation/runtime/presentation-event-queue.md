@@ -6,7 +6,7 @@ Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 This document describes the game-server presentation event queue.
 
-It covers how simulation-owned gameplay facts are converted into packet-facing `EventState` values, queued per player, included in gameplay state packets, and drained after packet projection.
+It covers how simulation-owned gameplay facts are converted into packet-facing `EventState` values, queued per player, projected into `event_batch` candidates, and drained only after successful active write.
 
 ## Overview
 
@@ -22,10 +22,10 @@ simulation system records events.Event
 -> eventStateForDomainEvent
 -> game.broadcastEvent
 -> pendingPresentationEvents[playerID]
--> Game.StatePacket(playerID)
--> StatePacket.events
--> pendingPresentationEvents[playerID] = nil
--> networking encodes state packet
+-> protocol/realtime projects pending events into event_batch candidates
+-> outbound selects and writes event_batch
+-> successful websocket write
+-> pendingPresentationEvents[playerID] = nil for drained event IDs
 -> client gameplay event presentation
 ```
 
@@ -39,7 +39,7 @@ It stores packet-facing `EventState` values for client presentation. It is not a
 
 The server currently fans each event out to every player session that exists at event-recording time. A player with a durable session but no live ship can still receive the event. A player added after the event is recorded will not receive that event.
 
-Events are drained per player when `Game.StatePacket(playerID)` is built. The first state packet after an event includes the queued events for that player. A later state packet for the same player no longer includes them unless new events were recorded.
+Events are drained per player only after the active outbound write succeeds. `protocol/realtime` may project pending events into `event_batch` candidates, but the queue is cleared only for event IDs that were successfully written for that receiver. A later `event_batch` for the same player no longer includes those drained events unless new events were recorded.
 
 This means the queue is best-effort presentation state. It does not guarantee delivery across encode failures, transport failures, disconnects, reconnects, or late joins.
 
@@ -74,8 +74,8 @@ The presentation event queue owns:
 * Translating supported `events.Event` domain facts into generated `EventState` packet values.
 * Broadcasting each converted event to every current player session.
 * Preserving event order within each player's pending event slice.
-* Copying pending events into `StatePacket.Events`.
-* Clearing a player's pending events after `Game.StatePacket(playerID)` projects them.
+* Projecting pending events into `event_batch` candidates.
+* Clearing a player's pending events only after successful active `event_batch` write drains the written event IDs.
 * Keeping presentation events transient and non-durable.
 
 ## Does not own
@@ -96,7 +96,7 @@ The presentation event queue does not own:
 * Room lifecycle or room match-over state transitions.
 * Devtools-only event behavior.
 
-Those concerns belong to combat, pickups, radial effects, state packet projection, protocol/data, networking, client presentation, rooms, or player-data documentation.
+Those concerns belong to combat, pickups, radial effects, lane packet projection, protocol/data, networking, client presentation, rooms, or player-data documentation.
 
 ## Domain roles
 
@@ -133,7 +133,7 @@ This keeps client presentation event delivery separate from the runtime systems 
 pendingPresentationEvents map[string][]EventState
 ```
 
-The map is owned by the `Game` aggregate and guarded by the same game mutex used for simulation stepping, player mutation, and state packet projection.
+The map is owned by the `Game` aggregate and guarded by the same game mutex used for simulation stepping and lane packet projection.
 
 ### Player addition
 
@@ -173,27 +173,23 @@ game.pendingPresentationEvents[playerID] = append(game.pendingPresentationEvents
 
 Fanout uses durable player sessions rather than active ship state. This is intentional because a player can be pending respawn or eliminated while still needing presentation events such as match, death, or world-event feedback.
 
-### State packet inclusion
+### Event batch inclusion
 
-`Game.StatePacket(playerID)` builds a packet for one player.
+`protocol/realtime` projects pending events for one player into `event_batch` candidates.
 
-During projection, `statePacket(playerID)` copies that player's current pending events into:
-
-```text
-StatePacket.Events
-```
+During projection, the lane-native event projection copies that player's current pending events into `event_batch` candidates for the receiver.
 
 The copy is made before the queue is cleared so the returned packet owns its own event slice.
 
 ### Drain
 
-After `statePacket(playerID)` returns, `Game.StatePacket(playerID)` clears that player's pending event slice:
+After the active `event_batch` write succeeds, the queue clears that player's pending event slice:
 
 ```text
 game.pendingPresentationEvents[playerID] = nil
 ```
 
-The queue is drained even though network encoding and websocket writing happen later. Presentation events are therefore not retried if later outbound work fails.
+The queue is drained only after the active outbound write succeeds. Presentation events are therefore not retried if later outbound work fails.
 
 ### Player removal
 
@@ -238,11 +234,7 @@ For damage events, the packet-facing event currently preserves source identity, 
 
 The queue is an internal game-server runtime surface, not a standalone network protocol.
 
-The network-visible surface is the `events` array on the generated gameplay state packet:
-
-```text
-StatePacket.events
-```
+The network-visible surface is the `event_batch` lane on the generated realtime protocol packets.
 
 That field is for client presentation. The client consumes it after receiving normal realtime gameplay state and routes supported events into local effects, audio, HUD, death, and match-end presentation.
 
@@ -250,8 +242,8 @@ Authority behind the events remains on the server:
 
 ```text
 server simulation owns event production
-Game owns event-to-packet queueing
-StatePacket owns packet projection
+Game owns event-to-queue storage
+protocol/realtime owns event_batch projection and planning
 networking owns JSON encode and websocket write
 client owns presentation response
 ```
@@ -264,10 +256,11 @@ The current internal surfaces are:
 recordDomainEvent(events.Event)
 eventStateForDomainEvent(events.Event) EventState
 broadcastEvent(EventState)
-Game.StatePacket(playerID)
+protocol/realtime event_batch projection helpers
+networking outbound event_batch write helpers
 ```
 
-`BuildGameplayPresentationStateResponse` in networking calls `Game.StatePacket(playerID)`, stamps `server_sent_msec`, encodes the packet, and returns websocket bytes. It does not own event production or queue semantics.
+`protocol/realtime` selects pending events for `event_batch`, and active networking writes the selected event batch packet. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics.
 
 ## Data ownership
 
@@ -300,7 +293,7 @@ effect_type
 amount
 ```
 
-`EventState` is the value stored in `pendingPresentationEvents` and later included in `StatePacket.Events`.
+`EventState` is the value stored in `pendingPresentationEvents` and later included in `event_batch` candidates for the receiver.
 
 ### Pending queue state
 
@@ -352,19 +345,19 @@ services/game-server/internal/game/events.go
 
 Owns `recordDomainEvent`, `eventStateForDomainEvent`, and `broadcastEvent`.
 
-### State packet projection and drain
+### Event batch projection and drain
 
 ```text
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/
 ```
 
-Copies pending events into `StatePacket.Events` and drains the player's pending queue after projection.
+Projects pending events into `event_batch` candidates and drains only after successful active write.
 
 ```text
 services/game-server/internal/game/packets.go
 ```
 
-Generated packet definitions for `EventState` and `StatePacket`.
+Generated packet definitions for `EventState` and `event_batch`-related gameplay packet shapes.
 
 ### Current event producers
 
@@ -416,7 +409,7 @@ Records pickup-expired presentation events.
 shared/packets/gameplay.toml
 ```
 
-Source-of-truth packet schema for `EventState` and `StatePacket.events`.
+Source-of-truth packet schema for `EventState` and `event_batch`.
 
 ```text
 services/game-server/internal/game/packets.go
@@ -427,10 +420,10 @@ Generated Go packet output consumed by the game and networking paths.
 ### Outbound networking consumer
 
 ```text
-services/game-server/internal/networking/outbound/gameplay_presentation.go
+services/game-server/internal/protocol/realtime/ and services/game-server/internal/networking/websocket_write.go
 ```
 
-Calls `Game.StatePacket(playerID)`, stamps `server_sent_msec`, encodes the packet through `packetcodec`, and returns the outbound websocket payload.
+Calls into the lane-native realtime projection path, encodes the selected `event_batch` packet through `packetcodec`, and returns the outbound websocket payload after successful write gating.
 
 ### Client presentation consumer
 
@@ -439,7 +432,7 @@ client/scripts/gameplay/events/
 client/scripts/gameplay/effects/
 ```
 
-Consume packet events after state packet normalization and turn the supported event subset into local client presentation.
+Consume packet events after `event_batch` normalization and turn the supported event subset into local client presentation.
 
 ### Important non-ownership boundaries
 
@@ -486,14 +479,14 @@ Covers:
 * Event-to-packet conversion for bullet blasts, ship deaths, pickup events, damage events, and damage-over-time events.
 * Queueing a recorded event for the current player.
 * Queueing an event for a durable player session that has no live ship.
-* Draining queued events through `Game.StatePacket(playerID)`.
+* Draining queued events through the lane-native `event_batch` projection and successful write path.
 * Creating damage presentation events only when damage results are not ignored and not no-op.
 
 ```text
 services/game-server/internal/game/pickup_drops_test.go
 ```
 
-Covers pickup drop behavior that later projects pickup state through gameplay state packets.
+Covers pickup drop behavior that later projects pickup state through `event_batch` lane packets.
 
 Suggested verification command from `services/game-server`:
 

@@ -23,7 +23,7 @@ active simulation tick
 -> pickup_collected event recording
 -> pickup effect intent application
 -> pickup_effect_applied event recording when an effect succeeds
--> later state-packet projection
+-> later event_batch projection
 ```
 
 Pickup collection is intentionally two-stage:
@@ -43,7 +43,7 @@ pickup_collected
 pickup_effect_applied
 ```
 
-This lets client presentation react to collection separately from gameplay-result feedback. For example, the world can remove or animate the collected pickup from `pickup_collected`, while HUD or telemetry feedback can use `pickup_effect_applied`.
+This lets client presentation react to collection separately from gameplay-result feedback. For example, the world can remove or animate the collected pickup from `pickup_collected`, while HUD or telemetry feedback can use `pickup_effect_applied` delivered through `event_batch`.
 
 Current implemented pickup collection effects are:
 
@@ -391,7 +391,7 @@ lives_after
 
 For `equip_weapon`, the current event includes the pickup identity, player identity, and effect type. The weapon/ammo result is primarily visible through later player and session state projection.
 
-Events are queued for player sessions and delivered through `StatePacket.events`. The authoritative pickup removal is also visible through `StatePacket.pickups`, where the collected pickup is absent after collection.
+Events are queued for player sessions and delivered through `event_batch`. The authoritative pickup removal is also visible through world lane pickup records, where the collected pickup is absent after collection.
 
 ## Data ownership
 
@@ -429,15 +429,15 @@ Pickup collection has no direct HTTP endpoint or direct client-callable WebSocke
 Clients observe pickup collection through normal game-server output:
 
 ```text
-StatePacket.pickups
-StatePacket.players
-StatePacket.player_sessions
-StatePacket.events
+world lane pickup records
+world lane ship records
+session lane player records
+event_batch
 ```
 
-`StatePacket.pickups` no longer includes a collected pickup after the server removes it.
+world lane pickup records no longer include a collected pickup after the server removes it.
 
-`StatePacket.events` can include:
+`event_batch` can include:
 
 ```text
 pickup_collected
@@ -562,12 +562,12 @@ Game integration tests cover:
 * pickup health, age, and lifespan initialization.
 * pickup expiry and expiry events.
 * pickup removal.
-* `StatePacket.pickups` projection.
+* world lane pickup records projection.
 * pickup age projection.
 * player/pickup collision removing the pickup.
 * frozen collisions preventing pickup collection.
 * `1_up` incrementing player session lives.
-* updated lives appearing in state packets.
+* updated lives appearing in world/session lane readback.
 * collection and effect events being emitted in order.
 
 Effect application tests cover:
@@ -602,7 +602,7 @@ go test -buildvcs=false ./internal/game/pickups ./tests/game -run 'Pickup|OneUp|
 * [Collision Shapes](../world/collision-shapes.md)
 * [Physics](../world/physics.md)
 * [Toroidal Space And Motion](../world/toroidal-space-and-motion.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Player Pause And Suspension](../players/player-pause-and-suspension.md)
 * [Data](../../../../data/!INDEX.md)
 * [Protocol](../../../../protocol/!INDEX.md)
@@ -615,3 +615,4 @@ The collection event position currently comes from the pickup position stored in
 The pickup collision fact stores an impact position, but the current collection adapter does not use that impact position when recording pickup collection events.
 
 Pickup collection currently allows only one collected pickup per player per collision pass because the player loop breaks after the first detected pickup collision.
+

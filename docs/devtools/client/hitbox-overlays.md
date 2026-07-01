@@ -33,7 +33,7 @@ Show Server Collision Telemetry
 
 When enabled, the client draws outline polylines for supported server-state entities using:
 
-* the latest normalized gameplay state
+* the latest applied world-lane state
 * the latest server-provided debug shape catalog
 * the current `WorldSync` server-to-visual coordinate conversion
 
@@ -87,9 +87,9 @@ shape_type
 points
 ```
 
-The shape catalog does not contain live players, asteroids, bullets, pickups, collision results, or debug collision bodies. Live entity placement comes from normal gameplay state packets.
+The shape catalog does not contain live players, asteroids, bullets, pickups, collision results, or debug collision bodies. Live entity placement comes from world lane records.
 
-The client combines the shape catalog with gameplay state for display only.
+The client combines the shape catalog with applied world-lane state for display only.
 
 ## Client presentation
 
@@ -147,8 +147,8 @@ server loads collision shape catalog
 -> server builds debug shape catalog packet
 -> client routes debug_shape_catalog packet
 -> ServerHitboxOverlayFlow stores shape definitions
--> client receives normal gameplay state packets
--> GameplayStatePacketReader normalizes state
+-> client receives world lane readback
+-> RealtimeRouter applies lane state
 -> ServerHitboxOverlayFlow stores latest gameplay state
 -> GameplayProcessFlow ticks overlay flow
 -> overlay flow resolves entity shape ids
@@ -157,7 +157,7 @@ server loads collision shape catalog
 -> DevtoolsServerHitboxOverlay draws closed outlines
 ```
 
-The overlay uses normal gameplay state fields after client normalization:
+The overlay uses applied world-lane fields after client lane application:
 
 ```text
 server_players
@@ -335,6 +335,6 @@ Server outbound tests verify that `debug_shape_catalog` responses:
 
 The UI label currently says “Show Server Collision Telemetry,” while the implementation names use “server hitbox overlay” and “hitbox” terminology.
 
-The overlay reconstructs visible outlines from shape definitions and live state. It does not receive per-entity precomputed outline geometry from the server.
+The overlay reconstructs visible outlines from shape definitions and applied world-lane state. It does not receive per-entity precomputed outline geometry from the server.
 
 Pickup overlay drawing depends on the client-resolved pickup shape id matching a shape id in the debug shape catalog. If no matching pickup shape exists, the pickup is skipped for overlay drawing without affecting normal pickup presentation or gameplay behavior.

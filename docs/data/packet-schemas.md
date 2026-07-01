@@ -58,13 +58,14 @@ Current output ids:
 
 ```text
 server_entities_packets
+server_realtime_packets
 server_game_packets
 player_data_packets
 client_packets
 server_devtools_packets
 ```
 
-`packet_type_ids` restricts which packet constants are rendered into an output and preserves the listed order. `structs` selects which packet structs are rendered for Go outputs. `builders` selects which GDScript builder functions are rendered for the client output.
+`packet_type_ids` restricts which packet constants are rendered into an output and preserves the listed order. `structs` selects which packet structs are rendered for Go outputs. `builders` selects which GDScript builder functions are rendered for the client output. `imports` can select packet type constants, structs, builders, and package imports as needed by the generated output. `server_realtime_packets` is a constants-only Go output.
 
 ### `shared/packets/gameplay.toml`
 
@@ -83,10 +84,25 @@ BulletState
 PickupState
 EventState
 PlayerPauseState
-StatePacket
 ```
 
-It also owns packet type values and client builders for gameplay input, respawn, pause, targeting, telemetry, client viewport configuration, state packets, and presentation events.
+It also owns shared realtime gameplay state shapes such as `ClientPacket`, `ClientConfig`, `InputState`, `ShipState`, `PlayerSessionState`, `AsteroidState`, `BulletState`, `PickupState`, `EventState`, and `PlayerPauseState`.
+
+It also owns realtime lane packet type values:
+
+```text
+world_full
+world_delta
+overlay_full
+overlay_delta
+session_full
+session_delta
+event_batch
+resync_request
+resync_required
+```
+
+It does not own the full lane payload structs used by the active server realtime protocol. Those live in `services/game-server/internal/protocol/realtime/`.
 
 ### `shared/packets/debug.toml`
 
@@ -192,7 +208,8 @@ A struct entry defines a packet or state shape.
 Struct ids use exported Go-style names such as:
 
 ```text
-StatePacket
+ClientPacket
+ShipState
 RoomSnapshot
 DebugCommand
 PlayerDataLoadStatsResult
@@ -235,8 +252,8 @@ Example shape:
 
 ```toml
 [[packet_types]]
-id = "state"
-value = "state"
+id = "world_full"
+value = "world_full"
 ```
 
 The `id` is used by generators to create language-specific constants. The `value` is the JSON packet type string sent over the wire or through the player-data runtime packet codec.
@@ -268,13 +285,14 @@ Builders currently generate GDScript dictionary construction helpers only.
 
 Current packet outputs are:
 
-| Output id                 | Source routing | Generated file                                                    | Runtime owner                                                                          |
-| ------------------------- | -------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `server_entities_packets` | `outputs.toml` | `services/game-server/internal/game/runtime/packets_generated.go` | Game-server runtime state structs                                                      |
-| `server_game_packets`     | `outputs.toml` | `services/game-server/internal/game/packets.go`                   | Game-server gameplay, lobby, auth, telemetry, room, and state packet structs/constants |
-| `server_devtools_packets` | `outputs.toml` | `services/game-server/internal/devtools/packets_generated.go`     | Game-server devtools packet structs/constants                                          |
-| `player_data_packets`     | `outputs.toml` | `services/player-data/protocol/packets.go`                        | Player-data runtime packet structs/constants                                           |
-| `client_packets`          | `outputs.toml` | `client/scripts/generated/networking/packets/packets.gd`          | Client packet constants, field constants, and outbound packet builders                 |
+| Output id                 | Source routing | Generated file                                                            | Runtime owner                                                                          |
+| ------------------------- | -------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `server_entities_packets` | `outputs.toml` | `services/game-server/internal/game/runtime/packets_generated.go`         | Game-server runtime state structs                                                      |
+| `server_realtime_packets` | `outputs.toml` | `services/game-server/internal/protocol/realtime/packets_generated.go`     | Game-server realtime protocol packet type constants                                    |
+| `server_game_packets`     | `outputs.toml` | `services/game-server/internal/game/packets.go`                           | Game-server gameplay, lobby, auth, telemetry, and room packet structs/constants |
+| `player_data_packets`     | `outputs.toml` | `services/player-data/protocol/packets.go`                                | Player-data runtime packet structs/constants                                           |
+| `client_packets`          | `outputs.toml` | `client/scripts/generated/networking/packets/packets.gd`                  | Client packet constants, field constants, and outbound packet builders                 |
+| `server_devtools_packets` | `outputs.toml` | `services/game-server/internal/devtools/packets_generated.go`             | Game-server devtools packet structs/constants                                          |
 
 The generated files begin with a generated-code warning. They are outputs, not edit sources.
 
@@ -282,13 +300,14 @@ The generated files begin with a generated-code warning. They are outputs, not e
 
 ### Game server
 
-The game server consumes generated packet code for inbound packet routing, outbound packet writing, state packet projection, telemetry, room snapshots, lobby flow, auth result packets, devtools packets, and player-data match-result reporting.
+The game server consumes generated packet code for inbound packet routing, outbound packet writing, realtime lane packet type constants, lane packet payload shapes, telemetry, room snapshots, lobby flow, auth result packets, devtools packets, and player-data match-result reporting.
 
 Primary generated Go files:
 
 ```text
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/runtime/packets_generated.go
+services/game-server/internal/protocol/realtime/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
 ```
 
@@ -299,7 +318,7 @@ services/game-server/internal/networking/
 services/game-server/internal/networking/inbound/
 services/game-server/internal/networking/outbound/
 services/game-server/internal/protocol/packetcodec/
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/
 services/game-server/internal/game/input.go
 services/game-server/internal/game/events.go
 services/game-server/internal/devtools/
@@ -316,6 +335,8 @@ The client consumes generated GDScript packet constants, field constants, and bu
 client/scripts/generated/networking/packets/packets.gd
 ```
 
+The generated client helper includes constants for realtime lane packet types, but client lane routing and application remain owned by the client runtime protocol and networking files.
+
 Primary client packet runtime paths include:
 
 ```text
@@ -323,11 +344,11 @@ client/scripts/networking/
 client/scripts/networking/packets/
 client/scripts/networking/outbound/
 client/scripts/networking/inbound/
-client/scripts/gameplay/state/
 client/scripts/gameplay/runtime/
 client/scripts/world/
 client/scripts/lobby/
 client/scripts/devtools/
+client/scripts/protocol/realtime/
 ```
 
 The generated GDScript file does not generate full typed packet structs. It provides constants and outbound dictionary builders. Packet reading and interpretation remain in client runtime readers and feature-specific flows.
@@ -379,7 +400,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-`-go` currently covers all configured Go packet outputs, including game-server, devtools, runtime entity/state packet structs, and player-data protocol packets.
+`-go` currently covers all configured Go packet outputs, including `server_entities_packets`, `server_realtime_packets`, `server_game_packets`, `server_devtools_packets`, and `player_data_packets`.
 
 `-gds` currently covers the generated client packet helper.
 
@@ -512,6 +533,8 @@ shared/player_data/
 
 Generated packet output should stay aligned with runtime protocol docs and service docs, but protocol behavior is not defined by the data pipeline alone.
 
+Realtime lane packet type constants are generated from packet schemas, while active runtime state shapes and realtime lane packet payload behavior are documented under protocol and service docs.
+
 ## Code or source map
 
 Packet source files:
@@ -558,6 +581,7 @@ Generated outputs:
 client/scripts/generated/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/runtime/packets_generated.go
+services/game-server/internal/protocol/realtime/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
 services/player-data/protocol/packets.go
 ```
@@ -579,6 +603,7 @@ Important non-ownership boundaries:
 ```text
 services/game-server/internal/protocol/packetcodec/ owns JSON encode/decode helpers.
 services/game-server/internal/networking/ owns WebSocket session routing.
+services/game-server/internal/protocol/realtime/ owns active realtime lane packet payload construction and lane protocol behavior.
 client/scripts/networking/ owns client packet send/receive flow.
 services/player-data/playerdata/ owns runtime handling of player-data packets.
 shared/contracts/http/openapi.yaml owns HTTP contracts.
@@ -599,6 +624,14 @@ shared/player_data/ owns logical player-data schema.
 
 The packet workflow is documented in [Data Sync And SSoT Pipeline](data-sync-and-ssot-pipeline.md), but `tools/data_sync/config.toml` is the immediate source for the active configured packet source paths and output targets.
 
+Realtime lane packet type constants are generated from packet schemas, but active lane payload structs and behavior are documented under protocol and service docs.
+
 The GDScript packet output currently renders field constants from the loaded schema and builders selected by `client_packets`. This makes some field constants available even when the client does not own the corresponding runtime packet family.
 
 Packet data documentation should stay focused on schema source files, generated outputs, and pipeline behavior. Packet lifecycle, routing order, authority, and service-specific runtime consequences belong in protocol and service documentation.
+
+
+
+
+
+

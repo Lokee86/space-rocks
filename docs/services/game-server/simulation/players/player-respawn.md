@@ -87,7 +87,7 @@ eliminated
 
 Respawn is the transition from `pending_respawn` back to `active`.
 
-The server keeps pending-respawn players in the session map even when their active ship is absent from `game.entities.Players`. This lets state packets continue reporting lives, respawn cooldown, spawn position, weapons, and lifecycle status without treating the player as removed from the match.
+The server keeps pending-respawn players in the session map even when their active ship is absent from `game.entities.Players`. This lets world/session lane readback continue reporting lives, respawn cooldown, spawn position, weapons, and lifecycle status without treating the player as removed from the match.
 
 ## Protocols and APIs
 
@@ -104,17 +104,17 @@ The packet carries no respawn authority beyond its packet type. The server uses 
 
 `Game.HandlePacket` handles `respawn` before active-ship lookup. This is intentional: a valid respawn request normally arrives while the player has no active ship. If the handler required an active ship before recognizing respawn, dead players could not request respawn.
 
-Successful respawn is reflected through normal state projection rather than a dedicated respawn event:
+Successful respawn is reflected through normal lane projection rather than a dedicated respawn event:
 
-* `StatePacket.players` includes the recreated active ship.
-* `StatePacket.player_sessions[playerID].respawn_cooldown` is zero.
-* `StatePacket.player_lifecycle[playerID]` becomes `active`.
+* `world lane ship records` include the recreated active ship.
+* `session lane player records[playerID].respawn_cooldown` is zero.
+* `session lane lifecycle records[playerID]` becomes `active`.
 
 Death and respawn availability are surfaced separately:
 
-* `ship_death` events include `lives` and `respawn_delay`.
-* `player_sessions` include `respawn_cooldown`.
-* `player_lifecycle` reports `pending_respawn` while the player has lives but no active ship.
+* `ship_death` events include `lives` and `respawn_delay` and are delivered through `event_batch`.
+* `session lane player records` include `respawn_cooldown`.
+* `session lane lifecycle records` report `pending_respawn` while the player has lives but no active ship.
 
 ## Respawn flow
 
@@ -284,7 +284,7 @@ Respawn reads session-owned state:
 
 Respawn does not persist player state outside the game server. Player-data and API-server persistence are outside this boundary.
 
-The constants used by respawn are generated into `services/game-server/internal/constants/constants.go` from shared constants source files. Packet type and state packet shapes are generated into `services/game-server/internal/game/packets.go` from the shared realtime packet source.
+The constants used by respawn are generated into `services/game-server/internal/constants/constants.go` from shared constants source files. Packet type and lane packet shapes are generated into `services/game-server/internal/game/packets.go` from the shared realtime packet source.
 
 ## Code map
 
@@ -332,7 +332,7 @@ Primary implementation files:
 
 * `services/game-server/internal/game/rules/match.go`
 
-  * Classify players as active, pending respawn, or eliminated for match lifecycle decisions and state packets.
+  * Classify players as active, pending respawn, or eliminated for match lifecycle decisions and lane packets.
 
 Related generated and source files:
 
@@ -346,7 +346,7 @@ Related generated and source files:
 
 * `shared/packets/gameplay.toml`
 
-  * Source packet definitions for `respawn`, `PlayerSessionState`, `EventState`, and `StatePacket`.
+  * Source packet definitions for `respawn`, `PlayerSessionState`, `EventState`, and `lane packet`.
 
 * `services/game-server/internal/game/packets.go`
 
@@ -449,6 +449,6 @@ Useful behavior checks:
 
 Initial player spawn and player respawn share the safe player spawn helper, but respawn uses the existing session spawn position and `SpawnReasonPlayerRespawn`.
 
-The current respawn path has no dedicated successful-respawn event. Clients infer successful respawn from the next authoritative state packet that contains the recreated active ship and lifecycle status `active`.
+The current respawn path has no dedicated successful-respawn event. Clients infer successful respawn from the next authoritative world/session lane update that contains the recreated active ship and lifecycle status `active`.
 
 Debug force respawn is intentionally separate from normal player respawn. It is exposed for devtools and should not be treated as the client gameplay respawn path.

@@ -24,7 +24,7 @@ simulation tick
 -> allocate asteroid id
 -> create runtime asteroid
 -> store asteroid in game.entities.Asteroids
--> project asteroid state through StatePacket.asteroids
+-> project asteroid state through world lane asteroid records
 ```
 
 Asteroid variants are assigned by the server when an asteroid is created. The server stores the assigned variant index on the runtime asteroid and exports that index in asteroid state. The client consumes the exported variant id for presentation, but does not choose authoritative asteroid variants.
@@ -68,7 +68,7 @@ Asteroid spawning and variant ownership includes:
 * Storing the selected variant on `runtime.Asteroid`.
 * Exporting asteroid variant ids through `runtime.AsteroidState`.
 * Looking up asteroid collision bodies from runtime asteroid variant and size.
-* Reporting total asteroid spawn count through state packet projection.
+* Reporting total asteroid spawn count through session-lane readout when needed.
 
 ## Does not own
 
@@ -109,7 +109,7 @@ For asteroid spawning, the server decides:
 * when fragments are created
 * when spawned asteroids are removed from runtime storage
 
-The client observes asteroid state through normal state packets. It may render asteroid variants differently, but it does not create authoritative asteroids, choose authoritative variants, or decide whether an asteroid exists.
+The client observes asteroid state through world lane full/delta packets. It may render asteroid variants differently, but it does not create authoritative asteroids, choose authoritative variants, or decide whether an asteroid exists.
 
 ## Timed spawn scheduling
 
@@ -235,7 +235,7 @@ asteroid-3
 
 The allocator checks the active asteroid map and skips ids that already exist.
 
-`spawning.Spawner.TotalAsteroidsSpawned()` returns the current asteroid id counter. State packet projection exposes this as `StatePacket.total_asteroids`.
+`spawning.Spawner.TotalAsteroidsSpawned()` returns the current asteroid id counter. Session-lane readback exposes this as `total_asteroids` when that readout is needed for player/session state, not as a world entity record.
 
 ## Fragment spawns
 
@@ -449,10 +449,10 @@ variant
 float64(size) * constants.AsteroidSizeScale
 ```
 
-`Game.statePacket` projects all runtime asteroids into:
+`protocol/realtime` projects all runtime asteroids into world lane asteroid records:
 
 ```text
-StatePacket.asteroids
+world lane asteroid records
 ```
 
 The client consumes the projected `variant` value for asteroid presentation.
@@ -495,14 +495,14 @@ Asteroid spawning has no inbound HTTP API.
 
 Normal clients do not send a spawn request for gameplay asteroids. Timed and fragment asteroid spawning are server-authored simulation effects.
 
-Clients observe asteroid spawning and variants through normal gameplay state output:
+Clients observe asteroid spawning and variants through world lane output:
 
 ```text
-StatePacket.asteroids
-StatePacket.total_asteroids
+world lane asteroid records
+session lane total_asteroids/readout
 ```
 
-`StatePacket.asteroids` carries each asteroid runtime state, including the server-selected `variant` index. `StatePacket.total_asteroids` carries the spawner's total asteroid id counter.
+World lane asteroid records carry each asteroid runtime state, including the server-selected `variant` index. `total_asteroids` is a session-lane or match-readout counter when needed, not a world entity record.
 
 Debug asteroid spawning is available only through devtools command handling. The devtools command path is a debug surface, not a gameplay authority surface. Devtools builds a debug asteroid spawn plan, then applies it through game-owned spawn mutation.
 
@@ -564,7 +564,7 @@ Asteroid spawning and variants must preserve these rules:
 * Timed, fragment, and debug spawns must select variants through the asteroid catalog helpers.
 * Variant randomization must not use raw `rand.Intn` pools.
 * Runtime asteroid state stores the selected variant index.
-* State packet projection must preserve the runtime asteroid variant.
+* World lane asteroid record projection must preserve the runtime asteroid variant.
 * Fragment spawns must receive newly selected fragment variants.
 * Debug asteroid spawning must apply through game-owned mutation seams.
 * Collision-body construction must use server-loaded collision shapes, not client presentation shapes.
@@ -580,7 +580,7 @@ services/game-server/internal/game/simulation_asteroids.go
 services/game-server/internal/game/spawning.go
 services/game-server/internal/game/visibility.go
 services/game-server/internal/game/asteroid_destruction.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/game/game.go
 services/game-server/internal/game/world_simulation_options.go
 ```
@@ -701,7 +701,7 @@ data-sync -check -packets -go
 * [Physics](physics.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Pickup Drop Integration](../pickups/pickup-drop-integration.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Asteroid Variants Data](../../../../data/asteroid-variants-data.md)
 * [Asteroid Variant Contract](../../../../protocol/asteroid-variant-contract.md)
 * [Client Asteroid Variant Presentation](../../../client/world-sync/asteroid-variant-presentation.md)
@@ -716,3 +716,4 @@ Current pickup drop integration does not select a drop table from the runtime as
 Current server collision-body lookup does not resolve the variant catalog `CollisionShape` field by string key. It indexes the loaded asteroid collision-shape list by runtime variant index with wrapping.
 
 All current variants use equal spawn weights, the same stats profile, the same drop table, and the same collision shape.
+

@@ -15,35 +15,29 @@ Gameplay presentation begins after the client networking layer receives a realti
 The active path is:
 
 ```text
-NetworkClient.packet_received
--> ClientConnectionService
--> ServerPacketDispatcher
--> SessionNetworkController
--> GameplaySessionController
--> realtime router
--> world / overlay / session lane states
--> GameplayReadiness baseline sync tracking
+NetworkClient receives/decodes packet
+-> ClientConnectionService receives packet
+-> ServerPacketDispatcher / ServerPacketRouter classify packet
+-> ClientConnectionService routes lane packets through RealtimeRouter.route_lane_packet(packet)
+-> RealtimeRouter applies lane state/readiness
+-> ClientConnectionService emits gameplay_packet_received(packet)
+-> SessionNetworkController receives gameplay_packet_received
+-> GameplaySessionController.handle_gameplay_packet performs acceptance/presentation fanout
 -> presentation adapters
 -> runtime consumers
 ```
 
-The client no longer normalizes one combined gameplay dictionary through `GameplayStatePacketReader` or `GameplayStateApplyFlow`.
+The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a combined dictionary flow.
 
-Instead, gameplay presentation is split by lane:
+## Code root
 
 ```text
-world lane
-= entity presentation state for ships, asteroids, bullets, pickups
-
-overlay lane
-= local-player HUD presentation state such as score, lives, loadout, cooldowns
-
-session lane
-= durable match-local player session state and lifecycle read models
-
-event batch
-= transient presentation events applied through the event batch applier
+client/scripts/protocol/realtime/
+client/scripts/session/gameplay_session_controller.gd
+client/scripts/session/session_network_controller.gd
 ```
+
+The realtime client package owns lane state, readiness tracking, and presentation adapters. SessionNetworkController and GameplaySessionController own the handoff after inbound networking has already classified the packet and RealtimeRouter has already applied lane state.
 
 ## Responsibilities
 
@@ -70,19 +64,33 @@ The lane-native client path does not own:
 * Server event production.
 * Match rules, scoring rules, respawn validity, or pause authority.
 
-## Baseline readiness
+## Domain roles
 
-Gameplay readiness is baseline-sync based, not “received one combined gameplay state packet”.
+The client lane application surface consumes server lane gameplay packets and turns them into presentation state after RealtimeRouter has already applied the inbound lane state.
 
-Required readiness currently means the client has received the required baseline packets for:
+The client owns transient lane presentation state only. It does not persist authoritative gameplay state.
 
-```text
-world
-overlay
-session
-```
+Generated packet constants and builders come from the packet schema pipeline.
 
-Once those baselines are synced, gameplay presentation and input readiness can proceed through the active runtime flow.
+## Protocols and APIs
+
+The client runtime consumes server lane gameplay packets, but packet shape and transport behavior are owned by protocol and data docs.
+
+Authoritative gameplay outcomes are owned by the server.
+
+For packet-family and transport detail, see:
+
+* [Gameplay packets](../../../protocol/gameplay-packets.md)
+* [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
+* [Packet Schemas](../../../data/packet-schemas.md)
+
+## Data ownership
+
+The client maintains transient lane presentation state only.
+
+It does not persist authoritative gameplay state.
+
+Generated packet constants and builders come from the packet schema pipeline.
 
 ## Presentation adapters
 
@@ -104,11 +112,11 @@ EventPresentationAdapter
 = applies event batches to event/effects presentation
 ```
 
-The event path uses `EventBatchApplier` rather than a combined state packet reader.
+The event path uses `EventBatchApplier` for `event_batch` delivery.
 
 ## World rendering boundary
 
-World entity rendering is not owned by a combined gameplay-state fanout layer.
+World entity rendering is not owned by gameplay application flow.
 
 The active runtime boundary is:
 
@@ -124,12 +132,14 @@ world lane state
 
 Primary runtime path:
 
-* `client/scripts/session/session_network_controller.gd`
-* `client/scripts/session/gameplay_session_controller.gd`
-* `client/scripts/protocol/realtime/`
-* `client/scripts/world/world_sync.gd`
-* `client/scripts/shell/gameplay_hud_flow.gd`
-* `client/scripts/gameplay/events/`
+* `client/scripts/session/session_network_controller.gd` - inbound routing handoff from networking.
+* `client/scripts/session/gameplay_session_controller.gd` - gameplay packet acceptance and presentation application.
+* `client/scripts/protocol/realtime/` - lane states, readiness, adapters, and appliers.
+* `client/scripts/world/world_sync.gd` - world entity sync/render boundary.
+* `client/scripts/shell/gameplay_hud_flow.gd` - HUD-facing presentation consumers.
+* `client/scripts/gameplay/events/` - event consumers and presentation flows.
+* `client/scripts/gameplay/effects/` - effects consumers fed by gameplay presentation.
+* `client/scripts/devtools/` - devtools lane-state consumers if enabled.
 
 Key lane-native files:
 
@@ -142,6 +152,20 @@ Key lane-native files:
 * `client/scripts/protocol/realtime/event_batch_applier.gd`
 * `client/scripts/protocol/realtime/event_presentation_adapter.gd`
 * `client/scripts/protocol/realtime/gameplay_readiness.gd`
+* `client/scripts/protocol/realtime/realtime_router.gd`
+
+## Tests
+
+Relevant client tests include:
+
+* `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
+* `client/tests/unit/protocol/realtime/test_gameplay_readiness.gd`
+* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
+* `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd`
+* `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
+* `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`
+* `client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd`
+* `client/tests/unit/test_gameplay_session_controller.gd`
 
 ## Related docs
 
@@ -150,9 +174,12 @@ Key lane-native files:
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)
 * [Gameplay packets](../../../protocol/gameplay-packets.md)
+* [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
+* [Packet Schemas](../../../data/packet-schemas.md)
 
 ## Notes
 
 This document describes the active lane-native gameplay presentation path.
 
-Any remaining references to `GameplayStatePacketReader`, combined gameplay-state fanout, or single-packet gameplay readiness are historical only and should not be treated as the active runtime design.
+Current gameplay application follows lane-adapter flow and event_batch delivery only.
+

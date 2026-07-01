@@ -24,7 +24,7 @@ client devtools hotkey or window action
 -> devtools.HandleCommand
 -> game-owned export seam
 -> authoritative game state mutation
--> normal gameplay state packet or debug output packet
+-> lane-native gameplay readback or debug output packet
 ```
 
 The command surface is not a normal gameplay packet path. Devtools command packets are detected before normal `game.ClientPacket` decoding and do not route through `Game.HandlePacket`.
@@ -101,7 +101,7 @@ DevtoolsClearBullets
 DevtoolsClearAsteroids
 ```
 
-The client does not receive a command-specific acknowledgement packet. Confirmation is observed through normal state projection, debug status output, entity sync, or visible absence/presence of entities after the server applies the change.
+The client does not receive a command-specific acknowledgement packet. Confirmation is observed through lane-native readback, debug status output, entity sync, or visible absence/presence of entities after the server applies the change.
 
 If a websocket session has no current room or no current game player ID, the inbound devtools command path consumes the packet and applies no command. This prevents debug command packets from falling through into normal gameplay handling when there is no active game context.
 
@@ -412,7 +412,7 @@ Clear commands mutate authoritative server entity storage directly through game-
 | `debug_clear_bullets`   | Removes all current projectiles from `game.entities.Projectiles`. |
 | `debug_clear_asteroids` | Removes all current asteroids from `game.entities.Asteroids`.     |
 
-Clients observe the result through normal state/world sync. There is no separate clear acknowledgement packet.
+Clients observe the result through lane-native state/world sync readback. There is no separate clear acknowledgement packet.
 
 ## Telemetry and output
 
@@ -691,8 +691,9 @@ The command surface deliberately keeps interpretation in `internal/devtools` and
 
 `target_player_id` is valid only for devtools/player-only compatibility commands. New gameplay targeting should use canonical target identity instead.
 
-`debug_status` is status projection, not command acknowledgement. Command results should be inferred from authoritative state or debug status changes.
+`debug_status` is status projection, not command acknowledgement. Command results should be inferred from lane-native readback or debug status changes.
 
 `debug_respawn_player` currently receives position fields but applies a server-selected safe respawn position. Do not document the payload position as authoritative respawn placement unless the implementation changes.
 
 When adding a new command, update packet source data, generated outputs, inbound routing, command classification, handler dispatch, game export seams, client send paths, and focused tests together.
+

@@ -24,7 +24,7 @@ Ship variants
 = partial server-side ship type/stat/collision seam, with only default v_wing currently used.
 ```
 
-Asteroid variants are the current complete entity-variant example. The server selects an asteroid variant index when an asteroid is created, stores it on the runtime asteroid, exports it through asteroid state, and the client consumes it for presentation.
+Asteroid variants are the current complete entity-variant example. The server selects an asteroid variant index when an asteroid is created, stores it on the runtime asteroid, exports it through world lane asteroid records, and the client consumes it for presentation.
 
 Ship variants are not fully implemented as selectable player-build content. The server currently carries a `ship_type` seam and resolves stats from that identity, but only the default `v_wing` ship type is active in normal gameplay.
 
@@ -42,7 +42,7 @@ Stable catalog identity
 
 Stable catalog identity is the durable meaning of the variant. For asteroid variants, this is the catalog entry such as `asteroid_1`. For future ship variants, this will be a ship or chassis identity such as `v_wing`.
 
-Authoritative runtime selection is the actual value chosen for live gameplay. For asteroids, this is the zero-based integer index stored on the runtime asteroid and sent through `AsteroidState.variant`. For ships, this is the server-owned `ship_type` / `ShipTypeID` value carried by player session and ship state.
+Authoritative runtime selection is the actual value chosen for live gameplay. For asteroids, this is the zero-based integer index stored on the runtime asteroid and sent through world lane asteroid records. For ships, this is the server-owned `ship_type` / `ShipTypeID` value carried by player session and ship state.
 
 Service-specific consumption is what each system does with the selected variant. The server may use it for spawn selection, stats, collision, drops, or build resolution. The client may use it for presentation. Protocol and data docs own the exact packet and source-of-truth contracts.
 
@@ -133,7 +133,7 @@ For ships, the server owns:
 ship type identity
 resolved ship stats
 collision shape id used by server collision behavior
-ship_type values exported through state packets
+ship_type values exported through world/session lane records
 ```
 
 Future player-build, loadout, inventory, or hangar systems may participate in choosing an eligible ship variant before match start, but the final runtime ship identity must still be server-validated before it affects gameplay.
@@ -165,7 +165,7 @@ The current asteroid variant flow participates in:
 shared asteroid variant data
 game-server asteroid spawning
 game-server runtime asteroid state
-realtime gameplay state packets
+realtime gameplay lane packets
 client world sync
 client asteroid presentation
 collision-shape data
@@ -180,7 +180,7 @@ game-server player sessions
 game-server runtime ship state
 game-server resolved ship stats
 game-server collision shape lookup
-realtime gameplay state packets
+realtime gameplay lane packets
 client state consumption
 client devtools hitbox/debug presentation
 future player-build and loadout planning

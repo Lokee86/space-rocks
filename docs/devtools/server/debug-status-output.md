@@ -12,7 +12,7 @@ It covers how the server builds and emits `debug_status` packets for devtools cl
 
 Debug status output is a server-authored devtools telemetry packet.
 
-It reports the current state of server-owned debug controls so the client devtools window can display accurate toggle status and per-player feature state. It does not mutate gameplay, does not replace gameplay state packets, and does not act as a command response.
+It reports the current state of server-owned debug controls so the client devtools window can display accurate toggle status and per-player feature state. It does not mutate gameplay, does not replace realtime lane packets, and does not act as a command response.
 
 The server emits debug status over the normal WebSocket connection after gameplay presentation state has been written. The status packet is built from the authoritative game instance and encoded through the shared packet codec.
 
@@ -42,7 +42,7 @@ player_frozen
 The packet is devtools-only diagnostic output. It is separate from:
 
 ```text
-gameplay state packets
+realtime lane packets
 debug shape catalog packets
 collision-body telemetry
 client-only overlays
@@ -110,7 +110,7 @@ Current flow:
 ```text
 writeServerMessages
 -> gameplay write ticker
--> BuildGameplayPresentationStateResponse
+-> current realtime outbound gameplay write path
 -> WriteServerMessage
 -> writeDebugShapeCatalogMessage
 -> debugStatusTick++

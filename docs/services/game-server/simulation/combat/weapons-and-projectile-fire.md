@@ -48,7 +48,7 @@ Client input packet
 -> weapons.Fire
 -> runtime.NewBulletFromWeaponSpawn
 -> game.entities.Projectiles
--> state packet projection
+-> world lane bullet record projection
 -> collision and damage flow
 ```
 
@@ -84,7 +84,7 @@ The game-server weapon and projectile-fire boundary owns:
 * Weapon fire policy.
 * Projectile spawn intent construction.
 * Weapon-backed runtime projectile creation through the `Game` adapter.
-* Projection of weapon and projectile metadata into gameplay state packets.
+* Projection of weapon and projectile metadata into world lane bullet records.
 * Copying projectile damage and impact-effect metadata onto runtime projectile entities.
 * Current pickup-driven torpedo equip behavior through the pickup effect adapter.
 
@@ -331,7 +331,7 @@ secondary_fire
 
 The server does not accept client-created projectile IDs, damage values, cooldown values, ammo values, or impact-effect metadata.
 
-The state packet sends weapon and projectile readback through generated packet fields:
+The world lane packet sends weapon and projectile readback through generated packet fields:
 
 ```text
 ShipState.primary_weapon_id

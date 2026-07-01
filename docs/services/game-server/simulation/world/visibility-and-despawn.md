@@ -244,21 +244,22 @@ fatal player damage
 
 Ship-asteroid collision does not currently despawn the asteroid merely because it killed a player.
 
-### State projection during pending despawn
+### World lane projection during pending despawn
 
-`statePacket` projects current entity maps directly.
+`protocol/realtime` reads current entity maps and projects them into world lane records.
 
-That means entities marked pending despawn remain in state packets until their simulation step removes them from the relevant map.
+That means entities marked pending despawn remain in world lane full/delta packets until their simulation step removes them from the relevant map.
 
 Current projected maps include:
 
 ```text
-game.entities.Players     -> StatePacket.players
-game.entities.Projectiles -> StatePacket.bullets
-game.entities.Asteroids   -> StatePacket.asteroids
+game.entities.Players     -> world lane ship records
+game.entities.Projectiles -> world lane bullet records
+game.entities.Asteroids   -> world lane asteroid records
+game.entities.Pickups     -> world lane pickup records
 ```
 
-After removal, the entity disappears from future state packets.
+After removal, the entity disappears from future world lane records.
 
 ### Match-over locked stepping
 
@@ -297,8 +298,8 @@ The relevant client-facing input is the generated `client_config` gameplay packe
 The externally observable result is indirect:
 
 ```text
-entity retained -> entity remains in StatePacket
-entity removed -> entity disappears from StatePacket
+entity retained -> entity remains in world lane records
+entity removed -> entity disappears from world lane records
 pending despawn -> entity remains briefly, then disappears after delay
 ```
 
@@ -359,7 +360,8 @@ Primary implementation files:
 * `services/game-server/internal/game/spawning.go` - Uses visibility spawn-position helpers before normalizing and applying asteroid spawn plans.
 * `services/game-server/internal/game/combat.go` - Marks hit bullets and killed players pending despawn and preserves player camera-view position on fatal damage.
 * `services/game-server/internal/game/asteroid_destruction.go` - Marks destroyed asteroids pending despawn and triggers fragments/pickup-drop consequences.
-* `services/game-server/internal/game/state_packet.go` - Projects remaining entities into state packets until removal.
+* `services/game-server/internal/protocol/realtime/records.go` - Projects remaining entities into world lane records until removal.
+* `services/game-server/internal/protocol/realtime/` - Related world lane projection helpers.
 
 Source-of-truth and generated files:
 
@@ -383,7 +385,7 @@ Important non-ownership boundaries:
 * `services/game-server/internal/game/player_world_state.go` owns inactive-player world-state fallback from camera views.
 * `services/game-server/internal/game/collisions.go` owns collision fact detection, not entity retention.
 * `services/game-server/internal/game/damage/` owns pure damage resolution, not removal timing.
-* `client/scripts/world/` owns client-side entity node creation/removal and visual presentation after state packets are received.
+* `client/scripts/world/` owns client-side entity node creation/removal and visual presentation after world lane packets are received.
 * `client/scripts/config/client_viewport_config_flow.gd` owns client viewport measurement and sending config packets, not server visibility policy.
 
 ## Tests and verification
@@ -425,7 +427,7 @@ Relevant behavior to preserve:
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Runtime Entity Store](../runtime/runtime-entity-store.md)
 * [Simulation Loop And Phase Order](../runtime/simulation-loop-and-phase-order.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Client Viewport Config Flow](../../../client/app-shell-and-session/client-viewport-config-flow.md)
 * [World Sync Coordinator](../../../client/world-sync/world-sync-coordinator.md)
 * [View Anchor And Visual Coordinates](../../../client/world-sync/view-anchor-and-visual-coordinates.md)
@@ -440,3 +442,4 @@ Relevant behavior to preserve:
 The current despawn-margin constant is named `AsteroidDespawnMargin`, but the same margin is used for asteroid and bullet far-from-camera cleanup.
 
 Pending despawn is not the same as far-from-camera despawn. Pending despawn is a short delayed removal state after gameplay consequences. Far-from-camera cleanup removes bullets and asteroids because no player view should still need them.
+

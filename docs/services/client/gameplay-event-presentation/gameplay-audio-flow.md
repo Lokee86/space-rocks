@@ -33,7 +33,7 @@ server event
 ```
 
 ```text
-StatePacket.bullets
+world lane bullet records
 -> WorldSync
 -> ProjectileSync
 -> GameplayAudioFlow
@@ -41,7 +41,7 @@ StatePacket.bullets
 ```
 
 ```text
-StatePacket.pickups
+world lane pickup records
 -> WorldSync
 -> PickupSync
 -> pickup.gd
@@ -215,7 +215,7 @@ Projectile firing audio is driven by first-seen projectile nodes in world sync.
 Current flow:
 
 ```text
-StatePacket.bullets
+world lane bullet records
 -> WorldSync.apply_state()
 -> ProjectileSync.apply()
 -> first projectile node creation
@@ -241,7 +241,7 @@ Pickup audio has two separate paths.
 Pickup spawn sound is node-creation presentation:
 
 ```text
-StatePacket.pickups
+world lane pickup records
 -> WorldSync
 -> PickupSync
 -> pickup node first creation

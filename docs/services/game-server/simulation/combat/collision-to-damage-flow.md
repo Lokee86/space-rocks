@@ -444,7 +444,7 @@ Projectile/asteroid destruction records `bullet_blast` at the projectile impact 
 
 Fatal player damage records `ship_death` at the player's death position, with the remaining lives and respawn delay.
 
-Events are not packets at the point of damage resolution. They are domain/presentation facts that are later projected into state-packet output.
+Events are not packets at the point of damage resolution. They are domain/presentation facts that are later projected into lane packet output.
 
 ## Data ownership
 
@@ -499,11 +499,11 @@ Collision-to-damage flow has no direct HTTP or WebSocket API.
 External clients observe its results indirectly through normal game-server output:
 
 ```text
-StatePacket players
-StatePacket asteroids
-StatePacket bullets
-StatePacket player_sessions
-StatePacket events
+world lane ship records
+world lane asteroid records
+world lane bullet records
+session lane player records
+event_batch
 ```
 
 Relevant event packet projections include damage, bullet blast, and ship death presentation facts.
@@ -697,7 +697,7 @@ go test -buildvcs=false ./tests/game -run 'Collision|Respawn|Devtools'
 * [Player Pause And Suspension](../players/player-pause-and-suspension.md)
 * [Player Counters](../players/player-counters.md)
 * [Player Death And Despawn](../players/player-death-and-despawn.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Realtime Websocket Protocol](../../../../protocol/realtime-websocket-protocol.md)
 * [Data](../../../../data/!INDEX.md)
 * [Devtools](../../../../devtools/!INDEX.md)
 

@@ -19,7 +19,7 @@ combat source destroys or creates something
 -> optional drop/spawn path creates authoritative pickup
 -> pickup exists in server world state
 -> server advances pickup age and expiry
--> client presents pickup from state packets
+-> client presents pickup from world lane pickup records
 -> player/pickup collision consumes pickup
 -> server resolves pickup effect intent
 -> server applies gameplay mutation if valid
@@ -88,7 +88,7 @@ creation
 
 Creation can come from normal gameplay, such as asteroid drop integration, or from devtools spawn commands. After creation, all pickup sources converge on the same authoritative pickup entity model.
 
-Active world existence means the pickup appears in server state packets with identity, position, health, age, and lifespan data. Clients render this state but do not own it.
+Active world existence means the pickup appears in world lane pickup records with identity, position, health, age, and lifespan data. Clients render this state but do not own it.
 
 Removal currently happens by collection or expiry:
 
@@ -226,7 +226,7 @@ Pickups are valid gameplay target candidates for readout and telemetry flows. Th
 Pickup presentation is packet-driven:
 
 ```text
-StatePacket.pickups
+world lane pickup records
 -> client world sync
 -> pickup presentation node
 ```

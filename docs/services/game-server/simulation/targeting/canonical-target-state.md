@@ -6,7 +6,7 @@ Parent index: [Game Server Simulation Targeting](./!INDEX.md)
 
 This document describes canonical target state in the game-server simulation.
 
-It explains which game-server state owns a player's selected gameplay target, how that state is copied into active avatar state, how target identity is exposed through gameplay packets, and why player-only debug target fields must remain outside normal gameplay targeting.
+It explains which game-server state owns a player's selected gameplay target, how that state is copied into active avatar state, how target identity is exposed through world lane ship records, and why player-only debug target fields must remain outside normal gameplay targeting.
 
 ## Overview
 
@@ -55,11 +55,11 @@ client target intent packet
 -> playerSession.Targeting
 -> optional copy to active runtime.Ship
 -> runtime.Ship.State()
--> StatePacket.players[player_id].target_kind / target_id
+-> world lane ship records[player_id].target_kind / target_id
 -> client authoritative readback
 ```
 
-Client clicks and local target candidates are requests. The server accepts or rejects them. Confirmed target state is the state projected back through authoritative gameplay state packets.
+Client clicks and local target candidates are requests. The server accepts or rejects them. Confirmed target state is the state projected back through authoritative world lane readback.
 
 ## Code root
 
@@ -280,11 +280,11 @@ playerSession.Targeting
 runtime.Ship.TargetKind / TargetID
 = active-avatar projection copy
 
-StatePacket.players[*].target_kind / target_id
+world lane ship records[*].target_kind / target_id
 = packet-facing read model for active ships
 ```
 
-A player with no active ship can still have target state in the session. That target is not visible through `StatePacket.players` until the player has an active ship again, because `StatePacket.players` contains active avatar state only.
+A player with no active ship can still have target state in the session. That target is not visible through `world lane ship records` until the player has an active ship again, because `world lane ship records` contains active avatar state only.
 
 ## Target existence and status
 
@@ -400,7 +400,7 @@ The coordinates are the server-space point being claimed for the selected target
 
 Inbound routing is owned by networking. The gameplay inbound handler routes target packets to the current room's game instance only when the session has a current room and current game-player ID.
 
-State readback is through `StatePacket.players`.
+State readback is through `world lane ship records`.
 
 The server projects active ship target copies as:
 
@@ -560,7 +560,7 @@ client/scripts/generated/networking/packets/packets.gd
 Related active-avatar and packet projection files:
 
 ```text
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/game/runtime/state.go
 ```
 
@@ -607,7 +607,7 @@ services/game-server/tests/networking/rooms_test.go
 Current coverage includes:
 
 * player target selection stores `target_kind = player` and the target player ID
-* `StatePacket.players` includes `target_kind` and `target_id`
+* `world lane ship records` includes `target_kind` and `target_id`
 * generic `SetTarget` stores player, asteroid, and bullet targets
 * point-based selection stores player, asteroid, bullet, and pickup targets when the click overlaps the authoritative collision body
 * missing targets do not overwrite an existing target
@@ -652,7 +652,7 @@ data-sync -check -packets -go -gds
 * [Player Session State](../players/player-session-state.md)
 * [Player Death And Despawn](../players/player-death-and-despawn.md)
 * [Player Respawn](../players/player-respawn.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Input And Targeting](../../../client/input-and-targeting.md)
 * [Realtime Protocol](../../../../protocol/!INDEX.md)
 * [Data](../../../../data/!INDEX.md)
@@ -662,6 +662,8 @@ data-sync -check -packets -go -gds
 
 The most important migrated legacy rule is the quarantine boundary: `target_player_id` must not leak back into normal gameplay targeting. Canonical gameplay target identity is `target_kind` plus `target_id`.
 
-Current `StatePacket` projection exposes target state only through active ship state. Session-owned target state can still exist when a player has no active ship, but it is not separately projected in `player_sessions`.
+Current world lane ship records expose target state only through active ship state. Session-owned target state can still exist when a player has no active ship, but it is not separately projected in `player_sessions`.
 
 `enemy` is a supported canonical target kind in the server targeting package and target candidate builder. Current enemy projection and full enemy gameplay behavior are not documented here.
+
+

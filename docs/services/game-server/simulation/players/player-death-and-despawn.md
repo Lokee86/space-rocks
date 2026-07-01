@@ -108,7 +108,7 @@ Player death and despawn participate in the player lifecycle and combat domains 
 * match-over input facts
 * death presentation events
 
-The client observes death through state packets and events. It does not decide that a player died, that a life was lost, that a respawn cooldown started, or that the player was eliminated.
+The client observes death through world/session lane readback and `event_batch`. It does not decide that a player died, that a life was lost, that a respawn cooldown started, or that the player was eliminated.
 
 ## Death entry points
 
@@ -372,7 +372,7 @@ Y            = event.Y
 
 `recordDomainEvent` broadcasts the packet event into every player session's pending presentation event queue.
 
-The event is delivered through the next `StatePacket` read for each player. Reading a state packet clears that player's pending presentation events after the packet is built.
+The event is delivered through the next `event_batch` write for each player. Successful lane packet delivery clears that player's pending presentation events after the packet is written.
 
 A fatal damage path may also emit a `damage_applied` event before the `ship_death` event when damage actually changed health or shield.
 
@@ -380,32 +380,32 @@ A fatal damage path may also emit a `damage_applied` event before the `ship_deat
 
 Player death and despawn have no direct HTTP API.
 
-Clients observe death/despawn indirectly through normal game-server state output:
+Clients observe death/despawn indirectly through normal game-server lane output:
 
 ```text
-StatePacket.players
-StatePacket.player_sessions
-StatePacket.player_lifecycle
-StatePacket.events
-StatePacket.lives
+world lane ship records
+session lane player records
+session lane lifecycle records
+event_batch
+overlay lane receiver-local lives/readout
 ```
 
 Relevant packet facts:
 
 ```text
-StatePacket.players
+world lane ship records
 = current runtime ship states, including ships still present during pending-despawn delay
 
-StatePacket.player_sessions
+session lane player records
 = session read model with lives, score, respawn cooldown, spawn position, and weapon ids
 
-StatePacket.player_lifecycle
+session lane lifecycle records
 = active, pending_respawn, or eliminated status
 
-StatePacket.events
+event_batch
 = queued presentation events such as damage_applied and ship_death
 
-StatePacket.lives
+overlay lane receiver-local lives/readout
 = local viewer's current lives
 ```
 
@@ -470,7 +470,7 @@ Player death and despawn must preserve these rules:
 * Respawn cooldown is set only when lives remain after death.
 * The camera view is preserved at the death position.
 * `ship_death` events are server-authored presentation facts.
-* Clients must not infer lifecycle only from presence or absence in `StatePacket.players`.
+* Clients must not infer lifecycle only from presence or absence in `world lane ship records`.
 * Match-over status is evaluated through `game/rules`, not by death/despawn code directly.
 
 ## Code map
@@ -484,7 +484,7 @@ services/game-server/internal/game/session.go
 services/game-server/internal/game/player_counters.go
 services/game-server/internal/game/player_world_state.go
 services/game-server/internal/game/player_session_state.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/game/events.go
 services/game-server/internal/game/match.go
 services/game-server/internal/game/simulation.go
@@ -624,7 +624,7 @@ go test -buildvcs=false ./internal/game -run 'PlayerWorldState|Event|MatchOver'
 * [Player Respawn](player-respawn.md)
 * [Player Pause And Suspension](player-pause-and-suspension.md)
 * [Player Lifecycle Overview](player-lifecycle-overview.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Presentation Event Queue](../runtime/presentation-event-queue.md)
 
 ## Notes
@@ -633,4 +633,5 @@ The legacy docs correctly identified the key boundary: the Go game server owns l
 
 The current implementation uses both `player_lifecycle` and `player_sessions` because active ship presence alone is not enough to represent pending-respawn or eliminated players.
 
-A pending-despawn ship can still appear in `StatePacket.players` while it remains in the runtime entity store during the despawn delay. Consumers should use lifecycle/session facts for player status instead of treating ship presence as the only lifecycle source.
+A pending-despawn ship can still appear in `world lane ship records` while it remains in the runtime entity store during the despawn delay. Consumers should use lifecycle/session facts for player status instead of treating ship presence as the only lifecycle source.
+

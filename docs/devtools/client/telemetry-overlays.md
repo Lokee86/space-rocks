@@ -17,16 +17,16 @@ The current client telemetry overlay is the world telemetry overlay. It is a `Ca
 * player-facing HUD
 * match result UI
 * gameplay menu UI
-* raw devtools-window state packet readouts
+* raw devtools-window lane readouts
 * server-authoritative devtools commands
 
-The overlay observes normalized gameplay state after the client has read the authoritative `state` packet. It counts server-owned entity dictionaries, adds local client frame timing, and optionally sends diagnostic `telemetry_ping` packets while visible so the server can respond with `telemetry_pong`.
+The overlay observes applied world-lane state after the client has routed authoritative lane packets. It counts server-owned entity dictionaries, adds local client frame timing, and optionally sends diagnostic `telemetry_ping` packets while visible so the server can respond with `telemetry_pong`.
 
 The high-level flow is:
 
 ```text
-state packet
--> GameplayStatePacketReader
+lane packets
+-> RealtimeRouter
 -> GameplayDevtoolsContext
 -> DevtoolsOverlayContext
 -> WorldTelemetryContext
@@ -74,7 +74,7 @@ The overlay is intentionally glanceable. Raw packet inspection belongs in the de
 
 The server remains authoritative for gameplay facts displayed by the overlay.
 
-World counts derive from the normalized gameplay state packet. The client does not decide how many players, asteroids, bullets, pickups, or enemies exist. It only counts dictionaries that came from the server-owned state projection.
+World counts derive from the applied world-lane state. The client does not decide how many players, asteroids, bullets, pickups, or enemies exist. It only counts dictionaries that came from the server-owned world-lane projection.
 
 The server also participates in packet timing diagnostics through `telemetry_ping` and `telemetry_pong`.
 
@@ -82,7 +82,7 @@ The server also participates in packet timing diagnostics through `telemetry_pin
 
 This packet pair does not require room membership and does not mutate gameplay state.
 
-The server also stamps gameplay state packets with `server_sent_msec` before outbound encoding. The client uses that value together with the estimated server clock offset from telemetry pong packets to calculate `packet_age_ms` in local monotonic-clock space.
+The server also stamps lane packets with `server_sent_msec` before outbound encoding. The client uses that value together with the estimated server clock offset from telemetry pong packets to calculate `packet_age_ms` in local monotonic-clock space.
 
 The authority boundary is:
 
@@ -179,7 +179,7 @@ total_asteroids
 server_sent_msec
 ```
 
-`GameplayStatePacketReader` produces these fields from the authoritative state packet. `WorldTelemetryMetrics` consumes them and stores the current count and packet timing state.
+`RealtimeRouter` and the world-lane applier produce these fields from the authoritative lane state. `WorldTelemetryMetrics` consumes them and stores the current count and packet timing state.
 
 `server_enemies` is preferred when present. If it is not present, the metrics collector falls back to `enemies`.
 
@@ -204,13 +204,13 @@ Packet timing fields mean:
 
 ```text
 packet_interval_ms
-  local elapsed time between the two most recent gameplay state packets
+  local elapsed time between the two most recent lane packets
 
 jitter_ms
   absolute difference between the two most recent packet intervals
 
 packet_staleness_ms
-  local elapsed time since the latest gameplay state packet was received
+  local elapsed time since the latest lane packet was received
 
 packet_age_ms
   estimated age of the latest gameplay packet using server_sent_msec and server_clock_offset_ms
@@ -263,8 +263,7 @@ client/scripts/devtools/dev_tools_build_flags.gd
 Gameplay state source path:
 
 ```text
-client/scripts/gameplay/state/gameplay_state_flow.gd
-client/scripts/gameplay/state/gameplay_state_packet_reader.gd
+client/scripts/networking/realtime_router.gd
 client/scripts/gameplay/state/gameplay_state_apply_flow.gd
 ```
 
@@ -331,7 +330,7 @@ client/tests/unit/devtools/telemetry/test_world_telemetry_context.gd
 Related client tests:
 
 ```text
-client/tests/unit/test_gameplay_state_packet_reader.gd
+client/tests/unit/test_realtime_router.gd
 client/tests/unit/test_gameplay_devtools_context.gd
 client/tests/unit/test_gameplay_state_apply_flow.gd
 client/tests/unit/test_packet_codec.gd
@@ -358,6 +357,6 @@ The telemetry context test verifies that showing the overlay allows processing t
 
 Telemetry overlay data is intentionally shallow. It is for immediate development visibility, not historical analysis.
 
-`packet_staleness_ms` and `packet_age_ms` are different measurements. Staleness is local time since the last state packet arrived. Age estimates how old the packet was by using the server send timestamp and the estimated server clock offset.
+`packet_staleness_ms` and `packet_age_ms` are different measurements. Staleness is local time since the last lane packet arrived. Age estimates how old the packet was by using the server send timestamp and the estimated server clock offset.
 
 The overlay and network player-label mode share the same network telemetry snapshot source, but they are separate presentation surfaces. The overlay owns the fixed world/client/network panel. Player dev labels own per-player label presentation.

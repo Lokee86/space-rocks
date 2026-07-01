@@ -25,7 +25,7 @@ client debug packet
 -> command-specific devtools handler
 -> game-owned export_devtools seam
 -> authoritative game state mutation
--> normal state/debug output back to client
+-> lane-native gameplay readback or debug output back to client
 ```
 
 Devtools commands intentionally do not route through `Game.HandlePacket`. They are not normal gameplay packets, even when they affect gameplay state. Their command packet structs and packet constants are generated under the devtools package, while normal gameplay/lobby/auth/telemetry packet structs are generated under the game package.
@@ -108,10 +108,10 @@ Client devtools hotkeys, placement tools, and window buttons build debug packets
 Server confirmation reaches the client through normal server-owned outputs:
 
 ```text
-state packets
+lane-native gameplay readback
 debug_status packets
 debug_shape_catalog packets
-entity presence or absence in normal sync
+entity presence or absence in lane-native sync
 player lifecycle/session state
 telemetry readouts
 server logs during development
@@ -679,3 +679,4 @@ Legacy docs correctly described the intended boundary: devtools command handling
 The current implementation has both a generated devtools command type set and separate inbound devtools packet group switches. Keep those lists synchronized when adding command packets. Prefer a single build-gated command classifier for future routing cleanup.
 
 Do not treat outbound debug status or debug shape catalog packets as proof that a command succeeded. They are diagnostic outputs. Command confirmation should be inferred from authoritative game state, debug status state, entity sync, lifecycle/session read-models, or server logs during development.
+

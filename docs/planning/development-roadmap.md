@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Remaining telemetry and logging work stays deferred until it is useful during P2 validation or after packet-size reduction.
+The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane packets are now the active runtime model, and remaining telemetry and logging work stays deferred until it is useful during P2 validation or after packet-size reduction.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -138,7 +138,7 @@ Remaining web polish and SEO/shareability planning live in the web planning docs
 
 Make packet pressure measurable before adding systems that increase entity count, event count, or realtime state size.
 
-This phase measures how far the current JSON/full-state packet model is from the lane-scoped realtime target.
+This phase measures packet pressure for the active lane-packet realtime model and informs remaining optimization work.
 
 Preferred frequent realtime packets should land around 300-600 bytes. Frequent packets over about 1KB should require justification, lower frequency, splitting, or later protocol work.
 
@@ -184,7 +184,7 @@ If packet size stays under budget and timing is clean:
 
 ### Goal
 
-Replace the current full-state-per-tick delivery model with an explicit realtime protocol boundary.
+Keep the lane-packet realtime protocol boundary as the active delivery model while continuing the remaining optimization work around it.
 
 ### Ownership Rule
 
@@ -210,7 +210,6 @@ priority policy
 resync path
 shadow verification
 cutover
-old state deletion
 ```
 
 ### P2 Validation Support
@@ -244,12 +243,11 @@ compact representation targets the new lane protocol, not old state
 1. Schema/data-sync packet families and planning doc normalization.
 2. Server projections/full/delta/baselines plus non-draining snapshot/event API. Projection, scheduling, and encoding do not drain; shadow may peek/copy pending events but never drains.
 3. Priority scheduler and budget planner.
-4. Generic lane metrics and removal of legacy state packet warning noise.
+4. Generic lane metrics.
 5. Client protocol/realtime lane caches and compatibility read model.
 6. Shadow encode/measure/parity with no send and no event drain. Shadow never drains; active `event_batch` drains only after socket write/enqueue success.
 7. Runtime cutover behind a temporary dev-only switch.
-8. Delete old `state` path and temporary switch.
-9. Replace compatibility read model with lane-native presentation adapters.
+8. Replace compatibility read model with lane-native presentation adapters.
 10. Next phase: codec move plus compact/binary representation.
 ```
 
@@ -263,7 +261,7 @@ shared-world and per-session overlay baselines exist
 sequence handling exists
 priority policy exists
 lane/priority metrics exist
-old state path is removed after cutover
+remaining lane-native runtime state path supports the P2 delivery model
 high-frequency state no longer depends on one full combined packet every tick
 stable event identity exists before event_batch cutover
 event_batch duplicate suppression and control-path/event-drain ordering are defined after active socket write/enqueue success
@@ -784,6 +782,5 @@ This roadmap is not a feature backlog.
 It should remain a sequencing and dependency document. Detailed scope belongs in the owner documents for each domain, service, protocol, data, or devtools area.
 
 When implementation changes make a planned system current, update the relevant current documentation instead of expanding this roadmap with implementation details.
-
 
 

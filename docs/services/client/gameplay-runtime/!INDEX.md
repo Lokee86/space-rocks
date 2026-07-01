@@ -7,7 +7,7 @@ Client gameplay runtime documentation lives here.
 ## Ownership
 
 - Client gameplay runtime composition.
-- Normalized gameplay-state application.
+- Lane-native gameplay application.
 - Gameplay-session lifecycle and reset.
 - Per-frame runtime processing.
 
@@ -23,7 +23,7 @@ Client gameplay runtime documentation lives here.
 <!-- doc-ledger:files:start -->
 
 - [gameplay-session-lifecycle.md](gameplay-session-lifecycle.md) - Client gameplay packet acceptance, reset, replay, and session-exit behavior.
-- [gameplay-state-application.md](gameplay-state-application.md) - Client gameplay packet normalization and state fanout flow.
+- [gameplay-state-application.md](gameplay-state-application.md) - Lane packet application, readiness, and presentation fanout.
 - [runtime-composition.md](runtime-composition.md) - Client gameplay runtime wiring and composition ownership.
 - [runtime-processing.md](runtime-processing.md) - Client per-frame gameplay processing order and runtime tick behavior.
 <!-- doc-ledger:files:end -->

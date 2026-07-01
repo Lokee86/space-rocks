@@ -181,7 +181,7 @@ client/scripts/generated/constants/constants.gd
 client/scripts/generated/networking/packets/packets.gd
 ```
 
-The game server consumes generated constants, packet structs, packet constants, devtools packet structs, runtime state packet structs, and drop-table code through:
+The game server consumes generated constants, packet structs, packet constants, devtools packet structs, realtime lane state-shape and packet-shape outputs, and drop-table code through:
 
 ```text
 services/game-server/internal/constants/

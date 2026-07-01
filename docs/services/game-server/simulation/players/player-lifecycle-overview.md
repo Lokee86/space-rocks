@@ -21,7 +21,7 @@ room/networking activation
 -> runtime.Ship
 -> camera view
 -> simulation stepping
--> state packet projection
+-> world lane realtime projection
 -> fatal damage
 -> pending despawn
 -> active ship removal
@@ -33,7 +33,7 @@ room/networking activation
 -> room return-to-lobby or cleanup removal
 ```
 
-The game server intentionally separates three player-facing state shapes:
+The game server intentionally separates player-facing lane readback into world and session lanes:
 
 ```text
 playerSession
@@ -50,7 +50,7 @@ player_lifecycle
 
 `runtime.Ship` is the active avatar entity in `game.entities.Players`. It owns live movement state, current input, rotation, velocity, health, shields, active weapon state, target fields, invulnerability, and pending-despawn state.
 
-`StatePacket.players` is active ship state only. It must not be used as the lifecycle source of truth. Pending-respawn and eliminated players can be absent from `StatePacket.players` while still appearing in `StatePacket.player_sessions` and `StatePacket.player_lifecycle`.
+`world lane ship records` are active ship state only. They must not be used as the lifecycle source of truth. Pending-respawn and eliminated players can be absent from world lane ship records while still appearing in session lane player records and session lane lifecycle records.
 
 ## Code root
 
@@ -74,7 +74,7 @@ It describes how these responsibilities fit together:
 * Advancing active player movement, weapon input, camera position, and pending-despawn removal during simulation.
 * Routing respawn requests to respawn eligibility and safe-placement logic.
 * Moving fatal-damage consequences into pending despawn, lives mutation, death count mutation, respawn cooldown setup, death events, and lifecycle classification.
-* Projecting active ship state, durable session state, and lifecycle status into gameplay state packets.
+* Projecting active ship state, durable session state, and lifecycle status into world/session lane records.
 * Allowing room lifecycle code to observe match-over state through game-owned match decisions.
 * Removing player state when the game aggregate is explicitly told to remove a player.
 
@@ -283,7 +283,7 @@ active non-pending ship does not exist
 session.Lives > 0
 ```
 
-The session remains in `game.playerSessions`. The player can still appear in `StatePacket.player_sessions` and `StatePacket.player_lifecycle`, but should be absent from `StatePacket.players` once the pending-despawn ship has been removed.
+The session remains in `game.playerSessions`. The player can still appear in `session lane player records` and `session lane lifecycle records`, but should be absent from `world lane ship records` once the pending-despawn ship has been removed.
 
 The session's `RespawnCooldown` is decremented by `stepPlayerSessions`.
 
@@ -332,7 +332,7 @@ session.Lives <= 0
 
 Eliminated players remain part of the per-match player session state until the game or room lifecycle removes the game instance or explicitly removes the player.
 
-Eliminated players are not active, targetable, damageable, or collidable. Their session state can still be used for scoreboard, match result, and state packet projection.
+Eliminated players are not active, targetable, damageable, or collidable. Their session state can still be used for scoreboard, match result, and world lane realtime projection.
 
 ### 11. Match-over observation
 
@@ -400,7 +400,7 @@ active non-pending runtime.Ship exists
 
 Active players have a live avatar in `game.entities.Players`.
 
-They can be included in `StatePacket.players`, can be projected as active in `player_lifecycle`, and can participate in movement, collision, damage, targeting, and weapon fire when no suspension or invulnerability gate blocks the specific action.
+They can be included in `world lane ship records`, can be projected as active in `session lane lifecycle records`, and can participate in movement, collision, damage, targeting, and weapon fire when no suspension or invulnerability gate blocks the specific action.
 
 ### Pending respawn
 
@@ -412,7 +412,7 @@ lives > 0
 
 Pending-respawn players remain in durable session state but are not active world avatars.
 
-They can be shown in `StatePacket.player_sessions` and `StatePacket.player_lifecycle`. They should not be inferred from `StatePacket.players`.
+They can be shown in `session lane player records` and `session lane lifecycle records`. They should not be inferred from `world lane ship records`.
 
 ### Eliminated
 
@@ -426,12 +426,12 @@ Eliminated players remain available for match facts and result projection. They 
 
 ## Protocols and APIs
 
-Player lifecycle is projected through three related state packet areas.
+Player lifecycle is projected through three related world lane packet areas.
 
 ### Active ship state
 
 ```text
-StatePacket.players
+world lane ship records
 ```
 
 This map is built from `game.entities.Players`.
@@ -441,7 +441,7 @@ It contains active runtime ship state. It is not the full player lifecycle read 
 ### Durable session state
 
 ```text
-StatePacket.player_sessions
+session lane player records
 ```
 
 This map is built from `game.playerSessions`.
@@ -465,7 +465,7 @@ secondary_ammo_policy
 ### Lifecycle status
 
 ```text
-StatePacket.player_lifecycle
+session lane lifecycle records
 ```
 
 This map is built from `MatchDecision.Players`.
@@ -683,10 +683,10 @@ services/game-server/internal/game/rules/match.go
 Classifies players as active, pending respawn, or eliminated and determines whether the match is over.
 
 ```text
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 ```
 
-Projects active ships, player sessions, lifecycle status, entities, and presentation events into gameplay state packets.
+Projects active ships, player sessions, lifecycle status, entities, and presentation events into gameplay world lane packets.
 
 ```text
 services/game-server/internal/game/player_session_state.go
@@ -819,8 +819,8 @@ go test -buildvcs=false ./internal/game ./internal/game/player ./internal/game/r
 
 ## Notes
 
-Legacy documentation supplied one still-current lifecycle rule: do not infer player lifecycle from active ship presence alone. `StatePacket.players` is active avatar state, while `StatePacket.player_lifecycle` and `StatePacket.player_sessions` preserve lifecycle and durable session information for inactive players.
+Legacy documentation supplied one still-current lifecycle rule: do not infer player lifecycle from active ship presence alone. `world lane ship records` is active avatar state, while `session lane lifecycle records` and `session lane player records` preserve lifecycle and durable session information for inactive players.
 
-Current player lifecycle state is partly duplicated across `rules.PlayerParticipationStatus` and `player.Status`. The former drives match decision and `StatePacket.player_lifecycle`; the latter drives the server-side player world read model. Both currently use the same status strings.
+Current player lifecycle state is partly duplicated across `rules.PlayerParticipationStatus` and `player.Status`. The former drives match decision and `session lane lifecycle records`; the latter drives the server-side player world read model. Both currently use the same status strings.
 
 `PlayerID` values currently use lowercase `player-<n>` from `Game.AddPlayer`. Some older documentation examples use capitalized `Player-<n>` as illustrative values. The active code path is lowercase.

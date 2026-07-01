@@ -232,7 +232,7 @@ If a packet cannot be decoded, it is logged and ignored. Decode failure does not
 
 The game server simulation owns the authoritative runtime state.
 
-On each server tick, the WebSocket write path can send gameplay presentation state when the session has an active game player and the room has a game instance in an eligible state.
+On each server tick, the WebSocket write path can send gameplay lane packets when the session has an active game player and the room has a game instance in an eligible state.
 
 The current main gameplay output is:
 
@@ -240,9 +240,9 @@ The current main gameplay output is:
 state
 ```
 
-That packet is projected per player from the authoritative game instance. It can include player state, player sessions, lifecycle state, bullets, asteroids, pickups, events, targeting state, camera/view state, and match-over classification.
+That packet is projected per player from the authoritative game instance. It can include world, overlay, session, and event lane readback such as player state, player sessions, lifecycle state, bullets, asteroids, pickups, events, targeting state, camera/view state, and match-over classification.
 
-The server stamps outbound gameplay state with server send time before encoding and writing it.
+The server stamps outbound gameplay lane packets with server send time before encoding and writing them.
 
 ### 8. Server sends one-off and ticker-driven packets
 
@@ -268,9 +268,9 @@ debug_shape_catalog
 
 Room snapshots are sent after room lifecycle changes such as create, join, ready, start, single-player start, return to lobby, leave, and disconnect broadcasts.
 
-Telemetry pong is a same-session diagnostic response. It does not require room membership and does not mutate gameplay state.
+Telemetry pong is a same-session diagnostic response. It does not require room membership and does not mutate gameplay lane state.
 
-Debug status and debug shape catalog packets are devtools-only outputs gated by devtools availability and room/gameplay state.
+Debug status and debug shape catalog packets are devtools-only outputs gated by devtools availability and room/gameplay lane state.
 
 ### 9. Client routes inbound packets
 
@@ -295,7 +295,7 @@ Room packets route into room session handling.
 
 Gameplay state routes into gameplay session handling, but gameplay application is gated. The client begins accepting gameplay packets only after room state reaches `InGame`.
 
-Telemetry pong routes to telemetry consumers and does not pass through normal gameplay state application.
+Telemetry pong routes to telemetry consumers and does not pass through normal gameplay lane state application.
 
 ### 10. Client applies presentation consequences
 
@@ -305,7 +305,7 @@ Examples:
 
 ```text
 room snapshots update room-session and lobby read models
-state packets update gameplay runtime and world presentation
+gameplay lane packets update gameplay runtime and world presentation
 player pause state updates local pause presentation
 debug packets update devtools presentation
 telemetry pong updates network timing metrics
@@ -372,7 +372,7 @@ These outputs are authoritative readback or diagnostic presentation packets. The
 
 The realtime flow does not directly persist player progress.
 
-When a match reaches authoritative completion, the game server can report resolved match facts through the match-result reporting boundary into player-data. That is a separate persistence flow. The realtime packet shown to clients is presentation-safe room/gameplay state, not the durable storage contract.
+When a match reaches authoritative completion, the game server can report resolved match facts through the match-result reporting boundary into player-data. That is a separate persistence flow. The realtime packet shown to clients is presentation-safe room/gameplay lane state, not the durable storage contract.
 
 ## Integration points
 
@@ -408,7 +408,7 @@ Client devtools send generated debug packets. Server networking identifies debug
 
 Telemetry ping/pong is diagnostic realtime traffic.
 
-The client sends telemetry pings only when the telemetry flow requests them. The server replies to the same WebSocket session with timing fields. Telemetry does not require room membership and does not mutate gameplay state.
+The client sends telemetry pings only when the telemetry flow requests them. The server replies to the same WebSocket session with timing fields. Telemetry does not require room membership and does not mutate gameplay lane state.
 
 ## Out of scope
 
@@ -458,6 +458,6 @@ Client input is sent to the server, the server advances simulation, and clients 
 
 WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
-The current realtime flow sends full gameplay presentation state on the server tick path. Future realtime protocol work may introduce lanes, deltas, quantization, bit packing, or binary encoding, but those are planning facts until implemented.
+The current realtime flow sends gameplay lane packets on the server tick path. Future realtime protocol work may introduce lanes, deltas, quantization, bit packing, or binary encoding, but those are planning facts until implemented.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.

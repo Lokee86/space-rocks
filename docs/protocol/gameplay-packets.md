@@ -6,7 +6,7 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document describes the current lane-native gameplay realtime packet protocol between the Godot client and the Go game server.
 
-It covers client-originated gameplay requests, server-originated world/overlay/session lane packets, `event_batch`, `player_pause_state`, packet authority, source-of-truth files, runtime routing, and the implementation paths that consume the gameplay packet contract.
+It covers client-originated gameplay requests, server-originated lane gameplay output families, `event_batch`, `player_pause_state`, packet authority, source-of-truth files, runtime routing, and the implementation paths that consume the gameplay packet contract.
 
 ## Overview
 
@@ -25,6 +25,12 @@ client sends input or request intent
 
 The client owns packet emission, local input collection, target-selection intent, viewport config reporting, and presentation after receiving server lane packets. The game server owns acceptance, validation, simulation mutation, pause state, respawn validity, scoring, lives, damage, pickups, spawning, lane packet projection, and presentation event production.
 
+## Canonical realtime protocol
+
+Detailed lane metadata, sequencing, baselines, deltas, resync/control packet behavior, and transport lifecycle belong in [Realtime WebSocket Protocol](realtime-websocket-protocol.md).
+
+This doc summarizes gameplay packet ownership and the high-level packet families only.
+
 ## Packet families
 
 Active server-to-client gameplay packet families are:
@@ -35,18 +41,19 @@ overlay_full / overlay_delta
 session_full / session_delta
 event_batch
 player_pause_state
-resync / control / debug where configured
+resync_request / resync_required / control
 ```
 
-The old combined `state` gameplay packet is no longer the active runtime path.
+Current packet families are lane-native, with `event_batch` carrying presentation events separately from world, overlay, and session lanes.
 
 ## Protocol authority
 
-Packet shape authority lives in:
+Packet schema authority lives in:
 
 ```text
 shared/packets/gameplay.toml
 shared/packets/outputs.toml
+docs/data/packet-schemas.md
 ```
 
 Generated packet code is output only and should not be edited by hand.
@@ -83,7 +90,7 @@ select_target_at_position_request
 clear_target_request
 ```
 
-These are still schema-driven gameplay packets, but they are separate from the removed combined gameplay-state output path.
+These are still schema-driven gameplay packets, and they route alongside the current lane-native output families.
 
 ## Client inbound gameplay application
 
@@ -94,17 +101,17 @@ NetworkClient.poll
 -> PacketCodec.decode
 -> NetworkClient.packet_received
 -> ClientConnectionService
--> ServerPacketDispatcher
+-> ServerPacketDispatcher / ServerPacketRouter classify packet
+-> ClientConnectionService routes lane packets through RealtimeRouter.route_lane_packet(packet)
+-> RealtimeRouter applies lane state/readiness
+-> ClientConnectionService emits gameplay_packet_received(packet)
 -> SessionNetworkController
--> GameplaySessionController
--> realtime router
--> world / overlay / session lane states
--> GameplayReadiness baseline sync tracking
+-> GameplaySessionController.handle_gameplay_packet
 -> presentation adapters
 -> EventBatchApplier
 ```
 
-The client no longer routes gameplay presentation through `GameplayStatePacketReader`, combined gameplay-state normalization, or a single gameplay-state readiness flag.
+`RealtimeRouter` applies inbound lane state before `GameplaySessionController` handles the packet for acceptance and presentation fanout. Presentation flow continues through the current lane adapters and `event_batch` application.
 
 ## Lane ownership
 
@@ -124,16 +131,14 @@ event_batch
 = transient presentation events delivered separately from baseline/delta state lanes
 ```
 
-`player_pause_state` remains a separate same-session packet and should not be treated as part of the old combined gameplay packet removal.
+`player_pause_state` remains a separate same-session packet and should be treated as a current packet family, not as part of lane event or world-state delivery.
 
 ## Event delivery
-
-Gameplay presentation events are now described as `event_batch` delivery rather than embedded `StatePacket.events` delivery.
 
 The important rule is:
 
 ```text
-projection may inspect/copy pending presentation events
+projection may inspect or copy pending presentation events
 active send/write path is the drain point
 ```
 
@@ -211,6 +216,7 @@ shared/packets/outputs.toml
 tools/data_sync/
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/runtime/packets_generated.go
+services/game-server/internal/protocol/realtime/packets_generated.go
 client/scripts/generated/networking/packets/packets.gd
 ```
 
@@ -242,8 +248,6 @@ services/game-server/internal/game/
 * [Game Server](../services/game-server/!INDEX.md)
 * [Client](../services/client/!INDEX.md)
 * [Gameplay State Application](../services/client/gameplay-runtime/gameplay-state-application.md)
-* [Lane Packet Projection](../services/game-server/simulation/runtime/state-packet-projection.md)
-
-## Notes
-
-Historical combined `StatePacket`, `GameplayStatePacketReader`, and single gameplay-state normalization/apply paths are no longer the active gameplay runtime design.
+* [Realtime WebSocket Protocol](realtime-websocket-protocol.md)
+* [Lane Packet Projection](../services/game-server/simulation/runtime/lane-packet-projection.md)
+* [Packet Schemas](../data/packet-schemas.md)

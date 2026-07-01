@@ -6,7 +6,7 @@ Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 This document describes game-server player counter ownership.
 
-It covers the current score and lives mutation seams, how those counters are stored on player sessions, which gameplay systems call them, how counter changes are projected to state packets, and what this boundary does not own.
+It covers the current score and lives mutation seams, how those counters are stored on player sessions, which gameplay systems call them, how counter changes are projected to lane packets, and what this boundary does not own.
 
 ## Overview
 
@@ -70,7 +70,7 @@ Player counters own:
 * Locked mutation helpers for same-package simulation code already holding game authority.
 * Returning `PlayerCounterChange` results for callers that need mutation feedback.
 * Keeping score and lives on `playerSession`.
-* Projecting score and lives through player session state.
+* Projecting score and lives through session lane and overlay lane readback.
 * Supplying score and deaths to match-result summary facts.
 * Providing narrow game-owned devtools adapters for score/lives mutation commands.
 
@@ -307,28 +307,28 @@ The current `1_up` pickup resolves to `add_lives` amount `1`.
 
 ## Protocols and APIs
 
-Player counters are projected through gameplay state packets.
+Player counters are projected through gameplay lane packets.
 
 The current packet-facing surfaces are:
 
 ```text
-StatePacket.lives
-StatePacket.player_sessions[player_id].score
-StatePacket.player_sessions[player_id].lives
-StatePacket.events[].lives
-StatePacket.events[].lives_after
+overlay lane receiver-local lives/readout
+session lane player records[player_id].score
+session lane player records[player_id].lives
+event_batch[].lives
+event_batch[].lives_after
 RoomPlayerMatchSummary.score
 ```
 
-`StatePacket.lives` is the requesting player’s lives value.
+`overlay lane receiver-local lives/readout` is the requesting player's lives value.
 
-`StatePacket.player_sessions` carries durable per-player session read-model state for all known player sessions, including score and lives.
+`session lane player records` carry durable per-player session read-model state for all known player sessions, including score and lives.
 
-`StatePacket.players` is active live ship state only. It should not be used as the source of truth for score or lives.
+`world lane ship records` is active live ship state only. It should not be used as the source of truth for score or lives.
 
-Death events use `events[].lives` to report the player’s remaining lives after the death consequence is applied.
+Death events use `event_batch[].lives` to report the player's remaining lives after the death consequence is applied.
 
-Pickup effect events use `events[].lives_after` to report the updated lives value after an `add_lives` effect succeeds.
+Pickup effect events use `event_batch[].lives_after` to report the updated lives value after an `add_lives` effect succeeds.
 
 Room match results use `PlayerMatchFacts`, which reads score and ship deaths from player sessions. Room code later combines those game-owned facts with room membership identity when building match result summaries.
 
@@ -468,7 +468,7 @@ services/game-server/internal/game/asteroid_destruction.go
 services/game-server/internal/game/combat.go
 services/game-server/internal/game/pickup_effects.go
 services/game-server/internal/game/player_session_state.go
-services/game-server/internal/game/state_packet.go
+services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/game/match.go
 services/game-server/internal/game/match_facts.go
 ```
@@ -563,7 +563,7 @@ Focused counter tests cover:
 * adding positive lives
 * adding negative lives
 * clamping lives below zero
-* projecting counter seam updates through state packets
+* projecting counter seam updates through lane packets
 
 Collision tests cover score and lives integration behavior:
 
@@ -582,7 +582,7 @@ Devtools tests cover:
 * debug add score for all players
 * debug set lives for all players
 * debug add lives for all players
-* direct counter seam updates appearing in state packets
+* direct counter seam updates appearing in lane packets
 * infinite lives allowing death without reducing lives
 
 Match-result tests cover:
@@ -631,6 +631,6 @@ The current counter seam has a lower bound of zero and no upper bound.
 
 Score is currently awarded only through the implemented asteroid-destruction scoring path.
 
-`StatePacket.lives` is a convenience projection for the packet recipient’s lives. Multi-player counter readback should use `StatePacket.player_sessions`.
+`lane packet.lives` is a convenience projection for the packet recipient’s lives. Multi-player counter readback should use `lane packet.player_sessions`.
 
 `PlayerCounterChange` is intentionally data-only. Event emission, logging, packet projection, persistence, and match summary construction stay with the caller or downstream boundary that owns that context.

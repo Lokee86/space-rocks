@@ -10,15 +10,15 @@ It covers how server presentation events enter the Godot client, how event posit
 
 ## Overview
 
-Gameplay events are authoritative server facts carried inside gameplay state packets.
+Gameplay events are authoritative server facts delivered through `event_batch` packets.
 
 The client does not decide that a bullet blast, ship death, pickup collection, radial effect, damage result, pickup expiry, score award, death, respawn, or match end happened. The client only reads event facts emitted by the server and converts the supported subset into local presentation.
 
 The active client path is:
 
 ```text
-StatePacket.events
--> GameplayStatePacketReader
+event_batch
+-> EventBatchApplier
 -> GameplayStateApplyFlow
 -> GameplayEventLifecycleFlow
 -> GameplayEventFlow
@@ -90,7 +90,7 @@ The gameplay event/effects presentation flow does not own:
 * WebSocket transport.
 * Raw packet decoding.
 * Persistent world entity sync.
-* Pickup node lifecycle while a pickup exists in `StatePacket.pickups`.
+* Pickup node lifecycle while a pickup exists in world lane pickup records.
 * HUD widget implementation.
 * Gameplay menu implementation.
 * Result-window presentation.
@@ -192,9 +192,9 @@ The event/effects path owns game-over sound delay and one-shot gating. Match-end
 
 ### State event input
 
-Gameplay events enter the client as the `events` array on a gameplay state packet.
+Gameplay events enter the client through the `event_batch` packet payload after lane state/readiness has been applied.
 
-`GameplayStatePacketReader` normalizes that packet field into:
+`EventBatchApplier` applies and dedupes the packet events into:
 
 ```text
 server_events
@@ -206,7 +206,7 @@ If the packet event field is missing or is not an array, the normalized value is
 
 Gameplay state application routes server events after world state and alive/respawn restoration have been applied.
 
-Current application order in `GameplayStateApplyFlow`:
+Current application order in `GameplayStateApplyFlow` after lane state/readiness is applied:
 
 ```text
 1. Apply gameplay state to devtools context.
@@ -214,7 +214,7 @@ Current application order in `GameplayStateApplyFlow`:
 3. Apply gameplay-state summary to HUD flow.
 4. Apply world state.
 5. Apply alive/respawn restoration.
-6. Apply server events.
+6. Apply `event_batch` through `EventBatchApplier`.
 7. Mark gameplay state as received.
 ```
 
@@ -479,7 +479,7 @@ The underlying constants source belongs to shared data and the data-sync pipelin
 
 ### Runtime callers
 
-* `client/scripts/gameplay/state/gameplay_state_packet_reader.gd` - Normalizes packet events into `server_events`.
+* `client/scripts/gameplay/state/event_batch_applier.gd` - Applies and dedupes `event_batch` payloads into `server_events`.
 * `client/scripts/gameplay/state/gameplay_state_apply_flow.gd` - Applies server events after world state and alive/respawn restoration.
 * `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Constructs and configures `GameplayEventLifecycleFlow`.
 * `client/scripts/shell/gameplay_shell_flow.gd` - Owns gameplay runtime shell delegation and reset.
@@ -524,7 +524,7 @@ The underlying constants source belongs to shared data and the data-sync pipelin
 
 Relevant tests include:
 
-* `client/tests/unit/test_gameplay_state_packet_reader.gd`
+* `client/tests/unit/test_event_batch_applier.gd`
 * `client/tests/unit/test_gameplay_state_apply_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_controller.gd`
 * `client/tests/unit/gameplay/events/test_gameplay_death_flow.gd`

@@ -42,7 +42,7 @@ client devtools placement
 -> game.DevtoolsRegisterSimulationStepObserver
 -> streamruntime.StepContinuousBulletStreams
 -> game.DevtoolsSpawnDebugBullet
--> normal state packet bullet readback
+-> world lane bullet record readback
 ```
 
 A stream records:
@@ -164,7 +164,7 @@ That delegates to `spawnDebugBullet`, which:
 * allocates a bullet ID through the game spawner
 * inserts the bullet into `game.entities.Projectiles`
 
-Clients then see the projectile through normal state packet projection and world sync. There is no separate stream-specific outbound packet.
+Clients then see the projectile through world lane bullet record readback and world sync. There is no separate stream-specific outbound packet.
 
 ## Commands or controls
 
@@ -228,10 +228,10 @@ Do not document `debug_clear_bullets` as the authoritative stream stop path unle
 
 The server does not send stream-specific presentation state.
 
-The client may request continuous stream placement, but after the command is sent, stream effects are visible only through ordinary server state readback:
+The client may request continuous stream placement, but after the command is sent, stream effects are visible only through ordinary world lane readback:
 
 ```text
-StatePacket.bullets
+world lane bullet records
 world sync bullet rendering
 normal projectile movement and expiration
 ```
@@ -268,7 +268,7 @@ direction_x
 direction_y
 ```
 
-Spawned bullets are not emitted as a stream-specific telemetry packet. They appear as normal bullets in gameplay state packets.
+Spawned bullets are not emitted as a stream-specific telemetry packet. They appear as normal bullets in world lane bullet records.
 
 ## Build/runtime gates
 
@@ -325,7 +325,7 @@ WorldSimulationOptions.BulletsCanMove
 space.NormalizePosition
 runtime.Bullet
 game.entities.Projectiles
-state packet bullet projection
+world lane bullet record readback
 normal client world sync rendering
 ```
 
@@ -500,3 +500,4 @@ Legacy server devtools notes correctly identified that continuous bullet streams
 Legacy notes also claimed that clear bullets clears active persistent streams. The current inspected implementation does not do that. Current docs should describe the live implementation: clear bullets removes existing projectile entities, while stream runtime clearing exists as a package method but is not currently wired to the clear-bullets command.
 
 The current `DefaultRuntime` is package-level stream runtime state. Stream records carry owner player ID, origin, direction, and cooldown, but not a room ID or game ID. If concurrent multi-room stream behavior becomes important, stream ownership should be revisited before treating streams as room-scoped tooling.
+

@@ -21,7 +21,7 @@ debug_clear_asteroids
 
 Both commands are room/global commands. They do not target a player, do not use placement coordinates, and do not resolve through the canonical gameplay target. The requesting client sends a generated debug packet, networking routes it through the devtools command path, and the server mutates the authoritative `Game` entity store through narrow game-owned export seams.
 
-The client does not remove bullets or asteroids locally. Removed entities disappear from presentation because the next server state packet no longer includes them.
+The client does not remove bullets or asteroids locally. Removed entities disappear from presentation because the next world lane readback no longer includes them.
 
 ## Debug-only scope
 
@@ -88,7 +88,7 @@ Packets.debug_clear_bullets_packet()
 Packets.debug_clear_asteroids_packet()
 ```
 
-The client logs that the request was sent, but it does not apply the mutation locally. Bullet and asteroid nodes are removed through normal world sync after the server projects a state packet without those entities.
+The client logs that the request was sent, but it does not apply the mutation locally. Bullet and asteroid nodes are removed through normal world sync after the server projects lane-native world readback without those entities.
 
 This keeps clear tools aligned with the normal server-authoritative presentation model:
 
@@ -98,7 +98,7 @@ client button
 -> websocket send path
 -> server devtools command route
 -> game-owned entity store mutation
--> next authoritative state packet
+-> next authoritative world lane readback
 -> client world sync removes missing entities
 ```
 
@@ -154,8 +154,8 @@ Clear-entity tools do not currently emit a dedicated acknowledgement packet, rem
 Observable effects are indirect:
 
 ```text
-StatePacket.bullets   -> empty or reduced after bullet clear
-StatePacket.asteroids -> empty or reduced after asteroid clear
+world lane bullet records   -> empty or reduced after bullet clear
+world lane asteroid records -> empty or reduced after asteroid clear
 ```
 
 Client-side devtools controls log that the clear request was sent. Server-side clear handlers do not currently log the removed count.

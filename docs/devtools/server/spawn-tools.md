@@ -89,7 +89,7 @@ The server decides:
 * how fallback directions are selected
 * how runtime ids are allocated
 * how the new entity enters the authoritative entity store
-* what state packets later project to clients
+* what world lane records later project to clients
 
 The spawn command path does not give the client direct write access to server entity maps. Client placement requests route through server command handlers and game-owned mutation helpers.
 
@@ -111,16 +111,16 @@ spawn_pickup
 The server does not send a special spawn-confirmation packet. Confirmation is observed through normal authoritative readback:
 
 ```text
-StatePacket.players
-StatePacket.asteroids
-StatePacket.bullets
-StatePacket.pickups
-StatePacket.player_world_states
-StatePacket.debug_statuses
-events where applicable
+world lane ship records
+world lane asteroid records
+world lane bullet records
+world lane pickup records
+session lane player records
+debug_status packets
+event_batch where applicable
 ```
 
-Spawned entities appear on the client only after the server mutates runtime state and the normal state packet path projects that state.
+Spawned entities appear on the client only after the server mutates runtime state and lane-native readback projects that state.
 
 ## Command routing
 
@@ -137,7 +137,7 @@ websocket message
 -> devtools.HandleCommand
 -> spawn command handler
 -> game-owned mutation helper
--> normal state packet projection
+-> lane-native realtime projection
 ```
 
 `HandlePlacementDevtoolsPacket` recognizes:
@@ -404,7 +404,7 @@ A successful pickup spawn:
 * creates the pickup entity from the definition
 * initializes health, age, and lifespan
 * stores the pickup in `game.entities.Pickups`
-* makes it available for normal state packet projection and pickup lifecycle handling
+* makes it available for world lane readback and pickup lifecycle handling
 
 Debug pickup spawn does not record a `pickup_dropped` gameplay event. Drop-table integration owns that event for normal asteroid-drop spawns.
 
@@ -502,7 +502,7 @@ devtools command
 -> debug adapter
 -> game-owned mutation seam
 -> normal runtime entity storage
--> normal state packet projection
+-> lane-native realtime projection
 ```
 
 Current examples:
@@ -662,7 +662,7 @@ data-sync -check -constants -go
 * [Pickup Entity Lifecycle](../../services/game-server/simulation/pickups/pickup-entity-lifecycle.md)
 * [Weapons And Projectile Fire](../../services/game-server/simulation/combat/weapons-and-projectile-fire.md)
 * [Player Session State](../../services/game-server/simulation/players/player-session-state.md)
-* [State Packet Projection](../../services/game-server/simulation/runtime/state-packet-projection.md)
+* [Realtime Websocket Protocol](../../protocol/realtime-websocket-protocol.md)
 * [Packet Schemas](../../data/packet-schemas.md)
 
 ## Notes

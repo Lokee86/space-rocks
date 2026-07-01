@@ -329,7 +329,7 @@ auth verifier
 match-result reporter
 ```
 
-The route exists so clients can establish realtime sessions. The startup boundary only constructs and injects dependencies. WebSocket upgrade behavior, packet routing, session identity, lobby flow, gameplay input, and outbound state packets belong to game-server networking docs.
+The route exists so clients can establish realtime sessions. The startup boundary only constructs and injects dependencies. WebSocket upgrade behavior, packet routing, session identity, lobby flow, gameplay input, and outbound lane packet delivery belong to game-server networking docs.
 
 ### Player-data HTTP routes
 

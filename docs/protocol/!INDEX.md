@@ -21,7 +21,7 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 
 - [api-product-surface.md](api-product-surface.md) - API product surface documentation.
 - [asteroid-variant-contract.md](asteroid-variant-contract.md) - Asteroid Variant Contract documentation.
-- [gameplay-packets.md](gameplay-packets.md) - Gameplay packet documentation.
+- [gameplay-packets.md](gameplay-packets.md) - Gameplay packet ownership and family overview.
 - [http-api-contracts.md](http-api-contracts.md) - HTTP API contract documentation.
 - [http-contract-enforcement.md](http-contract-enforcement.md) - HTTP request/response contract ownership and enforcement across services.
 - [lobby-packets.md](lobby-packets.md) - Lobby packet documentation.

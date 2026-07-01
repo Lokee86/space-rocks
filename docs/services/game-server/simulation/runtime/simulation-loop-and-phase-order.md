@@ -12,7 +12,7 @@ It covers `runSimulation`, `Step(delta)`, server tick cadence, game lock scope, 
 
 The game server is authoritative for live gameplay simulation.
 
-Each `game.Game` owns one in-memory simulation aggregate. Rooms start and stop that aggregate, networking routes decoded player requests into it, and outbound networking later asks it for state packets. The simulation loop itself lives inside the game package.
+Each `game.Game` owns one in-memory simulation aggregate. Rooms start and stop that aggregate, networking routes decoded player requests into it, and outbound networking later uses lane-native realtime projection results from it. The simulation loop itself lives inside the game package.
 
 The runtime loop starts through:
 
@@ -104,7 +104,7 @@ Game.Step
 -> advances authoritative state
 
 Networking outbound
--> asks Game for StatePacket
+-> asks Game for lane packet projection
 
 Client
 -> renders server results
@@ -132,19 +132,23 @@ Game.Step(delta)
 
 Clients do not call these surfaces directly. Clients send gameplay packets through WebSocket networking. Networking resolves room/session/player context and then calls game-owned mutation APIs such as `Game.HandlePacket`. Simulation consumes the resulting stored runtime state during later ticks.
 
-Outbound clients observe simulation indirectly through:
+Outbound clients observe simulation indirectly through lane-native realtime projection:
 
 ```text
-StatePacket players
-StatePacket player_sessions
-StatePacket player_lifecycle
-StatePacket bullets
-StatePacket asteroids
-StatePacket pickups
-StatePacket events
+world lane
+= active world entities such as ships, bullets, asteroids, and pickups
+
+overlay lane
+= receiver-local overlay/HUD state
+
+session lane
+= player/session/lifecycle read models
+
+event_batch
+= presentation events for the current receiver
 ```
 
-State packet projection is a separate runtime responsibility. The simulation loop mutates runtime state; state projection reads that state later and clears per-player pending presentation events after `StatePacket(playerID)` is consumed.
+Lane-native realtime projection is a separate runtime responsibility. The simulation loop mutates runtime state; `protocol/realtime` reads that state later and `event_batch` drains per receiver only after successful active write.
 
 ## Tick lifecycle
 
@@ -183,7 +187,7 @@ defer game.mu.Unlock()
 
 The phase helpers called from `Step` run under that lock. They mutate shared runtime maps, player sessions, camera views, radial effects, presentation event queues, and counters without taking separate locks.
 
-The same lock is used by public game APIs that mutate or read live state, including player addition/removal, input routing, pause-state packet generation, match decision reads, counter mutation, targeting, pickups, state packet projection, and devtools adapters.
+The same lock is used by public game APIs that mutate or read live state, including player addition/removal, input routing, pause-state packet generation, match decision reads, counter mutation, targeting, pickups, lane-native realtime projection inputs, and devtools adapters.
 
 This means the simulation phase order is serialized against inbound game mutations and outbound state projection.
 
@@ -250,7 +254,7 @@ Movement is gated by player suspension and pending-despawn state. Shooting is ga
 
 `removeReadyPlayers` removes active player ships whose pending-despawn delay has completed.
 
-This removes the runtime avatar. The durable player session remains available for lifecycle, counters, respawn, and state packet projection.
+This removes the runtime avatar. The durable player session remains available for lifecycle, counters, respawn, and lane-native realtime projection.
 
 ### 6. Asteroid spawning
 
@@ -391,7 +395,7 @@ FreezeCollisions
 -> disables player/pickup collision
 ```
 
-Player session timers, pickup aging, radial effect stepping, state packet projection, match decision reads, and simulation step observers are not directly controlled by `WorldSimulationOptions`.
+Player session timers, pickup aging, radial effect stepping, lane-native realtime projection, match decision reads, and simulation step observers are not directly controlled by `WorldSimulationOptions`.
 
 Player pause and dev player-freeze behavior are separate from world simulation options. They route through player suspension state.
 
@@ -489,7 +493,8 @@ Primary implementation files:
 * `services/game-server/internal/game/simulation_radial_effects.go` - radial effect stepping, hit application, and expired-effect removal.
 * `services/game-server/internal/game/world_simulation_options.go` - world freeze flags and gate helpers.
 * `services/game-server/internal/game/match.go` - match-over decision evaluation used by the simulation step gate.
-* `services/game-server/internal/game/state_packet.go` - state packet projection that reads post-step runtime state and clears per-player pending events.
+* `services/game-server/internal/protocol/realtime/` - lane-native realtime projection that reads post-step runtime state and plans `event_batch` output.
+* `services/game-server/internal/networking/outbound/` - writes selected lane packets to the websocket session and clears drained event IDs after successful active write.
 * `services/game-server/internal/game/runtime/state.go` - runtime entity store and core runtime entity shapes.
 * `services/game-server/internal/game/motion/motion.go` - movement integration and wrapped position advancement for ships, asteroids, and bullets.
 
@@ -497,7 +502,8 @@ Related room and networking files:
 
 * `services/game-server/internal/rooms/room_lifecycle.go` - room lifecycle calls `Game.Start` and `Game.Stop`.
 * `services/game-server/internal/rooms/lifecycle_tick.go` - room game-over lifecycle observation.
-* `services/game-server/internal/networking/outbound/gameplay_presentation.go` - outbound presentation state reads from `Game.StatePacket`.
+* `services/game-server/internal/protocol/realtime/` - lane-native realtime projection and packet planning.
+* `services/game-server/internal/networking/websocket_write.go` - outbound websocket write path for selected lane packets planned by `services/game-server/internal/protocol/realtime/`.
 * `services/game-server/internal/networking/websocket_gameplay_tick.go` - gameplay presentation tick path.
 
 Related devtools files:
@@ -582,7 +588,7 @@ go test -buildvcs=false ./internal/game ./tests/game
 * [Pickup Collection](../pickups/pickup-collection.md)
 * [Game Aggregate](game-aggregate.md)
 * [Runtime Entity Store](runtime-entity-store.md)
-* [State Packet Projection](state-packet-projection.md)
+* [Lane Packet Projection](lane-packet-projection.md)
 * [Presentation Event Queue](presentation-event-queue.md)
 * [Realtime Protocol](../../../../../protocol/!INDEX.md)
 * [Data](../../../../../data/!INDEX.md)
@@ -592,4 +598,5 @@ go test -buildvcs=false ./internal/game ./tests/game
 
 Legacy architecture notes correctly identified that `Game.Start()` launches a server-authoritative simulation loop and that `Game.Step()` centralizes phase order while delegating individual phases to focused helpers. This document narrows that legacy material to the current game-server runtime implementation.
 
-The phase order is a service implementation fact. Any change to `Game.Step` order should update this document and any related docs that reference collision order, weapon fire timing, pickup collection timing, radial effects, state packet projection, or match-over behavior.
+The phase order is a service implementation fact. Any change to `Game.Step` order should update this document and any related docs that reference collision order, weapon fire timing, pickup collection timing, radial effects, lane-native realtime projection, or match-over behavior.
+

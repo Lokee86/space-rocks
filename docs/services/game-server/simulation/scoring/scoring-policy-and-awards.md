@@ -237,7 +237,7 @@ func (policy Policy) Evaluate(event Event) []Award
 
 The caller supplies a scoring event. The policy returns data-only awards. The game aggregate owns authority behind applying those awards, and player counters own score storage.
 
-No client can call the scoring policy directly. Clients observe score only through server-projected state packets and match-result summaries.
+No client can call the scoring policy directly. Clients observe score through overlay/session lane readback, with match-result summaries kept as a separate observation path.
 
 Packet-facing score projection belongs to player session state and match-result reporting, not this scoring policy package.
 
@@ -378,3 +378,4 @@ go test -buildvcs=false ./tests/scoring ./tests/game -run 'AsteroidDestroyed|Sco
 The current scoring package is intentionally smaller than the player counter documentation. This document owns score-award policy only; player counter storage, mutation, packet projection, devtools score commands, and match-result readback belong in [Player Counters](../players/player-counters.md).
 
 Score awards currently have no upper bound beyond the integer value produced by policy and the player counter seam. The counter seam clamps only the lower bound at zero.
+

@@ -112,7 +112,7 @@ client target intent
 -> server validation
 -> session-owned selected target ref
 -> active ship target copy
--> state packet readback through ShipState target fields
+-> world lane ship record readback through ShipState target fields
 ```
 
 The selected target is gameplay state, but it is not automatically combat behavior. A target being selected does not mean the target is damaged, locked, collectable, or otherwise affected. Other systems must explicitly consume target state and enforce their own rules.
@@ -173,7 +173,7 @@ The inbound adapter converts those fields into a `TargetRef` and calls `Game.Sel
 
 `set_target_player_request` is a player-target compatibility path. The inbound adapter passes `packet.TargetID` to `Game.SetPlayerTarget`, which wraps it as a player target. The server-side adapter does not use `packet.TargetKind` for this packet type.
 
-The outbound readback surface is `StatePacket.players[*].target_kind` and `StatePacket.players[*].target_id`, projected from each active ship's `runtime.ShipState`.
+The outbound readback surface is `world lane ship records[*].target_kind` and `world lane ship records[*].target_id`, projected from each active ship's `runtime.ShipState`.
 
 Target requests are not authority. They are client intent. The server owns whether the target is accepted and later projects accepted target state back through authoritative gameplay state.
 
@@ -605,8 +605,8 @@ Current coverage includes:
 * player target storage
 * target clearing
 * missing target rejection without overwrite
-* `StatePacket.players[*].target_kind`
-* `StatePacket.players[*].target_id`
+* `world lane ship records[*].target_kind`
+* `world lane ship records[*].target_id`
 * generic player, asteroid, bullet, and pickup target refs
 * position-based target selection for player, asteroid, bullet, and pickup targets
 * missing target rejection for position-based selection
@@ -638,7 +638,7 @@ go test -buildvcs=false ./internal/game/targeting
 go test -buildvcs=false ./internal/game/player -run 'TargetStatus'
 ```
 
-Run packet generation checks when target packet fields or target state packet fields change:
+Run packet generation checks when target packet fields or target world lane packet fields change:
 
 ```bash
 data-sync -check -packets -go -gds
@@ -650,7 +650,7 @@ data-sync -check -packets -go -gds
 * [Game Server Simulation](../!INDEX.md)
 * [Game Server](../../!INDEX.md)
 * [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
-* [State Packet Projection](../runtime/state-packet-projection.md)
+* [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Active Player Avatar State](../players/active-player-avatar-state.md)
 * [Player Session State](../players/player-session-state.md)
 * [Player Camera View State](../players/player-camera-view-state.md)
@@ -670,3 +670,4 @@ The legacy targeting docs correctly identified the core quarantine rule: normal 
 `TargetKindPriority` exists in the target policy package and is covered by tests, but current game-server position selection validates the client-submitted target ref rather than choosing the highest-priority candidate from overlapping bodies.
 
 `set_target_player_request` remains a player-target compatibility request. New generic gameplay targeting should prefer `select_target_at_position_request` or game APIs that use `TargetRef`.
+

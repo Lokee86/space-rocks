@@ -326,11 +326,11 @@ External clients observe collision-shape effects indirectly through normal game-
 Examples:
 
 ```text
-StatePacket players
-StatePacket asteroids
-StatePacket bullets
-StatePacket pickups
-StatePacket events
+world lane ship records
+world lane asteroid records
+world lane bullet records
+world lane pickup records
+event_batch
 devtools collision telemetry output
 ```
 

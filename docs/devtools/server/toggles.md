@@ -23,7 +23,7 @@ toggle_debug_freeze_player
 
 The server receives these commands as generated debug packets, decodes them into `devtools.DebugCommand`, routes them through `devtools.HandleCommand`, and applies the result through narrow game-owned export seams.
 
-The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Confirmation comes back through normal gameplay state, debug status packets, visible entity behavior, or both.
+The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Confirmation comes back through lane-native gameplay readback, debug status packets, visible entity behavior, or both.
 
 The toggle system has three kinds of server-owned state:
 
@@ -85,7 +85,7 @@ client debug packet
 -> toggle-specific handler in internal/devtools/toggles.go
 -> game-owned export seam in internal/game/export_devtools_toggles.go
 -> normal game runtime state
--> normal simulation/state/debug-status output
+-> lane-native gameplay readback or debug status output
 ```
 
 If the current WebSocket session has no room or no current game player ID, the inbound devtools route consumes the packet without applying a command. If packet decode fails, the command is not applied and a network warning is logged.
@@ -359,7 +359,7 @@ The server does own the command effects and status data consumed by the client. 
 ```text
 debug_status.debug_status
 debug_status.debug_statuses
-normal gameplay state packet changes
+lane-native gameplay readback changes
 normal entity/session lifecycle changes
 logs visible from the server process
 ```
@@ -430,7 +430,7 @@ room state is InGame or GameOver
 session has a current game player ID
 ```
 
-Debug status packets are written on a slower cadence than gameplay state. Current code sends gameplay presentation state every server write tick, then sends debug status every `debugStatusWriteIntervalTicks`, currently `8`.
+Debug status packets are written on a slower cadence than gameplay readback. Current code sends gameplay presentation state every server write tick, then sends debug status every `debugStatusWriteIntervalTicks`, currently `8`.
 
 ## Build/runtime gates
 
@@ -704,3 +704,5 @@ Legacy devtools notes grouped client hotkeys, client overlays, server toggles, t
 `debug_kill_player` shares implementation file space with toggle handlers in `toggles.go`, but it is a command, not a toggle. It belongs with player targeting, lifecycle, and command-surface documentation rather than being treated as part of the toggle set.
 
 World freeze should be described as granular simulation gating. It is useful for debugging asteroid movement, bullet motion, spawning, and collision passes, but it should not be mistaken for match pause or full simulation suspension.
+
+

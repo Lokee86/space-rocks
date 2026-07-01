@@ -24,7 +24,7 @@ shared/collisions/collision_shapes.json
 
 The packet contains reusable shape definitions keyed by debug shape id. It does not contain live entity state.
 
-Live entity position, rotation, scale, variant, and pickup state continue to come from normal gameplay state packets. The client combines normal gameplay state with the debug shape catalog for presentation-only overlay drawing.
+Live entity position, rotation, scale, variant, and pickup state continue to come from world lane records and lane-native realtime projection. The client combines live world lane readback with the debug shape catalog for presentation-only overlay drawing.
 
 ## Debug-only scope
 
@@ -213,7 +213,7 @@ The shape catalog is sent by the websocket write loop after gameplay presentatio
 The relevant write-loop sequence is:
 
 ```text
-write gameplay presentation state
+write gameplay presentation lane output
 -> write debug shape catalog when eligible and not yet sent for this room id
 -> periodically write debug status
 ```
@@ -293,7 +293,7 @@ converting server-space points through WorldSync
 drawing overlay polylines
 ```
 
-The current client hitbox overlay uses normal gameplay state fields such as:
+The current client hitbox overlay uses world lane fields such as:
 
 ```text
 server_players

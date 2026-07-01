@@ -40,7 +40,7 @@ Logging and diagnostics own the game-server side of:
 * Environment-based log-level configuration.
 * Shared log field names for common diagnostic dimensions.
 * Runtime diagnostics for recoverable errors, lifecycle events, and unusual conditions.
-* Packet-size and slow-write warnings for gameplay presentation packets.
+* Packet-size and slow-write warnings for gameplay lane packets.
 * WebSocket close classification for expected versus unexpected read/write failures.
 * Keeping logs useful without enabling per-tick or per-entity output by default.
 
@@ -244,8 +244,8 @@ Current examples include:
 * pause-state marshal failure
 * telemetry pong encode failure
 * debug packet encode/load failure
-* gameplay presentation packet too large
-* gameplay presentation packet write too slow
+* gameplay lane packet too large
+* gameplay lane packet write too slow
 
 This category should not own gameplay decisions. It should report network-facing symptoms and include room, player, session, and remote address fields where available.
 
@@ -413,7 +413,7 @@ Avoid logs for:
 * every player position update
 * every physics step
 * every collision candidate
-* every successful state packet write
+* every successful lane packet write
 * every successful input packet
 * every asteroid spawn candidate
 * broad packet dumps
@@ -534,4 +534,4 @@ Expected output is `slog` text output on stderr. Category logs include a `catego
 
 The current logging implementation is intentionally small. It should remain a thin service diagnostic layer until the game server needs a durable observability backend.
 
-The old legacy server logging notes described the same core design, but current implementation has additional call sites for player-data initialization, auth verifier setup, match-result reporting lifecycle, telemetry pong encoding failures, and gameplay presentation packet size/write-duration diagnostics.
+The old legacy server logging notes described the same core design, but current implementation has additional call sites for player-data initialization, auth verifier setup, match-result reporting lifecycle, telemetry pong encoding failures, and gameplay lane packet size/write-duration diagnostics.

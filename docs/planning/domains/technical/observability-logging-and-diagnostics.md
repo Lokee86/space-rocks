@@ -324,7 +324,7 @@ Do not log by default:
 * every frame,
 * every entity update,
 * every input packet,
-* every successful state packet,
+* every successful lane packet,
 * every collision candidate,
 * every normal position update,
 * full packet payloads,
@@ -515,7 +515,7 @@ Log:
 | devtools packet rejected                    | Warn/Error                     |
 | production client devtools packet attempted | Error                          |
 
-Do not log successful state packet writes by default.
+Do not log successful lane packet writes by default.
 
 ### Game-Server Room Lifecycle
 
@@ -920,7 +920,7 @@ Metrics and telemetry are not the same as logs.
 | frame pressure threshold crossed      | log                        |
 | every packet size                     | metrics/devtools           |
 | packet-size warning threshold crossed | log                        |
-| every successful state packet         | metrics/devtools if needed |
+| every successful lane packet         | metrics/devtools if needed |
 | failed packet encode/write            | log                        |
 
 Logs should capture meaningful events, failures, summaries, and thresholds. Metrics and telemetry should carry high-frequency numeric pressure.

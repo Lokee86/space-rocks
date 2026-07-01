@@ -4,7 +4,7 @@ Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
-This document describes the client devtools readmodels that consume server debug status packets and normalized gameplay state.
+This document describes the client devtools readmodels that consume server debug status packets and lane-applied gameplay state.
 
 It covers how the client devtools window shows server-owned debug status, player target rows, game-target rows, and raw local/target telemetry without taking gameplay authority away from the server.
 
@@ -19,18 +19,18 @@ debug_status packet
 -> debug_status
 -> debug_statuses
 
-state packet normalized by gameplay state reader
+lane-applied world/session/overlay readmodels
 -> self_id
--> server_players
--> player_sessions
--> player_lifecycle
--> server_asteroids
--> server_bullets
--> server_pickups
--> optional server_enemies / enemies
+-> world lane ship records
+-> session lane player records
+-> session lane lifecycle records
+-> world lane asteroid records
+-> world lane bullet records
+-> world lane pickup records
+-> optional world lane enemy records / enemies
 ```
 
-The debug status packet provides current debug-toggle state. The normalized gameplay state provides the entity/session maps needed to build target selectors and raw telemetry panels.
+The debug status packet provides current debug-toggle state. The lane-applied gameplay state provides the entity/session maps needed to build target selectors and raw telemetry panels.
 
 The client uses these inputs to refresh:
 
@@ -83,7 +83,7 @@ room state is InGame or GameOver
 session has a current game player id
 ```
 
-The write loop sends debug status on a slower cadence than gameplay state. Current code writes normal gameplay presentation state every server write tick, then sends debug status every `debugStatusWriteIntervalTicks`, currently `8`.
+The write loop sends debug status on a slower cadence than gameplay state. Current code writes normal gameplay presentation lane output every server write tick, then sends debug status every `debugStatusWriteIntervalTicks`, currently `8`.
 
 The server packet contains:
 
@@ -159,13 +159,13 @@ Then it refreshes the player-target selectors so feature state labels reflect th
 
 ### Gameplay state fanout
 
-Target readmodels are refreshed from normalized gameplay state, not from raw packet dictionaries.
+Target readmodels are refreshed from lane-applied gameplay state, not from raw packet dictionaries.
 
 Current flow:
 
 ```text
-state packet
--> GameplayStatePacketReader.read
+lane packets
+-> RealtimeRouter
 -> GameplayComposition.apply_gameplay_state
 -> GameplayShellFlow / GameplayFlowComposer
 -> GameplayDevtoolsContext.apply_gameplay_state
@@ -314,8 +314,8 @@ TargetTelemetry
 Each panel has a source selector. Current source options are:
 
 ```text
-StatePacket.entities
-StatePacket.player_world_states
+world lane readback
+session lane readback
 ```
 
 Internal source keys are:
@@ -328,20 +328,20 @@ player_world_states
 For local telemetry:
 
 ```text
-players
+world lane readback
 -> server_players[self_id]
 
-player_world_states
+session lane readback
 -> player_sessions[self_id]
 ```
 
 For target telemetry:
 
 ```text
-players
+world lane readback
 -> selected player, asteroid, bullet, pickup, or enemy state
 
-player_world_states
+session lane readback
 -> selected player session state only
 ```
 
@@ -409,12 +409,12 @@ The client surfaces:
 ```text
 receiver/global status labels from debug_status
 per-player feature labels from debug_statuses
-raw local state from normalized gameplay state
-raw target state from normalized gameplay state
+raw local state from lane-applied gameplay state
+raw target state from lane-applied gameplay state
 canonical target kind and id
 ```
 
-The status packet and the gameplay state packet are separate lanes.
+The status packet and the lane-applied gameplay state are separate lanes.
 
 `debug_status` explains current debug-control state. The gameplay `state` packet explains entity/session world state. The client combines them only for devtools presentation.
 
@@ -471,7 +471,7 @@ Debug status and target readmodels must preserve these rules:
 ```text
 server owns gameplay mutation
 client reads debug status as telemetry
-client reads gameplay state as a presentation readmodel
+client reads lane-applied gameplay state as a presentation readmodel
 client selectors may emit command requests but must not apply command effects locally
 Game Target appears in player-only controls only when target_kind is player
 All Players is a target scope, not a fake player id
@@ -524,7 +524,7 @@ client/scripts/gameplay/runtime/gameplay_flow_composer.gd
 Gameplay state reader files:
 
 ```text
-client/scripts/gameplay/state/gameplay_state_packet_reader.gd
+client/scripts/networking/realtime_router.gd
 client/scripts/gameplay/state/gameplay_state_apply_flow.gd
 ```
 
@@ -601,7 +601,7 @@ client/tests/unit/devtools/context/test_devtools_command_context.gd
 Relevant inbound routing and gameplay state tests include:
 
 ```text
-client/tests/unit/test_gameplay_state_packet_reader.gd
+client/tests/unit/test_realtime_router.gd
 client/tests/unit/test_gameplay_state_apply_flow.gd
 client/tests/unit/test_session_network_controller.gd
 client/tests/unit/test_gameplay_session_controller.gd
