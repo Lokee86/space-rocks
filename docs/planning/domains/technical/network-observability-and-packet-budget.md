@@ -111,7 +111,7 @@ P1 answers whether the current architecture can safely support more entities and
 - Gameplay snapshots have a tight budget on the realtime path.
 - Non-realtime, control, and debug payloads are separate from gameplay packet budgets.
 - Large gameplay packets are diagnostic signals, not a steady-state allowance.
-- The canonical budget lives here; remaining telemetry and logging work is paused until packet-size reduction makes it useful again.
+- The canonical budget lives here; remaining telemetry and logging work is paused until packet-size reduction makes it useful again. Packet metrics and logs can be used to observe reduced JSON numeric size in float-heavy lanes, but this does not imply fixed savings for every packet mix.
 - Preferred frequent realtime packets should stay small and predictable.
 - Packets that grow noticeably should be justified, lowered in frequency, split, or deferred to later protocol work.
 

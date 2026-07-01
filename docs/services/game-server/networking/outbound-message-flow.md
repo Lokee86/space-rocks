@@ -18,7 +18,7 @@ The outbound boundary has three current responsibilities:
 
 Queued responses and lane packets both converge at `outbound.WriteServerMessage()`, which writes a WebSocket text message through the active Gorilla WebSocket connection.
 
-The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, and wire-shape assembly. Outbound routing delivers encoded packets; it does not decide realtime packet schema policy.
+The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, quantization, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy.
 
 ## Code root
 
@@ -60,7 +60,7 @@ The outbound packet routing path does not own:
 - Client-side packet decoding or presentation.
 - Retry, acknowledgement, resend, or durable outbound queues.
 - Realtime lane candidate selection, baseline policy, or packet prioritization.
-- Future compact encoding, quantization/packing, transport mapping, or remaining packet-budget work.
+- Future compact encoding, transport mapping, or remaining packet-budget work.
 
 ## Domain roles
 

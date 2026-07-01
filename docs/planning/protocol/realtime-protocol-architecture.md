@@ -19,7 +19,7 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md)
 - [Packet Schemas](../../data/packet-schemas.md)
 
-This planning doc keeps the remaining architecture boundary for compact encoding, quantization, bit packing, protobuf or future binary representation, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebSocket, and future protocol compatibility/versioning.
+This planning doc keeps the remaining architecture boundary for compact encoding, bit packing, protobuf or future binary representation, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebSocket, and future protocol compatibility/versioning.
 
 ## Current Inputs
 
@@ -80,6 +80,7 @@ Lane-native JSON WebSocket delivery is implemented, and this doc now tracks the 
 - Field-delta update maps are implemented for overlay receiver updates.
 - Field-delta update maps are implemented for session player and lifecycle updates.
 - Creates remain full records, updates carry identity plus changed fields only, and deletes remain identity lists.
+- Realtime numeric wire quantization is implemented for outbound lane projection.
 
 Current implementation details live in:
 
@@ -93,7 +94,7 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on JSON numeric quantization, hot/cold lane separation, compact field names, bit packing, protobuf or custom binary representation, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, transport evolution beyond WebSocket, and future compatibility/versioning.
+Future planning here remains focused on hot/cold lane separation, compact field names, bit packing, protobuf or custom binary representation, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, transport evolution beyond WebSocket, and future compatibility/versioning.
 
 ### Remaining Priority And Packet Budget Work
 
@@ -101,9 +102,9 @@ Delta decides what changed. Priority decides which changed data fits the packet 
 
 Current implementation has lane-native packets, baselines, deltas, and candidate-level scheduling metadata. Delta decides what changed; priority decides which changed data fits the packet budget first.
 
-Field-delta update maps are now implemented, but they are not the final bandwidth solution for high-frequency motion. Remaining packet-size work belongs to numeric wire quantization, hot/cold lane separation, compact or binary representation, interest filtering, and budget-aware record/entity selection.
+Field-delta update maps are now implemented, but they are not the final bandwidth solution for high-frequency motion. Remaining packet-size work belongs to hot/cold lane separation, compact field names, compact or binary representation, interest filtering, and budget-aware record/entity selection.
 
-Future numeric quantization should be treated first as a wire/projection concern before delta comparison, not as authoritative simulation truncation.
+Numeric wire quantization is a wire/projection concern before delta comparison, not authoritative simulation truncation.
 
 Future planning targets remain:
 
@@ -112,11 +113,17 @@ Future planning targets remain:
 - interest filtering
 - stronger resync behavior
 - hot/cold lane separation
-- JSON numeric quantization / truncation for wire projection
 - compact field names or binary/protobuf/custom codec
 - transport evolution beyond current WebSocket
 
 Live priority should stay conservative until required gameplay and presentation truth can be proven safe by metrics.
+
+### Numeric Quantization Note
+
+Numeric wire quantization is already implemented as part of outbound realtime lane projection. The current projection and wire-record behavior is described in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md), and the projection ownership boundary lives in [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md).
+
+Keep this planning doc high-level: it tracks the remaining protocol roadmap, not field policy, code paths, or runtime behavior details.
+
 ## Outbound Collaboration
 
 - `networking/outbound` owns delivery mechanics.

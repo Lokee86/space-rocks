@@ -29,9 +29,21 @@ type OverlayLaneDelta struct {
 	Receiver FieldRecordDelta[OverlayReceiverRecord]
 }
 
+type OverlayWireLaneDelta struct {
+	Metadata Metadata
+	Receiver FieldRecordDelta[OverlayReceiverWireRecord]
+}
+
 type SessionLaneDelta struct {
 	Metadata        Metadata
 	Players         FieldRecordDelta[SessionPlayerRecord]
+	PlayerLifecycle FieldRecordDelta[SessionLifecycleRecord]
+	TotalAsteroids  RecordDelta[SessionTotalAsteroidsRecord]
+}
+
+type SessionWireLaneDelta struct {
+	Metadata        Metadata
+	Players         FieldRecordDelta[SessionPlayerWireRecord]
 	PlayerLifecycle FieldRecordDelta[SessionLifecycleRecord]
 	TotalAsteroids  RecordDelta[SessionTotalAsteroidsRecord]
 }
@@ -49,6 +61,16 @@ type WorldDeltaPacket struct {
 	Asteroids FieldRecordDelta[WorldAsteroidRecord]
 	Pickups   FieldRecordDelta[WorldPickupRecord]
 }
+
+type WorldWireDeltaPacket struct {
+	Type      string
+	Metadata  Metadata
+	Ships     FieldRecordDelta[WorldShipWireRecord]
+	Bullets   FieldRecordDelta[WorldBulletWireRecord]
+	Asteroids FieldRecordDelta[WorldAsteroidWireRecord]
+	Pickups   FieldRecordDelta[WorldPickupWireRecord]
+}
+
 
 func CompareLaneRecordFields[T any](previous []T, current []T, recordID func(T) string, identityWireKey string) FieldRecordDelta[T] {
 	previousByID := make(map[string]T, len(previous))
@@ -194,6 +216,39 @@ func WorldDeltaHasChanges(delta WorldDeltaPacket) bool {
 		len(delta.Pickups.Creates) > 0 || len(delta.Pickups.Updates) > 0 || len(delta.Pickups.Deletes) > 0
 }
 
+
+func BuildWorldWireDeltaPacket(previous WorldWireFullPacket, current WorldWireFullPacket) WorldWireDeltaPacket {
+	metadata := current.Metadata
+	metadata.SnapshotKind = SnapshotKind("delta")
+	return WorldWireDeltaPacket{
+		Type:     PacketTypeWorldDelta,
+		Metadata: metadata,
+		Ships: CompareLaneRecordFields(previous.Ships, current.Ships,
+			func(record WorldShipWireRecord) string { return record.ID },
+			"id",
+		),
+		Bullets: CompareLaneRecordFields(previous.Bullets, current.Bullets,
+			func(record WorldBulletWireRecord) string { return record.ID },
+			"id",
+		),
+		Asteroids: CompareLaneRecordFields(previous.Asteroids, current.Asteroids,
+			func(record WorldAsteroidWireRecord) string { return record.ID },
+			"id",
+		),
+		Pickups: CompareLaneRecordFields(previous.Pickups, current.Pickups,
+			func(record WorldPickupWireRecord) string { return record.ID },
+			"id",
+		),
+	}
+}
+
+func WorldWireDeltaHasChanges(delta WorldWireDeltaPacket) bool {
+	return len(delta.Ships.Creates) > 0 || len(delta.Ships.Updates) > 0 || len(delta.Ships.Deletes) > 0 ||
+		len(delta.Bullets.Creates) > 0 || len(delta.Bullets.Updates) > 0 || len(delta.Bullets.Deletes) > 0 ||
+		len(delta.Asteroids.Creates) > 0 || len(delta.Asteroids.Updates) > 0 || len(delta.Asteroids.Deletes) > 0 ||
+		len(delta.Pickups.Creates) > 0 || len(delta.Pickups.Updates) > 0 || len(delta.Pickups.Deletes) > 0
+}
+
 func BuildOverlayDeltaPacket(previous OverlayFullPacket, current OverlayFullPacket) OverlayLaneDelta {
 	previousRecords := []OverlayReceiverRecord{previous.Receiver}
 	currentRecords := []OverlayReceiverRecord{current.Receiver}
@@ -209,6 +264,24 @@ func BuildOverlayDeltaPacket(previous OverlayFullPacket, current OverlayFullPack
 }
 
 func OverlayDeltaHasChanges(delta OverlayLaneDelta) bool {
+	return len(delta.Receiver.Creates) > 0 || len(delta.Receiver.Updates) > 0 || len(delta.Receiver.Deletes) > 0
+}
+
+func BuildOverlayWireDeltaPacket(previous OverlayWireFullPacket, current OverlayWireFullPacket) OverlayWireLaneDelta {
+	previousRecords := []OverlayReceiverWireRecord{previous.Receiver}
+	currentRecords := []OverlayReceiverWireRecord{current.Receiver}
+	metadata := current.Metadata
+	metadata.SnapshotKind = SnapshotKind("delta")
+	return OverlayWireLaneDelta{
+		Metadata: metadata,
+		Receiver: CompareLaneRecordFields(previousRecords, currentRecords,
+			func(record OverlayReceiverWireRecord) string { return record.SelfID },
+			"self_id",
+		),
+	}
+}
+
+func OverlayWireDeltaHasChanges(delta OverlayWireLaneDelta) bool {
 	return len(delta.Receiver.Creates) > 0 || len(delta.Receiver.Updates) > 0 || len(delta.Receiver.Deletes) > 0
 }
 
@@ -239,6 +312,37 @@ func SessionDeltaHasChanges(delta SessionLaneDelta) bool {
 		len(delta.PlayerLifecycle.Creates) > 0 || len(delta.PlayerLifecycle.Updates) > 0 || len(delta.PlayerLifecycle.Deletes) > 0 ||
 		len(delta.TotalAsteroids.Creates) > 0 || len(delta.TotalAsteroids.Updates) > 0 || len(delta.TotalAsteroids.Deletes) > 0
 }
+
+func BuildSessionWireDeltaPacket(previous SessionWireFullPacket, current SessionWireFullPacket) SessionWireLaneDelta {
+	previousTotal := []SessionTotalAsteroidsRecord{{ID: previous.Metadata.SnapshotID, Count: previous.TotalAsteroids}}
+	currentTotal := []SessionTotalAsteroidsRecord{{ID: current.Metadata.SnapshotID, Count: current.TotalAsteroids}}
+	metadata := current.Metadata
+	metadata.SnapshotKind = SnapshotKind("delta")
+	return SessionWireLaneDelta{
+		Metadata: metadata,
+		Players: CompareLaneRecordFields(previous.Players, current.Players,
+			func(record SessionPlayerWireRecord) string { return record.ID },
+			"id",
+		),
+		PlayerLifecycle: CompareLaneRecordFields(previous.PlayerLifecycle, current.PlayerLifecycle,
+			func(record SessionLifecycleRecord) string { return record.PlayerID },
+			"player_id",
+		),
+		TotalAsteroids: CompareLaneRecords(previousTotal, currentTotal,
+			func(record SessionTotalAsteroidsRecord) string { return record.ID },
+			func(left, right SessionTotalAsteroidsRecord) bool { return left == right },
+		),
+	}
+}
+
+func SessionWireDeltaHasChanges(delta SessionWireLaneDelta) bool {
+	return len(delta.Players.Creates) > 0 || len(delta.Players.Updates) > 0 || len(delta.Players.Deletes) > 0 ||
+		len(delta.PlayerLifecycle.Creates) > 0 || len(delta.PlayerLifecycle.Updates) > 0 || len(delta.PlayerLifecycle.Deletes) > 0 ||
+		len(delta.TotalAsteroids.Creates) > 0 || len(delta.TotalAsteroids.Updates) > 0 || len(delta.TotalAsteroids.Deletes) > 0
+}
+
+
+
 
 
 

@@ -108,9 +108,15 @@ func CandidateMetadata(candidate RealtimeLaneCandidate, state RealtimeSessionSta
 	switch packet := candidate.Full.(type) {
 	case WorldFullPacket:
 		return packet.Metadata, true
+	case WorldWireFullPacket:
+		return packet.Metadata, true
 	case OverlayFullPacket:
 		return packet.Metadata, true
+	case OverlayWireFullPacket:
+		return packet.Metadata, true
 	case SessionFullPacket:
+		return packet.Metadata, true
+	case SessionWireFullPacket:
 		return packet.Metadata, true
 	case EventBatchPacket:
 		return packet.Metadata, true
@@ -119,9 +125,15 @@ func CandidateMetadata(candidate RealtimeLaneCandidate, state RealtimeSessionSta
 	switch packet := candidate.Delta.(type) {
 	case WorldDeltaPacket:
 		return packet.Metadata, true
+	case WorldWireDeltaPacket:
+		return packet.Metadata, true
 	case OverlayLaneDelta:
 		return packet.Metadata, true
+	case OverlayWireLaneDelta:
+		return packet.Metadata, true
 	case SessionLaneDelta:
+		return packet.Metadata, true
+	case SessionWireLaneDelta:
 		return packet.Metadata, true
 	}
 
@@ -147,3 +159,4 @@ func AdvanceMetadataForSuccessfulWrite(lane Lane, metadata Metadata) Metadata {
 	metadata.SnapshotID = sequenceBackedBatchID(metadata.Sequence)
 	return metadata
 }
+

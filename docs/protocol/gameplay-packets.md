@@ -44,7 +44,7 @@ player_pause_state
 resync_request / resync_required / control
 ```
 
-Current packet families are lane-native, with `event_batch` carrying presentation events separately from world, overlay, and session lanes.
+Current packet families are lane-native, with `event_batch` carrying presentation events separately from world, overlay, and session lanes. Lane numeric values may already be wire-quantized before delivery; see [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
 
 Current lane delta behavior:
 

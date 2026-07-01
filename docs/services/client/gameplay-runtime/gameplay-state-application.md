@@ -29,6 +29,8 @@ NetworkClient receives/decodes packet
 
 The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a combined dictionary flow.
 
+Presentation state consumes server-owned quantized wire values as received. Omitted delta fields still mean unchanged, not cleared. Client presentation and devtools comparisons should expect quantized values rather than raw simulation precision. Quantization does not change gameplay authority, which remains server-owned.
+
 ## Code root
 
 ```text

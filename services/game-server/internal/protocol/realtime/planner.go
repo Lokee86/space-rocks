@@ -33,38 +33,43 @@ type RealtimeSendPrepared struct {
 func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeLanePlan {
 	candidates := make([]RealtimeLaneCandidate, 0, 4)
 
+
 	worldState, worldSynced := state.LaneState(LaneWorld)
 	worldReady := state.LaneBaselineReady(LaneWorld)
 	worldSequence := NextLaneSequence(worldState, worldSynced)
 	worldFull := BuildWorldFullPacket(snapshot, worldSequence)
+	quantizedWorldFull, err := quantizeWorldFullPacket(worldFull)
+	if err != nil {
+		return RealtimeLanePlan{Candidates: candidates}
+	}
 	worldProjection, worldHasProjection := state.BaselineProjection(LaneWorld)
 	worldCanUseProjection := worldReady && worldSynced && worldState.IsFinalChunk && worldState.BaselineID != "" && worldHasProjection
-	if !worldCanUseProjection {
+if !worldCanUseProjection {
 		candidates = append(candidates, RealtimeLaneCandidate{
 			Lane:       LaneWorld,
 			Kind:       RealtimeLaneCandidateKindFull,
-			Full:       worldFull,
-			Projection: worldFull,
+			Full:       quantizedWorldFull,
+			Projection: quantizedWorldFull,
 		})
 	} else {
-		previousWorldFull, ok := worldProjection.(WorldFullPacket)
+		previousWorldFull, ok := worldProjection.(WorldWireFullPacket)
 		if !ok {
 			candidates = append(candidates, RealtimeLaneCandidate{
 				Lane:       LaneWorld,
 				Kind:       RealtimeLaneCandidateKindFull,
-				Full:       worldFull,
-				Projection: worldFull,
+				Full:       quantizedWorldFull,
+				Projection: quantizedWorldFull,
 			})
-		} else if !ProjectionChanged(previousWorldFull, worldFull) {
+		} else if !ProjectionChanged(previousWorldFull, quantizedWorldFull) {
 			// No world candidate when the projection is unchanged.
 		} else {
-			worldDelta := BuildWorldDeltaPacket(previousWorldFull, worldFull)
-			if WorldDeltaHasChanges(worldDelta) {
+			worldDelta := BuildWorldWireDeltaPacket(previousWorldFull, quantizedWorldFull)
+			if WorldWireDeltaHasChanges(worldDelta) {
 				candidates = append(candidates, RealtimeLaneCandidate{
 					Lane:       LaneWorld,
 					Kind:       RealtimeLaneCandidateKindDelta,
 					Delta:      worldDelta,
-					Projection: worldFull,
+					Projection: quantizedWorldFull,
 				})
 			}
 		}
@@ -74,35 +79,41 @@ func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 	overlayReady := state.LaneBaselineReady(LaneOverlay)
 	overlaySequence := NextLaneSequence(overlayState, overlaySynced)
 	overlayFull := BuildOverlayFullPacket(snapshot, state.ReceiverID, overlaySequence)
+	quantizedOverlayFull, err := quantizeOverlayFullPacket(overlayFull)
+	if err != nil {
+		return RealtimeLanePlan{Candidates: candidates}
+	}
 	overlayProjection, overlayHasProjection := state.BaselineProjection(LaneOverlay)
 	overlayCanUseProjection := overlayReady && overlaySynced && overlayState.IsFinalChunk && overlayState.BaselineID != "" && overlayHasProjection
 	if !overlayCanUseProjection {
 		candidates = append(candidates, RealtimeLaneCandidate{
 			Lane:       LaneOverlay,
 			Kind:       RealtimeLaneCandidateKindFull,
-			Full:       overlayFull,
-			Projection: overlayFull,
+			Full:       quantizedOverlayFull,
+			Projection: quantizedOverlayFull,
 		})
 	} else {
-		previousOverlayFull, ok := overlayProjection.(OverlayFullPacket)
+		previousOverlayFull, ok := overlayProjection.(OverlayWireFullPacket)
 		if !ok {
 			candidates = append(candidates, RealtimeLaneCandidate{
 				Lane:       LaneOverlay,
 				Kind:       RealtimeLaneCandidateKindFull,
-				Full:       overlayFull,
-				Projection: overlayFull,
+				Full:       quantizedOverlayFull,
+				Projection: quantizedOverlayFull,
 			})
-		} else if !ProjectionChanged(previousOverlayFull, overlayFull) {
-			// No overlay candidate when the projection is unchanged.
 		} else {
-			overlayDelta := BuildOverlayDeltaPacket(previousOverlayFull, overlayFull)
-			if OverlayDeltaHasChanges(overlayDelta) {
-				candidates = append(candidates, RealtimeLaneCandidate{
+			if !ProjectionChanged(previousOverlayFull, quantizedOverlayFull) {
+				// No overlay candidate when the projection is unchanged.
+			} else {
+				overlayDelta := BuildOverlayWireDeltaPacket(previousOverlayFull, quantizedOverlayFull)
+				if OverlayWireDeltaHasChanges(overlayDelta) {
+					candidates = append(candidates, RealtimeLaneCandidate{
 					Lane:       LaneOverlay,
 					Kind:       RealtimeLaneCandidateKindDelta,
 					Delta:      overlayDelta,
-					Projection: overlayFull,
+					Projection: quantizedOverlayFull,
 				})
+				}
 			}
 		}
 	}
@@ -111,35 +122,41 @@ func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 	sessionReady := state.LaneBaselineReady(LaneSession)
 	sessionSequence := NextLaneSequence(sessionState, sessionSynced)
 	sessionFull := BuildSessionFullPacket(snapshot, sessionSequence)
+	quantizedSessionFull, err := quantizeSessionFullPacket(sessionFull)
+	if err != nil {
+		return RealtimeLanePlan{Candidates: candidates}
+	}
 	sessionProjection, sessionHasProjection := state.BaselineProjection(LaneSession)
 	sessionCanUseProjection := sessionReady && sessionSynced && sessionState.IsFinalChunk && sessionState.BaselineID != "" && sessionHasProjection
 	if !sessionCanUseProjection {
 		candidates = append(candidates, RealtimeLaneCandidate{
 			Lane:       LaneSession,
 			Kind:       RealtimeLaneCandidateKindFull,
-			Full:       sessionFull,
-			Projection: sessionFull,
+			Full:       quantizedSessionFull,
+			Projection: quantizedSessionFull,
 		})
 	} else {
-		previousSessionFull, ok := sessionProjection.(SessionFullPacket)
+		previousSessionFull, ok := sessionProjection.(SessionWireFullPacket)
 		if !ok {
 			candidates = append(candidates, RealtimeLaneCandidate{
 				Lane:       LaneSession,
 				Kind:       RealtimeLaneCandidateKindFull,
-				Full:       sessionFull,
-				Projection: sessionFull,
+				Full:       quantizedSessionFull,
+				Projection: quantizedSessionFull,
 			})
-		} else if !ProjectionChanged(previousSessionFull, sessionFull) {
-			// No session candidate when the projection is unchanged.
 		} else {
-			sessionDelta := BuildSessionDeltaPacket(previousSessionFull, sessionFull)
-			if SessionDeltaHasChanges(sessionDelta) {
-				candidates = append(candidates, RealtimeLaneCandidate{
+			if !ProjectionChanged(previousSessionFull, quantizedSessionFull) {
+				// No session candidate when the projection is unchanged.
+			} else {
+				sessionDelta := BuildSessionWireDeltaPacket(previousSessionFull, quantizedSessionFull)
+				if SessionWireDeltaHasChanges(sessionDelta) {
+					candidates = append(candidates, RealtimeLaneCandidate{
 					Lane:       LaneSession,
 					Kind:       RealtimeLaneCandidateKindDelta,
 					Delta:      sessionDelta,
-					Projection: sessionFull,
+					Projection: quantizedSessionFull,
 				})
+				}
 			}
 		}
 	}
@@ -270,3 +287,75 @@ func CandidateProjection(candidate RealtimeLaneCandidate) (any, bool) {
 	}
 	return candidate.Projection, true
 }
+
+
+func quantizeOverlayFullPacket(packet OverlayFullPacket) (OverlayWireFullPacket, error) {
+	quantized := OverlayWireFullPacket{
+		Type: packet.Type,
+		Metadata: packet.Metadata,
+		Receiver: OverlayReceiverWireRecord{
+			SelfID:                  packet.Receiver.SelfID,
+			Lives:                   packet.Receiver.Lives,
+			Score:                   packet.Receiver.Score,
+			PrimaryWeaponID:         packet.Receiver.PrimaryWeaponID,
+			PrimaryAmmoPolicy:       packet.Receiver.PrimaryAmmoPolicy,
+			PrimaryAmmoRemaining:    packet.Receiver.PrimaryAmmoRemaining,
+			SecondaryWeaponID:       packet.Receiver.SecondaryWeaponID,
+			SecondaryAmmoPolicy:     packet.Receiver.SecondaryAmmoPolicy,
+			SecondaryAmmoRemaining:  packet.Receiver.SecondaryAmmoRemaining,
+		},
+	}
+	var err error
+	quantized.Receiver.RespawnCooldown, err = quantizeTypedFloat("overlay.respawn_cooldown", packet.Receiver.RespawnCooldown)
+	if err != nil {
+		return OverlayWireFullPacket{}, err
+	}
+	quantized.Receiver.PrimaryCooldownRemaining, err = quantizeTypedFloat("overlay.primary_cooldown_remaining", packet.Receiver.PrimaryCooldownRemaining)
+	if err != nil {
+		return OverlayWireFullPacket{}, err
+	}
+	quantized.Receiver.SecondaryCooldownRemaining, err = quantizeTypedFloat("overlay.secondary_cooldown_remaining", packet.Receiver.SecondaryCooldownRemaining)
+	if err != nil {
+		return OverlayWireFullPacket{}, err
+	}
+	return quantized, nil
+}
+
+func quantizeSessionFullPacket(packet SessionFullPacket) (SessionWireFullPacket, error) {
+	quantized := SessionWireFullPacket{
+		Type: packet.Type,
+		Metadata: packet.Metadata,
+		Players: make([]SessionPlayerWireRecord, 0, len(packet.Players)),
+		PlayerLifecycle: packet.PlayerLifecycle,
+		TotalAsteroids: packet.TotalAsteroids,
+	}
+	var err error
+	for _, player := range packet.Players {
+		wirePlayer := SessionPlayerWireRecord{
+			ID:                  player.ID,
+			ShipType:            player.ShipType,
+			Score:               player.Score,
+			Lives:               player.Lives,
+			PrimaryWeaponID:     player.PrimaryWeaponID,
+			PrimaryAmmoPolicy:   player.PrimaryAmmoPolicy,
+			SecondaryWeaponID:   player.SecondaryWeaponID,
+			SecondaryAmmoPolicy: player.SecondaryAmmoPolicy,
+		}
+		wirePlayer.RespawnCooldown, err = quantizeTypedFloat("session.players.respawn_cooldown", player.RespawnCooldown)
+		if err != nil {
+			return SessionWireFullPacket{}, err
+		}
+		wirePlayer.SpawnX, err = quantizeTypedFloat("session.players.spawn_x", player.SpawnX)
+		if err != nil {
+			return SessionWireFullPacket{}, err
+		}
+		wirePlayer.SpawnY, err = quantizeTypedFloat("session.players.spawn_y", player.SpawnY)
+		if err != nil {
+			return SessionWireFullPacket{}, err
+		}
+		quantized.Players = append(quantized.Players, wirePlayer)
+	}
+	return quantized, nil
+}
+
+
