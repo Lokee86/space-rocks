@@ -38,7 +38,16 @@ func _apply_creates(target: Dictionary, records: Array) -> void:
 
 func _apply_updates(target: Dictionary, records: Array) -> void:
 	for record in records:
-		_apply_upsert(target, record)
+		_apply_merge_update(target, record)
+
+func _apply_merge_update(target: Dictionary, record: Dictionary) -> void:
+	var id = _record_key(record)
+	if id == null or not target.has(id):
+		return
+	var merged: Dictionary = target[id].duplicate(true)
+	for key in record.keys():
+		merged[key] = record.get(key)
+	target[id] = merged
 
 func _apply_deletes(target: Dictionary, records: Array) -> void:
 	for record in records:

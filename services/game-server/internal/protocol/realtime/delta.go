@@ -26,13 +26,13 @@ type WorldLaneDelta struct {
 
 type OverlayLaneDelta struct {
 	Metadata Metadata
-	Receiver RecordDelta[OverlayReceiverRecord]
+	Receiver FieldRecordDelta[OverlayReceiverRecord]
 }
 
 type SessionLaneDelta struct {
 	Metadata        Metadata
-	Players         RecordDelta[SessionPlayerRecord]
-	PlayerLifecycle RecordDelta[SessionLifecycleRecord]
+	Players         FieldRecordDelta[SessionPlayerRecord]
+	PlayerLifecycle FieldRecordDelta[SessionLifecycleRecord]
 	TotalAsteroids  RecordDelta[SessionTotalAsteroidsRecord]
 }
 
@@ -201,9 +201,9 @@ func BuildOverlayDeltaPacket(previous OverlayFullPacket, current OverlayFullPack
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return OverlayLaneDelta{
 		Metadata: metadata,
-		Receiver: CompareLaneRecords(previousRecords, currentRecords,
+		Receiver: CompareLaneRecordFields(previousRecords, currentRecords,
 			func(record OverlayReceiverRecord) string { return record.SelfID },
-			func(left, right OverlayReceiverRecord) bool { return left == right },
+			"self_id",
 		),
 	}
 }
@@ -219,13 +219,13 @@ func BuildSessionDeltaPacket(previous SessionFullPacket, current SessionFullPack
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return SessionLaneDelta{
 		Metadata: metadata,
-		Players: CompareLaneRecords(previous.Players, current.Players,
+		Players: CompareLaneRecordFields(previous.Players, current.Players,
 			func(record SessionPlayerRecord) string { return record.ID },
-			func(left, right SessionPlayerRecord) bool { return left == right },
+			"id",
 		),
-		PlayerLifecycle: CompareLaneRecords(previous.PlayerLifecycle, current.PlayerLifecycle,
+		PlayerLifecycle: CompareLaneRecordFields(previous.PlayerLifecycle, current.PlayerLifecycle,
 			func(record SessionLifecycleRecord) string { return record.PlayerID },
-			func(left, right SessionLifecycleRecord) bool { return left == right },
+			"player_id",
 		),
 		TotalAsteroids: CompareLaneRecords(previousTotal, currentTotal,
 			func(record SessionTotalAsteroidsRecord) string { return record.ID },

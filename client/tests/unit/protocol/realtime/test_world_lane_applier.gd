@@ -277,7 +277,7 @@ func test_world_delta_merges_partial_asteroid_and_pickup_updates_by_ownership() 
 	assert_eq(world_lane_state.pickups["pickup-1"]["age_seconds"], 0)
 
 
-func test_world_delta_applies_valid_arrays_normally() -> void:func test_world_delta_applies_valid_arrays_normally() -> void:
+func test_world_delta_applies_valid_arrays_normally() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
