@@ -41,6 +41,19 @@ func upsert_ship(record: Dictionary) -> void:
 func upsert_bullet(record: Dictionary) -> void:
 	_upsert_record(bullets, record, BULLET_FIELDS)
 
+func merge_bullet_update(record: Dictionary) -> void:
+	var id = record.get("id")
+	if id == null:
+		return
+	if not bullets.has(id):
+		return
+
+	var merged: Dictionary = bullets[id].duplicate(true)
+	var narrowed: Dictionary = _narrow_record(record, BULLET_FIELDS)
+	for field in narrowed:
+		merged[field] = narrowed[field]
+	bullets[id] = merged
+
 func upsert_asteroid(record: Dictionary) -> void:
 	_upsert_record(asteroids, record, ASTEROID_FIELDS)
 
@@ -76,5 +89,3 @@ func _narrow_record(record: Dictionary, fields: Array) -> Dictionary:
 		if record.has(field):
 			narrowed[field] = record[field]
 	return narrowed
-
-

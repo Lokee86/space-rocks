@@ -11,9 +11,15 @@ type RecordDelta[T any] struct {
 	Deletes []string
 }
 
+type FieldRecordDelta[T any] struct {
+	Creates []T
+	Updates []map[string]any
+	Deletes []string
+}
+
 type WorldLaneDelta struct {
 	Ships     RecordDelta[WorldShipRecord]
-	Bullets   RecordDelta[WorldBulletRecord]
+	Bullets   FieldRecordDelta[WorldBulletRecord]
 	Asteroids RecordDelta[WorldAsteroidRecord]
 	Pickups   RecordDelta[WorldPickupRecord]
 }
@@ -39,9 +45,70 @@ type WorldDeltaPacket struct {
 	Type      string
 	Metadata  Metadata
 	Ships     RecordDelta[WorldShipRecord]
-	Bullets   RecordDelta[WorldBulletRecord]
+	Bullets   FieldRecordDelta[WorldBulletRecord]
 	Asteroids RecordDelta[WorldAsteroidRecord]
 	Pickups   RecordDelta[WorldPickupRecord]
+}
+
+func CompareLaneRecordFields[T any](previous []T, current []T, recordID func(T) string, identityWireKey string) FieldRecordDelta[T] {
+	previousByID := make(map[string]T, len(previous))
+	for _, record := range previous {
+		previousByID[recordID(record)] = record
+	}
+
+	currentByID := make(map[string]T, len(current))
+	currentIDs := make([]string, 0, len(current))
+	for _, record := range current {
+		id := recordID(record)
+		currentByID[id] = record
+		currentIDs = append(currentIDs, id)
+	}
+	sort.Strings(currentIDs)
+
+	previousIDs := make([]string, 0, len(previous))
+	for _, record := range previous {
+		previousIDs = append(previousIDs, recordID(record))
+	}
+	sort.Strings(previousIDs)
+
+	delta := FieldRecordDelta[T]{}
+
+	for _, id := range currentIDs {
+		currentRecord := currentByID[id]
+		previousRecord, ok := previousByID[id]
+		if !ok {
+			delta.Creates = append(delta.Creates, currentRecord)
+			continue
+		}
+
+		previousWire := wireStructToMap(previousRecord)
+		currentWire := wireStructToMap(currentRecord)
+		update := map[string]any{identityWireKey: currentWire[identityWireKey]}
+		if update[identityWireKey] == nil {
+			update[identityWireKey] = recordID(currentRecord)
+		}
+
+		for key, currentValue := range currentWire {
+			if key == identityWireKey {
+				continue
+			}
+			if !reflect.DeepEqual(previousWire[key], currentValue) {
+				update[key] = currentValue
+			}
+		}
+
+		if len(update) > 1 {
+			delta.Updates = append(delta.Updates, update)
+		}
+	}
+
+	for _, id := range previousIDs {
+		if _, ok := currentByID[id]; !ok {
+			delta.Deletes = append(delta.Deletes, id)
+		}
+	}
+
+	return delta
 }
 
 func CompareLaneRecords[T any](previous []T, current []T, recordID func(T) string, equal func(T, T) bool) RecordDelta[T] {
@@ -105,9 +172,9 @@ func BuildWorldDeltaPacket(previous WorldFullPacket, current WorldFullPacket) Wo
 			func(record WorldShipRecord) string { return record.ID },
 			func(left, right WorldShipRecord) bool { return left == right },
 		),
-		Bullets: CompareLaneRecords(previous.Bullets, current.Bullets,
+		Bullets: CompareLaneRecordFields(previous.Bullets, current.Bullets,
 			func(record WorldBulletRecord) string { return record.ID },
-			func(left, right WorldBulletRecord) bool { return left == right },
+			"id",
 		),
 		Asteroids: CompareLaneRecords(previous.Asteroids, current.Asteroids,
 			func(record WorldAsteroidRecord) string { return record.ID },
