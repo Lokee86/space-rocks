@@ -18,10 +18,10 @@ type FieldRecordDelta[T any] struct {
 }
 
 type WorldLaneDelta struct {
-	Ships     RecordDelta[WorldShipRecord]
+	Ships     FieldRecordDelta[WorldShipRecord]
 	Bullets   FieldRecordDelta[WorldBulletRecord]
-	Asteroids RecordDelta[WorldAsteroidRecord]
-	Pickups   RecordDelta[WorldPickupRecord]
+	Asteroids FieldRecordDelta[WorldAsteroidRecord]
+	Pickups   FieldRecordDelta[WorldPickupRecord]
 }
 
 type OverlayLaneDelta struct {
@@ -44,10 +44,10 @@ type SessionTotalAsteroidsRecord struct {
 type WorldDeltaPacket struct {
 	Type      string
 	Metadata  Metadata
-	Ships     RecordDelta[WorldShipRecord]
+	Ships     FieldRecordDelta[WorldShipRecord]
 	Bullets   FieldRecordDelta[WorldBulletRecord]
-	Asteroids RecordDelta[WorldAsteroidRecord]
-	Pickups   RecordDelta[WorldPickupRecord]
+	Asteroids FieldRecordDelta[WorldAsteroidRecord]
+	Pickups   FieldRecordDelta[WorldPickupRecord]
 }
 
 func CompareLaneRecordFields[T any](previous []T, current []T, recordID func(T) string, identityWireKey string) FieldRecordDelta[T] {
@@ -168,21 +168,21 @@ func BuildWorldDeltaPacket(previous WorldFullPacket, current WorldFullPacket) Wo
 	return WorldDeltaPacket{
 		Type:     PacketTypeWorldDelta,
 		Metadata: metadata,
-		Ships: CompareLaneRecords(previous.Ships, current.Ships,
+		Ships: CompareLaneRecordFields(previous.Ships, current.Ships,
 			func(record WorldShipRecord) string { return record.ID },
-			func(left, right WorldShipRecord) bool { return left == right },
+			"id",
 		),
 		Bullets: CompareLaneRecordFields(previous.Bullets, current.Bullets,
 			func(record WorldBulletRecord) string { return record.ID },
 			"id",
 		),
-		Asteroids: CompareLaneRecords(previous.Asteroids, current.Asteroids,
+		Asteroids: CompareLaneRecordFields(previous.Asteroids, current.Asteroids,
 			func(record WorldAsteroidRecord) string { return record.ID },
-			func(left, right WorldAsteroidRecord) bool { return left == right },
+			"id",
 		),
-		Pickups: CompareLaneRecords(previous.Pickups, current.Pickups,
+		Pickups: CompareLaneRecordFields(previous.Pickups, current.Pickups,
 			func(record WorldPickupRecord) string { return record.ID },
-			func(left, right WorldPickupRecord) bool { return left == right },
+			"id",
 		),
 	}
 }
@@ -239,3 +239,6 @@ func SessionDeltaHasChanges(delta SessionLaneDelta) bool {
 		len(delta.PlayerLifecycle.Creates) > 0 || len(delta.PlayerLifecycle.Updates) > 0 || len(delta.PlayerLifecycle.Deletes) > 0 ||
 		len(delta.TotalAsteroids.Creates) > 0 || len(delta.TotalAsteroids.Updates) > 0 || len(delta.TotalAsteroids.Deletes) > 0
 }
+
+
+

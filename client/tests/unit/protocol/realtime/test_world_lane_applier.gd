@@ -226,7 +226,58 @@ func test_world_delta_treats_null_arrays_as_empty_and_applies_deletes() -> void:
 	assert_false(world_lane_state.pickups.has("pickup-1"))
 
 
-func test_world_delta_applies_valid_arrays_normally() -> void:
+func test_world_delta_merges_partial_asteroid_and_pickup_updates_by_ownership() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [_asteroid_packet("asteroid-1", 7, 8)],
+			"pickups": [_pickup_packet("pickup-1", 9, 10)],
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [],
+			"bullet_updates": [],
+			"bullet_deletes": [],
+			"asteroid_creates": [],
+			"asteroid_updates": [{"id": "asteroid-1", "x": 99}],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [{"id": "pickup-1", "x": 88, "age_seconds": 0}],
+			"pickup_deletes": [],
+		}
+	)
+
+	assert_true(applied)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 99)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 8)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["size"], 1)
+	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 88)
+	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 10)
+	assert_eq(world_lane_state.pickups["pickup-1"]["type"], "test")
+	assert_eq(world_lane_state.pickups["pickup-1"]["age_seconds"], 0)
+
+
+func test_world_delta_applies_valid_arrays_normally() -> void:func test_world_delta_applies_valid_arrays_normally() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
@@ -459,6 +510,281 @@ func test_world_lane_state_merges_bullet_updates_with_zero_rotation_and_preserve
 	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
 
 
+func test_world_lane_state_merges_ship_updates_without_dropping_omitted_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_ship({
+		"id": "ship-1",
+		"x": 10,
+		"y": 20,
+		"rotation": 30,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"thrusting": true,
+		"health": 90,
+		"shields": 15,
+		"ship_type": "v_wing",
+		"target_kind": "player",
+		"target_id": "player-2",
+	})
+
+	world_lane_state.merge_ship_update({"id": "ship-1", "x": 99})
+
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 99)
+	assert_eq(world_lane_state.ships["ship-1"]["y"], 20)
+	assert_eq(world_lane_state.ships["ship-1"]["rotation"], 30)
+	assert_eq(world_lane_state.ships["ship-1"]["health"], 90)
+	assert_eq(world_lane_state.ships["ship-1"]["shields"], 15)
+	assert_eq(world_lane_state.ships["ship-1"]["ship_type"], "v_wing")
+	assert_eq(world_lane_state.ships["ship-1"]["target_kind"], "player")
+	assert_eq(world_lane_state.ships["ship-1"]["target_id"], "player-2")
+
+
+func test_world_lane_state_merges_ship_updates_with_provided_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_ship({
+		"id": "ship-1",
+		"x": 10,
+		"y": 20,
+		"rotation": 30,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"thrusting": false,
+		"health": 90,
+		"shields": 15,
+		"ship_type": "v_wing",
+		"target_kind": "player",
+		"target_id": "player-2",
+	})
+
+	world_lane_state.merge_ship_update({"id": "ship-1", "x": 99, "y": 101, "rotation": 0.0, "thrusting": false})
+
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 99)
+	assert_eq(world_lane_state.ships["ship-1"]["y"], 101)
+	assert_eq(world_lane_state.ships["ship-1"]["rotation"], 0.0)
+	assert_eq(world_lane_state.ships["ship-1"]["thrusting"], false)
+
+
+func test_world_lane_state_ignores_unknown_ship_ids_for_merge() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.merge_ship_update({"id": "ship-unknown", "x": 99})
+
+	assert_false(world_lane_state.ships.has("ship-unknown"))
+
+
+func test_world_lane_state_ignores_ship_updates_without_id() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_ship({
+		"id": "ship-1",
+		"x": 10,
+		"y": 20,
+		"rotation": 30,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"thrusting": false,
+		"health": 90,
+		"shields": 15,
+		"ship_type": "v_wing",
+		"target_kind": "player",
+		"target_id": "player-2",
+	})
+
+	world_lane_state.merge_ship_update({"x": 99})
+
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
+	assert_eq(world_lane_state.ships["ship-1"]["ship_type"], "v_wing")
+
+
+func test_world_lane_state_creates_full_ship_records() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_ship({
+		"id": "ship-1",
+		"x": 10,
+		"y": 20,
+		"rotation": 30,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"thrusting": true,
+		"health": 90,
+		"shields": 15,
+		"ship_type": "v_wing",
+		"target_kind": "player",
+		"target_id": "player-2",
+	})
+
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
+	assert_eq(world_lane_state.ships["ship-1"]["y"], 20)
+	assert_eq(world_lane_state.ships["ship-1"]["rotation"], 30)
+	assert_eq(world_lane_state.ships["ship-1"]["thrusting"], true)
+	assert_eq(world_lane_state.ships["ship-1"]["ship_type"], "v_wing")
+	assert_eq(world_lane_state.ships["ship-1"]["target_kind"], "player")
+	assert_eq(world_lane_state.ships["ship-1"]["target_id"], "player-2")
+
+
+func test_world_lane_state_deletes_ship_records() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_ship({
+		"id": "ship-1",
+		"x": 10,
+		"y": 20,
+		"rotation": 30,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"thrusting": true,
+		"health": 90,
+		"shields": 15,
+		"ship_type": "v_wing",
+		"target_kind": "player",
+		"target_id": "player-2",
+	})
+
+	world_lane_state.delete_ship("ship-1")
+
+	assert_false(world_lane_state.ships.has("ship-1"))
+func test_world_lane_state_merges_asteroid_updates_without_dropping_omitted_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_asteroid({
+		"id": "asteroid-1",
+		"x": 10,
+		"y": 20,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"rotation": 30,
+		"size": 4,
+		"health": 90,
+		"scale": 2,
+		"variant": "rock",
+	})
+
+	world_lane_state.merge_asteroid_update({"id": "asteroid-1", "x": 99})
+
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 99)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 20)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["size"], 4)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["health"], 90)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["scale"], 2)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["variant"], "rock")
+
+
+func test_world_lane_state_merges_asteroid_updates_with_provided_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_asteroid({
+		"id": "asteroid-1",
+		"x": 10,
+		"y": 20,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"rotation": 30,
+		"size": 4,
+		"health": 90,
+		"scale": 2,
+		"variant": "rock",
+	})
+
+	world_lane_state.merge_asteroid_update({"id": "asteroid-1", "x": 99, "y": 101, "size": 7})
+
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 99)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 101)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["size"], 7)
+
+
+func test_world_lane_state_applies_zero_value_asteroid_updates() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_asteroid({
+		"id": "asteroid-1",
+		"x": 10,
+		"y": 20,
+		"velocity_x": 1.5,
+		"velocity_y": 2.5,
+		"rotation": 30,
+		"size": 4,
+		"health": 90,
+		"scale": 2,
+		"variant": "rock",
+	})
+
+	world_lane_state.merge_asteroid_update({"id": "asteroid-1", "rotation": 0, "scale": 0})
+
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["rotation"], 0)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["scale"], 0)
+
+
+func test_world_lane_state_ignores_unknown_asteroid_ids_for_merge() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.merge_asteroid_update({"id": "asteroid-unknown", "x": 99})
+
+	assert_false(world_lane_state.asteroids.has("asteroid-unknown"))
+
+
+func test_world_lane_state_merges_pickup_updates_without_dropping_omitted_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_pickup({
+		"id": "pickup-1",
+		"type": "shield",
+		"pickup_class": "powerup",
+		"x": 10,
+		"y": 20,
+		"health": 90,
+		"age_seconds": 4,
+		"lifespan_seconds": 12,
+	})
+
+	world_lane_state.merge_pickup_update({"id": "pickup-1", "x": 99})
+
+	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 99)
+	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 20)
+	assert_eq(world_lane_state.pickups["pickup-1"]["type"], "shield")
+	assert_eq(world_lane_state.pickups["pickup-1"]["pickup_class"], "powerup")
+	assert_eq(world_lane_state.pickups["pickup-1"]["health"], 90)
+	assert_eq(world_lane_state.pickups["pickup-1"]["age_seconds"], 4)
+	assert_eq(world_lane_state.pickups["pickup-1"]["lifespan_seconds"], 12)
+
+
+func test_world_lane_state_merges_pickup_updates_with_provided_fields() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_pickup({
+		"id": "pickup-1",
+		"type": "shield",
+		"pickup_class": "powerup",
+		"x": 10,
+		"y": 20,
+		"health": 90,
+		"age_seconds": 4,
+		"lifespan_seconds": 12,
+	})
+
+	world_lane_state.merge_pickup_update({"id": "pickup-1", "x": 99, "y": 101, "age_seconds": 0})
+
+	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 99)
+	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 101)
+	assert_eq(world_lane_state.pickups["pickup-1"]["age_seconds"], 0)
+
+
+func test_world_lane_state_applies_zero_value_pickup_updates() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_pickup({
+		"id": "pickup-1",
+		"type": "shield",
+		"pickup_class": "powerup",
+		"x": 10,
+		"y": 20,
+		"health": 90,
+		"age_seconds": 4,
+		"lifespan_seconds": 12,
+	})
+
+	world_lane_state.merge_pickup_update({"id": "pickup-1", "health": 0, "lifespan_seconds": 0})
+
+	assert_eq(world_lane_state.pickups["pickup-1"]["health"], 0)
+	assert_eq(world_lane_state.pickups["pickup-1"]["lifespan_seconds"], 0)
+
+
+func test_world_lane_state_ignores_unknown_pickup_ids_for_merge() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.merge_pickup_update({"id": "pickup-unknown", "x": 99})
+
+	assert_false(world_lane_state.pickups.has("pickup-unknown"))
+
+
 func test_world_lane_state_preserves_ship_target_fields() -> void:
 	var world_lane_state := WorldLaneState.new()
 	world_lane_state.upsert_ship({
@@ -529,4 +855,9 @@ static func _pickup_packet(id: String, x: int, y: int) -> Dictionary:
 		"y": y,
 		"pickup_type": "test",
 	}
+
+
+
+
+
 

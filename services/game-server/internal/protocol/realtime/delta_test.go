@@ -293,14 +293,171 @@ func TestBuildWorldDeltaPacketEmitsBulletDeleteAsID(t *testing.T) {
 	}
 }
 
-func TestBuildWorldDeltaPacketEmitsShipUpdatesAsFullRecords(t *testing.T) {
-	previous := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 1}}}
-	current := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 4}}}
+func TestBuildWorldDeltaPacketEmitsAsteroidCreatesAsTypedRecords(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Asteroids: []WorldAsteroidRecord{{ID: "asteroid-a", X: 1, Y: 2, Size: 3, Health: 4, Scale: 5, Variant: 1}}}
 
 	delta := BuildWorldDeltaPacket(previous, current)
 
-	if len(delta.Ships.Updates) != 1 || delta.Ships.Updates[0].ID != "ship-a" || delta.Ships.Updates[0].X != 4 {
-		t.Fatalf("expected full ship update record, got %#v", delta.Ships.Updates)
+	if len(delta.Asteroids.Creates) != 1 || delta.Asteroids.Creates[0].ID != "asteroid-a" || delta.Asteroids.Creates[0].Size != 3 {
+		t.Fatalf("expected typed asteroid create, got %#v", delta.Asteroids.Creates)
+	}
+	if len(delta.Asteroids.Updates) != 0 || len(delta.Asteroids.Deletes) != 0 {
+		t.Fatalf("expected only asteroid create, got %#v", delta.Asteroids)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsAsteroidUpdatesAsFieldDeltas(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Asteroids: []WorldAsteroidRecord{{ID: "asteroid-a", X: 1, Y: 2, Size: 3, Health: 4, Scale: 5, Variant: 1}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Asteroids: []WorldAsteroidRecord{{ID: "asteroid-a", X: 8, Y: 9, Size: 3, Health: 4, Scale: 5, Variant: 1}}}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Asteroids.Updates) != 1 {
+		t.Fatalf("expected one asteroid update, got %#v", delta.Asteroids.Updates)
+	}
+	got := delta.Asteroids.Updates[0]
+	if got["id"] != "asteroid-a" || len(got) != 3 || got["x"] != float64(8) || got["y"] != float64(9) {
+		t.Fatalf("expected id, x, and y only, got %#v", got)
+	}
+	if _, ok := got["size"]; ok {
+		t.Fatalf("expected size to be omitted, got %#v", got)
+	}
+	if _, ok := got["health"]; ok {
+		t.Fatalf("expected health to be omitted, got %#v", got)
+	}
+	if _, ok := got["scale"]; ok {
+		t.Fatalf("expected scale to be omitted, got %#v", got)
+	}
+	if _, ok := got["variant"]; ok {
+		t.Fatalf("expected variant to be omitted, got %#v", got)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsAsteroidDeletesAsIDs(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Asteroids: []WorldAsteroidRecord{{ID: "asteroid-a", X: 1, Y: 2, Size: 3, Health: 4, Scale: 5, Variant: 1}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Asteroids.Deletes) != 1 || delta.Asteroids.Deletes[0] != "asteroid-a" {
+		t.Fatalf("expected asteroid delete by ID, got %#v", delta.Asteroids.Deletes)
+	}
+	if len(delta.Asteroids.Creates) != 0 || len(delta.Asteroids.Updates) != 0 {
+		t.Fatalf("expected only asteroid delete, got %#v", delta.Asteroids)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsPickupCreatesAsTypedRecords(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Pickups: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 1, Y: 2, Health: 3, AgeSeconds: 4, LifespanSeconds: 5}}}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Pickups.Creates) != 1 || delta.Pickups.Creates[0].ID != "pickup-a" || delta.Pickups.Creates[0].Type != "shield" {
+		t.Fatalf("expected typed pickup create, got %#v", delta.Pickups.Creates)
+	}
+	if len(delta.Pickups.Updates) != 0 || len(delta.Pickups.Deletes) != 0 {
+		t.Fatalf("expected only pickup create, got %#v", delta.Pickups)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsPickupUpdatesAsFieldDeltas(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Pickups: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 1, Y: 2, Health: 3, AgeSeconds: 4, LifespanSeconds: 5}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Pickups: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 8, Y: 9, Health: 3, AgeSeconds: 7, LifespanSeconds: 5}}}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Pickups.Updates) != 1 {
+		t.Fatalf("expected one pickup update, got %#v", delta.Pickups.Updates)
+	}
+	got := delta.Pickups.Updates[0]
+	if got["id"] != "pickup-a" || len(got) != 4 || got["x"] != float64(8) || got["y"] != float64(9) || got["age_seconds"] != float64(7) {
+		t.Fatalf("expected id, x, y, and age_seconds only, got %#v", got)
+	}
+	if _, ok := got["type"]; ok {
+		t.Fatalf("expected type to be omitted, got %#v", got)
+	}
+	if _, ok := got["pickup_class"]; ok {
+		t.Fatalf("expected pickup_class to be omitted, got %#v", got)
+	}
+	if _, ok := got["health"]; ok {
+		t.Fatalf("expected health to be omitted, got %#v", got)
+	}
+	if _, ok := got["lifespan_seconds"]; ok {
+		t.Fatalf("expected lifespan_seconds to be omitted, got %#v", got)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsPickupDeletesAsIDs(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Pickups: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 1, Y: 2, Health: 3, AgeSeconds: 4, LifespanSeconds: 5}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Pickups.Deletes) != 1 || delta.Pickups.Deletes[0] != "pickup-a" {
+		t.Fatalf("expected pickup delete by ID, got %#v", delta.Pickups.Deletes)
+	}
+	if len(delta.Pickups.Creates) != 0 || len(delta.Pickups.Updates) != 0 {
+		t.Fatalf("expected only pickup delete, got %#v", delta.Pickups)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsShipCreatesAsTypedRecords(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}}}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Ships.Creates) != 1 || delta.Ships.Creates[0].ID != "ship-a" || delta.Ships.Creates[0].ShipType != "v_wing" {
+		t.Fatalf("expected typed ship create, got %#v", delta.Ships.Creates)
+	}
+	if len(delta.Ships.Updates) != 0 || len(delta.Ships.Deletes) != 0 {
+		t.Fatalf("expected only ship create, got %#v", delta.Ships)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsShipUpdatesAsFieldDeltas(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 8, Y: 9, Rotation: 10, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}}}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Ships.Updates) != 1 {
+		t.Fatalf("expected one ship update, got %#v", delta.Ships.Updates)
+	}
+	got := delta.Ships.Updates[0]
+	if got["id"] != "ship-a" || len(got) != 5 || got["x"] != float64(8) || got["y"] != float64(9) || got["rotation"] != float64(10) || got["thrusting"] != true {
+		t.Fatalf("expected id, x, y, rotation, and thrusting only, got %#v", got)
+	}
+	if _, ok := got["ship_type"]; ok {
+		t.Fatalf("expected ship_type to be omitted, got %#v", got)
+	}
+	if _, ok := got["health"]; ok {
+		t.Fatalf("expected health to be omitted, got %#v", got)
+	}
+	if _, ok := got["shields"]; ok {
+		t.Fatalf("expected shields to be omitted, got %#v", got)
+	}
+	if _, ok := got["target_kind"]; ok {
+		t.Fatalf("expected target_kind to be omitted, got %#v", got)
+	}
+	if _, ok := got["target_id"]; ok {
+		t.Fatalf("expected target_id to be omitted, got %#v", got)
+	}
+}
+
+func TestBuildWorldDeltaPacketEmitsShipDeletesAsIDs(t *testing.T) {
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 1}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull}
+
+	delta := BuildWorldDeltaPacket(previous, current)
+
+	if len(delta.Ships.Deletes) != 1 || delta.Ships.Deletes[0] != "ship-a" {
+		t.Fatalf("expected ship delete by ID, got %#v", delta.Ships.Deletes)
+	}
+	if len(delta.Ships.Creates) != 0 || len(delta.Ships.Updates) != 0 {
+		t.Fatalf("expected only ship delete, got %#v", delta.Ships)
 	}
 }
 
@@ -507,3 +664,5 @@ func TestBuildSessionDeltaPacketEmitsDeleteForMissingSessionRecord(t *testing.T)
 		t.Fatalf("expected lifecycle delete, got %#v", delta.PlayerLifecycle.Deletes)
 	}
 }
+
+

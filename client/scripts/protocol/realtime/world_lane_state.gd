@@ -38,27 +38,26 @@ func replace_pickups(records: Array) -> void:
 func upsert_ship(record: Dictionary) -> void:
 	_upsert_record(ships, record, SHIP_FIELDS)
 
+func merge_ship_update(record: Dictionary) -> void:
+	_merge_record_update(ships, record, SHIP_FIELDS)
+
 func upsert_bullet(record: Dictionary) -> void:
 	_upsert_record(bullets, record, BULLET_FIELDS)
 
 func merge_bullet_update(record: Dictionary) -> void:
-	var id = record.get("id")
-	if id == null:
-		return
-	if not bullets.has(id):
-		return
-
-	var merged: Dictionary = bullets[id].duplicate(true)
-	var narrowed: Dictionary = _narrow_record(record, BULLET_FIELDS)
-	for field in narrowed:
-		merged[field] = narrowed[field]
-	bullets[id] = merged
+	_merge_record_update(bullets, record, BULLET_FIELDS)
 
 func upsert_asteroid(record: Dictionary) -> void:
 	_upsert_record(asteroids, record, ASTEROID_FIELDS)
 
+func merge_asteroid_update(record: Dictionary) -> void:
+	_merge_record_update(asteroids, record, ASTEROID_FIELDS)
+
 func upsert_pickup(record: Dictionary) -> void:
 	_upsert_record(pickups, record, PICKUP_FIELDS)
+
+func merge_pickup_update(record: Dictionary) -> void:
+	_merge_record_update(pickups, record, PICKUP_FIELDS)
 
 func delete_ship(id) -> void:
 	ships.erase(id)
@@ -82,6 +81,19 @@ func _upsert_record(target: Dictionary, record: Dictionary, fields: Array) -> vo
 	if id == null:
 		return
 	target[id] = _narrow_record(record, fields)
+
+func _merge_record_update(target: Dictionary, record: Dictionary, fields: Array) -> void:
+	var id = record.get("id")
+	if id == null:
+		return
+	if not target.has(id):
+		return
+
+	var merged: Dictionary = target[id].duplicate(true)
+	var narrowed: Dictionary = _narrow_record(record, fields)
+	for field in narrowed:
+		merged[field] = narrowed[field]
+	target[id] = merged
 
 func _narrow_record(record: Dictionary, fields: Array) -> Dictionary:
 	var narrowed := {}
