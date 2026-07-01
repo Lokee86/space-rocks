@@ -94,7 +94,7 @@ Future planning here remains focused on compact representation, quantization, bi
 
 Delta decides what changed. Priority decides which changed data fits the packet budget first.
 
-Current implementation has lane and candidate scheduling, while advanced record-level prioritization remains future work.
+Current implementation has lane-native packets, baselines, deltas, and candidate-level scheduling metadata, while advanced record-level prioritization remains future work.
 
 Future planning targets remain:
 
@@ -107,6 +107,10 @@ Future planning targets remain:
 - chunking decisions
 - forced resync under pressure
 - interest-management relevance rules
+
+Record-level deltas are mainly plumbing for later priority, field-delta, and codec work, not the final bandwidth solution for high-frequency motion.
+
+Live priority should stay conservative until required gameplay and presentation truth can be proven safe by metrics.
 ## Outbound Collaboration
 
 - `networking/outbound` owns delivery mechanics.
@@ -124,4 +128,5 @@ Future packetcodec and transport evolution must preserve these ownership seams.
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.
+
 

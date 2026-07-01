@@ -59,6 +59,19 @@ P1 answers whether the current architecture can safely support more entities and
 - `client/scenes/devtools/world_telemetry_overlay.tscn` is the devtools-only overlay.
 - `docs/services/game-server/observability/logging-and-diagnostics.md` and `docs/services/client/client-logging.md` already define logging rules.
 
+### Current-State Note
+
+- Active logs report lane packet writes and candidate-level scheduling summaries.
+- Encoded byte counts are real after encode.
+- Scheduling estimates are not codec-aware.
+- Budget status is not yet a reliable hard-enforcement proof.
+
+### Future-State Note
+
+- Metrics must eventually prove included, deferred, and superseded counts by record or field group.
+- Metrics must compare estimated bytes with encoded bytes.
+- Metrics must distinguish target, warning, danger, and hard-cap outcomes.
+
 ### Ownership Rules
 
 - Server networking owns encoded outbound packet size, write duration, packet type/category, room ID, player ID, and presentation-state diagnostics.
@@ -230,5 +243,9 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 ## Notes
 
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
+
+
+
+
 
 
