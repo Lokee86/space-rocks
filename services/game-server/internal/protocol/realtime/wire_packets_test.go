@@ -884,6 +884,9 @@ func assertJSONIntValue(t *testing.T, wire map[string]any, key string, want int6
 	}
 }
 
+func assertIntValue(t *testing.T, wire map[string]any, key string, want int) {
+	t.Helper()
+
 	value, ok := wire[key]
 	if !ok {
 		t.Fatalf("expected key %q to exist", key)
@@ -921,7 +924,6 @@ func assertNotContainsKey(t *testing.T, wire map[string]any, key string) {
 		}
 	}
 }
-
 func TestWireLanePacketRoundTripsWorldFullFamily(t *testing.T) {
 	candidate := RealtimeLaneCandidate{
 		Lane: LaneWorld,
