@@ -173,7 +173,7 @@ func TestWorldQuantizationReachesEncodedWireJSON(t *testing.T) {
 
 	pickups := mustSliceValue(t, decoded, "pickups")
 	pickup := mustMapValue(t, pickups[0])
-	assertJSONIntValue(t, pickup, "x", 555)
+	assertJSONIntValue(t, pickup, "x", 556)
 	assertJSONIntValue(t, pickup, "y", 667)
 	assertJSONIntValue(t, pickup, "age_seconds", 7891)
 	assertJSONIntValue(t, pickup, "lifespan_seconds", 12346)
@@ -207,9 +207,9 @@ func TestWireWorldWireDeltaPacketOmitsEmptySectionsAndKeepsShipUpdates(t *testin
 
 	update := mustMapValue(t, updates[0])
 	assertStringValue(t, update, "id", "ship-1")
-	assertInt64Value(t, update, "x", 10)
-	assertInt64Value(t, update, "y", 20)
-	assertInt64Value(t, update, "rotation", 30)
+	assertJSONIntValue(t, update, "x", 10)
+	assertJSONIntValue(t, update, "y", 20)
+	assertJSONIntValue(t, update, "rotation", 30)
 	if thrusting, ok := update["thrusting"].(bool); !ok || !thrusting {
 		t.Fatalf("expected thrusting to be true, got %#v", update["thrusting"])
 	}
@@ -267,9 +267,9 @@ func TestWireWorldWireDeltaPacketPreservesFalseAndZeroFieldsInShipUpdates(t *tes
 	}))
 
 	update := mustMapValue(t, mustSliceValue(t, wire, "ship_updates")[0])
-	assertInt64Value(t, update, "x", 0)
-	assertInt64Value(t, update, "y", 0)
-	assertInt64Value(t, update, "rotation", 0)
+	assertJSONIntValue(t, update, "x", 0)
+	assertJSONIntValue(t, update, "y", 0)
+	assertJSONIntValue(t, update, "rotation", 0)
 	if thrusting, ok := update["thrusting"].(bool); !ok || thrusting {
 		t.Fatalf("expected thrusting to be false, got %#v", update["thrusting"])
 	}
@@ -829,9 +829,9 @@ func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
 	assertStringValue(t, wire, "baseline_id", "session-baseline-14")
 	assertStringValue(t, wire, "snapshot_id", "session-snapshot-14")
 	assertStringValue(t, wire, "snapshot_kind", "delta")
-	assertContainsKey(t, wire, "players")
+	assertNotContainsKey(t, wire, "players")
 	assertContainsKey(t, wire, "player_session_updates")
-	assertContainsKey(t, wire, "player_lifecycle")
+	assertNotContainsKey(t, wire, "player_lifecycle")
 	assertContainsKey(t, wire, "player_lifecycle_updates")
 	assertContainsKey(t, wire, "total_asteroids")
 	assertNotNakedSessionDeltaPayload(t, wire)

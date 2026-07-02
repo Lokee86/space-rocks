@@ -60,16 +60,18 @@ if !worldCanUseProjection {
 				Full:       quantizedWorldFull,
 				Projection: quantizedWorldFull,
 			})
-		} else if !ProjectionChanged(previousWorldFull, quantizedWorldFull) {
+		} else if !WorldWirePayloadChanged(previousWorldFull, quantizedWorldFull) {
 			// No world candidate when the projection is unchanged.
 		} else {
 			worldDelta := BuildWorldWireDeltaPacket(previousWorldFull, quantizedWorldFull)
 			if WorldWireDeltaHasChanges(worldDelta) {
+				chainedWorldProjection := quantizedWorldFull
+				chainedWorldProjection.Metadata = worldDelta.Metadata
 				candidates = append(candidates, RealtimeLaneCandidate{
 					Lane:       LaneWorld,
 					Kind:       RealtimeLaneCandidateKindDelta,
 					Delta:      worldDelta,
-					Projection: quantizedWorldFull,
+					Projection: chainedWorldProjection,
 				})
 			}
 		}
@@ -102,17 +104,19 @@ if !worldCanUseProjection {
 				Projection: quantizedOverlayFull,
 			})
 		} else {
-			if !ProjectionChanged(previousOverlayFull, quantizedOverlayFull) {
+			if !OverlayWirePayloadChanged(previousOverlayFull, quantizedOverlayFull) {
 				// No overlay candidate when the projection is unchanged.
 			} else {
 				overlayDelta := BuildOverlayWireDeltaPacket(previousOverlayFull, quantizedOverlayFull)
 				if OverlayWireDeltaHasChanges(overlayDelta) {
+					chainedOverlayProjection := quantizedOverlayFull
+					chainedOverlayProjection.Metadata = overlayDelta.Metadata
 					candidates = append(candidates, RealtimeLaneCandidate{
-					Lane:       LaneOverlay,
-					Kind:       RealtimeLaneCandidateKindDelta,
-					Delta:      overlayDelta,
-					Projection: quantizedOverlayFull,
-				})
+						Lane:       LaneOverlay,
+						Kind:       RealtimeLaneCandidateKindDelta,
+						Delta:      overlayDelta,
+						Projection: chainedOverlayProjection,
+					})
 				}
 			}
 		}
@@ -145,17 +149,19 @@ if !worldCanUseProjection {
 				Projection: quantizedSessionFull,
 			})
 		} else {
-			if !ProjectionChanged(previousSessionFull, quantizedSessionFull) {
+			if !SessionWirePayloadChanged(previousSessionFull, quantizedSessionFull) {
 				// No session candidate when the projection is unchanged.
 			} else {
 				sessionDelta := BuildSessionWireDeltaPacket(previousSessionFull, quantizedSessionFull)
 				if SessionWireDeltaHasChanges(sessionDelta) {
+					chainedSessionProjection := quantizedSessionFull
+					chainedSessionProjection.Metadata = sessionDelta.Metadata
 					candidates = append(candidates, RealtimeLaneCandidate{
-					Lane:       LaneSession,
-					Kind:       RealtimeLaneCandidateKindDelta,
-					Delta:      sessionDelta,
-					Projection: quantizedSessionFull,
-				})
+						Lane:       LaneSession,
+						Kind:       RealtimeLaneCandidateKindDelta,
+						Delta:      sessionDelta,
+						Projection: chainedSessionProjection,
+					})
 				}
 			}
 		}
@@ -357,5 +363,8 @@ func quantizeSessionFullPacket(packet SessionFullPacket) (SessionWireFullPacket,
 	}
 	return quantized, nil
 }
+
+
+
 
 

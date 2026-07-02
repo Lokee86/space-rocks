@@ -59,7 +59,7 @@ func record_full_chunk(lane: String, baseline_id, sequence, snapshot_id = null, 
 		state.sync_state = LaneSyncState.SYNCING
 	_refresh_readiness_for_lane(lane)
 
-func record_delta(lane: String, baseline_id, sequence) -> bool:
+func record_delta(lane: String, baseline_id, sequence, snapshot_id = null) -> bool:
 	var state := _ensure_lane_state(lane)
 	if state.sync_state == LaneSyncState.UNSYNCED:
 		return false
@@ -70,6 +70,7 @@ func record_delta(lane: String, baseline_id, sequence) -> bool:
 		_refresh_readiness_for_lane(lane)
 		return false
 	state.sequence = sequence
+	state.snapshot_id = snapshot_id
 	return true
 
 func mark_lane_unsynced(lane: String) -> void:

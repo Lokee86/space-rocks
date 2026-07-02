@@ -22,8 +22,9 @@ func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: Baseli
 func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: BaselineTracker, lane: String, world_packet: Dictionary) -> bool:
 	var baseline_id = world_packet.get("baseline_id")
 	var sequence = world_packet.get("sequence")
+	var snapshot_id = world_packet.get("snapshot_id")
 
-	if not baseline_tracker.record_delta(lane, baseline_id, sequence):
+	if not baseline_tracker.record_delta(lane, baseline_id, sequence, snapshot_id):
 		return false
 
 	_apply_entity_deltas(world_lane_state, _array_field(world_packet, "ship_creates"), _array_field(world_packet, "ship_updates"), _array_field(world_packet, "ship_deletes"), "ship")

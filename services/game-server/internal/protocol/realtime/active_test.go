@@ -78,6 +78,46 @@ func TestCandidateProjectionReturnsFalseForEventBatchCandidate(t *testing.T) {
 	}
 }
 
+func decodedPacketType(wire map[string]any) string {
+	if got, ok := wire["type"].(string); ok && got != "" {
+		return got
+	}
+	compact, _ := wire["t"].(string)
+	switch compact {
+	case "wf":
+		return "world_full"
+	case "wd":
+		return "world_delta"
+	case "of":
+		return "overlay_full"
+	case "od":
+		return "overlay_delta"
+	case "sf":
+		return "session_full"
+	case "sd":
+		return "session_delta"
+	default:
+		return ""
+	}
+}
+
+func decodedPacketLane(wire map[string]any) string {
+	if got, ok := wire["lane"].(string); ok && got != "" {
+		return got
+	}
+	compact, _ := wire["l"].(string)
+	switch compact {
+	case "w":
+		return "world"
+	case "o":
+		return "overlay"
+	case "s":
+		return "session"
+	default:
+		return ""
+	}
+}
+
 func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID:         "player-1",
@@ -123,10 +163,10 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 			t.Fatalf("expected encoded packet for lane=%q kind=%q", candidate.Lane, candidate.Kind)
 		}
 		wire := mustDecodeWirePacket(t, encodedPacket)
-		if gotType, ok := wire["type"].(string); !ok || gotType == "" {
+		if decodedPacketType(wire) == "" {
 			t.Fatalf("expected non-empty top-level type for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
 		}
-		if gotLane, ok := wire["lane"].(string); !ok || gotLane == "" {
+		if decodedPacketLane(wire) == "" {
 			t.Fatalf("expected non-empty top-level lane for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
 		}
 		assertNotNakedLanePayload(t, candidate.Lane, wire)
@@ -226,10 +266,10 @@ func assertEncodedPacketTypeAndLane(t *testing.T, result ActiveRealtimeResult, l
 		t.Fatalf("expected encoded packet for lane=%q", lane)
 	}
 	wire := mustDecodeWirePacket(t, encoded)
-	if got, ok := wire["type"].(string); !ok || got != wantType {
+	if got := decodedPacketType(wire); got != wantType {
 		t.Fatalf("expected type=%q for lane=%q, got %#v", wantType, lane, wire)
 	}
-	if got, ok := wire["lane"].(string); !ok || got != wantLane {
+	if got := decodedPacketLane(wire); got != wantLane {
 		t.Fatalf("expected lane=%q for lane=%q, got %#v", wantLane, lane, wire)
 	}
 }
@@ -295,10 +335,14 @@ func TestBuildActiveRealtimeResultUsesSelectedCandidatesOnly(t *testing.T) {
 func assertNotNakedLanePayload(t *testing.T, lane Lane, wire map[string]any) {
 	t.Helper()
 	if _, ok := wire["type"]; !ok {
-		t.Fatalf("wire packet missing type for lane=%q: %#v", lane, wire)
+		if _, ok := wire["t"]; !ok {
+			t.Fatalf("wire packet missing type for lane=%q: %#v", lane, wire)
+		}
 	}
 	if _, ok := wire["lane"]; !ok {
-		t.Fatalf("wire packet missing lane for lane=%q: %#v", lane, wire)
+		if _, ok := wire["l"]; !ok {
+			t.Fatalf("wire packet missing lane for lane=%q: %#v", lane, wire)
+		}
 	}
 
 	if hasOnlyKeys(wire, []string{"ships", "asteroids", "bullets", "pickups"}) {
