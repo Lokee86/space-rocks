@@ -47,6 +47,38 @@ type EventBatchPacket struct {
 
 
 
+func FullBaselineID(lane Lane, sequence int) string {
+	return string(lane) + "-baseline-" + itoa(sequence)
+}
+
+func DeltaSnapshotID(lane Lane, sequence int) string {
+	return string(lane) + "-snapshot-" + itoa(sequence)
+}
+
+func itoa(value int) string {
+	if value == 0 {
+		return "0"
+	}
+
+	negative := value < 0
+	if negative {
+		value = -value
+	}
+
+	var digits [20]byte
+	idx := len(digits)
+	for value > 0 {
+		idx--
+		digits[idx] = byte('0' + value%10)
+		value /= 10
+	}
+	if negative {
+		idx--
+		digits[idx] = '-'
+	}
+	return string(digits[idx:])
+}
+
 func (metadata Metadata) WithChunk(chunkIndex int, chunkCount int) Metadata {
 	metadata.ChunkIndex = chunkIndex
 	metadata.ChunkCount = chunkCount

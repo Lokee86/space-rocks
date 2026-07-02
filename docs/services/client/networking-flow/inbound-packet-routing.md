@@ -76,7 +76,7 @@ The routing path is signal-based and lane-aware. It does not mutate server autho
 
 ### Decoded packet handoff
 
-`NetworkClient` emits `packet_received(packet)` only after a raw WebSocket text message has passed through client packet decode and envelope validation.
+`NetworkClient` receives raw WebSocket text and hands it to `PacketCodec.decode`. `PacketCodec.decode` accepts compact realtime aliases by expanding them to readable long-key dictionaries before envelope validation and dispatch; see [Realtime Compact Wire Mapping](../../game-server/networking/realtime-compact-wire-mapping.md). Legacy long-key packets remain accepted, and packets with neither `type` nor compact `t` still fail envelope validation.
 
 `ClientConnectionService._on_packet_received(packet)` receives that dictionary and delegates to `ServerPacketDispatcher.dispatch(packet)`.
 
@@ -518,6 +518,9 @@ Generated output and packet source-of-truth ownership belong to protocol/data do
 * `client/scripts/networking/packets/packet_codec.gd`
 * `client/scripts/networking/packets/packet_decode_result.gd`
 * `client/scripts/networking/packets/packet_encode_result.gd`
+* `client/scripts/protocol/realtime/compact_lane_packet.gd`
+
+`PacketCodec.decode` uses `compact_lane_packet.gd` to expand compact realtime aliases before envelope validation; `RealtimeRouter` may defensively normalize already-expanded packets.
 
 ### Session consumers
 

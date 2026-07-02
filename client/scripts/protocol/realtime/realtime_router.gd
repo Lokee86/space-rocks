@@ -11,6 +11,7 @@ const EventBatchApplier = preload("res://scripts/protocol/realtime/event_batch_a
 const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 const ResyncState = preload("res://scripts/protocol/realtime/resync_state.gd")
+const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 
 var world_lane_state := WorldLaneState.new()
 var overlay_lane_state := OverlayLaneState.new()
@@ -28,45 +29,47 @@ func _init() -> void:
 	baseline_tracker.bind_readiness(gameplay_readiness)
 
 func route_packet(packet: Dictionary) -> Dictionary:
-	var packet_type = packet.get("type")
+	var expanded_packet: Dictionary = CompactLanePacket.expand_packet(packet)
+	var packet_type = expanded_packet.get("type")
 	match packet_type:
 		LaneMetadata.PACKET_FAMILY_WORLD[0]:
-			_world_applier.apply_world_full(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, packet)
+			_world_applier.apply_world_full(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_WORLD[1]:
-			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, packet)
+			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[0]:
-			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, packet)
+			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[1]:
-			_overlay_applier.apply_overlay_delta(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, packet)
+			_overlay_applier.apply_overlay_delta(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_SESSION[0]:
-			_session_applier.apply_session_full(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, packet)
+			_session_applier.apply_session_full(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_SESSION[1]:
-			_session_applier.apply_session_delta(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, packet)
+			_session_applier.apply_session_delta(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_EVENT[0]:
-			event_batch_applier.apply_event_batch(packet, self)
+			event_batch_applier.apply_event_batch(expanded_packet, self)
 		LaneMetadata.PACKET_FAMILY_CONTROL[0], LaneMetadata.PACKET_FAMILY_CONTROL[1]:
-			_route_resync(packet)
+			_route_resync(expanded_packet)
 	return {}
 
 func route_lane_packet(packet: Dictionary) -> Dictionary:
-	var packet_type = packet.get("type")
+	var expanded_packet: Dictionary = CompactLanePacket.expand_packet(packet)
+	var packet_type = expanded_packet.get("type")
 	match packet_type:
 		LaneMetadata.PACKET_FAMILY_WORLD[0]:
-			_world_applier.apply_world_full(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, packet)
+			_world_applier.apply_world_full(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_WORLD[1]:
-			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, packet)
+			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[0]:
-			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, packet)
+			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[1]:
-			_overlay_applier.apply_overlay_delta(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, packet)
+			_overlay_applier.apply_overlay_delta(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_SESSION[0]:
-			_session_applier.apply_session_full(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, packet)
+			_session_applier.apply_session_full(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_SESSION[1]:
-			_session_applier.apply_session_delta(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, packet)
+			_session_applier.apply_session_delta(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_EVENT[0]:
-			event_batch_applier.apply_event_batch(packet, self)
+			event_batch_applier.apply_event_batch(expanded_packet, self)
 		LaneMetadata.PACKET_FAMILY_CONTROL[0], LaneMetadata.PACKET_FAMILY_CONTROL[1]:
-			_route_resync(packet)
+			_route_resync(expanded_packet)
 	return {}
 
 func handle_presentation_event(event_type, payload, event_packet) -> void:

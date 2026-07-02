@@ -226,15 +226,15 @@ logging refinements needed to validate packet-size reduction
 
 This support work belongs to P2 when it helps validate lanes, snapshots, deltas, baseline handling, packet-size improvements, or realtime protocol behavior.
 
-### Deferred Next-Phase Codec And Compact Representation Work
+### Deferred Next-Phase Codec And Packed Representation Work
 
 ```text
 client packetcodec relocation
-quantization rules
+additional quantization policy refinements
 bit-packing rules
 protobuf
 binary/bitpacking work targets the new lane protocol, not old state
-compact representation targets the new lane protocol, not old state
+sparse delta section omission is implemented, while further packed/binary representation and prioritization remain future work
 ```
 
 ### Implementation Sequence
@@ -248,7 +248,7 @@ compact representation targets the new lane protocol, not old state
 6. Shadow encode/measure/parity with no send and no event drain. Shadow never drains; active `event_batch` drains only after socket write/enqueue success.
 7. Runtime cutover behind a temporary dev-only switch.
 8. Replace compatibility read model with lane-native presentation adapters.
-10. Next phase: codec move plus compact/binary representation.
+10. Next phase: codec move plus binary/packed representation and deeper packet-budget work.
 ```
 
 ### Completion Criteria
@@ -270,7 +270,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases are already implemented, and sparse delta section omission is implemented. Future work stays on tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization.
 
 ### Scope
 

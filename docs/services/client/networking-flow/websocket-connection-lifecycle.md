@@ -233,7 +233,9 @@ Incoming socket packets are read as UTF-8 text and passed to `PacketCodec.decode
 
 `PacketCodec` owns wire parsing and minimal envelope validation only.
 
-A decoded packet must be a dictionary and must include a valid packet envelope:
+Compact realtime packets may arrive with `t` instead of `type`. `PacketCodec.decode` expands compact aliases to readable long-key dictionaries before envelope validation; see [Realtime Compact Wire Mapping](../../game-server/networking/realtime-compact-wire-mapping.md). Legacy long-key packets remain accepted, and packets with neither `type` nor compact `t` still fail validation.
+
+A decoded packet must be a dictionary and must include a valid packet envelope after compact alias expansion:
 
 ```text
 type must exist
@@ -372,6 +374,7 @@ client/scripts/networking/client_connection_service.gd
 client/scripts/networking/packets/packet_codec.gd
 client/scripts/networking/packets/packet_encode_result.gd
 client/scripts/networking/packets/packet_decode_result.gd
+client/scripts/protocol/realtime/compact_lane_packet.gd
 ```
 
 Related generated files:
@@ -407,6 +410,9 @@ Those tests cover:
 ```text
 JSON encode success
 dictionary decode success
+compact realtime alias decode succeeds
+legacy long-key decode still succeeds
+missing both `type` and compact `t` fails
 invalid JSON rejection
 non-dictionary JSON rejection
 missing type rejection

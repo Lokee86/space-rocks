@@ -496,6 +496,8 @@ selected generated GDScript builders
 packet output file routing
 ```
 
+For active realtime gameplay lanes, runtime protocol code may build wire maps from generated packet type constants and hand-authored realtime records. Sparse delta omission, numeric wire quantization, and compact alias mapping are runtime protocol behaviors, not TOML schema generation behavior.
+
 Packet schemas do not own:
 
 ```text

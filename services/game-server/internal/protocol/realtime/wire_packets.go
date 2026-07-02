@@ -172,78 +172,122 @@ func wireStringArray(records []string) any {
 	return records
 }
 
+func putRecordArrayIfNonEmpty(wire map[string]any, key string, records any) {
+	result := wireRecordArray(records)
+	if !hasWireItems(result) {
+		return
+	}
+	wire[key] = result
+}
+
+func putFilteredRecordArrayIfNonEmpty(wire map[string]any, key string, records any, allowedKeys []string) {
+	result := wireFilteredRecordArray(records, allowedKeys)
+	if !hasWireItems(result) {
+		return
+	}
+	wire[key] = result
+}
+
+func putStringArrayIfNonEmpty(wire map[string]any, key string, records []string) {
+	if len(records) == 0 {
+		return
+	}
+	wire[key] = records
+}
+
+func putValueIfNotNil(wire map[string]any, key string, value any) {
+	if value == nil {
+		return
+	}
+	wire[key] = value
+}
+
+func hasWireItems(value any) bool {
+	if value == nil {
+		return false
+	}
+
+	rv := reflect.ValueOf(value)
+	switch rv.Kind() {
+	case reflect.Slice, reflect.Array:
+		return rv.Len() > 0
+	default:
+		return true
+	}
+}
+
 func wireWorldDeltaPacket(packet WorldDeltaPacket) map[string]any {
 	wire := wireMetadataPacket(packet.Type, packet.Metadata)
-	wire["ship_creates"] = wireRecordArray(packet.Ships.Creates)
-	wire["ship_updates"] = wireFilteredRecordArray(packet.Ships.Updates, []string{"id", "x", "y", "rotation", "thrusting"})
-	wire["ship_deletes"] = wireStringArray(packet.Ships.Deletes)
-	wire["bullet_creates"] = wireRecordArray(packet.Bullets.Creates)
-	wire["bullet_updates"] = wireFilteredRecordArray(packet.Bullets.Updates, []string{"id", "x", "y", "rotation"})
-	wire["bullet_deletes"] = wireStringArray(packet.Bullets.Deletes)
-	wire["asteroid_creates"] = wireRecordArray(packet.Asteroids.Creates)
-	wire["asteroid_updates"] = wireFilteredRecordArray(packet.Asteroids.Updates, []string{"id", "x", "y"})
-	wire["asteroid_deletes"] = wireStringArray(packet.Asteroids.Deletes)
-	wire["pickup_creates"] = wireRecordArray(packet.Pickups.Creates)
-	wire["pickup_updates"] = wireFilteredRecordArray(packet.Pickups.Updates, []string{"id", "x", "y", "age_seconds"})
-	wire["pickup_deletes"] = wireStringArray(packet.Pickups.Deletes)
+	putRecordArrayIfNonEmpty(wire, "ship_creates", packet.Ships.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "ship_updates", packet.Ships.Updates, []string{"id", "x", "y", "rotation", "thrusting"})
+	putStringArrayIfNonEmpty(wire, "ship_deletes", packet.Ships.Deletes)
+	putRecordArrayIfNonEmpty(wire, "bullet_creates", packet.Bullets.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "bullet_updates", packet.Bullets.Updates, []string{"id", "x", "y", "rotation"})
+	putStringArrayIfNonEmpty(wire, "bullet_deletes", packet.Bullets.Deletes)
+	putRecordArrayIfNonEmpty(wire, "asteroid_creates", packet.Asteroids.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "asteroid_updates", packet.Asteroids.Updates, []string{"id", "x", "y"})
+	putStringArrayIfNonEmpty(wire, "asteroid_deletes", packet.Asteroids.Deletes)
+	putRecordArrayIfNonEmpty(wire, "pickup_creates", packet.Pickups.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "pickup_updates", packet.Pickups.Updates, []string{"id", "x", "y", "age_seconds"})
+	putStringArrayIfNonEmpty(wire, "pickup_deletes", packet.Pickups.Deletes)
 	return wire
 }
 
 func wireWorldWireDeltaPacket(packet WorldWireDeltaPacket) map[string]any {
 	wire := wireMetadataPacket(packet.Type, packet.Metadata)
-	wire["ship_creates"] = wireRecordArray(packet.Ships.Creates)
-	wire["ship_updates"] = wireFilteredRecordArray(packet.Ships.Updates, []string{"id", "x", "y", "rotation", "thrusting"})
-	wire["ship_deletes"] = wireStringArray(packet.Ships.Deletes)
-	wire["bullet_creates"] = wireRecordArray(packet.Bullets.Creates)
-	wire["bullet_updates"] = wireFilteredRecordArray(packet.Bullets.Updates, []string{"id", "x", "y", "rotation"})
-	wire["bullet_deletes"] = wireStringArray(packet.Bullets.Deletes)
-	wire["asteroid_creates"] = wireRecordArray(packet.Asteroids.Creates)
-	wire["asteroid_updates"] = wireFilteredRecordArray(packet.Asteroids.Updates, []string{"id", "x", "y"})
-	wire["asteroid_deletes"] = wireStringArray(packet.Asteroids.Deletes)
-	wire["pickup_creates"] = wireRecordArray(packet.Pickups.Creates)
-	wire["pickup_updates"] = wireFilteredRecordArray(packet.Pickups.Updates, []string{"id", "x", "y", "age_seconds"})
-	wire["pickup_deletes"] = wireStringArray(packet.Pickups.Deletes)
+	putRecordArrayIfNonEmpty(wire, "ship_creates", packet.Ships.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "ship_updates", packet.Ships.Updates, []string{"id", "x", "y", "rotation", "thrusting"})
+	putStringArrayIfNonEmpty(wire, "ship_deletes", packet.Ships.Deletes)
+	putRecordArrayIfNonEmpty(wire, "bullet_creates", packet.Bullets.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "bullet_updates", packet.Bullets.Updates, []string{"id", "x", "y", "rotation"})
+	putStringArrayIfNonEmpty(wire, "bullet_deletes", packet.Bullets.Deletes)
+	putRecordArrayIfNonEmpty(wire, "asteroid_creates", packet.Asteroids.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "asteroid_updates", packet.Asteroids.Updates, []string{"id", "x", "y"})
+	putStringArrayIfNonEmpty(wire, "asteroid_deletes", packet.Asteroids.Deletes)
+	putRecordArrayIfNonEmpty(wire, "pickup_creates", packet.Pickups.Creates)
+	putFilteredRecordArrayIfNonEmpty(wire, "pickup_updates", packet.Pickups.Updates, []string{"id", "x", "y", "age_seconds"})
+	putStringArrayIfNonEmpty(wire, "pickup_deletes", packet.Pickups.Deletes)
 	return wire
 }
 
 
 func wireOverlayDeltaPacket(packet OverlayLaneDelta) map[string]any {
 	wire := wireMetadataPacket(PacketTypeOverlayDelta, packet.Metadata)
-	wire["receiver_creates"] = wireRecords(packet.Receiver.Creates)
-	wire["receiver_updates"] = wireRecords(packet.Receiver.Updates)
-	wire["receiver_deletes"] = packet.Receiver.Deletes
+	putRecordArrayIfNonEmpty(wire, "receiver_creates", packet.Receiver.Creates)
+	putRecordArrayIfNonEmpty(wire, "receiver_updates", packet.Receiver.Updates)
+	putStringArrayIfNonEmpty(wire, "receiver_deletes", packet.Receiver.Deletes)
 	return wire
 }
 
 func wireOverlayWireDeltaPacket(packet OverlayWireLaneDelta) map[string]any {
 	wire := wireMetadataPacket(PacketTypeOverlayDelta, packet.Metadata)
-	wire["receiver_creates"] = wireRecords(packet.Receiver.Creates)
-	wire["receiver_updates"] = wireRecords(packet.Receiver.Updates)
-	wire["receiver_deletes"] = packet.Receiver.Deletes
+	putRecordArrayIfNonEmpty(wire, "receiver_creates", packet.Receiver.Creates)
+	putRecordArrayIfNonEmpty(wire, "receiver_updates", packet.Receiver.Updates)
+	putStringArrayIfNonEmpty(wire, "receiver_deletes", packet.Receiver.Deletes)
 	return wire
 }
 
 func wireSessionDeltaPacket(packet SessionLaneDelta) map[string]any {
 	wire := wireMetadataPacket(PacketTypeSessionDelta, packet.Metadata)
-	wire["players"] = wireRecordArray(packet.Players.Creates)
-	wire["player_session_updates"] = wireRecordArray(packet.Players.Updates)
-	wire["player_session_deletes"] = wireStringArray(packet.Players.Deletes)
-	wire["player_lifecycle"] = wireRecordArray(packet.PlayerLifecycle.Creates)
-	wire["player_lifecycle_updates"] = wireRecordArray(packet.PlayerLifecycle.Updates)
-	wire["player_lifecycle_deletes"] = wireStringArray(packet.PlayerLifecycle.Deletes)
-	wire["total_asteroids"] = firstSessionTotalAsteroids(packet.TotalAsteroids)
+	putRecordArrayIfNonEmpty(wire, "players", packet.Players.Creates)
+	putRecordArrayIfNonEmpty(wire, "player_session_updates", packet.Players.Updates)
+	putStringArrayIfNonEmpty(wire, "player_session_deletes", packet.Players.Deletes)
+	putRecordArrayIfNonEmpty(wire, "player_lifecycle", packet.PlayerLifecycle.Creates)
+	putRecordArrayIfNonEmpty(wire, "player_lifecycle_updates", packet.PlayerLifecycle.Updates)
+	putStringArrayIfNonEmpty(wire, "player_lifecycle_deletes", packet.PlayerLifecycle.Deletes)
+	putValueIfNotNil(wire, "total_asteroids", firstSessionTotalAsteroids(packet.TotalAsteroids))
 	return wire
 }
 
 func wireSessionWireDeltaPacket(packet SessionWireLaneDelta) map[string]any {
 	wire := wireMetadataPacket(PacketTypeSessionDelta, packet.Metadata)
-	wire["players"] = wireRecordArray(packet.Players.Creates)
-	wire["player_session_updates"] = wireRecordArray(packet.Players.Updates)
-	wire["player_session_deletes"] = wireStringArray(packet.Players.Deletes)
-	wire["player_lifecycle"] = wireRecordArray(packet.PlayerLifecycle.Creates)
-	wire["player_lifecycle_updates"] = wireRecordArray(packet.PlayerLifecycle.Updates)
-	wire["player_lifecycle_deletes"] = wireStringArray(packet.PlayerLifecycle.Deletes)
-	wire["total_asteroids"] = firstSessionTotalAsteroids(packet.TotalAsteroids)
+	putRecordArrayIfNonEmpty(wire, "players", packet.Players.Creates)
+	putRecordArrayIfNonEmpty(wire, "player_session_updates", packet.Players.Updates)
+	putStringArrayIfNonEmpty(wire, "player_session_deletes", packet.Players.Deletes)
+	putRecordArrayIfNonEmpty(wire, "player_lifecycle", packet.PlayerLifecycle.Creates)
+	putRecordArrayIfNonEmpty(wire, "player_lifecycle_updates", packet.PlayerLifecycle.Updates)
+	putStringArrayIfNonEmpty(wire, "player_lifecycle_deletes", packet.PlayerLifecycle.Deletes)
+	putValueIfNotNil(wire, "total_asteroids", firstSessionTotalAsteroids(packet.TotalAsteroids))
 	return wire
 }
 

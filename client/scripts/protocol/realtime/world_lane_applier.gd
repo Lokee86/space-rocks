@@ -60,6 +60,7 @@ func _decode_entity_records(records: Array, entity_kind: String) -> Array:
 	return decoded
 
 func _array_field(packet: Dictionary, key: String) -> Array:
+	# Missing sparse delta arrays are intentionally treated as empty no-ops.
 	var value = packet.get(key, [])
 	if value is Array:
 		return value

@@ -19,7 +19,8 @@ client sends input or request intent
 -> game-server inbound routing classifies the packet
 -> active room/game instance receives the packet
 -> game simulation mutates authoritative state
--> outbound networking projects lane packets or pause output
+-> owning server paths build one-off outputs such as player_pause_state
+-> outbound networking writes encoded server packets
 -> client receives and applies server-owned lane state
 ```
 
@@ -27,7 +28,9 @@ The client owns packet emission, local input collection, target-selection intent
 
 ## Canonical realtime protocol
 
-Detailed lane metadata, sequencing, baselines, deltas, resync/control packet behavior, and transport lifecycle belong in [Realtime WebSocket Protocol](realtime-websocket-protocol.md).
+Detailed lane metadata, sequencing, baselines, deltas, control-lane resync packet behavior, and transport lifecycle belong in [Realtime WebSocket Protocol](realtime-websocket-protocol.md).
+
+The current generated recovery packet families are resync_request and resync_required; control is the lane category, not a generated packet family.
 
 This doc summarizes gameplay packet ownership and the high-level packet families only.
 
@@ -41,10 +44,10 @@ overlay_full / overlay_delta
 session_full / session_delta
 event_batch
 player_pause_state
-resync_request / resync_required / control
+resync_request / resync_required
 ```
 
-Current packet families are lane-native, with `event_batch` carrying presentation events separately from world, overlay, and session lanes. Lane numeric values may already be wire-quantized before delivery; see [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
+Current packet families are lane-native, with `event_batch` carrying presentation events separately from world, overlay, and session lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. Compact JSON aliases may be applied at the active outbound encode boundary, and the client expands them before normal lane routing. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
 
 Current lane delta behavior:
 
@@ -58,6 +61,8 @@ update arrays
 delete arrays
 = IDs
 ```
+
+Empty delta sections are omitted from emitted `world_delta`, `overlay_delta`, and `session_delta` packets. Missing delta sections mean empty or no-op, not delete or clear. Missing fields inside present update records mean unchanged. Meaningful false and zero values inside present records remain meaningful. `session_delta` omits `total_asteroids` when unchanged; `total_asteroids: 0` remains meaningful when present.
 
 Current update identity keys are:
 
@@ -102,7 +107,7 @@ game-server inbound routing
 = classifies packet type and forwards to the active authoritative game instance
 
 game-server realtime projection
-= builds authoritative lane packets for each player/session
+= lane projection, numeric wire quantization, field-delta comparison, sparse delta serialization, and compact alias preparation before packetcodec JSON encoding
 
 client gameplay runtime
 = routes lane packets into lane states, baseline readiness, presentation adapters, and event application
@@ -209,8 +214,9 @@ packet-family routing order
 server packet JSON encode/decode handoff
 session current room and current game player context
 lane packet write timing
-packet metrics and budgeting
+packet metric logging/write observations
 ```
+Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, and current byte-budget planning inputs; networking writes and observes encoded results.
 
 ### Game-server simulation
 
@@ -240,7 +246,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-Relevant verification areas now include lane packet routing, lane state application, presentation adapters, and event batch behavior.
+Relevant verification areas now include lane packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, lane state application, presentation adapters, and event batch behavior.
 
 ## Code map
 
@@ -273,7 +279,12 @@ Game-server outbound gameplay projection:
 
 ```text
 services/game-server/internal/networking/websocket_write.go
-services/game-server/internal/protocol/realtime/
+services/game-server/internal/protocol/realtime/wire_packets.go
+services/game-server/internal/protocol/realtime/compact_wire_packet.go
+services/game-server/internal/protocol/realtime/quantize/
+services/game-server/internal/protocol/realtime/quantize_world.go
+services/game-server/internal/protocol/realtime/quantized_records.go
+services/game-server/internal/protocol/realtime/active.go
 services/game-server/internal/networking/packetmetrics/
 services/game-server/internal/game/
 ```

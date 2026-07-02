@@ -286,3 +286,46 @@ func TestAdvanceMetadataForSuccessfulWriteAdvancesEventLaneSequence(t *testing.T
 		t.Fatalf("event lane snapshot id = %q, want event-batch-1", laneState.SnapshotID)
 	}
 }
+
+
+func TestFullBaselineID(t *testing.T) {
+	tests := []struct {
+		name     string
+		lane     Lane
+		sequence int
+		want     string
+	}{
+		{name: "world", lane: LaneWorld, sequence: 9, want: "world-baseline-9"},
+		{name: "overlay", lane: LaneOverlay, sequence: 4, want: "overlay-baseline-4"},
+		{name: "session", lane: LaneSession, sequence: 5, want: "session-baseline-5"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := FullBaselineID(tc.lane, tc.sequence); got != tc.want {
+				t.Fatalf("FullBaselineID(%q, %d) = %q, want %q", tc.lane, tc.sequence, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDeltaSnapshotID(t *testing.T) {
+	tests := []struct {
+		name     string
+		lane     Lane
+		sequence int
+		want     string
+	}{
+		{name: "world", lane: LaneWorld, sequence: 10, want: "world-snapshot-10"},
+		{name: "overlay", lane: LaneOverlay, sequence: 11, want: "overlay-snapshot-11"},
+		{name: "session", lane: LaneSession, sequence: 12, want: "session-snapshot-12"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := DeltaSnapshotID(tc.lane, tc.sequence); got != tc.want {
+				t.Fatalf("DeltaSnapshotID(%q, %d) = %q, want %q", tc.lane, tc.sequence, got, tc.want)
+			}
+		})
+	}
+}
