@@ -110,6 +110,36 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 	assert_eq(event_flow.apply_server_events_call_count, 1)
 	assert_eq(event_flow.received_event_count, 1)
 	assert_eq(event_flow.received_event_types[0], "bullet_blast")
+func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
+	var presentation_adapter := PresentationAdapter.new()
+	var readiness := GameplayReadiness.new()
+	readiness.mark_world_baseline_synced()
+	readiness.mark_overlay_baseline_synced()
+	readiness.mark_session_baseline_synced()
+	presentation_adapter.bind_gameplay_readiness(readiness)
+
+	var router := FakeRouter.new()
+	router.world_lane_state = WorldLaneState.new()
+	router.overlay_lane_state = OverlayLaneState.new()
+	router.overlay_lane_state.self_id = "player-1"
+	router.overlay_lane_state.respawn_cooldown = null
+	router.overlay_lane_state.primary_cooldown_remaining = null
+	router.overlay_lane_state.secondary_cooldown_remaining = null
+	router.session_lane_state = SessionLaneState.new()
+	router.event_batch_applier = EventBatchApplier.new()
+
+	var world_sync := FakePresentationTarget.new()
+	var hud_flow := FakePresentationTarget.new()
+	var event_flow := FakeEventFlow.new()
+
+	presentation_adapter.fanout_lane_states(router, world_sync, hud_flow, event_flow)
+
+	assert_not_null(world_sync.last_world_lane_state)
+	assert_not_null(hud_flow.last_overlay_lane_state)
+	assert_eq(hud_flow.last_overlay_lane_state.respawn_cooldown, null)
+	assert_eq(hud_flow.last_overlay_lane_state.primary_cooldown_remaining, null)
+	assert_eq(hud_flow.last_overlay_lane_state.secondary_cooldown_remaining, null)
+	assert_eq(event_flow.apply_server_events_call_count, 0)
 
 
 func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
@@ -229,4 +259,5 @@ func test_stale_sequence_is_ignored() -> void:
 
 	assert_false(applied)
 	assert_false(tracker.needs_resync(LaneMetadata.LANE_WORLD))
+
 

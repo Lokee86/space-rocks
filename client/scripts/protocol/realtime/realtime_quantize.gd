@@ -30,6 +30,8 @@ const _POLICIES = {
 }
 
 static func decode(policy_name: String, encoded):
+	if encoded == null:
+		return null
 	var policy = _POLICIES.get(policy_name, _POLICIES[POLICY_FLOAT_GENERIC])
 	match policy_name:
 		POLICY_RATIO_0_1:
@@ -184,4 +186,6 @@ static func _index_field_path(parent: String, index: int) -> String:
 	if parent == "":
 		return "[%d]" % index
 	return "%s[%d]" % [parent, index]
+
+
 
