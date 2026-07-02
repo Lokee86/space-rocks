@@ -24,7 +24,7 @@ client sends input or request intent
 -> client receives and applies server-owned lane state
 ```
 
-The client owns packet emission, local input collection, target-selection intent, viewport config reporting, and presentation after receiving server lane packets. The game server owns acceptance, validation, simulation mutation, pause state, respawn validity, scoring, lives, damage, pickups, spawning, lane packet projection, and presentation event production.
+The client owns packet emission, local input collection, target-selection intent, viewport config reporting, and presentation after receiving server lane packets. The game server owns acceptance, validation, simulation mutation, pause state, respawn validity, scoring, lives, damage, pickups, spawning, lane-native realtime projection, and presentation event production.
 
 ## Canonical realtime protocol
 
@@ -227,7 +227,7 @@ input application
 respawn behavior
 pause mutation
 target selection and clearing
-lane packet projection inputs
+lane-native realtime projection inputs
 player session state
 active avatar state
 lifecycle classification
@@ -246,7 +246,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-Relevant verification areas now include lane packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, lane state application, presentation adapters, and event batch behavior.
+Relevant verification areas now include lane-native packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, lane state application, presentation adapters, and event_batch behavior.
 
 ## Code map
 
@@ -298,3 +298,7 @@ services/game-server/internal/game/
 * [Realtime WebSocket Protocol](realtime-websocket-protocol.md)
 * [Lane Packet Projection](../services/game-server/simulation/runtime/lane-packet-projection.md)
 * [Packet Schemas](../data/packet-schemas.md)
+
+## Notes
+
+This doc stays at the gameplay packet family and ownership boundary. Detailed lane metadata, wire behavior, and transport sequencing remain canonical in `realtime-websocket-protocol.md`.

@@ -71,7 +71,7 @@ Player death and despawn own the game-server side of:
 * Preserving lives when infinite-lives mode is enabled.
 * Setting respawn cooldown when the player still has lives.
 * Distinguishing death-with-lives from game-over-without-lives in logs.
-* Recording `ship_death` events for state-packet presentation.
+* Recording `ship_death` events for event_batch presentation.
 * Removing ready pending-despawn player ships from `game.entities.Players`.
 * Keeping player session state alive after active avatar removal.
 * Feeding lifecycle projection with active, pending-respawn, or eliminated status.

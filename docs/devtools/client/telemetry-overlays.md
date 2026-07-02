@@ -50,7 +50,7 @@ Telemetry overlays are development tooling.
 
 They are allowed to:
 
-* display live world counts from normalized gameplay state
+* display live world counts from a devtools gameplay readmodel built from lane-applied state
 * display local client frame timing
 * display network timing derived from packet arrival and telemetry ping/pong
 * use generated packet constants for diagnostic packets
@@ -135,10 +135,10 @@ packet_age_ms
 Unavailable values render as:
 
 ```text
-—
+unavailable
 ```
 
-Counts come from server dictionaries after gameplay packet normalization. Timing values use `-1` internally for unavailable state and render as unavailable in the label.
+Counts come from server dictionaries after the devtools gameplay readmodel is built from lane-applied world/session/overlay state. Timing values use `-1` internally for unavailable state and render as unavailable in the label.
 
 The overlay refresh cadence is separate from gameplay packet arrival. `WorldTelemetryOverlayFlow` refreshes the visible label at most once every 250 ms while the overlay is visible.
 
@@ -166,7 +166,7 @@ While the overlay is visible and the connection service reports an active server
 
 World telemetry uses two metric sources.
 
-The first source is normalized gameplay state:
+The first source is a transient devtools gameplay readmodel built from lane-applied world/session/overlay state:
 
 ```text
 server_players
@@ -179,7 +179,7 @@ total_asteroids
 server_sent_msec
 ```
 
-`RealtimeRouter` and the world-lane applier produce these fields from the authoritative lane state. `WorldTelemetryMetrics` consumes them and stores the current count and packet timing state.
+`RealtimeRouter` applies the authoritative lane state, `DevtoolsLaneStateAdapter.build_state(...)` assembles the transient devtools gameplay readmodel, and `WorldTelemetryMetrics` consumes that readmodel to store current counts and packet timing state.
 
 `server_enemies` is preferred when present. If it is not present, the metrics collector falls back to `enemies`.
 
@@ -260,11 +260,13 @@ client/scripts/devtools/context/devtools_gameplay_state_context.gd
 client/scripts/devtools/dev_tools_build_flags.gd
 ```
 
-Gameplay state source path:
+Gameplay readmodel source path:
 
 ```text
-client/scripts/networking/realtime_router.gd
-client/scripts/gameplay/state/gameplay_state_apply_flow.gd
+client/scripts/protocol/realtime/realtime_router.gd
+client/scripts/protocol/realtime/devtools_lane_state_adapter.gd
+client/scripts/gameplay/gameplay_composition.gd
+client/scripts/devtools/context/devtools_gameplay_state_context.gd
 ```
 
 Client networking path for telemetry pong:
@@ -298,8 +300,11 @@ services/game-server/internal/game/packets.go
 Important non-ownership boundaries:
 
 ```text
-client/scripts/gameplay/hud/
-  owns player-facing HUD presentation, not telemetry overlays
+client/scripts/shell/gameplay_hud_flow.gd
+  owns runtime HUD presentation flow, not telemetry overlays
+
+client/scripts/ui/hud/
+  owns player-facing HUD widget scripts, not telemetry overlays
 
 client/scripts/ui/
   owns normal UI surfaces, not telemetry diagnostics
@@ -332,7 +337,7 @@ Related client tests:
 ```text
 client/tests/unit/test_realtime_router.gd
 client/tests/unit/test_gameplay_devtools_context.gd
-client/tests/unit/test_gameplay_state_apply_flow.gd
+client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd
 client/tests/unit/test_packet_codec.gd
 ```
 

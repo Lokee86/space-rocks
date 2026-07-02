@@ -73,7 +73,7 @@ WorldSync
 * Room, match, death, respawn, or spectate authority.
 * Packet schema source-of-truth files.
 * Raw gameplay packet parsing.
-* Lane packet application before world state reaches `WorldSync`.
+* Realtime world lane packet application before world state reaches `WorldSync`.
 * Target selection orchestration.
 * Input request sending.
 * HUD or menu behavior.
@@ -85,7 +85,7 @@ WorldSync
 
 ### Server coordinate
 
-A server coordinate is an authoritative bounded position from lane-applied state.
+A server coordinate is an authoritative bounded position from lane-applied world state.
 
 Server coordinates are the source facts sent by the authoritative game server. They should be used for protocol, simulation, and outbound targeting requests.
 
@@ -115,15 +115,16 @@ Player meaning is the presentation-layer interpretation of player state around t
 
 ### Coordinate ownership boundary
 
-`RealtimeRouter` applies lane state/readiness, then `GameplayWorldStateApplyFlow` forwards lane-applied world state into `WorldSync`.
+`RealtimeRouter` applies world lane state/readiness, then `WorldPresentationAdapter` forwards that lane-applied world state into `WorldSync`.
 
-`WorldSync` then applies that lane-applied state to player rendering and entity sync. ViewAnchor and visual coordinates are handled inside world sync, not in packet readers or deprecated combined-state fanout.
+`WorldSync` then applies that world lane state to player rendering and entity sync. ViewAnchor and visual coordinates are handled inside world sync, not in packet readers or retired combined-state fanout.
 
 ```text
 RealtimeRouter
--> GameplayStateApplyFlow
--> GameplayWorldStateApplyFlow
--> WorldSync
+-> world lane applier
+-> WorldPresentationAdapter.apply_world_lane_state(...)
+-> WorldSync.set_current_self_id(...)
+-> WorldSync.apply_world_lane_state(world_lane_state)
 -> PlayerRenderApi
 -> ViewAnchorSync
 ```
@@ -175,11 +176,11 @@ The underlying source-of-truth constants are generated from shared data, not fro
 
 ### Active anchor selection
 
-`PlayerRenderApi` chooses the active render anchor from available server player state.
+`PlayerRenderApi` chooses the active render anchor from available world lane ship state.
 
 Normal behavior uses `self_id`.
 
-If a view target is set and that player exists in the current server player state, the view target can become the active anchor for presentation.
+If a view target is set and that player exists in the current world lane ship state, the view target can become the active anchor for presentation.
 
 The selected anchor updates `ViewAnchorSync`, and player meaning is applied relative to that anchor.
 
@@ -233,7 +234,7 @@ This state is not durable.
 
 It is not authoritative.
 
-It is cleared or replaced as lane-applied state and session lifecycle require.
+It is cleared or replaced as lane-applied world state and session lifecycle require.
 
 ## World wrap behavior
 
@@ -287,6 +288,8 @@ Debug overlays and telemetry that display world positions should respect the sam
 
 * `client/scripts/world/world_sync.gd`
 * `client/scripts/world/world_wrap.gd`
+* `client/scripts/protocol/realtime/world_presentation_adapter.gd`
+* `client/scripts/protocol/realtime/world_lane_state.gd`
 
 ### Active player-render API
 
@@ -308,9 +311,8 @@ Debug overlays and telemetry that display world positions should respect the sam
 
 ### Runtime callers
 
-* `client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd`
+* `client/scripts/protocol/realtime/realtime_router.gd`
 * `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
-* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`
 
 ### Gameplay consumers
 

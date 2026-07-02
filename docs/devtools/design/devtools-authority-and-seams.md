@@ -81,7 +81,7 @@ how target scopes resolve
 whether a target player exists
 whether a spawn, respawn, counter, freeze, clear, or kill operation applies
 how the authoritative game state changes
-what debug status or gameplay state is emitted afterward
+what debug status or lane-native gameplay output is emitted afterward
 ```
 
 The server command package owns devtools command dispatch:
@@ -229,7 +229,7 @@ Current client context split:
 
 ```text
 DevtoolsStateContext
--> cached gameplay-state availability, local player id, canonical target, label mode
+-> cached gameplay-readiness availability, local player id, canonical target, label mode
 
 DevtoolsCommandContext
 -> command request gating and packet send delegation
@@ -247,7 +247,7 @@ DevtoolsOverlayContext
 -> telemetry overlay, remote labels, and hitbox overlay coordination
 
 DevtoolsGameplayStateContext
--> gameplay/debug packet fanout into window, cache, and overlays
+-> devtools gameplay readmodel and debug packet fanout into window, cache, and overlays
 ```
 
 Presentation seams must stay presentation-only. The devtools window and overlays may display state, request commands, or send diagnostic pings. They must not own simulation state or policy.
@@ -350,7 +350,7 @@ Server-owned telemetry includes debug status, debug shape catalog output, and co
 
 Client-owned telemetry includes presentation readmodels, overlay visibility, label lifecycle, telemetry source selectors, and network metric display.
 
-The devtools window may combine debug status packets with normalized gameplay state to build readmodels, but those readmodels remain transient presentation state.
+The devtools window may combine debug status packets with devtools gameplay readmodels built from lane-applied world/session/overlay state, but those readmodels remain transient presentation state.
 
 ## Build and runtime gates
 

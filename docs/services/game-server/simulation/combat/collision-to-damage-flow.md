@@ -23,7 +23,7 @@ simulation tick
 -> runtime entity damage application
 -> collision consequences
 -> domain event recording
--> later state-packet projection
+-> later lane-native realtime projection
 ```
 
 The collision phase is authoritative. The client may render ships, bullets, asteroids, hit effects, and UI feedback, but it does not decide whether a projectile hit, whether a player died, whether score was awarded, or whether an asteroid split.

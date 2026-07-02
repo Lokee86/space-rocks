@@ -266,7 +266,7 @@ Consumers should translate deliberately when crossing that boundary. They should
 
 ## Participating systems
 
-Game server simulation participates as the authority for selected target state, target validation, target status, and state-packet projection.
+Game server simulation participates as the authority for selected target state, target validation, target status, and lane-native realtime projection.
 
 Client input and targeting participate by translating mouse/input intent into target requests and reading authoritative confirmation from gameplay state.
 

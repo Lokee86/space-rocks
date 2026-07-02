@@ -18,7 +18,8 @@ Pickup presentation has two separate client paths:
 
 ```text
 world lane pickup records
--> WorldSync
+-> WorldPresentationAdapter
+-> WorldSync.apply_world_lane_state(world_lane_state)
 -> PickupSync
 -> pickup scene node
 ```
@@ -30,9 +31,9 @@ server event: pickup_collected
 -> pickup_collect effect scene
 ```
 
-`PickupSync` owns persistent pickup node presentation while the pickup exists in server world lane records. It selects a pickup scene family from `pickup_class`, applies the visible badge/icon from `type`, forwards lifespan state to the pickup node, tracks target visual positions, removes stale nodes, and interpolates pickup nodes between authoritative state updates.
+`PickupSync` owns persistent pickup node presentation while the pickup exists in `world_lane_state.pickups`. It selects a pickup scene family from `pickup_class`, applies the visible badge/icon from `type`, forwards lifespan state to the pickup node, tracks target visual positions, removes stale nodes, and interpolates pickup nodes between authoritative state updates.
 
-Collection effects are not owned by `PickupSync`. When the server emits `pickup_collected`, gameplay event presentation converts the event's server-space position into visual space and spawns a short-lived collection effect. This allows collected-sound and particle cleanup to outlive the pickup node that may be removed from world sync on the next state application.
+Collection effects are not owned by `PickupSync`. When the server emits `pickup_collected`, gameplay event presentation converts the event's server-space position into visual space and spawns a short-lived collection effect. This allows collected-sound and particle cleanup to outlive the pickup node that may be removed from world sync on the next world lane application.
 
 ## Code root
 
@@ -42,16 +43,16 @@ Collection effects are not owned by `PickupSync`. When the server emits `pickup_
 
 * Present server-authoritative pickup state as Godot scene nodes.
 * Select pickup scene family from `pickup_class`.
-* Apply pickup badge/icon visibility from pickup `type`.
+* Apply pickup badge or icon visibility from pickup `type`.
 * Keep pickup scene paths client-side.
-* Keep pickup type/class presentation state local and transient.
+* Keep pickup type or class presentation state local and transient.
 * Place pickup nodes in visual coordinates relative to the active render anchor.
 * Preserve pickup visual continuity across toroidal wrap boundaries.
 * Track pickup target visual positions for interpolation.
-* Remove local pickup nodes when their ids are absent from latest server state.
+* Remove local pickup nodes when their ids are absent from latest world lane state.
 * Forward pickup age and lifespan state into pickup scene presentation.
 * Play pickup spawn sound through the gameplay audio flow when a pickup node is first created.
-* Expose pickup visual/server position entries for targeting read models.
+* Expose pickup visual or server position entries for targeting read models.
 * Spawn collection particles and sound from `pickup_collected` events through gameplay effects.
 * Keep pickup presentation separate from pickup gameplay effects and collection authority.
 
@@ -97,7 +98,7 @@ The catalog also exposes available pickup types by inspecting `Badge` children i
 
 `client/scripts/entities/pickup.gd` owns scene-local pickup presentation behavior.
 
-It applies badge visibility, reads collision radius from the scene shape for presentation/read-model use, stores lifespan state, runs local pulse/glow animation, runs end-of-life blinking, and delegates spawn-sound playback to the gameplay audio flow.
+It applies badge visibility, reads collision radius from the scene shape for presentation or read-model use, stores lifespan state, runs local pulse or glow animation, runs end-of-life blinking, and delegates spawn-sound playback to the gameplay audio flow.
 
 ### Collection effect presenter
 
@@ -109,19 +110,20 @@ It applies badge visibility, reads collision radius from the scene shape for pre
 
 ### World lane pickup presentation
 
-Pickup node presentation is driven by the pickup dictionary passed through world-sync lane application.
+Pickup node presentation is driven by the pickup dictionary passed through the active world lane path.
 
 Current application path:
 
 ```text
 RealtimeRouter.route_lane_packet(...)
--> RealtimeLaneApplier
--> WorldSync.apply_state(...)
--> PickupSync.remove_missing(...)
--> PickupSync.apply(...)
+-> world lane applier updates world_lane_state
+-> WorldPresentationAdapter.apply_world_lane_state(...)
+-> WorldSync.apply_world_lane_state(world_lane_state)
+-> PickupSync.remove_missing(world_lane_state.pickups)
+-> PickupSync.apply(world_lane_state.pickups, ...)
 ```
 
-`WorldSync.apply_state(...)` receives normalized world-state dictionaries and delegates `server_pickups` to `PickupSync` after player/render-anchor state is applied.
+`WorldSync.apply_world_lane_state(...)` delegates `world_lane_state.pickups` to `PickupSync` after player or render-anchor state is applied.
 
 ### Packet-facing pickup fields
 
@@ -139,7 +141,7 @@ age_seconds
 lifespan_seconds
 ```
 
-`type` is the pickup identity used for badge/icon selection.
+`type` is the pickup identity used for badge or icon selection.
 
 `pickup_class` is the scene-family selector.
 
@@ -155,7 +157,7 @@ Unknown pickup classes return `null` and do not create a pickup node.
 
 The client must not receive or trust scene paths from gameplay packets. Scene paths stay client-side.
 
-### Badge/icon selection
+### Badge or icon selection
 
 Pickup scenes expose a `Badge` node with child icons whose names match pickup `type` strings.
 
@@ -190,7 +192,7 @@ For existing pickups, `PickupSync` advances visual position from the previous pi
 
 ### Missing-node cleanup
 
-`PickupSync.remove_missing(server_pickups)` removes any local pickup node whose id is not present in the latest server pickup dictionary.
+`PickupSync.remove_missing(world_lane_state.pickups)` removes any local pickup node whose id is not present in the latest world lane pickup dictionary.
 
 This is presentation cleanup only. It does not decide whether the pickup was collected, expired, or otherwise removed. The server made that decision before the client received the state.
 
@@ -250,7 +252,7 @@ pickup_class
 node
 ```
 
-Targeting may use these entries as client presentation/read-model data. The server remains authoritative over whether a pickup target request is valid.
+Targeting may use these entries as client presentation or read-model data. The server remains authoritative over whether a pickup target request is valid.
 
 ## Data ownership
 
@@ -266,7 +268,7 @@ Current local state includes:
 * last known pickup server positions
 * last known pickup visual positions
 * pickup lifespan state stored on pickup nodes
-* pickup pulse/glow/blink state stored on pickup nodes
+* pickup pulse, glow, or blink state stored on pickup nodes
 * short-lived collection effect nodes
 
 This state is not durable.
@@ -311,7 +313,7 @@ Badge/1_up
 Badge/torpedo
 ```
 
-`CollisionShape2D` is hidden in the scene and used for read-model/presentation radius access. It is not client collision authority.
+`CollisionShape2D` is hidden in the scene and used for read-model or presentation radius access. It is not client collision authority.
 
 ## Code map
 
@@ -321,6 +323,8 @@ Badge/torpedo
 * `client/scripts/world/pickup_sync.gd`
 * `client/scripts/world/pickup_sync_state.gd`
 * `client/scripts/world/world_wrap.gd`
+* `client/scripts/protocol/realtime/world_presentation_adapter.gd`
+* `client/scripts/protocol/realtime/world_lane_state.gd`
 
 ### Pickup presentation catalog
 
@@ -340,11 +344,7 @@ Badge/torpedo
 * `client/scripts/gameplay/audio/gameplay_audio_flow.gd`
 * `client/scenes/pickups/pickup_collect.tscn`
 
-### Runtime callers
 
-* `client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd`
-* `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
-* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`
 
 ### Targeting consumers
 
@@ -398,6 +398,6 @@ Use the normal client GUT verification flow when changing pickup presentation be
 
 Pickup presentation should stay under world sync because live pickup nodes are rendered from server world state and anchored to ViewAnchor visual coordinates.
 
-Collection effects are documented here only because they are part of pickup presentation behavior. Their implementation owner is gameplay event/effects presentation, not `PickupSync`.
+Collection effects are documented here only because they are part of pickup presentation behavior. Their implementation owner is gameplay event or effects presentation, not `PickupSync`.
 
 Do not collapse pickup, projectile, and asteroid presentation into one generic rendering implementation. Their sync pattern overlaps, but their packet-facing fields, scene selection, and presentation details are separate.

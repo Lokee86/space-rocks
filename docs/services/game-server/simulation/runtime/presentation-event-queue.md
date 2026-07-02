@@ -96,7 +96,7 @@ The presentation event queue does not own:
 * Room lifecycle or room match-over state transitions.
 * Devtools-only event behavior.
 
-Those concerns belong to combat, pickups, radial effects, lane packet projection, protocol/data, networking, client presentation, rooms, or player-data documentation.
+Those concerns belong to combat, pickups, radial effects, lane-native realtime projection, protocol/data, networking, client presentation, rooms, or player-data documentation.
 
 ## Domain roles
 
@@ -133,7 +133,7 @@ This keeps client presentation event delivery separate from the runtime systems 
 pendingPresentationEvents map[string][]EventState
 ```
 
-The map is owned by the `Game` aggregate and guarded by the same game mutex used for simulation stepping and lane packet projection.
+The map is owned by the `Game` aggregate and guarded by the same game mutex used for simulation stepping and lane-native realtime projection.
 
 ### Player addition
 
@@ -260,7 +260,7 @@ protocol/realtime event_batch projection helpers
 networking outbound event_batch write helpers
 ```
 
-`protocol/realtime` selects pending events for `event_batch`, and active networking writes the selected event batch packet. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics.
+`protocol/realtime` selects pending events for `event_batch`, and active networking writes the selected event_batch packet. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics.
 
 ## Data ownership
 
@@ -486,7 +486,7 @@ Covers:
 services/game-server/internal/game/pickup_drops_test.go
 ```
 
-Covers pickup drop behavior that later projects pickup state through `event_batch` lane packets.
+Covers pickup drop behavior that later reaches clients through world lane records and `event_batch` presentation event delivery.
 
 Suggested verification command from `services/game-server`:
 

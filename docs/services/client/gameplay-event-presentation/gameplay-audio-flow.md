@@ -25,7 +25,10 @@ client/scripts/gameplay/audio/gameplay_audio_flow.gd
 Current gameplay audio enters through these paths:
 
 ```text
-server event
+event_batch
+-> client/scripts/protocol/realtime/event_batch_applier.gd
+-> EventPresentationAdapter
+-> GameplayEventLifecycleFlow
 -> GameplayEventController
 -> GameplayEffects
 -> GameplayAudioFlow
@@ -85,7 +88,7 @@ Gameplay audio owns:
 * Restarting local afterburner audio while afterburner presentation remains active.
 * Looking up HUD `%GameOverSound` during gameplay event flow configuration.
 * Delaying game-over sound playback by the generated presentation constant.
-* Preventing repeated game-over sound playback during the same event/effects lifecycle.
+* Preventing repeated game-over sound playback during the same event or effects lifecycle.
 * Invalidating pending delayed game-over sound timers when game-over audio is reset or stopped.
 * Keeping audio playback local and non-authoritative.
 
@@ -135,6 +138,8 @@ The helper does not inspect packet data and does not decide whether an effect sh
 ### Gameplay event audio
 
 `GameplayEventFlow` constructs `GameplayEffects` and `GameplayEventController`.
+
+`EventPresentationAdapter` forwards applied `event_batch` output into `GameplayEventLifecycleFlow`, which then hands those events to `GameplayEventFlow`.
 
 `GameplayEventController` reads server events, converts event server coordinates into visual coordinates, and asks `GameplayEffects` to spawn presentation effects.
 
@@ -216,7 +221,7 @@ Current flow:
 
 ```text
 world lane bullet records
--> WorldSync.apply_state()
+-> WorldSync.apply_world_lane_state()
 -> ProjectileSync.apply()
 -> first projectile node creation
 -> FiringSound
@@ -252,7 +257,7 @@ world lane pickup records
 Pickup collection sound is event presentation:
 
 ```text
-server event: pickup_collected
+event_batch output
 -> GameplayEventController.apply_pickup_collected()
 -> GameplayEffects.spawn_pickup_collected()
 -> pickup_collect scene AudioStreamPlayer2D
@@ -280,7 +285,7 @@ Stopping afterburner presentation calls:
 GameplayAudioFlow.stop_afterburner_sound()
 ```
 
-`Player.stop_transient_effects()` also clears afterburner audio by setting afterburner inactive. Local self-death uses that path before HUD/death presentation is applied.
+`Player.stop_transient_effects()` also clears afterburner audio by setting afterburner inactive. Local self-death uses that path before HUD or death presentation is applied.
 
 Remote afterburner visual state does not currently play remote afterburner audio.
 
@@ -302,7 +307,7 @@ client/scenes/game.tscn
 
 ### Server event input
 
-Gameplay event sounds consume normalized server events from gameplay state.
+Gameplay event sounds consume applied `event_batch` output from the realtime event adapter path.
 
 Relevant event types currently handled by `GameplayEventController`:
 
@@ -314,15 +319,15 @@ pickup_collected
 pickup_effect_applied
 ```
 
-Only the first four currently produce visual/audio effects.
+Only the first four currently produce visual or audio effects.
 
 Event positions are converted through the configured visual-position converter before spawning effect scenes. Audio itself plays from the spawned scene node.
 
 ### World-state input
 
-Projectile and pickup spawn sounds are driven by world-state entity appearance.
+Projectile and pickup spawn sounds are driven by world-lane entity appearance.
 
-The client does not receive explicit “play projectile sound” or “play pickup spawn sound” packets. It infers those sounds from first local creation of server-authoritative entities.
+The client does not receive explicit "play projectile sound" or "play pickup spawn sound" packets. It infers those sounds from first local creation of server-authoritative entities.
 
 ### Match-end input
 
@@ -360,7 +365,7 @@ This state is not durable.
 
 It is not authoritative.
 
-It is reset through gameplay/effects reset paths, scene teardown, or normal Godot node lifecycle.
+It is reset through gameplay, effects, reset paths, scene teardown, or normal Godot node lifecycle.
 
 ## Scene requirements
 
@@ -409,15 +414,17 @@ Scene-local audio settings such as stream, volume, pitch, looping, and polyphony
 
 ### Primary audio implementation
 
-* `client/scripts/gameplay/audio/gameplay_audio_flow.gd` - Gameplay audio helper for scene sound playback, game-over sound lookup, projectile sound detachment, and null-safe play/stop calls.
-* `client/scripts/gameplay/audio/background_music_flow.gd` - Scene-level background music start/stop/ensure helper.
+* `client/scripts/gameplay/audio/gameplay_audio_flow.gd` - Gameplay audio helper for scene sound playback, game-over sound lookup, projectile sound detachment, and null-safe play or stop calls.
+* `client/scripts/gameplay/audio/background_music_flow.gd` - Scene-level background music start, stop, or ensure helper.
 
 ### Event and effect audio callers
 
+* `client/scripts/protocol/realtime/event_batch_applier.gd` - Applies and dedupes `event_batch` payloads before event-presentation fanout.
+* `client/scripts/protocol/realtime/event_presentation_adapter.gd` - Forwards applied `event_batch` output into gameplay event presentation.
 * `client/scripts/gameplay/events/gameplay_event_flow.gd` - Constructs effects and event controller, exposes game-over audio request and reset methods.
 * `client/scripts/gameplay/events/gameplay_event_controller.gd` - Converts server events into effect spawn calls.
-* `client/scripts/gameplay/effects/gameplay_effects.gd` - Spawns effect scenes, starts their sounds, manages effect cleanup, and owns game-over sound delay/one-shot state.
-* `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires event flow into gameplay state application and reset.
+* `client/scripts/gameplay/effects/gameplay_effects.gd` - Spawns effect scenes, starts their sounds, manages effect cleanup, and owns game-over sound delay or one-shot state.
+* `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires event flow into gameplay event presentation and reset.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Stops transient player effects before local death presentation and delegates final elimination to match-end flow.
 * `client/scripts/gameplay/match_end/match_end_flow.gd` - Requests game-over audio for local elimination and authoritative room match-over.
 
@@ -460,12 +467,12 @@ Scene-local audio settings such as stream, volume, pitch, looping, and polyphony
 
 ### Non-owning boundaries
 
-* `services/game-server/` - Owns gameplay authority and emits authoritative world state/events.
+* `services/game-server/` - Owns gameplay authority and emits authoritative world state or events.
 * `client/scripts/networking/` - Owns transport and packet routing, not sound playback.
 * `client/scripts/world/` - Owns entity sync and creation timing, not sound implementation.
 * `client/scripts/gameplay/match_end/` - Owns match-end presentation orchestration, not audio playback or audio gating.
-* `client/scripts/gameplay/hud/` and `client/scripts/shell/gameplay_hud_flow.gd` - Own HUD visibility and widgets, not audio playback policy.
-* `client/scripts/ui/` - Owns UI controls and result/menu presentation, not gameplay event audio.
+* `client/scripts/ui/` and `client/scripts/shell/gameplay_hud_flow.gd` - Own HUD visibility and widgets, not audio playback policy.
+* `client/scripts/ui/` - Owns UI controls and result or menu presentation, not gameplay event audio.
 
 ## Tests
 
@@ -473,6 +480,7 @@ Relevant tests include:
 
 * `client/tests/unit/gameplay/effects/test_gameplay_effects.gd`
 * `client/tests/unit/gameplay/match_end/test_match_end_flow.gd`
+* `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
 * `client/tests/unit/test_world_sync.gd`
 * `client/tests/unit/test_pickup.gd`
 * `client/tests/unit/test_pickup_sync.gd`
@@ -511,4 +519,4 @@ Do not move gameplay authority into audio paths. Audio playback should follow se
 
 Projectile firing sound is intentionally detached from projectile node lifetime. Pickup collection sound is intentionally detached from pickup node lifetime by using the `pickup_collected` event effect path.
 
-Game-over audio is requested by match-end presentation but gated by gameplay effects/audio. Keep those responsibilities separate so repeated room snapshots or local elimination state do not directly replay audio.
+Game-over audio is requested by match-end presentation but gated by gameplay effects or audio. Keep those responsibilities separate so repeated room snapshots or local elimination state do not directly replay audio.

@@ -6,21 +6,22 @@ Parent index: [World Sync](./!INDEX.md)
 
 This document describes the client `WorldSync` coordinator.
 
-It explains how the client applies lane-applied server world state to world presentation seams, how `WorldSync` delegates entity-family synchronization, how interpolation is coordinated, and how targeting and presentation code access world-sync read models.
+It explains how the client applies world lane state to world presentation seams, how `WorldSync` delegates entity-family synchronization, how interpolation is coordinated, and how targeting and presentation code access world-sync read models.
 
 ## Overview
 
 `WorldSync` is the client-side coordinator for rendering server-authoritative world state.
 
-It does not parse raw packets and does not decide gameplay outcomes. Packet decode and classification route through `RealtimeRouter`, which applies lane state/readiness before passing lane-applied state into `WorldSync.apply_state`. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
+It does not parse raw packets and does not decide gameplay outcomes. Packet decode and classification route through `RealtimeRouter`, which applies world lane state/readiness before `WorldPresentationAdapter` forwards that lane-applied state into `WorldSync`. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
 
 The current runtime path is:
 
 ```text
 packet decode / classification
--> RealtimeRouter applies lane state/readiness
--> GameplayWorldStateApplyFlow
--> WorldSync.apply_state
+-> RealtimeRouter applies world lane packets into world_lane_state
+-> WorldPresentationAdapter.apply_world_lane_state(...)
+-> WorldSync.set_current_self_id(...)
+-> WorldSync.apply_world_lane_state(world_lane_state)
 -> PlayerRenderApi
 -> ProjectileSync
 -> AsteroidSync
@@ -53,7 +54,7 @@ GameplayRuntimeContext.process(delta)
   * `PickupSync`
   * `TargetPositionSource`
 * Store the current `self_id` for world-sync read-model access.
-* Apply normalized server world state to the client world.
+* Apply lane-applied server world state to the client world.
 * Remove missing player, projectile, asteroid, and pickup nodes before applying new state.
 * Delegate player presentation to `PlayerRenderApi`.
 * Delegate projectile presentation to `ProjectileSync`.
@@ -78,7 +79,7 @@ GameplayRuntimeContext.process(delta)
 * Packet schema source-of-truth files.
 * Raw WebSocket transport.
 * Packet decoding.
-* Lane packet application and world state readiness.
+* Realtime world lane packet application and world state readiness.
 * Detailed player-render internals.
 * Detailed projectile, asteroid, or pickup sync internals.
 * Target selection orchestration.
@@ -91,9 +92,9 @@ GameplayRuntimeContext.process(delta)
 
 ### World-state coordinator
 
-`WorldSync` is the coordinator for applying server world state to client presentation.
+`WorldSync` is the coordinator for applying world lane state to client presentation.
 
-It receives the world-state subset selected by gameplay runtime and delegates each entity family to its owner. It is the boundary between normalized gameplay state and rendered world entities.
+It receives `world_lane_state` after the realtime protocol seam has already applied the inbound world packets and delegates each entity family to its owner. It is the boundary between lane-applied world state and rendered world entities.
 
 ### Entity-sync delegation seam
 
@@ -137,9 +138,55 @@ Constants.PICKUP_Z_INDEX
 Constants.BULLET_Z_INDEX
 ```
 
-### World-state application input
+### Active world lane application input
 
-`WorldSync.apply_state(...)` receives normalized state from gameplay runtime:
+The active world lane input path is:
+
+```text
+RealtimeRouter.route_lane_packet(packet)
+-> world lane applier updates world_lane_state
+-> WorldPresentationAdapter.apply_world_lane_state(world_sync, world_lane_state, self_id)
+-> WorldSync.set_current_self_id(self_id)
+-> WorldSync.apply_world_lane_state(world_lane_state)
+```
+
+`world_lane_state` currently carries:
+
+```text
+world_lane_state.ships
+world_lane_state.bullets
+world_lane_state.asteroids
+world_lane_state.pickups
+```
+
+### Apply order
+
+The current `WorldSync.apply_world_lane_state` order is:
+
+```text
+1. Store current world_lane_state.
+2. Remove missing players from world_lane_state.ships.
+3. Apply player/render-anchor state from world_lane_state.ships.
+4. Remove missing projectiles from world_lane_state.bullets.
+5. Apply projectile state from world_lane_state.bullets using the active anchor basis.
+6. Remove missing asteroids from world_lane_state.asteroids.
+7. Apply asteroid state from world_lane_state.asteroids using the active anchor basis.
+8. Remove missing pickups from world_lane_state.pickups.
+9. Apply pickup state from world_lane_state.pickups using the active anchor basis.
+```
+
+The non-player entity sync owners receive the active visual and server anchor basis from `PlayerRenderApi`:
+
+```gdscript
+player_render_api.visual_position()
+player_render_api.server_position()
+```
+
+This keeps projectile, asteroid, and pickup rendering aligned with the current ViewAnchor/render-anchor state.
+
+### Legacy compatibility path
+
+`WorldSync.apply_state(...)` still exists in the current implementation as compatibility or internal support for aggregate dictionaries:
 
 ```gdscript
 func apply_state(
@@ -151,33 +198,7 @@ func apply_state(
 ) -> void:
 ```
 
-These values are passed by `GameplayWorldStateApplyFlow` from the applied lane-state dictionary.
-
-### Apply order
-
-The current `WorldSync.apply_state` order is:
-
-```text
-1. Store current self_id.
-2. Update TargetPositionSource current self id.
-3. Remove missing players.
-4. Remove missing projectiles.
-5. Remove missing asteroids.
-6. Remove missing pickups.
-7. Apply player/render-anchor state.
-8. Apply projectile state using the active anchor basis.
-9. Apply asteroid state using the active anchor basis.
-10. Apply pickup state using the active anchor basis.
-```
-
-The non-player entity sync owners receive the active visual and server anchor basis from `PlayerRenderApi`:
-
-```gdscript
-player_render_api.visual_position()
-player_render_api.server_position()
-```
-
-This keeps projectile, asteroid, and pickup rendering aligned with the current ViewAnchor/render-anchor state.
+It should not be treated as the active lane-native world path in service documentation.
 
 ### Interpolation
 
@@ -272,12 +293,13 @@ Current coordinator state includes:
 * `asteroid_sync`
 * `pickup_sync`
 * `target_position_source`
+* `world_lane_state`
 * `view_anchor`
 * `local_player`
 
 `WorldSync` does not persist state.
 
-`WorldSync` does not own authoritative world data. It receives server state, applies presentation changes, and exposes read models for client presentation and targeting consumers.
+`WorldSync` does not own authoritative world data. The server owns authoritative simulation, realtime protocol owns world lane packet application, and `WorldSync` applies the resulting lane state to presentation and exposes read models for client presentation and targeting consumers.
 
 Entity-specific node maps, target positions, and interpolation state belong inside the relevant sync owners. Player anchor and player meaning state belong behind `PlayerRenderApi`.
 
@@ -287,12 +309,15 @@ Entity-specific node maps, target positions, and interpolation state belong insi
 
 * `client/scripts/world/world_sync.gd`
 
-### Runtime callers
+### Active world lane callers
 
-* `client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd`
-* `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
-* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`
+* `client/scripts/protocol/realtime/world_presentation_adapter.gd`
+* `client/scripts/protocol/realtime/world_lane_state.gd`
 * `client/scripts/protocol/realtime/realtime_router.gd`
+* `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
+
+### Legacy or compatibility callers
+
 
 ### Delegated sync owners
 
@@ -319,8 +344,8 @@ Entity-specific node maps, target positions, and interpolation state belong insi
 
 ### Non-ownership boundaries
 
-* `client/scripts/gameplay/runtime/` owns gameplay runtime composition and state fanout into world sync.
-* `client/scripts/gameplay/state/` owns lane packet application and state application ordering before world sync.
+* `client/scripts/protocol/realtime/` owns lane packet application and world state readiness before world sync.
+* `client/scripts/gameplay/runtime/` owns gameplay runtime composition and interpolation tick entry.
 * `client/scripts/gameplay/targeting/` owns target selection and targeting request behavior.
 * `client/scripts/gameplay/input/` owns gameplay input handling.
 * `client/scripts/shell/gameplay_hud_flow.gd` owns runtime HUD presentation.
@@ -344,9 +369,8 @@ World-sync coordinator behavior is covered or should be covered by tests around:
 Expected verification should confirm:
 
 * `WorldSync.configure` creates and wires all sync owners.
-* `WorldSync.apply_state` removes missing entities before applying new state.
-* `WorldSync.apply_state` delegates player state before projectile, asteroid, and pickup state.
-* `WorldSync.apply_state` passes the active anchor visual/server basis into non-player sync owners.
+* `WorldSync.apply_world_lane_state` delegates player state before projectile, asteroid, and pickup state.
+* `WorldSync.apply_world_lane_state` passes the active anchor visual/server basis into non-player sync owners.
 * `WorldSync.interpolate` delegates interpolation to each sync owner.
 * `WorldSync.target_source()` returns a configured target-position source.
 * Reset behavior clears intended presentation state.

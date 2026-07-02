@@ -489,7 +489,7 @@ This does not define a separate generated packet family named `control`.
 The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity.
 
 ```text
-event batches = critical/event-once
+event_batch = critical/event-once
 world and overlay deltas = high priority / hot supersedable
 session deltas = medium priority / deferrable
 required bootstrap full packets = world, overlay, then session
@@ -589,7 +589,7 @@ Lane application responsibilities are split by lane:
 world lane -> creates, updates, and deletes for ships, bullets, asteroids, pickups
 overlay lane -> receiver and HUD state
 session lane -> player sessions, lifecycle, and total asteroid count
-event batches -> deduped by batch and event identifiers, then drained into event presentation
+event_batch -> deduped by batch and event identifiers, then drained into event presentation
 ```
 
 Presentation adapters fan the current lane state into the gameplay runtime surface without turning this protocol doc into a client runtime guide.
@@ -971,7 +971,7 @@ lives
 death
 pickup state
 event projection
-lane packet projection
+lane-native realtime projection
 match-over policy integration
 ```
 

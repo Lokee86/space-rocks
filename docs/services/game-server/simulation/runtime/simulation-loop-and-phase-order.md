@@ -104,7 +104,7 @@ Game.Step
 -> advances authoritative state
 
 Networking outbound
--> asks Game for lane packet projection
+-> asks Game for lane-native realtime projection
 
 Client
 -> renders server results
@@ -189,7 +189,7 @@ The phase helpers called from `Step` run under that lock. They mutate shared run
 
 The same lock is used by public game APIs that mutate or read live state, including player addition/removal, input routing, pause-state packet generation, match decision reads, counter mutation, targeting, pickups, lane-native realtime projection inputs, and devtools adapters.
 
-This means the simulation phase order is serialized against inbound game mutations and outbound state projection.
+This means the simulation phase order is serialized against inbound game mutations and outbound lane-native realtime projection reads.
 
 Simulation step observers are invoked while `Step` still holds the game lock. Current observer usage is narrow devtools integration for continuous bullet streams. Observer callbacks should remain small and route mutations through the intended game-owned devtools adapter functions.
 
@@ -494,7 +494,7 @@ Primary implementation files:
 * `services/game-server/internal/game/world_simulation_options.go` - world freeze flags and gate helpers.
 * `services/game-server/internal/game/match.go` - match-over decision evaluation used by the simulation step gate.
 * `services/game-server/internal/protocol/realtime/` - lane-native realtime projection that reads post-step runtime state and plans `event_batch` output.
-* `services/game-server/internal/networking/outbound/` - writes selected lane packets to the websocket session and clears drained event IDs after successful active write.
+* `services/game-server/internal/networking/outbound/` - writes selected lane-native realtime packets to the websocket session and clears drained event IDs after successful active write.
 * `services/game-server/internal/game/runtime/state.go` - runtime entity store and core runtime entity shapes.
 * `services/game-server/internal/game/motion/motion.go` - movement integration and wrapped position advancement for ships, asteroids, and bullets.
 
@@ -503,7 +503,7 @@ Related room and networking files:
 * `services/game-server/internal/rooms/room_lifecycle.go` - room lifecycle calls `Game.Start` and `Game.Stop`.
 * `services/game-server/internal/rooms/lifecycle_tick.go` - room game-over lifecycle observation.
 * `services/game-server/internal/protocol/realtime/` - lane-native realtime projection and packet planning.
-* `services/game-server/internal/networking/websocket_write.go` - outbound websocket write path for selected lane packets planned by `services/game-server/internal/protocol/realtime/`.
+* `services/game-server/internal/networking/websocket_write.go` - outbound websocket write path for selected lane-native realtime packets planned by `services/game-server/internal/protocol/realtime/`.
 * `services/game-server/internal/networking/websocket_gameplay_tick.go` - gameplay presentation tick path.
 
 Related devtools files:

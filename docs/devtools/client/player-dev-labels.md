@@ -22,7 +22,7 @@ basic
 network
 ```
 
-`basic` mode shows per-remote-player gameplay readback derived from the latest gameplay state.
+`basic` mode shows per-remote-player gameplay readback derived from the latest devtools gameplay readmodel built from lane-applied state.
 
 `network` mode shows network and packet timing telemetry. The network label text is computed once from the latest telemetry snapshot and displayed on each remote player label.
 
@@ -36,7 +36,7 @@ They are allowed to observe:
 
 ```text
 remote player nodes
-latest gameplay state
+latest devtools gameplay readmodel
 player session read models
 network telemetry metrics
 world packet timing metrics
@@ -55,13 +55,13 @@ server mutation
 production HUD behavior
 ```
 
-The devtools label system may attach a child node to a remote player node for display, but it does not mutate the player’s gameplay state, movement state, target state, score, lives, or lifecycle.
+The devtools label system may attach a child node to a remote player node for display, but it does not mutate the player's gameplay state, movement state, target state, score, lives, or lifecycle.
 
 ## Server authority
 
 Player dev labels do not send packets and do not request server mutations.
 
-The server remains authoritative for the gameplay state that labels read:
+The server remains authoritative for the lane-applied gameplay output that labels read through the devtools gameplay readmodel:
 
 ```text
 players
@@ -73,7 +73,7 @@ score
 lives
 ```
 
-The client label system treats incoming gameplay state as read-only diagnostic input.
+The client label system treats the incoming devtools gameplay readmodel as read-only diagnostic input.
 
 Network label data is also diagnostic readback. It derives from client-side telemetry calculations and packet timing fields, not from a gameplay command surface.
 
@@ -103,7 +103,7 @@ position = Vector2(60, -70)
 rotation = 0.0
 ```
 
-While visible, the label forces `global_rotation` back to `0.0` during processing so label text stays screen-readable instead of inheriting the player’s rotation.
+While visible, the label forces `global_rotation` back to `0.0` during processing so label text stays screen-readable instead of inheriting the player's rotation.
 
 Basic mode shows:
 
@@ -120,7 +120,7 @@ Formatting behavior:
 
 ```text
 player IDs longer than 8 characters are shortened with an ellipsis
-missing values render as —
+missing values render as unavailable
 x and y are rounded to integer text
 ```
 
@@ -134,7 +134,7 @@ packet_staleness_ms
 packet_age_ms
 ```
 
-Missing or negative numeric metrics render as `—`.
+Missing or negative numeric metrics render as `unavailable`.
 
 ## Label lifecycle
 
@@ -222,7 +222,7 @@ The labels do not have devtools-window controls in the current implementation. T
 
 ## Telemetry
 
-Basic label data comes from the latest gameplay state applied into the devtools overlay context.
+Basic label data comes from the latest devtools gameplay readmodel applied into the devtools overlay context.
 
 The basic path reads:
 
@@ -329,7 +329,7 @@ Gameplay composition and observation paths:
 ```text
 client/scripts/gameplay/runtime/gameplay_flow_composer.gd
 client/scripts/gameplay/input/gameplay_input_context.gd
-client/scripts/gameplay/state/gameplay_state_apply_flow.gd
+client/scripts/protocol/realtime/devtools_lane_state_adapter.gd
 client/scripts/gameplay/runtime/gameplay_process_flow.gd
 client/scripts/world/world_sync.gd
 client/scripts/world/player_render/player_render_api.gd
@@ -365,7 +365,7 @@ client/tests/unit/devtools/telemetry/test_network_telemetry_metrics.gd
 client/tests/unit/world/player_render/test_player_render_api.gd
 client/tests/unit/test_world_sync.gd
 client/tests/unit/test_gameplay_input_context.gd
-client/tests/unit/test_gameplay_state_apply_flow.gd
+client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd
 ```
 
 No dedicated player-dev-label formatter or player-dev-label context test file is currently present in the client test tree.

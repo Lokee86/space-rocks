@@ -28,7 +28,7 @@ client devtools input or window control
 -> devtools command handler
 -> game-owned devtools export seam
 -> normal authoritative game state mutation
--> normal state/debug output packets
+-> normal lane-native gameplay/debug output packets
 -> client inbound packet routing
 -> devtools readmodels, overlays, or window presentation
 ```
@@ -144,7 +144,7 @@ debug_status
 debug_shape_catalog
 ```
 
-The client consumes those outputs as diagnostic presentation data. They are not a gameplay state replacement.
+The client consumes those outputs as diagnostic presentation data. They do not replace lane-native gameplay output.
 
 ## Source-of-truth files
 
@@ -444,7 +444,7 @@ debug_status
 -> GameplaySessionController.handle_debug_status_packet
 -> GameplayComposition.apply_devtools_debug_status_packet
 -> GameplayDevtoolsContext.apply_debug_status_packet
--> devtools window/readmodel refresh
+-> devtools readmodel refresh built from lane-applied state
 
 debug_shape_catalog
 -> ClientConnectionService.debug_shape_catalog_received
@@ -613,9 +613,10 @@ client/scripts/devtools/debug_status_packet_reader.gd
 client/scripts/devtools/hitboxes/debug_shape_catalog_packet_reader.gd
 ```
 
-Client devtools presentation consumers:
+Client devtools presentation consumers and readmodel builders:
 
 ```text
+client/scripts/protocol/realtime/devtools_lane_state_adapter.gd
 client/scripts/devtools/devtools_window_controller.gd
 client/scripts/devtools/devtools_display_refresh_flow.gd
 client/scripts/devtools/devtools_player_target_model.gd
@@ -708,7 +709,7 @@ shared/packets/ owns packet shape, not runtime command semantics.
 
 The devtools packet protocol deliberately reuses the normal WebSocket packet transport. Any future developer console should call the same packet path rather than bypassing server authority.
 
-`debug_status` and `debug_shape_catalog` are devtools readout packets. They help the client render debug controls and overlays, but they do not replace normal `state` packets.
+`debug_status` and `debug_shape_catalog` are devtools readout packets. They help the client render debug controls and overlays, but they do not replace normal lane-native realtime packets.
 
 World telemetry overlay packet timing uses `telemetry_ping` and `telemetry_pong`, which belong to the gameplay packet schema. The overlay is devtools presentation, but the packet pair is not defined in `debug.toml`.
 

@@ -111,7 +111,7 @@ The overlay has a high `z_index` so outlines render above normal world presentat
 
 ## Shape resolution
 
-`ServerHitboxOverlayFlow` resolves shape ids from current normalized gameplay state.
+`ServerHitboxOverlayFlow` resolves shape ids from the current devtools gameplay readmodel built from lane-applied world records.
 
 Current client shape id rules:
 
@@ -147,9 +147,11 @@ server loads collision shape catalog
 -> server builds debug shape catalog packet
 -> client routes debug_shape_catalog packet
 -> ServerHitboxOverlayFlow stores shape definitions
--> client receives world lane readback
+-> client receives lane-native gameplay output
 -> RealtimeRouter applies lane state
--> ServerHitboxOverlayFlow stores latest gameplay state
+-> DevtoolsLaneStateAdapter.build_state(...)
+-> GameplayComposition.apply_devtools_gameplay_state(devtools_state)
+-> ServerHitboxOverlayFlow stores latest devtools gameplay readmodel
 -> GameplayProcessFlow ticks overlay flow
 -> overlay flow resolves entity shape ids
 -> overlay flow transforms local shape points by entity position, rotation, and scale
@@ -224,7 +226,7 @@ The overlay flow resets when gameplay composition resets.
 Reset clears:
 
 * latest debug collision body cache
-* latest gameplay state
+* latest devtools gameplay readmodel
 * stored shape catalog entries
 * visible overlay draw entries
 
@@ -333,7 +335,7 @@ Server outbound tests verify that `debug_shape_catalog` responses:
 
 ## Notes
 
-The UI label currently says “Show Server Collision Telemetry,” while the implementation names use “server hitbox overlay” and “hitbox” terminology.
+The UI label currently says "Show Server Collision Telemetry," while the implementation names use "server hitbox overlay" and "hitbox" terminology.
 
 The overlay reconstructs visible outlines from shape definitions and applied world-lane state. It does not receive per-entity precomputed outline geometry from the server.
 

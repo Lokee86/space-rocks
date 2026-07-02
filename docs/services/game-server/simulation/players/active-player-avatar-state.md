@@ -159,7 +159,7 @@ game.entities.Players map[string]*runtime.Ship
 
 The key is the game player ID. The ship `ID` uses the same value.
 
-The map means Ã¢â‚¬Å“this player currently has a ship entity stored in the simulation.Ã¢â‚¬Â It does not always mean the player is eligible for every behavior. Pending-despawn ships remain in the map during their despawn delay but are blocked from movement, input, targeting candidates, collision damage, pickup collection, and firing.
+The map means "this player currently has a ship entity stored in the simulation." It does not always mean the player is eligible for every behavior. Pending-despawn ships remain in the map during their despawn delay but are blocked from movement, input, targeting candidates, collision damage, pickup collection, and firing.
 
 ## Avatar creation
 
@@ -409,7 +409,7 @@ session lane lifecycle records
 
 ## Targeting interaction
 
-Active avatars carry a copy of the playerÃ¢â‚¬â„¢s current target fields:
+Active avatars carry a copy of the player's current target fields:
 
 ```text
 TargetKind
@@ -707,7 +707,7 @@ go test -buildvcs=false ./internal/game/runtime
 
 ## Notes
 
-The legacy architecture docÃ¢â‚¬â„¢s most relevant migrated rule is that `runtime.Ship` is active ship/world state only. It is not the owner of durable score, lives, respawn, or match lifecycle state.
+The legacy architecture doc's most relevant migrated rule is that `runtime.Ship` is active ship/world state only. It is not the owner of durable score, lives, respawn, or match lifecycle state.
 
 `world lane ship records` can temporarily include pending-despawn ships during the despawn delay. Consumers that need gameplay eligibility should use lifecycle/session/read-model fields and server-owned targeting/collision gates rather than treating active avatar packet presence as the complete participation model.
 

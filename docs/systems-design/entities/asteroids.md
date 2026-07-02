@@ -144,7 +144,7 @@ Asteroid size is a gameplay concept, not only a visual concept.
 
 Current size affects:
 
-* state-packet scale
+* world lane record scale
 * server collision shape scaling
 * client node scale
 * score value from destruction

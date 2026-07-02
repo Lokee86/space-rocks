@@ -14,14 +14,14 @@ Runtime processing is the client-side frame loop for active gameplay presentatio
 
 It is not the authoritative simulation tick. The server owns gameplay simulation, collision outcomes, scoring, lives, death, respawn validity, and match lifecycle. The client runtime processing path only advances local presentation and client-owned runtime helpers between applied lane packets.
 
-The frame path starts in `GameplaySessionController._process(delta)`. The controller asks `GameplayStateFlow` whether any gameplay state has been received, then calls `GameplayComposition.process(delta, has_received_state)`.
+The frame path starts in `GameplaySessionController._process(delta)`. The controller asks the gameplay-readiness holder whether required lane baselines are synced, then calls `GameplayComposition.process(delta, required_lane_baselines_synced)`.
 
 `GameplayComposition.process` currently ticks three client-side lanes:
 
 ```text
 1. GameplayShellFlow.process(delta)
 2. DevToolsSessionFlow.process(delta)
-3. GameplayPresentationFlow.process(delta, has_received_gameplay_state)
+3. GameplayPresentationFlow.process(delta, required_lane_baselines_synced)
 ```
 
 `GameplayShellFlow` delegates to `GameplayFlowComposer`, which delegates focused per-frame gameplay work to `GameplayProcessFlow`.
@@ -32,8 +32,8 @@ The frame path starts in `GameplaySessionController._process(delta)`. The contro
 1. GameplayRuntimeContext.process(delta)
 2. ServerHitboxOverlayFlow.process()
 3. GameplayRuntimeTickFlow.process(delta)
-4. GameplayDevtoolsContext.process(has_received_state)
-5. GameplayInputContext.process(has_received_state)
+4. GameplayDevtoolsContext.process(required_lane_baselines_synced)
+5. GameplayInputContext.process(required_lane_baselines_synced)
 6. GameplaySpectateContext.process()
 ```
 
@@ -51,14 +51,14 @@ This structure keeps frame processing as an ordered orchestration seam. It shoul
 
 * Tick client-owned gameplay runtime work once per Godot frame.
 * Preserve a stable processing order for gameplay presentation helpers.
-* Pass `has_received_state` to flows that must behave differently before required lane baselines are present.
+* Pass gameplay readiness to flows that must behave differently before required lane baselines are present.
 * Tick world interpolation through `GameplayRuntimeContext`.
 * Tick server hitbox overlay presentation through `ServerHitboxOverlayFlow`.
 * Tick HUD runtime work through `GameplayRuntimeTickFlow`.
 * Tick gameplay devtools context processing.
 * Tick gameplay input context processing.
 * Tick spectate context processing.
-* Keep per-frame runtime orchestration separate from state-packet application.
+* Keep per-frame runtime orchestration separate from lane packet application.
 * Keep per-frame runtime orchestration separate from authoritative simulation.
 
 ## Does not own
@@ -91,7 +91,7 @@ This includes interpolation, HUD ticking, devtools presentation refresh, input-p
 
 ### State-aware processing bridge
 
-Some processing lanes receive `has_received_state` so they can avoid acting as if lane-applied world state is available before required baselines have been applied.
+Some processing lanes receive gameplay readiness so they can avoid acting as if lane-applied world state is available before required baselines have been applied.
 
 ### World-sync tick bridge
 
@@ -105,10 +105,10 @@ Gameplay frame processing enters through Godot `_process` on the gameplay sessio
 
 ```text
 GameplaySessionController._process(delta)
--> GameplayComposition.process(delta, has_received_state)
+-> GameplayComposition.process(delta, required_lane_baselines_synced)
 ```
 
-`has_received_state` is read from the lane application / readiness adapter used by `GameplayStateFlow`.
+The readiness flag is read from the `GameplayReadiness` / `GameplayStateFlow` wrapper used by `GameplaySessionController`.
 
 ### Composition processing path
 
@@ -117,16 +117,16 @@ GameplaySessionController._process(delta)
 ```text
 GameplayShellFlow.process(delta)
 DevToolsSessionFlow.process(delta)
-GameplayPresentationFlow.process(delta, has_received_gameplay_state)
+GameplayPresentationFlow.process(delta, required_lane_baselines_synced)
 ```
 
 `DevToolsSessionFlow` is a separate devtools gameplay-session seam. `GameplayPresentationFlow` owns broader local presentation updates such as camera-facing presentation inputs. The gameplay shell owns the inner gameplay runtime processing path.
 
 ### Inner gameplay processing path
 
-`GameplayShellFlow.process(delta)` delegates to `GameplayFlowComposer.process(delta, has_received_state)`.
+`GameplayShellFlow.process(delta)` delegates to `GameplayFlowComposer.process(delta, required_lane_baselines_synced)`.
 
-`GameplayFlowComposer.process` delegates to `GameplayProcessFlow.process(delta, has_received_state)`.
+`GameplayFlowComposer.process` delegates to `GameplayProcessFlow.process(delta, required_lane_baselines_synced)`.
 
 The current `GameplayProcessFlow` order is:
 
@@ -134,8 +134,8 @@ The current `GameplayProcessFlow` order is:
 runtime_context.process(delta)
 server_hitbox_overlay_flow.process()
 runtime_tick_flow.process(delta)
-devtools_context.process(has_received_state)
-input_context.process(has_received_state)
+devtools_context.process(required_lane_baselines_synced)
+input_context.process(required_lane_baselines_synced)
 spectate_context.process()
 ```
 
@@ -165,7 +165,7 @@ HUD flow owns the details of HUD updates. Runtime processing only provides the p
 
 ### State-aware process APIs
 
-`GameplayDevtoolsContext.process(has_received_state)` and `GameplayInputContext.process(has_received_state)` receive the lane-readiness flag.
+`GameplayDevtoolsContext.process(required_lane_baselines_synced)` and `GameplayInputContext.process(required_lane_baselines_synced)` receive the lane-readiness flag.
 
 This keeps pre-readiness behavior explicit for flows that may depend on required lane-applied gameplay state being available.
 
@@ -176,7 +176,7 @@ Runtime processing owns only transient frame-processing coordination.
 It uses:
 
 * `delta` from Godot `_process`.
-* `has_received_state` from `GameplayStateFlow`.
+* gameplay readiness from the `GameplayReadiness` / `GameplayStateFlow` wrapper.
 * references to composed runtime processors.
 * client-owned runtime flow instances.
 * client-owned presentation state inside downstream flows.
@@ -217,7 +217,7 @@ Runtime processing does not own packet schemas.
 
 ### Non-ownership boundaries
 
-* `client/scripts/gameplay/state/` owns lane packet reading and state application.
+* `client/scripts/gameplay/state/` and `client/scripts/protocol/realtime/` own lane packet application and readiness.
 * `client/scripts/world/` owns world entity sync and interpolation details.
 * `client/scripts/networking/` owns websocket transport, packet decoding, and packet dispatch.
 * `services/game-server/internal/game/` owns authoritative gameplay simulation.

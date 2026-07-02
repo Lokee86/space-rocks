@@ -538,7 +538,8 @@ Generated output and packet source-of-truth ownership belong to protocol/data do
 ### Downstream realtime presentation consumers
 
 * `client/scripts/world/world_sync.gd`
-* `client/scripts/gameplay/hud/`
+* `client/scripts/shell/gameplay_hud_flow.gd`
+* `client/scripts/ui/hud/`
 * `client/scripts/gameplay/events/`
 * `client/scripts/devtools/`
 * `client/scripts/protocol/realtime/presentation_adapter.gd`

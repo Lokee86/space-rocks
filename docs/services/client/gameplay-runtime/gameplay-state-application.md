@@ -18,16 +18,21 @@ The active path is:
 NetworkClient receives/decodes packet
 -> ClientConnectionService receives packet
 -> ServerPacketDispatcher / ServerPacketRouter classify packet
--> ClientConnectionService routes lane packets through RealtimeRouter.route_lane_packet(packet)
+-> RealtimeRouter.route_lane_packet(packet)
 -> RealtimeRouter applies lane state/readiness
 -> ClientConnectionService emits gameplay_packet_received(packet)
 -> SessionNetworkController receives gameplay_packet_received
--> GameplaySessionController.handle_gameplay_packet performs acceptance/presentation fanout
--> presentation adapters
--> runtime consumers
+-> GameplaySessionController gates on accepts_gameplay_packets and gameplay readiness
+-> PresentationAdapter.fanout_lane_states(...)
+-> WorldPresentationAdapter -> WorldSync.apply_world_lane_state(...)
+-> OverlayPresentationAdapter -> GameplayHudFlow.apply_overlay_lane_state(...)
+-> SessionPresentationAdapter -> GameplayHudFlow.apply_session_lane_state(...)
+-> EventPresentationAdapter -> GameplayEventLifecycleFlow / GameplayEventFlow
+-> GameplayComposition.restore_alive_presentation_from_realtime_router(...)
+-> DevtoolsLaneStateAdapter builds a separate devtools readmodel
 ```
 
-The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a combined dictionary flow.
+The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a retired aggregate `GameplayStateApplyFlow` path or combined normalized gameplay-state dictionary flow.
 
 Client inbound packets may carry compact aliases and quantized integer wire values. Packet decode and compact expansion normalize compact aliases to readable keys before lane appliers run. World lane application decodes quantized world records before storing or merging world lane state. Overlay and session values are decoded before presentation/devtools consumption through the realtime quantize helpers and presentation adapters. Devtools read models decode only the lane values they explicitly pass through `RealtimeQuantize`. Client-facing presentation should expect decoded values with quantized precision loss, not raw simulation precision. Tests should assert the current decode boundary explicitly instead of assuming raw simulation floats. Full packets still replace or initialize complete lane state. Client lane appliers treat missing sparse delta section fields as empty arrays or no-op, missing fields inside present update records as unchanged, and missing `total_asteroids` in `session_delta` as unchanged. A present `total_asteroids: 0` remains meaningful. Quantization does not change gameplay authority, which remains server-owned.
 
@@ -48,10 +53,12 @@ The active client gameplay application path owns:
 * Realtime packet-family routing after decode.
 * Maintaining lane state objects for world, overlay, and session data.
 * Tracking required lane baseline sync before gameplay is considered ready.
+* Gating presentation fanout behind both `accepts_gameplay_packets` and gameplay readiness.
 * Applying world lane state to world sync.
 * Applying overlay lane state to HUD/local presentation.
 * Applying session lane state to HUD and session-owned presentation.
 * Applying event batches through the event batch applier.
+* Restoring alive/respawn-facing presentation from current lane state after fanout.
 * Keeping devtools gameplay read models separate from primary gameplay presentation.
 
 ## Does not own
@@ -68,7 +75,7 @@ The lane-native client path does not own:
 
 ## Domain roles
 
-The client lane application surface consumes server lane gameplay packets and turns them into presentation state after RealtimeRouter has already applied the inbound lane state.
+The client lane application surface consumes server lane gameplay packets and turns them into presentation state after `RealtimeRouter` has already applied the inbound lane state.
 
 The client owns transient lane presentation state only. It does not persist authoritative gameplay state.
 
@@ -122,6 +129,30 @@ EventPresentationAdapter
 
 The event path uses `EventBatchApplier` for `event_batch` delivery.
 
+## Active handoff seams
+
+The current handoff boundaries are:
+
+```text
+ClientConnectionService
+= owns lane packet routing into RealtimeRouter and emits gameplay_packet_received(packet) after lane state/readiness has already been updated
+
+SessionNetworkController
+= forwards gameplay_packet_received(packet) into GameplaySessionController
+
+GameplaySessionController
+= owns accepts_gameplay_packets, checks gameplay readiness, fans out lane state, builds the devtools readmodel, and triggers alive-presentation restoration
+
+PresentationAdapter
+= fans out presentable lane state into world, overlay, session, and event presentation consumers
+
+GameplayComposition
+= routes alive-presentation restoration into shell/runtime seams without owning lane application itself
+
+DevtoolsLaneStateAdapter
+= builds devtools readmodel dictionaries separately from primary gameplay presentation fanout
+```
+
 ## World rendering boundary
 
 World entity rendering is not owned by gameplay application flow.
@@ -165,6 +196,7 @@ Key lane-native files:
 * `client/scripts/protocol/realtime/event_presentation_adapter.gd`
 * `client/scripts/protocol/realtime/gameplay_readiness.gd`
 * `client/scripts/protocol/realtime/realtime_router.gd`
+* `client/scripts/protocol/realtime/devtools_lane_state_adapter.gd`
 
 ## Tests
 
@@ -191,7 +223,6 @@ Relevant client tests include:
 
 ## Notes
 
-This document describes the active lane-native gameplay presentation path.
+This document is the canonical client lane-native gameplay application doc.
 
-Current gameplay application follows lane-adapter flow and event_batch delivery only.
-
+Current gameplay application follows lane-adapter flow and `event_batch` delivery only.

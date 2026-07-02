@@ -6,7 +6,7 @@ Parent index: [Client](./!INDEX.md)
 
 This document describes the current client HUD and gameplay-session UI implementation.
 
-It documents how the Godot client mounts gameplay UI, updates HUD presentation from lane-applied gameplay state and events, protects gameplay UI from gameplay mouse input, presents local death and respawn state, and renders weapon/loadout HUD state.
+It documents how the Godot client mounts gameplay UI, updates HUD presentation from lane-native presentation fanout and gameplay events, protects gameplay UI from gameplay mouse input, presents local death and respawn state, and renders weapon or loadout HUD state.
 
 ## Overview
 
@@ -29,7 +29,7 @@ GameplayUserInterface
 
 `UserInterface` is the top-level `CanvasLayer` for app-level UI such as the main menu, pregame menu, login window, join dialog, and multiplayer lobby.
 
-`GameplayUserInterface` is the gameplay-session UI root. HUD, gameplay menu overlays, match results, and gameplay-session modals belong under this root. `GameplayUserInterface` uses `mouse_filter = IGNORE` so it does not block sibling app/menu screens by itself.
+`GameplayUserInterface` is the gameplay-session UI root. HUD, gameplay menu overlays, match results, and gameplay-session modals belong under this root. `GameplayUserInterface` uses `mouse_filter = IGNORE` so it does not block sibling app or menu screens by itself.
 
 The HUD scene is:
 
@@ -37,9 +37,9 @@ The HUD scene is:
 client/scenes/ui/hud.tscn
 ```
 
-It contains the visible gameplay HUD controls for score, lives, local death/respawn text, game-over presentation, the embedded live gameplay menu path, and the loadout display container.
+It contains the visible gameplay HUD controls for score, lives, local death or respawn text, game-over presentation, the embedded live gameplay menu path, and the loadout display container.
 
-Runtime HUD behavior is coordinated by `GameplayHudFlow`. Packet decode and classification route through `RealtimeRouter`, which applies lane state/readiness before `GameplayStateApplyFlow` fans current lane-applied summary state into the HUD. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams.
+Runtime HUD behavior is coordinated by `GameplayHudFlow`. Packet decode and classification route through `RealtimeRouter`, which applies lane state or readiness before presentation adapters fan current lane-applied state into the HUD. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams.
 
 ## Code root
 
@@ -52,15 +52,15 @@ client/
 The client HUD and gameplay UI implementation owns:
 
 * Mounting gameplay-session UI under `GameplayUserInterface`.
-* Keeping app/menu/lobby screens outside `GameplayUserInterface`.
+* Keeping app, menu, and lobby screens outside `GameplayUserInterface`.
 * Showing normal gameplay HUD presentation after gameplay state starts.
 * Hiding the room id label during active gameplay HUD display.
-* Applying score from the local player's `player_sessions` state.
-* Applying lives from normalized gameplay state and local death events.
+* Applying score from overlay or session lane presentation inputs.
+* Applying lives from overlay lane state and local death events.
 * Presenting local death state.
 * Presenting the respawn countdown.
 * Exposing whether the client can request respawn through HUD presentation state.
-* Showing the â€œPress R to Respawnâ€ prompt only after the respawn countdown reaches zero.
+* Showing the "Press R to Respawn" prompt only after the respawn countdown reaches zero.
 * Clearing stale death presentation when the local player is restored to active state.
 * Hiding and locking the HUD after authoritative room match-over.
 * Preventing repeated `GameOver` snapshots from reopening normal HUD presentation.
@@ -84,7 +84,7 @@ The client HUD and gameplay UI implementation does not own:
 * Packet schemas.
 * WebSocket transport behavior.
 * Server simulation state.
-* Weapon/loadout rules.
+* Weapon or loadout rules.
 * Weapon fire validation.
 * Cooldown authority.
 * Persistent player profile, account, or match-result storage.
@@ -105,7 +105,7 @@ It owns the place where gameplay HUD, match results, gameplay menu overlays, and
 
 `HUD` is the visible gameplay HUD scene.
 
-It presents score, lives, local death/respawn state, game-over text, the embedded live gameplay menu path, and loadout display controls.
+It presents score, lives, local death or respawn state, game-over text, the embedded live gameplay menu path, and loadout display controls.
 
 ### HUD flow
 
@@ -124,37 +124,54 @@ respawn_countdown_remaining
 
 These are client presentation facts only. They do not become authoritative gameplay state.
 
-### State-summary presenter
+### Lane-native HUD presenter
 
-`GameplayStateApplyFlow` receives lane-applied summary state and calls:
+Overlay and session presentation adapters feed the HUD directly.
 
-```text
-hud_flow.apply_gameplay_state_summary(state)
-```
-
-The HUD then reads:
+Current active path:
 
 ```text
-has_lives
-lives
-self_id
-player_sessions
-server_players
+OverlayPresentationAdapter
+-> GameplayHudFlow.apply_overlay_lane_state(...)
+
+SessionPresentationAdapter
+-> GameplayHudFlow.apply_session_lane_state(...)
 ```
 
-The HUD uses `player_sessions[self_id].score` for score display and the local active player state for loadout display.
+The HUD's current active lane inputs are:
+
+```text
+overlay_lane_state.self_id
+overlay_lane_state.lives
+overlay_lane_state.score
+overlay_lane_state.primary_weapon_id
+overlay_lane_state.secondary_weapon_id
+overlay_lane_state.primary_ammo_policy
+overlay_lane_state.secondary_ammo_policy
+overlay_lane_state.primary_cooldown_remaining
+overlay_lane_state.secondary_cooldown_remaining
+overlay_lane_state.primary_ammo_remaining
+overlay_lane_state.secondary_ammo_remaining
+
+session_lane_state.player_sessions
+session_lane_state.player_lifecycle
+```
+
+`GameplayHudFlow.apply_overlay_lane_state(...)` owns receiver-local overlay facts such as score, lives, and loadout or cooldown presentation.
+
+`GameplayHudFlow.apply_session_lane_state(...)` owns player-session and lifecycle-driven HUD readback such as score fallback or session-owned local player facts.
 
 ### Local death and respawn presenter
 
-`GameplayDeathFlow` reacts to local self-death events.
+`GameplayDeathFlow` reacts to local self-death events from `event_batch` presentation.
 
-If the local player still has lives, it updates HUD lives and moves the HUD into local dead/respawn presentation.
+If the local player still has lives, it updates HUD lives and moves the HUD into local dead or respawn presentation.
 
 If local lives reach zero, it delegates final local elimination to `MatchEndFlow` instead of directly showing match results.
 
 `GameplayRespawnFlow` uses `GameplayHudFlow.can_request_respawn()` before sending a respawn request.
 
-`GameplayAliveRestoreFlow` clears stale death presentation when the local player becomes active again after respawn confirmation or stale dead presentation.
+`GameplayAliveRestoreFlow` owns stale death or respawn restoration. `GameplayAliveRestoreFlow.apply_lane_state(...)` clears stale death presentation only after lane state proves the local player is active again with a live ship.
 
 ### Match-over participant
 
@@ -174,7 +191,7 @@ That sets the match-over visibility lock. While the lock is active, gameplay lan
 
 `LoadoutDisplayFlow` owns HUD weapon display nodes under `%LoadoutContainer`.
 
-It reads player weapon state from server-fed player state fields and creates a display only for weapons registered by `WeaponDisplayRegistry`.
+It reads loadout and cooldown state from overlay-lane HUD inputs and creates a display only for weapons registered by `WeaponDisplayRegistry`.
 
 `LoadoutDisplayFlow` instantiates weapon display scene nodes from `weapon_display.tscn`.
 
@@ -198,40 +215,55 @@ Current behavior:
 
 `GameplaySessionController._input()` checks devtools input first. It then asks `/root/HudInputPolicy` whether a pressed mouse-button event is over `GameplayUserInterface` or one of its descendants. If so, gameplay input is not allowed to also consume that click.
 
-This policy protects gameplay UI only. It does not protect the whole `UserInterface` canvas layer because app/menu/lobby screens have separate ownership.
+This policy protects gameplay UI only. It does not protect the whole `UserInterface` canvas layer because app, menu, and lobby screens have separate ownership.
 
 ## Protocols and APIs
 
-### Gameplay state input
+### HUD lane-state input
 
-HUD presentation is updated from lane-applied gameplay state.
+HUD presentation is updated from lane-native presentation fanout.
 
-The lane-applied state reader produces values such as:
+Current active input path:
 
 ```text
-self_id
-server_players
-player_sessions
-player_lifecycle
-server_bullets
-server_asteroids
-server_pickups
-server_events
-has_lives
-lives
+OverlayPresentationAdapter
+-> GameplayHudFlow.apply_overlay_lane_state(...)
+
+SessionPresentationAdapter
+-> GameplayHudFlow.apply_session_lane_state(...)
 ```
 
-HUD-specific state usage is intentionally narrow:
+Current lane-state inputs used by HUD presentation include:
 
 ```text
-has_lives -> apply_lives(lives)
-player_sessions[self_id].score -> apply_score(score)
-server_players[self_id] -> loadout_display_flow.apply_player_state(self_player_state)
+overlay_lane_state.self_id
+overlay_lane_state.lives
+overlay_lane_state.score
+overlay_lane_state.primary_weapon_id
+overlay_lane_state.secondary_weapon_id
+overlay_lane_state.primary_ammo_policy
+overlay_lane_state.secondary_ammo_policy
+overlay_lane_state.primary_cooldown_remaining
+overlay_lane_state.secondary_cooldown_remaining
+overlay_lane_state.primary_ammo_remaining
+overlay_lane_state.secondary_ammo_remaining
+
+session_lane_state.player_sessions
+session_lane_state.player_lifecycle
+```
+
+HUD-specific usage is intentionally narrow:
+
+```text
+overlay_lane_state.lives -> apply_lives(lives)
+overlay_lane_state.score -> apply_score(score)
+overlay lane loadout or cooldown fields -> loadout_display_flow.apply_player_state(...)
+session_lane_state.player_sessions[self_id] -> session-backed local player readback when needed
 ```
 
 ### Local death event input
 
-Local death presentation is driven by server event data through `GameplayEventLifecycleFlow` and `GameplayDeathFlow`.
+Local death presentation is driven by `event_batch` output through `GameplayEventLifecycleFlow` and `GameplayDeathFlow`.
 
 The local self-death path uses:
 
@@ -240,9 +272,24 @@ lives
 respawn_delay
 ```
 
-When `lives > 0`, HUD presentation moves into dead/respawn state.
+When `lives > 0`, HUD presentation moves into dead or respawn state.
 
 When `lives == 0`, final local elimination is delegated to `MatchEndFlow`.
+
+### Alive restoration input
+
+Alive restoration is a separate post-fanout delegation.
+
+Current path:
+
+```text
+GameplayComposition.restore_alive_presentation_from_realtime_router(...)
+-> GameplayShellFlow.restore_alive_presentation_from_lane_state(...)
+-> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
+-> GameplayAliveRestoreFlow.apply_lane_state(...)
+```
+
+`GameplaySessionController` only gates and orchestrates this handoff. It does not own respawn recovery policy.
 
 ### Room match-over input
 
@@ -254,7 +301,7 @@ When the current room state is `GameOver`, `MatchEndFlow` handles room match-ove
 
 ### Match results input
 
-Match results are not part of ticked gameplay state.
+Match results are not part of gameplay lane presentation.
 
 `RoomSessionController` caches match results from room snapshots when the snapshot contains a match result with a non-empty match id. `MatchEndFlow` reads that cached result through a provider and passes presentation rows to `MatchResultsFlow`.
 
@@ -329,7 +376,7 @@ The loadout display reads generated packet field names and generated client cons
 ### Scene roots
 
 * `client/scenes/game.tscn` - Main client scene, `UserInterface`, `GameplayUserInterface`, and mounted HUD instance.
-* `client/scenes/ui/hud.tscn` - HUD scene, score/lives labels, local death/respawn UI, game-over container, embedded game menu, and loadout display container.
+* `client/scenes/ui/hud.tscn` - HUD scene, score or lives labels, local death or respawn UI, game-over container, embedded game menu, and loadout display container.
 * `client/scenes/ui/dialogs/game_menu.tscn` - Gameplay menu scene used by live gameplay and match-over overlay paths.
 * `client/scenes/ui/dialogs/match_result_window.tscn` - Match results scene mounted under gameplay UI by the match results flow.
 * `client/scenes/ui/weapon_displays/weapon_display.tscn` - Scene backing `WeaponDisplay`.
@@ -340,23 +387,23 @@ The loadout display reads generated packet field names and generated client cons
 * `client/scripts/session/gameplay_session_controller.gd` - Owns gameplay packet acceptance, gameplay input routing, HUD input-policy check, and gameplay composition lifecycle.
 * `client/scripts/gameplay/gameplay_composition.gd` - Constructs HUD, menu, match-end, match-results, shell, spectate, devtools, and presentation flows.
 * `client/scripts/shell/gameplay_shell_flow.gd` - Delegates gameplay state, processing, input, reset, and menu lifecycle through focused gameplay flows.
-* `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Wires state application, runtime ticking, input, devtools, spectate, events, and match-end dependencies.
+* `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Wires runtime ticking, input, devtools, spectate, events, alive restoration, and match-end dependencies.
 * `client/scripts/gameplay/runtime/gameplay_process_flow.gd` - Processes runtime interpolation, server hitbox overlay, HUD ticking, devtools, gameplay input, and spectate processing.
 
 ### HUD flow and presentation state
 
 * `client/scripts/shell/gameplay_hud_flow.gd` - Main HUD presentation flow for score, lives, local death, respawn countdown, game-over presentation, loadout display, reset, and match-over visibility lock.
 * `client/scripts/shell/gameplay_runtime_tick_flow.gd` - Ticks HUD countdown presentation each frame.
-* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd` - Applies lane-applied gameplay state to HUD, world sync, respawn restore, and event lifecycle flows.
-* `client/scripts/protocol/realtime/realtime_router.gd` - Routes gameplay lane packets into presentation flows.
-* `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires server events into event and death presentation flows.
+* `client/scripts/protocol/realtime/overlay_presentation_adapter.gd` - Feeds overlay lane state into `GameplayHudFlow.apply_overlay_lane_state(...)`.
+* `client/scripts/protocol/realtime/session_presentation_adapter.gd` - Feeds session lane state into `GameplayHudFlow.apply_session_lane_state(...)`.
+* `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires `event_batch` output into event and death presentation flows.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Handles local self-death presentation and delegates final elimination to match-end flow.
-* `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Restores alive HUD presentation after respawn confirmation or stale death state.
-* `client/scripts/shell/gameplay_respawn_flow.gd` - Gates respawn requests through `GameplayHudFlow.can_request_respawn()`.
+* `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Restores alive HUD presentation after lane state proves the local player is active with a live ship.
+* `client/scripts/gameplay/respawn/gameplay_respawn_flow.gd` - Gates respawn requests through `GameplayHudFlow.can_request_respawn()`.
 
 ### Match-end and gameplay menu collaborators
 
-* `client/scripts/gameplay/match_end/match_end_flow.gd` - Presentation orchestration for local elimination and room match-over; asks HUD to hide/lock on authoritative room match-over.
+* `client/scripts/gameplay/match_end/match_end_flow.gd` - Presentation orchestration for local elimination and room match-over; asks HUD to hide or lock on authoritative room match-over.
 * `client/scripts/shell/gameplay_menu_flow.gd` - Owns gameplay menu behavior, embedded HUD menu path, and match-over overlay menu instance.
 * `client/scripts/ui/match_results/match_results_flow.gd` - Owns result-window mounting, clearing, and result button intent forwarding.
 * `client/scripts/session/room_session_controller.gd` - Provides latest room state and cached match result to gameplay presentation flows.
@@ -407,13 +454,13 @@ These tests verify gameplay UI root and descendant hover detection, non-pressed 
 
 ### State and lifecycle tests
 
-* `client/tests/unit/test_gameplay_state_apply_flow.gd`
 * `client/tests/unit/gameplay/events/test_gameplay_death_flow.gd`
 * `client/tests/unit/gameplay/match_end/test_match_end_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_flow_composer.gd`
+* `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`
 
-These tests verify state application fanout into HUD, local death handling, match-end HUD hiding, match results presentation handoff, alive HUD restoration, and gameplay flow composition.
+These tests verify lane-native fanout into HUD, local death handling, match-end HUD hiding, match results presentation handoff, alive HUD restoration, and gameplay flow composition.
 
 ### Session and menu collaboration tests
 
@@ -442,8 +489,8 @@ These tests verify gameplay session lifecycle, gameplay menu behavior, and match
 
 The gameplay-session UI split between `UserInterface` and `GameplayUserInterface`, gameplay UI mouse-input protection, and the rule that match-over packets must not reopen the HUD after authoritative room match-over are current service behavior.
 
-The current implementation does not have `client/scripts/gameplay/hud/`. Runtime HUD behavior currently lives in `client/scripts/shell/gameplay_hud_flow.gd`, while HUD widget scripts live in `client/scripts/ui/hud/`.
+Runtime HUD behavior currently lives in `client/scripts/shell/gameplay_hud_flow.gd`, while HUD widget scripts live in `client/scripts/ui/hud/`.
 
 `HUD` currently has `mouse_filter = PASS` in the scene, while `GameplayUserInterface` has `mouse_filter = IGNORE`. Gameplay input protection is therefore handled by `HudInputPolicy` in `GameplaySessionController`, not by making the whole gameplay UI root consume input.
 
-The HUD scene still contains a `GameOverSound` node, but audio playback and one-shot gating are owned by the gameplay event/effects/audio path. HUD documentation should not treat that node as audio ownership.
+The HUD scene still contains a `GameOverSound` node, but audio playback and one-shot gating are owned by the gameplay event, effects, and audio path. HUD documentation should not treat that node as audio ownership.

@@ -21,7 +21,7 @@ room/networking activation
 -> runtime.Ship
 -> camera view
 -> simulation stepping
--> world lane realtime projection
+-> world lane projection
 -> fatal damage
 -> pending despawn
 -> active ship removal
@@ -332,7 +332,7 @@ session.Lives <= 0
 
 Eliminated players remain part of the per-match player session state until the game or room lifecycle removes the game instance or explicitly removes the player.
 
-Eliminated players are not active, targetable, damageable, or collidable. Their session state can still be used for scoreboard, match result, and world lane realtime projection.
+Eliminated players are not active, targetable, damageable, or collidable. Their session state can still be used for scoreboard, match result, and world lane projection.
 
 ### 11. Match-over observation
 
@@ -426,7 +426,7 @@ Eliminated players remain available for match facts and result projection. They 
 
 ## Protocols and APIs
 
-Player lifecycle is projected through three related world lane packet areas.
+Player lifecycle is projected through three related lane-native realtime projection areas.
 
 ### Active ship state
 
@@ -686,7 +686,7 @@ Classifies players as active, pending respawn, or eliminated and determines whet
 services/game-server/internal/protocol/realtime/records.go
 ```
 
-Projects active ships, player sessions, lifecycle status, entities, and presentation events into gameplay world lane packets.
+Projects active ships, player sessions, lifecycle status, entities, and presentation events into world/session/overlay lane records and event_batch output.
 
 ```text
 services/game-server/internal/game/player_session_state.go

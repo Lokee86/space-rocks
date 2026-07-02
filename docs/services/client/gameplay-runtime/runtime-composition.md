@@ -6,13 +6,13 @@ Parent index: [Gameplay Runtime](./!INDEX.md)
 
 This document describes the current client gameplay runtime composition.
 
-It documents how the Godot client builds the gameplay runtime from focused flows, how composition keeps packet application, world sync, HUD, input, devtools, spectate, match-end, and event presentation behind narrow seams, and where runtime composition stops owning behavior.
+It documents how the Godot client builds the gameplay runtime from focused flows, how composition keeps lane-native presentation delegation, world sync, HUD, input, devtools, spectate, match-end, and event presentation behind narrow seams, and where runtime composition stops owning behavior.
 
 ## Overview
 
 The client gameplay runtime is presentation orchestration. It does not simulate authoritative gameplay.
 
-Runtime composition starts after the client has entered a gameplay-capable session and the gameplay scene has been mounted. The composition layer wires existing scene references, runtime services, gameplay flows, and signal routes into a single runtime surface that can receive normalized state, process per-frame presentation work, and reset cleanly when the gameplay session exits.
+Runtime composition starts after the client has entered a gameplay-capable session and the gameplay scene has been mounted. The composition layer wires existing scene references, runtime services, gameplay flows, and signal routes into a single runtime surface that can receive lane-native presentation handoffs, process per-frame presentation work, and reset cleanly when the gameplay session exits.
 
 The main composition chain is:
 
@@ -28,11 +28,11 @@ GameplaySessionController
 
 `GameplayComposition` is the top-level gameplay composition object. It wires the gameplay shell, HUD flow, gameplay menu flow, match-end flow, match-results flow, spectate flow, devtools session flow, and gameplay presentation flow.
 
-`GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, creates the flow composer, tracks first-state application, and emits the gameplay-start signal when the first gameplay state is applied.
+`GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, creates the flow composer, stores required lane baseline sync, and routes lane-native presentation helpers into focused runtime seams.
 
 `GameplayRuntimeContext` is the runtime holder for world sync, respawn, input and presentation collaborators that need to be shared across gameplay flows.
 
-`GameplayFlowComposer` creates and connects the focused flows used by runtime state application and per-frame processing.
+`GameplayFlowComposer` creates and connects the focused flows used by lane-native presentation follow-up work and per-frame processing.
 
 The important boundary is that composition wires flows together, but does not collapse their behavior into one controller.
 
@@ -48,13 +48,12 @@ The important boundary is that composition wires flows together, but does not co
 * Create and configure `GameplayRuntimeContext`.
 * Create and configure `GameplayFlowComposer`.
 * Wire world sync, HUD runtime flow, input context, devtools context, spectate context, event lifecycle flow, targeting context, alive-restore flow, server hitbox overlay flow, and gameplay process flow.
-* Provide a single runtime surface for applying normalized gameplay state.
+* Provide a single runtime surface for alive-presentation restoration from lane-native state.
+* Provide a single runtime surface for devtools gameplay readmodels only.
 * Provide a single runtime surface for applying player pause state.
 * Route player pause packets through pause-state reader and tracker helpers.
 * Provide a single runtime surface for debug status and debug shape catalog packets.
 * Provide a single runtime surface for per-frame gameplay presentation processing.
-* Track whether the first gameplay state has been received.
-* Emit gameplay-start lifecycle once, after the first gameplay state is applied.
 * Reset composed runtime state during gameplay-session teardown.
 * Keep runtime composition separate from entity sync, packet schema ownership, gameplay input behavior, HUD widget behavior, and match-end policy.
 
@@ -66,7 +65,7 @@ The important boundary is that composition wires flows together, but does not co
 * Raw WebSocket transport.
 * Packet schema source-of-truth files.
 * Packet decoding before gameplay packet dispatch.
-* Gameplay packet normalization details.
+* Lane packet normalization details.
 * World entity node synchronization.
 * ViewAnchor or continuous visual-coordinate math.
 * HUD widget internals.
@@ -83,13 +82,13 @@ The important boundary is that composition wires flows together, but does not co
 
 `GameplayComposition` is the top-level client runtime composition seam. It owns the wiring between the session controller and the gameplay shell.
 
-It receives scene-level dependencies, creates the major gameplay flows, forwards normalized state into the shell, and exposes reset/process entry points back to the session layer.
+It receives scene-level dependencies, creates the major gameplay flows, forwards lane-native presentation delegation into the shell, and exposes reset/process entry points back to the session layer.
 
 ### Gameplay shell
 
 `GameplayShellFlow` owns the runtime shell inside the mounted gameplay scene.
 
-It is responsible for creating the runtime context and flow composer. It is also the place where first-state lifecycle is tracked before gameplay-start is emitted.
+It is responsible for creating the runtime context and flow composer. It also stores whether required lane baselines are synced before delegating runtime input/process work.
 
 ### Runtime context
 
@@ -112,7 +111,6 @@ targeting context
 pointer position provider
 input context
 devtools context
-gameplay state application
 server hitbox overlay
 runtime HUD tick
 spectate context
@@ -135,19 +133,27 @@ GameplaySessionController
 
 The session controller owns the outer lifecycle. Composition owns gameplay runtime wiring. The shell owns runtime-context and composer creation.
 
-### Gameplay state application entry
+### Lane-native presentation entries
 
-Runtime composition receives normalized gameplay state through:
+Runtime composition participates after `RealtimeRouter` and `PresentationAdapter` have already applied or fanned out lane state.
+
+Current lane-native delegation surfaces are:
 
 ```text
-GameplayComposition.apply_gameplay_state
--> GameplayShellFlow.apply_gameplay_state
--> GameplayFlowComposer.apply_gameplay_state
+GameplayComposition.restore_alive_presentation_from_realtime_router(router)
+-> GameplayShellFlow.restore_alive_presentation_from_lane_state(world_lane_state, session_lane_state, self_id)
+-> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
 ```
 
-Composition does not normalize the raw packet. That belongs to gameplay state application docs.
+```text
+GameplayComposition.apply_devtools_gameplay_state(state)
+-> GameplayShellFlow.apply_devtools_gameplay_state(state)
+-> GameplayFlowComposer.apply_devtools_gameplay_state(state)
+```
 
-Composition does not directly synchronize world entities. World state is eventually routed through `GameplayWorldStateApplyFlow` into `WorldSync`.
+The alive-restore path exists for lane-state-driven respawn/alive presentation only.
+
+The devtools gameplay-state path exists for devtools and server-hitbox readmodels only. It is not the primary gameplay world/session/overlay application path.
 
 ### Player pause state entry
 
@@ -223,8 +229,7 @@ It may hold references to:
 
 It may track:
 
-* whether a first gameplay state has been received
-* whether gameplay-start has already been emitted for the mounted runtime
+* whether required lane baselines are currently synced for runtime-facing helpers
 
 It does not own authoritative gameplay state.
 
@@ -243,8 +248,6 @@ It does not own durable profile, account, or player progression data.
 
 ### State and runtime collaborators
 
-* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd`
-* `client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd`
 * `client/scripts/gameplay/runtime/gameplay_process_flow.gd`
 * `client/scripts/shell/gameplay_runtime_tick_flow.gd`
 * `client/scripts/gameplay/state/gameplay_pause_state_flow.gd`
@@ -268,6 +271,7 @@ It does not own durable profile, account, or player progression data.
 * `client/scripts/session/session_network_controller.gd`
 * `client/scripts/world/world_sync.gd`
 * `client/scripts/networking/client_connection_service.gd`
+* `client/scripts/protocol/realtime/`
 
 ## Tests
 
@@ -276,7 +280,6 @@ Runtime-composition-relevant tests include:
 * `client/tests/unit/gameplay/test_gameplay_flow_composer.gd`
 * `client/tests/unit/test_gameplay_session_controller.gd`
 * `client/tests/unit/test_session_network_controller.gd`
-* `client/tests/unit/test_gameplay_state_apply_flow.gd`
 * `client/tests/unit/test_player_pause_state_packet_reader.gd`
 * `client/tests/unit/test_player_pause_state_tracker.gd`
 * `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
@@ -301,8 +304,8 @@ Use the normal Godot headless GUT client test run for verification.
 
 ## Notes
 
-Composition should stay a wiring seam. When a section starts describing detailed packet normalization, per-frame processing order, target selection, HUD widget behavior, or world entity interpolation, that content belongs in the more specific client service document.
+Composition should stay a wiring seam. When a section starts describing detailed lane packet application, per-frame processing order, target selection, HUD widget behavior, or world entity interpolation, that content belongs in the more specific client service document.
 
 `GameplayRuntimeContext` and `GameplayFlowComposer` are the main guardrails against runtime composition becoming a multipurpose gameplay controller.
 
-`GameplayWorldStateApplyFlow` is composed by the gameplay runtime, but detailed entity synchronization belongs to world sync documentation.
+Lane-native world/session/overlay application belongs to the gameplay-state-application and realtime protocol seams, while detailed entity synchronization belongs to world sync documentation.

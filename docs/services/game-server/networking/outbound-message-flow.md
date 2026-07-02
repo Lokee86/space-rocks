@@ -16,7 +16,7 @@ The outbound boundary has three current responsibilities:
 2. Ticker-driven active realtime lane packet writes produced by the websocket write loop.
 3. Debug shape catalog writes when devtools are enabled.
 
-Queued responses and lane packets both converge at `outbound.WriteServerMessage()`, which writes a WebSocket text message through the active Gorilla WebSocket connection.
+Queued responses and lane-native realtime packets both converge at `outbound.WriteServerMessage()`, which writes a WebSocket text message through the active Gorilla WebSocket connection.
 Queued one-off response producers generally encode packet structs through `packetcodec` before enqueueing bytes, while active realtime lane packets are built and encoded by `services/game-server/internal/protocol/realtime/` before networking writes the encoded bytes.
 
 The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, quantization, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy.
@@ -142,7 +142,7 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 9. `packetcodec` encodes JSON.
 10. `outbound.WriteServerMessage()` writes the encoded packet individually.
 11. Logs lane wire packet details after successful writes.
-12. Drains active event batch events only after a successful event batch write.
+12. Drains active event_batch events only after a successful event_batch write.
 13. Persists lane metadata only after successful writes.
 14. Stores baseline projections for non-event lane packets after successful writes.
 15. Marks a lane baseline ready after a final full packet.
@@ -233,7 +233,7 @@ Queued producers generally encode through `packetcodec` before enqueue. The queu
 
 ### Active realtime lane packets
 
-Active gameplay output is written as lane packet families, not as a single `state` packet.
+Active gameplay output is written as lane packet families, not as one combined gameplay output payload.
 
 Current lane families are:
 
@@ -249,10 +249,10 @@ Current lane families are:
 
 Lane roles at service level are:
 
-- world = authoritative world entities visible through presentation projection
-- overlay = receiver-specific HUD-facing values
-- session = player, session, lifecycle, and asteroid-count presentation
-- event = one-shot presentation event batches
+- world = authoritative world lane records for visible simulation entities
+- overlay = receiver-specific overlay lane records
+- session = session lane records for player/session/lifecycle and total asteroids
+- event = event_batch presentation event delivery
 - resync = resync_request/resync_required recovery signaling
 
 Lane packet metadata carries:
@@ -401,7 +401,7 @@ Broader packet-budget work is planned separately. This document describes the cu
 ### Important non-ownership boundaries
 
 - `services/game-server/internal/rooms/` owns room state and room lifecycle rules.
-- `services/game-server/internal/game/` owns authoritative simulation state and gameplay packet projection.
+- `services/game-server/internal/game/` owns authoritative simulation state and lane-native realtime projection.
 - `services/game-server/internal/devtools/` owns debug status and debug shape payload construction inputs.
 - `services/game-server/internal/protocol/packetcodec/` owns JSON encode/decode mechanics.
 - `services/game-server/internal/protocol/realtime/` owns realtime lane packet construction, send-plan records, sparse delta omission, compact alias preparation, encoded-byte accounting inputs, and metrics behavior.

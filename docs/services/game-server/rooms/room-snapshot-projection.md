@@ -141,7 +141,7 @@ max_players
 match_result
 ```
 
-The packet does not carry gameplay simulation state. Gameplay state is projected separately through the ticked `state` packet.
+The packet does not carry gameplay simulation state. Gameplay simulation state is projected separately through lane-native realtime packet families such as world_full/world_delta, overlay_full/overlay_delta, session_full/session_delta, and event_batch.
 
 ### Snapshot fields
 

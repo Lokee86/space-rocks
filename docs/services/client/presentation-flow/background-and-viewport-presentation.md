@@ -283,7 +283,6 @@ client/scripts/world/player_render/player_render_api.gd
 client/scripts/world/player_render/view_anchor_sync.gd
 client/scripts/session/client_config_controller.gd
 client/scripts/config/client_viewport_config_flow.gd
-client/scripts/gameplay/runtime/gameplay_world_state_apply_flow.gd
 ```
 
 ### Important non-ownership boundaries
@@ -301,7 +300,8 @@ client/scripts/config/client_viewport_config_flow.gd
 Owns viewport-size packet sending. It does not own local camera or background presentation.
 
 ```text
-client/scripts/gameplay/hud/
+client/scripts/shell/gameplay_hud_flow.gd
+client/scripts/ui/hud/
 ```
 
 Owns HUD presentation. Background presentation must not become a HUD layout or gameplay UI owner.

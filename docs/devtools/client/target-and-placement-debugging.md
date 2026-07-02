@@ -89,7 +89,7 @@ Placement presentation is intentionally minimal. The current implementation does
 
 ## Target read models
 
-Client devtools target read models are built from normalized gameplay state.
+Client devtools target read models are built from a transient devtools gameplay readmodel assembled from lane-applied world/session/overlay state.
 
 `DevtoolsPlayerTargetModel` reads:
 

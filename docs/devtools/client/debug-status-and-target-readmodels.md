@@ -4,7 +4,7 @@ Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
-This document describes the client devtools readmodels that consume server debug status packets and lane-applied gameplay state.
+This document describes the client devtools readmodels that consume server debug status packets and lane-applied devtools gameplay readmodels built from lane-native gameplay output.
 
 It covers how the client devtools window shows server-owned debug status, player target rows, game-target rows, and raw local/target telemetry without taking gameplay authority away from the server.
 
@@ -30,7 +30,7 @@ lane-applied world/session/overlay readmodels
 -> optional world lane enemy records / enemies
 ```
 
-The debug status packet provides current debug-toggle state. The lane-applied gameplay state provides the entity/session maps needed to build target selectors and raw telemetry panels.
+The debug status packet provides current debug-toggle state. The lane-applied devtools gameplay readmodel provides the entity/session maps needed to build target selectors and raw telemetry panels.
 
 The client uses these inputs to refresh:
 
@@ -166,15 +166,15 @@ Current flow:
 ```text
 lane packets
 -> RealtimeRouter
--> GameplayComposition.apply_gameplay_state
--> GameplayShellFlow / GameplayFlowComposer
--> GameplayDevtoolsContext.apply_gameplay_state
--> DevtoolsGameplayStateContext.apply_gameplay_state
--> DevtoolsDisplayRefreshFlow.refresh_gameplay_state
--> DevtoolsPlayerTargetModel.apply_gameplay_state
+-> DevtoolsLaneStateAdapter.build_state(...)
+-> GameplayComposition.apply_devtools_gameplay_state(devtools_state)
+-> GameplayDevtoolsContext.apply_gameplay_state(devtools_state)
+-> DevtoolsGameplayStateContext.apply_gameplay_state(devtools_state)
+-> DevtoolsDisplayRefreshFlow.refresh_gameplay_state(devtools_state)
+-> DevtoolsPlayerTargetModel.apply_gameplay_state(devtools_state)
 ```
 
-The target model caches:
+The target model caches a transient devtools gameplay readmodel that still uses aggregate-shaped dictionaries for devtools presentation only:
 
 ```text
 self_id
@@ -409,14 +409,14 @@ The client surfaces:
 ```text
 receiver/global status labels from debug_status
 per-player feature labels from debug_statuses
-raw local state from lane-applied gameplay state
-raw target state from lane-applied gameplay state
+raw local state from lane-applied devtools gameplay readmodels
+raw target state from lane-applied devtools gameplay readmodels
 canonical target kind and id
 ```
 
-The status packet and the lane-applied gameplay state are separate lanes.
+The status packet and the lane-applied devtools gameplay readmodel are separate inputs.
 
-`debug_status` explains current debug-control state. The gameplay `state` packet explains entity/session world state. The client combines them only for devtools presentation.
+`debug_status` explains current debug-control state. Lane-applied world/session/overlay readmodels are folded into a transient devtools gameplay readmodel for entity, lifecycle, and receiver-local state. The client combines them only for devtools presentation.
 
 ## Build/runtime gates
 
@@ -439,7 +439,7 @@ Owned transient state includes:
 ```text
 latest debug_status
 latest debug_statuses
-cached gameplay state maps
+cached devtools gameplay readmodel maps
 latest selector rows
 latest telemetry source choices
 latest local/target telemetry dictionaries
@@ -471,7 +471,7 @@ Debug status and target readmodels must preserve these rules:
 ```text
 server owns gameplay mutation
 client reads debug status as telemetry
-client reads lane-applied gameplay state as a presentation readmodel
+client reads lane-applied world/session/overlay state through a devtools presentation readmodel
 client selectors may emit command requests but must not apply command effects locally
 Game Target appears in player-only controls only when target_kind is player
 All Players is a target scope, not a fake player id
@@ -521,11 +521,11 @@ client/scripts/shell/gameplay_shell_flow.gd
 client/scripts/gameplay/runtime/gameplay_flow_composer.gd
 ```
 
-Gameplay state reader files:
+Gameplay readmodel source files:
 
 ```text
-client/scripts/networking/realtime_router.gd
-client/scripts/gameplay/state/gameplay_state_apply_flow.gd
+client/scripts/protocol/realtime/realtime_router.gd
+client/scripts/protocol/realtime/devtools_lane_state_adapter.gd
 ```
 
 Generated and source packet files:
@@ -598,11 +598,11 @@ client/tests/unit/devtools/context/test_devtools_state_context.gd
 client/tests/unit/devtools/context/test_devtools_command_context.gd
 ```
 
-Relevant inbound routing and gameplay state tests include:
+Relevant inbound routing and devtools gameplay readmodel tests include:
 
 ```text
 client/tests/unit/test_realtime_router.gd
-client/tests/unit/test_gameplay_state_apply_flow.gd
+client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd
 client/tests/unit/test_session_network_controller.gd
 client/tests/unit/test_gameplay_session_controller.gd
 ```

@@ -4,7 +4,7 @@ Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 ## Purpose
 
-This document describes the active game-server lane packet projection path for realtime gameplay presentation.
+This document describes the active game-server lane-native realtime projection path for realtime gameplay presentation.
 
 
 ## Overview
@@ -70,7 +70,7 @@ This doc only covers the projection-side service boundary. It does not define wi
 
 ## Data ownership
 
-The lane projection path owns the transient projection results used to build lane packets from authoritative game state.
+The lane projection path owns the transient projection results used to build lane-native realtime packets from authoritative game state.
 
 It does not own packet schema source files or generated constants. Runtime wire-map behavior for active realtime lanes lives in protocol/realtime and is specified by the realtime protocol docs; packet schema docs own generated schema inputs and outputs.
 
@@ -88,11 +88,11 @@ overlay lane
 session lane
 = durable match-local player session state and lifecycle-oriented read models
 
-event batch
+event_batch
 = transient presentation events sent separately from baseline/delta lanes
 ```
 
-`player_pause_state` remains a separate same-session packet and is handled independently from lane packet projection.
+`player_pause_state` remains a separate same-session packet and is handled independently from lane-native realtime projection.
 
 ## Delta projection behavior
 
@@ -128,7 +128,7 @@ authoritative gameplay state
 -> CompactWirePacket applies aliases to remaining emitted keys
 ```
 
-Sparse omission is a realtime wire-map serialization concern. Compact aliasing is a realtime encode-boundary mapping concern. `packetcodec` only encodes the already-shaped map to JSON. Networking only writes encoded bytes after realtime builds them. Full lane packets remain complete snapshots. Delta create, update, and delete sections are omitted when empty. Clients treat missing delta sections as empty or no-op, and missing fields inside update records remain unchanged, not cleared. Sparse omission must not drop meaningful `false` or `0` values inside present records.
+Sparse omission is a realtime wire-map serialization concern. Compact aliasing is a realtime encode-boundary mapping concern. `packetcodec` only encodes the already-shaped map to JSON. Networking only writes encoded bytes after realtime builds them. Full lane-native realtime packets remain complete snapshots. Delta create, update, and delete sections are omitted when empty. Clients treat missing delta sections as empty or no-op, and missing fields inside update records remain unchanged, not cleared. Sparse omission must not drop meaningful `false` or `0` values inside present records.
 
 Implementation ownership for this behavior lives in `services/game-server/internal/protocol/realtime/wire_packets.go`, `services/game-server/internal/protocol/realtime/quantize_world.go`, and `services/game-server/internal/protocol/realtime/quantize/`.
 
@@ -184,7 +184,7 @@ Relevant active files include:
 
 Relevant server tests include:
 
-* `services/game-server/internal/protocol/realtime/*_test.go` - lane packet projection coverage, including sparse delta serialization and wire-map omission behavior.
+* `services/game-server/internal/protocol/realtime/*_test.go` - lane-native realtime projection coverage, including sparse delta serialization and wire-map omission behavior.
 * `services/game-server/internal/networking/websocket_write_test.go`
 * `services/game-server/internal/networking/room_snapshot_test.go`
 * `services/game-server/internal/networking/room_error_test.go`

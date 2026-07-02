@@ -18,12 +18,12 @@ The active client path is:
 
 ```text
 event_batch
--> EventBatchApplier
--> GameplayStateApplyFlow
+-> client/scripts/protocol/realtime/event_batch_applier.gd
+-> EventPresentationAdapter
 -> GameplayEventLifecycleFlow
 -> GameplayEventFlow
 -> GameplayEventController
--> GameplayEffects
+-> GameplayEffects / GameplayDeathFlow
 -> effect scene / audio / local death handoff
 ```
 
@@ -37,7 +37,7 @@ server event x/y
 
 This keeps event effects visually continuous across toroidal wrap boundaries and aligned with the active ViewAnchor.
 
-The current event/effects path presents:
+The current event or effects path presents:
 
 ```text
 bullet_blast            -> bullet blast animation and sound
@@ -57,24 +57,24 @@ client/
 
 ## Responsibilities
 
-The gameplay event/effects presentation flow owns:
+The gameplay event or effects presentation flow owns:
 
-* Receiving normalized `server_events` from gameplay state application.
+* Receiving `event_batch` output from the realtime event adapter path.
 * Routing supported server event types to local presentation handlers.
 * Emitting the local `self_death_event` signal when a `ship_death` event belongs to the local player.
 * Converting server-space event coordinates into visual coordinates before spawning effects.
 * Spawning short-lived visual effect scenes for supported events.
 * Starting effect animations.
 * Starting event-local audio through the gameplay audio flow.
-* Cleaning up effect nodes after animation and/or sound completion.
-* Delegating non-final local self-death to HUD dead/respawn presentation.
+* Cleaning up effect nodes after animation and or sound completion.
+* Delegating non-final local self-death to HUD dead or respawn presentation.
 * Delegating final local elimination to match-end orchestration.
 * Resetting game-over sound one-shot state when the gameplay lifecycle resets.
 * Keeping presentation events separate from server simulation authority.
 
 ## Does not own
 
-The gameplay event/effects presentation flow does not own:
+The gameplay event or effects presentation flow does not own:
 
 * Server event authority.
 * Collision decisions.
@@ -103,7 +103,7 @@ The gameplay event/effects presentation flow does not own:
 
 `GameplayEventLifecycleFlow` wires event presentation into the gameplay runtime.
 
-It receives the gameplay owner node, HUD, HUD flow, player node, visual coordinate converter, and optional match-end flow. It creates or accepts an event flow and death flow, configures them, connects local self-death handling, and exposes a narrow `apply_server_events(state)` method for state application.
+It receives the gameplay owner node, HUD, HUD flow, player node, visual coordinate converter, and optional match-end flow. It creates or accepts an event flow and death flow, configures them, connects local self-death handling, and exposes a narrow `apply_server_events(events)` method for event-presentation fanout.
 
 Current lifecycle path:
 
@@ -119,7 +119,7 @@ GameplayFlowComposer.configure(...)
 
 `GameplayEventFlow` owns the public event-presentation API used by runtime callers.
 
-It configures `GameplayEffects`, configures `GameplayEventController`, forwards server event arrays, exposes game-over sound requests to match-end orchestration, and resets game-over sound state on lifecycle reset.
+It configures `GameplayEffects`, configures `GameplayEventController`, forwards applied server event arrays, exposes game-over sound requests to match-end orchestration, and resets game-over sound state on lifecycle reset.
 
 It emits:
 
@@ -176,7 +176,7 @@ pickup_collected      -> res://scenes/pickups/pickup_collect.tscn
 
 `GameplayDeathFlow` owns the client presentation response to local self-death events.
 
-For lives above zero, it applies the remaining lives to the HUD and sets dead/respawn presentation using the event respawn delay.
+For lives above zero, it applies the remaining lives to the HUD and sets dead or respawn presentation using the event respawn delay.
 
 For lives equal to zero, it delegates to `MatchEndFlow.handle_local_player_eliminated(event)` when match-end flow is configured.
 
@@ -186,39 +186,48 @@ This keeps final local elimination presentation separate from authoritative room
 
 `MatchEndFlow` may request game-over audio through `GameplayEventFlow.play_game_over_sound_after_delay()`.
 
-The event/effects path owns game-over sound delay and one-shot gating. Match-end orchestration does not play audio directly.
+The event or effects path owns game-over sound delay and one-shot gating. Match-end orchestration does not play audio directly.
+
+### Alive restoration boundary
+
+Alive restoration is a separate post-fanout gameplay-composition delegation.
+
+It is not part of `GameplayStateApplyFlow` and not part of the active `event_batch` presentation route.
+
+Current path:
+
+```text
+GameplayComposition.restore_alive_presentation_from_realtime_router(...)
+-> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
+-> GameplayAliveRestoreFlow.apply_lane_state(...)
+```
 
 ## Protocols and APIs
 
-### State event input
+### Event-batch input
 
-Gameplay events enter the client through the `event_batch` packet payload after lane state/readiness has been applied.
+Gameplay events enter the client through the `event_batch` packet payload after lane state or readiness has already been applied.
 
-`EventBatchApplier` applies and dedupes the packet events into:
+`client/scripts/protocol/realtime/event_batch_applier.gd` applies and dedupes the packet events. `EventPresentationAdapter` then drains the newly applied event output and forwards that output to `GameplayEventLifecycleFlow`.
 
-```text
-server_events
-```
-
-If the packet event field is missing or is not an array, the normalized value is an empty array.
+If the packet event field is missing or is not an array, the applied event output is an empty array.
 
 ### Runtime application order
 
-Gameplay state application routes server events after world state and alive/respawn restoration have been applied.
+Gameplay event presentation happens after lane state fanout and uses the realtime event adapter path.
 
-Current application order in `GameplayStateApplyFlow` after lane state/readiness is applied:
+Current active order is:
 
 ```text
-1. Apply gameplay state to devtools context.
-2. Mark gameplay input as having received gameplay state.
-3. Apply gameplay-state summary to HUD flow.
-4. Apply world state.
-5. Apply alive/respawn restoration.
-6. Apply `event_batch` through `EventBatchApplier`.
-7. Mark gameplay state as received.
+1. RealtimeRouter applies `event_batch` through event_batch_applier.
+2. EventPresentationAdapter drains applied events.
+3. GameplayEventLifecycleFlow.apply_server_events(...).
+4. GameplayEventFlow.apply_server_events(...).
+5. GameplayEventController routes supported event types.
+6. GameplayEffects or GameplayDeathFlow present local consequences.
 ```
 
-This order matters because event effects need current world-sync visual coordinate state before converting server event positions.
+Alive restoration is a separate post-fanout delegation and does not consume `event_batch` as a state-application step.
 
 ### Event coordinate conversion
 
@@ -253,7 +262,7 @@ If event coordinates contain a `Callable`, the client logs a warning and skips t
 
 ### Supported event fields
 
-The current event/effects flow reads only the fields it needs for presentation routing.
+The current event or effects flow reads only the fields it needs for presentation routing.
 
 Common fields:
 
@@ -295,17 +304,17 @@ y
 
 `GameplayEffects` uses generated constants for game-over delay and tracks a local token so delayed sound playback can be invalidated by reset or stop behavior.
 
-The game-over sound is played at most once per event/effects lifecycle until reset.
+The game-over sound is played at most once per event or effects lifecycle until reset.
 
 ### HTTP APIs
 
 This flow does not expose HTTP APIs.
 
-It consumes realtime gameplay state that has already entered the client gameplay runtime.
+It consumes realtime gameplay event output that has already entered the client gameplay runtime.
 
 ## Data ownership
 
-Gameplay event/effects presentation owns transient client presentation state only.
+Gameplay event or effects presentation owns transient client presentation state only.
 
 Current local state includes:
 
@@ -325,7 +334,7 @@ This state is not durable.
 
 It is not authoritative.
 
-It is reset when the gameplay lifecycle resets or when effect nodes complete their animation/sound cleanup.
+It is reset when the gameplay lifecycle resets or when effect nodes complete their animation or sound cleanup.
 
 ## Visual effects
 
@@ -439,7 +448,7 @@ client/scripts/generated/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
 ```
 
-The client event/effects flow consumes generated packet constants. It does not own packet schema.
+The client event or effects flow consumes generated packet constants. It does not own packet schema.
 
 ### Server event source
 
@@ -468,28 +477,29 @@ The underlying constants source belongs to shared data and the data-sync pipelin
 
 ## Code map
 
-### Primary event/effects implementation
+### Primary event or effects implementation
 
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires event flow, death flow, visual coordinate conversion, and match-end collaboration into gameplay runtime.
 * `client/scripts/gameplay/events/gameplay_event_flow.gd` - Public event flow wrapper for applying server events, requesting game-over sound, and resetting game-over sound state.
 * `client/scripts/gameplay/events/gameplay_event_controller.gd` - Routes server event dictionaries to supported presentation handlers.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Handles local self-death presentation and final local elimination delegation.
-* `client/scripts/gameplay/effects/gameplay_effects.gd` - Instantiates visual effect scenes, starts animations/sounds, scales torpedo explosions, and cleans up effect nodes.
+* `client/scripts/gameplay/effects/gameplay_effects.gd` - Instantiates visual effect scenes, starts animations or sounds, scales torpedo explosions, and cleans up effect nodes.
 * `client/scripts/gameplay/audio/gameplay_audio_flow.gd` - Plays event-local sounds and game-over sound requests.
 
 ### Runtime callers
 
-* `client/scripts/gameplay/state/event_batch_applier.gd` - Applies and dedupes `event_batch` payloads into `server_events`.
-* `client/scripts/gameplay/state/gameplay_state_apply_flow.gd` - Applies server events after world state and alive/respawn restoration.
+* `client/scripts/protocol/realtime/event_batch_applier.gd` - Applies and dedupes `event_batch` payloads before event presentation fanout.
+* `client/scripts/protocol/realtime/event_presentation_adapter.gd` - Drains applied event output and forwards it to `GameplayEventLifecycleFlow`.
 * `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Constructs and configures `GameplayEventLifecycleFlow`.
 * `client/scripts/shell/gameplay_shell_flow.gd` - Owns gameplay runtime shell delegation and reset.
-* `client/scripts/gameplay/gameplay_composition.gd` - Constructs gameplay shell, match-end flow, and surrounding gameplay collaborators.
+* `client/scripts/gameplay/gameplay_composition.gd` - Constructs gameplay shell, match-end flow, alive-restore delegation, and surrounding gameplay collaborators.
+* `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Separate post-fanout alive restoration owner.
 
 ### Coordinate conversion collaborators
 
 * `client/scripts/world/world_sync.gd` - Exposes `visual_position_for_server_position(...)`.
 * `client/scripts/world/player_render/player_render_api.gd` - Routes coordinate conversion through the active player-render API.
-* `client/scripts/world/player_render/view_anchor_sync.gd` - Wraps ViewAnchor visual/server coordinate conversion.
+* `client/scripts/world/player_render/view_anchor_sync.gd` - Wraps ViewAnchor visual or server coordinate conversion.
 
 ### Match-end and HUD collaborators
 
@@ -525,7 +535,7 @@ The underlying constants source belongs to shared data and the data-sync pipelin
 Relevant tests include:
 
 * `client/tests/unit/test_event_batch_applier.gd`
-* `client/tests/unit/test_gameplay_state_apply_flow.gd`
+* `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_controller.gd`
 * `client/tests/unit/gameplay/events/test_gameplay_death_flow.gd`
 * `client/tests/unit/gameplay/effects/test_gameplay_effects.gd`
@@ -535,7 +545,7 @@ Relevant tests include:
 * `client/tests/unit/test_world_sync.gd`
 * `client/tests/unit/world/player_render/test_view_anchor_sync.gd`
 
-Use the normal client GUT verification flow when changing event/effects presentation behavior.
+Use the normal client GUT verification flow when changing event or effects presentation behavior.
 
 ## Related docs
 
@@ -555,10 +565,10 @@ Use the normal client GUT verification flow when changing event/effects presenta
 
 ## Notes
 
-Legacy docs correctly identified the event/effects/audio path as the owner of game-over sound playback, delay, and one-shot gating. Current implementation keeps that ownership in `GameplayEffects` and `GameplayAudioFlow`.
+Legacy docs correctly identified the event, effects, and audio path as the owner of game-over sound playback, delay, and one-shot gating. Current implementation keeps that ownership in `GameplayEffects` and `GameplayAudioFlow`.
 
-`pickup_collected` collection effects belong to gameplay event/effects presentation even though pickup node rendering belongs to world sync. This separation lets a pickup collection particle and sound outlive the pickup node that may be removed by the next world-sync state application.
+`pickup_collected` collection effects belong to gameplay event or effects presentation even though pickup node rendering belongs to world sync. This separation lets a pickup collection particle and sound outlive the pickup node that may be removed by the next world-sync lane application.
 
 The current client event controller routes `pickup_effect_applied` but does not spawn a visual effect for it. Do not document that event as a visible client effect unless implementation changes.
 
-The event/effects path should stay presentation-only. New event types should be added by extending server event production, packet/schema documentation, and client presentation routing without moving gameplay authority into the client.
+The event or effects path should stay presentation-only. New event types should be added by extending server event production, packet or schema documentation, and client presentation routing without moving gameplay authority into the client.

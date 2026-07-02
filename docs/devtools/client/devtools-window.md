@@ -232,14 +232,15 @@ devtools_window.gd signal
 -> generated packet or client-only overlay update
 ```
 
-Gameplay state and debug status flow back into the window through:
+Lane-native gameplay output and debug status flow back into the window through:
 
 ```text
 lane/debug packet
--> GameplayShellFlow
--> GameplayFlowComposer
--> GameplayDevtoolsContext
--> DevtoolsGameplayStateContext
+-> RealtimeRouter
+-> DevtoolsLaneStateAdapter.build_state(...)
+-> GameplayComposition.apply_devtools_gameplay_state(devtools_state)
+-> GameplayDevtoolsContext.apply_gameplay_state(devtools_state)
+-> DevtoolsGameplayStateContext.apply_gameplay_state(devtools_state)
 -> DevtoolsDisplayRefreshFlow
 -> DevtoolsWindowController
 -> devtools_window.gd
@@ -390,7 +391,7 @@ Current test coverage verifies:
 * non-player canonical targets do not emit player-only commands
 * `All Players` emits `target_scope=all_players` with an empty player ID
 * target-scope routing is preserved for respawn, toggle, score, and lives actions
-* target row and telemetry model behavior is derived from gameplay state and debug status
+* target row and telemetry model behavior is derived from devtools gameplay readmodels and debug status
 
 ## Related docs
 

@@ -316,7 +316,7 @@ gameplay match decision
 
 For Guest single-player, match results route to Guest behavior.
 
-For Local Profile single-player, the room member’s `local_profile_id` becomes the identity reference used by match reporting and player-data routing.
+For Local Profile single-player, the room member's `local_profile_id` becomes the identity reference used by match reporting and player-data routing.
 
 The client result payload does not expose account IDs or local profile IDs.
 
@@ -417,7 +417,7 @@ session lane: players, player_lifecycle, total_asteroids
 event_batch: transient presentation events
 ```
 
-These are delivered through lane-native packets such as world_full/world_delta, overlay_full/overlay_delta, session_full/session_delta, and event_batch, not a combined state packet.
+These are delivered through lane-native packets such as world_full/world_delta, overlay_full/overlay_delta, session_full/session_delta, and event_batch, not one retired combined gameplay payload.
 Detailed packet shape, sparse delta omission, numeric wire quantization, and compact alias behavior belong in Realtime WebSocket Protocol and Gameplay Packets.
 
 The match-result persistence path uses authoritative server facts such as:
