@@ -23,7 +23,6 @@ var _gameplay_readiness
 var _logged_gameplay_ready := false
 var _logged_first_fanout := false
 var _logged_event_lifecycle_flow_ready := false
-var _logged_stale_dead_hud_clear := false
 var _logged_debug_shape_catalog_received := false
 
 signal return_to_pregame_requested(session_mode: String)
@@ -135,48 +134,11 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 		if gameplay_composition != null and devtools_lane_state_adapter != null:
 			var devtools_state: Dictionary = devtools_lane_state_adapter.build_state(gameplay_realtime_router)
 			gameplay_composition.apply_devtools_gameplay_state(devtools_state)
-		_confirm_respawn_restored_alive_hud(gameplay_hud_flow)
-		_clear_stale_dead_presentation_from_lane_state(gameplay_hud_flow)
+		if gameplay_composition != null and gameplay_composition.has_method("restore_alive_presentation_from_realtime_router"):
+			gameplay_composition.restore_alive_presentation_from_realtime_router(gameplay_realtime_router)
 		if !_lane_presentation_fanned_out:
 			gameplay_presentation_adapter.mark_fanned_out()
 			_lane_presentation_fanned_out = true
-
-
-func _confirm_respawn_restored_alive_hud(gameplay_hud_flow) -> void:
-	if gameplay_hud_flow == null or gameplay_realtime_router == null:
-		return
-	if gameplay_composition == null or gameplay_composition.gameplay_shell_flow == null:
-		return
-	var runtime_context = gameplay_composition.gameplay_shell_flow.runtime_context
-	if runtime_context == null:
-		return
-	var respawn_flow = runtime_context.respawn_flow
-	if respawn_flow == null or !respawn_flow.has_method("is_awaiting_confirmation"):
-		return
-	if !respawn_flow.is_awaiting_confirmation():
-		return
-	var self_id := ""
-	if gameplay_realtime_router.overlay_lane_state != null and gameplay_realtime_router.overlay_lane_state.self_id != null:
-		self_id = str(gameplay_realtime_router.overlay_lane_state.self_id)
-	if self_id == "":
-		return
-	var lifecycle = null
-	if gameplay_realtime_router.session_lane_state != null and gameplay_realtime_router.session_lane_state.player_lifecycle != null:
-		lifecycle = gameplay_realtime_router.session_lane_state.player_lifecycle.get(self_id)
-	var lifecycle_status := ""
-	if lifecycle is Dictionary:
-		lifecycle_status = str(lifecycle.get("status", ""))
-	else:
-		lifecycle_status = str(lifecycle)
-	if lifecycle_status != "active":
-		return
-	if gameplay_realtime_router.world_lane_state == null or gameplay_realtime_router.world_lane_state.ships == null:
-		return
-	if !gameplay_realtime_router.world_lane_state.ships.has(self_id):
-		return
-	gameplay_hud_flow.clear_dead_presentation()
-	respawn_flow.clear_awaiting_confirmation()
-	_log("respawn confirmation restored alive HUD")
 
 
 func handle_player_pause_state(packet: Dictionary) -> void:
@@ -339,42 +301,3 @@ func _on_gameplay_replay_requested() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
-
-func _clear_stale_dead_presentation_from_lane_state(gameplay_hud_flow) -> void:
-	if gameplay_hud_flow == null or gameplay_realtime_router == null:
-		return
-	if gameplay_hud_flow.hidden_for_match_over or gameplay_hud_flow.is_game_over:
-		return
-	if !gameplay_hud_flow._has_dead_presentation():
-		return
-	if gameplay_composition == null or gameplay_composition.gameplay_shell_flow == null:
-		return
-	var runtime_context = gameplay_composition.gameplay_shell_flow.runtime_context
-	if runtime_context == null:
-		return
-	var self_id := ""
-	if gameplay_realtime_router.overlay_lane_state != null and gameplay_realtime_router.overlay_lane_state.self_id != null:
-		self_id = str(gameplay_realtime_router.overlay_lane_state.self_id)
-	if self_id == "":
-		return
-	var lifecycle = null
-	if gameplay_realtime_router.session_lane_state != null and gameplay_realtime_router.session_lane_state.player_lifecycle != null:
-		lifecycle = gameplay_realtime_router.session_lane_state.player_lifecycle.get(self_id)
-	var lifecycle_status := ""
-	if lifecycle is Dictionary:
-		lifecycle_status = str(lifecycle.get("status", ""))
-	else:
-		lifecycle_status = str(lifecycle)
-	if lifecycle_status != "active":
-		return
-	if gameplay_realtime_router.world_lane_state == null or gameplay_realtime_router.world_lane_state.ships == null:
-		return
-	if !gameplay_realtime_router.world_lane_state.ships.has(self_id):
-		return
-	var respawn_flow = runtime_context.respawn_flow
-	if respawn_flow != null and respawn_flow.has_method("clear_awaiting_confirmation"):
-		respawn_flow.clear_awaiting_confirmation()
-	if !_logged_stale_dead_hud_clear:
-		_logged_stale_dead_hud_clear = true
-		_log("stale dead HUD cleared from confirmed alive lane state")
-	gameplay_hud_flow.clear_dead_presentation()

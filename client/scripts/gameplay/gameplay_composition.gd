@@ -120,6 +120,17 @@ func apply_devtools_debug_status_packet(packet: Dictionary) -> void:
 	gameplay_shell_flow.apply_devtools_debug_status_packet(packet)
 
 
+func restore_alive_presentation_from_realtime_router(router) -> void:
+	if router == null or gameplay_shell_flow == null:
+		return
+
+	var self_id := ""
+	if router.overlay_lane_state != null and router.overlay_lane_state.self_id != null:
+		self_id = str(router.overlay_lane_state.self_id)
+
+	gameplay_shell_flow.restore_alive_presentation_from_lane_state(router.world_lane_state, router.session_lane_state, self_id)
+
+
 func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
 	if gameplay_shell_flow == null:
 		return

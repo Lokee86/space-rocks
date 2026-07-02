@@ -44,3 +44,33 @@ func apply_state(state: Dictionary) -> void:
 		match_end_flow.handle_alive_restored()
 	respawn_flow.clear_awaiting_confirmation()
 
+
+func apply_lane_state(world_lane_state, session_lane_state, self_id: String) -> void:
+	if hud_flow == null || respawn_flow == null || world_lane_state == null || session_lane_state == null || self_id == "":
+		return
+	if hud_flow.hidden_for_match_over or hud_flow.is_game_over:
+		return
+
+	var world_ships: Dictionary = {}
+	if world_lane_state.ships is Dictionary:
+		world_ships = world_lane_state.ships
+
+	var player_lifecycle: Dictionary = {}
+	if session_lane_state.player_lifecycle is Dictionary:
+		player_lifecycle = session_lane_state.player_lifecycle
+
+	var has_stale_dead_presentation := false
+	if hud_flow.has_method("has_dead_presentation"):
+		has_stale_dead_presentation = hud_flow.has_dead_presentation()
+	elif hud_flow.has_method("_has_dead_presentation"):
+		has_stale_dead_presentation = hud_flow._has_dead_presentation()
+
+	if !respawn_flow.should_restore_alive_hud(world_ships, player_lifecycle, self_id, player, has_stale_dead_presentation):
+		return
+
+	if world_sync != null:
+		world_sync.clear_view_target_player()
+	hud_flow.clear_dead_presentation()
+	if match_end_flow != null && match_end_flow.has_method("handle_alive_restored"):
+		match_end_flow.handle_alive_restored()
+	respawn_flow.clear_awaiting_confirmation()

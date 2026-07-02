@@ -143,6 +143,12 @@ func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
 	server_hitbox_overlay_flow.apply_debug_shape_catalog_packet(packet)
 
 
+func restore_alive_presentation_from_lane_state(world_lane_state, session_lane_state, self_id: String) -> void:
+	if alive_restore_flow == null:
+		return
+	alive_restore_flow.apply_lane_state(world_lane_state, session_lane_state, self_id)
+
+
 func handle_unhandled_input(event: InputEvent, required_lane_baselines_synced: bool) -> bool:
 	if input_context == null:
 		return false

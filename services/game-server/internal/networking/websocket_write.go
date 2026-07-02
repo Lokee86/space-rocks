@@ -15,8 +15,6 @@ import (
 
 const debugStatusWriteIntervalTicks = 8
 
-var loggedEventBatchWriteIDs = map[string]bool{}
-
 var canSendDebugShapeCatalog = outbound.CanSendDebugShapeCatalog
 var buildDebugShapeCatalogResponse = outbound.BuildDebugShapeCatalogResponse
 
@@ -102,65 +100,11 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			"encoded_bytes", len(encodedPacket),
 		)
 		if candidate.Kind == realtime.RealtimeLaneCandidateKindEventBatch {
-			encodedEventCount := len(result.EventBatchEventIDs)
-			eventTypes := make([]string, 0, encodedEventCount)
-			eventIDs := make([]string, 0, encodedEventCount)
-			shipDeathFound := false
-			if eventBatch, ok := candidate.Full.(map[string]any); ok {
-				if events, ok := eventBatch["events"].([]any); ok {
-					for idx, event := range events {
-						eventID := fmt.Sprint(result.EventBatchEventIDs[idx])
-						eventIDs = append(eventIDs, eventID)
-						if eventMap, ok := event.(map[string]any); ok {
-							eventType := fmt.Sprint(eventMap["type"])
-							eventTypes = append(eventTypes, eventType)
-							if eventType == "ship_death" {
-								shipDeathFound = true
-								logging.Network.Debug("ship death present in active event batch",
-									logging.FieldRoomID, session.currentRoomID,
-									logging.FieldPlayerID, session.currentGamePlayerID,
-									"event_id", eventID,
-									"event_type", eventType,
-									"event_player_id", fmt.Sprint(eventMap["player_id"]),
-									"lives", fmt.Sprint(eventMap["lives"]),
-									"respawn_delay", fmt.Sprint(eventMap["respawn_delay"]),
-								)
-							}
-						}
-					}
-				}
-			}
 			if drained := drainActiveEventBatchAfterWrite(session.room.GameInstance(), session.currentGamePlayerID, result.EventBatchEventIDs); len(drained) > 0 {
 				drainedEventCount += len(drained)
-				if shipDeathFound {
-					logging.Network.Debug("lane protocol event batch drained",
-						logging.FieldRoomID, session.currentRoomID,
-						logging.FieldPlayerID, session.currentGamePlayerID,
-						logging.FieldRemoteAddr, remoteAddr,
-						"event_count", len(drained),
-					)
-				}
-			}
-			if shipDeathFound && encodedEventCount > 0 {
-				batchID := ""
-				if eventBatch, ok := candidate.Full.(map[string]any); ok {
-					batchID = fmt.Sprint(eventBatch["batch_id"])
-				}
-				if !loggedEventBatchWriteIDs[batchID] {
-					loggedEventBatchWriteIDs[batchID] = true
-					logging.Network.Debug("lane protocol event batch written",
-						logging.FieldRoomID, session.currentRoomID,
-						logging.FieldPlayerID, session.currentGamePlayerID,
-						logging.FieldRemoteAddr, remoteAddr,
-						"batch_id", batchID,
-						"event_count", encodedEventCount,
-						"event_ids", strings.Join(eventIDs, ","),
-						"event_types", strings.Join(eventTypes, ","),
-						"event_batch_drained_count", drainedEventCount,
-					)
-				}
 			}
 		}
+
 		if metadata, ok := realtime.CandidateMetadata(candidate, session.realtimeState); ok {
 			persistedMetadata := realtime.AdvanceMetadataForSuccessfulWrite(candidate.Lane, metadata)
 			session.realtimeState.UpdateLane(candidate.Lane, persistedMetadata)

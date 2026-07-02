@@ -218,6 +218,10 @@ func _has_dead_presentation() -> bool:
 	return is_dead or can_respawn
 
 
+func has_dead_presentation() -> bool:
+	return _has_dead_presentation()
+
+
 func _make_respawn_available() -> void:
 	can_respawn = true
 	if !_logged_respawn_available:
