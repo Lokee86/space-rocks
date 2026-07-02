@@ -79,8 +79,11 @@ func TestProjectOverlayLaneUsesReceiverLocalFields(t *testing.T) {
 	if packet.Type != PacketFamilyOverlayFull {
 		t.Fatalf("expected overlay full packet type, got %q", packet.Type)
 	}
-	if packet.Metadata.Lane != LaneOverlay || packet.Metadata.Sequence != 4 || packet.Metadata.BaselineID != "player-1" || packet.Metadata.SnapshotID != "player-1" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
+	if packet.Metadata.Lane != LaneOverlay || packet.Metadata.Sequence != 4 || packet.Metadata.BaselineID != "overlay-baseline-4" || packet.Metadata.SnapshotID != "overlay-baseline-4" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
 		t.Fatalf("expected overlay metadata to be populated, got %#v", packet.Metadata)
+	}
+	if packet.Metadata.BaselineID == snapshot.SelfID {
+		t.Fatalf("expected baseline id to differ from snapshot self id, got %q", packet.Metadata.BaselineID)
 	}
 	if packet.Receiver != receiver {
 		t.Fatalf("expected overlay packet receiver to match projection, got %#v want %#v", packet.Receiver, receiver)
@@ -94,3 +97,5 @@ func TestProjectOverlayLaneUsesReceiverLocalFields(t *testing.T) {
 		t.Fatal("expected overlay projection to use receiver-local weapon state, not other player values")
 	}
 }
+
+

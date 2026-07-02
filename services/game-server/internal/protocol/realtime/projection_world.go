@@ -113,8 +113,8 @@ func BuildWorldFullPacket(snapshot game.GameplayPresentationSnapshot, sequence i
 		Metadata: Metadata{
 			Lane:           LaneWorld,
 			Sequence:       sequence,
-			BaselineID:     snapshot.SelfID,
-			SnapshotID:     snapshot.SelfID,
+			BaselineID:     FullBaselineID(LaneWorld, sequence),
+			SnapshotID:     FullBaselineID(LaneWorld, sequence),
 			ServerSentMsec: snapshot.ServerSentMsec,
 			SnapshotKind:   SnapshotKind("full"),
 			ChunkIndex:     0,
@@ -127,4 +127,5 @@ func BuildWorldFullPacket(snapshot game.GameplayPresentationSnapshot, sequence i
 		Pickups:   projection.Pickups,
 	}
 }
+
 

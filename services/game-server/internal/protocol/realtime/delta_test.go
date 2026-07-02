@@ -508,22 +508,28 @@ func TestBuildWorldDeltaPacketReturnsNoChangesForIdenticalProjection(t *testing.
 }
 
 func TestBuildWorldDeltaPacketSetsDeltaSnapshotKind(t *testing.T) {
-	previous := WorldFullPacket{Type: PacketTypeWorldFull}
-	current := WorldFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 9, BaselineID: "baseline-1", SnapshotID: "snapshot-1", SnapshotKind: SnapshotKind("full"), ServerSentMsec: 123}, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}}
+	previous := WorldFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline-1", SnapshotID: "world-baseline-1", SnapshotKind: SnapshotKind("full"), ServerSentMsec: 111}, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}}
+	current := WorldFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline-2", SnapshotID: "world-baseline-2", SnapshotKind: SnapshotKind("full"), ServerSentMsec: 123}, Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 11}}}
 
 	delta := BuildWorldDeltaPacket(previous, current)
 
 	if got, want := delta.Metadata.SnapshotKind, SnapshotKind("delta"); got != want {
 		t.Fatalf("world delta snapshot kind = %q, want %q", got, want)
 	}
-	if got, want := delta.Metadata.Sequence, 9; got != want {
+	if got, want := delta.Metadata.Sequence, 2; got != want {
 		t.Fatalf("world delta sequence = %d, want %d", got, want)
+	}
+	if got, want := delta.Metadata.BaselineID, "world-baseline-1"; got != want {
+		t.Fatalf("world delta baseline id = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotID, "world-snapshot-2"; got != want {
+		t.Fatalf("world delta snapshot id = %q, want %q", got, want)
 	}
 }
 
 func TestBuildOverlayDeltaPacketSetsDeltaSnapshotKind(t *testing.T) {
-	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 4, BaselineID: "baseline-1", SnapshotID: "snapshot-1", SnapshotKind: SnapshotKind("full")}, Receiver: OverlayReceiverRecord{SelfID: "player-1"}}
-	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 5, BaselineID: "baseline-1", SnapshotID: "snapshot-2", SnapshotKind: SnapshotKind("full")}, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 3}}
+	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 4, BaselineID: "overlay-baseline-4", SnapshotID: "overlay-baseline-4", SnapshotKind: SnapshotKind("full")}, Receiver: OverlayReceiverRecord{SelfID: "player-1"}}
+	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 5, BaselineID: "overlay-baseline-5", SnapshotID: "overlay-baseline-5", SnapshotKind: SnapshotKind("full")}, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 3}}
 
 	delta := BuildOverlayDeltaPacket(previous, current)
 
@@ -533,11 +539,23 @@ func TestBuildOverlayDeltaPacketSetsDeltaSnapshotKind(t *testing.T) {
 	if got, want := delta.Metadata.Sequence, 5; got != want {
 		t.Fatalf("overlay delta sequence = %d, want %d", got, want)
 	}
+	if got, want := delta.Metadata.BaselineID, "overlay-baseline-4"; got != want {
+		t.Fatalf("overlay delta baseline id = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotID, "overlay-snapshot-5"; got != want {
+		t.Fatalf("overlay delta snapshot id = %q, want %q", got, want)
+	}
+	if len(delta.Receiver.Updates) != 1 {
+		t.Fatalf("expected one overlay update, got %#v", delta.Receiver.Updates)
+	}
+	if got := delta.Receiver.Updates[0]; len(got) != 2 || got["self_id"] != "player-1" || got["lives"] != 3 {
+		t.Fatalf("expected changed overlay receiver patch, got %#v", got)
+	}
 }
 
 func TestBuildSessionDeltaPacketSetsDeltaSnapshotKind(t *testing.T) {
-	previous := SessionFullPacket{Type: PacketFamilySessionFull, Metadata: Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "baseline-1", SnapshotID: "snapshot-1", SnapshotKind: SnapshotKind("full")}, Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing"}}}
-	current := SessionFullPacket{Type: PacketFamilySessionFull, Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "baseline-1", SnapshotID: "snapshot-2", SnapshotKind: SnapshotKind("full")}, Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 4}}}
+	previous := SessionFullPacket{Type: PacketFamilySessionFull, Metadata: Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-baseline-7", SnapshotKind: SnapshotKind("full")}, Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing"}}}
+	current := SessionFullPacket{Type: PacketFamilySessionFull, Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-8", SnapshotID: "session-baseline-8", SnapshotKind: SnapshotKind("full")}, Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 4}}}
 
 	delta := BuildSessionDeltaPacket(previous, current)
 
@@ -547,14 +565,32 @@ func TestBuildSessionDeltaPacketSetsDeltaSnapshotKind(t *testing.T) {
 	if got, want := delta.Metadata.Sequence, 8; got != want {
 		t.Fatalf("session delta sequence = %d, want %d", got, want)
 	}
+	if got, want := delta.Metadata.BaselineID, "session-baseline-7"; got != want {
+		t.Fatalf("session delta baseline id = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotID, "session-snapshot-8"; got != want {
+		t.Fatalf("session delta snapshot id = %q, want %q", got, want)
+	}
 }
 
 func TestBuildOverlayDeltaPacketEmitsChangedOverlayData(t *testing.T) {
-	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 2, Score: 5, RespawnCooldown: 1.25, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 7, PrimaryAmmoRemaining: 3, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 11, SecondaryAmmoRemaining: 4}}
-	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 3, Score: 9, RespawnCooldown: 0.5, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 7, PrimaryAmmoRemaining: 3, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 11, SecondaryAmmoRemaining: 4}}
+	previous := OverlayFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 4, BaselineID: "overlay-baseline-4", SnapshotID: "overlay-baseline-4", SnapshotKind: SnapshotKind("full")}, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 2, Score: 5, RespawnCooldown: 1.25, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 7, PrimaryAmmoRemaining: 3, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 11, SecondaryAmmoRemaining: 4}}
+	current := OverlayFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 5, BaselineID: "overlay-baseline-5", SnapshotID: "overlay-baseline-5", SnapshotKind: SnapshotKind("full")}, Receiver: OverlayReceiverRecord{SelfID: "player-1", Lives: 3, Score: 9, RespawnCooldown: 0.5, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "limited", PrimaryCooldownRemaining: 7, PrimaryAmmoRemaining: 3, SecondaryWeaponID: "bomb", SecondaryAmmoPolicy: "infinite", SecondaryCooldownRemaining: 11, SecondaryAmmoRemaining: 4}}
 
 	delta := BuildOverlayDeltaPacket(previous, current)
 
+	if got, want := delta.Metadata.SnapshotKind, SnapshotKind("delta"); got != want {
+		t.Fatalf("overlay delta snapshot kind = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.Sequence, 5; got != want {
+		t.Fatalf("overlay delta sequence = %d, want %d", got, want)
+	}
+	if got, want := delta.Metadata.BaselineID, "overlay-baseline-4"; got != want {
+		t.Fatalf("overlay delta baseline id = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotID, "overlay-snapshot-5"; got != want {
+		t.Fatalf("overlay delta snapshot id = %q, want %q", got, want)
+	}
 	if !OverlayDeltaHasChanges(delta) {
 		t.Fatal("expected overlay delta to report changes")
 	}
@@ -672,7 +708,7 @@ func TestBuildSessionDeltaPacketEmitsChangedSessionData(t *testing.T) {
 	if len(delta.PlayerLifecycle.Updates) != 1 || delta.PlayerLifecycle.Updates[0]["player_id"] != "player-a" || delta.PlayerLifecycle.Updates[0]["status"] != "respawning" {
 		t.Fatalf("expected lifecycle update, got %#v", delta.PlayerLifecycle)
 	}
-	if len(delta.TotalAsteroids.Updates) != 1 || delta.TotalAsteroids.Updates[0].Count != 7 {
+	if len(delta.TotalAsteroids.Updates) != 1 || delta.TotalAsteroids.Updates[0].ID != sessionTotalAsteroidsRecordID || delta.TotalAsteroids.Updates[0].Count != 7 {
 		t.Fatalf("expected total asteroid update, got %#v", delta.TotalAsteroids)
 	}
 }
@@ -731,11 +767,63 @@ func TestBuildSessionDeltaPacketEmitsDeleteForMissingSessionRecord(t *testing.T)
 	}
 }
 
+func TestSessionWireDeltaHasChangesIgnoresMetadataOnlyTotalAsteroidsChanges(t *testing.T) {
+	previous := SessionWireFullPacket{
+		Type: PacketFamilySessionFull,
+		Metadata: Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-baseline-7", SnapshotKind: SnapshotKind("full")},
+		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
+		TotalAsteroids: 4,
+	}
+	current := SessionWireFullPacket{
+		Type: PacketFamilySessionFull,
+		Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-8", SnapshotID: "session-baseline-8", SnapshotKind: SnapshotKind("full")},
+		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
+		TotalAsteroids: 4,
+	}
+
+	delta := BuildSessionWireDeltaPacket(previous, current)
+
+	if SessionWireDeltaHasChanges(delta) {
+		t.Fatalf("expected no session wire delta for metadata-only total asteroid changes, got %#v", delta)
+	}
+	if len(delta.TotalAsteroids.Creates) != 0 || len(delta.TotalAsteroids.Updates) != 0 || len(delta.TotalAsteroids.Deletes) != 0 {
+		t.Fatalf("expected no total asteroid delta, got %#v", delta.TotalAsteroids)
+	}
+}
+
+func TestSessionWireDeltaHasChangesEmitsTotalAsteroidsUpdateWithStableRecordID(t *testing.T) {
+	previous := SessionWireFullPacket{
+		Type: PacketFamilySessionFull,
+		Metadata: Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-baseline-7", SnapshotKind: SnapshotKind("full")},
+		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
+		TotalAsteroids: 4,
+	}
+	current := SessionWireFullPacket{
+		Type: PacketFamilySessionFull,
+		Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-8", SnapshotID: "session-baseline-8", SnapshotKind: SnapshotKind("full")},
+		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
+		TotalAsteroids: 7,
+	}
+
+	delta := BuildSessionWireDeltaPacket(previous, current)
+
+	if !SessionWireDeltaHasChanges(delta) {
+		t.Fatalf("expected session wire delta to report changes, got %#v", delta)
+	}
+	if got, want := delta.TotalAsteroids.Updates, []SessionTotalAsteroidsRecord{{ID: sessionTotalAsteroidsRecordID, Count: 7}}; len(got) != 1 || got[0] != want[0] {
+		t.Fatalf("expected stable total asteroid update, got %#v", got)
+	}
+}
+
 
 
 func TestBuildWorldWireDeltaPacketEmitsWireChanges(t *testing.T) {
-	previous := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, SnapshotID: "world-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
-	current := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, SnapshotID: "world-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 11, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
+	previous := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline-1", SnapshotID: "world-baseline-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
+	current := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline-2", SnapshotID: "world-baseline-2", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 11, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
 
 	delta := BuildWorldWireDeltaPacket(previous, current)
 
@@ -745,10 +833,81 @@ func TestBuildWorldWireDeltaPacketEmitsWireChanges(t *testing.T) {
 	if got, want := delta.Metadata.SnapshotKind, SnapshotKind("delta"); got != want {
 		t.Fatalf("world wire delta snapshot kind = %q, want %q", got, want)
 	}
+	if got, want := delta.Metadata.Sequence, 2; got != want {
+		t.Fatalf("world wire delta sequence = %d, want %d", got, want)
+	}
+	if got, want := delta.Metadata.BaselineID, "world-baseline-1"; got != want {
+		t.Fatalf("world wire delta baseline id = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotID, "world-snapshot-2"; got != want {
+		t.Fatalf("world wire delta snapshot id = %q, want %q", got, want)
+	}
 	if len(delta.Ships.Updates) != 1 {
 		t.Fatalf("expected one ship update, got %#v", delta.Ships.Updates)
 	}
 	if got := delta.Ships.Updates[0]; got["id"] != "ship-a" || len(got) != 2 || got["x"] != int64(11) {
 		t.Fatalf("expected id and quantized x only, got %#v", got)
+	}
+}
+
+
+
+
+
+
+
+
+
+func TestWorldWirePayloadChangedIgnoresMetadataOnlyDifferences(t *testing.T) {
+	previous := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline-1", SnapshotID: "world-snapshot-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10}}}
+	current := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline-1", SnapshotID: "world-snapshot-2", SnapshotKind: SnapshotKind("delta")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10}}}
+
+	if WorldWirePayloadChanged(previous, current) {
+		t.Fatal("expected metadata-only world changes to be ignored")
+	}
+}
+
+func TestWorldWirePayloadChangedDetectsRealPayloadDifferences(t *testing.T) {
+	previous := WorldWireFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10}}}
+	current := WorldWireFullPacket{Type: PacketTypeWorldFull, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 11}}}
+
+	if !WorldWirePayloadChanged(previous, current) {
+		t.Fatal("expected world payload difference to be detected")
+	}
+}
+
+func TestOverlayWirePayloadChangedIgnoresMetadataOnlyDifferences(t *testing.T) {
+	previous := OverlayWireFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 4, BaselineID: "overlay-baseline-4", SnapshotID: "overlay-snapshot-4", SnapshotKind: SnapshotKind("full")}, Receiver: OverlayReceiverWireRecord{SelfID: "player-1", Lives: 2}}
+	current := OverlayWireFullPacket{Type: PacketFamilyOverlayFull, Metadata: Metadata{Lane: LaneOverlay, Sequence: 5, BaselineID: "overlay-baseline-4", SnapshotID: "overlay-snapshot-5", SnapshotKind: SnapshotKind("delta")}, Receiver: OverlayReceiverWireRecord{SelfID: "player-1", Lives: 2}}
+
+	if OverlayWirePayloadChanged(previous, current) {
+		t.Fatal("expected metadata-only overlay changes to be ignored")
+	}
+}
+
+func TestOverlayWirePayloadChangedDetectsRealPayloadDifferences(t *testing.T) {
+	previous := OverlayWireFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverWireRecord{SelfID: "player-1", Lives: 2}}
+	current := OverlayWireFullPacket{Type: PacketFamilyOverlayFull, Receiver: OverlayReceiverWireRecord{SelfID: "player-1", Lives: 3}}
+
+	if !OverlayWirePayloadChanged(previous, current) {
+		t.Fatal("expected overlay payload difference to be detected")
+	}
+}
+
+func TestSessionWirePayloadChangedIgnoresMetadataOnlyDifferences(t *testing.T) {
+	previous := SessionWireFullPacket{Type: PacketFamilySessionFull, Metadata: Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-snapshot-7", SnapshotKind: SnapshotKind("full")}, Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}}}
+	current := SessionWireFullPacket{Type: PacketFamilySessionFull, Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-7", SnapshotID: "session-snapshot-8", SnapshotKind: SnapshotKind("delta")}, Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}}}
+
+	if SessionWirePayloadChanged(previous, current) {
+		t.Fatal("expected metadata-only session changes to be ignored")
+	}
+}
+
+func TestSessionWirePayloadChangedDetectsRealPayloadDifferences(t *testing.T) {
+	previous := SessionWireFullPacket{Type: PacketFamilySessionFull, Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}}}
+	current := SessionWireFullPacket{Type: PacketFamilySessionFull, Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 9}}}
+
+	if !SessionWirePayloadChanged(previous, current) {
+		t.Fatal("expected session payload difference to be detected")
 	}
 }

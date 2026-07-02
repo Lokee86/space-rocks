@@ -37,8 +37,8 @@ func BuildOverlayFullPacket(snapshot game.GameplayPresentationSnapshot, receiver
 		Metadata: Metadata{
 			Lane:           LaneOverlay,
 			Sequence:       sequence,
-			BaselineID:     snapshot.SelfID,
-			SnapshotID:     snapshot.SelfID,
+			BaselineID:     FullBaselineID(LaneOverlay, sequence),
+			SnapshotID:     FullBaselineID(LaneOverlay, sequence),
 			ServerSentMsec: snapshot.ServerSentMsec,
 			SnapshotKind:   SnapshotKind("full"),
 			ChunkIndex:     0,
@@ -48,4 +48,5 @@ func BuildOverlayFullPacket(snapshot game.GameplayPresentationSnapshot, receiver
 		Receiver: projection.Receiver,
 	}
 }
+
 

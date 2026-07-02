@@ -70,8 +70,8 @@ func BuildSessionFullPacket(snapshot game.GameplayPresentationSnapshot, sequence
 		Metadata: Metadata{
 			Lane:           LaneSession,
 			Sequence:       sequence,
-			BaselineID:     snapshot.SelfID,
-			SnapshotID:     snapshot.SelfID,
+			BaselineID:     FullBaselineID(LaneSession, sequence),
+			SnapshotID:     FullBaselineID(LaneSession, sequence),
 			ServerSentMsec: snapshot.ServerSentMsec,
 			SnapshotKind:   SnapshotKind("full"),
 			ChunkIndex:     0,
@@ -83,4 +83,5 @@ func BuildSessionFullPacket(snapshot game.GameplayPresentationSnapshot, sequence
 		TotalAsteroids:  projection.TotalAsteroids,
 	}
 }
+
 

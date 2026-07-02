@@ -53,6 +53,8 @@ type SessionTotalAsteroidsRecord struct {
 	Count int
 }
 
+const sessionTotalAsteroidsRecordID = "total_asteroids"
+
 type WorldDeltaPacket struct {
 	Type      string
 	Metadata  Metadata
@@ -184,8 +186,32 @@ func ProjectionChanged(previous any, current any) bool {
 	return !reflect.DeepEqual(previous, current)
 }
 
+func worldWirePayloadChanged(previous WorldWireFullPacket, current WorldWireFullPacket) bool {
+	previous.Metadata = Metadata{}
+	current.Metadata = Metadata{}
+	return !reflect.DeepEqual(previous, current)
+}
+
+func overlayWirePayloadChanged(previous OverlayWireFullPacket, current OverlayWireFullPacket) bool {
+	previous.Metadata = Metadata{}
+	current.Metadata = Metadata{}
+	return !reflect.DeepEqual(previous, current)
+}
+
+func sessionWirePayloadChanged(previous SessionWireFullPacket, current SessionWireFullPacket) bool {
+	previous.Metadata = Metadata{}
+	current.Metadata = Metadata{}
+	return !reflect.DeepEqual(previous, current)
+}
+
+func WorldWirePayloadChanged(previous WorldWireFullPacket, current WorldWireFullPacket) bool { return worldWirePayloadChanged(previous, current) }
+func OverlayWirePayloadChanged(previous OverlayWireFullPacket, current OverlayWireFullPacket) bool { return overlayWirePayloadChanged(previous, current) }
+func SessionWirePayloadChanged(previous SessionWireFullPacket, current SessionWireFullPacket) bool { return sessionWirePayloadChanged(previous, current) }
+
 func BuildWorldDeltaPacket(previous WorldFullPacket, current WorldFullPacket) WorldDeltaPacket {
 	metadata := current.Metadata
+	metadata.BaselineID = previous.Metadata.BaselineID
+	metadata.SnapshotID = DeltaSnapshotID(current.Metadata.Lane, current.Metadata.Sequence)
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return WorldDeltaPacket{
 		Type:     PacketTypeWorldDelta,
@@ -219,6 +245,8 @@ func WorldDeltaHasChanges(delta WorldDeltaPacket) bool {
 
 func BuildWorldWireDeltaPacket(previous WorldWireFullPacket, current WorldWireFullPacket) WorldWireDeltaPacket {
 	metadata := current.Metadata
+	metadata.BaselineID = previous.Metadata.BaselineID
+	metadata.SnapshotID = DeltaSnapshotID(current.Metadata.Lane, current.Metadata.Sequence)
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return WorldWireDeltaPacket{
 		Type:     PacketTypeWorldDelta,
@@ -253,6 +281,8 @@ func BuildOverlayDeltaPacket(previous OverlayFullPacket, current OverlayFullPack
 	previousRecords := []OverlayReceiverRecord{previous.Receiver}
 	currentRecords := []OverlayReceiverRecord{current.Receiver}
 	metadata := current.Metadata
+	metadata.BaselineID = previous.Metadata.BaselineID
+	metadata.SnapshotID = DeltaSnapshotID(current.Metadata.Lane, current.Metadata.Sequence)
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return OverlayLaneDelta{
 		Metadata: metadata,
@@ -271,6 +301,8 @@ func BuildOverlayWireDeltaPacket(previous OverlayWireFullPacket, current Overlay
 	previousRecords := []OverlayReceiverWireRecord{previous.Receiver}
 	currentRecords := []OverlayReceiverWireRecord{current.Receiver}
 	metadata := current.Metadata
+	metadata.BaselineID = previous.Metadata.BaselineID
+	metadata.SnapshotID = DeltaSnapshotID(current.Metadata.Lane, current.Metadata.Sequence)
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return OverlayWireLaneDelta{
 		Metadata: metadata,
@@ -286,9 +318,11 @@ func OverlayWireDeltaHasChanges(delta OverlayWireLaneDelta) bool {
 }
 
 func BuildSessionDeltaPacket(previous SessionFullPacket, current SessionFullPacket) SessionLaneDelta {
-	previousTotal := []SessionTotalAsteroidsRecord{{ID: previous.Metadata.SnapshotID, Count: previous.TotalAsteroids}}
-	currentTotal := []SessionTotalAsteroidsRecord{{ID: current.Metadata.SnapshotID, Count: current.TotalAsteroids}}
+	previousTotal := []SessionTotalAsteroidsRecord{{ID: sessionTotalAsteroidsRecordID, Count: previous.TotalAsteroids}}
+	currentTotal := []SessionTotalAsteroidsRecord{{ID: sessionTotalAsteroidsRecordID, Count: current.TotalAsteroids}}
 	metadata := current.Metadata
+	metadata.BaselineID = previous.Metadata.BaselineID
+	metadata.SnapshotID = DeltaSnapshotID(current.Metadata.Lane, current.Metadata.Sequence)
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return SessionLaneDelta{
 		Metadata: metadata,
@@ -314,9 +348,11 @@ func SessionDeltaHasChanges(delta SessionLaneDelta) bool {
 }
 
 func BuildSessionWireDeltaPacket(previous SessionWireFullPacket, current SessionWireFullPacket) SessionWireLaneDelta {
-	previousTotal := []SessionTotalAsteroidsRecord{{ID: previous.Metadata.SnapshotID, Count: previous.TotalAsteroids}}
-	currentTotal := []SessionTotalAsteroidsRecord{{ID: current.Metadata.SnapshotID, Count: current.TotalAsteroids}}
+	previousTotal := []SessionTotalAsteroidsRecord{{ID: sessionTotalAsteroidsRecordID, Count: previous.TotalAsteroids}}
+	currentTotal := []SessionTotalAsteroidsRecord{{ID: sessionTotalAsteroidsRecordID, Count: current.TotalAsteroids}}
 	metadata := current.Metadata
+	metadata.BaselineID = previous.Metadata.BaselineID
+	metadata.SnapshotID = DeltaSnapshotID(current.Metadata.Lane, current.Metadata.Sequence)
 	metadata.SnapshotKind = SnapshotKind("delta")
 	return SessionWireLaneDelta{
 		Metadata: metadata,
@@ -340,6 +376,15 @@ func SessionWireDeltaHasChanges(delta SessionWireLaneDelta) bool {
 		len(delta.PlayerLifecycle.Creates) > 0 || len(delta.PlayerLifecycle.Updates) > 0 || len(delta.PlayerLifecycle.Deletes) > 0 ||
 		len(delta.TotalAsteroids.Creates) > 0 || len(delta.TotalAsteroids.Updates) > 0 || len(delta.TotalAsteroids.Deletes) > 0
 }
+
+
+
+
+
+
+
+
+
 
 
 

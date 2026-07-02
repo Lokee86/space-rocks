@@ -92,7 +92,7 @@ func TestProjectWorldLaneFieldOwnershipAndOrder(t *testing.T) {
 
 func TestBuildWorldFullPacketUsesMetadataAndSortedProjection(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
-		SelfID:         "snapshot-1",
+		SelfID:         "player-1",
 		ServerSentMsec: 123,
 		Players: map[string]runtime.ShipState{
 			"ship-b": {ID: "ship-b", ShipType: "v_wing"},
@@ -105,11 +105,15 @@ func TestBuildWorldFullPacketUsesMetadataAndSortedProjection(t *testing.T) {
 	if packet.Type != PacketFamilyWorldFull {
 		t.Fatalf("expected world full packet type, got %q", packet.Type)
 	}
-	if packet.Metadata.Lane != LaneWorld || packet.Metadata.Sequence != 9 || packet.Metadata.BaselineID != "snapshot-1" || packet.Metadata.SnapshotID != "snapshot-1" || packet.Metadata.ServerSentMsec != 123 || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
+	if packet.Metadata.Lane != LaneWorld || packet.Metadata.Sequence != 9 || packet.Metadata.BaselineID != "world-baseline-9" || packet.Metadata.SnapshotID != "world-baseline-9" || packet.Metadata.ServerSentMsec != 123 || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
 		t.Fatalf("expected metadata to be populated, got %#v", packet.Metadata)
+	}
+	if packet.Metadata.BaselineID == snapshot.SelfID {
+		t.Fatalf("expected baseline id to differ from snapshot self id, got %q", packet.Metadata.BaselineID)
 	}
 	if len(packet.Ships) != 2 || packet.Ships[0].ID != "ship-a" || packet.Ships[1].ID != "ship-b" {
 		t.Fatalf("expected ships sorted by ID in packet, got %#v", packet.Ships)
 	}
 }
+
 

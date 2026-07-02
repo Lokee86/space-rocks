@@ -29,26 +29,7 @@ func _init() -> void:
 	baseline_tracker.bind_readiness(gameplay_readiness)
 
 func route_packet(packet: Dictionary) -> Dictionary:
-	var expanded_packet: Dictionary = CompactLanePacket.expand_packet(packet)
-	var packet_type = expanded_packet.get("type")
-	match packet_type:
-		LaneMetadata.PACKET_FAMILY_WORLD[0]:
-			_world_applier.apply_world_full(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_WORLD[1]:
-			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_OVERLAY[0]:
-			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_OVERLAY[1]:
-			_overlay_applier.apply_overlay_delta(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_SESSION[0]:
-			_session_applier.apply_session_full(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_SESSION[1]:
-			_session_applier.apply_session_delta(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_EVENT[0]:
-			event_batch_applier.apply_event_batch(expanded_packet, self)
-		LaneMetadata.PACKET_FAMILY_CONTROL[0], LaneMetadata.PACKET_FAMILY_CONTROL[1]:
-			_route_resync(expanded_packet)
-	return {}
+	return route_lane_packet(packet)
 
 func route_lane_packet(packet: Dictionary) -> Dictionary:
 	var expanded_packet: Dictionary = CompactLanePacket.expand_packet(packet)

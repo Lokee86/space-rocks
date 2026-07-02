@@ -84,8 +84,11 @@ func TestProjectSessionLaneUsesSharedFactsAndDeterministicOrder(t *testing.T) {
 	if packet.Type != PacketFamilySessionFull {
 		t.Fatalf("expected session full packet type, got %q", packet.Type)
 	}
-	if packet.Metadata.Lane != LaneSession || packet.Metadata.Sequence != 5 || packet.Metadata.BaselineID != "snapshot-1" || packet.Metadata.SnapshotID != "snapshot-1" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
+	if packet.Metadata.Lane != LaneSession || packet.Metadata.Sequence != 5 || packet.Metadata.BaselineID != "session-baseline-5" || packet.Metadata.SnapshotID != "session-baseline-5" || packet.Metadata.SnapshotKind != SnapshotKind("full") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
 		t.Fatalf("expected session metadata to be populated, got %#v", packet.Metadata)
+	}
+	if packet.Metadata.BaselineID == snapshot.SelfID {
+		t.Fatalf("expected baseline id to differ from snapshot self id, got %q", packet.Metadata.BaselineID)
 	}
 	if len(packet.Players) != 2 || packet.Players[0].ID != "player-a" || packet.Players[1].ID != "player-b" {
 		t.Fatalf("expected packet players sorted by ID, got %#v", packet.Players)
@@ -104,3 +107,4 @@ func TestProjectSessionLaneUsesSharedFactsAndDeterministicOrder(t *testing.T) {
 		t.Fatalf("expected player-b runtime state to remain untouched, got %#v", snapshot.Players["player-b"])
 	}
 }
+

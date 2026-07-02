@@ -199,25 +199,25 @@ func assertStoredBaselineProjectionType(t *testing.T, state realtime.RealtimeSes
 
 	switch lane {
 	case realtime.LaneWorld:
-		packet, ok := projection.(realtime.WorldFullPacket)
+		packet, ok := projection.(realtime.WorldWireFullPacket)
 		if !ok {
-			t.Fatalf("expected world projection to be realtime.WorldFullPacket, got %#v", projection)
+			t.Fatalf("expected world projection to be realtime.WorldWireFullPacket, got %#v", projection)
 		}
 		if packet.Type != wantType {
 			t.Fatalf("expected world projection type=%q, got %q", wantType, packet.Type)
 		}
 	case realtime.LaneOverlay:
-		packet, ok := projection.(realtime.OverlayFullPacket)
+		packet, ok := projection.(realtime.OverlayWireFullPacket)
 		if !ok {
-			t.Fatalf("expected overlay projection to be realtime.OverlayFullPacket, got %#v", projection)
+			t.Fatalf("expected overlay projection to be realtime.OverlayWireFullPacket, got %#v", projection)
 		}
 		if packet.Type != wantType {
 			t.Fatalf("expected overlay projection type=%q, got %q", wantType, packet.Type)
 		}
 	case realtime.LaneSession:
-		packet, ok := projection.(realtime.SessionFullPacket)
+		packet, ok := projection.(realtime.SessionWireFullPacket)
 		if !ok {
-			t.Fatalf("expected session projection to be realtime.SessionFullPacket, got %#v", projection)
+			t.Fatalf("expected session projection to be realtime.SessionWireFullPacket, got %#v", projection)
 		}
 		if packet.Type != wantType {
 			t.Fatalf("expected session projection type=%q, got %q", wantType, packet.Type)
@@ -280,8 +280,11 @@ func assertLanePacket(t *testing.T, conn *websocket.Conn) {
 	}
 
 	packetType, _ := payload["type"].(string)
+	if packetType == "" {
+		packetType, _ = payload["t"].(string)
+	}
 	switch packetType {
-	case "world_full", "world_delta", "overlay_full", "overlay_delta", "session_full", "session_delta", "event_batch", "resync_request", "resync_required":
+	case "world_full", "world_delta", "overlay_full", "overlay_delta", "session_full", "session_delta", "event_batch", "resync_request", "resync_required", "wf", "wd", "of", "od", "sf", "sd":
 	default:
 		t.Fatalf("expected lane packet type, got %v", packetType)
 	}

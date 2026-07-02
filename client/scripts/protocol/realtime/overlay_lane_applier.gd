@@ -21,8 +21,9 @@ func apply_overlay_full(overlay_lane_state: OverlayLaneState, baseline_tracker: 
 func apply_overlay_delta(overlay_lane_state: OverlayLaneState, baseline_tracker: BaselineTracker, lane: String, overlay_packet: Dictionary) -> bool:
 	var baseline_id = overlay_packet.get("baseline_id")
 	var sequence = overlay_packet.get("sequence")
+	var snapshot_id = overlay_packet.get("snapshot_id")
 
-	if not baseline_tracker.record_delta(lane, baseline_id, sequence):
+	if not baseline_tracker.record_delta(lane, baseline_id, sequence, snapshot_id):
 		return false
 
 	overlay_lane_state.apply_overlay_delta(overlay_packet)

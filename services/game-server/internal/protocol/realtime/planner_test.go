@@ -202,7 +202,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsNextSequenceWorldDeltaForChangedBase
 			"player-1": {ID: "player-1", ShipType: "v_wing", X: 11, Y: 34},
 		},
 	}
-state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
@@ -223,6 +223,68 @@ state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 
 		t.Fatalf("world delta snapshot kind = %q, want %q", got, want)
 	}
 }
+
+func TestAssembleRealtimeLaneCandidatesKeepsWorldDeltaChainedToLastFullBaseline(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 12, Y: 34},
+		},
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline-1", SnapshotID: "world-baseline-1", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 11, Y: 34},
+		},
+	}, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatal("expected world candidate")
+	}
+	if candidate.Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("world candidate kind = %q, want delta", candidate.Kind)
+	}
+	delta, ok := candidate.Delta.(WorldWireDeltaPacket)
+	if !ok {
+		t.Fatalf("world candidate delta type = %T, want WorldWireDeltaPacket", candidate.Delta)
+	}
+	if got, want := delta.Metadata.Sequence, 2; got != want {
+		t.Fatalf("world delta sequence = %d, want %d", got, want)
+	}
+	if got, want := delta.Metadata.BaselineID, "world-baseline-1"; got != want {
+		t.Fatalf("world delta baseline id = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotID, "world-snapshot-2"; got != want {
+		t.Fatalf("world delta snapshot id = %q, want %q", got, want)
+	}
+	if got, want := delta.Metadata.SnapshotKind, SnapshotKind("delta"); got != want {
+		t.Fatalf("world delta snapshot kind = %q, want %q", got, want)
+	}
+	projection, ok := CandidateProjection(candidate)
+	if !ok {
+		t.Fatal("expected delta candidate projection to be available")
+	}
+	chainedProjection, ok := projection.(WorldWireFullPacket)
+	if !ok {
+		t.Fatalf("expected stored world projection to be WorldWireFullPacket, got %T", projection)
+	}
+	if got, want := chainedProjection.Metadata.BaselineID, "world-baseline-1"; got != want {
+		t.Fatalf("stored world projection baseline id = %q, want %q", got, want)
+	}
+	if got, want := chainedProjection.Metadata.SnapshotID, "world-snapshot-2"; got != want {
+		t.Fatalf("stored world projection snapshot id = %q, want %q", got, want)
+	}
+	if got, want := chainedProjection.Metadata.Sequence, 2; got != want {
+		t.Fatalf("stored world projection sequence = %d, want %d", got, want)
+	}
+}
+
 
 func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceWhenStoredBaselineExists(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
@@ -646,3 +708,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsSessionDeltaWhenStoredBaselineDiffer
 		t.Fatalf("expected current session full projection to be carried, got %T", session.Projection)
 	}
 }
+
+
+
+
