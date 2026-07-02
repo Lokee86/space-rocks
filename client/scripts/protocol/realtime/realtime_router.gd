@@ -28,8 +28,6 @@ var _session_applier := SessionLaneApplier.new()
 func _init() -> void:
 	baseline_tracker.bind_readiness(gameplay_readiness)
 
-func route_packet(packet: Dictionary) -> Dictionary:
-	return route_lane_packet(packet)
 
 func route_lane_packet(packet: Dictionary) -> Dictionary:
 	var expanded_packet: Dictionary = CompactLanePacket.expand_packet(packet)
@@ -53,11 +51,7 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			_route_resync(expanded_packet)
 	return {}
 
-func handle_presentation_event(event_type, payload, event_packet) -> void:
-	pass
 
-func apply_presentation_event(event_type, payload, event_packet) -> void:
-	pass
 
 func _route_resync(packet: Dictionary) -> void:
 	var packet_type = packet.get("type")
@@ -71,3 +65,4 @@ func _lane_from_packet(packet: Dictionary) -> String:
 	if lane != null:
 		return lane
 	return LaneMetadata.LANE_WORLD
+

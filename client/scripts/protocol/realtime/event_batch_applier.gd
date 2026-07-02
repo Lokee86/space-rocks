@@ -56,8 +56,7 @@ func _apply_event(event_sink, event: Dictionary) -> bool:
 	var payload = event.get("payload", {})
 	if event_sink != null and event_sink.has_method("handle_presentation_event"):
 		event_sink.handle_presentation_event(event_type, payload, event)
-	elif event_sink != null and event_sink.has_method("apply_presentation_event"):
-		event_sink.apply_presentation_event(event_type, payload, event)
+
 
 	if event_id != null:
 		_event_id_record(event_id)
@@ -66,3 +65,4 @@ func _apply_event(event_sink, event: Dictionary) -> bool:
 
 func _event_id_record(event_id) -> void:
 	_applied_event_ids[event_id] = true
+
