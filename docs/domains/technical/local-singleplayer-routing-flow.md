@@ -411,17 +411,14 @@ match_result
 The gameplay lane path publishes live gameplay presentation state such as:
 
 ```text
-self_id
-players
-player_sessions
-player_lifecycle
-bullets
-asteroids
-pickups
-events
-lives
-score
+world lane: ships, bullets, asteroids, pickups
+overlay lane: self_id, lives, score, weapon/loadout facts, cooldown/ammo presentation fields
+session lane: players, player_lifecycle, total_asteroids
+event_batch: transient presentation events
 ```
+
+These are delivered through lane-native packets such as world_full/world_delta, overlay_full/overlay_delta, session_full/session_delta, and event_batch, not a combined state packet.
+Detailed packet shape, sparse delta omission, numeric wire quantization, and compact alias behavior belong in Realtime WebSocket Protocol and Gameplay Packets.
 
 The match-result persistence path uses authoritative server facts such as:
 

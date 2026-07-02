@@ -67,7 +67,7 @@ func _apply_overlay_fields(overlay_packet: Dictionary) -> void:
 		secondary_ammo_remaining = overlay_packet.get("secondary_ammo_remaining")
 
 func _array_field(packet: Dictionary, key: String) -> Array:
-	var value = packet.get(key)
+	var value = packet.get(key, [])
 	if value is Array:
 		return value
 	return []

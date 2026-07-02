@@ -29,7 +29,7 @@ NetworkClient receives/decodes packet
 
 The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a combined dictionary flow.
 
-Presentation state consumes server-owned quantized wire values as received. Omitted delta fields still mean unchanged, not cleared. Client presentation and devtools comparisons should expect quantized values rather than raw simulation precision. Quantization does not change gameplay authority, which remains server-owned.
+Client inbound packets may carry compact aliases and quantized integer wire values. Packet decode and compact expansion normalize compact aliases to readable keys before lane appliers run. World lane application decodes quantized world records before storing or merging world lane state. Overlay and session values are decoded before presentation/devtools consumption through the realtime quantize helpers and presentation adapters. Devtools read models decode only the lane values they explicitly pass through `RealtimeQuantize`. Client-facing presentation should expect decoded values with quantized precision loss, not raw simulation precision. Tests should assert the current decode boundary explicitly instead of assuming raw simulation floats. Full packets still replace or initialize complete lane state. Client lane appliers treat missing sparse delta section fields as empty arrays or no-op, missing fields inside present update records as unchanged, and missing `total_asteroids` in `session_delta` as unchanged. A present `total_asteroids: 0` remains meaningful. Quantization does not change gameplay authority, which remains server-owned.
 
 ## Code root
 
@@ -98,6 +98,12 @@ Generated packet constants and builders come from the packet schema pipeline.
 
 Presentation adapters are the packet-to-runtime boundary for gameplay presentation.
 
+#### Sparse delta handling
+
+World lane sparse compatibility lives in `client/scripts/protocol/realtime/world_lane_applier.gd`. Overlay sparse compatibility lives in `client/scripts/protocol/realtime/overlay_lane_state.gd`. Session sparse compatibility lives in `client/scripts/protocol/realtime/session_lane_state.gd`. Decode helpers live in `client/scripts/protocol/realtime/realtime_quantize.gd`.
+
+Sparse field omission is a server wire-map behavior, and the client compatibility rule is to tolerate missing fields without treating them as deletes or clears. Those appliers treat missing sparse delta section fields as empty arrays or no-op, preserve missing fields inside present update records as unchanged, and preserve meaningful zero values when they are actually emitted. In `session_delta`, missing `total_asteroids` means unchanged, while a present `total_asteroids: 0` remains meaningful.
+
 Current adapter roles are:
 
 ```text
@@ -146,8 +152,12 @@ Primary runtime path:
 Key lane-native files:
 
 * `client/scripts/protocol/realtime/world_lane_state.gd`
+* `client/scripts/protocol/realtime/world_lane_applier.gd` - decodes quantized world records and applies full/delta world packets.
 * `client/scripts/protocol/realtime/overlay_lane_state.gd`
+* `client/scripts/protocol/realtime/overlay_lane_applier.gd` - routes overlay full/delta packets into overlay lane state.
 * `client/scripts/protocol/realtime/session_lane_state.gd`
+* `client/scripts/protocol/realtime/session_lane_applier.gd` - routes session full/delta packets into session lane state.
+* `client/scripts/protocol/realtime/realtime_quantize.gd` - owns client decode helpers for quantized realtime wire values before presentation/devtools consumption.
 * `client/scripts/protocol/realtime/world_presentation_adapter.gd`
 * `client/scripts/protocol/realtime/overlay_presentation_adapter.gd`
 * `client/scripts/protocol/realtime/session_presentation_adapter.gd`
@@ -162,8 +172,8 @@ Relevant client tests include:
 
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
 * `client/tests/unit/protocol/realtime/test_gameplay_readiness.gd`
-* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
-* `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd`
+* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - `test_world_delta_treats_missing_sparse_sections_as_empty_noop` covers missing sparse delta section fields as empty/no-op for world lane application.
+* `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd` - `test_overlay_delta_treats_missing_sparse_sections_as_empty_noop` and `test_session_delta_treats_missing_sparse_sections_and_total_asteroids_as_empty_noop` cover missing sparse delta section fields as empty/no-op for overlay and session lane application.
 * `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
 * `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`
 * `client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd`

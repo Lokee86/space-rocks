@@ -89,3 +89,32 @@ func test_decode_accepts_lowercase_lane_packet_fixture() -> void:
 	assert_true(decoded.ok)
 	assert_eq(decoded.packet["type"], "world_full")
 	assert_eq(decoded.packet["ships"][0]["ship_type"], "v_wing")
+func test_decode_accepts_compact_realtime_lane_packet() -> void:
+	var decoded = PacketCodec.decode("{\"t\":\"wd\",\"l\":\"w\",\"q\":24,\"b\":\"player-1\",\"sid\":\"player-1\",\"k\":\"d\",\"au\":[{\"i\":\"asteroid-1\",\"x\":13030,\"y\":1844}]}")
+
+	assert_true(decoded.ok)
+	assert_eq(decoded.packet["type"], "world_delta")
+	assert_eq(decoded.packet["lane"], "world")
+	assert_eq(decoded.packet["sequence"], 24)
+	assert_eq(decoded.packet["baseline_id"], "player-1")
+	assert_eq(decoded.packet["snapshot_id"], "player-1")
+	assert_eq(decoded.packet["snapshot_kind"], "delta")
+	assert_eq(decoded.packet["asteroid_updates"][0]["id"], "asteroid-1")
+	assert_eq(decoded.packet["asteroid_updates"][0]["x"], 13030)
+	assert_eq(decoded.packet["asteroid_updates"][0]["y"], 1844)
+
+
+func test_decode_accepts_legacy_realtime_lane_packet() -> void:
+	var decoded = PacketCodec.decode("{\"type\":\"world_delta\",\"lane\":\"world\",\"sequence\":24}")
+
+	assert_true(decoded.ok)
+	assert_eq(decoded.packet["type"], "world_delta")
+	assert_eq(decoded.packet["lane"], "world")
+	assert_eq(decoded.packet["sequence"], 24)
+
+
+func test_decode_rejects_packet_without_type_or_compact_t() -> void:
+	var decoded = PacketCodec.decode("{\"l\":\"w\",\"q\":24}")
+
+	assert_false(decoded.ok)
+	assert_eq(decoded.error, "Packet envelope is missing required 'type' field")

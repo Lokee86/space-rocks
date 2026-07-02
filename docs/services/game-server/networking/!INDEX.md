@@ -23,6 +23,7 @@ This folder owns WebSocket/session transport and packet routing adapter document
 - [gameplay-network-adapter.md](gameplay-network-adapter.md) - Game-server gameplay packet adapter documentation.
 - [inbound-packet-routing.md](inbound-packet-routing.md) - Game-server inbound packet routing documentation.
 - [outbound-message-flow.md](outbound-message-flow.md) - Game-server outbound message flow documentation.
+- [realtime-compact-wire-mapping.md](realtime-compact-wire-mapping.md) - Game-server realtime compact wire mapping contract documentation.
 - [room-network-adapter.md](room-network-adapter.md) - Game-server room network adapter documentation.
 - [telemetry-packet-routing.md](telemetry-packet-routing.md) - Game-server telemetry packet routing documentation.
 - [websocket-session-lifecycle.md](websocket-session-lifecycle.md) - Game-server WebSocket session lifecycle documentation.

@@ -179,17 +179,167 @@ func TestWorldQuantizationReachesEncodedWireJSON(t *testing.T) {
 	assertJSONIntValue(t, pickup, "lifespan_seconds", 12346)
 }
 
-func TestWireWorldDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
-	wire := wireWorldDeltaPacket(WorldDeltaPacket{Type: PacketTypeWorldDelta})
+func TestWireWorldWireDeltaPacketOmitsEmptySectionsAndKeepsShipUpdates(t *testing.T) {
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldWireDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{Lane: LaneWorld, Sequence: 9, SnapshotKind: SnapshotKind("delta")},
+			Ships: FieldRecordDelta[WorldShipWireRecord]{
+				Updates: []map[string]any{
+					{
+						"id":        "ship-1",
+						"x":         int64(10),
+						"y":         int64(20),
+						"rotation":  int64(30),
+						"thrusting": true,
+					},
+				},
+			},
+		},
+	}))
 
-	fields := []string{"ship_creates", "ship_updates", "ship_deletes", "bullet_creates", "bullet_updates", "bullet_deletes", "asteroid_creates", "asteroid_updates", "asteroid_deletes", "pickup_creates", "pickup_updates", "pickup_deletes"}
-	for _, field := range fields {
-		value, ok := wire[field]
-		if !ok {
-			t.Fatalf("expected field %q to be present", field)
+	updates := mustSliceValue(t, wire, "ship_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one ship update, got %#v", updates)
+	}
+
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "id", "ship-1")
+	assertInt64Value(t, update, "x", 10)
+	assertInt64Value(t, update, "y", 20)
+	assertInt64Value(t, update, "rotation", 30)
+	if thrusting, ok := update["thrusting"].(bool); !ok || !thrusting {
+		t.Fatalf("expected thrusting to be true, got %#v", update["thrusting"])
+	}
+
+	for _, key := range []string{"ship_creates", "ship_deletes", "bullet_creates", "bullet_updates", "bullet_deletes", "asteroid_creates", "asteroid_updates", "asteroid_deletes", "pickup_creates", "pickup_updates", "pickup_deletes"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireWorldWireDeltaPacketOmitsEmptySectionsAndKeepsBulletDeletes(t *testing.T) {
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldWireDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{Lane: LaneWorld, Sequence: 10, SnapshotKind: SnapshotKind("delta")},
+			Bullets: FieldRecordDelta[WorldBulletWireRecord]{
+				Deletes: []string{"bullet-1"},
+			},
+		},
+	}))
+
+	deletes := mustSliceValue(t, wire, "bullet_deletes")
+	if len(deletes) != 1 {
+		t.Fatalf("expected one bullet delete, got %#v", deletes)
+	}
+	if got, ok := deletes[0].(string); !ok || got != "bullet-1" {
+		t.Fatalf("expected bullet delete %q, got %#v", "bullet-1", deletes[0])
+	}
+
+	for _, key := range []string{"ship_creates", "ship_updates", "ship_deletes", "bullet_creates", "bullet_updates", "asteroid_creates", "asteroid_updates", "asteroid_deletes", "pickup_creates", "pickup_updates", "pickup_deletes"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireWorldWireDeltaPacketPreservesFalseAndZeroFieldsInShipUpdates(t *testing.T) {
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldWireDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{Lane: LaneWorld, Sequence: 11, SnapshotKind: SnapshotKind("delta")},
+			Ships: FieldRecordDelta[WorldShipWireRecord]{
+				Updates: []map[string]any{
+					{
+						"id":        "ship-1",
+						"x":         int64(0),
+						"y":         int64(0),
+						"rotation":  int64(0),
+						"thrusting": false,
+					},
+				},
+			},
+		},
+	}))
+
+	update := mustMapValue(t, mustSliceValue(t, wire, "ship_updates")[0])
+	assertInt64Value(t, update, "x", 0)
+	assertInt64Value(t, update, "y", 0)
+	assertInt64Value(t, update, "rotation", 0)
+	if thrusting, ok := update["thrusting"].(bool); !ok || thrusting {
+		t.Fatalf("expected thrusting to be false, got %#v", update["thrusting"])
+	}
+}
+
+func TestWireWorldWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
+	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldWireDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{Lane: LaneWorld, Sequence: 20, SnapshotKind: SnapshotKind("delta")},
+			Ships: FieldRecordDelta[WorldShipWireRecord]{
+				Updates: []map[string]any{{"id": "ship-1", "x": int64(1), "y": int64(2), "rotation": int64(3), "thrusting": true}},
+			},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	encodedString := string(encoded)
+	for _, fragment := range []string{"ship_creates", "bullet_creates", "bullet_updates", "asteroid_updates", "pickup_deletes"} {
+		if strings.Contains(encodedString, fragment) {
+			t.Fatalf("expected encoded JSON to omit %q, got %s", fragment, encodedString)
 		}
-		if value == nil {
-			t.Fatalf("expected field %q to be encoded as an array, got nil", field)
+	}
+	for _, fragment := range []string{"ship_updates", "ship-1"} {
+		if !strings.Contains(encodedString, fragment) {
+			t.Fatalf("expected encoded JSON to contain %q, got %s", fragment, encodedString)
+		}
+	}
+}
+
+func TestWireOverlayWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
+	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneOverlay,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: OverlayWireLaneDelta{
+			Metadata: Metadata{Lane: LaneOverlay, Sequence: 21, SnapshotKind: SnapshotKind("delta")},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	encodedString := string(encoded)
+	for _, fragment := range []string{"receiver_creates", "receiver_updates", "receiver_deletes"} {
+		if strings.Contains(encodedString, fragment) {
+			t.Fatalf("expected encoded JSON to omit %q, got %s", fragment, encodedString)
+		}
+	}
+}
+
+func TestWireSessionWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
+	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneSession,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: SessionWireLaneDelta{
+			Metadata: Metadata{Lane: LaneSession, Sequence: 22, SnapshotKind: SnapshotKind("delta")},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("encode failed: %v", err)
+	}
+
+	encodedString := string(encoded)
+	for _, fragment := range []string{"player_session_updates", "player_lifecycle_updates", "total_asteroids"} {
+		if strings.Contains(encodedString, fragment) {
+			t.Fatalf("expected encoded JSON to omit %q, got %s", fragment, encodedString)
 		}
 	}
 }
@@ -370,19 +520,97 @@ func TestWireWorldDeltaPacketEncodesPickupUpdatesAsPartialFieldPatch(t *testing.
 	assertNotContainsKey(t, update, "lifespan_seconds")
 }
 
-func TestWireSessionDeltaPacketUsesEmptyArraysForMissingChanges(t *testing.T) {
-	wire := wireSessionDeltaPacket(SessionLaneDelta{Metadata: Metadata{Lane: LaneSession}, TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{}})
+func TestWireSessionDeltaPacketUsesSparseOmission(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneSession,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: SessionWireLaneDelta{
+			Metadata: Metadata{Lane: LaneSession, Sequence: 14, SnapshotKind: SnapshotKind("delta")},
+		},
+	})
 
-	fields := []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes"}
-	for _, field := range fields {
-		value, ok := wire[field]
-		if !ok {
-			t.Fatalf("expected field %q to be present", field)
-		}
-		if value == nil {
-			t.Fatalf("expected field %q to be encoded as an array, got nil", field)
-		}
+	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
+	assertStringValue(t, wire, "lane", string(LaneSession))
+	assertIntValue(t, wire, "sequence", 14)
+	assertStringValue(t, wire, "snapshot_kind", "delta")
+	for _, key := range []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes", "total_asteroids"} {
+		assertNotContainsKey(t, wire, key)
 	}
+}
+
+func TestWireOverlayWireDeltaPacketOmitsEmptySections(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneOverlay,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: OverlayWireLaneDelta{
+			Metadata: Metadata{Lane: LaneOverlay, Sequence: 12, SnapshotKind: SnapshotKind("delta")},
+		},
+	})
+
+	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
+	assertStringValue(t, wire, "lane", string(LaneOverlay))
+	assertIntValue(t, wire, "sequence", 12)
+	assertStringValue(t, wire, "snapshot_kind", "delta")
+	for _, key := range []string{"receiver_creates", "receiver_updates", "receiver_deletes"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireOverlayWireDeltaPacketKeepsReceiverUpdatesAndOmitsEmptySections(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneOverlay,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: OverlayWireLaneDelta{
+			Metadata: Metadata{Lane: LaneOverlay, Sequence: 13, SnapshotKind: SnapshotKind("delta")},
+			Receiver: FieldRecordDelta[OverlayReceiverWireRecord]{
+				Updates: []map[string]any{{"self_id": "player-1", "score": int64(0), "lives": int64(0), "primary_cooldown_remaining": int64(0)}},
+			},
+		},
+	})
+
+	updates := mustSliceValue(t, wire, "receiver_updates")
+	if len(updates) != 1 {
+		t.Fatalf("expected one receiver update, got %#v", updates)
+	}
+	update := mustMapValue(t, updates[0])
+	assertStringValue(t, update, "self_id", "player-1")
+	assertInt64Value(t, update, "score", 0)
+	assertInt64Value(t, update, "lives", 0)
+	assertInt64Value(t, update, "primary_cooldown_remaining", 0)
+	for _, key := range []string{"receiver_creates", "receiver_deletes"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireSessionWireDeltaPacketOmitsEmptySections(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneSession,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: SessionWireLaneDelta{
+			Metadata: Metadata{Lane: LaneSession, Sequence: 14, SnapshotKind: SnapshotKind("delta")},
+		},
+	})
+
+	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
+	assertStringValue(t, wire, "lane", string(LaneSession))
+	assertIntValue(t, wire, "sequence", 14)
+	assertStringValue(t, wire, "snapshot_kind", "delta")
+	for _, key := range []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes", "total_asteroids"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireSessionWireDeltaPacketKeepsZeroTotalAsteroids(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneSession,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: SessionWireLaneDelta{
+			Metadata: Metadata{Lane: LaneSession, Sequence: 15, SnapshotKind: SnapshotKind("delta")},
+			TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{Updates: []SessionTotalAsteroidsRecord{{ID: "session-1", Count: 0}}},
+		},
+	})
+
+	assertIntValue(t, wire, "total_asteroids", 0)
 }
 
 func TestWireSessionDeltaPacketEncodesPlayerSessionUpdates(t *testing.T) {

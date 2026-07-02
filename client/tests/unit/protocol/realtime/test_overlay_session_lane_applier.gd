@@ -103,6 +103,58 @@ func test_overlay_delta_updates_only_provided_fields() -> void:
 	assert_eq(overlay_lane_state.secondary_ammo_remaining, 99)
 
 
+func test_overlay_delta_treats_missing_sparse_sections_as_empty_noop() -> void:
+	var applier := OverlayLaneApplier.new()
+	var overlay_lane_state := OverlayLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_overlay_full(
+		overlay_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_OVERLAY,
+		{
+			"baseline_id": "overlay-baseline-1",
+			"sequence": 1,
+			"self_id": "player-1",
+			"lives": 3,
+			"score": 120,
+			"respawn_cooldown": 2.0,
+			"primary_weapon_id": "laser",
+			"secondary_weapon_id": "burst",
+			"primary_ammo_policy": "finite",
+			"secondary_ammo_policy": "infinite",
+			"primary_cooldown_remaining": 1.5,
+			"secondary_cooldown_remaining": 0.5,
+			"primary_ammo_remaining": 9,
+			"secondary_ammo_remaining": 99,
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_overlay_delta(
+		overlay_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_OVERLAY,
+		{
+			"baseline_id": "overlay-baseline-1",
+			"sequence": 2,
+		}
+	)
+
+	assert_true(applied)
+	assert_eq(overlay_lane_state.self_id, "player-1")
+	assert_eq(overlay_lane_state.lives, 3)
+	assert_eq(overlay_lane_state.score, 120)
+	assert_eq(overlay_lane_state.respawn_cooldown, 2.0)
+	assert_eq(overlay_lane_state.primary_weapon_id, "laser")
+	assert_eq(overlay_lane_state.secondary_weapon_id, "burst")
+	assert_eq(overlay_lane_state.primary_ammo_policy, "finite")
+	assert_eq(overlay_lane_state.secondary_ammo_policy, "infinite")
+	assert_eq(overlay_lane_state.primary_cooldown_remaining, 1.5)
+	assert_eq(overlay_lane_state.secondary_cooldown_remaining, 0.5)
+	assert_eq(overlay_lane_state.primary_ammo_remaining, 9)
+	assert_eq(overlay_lane_state.secondary_ammo_remaining, 99)
+
+
 func test_overlay_delta_applies_nested_receiver_updates() -> void:
 	var applier := OverlayLaneApplier.new()
 	var overlay_lane_state := OverlayLaneState.new()
@@ -293,6 +345,45 @@ func test_session_full_updates_score_lives_and_lifecycle_cache() -> void:
 	assert_eq(session_lane_state.player_sessions["player-1"]["score"], 120)
 	assert_eq(session_lane_state.player_sessions["player-1"]["lives"], 3)
 	assert_eq(session_lane_state.player_lifecycle["player-2"]["state"], "pending_respawn")
+
+
+func test_session_delta_treats_missing_sparse_sections_and_total_asteroids_as_empty_noop() -> void:
+	var applier := SessionLaneApplier.new()
+	var session_lane_state := SessionLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_session_full(
+		session_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_SESSION,
+		{
+			"baseline_id": "session-baseline-1",
+			"sequence": 1,
+			"total_asteroids": 4,
+			"players": [
+				{"id": "player-1", "score": 120, "lives": 3},
+			],
+			"player_lifecycle": [
+				{"player_id": "player-1", "state": "active"},
+			],
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_session_delta(
+		session_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_SESSION,
+		{
+			"baseline_id": "session-baseline-1",
+			"sequence": 2,
+		}
+	)
+
+	assert_true(applied)
+	assert_eq(session_lane_state.total_asteroids, 4)
+	assert_eq(session_lane_state.player_sessions["player-1"]["score"], 120)
+	assert_eq(session_lane_state.player_sessions["player-1"]["lives"], 3)
+	assert_eq(session_lane_state.player_lifecycle["player-1"]["state"], "active")
 
 
 func test_session_delta_merges_partial_player_updates() -> void:

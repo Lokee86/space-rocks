@@ -18,8 +18,9 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Gameplay State Application](../../services/client/gameplay-runtime/gameplay-state-application.md)
 - [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md)
 - [Packet Schemas](../../data/packet-schemas.md)
+- [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
-This planning doc keeps the remaining architecture boundary for compact encoding, bit packing, protobuf or future binary representation, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebSocket, and future protocol compatibility/versioning.
+This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, tuple/array packing where needed, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebSocket, and future protocol compatibility/versioning. JSON alias compaction and sparse delta serialization are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ## Current Inputs
 
@@ -58,7 +59,6 @@ Planning outputs for the remaining protocol work:
 
 ## Open Planning Questions
 
-- Which compact representation wins the next protocol step?
 - Which packet-budget policy changes require protocol-version compatibility?
 - Which resync hardening behaviors should be treated as mandatory versus optional?
 - What transport evolution is worth planning beyond the current WebSocket path?
@@ -81,6 +81,8 @@ Lane-native JSON WebSocket delivery is implemented, and this doc now tracks the 
 - Field-delta update maps are implemented for session player and lifecycle updates.
 - Creates remain full records, updates carry identity plus changed fields only, and deletes remain identity lists.
 - Realtime numeric wire quantization is implemented for outbound lane projection.
+- Compact JSON aliasing is implemented for active realtime gameplay lanes.
+- Sparse delta serialization is implemented for active realtime gameplay delta lanes; empty delta sections are omitted from emitted delta wire maps.
 
 Current implementation details live in:
 
@@ -94,7 +96,7 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on hot/cold lane separation, compact field names, bit packing, protobuf or custom binary representation, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, transport evolution beyond WebSocket, and future compatibility/versioning.
+Future planning here remains focused on bit packing, protobuf or custom binary representation, tuple/array packing where needed, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, transport evolution beyond WebSocket, and future compatibility/versioning. JSON alias compaction and sparse delta serialization are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ### Remaining Priority And Packet Budget Work
 
@@ -102,9 +104,9 @@ Delta decides what changed. Priority decides which changed data fits the packet 
 
 Current implementation has lane-native packets, baselines, deltas, and candidate-level scheduling metadata. Delta decides what changed; priority decides which changed data fits the packet budget first.
 
-Field-delta update maps are now implemented, but they are not the final bandwidth solution for high-frequency motion. Remaining packet-size work belongs to hot/cold lane separation, compact field names, compact or binary representation, interest filtering, and budget-aware record/entity selection.
+Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. High-density world stress cases can still exceed current packet budget even after quantization, compact aliases, and sparse deltas; remaining work belongs to prioritization, packing, and binary representation.
 
-Numeric wire quantization is a wire/projection concern before delta comparison, not authoritative simulation truncation.
+Server-owned outbound realtime lane state projection quantizes float-like values before delta comparison and JSON encoding, without truncating authoritative simulation state.
 
 Future planning targets remain:
 
@@ -113,14 +115,13 @@ Future planning targets remain:
 - interest filtering
 - stronger resync behavior
 - hot/cold lane separation
-- compact field names or binary/protobuf/custom codec
 - transport evolution beyond current WebSocket
 
 Live priority should stay conservative until required gameplay and presentation truth can be proven safe by metrics.
 
 ### Numeric Quantization Note
 
-Numeric wire quantization is already implemented as part of outbound realtime lane projection. The current projection and wire-record behavior is described in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md), and the projection ownership boundary lives in [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md).
+Server-owned outbound realtime lane state projection quantizes float-like values before delta comparison and JSON encoding. The current quantization contract is described in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md), and projection ownership lives in [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md).
 
 Keep this planning doc high-level: it tracks the remaining protocol roadmap, not field policy, code paths, or runtime behavior details.
 

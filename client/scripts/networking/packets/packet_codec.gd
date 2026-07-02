@@ -1,5 +1,7 @@
 extends RefCounted
 
+const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
+
 # PacketCodec owns wire parsing and envelope checks only; packet readers validate payload details.
 static func encode(packet: Dictionary) -> PacketEncodeResult:
 	return PacketEncodeResult.success(JSON.stringify(packet))
@@ -16,6 +18,7 @@ static func decode(text: String) -> PacketDecodeResult:
 		return PacketDecodeResult.failure("Packet JSON must decode to a Dictionary", text)
 
 	var packet: Dictionary = decoded
+	packet = CompactLanePacket.expand_packet(packet)
 	if !packet.has("type"):
 		return PacketDecodeResult.failure("Packet envelope is missing required 'type' field", text)
 	if typeof(packet["type"]) != TYPE_STRING:

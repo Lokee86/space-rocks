@@ -47,6 +47,8 @@ event
 control
 ```
 
+The control lane currently carries resync packet families such as resync_request and resync_required. There is no separate generated packet family named control.
+
 The active gameplay packet families are:
 
 ```text
@@ -100,7 +102,7 @@ Owns the server JSON encode/decode wrapper used by networking.
 services/game-server/internal/protocol/realtime/
 ```
 
-Owns lane projection, baseline and delta planning, scheduling, wire conversion, and active/shadow/parity support.
+Owns lane projection, baseline and delta planning, candidate selection, send-plan records, numeric wire quantization, sparse delta omission, compact alias preparation, active lane encode-boundary preparation, and active/shadow/parity support.
 
 ```text
 shared/packets/
@@ -159,13 +161,25 @@ devtools command effects
 future packet-encoding or transport-format planning
 ```
 
-Packet schema owns packet shape. Runtime services own packet meaning.
+Packet schema owns packet type strings, generated constants, generated struct fields where applicable, and canonical field names. Runtime realtime protocol code owns active lane wire-map emission behavior such as sparse delta omission, numeric wire quantization, and compact alias application. Runtime services own packet consequences and meaning.
 
 For example:
 
 ```text
 shared/packets/gameplay.toml
 -> defines lane packet families and packet shape
+
+services/game-server/internal/protocol/realtime/wire_packets.go
+-> decides which active delta sections are emitted after delta planning
+
+services/game-server/internal/protocol/realtime/compact_wire_packet.go
+-> aliases remaining emitted keys at the encode boundary
+
+services/game-server/internal/protocol/realtime/active.go
+-> applies raw-float assertion, compact aliasing, packetcodec JSON encoding, and encoded-byte accounting for active lane packets
+
+services/game-server/internal/protocol/realtime/quantize/
+-> owns numeric wire quantization policies
 
 client outbound flow
 -> sends input intent
@@ -234,6 +248,8 @@ type is not empty after trimming
 payload, when present, is a Dictionary
 ```
 
+Compact packets may arrive with `t` instead of `type`. Client decode expands compact aliases before applying normal envelope validation, and packets with neither `type` nor compact `t` still fail validation.
+
 Server-side initial envelope decode unmarshals the `type` field before routing. Invalid JSON or an envelope decode failure logs a warning and skips the message. A valid JSON object with an unknown or empty `type` does not produce an explicit protocol response in the current server path.
 
 ### Encoding
@@ -252,6 +268,8 @@ json.Marshal(packet)
 
 The current protocol is JSON-only. There is no binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation in the implemented transport.
 
+Active realtime gameplay lane packets use compact JSON aliases at the final outbound encode boundary. The alias contract lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). The Godot client normalizes compact packets to readable long-key dictionaries before typed packet routing and lane appliers, and legacy long-key packets remain accepted during the transition.
+
 ### Lane metadata
 
 Lane packets carry these top-level metadata fields:
@@ -269,7 +287,7 @@ chunk_count
 is_final_chunk
 ```
 
-The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`.
+The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, overlay, and session lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and before `packetcodec` encodes JSON.
 
 Chunk metadata exists in the wire shape and scheduler records. This document does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
 
@@ -293,6 +311,7 @@ Known float-like fields use lane- and field-specific policies from `services/gam
 - `services/game-server/internal/protocol/realtime/quantized_records.go`
 - `services/game-server/internal/protocol/realtime/quantize_world.go`
 - `services/game-server/internal/protocol/realtime/planner.go`
+- `services/game-server/internal/protocol/realtime/wire_packets.go`
 
 Unmapped float-like fields fall back to `float_generic`, but they should surface dev diagnostics and fail-loud behavior so new float fields do not silently bypass policy review.
 
@@ -333,6 +352,30 @@ For update maps, omitted fields mean unchanged, not cleared. Clients merge updat
 
 The server compares projected realtime wire records when building deltas. The client does not own authoritative delta decisions.
 
+#### Sparse delta serialization
+
+Delta packet serializers now omit empty create, update, and delete sections.
+
+Sparse omission is implemented in `services/game-server/internal/protocol/realtime/wire_packets.go` by the delta wire serializers, before compact aliasing and `packetcodec` encoding.
+
+Full packets remain complete snapshots and are not sparse.
+
+Missing delta section fields mean empty or no-op, not cleared.
+
+Missing update fields inside a present update record mean unchanged, not cleared.
+
+Meaningful `false` and `0` values inside present records are preserved.
+
+In `session_delta`, `total_asteroids` is omitted when unchanged or nil.
+
+A `total_asteroids: 0` value is meaningful and must be preserved when it is an actual emitted value.
+
+This sparse omission applies to readable long-key maps before compact aliases are applied.
+Compact aliases apply after sparse omission at the final outbound encode boundary.
+
+This is not binary packing.
+Packet-budget enforcement and record-level prioritization are not implemented here.
+
 ### World lane packets
 
 `world_full` carries:
@@ -344,7 +387,7 @@ asteroids
 pickups
 ```
 
-`world_delta` carries:
+`world_delta` may carry any non-empty subset of:
 
 ```text
 ship_creates
@@ -361,6 +404,8 @@ pickup_updates
 pickup_deletes
 ```
 
+Absent world delta sections are treated as empty arrays by the client.
+
 Current `world_delta` update maps are partial maps keyed by id:
 
 ```text
@@ -374,13 +419,15 @@ pickup_updates
 
 `overlay_full` flattens the receiver/HUD fields from `OverlayReceiverRecord` at top level.
 
-`overlay_delta` carries:
+`overlay_delta` may carry any non-empty subset of:
 
 ```text
 receiver_creates
 receiver_updates
 receiver_deletes
 ```
+
+Absent overlay delta sections are treated as empty arrays by the client.
 
 Current `overlay_delta` update maps are partial maps keyed by `self_id`:
 
@@ -398,7 +445,7 @@ player_lifecycle
 total_asteroids
 ```
 
-`session_delta` carries:
+`session_delta` may carry any non-empty subset of:
 
 ```text
 players
@@ -409,6 +456,8 @@ player_lifecycle_updates
 player_lifecycle_deletes
 total_asteroids
 ```
+
+Absent session delta sections are treated as empty arrays by the client; absent total_asteroids means unchanged.
 
 Current `session_delta` update maps use lane-specific identity keys:
 
@@ -429,254 +478,22 @@ events
 event_id per event
 ```
 
-### Resync and control packets
+### Resync packets
 
-`resync_request` and `resync_required` are active lane packet families. This doc keeps their presence as current protocol facts and does not overstate detailed recovery behavior beyond verified implementation.
+`resync_request` and `resync_required` are the current generated packet families for control-lane recovery signaling.
 
-## Connection lifecycle
+This does not define a separate generated packet family named `control`.
 
-Current connection flow:
+### Scheduling and delivery classes
 
-```text
-client selects WebSocket URL from requested session mode
--> client calls WebSocketPeer.connect_to_url(url)
--> server upgrades GET /ws
--> server creates one webSocketSession
--> session starts as Guest identity
--> server starts read loop goroutine
--> server starts gameplay lifecycle ticker goroutine
--> server runs write loop on the connection goroutine
--> client polls socket from ClientConnectionService._process()
--> client sends and receives JSON text packets while socket is open
--> read close, write failure, graceful close, or session exit tears down the connection
--> server leaves the current room if needed
--> server clears session room and active-player routing state
-```
-
-A new server session starts with:
+The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity.
 
 ```text
-sessionID           = "session-" plus an atomic sequence number
-identity            = Guest
-currentRoomID       = empty
-currentGamePlayerID = empty
-room                = nil
-outbound            = buffered channel, capacity 16
-```
-
-The session can later become authenticated by `authenticate_request`, attached to a room by room/lobby packets, and activated into gameplay by start-game or single-player start behavior.
-
-## Client network target selection
-
-The client selects a WebSocket URL from the requested session mode.
-
-Current mapping:
-
-```text
-single_player -> SINGLE_PLAYER_WS_URL
-multiplayer   -> MULTIPLAYER_WS_URL
-unknown       -> ""
-```
-
-The current local values for single-player and multiplayer both point at:
-
-```text
-ws://localhost:8080/ws
-```
-
-The route path is therefore not the mode boundary. The mode boundary is the client request plus server-side packet handling, identity, room, and admission rules.
-
-## Client-to-server packets
-
-Client-originated packets are requests or observations. The server decides whether they are accepted and what state changes result.
-
-Current client-to-server packet families are:
-
-```text
-auth
-telemetry
-lobby and room entry
-gameplay
-targeting
-pause
-client config
-devtools
-```
-
-### Auth
-
-```text
-authenticate_request
-```
-
-The client sends this after the WebSocket opens when an auth token exists.
-
-The packet does not itself make the client authenticated. The server verifies the token through the configured auth verifier and replies with `authenticate_result`.
-
-Auth packets require only an active WebSocket session.
-
-### Telemetry
-
-```text
-telemetry_ping
-```
-
-Telemetry ping carries:
-
-```text
-sequence
-client_sent_msec
-```
-
-The server responds to the same WebSocket session with `telemetry_pong`.
-
-Telemetry packets do not require room membership or active lane gameplay output and do not mutate gameplay.
-
-### Lobby and room entry
-
-```text
-create_room_request
-join_room_request
-leave_room_request
-set_ready_request
-start_game_request
-start_single_player_request
-return_to_lobby_request
-```
-
-Lobby and room packets route to networking session handlers, which delegate room authority to the room system.
-
-Current multiplayer create and join require Authenticated Account identity. Current single-player start does not require WebSocket authentication.
-
-### Gameplay
-
-```text
-input
-respawn
-client_config
-pause_request
-set_target_player_request
-select_target_at_position_request
-clear_target_request
-```
-
-Normal gameplay application requires a current room and active game player.
-
-For these packets:
-
-```text
-input
-respawn
-client_config
-```
-
-the server consumes the packet even when no room or active game player exists, but applies nothing.
-
-For target and pause packets, the current handler requires a room and active game player before routing them. If that state is missing, the packet falls through unhandled.
-
-### Devtools
-
-Devtools command packets use the same WebSocket transport but route before normal generated `game.ClientPacket` decode.
-
-Current devtools groups include:
-
-```text
-simple devtools commands
-placement devtools commands
-remaining devtools commands
-```
-
-Devtools command application requires a current room and active game player. If those are missing, the packet is consumed and no command is applied. This prevents devtools packets from falling through into normal gameplay routing.
-
-Devtools packet behavior remains debug-only and server-authoritative.
-
-## Server-to-client packets
-
-Server-originated packets are authoritative readback, request results, or diagnostics.
-
-Current server-to-client packet families include:
-
-```text
-auth result
-room state and errors
-lane gameplay output
-player pause state
-telemetry pong
-debug status
-debug shape catalog
-```
-
-### Queued one-off packets
-
-Queued packets are encoded bytes placed into the session outbound channel and written by the WebSocket write loop.
-
-Current queued producers include:
-
-```text
-authenticate_result
-room_snapshot
-room_error
-player_pause_state
-telemetry_pong
-```
-
-The queue is an in-memory handoff with capacity 16. It is not durable storage and has no retry or acknowledgement behavior.
-
-### Ticker-driven packets
-
-The server write loop runs at:
-
-```text
-constants.ServerTickRate
-```
-
-On eligible ticks, `writeGameplayLaneProtocolMessage(session, remoteAddr)` writes lane-native gameplay output:
-
-```text
-world_full
-world_delta
-overlay_full
-overlay_delta
-session_full
-session_delta
-event_batch
-resync_request
-resync_required
-```
-
-`writeGameplayLaneProtocolMessage()` currently:
-
-1. Optionally writes `debug_shape_catalog` first when eligible.
-2. Resets realtime session state when the receiver/player changes.
-3. Builds an active realtime result from the gameplay presentation snapshot.
-4. Selects included candidates through the send plan.
-5. Encodes selected lane candidates as JSON packets.
-6. Writes selected lane packets individually through `outbound.WriteServerMessage()`.
-7. Advances lane metadata only after successful writes.
-8. Stores baseline projections only after successful writes.
-9. Marks a lane baseline ready after a final full packet.
-10. Logs lane metrics.
-
-Lane baseline behavior is current implementation:
-
-```text
-world, overlay, and session full packets bootstrap lane baselines
-deltas require lane baseline readiness
-deltas require synced lane state
-deltas require the final baseline chunk to have been written
-deltas require an existing baseline projection
-deltas require a changed projection
-unchanged lane projections produce no candidate
-```
-
-Scheduling currently treats candidate-level lane metadata, not active record-level prioritization:
-
-```text
-required full/control/resync packets = required
 event batches = critical/event-once
 world and overlay deltas = high priority / hot supersedable
 session deltas = medium priority / deferrable
 required bootstrap full packets = world, overlay, then session
+control-lane resync packets = required
 ```
 
 The active path currently schedules whole lane candidates:
@@ -688,10 +505,8 @@ session_delta = one candidate
 event_batch = one candidate
 ```
 
-The active path does not currently split `world_delta`, `overlay_delta`, or `session_delta` into selected record or field sub-packets.
-
-The byte estimates used by the scheduler are advisory and are not codec-accurate.
-
+The active path does not currently split state-lane deltas into selected record or field sub-packets.
+Byte estimates are advisory and are not codec-accurate.
 Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ## Server inbound routing order
 
@@ -1046,7 +861,9 @@ services/game-server/internal/devtools/packets_generated.go
 
 The generated client file provides packet type constants, field constants, and selected outbound packet builder functions.
 
-The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`.
+The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`. Runtime realtime protocol files such as services/game-server/internal/protocol/realtime/quantized_records.go, services/game-server/internal/protocol/realtime/quantize_world.go, services/game-server/internal/protocol/realtime/quantize/, services/game-server/internal/protocol/realtime/wire_packets.go, services/game-server/internal/protocol/realtime/compact_wire_packet.go, and services/game-server/internal/protocol/realtime/active.go are implementation files, not generated packet-schema outputs.
+
+`services/game-server/internal/protocol/realtime/compact_wire_packet.go` is a hand-authored runtime alias mapper documented by `docs/services/game-server/networking/realtime-compact-wire-mapping.md`; it is not generated from packet TOML.
 
 Runtime wire conversion for lane packets lives in `services/game-server/internal/protocol/realtime/`. Client lane application lives in `client/scripts/protocol/realtime/`.
 
@@ -1195,7 +1012,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-Lane policy, delta snapshots, sequence numbers, quantization, bit packing, and protobuf migration are implementation facts where they already exist and planning facts where they do not.
+Readable packet type strings and long JSON field names come from shared packet/generated sources where applicable. Compact aliases are hand-authored and policy-exempt in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). Lane policy, delta snapshots, sequence numbers, quantization, bit packing, and protobuf migration are implementation facts where they already exist and planning facts where they do not.
 
 ## Code map
 
@@ -1210,9 +1027,13 @@ client/scripts/session/session_network_controller.gd
 client/scripts/session/gameplay_session_controller.gd
 client/scripts/networking/network_client.gd
 client/scripts/networking/packets/packet_codec.gd
+client/scripts/protocol/realtime/compact_lane_packet.gd
+client/scripts/protocol/realtime/realtime_router.gd
 client/scripts/networking/packets/packet_encode_result.gd
 client/scripts/networking/packets/packet_decode_result.gd
 ```
+
+PacketCodec.decode owns compact alias expansion before envelope validation; compact_lane_packet.gd owns the alias expansion helper used by PacketCodec and the defensive realtime router normalization path.
 
 ### Client boot/session participants
 
@@ -1223,7 +1044,6 @@ client/scripts/boot/pending_boot_request.gd
 client/scripts/boot/session_network_target.gd
 client/scripts/session/room_session_controller.gd
 ```
-
 ### Server realtime protocol and networking
 
 ```text
@@ -1242,6 +1062,7 @@ services/game-server/internal/protocol/realtime/priority.go
 services/game-server/internal/protocol/realtime/size_estimate.go
 services/game-server/internal/protocol/realtime/wire_packets.go
 services/game-server/internal/protocol/realtime/active.go
+services/game-server/internal/protocol/realtime/compact_wire_packet.go
 services/game-server/internal/protocol/realtime/shadow.go
 services/game-server/internal/protocol/realtime/parity.go
 services/game-server/internal/protocol/realtime/metrics_bridge.go
@@ -1340,10 +1161,13 @@ services/game-server/internal/networking/outbound/debug_shape_catalog_presentati
 services/game-server/internal/protocol/realtime/*_test.go
 ```
 
+Realtime protocol tests cover sparse delta omission in `wire_packets_test.go`, world/overlay/session wire delta serialization, quantized wire values, and planner baseline/delta behavior.
+
 Relevant client tests include:
 
 ```text
 client/tests/unit/test_packet_codec.gd
+client/tests/unit/protocol/realtime/test_compact_lane_packet.gd
 client/tests/unit/test_session_network_controller.gd
 client/tests/unit/test_room_session_controller.gd
 client/tests/unit/test_gameplay_session_controller.gd
@@ -1363,7 +1187,7 @@ client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd
 client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd
 ```
 
-`test_packet_codec.gd` verifies client JSON packet encode/decode and envelope validation.
+`test_packet_codec.gd` verifies client JSON packet encode/decode and envelope validation. `test_compact_lane_packet.gd` verifies compact alias expansion for realtime lane packets.
 
 `gameplay_packets_test.go` verifies current gameplay packet routing behavior, including `client_config` routing into the game instance and `start_single_player_request` routing through lobby handling while preserving Local Profile ID on the room member.
 
@@ -1406,9 +1230,6 @@ The current implementation sends lane-native gameplay output on the server tick 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
-
-
-
 
 
 

@@ -85,12 +85,21 @@ local navigation after match-end buttons
 
 The client does not own authoritative gameplay results. A sent packet is a request or observation, not proof that the server accepted the action.
 
-The packet schema owns packet shapes and generated helpers, but it does not own runtime meaning. Runtime meaning belongs to the service that handles the packet.
+Packet schemas own packet type strings, generated constants, generated fields where applicable, and generated helpers. Runtime realtime protocol code owns active lane wire-map emission behavior such as sparse delta omission, numeric wire quantization, and compact alias application. Runtime meaning belongs to the service that handles the packet.
 
 ```text
 shared/packets/*.toml
 -> generated packet constants, structs, and client builders
 -> runtime routing and authority in client/game-server service code
+
+services/game-server/internal/protocol/realtime/wire_packets.go
+-> active lane wire-map emission
+
+services/game-server/internal/protocol/realtime/compact_wire_packet.go
+-> compact aliases for emitted active lane keys
+
+services/game-server/internal/protocol/realtime/quantize/
+-> numeric wire quantization policies
 ```
 
 The WebSocket connection itself has no durable persistence authority. Player-data and API-server systems participate only after identity, auth, or match-result data crosses explicit service boundaries.
@@ -234,13 +243,9 @@ The game server simulation owns the authoritative runtime state.
 
 On each server tick, the WebSocket write path can send gameplay lane packets when the session has an active game player and the room has a game instance in an eligible state.
 
-The current main gameplay output is:
+The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`.
 
-```text
-state
-```
-
-That packet is projected per player from the authoritative game instance. It can include world, overlay, session, and event lane readback such as player state, player sessions, lifecycle state, bullets, asteroids, pickups, events, targeting state, camera/view state, and match-over classification.
+World lane carries authoritative visible entity presentation state. Overlay lane carries receiver-specific HUD-facing values. Session lane carries player/session/lifecycle/asteroid-count presentation state. Event batch carries transient presentation events. For world, overlay, and session state lanes, numeric wire quantization, field deltas, sparse delta omission, and compact JSON aliases are current active behavior. event_batch remains transient presentation event delivery and is not a field-delta or sparse-delta state lane.
 
 The server stamps outbound gameplay lane packets with server send time before encoding and writing them.
 
@@ -261,7 +266,13 @@ telemetry_pong
 Ticker-driven presentation packets include:
 
 ```text
-state
+world_full
+world_delta
+overlay_full
+overlay_delta
+session_full
+session_delta
+event_batch
 debug_status
 debug_shape_catalog
 ```
@@ -283,7 +294,13 @@ authenticate_result
 room_snapshot
 room_state_changed
 room_error
-state
+world_full
+world_delta
+overlay_full
+overlay_delta
+session_full
+session_delta
+event_batch
 debug_shape_catalog
 debug_status
 player_pause_state
@@ -359,7 +376,13 @@ authenticate_result
 room_snapshot
 room_error
 room_state_changed
-state
+world_full
+world_delta
+overlay_full
+overlay_delta
+session_full
+session_delta
+event_batch
 player_pause_state
 telemetry_pong
 debug_status
@@ -428,7 +451,7 @@ This domain document does not own:
 * Rails account storage
 * Local Profile storage
 * player-data persistence internals
-* future realtime lane, delta snapshot, quantization, bit-packing, or protobuf design
+* deeper packet budget policy, record/entity-level prioritization, interest management, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, or future transport evolution
 
 Those details belong in service, protocol, data, devtools, systems-design, planning, or limits documentation.
 
@@ -458,6 +481,6 @@ Client input is sent to the server, the server advances simulation, and clients 
 
 WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
-The current realtime flow sends gameplay lane packets on the server tick path. Future realtime protocol work may introduce lanes, deltas, quantization, bit packing, or binary encoding, but those are planning facts until implemented.
+Lane-native packets are current active realtime behavior. World, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. event_batch remains separate transient event delivery. Remaining future work includes deeper prioritization, packet-budget behavior, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket path.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.

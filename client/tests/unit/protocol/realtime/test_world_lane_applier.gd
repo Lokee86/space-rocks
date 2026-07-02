@@ -90,6 +90,46 @@ func test_world_delta_updates_creates_and_deletes_entities_by_ownership() -> voi
 	assert_false(world_lane_state.bullets.has("bullet-2"))
 
 
+func test_world_delta_treats_missing_sparse_sections_as_empty_noop() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [_ship_packet("ship-1", 10, 20)],
+			"bullets": [_bullet_packet("bullet-1", 5, 6)],
+			"asteroids": [_asteroid_packet("asteroid-1", 7, 8)],
+			"pickups": [_pickup_packet("pickup-1", 9, 10)],
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+		}
+	)
+
+	assert_true(applied)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
+	assert_eq(world_lane_state.ships["ship-1"]["y"], 20)
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 7)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 8)
+	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 9)
+	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 10)
+
+
 func test_world_delta_missing_entities_leave_lane_unchanged_by_ownership() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
