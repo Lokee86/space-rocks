@@ -19,6 +19,15 @@ static func is_player_active(lifecycle: Dictionary, player_id: String) -> bool:
 	if player_id.is_empty():
 		return false
 
-	return str(lifecycle.get(str(player_id), "")) == STATUS_ACTIVE
+	var lifecycle_value = lifecycle.get(str(player_id), "")
+	if lifecycle_value is Dictionary:
+		var lifecycle_record: Dictionary = lifecycle_value
+		if lifecycle_record.has("state"):
+			return str(lifecycle_record.get("state", "")) == STATUS_ACTIVE
+		if lifecycle_record.has("status"):
+			return str(lifecycle_record.get("status", "")) == STATUS_ACTIVE
+		return false
+
+	return str(lifecycle_value) == STATUS_ACTIVE
 
 

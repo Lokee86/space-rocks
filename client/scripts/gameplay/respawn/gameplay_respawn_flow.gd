@@ -77,7 +77,12 @@ func should_restore_alive_hud(
 	if self_state is Dictionary:
 		var self_state_dictionary: Dictionary = self_state
 		has_valid_server_state = !self_state_dictionary.is_empty()
-	return (player != null && player.visible) or has_valid_server_state
+
+	var player_visible := false
+	if player != null and player.get("visible") != null:
+		player_visible = bool(player.get("visible"))
+
+	return player_visible or has_valid_server_state
 
 
 func _log_respawn_blocked_once(reason: String) -> void:
