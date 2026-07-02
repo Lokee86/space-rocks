@@ -178,6 +178,7 @@ function PlasmicArchive__RenderFunc(props: {
             sty.root
           )}
           id={"uW6XQJEMGRlw"}
+          style={{ mixinTsJuVnJzaWaColor: "rgb(0, 229, 255)" }}
         >
           <header
             data-plasmic-name={"header"}
@@ -345,6 +346,25 @@ function PlasmicArchive__RenderFunc(props: {
                 </span>
               </PlasmicLink__>
             </nav>
+            <PlasmicLink__
+              aria-label={"Discord"}
+              className={classNames("all", "a", "a__uNJep", sty.link__dgyHg)}
+              href={"https://discord.gg/vTQAVtrVKE"}
+              platform={"react"}
+            >
+              <PlasmicImg__
+                alt={"Discord"}
+                className={classNames(sty.img__mfY2C)}
+                displayHeight={"min(20px, calc(2.285714vw - 1.257143px))"}
+                displayMaxHeight={"none"}
+                displayMaxWidth={"none"}
+                displayMinHeight={"0"}
+                displayMinWidth={"0"}
+                displayWidth={"min(140px, calc(16vw - 8.8px))"}
+                loading={"lazy"}
+                src={"/assets/ui/discord-logo.png"}
+              />
+            </PlasmicLink__>
           </header>
           <div
             className={classNames("all", sty.freeBox__bvtmK)}

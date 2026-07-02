@@ -198,6 +198,7 @@ function PlasmicHomepage__RenderFunc(props: {
             sty.root
           )}
           id={"uW6XQJEMGRlw"}
+          style={{ mixinTsJuVnJzaWaColor: "rgb(0, 229, 255)" }}
         >
           <header
             data-plasmic-name={"header"}
@@ -365,6 +366,25 @@ function PlasmicHomepage__RenderFunc(props: {
                 </span>
               </PlasmicLink__>
             </nav>
+            <PlasmicLink__
+              aria-label={"Discord"}
+              className={classNames("all", "a", "a__uNJep", sty.link___1Ia7F)}
+              href={"https://discord.gg/vTQAVtrVKE"}
+              platform={"react"}
+            >
+              <PlasmicImg__
+                alt={"Discord"}
+                className={classNames(sty.img__a9MFr)}
+                displayHeight={"min(20px, calc(2.285714vw - 1.257143px))"}
+                displayMaxHeight={"none"}
+                displayMaxWidth={"none"}
+                displayMinHeight={"0"}
+                displayMinWidth={"0"}
+                displayWidth={"min(140px, calc(16vw - 8.8px))"}
+                loading={"lazy"}
+                src={"/assets/ui/discord-logo.png"}
+              />
+            </PlasmicLink__>
           </header>
           <div
             className={classNames("all", sty.freeBox__ket3A)}
@@ -796,6 +816,38 @@ function PlasmicHomepage__RenderFunc(props: {
                         }
                 }
               />
+
+              <PlasmicLink__
+                aria-label={"Discord"}
+                className={classNames("all", "a", "a__uNJep", sty.link__traDh)}
+                href={"https://discord.gg/vTQAVtrVKE"}
+                platform={"react"}
+              >
+                <PlasmicImg__
+                  alt={"Discord"}
+                  className={classNames(sty.img__mwSaS)}
+                  displayHeight={
+                    hasVariant(globalVariants, "screen", "narrow")
+                      ? "44.44%"
+                      : "100%"
+                  }
+                  displayMaxHeight={"none"}
+                  displayMaxWidth={
+                    hasVariant(globalVariants, "screen", "narrow")
+                      ? "100%"
+                      : "100%"
+                  }
+                  displayMinHeight={"0"}
+                  displayMinWidth={"0"}
+                  displayWidth={
+                    hasVariant(globalVariants, "screen", "narrow")
+                      ? "55.56%"
+                      : "100%"
+                  }
+                  loading={"lazy"}
+                  src={"/assets/ui/discord-symbol.png"}
+                />
+              </PlasmicLink__>
             </section>
             <section
               className={classNames("all", sty.section___4BcfR)}
