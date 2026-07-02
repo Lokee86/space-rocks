@@ -1,4 +1,4 @@
-export type HomepageMediaKind = "" | "images" | "youtube";
+export type HomepageMediaKind = "" | "images" | "youtube" | "video";
 
 export type HomepageContent = {
   heroLine1: string;
@@ -7,6 +7,10 @@ export type HomepageContent = {
   heroMediaKind: HomepageMediaKind;
   heroImages: string[];
   heroYoutubeUrl: string;
+  heroVideoSrc: string;
+  heroVideoAutoPlay: boolean;
+  heroVideoMuted: boolean;
+  heroVideoLoop: boolean;
   heroMediaAlt: string;
   articleLabel: string;
   articleTitle: string;
@@ -32,6 +36,7 @@ const textContentFields: (keyof HomepageContent)[] = [
   "heroLine2",
   "heroLine3",
   "heroYoutubeUrl",
+  "heroVideoSrc",
   "heroMediaAlt",
   "articleLabel",
   "articleTitle",
@@ -60,6 +65,14 @@ const imageArrayFields: Array<"heroImages" | "articleImages"> = [
   "articleImages",
 ];
 
+const booleanFields: Array<
+  "heroVideoAutoPlay" | "heroVideoMuted" | "heroVideoLoop"
+> = [
+  "heroVideoAutoPlay",
+  "heroVideoMuted",
+  "heroVideoLoop",
+];
+
 export function normalizeHomepageContent(
   input: Partial<HomepageContent>,
 ): HomepageContent {
@@ -76,6 +89,12 @@ export function normalizeHomepageContent(
   for (const field of imageArrayFields) {
     normalized[field] = input[field] ?? [];
   }
+
+  for (const field of booleanFields) {
+    normalized[field] = input[field] ?? false;
+  }
+
+  normalized.heroVideoMuted = input.heroVideoMuted ?? true;
 
   return normalized;
 }

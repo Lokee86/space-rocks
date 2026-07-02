@@ -1,0 +1,107 @@
+---
+title: "Devlog 002: Signals in the Storm"
+date: 2026-07-02
+summary: Strange signals, impossible asteroid storms, and realtime network reinforcement as Space Rocks! begins moving beyond endless survival.
+heroLine1: REINFORCING THE NETWORK
+heroLine2: FOR LOST COLONIES
+heroLine3: AND REDISCOVERED RUINS
+heroMediaKind: video
+heroImages:
+  - /media/devlog/0002-storm-signals/deep_space_transmission.mp4
+heroYoutubeUrl: ""
+heroVideoSrc: "/media/devlog/0002-storm-signals/deep_space_transmission.mp4"
+heroVideoAutoPlay: true
+heroVideoMuted: true
+heroVideoLoop: true
+heroMediaAlt: Deep space transmission from the Xenobia system
+articleLabel: Devlog Entry - 002
+articleTitle: Signals in the Storm
+intro: |
+  This week’s transmission is split between the strange signals building around Xenobia and the technical work needed to keep Space Rocks! stable as the platform grows. The game has begun to move beyond endless survival, with mysterious asteroid storms, ancient ruins, and a colony that may have disturbed something it shouldn't have. Meanwhile, the realtime network layer has been getting major reinforcement, cutting early stress-test packets from game-breaking sizes down to something much closer to workable.
+  - [Deep Space Readings](#deep-space-readings)
+  - [Taming the Storm](#taming-the-storm)
+  - [Network Reinforcement](#network-reinforcement)
+  - [Devlog Updates](#devlog-updates)
+  - [What’s Next](#whats-next)
+articleMediaKind: images
+articleImages:
+  - /media/devlog/0002-storm-signals/packet_size_visual.png
+  - /media/devlog/0002-storm-signals/packet_lane_visual.png
+  - /media/devlog/0002-storm-signals/mining_colony.png
+  - /media/devlog/0002-storm-signals/delta_compression_visual.png
+articleYoutubeUrl: ""
+articleMediaAlt: Development visuals for Signals in the Storm
+finishedTitle: Protocol Foundation
+finishedBody: Realtime lanes, deltas, and quantization.
+nowTitle: Continued Reinforcement
+nowBody: Packets are much smaller, but more cleanup remains.
+comingUpTitle: Alpha Testing
+comingUpBody: Stable network lanes open the door for the closed alpha.
+utilityTitle: Current Signal
+utilityText: |
+  **Status:** Space Rocks! is moving past endless survival while the realtime layer gets reinforced for larger multiplayer chaos.
+finePrint: Space Rocks! is an active development project. All media, features, names, and content are work in progress and subject to change before final release.
+---
+## Deep Space Readings
+
+Every signal needs a source.
+
+Underneath the arcade chaos, Space Rocks! is about something bigger than an endless survival loop. The shooting, dodging, power-ups, and explosions are still the heart of the game, but if that action is going to support a campaign, then the chaos needs a reason to matter.
+
+That reason is Xenobia.
+
+Xenobia is a human colony far from Sol, founded centuries ago by a generation ship from Earth. The people who live here have no contact with their point of origin. For them, Xenobia is not a frontier outpost, it is their homeworld.
+
+For generations, life in the system has been relatively stable. Trade routes connected planetary and lunar colonies, companies mined the local asteroid belts, and commerce moved through familiar lanes harassed by pirates and corsairs.
+
+Until recently.
+
+Massive asteroid fields have started appearing across the system without warning, cutting off trade routes, bombarding colonies, and turning routine spaceflights into high risk operations. While the cause of these phenomena is officially unknown, the timing seems to coincide with archeological explorations on one of the system's moons, where ancient ruins were recently discovered during a mining operation. Perhaps *some* things are best left undisturbed.
+
+## Taming the Storm
+
+Currently the work being done in the system is less about adding new explosions, enemies and gameplay, and more about making sure that the game itself can survive all of those fantastic explosions, enemies, and effects.
+
+Space Rocks! is still barely past the classic arcade shooter stage. A few power-ups have been added, but the core loop is still mostly “spaceship shoots rocks.” Even then, the original network architecture was already flashing a giant red warning light. Early stress tests were producing 17–18KB realtime packets, which is just... catastrophically large for high-paced multiplayer action. This made the next step obvious: before adding more chaos, we needed to make sure that the game could carry it without crashing.
+
+## Network Reinforcement
+
+The big push this week has been cutting down the size of the realtime data moving between the server and the client.
+
+The first step was splitting the realtime protocol into lanes, so different kinds of updates are no longer all being treated as one giant lump of world state. From there, the system started moving toward record-level and field-level deltas, which means the game can send smaller updates focused on what actually changed instead of constantly repeating the full picture.
+
+There is also quantization now, which turns some of the bulky float-heavy world data into smaller network-friendly values. On top of that, the packet shapes themselves have been getting trimmed down so the structure around the data is not wasting as much space either.
+
+The gains have already been huge. Early multiplayer stress tests were producing 17–18KB packets. The same kind of test is now landing just over 3KB.
+
+That is still way too big for where the game needs to end up, but it is massive progress. The problem has moved from “this is catastrophically oversized” to “this is still too large, but now there is a clear path forward.”
+
+The next rounds of network optimization will keep pushing in that direction. WebRTC and UDP are still planned, deterministic rendering for asteroids and bullets is on the table, and bit packing / serialization will eventually take the protocol beyond compact JSON shapes entirely.
+
+## Devlog Updates
+
+A couple of devlog updates are live now too.
+
+RSS is enabled, so you can now subscribe directly and get new posts without checking the site manually.
+
+The Discord link has also been added. Come join the community, get notified about updates and progress, contribute some ground-floor input, and sign up for future alpha and beta access.
+
+## What’s Next
+
+The next stretch is about pushing the network work from “much better” toward “actually being stable.”
+
+Packet sizes still need to come down, and there is more cleanup to do before moving into heavier solutions like binary formats. The current goal is to keep tightening the shape of the data first: smaller updates, less repetition, and better decisions about what actually needs to be sent.
+
+WebRTC and UDP are also still on the roadmap for asynchronous data transmission, along with traffic prioritization and scheduling. The game needs to know what updates matter most, what can wait, and how to avoid jamming everything through the same path at the same time.
+
+Deterministic rendering is another major piece under consideration, especially for bullets and asteroids. If the client can safely predict some movement from server timing instead of receiving every position constantly, that opens the door to much larger and busier scenes without every object becoming a network burden.
+
+And the world-building is going to keep moving too.
+
+The storms are not just background noise. The campaign needs answers to some very basic questions:
+
+Who are you fighting next to?
+
+Who exactly are you even fighting?
+
+And why did all of this start now?

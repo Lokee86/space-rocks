@@ -1,7 +1,7 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 
-const mediaKind = z.enum(["", "images", "youtube"]).default("");
+const mediaKind = z.enum(["", "images", "youtube", "video"]).default("");
 
 const devlog = defineCollection({
   loader: glob({
@@ -18,6 +18,10 @@ const devlog = defineCollection({
     heroMediaKind: mediaKind,
     heroImages: z.array(z.string()).default([]),
     heroYoutubeUrl: z.string().default(""),
+    heroVideoSrc: z.string().default(""),
+    heroVideoAutoPlay: z.boolean().default(false),
+    heroVideoMuted: z.boolean().default(true),
+    heroVideoLoop: z.boolean().default(false),
     heroMediaAlt: z.string().default(""),
     articleLabel: z.string(),
     articleTitle: z.string(),

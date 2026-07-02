@@ -10,9 +10,13 @@ import { normalizeHomepageContent } from "../content/homepageContent";
 type MediaFrameOverrides = {
   alt: string;
   fit: "contain";
-  mediaMode?: "imageList";
+  mediaMode?: "imageList" | "video";
   imageItems: string[];
   youtubeUrl: string;
+  videoSrc?: string;
+  videoAutoPlay?: boolean;
+  videoMuted?: boolean;
+  videoLoop?: boolean;
 };
 
 export interface HomepageProps {
@@ -23,6 +27,10 @@ function getMediaFrameOverrides(
   mediaKind: HomepageContent["heroMediaKind"],
   imageItems: string[],
   youtubeUrl: string,
+  videoSrc: string,
+  videoAutoPlay: boolean,
+  videoMuted: boolean,
+  videoLoop: boolean,
   alt: string,
 ): MediaFrameOverrides {
   if (mediaKind === "images") {
@@ -30,6 +38,24 @@ function getMediaFrameOverrides(
       mediaMode: "imageList",
       imageItems,
       youtubeUrl: "",
+      videoSrc: "",
+      videoAutoPlay: false,
+      videoMuted: true,
+      videoLoop: false,
+      alt,
+      fit: "contain",
+    };
+  }
+
+  if (mediaKind === "video") {
+    return {
+      mediaMode: "video",
+      imageItems: [],
+      youtubeUrl: "",
+      videoSrc,
+      videoAutoPlay,
+      videoMuted,
+      videoLoop,
       alt,
       fit: "contain",
     };
@@ -39,6 +65,10 @@ function getMediaFrameOverrides(
     return {
       imageItems: [],
       youtubeUrl,
+      videoSrc: "",
+      videoAutoPlay: false,
+      videoMuted: true,
+      videoLoop: false,
       alt,
       fit: "contain",
     };
@@ -47,6 +77,10 @@ function getMediaFrameOverrides(
   return {
     imageItems: [],
     youtubeUrl: "",
+    videoSrc: "",
+    videoAutoPlay: false,
+    videoMuted: true,
+    videoLoop: false,
     alt,
     fit: "contain",
   };
@@ -58,12 +92,20 @@ function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
     content.heroMediaKind,
     content.heroImages,
     content.heroYoutubeUrl,
+    content.heroVideoSrc,
+    content.heroVideoAutoPlay === true,
+    content.heroVideoMuted ?? true,
+    content.heroVideoLoop === true,
     content.heroMediaAlt,
   );
   const articleMediaFrameProps = getMediaFrameOverrides(
     content.articleMediaKind,
     content.articleImages,
     content.articleYoutubeUrl,
+    "",
+    false,
+    true,
+    false,
     content.articleMediaAlt,
   );
   const hasPublishedDevlog =

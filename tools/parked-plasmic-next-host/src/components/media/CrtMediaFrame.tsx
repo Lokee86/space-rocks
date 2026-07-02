@@ -278,6 +278,9 @@ type CrtMediaFrameProps = {
   mediaMode?: MediaMode;
   imageItems?: string | string[];
   videoSrc?: string;
+  videoAutoPlay?: boolean;
+  videoMuted?: boolean;
+  videoLoop?: boolean;
   youtubeUrl?: string;
   youtubeTitle?: string;
   autoAdvanceMs?: number;
@@ -310,6 +313,9 @@ export function CrtMediaFrame({
   mediaMode,
   imageItems,
   videoSrc,
+  videoAutoPlay = false,
+  videoMuted = true,
+  videoLoop = false,
   youtubeUrl,
   youtubeTitle,
   autoAdvanceMs = 5000,
@@ -633,6 +639,9 @@ export function CrtMediaFrame({
                 ref={videoRef}
                 className={styles.media}
                 src={videoSrc}
+                autoPlay={videoAutoPlay}
+                muted={videoMuted || videoAutoPlay}
+                loop={videoLoop}
                 playsInline
                 preload="metadata"
                 onPlay={() => setIsVideoPlaying(true)}
