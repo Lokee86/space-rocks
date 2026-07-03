@@ -666,4 +666,3 @@ Current world lane ship records expose target state only through active ship sta
 
 `enemy` is a supported canonical target kind in the server targeting package and target candidate builder. Current enemy projection and full enemy gameplay behavior are not documented here.
 
-

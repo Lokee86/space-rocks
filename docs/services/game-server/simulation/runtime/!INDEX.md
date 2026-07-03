@@ -20,10 +20,10 @@ This folder owns Game aggregate, simulation loop/phase order, entity store, lane
 <!-- doc-ledger:files:start -->
 
 - [game-aggregate.md](game-aggregate.md) - Game aggregate documentation.
+- [lane-packet-projection.md](lane-packet-projection.md) - Lane packet projection documentation.
 - [presentation-event-queue.md](presentation-event-queue.md) - Presentation event queue documentation.
 - [runtime-entity-store.md](runtime-entity-store.md) - Runtime Entity Store documentation.
 - [simulation-loop-and-phase-order.md](simulation-loop-and-phase-order.md) - Simulation loop and phase order documentation.
-- [lane-packet-projection.md](lane-packet-projection.md) - Lane packet projection documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->

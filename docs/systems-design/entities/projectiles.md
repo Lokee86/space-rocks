@@ -507,4 +507,3 @@ The implementation still uses `Bullet` in runtime type names, packet field names
 The current client fallback for missing or unknown projectile type is `bullet`. That is presentation fallback behavior, not a rule that every projectile is conceptually a bullet.
 
 Projectile docs should not absorb the full weapon system. Weapons own firing capability and spawn intent. Projectiles own the live entity behavior after creation.
-

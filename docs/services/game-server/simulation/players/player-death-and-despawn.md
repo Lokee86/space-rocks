@@ -634,4 +634,3 @@ The legacy docs correctly identified the key boundary: the Go game server owns l
 The current implementation uses both `player_lifecycle` and `player_sessions` because active ship presence alone is not enough to represent pending-respawn or eliminated players.
 
 A pending-despawn ship can still appear in `world lane ship records` while it remains in the runtime entity store during the despawn delay. Consumers should use lifecycle/session facts for player status instead of treating ship presence as the only lifecycle source.
-

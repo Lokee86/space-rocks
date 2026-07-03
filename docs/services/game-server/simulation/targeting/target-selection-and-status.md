@@ -670,4 +670,3 @@ The legacy targeting docs correctly identified the core quarantine rule: normal 
 `TargetKindPriority` exists in the target policy package and is covered by tests, but current game-server position selection validates the client-submitted target ref rather than choosing the highest-priority candidate from overlapping bodies.
 
 `set_target_player_request` remains a player-target compatibility request. New generic gameplay targeting should prefer `select_target_at_position_request` or game APIs that use `TargetRef`.
-

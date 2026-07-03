@@ -548,4 +548,3 @@ Server devtools targeting should stay command-specific. Adding a new player-targ
 
 `Game Target` is a client-side selector concept. The server should not learn about a `__game_target__` sentinel; it should receive either concrete player command fields or no effective command target.
 
-

@@ -66,6 +66,16 @@ This check protects the server devtools boundary: `internal/devtools` owns behav
 
 If the server test command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
 
+For focused server logger verification, check `services/game-server/internal/logging` and run the server with info-level server logs enabled:
+
+```bash
+cd services/game-server
+LOG_SERVER=info go run ./cmd/game-server
+```
+
+Then inspect the sequential JSONL output under `services/game-server/logs/game-server/game-server-*.jsonl` to confirm file output is being written.
+
+
 ## Client checks
 
 Open the Godot project by opening or importing:
@@ -223,4 +233,3 @@ Do not put test helpers in `client/scripts/`.
 Human-run checkpoint guidance stays here.
 
 Prompt/report expectations live in [Prompting And Reporting](./prompting-and-reporting.md).
-

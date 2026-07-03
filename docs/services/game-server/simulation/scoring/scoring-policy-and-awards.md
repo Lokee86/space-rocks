@@ -378,4 +378,3 @@ go test -buildvcs=false ./tests/scoring ./tests/game -run 'AsteroidDestroyed|Sco
 The current scoring package is intentionally smaller than the player counter documentation. This document owns score-award policy only; player counter storage, mutation, packet projection, devtools score commands, and match-result readback belong in [Player Counters](../players/player-counters.md).
 
 Score awards currently have no upper bound beyond the integer value produced by policy and the player counter seam. The counter seam clamps only the lower bound at zero.
-

@@ -19,7 +19,7 @@ This folder owns service diagnostics and logging documentation for the game serv
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
-- [logging-and-diagnostics.md](logging-and-diagnostics.md) - Game-server logging categories, environment configuration, and diagnostic policy.
+- [logging-and-diagnostics.md](logging-and-diagnostics.md) - Game-server category logging, environment configuration, and sequential JSONL diagnostic file output.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->

@@ -7,7 +7,7 @@ This doc plans the network-visibility and packet-budget seam for future growth i
 
 ## Overview
 
-This doc keeps packet-size observability, contributor counts, and large-message diagnostics aligned so network pressure can be measured before protocol changes are chosen.
+This doc keeps packet-size observability, local diagnostic capture, and packet-evidence planning aligned so network pressure can be measured before protocol changes are chosen.
 
 ## Current status
 
@@ -15,7 +15,7 @@ Active planning.
 
 ## Ownership Boundary
 
-This doc owns planning for gameplay packet budget, outbound byte metrics, large-packet diagnostics, contributor counts, and devtools visibility.
+This doc owns planning for gameplay packet budget, outbound byte evidence, local diagnostic capture, validation-support telemetry, and devtools visibility.
 
 It should stay on measurement and observability rather than packet-format redesign.
 
@@ -34,15 +34,15 @@ These are the current project policy numbers for realtime gameplay traffic:
 ## Current Inputs
 
 - gameplay packet budget inputs
-- outbound byte metric inputs
-- large-packet diagnostic inputs
-- contributor count inputs
+- outbound byte evidence inputs
+- local JSONL diagnostic capture inputs
+- validation-support logging inputs
 - devtools visibility inputs
 
 ## Planned Outputs
 
 - packet-budget planning boundaries
-- diagnostic expectations for large gameplay packets
+- diagnostic expectations for gameplay packet evidence
 - visibility requirements for devtools and logging
 
 ## Phase P1 - Network Observability And Packet Budget
@@ -51,9 +51,9 @@ P1 answers whether the current architecture can safely support more entities and
 
 ### Existing Baseline
 
-- `services/game-server/internal/networking/packetmetrics/` owns gameplay packet severity classification, large-packet diagnostics, contributor counts, and slow-write metric context.
-- The same outbound path warns on gameplay presentation writes slower than 20ms.
-- `services/game-server/internal/networking/outbound/` owns outbound gameplay presentation helpers.
+- Server sequential JSONL diagnostic file output exists.
+- Client sequential JSONL diagnostic file output exists.
+- `services/game-server/internal/networking/packetmetrics/` remains a helper/support seam for packet observability work, but it is not the current active `realtime lane metric` runtime output.
 - `services/game-server/internal/protocol/packetcodec/` owns JSON packet encode/decode.
 - `client/scripts/devtools/telemetry/` owns client-side telemetry models.
 - `client/scenes/devtools/world_telemetry_overlay.tscn` is the devtools-only overlay.
@@ -61,10 +61,15 @@ P1 answers whether the current architecture can safely support more entities and
 
 ### Current-State Note
 
-- Active logs report lane packet writes and candidate-level scheduling summaries.
-- Encoded byte counts are real after encode.
-- Scheduling estimates are not codec-aware.
-- Budget status is not yet a reliable hard-enforcement proof.
+- Active server packet evidence now comes from per-packet wire logs and non-empty per-tick write summaries.
+- Active server debug logs expose per-packet `encoded_bytes` plus lane, type, kind, and sequence context.
+- Active server debug summaries expose non-empty per-tick `packet_count` and total `encoded_bytes` summaries.
+- No-op realtime summaries are intentionally suppressed when no packets were written.
+- `realtime lane metric` was removed from active runtime output.
+- Scheduler-ish, budget, deferred, superseded, and CRUD-count fields are intentionally not emitted as current packet evidence.
+- Active debug output does not prove contributor counts by delta section.
+- Active debug output does not implement packet budget enforcement or record-level prioritization.
+- Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
 
 ### Future-State Note
 
@@ -111,7 +116,7 @@ P1 answers whether the current architecture can safely support more entities and
 - Gameplay snapshots have a tight budget on the realtime path.
 - Non-realtime, control, and debug payloads are separate from gameplay packet budgets.
 - Large gameplay packets are diagnostic signals, not a steady-state allowance.
-- The canonical budget lives here; remaining telemetry and logging work is paused until packet-size reduction makes it useful again. Packet metrics and logs can be used to observe reduced JSON numeric size in float-heavy lanes, but this does not imply fixed savings for every packet mix.
+- The canonical budget lives here. Remaining telemetry and logging work should support P2 validation when it becomes useful, rather than acting as an endless Phase P1 blocker. Packet evidence can still be used to observe reduced JSON numeric size in float-heavy lanes, but this does not imply fixed savings for every packet mix.
 - Preferred frequent realtime packets should stay small and predictable.
 - Packets that grow noticeably should be justified, lowered in frequency, split, or deferred to later protocol work.
 
@@ -151,16 +156,15 @@ These display requirements are deferred until they are useful during Phase P2 va
 ### Likely Phase P1 Workstreams
 
 1. Document packet budget policy.
-2. Extend server contributor metrics in the outbound gameplay presentation path.
-3. Add cheap build, encode, and write duration context.
-4. Keep remaining telemetry/logging paused until P2 validation needs it.
+2. Keep current packet evidence and local JSONL diagnostic capture aligned with the active runtime output.
+3. Add only the cheap build, encode, and write context that is still useful and actually supported by current code.
+4. Keep remaining telemetry/logging framed as P2 validation support, not a Phase P1 blocker.
 
 ### Phase P1 Completion Criteria
 
 - Packet budget policy is documented.
-- Large gameplay packets include contributor-count diagnostics.
-- Slow writes include useful context.
 - Server evidence is enough to select realtime protocol work.
+- Remaining telemetry and logging support is scoped to what helps P2 validation, not to proving every future packet policy in Phase P1.
 - No packet format has changed.
 - No gameplay behavior has changed.
 - No feature work is mixed in.
@@ -180,7 +184,7 @@ Outcome 1 - Start Phase P2 realtime protocol work immediately
 
 Outcome 2 - Add only the observability needed before protocol work
 
-- Choose this if packet size is measured but contributors are unclear.
+- Choose this if packet size is measured but contributor evidence is still too coarse for the next decision.
 - Choose this if client overlay and server logs disagree.
 - Choose this if slow writes happen without large packets.
 - Choose this if packet size is acceptable but tick, build, or write timing is not.
@@ -220,8 +224,8 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 ## Implementation sequence
 
 1. Document the canonical packet budget and keep measurement and diagnostics current.
-2. Extend outbound gameplay presentation metrics with contributor-count diagnostics.
-3. Add cheap build, encode, and write duration context.
+2. Keep active packet evidence and local JSONL diagnostic capture aligned with current runtime logging.
+3. Add only the build, encode, and write context that remains cheap, localized, and actually supported.
 4. Use server-side packet evidence to select realtime protocol work.
 5. Resume remaining telemetry/logging during P2 when it helps validate protocol changes.
 
@@ -243,6 +247,8 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 ## Notes
 
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
+
+
 
 
 

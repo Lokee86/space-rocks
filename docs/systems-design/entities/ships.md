@@ -544,4 +544,3 @@ The server owns ship type resolution, resolved stats, and collision behavior. Th
 The current default ship type and collision shape id are both `v_wing`.
 
 The current runtime type name `Ship` is also used by a not-yet-active enemy map shape in the entity store. This document describes the implemented player ship/avatar model, not a completed enemy entity model.
-

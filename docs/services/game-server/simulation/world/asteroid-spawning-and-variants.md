@@ -716,4 +716,3 @@ Current pickup drop integration does not select a drop table from the runtime as
 Current server collision-body lookup does not resolve the variant catalog `CollisionShape` field by string key. It indexes the loaded asteroid collision-shape list by runtime variant index with wrapping.
 
 All current variants use equal spawn weights, the same stats profile, the same drop table, and the same collision shape.
-

@@ -11,6 +11,12 @@ import (
 
 func main() {
 	logging.Configure(os.Getenv(logging.EnvGlobalLevel))
+	logPath, err := logging.ConfigureFileOutput("logs/game-server", "game-server")
+	if err != nil {
+		logging.Server.Warn("server structured log file unavailable", logging.FieldError, err)
+	} else {
+		logging.Server.Info("server structured log file configured", "path", logPath)
+	}
 
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()

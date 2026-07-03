@@ -710,4 +710,3 @@ go test -buildvcs=false ./internal/game/runtime
 The legacy architecture doc's most relevant migrated rule is that `runtime.Ship` is active ship/world state only. It is not the owner of durable score, lives, respawn, or match lifecycle state.
 
 `world lane ship records` can temporarily include pending-despawn ships during the despawn delay. Consumers that need gameplay eligibility should use lifecycle/session/read-model fields and server-owned targeting/collision gates rather than treating active avatar packet presence as the complete participation model.
-

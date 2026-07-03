@@ -642,4 +642,3 @@ Legacy toroidal-wrap documentation correctly identified the key server/client sp
 The server currently has one authoritative position per entity. Cross-edge collision and distance behavior should continue to use wrapped deltas rather than adding duplicate ghost entities to runtime storage.
 
 `space.WrapPosition` returns the input coordinate unchanged when a bound size is non-positive. Current production bounds come from positive generated constants, so that fallback is defensive behavior rather than normal gameplay configuration.
-

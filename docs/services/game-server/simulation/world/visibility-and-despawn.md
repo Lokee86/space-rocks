@@ -442,4 +442,3 @@ Relevant behavior to preserve:
 The current despawn-margin constant is named `AsteroidDespawnMargin`, but the same margin is used for asteroid and bullet far-from-camera cleanup.
 
 Pending despawn is not the same as far-from-camera despawn. Pending despawn is a short delayed removal state after gameplay consequences. Far-from-camera cleanup removes bullets and asteroids because no player view should still need them.
-

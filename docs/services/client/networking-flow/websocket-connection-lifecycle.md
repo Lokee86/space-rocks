@@ -476,4 +476,3 @@ A successful WebSocket connection is only transport readiness. Authentication, r
 `SessionNetworkController` still uses text-helper logging for some connection and packet parse lifecycle messages through its configured logger callable.
 
 This document describes where networking logs are emitted from current networking paths. Client logging implementation details belong to [Client Logging](../client-logging.md), packet schema details belong to protocol docs, and logs do not own packet routing or gameplay consequences.
-

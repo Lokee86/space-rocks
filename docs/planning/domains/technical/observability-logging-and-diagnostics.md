@@ -52,7 +52,7 @@ Service docs own exact logging implementation. Domain docs own the meaning of do
 
 Space Rocks already has partial logging foundations.
 
-The game-server has structured/category logging through a Go `slog` wrapper. Current game-server categories include:
+The game-server has structured/category logging through a Go `slog` wrapper plus sequential local JSONL diagnostic file output. Current game-server categories include:
 
 * `server`
 * `network`
@@ -71,7 +71,7 @@ The client has a GDScript logging helper with levels, categories, helper methods
 * `input`
 * `packets`
 
-Current client logging does not provide a product log aggregation transport. Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
+Current client and server JSONL outputs are local diagnostic capture, not product log aggregation transport. Product log aggregation remains future work. Default logging stays quiet, and successful gameplay packet-write diagnostics are current debug or category-gated output rather than normal default logging. Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
 
 ## Product Observability Model
 
@@ -996,7 +996,6 @@ Release-shaped builds should verify that:
 ## Notes
 
 Preserve the detailed logging inventory and shared-field catalog; this doc should stay focused on policy, aggregation, diagnostics, and redaction.
-
 
 
 

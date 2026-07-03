@@ -23,8 +23,9 @@ authoritative game state
 -> raw-float assertion for active world/overlay/session wire maps
 -> compact alias mapping
 -> packetcodec JSON encoding
--> encoded-byte accounting and packetmetrics summaries
+-> encoded-byte accounting
 -> networking write integration
+-> debug wire/summary logging after successful writes
 -> WebSocket write
 ```
 
@@ -37,7 +38,7 @@ services/game-server/internal/protocol/realtime/
 services/game-server/internal/networking/websocket_write.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The WebSocket write loop owns tick-driven invocation, successful delivery, and post-write state changes.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The WebSocket write loop owns tick-driven invocation, successful delivery, post-write state changes, and the current successful-write debug wire/summary logging.
 
 ## Responsibilities
 
@@ -152,13 +153,13 @@ networking
 
 ## Event semantics
 
-Presentation event projection is non-draining until the active send path explicitly drains after successful active handling.
+Presentation event projection is non-draining until the active send path explicitly drains after a successful active write.
 
 The important rule is:
 
 ```text
 projection may inspect or copy pending presentation events
-active send/write path is the drain point after successful active handling
+active send/write path is the drain point after a successful active write
 ```
 
 Projection, shadow, and inspection paths must not treat event access as an implicit flush.
@@ -167,7 +168,7 @@ Projection, shadow, and inspection paths must not treat event access as an impli
 
 Relevant active files include:
 
-* `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, compact alias preparation, metrics bridge, and shadow/parity helpers.
+* `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, compact alias preparation, encoded-byte accounting inputs, and shadow/parity helpers.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
 * `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
 * `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path and raw-float assertion/compact/packetcodec boundary.
@@ -175,7 +176,7 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.
 * `services/game-server/internal/networking/websocket_write.go` - active write integration and post-write state changes.
-* `services/game-server/internal/networking/packetmetrics/` - sent lane metric summaries and packet metrics helpers.
+* `services/game-server/internal/networking/packetmetrics/` - packet observability helpers and related support types used by outbound networking seams.
 * `services/game-server/internal/networking/` - websocket session and outbound delivery boundaries.
 * `shared/packets/gameplay.toml` - shared gameplay schema and realtime packet type values.
 * `shared/packets/outputs.toml` - generated output routing for packet constants and builders.

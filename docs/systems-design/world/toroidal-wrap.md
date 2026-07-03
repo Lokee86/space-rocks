@@ -355,4 +355,3 @@ The core split is bounded authoritative server coordinates and continuous client
 `client/legacy/player_render/` still contains implementation support behind the active player-render API. Current docs should describe the active ViewAnchor/player-render seam and only reference implementation backing where necessary.
 
 Toroidal wrap is a world model, not a camera trick. The camera and background benefit from continuous visual coordinates, but authoritative gameplay behavior also depends on wrapped distance, direction, visibility, collision, spawning, and respawn safety.
-

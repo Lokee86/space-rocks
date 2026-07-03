@@ -382,4 +382,3 @@ Asteroids currently carry enough structure for future richer behavior: health, d
 Current implementation does not fully use every variant data field at runtime. In particular, current server collision-body lookup and pickup drop integration are narrower than the full asteroid variant data shape.
 
 Future asteroid work should extend the existing authority split rather than moving asteroid decisions into the client, packet schema, weapon code, radial-effect timing, scoring policy, or pickup effects.
-

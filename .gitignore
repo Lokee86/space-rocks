@@ -45,3 +45,4 @@ addons/engineforge_bridge/
 
 # Local player-data runtime DB
 services/player-data/data/player-data.sqlite3
+services/game-server/logs/

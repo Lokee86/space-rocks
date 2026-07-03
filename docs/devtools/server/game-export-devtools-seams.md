@@ -662,4 +662,3 @@ The current implementation has both `devtools.ShouldHandleCommand` gate helpers 
 
 This document intentionally focuses on the game export seams. Individual command behavior, client controls, packet schema ownership, and overlay presentation belong in their own devtools, protocol, data, or client docs.
 
-

@@ -38,6 +38,7 @@ var (
 	networkLevel = new(slog.LevelVar)
 	roomsLevel   = new(slog.LevelVar)
 	serverLevel  = new(slog.LevelVar)
+	logFile      *os.File
 )
 
 var (
@@ -55,11 +56,9 @@ type CategoryLogger struct {
 
 func newCategoryLogger(name string, level *slog.LevelVar) CategoryLogger {
 	return CategoryLogger{
-		name:  name,
-		level: level,
-		logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: level,
-		})),
+		name:   name,
+		level:  level,
+		logger: slog.New(buildHandler(level)),
 	}
 }
 
@@ -87,15 +86,39 @@ func (logger CategoryLogger) args(args []any) []any {
 func init() {
 	level.Set(slog.LevelWarn)
 	configureCategoryLevels(slog.LevelWarn)
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: level,
-	})))
+	rebuildLoggers()
 }
 
 func Configure(configuredLevel string) {
 	defaultLevel := parseLevel(configuredLevel)
 	level.Set(defaultLevel)
 	configureCategoryLevels(defaultLevel)
+	rebuildLoggers()
+}
+
+func ConfigureFileOutput(baseDir string, prefix string) (string, error) {
+	file, path, err := openSequentialLogFile(baseDir, prefix)
+	if err != nil {
+		return "", err
+	}
+
+	if err := closeLogFile(); err != nil {
+		file.Close()
+		return "", err
+	}
+
+	logFile = file
+	rebuildLoggers()
+	return path, nil
+}
+
+func CloseFileOutput() error {
+	if err := closeLogFile(); err != nil {
+		return err
+	}
+
+	rebuildLoggers()
+	return nil
 }
 
 func Debug(message string, args ...any) {
@@ -145,4 +168,38 @@ func parseLevelOrDefault(configuredLevel string, defaultLevel slog.Level) slog.L
 	}
 
 	return parseLevel(configuredLevel)
+}
+
+func rebuildLoggers() {
+	slog.SetDefault(slog.New(buildHandler(level)))
+	Game = newCategoryLogger(CategoryGame, gameLevel)
+	Network = newCategoryLogger(CategoryNetwork, networkLevel)
+	Rooms = newCategoryLogger(CategoryRooms, roomsLevel)
+	Server = newCategoryLogger(CategoryServer, serverLevel)
+}
+
+func buildHandler(level *slog.LevelVar) slog.Handler {
+	textHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: level,
+	})
+	if logFile == nil {
+		return textHandler
+	}
+
+	jsonHandler := slog.NewJSONHandler(logFile, &slog.HandlerOptions{
+		Level: level,
+	})
+	return fanoutHandler{
+		handlers: []slog.Handler{textHandler, jsonHandler},
+	}
+}
+
+func closeLogFile() error {
+	if logFile == nil {
+		return nil
+	}
+
+	file := logFile
+	logFile = nil
+	return file.Close()
 }

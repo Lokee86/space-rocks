@@ -599,4 +599,3 @@ go test -buildvcs=false ./internal/game ./tests/game
 Legacy architecture notes correctly identified that `Game.Start()` launches a server-authoritative simulation loop and that `Game.Step()` centralizes phase order while delegating individual phases to focused helpers. This document narrows that legacy material to the current game-server runtime implementation.
 
 The phase order is a service implementation fact. Any change to `Game.Step` order should update this document and any related docs that reference collision order, weapon fire timing, pickup collection timing, radial effects, lane-native realtime projection, or match-over behavior.
-

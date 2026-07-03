@@ -705,4 +705,3 @@ Legacy devtools notes grouped client hotkeys, client overlays, server toggles, t
 
 World freeze should be described as granular simulation gating. It is useful for debugging asteroid movement, bullet motion, spawning, and collision passes, but it should not be mistaken for match pause or full simulation suspension.
 
-

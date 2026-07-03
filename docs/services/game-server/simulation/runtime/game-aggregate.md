@@ -667,4 +667,3 @@ Expected behavioral coverage includes:
 The legacy architecture material's useful current facts are that gameplay state is server-authoritative, `Game.Start()` launches the simulation loop at the server tick rate, `Game.Step()` is the same-package simulation coordinator, and `pendingPresentationEvents` is a packet-facing presentation queue rather than the domain event queue.
 
 This document intentionally does not detail the full simulation phase order, lane-native realtime field projection, entity store shape, or presentation event queue mechanics. Those are adjacent runtime docs so the aggregate doc can stay focused on root ownership, lifecycle, synchronization, and service surfaces.
-

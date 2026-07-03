@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane packets are now the active runtime model, and remaining telemetry and logging work stays deferred until it is useful during P2 validation or after packet-size reduction.
+The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane-native runtime delivery already exists, client and server local JSONL logging already exist, active debug logs can validate encoded bytes, and no-op or scheduler-ish packet log spam has been removed from the active output path. Remaining telemetry and logging work should happen only when it is useful during P2 validation or later diagnostics.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -147,23 +147,22 @@ This phase is measurement and diagnostics, not optimization.
 ### Scope
 
 ```text
-gameplay packet byte measurement
-large-packet diagnostics
-slow-write diagnostics
-contributor counts
-client inbound message byte tracking
-devtools packet telemetry display
-packet-pressure smoke scenario
+lane-native runtime packet evidence
+server local JSONL logging
+client local JSONL logging
+encoded-byte validation from active debug logs
+devtools packet telemetry display when useful
+packet-pressure smoke scenario when useful for P2 validation
 ```
 
 ### Completion Criteria
 
 ```text
-large gameplay packets explain their contributors
-slow writes include useful route context
-client and server packet metrics can be compared
-World Telemetry Overlay shows packet pressure
-manual smoke can demonstrate packet growth as entities increase
+lane-native runtime evidence is usable for P2 validation
+server and client local JSONL logging are available for local diagnostic capture
+active debug logs can validate encoded bytes
+no-op realtime summary spam and scheduler-ish log spam are removed from the active output path
+manual smoke can still demonstrate packet growth as entities increase when needed
 no packet format has changed
 no gameplay behavior has changed
 ```
@@ -782,5 +781,4 @@ This roadmap is not a feature backlog.
 It should remain a sequencing and dependency document. Detailed scope belongs in the owner documents for each domain, service, protocol, data, or devtools area.
 
 When implementation changes make a planned system current, update the relevant current documentation instead of expanding this roadmap with implementation details.
-
 

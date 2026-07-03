@@ -19,16 +19,6 @@ func logLaneMetrics(records []PacketMetricRecord, roomID string, playerID string
 			"packet_family", record.PacketFamily,
 			"lane", record.Lane,
 			"bytes", record.Bytes,
-			"record_count", record.RecordCount,
-			"create_count", record.CreateCount,
-			"update_count", record.UpdateCount,
-			"delete_count", record.DeleteCount,
-			"priority_band", record.PriorityBand,
-			"deferred_count", record.DeferredCount,
-			"superseded_count", record.SupersededCount,
-			"required_count", record.RequiredCount,
-			"budget_target", record.BudgetTarget,
-			"budget_status", record.BudgetStatus,
 		)
 	}
 }

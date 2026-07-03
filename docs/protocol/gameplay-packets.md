@@ -214,9 +214,9 @@ packet-family routing order
 server packet JSON encode/decode handoff
 session current room and current game player context
 lane packet write timing
-packet metric logging/write observations
+encoded packet write observations, debug packet wire logs, and non-empty per-tick write summaries
 ```
-Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, and current byte-budget planning inputs; networking writes and observes encoded results.
+Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, and current byte-budget planning inputs; networking writes encoded results and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
 
 ### Game-server simulation
 
@@ -288,6 +288,7 @@ services/game-server/internal/protocol/realtime/active.go
 services/game-server/internal/networking/packetmetrics/
 services/game-server/internal/game/
 ```
+`packetmetrics/` remains a helper/support seam here and should not be read as current `realtime lane metric` log output.
 
 ## Related docs
 

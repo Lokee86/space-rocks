@@ -12,15 +12,16 @@ It explains how the game server emits structured runtime logs, how log levels ar
 
 Game-server logging is implemented as a small internal wrapper around Go `log/slog`.
 
-The logging package gives game-server code a shared way to report runtime behavior without scattering raw `slog`, `log`, or `fmt.Println` calls through service code. It writes text logs to stderr and supports category-specific loggers so noisy subsystems can be enabled independently during debugging.
+The logging package gives game-server code a shared way to report runtime behavior without scattering raw `slog`, `log`, or `fmt.Println` calls through service code. It keeps text logs on stderr, can fan structured output to a sequential JSONL file, and supports category-specific loggers so noisy subsystems can be enabled independently during debugging.
 
-The current flow is:
+The current startup-enabled flow is:
 
 ```text
 game-server runtime event
 -> category logger
--> slog text handler
--> stderr
+-> fanout handler
+-> slog text handler -> stderr
+-> slog JSON handler -> active JSONL file
 ```
 
 Logging is observational. It should explain what happened in the process, connection, room, or simulation, but it must not change gameplay state, packet routing, persistence, or auth behavior.
@@ -40,9 +41,9 @@ Logging and diagnostics own the game-server side of:
 * Environment-based log-level configuration.
 * Shared log field names for common diagnostic dimensions.
 * Runtime diagnostics for recoverable errors, lifecycle events, and unusual conditions.
-* Packet-size and slow-write warnings for gameplay lane packets.
 * WebSocket close classification for expected versus unexpected read/write failures.
 * Keeping logs useful without enabling per-tick or per-entity output by default.
+* Optional structured JSONL file output for runtime diagnostics.
 
 ## Does not own
 
@@ -122,6 +123,42 @@ logging.Error(...)
 ```
 
 New game-server code should prefer category loggers because category loggers can be filtered independently.
+
+### File output behavior
+
+Game-server startup now enables sequential structured file output with:
+
+```go
+ConfigureFileOutput("logs/game-server", "game-server")
+```
+
+When the server runs from `services/game-server`, that path resolves relative to `services/game-server`.
+
+Current file naming is sequential JSONL:
+
+```text
+logs/game-server/game-server-000001.jsonl
+logs/game-server/game-server-000002.jsonl
+```
+
+At runtime, file output fans logs to:
+
+* the `slog` text handler on stderr
+* the `slog` JSON handler for the active JSONL file
+
+Current logging package file-output helpers are:
+
+```go
+ConfigureFileOutput(baseDir, prefix) (string, error)
+CloseFileOutput() error
+```
+
+Behavior notes:
+
+* `ConfigureFileOutput` opens the next sequential JSONL file under the requested base directory and returns the configured path on success.
+* `CloseFileOutput` closes the active file output during shutdown or cleanup.
+* File-output setup failure does not stop server startup.
+* File rotation, aggregation, and retention policy are not owned by this package.
 
 ### Environment configuration
 
@@ -211,6 +248,13 @@ cd services/game-server
 LOG_LEVEL=off LOG_NETWORK=warn go run ./cmd/game-server
 ```
 
+Startup file-output status is logged through the existing logging flow:
+
+* success log message: `server structured log file configured`
+* success field: `path`
+* failure log message: `server structured log file unavailable`
+* failure field: `error`
+
 ## Log categories
 
 ### Server
@@ -244,8 +288,7 @@ Current examples include:
 * pause-state marshal failure
 * telemetry pong encode failure
 * debug packet encode/load failure
-* gameplay lane packet too large
-* gameplay lane packet write too slow
+* debug realtime packet write diagnostics when `LOG_NETWORK=debug`
 
 This category should not own gameplay decisions. It should report network-facing symptoms and include room, player, session, and remote address fields where available.
 
@@ -369,7 +412,7 @@ For normal lifecycle events, prefer `Debug` unless the event is important during
 
 Logging and diagnostics does not own durable data.
 
-It emits transient process output to stderr.
+It emits transient process output to stderr and, when startup file output is available, to the active JSONL file.
 
 It may include identifiers and runtime facts that help correlate behavior:
 
@@ -387,7 +430,7 @@ It may include identifiers and runtime facts that help correlate behavior:
 
 It must not persist logs, mutate player data, or become the source of truth for gameplay or account state.
 
-If Space Rocks later adds durable telemetry, tracing, metrics, or log aggregation, that should be documented as a separate integration or observability system.
+If Space Rocks later adds durable telemetry, tracing, metrics, log shipping, or retention management, that should be documented as a separate integration or observability system.
 
 ## Diagnostic policy
 
@@ -401,11 +444,11 @@ Use logs for:
 * expected versus unexpected socket closes
 * malformed packet input
 * packet encode or marshal failures
-* packet size or slow-write warnings
 * room lifecycle transitions
 * match result reporting lifecycle
 * player spawn, respawn, death, and game-over transitions
 * devtools effects applied through real gameplay seams
+* non-empty realtime packet write summaries when network debug logging is intentionally enabled
 
 Avoid logs for:
 
@@ -413,7 +456,6 @@ Avoid logs for:
 * every player position update
 * every physics step
 * every collision candidate
-* every successful lane packet write
 * every successful input packet
 * every asteroid spawn candidate
 * broad packet dumps
@@ -421,12 +463,54 @@ Avoid logs for:
 
 Logs should make production and development failures easier to diagnose without drowning normal gameplay output.
 
+## Current realtime packet debug logs
+
+Realtime packet debug output is currently focused on written gameplay packets only, and only when network debug logging is enabled.
+
+Current active debug messages:
+
+* `lane protocol gameplay wire packet written` records each written gameplay wire packet.
+* `lane protocol gameplay written` records a non-empty per-tick gameplay write summary.
+
+`lane protocol gameplay wire packet written` is debug-only and useful for per-packet inspection. Useful fields include:
+
+```text
+wire_type
+candidate_lane
+candidate_kind
+wire_lane
+sequence
+baseline_id
+snapshot_id
+snapshot_kind
+encoded_bytes
+```
+
+`lane protocol gameplay written` is debug-only and emitted only when at least one packet was written for the tick. Useful fields include:
+
+```text
+lane_packet_families
+baseline_full_count
+event_batch_written
+event_batch_drained_count
+packet_count
+encoded_bytes
+```
+
+Current behavior notes:
+
+* no-op per-tick summaries are suppressed
+* `realtime lane metric` is not current runtime output
+* scheduler, budget, deferred, superseded, and CRUD-count fields are intentionally not emitted right now
+* current debug output is diagnostic only; it does not imply packet-budget enforcement, record-level prioritization, or cross-tick replay or supersession behavior
+
 ## Code map
 
 Primary implementation files:
 
 ```text
 services/game-server/internal/logging/logger.go
+services/game-server/internal/logging/file_output.go
 services/game-server/cmd/game-server/main.go
 services/game-server/cmd/game-server/auth_config.go
 ```
@@ -447,7 +531,7 @@ Representative diagnostic helpers:
 ```text
 services/game-server/internal/networking/websocket_close_logging.go
 services/game-server/internal/networking/websocket_read.go
-services/game-server/internal/networking/outbound/gameplay_state_metrics.go
+services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/rooms/lifecycle_tick.go
 ```
 
@@ -474,9 +558,16 @@ client/
 
 ## Tests
 
-There are no dedicated tests for `services/game-server/internal/logging/logger.go` in the current tree.
+The logging package now has focused file-output and handler tests in the current tree.
 
-Current verification is mostly indirect through normal game-server tests and manual environment checks.
+Current dedicated logging tests include:
+
+```text
+services/game-server/internal/logging/file_output_test.go
+services/game-server/internal/logging/fanout_handler_test.go
+```
+
+Broader verification still includes normal game-server tests and manual environment checks.
 
 Relevant test areas include:
 
@@ -513,7 +604,7 @@ cd services/game-server
 LOG_LEVEL=warn LOG_NETWORK=debug go run ./cmd/game-server
 ```
 
-Expected output is `slog` text output on stderr. Category logs include a `category` field.
+Expected stderr output is `slog` text records with `category` fields, and when file output is available the same log stream also writes structured JSON records to the active sequential JSONL file.
 
 ## Related docs
 
@@ -534,4 +625,4 @@ Expected output is `slog` text output on stderr. Category logs include a `catego
 
 The current logging implementation is intentionally small. It should remain a thin service diagnostic layer until the game server needs a durable observability backend.
 
-The old legacy server logging notes described the same core design, but current implementation has additional call sites for player-data initialization, auth verifier setup, match-result reporting lifecycle, telemetry pong encoding failures, and gameplay lane packet size/write-duration diagnostics.
+The old legacy server logging notes described the same core design, but current implementation now includes startup-enabled JSONL file fanout, focused file-output tests, and cleaned realtime gameplay packet debug output alongside the existing player-data, auth verifier, match-result, and transport diagnostics.

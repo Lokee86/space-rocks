@@ -1,5 +1,7 @@
 # Realtime Compact Wire Mapping
 
+Parent index: [Game Server Networking](./!INDEX.md)
+
 This file is hand-authored because it defines the compact wire alias contract.
 It is not generated from packet SSoT.
 Do not reconcile compact aliases from raw packet struct names.

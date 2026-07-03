@@ -212,4 +212,3 @@ client/scripts/logging/logger.gd
 ## Notes
 
 This document captures the current client logging helper behavior only. It does not define server logging policy, packet metrics, or telemetry transport behavior. For practical log-file lookup and focused test guidance, see [Developer Guide](../../developer.md) and [Agent Testing](../../agent/testing.md).
-

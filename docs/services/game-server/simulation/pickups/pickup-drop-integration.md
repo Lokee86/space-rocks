@@ -561,4 +561,3 @@ Asteroid variant source data includes a `drop_table` field, and generated server
 The current `pickup_dropped` event projection records the table id as `basicasteroids` from the integration helper. The drop result also carries a table id, but the current event construction does not read it from the result.
 
 The current drop-table generated output is Go-only. Drop tables are not generated into client constants or packet outputs.
-

@@ -473,4 +473,3 @@ The current debug respawn command uses safe server-selected respawn placement. I
 The server-side force-respawn camera path uses a dummy 1280 by 720 camera config when it must create a missing camera view. Normal gameplay respawn uses the existing player camera view and preserves valid client viewport configuration through `setPlayerCameraViewLocked`.
 
 Earlier legacy notes described respawn tools as using the existing per-player respawn guards. Current code uses a debug-specific force-respawn path instead: active players are ignored, invalid targets are ignored, and non-active sessions are recreated through the devtools export seam.
-

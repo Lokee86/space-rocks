@@ -634,4 +634,3 @@ Lane routing and presentation fanout are separate boundaries. `RealtimeRouter` o
 Telemetry pong is routed through the same inbound dispatcher but consumed directly by telemetry context rather than through `SessionNetworkController`.
 
 Gameplay packet acceptance is intentionally not handled by the router. The router classifies packets; `GameplaySessionController` decides whether gameplay packets are currently accepted.
-

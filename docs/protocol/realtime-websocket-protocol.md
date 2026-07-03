@@ -527,6 +527,22 @@ event_batch = one candidate
 The active path does not currently split state-lane deltas into selected record or field sub-packets.
 Byte estimates are advisory and are not codec-accurate.
 Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
+### Runtime observability note
+
+Current runtime debug observability is intentionally narrow:
+
+```text
+per-packet debug logs
+= encoded packet write observations including encoded_bytes
+
+non-empty per-tick debug summaries
+= packet_count plus total encoded_bytes for ticks that actually wrote packets
+```
+
+Current runtime does not emit `realtime lane metric` logs or scheduler, budget, deferred, superseded, or record-level counter fields as active protocol log output.
+
+Byte estimates in planning and scheduling remain advisory and are not codec-accurate. Packet budget enforcement and record-level prioritization remain future or unfinished work. The active path still does not split state-lane deltas into selected record or field sub-packets.
+
 ## Server inbound routing order
 
 The server inbound routing order is:
@@ -1106,7 +1122,7 @@ services/game-server/internal/devtools/packets_generated.go
 ```text
 services/game-server/internal/networking/outbound/server_message_writer.go
 services/game-server/internal/networking/outbound/gameplay_presentation.go
-services/game-server/internal/networking/outbound/gameplay_state_metrics.go
+services/game-server/internal/networking/packetmetrics/
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
 services/game-server/internal/networking/room_snapshot.go

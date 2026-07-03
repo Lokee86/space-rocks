@@ -626,4 +626,3 @@ go test -buildvcs=false ./tests/game -run 'Debug.*Freeze|PlayerFrozen'
 Suspended players still remain active player entities unless another lifecycle path removes them. Pause is not the same as death, pending despawn, respawn cooldown, or elimination.
 
 The movement helper clears input while movement is blocked, but pausing also clears input immediately at the transition. This duplication is intentional defense against stale input from both the transition and later simulation ticks.
-

@@ -424,4 +424,3 @@ The current effect system is intentionally narrow. It supports lives and runtime
 The torpedo pickup currently changes the active runtime ship, not durable player inventory or future loadout state. Future loadout or inventory work should not be documented here as current behavior until implemented.
 
 The current resolver uses code-defined pickup-type mappings. If pickup effect metadata later becomes fully data-driven, that belongs in the data pipeline documentation as well as this service boundary.
-

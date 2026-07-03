@@ -431,4 +431,3 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 Legacy documentation supplied two still-current ownership rules: the client does not own authoritative match lifecycle, and WebSocket connection, room membership, and active gameplay participation are separate states.
 
 Room game-over state and local player elimination are different concepts. The room reaches `GameOver` only when the server room lifecycle observes that the authoritative game match decision is complete.
-

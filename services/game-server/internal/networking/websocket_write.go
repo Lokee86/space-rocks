@@ -117,19 +117,18 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		}
 	}
 
-	packetmetrics.LogSentLaneMetrics(result.MetricSummaries, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+	if len(result.MetricSummaries) == 0 && result.TotalEncodedBytes == 0 {
+		return true
+	}
+
 	logging.Network.Debug("lane protocol gameplay written",
 		logging.FieldRoomID, session.currentRoomID,
 		logging.FieldPlayerID, session.currentGamePlayerID,
 		logging.FieldRemoteAddr, remoteAddr,
 		"lane_packet_families", lanePacketFamilySummary(result.MetricSummaries),
 		"baseline_full_count", countLaneCandidateKinds(result.SelectedCandidates, realtime.RealtimeLaneCandidateKindFull),
-		"baseline_chunk_count", 0,
-		"delta_blocked_count", len(result.SendPlan.Deferred),
 		"event_batch_written", len(result.EventBatchEventIDs) > 0,
 		"event_batch_drained_count", drainedEventCount,
-		"candidate_count", len(result.Candidates),
-		"included_count", len(result.SelectedCandidates),
 		"packet_count", len(result.MetricSummaries),
 		"encoded_bytes", result.TotalEncodedBytes,
 	)

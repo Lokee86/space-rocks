@@ -142,4 +142,3 @@ Future packetcodec and transport evolution must preserve these ownership seams.
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.
 
-

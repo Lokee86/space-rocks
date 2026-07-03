@@ -531,7 +531,7 @@ Room and gameplay request rejection does not close the WebSocket by itself. Reje
 
 ## Observability
 
-The session lifecycle emits networking and room diagnostics for:
+The session lifecycle emits transport and room-lifecycle diagnostics for:
 
 ```text
 websocket upgrade failed
@@ -550,7 +550,7 @@ room game-over lifecycle advanced; reporting match result
 
 Transport diagnostics include remote address where available.
 
-Room/gameplay diagnostics may include:
+Room or gameplay lifecycle diagnostics may include:
 
 ```text
 room_id
@@ -560,6 +560,8 @@ current_room_id
 remaining_members
 reason
 ```
+
+Detailed active gameplay packet debug logs belong primarily in [Outbound Packet Routing](./outbound-message-flow.md). If this boundary mentions active packet output at all, current runtime behavior is that no-op realtime packet summaries are suppressed when no packets were written.
 
 Broader logging policy belongs in game-server observability documentation.
 
@@ -618,7 +620,7 @@ The session may carry identity and room references that downstream systems use f
 
 * `services/game-server/internal/networking/outbound/server_message_writer.go` - Writes encoded payloads as WebSocket text messages.
 * `services/game-server/internal/networking/websocket_write.go` - Runs outbound websocket writes for selected lane packets while `services/game-server/internal/protocol/realtime/` plans gameplay presentation output.
-* `services/game-server/internal/networking/packetmetrics/` - Tracks lane packet write metrics and slow-write diagnostics.
+* `services/game-server/internal/networking/packetmetrics/` - Supports packet observability helpers and related types used around outbound networking seams.
 * `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets.
 * `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go` - Builds encoded debug shape catalog packets.
 

@@ -605,4 +605,3 @@ Current handoff points:
 This document intentionally repeats only the basic setup and developer workflow information needed for onboarding.
 
 When a detail becomes large enough to explain implementation behavior, move it to the owning service, protocol, data, devtools, domain, systems-design, limits, or planning doc and link to it from here.
-

@@ -679,4 +679,3 @@ Legacy docs correctly described the intended boundary: devtools command handling
 The current implementation has both a generated devtools command type set and separate inbound devtools packet group switches. Keep those lists synchronized when adding command packets. Prefer a single build-gated command classifier for future routing cleanup.
 
 Do not treat outbound debug status or debug shape catalog packets as proof that a command succeeded. They are diagnostic outputs. Command confirmation should be inferred from authoritative game state, debug status state, entity sync, lifecycle/session read-models, or server logs during development.
-

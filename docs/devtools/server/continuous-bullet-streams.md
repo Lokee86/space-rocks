@@ -500,4 +500,3 @@ Legacy server devtools notes correctly identified that continuous bullet streams
 Legacy notes also claimed that clear bullets clears active persistent streams. The current inspected implementation does not do that. Current docs should describe the live implementation: clear bullets removes existing projectile entities, while stream runtime clearing exists as a package method but is not currently wired to the clear-bullets command.
 
 The current `DefaultRuntime` is package-level stream runtime state. Stream records carry owner player ID, origin, direction, and cooldown, but not a room ID or game ID. If concurrent multi-room stream behavior becomes important, stream ownership should be revisited before treating streams as room-scoped tooling.
-

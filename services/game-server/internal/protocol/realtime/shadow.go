@@ -26,7 +26,7 @@ func BuildShadowRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 		}
 	}
 
-	metricRecord := prepared.SendPlan.Summary.ToPacketMetricRecord("shadow", LaneWorld, "unspecified", HardCapBytes, "shadow")
+	metricRecord := prepared.SendPlan.Summary.ToPacketMetricRecord("shadow", LaneWorld)
 	totalEncodedBytes := 0
 	for _, recordedBytes := range encodedBytes {
 		totalEncodedBytes += recordedBytes
@@ -50,7 +50,7 @@ func BuildShadowRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 func ShadowLaneMetricRecords(result ShadowRealtimeResult) []packetmetrics.PacketMetricRecord {
 	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.Candidates))
 	for _, candidate := range result.Candidates {
-		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane, "unspecified", HardCapBytes, "shadow")
+		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane)
 		record.Bytes = result.EncodedBytes[candidate.Lane]
 		records = append(records, record)
 	}
@@ -61,9 +61,6 @@ func ShadowRealtimeSummaryFields(result ShadowRealtimeResult) []any {
 	fields := []any{
 		"lane_packet_families", laneFamilySummary(result.PlannedRecords),
 		"encoded_bytes", result.TotalEncodedBytes,
-		"included_count", len(result.SendPlan.Included),
-		"deferred_count", len(result.SendPlan.Deferred),
-		"superseded_count", result.SendPlan.Summary.SupersededCount,
 	}
 	if pendingEvents := len(result.Snapshot.PendingEvents); pendingEvents > 0 {
 		fields = append(fields, "event_batch_count", pendingEvents)

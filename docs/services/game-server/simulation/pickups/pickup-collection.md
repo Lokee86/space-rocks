@@ -615,4 +615,3 @@ The collection event position currently comes from the pickup position stored in
 The pickup collision fact stores an impact position, but the current collection adapter does not use that impact position when recording pickup collection events.
 
 Pickup collection currently allows only one collected pickup per player per collision pass because the player loop breaks after the first detected pickup collision.
-

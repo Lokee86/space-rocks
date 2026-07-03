@@ -25,7 +25,8 @@ Current high-level startup flow:
 
 ```text
 main()
-  configure logging
+  configure logging levels
+  configure sequential JSONL file logging
   create HTTP mux
   create room manager
   defer room manager StopAll
@@ -53,7 +54,8 @@ Supporting service roots:
 
 The game-server startup boundary owns:
 
-* configuring game-server logging from environment variables
+* configuring game-server logging levels from environment variables
+* configuring sequential JSONL diagnostic file output
 * creating the process HTTP mux
 * creating the room manager
 * registering process shutdown cleanup through `defer rooms.StopAll()`
@@ -106,7 +108,7 @@ The game server remains the realtime gameplay authority. Player-data remains the
 
 ### Logging configuration
 
-Startup begins by configuring logging:
+Startup begins by configuring logging levels:
 
 ```go
 logging.Configure(os.Getenv(logging.EnvGlobalLevel))
@@ -121,7 +123,33 @@ LOG_ROOMS
 LOG_SERVER
 ```
 
-The default level is `warn`. The `server starting` event is logged through `logging.Server.Info`, so it is visible only when server or global logging allows info-level output.
+The default level is `warn`. The `server starting` event is logged through `logging.Server.Info`, so it is visible only when `LOG_SERVER=info` or `LOG_LEVEL=info` enables info-level output.
+
+After level configuration, startup enables sequential structured file output:
+
+```go
+logging.ConfigureFileOutput("logs/game-server", "game-server")
+```
+
+When the server runs from `services/game-server`, the JSONL path is relative to that module directory.
+
+Current file naming is sequential:
+
+```text
+logs/game-server/game-server-000001.jsonl
+logs/game-server/game-server-000002.jsonl
+```
+
+Startup logs file-output status through the existing logging flow:
+
+* success log message: `server structured log file configured`
+* success field: `path`
+* failure log message: `server structured log file unavailable`
+* failure field: `error`
+
+File-output failure is diagnostic degradation, not startup failure. Startup continues serving with stderr text logging even when JSONL file output is unavailable.
+
+Startup owns wiring this behavior. The `internal/logging` package owns file creation, fanout, and handler internals.
 
 ### HTTP mux creation
 
@@ -372,7 +400,8 @@ The game-server process owns:
 * the HTTP mux
 * room manager runtime state
 * WebSocket runtime state after sessions connect
-* process-local logging configuration
+* process-local logging level configuration
+* process-local JSONL diagnostic file-output wiring
 * the injected match-result reporter dependency
 
 ### Player-data-owned runtime state
@@ -432,6 +461,12 @@ Startup is tolerant for missing Rails player-data backing:
 missing PLAYER_DATA_RAILS_BASE_URL -> player-data uses memory account store
 ```
 
+Startup is also tolerant for structured log file setup failure:
+
+```text
+logging file-output setup failure -> log diagnostic degradation and continue startup
+```
+
 Startup behavior should not be confused with request-time behavior. A process can start successfully while later requests fail because auth verification, local profiles, or backing stores are unavailable for that request.
 
 ## Code map
@@ -447,6 +482,8 @@ Primary startup files:
 Game-server dependencies constructed during startup:
 
 * `services/game-server/internal/logging/logger.go`
+* `services/game-server/internal/logging/file_output.go`
+* `services/game-server/internal/logging/fanout_handler.go`
 * `services/game-server/internal/networking/rooms.go`
 * `services/game-server/internal/networking/websocket.go`
 * `services/game-server/internal/authclient/client.go`
