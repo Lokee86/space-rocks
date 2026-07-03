@@ -51,9 +51,18 @@
   line-height: 1.55;
 }
 
-.headerDiscordLink :global(a[aria-label="Discord"]):hover,
-.headerDiscordLink :global(a[aria-label="Discord"]):focus-visible {
-  color: #00e5ff;
+.headerDiscordLink :global(a[aria-label="Discord"] img),
+.headerDiscordLink :global(a[aria-label="Discord"] picture > img) {
+  transition: filter 140ms ease;
+}
+
+.headerDiscordLink :global(a[aria-label="Discord"]):hover img,
+.headerDiscordLink :global(a[aria-label="Discord"]):focus-visible img,
+.headerDiscordLink :global(a[aria-label="Discord"]):hover picture > img,
+.headerDiscordLink :global(a[aria-label="Discord"]):focus-visible picture > img {
+  filter:
+    drop-shadow(0 0 8px #00e5ff)
+    drop-shadow(0 0 16px rgba(0, 229, 255, 0.65));
 }
 
 .headerDiscordLink :global(a[aria-label="Discord"]):focus-visible {
