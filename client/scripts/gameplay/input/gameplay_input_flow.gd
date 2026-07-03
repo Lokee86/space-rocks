@@ -32,17 +32,19 @@ func process(required_lane_baselines_synced: bool) -> void:
 	var input_packet = player.get_input_packet()
 	if !_logged_input_packet:
 		_logged_input_packet = true
-		ClientLogger.network_info(
-			"first input packet sent: type=%s forward=%s back=%s left=%s right=%s primary_fire=%s secondary_fire=%s" % [
-				str(input_packet.get("type", "")),
-				str(bool(input_packet.get("forward", false))),
-				str(bool(input_packet.get("back", false))),
-				str(bool(input_packet.get("left", false))),
-				str(bool(input_packet.get("right", false))),
-				str(bool(input_packet.get("primary_fire", false))),
-				str(bool(input_packet.get("secondary_fire", false))),
-			]
+		ClientLogger.network_event(
+			ClientLogger.LEVEL_INFO,
+			"first_input_packet_sent",
+			"First input packet sent",
+			{
+				"packet_type": str(input_packet.get("type", "")),
+				"forward": bool(input_packet.get("forward", false)),
+				"back": bool(input_packet.get("back", false)),
+				"left": bool(input_packet.get("left", false)),
+				"right": bool(input_packet.get("right", false)),
+				"primary_fire": bool(input_packet.get("primary_fire", false)),
+				"secondary_fire": bool(input_packet.get("secondary_fire", false)),
+			}
 		)
 
 	connection_service.send_input_packet(input_packet)
-

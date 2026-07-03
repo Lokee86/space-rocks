@@ -47,6 +47,10 @@ var menu_flow_controller
 var multiplayer_entry_flow
 
 func _ready() -> void:
+	if ClientLogger.configure_file_output("user://logs", "client"):
+		ClientLogger.shell_info("Client structured log file: %s" % ClientLogger.current_file_output_path())
+	else:
+		ClientLogger.shell_warn("Client structured log file output unavailable")
 
 	_log_shell_status("App entry booted")
 	get_tree().set_auto_accept_quit(false)

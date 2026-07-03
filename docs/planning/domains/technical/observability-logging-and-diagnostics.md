@@ -59,8 +59,9 @@ The game-server has structured/category logging through a Go `slog` wrapper. Cur
 * `rooms`
 * `game`
 
-The client has a logging helper with levels, categories, and helper methods. Current client categories include:
+The client has a GDScript logging helper with levels, categories, helper methods, stable structured records/events, text helpers that route through structured records internally, and optional local JSONL diagnostic file output. Current client categories include:
 
+* `default`
 * `shell`
 * `lobby`
 * `network`
@@ -70,7 +71,7 @@ The client has a logging helper with levels, categories, and helper methods. Cur
 * `input`
 * `packets`
 
-Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
+Current client logging does not provide a product log aggregation transport. Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
 
 ## Product Observability Model
 
@@ -951,17 +952,19 @@ Release-shaped builds should verify that:
 
 ## Implementation sequence
 
-1. Keep the existing structured logging helpers and category sets aligned with the shared observability model.
+1. Keep the existing client structured logging helper, level controls, category controls, and optional JSONL diagnostic file output aligned with the shared observability model.
 2. Define the product observability source of truth and its generated consumers.
-3. Make local packaged single-player participate in local diagnostic aggregation.
-4. Keep bug reports and copy diagnostics attached to the aggregated event stream when possible.
-5. Preserve redaction, audit-trigger, and retention rules before broadening incident tooling.
-6. Leave service-specific logging implementation in the owning service docs.
+3. Keep the client helper foundation current while product observability SSoT, generated observability constants, aggregation schemas, durable log aggregation, copy diagnostics bundles, audit-grade promotion, and release-shaped gates remain future work.
+4. Make local packaged single-player participate in local diagnostic aggregation.
+5. Keep bug reports and copy diagnostics attached to the aggregated event stream when possible.
+6. Preserve redaction, audit-trigger, and retention rules before broadening incident tooling.
+7. Leave service-specific logging implementation in the owning service docs.
 
 ## Related docs
 
 * [Planning](../../!INDEX.md)
 * [Development Roadmap](../../development-roadmap.md)
+* [Client Logging](../../../services/client/client-logging.md)
 * [Network Observability And Packet Budget](network-observability-and-packet-budget.md)
 * [Operational Readiness And Failure Modes](operational-readiness-and-failure-modes.md)
 * [Verification And Quality Gates](verification-and-quality-gates.md)
@@ -971,7 +974,6 @@ Release-shaped builds should verify that:
 * [Devtools And Telemetry](../../devtools/devtools-and-telemetry.md)
 * [Data Sync And SSoT Pipeline](../../../data/data-sync-and-ssot-pipeline.md)
 * [Game Server Logging And Diagnostics](../../../services/game-server/observability/logging-and-diagnostics.md)
-* [Client Logging](../../../services/client/client-logging.md)
 * [Abuse And Enforcement Admin](../platform/security-and-admin/abuse-and-enforcement-admin.md)
 * [Game Integrity Policy](../platform/security-and-admin/game-integrity-policy.md)
 
@@ -994,3 +996,7 @@ Release-shaped builds should verify that:
 ## Notes
 
 Preserve the detailed logging inventory and shared-field catalog; this doc should stay focused on policy, aggregation, diagnostics, and redaction.
+
+
+
+

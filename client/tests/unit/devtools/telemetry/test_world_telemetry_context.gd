@@ -17,6 +17,17 @@ class FakeConnectionService:
 	func is_server_connected() -> bool:
 		return true
 
+	func network_metrics_snapshot() -> Dictionary:
+		return {
+			"packets_in": 7,
+			"packets_out": 8,
+			"bytes_in": 700,
+			"bytes_out": 800,
+			"last_in_packet_bytes": 70,
+			"last_out_packet_bytes": 80,
+			"decode_failures": 2,
+		}
+
 
 func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 	var fake_connection := FakeConnectionService.new()
@@ -51,8 +62,7 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 		overlay_node.queue_free()
 
 
-
-func test_apply_gameplay_state_updates_lane_counts() -> void:
+func test_apply_gameplay_state_updates_lane_counts_and_merges_connection_network_metrics() -> void:
 	var fake_connection := FakeConnectionService.new()
 	var telemetry_context := WorldTelemetryContext.new()
 	telemetry_context.configure(fake_connection)
@@ -82,3 +92,10 @@ func test_apply_gameplay_state_updates_lane_counts() -> void:
 	assert_eq(snapshot["bullets"], 2)
 	assert_eq(snapshot["pickups"], 1)
 	assert_eq(snapshot["total_asteroids"], 7)
+	assert_eq(snapshot["packets_in"], 7)
+	assert_eq(snapshot["packets_out"], 8)
+	assert_eq(snapshot["bytes_in"], 700)
+	assert_eq(snapshot["bytes_out"], 800)
+	assert_eq(snapshot["last_in_packet_bytes"], 70)
+	assert_eq(snapshot["last_out_packet_bytes"], 80)
+	assert_eq(snapshot["decode_failures"], 2)

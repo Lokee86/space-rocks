@@ -246,6 +246,9 @@ godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://test
 
 A passing GUT run can still print Godot cleanup or ObjectDB warnings. Treat the run as passing when GUT reports that all tests passed.
 
+When client file logging is enabled, log files live under the Godot user-data location, not the repository root. `user://` resolves through Godot, so the normal folder name is affected by the project/app name, and `user://logs` is only the default base dir when file output has been enabled. Use `ClientLogger.current_file_output_path()` while file output is active to see the live path. GUT/headless tests may use a different temporary Godot user-data root than normal game runs, so treat local OS paths as Godot-resolved paths rather than hard-coded repo paths.
+
+
 Use Godot and the EngineForge bridge to inspect scene and UI state before guessing about node paths, tree shape, scene ownership, or editor state.
 
 ### Go
@@ -602,3 +605,4 @@ Current handoff points:
 This document intentionally repeats only the basic setup and developer workflow information needed for onboarding.
 
 When a detail becomes large enough to explain implementation behavior, move it to the owning service, protocol, data, devtools, domain, systems-design, limits, or planning doc and link to it from here.
+

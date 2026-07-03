@@ -68,7 +68,11 @@ func connect_to_server(url: String) -> Error:
 func reset_realtime_protocol_state() -> void:
 	realtime_router = RealtimeRouter.new()
 	_lane_route_log_emitted.clear()
-	ClientLogger.network_info("realtime protocol state reset")
+	ClientLogger.network_event(
+		ClientLogger.LEVEL_INFO,
+		"realtime_protocol_state_reset",
+		"Realtime protocol state reset"
+	)
 
 
 func is_server_connected() -> bool:
@@ -167,6 +171,12 @@ func send_return_to_lobby_request() -> void:
 		client_packet_sender.send_return_to_lobby_request()
 
 
+func network_metrics_snapshot() -> Dictionary:
+	if network_client != null and network_client.has_method("network_metrics_snapshot"):
+		return network_client.network_metrics_snapshot()
+	return {}
+
+
 func _connect_network_client_signals() -> void:
 	_connect_network_signal("connected_to_server", Callable(self, "_on_connected"))
 	_connect_network_signal("connection_closed", Callable(self, "_on_closed"))
@@ -220,7 +230,15 @@ func _route_gameplay_packet(packet: Dictionary) -> void:
 			var gameplay_readiness = realtime_router.get_gameplay_readiness()
 			if gameplay_readiness != null and gameplay_readiness.has_method("is_gameplay_ready"):
 				readiness = gameplay_readiness.is_gameplay_ready()
-		ClientLogger.network_info("lane packet routed: type=%s readiness=%s" % [packet_type, str(readiness)])
+		ClientLogger.network_event(
+			ClientLogger.LEVEL_INFO,
+			"lane_packet_routed",
+			"Lane packet routed",
+			{
+				"packet_type": packet_type,
+				"readiness": readiness,
+			}
+		)
 
 
 func _emit_gameplay_packet(packet: Dictionary) -> void:

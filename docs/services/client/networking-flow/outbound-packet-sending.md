@@ -27,6 +27,8 @@ client caller
 
 `ClientConnectionService` is the service-facing outbound facade used by session boot, lobby, gameplay, devtools, telemetry, and general client flows. `ClientPacketSender` owns focused outbound wrapper methods and delegates raw packet sending to `NetworkClient`. `NetworkClient` owns the final connection-state guard, JSON encoding, and WebSocket text send.
 
+Client logging mechanics are owned by [Client Logging](../client-logging.md). This doc only notes the current outbound diagnostic call sites on the packet-sending path.
+
 Some flows build generated packet dictionaries before reaching `ClientPacketSender`. Those flows call:
 
 ```text
@@ -35,7 +37,7 @@ ClientConnectionService.send_packet(packet)
 
 instead of a more specific wrapper method.
 
-The outbound send path is best-effort and non-queued. If the packet sender has no `NetworkClient`, or if the raw WebSocket is not open, the packet is not sent. If packet encoding fails, the client logs a warning and drops the packet.
+The outbound send path is best-effort and non-queued. If the packet sender has no `NetworkClient`, or if the raw WebSocket is not open, the packet is not sent. If packet encoding fails, the client emits a structured network warning event and drops the packet.
 
 The server remains authoritative for packet acceptance, room state, gameplay simulation, devtools effects, and durable results.
 
@@ -123,6 +125,8 @@ The facade is intentionally broader than one packet family because session, lobb
 
 `ClientPacketSender` owns the focused outbound wrapper layer.
 
+Logger mechanics belong to [Client Logging](../client-logging.md).
+
 It stores:
 
 ```text
@@ -144,6 +148,36 @@ send_input_packet(packet)
 
 `send_packet()` only checks that `network_client` exists. The final connected-state check belongs to `NetworkClient.send_raw_packet()`.
 
+`ClientPacketSender.send_respawn_request()` currently emits a structured network event once for the first respawn packet send marker:
+
+```text
+event: outbound_packet_sent_marker
+level: info
+category: network
+fields:
+  packet_type: respawn
+  source: client_packet_sender
+```
+
+The once-only respawn marker is diagnostic only and does not alter send behavior.
+
+`GameplayInputFlow.process(...)` currently emits a structured network event once for the first input packet marker:
+
+```text
+event: first_input_packet_sent
+level: info
+category: network
+fields:
+  packet_type
+  forward
+  back
+  left
+  right
+  primary_fire
+  secondary_fire
+```
+
+The input marker is once-only and diagnostic only. It does not change gameplay input sending.
 ### Packet-family builders
 
 Outbound packet construction is split by family:
@@ -190,6 +224,17 @@ socket.send_text(encoded wire message)
 ```
 
 The raw sender does not queue packets for later delivery.
+
+`NetworkClient` currently emits a structured network warning event for packet encode failures:
+
+```text
+event: packet_encode_failed
+level: warn
+category: network
+fields:
+  error
+  packet_type
+```
 
 ### Caller-owned packet construction
 
@@ -600,7 +645,7 @@ NetworkClient.send_raw_packet() while WebSocket is not open
 -> no-op
 
 PacketCodec.encode(packet) failure
--> network warning and no send
+-> structured network warning event and no send
 ```
 
 Outbound packets are not queued.
@@ -716,8 +761,9 @@ No focused `ClientPacketSender` unit test was found during this pass.
 * [Lobby Flow](../lobby-flow/!INDEX.md)
 * [Room Entry And Join Dialog](../lobby-flow/room-entry-and-join-dialog.md)
 * [Lobby Session And Presentation](../lobby-flow/lobby-session-and-presentation.md)
+* [Client Logging](../client-logging.md) - Client logger implementation and output behavior.
 * [Game Server](../../game-server/!INDEX.md)
-* [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md) - Realtime WebSocket protocol documentation.
+* [Realtime Websocket Protocol](../../../protocol/realtime-websocket-protocol.md) - Realtime Websocket protocol documentation.
 * [Gameplay Packets](../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
 * [Lobby Packets](../../../protocol/lobby-packets.md) - Lobby packet documentation.
 * [Devtools Packets](../../../devtools/design/devtools-packet-protocol.md) - Devtools packet protocol documentation.
@@ -728,3 +774,8 @@ No focused `ClientPacketSender` unit test was found during this pass.
 WebSocket packet schemas are sourced from `shared/packets/*.toml`, generated client packet helpers live under `client/scripts/generated/networking/packets/`, and client input and devtools send intent while server systems own authority.
 
 `ClientPacketSender` is not the only path that builds outbound packet dictionaries. Target selection, viewport config, and auth use generated helpers closer to their owning flows, then converge at the same raw send path.
+
+
+
+
+

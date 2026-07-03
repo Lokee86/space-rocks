@@ -169,7 +169,7 @@ If the local player still has lives, it updates HUD lives and moves the HUD into
 
 If local lives reach zero, it delegates final local elimination to `MatchEndFlow` instead of directly showing match results.
 
-`GameplayRespawnFlow` uses `GameplayHudFlow.can_request_respawn()` before sending a respawn request.
+`GameplayRespawnFlow` uses `GameplayHudFlow.can_request_respawn()` before sending a respawn request. The respawn path currently emits three structured network diagnostics through [Client Logging](./client-logging.md): `respawn_request_send_started` and `respawn_awaiting_confirmation_marked` at info level, and `respawn_request_blocked` at info level when a local guard blocks the request. These diagnostics are one-shot or guarded by local flow state and do not change respawn permission, gameplay readiness, or server authority.
 
 `GameplayAliveRestoreFlow` owns stale death or respawn restoration. `GameplayAliveRestoreFlow.apply_lane_state(...)` clears stale death presentation only after lane state proves the local player is active again with a live ship.
 

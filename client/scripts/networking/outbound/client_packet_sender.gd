@@ -32,7 +32,15 @@ func send_respawn_request() -> void:
 	if network_client != null:
 		if !_logged_respawn_packet_send:
 			_logged_respawn_packet_send = true
-			ClientLogger.network_info("respawn packet sent: type=respawn")
+			ClientLogger.network_event(
+				ClientLogger.LEVEL_INFO,
+				"outbound_packet_sent_marker",
+				"Outbound packet sent marker",
+				{
+					"packet_type": "respawn",
+					"source": "client_packet_sender",
+				}
+			)
 		network_client.send_raw_packet(GameplayClientPackets.respawn_packet())
 
 

@@ -180,6 +180,19 @@ _route_gameplay_packet(packet)
 
 This keeps callers attached to one public networking facade instead of directly depending on `NetworkClient` or `ServerPacketDispatcher`.
 
+`ClientConnectionService` currently emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
+
+```text
+event: lane_packet_routed
+level: info
+category: network
+fields:
+  packet_type
+  readiness
+```
+
+The once-per-packet-type guard remains diagnostic-only. It does not affect routing or lane state.
+
 ### Websocket auth result cache
 
 `ClientConnectionService` handles `authenticate_result` specially because websocket auth state is connection-level state.
@@ -419,7 +432,7 @@ telemetry_pong
 
 unmatched packet type
 -> unknown_packet_received
--> SessionNetworkController logs unknown packet
+-> SessionNetworkController logs unknown packet through its configured logger callable
 ```
 
 ### Auth gate interaction
@@ -427,6 +440,8 @@ unmatched packet type
 Inbound routing participates in multiplayer boot gating only by delivering connection and auth signals.
 
 Current multiplayer boot behavior is owned by `SessionNetworkController` and `ShellBootFlow`:
+
+Logger mechanics belong to [Client Logging](../client-logging.md). `AppEntry` wires the session network controller logger to `_log_shell_status()`, which forwards to `ClientLogger.shell_info(...)`.
 
 ```text
 connected + pending multiplayer request + websocket auth already authenticated
@@ -592,8 +607,9 @@ Current direct coverage for `ServerPacketRouter` and `ServerPacketDispatcher` is
 ## Related docs
 
 * [Networking Flow](./!INDEX.md)
-* [WebSocket Connection Lifecycle](websocket-connection-lifecycle.md) - Raw client WebSocket lifecycle and packet decode/encode boundary.
-* [Outbound Packet Sending](outbound-packet-sending.md) - Client outbound packet construction and send handoff.
+* [WebSocket Connection Lifecycle](websocket-connection-lifecycle.md) - Raw client WebSocket lifecycle, packet decode/encode logging facts, and transport warnings.
+* [Outbound Packet Sending](outbound-packet-sending.md)
+* [Client Logging](../client-logging.md) - Client logger implementation and output behavior.
 * [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)
 * [Room Session State](../app-shell-and-session/room-session-state.md)
 * [Auth Session Flow](../auth-session-flow.md)
@@ -618,3 +634,4 @@ Lane routing and presentation fanout are separate boundaries. `RealtimeRouter` o
 Telemetry pong is routed through the same inbound dispatcher but consumed directly by telemetry context rather than through `SessionNetworkController`.
 
 Gameplay packet acceptance is intentionally not handled by the router. The router classifies packets; `GameplaySessionController` decides whether gameplay packets are currently accepted.
+

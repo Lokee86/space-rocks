@@ -58,6 +58,10 @@ func telemetry_snapshot() -> Dictionary:
 		var world_packet_snapshot = overlay_flow.world_packet_metrics_snapshot()
 		for key in world_packet_snapshot.keys():
 			snapshot[key] = world_packet_snapshot[key]
+	if connection_service != null and connection_service.has_method("network_metrics_snapshot"):
+		var connection_network_snapshot = connection_service.network_metrics_snapshot()
+		for key in connection_network_snapshot.keys():
+			snapshot[key] = connection_network_snapshot[key]
 	return snapshot
 
 

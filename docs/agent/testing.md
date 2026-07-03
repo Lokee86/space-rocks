@@ -86,6 +86,9 @@ Run client GUT tests, if the `godot` CLI is available:
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
 
+
+For focused client logger verification, use `client/tests/unit/test_client_logger.gd`. It uses `user://logger_test_output` with the `client-test` prefix and cleans up its own JSONL files, so it is a good place to confirm file-output and formatting behavior without broadening into a full client testing catalog.
+
 Run the client constants boundary scan:
 
 ```bash
@@ -220,3 +223,4 @@ Do not put test helpers in `client/scripts/`.
 Human-run checkpoint guidance stays here.
 
 Prompt/report expectations live in [Prompting And Reporting](./prompting-and-reporting.md).
+

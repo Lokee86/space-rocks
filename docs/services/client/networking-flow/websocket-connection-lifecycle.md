@@ -39,7 +39,7 @@ send websocket authenticate request after connection when an auth token exists
 clear websocket auth identity on close
 ```
 
-The lifecycle boundary stops when a decoded packet dictionary is emitted or dispatched. Packet-type routing belongs to [Inbound Packet Routing](inbound-packet-routing.md). Client packet helper families belong to [Outbound Packet Sending](outbound-packet-sending.md).
+The lifecycle boundary stops when a decoded packet dictionary is emitted or dispatched. Packet-type routing belongs to [Inbound Packet Routing](inbound-packet-routing.md). Client packet helper families belong to [Outbound Packet Sending](outbound-packet-sending.md). Client logging implementation behavior belongs to [Client Logging](../client-logging.md).
 
 ## Responsibilities
 
@@ -244,7 +244,19 @@ type must not be empty after trimming
 payload, when present, must be a Dictionary
 ```
 
-If decoding fails, `NetworkClient` logs a network warning and emits:
+If decoding fails, `NetworkClient` records the failure in runtime metrics and emits a structured network warning event through `ClientLogger`:
+
+```text
+event: packet_decode_failed
+level: warn
+category: network
+fields:
+  error
+  raw_bytes
+  raw_text_length
+```
+
+The same decode failure still emits:
 
 ```text
 packet_parse_failed(text)
@@ -258,7 +270,7 @@ packet_received(packet)
 
 `ClientConnectionService` forwards parse failures through its own `packet_parse_failed` signal.
 
-Decoded packets are dispatched by `ClientConnectionService._on_packet_received(packet)`, but packet classification and packet-type routing are owned by inbound packet routing, not by this lifecycle document.
+Decoded packets are dispatched by `ClientConnectionService._on_packet_received(packet)`, but packet classification and packet-type routing belong to inbound packet routing, not to this lifecycle document.
 
 ### Packet encode lifecycle
 
@@ -282,7 +294,18 @@ If the socket is open, the packet dictionary is passed to:
 PacketCodec.encode(packet)
 ```
 
-The current codec serializes the dictionary as JSON text. If encoding fails, `NetworkClient` logs a network warning and does not send. If encoding succeeds, the encoded wire message is sent through:
+The current codec serializes the dictionary as JSON text. If encoding fails, `NetworkClient` records the failure in runtime metrics and emits a structured network warning event through `ClientLogger`:
+
+```text
+event: packet_encode_failed
+level: warn
+category: network
+fields:
+  error
+  packet_type
+```
+
+If encoding succeeds, the encoded wire message is sent through:
 
 ```text
 socket.send_text(encode_result.wire_message)
@@ -429,10 +452,14 @@ The WebSocket transport lifecycle itself depends on Godot `WebSocketPeer` runtim
 - [Networking Flow](./!INDEX.md)
 - [Inbound Packet Routing](inbound-packet-routing.md) - Client inbound packet routing documentation.
 - [Outbound Packet Sending](outbound-packet-sending.md)
+- [Client Logging](../client-logging.md) - Client logger implementation and output behavior.
 - [Session Boot And Network Target](../app-shell-and-session/session-boot-and-network-target.md)
 - [Auth Session Flow](../auth-session-flow.md)
-- [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
-- [Packet Schema Pipeline](../../../data/packet-schemas.md)
+- [Realtime Websocket Protocol](../../../protocol/realtime-websocket-protocol.md)
+- [Gameplay Packets](../../../protocol/gameplay-packets.md)
+- [Lobby Packets](../../../protocol/lobby-packets.md)
+- [Devtools Packets](../../../devtools/design/devtools-packet-protocol.md)
+- [Packet Schema Pipeline](../../../data/packet-schemas.md) - shared packet schema and generated output documentation.
 
 ## Notes
 
@@ -441,3 +468,12 @@ The WebSocket transport lifecycle itself depends on Godot `WebSocketPeer` runtim
 A successful WebSocket connection is only transport readiness. Authentication, room membership, gameplay participation, and player authority are separate states.
 
 `PacketCodec` should stay small. If packet versioning, binary transport, compression, compatibility negotiation, or schema-level validation moves into the client codec, it should receive its own service or protocol document.
+
+`NetworkClient` records packet decode and encode failures in runtime metrics and reports them through structured `ClientLogger.network_event(...)` calls, but this document does not own the logger implementation details.
+
+`ClientConnectionService` currently uses structured `network_event(...)` logs for realtime protocol reset and lane packet routing diagnostics. `reset_realtime_protocol_state()` emits `realtime_protocol_state_reset` at info level in the network category. That event is diagnostic only and does not own realtime state reset behavior.
+
+`SessionNetworkController` still uses text-helper logging for some connection and packet parse lifecycle messages through its configured logger callable.
+
+This document describes where networking logs are emitted from current networking paths. Client logging implementation details belong to [Client Logging](../client-logging.md), packet schema details belong to protocol docs, and logs do not own packet routing or gameplay consequences.
+

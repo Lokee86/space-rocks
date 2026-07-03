@@ -38,14 +38,28 @@ func request_respawn(required_lane_baselines_synced: bool) -> void:
 
 	if !_logged_respawn_send:
 		_logged_respawn_send = true
-		ClientLogger.network_info("sending respawn request to network client")
+		ClientLogger.network_event(
+			ClientLogger.LEVEL_INFO,
+			"respawn_request_send_started",
+			"Respawn request send started",
+			{
+				"source": "gameplay_respawn_flow",
+			}
+		)
 	connection_service.send_respawn_request()
 	mark_awaiting_confirmation()
 
 
 func mark_awaiting_confirmation() -> void:
 	awaiting_respawn_confirmation = true
-	ClientLogger.network_info("respawn awaiting confirmation marked")
+	ClientLogger.network_event(
+		ClientLogger.LEVEL_INFO,
+		"respawn_awaiting_confirmation_marked",
+		"Respawn awaiting confirmation marked",
+		{
+			"source": "gameplay_respawn_flow",
+		}
+	)
 
 
 func clear_awaiting_confirmation() -> void:
@@ -89,4 +103,12 @@ func _log_respawn_blocked_once(reason: String) -> void:
 	if _logged_respawn_blocked.has(reason):
 		return
 	_logged_respawn_blocked[reason] = true
-	ClientLogger.network_info("respawn request blocked: %s" % reason)
+	ClientLogger.network_event(
+		ClientLogger.LEVEL_INFO,
+		"respawn_request_blocked",
+		"Respawn request blocked",
+		{
+			"reason": reason,
+			"source": "gameplay_respawn_flow",
+		}
+	)

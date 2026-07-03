@@ -32,6 +32,17 @@ func refresh_metrics(metrics: Dictionary) -> void:
 		"jitter_ms: %s" % _timing_or_network_value(metrics, "jitter_ms"),
 		"packet_staleness_ms: %s" % _timing_or_network_value(metrics, "packet_staleness_ms"),
 		"packet_age_ms: %s" % _timing_or_network_value(metrics, "packet_age_ms"),
+		"packets_in: %s" % _timing_or_network_value(metrics, "packets_in"),
+		"packets_out: %s" % _timing_or_network_value(metrics, "packets_out"),
+		"bytes_in: %s" % _timing_or_network_value(metrics, "bytes_in"),
+		"bytes_out: %s" % _timing_or_network_value(metrics, "bytes_out"),
+		"last_in_packet_bytes: %s" % _timing_or_network_value(metrics, "last_in_packet_bytes"),
+		"last_out_packet_bytes: %s" % _timing_or_network_value(metrics, "last_out_packet_bytes"),
+		"max_in_packet_bytes: %s" % _timing_or_network_value(metrics, "max_in_packet_bytes"),
+		"max_out_packet_bytes: %s" % _timing_or_network_value(metrics, "max_out_packet_bytes"),
+		"decode_failures: %s" % _timing_or_network_value(metrics, "decode_failures"),
+		"encode_failures: %s" % _timing_or_network_value(metrics, "encode_failures"),
+		"send_failures: %s" % _timing_or_network_value(metrics, "send_failures"),
 	])
 	metrics_label.text = "\n".join(lines)
 

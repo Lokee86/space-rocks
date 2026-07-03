@@ -2,6 +2,7 @@ extends Node
 
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
 const DevtoolsLaneStateAdapter := preload("res://scripts/protocol/realtime/devtools_lane_state_adapter.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var connection_service
 var hud: Control
@@ -111,13 +112,17 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 		var event_types = []
 		for event in events:
 			event_types.append(str(event.get("type", "")))
-		_log(
-			"Gameplay event batch diagnostics: batch_id=%s events_size=%d event_types=%s event_lifecycle_flow_null=%s" % [
-				str(packet.get("batch_id", "")),
-				events.size(),
-				str(event_types),
-				str(event_lifecycle_flow == null)
-			]
+		ClientLogger.event(
+			ClientLogger.CATEGORY_GAME,
+			ClientLogger.LEVEL_DEBUG,
+			"gameplay_event_batch_diagnostics",
+			"Gameplay event batch diagnostics",
+			{
+				"batch_id": str(packet.get("batch_id", "")),
+				"events_size": events.size(),
+				"event_types": event_types,
+				"event_lifecycle_flow_null": event_lifecycle_flow == null,
+			}
 		)
 
 	if gameplay_realtime_router != null and gameplay_presentation_adapter.can_fanout():

@@ -4,6 +4,15 @@ const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_
 
 # PacketCodec owns wire parsing and envelope checks only; packet readers validate payload details.
 static func encode(packet: Dictionary) -> PacketEncodeResult:
+	if !packet.has("type"):
+		return PacketEncodeResult.failure("Packet envelope is missing required 'type' field")
+	if typeof(packet["type"]) != TYPE_STRING:
+		return PacketEncodeResult.failure("Packet envelope field 'type' must be a String")
+	if str(packet["type"]).strip_edges().is_empty():
+		return PacketEncodeResult.failure("Packet envelope field 'type' must not be empty")
+	if packet.has("payload") && typeof(packet["payload"]) != TYPE_DICTIONARY:
+		return PacketEncodeResult.failure("Packet envelope field 'payload' must be a Dictionary when present")
+
 	return PacketEncodeResult.success(JSON.stringify(packet))
 
 
