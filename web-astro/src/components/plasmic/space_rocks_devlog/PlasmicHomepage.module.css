@@ -481,11 +481,11 @@
   position: absolute;
   left: max(48%, calc(4.5% + 15px + min(520px, 46%)));
   top: 62px;
-  width: 29%;
-  max-width: 29%;
+  width: 100%;
+  max-width: 33%;
   z-index: 2;
   color: rgb(255, 255, 255);
-  font-size: clamp(26px, 2.4vw, 36px);
+  font-size: clamp(24px, 2.4vw, 33px);
   line-height: 1.04;
   font-weight: 900;
   letter-spacing: -0.035em;
@@ -494,6 +494,7 @@
   bottom: auto;
   text-align: left;
   align-self: auto;
+  min-width: 0;
   padding: 0px;
   margin: 0px;
 }
@@ -542,6 +543,9 @@
   display: block;
   flex-direction: column;
 }
+.heroLine1Desktop {
+  line-height: 1;
+}
 @media (max-width: 930px) {
   .heroLine1Desktop {
     margin-top: 0px;
@@ -551,9 +555,15 @@
   display: block;
   flex-direction: column;
 }
+.heroLine2Desktop {
+  line-height: 1;
+}
 .span__xr4Fm {
   display: block;
   flex-direction: column;
+}
+.heroLine3Desktop {
+  line-height: 1;
 }
 @media (max-width: 930px) {
   .heroLine3Desktop {
