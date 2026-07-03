@@ -178,7 +178,14 @@ function PlasmicArchive__RenderFunc(props: {
             sty.root
           )}
           id={"uW6XQJEMGRlw"}
-          style={{ mixinTsJuVnJzaWaColor: "rgb(0, 229, 255)" }}
+          style={{
+            mixinTsJuVnJzaWaColor: "rgb(0, 229, 255)",
+            backgroundSize: "cover, cover",
+            backgroundImage:
+              'url("/assets/ui/backgroun-fore.png"), url("/assets/ui/background.png")',
+            backgroundPosition: "center center, center top",
+            backgroundRepeat: "no-repeat, no-repeat"
+          }}
         >
           <header
             data-plasmic-name={"header"}
@@ -369,6 +376,7 @@ function PlasmicArchive__RenderFunc(props: {
           <div
             className={classNames("all", sty.freeBox__bvtmK)}
             id={"gMSVNH-NZasS"}
+            style={{ backgroundImage: "none" }}
           >
             <section
               data-plasmic-name={"section"}
@@ -394,7 +402,6 @@ function PlasmicArchive__RenderFunc(props: {
                 <div
                   className={classNames("all", sty.freeBox__nrJbe)}
                   id={"lyrSSAnBMjvn"}
-                  style={{ mixBlendMode: "screen" }}
                 />
 
                 <div className={classNames("all", sty.freeBox__a0Sh)}>

@@ -320,9 +320,7 @@
   right: 0px;
   bottom: -109px;
   left: 0px;
-  background: url("/assets/ui/backgroun-fore.png") center center / cover
-    no-repeat;
-  opacity: 0.18;
+  background: none;
 }
 .freeBox__a0Sh {
   display: flex;

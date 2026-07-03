@@ -533,6 +533,11 @@
     margin: 0px;
   }
 }
+@media (max-width: 400px) {
+  .freeBox__wR5Os {
+    max-width: 235px;
+  }
+}
 .span__xh1Fs {
   display: block;
   flex-direction: column;
@@ -618,7 +623,7 @@
     flex-direction: column;
     position: absolute;
     left: 4%;
-    top: 50%;
+    top: 45%;
     width: 15vw;
     height: 15vw;
     z-index: 4;
@@ -704,9 +709,7 @@
   right: 0px;
   bottom: -109px;
   left: 0px;
-  background: url("/assets/ui/backgroun-fore.png") center center / cover
-    no-repeat;
-  opacity: 0.18;
+  background: none;
 }
 .freeBox__xvdC {
   display: flex;

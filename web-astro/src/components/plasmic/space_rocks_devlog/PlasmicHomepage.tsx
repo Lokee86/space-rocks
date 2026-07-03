@@ -198,7 +198,14 @@ function PlasmicHomepage__RenderFunc(props: {
             sty.root
           )}
           id={"uW6XQJEMGRlw"}
-          style={{ mixinTsJuVnJzaWaColor: "rgb(0, 229, 255)" }}
+          style={{
+            mixinTsJuVnJzaWaColor: "rgb(0, 229, 255)",
+            backgroundImage:
+              'url("/assets/ui/backgroun-fore.png"), url("/assets/ui/background.png")',
+            backgroundSize: "cover, cover",
+            backgroundPosition: "center center, center top",
+            backgroundRepeat: "no-repeat, no-repeat"
+          }}
         >
           <header
             data-plasmic-name={"header"}
@@ -715,7 +722,9 @@ function PlasmicHomepage__RenderFunc(props: {
                     )}
                     id={"NzSf9Y9fVjp8"}
                   >
-                    {"Lorem ipsum dolor"}
+                    {hasVariant(globalVariants, "screen", "narrow")
+                      ? "REINFOCING THE NETWORK"
+                      : "Lorem ipsum dolor"}
                   </span>
                 </span>
                 <span
@@ -739,7 +748,9 @@ function PlasmicHomepage__RenderFunc(props: {
                     )}
                     id={"LeNRnq4QrpBe"}
                   >
-                    {"sit amet, consectetur"}
+                    {hasVariant(globalVariants, "screen", "narrow")
+                      ? "FOR LOST COLONIES"
+                      : "sit amet, consectetur"}
                   </span>
                 </span>
                 <span
@@ -763,7 +774,9 @@ function PlasmicHomepage__RenderFunc(props: {
                     )}
                     id={"D9CgjTnY0hm0"}
                   >
-                    {"adipiscing elit, sed do"}
+                    {hasVariant(globalVariants, "screen", "narrow")
+                      ? "AND REDISCOVERED RUINS"
+                      : "adipiscing elit, sed do"}
                   </span>
                 </span>
               </div>
@@ -867,7 +880,6 @@ function PlasmicHomepage__RenderFunc(props: {
                 <div
                   className={classNames("all", sty.freeBox__pNhK)}
                   id={"lyrSSAnBMjvn"}
-                  style={{ mixBlendMode: "screen" }}
                 />
 
                 <div
@@ -1024,11 +1036,10 @@ function PlasmicHomepage__RenderFunc(props: {
                   style={
                     hasVariant(globalVariants, "screen", "tablet")
                       ? {
-                          backgroundImage:
-                            "linear-gradient(rgba(20,23,24,0.88), rgba(20,23,24,0.88)), url('/assets/ui/backgroun-fore.png')",
-                          backgroundSize: "auto, cover",
-                          backgroundPosition: "center center, center center",
-                          backgroundRepeat: "repeat, no-repeat",
+                          backgroundImage: "none",
+                          backgroundSize: "auto",
+                          backgroundPosition: "center center",
+                          backgroundRepeat: "repeat",
                           borderImageSource: "url('/assets/ui/card_frame.png')",
                           borderImageSlice: "78 58",
                           borderImageWidth: "42px",
@@ -1063,10 +1074,10 @@ function PlasmicHomepage__RenderFunc(props: {
                     className={classNames("all", sty.freeBox__vvgXp)}
                     style={{
                       backgroundImage:
-                        'linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88)), url("/assets/ui/backgroun-fore.png")',
-                      backgroundSize: "auto, cover",
-                      backgroundPosition: "center center, center center",
-                      backgroundRepeat: "repeat, no-repeat"
+                        "linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88))",
+                      backgroundSize: "auto",
+                      backgroundPosition: "center center",
+                      backgroundRepeat: "repeat"
                     }}
                   />
 
@@ -1130,8 +1141,7 @@ function PlasmicHomepage__RenderFunc(props: {
                   style={
                     hasVariant(globalVariants, "screen", "tablet")
                       ? {
-                          backgroundImage:
-                            "linear-gradient(rgba(20,23,24,0.88), rgba(20,23,24,0.88)), url('/assets/ui/backgroun-fore.png')",
+                          backgroundImage: "none",
                           backgroundSize: "auto, cover",
                           backgroundPosition: "center center, center center",
                           backgroundRepeat: "repeat, no-repeat",
@@ -1169,10 +1179,10 @@ function PlasmicHomepage__RenderFunc(props: {
                     className={classNames("all", sty.freeBox__aFdp)}
                     style={{
                       backgroundImage:
-                        'linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88)), url("/assets/ui/backgroun-fore.png")',
-                      backgroundSize: "auto, cover",
-                      backgroundPosition: "center center, center center",
-                      backgroundRepeat: "repeat, no-repeat"
+                        "linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88))",
+                      backgroundSize: "auto",
+                      backgroundPosition: "center center",
+                      backgroundRepeat: "repeat"
                     }}
                   />
 
@@ -1236,8 +1246,7 @@ function PlasmicHomepage__RenderFunc(props: {
                   style={
                     hasVariant(globalVariants, "screen", "tablet")
                       ? {
-                          backgroundImage:
-                            "linear-gradient(rgba(20,23,24,0.88), rgba(20,23,24,0.88)), url('/assets/ui/backgroun-fore.png')",
+                          backgroundImage: "none",
                           backgroundSize: "auto, cover",
                           backgroundPosition: "center center, center center",
                           backgroundRepeat: "repeat, no-repeat",
@@ -1275,10 +1284,10 @@ function PlasmicHomepage__RenderFunc(props: {
                     className={classNames("all", sty.freeBox__rB9Hu)}
                     style={{
                       backgroundImage:
-                        'linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88)), url("/assets/ui/backgroun-fore.png")',
-                      backgroundSize: "auto, cover",
-                      backgroundPosition: "center center, center center",
-                      backgroundRepeat: "repeat, no-repeat"
+                        "linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88))",
+                      backgroundSize: "auto",
+                      backgroundPosition: "center center",
+                      backgroundRepeat: "repeat"
                     }}
                   />
 
