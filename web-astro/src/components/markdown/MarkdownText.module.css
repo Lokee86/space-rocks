@@ -2,6 +2,24 @@
   margin: 0 0 1.05em;
 }
 
+.root a {
+  color: rgb(0, 229, 255);
+  text-decoration: none;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+}
+
+.root a:hover,
+.root a:focus-visible {
+  color: rgb(217, 250, 255);
+  text-decoration: underline;
+}
+
+.root ul,
+.root ol {
+  margin: 1em 0 1.2em;
+  padding-left: 1.4em;
+}
+
 .root > :last-child {
   margin-bottom: 0;
 }

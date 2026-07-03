@@ -127,7 +127,7 @@ export type PlasmicHomepage__OverridesType = {
   article?: Flex__<"article">;
   articleLabel?: Flex__<"span">;
   articleTitle?: Flex__<"h1">;
-  introText?: Flex__<"p">;
+  introText?: Flex__<"div">;
   screenStack2?: Flex__<"div">;
   articleMediaFrame?: Flex__<typeof CrtMediaFrame>;
   aside?: Flex__<"aside">;
@@ -919,22 +919,25 @@ function PlasmicHomepage__RenderFunc(props: {
                   >
                     {"Lorem Ipsum Delor"}
                   </h1>
-                  <p
+                  <div
                     data-plasmic-name={"introText"}
                     data-plasmic-override={overrides.introText}
-                    className={classNames(
-                      "all",
-                      "p",
-                      "p__uNJep",
-                      "__wab_text",
-                      sty.introText
-                    )}
-                    id={"2k_fW1gkoIiS"}
+                    className={classNames("all", sty.introText)}
                   >
-                    {
-                      "Main article content goes here. This panel is the reusable devlog body area. Screenshots and clips can use framed media components inside the article flow."
-                    }
-                  </p>
+                    <span
+                      className={classNames(
+                        "all",
+                        "span",
+                        "span__uNJep",
+                        "__wab_text",
+                        sty.span__xBgWl
+                      )}
+                    >
+                      {
+                        "Main article content goes here. This panel is the reusable devlog body area. Screenshots and clips can use framed media components inside the article flow."
+                      }
+                    </span>
+                  </div>
                   <div
                     data-plasmic-name={"screenStack2"}
                     data-plasmic-override={overrides.screenStack2}
@@ -1643,7 +1646,7 @@ type NodeDefaultElementType = {
   article: "article";
   articleLabel: "span";
   articleTitle: "h1";
-  introText: "p";
+  introText: "div";
   screenStack2: "div";
   articleMediaFrame: typeof CrtMediaFrame;
   aside: "aside";

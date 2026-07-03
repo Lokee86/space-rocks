@@ -751,18 +751,14 @@
   }
 }
 .introText {
+  display: flex;
+  flex-direction: column;
   max-width: none;
   color: rgba(238, 240, 236, 0.78);
   font-size: 16px;
   line-height: 1.7;
   width: 100%;
   margin: 0px 0px 22px;
-}
-@media (max-width: 930px) {
-  .introText {
-    font-size: 15px;
-    line-height: 1.62;
-  }
 }
 .screenStack2 {
   display: flex;
