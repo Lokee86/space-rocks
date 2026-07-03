@@ -47,6 +47,9 @@ func test_refresh_gameplay_state_forwards_game_target_state_to_window_controller
 
 	flow.refresh_gameplay_state({
 		"self_id": "Player-1",
+		"overlay": {
+			"self_id": "Player-1",
+		},
 		"world": {
 			"ships": {
 				"Player-1": {
@@ -82,6 +85,9 @@ func test_refresh_gameplay_state_forwards_target_kind_target_id_and_raw_target_s
 	}
 	flow.refresh_gameplay_state({
 		"self_id": "Player-1",
+		"overlay": {
+			"self_id": "Player-1",
+		},
 		"world": {
 			"ships": {
 				"Player-1": {
@@ -114,6 +120,9 @@ func test_refresh_gameplay_state_defaults_to_lane_sources_when_selectors_missing
 
 	flow.refresh_gameplay_state({
 		"self_id": "Player-1",
+		"overlay": {
+			"self_id": "Player-1",
+		},
 		"world": {
 			"ships": {
 				"Player-1": {

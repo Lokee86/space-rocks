@@ -13,6 +13,7 @@ class FakeWorldSync:
 
 class FakeRespawnFlow:
 	var should_restore_result := false
+	var use_restore_policy := false
 	var should_restore_calls := 0
 	var last_world_ships: Dictionary = {}
 	var last_player_lifecycle: Dictionary = {}
@@ -29,6 +30,14 @@ class FakeRespawnFlow:
 		last_self_id = self_id
 		last_player = player
 		last_has_stale_dead_presentation = has_stale_dead_presentation
+		if use_restore_policy:
+			var lifecycle = player_lifecycle.get(self_id, {})
+			var lifecycle_status := ""
+			if lifecycle is Dictionary:
+				lifecycle_status = str(lifecycle.get("status", lifecycle.get("state", "")))
+			else:
+				lifecycle_status = str(lifecycle)
+			return has_stale_dead_presentation and lifecycle_status == "active" and world_ships.has(self_id)
 		return should_restore_result
 
 	func clear_awaiting_confirmation() -> void:
@@ -202,6 +211,69 @@ func test_apply_lane_state_clears_stale_dead_presentation_without_confirmation_w
 	assert_eq(hud_flow.clear_dead_presentation_calls, 1)
 	assert_eq(match_end_flow.handle_alive_restored_calls, 1)
 	assert_eq(respawn_flow.clear_awaiting_confirmation_calls, 1)
+
+
+func test_apply_lane_state_clears_hud_and_respawn_confirmation_when_local_player_is_active_and_present() -> void:
+	var world_sync := FakeWorldSync.new()
+	var respawn_flow := FakeRespawnFlow.new()
+	respawn_flow.use_restore_policy = true
+	var hud_flow := FakeHudFlow.new()
+	hud_flow.is_dead = true
+	var player := FakePlayer.new()
+	var flow := _make_flow(world_sync, respawn_flow, hud_flow, null, player)
+
+	var world_lane_state := FakeWorldLaneState.new()
+	world_lane_state.ships = {"player-1": {"id": "player-1"}}
+	var session_lane_state := FakeSessionLaneState.new()
+	session_lane_state.player_lifecycle = {"player-1": {"player_id": "player-1", "status": "active"}}
+
+	flow.apply_lane_state(world_lane_state, session_lane_state, "player-1")
+
+	assert_eq(hud_flow.clear_dead_presentation_calls, 1)
+	assert_eq(respawn_flow.clear_awaiting_confirmation_calls, 1)
+	assert_false(hud_flow.is_dead)
+
+
+func test_apply_lane_state_does_not_clear_when_lifecycle_is_pending_respawn_and_ship_missing() -> void:
+	var world_sync := FakeWorldSync.new()
+	var respawn_flow := FakeRespawnFlow.new()
+	respawn_flow.use_restore_policy = true
+	var hud_flow := FakeHudFlow.new()
+	hud_flow.is_dead = true
+	var player := FakePlayer.new()
+	var flow := _make_flow(world_sync, respawn_flow, hud_flow, null, player)
+
+	var world_lane_state := FakeWorldLaneState.new()
+	world_lane_state.ships = {}
+	var session_lane_state := FakeSessionLaneState.new()
+	session_lane_state.player_lifecycle = {"player-1": {"player_id": "player-1", "status": "pending_respawn"}}
+
+	flow.apply_lane_state(world_lane_state, session_lane_state, "player-1")
+
+	assert_eq(hud_flow.clear_dead_presentation_calls, 0)
+	assert_eq(respawn_flow.clear_awaiting_confirmation_calls, 0)
+	assert_true(hud_flow.is_dead)
+
+
+func test_apply_lane_state_does_not_clear_when_lifecycle_is_active_but_self_ship_is_missing() -> void:
+	var world_sync := FakeWorldSync.new()
+	var respawn_flow := FakeRespawnFlow.new()
+	respawn_flow.use_restore_policy = true
+	var hud_flow := FakeHudFlow.new()
+	hud_flow.is_dead = true
+	var player := FakePlayer.new()
+	var flow := _make_flow(world_sync, respawn_flow, hud_flow, null, player)
+
+	var world_lane_state := FakeWorldLaneState.new()
+	world_lane_state.ships = {}
+	var session_lane_state := FakeSessionLaneState.new()
+	session_lane_state.player_lifecycle = {"player-1": {"player_id": "player-1", "status": "active"}}
+
+	flow.apply_lane_state(world_lane_state, session_lane_state, "player-1")
+
+	assert_eq(hud_flow.clear_dead_presentation_calls, 0)
+	assert_eq(respawn_flow.clear_awaiting_confirmation_calls, 0)
+	assert_true(hud_flow.is_dead)
 
 
 func test_apply_lane_state_does_not_clear_dead_presentation_when_hidden_for_match_over_or_game_over() -> void:

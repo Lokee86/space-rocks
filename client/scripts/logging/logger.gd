@@ -18,6 +18,9 @@ const CATEGORY_PACKETS := "packets"
 
 static var default_level := LEVEL_INFO
 static var category_levels := {}
+static var file_output_enabled := false
+static var file_output_path := ""
+static var file_output_handle = null
 
 
 static func set_default_level(level: int) -> void:
@@ -42,20 +45,156 @@ static func disable() -> void:
 	set_default_level(LEVEL_OFF)
 
 
+static func reset_for_tests() -> void:
+	close_file_output()
+	default_level = LEVEL_INFO
+	category_levels = {}
+
+
 static func debug(category: String, message: String) -> void:
-	_log(category, LEVEL_DEBUG, "debug", message)
+	_log(category, LEVEL_DEBUG, message)
 
 
 static func info(category: String, message: String) -> void:
-	_log(category, LEVEL_INFO, "info", message)
+	_log(category, LEVEL_INFO, message)
 
 
 static func warn(category: String, message: String) -> void:
-	_log(category, LEVEL_WARN, "warn", message)
+	_log(category, LEVEL_WARN, message)
 
 
 static func error(category: String, message: String) -> void:
-	_log(category, LEVEL_ERROR, "error", message)
+	_log(category, LEVEL_ERROR, message)
+
+
+static func event(
+	category: String,
+	level: int,
+	event_name: String,
+	message: String = "",
+	fields: Dictionary = {}
+) -> void:
+	if !_should_log(category, level):
+		return
+
+	var record := build_record(category, level, event_name, message, fields)
+	_output_record(record)
+
+
+static func network_event(
+	level: int,
+	event_name: String,
+	message: String = "",
+	fields: Dictionary = {}
+) -> void:
+	event(CATEGORY_NETWORK, level, event_name, message, fields)
+
+
+static func packets_event(
+	level: int,
+	event_name: String,
+	message: String = "",
+	fields: Dictionary = {}
+) -> void:
+	event(CATEGORY_PACKETS, level, event_name, message, fields)
+
+
+static func level_name(level: int) -> String:
+	match level:
+		LEVEL_DEBUG:
+			return "debug"
+		LEVEL_INFO:
+			return "info"
+		LEVEL_WARN:
+			return "warn"
+		LEVEL_ERROR:
+			return "error"
+		_:
+			return "unknown"
+
+
+static func build_record(
+	category: String,
+	level: int,
+	event_name: String,
+	message: String = "",
+	fields: Dictionary = {}
+) -> Dictionary:
+	return {
+		"timestamp_unix_ms": int(Time.get_unix_time_from_system() * 1000.0),
+		"level": level_name(level),
+		"category": category,
+		"event": event_name,
+		"message": message,
+		"fields": fields.duplicate(true),
+	}
+
+
+static func format_console_line(record: Dictionary) -> String:
+	var line := "[%s][%s]" % [record.get("category", ""), record.get("level", "unknown")]
+	var event_name := str(record.get("event", ""))
+	if event_name != "" && event_name != "log_message":
+		line += "[%s]" % event_name
+
+	var message := str(record.get("message", ""))
+	if message != "":
+		line += " %s" % message
+
+	var field_parts: Array[String] = []
+	var fields = record.get("fields", {})
+	if fields is Dictionary:
+		var keys: Array = fields.keys()
+		keys.sort()
+		for key in keys:
+			field_parts.append("%s=%s" % [str(key), _format_field_value(fields[key])])
+
+	if !field_parts.is_empty():
+		line += " %s" % " ".join(field_parts)
+
+	return line
+
+
+static func format_json_line(record: Dictionary) -> String:
+	return JSON.stringify(record)
+
+
+static func configure_file_output(base_dir: String = "user://logs", prefix: String = "client") -> bool:
+	close_file_output()
+
+	var make_error := DirAccess.make_dir_recursive_absolute(base_dir)
+	if make_error != OK:
+		return false
+
+	for index in range(1, 1000000):
+		var candidate_name := _build_numbered_log_filename(prefix, index)
+		var candidate_path := base_dir.path_join(candidate_name)
+		if FileAccess.file_exists(candidate_path):
+			continue
+
+		var handle = FileAccess.open(candidate_path, FileAccess.WRITE)
+		if handle == null:
+			return false
+
+		file_output_enabled = true
+		file_output_path = candidate_path
+		file_output_handle = handle
+		return true
+
+	return false
+
+
+static func close_file_output() -> void:
+	if file_output_handle != null:
+		file_output_handle.flush()
+		file_output_handle.close()
+
+	file_output_enabled = false
+	file_output_path = ""
+	file_output_handle = null
+
+
+static func current_file_output_path() -> String:
+	return file_output_path
 
 
 static func shell_debug(message: String) -> void:
@@ -186,19 +325,29 @@ static func packets_error(message: String) -> void:
 	error(CATEGORY_PACKETS, message)
 
 
-static func _log(category: String, level: int, level_name: String, message: String) -> void:
+static func _log(category: String, level: int, message: String) -> void:
 	if !_should_log(category, level):
 		return
 
-	var line := "[%s][%s] %s" % [category, level_name, message]
+	var record := build_record(category, level, "log_message", message)
+	_output_record(record)
+
+
+static func _output_record(record: Dictionary) -> void:
+	var line := format_console_line(record)
+	var level := str(record.get("level", "unknown"))
 
 	match level:
-		LEVEL_WARN:
+		"warn":
 			push_warning(line)
-		LEVEL_ERROR:
+		"error":
 			push_error(line)
 		_:
 			print(line)
+
+	if file_output_enabled && file_output_handle != null:
+		file_output_handle.store_line(format_json_line(record))
+		file_output_handle.flush()
 
 
 static func _should_log(category: String, level: int) -> bool:
@@ -207,3 +356,15 @@ static func _should_log(category: String, level: int) -> bool:
 		active_level = category_levels[category]
 
 	return level >= active_level && active_level != LEVEL_OFF
+
+
+static func _build_numbered_log_filename(prefix: String, index: int) -> String:
+	return "%s-%06d.jsonl" % [prefix, index]
+
+
+static func _format_field_value(value) -> String:
+	match typeof(value):
+		TYPE_DICTIONARY, TYPE_ARRAY:
+			return JSON.stringify(value)
+		_:
+			return str(value)

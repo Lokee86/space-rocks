@@ -10,7 +10,9 @@ This document describes the client logging helper behavior for the client servic
 
 `client/scripts/logging/logger.gd` provides the client-side logging helper used by client runtime code.
 
-It defines log levels, category names, default and category-specific log-level controls, and helper methods for emitting formatted log lines. The helper routes warnings through `push_warning`, errors through `push_error`, and informational or debug output through `print`.
+Existing text helpers still work. Calls such as `Logger.network_info("realtime protocol state reset")` continue to emit the same console-friendly lines while routing internally through structured records.
+
+The helper also supports structured event logging, category-specific convenience wrappers for immediate packet and networking work, and optional local JSONL file output for diagnostics.
 
 ## Code root
 
@@ -32,92 +34,77 @@ The client logging helper owns:
 * client logger categories
 * default log-level control
 * category-specific log-level control
-* enable/disable behavior for the client default level
-* routing debug and info messages through `print`
-* routing warnings through `push_warning`
-* routing errors through `push_error`
-* formatting log lines with category and level metadata
-
-## Does not own
-
-The client logging helper does not own:
-
-* server logging policy
-* telemetry packet routing
-* durable observability storage
-* packet schema authority
-* gameplay logging semantics
-* devtools logging policy
+* structured log record construction
+* console log formatting
+* optional local JSONL diagnostic file output
 
 ## Behavior
 
-### Log levels
+### Text helpers
 
-The helper defines these client log levels:
+Use the existing text helpers for ordinary human-readable status lines:
 
-```text
-LEVEL_DEBUG
-LEVEL_INFO
-LEVEL_WARN
-LEVEL_ERROR
-LEVEL_OFF
+```gdscript
+Logger.network_info("realtime protocol state reset")
 ```
 
-The default client log level is `LEVEL_INFO`.
+### Structured event logging
 
-### Logger categories
+Use structured event logging when the log should carry stable event identity plus fields.
 
-The helper defines category names for common client logging areas:
+Good fits:
 
-```text
-default
-shell
-lobby
-network
-game
-world_sync
-hud
-input
-packets
+* recurring diagnostics
+* network packet send and receive summaries
+* threshold warnings
+* failures with extra fields
+
+Examples:
+
+```gdscript
+Logger.network_event(
+	Logger.LEVEL_WARN,
+	"packet_decode_failed",
+	"Packet decode failed",
+	{
+		"error": "Invalid JSON",
+		"raw_bytes": 42,
+	}
+)
 ```
 
-These category names let client code emit category-specific logs without re-creating the category string at each call site.
+```gdscript
+Logger.packets_event(
+	Logger.LEVEL_INFO,
+	"packet_sent",
+	"Packet sent",
+	{
+		"packet_type": "world_delta",
+		"bytes": 384,
+	}
+)
+```
 
-### Level controls
+Do not emit high-frequency packet logs by default. Use them for targeted diagnostics, narrow summaries, or temporary investigation windows rather than every routine packet path.
 
-`set_default_level()` changes the default client log level.
+### Local JSONL output
 
-`set_category_level()` changes the log level for one category.
+The logger can optionally mirror emitted records to a sequential local JSONL file. This is local diagnostic output, not server logging, telemetry transport, or durable observability storage.
 
-`set_all_categories_level()` changes the default level and applies the same level to all known category overrides.
+```gdscript
+if Logger.configure_file_output("user://logs", "client"):
+	Logger.network_event(
+		Logger.LEVEL_INFO,
+		"realtime_connected",
+		"Realtime connected"
+	)
+```
 
-`enable_debug()` sets the default level to debug.
-
-`disable()` sets the default level to off.
-
-### Output routing
-
-`debug()` and `info()` emit formatted lines through `print` when the active level allows them.
-
-`warn()` emits through `push_warning` when the active level allows it.
-
-`error()` emits through `push_error` when the active level allows it.
-
-Category-specific helper methods such as `shell_debug()` and `network_error()` are convenience wrappers over the shared logging methods.
+Output files use sequential names such as `client-000001.jsonl` and `client-000002.jsonl`.
 
 ## Code map
 
 Primary implementation files:
-
-```text
-client/scripts/logging/logger.gd
-```
-
-## Tests
-
-No focused test is documented yet for this helper.
-
-The closest verification boundary is the client logging implementation in:
 
 ```text
 client/scripts/logging/logger.gd
@@ -129,9 +116,7 @@ client/scripts/logging/logger.gd
 * [Client Networking Flow](networking-flow/!INDEX.md)
 * [Gameplay Runtime](gameplay-runtime/!INDEX.md)
 * [Input And Targeting](input-and-targeting.md)
-* [Game Server Observability](../game-server/observability/!INDEX.md)
-* [Telemetry And Packet Routing](../game-server/networking/telemetry-packet-routing.md)
 
 ## Notes
 
-This document captures the current client logging helper behavior only. It does not define server logging policy or telemetry transport behavior.
+This document captures the current client logging helper behavior only. It does not define server logging policy, packet metrics, or telemetry transport behavior.
