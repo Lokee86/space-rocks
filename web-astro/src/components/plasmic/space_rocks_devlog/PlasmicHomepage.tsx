@@ -723,7 +723,7 @@ function PlasmicHomepage__RenderFunc(props: {
                     id={"NzSf9Y9fVjp8"}
                   >
                     {hasVariant(globalVariants, "screen", "narrow")
-                      ? "REINFOCING THE NETWORK"
+                      ? "Lorem ipsum dolor"
                       : "Lorem ipsum dolor"}
                   </span>
                 </span>
@@ -749,7 +749,7 @@ function PlasmicHomepage__RenderFunc(props: {
                     id={"LeNRnq4QrpBe"}
                   >
                     {hasVariant(globalVariants, "screen", "narrow")
-                      ? "FOR LOST COLONIES"
+                      ? "sit amet, consectetur"
                       : "sit amet, consectetur"}
                   </span>
                 </span>
@@ -775,7 +775,7 @@ function PlasmicHomepage__RenderFunc(props: {
                     id={"D9CgjTnY0hm0"}
                   >
                     {hasVariant(globalVariants, "screen", "narrow")
-                      ? "AND REDISCOVERED RUINS"
+                      ? "adipiscing elit, sed do"
                       : "adipiscing elit, sed do"}
                   </span>
                 </span>
