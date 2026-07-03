@@ -15,6 +15,26 @@ Do not reconcile compact aliases from raw packet struct names.
 - Compacting field names is separate from omitting empty delta sections.
 - Sparse delta omission happens before compact aliases are applied.
 
+## Runtime Metadata Inference
+
+For active realtime world, overlay, and session packet families, the preferred outbound wire shape now omits runtime metadata the client can infer.
+
+The client derives:
+
+- `lane` from packet `type`.
+- `snapshot_kind` from packet `type`: `_full` -> `full`, `_delta` -> `delta`.
+- `snapshot_id` from lane, packet kind, and sequence.
+  Full packets infer `<lane>-baseline-<sequence>`.
+  Delta packets infer `<lane>-snapshot-<sequence>`.
+- Full-packet `baseline_id` from lane and sequence as `<lane>-baseline-<sequence>`.
+- Delta-packet `baseline_id` from readable `baseline_sequence` or compact `bq` as `<lane>-baseline-<baseline_sequence>`.
+- `is_final_chunk` from `chunk_index` and `chunk_count`.
+
+For active realtime world, overlay, and session packet families, the server now emits `chunk_index` and `chunk_count` only when `chunk_count > 1`.
+When those fields are absent, the client treats the packet as a single final chunk.
+
+This inference rule is runtime-lane specific. It does not imply compacted event/control packet behavior beyond what the current implementation actually emits.
+
 ## Compact Packet Type Values
 
 - `world_full` -> `wf`
@@ -26,27 +46,39 @@ Do not reconcile compact aliases from raw packet struct names.
 
 ## Compact Lane Values
 
+These remain documented for backward-compatible decode support and for non-runtime contexts where `lane` is still explicitly present. They are not the preferred active runtime output for world/overlay/session gameplay lanes.
+
 - `world` -> `w`
 - `overlay` -> `o`
 - `session` -> `s`
 
 ## Compact Snapshot Kind Values
 
+These remain documented for backward-compatible decode support and for contexts where `snapshot_kind` is still explicitly present. They are not the preferred active runtime output for world/overlay/session gameplay lanes.
+
 - `full` -> `f`
 - `delta` -> `d`
 
 ## Metadata Keys
 
+Preferred active runtime output for world/overlay/session gameplay lanes:
+
 - `type` -> `t`
-- `lane` -> `l`
 - `sequence` -> `q`
+- `baseline_sequence` -> `bq`
+- `server_sent_msec` -> `ms`
+- `chunk_index` -> `ci` when `chunk_count > 1`
+- `chunk_count` -> `cc` when `chunk_count > 1`
+
+Legacy or backward-compatible decode support still accepted by the client:
+
+- `lane` -> `l`
 - `baseline_id` -> `b`
 - `snapshot_id` -> `sid`
-- `server_sent_msec` -> `ms`
 - `snapshot_kind` -> `k`
-- `chunk_index` -> `ci`
-- `chunk_count` -> `cc`
 - `is_final_chunk` -> `fc`
+
+For active runtime world/overlay/session packets, `baseline_id` is only emitted when a delta packet cannot express its dependency as a numeric baseline sequence or when full-packet metadata cannot be represented by the current inferred format safely.
 
 ## World Delta Section Keys
 

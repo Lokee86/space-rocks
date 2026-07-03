@@ -1,10 +1,13 @@
 extends RefCounted
 
+const LaneMetadata = preload("res://scripts/protocol/realtime/lane_metadata.gd")
+
 const _KEY_MAP := {
 	"t": "type",
 	"l": "lane",
 	"q": "sequence",
 	"b": "baseline_id",
+	"bq": "baseline_sequence",
 	"sid": "snapshot_id",
 	"ms": "server_sent_msec",
 	"k": "snapshot_kind",
@@ -89,7 +92,9 @@ const _VALUE_MAPS := {
 }
 
 static func expand_packet(packet: Dictionary) -> Dictionary:
-	return _expand_value(packet, null)
+	var expanded: Dictionary = _expand_value(packet, null)
+	_normalize_runtime_metadata(expanded)
+	return expanded
 
 static func _expand_value(value, parent_key):
 	if value is Dictionary:
@@ -112,3 +117,74 @@ static func _expand_value(value, parent_key):
 			if value_map.has(string_value):
 				return value_map[string_value]
 	return value
+
+
+static func _normalize_runtime_metadata(packet: Dictionary) -> void:
+	var packet_type = packet.get("type")
+	if not _is_runtime_packet_type(packet_type):
+		return
+
+	var lane = packet.get("lane")
+	if lane == null:
+		lane = LaneMetadata.PACKET_TYPE_TO_LANE.get(packet_type)
+		if lane != null:
+			packet["lane"] = lane
+
+	var snapshot_kind = packet.get("snapshot_kind")
+	if snapshot_kind == null:
+		snapshot_kind = _snapshot_kind_from_type(packet_type)
+		if snapshot_kind != "":
+			packet["snapshot_kind"] = snapshot_kind
+
+	var sequence = packet.get("sequence")
+	if lane != null and sequence != null:
+		if packet.get("snapshot_id") == null:
+			var snapshot_id = _default_snapshot_id(lane, snapshot_kind, sequence)
+			if snapshot_id != "":
+				packet["snapshot_id"] = snapshot_id
+		if packet.get("baseline_id") == null:
+			var baseline_id = _default_baseline_id(lane, snapshot_kind, sequence, packet.get("baseline_sequence"))
+			if baseline_id != "":
+				packet["baseline_id"] = baseline_id
+
+	if packet.get("chunk_index") == null:
+		packet["chunk_index"] = 0
+	if packet.get("chunk_count") == null:
+		packet["chunk_count"] = 1
+	if packet.get("is_final_chunk") == null:
+		var chunk_index: int = int(packet.get("chunk_index", 0))
+		var chunk_count: int = int(packet.get("chunk_count", 1))
+		packet["is_final_chunk"] = chunk_count <= 1 or chunk_index == chunk_count - 1
+
+
+static func _is_runtime_packet_type(packet_type) -> bool:
+	return packet_type in LaneMetadata.PACKET_FAMILY_WORLD \
+		or packet_type in LaneMetadata.PACKET_FAMILY_OVERLAY \
+		or packet_type in LaneMetadata.PACKET_FAMILY_SESSION
+
+
+static func _snapshot_kind_from_type(packet_type) -> String:
+	var type_string := str(packet_type)
+	if type_string.ends_with("_full"):
+		return "full"
+	if type_string.ends_with("_delta"):
+		return "delta"
+	return ""
+
+
+static func _default_snapshot_id(lane, snapshot_kind, sequence) -> String:
+	if snapshot_kind == "full":
+		return "%s-baseline-%s" % [lane, str(sequence)]
+	if snapshot_kind == "delta":
+		return "%s-snapshot-%s" % [lane, str(sequence)]
+	return ""
+
+
+static func _default_baseline_id(lane, snapshot_kind, sequence, baseline_sequence) -> String:
+	if snapshot_kind == "full":
+		return "%s-baseline-%s" % [lane, str(sequence)]
+	if snapshot_kind == "delta" and baseline_sequence != null:
+		return "%s-baseline-%s" % [lane, str(baseline_sequence)]
+	return ""
+
+

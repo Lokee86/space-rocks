@@ -82,7 +82,7 @@ The server also participates in packet timing diagnostics through `telemetry_pin
 
 This packet pair does not require room membership and does not mutate gameplay state.
 
-The server also stamps lane packets with `server_sent_msec` before outbound encoding. The client uses that value together with the estimated server clock offset from telemetry pong packets to calculate `packet_age_ms` in local monotonic-clock space.
+The server still stamps lane packets with `server_sent_msec` before outbound encoding. The client uses that value together with the estimated server clock offset from telemetry pong packets to calculate `packet_age_ms` in local monotonic-clock space. Runtime metadata inference removes redundant envelope fields for some gameplay lanes, but it does not remove or sample `server_sent_msec`.
 
 The authority boundary is:
 
@@ -365,3 +365,4 @@ Telemetry overlay data is intentionally shallow. It is for immediate development
 `packet_staleness_ms` and `packet_age_ms` are different measurements. Staleness is local time since the last lane packet arrived. Age estimates how old the packet was by using the server send timestamp and the estimated server clock offset.
 
 The overlay and network player-label mode share the same network telemetry snapshot source, but they are separate presentation surfaces. The overlay owns the fixed world/client/network panel. Player dev labels own per-player label presentation.
+

@@ -31,6 +31,77 @@ func test_expand_packet_converts_compact_world_delta_keys_and_values() -> void:
 	assert_false(expanded["ship_updates"][0]["thrusting"])
 
 
+func test_expand_packet_derives_minimal_compact_world_delta_runtime_metadata() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"q": 7,
+		"bq": 5,
+		"su": [
+			{"i": "ship-1"},
+		],
+	})
+
+	assert_eq(expanded["type"], "world_delta")
+	assert_eq(expanded["lane"], "world")
+	assert_eq(expanded["snapshot_kind"], "delta")
+	assert_eq(expanded["snapshot_id"], "world-snapshot-7")
+	assert_eq(expanded["baseline_sequence"], 5)
+	assert_eq(expanded["baseline_id"], "world-baseline-5")
+	assert_eq(expanded["chunk_index"], 0)
+	assert_eq(expanded["chunk_count"], 1)
+	assert_true(expanded["is_final_chunk"])
+
+
+func test_expand_packet_derives_minimal_compact_world_full_runtime_metadata() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wf",
+		"q": 3,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_eq(expanded["type"], "world_full")
+	assert_eq(expanded["lane"], "world")
+	assert_eq(expanded["snapshot_kind"], "full")
+	assert_eq(expanded["snapshot_id"], "world-baseline-3")
+	assert_eq(expanded["baseline_id"], "world-baseline-3")
+	assert_eq(expanded["chunk_index"], 0)
+	assert_eq(expanded["chunk_count"], 1)
+	assert_true(expanded["is_final_chunk"])
+
+
+func test_expand_packet_derives_chunk_finality_when_missing() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wf",
+		"q": 4,
+		"ci": 1,
+		"cc": 3,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_eq(expanded["chunk_index"], 1)
+	assert_eq(expanded["chunk_count"], 3)
+	assert_false(expanded["is_final_chunk"])
+
+	var final_chunk := CompactLanePacket.expand_packet({
+		"t": "wf",
+		"q": 4,
+		"ci": 2,
+		"cc": 3,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_true(final_chunk["is_final_chunk"])
+
+
 func test_legacy_long_key_packets_still_route_to_existing_appliers() -> void:
 	var router := RealtimeRouter.new()
 	var packet := {

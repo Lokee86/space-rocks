@@ -33,6 +33,9 @@ func TestCompactWirePacketCompactsMetadataKeys(t *testing.T) {
 	if got["x"] != 1 || got["y"] != 2 {
 		t.Fatalf("coordinate fields changed: %#v", got)
 	}
+	if _, ok := got["baseline_sequence"]; ok {
+		t.Fatalf("did not expect readable baseline_sequence key in compact output: %#v", got)
+	}
 }
 
 func TestCompactWirePacketCompactsNestedWorldUpdatesRecursively(t *testing.T) {
@@ -134,15 +137,13 @@ func TestCompactWirePacketDoesNotMutateInput(t *testing.T) {
 		t.Fatalf("compacted packet not returned as expected: %#v", got)
 	}
 }
+
 func TestCompactWirePacketCompactsReadableWorldDeltaMap(t *testing.T) {
 	input := map[string]any{
-		"type":             "world_delta",
-		"lane":             "world",
-		"sequence":         int64(7),
-		"baseline_id":      "player-1",
-		"snapshot_id":      "player-1",
-		"server_sent_msec": int64(123),
-		"snapshot_kind":    "delta",
+		"type":              "world_delta",
+		"sequence":          int64(7),
+		"baseline_sequence": int64(5),
+		"server_sent_msec":  int64(123),
 		"ship_updates": []any{
 			map[string]any{
 				"id":        "ship-1",
@@ -156,12 +157,17 @@ func TestCompactWirePacketCompactsReadableWorldDeltaMap(t *testing.T) {
 
 	got := CompactWirePacket(input)
 
-	for _, key := range []string{"t", "l", "q", "b", "sid", "ms", "k", "su"} {
+	for _, key := range []string{"t", "q", "bq", "ms", "su"} {
 		if _, ok := got[key]; !ok {
 			t.Fatalf("expected compact key %q to be present, got %#v", key, got)
 		}
 	}
-	for _, key := range []string{"type", "lane", "sequence", "baseline_id", "snapshot_id", "server_sent_msec", "snapshot_kind", "ship_updates"} {
+	for _, key := range []string{"l", "k", "sid", "ci", "cc", "fc", "b"} {
+		if _, ok := got[key]; ok {
+			t.Fatalf("did not expect legacy compact key %q in compact runtime output: %#v", key, got)
+		}
+	}
+	for _, key := range []string{"type", "sequence", "baseline_sequence", "server_sent_msec", "ship_updates"} {
 		if _, ok := got[key]; ok {
 			t.Fatalf("did not expect readable key %q in compact output: %#v", key, got)
 		}

@@ -79,43 +79,52 @@ func TestCandidateProjectionReturnsFalseForEventBatchCandidate(t *testing.T) {
 }
 
 func decodedPacketType(wire map[string]any) string {
-	if got, ok := wire["type"].(string); ok && got != "" {
-		return got
-	}
-	compact, _ := wire["t"].(string)
-	switch compact {
-	case "wf":
-		return "world_full"
-	case "wd":
-		return "world_delta"
-	case "of":
-		return "overlay_full"
-	case "od":
-		return "overlay_delta"
-	case "sf":
-		return "session_full"
-	case "sd":
-		return "session_delta"
-	default:
-		return ""
-	}
+    if got, ok := wire["type"].(string); ok && got != "" {
+        return got
+    }
+    compact, _ := wire["t"].(string)
+    switch compact {
+    case "wf":
+        return "world_full"
+    case "wd":
+        return "world_delta"
+    case "of":
+        return "overlay_full"
+    case "od":
+        return "overlay_delta"
+    case "sf":
+        return "session_full"
+    case "sd":
+        return "session_delta"
+    default:
+        return ""
+    }
 }
 
 func decodedPacketLane(wire map[string]any) string {
-	if got, ok := wire["lane"].(string); ok && got != "" {
-		return got
-	}
-	compact, _ := wire["l"].(string)
-	switch compact {
-	case "w":
-		return "world"
-	case "o":
-		return "overlay"
-	case "s":
-		return "session"
-	default:
-		return ""
-	}
+    if got, ok := wire["lane"].(string); ok && got != "" {
+        return got
+    }
+    compact, _ := wire["l"].(string)
+    switch compact {
+    case "w":
+        return "world"
+    case "o":
+        return "overlay"
+    case "s":
+        return "session"
+    default:
+        switch decodedPacketType(wire) {
+        case "world_full", "world_delta":
+            return "world"
+        case "overlay_full", "overlay_delta":
+            return "overlay"
+        case "session_full", "session_delta":
+            return "session"
+        default:
+            return ""
+        }
+    }
 }
 
 func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
@@ -333,27 +342,25 @@ func TestBuildActiveRealtimeResultUsesSelectedCandidatesOnly(t *testing.T) {
 }
 
 func assertNotNakedLanePayload(t *testing.T, lane Lane, wire map[string]any) {
-	t.Helper()
-	if _, ok := wire["type"]; !ok {
-		if _, ok := wire["t"]; !ok {
-			t.Fatalf("wire packet missing type for lane=%q: %#v", lane, wire)
-		}
-	}
-	if _, ok := wire["lane"]; !ok {
-		if _, ok := wire["l"]; !ok {
-			t.Fatalf("wire packet missing lane for lane=%q: %#v", lane, wire)
-		}
-	}
+    t.Helper()
+    if _, ok := wire["type"]; !ok {
+        if _, ok := wire["t"]; !ok {
+            t.Fatalf("wire packet missing type for lane=%q: %#v", lane, wire)
+        }
+    }
+    if decodedPacketType(wire) == "" {
+        t.Fatalf("wire packet missing decodable envelope type for lane=%q: %#v", lane, wire)
+    }
 
-	if hasOnlyKeys(wire, []string{"ships", "asteroids", "bullets", "pickups"}) {
-		t.Fatalf("world payload encoded without envelope for lane=%q: %#v", lane, wire)
-	}
-	if hasOnlyKeys(wire, []string{"receiver"}) {
-		t.Fatalf("overlay payload encoded without envelope for lane=%q: %#v", lane, wire)
-	}
-	if hasOnlyKeys(wire, []string{"players", "player_lifecycle", "total_asteroids"}) {
-		t.Fatalf("session payload encoded without envelope for lane=%q: %#v", lane, wire)
-	}
+    if hasOnlyKeys(wire, []string{"ships", "asteroids", "bullets", "pickups"}) {
+        t.Fatalf("world payload encoded without envelope for lane=%q: %#v", lane, wire)
+    }
+    if hasOnlyKeys(wire, []string{"receiver"}) {
+        t.Fatalf("overlay payload encoded without envelope for lane=%q: %#v", lane, wire)
+    }
+    if hasOnlyKeys(wire, []string{"players", "player_lifecycle", "total_asteroids"}) {
+        t.Fatalf("session payload encoded without envelope for lane=%q: %#v", lane, wire)
+    }
 }
 
 func hasOnlyKeys(wire map[string]any, keys []string) bool {
@@ -447,44 +454,48 @@ func TestIncludedRealtimeLaneCandidatesSkipsInvalidIndexes(t *testing.T) {
 	}
 }
 func TestEncodeLanePacketCompactsActiveWorldDeltaWireJSON(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{
-				Lane:         LaneWorld,
-				Sequence:     9,
-				BaselineID:   "baseline-9",
-				SnapshotID:   "snapshot-9",
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			Ships: FieldRecordDelta[WorldShipRecord]{
-				Updates: []map[string]any{{
-					"id":        "ship-1",
-					"x":         6,
-					"y":         7,
-					"rotation":  8,
-					"thrusting": true,
-				}},
-			},
-		},
-	}
+    candidate := RealtimeLaneCandidate{
+        Lane: LaneWorld,
+        Kind: RealtimeLaneCandidateKindDelta,
+        Delta: WorldDeltaPacket{
+            Type: PacketTypeWorldDelta,
+            Metadata: Metadata{
+                Lane:         LaneWorld,
+                Sequence:     9,
+                BaselineID:   "baseline-9",
+                SnapshotID:   "snapshot-9",
+                SnapshotKind: SnapshotKind("delta"),
+            },
+            Ships: FieldRecordDelta[WorldShipRecord]{
+                Updates: []map[string]any{{
+                    "id":        "ship-1",
+                    "x":         6,
+                    "y":         7,
+                    "rotation":  8,
+                    "thrusting": true,
+                }},
+            },
+        },
+    }
 
-	encoded, recordedBytes := encodeLanePacket(candidate)
-	if recordedBytes == 0 {
-		t.Fatal("expected encoded bytes for active world delta packet")
-	}
-	if len(encoded) == 0 {
-		t.Fatal("expected non-empty encoded packet")
-	}
+    encoded, recordedBytes := encodeLanePacket(candidate)
+    if recordedBytes == 0 {
+        t.Fatal("expected encoded bytes for active world delta packet")
+    }
+    if len(encoded) == 0 {
+        t.Fatal("expected non-empty encoded packet")
+    }
 
-	wire := mustDecodeWirePacket(t, encoded)
-	assertStringValue(t, wire, "t", "wd")
-	assertStringValue(t, wire, "l", "w")
-	assertContainsKey(t, wire, "q")
-	assertContainsKey(t, wire, "su")
-	assertNotContainsKey(t, wire, "server_sent_msec")
-	assertNotContainsKey(t, wire, "snapshot_kind")
-	assertNotContainsKey(t, wire, "ship_updates")
+    wire := mustDecodeWirePacket(t, encoded)
+    assertStringValue(t, wire, "t", "wd")
+    assertContainsKey(t, wire, "q")
+    assertContainsKey(t, wire, "su")
+    assertNotContainsKey(t, wire, "l")
+    assertNotContainsKey(t, wire, "server_sent_msec")
+    assertNotContainsKey(t, wire, "snapshot_kind")
+    assertNotContainsKey(t, wire, "k")
+    assertNotContainsKey(t, wire, "sid")
+    assertNotContainsKey(t, wire, "ship_updates")
 }
+
+

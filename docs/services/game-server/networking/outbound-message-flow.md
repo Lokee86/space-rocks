@@ -255,18 +255,22 @@ Lane roles at service level are:
 - event = event_batch presentation event delivery
 - resync = resync_request/resync_required recovery signaling
 
-Lane packet metadata carries:
+Lane packet metadata always carries:
 
-- `lane`
 - `sequence`
-- `baseline_id`
-- `snapshot_id`
 - `server_sent_msec`
-- `snapshot_kind`
-- `chunk_index`
-- `chunk_count`
-- `is_final_chunk`
 
+Active runtime world/overlay/session lane packets may also carry inferred-or-conditional metadata when needed:
+
+- `lane` when not inferred from `type`
+- `baseline_id` when a numeric baseline dependency cannot represent the current value safely
+- `baseline_sequence` for parseable runtime delta dependencies
+- `snapshot_id` when not inferred from lane, packet kind, and sequence
+- `snapshot_kind` when not inferred from `type`
+- `chunk_index` and `chunk_count` when `chunk_count > 1`
+- `is_final_chunk` only for legacy/backward-compatible decode support, not preferred active runtime output
+
+`event_batch` and control-lane resync packet families keep their own current metadata behavior; this section only narrows the active runtime world/overlay/session envelope claim.
 The packet-shape details for those lane packets belong in the realtime protocol doc. This service doc only keeps the outbound delivery boundary and the current lane roles.
 
 ### Room snapshots
@@ -447,4 +451,6 @@ The documented focused test paths for outbound routing are:
 The current `debug_shape_catalog` send-once behavior is tracked by room ID inside the write loop, not by a durable client acknowledgement.
 
 This document is scoped to current service implementation. Further transport mapping, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization remain future work.
+
+
 

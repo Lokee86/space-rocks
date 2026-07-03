@@ -272,25 +272,44 @@ Active realtime gameplay lane packets use compact JSON aliases at the final outb
 
 ### Lane metadata
 
-Lane packets carry these top-level metadata fields:
+Lane packets always carry these top-level metadata fields:
 
 ```text
 type
-lane
 sequence
-baseline_id
-snapshot_id
 server_sent_msec
-snapshot_kind
-chunk_index
-chunk_count
-is_final_chunk
 ```
+
+For active world, overlay, and session runtime packets, the client now infers additional metadata when the server omits redundant fields:
+
+```text
+lane
+  inferred from type
+
+snapshot_kind
+  inferred from type: _full -> full, _delta -> delta
+
+snapshot_id
+  inferred from lane + packet kind + sequence
+
+full baseline_id
+  inferred as <lane>-baseline-<sequence>
+
+delta baseline_id
+  inferred from baseline_sequence when present
+
+chunk_index / chunk_count
+  emitted only when chunk_count > 1
+
+is_final_chunk
+  inferred from chunk_index and chunk_count
+```
+
+Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world/overlay/session gameplay lanes. `event_batch` and control-lane resync packets keep their own current metadata behavior unless implementation changes.
 
 The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, overlay, and session lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and before `packetcodec` encodes JSON.
 
 Chunk metadata exists in the wire shape and scheduler records. This document does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
-
 ### Numeric wire quantization
 
 Server outbound realtime lane records are quantized in the realtime projection and wire-record path before JSON encoding. Quantization happens before delta comparison, so deltas compare projected wire-shaped values instead of raw simulation float precision.
@@ -1230,6 +1249,8 @@ The current implementation sends lane-native gameplay output on the server tick 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
+
+
 
 
 

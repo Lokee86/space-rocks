@@ -2,6 +2,7 @@ package realtime
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -358,18 +359,69 @@ func firstSessionTotalAsteroids(delta RecordDelta[SessionTotalAsteroidsRecord]) 
 }
 
 func wireMetadataPacket(packetType string, metadata Metadata) map[string]any {
-	return map[string]any{
+	wire := map[string]any{
 		"type":             packetType,
-		"lane":             string(metadata.Lane),
 		"sequence":         metadata.Sequence,
-		"baseline_id":      metadata.BaselineID,
-		"snapshot_id":      metadata.SnapshotID,
 		"server_sent_msec": metadata.ServerSentMsec,
-		"snapshot_kind":    string(metadata.SnapshotKind),
-		"chunk_index":      metadata.ChunkIndex,
-		"chunk_count":      metadata.ChunkCount,
-		"is_final_chunk":   metadata.IsFinalChunk,
 	}
+	if !isRuntimePacketType(packetType) {
+		wire["lane"] = string(metadata.Lane)
+		wire["baseline_id"] = metadata.BaselineID
+		wire["snapshot_id"] = metadata.SnapshotID
+		wire["snapshot_kind"] = string(metadata.SnapshotKind)
+		wire["chunk_index"] = metadata.ChunkIndex
+		wire["chunk_count"] = metadata.ChunkCount
+		wire["is_final_chunk"] = metadata.IsFinalChunk
+		return wire
+	}
+
+	if metadata.SnapshotKind == SnapshotKind("delta") {
+		if baselineSequence, ok := runtimeBaselineSequence(metadata.Lane, metadata.BaselineID); ok {
+			wire["baseline_sequence"] = baselineSequence
+		} else if metadata.BaselineID != "" {
+			wire["baseline_id"] = metadata.BaselineID
+		}
+	} else if metadata.BaselineID != "" && !isRuntimeGeneratedFullBaseline(metadata) {
+		wire["baseline_id"] = metadata.BaselineID
+	}
+
+	if metadata.ChunkCount > 1 {
+		wire["chunk_index"] = metadata.ChunkIndex
+		wire["chunk_count"] = metadata.ChunkCount
+	}
+	return wire
+}
+
+func isRuntimePacketType(packetType string) bool {
+	switch packetType {
+	case PacketFamilyWorldFull, PacketTypeWorldDelta, PacketFamilyOverlayFull, PacketTypeOverlayDelta, PacketFamilySessionFull, PacketTypeSessionDelta:
+		return true
+	default:
+		return false
+	}
+}
+
+func runtimeBaselineSequence(lane Lane, baselineID string) (int, bool) {
+	prefix := string(lane) + "-baseline-"
+	if !strings.HasPrefix(baselineID, prefix) {
+		return 0, false
+	}
+	sequence, err := strconv.Atoi(strings.TrimPrefix(baselineID, prefix))
+	if err != nil {
+		return 0, false
+	}
+	return sequence, true
+}
+
+func isRuntimeGeneratedFullBaseline(metadata Metadata) bool {
+	if metadata.BaselineID == "" {
+		return true
+	}
+	sequence, ok := runtimeBaselineSequence(metadata.Lane, metadata.BaselineID)
+	if !ok {
+		return false
+	}
+	return sequence == metadata.Sequence
 }
 
 func wireRecords(records any) any {
@@ -501,6 +553,9 @@ func toSnakeCase(value string) string {
 func isUpper(r rune) bool { return r >= 'A' && r <= 'Z' }
 func isLower(r rune) bool { return r >= 'a' && r <= 'z' }
 func isDigit(r rune) bool { return r >= '0' && r <= '9' }
+
+
+
 
 
 

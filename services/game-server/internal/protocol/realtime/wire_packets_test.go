@@ -530,9 +530,7 @@ func TestWireSessionDeltaPacketUsesSparseOmission(t *testing.T) {
 	})
 
 	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
-	assertStringValue(t, wire, "lane", string(LaneSession))
 	assertIntValue(t, wire, "sequence", 14)
-	assertStringValue(t, wire, "snapshot_kind", "delta")
 	for _, key := range []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes", "total_asteroids"} {
 		assertNotContainsKey(t, wire, key)
 	}
@@ -548,9 +546,7 @@ func TestWireOverlayWireDeltaPacketOmitsEmptySections(t *testing.T) {
 	})
 
 	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
-	assertStringValue(t, wire, "lane", string(LaneOverlay))
 	assertIntValue(t, wire, "sequence", 12)
-	assertStringValue(t, wire, "snapshot_kind", "delta")
 	for _, key := range []string{"receiver_creates", "receiver_updates", "receiver_deletes"} {
 		assertNotContainsKey(t, wire, key)
 	}
@@ -592,9 +588,7 @@ func TestWireSessionWireDeltaPacketOmitsEmptySections(t *testing.T) {
 	})
 
 	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
-	assertStringValue(t, wire, "lane", string(LaneSession))
 	assertIntValue(t, wire, "sequence", 14)
-	assertStringValue(t, wire, "snapshot_kind", "delta")
 	for _, key := range []string{"players", "player_session_updates", "player_session_deletes", "player_lifecycle", "player_lifecycle_updates", "player_lifecycle_deletes", "total_asteroids"} {
 		assertNotContainsKey(t, wire, key)
 	}
@@ -682,11 +676,8 @@ func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
 	assertStringValue(t, wire, "type", PacketTypeWorldDelta)
-	assertStringValue(t, wire, "lane", string(LaneWorld))
 	assertIntValue(t, wire, "sequence", 9)
 	assertStringValue(t, wire, "baseline_id", "baseline-9")
-	assertStringValue(t, wire, "snapshot_id", "snapshot-9")
-	assertStringValue(t, wire, "snapshot_kind", "delta")
 	assertContainsKey(t, wire, "ship_creates")
 	assertContainsKey(t, wire, "bullet_updates")
 	assertContainsKey(t, wire, "asteroid_deletes")
@@ -713,11 +704,8 @@ func TestActiveWirePacketEncodingUsesOverlayDeltaEnvelope(t *testing.T) {
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
 	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
-	assertStringValue(t, wire, "lane", string(LaneOverlay))
 	assertIntValue(t, wire, "sequence", 12)
-	assertStringValue(t, wire, "baseline_id", "overlay-baseline-12")
-	assertStringValue(t, wire, "snapshot_id", "overlay-snapshot-12")
-	assertStringValue(t, wire, "snapshot_kind", "delta")
+    assertIntValue(t, wire, "baseline_sequence", 12)
 	assertContainsKey(t, wire, "receiver_updates")
 	assertNotNakedOverlayDeltaPayload(t, wire)
 }
@@ -733,11 +721,8 @@ func TestWireOverlayDeltaPacketEncodesReceiverUpdatesAsPartialFieldPatch(t *test
 
 	wire := mustDecodeWirePacket(t, encoded)
 	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
-	assertStringValue(t, wire, "lane", string(LaneOverlay))
 	assertIntValue(t, wire, "sequence", 12)
-	assertStringValue(t, wire, "baseline_id", "overlay-baseline-12")
-	assertStringValue(t, wire, "snapshot_id", "overlay-snapshot-12")
-	assertStringValue(t, wire, "snapshot_kind", "delta")
+    assertIntValue(t, wire, "baseline_sequence", 12)
 
 	updates := mustSliceValue(t, wire, "receiver_updates")
 	if len(updates) != 1 {
@@ -824,11 +809,8 @@ func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
 	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
-	assertStringValue(t, wire, "lane", string(LaneSession))
 	assertIntValue(t, wire, "sequence", 14)
-	assertStringValue(t, wire, "baseline_id", "session-baseline-14")
-	assertStringValue(t, wire, "snapshot_id", "session-snapshot-14")
-	assertStringValue(t, wire, "snapshot_kind", "delta")
+    assertIntValue(t, wire, "baseline_sequence", 14)
 	assertNotContainsKey(t, wire, "players")
 	assertContainsKey(t, wire, "player_session_updates")
 	assertNotContainsKey(t, wire, "player_lifecycle")
@@ -1001,6 +983,58 @@ func TestWireLanePacketDropsUnsupportedDeltaPayloads(t *testing.T) {
 	}
 }
 
+
+func TestWireWorldFullPacketOmitsInferableRuntimeMetadata(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindFull,
+		Full: WorldFullPacket{
+			Type: PacketFamilyWorldFull,
+			Metadata: Metadata{
+				Lane:           LaneWorld,
+				Sequence:       9,
+				BaselineID:     "world-baseline-9",
+				SnapshotID:     "world-baseline-9",
+				SnapshotKind:   SnapshotKind("full"),
+				ServerSentMsec: 123,
+				ChunkIndex:     0,
+				ChunkCount:     1,
+				IsFinalChunk:   true,
+			},
+		},
+	})
+
+	assertStringValue(t, wire, "type", PacketFamilyWorldFull)
+	assertIntValue(t, wire, "sequence", 9)
+	assertIntValue(t, wire, "server_sent_msec", 123)
+	for _, key := range []string{"lane", "baseline_id", "baseline_sequence", "snapshot_id", "snapshot_kind", "chunk_index", "chunk_count", "is_final_chunk"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireWorldDeltaPacketEmitsChunkMetadataOnlyForChunkedPackets(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: WorldDeltaPacket{
+			Type: PacketTypeWorldDelta,
+			Metadata: Metadata{
+				Lane:         LaneWorld,
+				Sequence:     10,
+				BaselineID:   "world-baseline-9",
+				SnapshotID:   "world-snapshot-10",
+				SnapshotKind: SnapshotKind("delta"),
+				ChunkIndex:   1,
+				ChunkCount:   3,
+			},
+		},
+	})
+
+	assertIntValue(t, wire, "baseline_sequence", 9)
+	assertIntValue(t, wire, "chunk_index", 1)
+	assertIntValue(t, wire, "chunk_count", 3)
+	assertNotContainsKey(t, wire, "is_final_chunk")
+}
 func mustEncodeWirePacket(t *testing.T, candidate RealtimeLaneCandidate) []byte {
 	t.Helper()
 
@@ -1310,4 +1344,6 @@ func TestWireWorldWireDeltaPacketEncodesIntegerWorldFieldUpdates(t *testing.T) {
 	assertInt64Value(t, update, "rotation", 30)
 	assertNotContainsKey(t, update, "ship_type")
 }
+
+
 

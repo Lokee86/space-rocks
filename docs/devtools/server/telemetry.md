@@ -133,7 +133,7 @@ pickup
 
 `telemetry_ping` and `telemetry_pong` are timing diagnostics only. The server preserves the client ping sequence and client send timestamp, then adds server receive and server send timestamps. The packet pair does not mutate room, player, or simulation state.
 
-Normal gameplay lane packets are also stamped with `server_sent_msec` before outbound encoding. Client telemetry uses that timestamp together with ping/pong-derived clock offset estimates to calculate packet age.
+Normal gameplay lane packets are also still stamped with `server_sent_msec` before outbound encoding. Client telemetry uses that timestamp together with ping/pong-derived clock offset estimates to calculate packet age. The newer runtime envelope inference for world/overlay/session packets removes redundant metadata fields, not this timestamp.
 
 ## Client presentation
 
@@ -544,3 +544,4 @@ Telemetry in this document means live debug and diagnostic readouts. It does not
 `packet_staleness_ms` and `packet_age_ms` are client-side calculations. The server supplies timestamps and lane packets; the client owns the derived timing readout.
 
 The server collision body telemetry seam observes real collision bodies. It should stay connected to the authoritative physics/collision implementation rather than duplicating shape facts in client-only debug logic.
+
