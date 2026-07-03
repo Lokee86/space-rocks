@@ -1,6 +1,8 @@
 ---
 import { getCollection } from "astro:content";
+import PageHead from '../components/PageHead.astro';
 import HomepageClientMount from '../components/HomepageClientMount';
+import { buildPageMetadata } from '../content/pageMetadata';
 import '../components/plasmic/plasmic__default_style.css';
 import '../components/plasmic/space_rocks_devlog/plasmic.css';
 
@@ -15,44 +17,18 @@ const homepageContent = latestDevlog
 	}
 	: undefined;
 
-const shareImageUrl = new URL("/assets/ui/thumbnailv2.png", Astro.site).toString();
-const shareUrl = new URL("/", Astro.site).toString();
-const shareTitle = "Space Rocks Devlog";
-const shareDescription = latestDevlog?.data.summary ?? "The latest development updates for Space Rocks.";
+const metadata = buildPageMetadata({
+	site: Astro.site!,
+	title: "Space Rocks Devlog",
+	description: latestDevlog?.data.summary ?? "The latest development updates for Space Rocks.",
+	path: "/",
+	type: "website",
+});
 ---
 
 <html lang="en">
 	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/png" href="/assets/ui/favicon.png" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="description" content={shareDescription} />
-		<meta name="theme-color" content="#00e5ff" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{shareTitle}</title>
-		<meta property="og:site_name" content="Laughing Skull Entertainment" />
-		<meta property="og:type" content="website" />
-		<meta property="og:title" content={shareTitle} />
-		<meta property="og:description" content={shareDescription} />
-		<meta property="og:url" content={shareUrl} />
-		<meta property="og:image" content={shareImageUrl} />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
-		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content={shareTitle} />
-		<meta name="twitter:description" content={shareDescription} />
-		<meta name="twitter:image" content={shareImageUrl} />
-		<style is:global>
-			html,
-			body {
-				margin: 0;
-				padding: 0;
-			}
-
-			body {
-				background: #05070d;
-			}
-		</style>
+		<PageHead metadata={metadata} generator={Astro.generator} />
 	</head>
 	<body>
 		<HomepageClientMount content={homepageContent} client:only="react" />

@@ -12,6 +12,8 @@ const devlog = defineCollection({
     title: z.string(),
     date: z.date(),
     summary: z.string(),
+    socialImage: z.string().default(""),
+    socialImageAlt: z.string().default(""),
     heroLine1: z.string(),
     heroLine2: z.string(),
     heroLine3: z.string(),

@@ -14,6 +14,16 @@ date: 2026-06-26
 
 summary: "Short archive/feed summary for this post."
 
+# Optional social card image override.
+# Use a public asset path, ideally 1200x630.
+# If empty, metadata falls back to the default thumbnail.
+
+socialImage: ""
+
+# Optional plain-text social image alt text for future accessibility/social-card use.
+
+socialImageAlt: ""
+
 # Hero copy shown over/near the hero media.
 # Plain text. Keep short and punchy.
 
