@@ -17,6 +17,7 @@ function Archive_(props: ArchiveProps, _ref: React.ForwardedRef<unknown>) {
       overrides={{
         h1: { children: "All Posts" },
         p: { children: "All development posts for Space Rocks." },
+        header: { className: styles.headerDiscordLink },
         archiveList: {
           children:
             content.entries.length === 0 ? (

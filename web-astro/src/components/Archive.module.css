@@ -26,7 +26,7 @@
 
 .archiveLink:hover,
 .archiveLink:focus-visible {
-  color: rgb(255, 255, 255);
+  color: #00e5ff;
   text-shadow:
     rgba(0, 229, 255, 0.95) 0 0 12px,
     rgba(0, 229, 255, 0.55) 0 0 22px;
@@ -49,4 +49,14 @@
   max-width: 90ch;
   margin: 8px 0 0;
   line-height: 1.55;
+}
+
+.headerDiscordLink :global(a[aria-label="Discord"]):hover,
+.headerDiscordLink :global(a[aria-label="Discord"]):focus-visible {
+  color: #00e5ff;
+}
+
+.headerDiscordLink :global(a[aria-label="Discord"]):focus-visible {
+  outline: 1px solid rgba(0, 229, 255, 0.75);
+  outline-offset: 4px;
 }

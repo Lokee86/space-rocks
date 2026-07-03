@@ -3,6 +3,7 @@ import * as React from "react";
 import PlasmicHomepage from "./plasmic/space_rocks_devlog/PlasmicHomepage";
 import { CrtMediaFrame } from "./media/CrtMediaFrame";
 import { MarkdownText } from "./markdown/MarkdownText";
+import styles from "./Archive.module.css";
 import markdownStyles from "./markdown/MarkdownText.module.css";
 import type { HomepageContent } from "../content/homepageContent";
 import { normalizeHomepageContent } from "../content/homepageContent";
@@ -125,6 +126,7 @@ function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
   return (
     <PlasmicHomepage
       overrides={{
+        header: { className: styles.headerDiscordLink },
         heroLine1Media: { children: content.heroLine1 },
         heroLine2Media: { children: content.heroLine2 },
         heroLine3Media: { children: content.heroLine3 },
