@@ -41,7 +41,7 @@ YAML frontmatter-controlled layout fields
 MDX article body content
 Markdown-rendered selected frontmatter fields
 hero media
-article media gallery/video frame
+article media image/YouTube frame
 progress cards
 utility panel text
 fine print
@@ -69,17 +69,20 @@ Current route files:
 web-astro/src/pages/index.astro
 web-astro/src/pages/archive/index.astro
 web-astro/src/pages/devlog/[slug].astro
+web-astro/src/pages/rss.xml.js
 ```
 
 Current owned wrapper/source files:
 
 ```text
+web-astro/src/components/PageHead.astro
 web-astro/src/components/Homepage.tsx
 web-astro/src/components/HomepageClientMount.tsx
 web-astro/src/components/Archive.tsx
 web-astro/src/components/ArchiveClientMount.tsx
 web-astro/src/components/markdown/MarkdownText.tsx
 web-astro/src/content.config.ts
+web-astro/src/content/pageMetadata.ts
 web-astro/src/content/homepageContent.ts
 web-astro/src/content/archiveContent.ts
 ```
@@ -95,7 +98,6 @@ Generated Plasmic output is under:
 
 ```text
 web-astro/src/components/plasmic/
-web-astro/src/plasmic/
 web-astro/src/components/plasmic-tokens.theo.json
 web-astro/plasmic.json
 web-astro/plasmic.lock
@@ -205,7 +207,7 @@ Astro content collections
 -> load and validate devlog entries
 
 Astro static routes
--> generate homepage, archive, and per-post routes
+-> generate homepage, archive, per-post, and RSS routes
 
 React component props
 -> pass normalized content into owned wrappers and generated Plasmic layouts
@@ -219,6 +221,32 @@ Cloudflare Pages build pipeline
 
 The content collection schema is the main validation boundary for post files.
 
+Shared page-head metadata is rendered through:
+
+```text
+web-astro/src/components/PageHead.astro
+```
+
+Metadata defaults and URL helpers are owned by:
+
+```text
+web-astro/src/content/pageMetadata.ts
+```
+
+`pageMetadata.ts` owns the site name, default share image, default theme color, canonical URL generation, and share image URL generation.
+
+`PageHead.astro` renders:
+
+```text
+title
+description
+theme color
+Open Graph tags
+Twitter card tags
+canonical URL
+article published time when present
+```
+
 ## RSS feed
 
 The devlog static site exposes an RSS feed at:
@@ -231,6 +259,25 @@ The RSS endpoint is implemented in:
 
 ```text
 web-astro/src/pages/rss.xml.js
+```
+
+The RSS route uses:
+
+```text
+@astrojs/rss
+```
+
+Current dependency ownership for the devlog site includes:
+
+```text
+@astrojs/mdx
+-> MDX devlog entry loading and build support
+
+react-markdown
+-> MarkdownText rendering for Markdown-capable fields and the MDX body handoff
+
+@astrojs/rss
+-> /rss.xml feed generation
 ```
 
 RSS items are generated from devlog collection frontmatter and entry identity using:
@@ -248,6 +295,8 @@ summary
 entry.id
 -> /devlog/<slug>/ item link
 ```
+
+RSS descriptions are plain-text summaries stripped from Markdown-ish formatting before they are emitted into the feed.
 
 The canonical site URL for absolute feed links is owned by:
 
@@ -316,6 +365,7 @@ The current frontmatter model controls:
 
 ```text
 archive/feed metadata
+social sharing metadata
 hero copy
 hero media
 article eyebrow
@@ -327,12 +377,31 @@ utility panel title and text
 fine print
 ```
 
+Current schema notes:
+
+```text
+socialImage
+-> optional public asset path for social/share previews; ideally 1200x630
+-> empty values fall back to the default share image owned by web-astro/src/content/pageMetadata.ts
+
+socialImageAlt
+-> current/future accessibility and social-preview alt text for the social image
+
+heroVideoSrc
+heroVideoAutoPlay
+heroVideoMuted
+heroVideoLoop
+-> native hero video fields used when heroMediaKind is "video"
+```
+
 Current live fields include:
 
 ```yaml
 title: "Devlog 0001: From Arcade to Online"
 date: 2026-06-26
 summary: "Short archive/feed summary."
+socialImage: "/media/devlog/0001-arcade-to-online/social-card.png"
+socialImageAlt: "Space Rocks gameplay screenshot with neon HUD overlays"
 
 heroLine1: "FROM 80'S ARCADES"
 heroLine2: "TO AT HOME"
@@ -341,6 +410,10 @@ heroLine3: "ONLINE CHAOS"
 heroMediaKind: "youtube"
 heroImages: []
 heroYoutubeUrl: "https://www.youtube.com/watch?v=8UXrnRvapHQ"
+heroVideoSrc: ""
+heroVideoAutoPlay: false
+heroVideoMuted: true
+heroVideoLoop: false
 heroMediaAlt: "Gameplay demo"
 
 articleLabel: "Devlog Entry - 0001"
@@ -487,6 +560,12 @@ utilityText
 finePrint
 ```
 
+`MarkdownText` also renders the MDX body injected into the article layout after the article CRT media frame.
+
+`MarkdownText` owns generated heading ids for `h2`, `h3`, and `h4`. Intro index links rely on those generated heading ids from body headings.
+
+`MarkdownText.module.css` owns the scoped Markdown link and list styling used by the rendered Markdown content.
+
 Title-like fields should remain plain text:
 
 ```text
@@ -526,6 +605,7 @@ Supported media kinds:
 ""
 "images"
 "youtube"
+"video"
 ```
 
 Current usage pattern for the first live post:
@@ -535,9 +615,26 @@ heroMediaKind: "youtube"
 articleMediaKind: "images"
 ```
 
-The hero uses a YouTube URL. The article media frame uses a list of public screenshot paths.
+Hero native video uses:
 
-Media alt text should describe the media generally. For ordinary gameplay screenshots/video, a concise value such as WIP screenshots from the game or Gameplay demo is sufficient.
+```text
+heroVideoSrc
+heroVideoAutoPlay
+heroVideoMuted
+heroVideoLoop
+```
+
+The hero uses a YouTube URL or native video source depending on `heroMediaKind`. Article media currently supports images or YouTube through `articleImages` and `articleYoutubeUrl`. Article native video is not wired until article video source fields are added or media enums are split.
+
+Current article-media caveat:
+
+```text
+articleMediaKind currently uses the same enum.
+article video source fields are not currently exposed.
+Do not use articleMediaKind: "video" until article video source fields are added or hero/article media enums are split.
+```
+
+Media alt text should describe the media generally. For ordinary gameplay screenshots/video, a concise value such as WIP screenshots from the game or Gameplay demo is sufficient. `socialImageAlt` is the current/future alt text surface for social previews and accessibility-oriented metadata.
 
 ## Archive and latest-post behavior
 
@@ -556,6 +653,9 @@ The current route pattern is:
 
 /devlog/<slug>/
 -> individual static post route
+
+/rss.xml
+-> generated RSS feed
 ```
 
 Archive links must point to generated devlog routes, not raw content files.
@@ -587,8 +687,10 @@ Generated Plasmic files are produced into:
 
 ```text
 web-astro/src/components/plasmic/
-web-astro/src/plasmic/
-Test entries should be removed from the active content collection path.
+web-astro/src/components/plasmic-tokens.theo.json
+web-astro/plasmic.json
+web-astro/plasmic.lock
+```
 
 Owned wrappers must wire content into Plasmic through overrides and owned components. Do not hand-edit generated Plasmic files for behavior.
 
@@ -618,7 +720,26 @@ utilityText
 finePrint
 ```
 
-The `Homepage.tsx` wrapper owns the current custom insertion seam for the MDX body.
+The `Homepage.tsx` wrapper owns the current custom insertion seam for the MDX body and injects `MarkdownText` into `introText`.
+
+`introText` rule:
+
+```text
+introText must remain a block/container slot, currently a div.
+Do not convert introText back to a p/text node.
+Homepage.tsx injects MarkdownText into introText.
+MarkdownText can render block children such as p, ul, and ol.
+If introText is a p, the DOM becomes invalid and browser paint/layout artifacts can happen.
+```
+
+Plasmic seam verification for `introText` after codegen:
+
+```text
+Verify introText?: Flex__<"div">;
+Verify data-plasmic-name={"introText"} exists.
+Verify data-plasmic-override={overrides.introText} exists.
+Do not leave the node as only a literal label prop.
+```
 
 Important current integration rule:
 
@@ -789,6 +910,9 @@ web-astro/src/content.config.ts
 web-astro/src/content/devlog/
 -> live MDX devlog content entries
 
+web-astro/src/content/pageMetadata.ts
+-> site name, default share image, default theme color, canonical URL generation, and share image URL generation
+
 web-astro/src/content/homepageContent.ts
 -> homepage content type and normalization
 
@@ -807,13 +931,19 @@ web-astro/src/pages/archive/index.astro
 
 web-astro/src/pages/devlog/[slug].astro
 -> generates static per-post devlog pages
+
+web-astro/src/pages/rss.xml.js
+-> generates the /rss.xml feed from devlog entries with plain-text summary descriptions
 ```
 
 Owned wrappers and rendering:
 
 ```text
+web-astro/src/components/PageHead.astro
+-> renders shared page-head metadata for Astro routes
+
 web-astro/src/components/Homepage.tsx
--> maps devlog content into Plasmic overrides, media props, and MDX body placement
+-> maps devlog content into Plasmic overrides, media props, MDX body placement, and the introText Markdown injection seam
 
 web-astro/src/components/HomepageClientMount.tsx
 -> mounts Homepage client-side
@@ -825,7 +955,7 @@ web-astro/src/components/ArchiveClientMount.tsx
 -> mounts Archive client-side
 
 web-astro/src/components/markdown/MarkdownText.tsx
--> renders Markdown-capable fields/body where used
+-> renders Markdown-capable fields and the MDX body, and generates heading ids for h2/h3/h4
 ```
 
 Owned presentation components:
@@ -844,8 +974,8 @@ Generated Plasmic output:
 web-astro/src/components/plasmic/space_rocks_devlog/
 -> generated layout components and CSS modules
 
-web-astro/src/plasmic/
--> generated Plasmic support files
+web-astro/src/components/plasmic-tokens.theo.json
+-> generated Plasmic token output
 
 web-astro/plasmic.json
 web-astro/plasmic.lock
@@ -889,13 +1019,13 @@ homepage renders the latest live devlog
 archive renders only intended live posts
 archive links resolve to generated devlog routes
 devlog post route renders
+/rss.xml loads
 hero media renders
 article media renders
 MDX body renders immediately after the article media frame
 intro/progress/utility/finePrint fields render expected Markdown/plain text
 media frame controls appear and work where applicable
 no test posts appear in the published content collection
-rss feed loads
 newest devlog appears first in the feed
 feed links resolve under https://space-rocks.laughingskull.ca
 feed descriptions are plain text

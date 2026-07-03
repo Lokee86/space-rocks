@@ -8,6 +8,7 @@ export type PageMetadata = {
   canonicalUrl: string;
   type: "website" | "article";
   imageUrl: string;
+  imageAlt: string;
   imageWidth: number;
   imageHeight: number;
   twitterCard: "summary" | "summary_large_image";
@@ -22,6 +23,7 @@ type BuildPageMetadataInput = {
   path: string;
   type?: "website" | "article";
   imagePath?: string;
+  imageAlt?: string;
   imageWidth?: number;
   imageHeight?: number;
   publishedTime?: string;
@@ -34,6 +36,7 @@ export function buildPageMetadata({
   path,
   type = "website",
   imagePath = defaultShareImagePath,
+  imageAlt = "",
   imageWidth = 1200,
   imageHeight = 630,
   publishedTime,
@@ -46,6 +49,7 @@ export function buildPageMetadata({
     canonicalUrl: new URL(path, site).toString(),
     type,
     imageUrl: new URL(resolvedImagePath, site).toString(),
+    imageAlt,
     imageWidth,
     imageHeight,
     twitterCard: "summary_large_image",

@@ -200,7 +200,11 @@ If Astro is not available, use no preset/manual settings and set the build comma
 
 The deployed static devlog pages should include standard title and description metadata, Open Graph metadata, and Twitter card metadata so shared links render as full preview cards instead of plain thumbnails.
 
-Preview images must be publicly reachable from the deployed site.
+Social preview metadata is generated server-side by Astro page head rendering through `web-astro/src/components/PageHead.astro`.
+
+`web-astro/src/content/pageMetadata.ts` owns the site-name defaults, canonical/share-image URL generation, fallback to the default share image when a page-level `socialImage` is empty, and the optional image alt text that PageHead emits as `og:image:alt` and `twitter:image:alt` when `imageAlt` or `socialImageAlt` is present.
+
+Preview images must be publicly reachable from the deployed site. Use public asset paths under `web-astro/public/` today, or external reachable URLs later if that is intentionally allowed.
 
 When testing preview metadata changes, a cache-busting query string such as `?v=og3` can help confirm whether external scrapers have picked up the updated metadata or image.
 
@@ -296,6 +300,20 @@ individual devlog page renders
 MDX body appears after article media frame
 media paths resolve
 no stale test content appears
+```
+
+Check feed:
+
+```text
+/rss.xml
+```
+
+Expected:
+
+```text
+feed loads
+absolute links use the production site host
+descriptions are plain text, not Markdown-heavy
 ```
 
 ## DNS and registrar model
@@ -546,6 +564,67 @@ Cloudflare cache/deployment version
 wrong branch deployed
 ```
 
+## RSS/feed issues
+
+## RSS has wrong absolute links
+
+Symptom:
+
+```text
+feed item links or feed metadata point at the wrong host
+```
+
+Cause:
+
+```text
+Astro site config is wrong
+```
+
+Fix:
+
+```text
+check web-astro/astro.config.mjs site value
+```
+
+## RSS is stale
+
+Symptom:
+
+```text
+feed is missing the newest post or still includes older content after a deploy
+```
+
+Likely causes:
+
+```text
+Cloudflare built an older commit
+Cloudflare built the wrong branch
+Cloudflare built the wrong root directory
+```
+
+Check:
+
+```text
+Cloudflare build commit SHA
+Cloudflare production branch
+Root directory is web-astro
+```
+
+## RSS descriptions look wrong
+
+Symptom:
+
+```text
+feed descriptions include Markdown-heavy formatting instead of plain text
+```
+
+Check:
+
+```text
+rss.xml output
+web-astro/src/pages/rss.xml.js summary stripping
+```
+
 ## Images fail in deployed site
 
 Check:
@@ -601,6 +680,7 @@ Cloudflare Pages build succeeds
 pages.dev deployment renders homepage
 archive renders
 post route renders
+/rss.xml renders
 custom domain resolves after DNS activation
 ```
 
@@ -619,19 +699,28 @@ Deployment-relevant files:
 
 ```text
 web-astro/package.json
--> build scripts and dependencies
+-> build scripts and dependencies including @astrojs/rss
 
 web-astro/package-lock.json
 -> locked dependency graph
 
 web-astro/astro.config.mjs
--> Astro static-site configuration
+-> Astro static-site configuration and absolute site URL used by metadata and RSS
+
+web-astro/src/components/PageHead.astro
+-> server-rendered page head metadata output
+
+web-astro/src/content/pageMetadata.ts
+-> metadata defaults, canonical URL generation, and default share-image fallback
 
 web-astro/src/content.config.ts
 -> content collection schema
 
 web-astro/src/pages/
 -> generated static route source
+
+web-astro/src/pages/rss.xml.js
+-> RSS feed generation route
 
 web-astro/src/content/devlog/
 -> live devlog entries

@@ -20,11 +20,12 @@ devlog archive
 individual devlog post pages
 static public media
 project/repository navigation
+Discord navigation/community links
 Plasmic-based visual layout
 owned wrapper/source behavior
 ```
 
-The site is content-driven and repo-owned. Devlog Markdown entries provide the current public content. Astro loads those entries and generates public routes. React wrappers map content into Plasmic-generated layouts. Owned components provide custom behavior such as media presentation.
+The site is content-driven and repo-owned. Devlog MDX entries provide the current public content. Astro loads those entries and generates public routes. React wrappers map content into Plasmic-generated layouts. Owned components provide custom behavior such as media presentation.
 
 The current domain shape is:
 
@@ -71,7 +72,7 @@ Static host
 -> serves generated site output
 ```
 
-The current web domain also links out to external project/community surfaces where configured, such as the project repository.
+The current web domain also links out to external project/community surfaces where configured, such as the project repository and the current Discord community links in site navigation.
 
 ## Authority boundaries
 
@@ -136,7 +137,7 @@ devlog content collection
 Devlog post flow:
 
 ```text
-devlog Markdown entry
+devlog MDX entry
 -> static route generated from entry id
 -> entry data passed into homepage-style devlog layout
 -> public devlog post page renders
@@ -147,7 +148,7 @@ Media flow:
 ```text
 devlog frontmatter media fields
 -> owned wrapper maps media fields into CrtMediaFrame props
--> CrtMediaFrame presents image galleries or YouTube media
+-> CrtMediaFrame presents image galleries, YouTube media, or native video
 -> static assets or embedded YouTube media render inside the frame
 ```
 
@@ -158,7 +159,7 @@ The public reader receives generated pages and public assets. No account session
 Inputs:
 
 ```text
-repo-owned devlog Markdown entries
+repo-owned devlog MDX entries
 devlog frontmatter fields
 post-specific public media assets
 shared public UI assets
@@ -174,12 +175,14 @@ Public outputs:
 homepage
 devlog archive page
 individual devlog post pages
+/rss.xml feed
 static HTML
 CSS and JavaScript bundles
 public UI assets
 post-specific media assets
 YouTube iframe embeds where configured
 repository/project links where configured
+Discord community links where configured
 ```
 
 Internal implementation outputs:
@@ -192,7 +195,7 @@ normalized homepage content objects
 normalized archive content objects
 ```
 
-The current site does not output account-specific, purchase-specific, entitlement-specific, or player-specific pages.
+The current site does not output account-specific, purchase-specific, entitlement-specific, or player-specific pages. The current Discord links are V0 public-navigation/community links only; they are not account, moderation, or social-platform integration behavior.
 
 ## Current public surfaces
 
@@ -207,6 +210,9 @@ Current implemented public surfaces:
 
 /devlog/<slug>/
 -> individual static devlog post page
+
+/rss.xml
+-> generated public RSS feed
 ```
 
 Current content surfaces:
@@ -226,6 +232,7 @@ Current media surfaces:
 ```text
 post-specific image galleries
 YouTube video embeds
+native video in hero media where configured
 CRT-styled media frame
 shared UI frame assets
 ```

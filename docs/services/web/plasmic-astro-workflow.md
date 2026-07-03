@@ -51,7 +51,7 @@ The hard ownership rule is:
 Custom behavior MUST go in owned wrapper/source files, always.
 ```
 
-Generated Plasmic files are layout output. They must not become customization surfaces.
+Generated Plasmic files are layout output. They must not become customization surfaces. They remain verification output only, not durable edit surfaces.
 
 The current Plasmic codegen command is:
 
@@ -66,6 +66,13 @@ web-astro/
 ```
 
 Generated Plasmic files must not be hand-edited.
+
+Workflow warning:
+
+```text
+Replacing or renaming Plasmic nodes can break named override slots even when the visual layout still looks correct in Studio.
+After a Plasmic node replacement or rename, inspect generated files only to verify the named override slot still exists, data-plasmic-name still exists, and data-plasmic-override still points at overrides.<slot>.
+```
 
 ## Code root
 
@@ -99,7 +106,6 @@ Generated Plasmic output includes:
 
 ```text
 web-astro/src/components/plasmic/
-web-astro/src/plasmic/
 web-astro/src/components/plasmic-tokens.theo.json
 web-astro/plasmic.json
 web-astro/plasmic.lock
@@ -276,11 +282,12 @@ compatibility shims
 site-specific React behavior
 ```
 
+If generated Plasmic imports fail during Astro build, check `web-astro/astro.config.mjs` aliases and `web-astro/src/compat/` before editing generated files.
+
 Do not place custom behavior in:
 
 ```text
 web-astro/src/components/plasmic/
-web-astro/src/plasmic/
 generated Plasmic component files
 generated Plasmic CSS modules
 generated token output
@@ -354,7 +361,26 @@ web-astro/src/components/plasmic/space_rocks_devlog/PlasmicStyleTokensProvider.t
 web-astro/src/components/plasmic/space_rocks_devlog/PlasmicGlobalVariant__Screen.tsx
 ```
 
-Editing generated files directly should be avoided. If a generated file must be changed to recover or unblock workflow, the change should be treated as temporary and moved into an owned file or Plasmic source as soon as practical.
+Editing generated files directly should be avoided. Generated files should be inspected only as verification output after sync/codegen. If a generated file must be changed to recover or unblock workflow, the change should be treated as temporary and moved into an owned file or Plasmic source as soon as practical.
+
+Named-slot verification after Plasmic node replacement or rename:
+
+```text
+Verify the named override slot still exists.
+Verify data-plasmic-name exists on the generated node.
+Verify data-plasmic-override points to overrides.<slot>.
+```
+
+`introText` is the current high-risk example:
+
+```text
+introText must remain a block/container slot, currently div.
+Do not convert introText back to p.
+MarkdownText renders block-level children inside introText.
+Verify generated output contains introText?: Flex__<"div">.
+Verify the generated introText node still has data-plasmic-name={"introText"}.
+Verify the generated introText node still has data-plasmic-override={overrides.introText}.
+```
 
 ## Temporary parked Next/Plasmic host
 
@@ -377,6 +403,19 @@ local development dependencies
 ```
 
 The parked host should remain conspicuous and separate from the deployable Astro site.
+
+Plasmic Studio preview may require matching public assets in the parked host when generated layouts reference repo-public UI files.
+
+Current Discord public-link assets that need to exist in both places are:
+
+```text
+web-astro/public/assets/ui/discord-logo.png
+web-astro/public/assets/ui/discord-symbol.png
+tools/parked-plasmic-next-host/public/assets/ui/discord-logo.png
+tools/parked-plasmic-next-host/public/assets/ui/discord-symbol.png
+```
+
+If those parked-host assets drift from the Astro copies, Studio preview can differ from the Astro runtime even when the deployed site is correct.
 
 Plasmic Studio currently uses `tools/parked-plasmic-next-host/`.
 The deployable site uses `web-astro/`.
@@ -407,6 +446,7 @@ Current route files include:
 web-astro/src/pages/index.astro
 web-astro/src/pages/archive/index.astro
 web-astro/src/pages/devlog/[slug].astro
+web-astro/src/pages/rss.xml.js
 ```
 
 Astro pages load content and hand off rendering to React client mount wrappers:
@@ -419,6 +459,8 @@ ArchiveClientMount
 This split allows Astro to own routing and content collection loading while React/Plasmic handle the current visual layout.
 
 Astro also owns the static build output. The parked Next/Plasmic host is not part of the static deployment path.
+
+`web-astro/src/compat/` is the Astro/Vite compatibility layer for generated Plasmic output. It is the owning seam for import/alias mismatches between generated Plasmic code and the Astro build.
 
 The devlog body is now MDX and is inserted by owned wrapper code after the article CRT media frame.
 
@@ -444,6 +486,15 @@ web-astro/src/pages/archive/index.astro
 
 web-astro/src/pages/devlog/[slug].astro
 -> static devlog post routes
+
+web-astro/src/pages/rss.xml.js
+-> RSS feed route
+
+web-astro/src/components/PageHead.astro
+-> Astro page-head metadata rendering
+
+web-astro/src/content/pageMetadata.ts
+-> shared metadata defaults and canonical/share-image URL generation
 
 web-astro/src/content.config.ts
 -> devlog content collection schema
@@ -480,7 +531,18 @@ web-astro/src/components/card/
 -> owned card-frame behavior
 
 web-astro/src/compat/
--> compatibility shims for generated Plasmic integration
+-> Astro/Vite compatibility layer for generated Plasmic integration
+
+Current shim and alias responsibility includes:
+
+```text
+classnames
+clone
+use-sync-external-store/shim
+@plasmicapp/react-web
+Plasmic host/query/css imports
+dlv
+@ project alias
 ```
 
 Generated Plasmic files:
@@ -489,8 +551,8 @@ Generated Plasmic files:
 web-astro/src/components/plasmic/
 -> generated Plasmic React components and styles
 
-web-astro/src/plasmic/
--> generated Plasmic support files
+web-astro/src/components/plasmic-tokens.theo.json
+-> generated Plasmic token output
 
 web-astro/plasmic.json
 web-astro/plasmic.lock
@@ -517,10 +579,13 @@ Astro dev server starts from web-astro/
 homepage renders generated Plasmic layout
 archive renders generated Plasmic layout
 devlog post routes render generated Plasmic layout
+/rss.xml route still builds and serves
 owned wrappers pass content into named Plasmic overrides
 media frame renders through generated layout instances
 custom behavior remains in owned wrapper/source files
 generated Plasmic files are not manually customized
+replaced or renamed Plasmic nodes still preserve required named override slots
+introText remains a div-backed override slot with data-plasmic-name and data-plasmic-override intact
 parked Next/Plasmic host remains outside the deployable Astro root
 Astro build succeeds for deployable static output
 ```
@@ -543,6 +608,8 @@ npm run astro
 ```
 
 The parked host may have its own local commands, but those are workflow-host commands, not deployable-site commands.
+
+When Studio preview disagrees with the deployable site, check parked-host asset duplication and parked-host component drift before assuming the Astro runtime is wrong.
 
 ## Related docs
 

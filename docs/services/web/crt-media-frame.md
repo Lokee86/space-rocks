@@ -26,6 +26,9 @@ image galleries
 YouTube and native video
 -> RW / Play-Pause / FF controls
 
+fallback children or empty media
+-> custom fallback content or an intentionally empty media viewport when no renderable media is provided
+
 CRT shell
 -> frame art
 -> calibrated viewport insets
@@ -106,6 +109,14 @@ videoSrc
 
 children
 -> fallback custom content
+```
+
+Current devlog schema note:
+
+```text
+heroMediaKind: "video" with heroVideoSrc, heroVideoAutoPlay, heroVideoMuted, and heroVideoLoop can drive native video in the hero surface today.
+articleMediaKind currently shares the same mediaKind enum, but article video source fields are not exposed in the devlog schema.
+Do not use articleMediaKind: "video" until article video source fields are added or the enum is split.
 ```
 
 ## Does not own
@@ -228,6 +239,8 @@ Per-entry media storage is owned by the devlog static-site implementation, not b
 The component resolves media mode from available props.
 
 YouTube takes precedence when `youtubeUrl` can be converted into a valid embed URL.
+
+This component capability is broader than the current devlog content schema. The component can render native video anywhere it receives `mediaMode="video"` plus `videoSrc`, but the current devlog content pipeline only exposes the native-video fields for hero media.
 
 Resolution order:
 
@@ -489,6 +502,16 @@ If the frame is blank, suspect the iframe render path, player lifecycle, or clea
 
 When `mediaMode="video"` and `videoSrc` are present, the component renders a native `<video>` element.
 
+Current devlog hero content can use native video via:
+
+```text
+heroMediaKind: "video"
+heroVideoSrc
+heroVideoAutoPlay
+heroVideoMuted
+heroVideoLoop
+```
+
 Native video controls map to:
 
 ```text
@@ -649,6 +672,8 @@ devlog page renders
 YouTube media appears in the CRT viewport
 YouTube play/pause works
 YouTube rewind/fast-forward works
+native video appears in the CRT viewport when configured
+native video play/pause and seek controls work
 image gallery appears in the CRT viewport
 image gallery auto-scrolls by default
 image previous/next controls work
