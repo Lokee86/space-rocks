@@ -6,6 +6,10 @@ import { buildPageMetadata } from '../content/pageMetadata';
 import '../components/plasmic/plasmic__default_style.css';
 import '../components/plasmic/space_rocks_devlog/plasmic.css';
 
+function summaryToPlainText(summary: string): string {
+	return summary.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+}
+
 const devlogEntries = await getCollection("devlog");
 const latestDevlog = devlogEntries
 	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())[0];
@@ -17,10 +21,14 @@ const homepageContent = latestDevlog
 	}
 	: undefined;
 
+const shareDescription = latestDevlog
+	? summaryToPlainText(latestDevlog.data.summary)
+	: "The latest development updates for Space Rocks.";
+
 const metadata = buildPageMetadata({
 	site: Astro.site!,
 	title: "Space Rocks Devlog",
-	description: latestDevlog?.data.summary ?? "The latest development updates for Space Rocks.",
+	description: shareDescription,
 	path: "/",
 	type: "website",
 });
@@ -29,6 +37,12 @@ const metadata = buildPageMetadata({
 <html lang="en">
 	<head>
 		<PageHead metadata={metadata} generator={Astro.generator} />
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="Space Rocks! Devlog RSS"
+			href={new URL("/rss.xml", Astro.site)}
+		/>
 	</head>
 	<body>
 		<HomepageClientMount content={homepageContent} client:only="react" />

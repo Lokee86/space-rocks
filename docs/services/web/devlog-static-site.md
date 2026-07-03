@@ -219,6 +219,44 @@ Cloudflare Pages build pipeline
 
 The content collection schema is the main validation boundary for post files.
 
+## RSS feed
+
+The devlog static site exposes an RSS feed at:
+
+```text
+/rss.xml
+```
+
+The RSS endpoint is implemented in:
+
+```text
+web-astro/src/pages/rss.xml.js
+```
+
+RSS items are generated from devlog collection frontmatter and entry identity using:
+
+```text
+title
+-> item title
+
+date
+-> item publication date
+
+summary
+-> plain-text item description
+
+entry.id
+-> /devlog/<slug>/ item link
+```
+
+The canonical site URL for absolute feed links is owned by:
+
+```text
+web-astro/astro.config.mjs
+```
+
+If feed links point at the wrong host, fix `astro.config.mjs` instead of patching the RSS route.
+
 ## Data ownership
 
 The devlog static site owns repo-based published content data.
@@ -499,7 +537,7 @@ articleMediaKind: "images"
 
 The hero uses a YouTube URL. The article media frame uses a list of public screenshot paths.
 
-Media alt text should describe the media generally. For ordinary gameplay screenshots/video, a concise value such as “WIP screenshots from the game” or “Gameplay demo” is sufficient.
+Media alt text should describe the media generally. For ordinary gameplay screenshots/video, a concise value such as WIP screenshots from the game or Gameplay demo is sufficient.
 
 ## Archive and latest-post behavior
 
@@ -857,6 +895,10 @@ MDX body renders immediately after the article media frame
 intro/progress/utility/finePrint fields render expected Markdown/plain text
 media frame controls appear and work where applicable
 no test posts appear in the published content collection
+rss feed loads
+newest devlog appears first in the feed
+feed links resolve under https://space-rocks.laughingskull.ca
+feed descriptions are plain text
 ```
 
 Cloudflare verification:

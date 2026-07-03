@@ -6,6 +6,10 @@ import { buildPageMetadata } from "../../content/pageMetadata";
 import "../../components/plasmic/plasmic__default_style.css";
 import "../../components/plasmic/space_rocks_devlog/plasmic.css";
 
+function descriptionToPlainText(description: string): string {
+	return description.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+}
+
 const devlogEntries = await getCollection("devlog");
 const entries = devlogEntries
 	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
@@ -18,11 +22,12 @@ const entries = devlogEntries
 	}));
 
 const archiveContent = { entries };
+const shareDescription = descriptionToPlainText("All development posts for Space Rocks.");
 
 const metadata = buildPageMetadata({
 	site: Astro.site!,
 	title: "Space Rocks Devlog Archive",
-	description: "All development posts for Space Rocks.",
+	description: shareDescription,
 	path: "/archive/",
 	type: "website",
 });
@@ -31,6 +36,12 @@ const metadata = buildPageMetadata({
 <html lang="en">
 	<head>
 		<PageHead metadata={metadata} />
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="Space Rocks! Devlog RSS"
+			href={new URL("/rss.xml", Astro.site)}
+		/>
 	</head>
 	<body>
 		<ArchiveClientMount content={archiveContent} client:only="react" />

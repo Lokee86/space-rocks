@@ -6,6 +6,10 @@ import { buildPageMetadata } from '../../content/pageMetadata';
 import '../../components/plasmic/plasmic__default_style.css';
 import '../../components/plasmic/space_rocks_devlog/plasmic.css';
 
+function summaryToPlainText(summary: string): string {
+	return summary.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+}
+
 export async function getStaticPaths() {
 	const devlogEntries = await getCollection("devlog");
 
@@ -21,10 +25,12 @@ const homepageContent = {
 	body: entry.body ?? "",
 };
 
+const shareDescription = summaryToPlainText(entry.data.summary);
+
 const metadata = buildPageMetadata({
 	site: Astro.site!,
 	title: entry.data.title,
-	description: entry.data.summary,
+	description: shareDescription,
 	path: `/devlog/${entry.id}/`,
 	type: "article",
 	imagePath: entry.data.socialImage,
@@ -35,6 +41,12 @@ const metadata = buildPageMetadata({
 <html lang="en">
 	<head>
 		<PageHead metadata={metadata} generator={Astro.generator} />
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="Space Rocks! Devlog RSS"
+			href={new URL("/rss.xml", Astro.site)}
+		/>
 	</head>
 	<body>
 		<HomepageClientMount content={homepageContent} client:only="react" />
