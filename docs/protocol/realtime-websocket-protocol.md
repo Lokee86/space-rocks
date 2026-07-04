@@ -248,7 +248,7 @@ type is not empty after trimming
 payload, when present, is a Dictionary
 ```
 
-Compact packets may arrive with `t` instead of `type`. Client decode expands compact aliases before applying normal envelope validation, and packets with neither `type` nor compact `t` still fail validation. Readable/logical world records are still maps keyed by `id`. Compact active wire output tuple-packs asteroid records only: `world_full.asteroids`, `world_delta.ac`, `world_delta.au`, and `world_delta.ax` use compact asteroid tuple/deletes on the final wire shape. Compact asteroid tuple IDs are numeric suffixes and the client rehydrates them to `asteroid-<id>` before world lane appliers run. Compact asteroid deletes use numeric suffix IDs, while readable/logical deletes are still full string IDs.
+Compact packets may arrive with `t` instead of `type`. Client decode expands compact aliases before applying normal envelope validation, and packets with neither `type` nor compact `t` still fail validation. Readable/logical world records are still maps keyed by `id`. Compact active wire output now tuple-packs asteroid, bullet, ship/player, session player/lifecycle, and known event records on the final wire shape. The client expands compact tuples back into readable dictionaries before lane state appliers run. Compact asteroid tuple IDs are numeric suffixes and the client rehydrates them to `asteroid-<id>` before world lane appliers run. Compact bullet IDs are numeric suffixes and the client rehydrates them to `bullet-<id>` before world lane appliers run. Compact player IDs are numeric suffixes and the client rehydrates them to `player-<id>` before ship, session, lifecycle, and tuple-expanded event appliers run. Compact event batches use tuple event records with compact presentation-event and player IDs where applicable. Compact deletes use numeric suffix IDs for the specific tuple fields that currently own that context. Readable/logical deletes remain full string IDs where the tuple contract does not apply.
 
 Server-side initial envelope decode unmarshals the `type` field before routing. Invalid JSON or an envelope decode failure logs a warning and skips the message. A valid JSON object with an unknown or empty `type` does not produce an explicit protocol response in the current server path.
 
@@ -307,7 +307,7 @@ is_final_chunk
 
 Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world/overlay/session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output. Control-lane resync packets keep their own current metadata behavior.
 
-The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, overlay, session, and `event_batch` lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and before `packetcodec` encodes JSON.
+The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, overlay, session, and `event_batch` lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and tuple packing, and before `packetcodec` encodes JSON.
 
 Chunk metadata exists in the wire shape and scheduler records. This document does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
 ### Numeric wire quantization
@@ -449,7 +449,31 @@ Compact asteroid example:
 {"t":"wf","q":1,"asteroids":[[1,70,80,2,90,1500,3]],"ships":[],"bullets":[],"pickups":[]}
 ```
 
-The client expands ID `1` to `asteroid-1`.
+The client expands the tuple-packed asteroid record back into a readable dictionary before world lane application. The client expands ID `1` to `asteroid-1`.
+
+Compact bullet example:
+
+```json
+{"t":"wd","q":2,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bu":[[1,11,21,31]],"bx":[1]}
+```
+
+The client expands the tuple-packed bullet records back into readable dictionaries before world lane application.
+
+Compact world ship/player example:
+
+```json
+{"t":"wd","q":3,"sc":[[1,"v_wing",10,20,30,100,50,true,"player","player-2"]],"su":[[1,11,21,31,false]],"sx":[1]}
+```
+
+The client expands the tuple-packed ship records back into readable dictionaries before world lane application.
+
+Compact world_delta update example:
+
+```json
+{"t":"wd","q":5,"su":[[1,11,21,31,false]],"bu":[[2,12,22,32]],"au":[[3,13,23]]}
+```
+
+The client expands the tuple-packed `world_delta` update records back into readable dictionaries before world lane application.
 
 Current `world_delta` update maps are partial maps keyed by id:
 
@@ -511,6 +535,14 @@ player_session_updates = id
 player_lifecycle_updates = player_id
 ```
 
+Compact session examples:
+
+```json
+{"t":"sd","q":4,"pl":[[1,"v_wing",100,3,250,"pulse","limited","mine","limited",10,20]],"psu":[[1,"sco",100,"lv",2,"rcd",0]],"plc":[[1,"active"]],"plu":[[1,"respawning"]],"plx":[1]}
+```
+
+The client expands the tuple-packed session records back into readable dictionaries before session lane application.
+
 `total_asteroids` remains record-level and is not part of the field-delta conversion.
 
 ### Event lane packets
@@ -524,6 +556,23 @@ event_id per event
 ```
 
 Readable protocol docs may show expanded logical names, while runtime wire sends compact aliases. Domain logs may still show raw x/y before projection.
+
+Compact event batch example:
+
+```json
+{
+  "t": "eb",
+  "q": 412,
+  "ms": 1712345678901,
+  "bid": 412,
+  "ev": [
+    ["shd", 100, 2, 2, 3, 512, 384],
+    ["dmg", 101, "pickup", "pickup-4", "impact", 20, 512, 384]
+  ]
+}
+```
+
+The client expands the tuple-packed event records back into readable dictionaries before event lane application.
 
 ### Event Batch Example
 
@@ -566,7 +615,7 @@ Compact wire example:
   "t": "eb",
   "q": 412,
   "ms": 1712345678901,
-  "bid": "event-batch-412",
+  "bid": 412,
   "ev": [
     {
       "t": "shd",
@@ -992,7 +1041,7 @@ services/game-server/internal/devtools/packets_generated.go
 
 The generated client file provides packet type constants, field constants, and selected outbound packet builder functions.
 
-The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`. Runtime realtime protocol files such as services/game-server/internal/protocol/realtime/quantized_records.go, services/game-server/internal/protocol/realtime/quantize_world.go, services/game-server/internal/protocol/realtime/quantize/, services/game-server/internal/protocol/realtime/wire_packets.go, services/game-server/internal/protocol/realtime/compact_wire_packet.go, and services/game-server/internal/protocol/realtime/active.go are implementation files, not generated packet-schema outputs.
+The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`. Runtime realtime protocol files such as services/game-server/internal/protocol/realtime/quantized_records.go, services/game-server/internal/protocol/realtime/quantize_world.go, services/game-server/internal/protocol/realtime/quantize/, services/game-server/internal/protocol/realtime/wire_packets.go, services/game-server/internal/protocol/realtime/compact_wire_ids.go, services/game-server/internal/protocol/realtime/compact_wire_asteroids.go, services/game-server/internal/protocol/realtime/compact_wire_bullets.go, services/game-server/internal/protocol/realtime/compact_wire_ships.go, services/game-server/internal/protocol/realtime/compact_wire_players.go, services/game-server/internal/protocol/realtime/compact_wire_events.go, services/game-server/internal/protocol/realtime/compact_wire_packet.go, and services/game-server/internal/protocol/realtime/active.go are implementation files, not generated packet-schema outputs.
 
 `services/game-server/internal/protocol/realtime/compact_wire_packet.go` is a hand-authored runtime alias mapper documented by `docs/services/game-server/networking/realtime-compact-wire-mapping.md`; it is not generated from packet TOML.
 
@@ -1164,7 +1213,7 @@ client/scripts/networking/packets/packet_encode_result.gd
 client/scripts/networking/packets/packet_decode_result.gd
 ```
 
-PacketCodec.decode owns compact alias expansion before envelope validation; compact_lane_packet.gd owns the alias expansion helper used by PacketCodec and the defensive realtime router normalization path.
+PacketCodec.decode owns compact alias expansion before envelope validation; compact_lane_packet.gd owns the alias expansion helper used by PacketCodec and the defensive realtime router normalization path. Client compatibility tests include `client/tests/unit/protocol/realtime/test_compact_lane_packet.gd`, `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`, `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd`, and `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`.
 
 ### Client boot/session participants
 
@@ -1361,6 +1410,14 @@ The current implementation sends lane-native gameplay output on the server tick 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
+
+
+
+
+
+
+
+
 
 
 

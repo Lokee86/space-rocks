@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane-native runtime delivery already exists, client and server local JSONL logging already exist, active debug logs can validate encoded bytes, and no-op or scheduler-ish packet log spam has been removed from the active output path. Active `event_batch` presentation-event delivery now also exists: event records are sparse and event-type-specific, compact aliases are active, event x/y and ship_death respawn_delay are quantized on the wire, and the lane drains after successful active write/enqueue according to current semantics. Remaining telemetry and logging work should happen only when it is useful during P2 validation or later diagnostics.
+The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane-native runtime delivery already exists, client and server local JSONL logging already exist, active debug logs can validate encoded bytes, and no-op or scheduler-ish packet log spam has been removed from the active output path. Active `event_batch` presentation-event delivery now also exists: event records are sparse and event-type-specific, compact aliases are active, tuple-packed known events are active, event x/y and ship_death respawn_delay are quantized on the wire, and the lane drains after successful active write/enqueue according to current semantics. Remaining telemetry and logging work should happen only when it is useful during P2 validation or later diagnostics.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -233,7 +233,7 @@ additional quantization policy refinements
 bit-packing rules
 protobuf
 binary/bitpacking work targets the new lane protocol, not old state
-Compact JSON aliases, sparse delta section omission, and asteroid tuple packing are implemented. Additional tuple/array packing beyond asteroid records, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior, and record/entity-level prioritization remain future work.
+Compact JSON aliases, sparse delta section omission, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are implemented. Binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior, and record/entity-level prioritization remain future work.
 ```
 
 ### Implementation Sequence
@@ -269,7 +269,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, and asteroid tuple packing are implemented. Future work stays on additional tuple/array packing beyond asteroid records, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are implemented. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization.
 
 ### Scope
 
@@ -781,4 +781,5 @@ This roadmap is not a feature backlog.
 It should remain a sequencing and dependency document. Detailed scope belongs in the owner documents for each domain, service, protocol, data, or devtools area.
 
 When implementation changes make a planned system current, update the relevant current documentation instead of expanding this roadmap with implementation details.
+
 

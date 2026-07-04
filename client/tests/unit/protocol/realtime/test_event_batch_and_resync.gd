@@ -76,6 +76,36 @@ func test_event_batch_applies_events_once() -> void:
 	assert_eq(sink.handled_events[0]["type"], "spark")
 
 
+func test_compact_event_batch_tuple_expansion_still_applies_and_dedupes() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "eb",
+		"q": 11,
+		"ms": 123,
+		"bid": "event-batch-11",
+		"ev": [
+			["bb", 1, 123, 568],
+			["shd", 2, 1, 2, 3500, 30, 40],
+		],
+	})
+
+	var applier := EventBatchApplier.new()
+	var sink := FakeEventSink.new()
+
+	var applied := applier.apply_event_batch(expanded, sink)
+	var reapplied := applier.apply_event_batch(expanded, sink)
+
+	assert_true(applied)
+	assert_false(reapplied)
+	assert_eq(sink.handled_events.size(), 2)
+	assert_eq(sink.handled_events[0]["type"], "bullet_blast")
+	assert_eq(sink.handled_events[0]["packet"]["event_id"], "presentation-event-1")
+	assert_eq(sink.handled_events[0]["packet"]["x"], 123)
+	assert_eq(sink.handled_events[0]["packet"]["y"], 568)
+	assert_eq(sink.handled_events[1]["type"], "ship_death")
+	assert_eq(sink.handled_events[1]["packet"]["player_id"], "player-1")
+	assert_eq(sink.handled_events[1]["packet"]["respawn_delay"], 3500)
+
+
 func test_compact_event_batch_expands_before_application_and_dedupes() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "eb",

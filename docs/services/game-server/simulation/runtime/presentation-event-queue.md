@@ -234,7 +234,7 @@ For damage events, the packet-facing event currently preserves source identity, 
 
 The queue is an internal game-server runtime surface, not a standalone network protocol.
 
-The network-visible surface is the `event_batch` lane on the generated realtime protocol packets. It is a presentation-event lane: one ordered batch of pending presentation events, not one packet per event.
+The network-visible surface is the `event_batch` lane on the generated realtime protocol packets. It is a presentation-event lane: one ordered batch of pending presentation events, not one packet per event. Known event records are tuple-packed on the compact wire path and expand back into readable dictionaries on the client before application.
 
 That field is for client presentation. The client consumes it after receiving normal realtime gameplay state and routes supported events into local effects, audio, HUD, death, and match-end presentation. After compact expansion, client presentation systems receive readable long-key dictionaries, not raw compact keys.
 
@@ -519,6 +519,7 @@ Legacy documentation correctly identified the important naming rule: `pendingPre
 The event adapter currently returns a zero-value `EventState` for unsupported event types. Producers should not call `recordDomainEvent` for a new event type until `eventStateForDomainEvent`, packet schema, tests, and client presentation handling are updated as needed.
 
 This document lives under simulation runtime because it documents a runtime queue on the `Game` aggregate. The concrete queue implementation is in the root `internal/game` package, not in the Go `internal/game/runtime` package.
+
 
 
 

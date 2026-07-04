@@ -4,6 +4,7 @@ const WorldLaneApplier := preload("res://scripts/protocol/realtime/world_lane_ap
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
+const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 
 
 func test_world_full_replaces_lane_and_removes_missing_entities_by_ownership() -> void:
@@ -523,6 +524,32 @@ func test_world_full_preserves_bullet_projectile_type_for_torpedo_presentation()
 	assert_eq(world_lane_state.bullets["bullet-torpedo"]["projectile_type"], "torpedo")
 	assert_eq(world_lane_state.bullets["bullet-torpedo"]["weapon_id"], "torpedo")
 
+
+
+func test_world_lane_applier_accepts_tuple_expanded_compact_records() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wf",
+		"ships": [[1, "v_wing", 10, 20, 30, 100, 50, true, "player", "player-2"]],
+		"bullets": [[1, "player-1", 5, 6, 7, "pulse", "laser"]],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		expanded
+	)
+
+	assert_eq(world_lane_state.ships["player-1"]["ship_type"], "v_wing")
+	assert_eq(world_lane_state.ships["player-1"]["target_id"], "player-2")
+	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "player-1")
+	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "pulse")
+	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
 
 
 func test_world_lane_state_merges_bullet_updates_without_dropping_omitted_fields() -> void:

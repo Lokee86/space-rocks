@@ -124,7 +124,12 @@ var compactWireValueMaps = map[string]map[string]string{
 func CompactWirePacket(packet map[string]any) map[string]any {
 	expanded := compactWireValue(packet, "")
 	if compacted, ok := expanded.(map[string]any); ok {
-		return compactWirePackAsteroids(compacted)
+		compacted = compactWirePackAsteroids(compacted)
+		compacted = compactWirePackBullets(compacted)
+		compacted = compactWirePackShips(compacted)
+		compacted = compactWirePackSessionPlayers(compacted)
+		compacted = compactWirePackEvents(compacted)
+		return compacted
 	}
 	return map[string]any{}
 }

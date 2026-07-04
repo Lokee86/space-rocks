@@ -102,59 +102,72 @@ func test_expand_packet_derives_chunk_finality_when_missing() -> void:
 	assert_true(final_chunk["is_final_chunk"])
 
 
+func test_expand_compact_presentation_event_id_rebuilds_numeric_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_presentation_event_id(1), "presentation-event-1")
+	assert_eq(CompactLanePacket.expand_compact_presentation_event_id(1.0), "presentation-event-1")
+	assert_eq(CompactLanePacket.expand_compact_presentation_event_id("1"), "presentation-event-1")
+	assert_eq(CompactLanePacket.expand_compact_presentation_event_id("presentation-event-1"), "presentation-event-1")
+	assert_eq(CompactLanePacket.expand_compact_presentation_event_id(1.5), 1.5)
+	assert_null(CompactLanePacket.expand_compact_presentation_event_id(null))
+
+
+func test_expand_compact_event_batch_id_rebuilds_numeric_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_event_batch_id(11), "event-batch-11")
+	assert_eq(CompactLanePacket.expand_compact_event_batch_id(11.0), "event-batch-11")
+	assert_eq(CompactLanePacket.expand_compact_event_batch_id("11"), "event-batch-11")
+	assert_eq(CompactLanePacket.expand_compact_event_batch_id("event-batch-11"), "event-batch-11")
+	assert_eq(CompactLanePacket.expand_compact_event_batch_id(11.5), 11.5)
+	assert_null(CompactLanePacket.expand_compact_event_batch_id(null))
+
+
 func test_expand_packet_converts_compact_event_batch_keys_and_values() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "eb",
 		"q": 11,
 		"ms": 123,
-		"bid": "event-batch-11",
+		"bid": 11,
 		"ev": [
-			{"ei": "event-1", "t": "bb", "x": 10, "y": 20},
-			{"ei": "event-2", "t": "dmg", "srct": "projectile", "src": "bullet-1", "tid": "player-1", "tt": "player", "dt": "explosive", "dc": "impact", "ba": 20, "ma": 17, "ah": 12, "abs": 5, "rh": 88, "rs": 0, "fx": "blast", "amt": 17, "x": 123, "y": 456},
-			{"ei": "event-3", "t": "shd", "pid": "player-1", "lv": 2, "rd": 3500},
-			{"ei": "event-4", "t": "dots", "srct": "asteroid", "src": "hazard-1", "fx": "radioactive", "amt": 2},
-			{"ei": "event-5", "t": "dott", "srct": "asteroid", "src": "hazard-1", "fx": "radioactive", "amt": 3},
-			{"ei": "event-6", "t": "rfx", "srct": "pickup", "src": "pickup-1", "fx": "pulse"},
-			{"ei": "event-7", "t": "pcol", "pid": "player-1", "pkid": "pickup-1", "pkt": "shield", "x": 125, "y": 345},
-			{"ei": "event-8", "t": "pea", "pid": "player-1", "pkid": "pickup-1", "pkt": "shield", "fx": "repair", "amt": 4, "lva": 3},
-			{"ei": "event-9", "t": "pexp", "pkid": "pickup-1", "pkt": "shield", "x": 222, "y": 333},
-			{"ei": "event-10", "t": "pdr", "pkid": "pickup-1", "pkt": "shield", "srct": "ship", "src": "ship-1", "tbl": "table-1", "x": 444, "y": 555},
+			["bb", 1, 10, 20],
+			["shd", 2, 1, 3, 250, 30, 40],
+			["dmg", 3, "projectile", "bullet-1", "blast", 17, 50, 60],
+			["dots", 4, "asteroid", "hazard-1", "radioactive", 2],
+			["dott", 5, "asteroid", "hazard-1", "radioactive", 3, 70, 80],
+			["rfx", 6, "pickup", "pickup-1", "pulse", 90, 100],
+			["pcol", 7, 1, "pickup-1", "shield", 110, 120],
+			["pea", 8, 1, "pickup-1", "shield", "repair", 4, 3],
+			["pexp", 9, "pickup-1", "shield", 130, 140],
+			["pdr", 10, "pickup-1", "shield", "ship", "ship-1", "table-1", 150, 160],
 		],
 	})
 
 	assert_eq(expanded["type"], "event_batch")
+	assert_eq(expanded["batch_id"], "event-batch-11")
 	assert_eq(expanded["sequence"], 11)
 	assert_eq(expanded["server_sent_msec"], 123)
+	assert_eq(expanded["events"][0], {"event_id": "presentation-event-1", "type": "bullet_blast", "x": 10, "y": 20})
+	assert_eq(expanded["events"][1], {"event_id": "presentation-event-2", "type": "ship_death", "player_id": "player-1", "lives": 3, "respawn_delay": 250, "x": 30, "y": 40})
+	assert_eq(expanded["events"][2], {"event_id": "presentation-event-3", "type": "damage_applied", "source_type": "projectile", "source_id": "bullet-1", "effect_type": "blast", "amount": 17, "x": 50, "y": 60})
+	assert_eq(expanded["events"][3], {"event_id": "presentation-event-4", "type": "damage_over_time_started", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 2})
+	assert_eq(expanded["events"][4], {"event_id": "presentation-event-5", "type": "damage_over_time_tick", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 3, "x": 70, "y": 80})
+	assert_eq(expanded["events"][5], {"event_id": "presentation-event-6", "type": "radial_effect_started", "source_type": "pickup", "source_id": "pickup-1", "effect_type": "pulse", "x": 90, "y": 100})
+	assert_eq(expanded["events"][6], {"event_id": "presentation-event-7", "type": "pickup_collected", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 110, "y": 120})
+	assert_eq(expanded["events"][7], {"event_id": "presentation-event-8", "type": "pickup_effect_applied", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "effect_type": "repair", "amount": 4, "lives_after": 3})
+	assert_eq(expanded["events"][8], {"event_id": "presentation-event-9", "type": "pickup_expired", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 130, "y": 140})
+	assert_eq(expanded["events"][9], {"event_id": "presentation-event-10", "type": "pickup_dropped", "pickup_id": "pickup-1", "pickup_type": "shield", "source_type": "ship", "source_id": "ship-1", "table_id": "table-1", "x": 150, "y": 160})
+
+
+func test_expand_packet_keeps_compact_map_shaped_event_records_compatible() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "eb",
+		"bid": 11,
+		"ev": [
+			{"ei": "presentation-event-1", "t": "bb", "x": 10, "y": 20},
+		],
+	})
+
+	assert_eq(expanded["type"], "event_batch")
 	assert_eq(expanded["batch_id"], "event-batch-11")
-	assert_eq(expanded["events"][0]["event_id"], "event-1")
-	assert_eq(expanded["events"][0]["type"], "bullet_blast")
-	assert_eq(expanded["events"][1]["event_id"], "event-2")
-	assert_eq(expanded["events"][1]["type"], "damage_applied")
-	assert_eq(expanded["events"][1]["source_type"], "projectile")
-	assert_eq(expanded["events"][1]["source_id"], "bullet-1")
-	assert_eq(expanded["events"][1]["target_id"], "player-1")
-	assert_eq(expanded["events"][1]["target_type"], "player")
-	assert_eq(expanded["events"][1]["damage_type"], "explosive")
-	assert_eq(expanded["events"][1]["damage_cause"], "impact")
-	assert_eq(expanded["events"][1]["base_amount"], 20)
-	assert_eq(expanded["events"][1]["modified_amount"], 17)
-	assert_eq(expanded["events"][1]["applied_to_health"], 12)
-	assert_eq(expanded["events"][1]["absorbed_by_shield"], 5)
-	assert_eq(expanded["events"][1]["remaining_health"], 88)
-	assert_eq(expanded["events"][1]["remaining_shield"], 0)
-	assert_eq(expanded["events"][1]["effect_type"], "blast")
-	assert_eq(expanded["events"][1]["amount"], 17)
-	assert_eq(expanded["events"][2]["type"], "ship_death")
-	assert_eq(expanded["events"][2]["player_id"], "player-1")
-	assert_eq(expanded["events"][2]["lives"], 2)
-	assert_eq(expanded["events"][2]["respawn_delay"], 3500)
-	assert_eq(expanded["events"][3]["type"], "damage_over_time_started")
-	assert_eq(expanded["events"][4]["type"], "damage_over_time_tick")
-	assert_eq(expanded["events"][5]["type"], "radial_effect_started")
-	assert_eq(expanded["events"][6]["type"], "pickup_collected")
-	assert_eq(expanded["events"][7]["type"], "pickup_effect_applied")
-	assert_eq(expanded["events"][8]["type"], "pickup_expired")
-	assert_eq(expanded["events"][9]["type"], "pickup_dropped")
+	assert_eq(expanded["events"][0], {"event_id": "presentation-event-1", "type": "bullet_blast", "x": 10, "y": 20})
 
 
 func test_expand_packet_keeps_event_batch_events_readable_for_application() -> void:
@@ -200,6 +213,354 @@ func test_legacy_long_key_packets_still_route_to_existing_appliers() -> void:
 	router.route_lane_packet(packet)
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
 
+
+
+func test_expand_compact_bullet_id_rebuilds_numeric_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_bullet_id(123), "bullet-123")
+
+
+func test_expand_compact_bullet_id_rebuilds_float_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_bullet_id(1.0), "bullet-1")
+
+
+func test_expand_compact_bullet_id_keeps_non_integer_float() -> void:
+	assert_eq(CompactLanePacket.expand_compact_bullet_id(1.5), 1.5)
+
+
+func test_expand_compact_bullet_id_rebuilds_string_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_bullet_id("123"), "bullet-123")
+
+
+func test_expand_compact_bullet_id_keeps_full_id() -> void:
+	assert_eq(CompactLanePacket.expand_compact_bullet_id("bullet-123"), "bullet-123")
+
+
+func test_expand_compact_player_id_rebuilds_numeric_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_player_id(123), "player-123")
+
+
+func test_expand_compact_player_id_rebuilds_float_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_player_id(1.0), "player-1")
+
+
+func test_expand_compact_player_id_keeps_non_integer_float() -> void:
+	assert_eq(CompactLanePacket.expand_compact_player_id(1.5), 1.5)
+
+
+func test_expand_compact_player_id_rebuilds_string_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_player_id("123"), "player-123")
+
+
+func test_expand_compact_player_id_keeps_full_id() -> void:
+	assert_eq(CompactLanePacket.expand_compact_player_id("player-123"), "player-123")
+
+
+func test_expand_compact_player_id_keeps_null_and_unsupported_values() -> void:
+	assert_null(CompactLanePacket.expand_compact_player_id(null))
+	assert_eq(CompactLanePacket.expand_compact_player_id({"id": 123}), {"id": 123})
+
+
+func test_expand_packet_converts_compact_world_full_ship_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wf",
+		"ships": [[1, "v_wing", 10, 20, 30, 100, 50, true, "player", "player-2"]],
+	})
+
+	assert_eq(expanded["ships"][0]["id"], "player-1")
+	assert_eq(expanded["ships"][0]["ship_type"], "v_wing")
+	assert_eq(expanded["ships"][0]["x"], 10)
+	assert_eq(expanded["ships"][0]["y"], 20)
+	assert_eq(expanded["ships"][0]["rotation"], 30)
+	assert_eq(expanded["ships"][0]["health"], 100)
+	assert_eq(expanded["ships"][0]["shields"], 50)
+	assert_eq(expanded["ships"][0]["thrusting"], true)
+	assert_eq(expanded["ships"][0]["target_kind"], "player")
+	assert_eq(expanded["ships"][0]["target_id"], "player-2")
+
+
+func test_expand_packet_converts_compact_world_delta_ship_create_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"sc": [[1, "v_wing", 10, 20, 30, 100, 50, true, "player", "player-2"]],
+	})
+
+	assert_eq(expanded["ship_creates"][0]["id"], "player-1")
+	assert_eq(expanded["ship_creates"][0]["ship_type"], "v_wing")
+	assert_eq(expanded["ship_creates"][0]["x"], 10)
+	assert_eq(expanded["ship_creates"][0]["y"], 20)
+	assert_eq(expanded["ship_creates"][0]["rotation"], 30)
+	assert_eq(expanded["ship_creates"][0]["health"], 100)
+	assert_eq(expanded["ship_creates"][0]["shields"], 50)
+	assert_eq(expanded["ship_creates"][0]["thrusting"], true)
+	assert_eq(expanded["ship_creates"][0]["target_kind"], "player")
+	assert_eq(expanded["ship_creates"][0]["target_id"], "player-2")
+
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_xy_rotation_thrusting() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, 10, 20, 30, true]],
+	})
+
+	assert_eq(expanded["ship_updates"][0]["id"], "player-1")
+	assert_eq(expanded["ship_updates"][0]["x"], 10)
+	assert_eq(expanded["ship_updates"][0]["y"], 20)
+	assert_eq(expanded["ship_updates"][0]["rotation"], 30)
+	assert_eq(expanded["ship_updates"][0]["thrusting"], true)
+
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_x_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, 10]],
+	})
+
+	assert_eq(expanded["ship_updates"][0]["id"], "player-1")
+	assert_eq(expanded["ship_updates"][0]["x"], 10)
+	assert_false(expanded["ship_updates"][0].has("y"))
+	assert_false(expanded["ship_updates"][0].has("rotation"))
+	assert_false(expanded["ship_updates"][0].has("thrusting"))
+
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_y_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, null, 20]],
+	})
+
+	assert_eq(expanded["ship_updates"][0]["id"], "player-1")
+	assert_false(expanded["ship_updates"][0].has("x"))
+	assert_eq(expanded["ship_updates"][0]["y"], 20)
+	assert_false(expanded["ship_updates"][0].has("rotation"))
+	assert_false(expanded["ship_updates"][0].has("thrusting"))
+
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_rotation_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, null, null, 30]],
+	})
+
+	assert_eq(expanded["ship_updates"][0]["id"], "player-1")
+	assert_false(expanded["ship_updates"][0].has("x"))
+	assert_false(expanded["ship_updates"][0].has("y"))
+	assert_eq(expanded["ship_updates"][0]["rotation"], 30)
+	assert_false(expanded["ship_updates"][0].has("thrusting"))
+
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_thrusting_only_false() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, null, null, null, false]],
+	})
+
+	assert_eq(expanded["ship_updates"][0]["id"], "player-1")
+	assert_false(expanded["ship_updates"][0].has("x"))
+	assert_false(expanded["ship_updates"][0].has("y"))
+	assert_false(expanded["ship_updates"][0].has("rotation"))
+	assert_eq(expanded["ship_updates"][0]["thrusting"], false)
+
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_zero_values() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, 0, 0, 0, false]],
+	})
+
+	assert_eq(expanded["ship_updates"][0]["id"], "player-1")
+	assert_eq(expanded["ship_updates"][0]["x"], 0)
+	assert_eq(expanded["ship_updates"][0]["y"], 0)
+	assert_eq(expanded["ship_updates"][0]["rotation"], 0)
+	assert_eq(expanded["ship_updates"][0]["thrusting"], false)
+
+
+func test_expand_packet_converts_compact_world_delta_ship_delete_ids() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"sx": [1, "2", "player-3"],
+	})
+
+	assert_eq(expanded["ship_deletes"], ["player-1", "player-2", "player-3"])
+
+
+func test_expand_packet_converts_compact_session_full_player_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "sf",
+		"pl": [[1, "v_wing", 100, 3, 250, "pulse", "limited", "mine", "limited", 10, 20]],
+	})
+
+	assert_eq(expanded["players"][0]["id"], "player-1")
+	assert_eq(expanded["players"][0]["ship_type"], "v_wing")
+	assert_eq(expanded["players"][0]["score"], 100)
+	assert_eq(expanded["players"][0]["lives"], 3)
+	assert_eq(expanded["players"][0]["respawn_cooldown"], 250)
+	assert_eq(expanded["players"][0]["primary_weapon_id"], "pulse")
+	assert_eq(expanded["players"][0]["primary_ammo_policy"], "limited")
+	assert_eq(expanded["players"][0]["secondary_weapon_id"], "mine")
+	assert_eq(expanded["players"][0]["secondary_ammo_policy"], "limited")
+	assert_eq(expanded["players"][0]["spawn_x"], 10)
+	assert_eq(expanded["players"][0]["spawn_y"], 20)
+
+
+func test_expand_packet_converts_compact_session_delta_player_create_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "sd",
+		"pl": [[1, "v_wing", 100, 3, 250, "pulse", "limited", "mine", "limited", 10, 20]],
+	})
+
+	assert_eq(expanded["players"][0]["id"], "player-1")
+	assert_eq(expanded["players"][0]["ship_type"], "v_wing")
+	assert_eq(expanded["players"][0]["score"], 100)
+	assert_eq(expanded["players"][0]["lives"], 3)
+	assert_eq(expanded["players"][0]["respawn_cooldown"], 250)
+	assert_eq(expanded["players"][0]["primary_weapon_id"], "pulse")
+	assert_eq(expanded["players"][0]["primary_ammo_policy"], "limited")
+	assert_eq(expanded["players"][0]["secondary_weapon_id"], "mine")
+	assert_eq(expanded["players"][0]["secondary_ammo_policy"], "limited")
+	assert_eq(expanded["players"][0]["spawn_x"], 10)
+	assert_eq(expanded["players"][0]["spawn_y"], 20)
+
+
+func test_expand_packet_converts_compact_session_delta_player_session_updates() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "sd",
+		"psu": [[1, "sco", 100, "lv", 2, "rcd", 0]],
+	})
+
+	assert_eq(expanded["player_session_updates"][0], {"id": "player-1", "score": 100, "lives": 2, "respawn_cooldown": 0})
+
+
+func test_expand_packet_converts_compact_session_delta_player_session_deletes() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "sd",
+		"psx": [1, "2", "player-3"],
+	})
+
+	assert_eq(expanded["player_session_deletes"], ["player-1", "player-2", "player-3"])
+
+
+func test_expand_packet_converts_compact_session_lifecycle_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "sd",
+		"plc": [[1, "active"]],
+		"plu": [[1, "respawning"]],
+	})
+
+	assert_eq(expanded["player_lifecycle"][0], {"player_id": "player-1", "status": "active"})
+	assert_eq(expanded["player_lifecycle_updates"][0], {"player_id": "player-1", "status": "respawning"})
+
+
+func test_expand_packet_converts_compact_session_lifecycle_deletes() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "sd",
+		"plx": [1],
+	})
+
+	assert_eq(expanded["player_lifecycle_deletes"], ["player-1"])
+
+
+func test_expand_compact_bullet_id_keeps_null_and_unsupported_values() -> void:
+	assert_null(CompactLanePacket.expand_compact_bullet_id(null))
+	assert_eq(CompactLanePacket.expand_compact_bullet_id({"id": 123}), {"id": 123})
+
+
+func test_expand_packet_converts_compact_world_full_bullet_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wf",
+		"bullets": [[1, "player-1", 10, 20, 30, "pulse", "laser"]],
+	})
+
+	assert_eq(expanded["bullets"][0]["id"], "bullet-1")
+	assert_eq(expanded["bullets"][0]["owner_id"], "player-1")
+	assert_eq(expanded["bullets"][0]["x"], 10)
+	assert_eq(expanded["bullets"][0]["y"], 20)
+	assert_eq(expanded["bullets"][0]["rotation"], 30)
+	assert_eq(expanded["bullets"][0]["weapon_id"], "pulse")
+	assert_eq(expanded["bullets"][0]["projectile_type"], "laser")
+
+
+func test_expand_packet_converts_compact_world_delta_bullet_create_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bc": [[1, "player-1", 10, 20, 30, "pulse", "laser"]],
+	})
+
+	assert_eq(expanded["bullet_creates"][0]["id"], "bullet-1")
+	assert_eq(expanded["bullet_creates"][0]["owner_id"], "player-1")
+	assert_eq(expanded["bullet_creates"][0]["x"], 10)
+	assert_eq(expanded["bullet_creates"][0]["y"], 20)
+	assert_eq(expanded["bullet_creates"][0]["rotation"], 30)
+	assert_eq(expanded["bullet_creates"][0]["weapon_id"], "pulse")
+	assert_eq(expanded["bullet_creates"][0]["projectile_type"], "laser")
+
+
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_xy_rotation() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bu": [[1, 10, 20, 30]],
+	})
+
+	assert_eq(expanded["bullet_updates"][0]["id"], "bullet-1")
+	assert_eq(expanded["bullet_updates"][0]["x"], 10)
+	assert_eq(expanded["bullet_updates"][0]["y"], 20)
+	assert_eq(expanded["bullet_updates"][0]["rotation"], 30)
+
+
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_x_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bu": [[1, 10]],
+	})
+
+	assert_eq(expanded["bullet_updates"][0]["id"], "bullet-1")
+	assert_eq(expanded["bullet_updates"][0]["x"], 10)
+	assert_false(expanded["bullet_updates"][0].has("y"))
+	assert_false(expanded["bullet_updates"][0].has("rotation"))
+
+
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_y_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bu": [[1, null, 20]],
+	})
+
+	assert_eq(expanded["bullet_updates"][0]["id"], "bullet-1")
+	assert_false(expanded["bullet_updates"][0].has("x"))
+	assert_eq(expanded["bullet_updates"][0]["y"], 20)
+	assert_false(expanded["bullet_updates"][0].has("rotation"))
+
+
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_rotation_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bu": [[1, null, null, 30]],
+	})
+
+	assert_eq(expanded["bullet_updates"][0]["id"], "bullet-1")
+	assert_false(expanded["bullet_updates"][0].has("x"))
+	assert_false(expanded["bullet_updates"][0].has("y"))
+	assert_eq(expanded["bullet_updates"][0]["rotation"], 30)
+
+
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_zero_values() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bu": [[1, 0, 0, 0]],
+	})
+
+	assert_eq(expanded["bullet_updates"][0]["id"], "bullet-1")
+	assert_eq(expanded["bullet_updates"][0]["x"], 0)
+	assert_eq(expanded["bullet_updates"][0]["y"], 0)
+	assert_eq(expanded["bullet_updates"][0]["rotation"], 0)
+
+
+func test_expand_packet_converts_compact_world_delta_bullet_delete_ids() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bx": [1, "2", "bullet-3"],
+	})
+
+	assert_eq(expanded["bullet_deletes"], ["bullet-1", "bullet-2", "bullet-3"])
 
 
 func test_expand_compact_asteroid_id_rebuilds_numeric_suffix() -> void:

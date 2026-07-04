@@ -124,7 +124,8 @@ const _VALUE_MAPS := {
 }
 
 static func expand_packet(packet: Dictionary) -> Dictionary:
-	var expanded: Dictionary = _expand_value(packet, null)
+	var packet_type = packet.get("type", packet.get("t"))
+	var expanded: Dictionary = _expand_value(packet, null, packet_type)
 	_normalize_runtime_metadata(expanded)
 	return expanded
 
@@ -142,7 +143,231 @@ static func expand_compact_asteroid_id(value):
 		if value.is_valid_int():
 			return "asteroid-%s" % value
 	return value
-static func _expand_asteroid_record(value):
+
+
+static func expand_compact_prefixed_id(value, prefix):
+	if value is int:
+		return "%s%d" % [prefix, value]
+	if value is float:
+		if is_equal_approx(value, floor(value)):
+			return "%s%d" % [prefix, int(value)]
+		return value
+	if value is String:
+		if value.begins_with(prefix):
+			return value
+		if value.is_valid_int():
+			return "%s%s" % [prefix, value]
+	return value
+
+
+static func expand_compact_bullet_id(value):
+	return expand_compact_prefixed_id(value, "bullet-")
+
+
+static func expand_compact_presentation_event_id(value):
+	return expand_compact_prefixed_id(value, "presentation-event-")
+
+
+static func expand_compact_event_batch_id(value):
+	return expand_compact_prefixed_id(value, "event-batch-")
+
+
+static func expand_compact_player_id(value):
+	return expand_compact_prefixed_id(value, "player-")
+
+
+static func _expand_session_player_record(value, packet_type = null):
+	if value is Array and value.size() == 11:
+		return {
+			"id": expand_compact_player_id(value[0]),
+			"ship_type": value[1],
+			"score": value[2],
+			"lives": value[3],
+			"respawn_cooldown": value[4],
+			"primary_weapon_id": value[5],
+			"primary_ammo_policy": value[6],
+			"secondary_weapon_id": value[7],
+			"secondary_ammo_policy": value[8],
+			"spawn_x": value[9],
+			"spawn_y": value[10],
+		}
+	return _expand_value(value, "players", null)
+
+
+static func _expand_session_player_update_record(value, packet_type = null):
+	if value is Array and value.size() >= 1:
+		var expanded := {
+			"id": expand_compact_player_id(value[0]),
+		}
+		var index := 1
+		while index + 1 < value.size():
+			var key = str(value[index])
+			var expanded_key = _KEY_MAP.get(key, key)
+			expanded[expanded_key] = value[index + 1]
+			index += 2
+		return expanded
+	return _expand_value(value, "player_session_updates", null)
+
+
+static func _expand_player_lifecycle_record(value, packet_type = null):
+	if value is Array and value.size() >= 2:
+		return {
+			"player_id": expand_compact_player_id(value[0]),
+			"status": value[1],
+		}
+	return _expand_value(value, "player_lifecycle", null)
+
+
+static func _expand_player_lifecycle_delete(value, packet_type = null):
+	return expand_compact_player_id(value)
+
+
+static func _expand_ship_record(value, packet_type = null):
+	if value is Array and value.size() == 10:
+		return {
+			"id": expand_compact_player_id(value[0]),
+			"ship_type": value[1],
+			"x": value[2],
+			"y": value[3],
+			"rotation": value[4],
+			"health": value[5],
+			"shields": value[6],
+			"thrusting": value[7],
+			"target_kind": value[8],
+			"target_id": value[9],
+		}
+	return _expand_value(value, "ships", null)
+
+
+static func _expand_ship_update_record(value, packet_type = null):
+	if value is Array and value.size() >= 1:
+		var expanded := {
+			"id": expand_compact_player_id(value[0]),
+		}
+		if value.size() > 1 and value[1] != null:
+			expanded["x"] = value[1]
+		if value.size() > 2 and value[2] != null:
+			expanded["y"] = value[2]
+		if value.size() > 3 and value[3] != null:
+			expanded["rotation"] = value[3]
+		if value.size() > 4 and value[4] != null:
+			expanded["thrusting"] = value[4]
+		return expanded
+	return _expand_value(value, "ship_updates", null)
+
+
+static func _expand_bullet_record(value, packet_type = null):
+	if value is Array and value.size() == 7:
+		return {
+			"id": expand_compact_bullet_id(value[0]),
+			"owner_id": value[1],
+			"x": value[2],
+			"y": value[3],
+			"rotation": value[4],
+			"weapon_id": value[5],
+			"projectile_type": value[6],
+		}
+	return _expand_value(value, "bullets", null)
+
+
+static func _expand_bullet_update_record(value, packet_type = null):
+	if value is Array and value.size() >= 1:
+		var expanded := {
+			"id": expand_compact_bullet_id(value[0]),
+		}
+		if value.size() > 1 and value[1] != null:
+			expanded["x"] = value[1]
+		if value.size() > 2 and value[2] != null:
+			expanded["y"] = value[2]
+		if value.size() > 3 and value[3] != null:
+			expanded["rotation"] = value[3]
+		return expanded
+	return _expand_value(value, "bullet_updates", null)
+
+
+static func _expand_event_record(value):
+	if value is Array and value.size() >= 2:
+		var expanded := {
+			"event_id": expand_compact_presentation_event_id(value[1]),
+		}
+		match value[0]:
+			"bb":
+				expanded["type"] = "bullet_blast"
+				expanded["x"] = value[2]
+				expanded["y"] = value[3]
+			"shd":
+				expanded["type"] = "ship_death"
+				expanded["player_id"] = expand_compact_player_id(value[2])
+				expanded["lives"] = value[3]
+				expanded["respawn_delay"] = value[4]
+				expanded["x"] = value[5]
+				expanded["y"] = value[6]
+			"dmg":
+				expanded["type"] = "damage_applied"
+				expanded["source_type"] = value[2]
+				expanded["source_id"] = value[3]
+				expanded["effect_type"] = value[4]
+				expanded["amount"] = value[5]
+				expanded["x"] = value[6]
+				expanded["y"] = value[7]
+			"dots":
+				expanded["type"] = "damage_over_time_started"
+				expanded["source_type"] = value[2]
+				expanded["source_id"] = value[3]
+				expanded["effect_type"] = value[4]
+				expanded["amount"] = value[5]
+			"dott":
+				expanded["type"] = "damage_over_time_tick"
+				expanded["source_type"] = value[2]
+				expanded["source_id"] = value[3]
+				expanded["effect_type"] = value[4]
+				expanded["amount"] = value[5]
+				expanded["x"] = value[6]
+				expanded["y"] = value[7]
+			"rfx":
+				expanded["type"] = "radial_effect_started"
+				expanded["source_type"] = value[2]
+				expanded["source_id"] = value[3]
+				expanded["effect_type"] = value[4]
+				expanded["x"] = value[5]
+				expanded["y"] = value[6]
+			"pcol":
+				expanded["type"] = "pickup_collected"
+				expanded["player_id"] = expand_compact_player_id(value[2])
+				expanded["pickup_id"] = value[3]
+				expanded["pickup_type"] = value[4]
+				expanded["x"] = value[5]
+				expanded["y"] = value[6]
+			"pea":
+				expanded["type"] = "pickup_effect_applied"
+				expanded["player_id"] = expand_compact_player_id(value[2])
+				expanded["pickup_id"] = value[3]
+				expanded["pickup_type"] = value[4]
+				expanded["effect_type"] = value[5]
+				expanded["amount"] = value[6]
+				expanded["lives_after"] = value[7]
+			"pexp":
+				expanded["type"] = "pickup_expired"
+				expanded["pickup_id"] = value[2]
+				expanded["pickup_type"] = value[3]
+				expanded["x"] = value[4]
+				expanded["y"] = value[5]
+			"pdr":
+				expanded["type"] = "pickup_dropped"
+				expanded["pickup_id"] = value[2]
+				expanded["pickup_type"] = value[3]
+				expanded["source_type"] = value[4]
+				expanded["source_id"] = value[5]
+				expanded["table_id"] = value[6]
+				expanded["x"] = value[7]
+				expanded["y"] = value[8]
+			_:
+				return _expand_value(value, "events", null)
+		return expanded
+	return _expand_value(value, "events", null)
+
+
+static func _expand_asteroid_record(value, packet_type = null):
 	if value is Array and value.size() == 7:
 		return {
 			"id": expand_compact_asteroid_id(value[0]),
@@ -153,10 +378,10 @@ static func _expand_asteroid_record(value):
 			"scale": value[5],
 			"variant": value[6],
 		}
-	return _expand_value(value, "asteroids")
+	return _expand_value(value, "asteroids", null)
 
 
-static func _expand_asteroid_update_record(value):
+static func _expand_asteroid_update_record(value, packet_type = null):
 	if value is Array and value.size() >= 1:
 		var expanded := {
 			"id": expand_compact_asteroid_id(value[0]),
@@ -166,27 +391,103 @@ static func _expand_asteroid_update_record(value):
 		if value.size() > 2 and value[2] != null:
 			expanded["y"] = value[2]
 		return expanded
-	return _expand_value(value, "asteroid_updates")
+	return _expand_value(value, "asteroid_updates", null)
 
 
 static func _is_compact_asteroid_record_list(parent_key) -> bool:
 	return parent_key == "asteroids" or parent_key == "asteroid_creates"
 
 
-static func _expand_value(value, parent_key):
+static func _expand_value(value, parent_key, packet_type):
 	if value is Dictionary:
 		var expanded := {}
 		for raw_key in value.keys():
 			var key = str(raw_key)
 			var expanded_key = _KEY_MAP.get(key, key)
-			expanded[expanded_key] = _expand_value(value[raw_key], expanded_key)
+			var expanded_value = _expand_value(value[raw_key], expanded_key, packet_type)
+			if key == "bid" or expanded_key == "batch_id":
+				expanded_value = expand_compact_event_batch_id(expanded_value)
+			expanded[expanded_key] = expanded_value
 		return expanded
 	if value is Array:
+		if parent_key == "players":
+			if packet_type == "session_full" or packet_type == "session_delta" or packet_type == "sf" or packet_type == "sd" or value.size() == 11:
+				var expanded_players := []
+				expanded_players.resize(value.size())
+				for index in range(value.size()):
+					expanded_players[index] = _expand_session_player_record(value[index], packet_type)
+				return expanded_players
+		if parent_key == "player_session_updates":
+			var expanded_player_session_updates := []
+			expanded_player_session_updates.resize(value.size())
+			for index in range(value.size()):
+				expanded_player_session_updates[index] = _expand_session_player_update_record(value[index], packet_type)
+			return expanded_player_session_updates
+		if parent_key == "player_session_deletes":
+			var expanded_player_session_deletes := []
+			expanded_player_session_deletes.resize(value.size())
+			for index in range(value.size()):
+				expanded_player_session_deletes[index] = expand_compact_player_id(value[index])
+			return expanded_player_session_deletes
+		if parent_key == "player_lifecycle" or parent_key == "player_lifecycle_updates":
+			var expanded_player_lifecycle := []
+			expanded_player_lifecycle.resize(value.size())
+			for index in range(value.size()):
+				expanded_player_lifecycle[index] = _expand_player_lifecycle_record(value[index], packet_type)
+			return expanded_player_lifecycle
+		if parent_key == "player_lifecycle_deletes":
+			var expanded_player_lifecycle_deletes := []
+			expanded_player_lifecycle_deletes.resize(value.size())
+			for index in range(value.size()):
+				expanded_player_lifecycle_deletes[index] = _expand_player_lifecycle_delete(value[index], packet_type)
+			return expanded_player_lifecycle_deletes
+		if parent_key == "events":
+			var expanded_events := []
+			expanded_events.resize(value.size())
+			for index in range(value.size()):
+				expanded_events[index] = _expand_event_record(value[index])
+			return expanded_events
+		if parent_key == "ship_updates":
+			var expanded_ship_updates := []
+			expanded_ship_updates.resize(value.size())
+			for index in range(value.size()):
+				expanded_ship_updates[index] = _expand_ship_update_record(value[index], packet_type)
+			return expanded_ship_updates
+		if parent_key == "ship_deletes":
+			var expanded_ship_deletes := []
+			expanded_ship_deletes.resize(value.size())
+			for index in range(value.size()):
+				expanded_ship_deletes[index] = expand_compact_player_id(value[index])
+			return expanded_ship_deletes
+		if parent_key == "ships" or parent_key == "ship_creates":
+			var expanded_ships := []
+			expanded_ships.resize(value.size())
+			for index in range(value.size()):
+				expanded_ships[index] = _expand_ship_record(value[index])
+			return expanded_ships
+		if parent_key == "bullet_updates":
+			var expanded_bullet_updates := []
+			expanded_bullet_updates.resize(value.size())
+			for index in range(value.size()):
+				expanded_bullet_updates[index] = _expand_bullet_update_record(value[index], packet_type)
+			return expanded_bullet_updates
+		if parent_key == "bullet_deletes":
+			var expanded_bullet_deletes := []
+			expanded_bullet_deletes.resize(value.size())
+			for index in range(value.size()):
+				expanded_bullet_deletes[index] = expand_compact_bullet_id(value[index])
+			return expanded_bullet_deletes
+		if parent_key == "bullets" or parent_key == "bullet_creates":
+			var expanded_bullets := []
+			expanded_bullets.resize(value.size())
+			for index in range(value.size()):
+				expanded_bullets[index] = _expand_bullet_record(value[index])
+			return expanded_bullets
 		if parent_key == "asteroid_updates":
 			var expanded_asteroid_updates := []
 			expanded_asteroid_updates.resize(value.size())
 			for index in range(value.size()):
-				expanded_asteroid_updates[index] = _expand_asteroid_update_record(value[index])
+				expanded_asteroid_updates[index] = _expand_asteroid_update_record(value[index], packet_type)
 			return expanded_asteroid_updates
 		if parent_key == "asteroid_deletes":
 			var expanded_asteroid_deletes := []
@@ -198,17 +499,19 @@ static func _expand_value(value, parent_key):
 			var expanded_asteroids := []
 			expanded_asteroids.resize(value.size())
 			for index in range(value.size()):
-				expanded_asteroids[index] = _expand_asteroid_record(value[index])
+				expanded_asteroids[index] = _expand_asteroid_record(value[index], packet_type)
 			return expanded_asteroids
 		var expanded_array := []
 		expanded_array.resize(value.size())
 		for index in range(value.size()):
-			expanded_array[index] = _expand_value(value[index], parent_key)
+			expanded_array[index] = _expand_value(value[index], parent_key, packet_type)
 		return expanded_array
 	if parent_key != null:
 		var value_map = _VALUE_MAPS.get(parent_key)
 		if value_map != null:
 			var string_value = str(value)
+			if parent_key == "batch_id":
+				return expand_compact_event_batch_id(value)
 			if value_map.has(string_value):
 				return value_map[string_value]
 	return value

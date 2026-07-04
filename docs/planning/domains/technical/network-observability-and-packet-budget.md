@@ -72,6 +72,7 @@ P1 answers whether the current architecture can safely support more entities and
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
 - Ordinary world or overlay writes can be small, but event ticks can spike because `event_batch` is included with world, overlay, and session on the same active write.
 - Compact sparse event records reduce that event-tick spike.
+- Asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work.
 
 ### Future-State Note
 
@@ -208,7 +209,7 @@ Likely protocol work families under Phase P2, without choosing one:
 - Debug lane separation, if debug or devtools data leaks into normal gameplay packets.
 - Shared room snapshot plus per-client overlay, if most state is duplicated per client but only small portions are player-specific.
 
-The next planning work after Phase P1 should be selected by evidence from the decision gate, not by feature visibility alone.
+The next planning work after Phase P1 should be selected by evidence from the decision gate, not by feature visibility alone. After tuple packing is current, the next likely steps are to verify packet-size gains with stress logs, continue world lane reductions where needed, and keep binary/bitpacking as later work unless measurements justify it sooner.
 ### P2 Validation Support
 
 During P2, deferred network telemetry and logging work can resume when it helps validate protocol changes:
@@ -249,6 +250,7 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 ## Notes
 
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
+
 
 
 

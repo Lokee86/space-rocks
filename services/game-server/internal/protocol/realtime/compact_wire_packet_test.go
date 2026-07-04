@@ -1,6 +1,9 @@
 package realtime
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestCompactWirePacketCompactsMetadataKeys(t *testing.T) {
 	input := map[string]any{
@@ -38,17 +41,15 @@ func TestCompactWirePacketCompactsMetadataKeys(t *testing.T) {
 	}
 }
 
-func TestCompactWirePacketCompactsNestedWorldUpdatesRecursively(t *testing.T) {
+func TestCompactWirePacketCompactsNestedMapRecordsRecursively(t *testing.T) {
 	input := map[string]any{
 		"type": "world_delta",
 		"lane": "world",
-		"ship_updates": []any{
+		"pickup_updates": []any{
 			map[string]any{
-				"id":        "ship-1",
-				"x":         10,
-				"y":         11,
-				"rotation":  12,
-				"thrusting": false,
+				"id":   "pickup-1",
+				"x":    10,
+				"y":    11,
 				"nested": map[string]any{
 					"owner_id": "player-9",
 					"size":     3,
@@ -59,19 +60,13 @@ func TestCompactWirePacketCompactsNestedWorldUpdatesRecursively(t *testing.T) {
 
 	got := CompactWirePacket(input)
 
-	updates := got["su"].([]any)
+	updates := got["pu"].([]any)
 	first := updates[0].(map[string]any)
-	if first["i"] != "ship-1" {
-		t.Fatalf("id = %v, want ship-1", first["i"])
+	if first["i"] != "pickup-1" {
+		t.Fatalf("id = %v, want pickup-1", first["i"])
 	}
 	if first["x"] != 10 || first["y"] != 11 {
 		t.Fatalf("position changed: %#v", first)
-	}
-	if first["r"] != 12 {
-		t.Fatalf("rotation = %v, want 12", first["r"])
-	}
-	if first["th"] != false {
-		t.Fatalf("thrusting = %v, want false", first["th"])
 	}
 	nested := first["nested"].(map[string]any)
 	if nested["oi"] != "player-9" {
@@ -194,6 +189,432 @@ func TestCompactWirePacketTuplePacksWorldFullAsteroids(t *testing.T) {
 	}
 }
 
+func TestCompactWirePacketTuplePacksWorldFullBullets(t *testing.T) {
+	input := map[string]any{
+		"type": "world_full",
+		"bullets": []any{
+			map[string]any{
+				"id":             "bullet-1",
+				"owner_id":       "player-1",
+				"x":              10,
+				"y":              20,
+				"rotation":       30,
+				"weapon_id":      "pulse",
+				"projectile_type": "laser",
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+
+	if got["t"] != "wf" {
+		t.Fatalf("type = %v, want wf", got["t"])
+	}
+
+	bullets, ok := got["bullets"].([]any)
+	if !ok || len(bullets) != 1 {
+		t.Fatalf("bullets = %#v, want one tuple-packed bullet", got["bullets"])
+	}
+
+	tuple, ok := bullets[0].([]any)
+	if !ok {
+		t.Fatalf("bullets[0] = %#v, want tuple array", bullets[0])
+	}
+
+	want := []any{1, "player-1", 10, 20, 30, "pulse", "laser"}
+	if len(tuple) != len(want) {
+		t.Fatalf("tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldFullShips(t *testing.T) {
+	input := map[string]any{
+		"type": "world_full",
+		"ships": []any{
+			map[string]any{
+				"id":          "player-1",
+				"ship_type":   "v_wing",
+				"x":           10,
+				"y":           20,
+				"rotation":    30,
+				"health":      100,
+				"shields":     50,
+				"thrusting":   true,
+				"target_kind": "player",
+				"target_id":   "player-2",
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	ships, ok := got["ships"].([]any)
+	if !ok || len(ships) != 1 {
+		t.Fatalf("ships = %#v, want one tuple-packed ship", got["ships"])
+	}
+	tuple, ok := ships[0].([]any)
+	if !ok {
+		t.Fatalf("ships[0] = %#v, want tuple array", ships[0])
+	}
+	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", "player-2"}
+	if len(tuple) != len(want) {
+		t.Fatalf("tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+}
+
+
+func TestCompactWirePacketTuplePacksWorldDeltaShipCreates(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_creates": []any{
+			map[string]any{
+				"id":          "player-1",
+				"ship_type":   "v_wing",
+				"x":           10,
+				"y":           20,
+				"rotation":    30,
+				"health":      100,
+				"shields":     50,
+				"thrusting":   true,
+				"target_kind": "player",
+				"target_id":   "player-2",
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	creates := got["sc"].([]any)
+	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", "player-2"}
+	if tuple, ok := creates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("ship create = %#v, want full tuple %#v", creates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("create tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesXYRotationThrusting(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id":        "player-1",
+				"x":         10,
+				"y":         20,
+				"rotation":  30,
+				"thrusting": true,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["su"].([]any)
+	want := []any{1, 10, 20, 30, true}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("ship xy rotation thrusting update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("update tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesXOnly(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id": "player-1",
+				"x":  10,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["su"].([]any)
+	want := []any{1, 10}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("ship x-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("x-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesYOnly(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id": "player-1",
+				"y":  20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["su"].([]any)
+	want := []any{1, nil, 20}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("ship y-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("y-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesRotationOnly(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id":       "player-1",
+				"rotation": 30,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["su"].([]any)
+	want := []any{1, nil, nil, 30}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("ship rotation-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("rotation-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesThrustingOnlyFalse(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id":        "player-1",
+				"thrusting": false,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["su"].([]any)
+	want := []any{1, nil, nil, nil, false}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("ship thrusting-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("thrusting-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesPreserveZeroValues(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id":        "player-1",
+				"x":         0,
+				"y":         0,
+				"rotation":  0,
+				"thrusting": false,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["su"].([]any)
+	want := []any{1, 0, 0, 0, false}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("ship zero update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("zero tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketCompactsWorldDeltaShipDeletes(t *testing.T) {
+	input := map[string]any{
+		"type":           "world_delta",
+		"ship_deletes": []any{"player-1", "ship-legacy", "player-2"},
+	}
+
+	got := CompactWirePacket(input)
+	deletes := got["sx"].([]any)
+	if len(deletes) != 3 || deletes[0] != 1 || deletes[1] != "ship-legacy" || deletes[2] != 2 {
+		t.Fatalf("ship deletes changed: %#v", deletes)
+	}
+}
+
+func TestCompactWirePacketTuplePacksSessionFullPlayers(t *testing.T) {
+	input := map[string]any{
+		"type": "session_full",
+		"players": []any{
+			map[string]any{
+				"id":                  "player-1",
+				"ship_type":           "v_wing",
+				"score":               100,
+				"lives":               3,
+				"respawn_cooldown":    250,
+				"primary_weapon_id":   "pulse",
+				"primary_ammo_policy": "limited",
+				"secondary_weapon_id": "mine",
+				"secondary_ammo_policy": "limited",
+				"spawn_x":             10,
+				"spawn_y":             20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	players := got["pl"].([]any)
+	want := []any{1, "v_wing", 100, 3, 250, "pulse", "limited", "mine", "limited", 10, 20}
+	if tuple, ok := players[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("session player = %#v, want full tuple %#v", players[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("player tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+
+func TestCompactWirePacketTuplePacksSessionDeltaPlayerCreates(t *testing.T) {
+	input := map[string]any{
+		"type": "session_delta",
+		"pl": []any{
+			map[string]any{
+				"id":                  "player-1",
+				"ship_type":           "v_wing",
+				"score":               100,
+				"lives":               3,
+				"respawn_cooldown":    250,
+				"primary_weapon_id":   "pulse",
+				"primary_ammo_policy": "limited",
+				"secondary_weapon_id": "mine",
+				"secondary_ammo_policy": "limited",
+				"spawn_x":             10,
+				"spawn_y":             20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	players := got["pl"].([]any)
+	want := []any{1, "v_wing", 100, 3, 250, "pulse", "limited", "mine", "limited", 10, 20}
+	if tuple, ok := players[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("session delta player = %#v, want full tuple %#v", players[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("player create tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksSessionDeltaPlayerSessionUpdates(t *testing.T) {
+	input := map[string]any{
+		"type": "session_delta",
+		"psu": []any{
+			map[string]any{
+				"id":               "player-1",
+				"score":            100,
+				"lives":            2,
+				"respawn_cooldown": 0,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["psu"].([]any)
+	tuple := updates[0].([]any)
+	if tuple[0] != 1 {
+		t.Fatalf("update id = %#v, want 1", tuple[0])
+	}
+	if len(tuple) != 7 || tuple[1] != "sco" || tuple[2] != 100 || tuple[3] != "lv" || tuple[4] != 2 || tuple[5] != "rcd" || tuple[6] != 0 {
+		t.Fatalf("player session update tuple = %#v", tuple)
+	}
+}
+
+func TestCompactWirePacketCompactsSessionDeltaPlayerSessionDeletes(t *testing.T) {
+	input := map[string]any{
+		"type": "session_delta",
+		"psx": []any{"player-1", "player-bad", "player-2"},
+	}
+
+	got := CompactWirePacket(input)
+	deletes := got["psx"].([]any)
+	if len(deletes) != 3 || deletes[0] != 1 || deletes[1] != "player-bad" || deletes[2] != 2 {
+		t.Fatalf("player session deletes changed: %#v", deletes)
+	}
+}
+
+func TestCompactWirePacketTuplePacksSessionLifecycleCreatesAndUpdates(t *testing.T) {
+	create := CompactWirePacket(map[string]any{
+		"type": "session_full",
+		"plc": []any{
+			map[string]any{"player_id": "player-1", "status": "active"},
+		},
+	})
+	update := CompactWirePacket(map[string]any{
+		"type": "session_delta",
+		"plu": []any{
+			map[string]any{"pid": "player-1", "stat": "respawning"},
+		},
+	})
+
+	if got := create["plc"].([]any)[0]; !reflect.DeepEqual(got, []any{1, "active"}) {
+		t.Fatalf("player lifecycle create = %#v, want %#v", got, []any{1, "active"})
+	}
+	if got := update["plu"].([]any)[0]; !reflect.DeepEqual(got, []any{1, "respawning"}) {
+		t.Fatalf("player lifecycle update = %#v, want %#v", got, []any{1, "respawning"})
+	}
+}
+
+func TestCompactWirePacketCompactsSessionLifecycleDeletes(t *testing.T) {
+	input := map[string]any{
+		"type": "session_delta",
+		"plx": []any{"player-1"},
+	}
+
+	got := CompactWirePacket(input)
+	deletes := got["plx"].([]any)
+	if len(deletes) != 1 || deletes[0] != 1 {
+		t.Fatalf("player lifecycle deletes changed: %#v", deletes)
+	}
+}
+
 func TestCompactWirePacketTuplePacksWorldDeltaAsteroidCreates(t *testing.T) {
 	input := map[string]any{
 		"type": "world_delta",
@@ -219,6 +640,135 @@ func TestCompactWirePacketTuplePacksWorldDeltaAsteroidCreates(t *testing.T) {
 		for i := range want {
 			if tuple[i] != want[i] {
 				t.Fatalf("create tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesXYRotation(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"bullet_updates": []any{
+			map[string]any{
+				"id":       "bullet-1",
+				"x":        10,
+				"y":        20,
+				"rotation": 30,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["bu"].([]any)
+	want := []any{1, 10, 20, 30}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("bullet xy rotation update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("update tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesXOnly(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"bullet_updates": []any{
+			map[string]any{
+				"id": "bullet-1",
+				"x":  10,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["bu"].([]any)
+	want := []any{1, 10}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("bullet x-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("x-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesYOnly(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"bullet_updates": []any{
+			map[string]any{
+				"id": "bullet-1",
+				"y":  20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["bu"].([]any)
+	want := []any{1, nil, 20}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("bullet y-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("y-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesRotationOnly(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"bullet_updates": []any{
+			map[string]any{
+				"id":       "bullet-1",
+				"rotation": 30,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["bu"].([]any)
+	want := []any{1, nil, nil, 30}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("bullet rotation-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("rotation-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesPreserveZeroValues(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"bullet_updates": []any{
+			map[string]any{
+				"id":       "bullet-1",
+				"x":        0,
+				"y":        0,
+				"rotation": 0,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["bu"].([]any)
+	want := []any{1, 0, 0, 0}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("bullet zero update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("zero tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
 			}
 		}
 	}
@@ -327,6 +877,19 @@ func TestCompactWirePacketLeavesMalformedAsteroidIDsUnchanged(t *testing.T) {
 	}
 }
 
+func TestCompactWirePacketCompactsWorldDeltaBulletDeletes(t *testing.T) {
+	input := map[string]any{
+		"type":           "world_delta",
+		"bullet_deletes": []any{"bullet-1", "bullet-not-a-number", "bullet-2"},
+	}
+
+	got := CompactWirePacket(input)
+	deletes := got["bx"].([]any)
+	if len(deletes) != 3 || deletes[0] != 1 || deletes[1] != "bullet-not-a-number" || deletes[2] != 2 {
+		t.Fatalf("bullet deletes changed: %#v", deletes)
+	}
+}
+
 func TestCompactWirePacketCompactsWorldDeltaAsteroidDeletes(t *testing.T) {
 	input := map[string]any{
 		"type":             "world_delta",
@@ -381,30 +944,16 @@ func TestCompactWirePacketCompactsEventBatchAndNestedEventRecords(t *testing.T) 
 		"type": "event_batch",
 		"batch_id": "event-batch-11",
 		"events": []any{
-			map[string]any{
-				"event_id": "event-1",
-				"type": "bullet_blast",
-				"x": 10,
-				"y": 20,
-			},
-			map[string]any{
-				"event_id": "event-2",
-				"type": "damage_applied",
-				"source_type": "projectile",
-				"source_id": "bullet-1",
-				"target_type": "player",
-				"target_id": "player-1",
-				"damage_type": "explosive",
-				"damage_cause": "impact",
-				"base_amount": 20,
-				"modified_amount": 17,
-				"applied_to_health": 12,
-				"absorbed_by_shield": 5,
-				"remaining_health": 88,
-				"remaining_shield": 0,
-				"effect_type": "blast",
-				"amount": 17,
-			},
+			map[string]any{"event_id": "event-1", "type": "bullet_blast", "x": 10, "y": 20},
+			map[string]any{"event_id": "event-2", "type": "ship_death", "player_id": "player-1", "lives": 2, "respawn_delay": 1.25, "x": 30, "y": 40},
+			map[string]any{"event_id": "event-3", "type": "damage_applied", "source_type": "projectile", "source_id": "bullet-1", "effect_type": "blast", "amount": 17, "x": 50, "y": 60},
+			map[string]any{"event_id": "event-4", "type": "damage_over_time_started", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 2},
+			map[string]any{"event_id": "event-5", "type": "damage_over_time_tick", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 3, "x": 70, "y": 80},
+			map[string]any{"event_id": "event-6", "type": "radial_effect_started", "source_type": "pickup", "source_id": "pickup-1", "effect_type": "pulse", "x": 90, "y": 100},
+			map[string]any{"event_id": "event-7", "type": "pickup_collected", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 110, "y": 120},
+			map[string]any{"event_id": "event-8", "type": "pickup_effect_applied", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "effect_type": "repair", "amount": 4, "lives_after": 3},
+			map[string]any{"event_id": "event-9", "type": "pickup_expired", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 130, "y": 140},
+			map[string]any{"event_id": "event-10", "type": "pickup_dropped", "pickup_id": "pickup-1", "pickup_type": "shield", "source_type": "ship", "source_id": "ship-1", "table_id": "table-1", "x": 150, "y": 160},
 		},
 	}
 
@@ -413,44 +962,107 @@ func TestCompactWirePacketCompactsEventBatchAndNestedEventRecords(t *testing.T) 
 	if got["t"] != "eb" {
 		t.Fatalf("type = %v, want eb", got["t"])
 	}
-	if got["bid"] != "event-batch-11" {
-		t.Fatalf("batch_id = %v, want event-batch-11", got["bid"])
+	if got["bid"] != 11 {
+		t.Fatalf("batch_id = %v, want 11", got["bid"])
 	}
 	events := got["ev"].([]any)
-	if len(events) != 2 {
-		t.Fatalf("events = %#v, want 2 items", events)
+	if len(events) != 10 {
+		t.Fatalf("events = %#v, want 10 items", events)
 	}
-	first := events[0].(map[string]any)
-	if first["ei"] != "event-1" {
-		t.Fatalf("event_id = %v, want event-1", first["ei"])
+	if _, ok := events[0].([]any); !ok {
+		t.Fatalf("bullet_blast event = %#v, want tuple array", events[0])
 	}
-	if first["t"] != "bb" {
-		t.Fatalf("event type = %v, want bb", first["t"])
+	if _, ok := events[1].([]any); !ok {
+		t.Fatalf("ship_death event = %#v, want tuple array", events[1])
 	}
-	if first["x"] != 10 || first["y"] != 20 {
-		t.Fatalf("event coordinates changed: %#v", first)
+	if _, ok := events[2].([]any); !ok {
+		t.Fatalf("damage_applied event = %#v, want tuple array", events[2])
 	}
-	second := events[1].(map[string]any)
-	if second["ei"] != "event-2" {
-		t.Fatalf("event_id = %v, want event-2", second["ei"])
+	if _, ok := events[3].([]any); !ok {
+		t.Fatalf("damage_over_time_started event = %#v, want tuple array", events[3])
 	}
-	if second["t"] != "dmg" {
-		t.Fatalf("event type = %v, want dmg", second["t"])
+	if _, ok := events[4].([]any); !ok {
+		t.Fatalf("damage_over_time_tick event = %#v, want tuple array", events[4])
 	}
-	if second["srct"] != "projectile" || second["src"] != "bullet-1" {
-		t.Fatalf("source aliases not compacted: %#v", second)
+	if _, ok := events[5].([]any); !ok {
+		t.Fatalf("radial_effect_started event = %#v, want tuple array", events[5])
 	}
-	if second["tt"] != "player" || second["tid"] != "player-1" {
-		t.Fatalf("target aliases not compacted: %#v", second)
+	if _, ok := events[6].([]any); !ok {
+		t.Fatalf("pickup_collected event = %#v, want tuple array", events[6])
 	}
-	if second["dt"] != "explosive" || second["dc"] != "impact" {
-		t.Fatalf("damage aliases not compacted: %#v", second)
+	if _, ok := events[7].([]any); !ok {
+		t.Fatalf("pickup_effect_applied event = %#v, want tuple array", events[7])
 	}
-	if second["ba"] != 20 || second["ma"] != 17 || second["ah"] != 12 || second["abs"] != 5 || second["rh"] != 88 || second["rs"] != 0 {
-		t.Fatalf("damage value aliases not compacted: %#v", second)
+	if _, ok := events[8].([]any); !ok {
+		t.Fatalf("pickup_expired event = %#v, want tuple array", events[8])
 	}
-	if second["fx"] != "blast" || second["amt"] != 17 {
-		t.Fatalf("effect/amount aliases not compacted: %#v", second)
+	if _, ok := events[9].([]any); !ok {
+		t.Fatalf("pickup_dropped event = %#v, want tuple array", events[9])
+	}
+	if events[0].([]any)[0] != "bb" || events[0].([]any)[1] != 1 {
+		t.Fatalf("bullet_blast tuple = %#v", events[0])
+	}
+	if events[1].([]any)[0] != "shd" || events[1].([]any)[1] != 2 || events[1].([]any)[2] != 1 {
+		t.Fatalf("ship_death tuple = %#v", events[1])
+	}
+	if events[2].([]any)[0] != "dmg" || events[2].([]any)[1] != 3 || events[2].([]any)[3] != "bullet-1" {
+		t.Fatalf("damage_applied tuple = %#v", events[2])
+	}
+	if events[3].([]any)[0] != "dots" || events[3].([]any)[1] != 4 {
+		t.Fatalf("damage_over_time_started tuple = %#v", events[3])
+	}
+	if events[4].([]any)[0] != "dott" || events[4].([]any)[1] != 5 {
+		t.Fatalf("damage_over_time_tick tuple = %#v", events[4])
+	}
+	if events[5].([]any)[0] != "rfx" || events[5].([]any)[1] != 6 {
+		t.Fatalf("radial_effect_started tuple = %#v", events[5])
+	}
+	if events[6].([]any)[0] != "pcol" || events[6].([]any)[1] != 7 || events[6].([]any)[2] != 1 {
+		t.Fatalf("pickup_collected tuple = %#v", events[6])
+	}
+	if events[7].([]any)[0] != "pea" || events[7].([]any)[1] != 8 || events[7].([]any)[2] != 1 {
+		t.Fatalf("pickup_effect_applied tuple = %#v", events[7])
+	}
+	if events[8].([]any)[0] != "pexp" || events[8].([]any)[1] != 9 {
+		t.Fatalf("pickup_expired tuple = %#v", events[8])
+	}
+	if events[9].([]any)[0] != "pdr" || events[9].([]any)[1] != 10 {
+		t.Fatalf("pickup_dropped tuple = %#v", events[9])
+	}
+}
+
+func TestCompactWirePacketLeavesUnknownEventRecordsMapShaped(t *testing.T) {
+	input := map[string]any{
+		"type": "event_batch",
+		"batch_id": "event-batch-11",
+		"events": []any{
+			map[string]any{"event_id": "event-11", "type": "new_future_event", "source_id": "ship-1", "note": "kept"},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	if got["t"] != "eb" {
+		t.Fatalf("type = %v, want eb", got["t"])
+	}
+	if got["bid"] != 11 {
+		t.Fatalf("batch_id = %v, want 11", got["bid"])
+	}
+	events := got["ev"].([]any)
+	if len(events) != 1 {
+		t.Fatalf("events = %#v, want 1 item", events)
+	}
+	record, ok := events[0].(map[string]any)
+	if !ok {
+		t.Fatalf("unknown event = %#v, want map shaped record", events[0])
+	}
+	if record["ei"] != 11 {
+		t.Fatalf("event_id = %#v, want 11", record["ei"])
+	}
+	if record["t"] != "new_future_event" {
+		t.Fatalf("event type = %#v, want new_future_event", record["t"])
+	}
+	if record["src"] != "ship-1" || record["note"] != "kept" {
+		t.Fatalf("unknown event aliases changed: %#v", record)
 	}
 }
 

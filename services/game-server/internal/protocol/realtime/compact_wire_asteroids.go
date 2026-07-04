@@ -1,7 +1,5 @@
 package realtime
 
-import "strconv"
-
 func compactWirePackAsteroids(packet map[string]any) map[string]any {
 	switch packet["t"] {
 	case "wf":
@@ -117,23 +115,5 @@ func compactWirePackAsteroidMovementUpdate(value any) any {
 	return tuple
 }
 
-func compactWirePackAsteroidID(value any) any {
-	id, ok := value.(string)
-	if !ok {
-		return value
-	}
-
-	const prefix = "asteroid-"
-	if len(id) < len(prefix) || id[:len(prefix)] != prefix {
-		return id
-	}
-
-	parsed, err := strconv.Atoi(id[len(prefix):])
-	if err != nil {
-		return id
-	}
-
-	return parsed
-}
 
 

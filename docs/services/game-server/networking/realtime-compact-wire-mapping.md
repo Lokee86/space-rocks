@@ -10,13 +10,30 @@ Do not reconcile compact aliases from raw packet struct names.
 
 - Internal server structs keep readable field names.
 - `WireLanePacket` keeps producing readable long-key maps.
-- `CompactWirePacket` owns the final outbound alias conversion at the encode boundary.
-- The client expands compact packets back to readable long-key dictionaries before existing lane appliers process them.
-- For asteroid tuples, the client rehydrates numeric ID suffixes back into `asteroid-<id>` strings before world lane appliers process them.
+- `CompactWirePacket` owns the final outbound compact-key conversion, compact-value conversion, shared ID compaction, and tuple packing at the encode boundary.
+- The client compact lane packet expands compact wire data back to readable long-key dictionaries before existing lane appliers process them.
+- The client expands tuple packets back into readable dictionaries before existing lane appliers process them.
+- For tuple-packed records, the client rehydrates compact numeric IDs back into readable string IDs before world, session, and event appliers process them.
 - Both compact and legacy long-key packets must remain accepted by the client during this transition.
 - Aliases must be globally unambiguous so the client can recursively expand compact keys without needing entity-kind context.
 - Compacting field names is separate from omitting empty delta sections.
 - Sparse delta omission happens before compact aliases are applied.
+## Shared ID Compaction
+
+Shared ID compaction applies to the tuple-packed and compact-value wire paths when the field slot has a safe specific context.
+
+Server-side compaction rules:
+
+- `asteroid-N` -> `N`
+- `bullet-N` -> `N`
+- `player-N` -> `N`
+- `presentation-event-N` -> `N`
+- `event-batch-N` -> `N`
+- malformed IDs remain unchanged
+
+The compacting helper only removes the known prefix when the numeric suffix is valid.
+Non-string IDs remain unchanged.
+String fields that are only loosely associated with an entity or record keep their readable string form unless a tuple slot has a safe specific context.
 
 ## Runtime Metadata Inference
 
@@ -175,6 +192,8 @@ Missing compact delta section aliases mean empty or no-op.
 - `score` -> `sco`
 - `lives` -> `lv`
 - `respawn_cooldown` -> `rcd`
+These keys are still applied where the wire slot remains a map field.
+Tuple-packed slots can bypass these readable key aliases when their position already carries the meaning safely.
 
 ## World Record Keys
 
@@ -192,6 +211,14 @@ Missing compact delta section aliases mean empty or no-op.
 - `pickup_class` -> `pcl`
 - `age_seconds` -> `age`
 - `lifespan_seconds` -> `life`
+Polymorphic or broadly shared string fields remain strings unless the tuple slot has safe specific context.
+These stay readable string values:
+
+- `owner_id`
+- `target_id`
+- `source_id`
+- `pickup_id`
+- `table_id`
 
 ## Overlay And Session Weapon And Loadout Keys
 
@@ -213,7 +240,7 @@ It is the presentation-event lane, not a state lane.
 It keeps batching: one ordered batch can contain multiple pending presentation events.
 It does not become one packet per event.
 
-Known event records are sparse and event-type-specific.
+Known event records are tuple-shaped for the compact wire path.
 Known event records no longer use broad reflected `EventState` output.
 Unknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.
 
@@ -278,6 +305,111 @@ Unknown or newly added event types may still fall back to legacy long-key reflec
 | `type = damage_over_time_started` | `t = dots` | event type value |
 | `type = damage_over_time_tick` | `t = dott` | event type value |
 
+## Bullet Tuple Mapping
+
+This contract applies to world lane bullet records.
+`world_full.bullets` uses tuple records.
+`world_delta.bc` uses tuple records for bullet creates.
+`world_delta.bu` uses tuple records for bullet updates.
+`world_delta.bx` uses compact numeric delete IDs.
+
+| Record family | Tuple shape |
+| --- | --- |
+| `world_full.bullets` | `[id, owner_id, x, y, rotation, weapon_id, projectile_type]` |
+| `world_delta.bullet_creates` | `[id, owner_id, x, y, rotation, weapon_id, projectile_type]` |
+| `world_delta.bullet_updates` | `[id, x, y, rotation]` |
+| `world_delta.bullet_deletes` | `[id]` |
+
+Sparse placeholder rules:
+
+- Missing trailing fields are omitted.
+- Missing middle fields use `null` placeholders.
+- Zero values are preserved.
+- `false` booleans are preserved.
+
+Deletes use compact numeric IDs such as `bullet-123 -> 123`.
+Malformed bullet IDs remain unchanged.
+
+## World Ship/Player Tuple Mapping
+
+This contract applies to world lane ship and player records.
+`world_full.ships` uses tuple records.
+`world_delta.sc` uses tuple records for ship creates.
+`world_delta.su` uses tuple records for ship updates.
+`world_delta.sx` uses compact numeric delete IDs.
+
+| Record family | Tuple shape |
+| --- | --- |
+| `world_full.ships` | `[id, ship_type, x, y, rotation, health, shields, thrusting, target_kind, target_id]` |
+| `world_delta.ship_creates` | `[id, ship_type, x, y, rotation, health, shields, thrusting, target_kind, target_id]` |
+| `world_delta.ship_updates` | `[id, x, y, rotation, thrusting]` |
+| `world_delta.ship_deletes` | `[id]` |
+
+Sparse placeholder rules:
+
+- Missing trailing fields are omitted.
+- Missing middle fields use `null` placeholders.
+- Zero values and `false` booleans are preserved.
+
+Deletes use compact player IDs when the ship ID is player-scoped.
+Legacy non-player ship IDs remain unchanged.
+
+## Session Player Tuple Mapping
+
+This contract applies to session lane player and lifecycle records.
+`session_full.pl` and `session_delta.pl` use tuple records for session players.
+`session_delta.psu` uses pair tuples for partial session player updates.
+`session_delta.psx` uses compact numeric delete IDs.
+`session_full.plc`, `session_delta.plc`, `session_delta.plu`, and `session_delta.plx` cover lifecycle records.
+
+| Record family | Tuple shape |
+| --- | --- |
+| `session_full.pl` | `[id, ship_type, score, lives, respawn_cooldown, primary_weapon_id, primary_ammo_policy, secondary_weapon_id, secondary_ammo_policy, spawn_x, spawn_y]` |
+| `session_delta.pl` | `[id, ship_type, score, lives, respawn_cooldown, primary_weapon_id, primary_ammo_policy, secondary_weapon_id, secondary_ammo_policy, spawn_x, spawn_y]` |
+| `session_delta.player_session_updates` | `[id, field_alias, value, field_alias, value]` |
+| `session_delta.player_session_deletes` | `[id]` |
+| `session_full.plc` | `[player_id, status]` |
+| `session_delta.plc` | `[player_id, status]` |
+| `session_delta.plu` | `[player_id, status]` |
+| `session_delta.plx` | `[player_id]` |
+
+Sparse placeholder rules:
+
+- Missing trailing fields are omitted.
+- Missing middle fields use `null` placeholders.
+- Zero values and `false` booleans are preserved.
+
+Deletes use compact player IDs.
+
+## Event Tuple Mapping
+
+This contract applies to `event_batch` records.
+`event_batch.ev` uses tuple records for known event types.
+Known event tuples expand back into readable dictionaries on the client before event appliers run.
+Legacy map-shaped or long-key event records remain accepted during the transition.
+
+| Event type | Tuple shape |
+| --- | --- |
+| `bullet_blast` | `[type, event_id, x, y]` |
+| `ship_death` | `[type, event_id, player_id, lives, respawn_delay, x, y]` |
+| `damage_applied` | `[type, event_id, source_type, source_id, effect_type, amount, x, y]` |
+| `damage_over_time_started` | `[type, event_id, source_type, source_id, effect_type, amount]` |
+| `damage_over_time_tick` | `[type, event_id, source_type, source_id, effect_type, amount, x, y]` |
+| `radial_effect_started` | `[type, event_id, source_type, source_id, effect_type, x, y]` |
+| `pickup_collected` | `[type, event_id, player_id, pickup_id, pickup_type, x, y]` |
+| `pickup_effect_applied` | `[type, event_id, player_id, pickup_id, pickup_type, effect_type, amount, lives_after]` |
+| `pickup_expired` | `[type, event_id, pickup_id, pickup_type, x, y]` |
+| `pickup_dropped` | `[type, event_id, pickup_id, pickup_type, source_type, source_id, table_id, x, y]` |
+
+Sparse placeholder rules:
+
+- Missing trailing fields are omitted.
+- Missing middle fields use `null` placeholders.
+- Zero values and `false` booleans are preserved.
+
+Known tuple event fields use compact presentation-event IDs and compact player IDs where those slots are safe and specific. `event_id` rehydrates to `presentation-event-N` on the client.
+`source_id`, `target_id`, `owner_id`, `pickup_id`, and `table_id` remain string IDs unless a tuple field has a safe specific context.
+
 ### Event Batch Example
 
 Readable logical event_batch example:
@@ -319,7 +451,7 @@ Compact wire event_batch example:
   "t": "eb",
   "q": 412,
   "ms": 1712345678901,
-  "bid": "event-batch-412",
+  "bid": 412,
   "ev": [
     {
       "t": "shd",
@@ -345,13 +477,13 @@ Compact wire event_batch example:
 ```
 
 Readable/logical docs may show expanded names, while runtime wire sends compact aliases. Domain logs may still show raw x/y before projection.
-The current implementation does not use tuple arrays for events.
+The current implementation uses tuple arrays for known compact event records.
 The current implementation does not use binary encoding for events.
 
 ## Implemented Boundary
 
 - Server readable lane maps are still built by `WireLanePacket`.
-- `CompactWirePacket` applies aliases only at the final outbound encode boundary.
+- `CompactWirePacket` applies compact keys, compact values, shared ID compaction, and tuple packing only at the final outbound encode boundary.
 - Active outbound compacting currently applies to world, overlay, session, and `event_batch` realtime packet families.
 - Generated control-lane resync packet families are not compacted in this pass unless implementation changes.
 - `PacketCodec.decode` performs the first compact expansion before packet envelope validation. `RealtimeRouter` may defensively normalize already-expanded packets, but it is not the first decode boundary.
@@ -363,6 +495,10 @@ The current implementation does not use binary encoding for events.
 - `services/game-server/internal/protocol/realtime/wire_packets.go`
 - `services/game-server/internal/protocol/realtime/compact_wire_packet.go`
 - `services/game-server/internal/protocol/realtime/compact_wire_asteroids.go`
+- `services/game-server/internal/protocol/realtime/compact_wire_bullets.go`
+- `services/game-server/internal/protocol/realtime/compact_wire_ships.go`
+- `services/game-server/internal/protocol/realtime/compact_wire_players.go`
+- `services/game-server/internal/protocol/realtime/compact_wire_events.go`
 - `services/game-server/internal/protocol/realtime/active.go`
 - `client/scripts/networking/packets/packet_codec.gd`
 - `client/scripts/protocol/realtime/compact_lane_packet.gd`
@@ -385,3 +521,11 @@ Recent compact three-lane observed development samples include quantization, spa
 - sparse 8-player world-only sample: ~3.1-3.6 KB/tick
 
 These are observed development samples, not guaranteed budgets.
+
+
+
+
+
+
+
+

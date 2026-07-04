@@ -47,7 +47,7 @@ player_pause_state
 resync_request / resync_required
 ```
 
-Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases before normal lane routing. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
+Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
 
 Current lane delta behavior:
 
@@ -80,7 +80,7 @@ session lifecycle updates
 = player_id
 ```
 
-`world_delta`, `overlay_delta`, and `session_delta` are field-delta aware for update arrays. `event_batch` is not a field-delta lane; it remains transient presentation-event delivery. Known event records are explicitly shaped from `EventState` into sparse wire records for known event types, and compact event aliases are transport details that expand before gameplay presentation code consumes them. `player_pause_state` remains a separate same-session packet and is not part of lane delta delivery.
+`world_delta`, `overlay_delta`, and `session_delta` are field-delta aware for update arrays. `event_batch` is not a field-delta lane; it remains transient presentation-event delivery. Known event records are explicitly shaped from `EventState` into sparse wire records for known event types, and compact event aliases and tuple-packed event records are transport details that expand before gameplay presentation code consumes them. `player_pause_state` remains a separate same-session packet and is not part of lane delta delivery.
 
 Detailed lane metadata, baseline, sequencing, and field-delta semantics belong in [Realtime WebSocket Protocol](realtime-websocket-protocol.md).
 
@@ -246,7 +246,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-Relevant verification areas now include lane-native packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, lane state application, presentation adapters, and event_batch behavior.
+Relevant verification areas now include lane-native packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, tuple-packed record expansion, lane state application, presentation adapters, and event_batch behavior.
 
 ## Code map
 
@@ -303,3 +303,4 @@ services/game-server/internal/game/
 ## Notes
 
 This doc stays at the gameplay packet family and ownership boundary. Detailed lane metadata, wire behavior, and transport sequencing remain canonical in `realtime-websocket-protocol.md`.
+

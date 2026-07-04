@@ -6,6 +6,7 @@ const SessionLaneApplier := preload("res://scripts/protocol/realtime/session_lan
 const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_state.gd")
 const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
+const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 const PresentationAdapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd")
 const GameplayReadiness := preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
@@ -384,6 +385,30 @@ func test_session_delta_treats_missing_sparse_sections_and_total_asteroids_as_em
 	assert_eq(session_lane_state.player_sessions["player-1"]["score"], 120)
 	assert_eq(session_lane_state.player_sessions["player-1"]["lives"], 3)
 	assert_eq(session_lane_state.player_lifecycle["player-1"]["state"], "active")
+
+
+func test_session_full_accepts_tuple_expanded_compact_records() -> void:
+	var applier := SessionLaneApplier.new()
+	var session_lane_state := SessionLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "sf",
+		"pl": [[1, "v_wing", 100, 3, 250, "pulse", "limited", "mine", "limited", 10, 20]],
+		"plc": [[1, "active"]],
+	})
+
+	applier.apply_session_full(
+		session_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_SESSION,
+		expanded
+	)
+
+	assert_eq(session_lane_state.player_sessions["player-1"]["ship_type"], "v_wing")
+	assert_eq(session_lane_state.player_sessions["player-1"]["score"], 100)
+	assert_eq(session_lane_state.player_sessions["player-1"]["spawn_x"], 10)
+	assert_eq(session_lane_state.player_sessions["player-1"]["spawn_y"], 20)
+	assert_eq(session_lane_state.player_lifecycle["player-1"]["status"], "active")
 
 
 func test_session_delta_merges_partial_player_updates() -> void:

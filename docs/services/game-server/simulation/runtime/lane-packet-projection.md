@@ -126,7 +126,7 @@ authoritative gameplay state
 -> sparse delta serializers emit only non-empty delta sections into readable wire maps
 -> raw-float assertion checks active world/overlay/session wire maps
 -> packetcodec encodes JSON
--> CompactWirePacket applies aliases to remaining emitted keys
+-> CompactWirePacket applies aliases, compact values, shared ID compaction, and tuple packing to remaining emitted keys
 ```
 
 Sparse omission is a realtime wire-map serialization concern. Compact aliasing is a realtime encode-boundary mapping concern. `packetcodec` only encodes the already-shaped map to JSON. Networking only writes encoded bytes after realtime builds them. Full lane-native realtime packets remain complete snapshots. Delta create, update, and delete sections are omitted when empty. Clients treat missing delta sections as empty or no-op, and missing fields inside update records remain unchanged, not cleared. Sparse omission must not drop meaningful `false` or `0` values inside present records.
@@ -203,5 +203,6 @@ Relevant server tests include:
 * [Packet Schemas](../../../../data/packet-schemas.md)
 
 ## Notes
+
 
 
