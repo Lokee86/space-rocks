@@ -461,6 +461,74 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesPreserveZeroValues(t *t
 	}
 }
 
+func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesSparseFieldsPreserveLaterValues(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id": "player-1",
+				"y": 20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["su"].([]any)
+	tuple := updates[0].([]any)
+	want := []any{1, nil, 20}
+	if len(tuple) != len(want) {
+		t.Fatalf("ship y-only tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("ship y-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+
+	input = map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id": "player-1",
+				"rotation": 30,
+			},
+		},
+	}
+	got = CompactWirePacket(input)
+	tuple = got["su"].([]any)[0].([]any)
+	want = []any{1, nil, nil, 30}
+	if len(tuple) != len(want) {
+		t.Fatalf("ship rotation-only tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("ship rotation-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+
+	input = map[string]any{
+		"type": "world_delta",
+		"ship_updates": []any{
+			map[string]any{
+				"id": "player-1",
+				"thrusting": true,
+			},
+		},
+	}
+	got = CompactWirePacket(input)
+	tuple = got["su"].([]any)[0].([]any)
+	want = []any{1, nil, nil, nil, true}
+	if len(tuple) != len(want) {
+		t.Fatalf("ship thrusting-only tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("ship thrusting-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+}
+
+
 func TestCompactWirePacketCompactsWorldDeltaShipDeletes(t *testing.T) {
 	input := map[string]any{
 		"type":           "world_delta",
@@ -773,6 +841,53 @@ func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesPreserveZeroValues(t 
 		}
 	}
 }
+
+func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesSparseFieldsPreserveLaterValues(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"bullet_updates": []any{
+			map[string]any{
+				"id": "bullet-1",
+				"y": 20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["bu"].([]any)
+	tuple := updates[0].([]any)
+	want := []any{1, nil, 20}
+	if len(tuple) != len(want) {
+		t.Fatalf("bullet y-only tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("bullet y-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+
+	input = map[string]any{
+		"type": "world_delta",
+		"bullet_updates": []any{
+			map[string]any{
+				"id": "bullet-1",
+				"rotation": 30,
+			},
+		},
+	}
+	got = CompactWirePacket(input)
+	tuple = got["bu"].([]any)[0].([]any)
+	want = []any{1, nil, nil, 30}
+	if len(tuple) != len(want) {
+		t.Fatalf("bullet rotation-only tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("bullet rotation-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+}
+
 
 func TestCompactWirePacketTuplePacksWorldDeltaAsteroidUpdatesXY(t *testing.T) {
 	input := map[string]any{

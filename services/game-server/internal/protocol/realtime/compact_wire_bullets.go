@@ -93,8 +93,7 @@ func compactWirePackBulletMovementUpdate(value any) any {
 		return value
 	}
 
-	tuple := []any{compactWirePackBulletID(record["i"])}
-	tuple = append(tuple, nil, nil, nil)
+	tuple := []any{compactWirePackBulletID(record["i"]), nil, nil, nil}
 
 	if x, ok := record["x"]; ok {
 		tuple[1] = x
@@ -106,14 +105,8 @@ func compactWirePackBulletMovementUpdate(value any) any {
 		tuple[3] = rotation
 	}
 
-	if tuple[3] == nil {
-		tuple = tuple[:3]
-	}
-	if tuple[2] == nil {
-		tuple = tuple[:2]
-	}
-	if tuple[1] == nil {
-		tuple = tuple[:1]
+	for len(tuple) > 1 && tuple[len(tuple)-1] == nil {
+		tuple = tuple[:len(tuple)-1]
 	}
 
 	return tuple

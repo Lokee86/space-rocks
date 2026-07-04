@@ -96,8 +96,7 @@ func compactWirePackShipMovementUpdate(value any) any {
 		return value
 	}
 
-	tuple := []any{compactWirePackPlayerID(record["i"])}
-	tuple = append(tuple, nil, nil, nil, nil)
+	tuple := []any{compactWirePackPlayerID(record["i"]), nil, nil, nil, nil}
 
 	if x, ok := record["x"]; ok {
 		tuple[1] = x
@@ -112,17 +111,8 @@ func compactWirePackShipMovementUpdate(value any) any {
 		tuple[4] = thrusting
 	}
 
-	if tuple[4] == nil {
-		tuple = tuple[:4]
-	}
-	if tuple[3] == nil {
-		tuple = tuple[:3]
-	}
-	if tuple[2] == nil {
-		tuple = tuple[:2]
-	}
-	if tuple[1] == nil {
-		tuple = tuple[:1]
+	for len(tuple) > 1 && tuple[len(tuple)-1] == nil {
+		tuple = tuple[:len(tuple)-1]
 	}
 
 	return tuple

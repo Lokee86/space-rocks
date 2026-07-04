@@ -657,3 +657,50 @@ func test_expand_packet_converts_compact_world_delta_asteroid_delete_ids() -> vo
 
 	assert_eq(expanded["asteroid_deletes"], ["asteroid-1", "asteroid-2", "asteroid-3"])
 
+
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_sparse_interior_nulls_preserve_later_values() -> void {
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, null, 20]],
+	})
+
+	assert_eq(expanded["ship_updates"][0], {"id": "player-1", "y": 20})
+}
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_rotation_only_with_sparse_nulls() -> void {
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, null, null, 30]],
+	})
+
+	assert_eq(expanded["ship_updates"][0], {"id": "player-1", "rotation": 30})
+}
+
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_thrusting_only_with_sparse_nulls() -> void {
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"su": [[1, null, null, null, true]],
+	})
+
+	assert_eq(expanded["ship_updates"][0], {"id": "player-1", "thrusting": true})
+}
+
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_sparse_interior_nulls_preserve_later_values() -> void {
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bu": [[1, null, 20]],
+	})
+
+	assert_eq(expanded["bullet_updates"][0], {"id": "bullet-1", "y": 20})
+}
+
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_rotation_only_with_sparse_nulls() -> void {
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"bu": [[1, null, null, 30]],
+	})
+
+	assert_eq(expanded["bullet_updates"][0], {"id": "bullet-1", "rotation": 30})
+}
+
