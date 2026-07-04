@@ -89,6 +89,22 @@ func test_decode_accepts_lowercase_lane_packet_fixture() -> void:
 	assert_true(decoded.ok)
 	assert_eq(decoded.packet["type"], "world_full")
 	assert_eq(decoded.packet["ships"][0]["ship_type"], "v_wing")
+func test_decode_accepts_compact_world_full_asteroid_tuple_with_numeric_suffix() -> void:
+	var decoded = PacketCodec.decode(
+		"{\"t\":\"wf\",\"q\":1,\"asteroids\":[[1,70,80,2,90,1500,3]],\"ships\":[],\"bullets\":[],\"pickups\":[]}"
+	)
+
+	assert_true(decoded.ok)
+	assert_eq(decoded.packet["type"], "world_full")
+	assert_eq(decoded.packet["asteroids"][0]["id"], "asteroid-1")
+	assert_eq(decoded.packet["asteroids"][0]["x"], 70.0)
+	assert_eq(decoded.packet["asteroids"][0]["y"], 80.0)
+	assert_eq(decoded.packet["asteroids"][0]["size"], 2.0)
+	assert_eq(decoded.packet["asteroids"][0]["health"], 90.0)
+	assert_eq(decoded.packet["asteroids"][0]["scale"], 1500.0)
+	assert_eq(decoded.packet["asteroids"][0]["variant"], 3.0)
+
+
 func test_decode_accepts_compact_realtime_lane_packet() -> void:
 	var decoded = PacketCodec.decode("{\"t\":\"wd\",\"l\":\"w\",\"q\":24,\"b\":\"player-1\",\"sid\":\"player-1\",\"k\":\"d\",\"au\":[{\"i\":\"asteroid-1\",\"x\":13030,\"y\":1844}]}")
 

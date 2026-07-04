@@ -192,6 +192,19 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 		if decodedPacketLane(wire) == "" {
 			t.Fatalf("expected non-empty top-level lane for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
 		}
+		if candidate.Lane == LaneWorld {
+			asteroids, ok := wire["asteroids"].([]any)
+			if !ok || len(asteroids) == 0 {
+				t.Fatalf("expected compact world packet to include asteroids, got %#v", wire["asteroids"])
+			}
+			tuple, ok := asteroids[0].([]any)
+			if !ok || len(tuple) == 0 {
+				t.Fatalf("expected compact asteroid tuple, got %#v", asteroids[0])
+			}
+			if !hasNumericCompactAsteroidTupleID(tuple[0]) {
+				t.Fatalf("expected compact asteroid tuple id to be numeric suffix 1, not a string, got %#v", tuple[0])
+			}
+		}
 		assertNotNakedLanePayload(t, candidate.Lane, wire)
 	}
 }
@@ -377,6 +390,18 @@ func assertNotNakedLanePayload(t *testing.T, lane Lane, wire map[string]any) {
     }
 }
 
+func hasNumericCompactAsteroidTupleID(value any) bool {
+	switch got := value.(type) {
+	case int:
+		return got == 1
+	case int64:
+		return got == 1
+	case float64:
+		return got == 1
+	default:
+		return false
+	}
+}
 func hasOnlyKeys(wire map[string]any, keys []string) bool {
 	if len(wire) != len(keys) {
 		return false

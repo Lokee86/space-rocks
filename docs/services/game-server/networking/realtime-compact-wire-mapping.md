@@ -12,6 +12,7 @@ Do not reconcile compact aliases from raw packet struct names.
 - `WireLanePacket` keeps producing readable long-key maps.
 - `CompactWirePacket` owns the final outbound alias conversion at the encode boundary.
 - The client expands compact packets back to readable long-key dictionaries before existing lane appliers process them.
+- For asteroid tuples, the client rehydrates numeric ID suffixes back into `asteroid-<id>` strings before world lane appliers process them.
 - Both compact and legacy long-key packets must remain accepted by the client during this transition.
 - Aliases must be globally unambiguous so the client can recursively expand compact keys without needing entity-kind context.
 - Compacting field names is separate from omitting empty delta sections.
@@ -96,6 +97,50 @@ For active runtime world/overlay/session packets, `baseline_id` is only emitted 
 - `pickup_creates` -> `pc`
 - `pickup_updates` -> `pu`
 - `pickup_deletes` -> `px`
+
+## Asteroid Tuple Mapping
+
+This contract applies only to world lane asteroid records.
+`world_full.asteroids` uses tuple records.
+`world_delta.ac` uses tuple records for asteroid creates.
+`world_delta.au` uses tuple records for asteroid updates.
+`world_delta.ax` uses numeric suffix IDs for asteroid deletes.
+
+Tuple order for full/create asteroid records:
+
+- `[id_number, x, y, size, health, scale, variant]`
+
+Tuple order for update asteroid records:
+
+- `[id_number, x, y]`
+
+Tuple order for x-only updates:
+
+- `[id_number, x]`
+
+Y-only updates use:
+
+- `[id_number, null, y]`
+
+Identity-only updates, when no x/y is present, use:
+
+- `[id_number]`
+
+Deletes use:
+
+- `ax: [id_number, id_number]`
+
+Server ID compaction converts `"asteroid-123"` to JSON number `123`.
+This is not string `"123"`.
+The byte saving is 11 bytes per occurrence from removing the 9-byte `asteroid-` prefix plus 2 JSON quote bytes.
+Malformed asteroid IDs such as `"asteroid-not-a-number"` remain unchanged.
+Non-string IDs are left unchanged by the server helper.
+
+Client ID rehydration converts int `123` to `"asteroid-123"`.
+JSON-decoded whole-number float `123.0` also becomes `"asteroid-123"`.
+String suffix `"123"` becomes `"asteroid-123"` for transition tolerance.
+Already-full `"asteroid-123"` remains unchanged.
+Non-integer float values and unsupported values remain unchanged.
 
 ## Overlay Delta Section Keys
 
@@ -317,6 +362,7 @@ The current implementation does not use binary encoding for events.
 
 - `services/game-server/internal/protocol/realtime/wire_packets.go`
 - `services/game-server/internal/protocol/realtime/compact_wire_packet.go`
+- `services/game-server/internal/protocol/realtime/compact_wire_asteroids.go`
 - `services/game-server/internal/protocol/realtime/active.go`
 - `client/scripts/networking/packets/packet_codec.gd`
 - `client/scripts/protocol/realtime/compact_lane_packet.gd`
@@ -325,7 +371,9 @@ The current implementation does not use binary encoding for events.
 ## Tests
 
 - `services/game-server/internal/protocol/realtime/compact_wire_packet_test.go`
+- `services/game-server/internal/protocol/realtime/active_test.go`
 - `client/tests/unit/protocol/realtime/test_compact_lane_packet.gd`
+- `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
 - PacketCodec compact decode coverage in `client/tests/unit/test_packet_codec.gd`
 
 ## Observed Development Run

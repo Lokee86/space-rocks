@@ -248,7 +248,7 @@ type is not empty after trimming
 payload, when present, is a Dictionary
 ```
 
-Compact packets may arrive with `t` instead of `type`. Client decode expands compact aliases before applying normal envelope validation, and packets with neither `type` nor compact `t` still fail validation.
+Compact packets may arrive with `t` instead of `type`. Client decode expands compact aliases before applying normal envelope validation, and packets with neither `type` nor compact `t` still fail validation. Readable/logical world records are still maps keyed by `id`. Compact active wire output tuple-packs asteroid records only: `world_full.asteroids`, `world_delta.ac`, `world_delta.au`, and `world_delta.ax` use compact asteroid tuple/deletes on the final wire shape. Compact asteroid tuple IDs are numeric suffixes and the client rehydrates them to `asteroid-<id>` before world lane appliers run. Compact asteroid deletes use numeric suffix IDs, while readable/logical deletes are still full string IDs.
 
 Server-side initial envelope decode unmarshals the `type` field before routing. Invalid JSON or an envelope decode failure logs a warning and skips the message. A valid JSON object with an unknown or empty `type` does not produce an explicit protocol response in the current server path.
 
@@ -356,7 +356,7 @@ This is still JSON-over-WebSocket. The current implementation does not have bina
 
 Delta lane update arrays are field-delta aware.
 
-Current delta lane record groups use this shape:
+Current delta lane record groups are described here as readable logical shapes before compact aliasing:
 
 ```text
 creates
@@ -386,6 +386,8 @@ For update maps, omitted fields mean unchanged, not cleared. Clients merge updat
 `total_asteroids` in `session_delta` remains record-level and is not part of the field-delta update-map conversion.
 
 The server compares projected realtime wire records when building deltas. The client does not own authoritative delta decisions.
+
+The compact asteroid tuple exception is applied only at the final active wire shape. It does not change the readable logical create/update/delete descriptions above.
 
 #### Sparse delta serialization
 
@@ -439,7 +441,15 @@ pickup_updates
 pickup_deletes
 ```
 
-Absent world delta sections are treated as empty arrays by the client.
+Absent world delta sections are treated as empty arrays by the client. For asteroid records only, the compact active wire form uses tuple arrays with numeric suffix IDs, and the client rehydrates those IDs before world lane application. Readable/logical world records remain id-keyed maps before compact aliasing.
+
+Compact asteroid example:
+
+```json
+{"t":"wf","q":1,"asteroids":[[1,70,80,2,90,1500,3]],"ships":[],"bullets":[],"pickups":[]}
+```
+
+The client expands ID `1` to `asteroid-1`.
 
 Current `world_delta` update maps are partial maps keyed by id:
 

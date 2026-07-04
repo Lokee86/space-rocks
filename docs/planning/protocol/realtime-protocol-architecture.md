@@ -20,7 +20,7 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Packet Schemas](../../data/packet-schemas.md)
 - [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
-This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, tuple/array packing where needed, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebSocket, and future protocol compatibility/versioning. JSON alias compaction and sparse delta serialization are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, additional tuple/array packing beyond implemented asteroid tuple records, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebSocket, and future protocol compatibility/versioning. JSON alias compaction and sparse delta serialization are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ## Current Inputs
 
@@ -82,6 +82,7 @@ Lane-native JSON WebSocket delivery is implemented, and this doc now tracks the 
 - Creates remain full records, updates carry identity plus changed fields only, and deletes remain identity lists.
 - Realtime numeric wire quantization is implemented for outbound lane projection.
 - Compact JSON aliasing is implemented for active realtime gameplay lanes.
+- Asteroid tuple packing is implemented for compact world lane asteroid full/create/update/delete records.
 - Sparse delta serialization is implemented for active realtime gameplay delta lanes; empty delta sections are omitted from emitted delta wire maps.
 
 Current implementation details live in:
@@ -96,7 +97,7 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on bit packing, protobuf or custom binary representation, tuple/array packing where needed, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, transport evolution beyond WebSocket, and future compatibility/versioning. JSON alias compaction and sparse delta serialization are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Future planning here remains focused on bit packing, protobuf or custom binary representation, additional tuple/array packing beyond implemented asteroid tuple records, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, transport evolution beyond WebSocket, and future compatibility/versioning. JSON alias compaction and sparse delta serialization are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ### Remaining Priority And Packet Budget Work
 
@@ -104,7 +105,7 @@ Delta decides what changed. Priority decides which changed data fits the packet 
 
 Current implementation has lane-native packets, baselines, deltas, and candidate-level scheduling metadata. Delta decides what changed; priority decides which changed data fits the packet budget first.
 
-Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. High-density world stress cases can still exceed current packet budget even after quantization, compact aliases, and sparse deltas; remaining work belongs to prioritization, packing, and binary representation.
+Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid tuple packing is implemented for compact world lane asteroid full/create/update/delete records. High-density world stress cases can still exceed current packet budget even after quantization, compact aliases, sparse deltas, and asteroid tuple packing; remaining work belongs to additional tuple/array packing beyond asteroid records, prioritization, and binary representation.
 
 State lanes are quantized during outbound projection before delta comparison.
 Presentation-event records are quantized during explicit event wire shaping.

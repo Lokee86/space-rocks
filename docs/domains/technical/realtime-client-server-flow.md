@@ -243,7 +243,7 @@ The game server simulation owns the authoritative runtime state.
 
 On each server tick, the WebSocket write path can send gameplay lane packets when the session has an active game player and the room has a game instance in an eligible state.
 
-The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`.
+The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`. Asteroid tuple packing is implemented only for compact world lane asteroid full/create/update/delete records, and those numeric suffix IDs rehydrate to `asteroid-<id>` on the client before lane application.
 
 World lane carries authoritative visible entity presentation state. Overlay lane carries receiver-specific HUD-facing values. Session lane carries player/session/lifecycle/asteroid-count presentation state. For world, overlay, and session state lanes, numeric wire quantization, field deltas, sparse delta omission, and compact JSON aliases are current active behavior. `event_batch` is transient presentation-event delivery, not a state delta lane. It now uses compact output encoding, and known event records are sparse and event-type-specific. Known event `x`/`y` and `ship_death` `respawn_delay` are quantized during event wire shaping. `event_batch` does not use baselines, deltas, state snapshots, or chunking.
 
@@ -451,7 +451,7 @@ This domain document does not own:
 * Rails account storage
 * Local Profile storage
 * player-data persistence internals
-* deeper packet budget policy, record/entity-level prioritization, interest management, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, or future transport evolution
+* deeper packet budget policy, record/entity-level prioritization, interest management, additional tuple/array packing beyond asteroid records, binary/bit-packed representation, protobuf/custom binary representation, or future transport evolution
 
 Those details belong in service, protocol, data, devtools, systems-design, planning, or limits documentation.
 
@@ -481,7 +481,7 @@ Client input is sent to the server, the server advances simulation, and clients 
 
 WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
-Lane-native packets are current active realtime behavior. World, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. `event_batch` remains compact sparse quantized presentation-event delivery. Remaining future work includes deeper prioritization, packet-budget behavior, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket path.
+Lane-native packets are current active realtime behavior. World, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. `event_batch` remains compact sparse quantized presentation-event delivery. Remaining future work includes deeper prioritization, packet-budget behavior, tuple/array packing beyond asteroid records, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket path.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.
 

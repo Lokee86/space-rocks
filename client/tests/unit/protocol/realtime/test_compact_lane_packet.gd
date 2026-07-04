@@ -200,3 +200,99 @@ func test_legacy_long_key_packets_still_route_to_existing_appliers() -> void:
 	router.route_lane_packet(packet)
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
 
+
+
+func test_expand_compact_asteroid_id_rebuilds_numeric_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_asteroid_id(123), "asteroid-123")
+
+
+func test_expand_compact_asteroid_id_rebuilds_float_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_asteroid_id(1.0), "asteroid-1")
+
+
+func test_expand_compact_asteroid_id_keeps_non_integer_float() -> void:
+	assert_eq(CompactLanePacket.expand_compact_asteroid_id(1.5), 1.5)
+
+func test_expand_compact_asteroid_id_rebuilds_string_suffix() -> void:
+	assert_eq(CompactLanePacket.expand_compact_asteroid_id("123"), "asteroid-123")
+
+
+func test_expand_compact_asteroid_id_keeps_full_id() -> void:
+	assert_eq(CompactLanePacket.expand_compact_asteroid_id("asteroid-123"), "asteroid-123")
+
+
+func test_expand_compact_asteroid_id_keeps_null_and_unsupported_values() -> void:
+	assert_null(CompactLanePacket.expand_compact_asteroid_id(null))
+	assert_eq(CompactLanePacket.expand_compact_asteroid_id({"id": 123}), {"id": 123})
+
+
+func test_expand_packet_converts_compact_world_full_asteroid_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wf",
+		"asteroids": [[1, 10, 20, 2, 90, 1500, 3]],
+	})
+
+	assert_eq(expanded["asteroids"][0]["id"], "asteroid-1")
+	assert_eq(expanded["asteroids"][0]["x"], 10)
+	assert_eq(expanded["asteroids"][0]["variant"], 3)
+
+
+func test_expand_packet_converts_compact_world_delta_asteroid_create_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"ac": [[1, 10, 20, 2, 90, 1500, 3]],
+	})
+
+	assert_eq(expanded["asteroid_creates"][0]["id"], "asteroid-1")
+
+func test_expand_packet_converts_compact_world_delta_asteroid_update_tuple_xy() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"au": [[1, 10, 20]],
+	})
+
+	assert_eq(expanded["asteroid_updates"][0]["id"], "asteroid-1")
+	assert_eq(expanded["asteroid_updates"][0]["x"], 10)
+	assert_eq(expanded["asteroid_updates"][0]["y"], 20)
+
+
+func test_expand_packet_converts_compact_world_delta_asteroid_update_tuple_x_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"au": [[1, 10]],
+	})
+
+	assert_eq(expanded["asteroid_updates"][0]["id"], "asteroid-1")
+	assert_eq(expanded["asteroid_updates"][0]["x"], 10)
+	assert_false(expanded["asteroid_updates"][0].has("y"))
+
+
+func test_expand_packet_converts_compact_world_delta_asteroid_update_tuple_y_only() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"au": [[1, null, 20]],
+	})
+
+	assert_eq(expanded["asteroid_updates"][0]["id"], "asteroid-1")
+	assert_false(expanded["asteroid_updates"][0].has("x"))
+	assert_eq(expanded["asteroid_updates"][0]["y"], 20)
+
+
+func test_expand_packet_converts_compact_world_delta_asteroid_update_tuple_zero_values() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"au": [[1, 0, 0]],
+	})
+
+	assert_eq(expanded["asteroid_updates"][0]["id"], "asteroid-1")
+	assert_eq(expanded["asteroid_updates"][0]["x"], 0)
+	assert_eq(expanded["asteroid_updates"][0]["y"], 0)
+
+func test_expand_packet_converts_compact_world_delta_asteroid_delete_ids() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"ax": [1, "2", "asteroid-3"],
+	})
+
+	assert_eq(expanded["asteroid_deletes"], ["asteroid-1", "asteroid-2", "asteroid-3"])
+

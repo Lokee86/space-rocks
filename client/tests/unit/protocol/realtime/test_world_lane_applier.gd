@@ -30,10 +30,10 @@ func test_world_full_replaces_lane_and_removes_missing_entities_by_ownership() -
 	)
 
 	assert_false(world_lane_state.ships.has("ship-2"))
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 11)
-	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
-	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 7)
-	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 9)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.1)
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 0.5)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 0.7)
+	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 0.9)
 	assert_false(baseline_tracker.needs_resync(LaneMetadata.LANE_WORLD))
 
 
@@ -79,9 +79,9 @@ func test_world_delta_updates_creates_and_deletes_entities_by_ownership() -> voi
 	)
 
 	assert_true(applied)
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 11)
-	assert_eq(world_lane_state.ships["ship-2"]["x"], 30)
-	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 99)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.1)
+	assert_eq(world_lane_state.ships["ship-2"]["x"], 3.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 9.9)
 	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
 	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0.0)
 	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "ship-1")
@@ -120,14 +120,14 @@ func test_world_delta_treats_missing_sparse_sections_as_empty_noop() -> void:
 	)
 
 	assert_true(applied)
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
-	assert_eq(world_lane_state.ships["ship-1"]["y"], 20)
-	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
+	assert_eq(world_lane_state.ships["ship-1"]["y"], 2.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 0.5)
 	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
-	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 7)
-	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 8)
-	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 9)
-	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 10)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 0.7)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 0.8)
+	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 0.9)
+	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 1.0)
 
 
 func test_world_delta_missing_entities_leave_lane_unchanged_by_ownership() -> void:
@@ -171,7 +171,7 @@ func test_world_delta_missing_entities_leave_lane_unchanged_by_ownership() -> vo
 		}
 	)
 
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
 
 
 func test_world_delta_delete_removes_entity_by_ownership() -> void:
@@ -308,14 +308,75 @@ func test_world_delta_merges_partial_asteroid_and_pickup_updates_by_ownership() 
 	)
 
 	assert_true(applied)
-	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 99)
-	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 8)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 9.9)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 0.8)
 	assert_eq(world_lane_state.asteroids["asteroid-1"]["size"], 1)
-	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 88)
-	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 10)
+	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 8.8)
+	assert_eq(world_lane_state.pickups["pickup-1"]["y"], 1.0)
 	assert_eq(world_lane_state.pickups["pickup-1"]["type"], "test")
-	assert_eq(world_lane_state.pickups["pickup-1"]["age_seconds"], 0)
+	assert_eq(world_lane_state.pickups["pickup-1"]["age_seconds"], 0.0)
 
+
+func test_world_delta_keeps_rehydrated_asteroid_id_stable_across_lane_application() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [{
+				"id": "asteroid-1",
+				"x": 7,
+				"y": 8,
+				"velocity_x": 0.0,
+				"velocity_y": 0.0,
+				"rotation": 0.0,
+				"size": 2,
+				"health": 90,
+				"scale": 1500,
+				"variant": 3,
+			}],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	var applied := applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [],
+			"bullet_updates": [],
+			"bullet_deletes": [],
+			"asteroid_creates": [],
+			"asteroid_updates": [{"id": "asteroid-1", "x": 99, "y": 101}],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	assert_true(applied)
+	assert_true(world_lane_state.asteroids.has("asteroid-1"))
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 9.9)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 10.1)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["size"], 2)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["health"], 90)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["scale"], 1.5)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["variant"], 3)
 
 func test_world_delta_applies_valid_arrays_normally() -> void:
 	var applier := WorldLaneApplier.new()
@@ -359,9 +420,9 @@ func test_world_delta_applies_valid_arrays_normally() -> void:
 	)
 
 	assert_true(applied)
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 11)
-	assert_eq(world_lane_state.ships["ship-2"]["x"], 30)
-	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.1)
+	assert_eq(world_lane_state.ships["ship-2"]["x"], 3.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 0.5)
 
 
 func test_world_delta_rejected_when_unsynced() -> void:
@@ -630,7 +691,7 @@ func test_world_lane_state_ignores_ship_updates_without_id() -> void:
 
 	world_lane_state.merge_ship_update({"x": 99})
 
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
 	assert_eq(world_lane_state.ships["ship-1"]["ship_type"], "v_wing")
 
 
@@ -651,7 +712,7 @@ func test_world_lane_state_creates_full_ship_records() -> void:
 		"target_id": "player-2",
 	})
 
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
 	assert_eq(world_lane_state.ships["ship-1"]["y"], 20)
 	assert_eq(world_lane_state.ships["ship-1"]["rotation"], 30)
 	assert_eq(world_lane_state.ships["ship-1"]["thrusting"], true)
@@ -893,7 +954,7 @@ static func _pickup_packet(id: String, x: int, y: int) -> Dictionary:
 		"id": id,
 		"x": x,
 		"y": y,
-		"pickup_type": "test",
+		"type": "test",
 	}
 
 

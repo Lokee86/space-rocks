@@ -31,8 +31,8 @@ var compactWireKeyMap = map[string]string{
 	"player_session_updates":    "psu",
 	"player_session_deletes":    "psx",
 	"player_lifecycle":          "plc",
-	"player_lifecycle_updates":   "plu",
-	"player_lifecycle_deletes":   "plx",
+	"player_lifecycle_updates":  "plu",
+	"player_lifecycle_deletes":  "plx",
 	"total_asteroids":           "ta",
 	"batch_id":                  "bid",
 	"events":                    "ev",
@@ -85,30 +85,30 @@ var compactWireKeyMap = map[string]string{
 	"secondary_weapon_id":       "swid",
 	"secondary_ammo_policy":     "sap",
 	"secondary_cooldown_remaining": "scr",
-	"secondary_ammo_remaining":   "sar",
+	"secondary_ammo_remaining":  "sar",
 	"spawn_x":                   "spx",
 	"spawn_y":                   "spy",
 }
 
 var compactWireValueMaps = map[string]map[string]string{
 	"type": {
-		"world_full":   "wf",
-		"world_delta":  "wd",
-		"overlay_full": "of",
-		"overlay_delta": "od",
-		"session_full": "sf",
-		"session_delta": "sd",
-		"event_batch":  "eb",
-		"bullet_blast": "bb",
-		"ship_death":   "shd",
-		"radial_effect_started": "rfx",
-		"pickup_collected":      "pcol",
-		"pickup_effect_applied": "pea",
-		"pickup_expired":        "pexp",
-		"pickup_dropped":        "pdr",
-		"damage_applied":        "dmg",
+		"world_full":              "wf",
+		"world_delta":             "wd",
+		"overlay_full":            "of",
+		"overlay_delta":           "od",
+		"session_full":            "sf",
+		"session_delta":           "sd",
+		"event_batch":             "eb",
+		"bullet_blast":            "bb",
+		"ship_death":              "shd",
+		"radial_effect_started":   "rfx",
+		"pickup_collected":        "pcol",
+		"pickup_effect_applied":   "pea",
+		"pickup_expired":          "pexp",
+		"pickup_dropped":          "pdr",
+		"damage_applied":          "dmg",
 		"damage_over_time_started": "dots",
-		"damage_over_time_tick":    "dott",
+		"damage_over_time_tick":   "dott",
 	},
 	"lane": {
 		"world":   "w",
@@ -124,7 +124,7 @@ var compactWireValueMaps = map[string]map[string]string{
 func CompactWirePacket(packet map[string]any) map[string]any {
 	expanded := compactWireValue(packet, "")
 	if compacted, ok := expanded.(map[string]any); ok {
-		return compacted
+		return compactWirePackAsteroids(compacted)
 	}
 	return map[string]any{}
 }

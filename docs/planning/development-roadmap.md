@@ -233,7 +233,7 @@ additional quantization policy refinements
 bit-packing rules
 protobuf
 binary/bitpacking work targets the new lane protocol, not old state
-sparse delta section omission is implemented, while further packed/binary representation and prioritization remain future work
+Compact JSON aliases, sparse delta section omission, and asteroid tuple packing are implemented. Additional tuple/array packing beyond asteroid records, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior, and record/entity-level prioritization remain future work.
 ```
 
 ### Implementation Sequence
@@ -269,7 +269,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases are already implemented, and sparse delta section omission is implemented. Future work stays on tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, and asteroid tuple packing are implemented. Future work stays on additional tuple/array packing beyond asteroid records, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization.
 
 ### Scope
 

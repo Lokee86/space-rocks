@@ -128,6 +128,51 @@ static func expand_packet(packet: Dictionary) -> Dictionary:
 	_normalize_runtime_metadata(expanded)
 	return expanded
 
+
+static func expand_compact_asteroid_id(value):
+	if value is int:
+		return "asteroid-%d" % value
+	if value is float:
+		if is_equal_approx(value, floor(value)):
+			return "asteroid-%d" % int(value)
+		return value
+	if value is String:
+		if value.begins_with("asteroid-"):
+			return value
+		if value.is_valid_int():
+			return "asteroid-%s" % value
+	return value
+static func _expand_asteroid_record(value):
+	if value is Array and value.size() == 7:
+		return {
+			"id": expand_compact_asteroid_id(value[0]),
+			"x": value[1],
+			"y": value[2],
+			"size": value[3],
+			"health": value[4],
+			"scale": value[5],
+			"variant": value[6],
+		}
+	return _expand_value(value, "asteroids")
+
+
+static func _expand_asteroid_update_record(value):
+	if value is Array and value.size() >= 1:
+		var expanded := {
+			"id": expand_compact_asteroid_id(value[0]),
+		}
+		if value.size() > 1 and value[1] != null:
+			expanded["x"] = value[1]
+		if value.size() > 2 and value[2] != null:
+			expanded["y"] = value[2]
+		return expanded
+	return _expand_value(value, "asteroid_updates")
+
+
+static func _is_compact_asteroid_record_list(parent_key) -> bool:
+	return parent_key == "asteroids" or parent_key == "asteroid_creates"
+
+
 static func _expand_value(value, parent_key):
 	if value is Dictionary:
 		var expanded := {}
@@ -137,6 +182,24 @@ static func _expand_value(value, parent_key):
 			expanded[expanded_key] = _expand_value(value[raw_key], expanded_key)
 		return expanded
 	if value is Array:
+		if parent_key == "asteroid_updates":
+			var expanded_asteroid_updates := []
+			expanded_asteroid_updates.resize(value.size())
+			for index in range(value.size()):
+				expanded_asteroid_updates[index] = _expand_asteroid_update_record(value[index])
+			return expanded_asteroid_updates
+		if parent_key == "asteroid_deletes":
+			var expanded_asteroid_deletes := []
+			expanded_asteroid_deletes.resize(value.size())
+			for index in range(value.size()):
+				expanded_asteroid_deletes[index] = expand_compact_asteroid_id(value[index])
+			return expanded_asteroid_deletes
+		if _is_compact_asteroid_record_list(parent_key):
+			var expanded_asteroids := []
+			expanded_asteroids.resize(value.size())
+			for index in range(value.size()):
+				expanded_asteroids[index] = _expand_asteroid_record(value[index])
+			return expanded_asteroids
 		var expanded_array := []
 		expanded_array.resize(value.size())
 		for index in range(value.size()):

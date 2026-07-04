@@ -138,6 +138,208 @@ func TestCompactWirePacketDoesNotMutateInput(t *testing.T) {
 	}
 }
 
+func TestCompactWirePacketTuplePacksWorldFullAsteroids(t *testing.T) {
+	input := map[string]any{
+		"type": "world_full",
+		"asteroids": []any{
+			map[string]any{
+				"id":      "asteroid-1",
+				"x":       10,
+				"y":       20,
+				"size":    2,
+				"health":  90,
+				"scale":   1500,
+				"variant": 3,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+
+	if got["t"] != "wf" {
+		t.Fatalf("type = %v, want wf", got["t"])
+	}
+
+	asteroids, ok := got["asteroids"].([]any)
+	if !ok || len(asteroids) != 1 {
+		t.Fatalf("asteroids = %#v, want one tuple-packed asteroid", got["asteroids"])
+	}
+
+	tuple, ok := asteroids[0].([]any)
+	if !ok {
+		t.Fatalf("asteroids[0] = %#v, want tuple array", asteroids[0])
+	}
+
+	want := []any{1, 10, 20, 2, 90, 1500, 3}
+	if len(tuple) != len(want) {
+		t.Fatalf("tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+	for i, item := range tuple {
+		if nested, ok := item.(map[string]any); ok {
+			for _, key := range []string{"i", "sz", "h", "sl", "v"} {
+				if _, exists := nested[key]; exists {
+					t.Fatalf("tuple[%d] unexpectedly exposed compact asteroid key %q: %#v", i, key, tuple)
+				}
+			}
+		}
+	}
+
+	if _, ok := asteroids[0].(map[string]any); ok {
+		t.Fatalf("asteroids[0] unexpectedly remained a map: %#v", asteroids[0])
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaAsteroidCreates(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"asteroid_creates": []any{
+			map[string]any{
+				"id":      "asteroid-1",
+				"x":       10,
+				"y":       20,
+				"size":    2,
+				"health":  90,
+				"scale":   1500,
+				"variant": 3,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	creates := got["ac"].([]any)
+	want := []any{1, 10, 20, 2, 90, 1500, 3}
+	if tuple, ok := creates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("asteroid create = %#v, want full tuple %#v", creates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("create tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaAsteroidUpdatesXY(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"asteroid_updates": []any{
+			map[string]any{
+				"id": "asteroid-1",
+				"x":  10,
+				"y":  20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["au"].([]any)
+	want := []any{1, 10, 20}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("asteroid update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("update tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaAsteroidUpdatesYOnly(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"asteroid_updates": []any{
+			map[string]any{
+				"id": "asteroid-1",
+				"y":  20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["au"].([]any)
+	want := []any{1, nil, 20}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("asteroid y-only update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("y-only tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketTuplePacksWorldDeltaAsteroidUpdatesPreserveZeroValues(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"asteroid_updates": []any{
+			map[string]any{
+				"id": "asteroid-1",
+				"x":  0,
+				"y":  0,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["au"].([]any)
+	want := []any{1, 0, 0}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("asteroid zero update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("zero tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketLeavesMalformedAsteroidIDsUnchanged(t *testing.T) {
+	input := map[string]any{
+		"type": "world_delta",
+		"asteroid_updates": []any{
+			map[string]any{
+				"id": "asteroid-not-a-number",
+				"x":  10,
+				"y":  20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	updates := got["au"].([]any)
+	want := []any{"asteroid-not-a-number", 10, 20}
+	if tuple, ok := updates[0].([]any); !ok || len(tuple) != len(want) {
+		t.Fatalf("malformed asteroid update = %#v, want tuple %#v", updates[0], want)
+	} else {
+		for i := range want {
+			if tuple[i] != want[i] {
+				t.Fatalf("malformed tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+			}
+		}
+	}
+}
+
+func TestCompactWirePacketCompactsWorldDeltaAsteroidDeletes(t *testing.T) {
+	input := map[string]any{
+		"type":             "world_delta",
+		"asteroid_deletes": []any{"asteroid-1", "asteroid-not-a-number", "asteroid-2"},
+	}
+
+	got := CompactWirePacket(input)
+	deletes := got["ax"].([]any)
+	if len(deletes) != 3 || deletes[0] != 1 || deletes[1] != "asteroid-not-a-number" || deletes[2] != 2 {
+		t.Fatalf("asteroid deletes changed: %#v", deletes)
+	}
+}
+
 func TestCompactWirePacketCompactsReadableWorldDeltaMap(t *testing.T) {
 	input := map[string]any{
 		"type":              "world_delta",
@@ -284,3 +486,6 @@ func TestCompactWirePacketCompactAliasCollisionGuard(t *testing.T) {
 		seen[value] = key
 	}
 }
+
+
+

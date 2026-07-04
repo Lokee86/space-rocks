@@ -138,7 +138,7 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 5. `WireLanePacket` builds readable long-key maps.
 6. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.
 7. Raw-float assertion runs on relevant lane wire maps.
-8. `CompactWirePacket` applies compact aliases only to keys that remain present.
+8. `CompactWirePacket` applies compact aliases and asteroid tuple packing at the final active outbound encode boundary.
 9. `packetcodec` encodes JSON.
 10. `outbound.WriteServerMessage()` writes the encoded packet individually.
 11. Logs lane wire packet details after successful writes.
@@ -148,7 +148,7 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 15. Marks a lane baseline ready after a final full packet.
 16. Emits a non-empty per-tick debug summary after packet writes.
 
-The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. That package owns candidate selection, send-plan records, wire-map construction, sparse delta omission, compact alias preparation, encoded-byte accounting inputs, and helper metadata or types that support the write path. Realtime owns sparse delta omission, compact alias preparation, and sparse event wire shaping. Networking owns successful WebSocket delivery, event_batch drain-after-success behavior, post-write lane metadata persistence, and the current successful-write debug logs. `packetcodec` owns JSON encoding only. Active realtime world, overlay, session, and `event_batch` lane packets are compacted at the final outbound encode boundary: `WireLanePacket` builds the readable map, `CompactWirePacket` applies aliases after raw-float assertion and before `packetcodec` encoding, and the alias contract lives in `docs/services/game-server/networking/realtime-compact-wire-mapping.md`. `event_batch` uses compact envelope keys plus sparse, event-type-specific nested event records. Known event types are shaped instead of broad reflected `EventState` output, while unsupported event types may still fall back to legacy reflected output when the implementation already does so for compatibility. It remains one ordered batch of pending presentation events, not one packet per event. Sparse delta omission reduces JSON shape overhead, but it does not implement record-level packet splitting, record-level prioritization, packet baselines, packet deltas, or packet budget enforcement.
+The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. That package owns candidate selection, send-plan records, wire-map construction, sparse delta omission, compact alias preparation, asteroid tuple packing, encoded-byte accounting inputs, and helper metadata or types that support the write path. Realtime owns sparse delta omission, compact alias preparation, asteroid tuple packing, and sparse event wire shaping. Networking owns successful WebSocket delivery, event_batch drain-after-success behavior, post-write lane metadata persistence, and the current successful-write debug logs. `packetcodec` owns JSON encoding only. Active realtime world, overlay, session, and `event_batch` lane packets are compacted at the final outbound encode boundary: `WireLanePacket` builds the readable map, `CompactWirePacket` applies aliases and asteroid tuple packing after raw-float assertion and before `packetcodec` encoding, and the alias contract lives in `docs/services/game-server/networking/realtime-compact-wire-mapping.md`. `event_batch` uses compact envelope keys plus sparse, event-type-specific nested event records. Known event types are shaped instead of broad reflected `EventState` output, while unsupported event types may still fall back to legacy reflected output when the implementation already does so for compatibility. It remains one ordered batch of pending presentation events, not one packet per event. Sparse delta omission reduces JSON shape overhead, but it does not implement record-level packet splitting, record-level prioritization, packet baselines, packet deltas, or packet budget enforcement.
 
 The networking layer owns successful WebSocket delivery and the post-write session state changes that follow from those successful writes.
 
@@ -193,6 +193,7 @@ Generated and runtime outputs include:
 
 - `services/game-server/internal/protocol/realtime/packets_generated.go`
 - `services/game-server/internal/protocol/realtime/`
+- `services/game-server/internal/protocol/realtime/compact_wire_asteroids.go`
 - `services/game-server/internal/game/packets.go`
 - `services/game-server/internal/game/runtime/packets_generated.go`
 - `services/game-server/internal/devtools/packets_generated.go`
@@ -473,7 +474,7 @@ The documented focused test paths for outbound routing are:
 
 The current `debug_shape_catalog` send-once behavior is tracked by room ID inside the write loop, not by a durable client acknowledgement.
 
-This document is scoped to current service implementation. Further transport mapping, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization remain future work.
+This document is scoped to current service implementation. Asteroid tuple packing is implemented. Further transport mapping, tuple/array packing beyond asteroid records, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization remain future work.
 
 
 
