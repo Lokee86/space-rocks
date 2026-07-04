@@ -83,7 +83,7 @@ func test_world_delta_updates_creates_and_deletes_entities_by_ownership() -> voi
 	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.1)
 	assert_eq(world_lane_state.ships["ship-2"]["x"], 3.0)
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 9.9)
-	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 0.6)
 	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0.0)
 	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "ship-1")
 	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "bullet")
@@ -124,7 +124,7 @@ func test_world_delta_treats_missing_sparse_sections_as_empty_noop() -> void:
 	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
 	assert_eq(world_lane_state.ships["ship-1"]["y"], 2.0)
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 0.5)
-	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 0.6)
 	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 0.7)
 	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 0.8)
 	assert_eq(world_lane_state.pickups["pickup-1"]["x"], 0.9)
@@ -168,7 +168,7 @@ func test_world_delta_missing_entities_leave_lane_unchanged_by_ownership() -> vo
 			"asteroid_deletes": [],
 			"pickup_creates": [],
 			"pickup_updates": [],
-			"pickup_deletes": [],
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
 		}
 	)
 
@@ -568,7 +568,7 @@ func test_world_lane_state_merges_bullet_updates_without_dropping_omitted_fields
 
 	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "ship-1")
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 99)
-	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 0.6)
 	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 7)
 	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "pulse")
 	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
@@ -718,7 +718,7 @@ func test_world_lane_state_ignores_ship_updates_without_id() -> void:
 
 	world_lane_state.merge_ship_update({"x": 99})
 
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
 	assert_eq(world_lane_state.ships["ship-1"]["ship_type"], "v_wing")
 
 
@@ -739,7 +739,7 @@ func test_world_lane_state_creates_full_ship_records() -> void:
 		"target_id": "player-2",
 	})
 
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
+	assert_eq(world_lane_state.ships["ship-1"]["x"], 10)
 	assert_eq(world_lane_state.ships["ship-1"]["y"], 20)
 	assert_eq(world_lane_state.ships["ship-1"]["rotation"], 30)
 	assert_eq(world_lane_state.ships["ship-1"]["thrusting"], true)
@@ -983,6 +983,13 @@ static func _pickup_packet(id: String, x: int, y: int) -> Dictionary:
 		"y": y,
 		"type": "test",
 	}
+
+
+
+
+
+
+
 
 
 

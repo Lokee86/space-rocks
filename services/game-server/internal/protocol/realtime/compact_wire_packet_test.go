@@ -221,7 +221,7 @@ func TestCompactWirePacketTuplePacksWorldFullBullets(t *testing.T) {
 		t.Fatalf("bullets[0] = %#v, want tuple array", bullets[0])
 	}
 
-	want := []any{1, "player-1", 10, 20, 30, "pulse", "laser"}
+	want := []any{1, 1, 10, 20, 30, "pulse", "laser"}
 	if len(tuple) != len(want) {
 		t.Fatalf("tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
 	}
@@ -260,7 +260,7 @@ func TestCompactWirePacketTuplePacksWorldFullShips(t *testing.T) {
 	if !ok {
 		t.Fatalf("ships[0] = %#v, want tuple array", ships[0])
 	}
-	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", "player-2"}
+	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", 2}
 	if len(tuple) != len(want) {
 		t.Fatalf("tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
 	}
@@ -293,7 +293,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipCreates(t *testing.T) {
 
 	got := CompactWirePacket(input)
 	creates := got["sc"].([]any)
-	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", "player-2"}
+	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", 2}
 	if tuple, ok := creates[0].([]any); !ok || len(tuple) != len(want) {
 		t.Fatalf("ship create = %#v, want full tuple %#v", creates[0], want)
 	} else {
@@ -1059,16 +1059,16 @@ func TestCompactWirePacketCompactsEventBatchAndNestedEventRecords(t *testing.T) 
 		"type": "event_batch",
 		"batch_id": "event-batch-11",
 		"events": []any{
-			map[string]any{"event_id": "event-1", "type": "bullet_blast", "x": 10, "y": 20},
-			map[string]any{"event_id": "event-2", "type": "ship_death", "player_id": "player-1", "lives": 2, "respawn_delay": 1.25, "x": 30, "y": 40},
-			map[string]any{"event_id": "event-3", "type": "damage_applied", "source_type": "projectile", "source_id": "bullet-1", "effect_type": "blast", "amount": 17, "x": 50, "y": 60},
-			map[string]any{"event_id": "event-4", "type": "damage_over_time_started", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 2},
-			map[string]any{"event_id": "event-5", "type": "damage_over_time_tick", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 3, "x": 70, "y": 80},
-			map[string]any{"event_id": "event-6", "type": "radial_effect_started", "source_type": "pickup", "source_id": "pickup-1", "effect_type": "pulse", "x": 90, "y": 100},
-			map[string]any{"event_id": "event-7", "type": "pickup_collected", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 110, "y": 120},
-			map[string]any{"event_id": "event-8", "type": "pickup_effect_applied", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "effect_type": "repair", "amount": 4, "lives_after": 3},
-			map[string]any{"event_id": "event-9", "type": "pickup_expired", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 130, "y": 140},
-			map[string]any{"event_id": "event-10", "type": "pickup_dropped", "pickup_id": "pickup-1", "pickup_type": "shield", "source_type": "ship", "source_id": "ship-1", "table_id": "table-1", "x": 150, "y": 160},
+			map[string]any{"event_id": "presentation-event-1", "type": "bullet_blast", "x": 10, "y": 20},
+			map[string]any{"event_id": "presentation-event-2", "type": "ship_death", "player_id": "player-1", "lives": 2, "respawn_delay": 1.25, "x": 30, "y": 40},
+			map[string]any{"event_id": "presentation-event-3", "type": "damage_applied", "source_type": "projectile", "source_id": "bullet-1", "effect_type": "blast", "amount": 17, "x": 50, "y": 60},
+			map[string]any{"event_id": "presentation-event-4", "type": "damage_over_time_started", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 2},
+			map[string]any{"event_id": "presentation-event-5", "type": "damage_over_time_tick", "source_type": "asteroid", "source_id": "hazard-1", "effect_type": "radioactive", "amount": 3, "x": 70, "y": 80},
+			map[string]any{"event_id": "presentation-event-6", "type": "radial_effect_started", "source_type": "pickup", "source_id": "pickup-1", "effect_type": "pulse", "x": 90, "y": 100},
+			map[string]any{"event_id": "presentation-event-7", "type": "pickup_collected", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 110, "y": 120},
+			map[string]any{"event_id": "presentation-event-8", "type": "pickup_effect_applied", "player_id": "player-1", "pickup_id": "pickup-1", "pickup_type": "shield", "effect_type": "repair", "amount": 4, "lives_after": 3},
+			map[string]any{"event_id": "presentation-event-9", "type": "pickup_expired", "pickup_id": "pickup-1", "pickup_type": "shield", "x": 130, "y": 140},
+			map[string]any{"event_id": "presentation-event-10", "type": "pickup_dropped", "pickup_id": "pickup-1", "pickup_type": "shield", "source_type": "ship", "source_id": "ship-1", "table_id": "table-1", "x": 150, "y": 160},
 		},
 	}
 
@@ -1120,28 +1120,28 @@ func TestCompactWirePacketCompactsEventBatchAndNestedEventRecords(t *testing.T) 
 	if events[1].([]any)[0] != "shd" || events[1].([]any)[1] != 2 || events[1].([]any)[2] != 1 {
 		t.Fatalf("ship_death tuple = %#v", events[1])
 	}
-	if events[2].([]any)[0] != "dmg" || events[2].([]any)[1] != 3 || events[2].([]any)[3] != "bullet-1" {
+	if events[2].([]any)[0] != "dmg" || events[2].([]any)[1] != 3 || events[2].([]any)[3] != 1 {
 		t.Fatalf("damage_applied tuple = %#v", events[2])
 	}
-	if events[3].([]any)[0] != "dots" || events[3].([]any)[1] != 4 {
+	if events[3].([]any)[0] != "dots" || events[3].([]any)[1] != 4 || events[3].([]any)[3] != "hazard-1" {
 		t.Fatalf("damage_over_time_started tuple = %#v", events[3])
 	}
-	if events[4].([]any)[0] != "dott" || events[4].([]any)[1] != 5 {
+	if events[4].([]any)[0] != "dott" || events[4].([]any)[1] != 5 || events[4].([]any)[3] != "hazard-1" {
 		t.Fatalf("damage_over_time_tick tuple = %#v", events[4])
 	}
-	if events[5].([]any)[0] != "rfx" || events[5].([]any)[1] != 6 {
+	if events[5].([]any)[0] != "rfx" || events[5].([]any)[1] != 6 || events[5].([]any)[3] != 1 {
 		t.Fatalf("radial_effect_started tuple = %#v", events[5])
 	}
-	if events[6].([]any)[0] != "pcol" || events[6].([]any)[1] != 7 || events[6].([]any)[2] != 1 {
+	if events[6].([]any)[0] != "pcol" || events[6].([]any)[1] != 7 || events[6].([]any)[2] != 1 || events[6].([]any)[3] != 1 {
 		t.Fatalf("pickup_collected tuple = %#v", events[6])
 	}
-	if events[7].([]any)[0] != "pea" || events[7].([]any)[1] != 8 || events[7].([]any)[2] != 1 {
+	if events[7].([]any)[0] != "pea" || events[7].([]any)[1] != 8 || events[7].([]any)[2] != 1 || events[7].([]any)[3] != 1 {
 		t.Fatalf("pickup_effect_applied tuple = %#v", events[7])
 	}
-	if events[8].([]any)[0] != "pexp" || events[8].([]any)[1] != 9 {
+	if events[8].([]any)[0] != "pexp" || events[8].([]any)[1] != 9 || events[8].([]any)[2] != 1 {
 		t.Fatalf("pickup_expired tuple = %#v", events[8])
 	}
-	if events[9].([]any)[0] != "pdr" || events[9].([]any)[1] != 10 {
+	if events[9].([]any)[0] != "pdr" || events[9].([]any)[1] != 10 || events[9].([]any)[2] != 1 || events[9].([]any)[6] != 1 {
 		t.Fatalf("pickup_dropped tuple = %#v", events[9])
 	}
 }
@@ -1151,7 +1151,7 @@ func TestCompactWirePacketLeavesUnknownEventRecordsMapShaped(t *testing.T) {
 		"type": "event_batch",
 		"batch_id": "event-batch-11",
 		"events": []any{
-			map[string]any{"event_id": "event-11", "type": "new_future_event", "source_id": "ship-1", "note": "kept"},
+			map[string]any{"event_id": "presentation-event-11", "type": "new_future_event", "source_id": "ship-1", "note": "kept"},
 		},
 	}
 
@@ -1170,8 +1170,8 @@ func TestCompactWirePacketLeavesUnknownEventRecordsMapShaped(t *testing.T) {
 	if !ok {
 		t.Fatalf("unknown event = %#v, want map shaped record", events[0])
 	}
-	if record["ei"] != 11 {
-		t.Fatalf("event_id = %#v, want 11", record["ei"])
+	if record["ei"] != "presentation-event-11" {
+		t.Fatalf("event_id = %#v, want presentation-event-11", record["ei"])
 	}
 	if record["t"] != "new_future_event" {
 		t.Fatalf("event type = %#v, want new_future_event", record["t"])
@@ -1214,5 +1214,46 @@ func TestCompactWirePacketCompactAliasCollisionGuard(t *testing.T) {
 	}
 }
 
+
+
+
+
+func TestCompactWirePacketTuplePacksWorldFullShipUnknownTargetKindUsesTaggedTargetID(t *testing.T) {
+	input := map[string]any{
+		"type": "world_full",
+		"ships": []any{
+			map[string]any{
+				"id":          "player-3",
+				"ship_type":   "v_wing",
+				"target_kind": "mystery",
+				"target_id":   "player-2",
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	ships := got["ships"].([]any)
+	tuple := ships[0].([]any)
+	if tuple[0] != 3 || !reflect.DeepEqual(tuple[9], []any{"p", 2}) {
+		t.Fatalf("unexpected compact ship tuple: %#v", tuple)
+	}
+}
+
+
+func TestCompactWirePacketCompactsKnownEventSourceIDsByTupleContext(t *testing.T) {
+	input := map[string]any{
+		"type": "event_batch",
+		"batch_id": "event-batch-1",
+		"events": []any{
+			map[string]any{"event_id": "presentation-event-1", "type": "damage_applied", "source_type": "mystery", "source_id": "player-2", "effect_type": "blast", "amount": 1},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	event := got["ev"].([]any)[0].([]any)
+	if !reflect.DeepEqual(event[3], []any{"p", 2}) {
+		t.Fatalf("damage_applied source_id = %#v, want tagged player id", event[3])
+	}
+}
 
 

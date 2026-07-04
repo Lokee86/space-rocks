@@ -129,14 +129,14 @@ func test_expand_packet_converts_compact_event_batch_keys_and_values() -> void:
 		"ev": [
 			["bb", 1, 10, 20],
 			["shd", 2, 1, 3, 250, 30, 40],
-			["dmg", 3, "projectile", "bullet-1", "blast", 17, 50, 60],
+			["dmg", 3, "projectile", 1, "blast", 17, 50, 60],
 			["dots", 4, "asteroid", "hazard-1", "radioactive", 2],
 			["dott", 5, "asteroid", "hazard-1", "radioactive", 3, 70, 80],
-			["rfx", 6, "pickup", "pickup-1", "pulse", 90, 100],
-			["pcol", 7, 1, "pickup-1", "shield", 110, 120],
-			["pea", 8, 1, "pickup-1", "shield", "repair", 4, 3],
-			["pexp", 9, "pickup-1", "shield", 130, 140],
-			["pdr", 10, "pickup-1", "shield", "ship", "ship-1", "table-1", 150, 160],
+			["rfx", 6, "pickup", 1, "pulse", 90, 100],
+			["pcol", 7, 1, 1, "shield", 110, 120],
+			["pea", 8, 1, 1, "shield", "repair", 4, 3],
+			["pexp", 9, 1, "shield", 130, 140],
+			["pdr", 10, 1, "shield", "ship", 1, 1, 150, 160],
 		],
 	})
 
@@ -659,48 +659,75 @@ func test_expand_packet_converts_compact_world_delta_asteroid_delete_ids() -> vo
 
 
 
-func test_expand_packet_converts_compact_world_delta_ship_update_tuple_sparse_interior_nulls_preserve_later_values() -> void {
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_sparse_interior_nulls_preserve_later_values() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "wd",
 		"su": [[1, null, 20]],
 	})
 
 	assert_eq(expanded["ship_updates"][0], {"id": "player-1", "y": 20})
-}
 
-func test_expand_packet_converts_compact_world_delta_ship_update_tuple_rotation_only_with_sparse_nulls() -> void {
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_rotation_only_with_sparse_nulls() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "wd",
 		"su": [[1, null, null, 30]],
 	})
 
 	assert_eq(expanded["ship_updates"][0], {"id": "player-1", "rotation": 30})
-}
 
-func test_expand_packet_converts_compact_world_delta_ship_update_tuple_thrusting_only_with_sparse_nulls() -> void {
+func test_expand_packet_converts_compact_world_delta_ship_update_tuple_thrusting_only_with_sparse_nulls() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "wd",
 		"su": [[1, null, null, null, true]],
 	})
 
 	assert_eq(expanded["ship_updates"][0], {"id": "player-1", "thrusting": true})
-}
 
-func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_sparse_interior_nulls_preserve_later_values() -> void {
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_sparse_interior_nulls_preserve_later_values() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "wd",
 		"bu": [[1, null, 20]],
 	})
 
 	assert_eq(expanded["bullet_updates"][0], {"id": "bullet-1", "y": 20})
-}
 
-func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_rotation_only_with_sparse_nulls() -> void {
+func test_expand_packet_converts_compact_world_delta_bullet_update_tuple_rotation_only_with_sparse_nulls() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "wd",
 		"bu": [[1, null, null, 30]],
 	})
 
 	assert_eq(expanded["bullet_updates"][0], {"id": "bullet-1", "rotation": 30})
-}
+
+
+
+
+func test_expand_packet_rehydrates_tagged_compact_ids_in_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "eb",
+		"bid": ["eb", 11],
+		"ev": [
+			["dmg", ["pe", 3], "mystery", ["p", 2], "blast", 17, 50, 60],
+		],
+	})
+
+	assert_eq(expanded["batch_id"], "event-batch-11")
+	assert_eq(expanded["events"][0], {"event_id": "presentation-event-3", "type": "damage_applied", "source_type": "mystery", "source_id": "player-2", "effect_type": "blast", "amount": 17, "x": 50, "y": 60})
+
+
+
+
+func test_expand_packet_preserves_unknown_and_malformed_tuple_ids() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "eb",
+		"bid": "event-batch-bad",
+		"ev": [
+			["pdr", "event-batch-1", "pickup-bad", "shield", "mystery", "hazard-1", "table-bad", 150, 160],
+		],
+	})
+
+	assert_eq(expanded["batch_id"], "event-batch-bad")
+	assert_eq(expanded["events"][0], {"event_id": "event-batch-1", "type": "pickup_dropped", "pickup_id": "pickup-bad", "pickup_type": "shield", "source_type": "mystery", "source_id": "hazard-1", "table_id": "table-bad", "x": 150, "y": 160})
+
+
 

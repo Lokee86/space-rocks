@@ -30,23 +30,29 @@ func compactWirePackSessionPlayers(packet map[string]any) map[string]any {
 }
 
 func compactWirePackSessionFullPlayers(packet map[string]any) map[string]any {
-	players, ok := packet["pl"].([]any)
-	if !ok {
-		return packet
-	}
+	next := packet
+	cloned := false
 
-	packed := make([]any, len(players))
-	for i, player := range players {
-		packed[i] = compactWirePackSessionPlayerRecord(player)
+	if players, ok := packet["pl"].([]any); ok {
+		packed := make([]any, len(players))
+		for i, player := range players {
+			packed[i] = compactWirePackSessionPlayerRecord(player)
+		}
+		if !cloned {
+			next = compactWireClonePacket(packet)
+			cloned = true
+		}
+		next["pl"] = packed
 	}
-
-	next := compactWireClonePacket(packet)
-	next["pl"] = packed
 
 	if lifecycles, ok := packet["plc"].([]any); ok {
 		packed := make([]any, len(lifecycles))
 		for i, lifecycle := range lifecycles {
 			packed[i] = compactWirePackSessionLifecycleRecord(lifecycle)
+		}
+		if !cloned {
+			next = compactWireClonePacket(packet)
+			cloned = true
 		}
 		next["plc"] = packed
 	}
@@ -56,6 +62,10 @@ func compactWirePackSessionFullPlayers(packet map[string]any) map[string]any {
 		for i, lifecycle := range updates {
 			packed[i] = compactWirePackSessionLifecycleRecord(lifecycle)
 		}
+		if !cloned {
+			next = compactWireClonePacket(packet)
+			cloned = true
+		}
 		next["plu"] = packed
 	}
 
@@ -63,6 +73,10 @@ func compactWirePackSessionFullPlayers(packet map[string]any) map[string]any {
 		packed := make([]any, len(deletes))
 		for i, playerID := range deletes {
 			packed[i] = compactWirePackPlayerID(playerID)
+		}
+		if !cloned {
+			next = compactWireClonePacket(packet)
+			cloned = true
 		}
 		next["plx"] = packed
 	}

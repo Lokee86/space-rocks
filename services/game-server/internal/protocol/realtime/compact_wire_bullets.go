@@ -78,7 +78,7 @@ func compactWirePackBulletRecord(value any) any {
 
 	return []any{
 		compactWirePackBulletID(record["i"]),
-		record["oi"],
+		compactWirePackPlayerID(record["oi"]),
 		record["x"],
 		record["y"],
 		record["r"],

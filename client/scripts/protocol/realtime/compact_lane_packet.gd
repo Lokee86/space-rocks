@@ -145,6 +145,18 @@ static func expand_compact_asteroid_id(value):
 	return value
 
 
+static func expand_compact_pickup_id(value):
+	return expand_compact_prefixed_id(value, "pickup-")
+
+
+static func expand_compact_table_id(value):
+	return expand_compact_prefixed_id(value, "table-")
+
+
+static func expand_compact_ship_id(value):
+	return expand_compact_prefixed_id(value, "ship-")
+
+
 static func expand_compact_prefixed_id(value, prefix):
 	if value is int:
 		return "%s%d" % [prefix, value]
@@ -165,15 +177,77 @@ static func expand_compact_bullet_id(value):
 
 
 static func expand_compact_presentation_event_id(value):
+	if value is Array and value.size() == 2 and value[0] == "pe":
+		return "presentation-event-%s" % str(value[1])
 	return expand_compact_prefixed_id(value, "presentation-event-")
 
 
 static func expand_compact_event_batch_id(value):
+	if value is Array and value.size() == 2 and value[0] == "eb":
+		return "event-batch-%s" % str(value[1])
 	return expand_compact_prefixed_id(value, "event-batch-")
 
 
 static func expand_compact_player_id(value):
 	return expand_compact_prefixed_id(value, "player-")
+
+
+static func expand_compact_tagged_id(value):
+	if not (value is Array and value.size() == 2):
+		return value
+	var tag = value[0]
+	var suffix = value[1]
+	match tag:
+		"p":
+			return expand_compact_player_id(suffix)
+		"b":
+			return expand_compact_bullet_id(suffix)
+		"a":
+			return expand_compact_asteroid_id(suffix)
+		"pk":
+			return expand_compact_pickup_id(suffix)
+		"s":
+			return expand_compact_ship_id(suffix)
+		"tbl":
+			return expand_compact_table_id(suffix)
+		"pe":
+			return expand_compact_presentation_event_id(suffix)
+		"eb":
+			return expand_compact_event_batch_id(suffix)
+		_:
+			return value
+
+
+static func _expand_source_or_tagged_id(source_type, value):
+	match source_type:
+		"player":
+			return expand_compact_player_id(value)
+		"ship":
+			return expand_compact_ship_id(value)
+		"projectile", "bullet":
+			return expand_compact_bullet_id(value)
+		"asteroid":
+			return expand_compact_asteroid_id(value)
+		"pickup":
+			return expand_compact_pickup_id(value)
+		_:
+			return expand_compact_tagged_id(value)
+
+
+static func _expand_target_or_tagged_id(target_kind, value):
+	match target_kind:
+		"player":
+			return expand_compact_player_id(value)
+		"ship":
+			return expand_compact_ship_id(value)
+		"projectile", "bullet":
+			return expand_compact_bullet_id(value)
+		"asteroid":
+			return expand_compact_asteroid_id(value)
+		"pickup":
+			return expand_compact_pickup_id(value)
+		_:
+			return expand_compact_tagged_id(value)
 
 
 static func _expand_session_player_record(value, packet_type = null):
@@ -234,7 +308,7 @@ static func _expand_ship_record(value, packet_type = null):
 			"shields": value[6],
 			"thrusting": value[7],
 			"target_kind": value[8],
-			"target_id": value[9],
+			"target_id": _expand_target_or_tagged_id(value[8], value[9]),
 		}
 	return _expand_value(value, "ships", null)
 
@@ -260,7 +334,7 @@ static func _expand_bullet_record(value, packet_type = null):
 	if value is Array and value.size() == 7:
 		return {
 			"id": expand_compact_bullet_id(value[0]),
-			"owner_id": value[1],
+			"owner_id": expand_compact_player_id(value[1]),
 			"x": value[2],
 			"y": value[3],
 			"rotation": value[4],
@@ -305,7 +379,7 @@ static func _expand_event_record(value):
 			"dmg":
 				expanded["type"] = "damage_applied"
 				expanded["source_type"] = value[2]
-				expanded["source_id"] = value[3]
+				expanded["source_id"] = _expand_source_or_tagged_id(value[2], value[3])
 				expanded["effect_type"] = value[4]
 				expanded["amount"] = value[5]
 				expanded["x"] = value[6]
@@ -313,13 +387,13 @@ static func _expand_event_record(value):
 			"dots":
 				expanded["type"] = "damage_over_time_started"
 				expanded["source_type"] = value[2]
-				expanded["source_id"] = value[3]
+				expanded["source_id"] = _expand_source_or_tagged_id(value[2], value[3])
 				expanded["effect_type"] = value[4]
 				expanded["amount"] = value[5]
 			"dott":
 				expanded["type"] = "damage_over_time_tick"
 				expanded["source_type"] = value[2]
-				expanded["source_id"] = value[3]
+				expanded["source_id"] = _expand_source_or_tagged_id(value[2], value[3])
 				expanded["effect_type"] = value[4]
 				expanded["amount"] = value[5]
 				expanded["x"] = value[6]
@@ -327,38 +401,38 @@ static func _expand_event_record(value):
 			"rfx":
 				expanded["type"] = "radial_effect_started"
 				expanded["source_type"] = value[2]
-				expanded["source_id"] = value[3]
+				expanded["source_id"] = _expand_source_or_tagged_id(value[2], value[3])
 				expanded["effect_type"] = value[4]
 				expanded["x"] = value[5]
 				expanded["y"] = value[6]
 			"pcol":
 				expanded["type"] = "pickup_collected"
 				expanded["player_id"] = expand_compact_player_id(value[2])
-				expanded["pickup_id"] = value[3]
+				expanded["pickup_id"] = expand_compact_pickup_id(value[3])
 				expanded["pickup_type"] = value[4]
 				expanded["x"] = value[5]
 				expanded["y"] = value[6]
 			"pea":
 				expanded["type"] = "pickup_effect_applied"
 				expanded["player_id"] = expand_compact_player_id(value[2])
-				expanded["pickup_id"] = value[3]
+				expanded["pickup_id"] = expand_compact_pickup_id(value[3])
 				expanded["pickup_type"] = value[4]
 				expanded["effect_type"] = value[5]
 				expanded["amount"] = value[6]
 				expanded["lives_after"] = value[7]
 			"pexp":
 				expanded["type"] = "pickup_expired"
-				expanded["pickup_id"] = value[2]
+				expanded["pickup_id"] = expand_compact_pickup_id(value[2])
 				expanded["pickup_type"] = value[3]
 				expanded["x"] = value[4]
 				expanded["y"] = value[5]
 			"pdr":
 				expanded["type"] = "pickup_dropped"
-				expanded["pickup_id"] = value[2]
+				expanded["pickup_id"] = expand_compact_pickup_id(value[2])
 				expanded["pickup_type"] = value[3]
 				expanded["source_type"] = value[4]
-				expanded["source_id"] = value[5]
-				expanded["table_id"] = value[6]
+				expanded["source_id"] = _expand_source_or_tagged_id(value[4], value[5])
+				expanded["table_id"] = expand_compact_table_id(value[6])
 				expanded["x"] = value[7]
 				expanded["y"] = value[8]
 			_:
@@ -584,3 +658,6 @@ static func _default_baseline_id(lane, snapshot_kind, sequence, baseline_sequenc
 	if snapshot_kind == "delta" and baseline_sequence != null:
 		return "%s-baseline-%s" % [lane, str(baseline_sequence)]
 	return ""
+
+
+

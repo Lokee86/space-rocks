@@ -43,21 +43,21 @@ func compactWirePackEventRecord(value any) any {
 	case "shd":
 		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), compactWirePackPlayerID(record["pid"]), record["lv"], record["rd"], record["x"], record["y"]}
 	case "dmg":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], record["src"], record["fx"], record["amt"], record["x"], record["y"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], compactWirePackSourceID(record["srct"], record["src"]), record["fx"], record["amt"], record["x"], record["y"]}
 	case "dots":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], record["src"], record["fx"], record["amt"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], compactWirePackSourceID(record["srct"], record["src"]), record["fx"], record["amt"]}
 	case "dott":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], record["src"], record["fx"], record["amt"], record["x"], record["y"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], compactWirePackSourceID(record["srct"], record["src"]), record["fx"], record["amt"], record["x"], record["y"]}
 	case "rfx":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], record["src"], record["fx"], record["x"], record["y"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["srct"], compactWirePackSourceID(record["srct"], record["src"]), record["fx"], record["x"], record["y"]}
 	case "pcol":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), compactWirePackPlayerID(record["pid"]), record["pkid"], record["pkt"], record["x"], record["y"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), compactWirePackPlayerID(record["pid"]), compactWirePackPickupID(record["pkid"]), record["pkt"], record["x"], record["y"]}
 	case "pea":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), compactWirePackPlayerID(record["pid"]), record["pkid"], record["pkt"], record["fx"], record["amt"], record["lva"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), compactWirePackPlayerID(record["pid"]), compactWirePackPickupID(record["pkid"]), record["pkt"], record["fx"], record["amt"], record["lva"]}
 	case "pexp":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["pkid"], record["pkt"], record["x"], record["y"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), compactWirePackPickupID(record["pkid"]), record["pkt"], record["x"], record["y"]}
 	case "pdr":
-		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), record["pkid"], record["pkt"], record["srct"], record["src"], record["tbl"], record["x"], record["y"]}
+		return []any{record["t"], compactWirePackPresentationEventID(record["ei"]), compactWirePackPickupID(record["pkid"]), record["pkt"], record["srct"], compactWirePackSourceID(record["srct"], record["src"]), compactWirePackTableID(record["tbl"]), record["x"], record["y"]}
 	default:
 		return record
 	}

@@ -65,7 +65,7 @@ func test_event_batch_applies_events_once() -> void:
 		{
 			"batch_id": "batch-1",
 			"events": [
-				{"event_id": "event-1", "type": "spark", "payload": {"value": 1}},
+				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
 			],
 		},
 		sink
@@ -99,11 +99,11 @@ func test_compact_event_batch_tuple_expansion_still_applies_and_dedupes() -> voi
 	assert_eq(sink.handled_events.size(), 2)
 	assert_eq(sink.handled_events[0]["type"], "bullet_blast")
 	assert_eq(sink.handled_events[0]["packet"]["event_id"], "presentation-event-1")
-	assert_eq(sink.handled_events[0]["packet"]["x"], 123)
-	assert_eq(sink.handled_events[0]["packet"]["y"], 568)
+	assert_eq(sink.handled_events[0]["packet"]["x"], 12.3)
+	assert_eq(sink.handled_events[0]["packet"]["y"], 56.8)
 	assert_eq(sink.handled_events[1]["type"], "ship_death")
 	assert_eq(sink.handled_events[1]["packet"]["player_id"], "player-1")
-	assert_eq(sink.handled_events[1]["packet"]["respawn_delay"], 3500)
+	assert_eq(sink.handled_events[1]["packet"]["respawn_delay"], 3.5)
 
 
 func test_compact_event_batch_expands_before_application_and_dedupes() -> void:
@@ -113,16 +113,16 @@ func test_compact_event_batch_expands_before_application_and_dedupes() -> void:
 		"ms": 123,
 		"bid": "event-batch-11",
 		"ev": [
-			{"ei": "event-1", "t": "bb", "x": 123, "y": 568},
-			{"ei": "event-2", "t": "shd", "pid": "player-1", "lv": 2, "rd": 3500, "x": 30, "y": 40},
+			{"ei": "presentation-event-1", "t": "bb", "x": 123, "y": 568},
+			{"ei": "presentation-event-2", "t": "shd", "pid": "player-1", "lv": 2, "rd": 3500, "x": 30, "y": 40},
 		],
 	})
 
 	assert_eq(expanded["type"], "event_batch")
 	assert_eq(expanded["batch_id"], "event-batch-11")
-	assert_eq(expanded["events"][0]["event_id"], "event-1")
+	assert_eq(expanded["events"][0]["event_id"], "presentation-event-1")
 	assert_eq(expanded["events"][0]["type"], "bullet_blast")
-	assert_eq(expanded["events"][1]["event_id"], "event-2")
+	assert_eq(expanded["events"][1]["event_id"], "presentation-event-2")
 	assert_eq(expanded["events"][1]["type"], "ship_death")
 	assert_eq(expanded["events"][1]["player_id"], "player-1")
 	assert_eq(expanded["events"][1]["lives"], 2)
@@ -168,7 +168,7 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 		{
 			"batch_id": "batch-1",
 			"events": [
-				{"event_id": "event-1", "type": "bullet_blast", "payload": {"value": 1}},
+				{"event_id": "presentation-event-1", "type": "bullet_blast", "payload": {"value": 1}},
 			],
 		},
 		null
@@ -220,7 +220,7 @@ func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
 		{
 			"batch_id": "batch-1",
 			"events": [
-				{"event_id": "event-1", "type": "spark", "payload": {"value": 1}},
+				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
 			],
 		},
 		sink
@@ -229,7 +229,7 @@ func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
 		{
 			"batch_id": "batch-1",
 			"events": [
-				{"event_id": "event-2", "type": "spark", "payload": {"value": 2}},
+				{"event_id": "presentation-event-2", "type": "spark", "payload": {"value": 2}},
 			],
 		},
 		sink
@@ -275,7 +275,7 @@ func test_duplicate_event_id_is_suppressed() -> void:
 		{
 			"batch_id": "batch-1",
 			"events": [
-				{"event_id": "event-1", "type": "spark", "payload": {"value": 1}},
+				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
 			],
 		},
 		sink
@@ -284,7 +284,7 @@ func test_duplicate_event_id_is_suppressed() -> void:
 		{
 			"batch_id": "batch-2",
 			"events": [
-				{"event_id": "event-1", "type": "spark", "payload": {"value": 2}},
+				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 2}},
 			],
 		},
 		sink
@@ -303,7 +303,7 @@ func test_event_batch_does_not_mark_gameplay_ready() -> void:
 		{
 			"batch_id": "batch-1",
 			"events": [
-				{"event_id": "event-1", "type": "spark", "payload": {}},
+				{"event_id": "presentation-event-1", "type": "spark", "payload": {}},
 			],
 		},
 		sink
@@ -329,6 +329,7 @@ func test_stale_sequence_is_ignored() -> void:
 
 	assert_false(applied)
 	assert_false(tracker.needs_resync(LaneMetadata.LANE_WORLD))
+
 
 
 

@@ -20,19 +20,39 @@ Do not reconcile compact aliases from raw packet struct names.
 - Sparse delta omission happens before compact aliases are applied.
 ## Shared ID Compaction
 
-Shared ID compaction applies to the tuple-packed and compact-value wire paths when the field slot has a safe specific context.
+Shared ID compaction applies to tuple-packed records and compact value slots when the field position or context determines the prefix safely.
 
-Server-side compaction rules:
+The current compact tuple ID rule is:
+
+- bare numeric suffix when tuple context determines the prefix
+- tagged compact ID when the prefix is known but not tuple-determined
+- original string when the prefix is unknown or the suffix is malformed
+
+Server-side bare numeric helpers currently apply to:
 
 - `asteroid-N` -> `N`
 - `bullet-N` -> `N`
 - `player-N` -> `N`
+- `pickup-N` -> `N`
+- `ship-N` -> `N`
+- `table-N` -> `N`
 - `presentation-event-N` -> `N`
 - `event-batch-N` -> `N`
-- malformed IDs remain unchanged
 
-The compacting helper only removes the known prefix when the numeric suffix is valid.
+Tagged compact IDs currently use these shapes:
+
+- `["p", N]` -> `player-N`
+- `["b", N]` -> `bullet-N`
+- `["a", N]` -> `asteroid-N`
+- `["pk", N]` -> `pickup-N`
+- `["s", N]` -> `ship-N`
+- `["tbl", N]` -> `table-N`
+- `["pe", N]` -> `presentation-event-N`
+- `["eb", N]` -> `event-batch-N`
+
+The compacting helper only removes or tags a prefix when the numeric suffix is valid.
 Non-string IDs remain unchanged.
+Unknown prefixes and malformed suffixes remain unchanged.
 String fields that are only loosely associated with an entity or record keep their readable string form unless a tuple slot has a safe specific context.
 
 ## Runtime Metadata Inference
@@ -212,7 +232,7 @@ Tuple-packed slots can bypass these readable key aliases when their position alr
 - `age_seconds` -> `age`
 - `lifespan_seconds` -> `life`
 Polymorphic or broadly shared string fields remain strings unless the tuple slot has safe specific context.
-These stay readable string values:
+Tuple slots with safe context now compact and rehydrate these IDs:
 
 - `owner_id`
 - `target_id`
@@ -242,7 +262,7 @@ It does not become one packet per event.
 
 Known event records are tuple-shaped for the compact wire path.
 Known event records no longer use broad reflected `EventState` output.
-Unknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.
+Unknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.`r`n`r`nUnknown map-shaped event records remain compatibility fallback records and should not be forced into tuple arrays just because they have compact aliases.`r`nKnown event records are tuple arrays; unknown event records stay map shaped.
 
 `sd` is not used for `ship_death` because `sd` is already reserved for `session_delta`.
 
@@ -408,7 +428,7 @@ Sparse placeholder rules:
 - Zero values and `false` booleans are preserved.
 
 Known tuple event fields use compact presentation-event IDs and compact player IDs where those slots are safe and specific. `event_id` rehydrates to `presentation-event-N` on the client.
-`source_id`, `target_id`, `owner_id`, `pickup_id`, and `table_id` remain string IDs unless a tuple field has a safe specific context.
+`source_id`, `target_id`, `owner_id`, `pickup_id`, and `table_id` compact when a known tuple context can determine the prefix, and they rehydrate back to full string IDs on the client.
 
 ### Event Batch Example
 
@@ -423,7 +443,7 @@ Readable logical event_batch example:
   "events": [
     {
       "type": "ship_death",
-      "event_id": "evt-100",
+      "event_id": "presentation-event-100",
       "player_id": "Player-2",
       "lives": 2,
       "respawn_delay": 3,
@@ -432,7 +452,7 @@ Readable logical event_batch example:
     },
     {
       "type": "damage_applied",
-      "event_id": "evt-101",
+      "event_id": "presentation-event-101",
       "source_type": "pickup",
       "source_id": "pickup-4",
       "effect_type": "impact",
@@ -455,8 +475,8 @@ Compact wire event_batch example:
   "ev": [
     {
       "t": "shd",
-      "ei": "evt-100",
-      "pid": "Player-2",
+      "ei": 100,
+      "pid": 2,
       "lv": 2,
       "rd": 3,
       "x": 512,
@@ -464,9 +484,9 @@ Compact wire event_batch example:
     },
     {
       "t": "dmg",
-      "ei": "evt-101",
+      "ei": 101,
       "srct": "pickup",
-      "src": "pickup-4",
+      "src": 4,
       "fx": "impact",
       "amt": 20,
       "x": 512,
@@ -477,6 +497,7 @@ Compact wire event_batch example:
 ```
 
 Readable/logical docs may show expanded names, while runtime wire sends compact aliases. Domain logs may still show raw x/y before projection.
+After client expansion, readable/logical packets still use full string IDs.
 The current implementation uses tuple arrays for known compact event records.
 The current implementation does not use binary encoding for events.
 
@@ -521,6 +542,8 @@ Recent compact three-lane observed development samples include quantization, spa
 - sparse 8-player world-only sample: ~3.1-3.6 KB/tick
 
 These are observed development samples, not guaranteed budgets.
+
+
 
 
 

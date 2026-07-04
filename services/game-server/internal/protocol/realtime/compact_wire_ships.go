@@ -86,7 +86,7 @@ func compactWirePackShipRecord(value any) any {
 		record["sh"],
 		record["th"],
 		record["tk"],
-		record["tid"],
+		compactWirePackTargetID(record["tk"], record["tid"]),
 	}
 }
 
