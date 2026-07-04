@@ -1,5 +1,6 @@
 extends GutTest
 
+const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 const EventBatchApplier := preload("res://scripts/protocol/realtime/event_batch_applier.gd")
 const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
 const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
@@ -73,6 +74,45 @@ func test_event_batch_applies_events_once() -> void:
 	assert_true(applied)
 	assert_eq(sink.handled_events.size(), 1)
 	assert_eq(sink.handled_events[0]["type"], "spark")
+
+
+func test_compact_event_batch_expands_before_application_and_dedupes() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "eb",
+		"q": 11,
+		"ms": 123,
+		"bid": "event-batch-11",
+		"ev": [
+			{"ei": "event-1", "t": "bb", "x": 123, "y": 568},
+			{"ei": "event-2", "t": "shd", "pid": "player-1", "lv": 2, "rd": 3500, "x": 30, "y": 40},
+		],
+	})
+
+	assert_eq(expanded["type"], "event_batch")
+	assert_eq(expanded["batch_id"], "event-batch-11")
+	assert_eq(expanded["events"][0]["event_id"], "event-1")
+	assert_eq(expanded["events"][0]["type"], "bullet_blast")
+	assert_eq(expanded["events"][1]["event_id"], "event-2")
+	assert_eq(expanded["events"][1]["type"], "ship_death")
+	assert_eq(expanded["events"][1]["player_id"], "player-1")
+	assert_eq(expanded["events"][1]["lives"], 2)
+	assert_eq(expanded["events"][1]["respawn_delay"], 3500)
+
+	var applier := EventBatchApplier.new()
+	var sink := FakeEventSink.new()
+
+	var first_applied := applier.apply_event_batch(expanded, sink)
+	var second_applied := applier.apply_event_batch(expanded, sink)
+
+	assert_true(first_applied)
+	assert_false(second_applied)
+	assert_eq(sink.handled_events.size(), 2)
+	assert_eq(sink.handled_events[0]["type"], "bullet_blast")
+	assert_eq(sink.handled_events[0]["packet"]["x"], 12.3)
+	assert_eq(sink.handled_events[0]["packet"]["y"], 56.8)
+	assert_eq(sink.handled_events[1]["type"], "ship_death")
+	assert_eq(sink.handled_events[1]["packet"]["respawn_delay"], 3.5)
+	assert_eq(applier.get_applied_events()[0]["x"], 12.3)
 
 
 func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow() -> void:
@@ -259,5 +299,8 @@ func test_stale_sequence_is_ignored() -> void:
 
 	assert_false(applied)
 	assert_false(tracker.needs_resync(LaneMetadata.LANE_WORLD))
+
+
+
 
 

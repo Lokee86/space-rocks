@@ -438,7 +438,7 @@ bullet_blast
 ship_death
 ```
 
-`damage_applied` is emitted only when the result is not ignored and damage affected health or shield.
+`damage_applied` is emitted only when the result is not ignored and damage affected health or shield. The logical expanded fields are not a promise that every field is emitted on the wire.
 
 Projectile/asteroid destruction records `bullet_blast` at the projectile impact position.
 

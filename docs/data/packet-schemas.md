@@ -88,6 +88,8 @@ PlayerPauseState
 
 It also owns shared realtime gameplay state shapes such as `ClientPacket`, `ClientConfig`, `InputState`, `ShipState`, `PlayerSessionState`, `AsteroidState`, `BulletState`, `PickupState`, `EventState`, and `PlayerPauseState`.
 
+`EventState` defines the possible event payload fields. The realtime event wire shaper emits only the relevant fields for known event types, so not every `EventState` field is emitted for every `event_batch` event.
+
 It also owns realtime lane packet type values:
 
 ```text
@@ -496,7 +498,7 @@ selected generated GDScript builders
 packet output file routing
 ```
 
-For active realtime gameplay lanes, runtime protocol code may build wire maps from generated packet type constants and hand-authored realtime records. Sparse delta omission, numeric wire quantization, and compact alias mapping are runtime protocol behaviors, not TOML schema generation behavior.
+For active realtime gameplay lanes, runtime protocol code may build wire maps from generated packet type constants and hand-authored realtime records. Sparse delta omission, numeric wire quantization, and compact alias mapping are runtime protocol behaviors, not TOML schema generation behavior. Generated `EventState` fields define possible event payload fields, while the realtime event wire shaper emits only relevant fields for known event types.
 
 Packet schemas do not own:
 

@@ -372,7 +372,7 @@ Y            = event.Y
 
 `recordDomainEvent` broadcasts the packet event into every player session's pending presentation event queue.
 
-The event is delivered through the next `event_batch` write for each player. Successful lane packet delivery clears that player's pending presentation events after the packet is written.
+The event is delivered through the next `event_batch` write for each player. Successful lane packet delivery clears that player's pending presentation events after the packet is written. The domain `EventState` shape is the source-facing projection; the runtime wire record is shaped later by `protocol/realtime` into sparse quantized output. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 A fatal damage path may also emit a `damage_applied` event before the `ship_death` event when damage actually changed health or shield.
 

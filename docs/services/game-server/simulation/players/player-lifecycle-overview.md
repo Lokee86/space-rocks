@@ -1,4 +1,4 @@
-# Player Lifecycle Overview
+﻿# Player Lifecycle Overview
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)
 
@@ -666,7 +666,7 @@ services/game-server/internal/game/events.go
 services/game-server/internal/game/events/events.go
 ```
 
-Convert ship death domain events into packet-facing event state.
+Convert ship death domain events into packet-facing event shape for compact sparse `event_batch` delivery.
 
 ### Lifecycle read models and projection
 
@@ -824,3 +824,4 @@ Legacy documentation supplied one still-current lifecycle rule: do not infer pla
 Current player lifecycle state is partly duplicated across `rules.PlayerParticipationStatus` and `player.Status`. The former drives match decision and `session lane lifecycle records`; the latter drives the server-side player world read model. Both currently use the same status strings.
 
 `PlayerID` values currently use lowercase `player-<n>` from `Game.AddPlayer`. Some older documentation examples use capitalized `Player-<n>` as illustrative values. The active code path is lowercase.
+

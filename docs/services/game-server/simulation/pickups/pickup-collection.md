@@ -391,7 +391,7 @@ lives_after
 
 For `equip_weapon`, the current event includes the pickup identity, player identity, and effect type. The weapon/ammo result is primarily visible through later player and session state projection.
 
-Events are queued for player sessions and delivered through `event_batch`. The authoritative pickup removal is also visible through world lane pickup records, where the collected pickup is absent after collection.
+Events are queued for player sessions and delivered through `event_batch`. The authoritative pickup removal is also visible through world lane pickup records, where the collected pickup is absent after collection. The pickup event itself is later shaped into sparse, quantized wire output for known event types. See [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ## Data ownership
 

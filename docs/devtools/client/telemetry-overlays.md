@@ -22,6 +22,8 @@ The current client telemetry overlay is the world telemetry overlay. It is a `Ca
 
 The overlay observes applied world-lane state after the client has routed authoritative lane packets. It counts server-owned entity dictionaries, adds local client frame timing, and optionally sends diagnostic `telemetry_ping` packets while visible so the server can respond with `telemetry_pong`.
 
+Packet-age interpretation is still a server-timestamp plus client-clock-offset calculation. If low-level wire logs show omitted runtime metadata as `nil`, that is a raw wire-map artifact, not a sign that packet age is unavailable.
+
 The high-level flow is:
 
 ```text
@@ -365,3 +367,4 @@ Telemetry overlay data is intentionally shallow. It is for immediate development
 `packet_staleness_ms` and `packet_age_ms` are different measurements. Staleness is local time since the last lane packet arrived. Age estimates how old the packet was by using the server send timestamp and the estimated server clock offset.
 
 The overlay and network player-label mode share the same network telemetry snapshot source, but they are separate presentation surfaces. The overlay owns the fixed world/client/network panel. Player dev labels own per-player label presentation.
+

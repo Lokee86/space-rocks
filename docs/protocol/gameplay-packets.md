@@ -47,7 +47,7 @@ player_pause_state
 resync_request / resync_required
 ```
 
-Current packet families are lane-native, with `event_batch` carrying presentation events separately from world, overlay, and session lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. Compact JSON aliases may be applied at the active outbound encode boundary, and the client expands them before normal lane routing. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
+Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases before normal lane routing. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
 
 Current lane delta behavior:
 
@@ -80,7 +80,7 @@ session lifecycle updates
 = player_id
 ```
 
-`world_delta`, `overlay_delta`, and `session_delta` are field-delta aware for update arrays. `event_batch` is not a field-delta lane; it remains transient presentation event delivery. `player_pause_state` remains a separate same-session packet and is not part of lane delta delivery.
+`world_delta`, `overlay_delta`, and `session_delta` are field-delta aware for update arrays. `event_batch` is not a field-delta lane; it remains transient presentation-event delivery. Known event records are explicitly shaped from `EventState` into sparse wire records for known event types, and compact event aliases are transport details that expand before gameplay presentation code consumes them. `player_pause_state` remains a separate same-session packet and is not part of lane delta delivery.
 
 Detailed lane metadata, baseline, sequencing, and field-delta semantics belong in [Realtime WebSocket Protocol](realtime-websocket-protocol.md).
 
@@ -172,7 +172,7 @@ event_batch
 
 `player_pause_state` remains a separate same-session packet and should be treated as a current packet family, not as part of lane event or world-state delivery.
 
-`event_batch` is transient event delivery, not a field-delta lane.
+`event_batch` is transient presentation-event delivery, not a field-delta lane. It is not authoritative state, and it does not use baselines, deltas, or chunks.
 
 ## Event delivery
 

@@ -948,21 +948,17 @@ func TestActiveWirePacketEncodingUsesLowercaseEventShape(t *testing.T) {
 	bulletBlast := mustMapValue(t, events[0])
 	assertStringValue(t, bulletBlast, "event_id", "event-1")
 	assertStringValue(t, bulletBlast, "type", "bullet_blast")
-	assertFloatValue(t, bulletBlast, "x", 1)
-	assertFloatValue(t, bulletBlast, "y", 2)
-	assertStringValue(t, bulletBlast, "source_id", "ship-1")
-	assertStringValue(t, bulletBlast, "effect_type", "blast")
+	assertJSONIntValue(t, bulletBlast, "x", 10)
+	assertJSONIntValue(t, bulletBlast, "y", 20)
 
 	shipDeath := mustMapValue(t, events[1])
 	assertStringValue(t, shipDeath, "event_id", "event-2")
 	assertStringValue(t, shipDeath, "type", "ship_death")
 	assertStringValue(t, shipDeath, "player_id", "player-1")
 	assertIntValue(t, shipDeath, "lives", 2)
-	assertFloatValue(t, shipDeath, "respawn_delay", 3.5)
-	assertFloatValue(t, shipDeath, "x", 4)
-	assertFloatValue(t, shipDeath, "y", 5)
-	assertStringValue(t, shipDeath, "source_id", "ship-2")
-	assertStringValue(t, shipDeath, "effect_type", "death")
+	assertJSONIntValue(t, shipDeath, "respawn_delay", 3500)
+	assertJSONIntValue(t, shipDeath, "x", 40)
+	assertJSONIntValue(t, shipDeath, "y", 50)
 }
 
 func TestWireLanePacketDropsUnsupportedFullPayloads(t *testing.T) {
@@ -1035,6 +1031,449 @@ func TestWireWorldDeltaPacketEmitsChunkMetadataOnlyForChunkedPackets(t *testing.
 	assertIntValue(t, wire, "chunk_count", 3)
 	assertNotContainsKey(t, wire, "is_final_chunk")
 }
+func TestWireEventBatchPacketOmitsEnvelopeMetadata(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Metadata: Metadata{Lane: LaneEvent, Sequence: 11, SnapshotKind: SnapshotKind("delta"), BaselineID: "event-baseline", SnapshotID: "event-snapshot", ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: true},
+			Batch: EventBatchRecord{BatchID: "event-batch-11"},
+		},
+	})
+
+	assertStringValue(t, wire, "type", PacketFamilyEventBatch)
+	assertIntValue(t, wire, "sequence", 11)
+	assertNotContainsKey(t, wire, "lane")
+	assertNotContainsKey(t, wire, "baseline_id")
+	assertNotContainsKey(t, wire, "snapshot_id")
+	assertNotContainsKey(t, wire, "snapshot_kind")
+	assertNotContainsKey(t, wire, "chunk_index")
+	assertNotContainsKey(t, wire, "chunk_count")
+	assertNotContainsKey(t, wire, "is_final_chunk")
+}
+func TestWireEventBatchPacketShapesBulletBlastWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-1",
+					Event: game.EventState{
+						Type:       "bullet_blast",
+						X:          12.34,
+						Y:          56.78,
+						PickupID:   "pickup-1",
+						PickupType: "shield",
+						TableID:    "table-1",
+						EffectType: "blast",
+						Amount:     9,
+						LivesAfter: 1,
+						SourceID:   "ship-1",
+						SourceType: "ship",
+					},
+				}},
+			},
+		},
+	})
+
+	events := mustSliceValue(t, wire, "events")
+	record := mustMapValue(t, events[0])
+	assertStringValue(t, record, "event_id", "event-1")
+	assertStringValue(t, record, "type", "bullet_blast")
+	assertInt64Value(t, record, "x", 123)
+	assertInt64Value(t, record, "y", 568)
+	for _, key := range []string{"pickup_id", "pickup_type", "table_id", "effect_type", "amount", "lives_after", "source_id", "source_type", "player_id", "lives", "respawn_delay"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
+func TestWireEventBatchPacketShapesShipDeathWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-2",
+					Event: game.EventState{
+						Type:         "ship_death",
+						PlayerID:     "player-1",
+						Lives:        2,
+						RespawnDelay: 3.5,
+						X:            1979.580796080448,
+						Y:            235.79718289389993,
+						PickupID:     "pickup-1",
+						PickupType:   "shield",
+						TableID:      "table-1",
+						EffectType:   "death",
+						Amount:       7,
+						LivesAfter:   1,
+						SourceID:     "ship-2",
+						SourceType:   "ship",
+					},
+				}},
+			},
+		},
+	})
+
+	events := mustSliceValue(t, wire, "events")
+	record := mustMapValue(t, events[0])
+	assertStringValue(t, record, "event_id", "event-2")
+	assertStringValue(t, record, "type", "ship_death")
+	assertStringValue(t, record, "player_id", "player-1")
+	assertIntValue(t, record, "lives", 2)
+	assertInt64Value(t, record, "respawn_delay", 3500)
+	assertInt64Value(t, record, "x", 19796)
+	assertInt64Value(t, record, "y", 2358)
+	for _, key := range []string{"pickup_id", "pickup_type", "table_id", "effect_type", "amount", "lives_after", "source_id", "source_type"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+func TestWireEventBatchPacketEncodesHighPrecisionShipDeathFloatsAsIntegers(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-precision-ship",
+					Event: game.EventState{
+						Type:         "ship_death",
+						PlayerID:     "player-1",
+						Lives:        2,
+						RespawnDelay: 3,
+						X:            1979.580796080448,
+						Y:            235.79718289389993,
+					},
+				}},
+			},
+		},
+	}
+
+	encoded := mustEncodeWirePacket(t, candidate)
+	encodedString := string(encoded)
+	for _, fragment := range []string{"1979.580796080448", "235.79718289389993"} {
+		if strings.Contains(encodedString, fragment) {
+			t.Fatalf("expected encoded JSON to omit raw float %q, got %s", fragment, encodedString)
+		}
+	}
+
+	record := mustMapValue(t, mustSliceValue(t, mustDecodeWirePacket(t, encoded), "events")[0])
+	assertJSONIntValue(t, record, "respawn_delay", 3000)
+	assertJSONIntValue(t, record, "x", 19796)
+	assertJSONIntValue(t, record, "y", 2358)
+}
+
+func TestWireEventBatchPacketKeepsLegacyFallbackForUnknownEventTypes(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-3",
+					Event: game.EventState{
+						Type:       "unknown_event",
+						PlayerID:   "player-1",
+						PickupID:   "pickup-1",
+						PickupType: "shield",
+						X:          1.25,
+						Y:          2.5,
+					},
+				}},
+			},
+		},
+	})
+
+	events := mustSliceValue(t, wire, "events")
+	record := mustMapValue(t, events[0])
+	assertStringValue(t, record, "event_id", "event-3")
+	assertStringValue(t, record, "type", "unknown_event")
+	assertStringValue(t, record, "player_id", "player-1")
+	assertStringValue(t, record, "pickup_id", "pickup-1")
+	assertStringValue(t, record, "pickup_type", "shield")
+	assertFloatValue(t, record, "x", 1.25)
+	assertFloatValue(t, record, "y", 2.5)
+}
+func TestWireEventBatchPacketShapesDamageAppliedWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-damage-applied",
+					Event: game.EventState{
+						Type:         "damage_applied",
+						SourceType:   "projectile",
+						SourceID:     "bullet-1",
+						EffectType:   "explosive",
+						Amount:       17,
+						X:            12.34,
+						Y:            56.78,
+						PlayerID:     "player-1",
+						Lives:        2,
+						RespawnDelay: 3.5,
+						PickupID:     "pickup-1",
+						PickupType:   "shield",
+						TableID:      "table-1",
+						LivesAfter:   1,
+					},
+				}},
+			},
+		},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-damage-applied")
+	assertStringValue(t, record, "type", "damage_applied")
+	assertStringValue(t, record, "source_type", "projectile")
+	assertStringValue(t, record, "source_id", "bullet-1")
+	assertStringValue(t, record, "effect_type", "explosive")
+	assertIntValue(t, record, "amount", 17)
+	assertInt64Value(t, record, "x", 123)
+	assertInt64Value(t, record, "y", 568)
+	for _, key := range []string{"player_id", "lives", "respawn_delay", "pickup_id", "pickup_type", "table_id", "lives_after"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+func TestWireEventBatchPacketEncodesHighPrecisionDamageAppliedFloatsAsIntegers(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-precision-damage",
+					Event: game.EventState{
+						Type:       "damage_applied",
+						SourceType: "projectile",
+						SourceID:   "bullet-1",
+						X:          12.3456789012345,
+						Y:          98.7654321098765,
+					},
+				}},
+			},
+		},
+	}
+
+	encoded := mustEncodeWirePacket(t, candidate)
+	encodedString := string(encoded)
+	for _, fragment := range []string{"12.3456789012345", "98.7654321098765"} {
+		if strings.Contains(encodedString, fragment) {
+			t.Fatalf("expected encoded JSON to omit raw float %q, got %s", fragment, encodedString)
+		}
+	}
+
+	record := mustMapValue(t, mustSliceValue(t, mustDecodeWirePacket(t, encoded), "events")[0])
+	assertJSONIntValue(t, record, "x", 123)
+	assertJSONIntValue(t, record, "y", 988)
+}
+
+func TestWireEventBatchPacketShapesDamageOverTimeStartedWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-dot-started",
+					Event: game.EventState{
+						Type:         "damage_over_time_started",
+						SourceType:   "asteroid",
+						SourceID:     "hazard-1",
+						EffectType:   "radioactive",
+						Amount:       2,
+						X:            9.99,
+						Y:            8.88,
+						PlayerID:     "player-1",
+						PickupID:     "pickup-1",
+						TableID:      "table-1",
+					},
+				}},
+			},
+		},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-dot-started")
+	assertStringValue(t, record, "type", "damage_over_time_started")
+	assertStringValue(t, record, "source_type", "asteroid")
+	assertStringValue(t, record, "source_id", "hazard-1")
+	assertStringValue(t, record, "effect_type", "radioactive")
+	assertIntValue(t, record, "amount", 2)
+	for _, key := range []string{"x", "y", "player_id", "pickup_id", "pickup_type", "table_id", "lives", "respawn_delay"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
+func TestWireEventBatchPacketShapesDamageOverTimeTickWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{
+			Type: PacketFamilyEventBatch,
+			Batch: EventBatchRecord{
+				Events: []EventRecord{{
+					EventID: "event-dot-tick",
+					Event: game.EventState{
+						Type:         "damage_over_time_tick",
+						SourceType:   "asteroid",
+						SourceID:     "hazard-1",
+						EffectType:   "radioactive",
+						Amount:       3,
+						X:            45.67,
+						Y:            89.01,
+						PlayerID:     "player-1",
+						Lives:        2,
+						PickupID:     "pickup-1",
+						TableID:      "table-1",
+					},
+				}},
+			},
+		},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-dot-tick")
+	assertStringValue(t, record, "type", "damage_over_time_tick")
+	assertStringValue(t, record, "source_type", "asteroid")
+	assertStringValue(t, record, "source_id", "hazard-1")
+	assertStringValue(t, record, "effect_type", "radioactive")
+	assertIntValue(t, record, "amount", 3)
+	assertInt64Value(t, record, "x", 457)
+	assertInt64Value(t, record, "y", 890)
+	for _, key := range []string{"player_id", "lives", "respawn_delay", "pickup_id", "pickup_type", "table_id", "lives_after"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
+func TestWireEventBatchPacketShapesRadialEffectStartedWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
+			EventID: "event-radial",
+			Event: game.EventState{Type: "radial_effect_started", SourceType: "pickup", SourceID: "pickup-1", EffectType: "pulse", Amount: 9, X: 10.25, Y: 20.5, PlayerID: "player-1", PickupID: "pickup-1", TableID: "table-1"},
+		}}}},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-radial")
+	assertStringValue(t, record, "type", "radial_effect_started")
+	assertStringValue(t, record, "source_type", "pickup")
+	assertStringValue(t, record, "source_id", "pickup-1")
+	assertStringValue(t, record, "effect_type", "pulse")
+	assertInt64Value(t, record, "x", 103)
+	assertInt64Value(t, record, "y", 205)
+	for _, key := range []string{"amount", "player_id", "pickup_id", "pickup_type", "table_id", "lives", "respawn_delay"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
+func TestWireEventBatchPacketShapesPickupCollectedWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
+			EventID: "event-pickup-collected",
+			Event: game.EventState{Type: "pickup_collected", PlayerID: "player-1", PickupID: "pickup-1", PickupType: "shield", X: 12.5, Y: 34.5, SourceType: "ship", SourceID: "ship-1", TableID: "table-1", Lives: 2},
+		}}}},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-pickup-collected")
+	assertStringValue(t, record, "type", "pickup_collected")
+	assertStringValue(t, record, "player_id", "player-1")
+	assertStringValue(t, record, "pickup_id", "pickup-1")
+	assertStringValue(t, record, "pickup_type", "shield")
+	assertInt64Value(t, record, "x", 125)
+	assertInt64Value(t, record, "y", 345)
+	for _, key := range []string{"source_type", "source_id", "table_id", "lives", "respawn_delay", "effect_type", "amount"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
+func TestWireEventBatchPacketShapesPickupEffectAppliedWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
+			EventID: "event-pickup-effect",
+			Event: game.EventState{Type: "pickup_effect_applied", PlayerID: "player-1", PickupID: "pickup-1", PickupType: "shield", EffectType: "repair", Amount: 4, LivesAfter: 3, X: 1.5, Y: 2.5, TableID: "table-1"},
+		}}}},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-pickup-effect")
+	assertStringValue(t, record, "type", "pickup_effect_applied")
+	assertStringValue(t, record, "player_id", "player-1")
+	assertStringValue(t, record, "pickup_id", "pickup-1")
+	assertStringValue(t, record, "pickup_type", "shield")
+	assertStringValue(t, record, "effect_type", "repair")
+	assertIntValue(t, record, "amount", 4)
+	assertIntValue(t, record, "lives_after", 3)
+	for _, key := range []string{"x", "y", "source_type", "source_id", "table_id", "respawn_delay"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
+func TestWireEventBatchPacketShapesPickupExpiredWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
+			EventID: "event-pickup-expired",
+			Event: game.EventState{Type: "pickup_expired", PickupID: "pickup-1", PickupType: "shield", X: 22.2, Y: 33.3, PlayerID: "player-1", SourceID: "ship-1"},
+		}}}},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-pickup-expired")
+	assertStringValue(t, record, "type", "pickup_expired")
+	assertStringValue(t, record, "pickup_id", "pickup-1")
+	assertStringValue(t, record, "pickup_type", "shield")
+	assertInt64Value(t, record, "x", 222)
+	assertInt64Value(t, record, "y", 333)
+	for _, key := range []string{"player_id", "source_type", "source_id", "table_id", "effect_type", "amount", "lives"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
+func TestWireEventBatchPacketShapesPickupDroppedWithRelevantFieldsOnly(t *testing.T) {
+	wire := WireLanePacket(RealtimeLaneCandidate{
+		Lane: LaneEvent,
+		Kind: RealtimeLaneCandidateKindEventBatch,
+		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
+			EventID: "event-pickup-dropped",
+			Event: game.EventState{Type: "pickup_dropped", PickupID: "pickup-1", PickupType: "shield", SourceType: "ship", SourceID: "ship-1", TableID: "table-1", X: 44.4, Y: 55.5, PlayerID: "player-1", Lives: 2},
+		}}}},
+	})
+
+	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
+	assertStringValue(t, record, "event_id", "event-pickup-dropped")
+	assertStringValue(t, record, "type", "pickup_dropped")
+	assertStringValue(t, record, "pickup_id", "pickup-1")
+	assertStringValue(t, record, "pickup_type", "shield")
+	assertStringValue(t, record, "source_type", "ship")
+	assertStringValue(t, record, "source_id", "ship-1")
+	assertStringValue(t, record, "table_id", "table-1")
+	assertInt64Value(t, record, "x", 444)
+	assertInt64Value(t, record, "y", 555)
+	for _, key := range []string{"player_id", "lives", "respawn_delay", "effect_type", "amount", "lives_after"} {
+		assertNotContainsKey(t, record, key)
+	}
+}
+
 func mustEncodeWirePacket(t *testing.T, candidate RealtimeLaneCandidate) []byte {
 	t.Helper()
 
@@ -1344,6 +1783,14 @@ func TestWireWorldWireDeltaPacketEncodesIntegerWorldFieldUpdates(t *testing.T) {
 	assertInt64Value(t, update, "rotation", 30)
 	assertNotContainsKey(t, update, "ship_type")
 }
+
+
+
+
+
+
+
+
 
 
 

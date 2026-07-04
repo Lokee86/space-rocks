@@ -34,7 +34,7 @@ NetworkClient receives/decodes packet
 
 The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a retired aggregate `GameplayStateApplyFlow` path or combined normalized gameplay-state dictionary flow.
 
-Client inbound packets may carry compact aliases and quantized integer wire values. Packet decode and compact expansion normalize compact aliases to readable keys before lane appliers run. World lane application decodes quantized world records before storing or merging world lane state. Overlay and session values are decoded before presentation/devtools consumption through the realtime quantize helpers and presentation adapters. Devtools read models decode only the lane values they explicitly pass through `RealtimeQuantize`. Client-facing presentation should expect decoded values with quantized precision loss, not raw simulation precision. Tests should assert the current decode boundary explicitly instead of assuming raw simulation floats. Full packets still replace or initialize complete lane state. Client lane appliers treat missing sparse delta section fields as empty arrays or no-op, missing fields inside present update records as unchanged, and missing `total_asteroids` in `session_delta` as unchanged. A present `total_asteroids: 0` remains meaningful. Quantization does not change gameplay authority, which remains server-owned.
+Client inbound packets may carry compact aliases and quantized integer wire values. Packet decode and compact expansion normalize compact aliases to readable keys before lane appliers or event presentation flows run. World lane application decodes quantized world records before storing or merging world lane state. Overlay and session values are decoded before presentation/devtools consumption through the realtime quantize helpers and presentation adapters. Event_batch arrives from compact wire output, but it is expanded before client event appliers and presentation flows consume it, so gameplay presentation systems should consume readable long-key event dictionaries rather than compact aliases. Devtools read models decode only the lane values they explicitly pass through `RealtimeQuantize`. Client-facing presentation should expect decoded values with quantized precision loss, not raw simulation precision. Tests should assert the current decode boundary explicitly instead of assuming raw simulation floats. Full packets still replace or initialize complete lane state. Client lane appliers treat missing sparse delta section fields as empty arrays or no-op, missing fields inside present update records as unchanged, and missing `total_asteroids` in `session_delta` as unchanged. A present `total_asteroids: 0` remains meaningful. Quantization does not change gameplay authority, which remains server-owned.
 
 ## Code root
 
@@ -127,7 +127,7 @@ EventPresentationAdapter
 = applies event batches to event/effects presentation
 ```
 
-The event path uses `EventBatchApplier` for `event_batch` delivery.
+The event path uses `EventBatchApplier` for `event_batch` delivery. Compact aliases such as `eb`, `ev`, `ei`, `bb`, `shd`, and `dmg` are wire details and should not leak into client presentation code.
 
 ## Active handoff seams
 

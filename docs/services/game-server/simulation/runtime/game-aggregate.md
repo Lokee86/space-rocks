@@ -424,9 +424,9 @@ The aggregate stores generated packet-facing presentation events in:
 pendingPresentationEvents map[string][]EventState
 ```
 
-This queue is per player. Domain events are recorded through game-owned event adapters, translated to packet-facing `EventState`, then appended to every current player session's pending lane.
+This queue is per player. Domain events are recorded through game-owned event adapters, translated to packet-facing presentation-event values, then appended to every current player session's pending lane. The packet-facing runtime lane is later shaped by `protocol/realtime` into sparse wire records for delivery; see [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md) and [Presentation Event Queue](presentation-event-queue.md).
 
-`protocol/realtime` projects that player's pending events into `event_batch`, and outbound networking clears only that player's drained event IDs after successful active write.
+`protocol/realtime` projects that player's pending events into `event_batch`, and outbound networking clears only that player's drained event IDs after successful active write. The readable `EventState`-style domain shape is not the same thing as the compact wire record that later goes on the wire.
 
 This is not the domain event store. It is a packet presentation queue for client-visible effects such as bullet blasts, ship death, pickup events, radial effect starts, and damage event presentation.
 

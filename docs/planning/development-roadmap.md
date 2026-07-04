@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane-native runtime delivery already exists, client and server local JSONL logging already exist, active debug logs can validate encoded bytes, and no-op or scheduler-ish packet log spam has been removed from the active output path. Remaining telemetry and logging work should happen only when it is useful during P2 validation or later diagnostics.
+The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane-native runtime delivery already exists, client and server local JSONL logging already exist, active debug logs can validate encoded bytes, and no-op or scheduler-ish packet log spam has been removed from the active output path. Active `event_batch` presentation-event delivery now also exists: event records are sparse and event-type-specific, compact aliases are active, event x/y and ship_death respawn_delay are quantized on the wire, and the lane drains after successful active write/enqueue according to current semantics. Remaining telemetry and logging work should happen only when it is useful during P2 validation or later diagnostics.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -240,7 +240,7 @@ sparse delta section omission is implemented, while further packed/binary repres
 
 ```text
 1. Schema/data-sync packet families and planning doc normalization.
-2. Server projections/full/delta/baselines plus non-draining snapshot/event API. Projection, scheduling, and encoding do not drain; shadow may peek/copy pending events but never drains.
+2. Server projections/full/delta/baselines for world, overlay, and session lanes; event presentation remains a compact sparse presentation-event lane, not a baseline or delta lane. Projection, scheduling, and encoding do not drain; shadow may peek/copy pending events but never drains.
 3. Priority scheduler and budget planner.
 4. Generic lane metrics.
 5. Client protocol/realtime lane caches and compatibility read model.

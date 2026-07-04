@@ -19,7 +19,7 @@ The outbound boundary has three current responsibilities:
 Queued responses and lane-native realtime packets both converge at `outbound.WriteServerMessage()`, which writes a WebSocket text message through the active Gorilla WebSocket connection.
 Queued one-off response producers generally encode packet structs through `packetcodec` before enqueueing bytes, while active realtime lane packets are built and encoded by `services/game-server/internal/protocol/realtime/` before networking writes the encoded bytes.
 
-The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, quantization, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy.
+The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, quantization, event wire shaping, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy.
 
 Realtime send-plan construction owns current candidate selection and byte-budget planning inputs; networking logs and writes the encoded results but does not decide record/entity-level prioritization.
 
@@ -148,7 +148,7 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 15. Marks a lane baseline ready after a final full packet.
 16. Emits a non-empty per-tick debug summary after packet writes.
 
-The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. That package owns candidate selection, send-plan records, wire-map construction, sparse delta omission, compact alias preparation, encoded-byte accounting inputs, and helper metadata or types that support the write path. Realtime owns sparse delta omission and compact alias preparation. Networking owns successful WebSocket delivery, event_batch drain-after-success behavior, post-write lane metadata persistence, and the current successful-write debug logs. `packetcodec` owns JSON encoding only. Active realtime world, overlay, and session lane packets are compacted at the final outbound encode boundary: `WireLanePacket` builds the readable map, `CompactWirePacket` applies aliases after raw-float assertion and before `packetcodec` encoding, and the alias contract lives in `docs/services/game-server/networking/realtime-compact-wire-mapping.md`. event_batch and control-lane resync packet families are not part of the current compact alias pass unless implementation changes. Sparse delta omission reduces JSON shape overhead, but it does not implement record-level packet splitting, record-level prioritization, or packet budget enforcement.
+The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. That package owns candidate selection, send-plan records, wire-map construction, sparse delta omission, compact alias preparation, encoded-byte accounting inputs, and helper metadata or types that support the write path. Realtime owns sparse delta omission, compact alias preparation, and sparse event wire shaping. Networking owns successful WebSocket delivery, event_batch drain-after-success behavior, post-write lane metadata persistence, and the current successful-write debug logs. `packetcodec` owns JSON encoding only. Active realtime world, overlay, session, and `event_batch` lane packets are compacted at the final outbound encode boundary: `WireLanePacket` builds the readable map, `CompactWirePacket` applies aliases after raw-float assertion and before `packetcodec` encoding, and the alias contract lives in `docs/services/game-server/networking/realtime-compact-wire-mapping.md`. `event_batch` uses compact envelope keys plus sparse, event-type-specific nested event records. Known event types are shaped instead of broad reflected `EventState` output, while unsupported event types may still fall back to legacy reflected output when the implementation already does so for compatibility. It remains one ordered batch of pending presentation events, not one packet per event. Sparse delta omission reduces JSON shape overhead, but it does not implement record-level packet splitting, record-level prioritization, packet baselines, packet deltas, or packet budget enforcement.
 
 The networking layer owns successful WebSocket delivery and the post-write session state changes that follow from those successful writes.
 
@@ -270,7 +270,7 @@ Active runtime world/overlay/session lane packets may also carry inferred-or-con
 - `chunk_index` and `chunk_count` when `chunk_count > 1`
 - `is_final_chunk` only for legacy/backward-compatible decode support, not preferred active runtime output
 
-`event_batch` and control-lane resync packet families keep their own current metadata behavior; this section only narrows the active runtime world/overlay/session envelope claim.
+`event_batch` now uses compact envelope keys and sparse nested event records. It remains one ordered batch of pending presentation events, not one packet per event. It does not use baselines, deltas, state snapshots, or chunking, and this section does not claim any future scheduler or transport behavior.
 The packet-shape details for those lane packets belong in the realtime protocol doc. This service doc only keeps the outbound delivery boundary and the current lane roles.
 
 ### Room snapshots
@@ -474,6 +474,10 @@ The documented focused test paths for outbound routing are:
 The current `debug_shape_catalog` send-once behavior is tracked by room ID inside the write loop, not by a durable client acknowledgement.
 
 This document is scoped to current service implementation. Further transport mapping, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization remain future work.
+
+
+
+
 
 
 

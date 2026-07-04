@@ -142,6 +142,13 @@ static func decode_world_pickup_record(record: Dictionary) -> Dictionary:
 	_decode_field_if_present(decoded, "lifespan_seconds", POLICY_SECONDS)
 	return decoded
 
+static func decode_event_record(event: Dictionary) -> Dictionary:
+	var decoded: Dictionary = event.duplicate(true)
+	_decode_field_if_present(decoded, "x", POLICY_POSITION)
+	_decode_field_if_present(decoded, "y", POLICY_POSITION)
+	_decode_field_if_present(decoded, "respawn_delay", POLICY_SECONDS)
+	return decoded
+
 static func _decode_field_if_present(decoded: Dictionary, field: String, policy_name: String) -> void:
 	if not decoded.has(field):
 		return

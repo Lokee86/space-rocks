@@ -148,7 +148,7 @@ event_batch
 = presentation events for the current receiver
 ```
 
-Lane-native realtime projection is a separate runtime responsibility. The simulation loop mutates runtime state; `protocol/realtime` reads that state later and `event_batch` drains per receiver only after successful active write.
+Lane-native realtime projection is a separate runtime responsibility. The simulation loop mutates runtime state; `protocol/realtime` reads that state later and `event_batch` drains per receiver only after successful active write. The simulation-owned event facts can contain raw simulation values, and the realtime event wire shaper later quantizes and sparsifies known records before compact output encoding. See [Presentation Event Queue](presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ## Tick lifecycle
 

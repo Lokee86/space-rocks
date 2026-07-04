@@ -6,7 +6,7 @@ Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 This document describes the game-server presentation event queue.
 
-It covers how simulation-owned gameplay facts are converted into packet-facing `EventState` values, queued per player, projected into `event_batch` candidates, and drained only after successful active write.
+It covers how simulation-owned gameplay facts are converted into sparse, quantized event wire records, queued per player, projected into `event_batch` candidates, and drained only after successful active write.
 
 ## Overview
 
@@ -35,7 +35,7 @@ The queue is intentionally named:
 pendingPresentationEvents
 ```
 
-It stores packet-facing `EventState` values for client presentation. It is not a domain event queue.
+It stores packet-facing presentation facts for client presentation. It is not a domain event queue.
 
 The server currently fans each event out to every player session that exists at event-recording time. A player with a durable session but no live ship can still receive the event. A player added after the event is recorded will not receive that event.
 
@@ -226,24 +226,24 @@ Current mappings are:
 | `EventDamageOverTimeStarted` | `damage_over_time_started` | `source_type`, `source_id`, `effect_type`, `amount`                             |
 | `EventDamageOverTimeTick`    | `damage_over_time_tick`    | `source_type`, `source_id`, `effect_type`, `amount`, `x`, `y`                   |
 
-The adapter intentionally narrows event facts to the fields currently available in generated `EventState`.
+The adapter intentionally narrows event facts to the fields currently available for the current event wire contract.
 
-For damage events, the packet-facing event currently preserves source identity, damage type through `effect_type`, amount, and coordinates where relevant. It does not project every damage result field such as target identity, cause, base amount, shield absorption, or remaining health.
+For damage events, the packet-facing event currently preserves source identity, damage type through `effect_type`, amount, and coordinates where relevant. Presentation-event projection turns those facts into sparse, quantized wire records before compact aliases are applied. Domain and simulation logs may still show raw simulation floats, but the wire contract does not.
 
 ## Protocols and APIs
 
 The queue is an internal game-server runtime surface, not a standalone network protocol.
 
-The network-visible surface is the `event_batch` lane on the generated realtime protocol packets.
+The network-visible surface is the `event_batch` lane on the generated realtime protocol packets. It is a presentation-event lane: one ordered batch of pending presentation events, not one packet per event.
 
-That field is for client presentation. The client consumes it after receiving normal realtime gameplay state and routes supported events into local effects, audio, HUD, death, and match-end presentation.
+That field is for client presentation. The client consumes it after receiving normal realtime gameplay state and routes supported events into local effects, audio, HUD, death, and match-end presentation. After compact expansion, client presentation systems receive readable long-key dictionaries, not raw compact keys.
 
 Authority behind the events remains on the server:
 
 ```text
 server simulation owns event production
 Game owns event-to-queue storage
-protocol/realtime owns event_batch projection and planning
+protocol/realtime owns event_batch projection, sparse shaping, quantization, and planning
 networking owns JSON encode and websocket write
 client owns presentation response
 ```
@@ -293,7 +293,7 @@ effect_type
 amount
 ```
 
-`EventState` is the value stored in `pendingPresentationEvents` and later included in `event_batch` candidates for the receiver.
+Sparse event records are stored in `pendingPresentationEvents` and later included in `event_batch` candidates for the receiver.
 
 ### Pending queue state
 
@@ -357,7 +357,7 @@ Projects pending events into `event_batch` candidates and drains only after succ
 services/game-server/internal/game/packets.go
 ```
 
-Generated packet definitions for `EventState` and `event_batch`-related gameplay packet shapes.
+Generated packet definitions for `event_batch`-related gameplay packet shapes.
 
 ### Current event producers
 
@@ -409,7 +409,7 @@ Records pickup-expired presentation events.
 shared/packets/gameplay.toml
 ```
 
-Source-of-truth packet schema for `EventState` and `event_batch`.
+Source-of-truth packet schema for `event_batch`.
 
 ```text
 services/game-server/internal/game/packets.go
@@ -519,3 +519,6 @@ Legacy documentation correctly identified the important naming rule: `pendingPre
 The event adapter currently returns a zero-value `EventState` for unsupported event types. Producers should not call `recordDomainEvent` for a new event type until `eventStateForDomainEvent`, packet schema, tests, and client presentation handling are updated as needed.
 
 This document lives under simulation runtime because it documents a runtime queue on the `Game` aggregate. The concrete queue implementation is in the root `internal/game` package, not in the Go `internal/game/runtime` package.
+
+
+

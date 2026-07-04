@@ -10,7 +10,7 @@ It covers how server presentation events enter the Godot client, how event posit
 
 ## Overview
 
-Gameplay events are authoritative server facts delivered through `event_batch` packets.
+Gameplay events are presentation-only server facts delivered through `event_batch` packets. The wire format uses compact envelope keys plus sparse, event-type-specific nested event records, and the client expands those compact packets before event application. Authoritative gameplay state still comes through world, overlay, and session lanes; `event_batch` does not replace those lanes.
 
 The client does not decide that a bullet blast, ship death, pickup collection, radial effect, damage result, pickup expiry, score award, death, respawn, or match end happened. The client only reads event facts emitted by the server and converts the supported subset into local presentation.
 
@@ -208,7 +208,7 @@ GameplayComposition.restore_alive_presentation_from_realtime_router(...)
 
 Gameplay events enter the client through the `event_batch` packet payload after lane state or readiness has already been applied.
 
-`client/scripts/protocol/realtime/event_batch_applier.gd` applies and dedupes the packet events. `EventPresentationAdapter` then drains the newly applied event output and forwards that output to `GameplayEventLifecycleFlow`.
+`client/scripts/protocol/realtime/event_batch_applier.gd` applies and dedupes the packet events after compact expansion. `EventPresentationAdapter` then drains the newly applied event output and forwards that output to `GameplayEventLifecycleFlow`.
 
 If the packet event field is missing or is not an array, the applied event output is an empty array.
 
@@ -461,7 +461,7 @@ services/game-server/internal/game/events/events.go
 services/game-server/internal/game/packets.go
 ```
 
-The server-side queue is `pendingPresentationEvents`. It stores packet-facing `EventState` values for client presentation. It is not client-owned state.
+The server-side queue is `pendingPresentationEvents`. It stores packet-facing presentation-event values for client presentation. It is not client-owned state.
 
 ### Constants source of truth
 
@@ -572,3 +572,4 @@ Legacy docs correctly identified the event, effects, and audio path as the owner
 The current client event controller routes `pickup_effect_applied` but does not spawn a visual effect for it. Do not document that event as a visible client effect unless implementation changes.
 
 The event or effects path should stay presentation-only. New event types should be added by extending server event production, packet or schema documentation, and client presentation routing without moving gameplay authority into the client.
+

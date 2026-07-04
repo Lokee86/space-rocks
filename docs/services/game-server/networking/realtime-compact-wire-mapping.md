@@ -161,12 +161,154 @@ Missing compact delta section aliases mean empty or no-op.
 - `spawn_x` -> `spx`
 - `spawn_y` -> `spy`
 
+## Event Batch Compact Mapping
+
+`event_batch` is now compacted through the realtime compact wire path.
+It is the presentation-event lane, not a state lane.
+It keeps batching: one ordered batch can contain multiple pending presentation events.
+It does not become one packet per event.
+
+Known event records are sparse and event-type-specific.
+Known event records no longer use broad reflected `EventState` output.
+Unknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.
+
+`sd` is not used for `ship_death` because `sd` is already reserved for `session_delta`.
+
+### Canonical Event Batch Alias Tables
+
+#### Event Batch Envelope
+
+| Readable/logical field name | Compact wire key/value | Applies where |
+| --- | --- | --- |
+| `type = event_batch` | `t = eb` | event_batch envelope |
+| `sequence` | `q` | event_batch envelope |
+| `server_sent_msec` | `ms` | event_batch envelope |
+| `batch_id` | `bid` | event_batch envelope |
+| `events` | `ev` | event_batch envelope |
+
+#### Nested Event Record Keys
+
+| Readable/logical field name | Compact wire key/value | Applies where |
+| --- | --- | --- |
+| `type` | `t` | nested event record |
+| `event_id` | `ei` | nested event record |
+| `player_id` | `pid` | nested event record |
+| `target_id` | `tid` | nested event record |
+| `lives` | `lv` | nested event record |
+| `x` | `x` | nested event record |
+| `y` | `y` | nested event record |
+| `source_type` | `srct` | nested event record |
+| `source_id` | `src` | nested event record |
+| `target_type` | `tt` | nested event record |
+| `damage_type` | `dt` | nested event record |
+| `damage_cause` | `dc` | nested event record |
+| `base_amount` | `ba` | nested event record |
+| `modified_amount` | `ma` | nested event record |
+| `applied_to_health` | `ah` | nested event record |
+| `absorbed_by_shield` | `abs` | nested event record |
+| `remaining_health` | `rh` | nested event record |
+| `remaining_shield` | `rs` | nested event record |
+| `pickup_id` | `pkid` | nested event record |
+| `pickup_type` | `pkt` | nested event record |
+| `table_id` | `tbl` | nested event record |
+| `lives_after` | `lva` | nested event record |
+| `effect_type` | `fx` | nested event record |
+| `amount` | `amt` | nested event record |
+| `respawn_delay` | `rd` | nested event record |
+
+`x` and `y` remain `x` and `y` after compact encoding, but they are quantized on the wire.
+
+#### Event Type Values
+
+| Readable/logical field name | Compact wire key/value | Applies where |
+| --- | --- | --- |
+| `type = bullet_blast` | `t = bb` | event type value |
+| `type = ship_death` | `t = shd` | event type value |
+| `type = radial_effect_started` | `t = rfx` | event type value |
+| `type = pickup_collected` | `t = pcol` | event type value |
+| `type = pickup_effect_applied` | `t = pea` | event type value |
+| `type = pickup_expired` | `t = pexp` | event type value |
+| `type = pickup_dropped` | `t = pdr` | event type value |
+| `type = damage_applied` | `t = dmg` | event type value |
+| `type = damage_over_time_started` | `t = dots` | event type value |
+| `type = damage_over_time_tick` | `t = dott` | event type value |
+
+### Event Batch Example
+
+Readable logical event_batch example:
+
+```json
+{
+  "type": "event_batch",
+  "sequence": 412,
+  "server_sent_msec": 1712345678901,
+  "batch_id": "event-batch-412",
+  "events": [
+    {
+      "type": "ship_death",
+      "event_id": "evt-100",
+      "player_id": "Player-2",
+      "lives": 2,
+      "respawn_delay": 3,
+      "x": 512,
+      "y": 384
+    },
+    {
+      "type": "damage_applied",
+      "event_id": "evt-101",
+      "source_type": "pickup",
+      "source_id": "pickup-4",
+      "effect_type": "impact",
+      "amount": 20,
+      "x": 512,
+      "y": 384
+    }
+  ]
+}
+```
+
+Compact wire event_batch example:
+
+```json
+{
+  "t": "eb",
+  "q": 412,
+  "ms": 1712345678901,
+  "bid": "event-batch-412",
+  "ev": [
+    {
+      "t": "shd",
+      "ei": "evt-100",
+      "pid": "Player-2",
+      "lv": 2,
+      "rd": 3,
+      "x": 512,
+      "y": 384
+    },
+    {
+      "t": "dmg",
+      "ei": "evt-101",
+      "srct": "pickup",
+      "src": "pickup-4",
+      "fx": "impact",
+      "amt": 20,
+      "x": 512,
+      "y": 384
+    }
+  ]
+}
+```
+
+Readable/logical docs may show expanded names, while runtime wire sends compact aliases. Domain logs may still show raw x/y before projection.
+The current implementation does not use tuple arrays for events.
+The current implementation does not use binary encoding for events.
+
 ## Implemented Boundary
 
 - Server readable lane maps are still built by `WireLanePacket`.
 - `CompactWirePacket` applies aliases only at the final outbound encode boundary.
-- Active outbound compacting currently applies to world, overlay, and session realtime gameplay lanes.
-- event_batch and control-lane resync packet families are not compacted in this pass unless implementation changes.
+- Active outbound compacting currently applies to world, overlay, session, and `event_batch` realtime packet families.
+- Generated control-lane resync packet families are not compacted in this pass unless implementation changes.
 - `PacketCodec.decode` performs the first compact expansion before packet envelope validation. `RealtimeRouter` may defensively normalize already-expanded packets, but it is not the first decode boundary.
 - Legacy long-key packets remain accepted during the transition.
 - Empty delta section omission is implemented by the readable delta serializers before CompactWirePacket applies aliases. CompactWirePacket only aliases keys that remain present. The current generated control-lane recovery packet families are resync_request and resync_required; there is no separate generated packet family named control.

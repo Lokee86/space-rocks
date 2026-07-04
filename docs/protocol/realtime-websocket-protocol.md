@@ -305,14 +305,16 @@ is_final_chunk
   inferred from chunk_index and chunk_count
 ```
 
-Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world/overlay/session gameplay lanes. `event_batch` and control-lane resync packets keep their own current metadata behavior unless implementation changes.
+Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world/overlay/session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output. Control-lane resync packets keep their own current metadata behavior.
 
-The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, overlay, and session lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and before `packetcodec` encodes JSON.
+The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, overlay, session, and `event_batch` lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and before `packetcodec` encodes JSON.
 
 Chunk metadata exists in the wire shape and scheduler records. This document does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
 ### Numeric wire quantization
 
-Server outbound realtime lane records are quantized in the realtime projection and wire-record path before JSON encoding. Quantization happens before delta comparison, so deltas compare projected wire-shaped values instead of raw simulation float precision.
+State-lane records are quantized in the realtime projection and wire-record path before delta comparison and JSON encoding, so deltas compare projected wire-shaped values instead of raw simulation float precision. `event_batch` is not a state lane and does not participate in delta comparison.
+
+Presentation-event records are quantized during explicit event wire shaping before JSON encoding. The domain/game logs may still show raw simulation floats, but those raw logs are not the wire contract.
 
 This currently applies to the server-owned outbound lane state families:
 
@@ -322,7 +324,21 @@ overlay_full / overlay_delta
 session_full / session_delta
 ```
 
-`event_batch` is not a field-delta state lane. Do not describe event payloads as quantized unless the implementation explicitly quantizes event payload float values.
+`event_batch` is not a field-delta state lane.
+
+Event wire `x` and `y` values use the same position-scale policy family as realtime entity positions.
+`ship_death` `respawn_delay` is quantized as a seconds/duration-style field.
+IDs, type names, lives, damage amounts, health, shield, score, and already-integer values are not numeric-quantized.
+
+Example:
+
+```text
+simulation x/y = 512.75, 384.25
+wire x/y = 512, 384
+
+simulation respawn_delay = 2.75
+wire respawn_delay = 3
+```
 
 Known float-like fields use lane- and field-specific policies from `services/game-server/internal/protocol/realtime/quantize/`. The active server code paths include:
 
@@ -496,6 +512,76 @@ batch_id
 events
 event_id per event
 ```
+
+Readable protocol docs may show expanded logical names, while runtime wire sends compact aliases. Domain logs may still show raw x/y before projection.
+
+### Event Batch Example
+
+Readable logical example:
+
+```json
+{
+  "type": "event_batch",
+  "sequence": 412,
+  "server_sent_msec": 1712345678901,
+  "batch_id": "event-batch-412",
+  "events": [
+    {
+      "type": "ship_death",
+      "event_id": "evt-100",
+      "player_id": "Player-2",
+      "lives": 2,
+      "respawn_delay": 3,
+      "x": 512,
+      "y": 384
+    },
+    {
+      "type": "damage_applied",
+      "event_id": "evt-101",
+      "source_type": "pickup",
+      "source_id": "pickup-4",
+      "effect_type": "impact",
+      "amount": 20,
+      "x": 512,
+      "y": 384
+    }
+  ]
+}
+```
+
+Compact wire example:
+
+```json
+{
+  "t": "eb",
+  "q": 412,
+  "ms": 1712345678901,
+  "bid": "event-batch-412",
+  "ev": [
+    {
+      "t": "shd",
+      "ei": "evt-100",
+      "pid": "Player-2",
+      "lv": 2,
+      "rd": 3,
+      "x": 512,
+      "y": 384
+    },
+    {
+      "t": "dmg",
+      "ei": "evt-101",
+      "srct": "pickup",
+      "src": "pickup-4",
+      "fx": "impact",
+      "amt": 20,
+      "x": 512,
+      "y": 384
+    }
+  ]
+}
+```
+
+Readable/logical docs may show expanded names, while runtime wire sends compact aliases. Domain logs may still show raw x/y before projection.
 
 ### Resync packets
 
@@ -1265,6 +1351,11 @@ The current implementation sends lane-native gameplay output on the server tick 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
+
+
+
+
+
 
 
 

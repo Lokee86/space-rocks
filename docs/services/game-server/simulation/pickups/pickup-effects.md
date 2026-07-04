@@ -1,4 +1,4 @@
-# Pickup Effects
+﻿# Pickup Effects
 
 Parent index: [Game Server Simulation Pickups](./!INDEX.md)
 
@@ -155,7 +155,7 @@ The game server records a domain event:
 events.EventPickupEffectApplied
 ```
 
-Then `eventStateForDomainEvent` converts it into a packet-facing event state:
+Then `eventStateForDomainEvent` converts it into a packet-facing event shape for the presentation-event lane:
 
 ```text
 type: pickup_effect_applied
@@ -167,7 +167,7 @@ amount
 lives_after
 ```
 
-The event is queued into each player session's pending presentation events and is drained into that player's next `event_batch` after successful active write.
+The event is queued into each player session's pending presentation events and is drained into that player's next `event_batch` after successful active write. The packet-facing event values are a source shape; the runtime wire shaper later emits the compact sparse record for the known event type. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ## Current effect intents
 
@@ -424,3 +424,4 @@ The current effect system is intentionally narrow. It supports lives and runtime
 The torpedo pickup currently changes the active runtime ship, not durable player inventory or future loadout state. Future loadout or inventory work should not be documented here as current behavior until implemented.
 
 The current resolver uses code-defined pickup-type mappings. If pickup effect metadata later becomes fully data-driven, that belongs in the data pipeline documentation as well as this service boundary.
+

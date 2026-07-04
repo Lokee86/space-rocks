@@ -32,15 +32,15 @@ func test_apply_server_events_routes_pickup_collected_to_effects() -> void:
 	var server_events := [
 		{
 			Packets.FIELD_TYPE: "pickup_collected",
-			Packets.FIELD_X: 12,
-			Packets.FIELD_Y: 34,
+			Packets.FIELD_X: 12.3,
+			Packets.FIELD_Y: 34.5,
 		}
 	]
 
 	controller.apply_server_events(server_events, "player-1", Callable())
 
 	assert_eq(effects.spawn_pickup_collected_call_count, 1)
-	assert_eq(effects.last_visual_position, Vector2(22, 54))
+	assert_eq(effects.last_visual_position, Vector2(22.3, 54.5))
 
 
 func test_apply_server_events_routes_radial_effect_started_to_torpedo_explosion() -> void:

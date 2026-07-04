@@ -172,6 +172,20 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 			t.Fatalf("expected encoded packet for lane=%q kind=%q", candidate.Lane, candidate.Kind)
 		}
 		wire := mustDecodeWirePacket(t, encodedPacket)
+		if candidate.Lane == LaneEvent {
+			assertStringValue(t, wire, "t", "eb")
+			assertStringValue(t, wire, "type", PacketFamilyEventBatch)
+			assertContainsKey(t, wire, "bid")
+			assertContainsKey(t, wire, "ev")
+			assertNotContainsKey(t, wire, "lane")
+			assertNotContainsKey(t, wire, "baseline_id")
+			assertNotContainsKey(t, wire, "snapshot_id")
+			assertNotContainsKey(t, wire, "snapshot_kind")
+			assertNotContainsKey(t, wire, "chunk_index")
+			assertNotContainsKey(t, wire, "chunk_count")
+			assertNotContainsKey(t, wire, "is_final_chunk")
+			continue
+		}
 		if decodedPacketType(wire) == "" {
 			t.Fatalf("expected non-empty top-level type for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
 		}

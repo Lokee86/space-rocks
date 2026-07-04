@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime/quantize"
 )
 
 func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
@@ -121,10 +123,13 @@ func wireSessionWireFullPacket(packet SessionWireFullPacket) map[string]any {
 }
 
 func wireEventBatchPacket(packet EventBatchPacket) map[string]any {
-	wire := wireMetadataPacket(packet.Type, packet.Metadata)
-	wire["batch_id"] = packet.Batch.BatchID
-	wire["events"] = wireEventRecords(packet.Batch.Events)
-	return wire
+	return map[string]any{
+		"type":             packet.Type,
+		"sequence":         packet.Metadata.Sequence,
+		"server_sent_msec": packet.Metadata.ServerSentMsec,
+		"batch_id":         packet.Batch.BatchID,
+		"events":           wireEventRecords(packet.Batch.Events),
+	}
 }
 
 func wireRecordArray(records any) any {
@@ -339,6 +344,29 @@ func wireEventRecords(records []EventRecord) []any {
 }
 
 func wireEventRecord(record EventRecord) map[string]any {
+	switch record.Event.Type {
+	case "bullet_blast":
+		return wireBulletBlastEventRecord(record)
+	case "ship_death":
+		return wireShipDeathEventRecord(record)
+	case "damage_applied":
+		return wireDamageAppliedEventRecord(record)
+	case "damage_over_time_started":
+		return wireDamageOverTimeStartedEventRecord(record)
+	case "damage_over_time_tick":
+		return wireDamageOverTimeTickEventRecord(record)
+	case "radial_effect_started":
+		return wireRadialEffectStartedEventRecord(record)
+	case "pickup_collected":
+		return wirePickupCollectedEventRecord(record)
+	case "pickup_effect_applied":
+		return wirePickupEffectAppliedEventRecord(record)
+	case "pickup_expired":
+		return wirePickupExpiredEventRecord(record)
+	case "pickup_dropped":
+		return wirePickupDroppedEventRecord(record)
+	}
+
 	wire := map[string]any{
 		"event_id": record.EventID,
 	}
@@ -346,6 +374,138 @@ func wireEventRecord(record EventRecord) map[string]any {
 		wire[key] = value
 	}
 	return wire
+}
+
+func wireBulletBlastEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id": record.EventID,
+		"type":     record.Event.Type,
+		"x":        wireQuantizedEventFloat("event.bullet_blast.x", record.Event.X),
+		"y":        wireQuantizedEventFloat("event.bullet_blast.y", record.Event.Y),
+	}
+}
+
+func wireShipDeathEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":      record.EventID,
+		"type":          record.Event.Type,
+		"player_id":     record.Event.PlayerID,
+		"lives":         record.Event.Lives,
+		"respawn_delay": wireQuantizedEventFloat("event.ship_death.respawn_delay", record.Event.RespawnDelay),
+		"x":             wireQuantizedEventFloat("event.ship_death.x", record.Event.X),
+		"y":             wireQuantizedEventFloat("event.ship_death.y", record.Event.Y),
+	}
+}
+
+func wireDamageAppliedEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"source_type": record.Event.SourceType,
+		"source_id":   record.Event.SourceID,
+		"effect_type": record.Event.EffectType,
+		"amount":      record.Event.Amount,
+		"x":           wireQuantizedEventFloat("event.damage_applied.x", record.Event.X),
+		"y":           wireQuantizedEventFloat("event.damage_applied.y", record.Event.Y),
+	}
+}
+
+func wireDamageOverTimeStartedEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"source_type": record.Event.SourceType,
+		"source_id":   record.Event.SourceID,
+		"effect_type": record.Event.EffectType,
+		"amount":      record.Event.Amount,
+	}
+}
+
+func wireDamageOverTimeTickEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"source_type": record.Event.SourceType,
+		"source_id":   record.Event.SourceID,
+		"effect_type": record.Event.EffectType,
+		"amount":      record.Event.Amount,
+		"x":           wireQuantizedEventFloat("event.damage_over_time_tick.x", record.Event.X),
+		"y":           wireQuantizedEventFloat("event.damage_over_time_tick.y", record.Event.Y),
+	}
+}
+
+func wireRadialEffectStartedEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"source_type": record.Event.SourceType,
+		"source_id":   record.Event.SourceID,
+		"effect_type": record.Event.EffectType,
+		"x":           wireQuantizedEventFloat("event.radial_effect_started.x", record.Event.X),
+		"y":           wireQuantizedEventFloat("event.radial_effect_started.y", record.Event.Y),
+	}
+}
+
+func wirePickupCollectedEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"player_id":   record.Event.PlayerID,
+		"pickup_id":   record.Event.PickupID,
+		"pickup_type": record.Event.PickupType,
+		"x":           wireQuantizedEventFloat("event.pickup_collected.x", record.Event.X),
+		"y":           wireQuantizedEventFloat("event.pickup_collected.y", record.Event.Y),
+	}
+}
+
+func wirePickupEffectAppliedEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"player_id":   record.Event.PlayerID,
+		"pickup_id":   record.Event.PickupID,
+		"pickup_type": record.Event.PickupType,
+		"effect_type": record.Event.EffectType,
+		"amount":      record.Event.Amount,
+		"lives_after": record.Event.LivesAfter,
+	}
+}
+
+func wirePickupExpiredEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"pickup_id":   record.Event.PickupID,
+		"pickup_type": record.Event.PickupType,
+		"x":           wireQuantizedEventFloat("event.pickup_expired.x", record.Event.X),
+		"y":           wireQuantizedEventFloat("event.pickup_expired.y", record.Event.Y),
+	}
+}
+
+func wirePickupDroppedEventRecord(record EventRecord) map[string]any {
+	return map[string]any{
+		"event_id":    record.EventID,
+		"type":        record.Event.Type,
+		"pickup_id":   record.Event.PickupID,
+		"pickup_type": record.Event.PickupType,
+		"source_type": record.Event.SourceType,
+		"source_id":   record.Event.SourceID,
+		"table_id":    record.Event.TableID,
+		"x":           wireQuantizedEventFloat("event.pickup_dropped.x", record.Event.X),
+		"y":           wireQuantizedEventFloat("event.pickup_dropped.y", record.Event.Y),
+	}
+}
+
+func wireQuantizedEventFloat(fieldPath string, value float64) any {
+	policy, ok := quantize.LookupPolicy(fieldPath)
+	if !ok {
+		return value
+	}
+	encoded, err := quantize.EncodeFloat(policy, value)
+	if err != nil {
+		return value
+	}
+	return encoded
 }
 
 func firstSessionTotalAsteroids(delta RecordDelta[SessionTotalAsteroidsRecord]) any {
@@ -553,6 +713,7 @@ func toSnakeCase(value string) string {
 func isUpper(r rune) bool { return r >= 'A' && r <= 'Z' }
 func isLower(r rune) bool { return r >= 'a' && r <= 'z' }
 func isDigit(r rune) bool { return r >= '0' && r <= '9' }
+
 
 
 

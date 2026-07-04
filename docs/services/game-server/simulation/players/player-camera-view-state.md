@@ -1,4 +1,4 @@
-# Player Camera View State
+﻿# Player Camera View State
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)
 
@@ -25,7 +25,7 @@ ClientConfig.VisibleWorldWidth
 ClientConfig.VisibleWorldHeight
 ```
 
-This is not a rendered camera. It is a server-side visibility and spawning anchor. The client owns rendered camera presentation, but the server needs each player’s visible world size and current anchor position so it can spawn asteroids offscreen, prevent spawning inside any current viewport, and remove bullets or asteroids only after they are far from all player views.
+This is not a rendered camera. It is a server-side visibility and spawning anchor. The client owns rendered camera presentation, but the server needs each playerâ€™s visible world size and current anchor position so it can spawn asteroids offscreen, prevent spawning inside any current viewport, and remove bullets or asteroids only after they are far from all player views.
 
 The normal camera-view lifecycle is:
 
@@ -77,7 +77,7 @@ The player camera-view boundary owns:
 
 * Creating a camera view when an active player ship is created through normal player add, respawn, or devtools spawn/respawn paths.
 * Storing one camera view per player ID.
-* Storing the server’s current per-player visibility anchor position.
+* Storing the serverâ€™s current per-player visibility anchor position.
 * Storing the most recent valid viewport config received for the player.
 * Seeding missing camera config from session config, active ship config, or world-size fallback.
 * Updating camera-view position from the active ship during simulation stepping.
@@ -114,7 +114,7 @@ Those responsibilities belong to client world-sync, client app-shell/session con
 
 ### Server visibility anchor
 
-`CameraView` is the server’s per-player visibility anchor.
+`CameraView` is the serverâ€™s per-player visibility anchor.
 
 World systems use it to decide whether positions are inside any viewport-sized player view or far enough from every view to remove runtime entities.
 
@@ -196,7 +196,7 @@ Respawn creates a new active ship from the player session and reattaches the cam
 
 The camera-view boundary consumes the generated gameplay `client_config` packet.
 
-The packet is for reporting the client’s visible viewport size to the server. The Godot client measures its visible viewport and sends:
+The packet is for reporting the clientâ€™s visible viewport size to the server. The Godot client measures its visible viewport and sends:
 
 ```text
 type = "client_config"
@@ -223,7 +223,7 @@ runtime.Ship.Config, if an active ship exists
 
 This means a pending-respawn player with a session and camera view can still refresh server camera config even when no active ship exists.
 
-`CameraView` is not projected directly in lane packets. Clients observe active ship state through world lane records, player session state through session lane records, lifecycle status through session lane lifecycle records, bullets through world lane bullet records, asteroids through world lane asteroid records, pickups through world lane pickup records, and events through `event_batch`. The server camera view remains internal simulation state.
+`CameraView` is not projected directly in lane packets. Clients observe active ship state through world lane records, player session state through session lane records, lifecycle status through session lane lifecycle records, bullets through world lane bullet records, asteroids through world lane asteroid records, pickups through world lane pickup records, and presentation events through compact sparse `event_batch` delivery. The server camera view remains internal simulation state, and this doc describes logical behavior rather than literal compact wire keys.
 
 Devtools paths can also create or update camera views when forcing player spawn or respawn:
 
@@ -357,3 +357,4 @@ The name `CameraView` is server-side terminology. It should not be read as owner
 The current server camera view is anchored to active ship position during normal gameplay. Spectate and rendered camera ownership remain client-side presentation concerns.
 
 `runtime.CameraView.IsInside` and `runtime.CameraView.IsFarFrom` perform non-wrapped rectangle checks on the runtime type, but the game-level visibility helpers use `space.Delta` for toroidal-aware camera comparisons. Current gameplay visibility/despawn behavior should use the game-level helpers.
+

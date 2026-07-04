@@ -14,6 +14,8 @@ Inbound packet routing begins after the WebSocket transport has already decoded 
 
 `NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission. After that signal fires, inbound routing is owned by `ClientConnectionService`, `ServerPacketDispatcher`, and `ServerPacketRouter`.
 
+Compact `event_batch` packets are expanded by the client compact packet expansion layer before event appliers receive them, so downstream gameplay code sees readable long-key event dictionaries rather than compact aliases. Nested `ev` or `events` entries are expanded as part of that same transport step, and event dedupe still keys off `event_id` after expansion. Runtime wire packets keep compact aliases on the wire; domain logs may still show raw x/y before projection.
+
 Current flow:
 
 ```text
@@ -76,7 +78,7 @@ The routing path is signal-based and lane-aware. It does not mutate server autho
 
 ### Decoded packet handoff
 
-`NetworkClient` receives raw WebSocket text and hands it to `PacketCodec.decode`. `PacketCodec.decode` accepts compact realtime aliases by expanding them to readable long-key dictionaries before envelope validation and dispatch; see [Realtime Compact Wire Mapping](../../game-server/networking/realtime-compact-wire-mapping.md). Legacy long-key packets remain accepted, and packets with neither `type` nor compact `t` still fail envelope validation.
+`NetworkClient` receives raw WebSocket text and hands it to `PacketCodec.decode`. `PacketCodec.decode` accepts compact realtime aliases by expanding them to readable long-key dictionaries before envelope validation and dispatch; see [Realtime Compact Wire Mapping](../../game-server/networking/realtime-compact-wire-mapping.md). Legacy long-key packets remain accepted, and packets with neither `type` nor compact `t` still fail envelope validation. For `event_batch`, that expansion happens before `event_batch_applier.gd` or gameplay event appliers see the packet payload, and compact event aliases stay a transport detail rather than leaking into gameplay presentation code.
 
 `ClientConnectionService._on_packet_received(packet)` receives that dictionary and delegates to `ServerPacketDispatcher.dispatch(packet)`.
 
@@ -634,3 +636,5 @@ Lane routing and presentation fanout are separate boundaries. `RealtimeRouter` o
 Telemetry pong is routed through the same inbound dispatcher but consumed directly by telemetry context rather than through `SessionNetworkController`.
 
 Gameplay packet acceptance is intentionally not handled by the router. The router classifies packets; `GameplaySessionController` decides whether gameplay packets are currently accepted.
+
+

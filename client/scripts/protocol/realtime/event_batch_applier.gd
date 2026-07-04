@@ -1,5 +1,6 @@
 extends RefCounted
 
+const RealtimeQuantize := preload("res://scripts/protocol/realtime/realtime_quantize.gd")
 var _applied_batch_ids := {}
 var _applied_event_ids := {}
 var _applied_events := []
@@ -27,15 +28,16 @@ func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
 	var applied_any := false
 	var newly_applied_events := []
 	for event in events:
-		var event_id = str(event.get("event_id", ""))
+		var decoded_event := RealtimeQuantize.decode_event_record(event)
+		var event_id = str(decoded_event.get("event_id", ""))
 		if event_id != "" and _applied_event_ids.has(event_id):
 			continue
 		if batch_already_applied and event_id == "":
 			continue
-		if not _apply_event(event_sink, event):
+		if not _apply_event(event_sink, decoded_event):
 			continue
 		applied_any = true
-		newly_applied_events.append(event)
+		newly_applied_events.append(decoded_event)
 
 	if batch_id != null:
 		_applied_batch_ids[batch_id] = true

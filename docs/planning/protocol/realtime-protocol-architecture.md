@@ -106,7 +106,9 @@ Current implementation has lane-native packets, baselines, deltas, and candidate
 
 Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. High-density world stress cases can still exceed current packet budget even after quantization, compact aliases, and sparse deltas; remaining work belongs to prioritization, packing, and binary representation.
 
-Server-owned outbound realtime lane state projection quantizes float-like values before delta comparison and JSON encoding, without truncating authoritative simulation state.
+State lanes are quantized during outbound projection before delta comparison.
+Presentation-event records are quantized during explicit event wire shaping.
+The current quantization contract is described in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md), and projection ownership lives in [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md).
 
 Future planning targets remain:
 
@@ -121,7 +123,7 @@ Live priority should stay conservative until required gameplay and presentation 
 
 ### Numeric Quantization Note
 
-Server-owned outbound realtime lane state projection quantizes float-like values before delta comparison and JSON encoding. The current quantization contract is described in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md), and projection ownership lives in [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md).
+State lanes are quantized during outbound projection before delta comparison. Presentation-event records are quantized during explicit event wire shaping. The current quantization contract is described in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md), and projection ownership lives in [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md).
 
 Keep this planning doc high-level: it tracks the remaining protocol roadmap, not field policy, code paths, or runtime behavior details.
 
@@ -141,4 +143,5 @@ Future packetcodec and transport evolution must preserve these ownership seams.
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.
+
 

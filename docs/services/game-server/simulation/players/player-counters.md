@@ -326,9 +326,9 @@ RoomPlayerMatchSummary.score
 
 `world lane ship records` is active live ship state only. It should not be used as the source of truth for score or lives.
 
-Death events use `event_batch[].lives` to report the player's remaining lives after the death consequence is applied.
+Death events use `event_batch[].lives` to report the player's remaining lives after the death consequence is applied. That path is a logical expanded field after decode; the compact wire shaper may emit a smaller sparse record for `ship_death`. See [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md) and [Presentation Event Queue](../runtime/presentation-event-queue.md).
 
-Pickup effect events use `event_batch[].lives_after` to report the updated lives value after an `add_lives` effect succeeds.
+Pickup effect events use `event_batch[].lives_after` to report the updated lives value after an `add_lives` effect succeeds. That path is a logical expanded field after decode; the compact wire shaper may emit a smaller sparse record for the corresponding event.
 
 Room match results use `PlayerMatchFacts`, which reads score and ship deaths from player sessions. Room code later combines those game-owned facts with room membership identity when building match result summaries.
 

@@ -133,13 +133,13 @@ play_game_over_sound()
 stop_game_over_sound()
 ```
 
-The helper does not inspect packet data and does not decide whether an effect should happen.
+The helper does not inspect packet data and does not decide whether an effect should happen. Compact wire aliases are transport details, not audio API inputs.
 
 ### Gameplay event audio
 
 `GameplayEventFlow` constructs `GameplayEffects` and `GameplayEventController`.
 
-`EventPresentationAdapter` forwards applied `event_batch` output into `GameplayEventLifecycleFlow`, which then hands those events to `GameplayEventFlow`.
+`EventPresentationAdapter` forwards applied `event_batch` output into `GameplayEventLifecycleFlow`, which then hands those events to `GameplayEventFlow`. `event_batch` reaches this flow through compact wire output, but it is expanded before gameplay audio consumes it, so audio code should work with readable long-key event dictionaries rather than compact aliases.
 
 `GameplayEventController` reads server events, converts event server coordinates into visual coordinates, and asks `GameplayEffects` to spawn presentation effects.
 

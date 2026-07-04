@@ -1,4 +1,4 @@
-# World Authority
+﻿# World Authority
 
 Parent index: [World](./!INDEX.md)
 
@@ -265,7 +265,7 @@ session lane
 = match-local durable player session state and lifecycle read models
 
 event_batch
-= transient packet-facing presentation events
+= transient packet-facing presentation events, compacted through the realtime wire path
 ```
 
 Important projection boundaries:
@@ -281,7 +281,7 @@ session lane lifecycle records
 = active, pending_respawn, or eliminated lifecycle read model
 
 event_batch
-= transient packet-facing presentation events
+= transient packet-facing presentation events, compacted through the realtime wire path
 
 server_sent_msec
 = networking write timestamp, not simulation state
@@ -600,3 +600,4 @@ The current implementation still keeps many world mutations under the root `game
 The active client ViewAnchor model is intentionally presentation-only. It can change what the player sees and how coordinates are converted, but it does not change world ownership.
 
 World authority should be treated as a permanent design constraint, not a temporary implementation detail.
+

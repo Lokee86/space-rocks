@@ -1,4 +1,4 @@
-# Realtime Client Server Flow
+﻿# Realtime Client Server Flow
 
 Parent index: [Technical](./!INDEX.md)
 
@@ -245,7 +245,7 @@ On each server tick, the WebSocket write path can send gameplay lane packets whe
 
 The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`.
 
-World lane carries authoritative visible entity presentation state. Overlay lane carries receiver-specific HUD-facing values. Session lane carries player/session/lifecycle/asteroid-count presentation state. Event batch carries transient presentation events. For world, overlay, and session state lanes, numeric wire quantization, field deltas, sparse delta omission, and compact JSON aliases are current active behavior. event_batch remains transient presentation event delivery and is not a field-delta or sparse-delta state lane.
+World lane carries authoritative visible entity presentation state. Overlay lane carries receiver-specific HUD-facing values. Session lane carries player/session/lifecycle/asteroid-count presentation state. For world, overlay, and session state lanes, numeric wire quantization, field deltas, sparse delta omission, and compact JSON aliases are current active behavior. `event_batch` is transient presentation-event delivery, not a state delta lane. It now uses compact output encoding, and known event records are sparse and event-type-specific. Known event `x`/`y` and `ship_death` `respawn_delay` are quantized during event wire shaping. `event_batch` does not use baselines, deltas, state snapshots, or chunking.
 
 The server stamps outbound gameplay lane packets with server send time before encoding and writing them.
 
@@ -335,7 +335,7 @@ The client renders from server-observed facts. It does not recalculate authorita
 
 The client can close gracefully for replay, lobby return, pregame return, main-menu return, or normal session cleanup.
 
-The game server also handles read or write failure by tearing down the WebSocket session. During disconnect or requested leave, the server detaches the session from the current room when needed, clears the session’s room and active player routing fields, and broadcasts a room snapshot if remaining room members should observe the change.
+The game server also handles read or write failure by tearing down the WebSocket session. During disconnect or requested leave, the server detaches the session from the current room when needed, clears the sessionâ€™s room and active player routing fields, and broadcasts a room snapshot if remaining room members should observe the change.
 
 If the room already has a resolved match result before exit, the server attempts to report that result before losing the session reference.
 
@@ -481,6 +481,7 @@ Client input is sent to the server, the server advances simulation, and clients 
 
 WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
-Lane-native packets are current active realtime behavior. World, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. event_batch remains separate transient event delivery. Remaining future work includes deeper prioritization, packet-budget behavior, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket path.
+Lane-native packets are current active realtime behavior. World, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. `event_batch` remains compact sparse quantized presentation-event delivery. Remaining future work includes deeper prioritization, packet-budget behavior, tuple/array packing, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket path.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.
+

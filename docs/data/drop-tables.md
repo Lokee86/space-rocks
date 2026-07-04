@@ -1,4 +1,4 @@
-# Drop Tables
+﻿# Drop Tables
 
 Parent index: [Data](./!INDEX.md)
 
@@ -269,7 +269,7 @@ world lane pickup records
 event_batch
 ```
 
-The client does not consume drop-table generated output directly.
+The client does not consume drop-table generated output directly. Any pickup-related presentation events travel separately through compact sparse `event_batch` delivery rather than through the drop-table data itself.
 
 ## Pipeline usage
 
@@ -487,3 +487,4 @@ Only `basicasteroids` exists today.
 Drop-table generated output is currently Go-only.
 
 Drop-table events are presentation events after successful authoritative spawn. `pickup_dropped` does not mean the pickup was collected, consumed, expired, or applied to a player.
+

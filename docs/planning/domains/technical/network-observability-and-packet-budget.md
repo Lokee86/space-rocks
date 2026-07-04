@@ -70,6 +70,8 @@ P1 answers whether the current architecture can safely support more entities and
 - Active debug output does not prove contributor counts by delta section.
 - Active debug output does not implement packet budget enforcement or record-level prioritization.
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
+- Ordinary world or overlay writes can be small, but event ticks can spike because `event_batch` is included with world, overlay, and session on the same active write.
+- Compact sparse event records reduce that event-tick spike.
 
 ### Future-State Note
 
@@ -202,7 +204,7 @@ Likely protocol work families under Phase P2, without choosing one:
 - Compact wire shape or generated short field names, if JSON key overhead dominates.
 - Delta snapshots, if repeated full entity state dominates.
 - Session lane split, if all data is being sent at the same frequency.
-- Event batching, event IDs, batch IDs, duplicate suppression, and drain-after-active-socket-write/enqueue-success behavior if presentation events accumulate or repeat too long.
+- Event batching, event IDs, batch IDs, duplicate suppression, and drain-after-active-socket-write/enqueue-success behavior if presentation events accumulate or repeat too long. `event_batch` is already an active delivery path, so duplicate suppression and drain semantics should be described as current behavior where implemented, not only future work.
 - Debug lane separation, if debug or devtools data leaks into normal gameplay packets.
 - Shared room snapshot plus per-client overlay, if most state is duplicated per client but only small portions are player-specific.
 
@@ -247,6 +249,7 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 ## Notes
 
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
+
 
 
 

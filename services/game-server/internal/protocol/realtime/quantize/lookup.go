@@ -24,6 +24,23 @@ var fieldPolicies = map[string]Policy{
 	"world.pickups.y":                  mustPolicy(PolicyPosition),
 	"world.pickups.age_seconds":        mustPolicy(PolicySeconds),
 	"world.pickups.lifespan_seconds":   mustPolicy(PolicySeconds),
+	"event.bullet_blast.x":             mustPolicy(PolicyPosition),
+	"event.bullet_blast.y":             mustPolicy(PolicyPosition),
+	"event.ship_death.x":               mustPolicy(PolicyPosition),
+	"event.ship_death.y":               mustPolicy(PolicyPosition),
+	"event.ship_death.respawn_delay":   mustPolicy(PolicySeconds),
+	"event.damage_applied.x":           mustPolicy(PolicyPosition),
+	"event.damage_applied.y":           mustPolicy(PolicyPosition),
+	"event.radial_effect_started.x":    mustPolicy(PolicyPosition),
+	"event.radial_effect_started.y":    mustPolicy(PolicyPosition),
+	"event.pickup_collected.x":         mustPolicy(PolicyPosition),
+	"event.pickup_collected.y":         mustPolicy(PolicyPosition),
+	"event.pickup_expired.x":           mustPolicy(PolicyPosition),
+	"event.pickup_expired.y":           mustPolicy(PolicyPosition),
+	"event.pickup_dropped.x":           mustPolicy(PolicyPosition),
+	"event.pickup_dropped.y":           mustPolicy(PolicyPosition),
+	"event.damage_over_time_tick.x":    mustPolicy(PolicyPosition),
+	"event.damage_over_time_tick.y":    mustPolicy(PolicyPosition),
 }
 
 func LookupPolicy(fieldPath string) (Policy, bool) {

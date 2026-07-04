@@ -38,7 +38,7 @@ services/game-server/internal/protocol/realtime/
 services/game-server/internal/networking/websocket_write.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The WebSocket write loop owns tick-driven invocation, successful delivery, post-write state changes, and the current successful-write debug wire/summary logging.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The WebSocket write loop owns tick-driven invocation, successful delivery, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 

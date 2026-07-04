@@ -1,4 +1,4 @@
-# Room Snapshot Projection
+﻿# Room Snapshot Projection
 
 Parent index: [Game Server Rooms](./!INDEX.md)
 
@@ -141,7 +141,7 @@ max_players
 match_result
 ```
 
-The packet does not carry gameplay simulation state. Gameplay simulation state is projected separately through lane-native realtime packet families such as world_full/world_delta, overlay_full/overlay_delta, session_full/session_delta, and event_batch.
+The packet does not carry gameplay simulation state. Gameplay simulation state is projected separately through lane-native realtime packet families such as world_full/world_delta, overlay_full/overlay_delta, and session_full/session_delta. The event lane is separate transient presentation-event delivery through `event_batch`, which is compact sparse wire output rather than room snapshot state.
 
 ### Snapshot fields
 
@@ -427,3 +427,4 @@ Legacy documentation supplied two useful current facts for this boundary: room m
 A room returning to lobby does not itself clear the resolved match summary. Starting the next match through `BeginNextMatch` clears the previous resolved summary. Snapshot projection therefore includes a match result whenever the room currently has a resolved summary, not only while the room state is `game_over`.
 
 `BroadcastRoomSnapshot` builds one snapshot per receiving session because `local_player_id` is receiver-specific.
+

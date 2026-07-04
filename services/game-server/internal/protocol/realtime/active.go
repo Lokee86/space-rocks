@@ -165,7 +165,7 @@ func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
 	if packet == nil {
 		return nil, 0
 	}
-	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay {
+	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay || candidate.Lane == LaneEvent {
 		quantize.AssertNoRawFloats(string(candidate.Lane), string(candidate.Lane), packet)
 		packet = CompactWirePacket(packet)
 	}
