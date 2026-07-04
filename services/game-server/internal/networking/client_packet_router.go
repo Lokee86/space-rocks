@@ -19,6 +19,9 @@ func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte
 		HandleRemainingDevtools: func() bool {
 			return inbound.HandleRemainingDevtoolsPacket(adapter, remoteAddr, msg, envelope)
 		},
+		HandleWebRTCSignaling: func() bool {
+			return inbound.HandleWebRTCSignalingPacket(adapter, remoteAddr, msg, envelope)
+		},
 		DecodePacket: func() (game.ClientPacket, error) {
 			var packet game.ClientPacket
 			if err := packetcodec.Decode(msg, &packet); err != nil {

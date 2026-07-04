@@ -88,6 +88,7 @@ The canonical sources for data-sync-supported active packets are:
 - `shared/packets/gameplay.toml`
 - `shared/packets/debug.toml`
 - `shared/packets/lobby.toml`
+- `shared/packets/webrtc.toml`
 
 The canonical sources for data-sync-supported active drop tables are the TOML files under `shared/drop_tables/`, including `shared/drop_tables/basicasteroids.toml`.
 
@@ -405,3 +406,4 @@ shared/drop_tables/basicasteroids.toml
 4. Review the diff.
 5. Run `data-sync -push -drop-tables -go`.
 6. Run `data-sync -check -drop-tables -go`.
+

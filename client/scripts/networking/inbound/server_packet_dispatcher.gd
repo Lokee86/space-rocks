@@ -19,6 +19,11 @@ signal debug_shape_catalog_received(packet: Dictionary)
 signal debug_status_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
 signal telemetry_pong_received(packet: Dictionary)
+signal webrtc_answer_received(packet: Dictionary)
+signal webrtc_ice_candidate_received(packet: Dictionary)
+signal webrtc_ready_received(packet: Dictionary)
+signal webrtc_smoke_received(packet: Dictionary)
+signal webrtc_failed_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
 
 
@@ -49,6 +54,16 @@ func dispatch(packet: Dictionary) -> void:
 		resync_request_received.emit(packet)
 	elif ServerPacketRouter.is_resync_required(packet):
 		resync_required_received.emit(packet)
+	elif ServerPacketRouter.is_webrtc_answer(packet):
+		webrtc_answer_received.emit(packet)
+	elif ServerPacketRouter.is_webrtc_ice_candidate(packet):
+		webrtc_ice_candidate_received.emit(packet)
+	elif ServerPacketRouter.is_webrtc_ready(packet):
+		webrtc_ready_received.emit(packet)
+	elif ServerPacketRouter.is_webrtc_smoke(packet):
+		webrtc_smoke_received.emit(packet)
+	elif ServerPacketRouter.is_webrtc_failed(packet):
+		webrtc_failed_received.emit(packet)
 	elif ServerPacketRouter.is_debug_shape_catalog(packet):
 		debug_shape_catalog_received.emit(packet)
 	elif ServerPacketRouter.is_debug_status(packet):

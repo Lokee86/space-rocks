@@ -1,0 +1,188 @@
+[[structs]]
+id = "WebRTCOffer"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "description_type"
+go_name = "DescriptionType"
+json = "description_type"
+type = "string"
+
+[[structs.fields]]
+name = "sdp"
+json = "sdp"
+type = "string"
+
+[[structs]]
+id = "WebRTCAnswer"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "description_type"
+go_name = "DescriptionType"
+json = "description_type"
+type = "string"
+
+[[structs.fields]]
+name = "sdp"
+json = "sdp"
+type = "string"
+
+[[structs]]
+id = "WebRTCIceCandidate"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "media"
+json = "media"
+type = "string"
+
+[[structs.fields]]
+name = "index"
+json = "index"
+type = "int"
+
+[[structs.fields]]
+name = "name"
+json = "name"
+type = "string"
+
+[[structs]]
+id = "WebRTCReady"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "channel_label"
+go_name = "ChannelLabel"
+json = "channel_label"
+type = "string"
+
+[[structs.fields]]
+name = "channel_id"
+go_name = "ChannelID"
+json = "channel_id"
+type = "int"
+
+[[structs]]
+id = "WebRTCSmoke"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "smoke_id"
+go_name = "SmokeID"
+json = "smoke_id"
+type = "string"
+
+[[structs.fields]]
+name = "origin"
+json = "origin"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[structs]]
+id = "WebRTCFailed"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "error_code"
+go_name = "ErrorCode"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[packet_types]]
+id = "webrtc_offer"
+value = "webrtc_offer"
+
+[[packet_types]]
+id = "webrtc_answer"
+value = "webrtc_answer"
+
+[[packet_types]]
+id = "webrtc_ice_candidate"
+value = "webrtc_ice_candidate"
+
+[[packet_types]]
+id = "webrtc_ready"
+value = "webrtc_ready"
+
+[[packet_types]]
+id = "webrtc_smoke"
+value = "webrtc_smoke"
+
+[[packet_types]]
+id = "webrtc_failed"
+value = "webrtc_failed"
+
+[[builders]]
+id = "webrtc_offer_packet"
+args = ["description_type", "sdp"]
+
+[builders.body]
+type = "webrtc_offer"
+description_type = "$description_type"
+sdp = "$sdp"
+
+[[builders]]
+id = "webrtc_ice_candidate_packet"
+args = ["media", "index", "name"]
+
+[builders.body]
+type = "webrtc_ice_candidate"
+media = "$media"
+index = "$index"
+name = "$name"
+
+[[builders]]
+id = "webrtc_smoke_packet"
+args = ["smoke_id", "origin", "message"]
+
+[builders.body]
+type = "webrtc_smoke"
+smoke_id = "$smoke_id"
+origin = "$origin"
+message = "$message"
+
+[[builders]]
+id = "webrtc_failed_packet"
+args = ["error_code", "message"]
+
+[builders.body]
+type = "webrtc_failed"
+error_code = "$error_code"
+message = "$message"
+
+
+

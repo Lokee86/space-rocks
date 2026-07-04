@@ -17,6 +17,7 @@ def migrated_packet_toml_paths(tmp_path: Path) -> tuple[Path, ...]:
         "shared/packets/gameplay.toml",
         "shared/packets/debug.toml",
         "shared/packets/lobby.toml",
+        "shared/packets/webrtc.toml",
     )
     outputs: list[Path] = []
     for relative_path in relative_paths:
@@ -440,3 +441,4 @@ shoot = "bool"
 
     with pytest.raises(PacketTomlError):
         load_packet_schema_files((legacy,))
+

@@ -16,6 +16,7 @@ paths = [
   "shared/packets/gameplay.toml",
   "shared/packets/debug.toml",
   "shared/packets/lobby.toml",
+  "shared/packets/webrtc.toml",
   "shared/packets/player_data.toml",
 ]
 
@@ -63,3 +64,4 @@ files = ["services/game-server/internal/game/drops/drop_tables.go"]
 sections = []
 owns = []
 outputs = ["server_drop_tables"]
+

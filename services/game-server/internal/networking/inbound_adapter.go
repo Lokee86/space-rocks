@@ -69,3 +69,19 @@ func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {
 func (a inboundSessionAdapter) EnqueuePlayerPauseState() {
 	a.session.EnqueuePlayerPauseState()
 }
+
+func (a inboundSessionAdapter) HandleWebRTCOffer(descriptionType string, sdp string) {
+	a.session.HandleWebRTCOffer(descriptionType, sdp)
+}
+
+func (a inboundSessionAdapter) HandleWebRTCIceCandidate(media string, index int, name string) {
+	a.session.HandleWebRTCIceCandidate(media, index, name)
+}
+
+func (a inboundSessionAdapter) HandleWebRTCSmoke(smokeID string, origin string, message string) {
+	a.session.HandleWebRTCSmoke(smokeID, origin, message)
+}
+
+func (a inboundSessionAdapter) HandleWebRTCFailed(errorCode string, message string) {
+	a.session.HandleWebRTCFailed(errorCode, message)
+}

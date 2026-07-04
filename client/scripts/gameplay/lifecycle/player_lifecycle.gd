@@ -1,11 +1,11 @@
 extends RefCounted
 
-const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
+const FIELD_PLAYER_LIFECYCLE := "player_lifecycle"
 const STATUS_ACTIVE := "active"
 
 
 static func from_state(data: Dictionary) -> Dictionary:
-	var lifecycle_data = data.get(Packets.FIELD_PLAYER_LIFECYCLE, {})
+	var lifecycle_data = data.get(FIELD_PLAYER_LIFECYCLE, {})
 	if !(lifecycle_data is Dictionary):
 		return {}
 
@@ -29,5 +29,3 @@ static func is_player_active(lifecycle: Dictionary, player_id: String) -> bool:
 		return false
 
 	return str(lifecycle_value) == STATUS_ACTIVE
-
-

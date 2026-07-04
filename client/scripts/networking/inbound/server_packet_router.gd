@@ -59,6 +59,26 @@ static func is_resync_required(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_RESYNC_REQUIRED
 
 
+static func is_webrtc_answer(packet: Dictionary) -> bool:
+	return packet_type(packet) == "webrtc_answer"
+
+
+static func is_webrtc_ice_candidate(packet: Dictionary) -> bool:
+	return packet_type(packet) == "webrtc_ice_candidate"
+
+
+static func is_webrtc_ready(packet: Dictionary) -> bool:
+	return packet_type(packet) == "webrtc_ready"
+
+
+static func is_webrtc_smoke(packet: Dictionary) -> bool:
+	return packet_type(packet) == "webrtc_smoke"
+
+
+static func is_webrtc_failed(packet: Dictionary) -> bool:
+	return packet_type(packet) == "webrtc_failed"
+
+
 static func is_debug_status(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_DEBUG_STATUS
 

@@ -24,6 +24,7 @@ DEFAULT_SOT_PATHS = {
         "shared/packets/gameplay.toml",
         "shared/packets/debug.toml",
         "shared/packets/lobby.toml",
+        "shared/packets/webrtc.toml",
     ),
     "drop_tables": (
         "shared/drop_tables/basicasteroids.toml",
@@ -413,3 +414,4 @@ def _resolve_path(root: Path, value: str | Path) -> Path:
     if path.is_absolute():
         return path.resolve()
     return (root / path).resolve()
+

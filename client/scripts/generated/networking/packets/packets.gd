@@ -22,6 +22,12 @@ const TYPE_SESSION_DELTA := "session_delta"
 const TYPE_EVENT_BATCH := "event_batch"
 const TYPE_RESYNC_REQUEST := "resync_request"
 const TYPE_RESYNC_REQUIRED := "resync_required"
+const TYPE_WEBRTC_OFFER := "webrtc_offer"
+const TYPE_WEBRTC_ANSWER := "webrtc_answer"
+const TYPE_WEBRTC_ICE_CANDIDATE := "webrtc_ice_candidate"
+const TYPE_WEBRTC_READY := "webrtc_ready"
+const TYPE_WEBRTC_SMOKE := "webrtc_smoke"
+const TYPE_WEBRTC_FAILED := "webrtc_failed"
 const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
 const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
 const TYPE_TOGGLE_DEBUG_FREEZE_WORLD := "toggle_debug_freeze_world"
@@ -56,12 +62,12 @@ const FIELD_ACCEPTED := "accepted"
 const FIELD_ACCOUNT_ID := "account_id"
 const FIELD_AGE_SECONDS := "age_seconds"
 const FIELD_AMOUNT := "amount"
-const FIELD_ASTEROIDS := "asteroids"
 const FIELD_ASTEROIDS_FROZEN := "asteroids_frozen"
 const FIELD_AUTHENTICATED := "authenticated"
 const FIELD_BACK := "back"
-const FIELD_BULLETS := "bullets"
 const FIELD_BULLETS_FROZEN := "bullets_frozen"
+const FIELD_CHANNEL_ID := "channel_id"
+const FIELD_CHANNEL_LABEL := "channel_label"
 const FIELD_CLIENT_SENT_MSEC := "client_sent_msec"
 const FIELD_COLLISIONS_FROZEN := "collisions_frozen"
 const FIELD_CONFIG := "config"
@@ -69,6 +75,7 @@ const FIELD_CONNECTED := "connected"
 const FIELD_CONTEXT := "context"
 const FIELD_DEBUG_STATUS := "debug_status"
 const FIELD_DEBUG_STATUSES := "debug_statuses"
+const FIELD_DESCRIPTION_TYPE := "description_type"
 const FIELD_DIRECTION_X := "direction_x"
 const FIELD_DIRECTION_Y := "direction_y"
 const FIELD_DISPLAY_NAME := "display_name"
@@ -76,7 +83,6 @@ const FIELD_DUPLICATE := "duplicate"
 const FIELD_EFFECT_TYPE := "effect_type"
 const FIELD_ENTITY_TYPE := "entity_type"
 const FIELD_ERROR_CODE := "error_code"
-const FIELD_EVENTS := "events"
 const FIELD_FORWARD := "forward"
 const FIELD_FOUND := "found"
 const FIELD_FREEZE_TARGET := "freeze_target"
@@ -88,6 +94,7 @@ const FIELD_HIGH_SCORE := "high_score"
 const FIELD_ID := "id"
 const FIELD_IDENTITY := "identity"
 const FIELD_IDENTITY_KIND := "identity_kind"
+const FIELD_INDEX := "index"
 const FIELD_INFINITE_LIVES := "infinite_lives"
 const FIELD_INPUT := "input"
 const FIELD_INVINCIBLE := "invincible"
@@ -103,22 +110,21 @@ const FIELD_LOCAL_PROFILE_ID := "local_profile_id"
 const FIELD_MATCH_ID := "match_id"
 const FIELD_MATCH_RESULT := "match_result"
 const FIELD_MAX_PLAYERS := "max_players"
+const FIELD_MEDIA := "media"
 const FIELD_MEMBER_NAME := "member_name"
 const FIELD_MEMBERS := "members"
 const FIELD_MESSAGE := "message"
 const FIELD_MODE := "mode"
 const FIELD_NAME := "name"
+const FIELD_ORIGIN := "origin"
 const FIELD_OWNER_ID := "owner_id"
 const FIELD_PAUSED := "paused"
 const FIELD_PICKUP_CLASS := "pickup_class"
 const FIELD_PICKUP_ID := "pickup_id"
 const FIELD_PICKUP_TYPE := "pickup_type"
-const FIELD_PICKUPS := "pickups"
 const FIELD_PLAY_MODE := "play_mode"
 const FIELD_PLAYER_FROZEN := "player_frozen"
 const FIELD_PLAYER_ID := "player_id"
-const FIELD_PLAYER_LIFECYCLE := "player_lifecycle"
-const FIELD_PLAYER_SESSIONS := "player_sessions"
 const FIELD_PLAYERS := "players"
 const FIELD_POINTS := "points"
 const FIELD_PRIMARY_AMMO_POLICY := "primary_ammo_policy"
@@ -137,12 +143,12 @@ const FIELD_ROOM_STATE := "room_state"
 const FIELD_ROTATION := "rotation"
 const FIELD_SCALE := "scale"
 const FIELD_SCORE := "score"
+const FIELD_SDP := "sdp"
 const FIELD_SECONDARY_AMMO_POLICY := "secondary_ammo_policy"
 const FIELD_SECONDARY_AMMO_REMAINING := "secondary_ammo_remaining"
 const FIELD_SECONDARY_COOLDOWN_REMAINING := "secondary_cooldown_remaining"
 const FIELD_SECONDARY_FIRE := "secondary_fire"
 const FIELD_SECONDARY_WEAPON_ID := "secondary_weapon_id"
-const FIELD_SELF_ID := "self_id"
 const FIELD_SEQUENCE := "sequence"
 const FIELD_SERVER_RECEIVED_MSEC := "server_received_msec"
 const FIELD_SERVER_SENT_MSEC := "server_sent_msec"
@@ -152,6 +158,7 @@ const FIELD_SHIELDS := "shields"
 const FIELD_SHIP_DEATHS := "ship_deaths"
 const FIELD_SHIP_TYPE := "ship_type"
 const FIELD_SIZE := "size"
+const FIELD_SMOKE_ID := "smoke_id"
 const FIELD_SOURCE_ID := "source_id"
 const FIELD_SOURCE_TYPE := "source_type"
 const FIELD_SPAWN_X := "spawn_x"
@@ -165,7 +172,6 @@ const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TARGET_SCOPE := "target_scope"
 const FIELD_THRUSTING := "thrusting"
 const FIELD_TOKEN := "token"
-const FIELD_TOTAL_ASTEROIDS := "total_asteroids"
 const FIELD_TOTAL_SCORE := "total_score"
 const FIELD_TYPE := "type"
 const FIELD_USER_ID := "user_id"
@@ -221,6 +227,36 @@ static func select_target_at_position_request_packet(x, y, target_kind, target_i
 static func clear_target_request_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "clear_target_request"
+	return packet
+
+static func webrtc_offer_packet(description_type, sdp) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "webrtc_offer"
+	packet[FIELD_DESCRIPTION_TYPE] = description_type
+	packet[FIELD_SDP] = sdp
+	return packet
+
+static func webrtc_ice_candidate_packet(media, index, name) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "webrtc_ice_candidate"
+	packet[FIELD_MEDIA] = media
+	packet[FIELD_INDEX] = index
+	packet[FIELD_NAME] = name
+	return packet
+
+static func webrtc_smoke_packet(smoke_id, origin, message) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "webrtc_smoke"
+	packet[FIELD_SMOKE_ID] = smoke_id
+	packet[FIELD_ORIGIN] = origin
+	packet[FIELD_MESSAGE] = message
+	return packet
+
+static func webrtc_failed_packet(error_code, message) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "webrtc_failed"
+	packet[FIELD_ERROR_CODE] = error_code
+	packet[FIELD_MESSAGE] = message
 	return packet
 
 static func toggle_debug_invincible_packet() -> Dictionary:

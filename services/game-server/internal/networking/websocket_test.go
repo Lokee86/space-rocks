@@ -21,6 +21,15 @@ func (reporter *recordingMatchResultReporter) ReportMatchResult(summary playerda
 	return nil
 }
 
+func TestWebSocketSessionLeaveDisconnectedRoomIsQuietWithoutRoomState(t *testing.T) {
+	session := &webSocketSession{}
+	session.leaveDisconnectedRoom()
+
+	if session.room != nil || session.currentRoomID != "" || session.currentGamePlayerID != "" {
+		t.Fatal("expected empty disconnect leave to keep session state clear")
+	}
+}
+
 func TestWebSocketSessionReportsResolvedMatchBeforeRoomExit(t *testing.T) {
 	t.Run("requested leave reports before removing member", func(t *testing.T) {
 		session, room, reporter, cleanup := newWebSocketSessionRoomExitTestSetup(t)
@@ -42,21 +51,22 @@ func TestWebSocketSessionReportsResolvedMatchBeforeRoomExit(t *testing.T) {
 		}
 	})
 
-	t.Run("disconnected leave skips already reported match", func(t *testing.T) {
+	t.Run("disconnected leave clears state after manager cleanup", func(t *testing.T) {
 		session, room, reporter, cleanup := newWebSocketSessionRoomExitTestSetup(t)
 		defer cleanup()
 
-		room.MarkMatchResultReported()
+		roomID := room.ID
+		session.rooms.StopAll()
 		session.leaveDisconnectedRoom()
 
 		if reporter.calls != 0 {
-			t.Fatalf("expected reporter to be skipped for already reported match, got %d calls", reporter.calls)
-		}
-		if room.MemberCount() != 0 {
-			t.Fatalf("expected room member to be removed after disconnect, got %d", room.MemberCount())
+			t.Fatalf("expected reporter to be skipped after room cleanup, got %d calls", reporter.calls)
 		}
 		if session.room != nil || session.currentRoomID != "" || session.currentGamePlayerID != "" {
-			t.Fatal("expected session room state to be cleared after disconnect")
+			t.Fatal("expected session room state to be cleared after cleaned-up disconnect")
+		}
+		if _, ok := session.rooms.Find(roomID); ok {
+			t.Fatal("expected room to remain removed from manager")
 		}
 	})
 }

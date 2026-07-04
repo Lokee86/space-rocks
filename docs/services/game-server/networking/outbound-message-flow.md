@@ -76,6 +76,8 @@ The server owns authority behind the payloads. The client should treat outbound 
 
 The current outbound payloads include queued one-off responses plus lane-native realtime packets and debug packets.
 
+WebRTC signaling is still WebSocket-owned in the current implementation. The current smoke-test WebRTC packets are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. sr.reliable is a negotiated DataChannel with id 1, and its payloads are JSON text. This path is smoke-only; gameplay lanes still use WebSocket until the next cutover. No unreliable, hot, or asteroid channel exists yet.
+
 ## Routing model
 
 ### Connection write loop
@@ -481,6 +483,7 @@ The documented focused test paths for outbound routing are:
 The current `debug_shape_catalog` send-once behavior is tracked by room ID inside the write loop, not by a durable client acknowledgement.
 
 This document is scoped to current service implementation. Compact tuple packing is implemented for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records. Further transport mapping, binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization remain future work.
+
 
 
 

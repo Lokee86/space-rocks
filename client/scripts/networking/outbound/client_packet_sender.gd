@@ -27,6 +27,44 @@ func send_input_packet(packet: Dictionary) -> void:
 	send_packet(packet)
 
 
+func send_webrtc_offer(description_type: String, sdp: String) -> void:
+	if network_client != null:
+		network_client.send_raw_packet({
+			"type": "webrtc_offer",
+			"description_type": description_type,
+			"sdp": sdp,
+		})
+
+
+func send_webrtc_ice_candidate(media: String, index: int, name: String) -> void:
+	if network_client != null:
+		network_client.send_raw_packet({
+			"type": "webrtc_ice_candidate",
+			"media": media,
+			"index": index,
+			"name": name,
+		})
+
+
+func send_webrtc_smoke(smoke_id: String, origin: String, message: String) -> void:
+	if network_client != null:
+		network_client.send_raw_packet({
+			"type": "webrtc_smoke",
+			"smoke_id": smoke_id,
+			"origin": origin,
+			"message": message,
+		})
+
+
+func send_webrtc_failed(error_code: String, message: String) -> void:
+	if network_client != null:
+		network_client.send_raw_packet({
+			"type": "webrtc_failed",
+			"error_code": error_code,
+			"message": message,
+		})
+
+
 # Gameplay
 func send_respawn_request() -> void:
 	if network_client != null:

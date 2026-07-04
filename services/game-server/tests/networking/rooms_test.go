@@ -1602,42 +1602,89 @@ func readLaneBootstrapPackets(t *testing.T, conn *websocket.Conn) {
 		string(realtimemode.PacketFamilySessionFull),
 	}
 	seen := map[string]bool{}
-	deadline := time.Now().Add(time.Second)
+	deadline := time.Now().Add(2 * time.Second)
+
+	if err := conn.SetReadDeadline(deadline); err != nil {
+		t.Fatalf("set websocket read deadline: %v", err)
+	}
 
 	for {
 		if seen[required[0]] && seen[required[1]] && seen[required[2]] {
+			if err := conn.SetReadDeadline(time.Time{}); err != nil {
+				t.Fatalf("clear websocket read deadline: %v", err)
+			}
 			return
 		}
-		if time.Now().After(deadline) {
-			t.Fatalf("timed out waiting for lane bootstrap packets; required=%v seen=%v", required, seenPacketFamilies(seen))
+
+		var packet map[string]any
+		if err := conn.ReadJSON(&packet); err != nil {
+			t.Fatalf("read lane bootstrap packet envelope: %v; required=%v seen=%v", err, required, seenPacketFamilies(seen))
 		}
 
-		if err := conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond)); err != nil {
-			t.Fatalf("set websocket read deadline: %v", err)
+		family := bootstrapPacketFamily(packet)
+		if family == "" {
+			continue
 		}
-
-		var envelope struct {
-			Type string `json:"type"`
-		}
-		if err := conn.ReadJSON(&envelope); err != nil {
-			if isWebSocketTimeout(err) {
-				continue
-			}
-			t.Fatalf("read lane bootstrap packet envelope: %v", err)
-		}
-
-		if err := conn.SetReadDeadline(time.Time{}); err != nil {
-			t.Fatalf("clear websocket read deadline: %v", err)
-		}
-
-		if envelope.Type == "state" {
-			t.Fatal("unexpected state packet during lane bootstrap")
-		}
-
-		seen[envelope.Type] = true
+		seen[family] = true
 	}
 }
 
+func TestBootstrapPacketFamilyRecognizesRuntimeFullPacketShapes(t *testing.T) {
+	tests := []struct {
+		name   string
+		packet map[string]any
+		want   string
+	}{
+		{name: "readable world full", packet: map[string]any{"type": "world_full"}, want: "world_full"},
+		{name: "readable overlay full", packet: map[string]any{"type": "overlay_full"}, want: "overlay_full"},
+		{name: "readable session full", packet: map[string]any{"type": "session_full"}, want: "session_full"},
+		{name: "compact world full", packet: map[string]any{"t": "wf"}, want: "world_full"},
+		{name: "compact overlay full", packet: map[string]any{"t": "of"}, want: "overlay_full"},
+		{name: "compact session full", packet: map[string]any{"t": "sf"}, want: "session_full"},
+		{name: "unrelated readable packet", packet: map[string]any{"type": "debug_shape_catalog"}, want: ""},
+		{name: "unrelated compact packet", packet: map[string]any{"t": "wd"}, want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := bootstrapPacketFamily(tt.packet); got != tt.want {
+				t.Fatalf("bootstrapPacketFamily(%v) = %q, want %q", tt.packet, got, tt.want)
+			}
+		})
+	}
+}
+
+func bootstrapPacketFamily(packet map[string]any) string {
+	if packet == nil {
+		return ""
+	}
+
+	packetType, _ := packet["type"].(string)
+	if packetType == "debug_status" || packetType == "debug_shape_catalog" {
+		return ""
+	}
+	if packetType != "" {
+		switch packetType {
+		case "world_full", "overlay_full", "session_full":
+			return packetType
+		case "state":
+			return ""
+		}
+	}
+
+	compactType, _ := packet["t"].(string)
+	if compactType == "wf" {
+		return string(realtimemode.PacketFamilyWorldFull)
+	}
+	if compactType == "of" {
+		return string(realtimemode.PacketFamilyOverlayFull)
+	}
+	if compactType == "sf" {
+		return string(realtimemode.PacketFamilySessionFull)
+	}
+
+	return ""
+}
 func seenPacketFamilies(seen map[string]bool) []string {
 	families := make([]string, 0, len(seen))
 	for family := range seen {

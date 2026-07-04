@@ -195,6 +195,8 @@ fields:
 
 The once-per-packet-type guard remains diagnostic-only. It does not affect routing or lane state.
 
+Current WebRTC handling in the client networking stack is smoke-test only. WebSocket still owns auth, lobby, room lifecycle, and WebRTC signaling. The current packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. sr.reliable is a negotiated DataChannel with id 1, and packet payloads are JSON text. Gameplay lanes still use WebSocket until the next cutover. No unreliable, hot, or asteroid channel exists yet.
+
 ### Websocket auth result cache
 
 `ClientConnectionService` handles `authenticate_result` specially because websocket auth state is connection-level state.
@@ -636,5 +638,6 @@ Lane routing and presentation fanout are separate boundaries. `RealtimeRouter` o
 Telemetry pong is routed through the same inbound dispatcher but consumed directly by telemetry context rather than through `SessionNetworkController`.
 
 Gameplay packet acceptance is intentionally not handled by the router. The router classifies packets; `GameplaySessionController` decides whether gameplay packets are currently accepted.
+
 
 

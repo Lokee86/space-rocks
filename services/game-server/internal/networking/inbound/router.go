@@ -6,6 +6,7 @@ type ClientPacketRouter struct {
 	HandleSimpleDevtools    func() bool
 	HandlePlacementDevtools func() bool
 	HandleRemainingDevtools func() bool
+	HandleWebRTCSignaling   func() bool
 	DecodePacket            func() (game.ClientPacket, error)
 	HandleAuth              func(game.ClientPacket) bool
 	HandleTelemetry         func(game.ClientPacket) bool
@@ -21,6 +22,9 @@ func RouteClientPacket(router ClientPacketRouter) {
 		return
 	}
 	if router.HandleRemainingDevtools != nil && router.HandleRemainingDevtools() {
+		return
+	}
+	if router.HandleWebRTCSignaling != nil && router.HandleWebRTCSignaling() {
 		return
 	}
 

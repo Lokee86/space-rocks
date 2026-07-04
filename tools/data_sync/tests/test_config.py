@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from pathlib import Path
 
@@ -6,6 +6,7 @@ import pytest
 
 from data_sync.config import (
     DEFAULT_CONSTANTS_SCAN,
+    DEFAULT_SOT_PATHS,
     ConfigError,
     DataSyncConfig,
     DomainLanguageConfig,
@@ -85,6 +86,8 @@ def test_loads_valid_config(tmp_path: Path) -> None:
     assert config.target("constants", "ts").files == (
         tmp_path / "services/api-server/src/constants.ts",
     )
+
+
     assert config.target("packets", "go").files == (tmp_path / "services/game-server/internal/network/packets.go",)
     assert config.constants_scan == ScanConfig(
         include=("client/scripts/**/*.gd", "services/game-server/**/*.go"),
@@ -233,6 +236,15 @@ def test_sot_override(tmp_path: Path) -> None:
     assert config.sot_path("constants") == tmp_path / "custom/source.toml"
     assert config.sot_path("packets") == tmp_path / "custom/source.toml"
 
+def test_default_packet_sot_paths_include_webrtc() -> None:
+    assert DEFAULT_SOT_PATHS["packets"] == (
+        "shared/packets/outputs.toml",
+        "shared/packets/gameplay.toml",
+        "shared/packets/debug.toml",
+        "shared/packets/lobby.toml",
+        "shared/packets/webrtc.toml",
+    )
+
 
 def test_loads_per_domain_sot_paths(tmp_path: Path) -> None:
     config_text = valid_config().replace(
@@ -245,7 +257,14 @@ path = "shared/game_data.toml"
 path = "shared/game_data.toml"
 
 [sot.packets]
-path = "shared/packets/packets.toml"
+paths = [
+  "shared/packets/outputs.toml",
+  "shared/packets/gameplay.toml",
+  "shared/packets/debug.toml",
+  "shared/packets/lobby.toml",
+  "shared/packets/webrtc.toml",
+  "shared/packets/player_data.toml",
+]
 """.strip(),
     )
     config_path = write_config(tmp_path, config_text)
@@ -267,7 +286,7 @@ path = "shared/game_data.toml"
 paths = ["shared/game_data.toml", "shared/game_data.override.toml"]
 
 [sot.packets]
-paths = ["shared/packets/packets.toml", "shared/packets/packets.override.toml"]
+paths = ["shared/packets/outputs.toml", "shared/packets/gameplay.toml", "shared/packets/debug.toml", "shared/packets/lobby.toml", "shared/packets/webrtc.toml", "shared/packets/player_data.toml"]
 """.strip(),
     )
     config_path = write_config(tmp_path, config_text)
@@ -404,6 +423,8 @@ outputs = ["server_entities_packets", "server_game_packets"]
     assert packets_go.owns == ("packets",)
     assert packets_go.outputs == ("server_entities_packets", "server_game_packets")
 
+
+
     assert config.target("packets", "go").files == (tmp_path / "services/game-server/internal/network/packets.go",)
     assert config.target("drop_tables", "go").files == (tmp_path / "services/game-server/internal/game/drops/drop_tables.go",)
 
@@ -428,3 +449,6 @@ outputs = ["server_entities_packets", ""]
 
     with pytest.raises(ConfigError, match=r"\[packets.go\]\.outputs must contain only non-empty strings"):
         load_config(config_path)
+
+
+

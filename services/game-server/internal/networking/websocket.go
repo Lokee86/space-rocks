@@ -36,6 +36,7 @@ func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifie
 }
 
 func handleConnection(session *webSocketSession, remoteAddr string) {
+	defer session.clearWebRTCSmokePeer()
 	defer session.conn.Close()
 	defer session.leaveDisconnectedRoom()
 
@@ -63,97 +64,4 @@ func handleConnection(session *webSocketSession, remoteAddr string) {
 	go tickSessionGameplayLifecycle(session, gameplayLifecycleDone)
 
 	writeServerMessages(session, remoteAddr, readErr)
-}
-
-func (session *webSocketSession) reportResolvedMatchBeforeRoomExit(reason string) {
-	if session.room == nil {
-		return
-	}
-
-	if rooms.ReportResolvedMatchResultOnceForReason(session.room, session.matchResultReporter, reason) {
-		logging.Rooms.Debug("reported resolved match result before room exit",
-			logging.FieldRoomID, session.currentRoomID,
-			"session_id", session.sessionID,
-			"reason", reason,
-		)
-	}
-}
-
-func (session *webSocketSession) leaveRequestedRoom() {
-	session.reportResolvedMatchBeforeRoomExit("requested room leave")
-
-	if session.currentRoomID == "" || session.room == nil {
-		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
-		return
-	}
-
-	room := session.room
-	roomID := session.currentRoomID
-	sessionID := session.sessionID
-	playerID := session.currentGamePlayerID
-
-	leaveResult, roomErr := session.rooms.LeaveMember(roomID, sessionID, playerID)
-	if roomErr == nil {
-		room = leaveResult.Room
-		logging.Rooms.Debug("room member left",
-			logging.FieldRoomID, roomID,
-			"session_id", sessionID,
-			"remaining_members", leaveResult.RemainingMembers,
-		)
-	}
-	if sessionID != "" {
-		detachRoomSession(room, sessionID)
-	}
-
-	session.room = nil
-	session.currentRoomID = ""
-	session.currentGamePlayerID = ""
-
-	if room.MemberCount() > 0 {
-		logging.Rooms.Debug("broadcasting room snapshot after member left",
-			logging.FieldRoomID, roomID,
-			"session_id", sessionID,
-			"remaining_members", room.MemberCount(),
-		)
-		BroadcastRoomSnapshot(room)
-	}
-}
-
-func (session *webSocketSession) leaveDisconnectedRoom() {
-	session.reportResolvedMatchBeforeRoomExit("disconnected")
-
-	if session.currentRoomID == "" || session.room == nil {
-		return
-	}
-
-	room := session.room
-	roomID := session.currentRoomID
-	sessionID := session.sessionID
-	playerID := session.currentGamePlayerID
-
-	leaveResult, roomErr := session.rooms.LeaveMember(roomID, sessionID, playerID)
-	if roomErr == nil {
-		room = leaveResult.Room
-		logging.Rooms.Debug("room member left",
-			logging.FieldRoomID, roomID,
-			"session_id", sessionID,
-			"remaining_members", leaveResult.RemainingMembers,
-		)
-	}
-	if sessionID != "" {
-		detachRoomSession(room, sessionID)
-	}
-
-	session.room = nil
-	session.currentRoomID = ""
-	session.currentGamePlayerID = ""
-
-	if room.MemberCount() > 0 {
-		logging.Rooms.Debug("broadcasting room snapshot after member left",
-			logging.FieldRoomID, roomID,
-			"session_id", sessionID,
-			"remaining_members", room.MemberCount(),
-		)
-		BroadcastRoomSnapshot(room)
-	}
 }

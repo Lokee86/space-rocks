@@ -28,6 +28,12 @@ const (
 	PacketTypeRoomSnapshot                  = "room_snapshot"
 	PacketTypeRoomStateChanged              = "room_state_changed"
 	PacketTypeRoomError                     = "room_error"
+	PacketTypeWebrtcOffer                   = "webrtc_offer"
+	PacketTypeWebrtcAnswer                  = "webrtc_answer"
+	PacketTypeWebrtcIceCandidate            = "webrtc_ice_candidate"
+	PacketTypeWebrtcReady                   = "webrtc_ready"
+	PacketTypeWebrtcSmoke                   = "webrtc_smoke"
+	PacketTypeWebrtcFailed                  = "webrtc_failed"
 )
 
 type ClientPacket struct {
@@ -182,4 +188,42 @@ type PickupState struct {
 	Health          int     `json:"health"`
 	AgeSeconds      float64 `json:"age_seconds"`
 	LifespanSeconds float64 `json:"lifespan_seconds"`
+}
+
+type WebRTCOffer struct {
+	Type            string `json:"type"`
+	DescriptionType string `json:"description_type"`
+	Sdp             string `json:"sdp"`
+}
+
+type WebRTCAnswer struct {
+	Type            string `json:"type"`
+	DescriptionType string `json:"description_type"`
+	Sdp             string `json:"sdp"`
+}
+
+type WebRTCIceCandidate struct {
+	Type  string `json:"type"`
+	Media string `json:"media"`
+	Index int    `json:"index"`
+	Name  string `json:"name"`
+}
+
+type WebRTCReady struct {
+	Type         string `json:"type"`
+	ChannelLabel string `json:"channel_label"`
+	ChannelID    int    `json:"channel_id"`
+}
+
+type WebRTCSmoke struct {
+	Type    string `json:"type"`
+	SmokeID string `json:"smoke_id"`
+	Origin  string `json:"origin"`
+	Message string `json:"message"`
+}
+
+type WebRTCFailed struct {
+	Type      string `json:"type"`
+	ErrorCode string `json:"error_code"`
+	Message   string `json:"message"`
 }
