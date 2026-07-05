@@ -45,6 +45,7 @@ shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
 shared/packets/lobby.toml
+shared/packets/webrtc.toml
 shared/packets/player_data.toml
 ```
 
@@ -150,6 +151,23 @@ RoomError
 ```
 
 It owns packet types and client builders for create/join/leave, ready state, game start, single-player start, return-to-lobby, and authenticate requests.
+
+### `shared/packets/webrtc.toml`
+
+`webrtc.toml` owns WebRTC signaling and diagnostic packet shapes.
+
+Current packet types include:
+
+```text
+webrtc_offer
+webrtc_answer
+webrtc_ice_candidate
+webrtc_ready
+webrtc_smoke
+webrtc_failed
+```
+
+It owns packet schema only. It does not own ICE behavior, DataChannel creation, UDP routing, or WebRTC transport policy.
 
 ### `shared/packets/player_data.toml`
 
@@ -548,6 +566,7 @@ shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
 shared/packets/lobby.toml
+shared/packets/webrtc.toml
 shared/packets/player_data.toml
 ```
 

@@ -24,7 +24,7 @@ simulation system records events.Event
 -> pendingPresentationEvents[playerID]
 -> protocol/realtime projects pending events into event_batch candidates
 -> outbound selects and writes event_batch
--> successful websocket write
+-> successful active realtime WebRTC delivery
 -> pendingPresentationEvents[playerID] = nil for drained event IDs
 -> client gameplay event presentation
 ```
@@ -40,7 +40,6 @@ It stores packet-facing presentation facts for client presentation. It is not a 
 The server currently fans each event out to every player session that exists at event-recording time. A player with a durable session but no live ship can still receive the event. A player added after the event is recorded will not receive that event.
 
 Events are drained per player only after the active outbound write succeeds. `protocol/realtime` may project pending events into `event_batch` candidates, but the queue is cleared only for event IDs that were successfully written for that receiver. A later `event_batch` for the same player no longer includes those drained events unless new events were recorded.
-
 This means the queue is best-effort presentation state. It does not guarantee delivery across encode failures, transport failures, disconnects, reconnects, or late joins.
 
 ## Code root
@@ -61,6 +60,8 @@ Outbound delivery uses:
 
 ```text
 services/game-server/internal/networking/outbound/
+services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/networking/webrtc_transport.go
 ```
 
 ## Responsibilities
@@ -89,7 +90,7 @@ The presentation event queue does not own:
 * Pickup entity lifecycle.
 * Domain event vocabulary design outside the currently supported presentation facts.
 * Packet schema source-of-truth files.
-* JSON encoding or websocket writes.
+* JSON encoding or WebRTC active gameplay writes.
 * Network retry, guaranteed delivery, acknowledgements, or replay.
 * Client-side event routing, visual effects, audio, HUD updates, or match-end presentation.
 * Durable player-data reporting or persistence.
@@ -244,7 +245,7 @@ Authority behind the events remains on the server:
 server simulation owns event production
 Game owns event-to-queue storage
 protocol/realtime owns event_batch projection, sparse shaping, quantization, and planning
-networking owns JSON encode and websocket write
+networking owns packetcodec encode handoff and WebRTC active gameplay write
 client owns presentation response
 ```
 
@@ -260,7 +261,7 @@ protocol/realtime event_batch projection helpers
 networking outbound event_batch write helpers
 ```
 
-`protocol/realtime` selects pending events for `event_batch`, and active networking writes the selected event_batch packet. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics.
+`protocol/realtime` selects pending events for `event_batch`, and active networking delivers the selected `event_batch` packet over WebRTC `sr.reliable`. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics. No unreliable, hot, or `sr.world` channel split is implemented yet.
 
 ## Data ownership
 
@@ -420,7 +421,9 @@ Generated Go packet output consumed by the game and networking paths.
 ### Outbound networking consumer
 
 ```text
-services/game-server/internal/protocol/realtime/ and services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/protocol/realtime/
+services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/networking/webrtc_transport.go
 ```
 
 Calls into the lane-native realtime projection path, encodes the selected `event_batch` packet through `packetcodec`, and returns the outbound websocket payload after successful write gating.
@@ -519,7 +522,6 @@ Legacy documentation correctly identified the important naming rule: `pendingPre
 The event adapter currently returns a zero-value `EventState` for unsupported event types. Producers should not call `recordDomainEvent` for a new event type until `eventStateForDomainEvent`, packet schema, tests, and client presentation handling are updated as needed.
 
 This document lives under simulation runtime because it documents a runtime queue on the `Game` aggregate. The concrete queue implementation is in the root `internal/game` package, not in the Go `internal/game/runtime` package.
-
 
 
 

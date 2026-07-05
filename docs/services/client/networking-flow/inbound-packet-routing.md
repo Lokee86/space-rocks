@@ -11,9 +11,9 @@ It covers how decoded server packet dictionaries move from the client WebSocket 
 ## Overview
 
 Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
-WebSocket remains the client route for session, control, room, lobby, auth, telemetry, and signaling packets. WebRTC sr.reliable is the route for active realtime gameplay packets. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address and UDP path can reach the game server directly.
+WebSocket remains the client route for session, control, room, lobby, auth, telemetry, signaling, and queued non-gameplay packets. WebRTC sr.reliable is the route for active realtime gameplay packets and diagnostic smoke packets. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
 
-`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission. After that signal fires, inbound routing is owned by `ClientConnectionService`, `ServerPacketDispatcher`, and `ServerPacketRouter`.
+`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `WebRTCTransport` owns DataChannel text receive, packet decode, and `packet_received` emission for WebRTC packets. After those signals fire, inbound routing is owned by `ClientConnectionService`, `ServerPacketDispatcher`, and `ServerPacketRouter`.
 
 Compact `event_batch` packets are expanded by the client compact packet expansion layer before event appliers receive them, so downstream gameplay code sees readable long-key event dictionaries rather than compact aliases. Nested `ev` or `events` entries are expanded as part of that same transport step, and event dedupe still keys off `event_id` after expansion. Runtime wire packets keep compact aliases on the wire; domain logs may still show raw x/y before projection.
 
@@ -24,15 +24,21 @@ NetworkClient.packet_received(packet)
 -> ClientConnectionService._on_packet_received(packet)
 -> ServerPacketDispatcher.dispatch(packet)
 -> ServerPacketRouter packet-type checks
+-> ClientConnectionService re-emits the typed WebSocket service signal or handles lane packets
+
+WebRTCTransport.packet_received(packet)
+-> ClientConnectionService._handle_webrtc_transport_packet(packet)
+-> PacketCodec.decode(packet)
+-> ServerPacketDispatcher.dispatch(packet)
 -> ServerPacketDispatcher emits a typed dispatcher signal
--> ClientConnectionService re-emits the typed service signal or handles lane packets
+-> ClientConnectionService._route_gameplay_packet(packet) for lane packets
 -> RealtimeRouter.route_lane_packet(packet) for lane packets
 -> gameplay_packet_received(packet) for lane packets
 -> SessionNetworkController._on_gameplay_packet_received
 -> GameplaySessionController.handle_gameplay_packet
 ```
 
-The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values.
+The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. No unreliable, hot, or `sr.world` channel cutover exists yet.
 
 ## Code root
 
@@ -41,7 +47,7 @@ The routing path is signal-based and lane-aware. It does not mutate server autho
 
 ## Responsibilities
 
-* Receive decoded packet dictionaries from `NetworkClient`.
+* Receive decoded packet dictionaries from `NetworkClient` and `WebRTCTransport`.
 * Dispatch inbound packets by generated packet type constants.
 * Re-emit typed packet signals from the connection service.
 * Track websocket auth result state from `authenticate_result` packets.
@@ -56,6 +62,7 @@ The routing path is signal-based and lane-aware. It does not mutate server autho
 ## Does not own
 
 * Raw WebSocket connection lifecycle.
+* Raw WebRTC peer and DataChannel lifecycle.
 * WebSocket polling.
 * Packet JSON parsing.
 * Packet encode/decode result types.
@@ -81,7 +88,9 @@ The routing path is signal-based and lane-aware. It does not mutate server autho
 
 `NetworkClient` receives raw WebSocket text and hands it to `PacketCodec.decode`. `PacketCodec.decode` accepts compact realtime aliases by expanding them to readable long-key dictionaries before envelope validation and dispatch; see [Realtime Compact Wire Mapping](../../game-server/networking/realtime-compact-wire-mapping.md). Legacy long-key packets remain accepted, and packets with neither `type` nor compact `t` still fail envelope validation. For `event_batch`, that expansion happens before `event_batch_applier.gd` or gameplay event appliers see the packet payload, and compact event aliases stay a transport detail rather than leaking into gameplay presentation code.
 
-`ClientConnectionService._on_packet_received(packet)` receives that dictionary and delegates to `ServerPacketDispatcher.dispatch(packet)`.
+`WebRTCTransport` receives DataChannel text, calls `PacketCodec.decode` before emitting `packet_received`, and the decoded dictionary then flows through `ClientConnectionService._handle_webrtc_transport_packet(packet)` for diagnostic smoke handling or gameplay dispatch.
+
+`ClientConnectionService._on_packet_received(packet)` receives the WebSocket dictionary and delegates to `ServerPacketDispatcher.dispatch(packet)`.
 
 Inbound routing therefore assumes:
 
@@ -537,6 +546,7 @@ Generated output and packet source-of-truth ownership belong to protocol/data do
 ### Transport boundary
 
 * `client/scripts/networking/network_client.gd`
+* `client/scripts/networking/webrtc/webrtc_transport.gd`
 * `client/scripts/networking/packets/packet_codec.gd`
 * `client/scripts/networking/packets/packet_decode_result.gd`
 * `client/scripts/networking/packets/packet_encode_result.gd`
@@ -590,6 +600,8 @@ Generated output and packet source-of-truth ownership belong to protocol/data do
 Relevant tests include:
 
 * `client/tests/unit/test_session_network_controller.gd`
+* `client/tests/unit/networking/test_webrtc_transport.gd`
+* `client/tests/unit/test_client_connection_service_webrtc.gd`
 * `client/tests/unit/test_gameplay_session_controller.gd`
 * `client/tests/unit/test_room_session_controller.gd`
 * `client/tests/unit/test_packet_codec.gd`

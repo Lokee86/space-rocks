@@ -12,7 +12,7 @@ It covers the executable composition root, startup ordering, environment-backed 
 
 The game server starts from `services/game-server/cmd/game-server/main.go`.
 
-The process currently owns one HTTP server on `:8080`. That server exposes the health route, the WebSocket gameplay route, and player-data HTTP routes on the same `net/http` mux.
+The process currently owns one HTTP server on `:8080`. That server exposes the health route, the WebSocket realtime/session/signaling route, and player-data HTTP routes on the same `net/http` mux.
 
 Startup is not only game-server-local setup. The game server also constructs a `services/player-data` runtime before it begins listening. That runtime is a sibling Go module dependency, not game-server internals. The game-server process hosts it in-process for now and passes it to:
 
@@ -36,6 +36,9 @@ main()
   build optional auth verifier
   mount health route
   mount WebSocket route
+  build WebRTC transport config from env
+  set WebRTC transport config on networking
+  log WebRTC transport config loaded
   mount player-data HTTP routes
   listen on :8080
 ```
@@ -65,7 +68,7 @@ The game-server startup boundary owns:
 * constructing the match-result reporter used by room lifecycle reporting
 * constructing the optional API-server auth verifier from environment configuration
 * mounting the health route
-* mounting the WebSocket route with room manager, auth verifier, and match reporter dependencies
+* mounting the WebSocket realtime/session/signaling route with room manager, auth verifier, and match reporter dependencies
 * mounting game-server-hosted player-data HTTP routes
 * logging the server start event
 * starting `http.ListenAndServe(":8080", mux)`
@@ -78,6 +81,7 @@ The startup boundary does not own:
 * WebSocket session behavior after route entry
 * inbound packet routing
 * outbound packet routing
+* WebRTC transport runtime behavior after config loading
 * room lifecycle rules
 * room cleanup policy beyond registering `StopAll()` for process exit
 * simulation mechanics
@@ -173,6 +177,43 @@ defer rooms.StopAll()
 The room manager is passed into the WebSocket handler. The deferred `StopAll()` call is the current process-exit cleanup hook for room cleanup timers and running game instances.
 
 Detailed shutdown behavior belongs in service-shutdown documentation.
+
+### WebRTC transport config loading
+
+After room manager creation, startup loads the WebRTC transport config from the environment and injects it into networking:
+
+```go
+webrtcConfig := buildWebRTCTransportConfigFromEnv()
+networking.SetWebRTCTransportConfig(webrtcConfig)
+logging.Server.Info("web rtc transport config loaded")
+```
+
+This is the WebRTC transport config seam for server-advertised ICE and deployment-time UDP port selection. It stays separate from the WebSocket route selection seam.
+
+Environment-backed config:
+
+```text
+SPACE_ROCKS_WEBRTC_ADVERTISED_IPS
+SPACE_ROCKS_WEBRTC_UDP_PORT_MIN
+SPACE_ROCKS_WEBRTC_UDP_PORT_MAX
+```
+
+Defaults:
+
+```text
+empty advertised IPs -> preserve local/default ICE behavior
+zero UDP port range -> preserve default ephemeral UDP behavior
+```
+
+Deployment meaning:
+
+```text
+advertised IPs -> server ICE host candidate advertisement
+UDP port range -> firewall and deployment control
+WebSocket URL selection -> separate from WebRTC ICE and data connectivity
+```
+
+Proxied HTTP routes should not be assumed to carry WebRTC UDP traffic.
 
 ### Player-data runtime construction
 
@@ -357,7 +398,7 @@ auth verifier
 match-result reporter
 ```
 
-The route exists so clients can establish realtime sessions. The startup boundary only constructs and injects dependencies. WebSocket upgrade behavior, packet routing, session identity, lobby flow, gameplay input, and outbound lane packet delivery belong to game-server networking docs.
+The route exists so clients can establish realtime sessions, signaling, and session control. The startup boundary only constructs and injects dependencies. WebSocket upgrade behavior, packet routing, session identity, lobby flow, gameplay input, and outbound lane packet delivery belong to game-server networking docs. WebSocket URL selection is separate from WebRTC ICE and data connectivity.
 
 ### Player-data HTTP routes
 
@@ -475,6 +516,7 @@ Primary startup files:
 
 * `services/game-server/cmd/game-server/main.go`
 * `services/game-server/cmd/game-server/auth_config.go`
+* `services/game-server/cmd/game-server/webrtc_config.go`
 * `services/game-server/cmd/game-server/player_data_http.go`
 * `services/game-server/cmd/game-server/player_data_local_store_dev.go`
 * `services/game-server/cmd/game-server/player_data_local_store_noembeddedsqlite.go`
@@ -485,6 +527,7 @@ Game-server dependencies constructed during startup:
 * `services/game-server/internal/logging/file_output.go`
 * `services/game-server/internal/logging/fanout_handler.go`
 * `services/game-server/internal/networking/rooms.go`
+* `services/game-server/internal/networking/webrtc_transport.go`
 * `services/game-server/internal/networking/websocket.go`
 * `services/game-server/internal/authclient/client.go`
 * `services/game-server/internal/authclient/types.go`
@@ -523,6 +566,7 @@ There are no direct `cmd/game-server` startup composition tests identified for t
 
 Relevant lower-level tests include:
 
+* `services/game-server/cmd/game-server/*_test.go`
 * `services/game-server/internal/authclient/client_test.go`
 * `services/game-server/internal/matchreporting/runtime_reporter_test.go`
 * `services/game-server/internal/networking/session_auth_test.go`
@@ -542,6 +586,7 @@ Useful verification commands:
 
 ```bash
 cd services/game-server && go test -buildvcs=false ./...
+cd services/game-server/cmd/game-server && go test -buildvcs=false ./...
 cd services/player-data && go test ./...
 cd services/player-data && go test -tags noembeddedsqlite ./...
 ```

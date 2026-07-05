@@ -19,7 +19,7 @@ The contract is implemented manually by services. It does not generate Rails con
 
 Current enforcement is test-time enforcement. Rails tests load the OpenAPI definition through `openapi_first`, and controller tests can assert request and response conformance with `assert_openapi_contract!`. Runtime OpenAPI middleware is not active.
 
-HTTP API contracts are separate from realtime WebSocket packet contracts. WebSocket packet shapes are owned by the shared packet schema pipeline under `shared/packets/`, not by OpenAPI.
+HTTP API contracts are separate from realtime packet contracts. Realtime packet shapes are owned by the shared packet schema pipeline under `shared/packets/`, not by OpenAPI.
 
 ## Message or Request Flow
 
@@ -51,7 +51,7 @@ Rails controller generation
 Go handler generation
 Godot client generation
 runtime OpenAPI middleware
-WebSocket packet schemas
+realtime packet schemas
 player-data runtime packets
 gameplay simulation authority
 ```
@@ -173,7 +173,7 @@ HTTP contract changes should preserve compatibility unless the change is intenti
 
 When a contract changes, keep the OpenAPI source, service implementation, and tests aligned in the same change. Prefer additive updates over replacement updates when the product surface can support them.
 
-WebSocket packet changes must stay in the packet schema pipeline and must not be treated as HTTP contract changes.
+Realtime packet changes must stay in the packet schema pipeline and must not be treated as HTTP contract changes.
 
 ## Related Docs
 
@@ -196,3 +196,6 @@ The OpenAPI `/health` route describes the Rails API JSON health endpoint. The ga
 The current OpenAPI contract is authoritative for HTTP shape, but only Rails tests currently use OpenAPI assertion helpers directly. Go-hosted player-data routes rely on Go handler/runtime tests and manual alignment with the shared OpenAPI file.
 
 Detailed endpoint behavior belongs in the service docs. This protocol doc stays focused on contract authority, enforcement expectations, and update rules.
+
+
+

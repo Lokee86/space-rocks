@@ -141,7 +141,7 @@ constants.client.shell.session
 constants.client.shell.game_menu
 ```
 
-These sections own client websocket target URLs/origin, network polling priority, client WebRTC ICE server configuration, room-state strings, shell-state strings, session-mode strings, boot request strings, connect result strings, and gameplay menu primary-action identifiers.
+These sections own client websocket target URLs/origin, network polling priority, client WebRTC ICE server configuration, room-state strings, shell-state strings, session-mode strings, boot request strings, connect result strings, and gameplay menu primary-action identifiers. The network subsection includes `webrtc_ice_servers` for the client ICE server config seam.
 
 ### Client lobby constants
 
@@ -249,6 +249,18 @@ generates:
 
 ```gdscript
 const WINDOW_MIN_SIZE := Vector2(1280.0, 720.0)
+```
+
+Client WebRTC ICE server config seam example:
+
+```toml
+webrtc_ice_servers = []
+```
+
+generates:
+
+```gdscript
+const WEBRTC_ICE_SERVERS := []
 ```
 
 ### TypeScript
@@ -367,7 +379,10 @@ int
 float
 string
 list[float] with exactly two numeric values for GDScript Vector2 output
+empty list for supported empty-array constants such as `WEBRTC_ICE_SERVERS`
 ```
+
+`WEBRTC_ICE_SERVERS` is a client ICE server config seam. The current default is empty, it is not a WebRTC connection URL, and it does not contain TURN credentials by default.
 
 Names must be snake_case.
 
@@ -445,6 +460,7 @@ client/scripts/boot/
 client/scripts/session/
 client/scripts/shell/
 client/scripts/networking/
+client/scripts/networking/webrtc/
 client/scripts/lobby/
 client/scripts/ui/
 client/scripts/entities/
@@ -459,6 +475,7 @@ Important client uses include:
 single-player and multiplayer websocket target selection
 multiplayer websocket Origin header
 network polling priority
+client WebRTC ICE server configuration
 room-state and shell-state string comparisons
 boot request state
 connect result values

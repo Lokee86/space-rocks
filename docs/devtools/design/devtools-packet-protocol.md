@@ -393,7 +393,7 @@ room state is InGame or GameOver
 session has a current game player id
 ```
 
-The WebSocket write loop sends normal gameplay presentation state every server write tick. Debug status is sent on a slower cadence, currently every eight write ticks.
+The session write loop triggers normal gameplay presentation output every server write tick; active gameplay lane bytes are delivered over WebRTC `sr.reliable`. Debug status is sent over the WebSocket path on a slower cadence, currently every eight write ticks.
 
 The client uses `debug_status` for receiver/global status labels and `debug_statuses` for per-player target/status rows.
 
@@ -714,3 +714,4 @@ The devtools packet protocol deliberately reuses the normal WebSocket packet tra
 World telemetry overlay packet timing uses `telemetry_ping` and `telemetry_pong`, which belong to the gameplay packet schema. The overlay is devtools presentation, but the packet pair is not defined in `debug.toml`.
 
 `target_player_id` remains a devtools compatibility field for player-only debug commands. New gameplay targeting should continue to use canonical target kind/id fields instead of extending `target_player_id` further.
+

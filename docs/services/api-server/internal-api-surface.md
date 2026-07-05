@@ -6,7 +6,7 @@ Parent index: [API Server](./!INDEX.md)
 
 This document describes the current internal API surface implemented by `services/api-server`.
 
-It covers Rails endpoints consumed by sibling services, not public client auth routes, local profile HTTP routes hosted by the game-server data-handler, or realtime websocket packets.
+It covers Rails endpoints consumed by sibling services, not public client auth routes, local profile HTTP routes hosted by the game-server data-handler, or realtime packet traffic.
 
 ## Overview
 
@@ -57,7 +57,7 @@ The API server does not own:
 * Game-server data-handler routes such as `POST /api/player-data/profile`.
 * Runtime player-data store selection.
 * Client-side profile readout.
-* Websocket packet schema or packet codec behavior.
+* Realtime packet schema or packet codec behavior.
 * Direct gameplay stat mutation during a live match.
 
 ## Domain roles

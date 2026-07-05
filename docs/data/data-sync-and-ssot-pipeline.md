@@ -55,6 +55,7 @@ shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
 shared/packets/lobby.toml
+shared/packets/webrtc.toml
 shared/packets/player_data.toml
 ```
 

@@ -12,7 +12,7 @@ It covers the transport route, JSON packet framing, connection lifecycle, packet
 
 ## Overview
 
-The realtime protocol currently uses JSON text messages over a WebSocket connection.
+The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and WebRTC sr.reliable for active realtime gameplay packets.
 
 The game server exposes one realtime route:
 
@@ -20,9 +20,9 @@ The game server exposes one realtime route:
 GET /ws
 ```
 
-The Godot client selects a WebSocket URL from the requested session mode, opens the connection, optionally sends an auth packet, sends room or gameplay request packets, and receives authoritative server packets.
+The Godot client selects a WebSocket URL from the requested session mode, opens the connection, optionally sends an auth packet, sends room or gameplay request packets, and receives authoritative server packets. /ws is the signaling, session, and control route, not the active gameplay state transport.
 
-WebSocket owns session, control, room, lobby, auth, telemetry, and WebRTC signaling packets. WebRTC sr.reliable owns active realtime gameplay packets. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address and UDP path to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry UDP WebRTC traffic.
+WebSocket owns auth, room, lobby, telemetry, signaling, and queued one-off packets. WebRTC sr.reliable owns active realtime gameplay packets. `sr.reliable` is currently reliable and ordered. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry WebRTC DataChannel traffic.
 
 The route path does not define play mode. Local single-player and multiplayer currently use the same local WebSocket route during development. Single-player versus multiplayer behavior is expressed through packets, session identity, room state, admission policy, and player-data routing.
 
@@ -37,7 +37,7 @@ durable Local Profile identity
 durable account identity
 ```
 
-The server owns authority behind accepted room, gameplay, auth-result, telemetry, and devtools consequences. The client owns connection initiation, packet emission, inbound packet classification, realtime lane routing, and presentation routing.
+The server owns authority behind accepted room, gameplay, auth-result, telemetry, and devtools consequences. The client owns connection initiation, packet emission, inbound packet classification, realtime lane routing, presentation routing, and WebRTC lane application.
 
 
 Active realtime gameplay packets are not WebSocket-owned anymore. The current server path builds the lane packet, encodes it to JSON, and sends it over the session WebRTC DataChannel `sr.reliable` when WebRTC is ready. WebSocket still owns auth, room/lobby lifecycle, room snapshots, and WebRTC signaling. There is no WebSocket fallback for active realtime gameplay packets.
@@ -241,7 +241,7 @@ The packet envelope uses:
 
 Many packet types also include additional top-level fields or nested objects.
 
-Client-side packet decode requires:
+Client-side WebSocket packet decode requires:
 
 ```text
 JSON parses successfully
@@ -255,6 +255,8 @@ payload, when present, is a Dictionary
 Compact packets may arrive with `t` instead of `type`. Client decode expands compact aliases before applying normal envelope validation, and packets with neither `type` nor compact `t` still fail validation. Readable/logical world records are still maps keyed by `id`. Compact active wire output now tuple-packs asteroid, bullet, ship/player, session player/lifecycle, and known event records on the final wire shape. The client expands compact tuples back into readable dictionaries before lane state appliers run. Compact tuple IDs follow a three-way rule: bare numeric suffix when tuple context determines the prefix, tagged compact ID when the prefix is known but not tuple-determined, and the original string when the prefix is unknown or the suffix is malformed. Compact asteroid tuple IDs are numeric suffixes and the client rehydrates them to `asteroid-<id>` before world lane appliers run. Compact bullet IDs are numeric suffixes and the client rehydrates them to `bullet-<id>` before world lane appliers run. Compact player IDs are numeric suffixes and the client rehydrates them to `player-<id>` before ship, session, lifecycle, and tuple-expanded event appliers run. Compact event batches use tuple event records with compact presentation-event and player IDs where applicable. Compact deletes use numeric suffix IDs for the specific tuple fields that currently own that context. Readable/logical deletes remain full string IDs where the tuple contract does not apply. After client expansion, readable/logical packets still use full string IDs.
 
 Server-side initial envelope decode unmarshals the `type` field before routing. Invalid JSON or an envelope decode failure logs a warning and skips the message. A valid JSON object with an unknown or empty `type` does not produce an explicit protocol response in the current server path.
+
+WebRTC inbound delivery uses `WebRTCTransport` receiving DataChannel text, `PacketCodec.decode` expanding compact aliases, `ClientConnectionService` dispatching non-smoke WebRTC packets through `ServerPacketDispatcher`, and `RealtimeRouter` applying lane packets.
 
 ### Encoding
 
@@ -946,11 +948,11 @@ Server-to-client:
 }
 ```
 
-The server replies only to the same WebSocket session. Telemetry does not require room membership, does not require active lane gameplay output, and does not mutate gameplay.
+The server replies only to the same WebSocket session. Telemetry does not require room membership, does not require active lane gameplay output, and does not mutate gameplay. WebSocket best-effort applies to auth, room, lobby, telemetry, signaling, and queued one-off packets; active realtime gameplay output uses WebRTC sr.reliable. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
 
 ## Delivery and failure semantics
 
-Current delivery is best-effort over the active WebSocket session.
+Current delivery is best-effort for WebSocket-owned auth, room, lobby, telemetry, signaling, and queued one-off packets. Active realtime gameplay output uses WebRTC sr.reliable.
 
 There is no implemented support for:
 
@@ -965,7 +967,7 @@ durable outbound queues
 
 Current lane-native delivery does include sequence numbers, baseline tracking, and delta snapshots as part of the active gameplay protocol. Those mechanisms support in-session lane ordering and incremental updates, but they do not provide acknowledgement-based recovery, resend, reconnect recovery, session resume, or a durable outbound queue.
 
-Client outbound sends are not queued. If the WebSocket is not open, the packet is not sent.
+Client outbound sends are not queued. If the WebSocket is not open, the packet is not sent. Active realtime gameplay output uses WebRTC sr.reliable. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
 
 Server queued outbound messages use a bounded in-memory channel. If a WebSocket write fails, the session write loop exits and normal connection teardown begins.
 
@@ -1015,6 +1017,7 @@ Realtime packet shapes are sourced from:
 shared/packets/gameplay.toml
 shared/packets/lobby.toml
 shared/packets/debug.toml
+shared/packets/webrtc.toml
 shared/packets/outputs.toml
 ```
 
@@ -1210,6 +1213,7 @@ client/scripts/networking/client_connection_service.gd
 client/scripts/session/session_network_controller.gd
 client/scripts/session/gameplay_session_controller.gd
 client/scripts/networking/network_client.gd
+client/scripts/networking/webrtc/webrtc_transport.gd
 client/scripts/networking/packets/packet_codec.gd
 client/scripts/protocol/realtime/compact_lane_packet.gd
 client/scripts/protocol/realtime/realtime_router.gd
@@ -1255,6 +1259,8 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/websocket.go
 services/game-server/internal/networking/websocket_read.go
 services/game-server/internal/networking/websocket_session.go
+services/game-server/internal/networking/webrtc_transport.go
+services/game-server/cmd/game-server/webrtc_config.go
 ```
 
 ### Server packet codec and generated packet files
@@ -1286,6 +1292,7 @@ services/game-server/internal/networking/player_pause_state.go
 shared/packets/gameplay.toml
 shared/packets/lobby.toml
 shared/packets/debug.toml
+shared/packets/webrtc.toml
 shared/packets/outputs.toml
 ```
 
@@ -1409,9 +1416,9 @@ client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd
 
 ## Notes
 
-The current implementation sends lane-native gameplay output on the server tick path over WebRTC sr.reliable. That is current protocol behavior, not the intended final realtime architecture.
+The current implementation sends lane-native gameplay output on the server tick path over WebRTC sr.reliable. That is current protocol behavior, not the intended final realtime architecture. The client ICE-server seam exists, but this document does not prescribe a future TURN/STUN topology.
 
-Deployment knobs currently include server-advertised WebRTC IPs, an optional server UDP port range, and client ICE server configuration. The client ICE-server seam exists for future deployment configuration, but this document does not prescribe TURN or other future ICE topology beyond noting that the seam exists.
+Deployment knobs currently include SPACE_ROCKS_WEBRTC_ADVERTISED_IPS, SPACE_ROCKS_WEBRTC_UDP_PORT_MIN, SPACE_ROCKS_WEBRTC_UDP_PORT_MAX, and WEBRTC_ICE_SERVERS. The client ICE-server seam exists for future deployment configuration, but this document does not prescribe TURN or other future ICE topology beyond noting that the seam exists.
 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 

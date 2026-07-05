@@ -12,7 +12,7 @@ The aggregate is the in-memory authoritative runtime owner for one active game i
 
 The game-server simulation aggregate is `game.Game` in `services/game-server/internal/game/game.go`.
 
-A `Game` instance represents one running match simulation. It is not the process, not a room, and not a network connection. Rooms own when a game instance is created, started, stopped, cleared, and associated with room lifecycle. Networking owns how decoded client packets reach the current room's game instance and how lane-native realtime packets are planned by `protocol/realtime` and written to clients through outbound websocket delivery.
+A `Game` instance represents one running match simulation. It is not the process, not a room, and not a network connection. Rooms own when a game instance is created, started, stopped, cleared, and associated with room lifecycle. Networking owns how decoded client packets reach the current room's game instance and how lane-native realtime packets are planned by `protocol/realtime`, encoded, and delivered to clients over WebRTC `sr.reliable` after signaling succeeds.
 
 Inside the simulation boundary, `Game` owns the mutable runtime state needed to advance authoritative gameplay:
 
@@ -304,7 +304,7 @@ clear_target_request
 
 The gameplay network adapter handles routing and request adaptation. The aggregate owns authoritative mutation behind those requests.
 
-Outbound realtime state reaches clients through lane-native realtime projection. `protocol/realtime` reads game presentation state and builds lane-native realtime packets, outbound networking writes the selected packet to the websocket session, and `packetcodec` handles encoding.
+Outbound realtime state reaches clients through lane-native realtime projection. `protocol/realtime` reads game presentation state and builds lane-native realtime packets, `packetcodec` handles encoding, and outbound networking delivers the selected active gameplay packet over WebRTC `sr.reliable` after signaling succeeds.
 
 `Lane-native realtime projection` includes:
 
@@ -322,7 +322,7 @@ events
 server_sent_msec
 ```
 
-`protocol/realtime` projects that player's pending presentation events into `event_batch`, and outbound networking clears only the drained event IDs after the active websocket write succeeds. This makes the event lane player-specific and packet-facing.
+`protocol/realtime` projects that player's pending presentation events into `event_batch`, and outbound networking clears only the drained event IDs after successful active WebRTC delivery. This makes the event lane player-specific and packet-facing.
 
 ## Data ownership
 
@@ -667,3 +667,4 @@ Expected behavioral coverage includes:
 The legacy architecture material's useful current facts are that gameplay state is server-authoritative, `Game.Start()` launches the simulation loop at the server tick rate, `Game.Step()` is the same-package simulation coordinator, and `pendingPresentationEvents` is a packet-facing presentation queue rather than the domain event queue.
 
 This document intentionally does not detail the full simulation phase order, lane-native realtime field projection, entity store shape, or presentation event queue mechanics. Those are adjacent runtime docs so the aggregate doc can stay focused on root ownership, lifecycle, synchronization, and service surfaces.
+

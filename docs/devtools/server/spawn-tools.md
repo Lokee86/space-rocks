@@ -351,7 +351,7 @@ handleDebugSpawnEntity
 -> Game.spawnDebugBullet
 ```
 
-The bullet owner is the `playerID` supplied by the active websocket/game session, not a client-supplied owner field.
+The bullet owner is the `playerID` supplied by the active networking/game session, not a client-supplied owner field.
 
 The bullet spawn path requires:
 
@@ -674,3 +674,4 @@ Debug bullet spawn intentionally bypasses normal weapon fire policy. That makes 
 Debug pickup spawn creates a real authoritative pickup entity, but it does not represent normal drop-table behavior.
 
 Debug player spawn creates runtime player state for inspection. It does not represent a normal authenticated join path or durable player profile state.
+

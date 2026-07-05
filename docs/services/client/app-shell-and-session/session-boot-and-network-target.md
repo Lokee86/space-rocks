@@ -4,15 +4,15 @@ Parent index: [App Shell And Session](./!INDEX.md)
 
 ## Purpose
 
-This document describes the current client session boot flow and websocket network-target selection.
+This document describes the current client session boot flow, websocket network-target selection, and WebRTC gameplay transport readiness gate.
 
-It covers how the Godot client turns menu requests into a requested session mode, pending boot request, websocket target URL, connection attempt, and eventual boot packet dispatch.
+It covers how the Godot client turns menu requests into a requested session mode, pending boot request, websocket target URL, connection attempt, WebRTC readiness gate, and eventual boot packet dispatch.
 
 ## Overview
 
 Session boot is the client-side bridge between menu intent and server room or gameplay entry.
 
-The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, and sends the appropriate boot packet when the connection state allows it.
+The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, starts WebRTC signaling and transport setup, and sends the appropriate boot packet only after the readiness gate allows it.
 
 Current boot request types are:
 
@@ -56,8 +56,8 @@ WebSocket target selection is separate from WebRTC connectivity. The WebSocket U
 * Preserve the selected Local Profile id for single-player boot requests.
 * Preserve the room code for join-room boot requests.
 * Select the websocket URL from generated client constants based on requested session mode.
-* Start a websocket connection through `ClientConnectionService`.
-* Send a pending single-player boot request after websocket connection.
+* Start a websocket connection through `ClientConnectionService` and let it begin WebRTC signaling and transport setup.
+* Send a pending single-player boot request after WebRTC readiness when active gameplay will use WebRTC.
 * Hold pending multiplayer boot requests until websocket auth succeeds or token verification is unavailable.
 * Send client viewport config after a boot request is sent.
 * Clear pending boot request state during session reset paths.
@@ -164,7 +164,7 @@ multiplayer   -> MULTIPLAYER_WS_URL
 unknown       -> ""
 ```
 
-The generated constants come from shared client shell constants.
+The generated constants come from shared client shell constants. The server-advertised ICE address and UDP-path reachability belong to server WebRTC config, not `SessionNetworkTarget`.
 
 ### Connection and auth gate
 
@@ -173,7 +173,7 @@ The generated constants come from shared client shell constants.
 Current behavior:
 
 ```text
-connected + pending single-player request
+websocket connected + WebRTC ready + pending single-player request
 -> send pending request immediately
 
 connected + pending multiplayer request + websocket auth already authenticated
@@ -192,7 +192,7 @@ authenticate_result authenticated=false, other error
 -> keep pending multiplayer request unsent
 ```
 
-This means multiplayer boot is gated by websocket auth, while single-player boot remains independent of signed-in state.
+This means multiplayer boot is gated by websocket auth, while single-player boot waits for WebRTC readiness when active gameplay will use WebRTC. Boot request dispatch must not race ahead of WebRTC readiness.
 
 ## Protocols and APIs
 
@@ -210,6 +210,7 @@ Pregame/Menu caller
 -> ShellBootFlow.connect_to_game_server("single player")
 -> ClientConnectionService.connect_to_server(url)
 -> NetworkClient.connect_to_server(url)
+-> ClientConnectionService._start_webrtc_transport()
 ```
 
 When the connection opens:
@@ -217,6 +218,8 @@ When the connection opens:
 ```text
 ClientConnectionService.connected
 -> SessionNetworkController._on_connection_connected()
+-> ClientConnectionService._start_webrtc_transport()
+-> WebRTC ready signal / packet path
 -> ShellBootFlow.send_pending_boot_request()
 -> ClientConnectionService.send_start_single_player_request(local_profile_id)
 -> ShellBootFlow.boot_request_sent
@@ -248,7 +251,7 @@ Pregame/Menu caller
 -> ShellBootFlow.connect_to_game_server("multiplayer join: <room_code>")
 ```
 
-Multiplayer requests are sent only after websocket auth succeeds or token verification is unavailable.
+Multiplayer requests are sent only after websocket auth succeeds or token verification is unavailable, and still wait for WebRTC readiness before dispatch when active gameplay will use WebRTC.
 
 ### Connect result values
 
@@ -293,6 +296,8 @@ The websocket target constants are generated from:
 
 ```text
 shared/constants/client/shell.toml
+shared/constants/client/presentation.toml
+shared/constants/client/lobby.toml
 ```
 
 Generated client output:
@@ -316,9 +321,10 @@ SESSION_MODE_MULTIPLAYER
 CONNECT_RESULT_STARTED_CONNECTING
 CONNECT_RESULT_ALREADY_CONNECTED
 CONNECT_RESULT_FAILED
+WEBRTC_ICE_SERVERS
 ```
 
-The client shell constants also own the current client ICE server configuration seam. That seam is currently empty by default and does not require local development configuration.
+The client shell constants also own the current client ICE server configuration seam. That seam is currently empty by default and does not require local development configuration. `SINGLE_PLAYER_WS_URL` and `MULTIPLAYER_WS_URL` are WebSocket signaling/control targets, not WebRTC UDP or data-channel addresses.
 
 The client boot flow does not persist boot state.
 
@@ -376,6 +382,8 @@ This document should not hide that pressure, but it should not prescribe a refac
 ### Data and generated files
 
 * `shared/constants/client/shell.toml`
+* `shared/constants/client/presentation.toml`
+* `shared/constants/client/lobby.toml`
 * `client/scripts/generated/constants/constants.gd`
 
 ### Non-ownership boundaries
@@ -395,6 +403,8 @@ Relevant tests include:
 * `client/tests/unit/test_pending_boot_request.gd`
 * `client/tests/unit/test_shell_boot_flow.gd`
 * `client/tests/unit/test_session_network_controller.gd`
+* `client/tests/unit/networking/test_webrtc_transport.gd`
+* `client/tests/unit/test_client_connection_service_webrtc.gd`
 * `client/tests/unit/ui/menu_flow/test_app_entry_menu_flow.gd`
 
 `test_session_network_target.gd` verifies mode-to-URL mapping and unknown-mode fallback.

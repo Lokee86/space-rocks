@@ -49,7 +49,7 @@ The runtime entity store does not own:
 * `Game` lifecycle, room lifecycle, or simulation tick cadence.
 * Player session durability, score, lives, respawn state, or other durable counters.
 * Packet schema source-of-truth files.
-* Network encoding or websocket write loops.
+* Network encoding or transport write loops.
 * Client rendering, interpolation, HUD, or presentation effects.
 * Persistence or account/profile storage.
 * Collision policy, combat policy, spawn policy, or scoring policy.
@@ -163,3 +163,4 @@ Package-level tests may also exercise entity-map mutation indirectly through sim
 The store is deliberately simple: one aggregate-owned container for the live entity maps used during a match.
 
 This document stays focused on ownership and map semantics. It does not duplicate player-session, pickup, combat, or lane-native realtime projection behavior documented elsewhere.
+

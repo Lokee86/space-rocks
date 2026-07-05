@@ -84,7 +84,7 @@ The WebSocket session lifecycle owns:
 * coordinating read, write, and room/game-over lifecycle goroutines
 * reading raw WebSocket text messages
 * handing inbound raw messages to packet routing after envelope decode
-* writing queued and ticker-driven outbound WebSocket text messages
+* writing queued outbound WebSocket text messages and triggering ticker-driven active realtime lane writes
 * advancing room game-over lifecycle from the session lifecycle ticker
 * reporting resolved match results before session-driven room exit when needed
 * leaving/detaching the session from its current room on disconnect
@@ -289,7 +289,7 @@ The detailed packet-family order belongs to inbound packet routing documentation
 
 ## Write loop
 
-`writeServerMessages()` owns outbound delivery for the active WebSocket session.
+`writeServerMessages()` owns the per-session write loop: queued outbound messages are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through WebRTC `sr.reliable` when ready.
 
 It selects over three inputs:
 
@@ -319,7 +319,7 @@ debug shape catalog, when eligible
 debug status, when eligible
 ```
 
-Gameplay presentation writes require:
+Queued outbound messages remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over WebRTC `sr.reliable` when the transport is ready. Gameplay presentation writes require:
 
 ```text
 session.currentGamePlayerID is not empty
@@ -328,7 +328,7 @@ outbound lane send gate allows delivery for the current room/session
 
 Debug status and debug shape catalog writes additionally require devtools eligibility inside the outbound helper package.
 
-If a WebSocket write fails, the write-close logger runs and the write loop returns. Returning from the write loop starts connection teardown.
+There is no WebSocket fallback for active gameplay lane packets. If a WebSocket write fails, the write-close logger runs and the write loop returns. Returning from the write loop starts connection teardown.
 
 ## Outbound queue
 
@@ -598,7 +598,7 @@ The session may carry identity and room references that downstream systems use f
 * `services/game-server/internal/networking/websocket_origin.go` - WebSocket origin allowlist.
 * `services/game-server/internal/networking/websocket_session.go` - Per-connection session state and session construction.
 * `services/game-server/internal/networking/websocket_read.go` - Raw WebSocket read loop and envelope-decode handoff.
-* `services/game-server/internal/networking/websocket_write.go` - Write loop, outbound queue consumption, gameplay presentation writes, debug status writes, and debug shape catalog writes.
+* `services/game-server/internal/networking/websocket_write.go` - Runs the session write loop, consumes the outbound queue, and triggers active lane writes; active lane bytes are sent through `services/game-server/internal/networking/webrtc_transport.go`.
 * `services/game-server/internal/networking/websocket_gameplay_tick.go` - Per-session room game-over lifecycle ticker.
 * `services/game-server/internal/networking/websocket_close_logging.go` - Expected and unexpected read/write close logging.
 
@@ -618,8 +618,9 @@ The session may carry identity and room references that downstream systems use f
 
 ### Outbound write helpers
 
-* `services/game-server/internal/networking/outbound/server_message_writer.go` - Writes encoded payloads as WebSocket text messages.
-* `services/game-server/internal/networking/websocket_write.go` - Runs outbound websocket writes for selected lane packets while `services/game-server/internal/protocol/realtime/` plans gameplay presentation output.
+* `services/game-server/internal/networking/outbound/server_message_writer.go` - Writes encoded queued payloads as WebSocket text messages.
+* `services/game-server/internal/networking/websocket_write.go` - Runs outbound websocket writes for queued messages and triggers active lane writes while `services/game-server/internal/protocol/realtime/` plans gameplay presentation output. Active lane bytes are sent through `services/game-server/internal/networking/webrtc_transport.go`.
+* `services/game-server/internal/networking/webrtc_transport.go` - Sends encoded active realtime lane bytes over the configured WebRTC transport after signaling succeeds.
 * `services/game-server/internal/networking/packetmetrics/` - Supports packet observability helpers and related types used around outbound networking seams.
 * `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets.
 * `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go` - Builds encoded debug shape catalog packets.
@@ -695,3 +696,4 @@ The current session object is shared by the read loop, write loop, lifecycle tic
 The WebSocket lifecycle intentionally stays separate from room/game authority. Adding new room or gameplay behavior should usually extend the packet routing, room, or game seams rather than adding rules directly to WebSocket upgrade or read/write loop code.
 
 The `/ws` endpoint is shared by local single-player and multiplayer. New mode distinctions should remain explicit session/packet/admission behavior unless the protocol architecture changes.
+

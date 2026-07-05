@@ -10,7 +10,7 @@ It covers client-originated gameplay requests, server-originated lane gameplay o
 
 ## Overview
 
-Gameplay packets are the realtime WebSocket messages used after a client is connected to the game server and, for gameplay mutation, attached to an active game player.
+Gameplay packets are the realtime packets used after a client is connected to the game server and, for gameplay mutation, attached to an active game player. Client-originated gameplay intent currently travels over the WebSocket session/control path, while server-originated active gameplay lane output travels over WebRTC `sr.reliable`.
 
 The protocol is server-authoritative:
 
@@ -20,7 +20,7 @@ client sends input or request intent
 -> active room/game instance receives the packet
 -> game simulation mutates authoritative state
 -> owning server paths build one-off outputs such as player_pause_state
--> outbound networking writes encoded server packets
+-> outbound networking delivers queued one-off packets over WebSocket and active gameplay lane packets over WebRTC `sr.reliable`
 -> client receives and applies server-owned lane state
 ```
 
@@ -136,10 +136,9 @@ These are still schema-driven gameplay packets, and they route alongside the cur
 The active client inbound gameplay path is:
 
 ```text
-NetworkClient.poll
+WebRTCTransport receives DataChannel text for active gameplay lane packets
 -> PacketCodec.decode
--> NetworkClient.packet_received
--> ClientConnectionService
+-> ClientConnectionService._handle_webrtc_transport_packet
 -> ServerPacketDispatcher / ServerPacketRouter classify packet
 -> ClientConnectionService routes lane packets through RealtimeRouter.route_lane_packet(packet)
 -> RealtimeRouter applies lane state/readiness
@@ -209,14 +208,14 @@ The client does not own gameplay authority, lane packet contents, respawn validi
 Game-server networking owns:
 
 ```text
-WebSocket read/write loops
+WebSocket read loop, queued WebSocket writes, and active WebRTC gameplay delivery handoff
 packet-family routing order
 server packet JSON encode/decode handoff
 session current room and current game player context
 lane packet write timing
 encoded packet write observations, debug packet wire logs, and non-empty per-tick write summaries
 ```
-Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, and current byte-budget planning inputs; networking writes encoded results and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
+Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, and current byte-budget planning inputs; networking delivers encoded active gameplay lane packets over WebRTC `sr.reliable` and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
 
 ### Game-server simulation
 
@@ -265,6 +264,8 @@ client/scripts/generated/networking/packets/packets.gd
 Client inbound lane-native gameplay application:
 
 ```text
+client/scripts/networking/webrtc/webrtc_transport.gd
+client/scripts/networking/client_connection_service.gd
 client/scripts/networking/inbound/server_packet_dispatcher.gd
 client/scripts/networking/inbound/server_packet_router.gd
 client/scripts/session/session_network_controller.gd
@@ -279,6 +280,7 @@ Game-server outbound gameplay projection:
 
 ```text
 services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/networking/webrtc_transport.go
 services/game-server/internal/protocol/realtime/wire_packets.go
 services/game-server/internal/protocol/realtime/compact_wire_packet.go
 services/game-server/internal/protocol/realtime/quantize/
@@ -303,4 +305,5 @@ services/game-server/internal/game/
 ## Notes
 
 This doc stays at the gameplay packet family and ownership boundary. Detailed lane metadata, wire behavior, and transport sequencing remain canonical in `realtime-websocket-protocol.md`.
+
 

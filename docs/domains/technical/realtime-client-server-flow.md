@@ -6,13 +6,13 @@ Parent index: [Technical](./!INDEX.md)
 
 This document describes the cross-system realtime client/server flow for Space Rocks.
 
-It covers how the Godot client and Go game server exchange live WebSocket traffic, how packet authority is split, how client intent becomes server-owned state, and how server-owned state returns to client presentation.
+It covers how the Godot client and Go game server exchange live WebSocket and WebRTC DataChannel traffic, how packet authority is split, how client intent becomes server-owned state, and how server-owned state returns to client presentation.
 
 ## Overview
 
 The realtime client/server flow is the live communication path between the Godot client and the Go game server.
 
-The current transport is JSON text over a WebSocket connection. The game server exposes one realtime route:
+The current transport is JSON text over a WebSocket connection for session/control/auth/lobby/signaling packets, and JSON text over a WebRTC DataChannel for active realtime gameplay packets. The game server exposes one realtime route:
 
 ```text
 GET /ws
@@ -26,8 +26,8 @@ The realtime flow is not the same thing as gameplay session ownership. A WebSock
 
 ## Participating systems
 
-* [Client](../../services/client/!INDEX.md) - owns WebSocket connection startup, polling, local packet construction, inbound packet classification, gameplay packet acceptance gates, and presentation routing.
-* [Game Server](../../services/game-server/!INDEX.md) - owns the `/ws` route, WebSocket upgrade, per-session transport state, inbound packet routing, room/session adapters, authoritative gameplay routing, and outbound server packets.
+* [Client](../../services/client/!INDEX.md) - owns WebSocket connection startup, WebRTC transport setup, polling, local packet construction, inbound packet classification, gameplay packet acceptance gates, and presentation routing.
+* [Game Server](../../services/game-server/!INDEX.md) - owns the `/ws` route, WebSocket upgrade, per-session WebSocket and WebRTC transport state, inbound packet routing, room/session adapters, authoritative gameplay routing, queued WebSocket packets, and active WebRTC gameplay lane packets.
 * [Protocol](../../protocol/!INDEX.md) - owns communication and message-flow documentation for realtime packets.
 * [Data](../../data/!INDEX.md) - owns packet schema source files and generated packet outputs shared by client and game server.
 * [Devtools](../../devtools/!INDEX.md) - owns debug-only client/server tooling that uses the normal realtime transport.
@@ -150,7 +150,7 @@ The client maps the requested session mode to a WebSocket URL. Current local sin
 
 ### 2. Client opens the WebSocket connection
 
-The client networking layer opens the WebSocket, sets the configured Origin header, polls connection state, receives raw text messages, decodes packet envelopes, and emits decoded packet dictionaries.
+The client networking layer opens the WebSocket, sets the configured Origin header, polls connection state, receives raw WebSocket text for session/control/auth/lobby/signaling packets, and receives raw WebRTC DataChannel text for active realtime gameplay packets before decoding packet envelopes and emitting decoded packet dictionaries.
 
 When the socket opens, the client sends an `authenticate_request` only if an auth token exists. Single-player boot does not require this authentication result. Multiplayer boot waits for WebSocket auth success unless token verification is unavailable, in which case the pending request is sent so the server can fail admission explicitly.
 
@@ -248,13 +248,13 @@ If a packet cannot be decoded, it is logged and ignored. Decode failure does not
 
 The game server simulation owns the authoritative runtime state.
 
-On each server tick, the WebSocket write path can send gameplay lane packets when the session has an active game player and the room has a game instance in an eligible state.
+On each server tick, the session write path can build and encode active gameplay lane packets when the session has an active game player, the room has a game instance in an eligible state, and the WebRTC transport is ready.
 
-The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`. The server emits compact tuple wire shape for selected hot records, including asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records. Tuple packing is a wire optimization, not a domain model change. The client `compact_lane_packet` expands compact keys, values, IDs, and tuple arrays before the existing world, session, and event appliers run. Tuple IDs rehydrate by context: bare numeric suffixes expand when the tuple slot determines the prefix, tagged compact IDs expand when only the prefix is known, and malformed or unknown IDs stay unchanged. World ships still live under the `ships` section after expansion, session players still live under the `players` section after expansion, and `event_batch` stays batched rather than becoming one packet per event.
+The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`. The server emits compact tuple wire shape for selected hot records, including asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records. Active realtime gameplay delivery uses WebRTC DataChannel text over `sr.reliable` after signaling succeeds; WebSocket remains the session/control/auth/lobby/signaling path. Tuple packing is a wire optimization, not a domain model change. The client `compact_lane_packet` expands compact keys, values, IDs, and tuple arrays before the existing world, session, and event appliers run. Tuple IDs rehydrate by context: bare numeric suffixes expand when the tuple slot determines the prefix, tagged compact IDs expand when only the prefix is known, and malformed or unknown IDs stay unchanged. World ships still live under the `ships` section after expansion, session players still live under the `players` section after expansion, and `event_batch` stays batched rather than becoming one packet per event.
 
 World lane carries authoritative visible entity presentation state. Overlay lane carries receiver-specific HUD-facing values. Session lane carries player/session/lifecycle/asteroid-count presentation state. For world, overlay, and session state lanes, numeric wire quantization, field deltas, sparse delta omission, and compact JSON aliases are current active behavior. `event_batch` is transient presentation-event delivery, not a state delta lane. It uses compact output encoding and tuple-packed known event records, but remains batched. Known event `x`/`y` and `ship_death` `respawn_delay` are quantized during event wire shaping. `event_batch` does not use baselines, deltas, state snapshots, or chunking.
 
-The server stamps outbound gameplay lane packets with server send time before encoding and writing them.
+The server stamps outbound gameplay lane packets with server send time before encoding them and delivering them over WebRTC `sr.reliable`.
 
 ### 8. Server sends one-off and ticker-driven packets
 
@@ -292,7 +292,7 @@ Debug status and debug shape catalog packets are devtools-only outputs gated by 
 
 ### 9. Client routes inbound packets
 
-The client decodes raw WebSocket text into packet dictionaries, classifies packets by generated packet type constants, and emits typed networking signals.
+The client decodes raw WebSocket text for session/control/auth/lobby/signaling packets and raw WebRTC DataChannel text for active realtime gameplay packets into packet dictionaries, classifies packets by generated packet type constants, and emits typed networking signals.
 
 Current client inbound routes include:
 
@@ -488,9 +488,10 @@ Client input is sent to the server, the server advances simulation, and clients 
 
 WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
-Lane-native packets are current active realtime behavior. World, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. `event_batch` remains compact sparse quantized presentation-event delivery. The server now emits compact tuple wire shape for selected hot records, and the client expands those tuples before appliers run. Remaining future work includes deeper prioritization, packet-budget behavior, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket path.
+Lane-native packets are current active realtime behavior. World, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. `event_batch` remains compact sparse quantized presentation-event delivery. The server now emits compact tuple wire shape for selected hot records, and the client expands those tuples before appliers run. Remaining future work includes deeper prioritization, packet-budget behavior, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket control/signaling path plus WebRTC sr.reliable gameplay output path.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.
+
 
 
 

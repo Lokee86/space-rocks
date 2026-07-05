@@ -102,7 +102,7 @@ The client owns request consumption and presentation flow, not the authoritative
 The player-data HTTP API does not own:
 
 ```text
-WebSocket packet shapes
+realtime packet shapes
 runtime player-data packet schemas
 Rails database schema
 embedded SQLite schema
@@ -1000,3 +1000,4 @@ Local Profile display names are presentation values. `local_profile_id` is the l
 Authenticated Account routing uses `account_id` resolved from token verification. Rails `user_id` remains an API-server internal database identifier.
 
 Guest stats are process-local and transient. Local Profile stats are durable only when local storage is configured. Authenticated Account stats route through the Rails adapter when Rails configuration is present.
+

@@ -26,7 +26,7 @@ test-time OpenAPI parsing and request/response validation
 
 Runtime OpenAPI middleware is not active. The OpenAPI contract does not generate Rails controllers, does not replace Rails strong params, does not generate Godot client code, does not generate Go server/client code, and does not own database schema.
 
-HTTP contracts are separate from realtime WebSocket packet contracts. Realtime packet shapes remain owned by the shared packet schema pipeline, not by OpenAPI.
+HTTP contracts are separate from realtime packet contracts. Realtime packet shapes remain owned by the shared packet schema pipeline, not by OpenAPI.
 
 ## Participating systems
 
@@ -85,7 +85,7 @@ Rails strong params
 Godot API client generation
 Go API client generation
 runtime middleware enforcement
-WebSocket packet contracts
+realtime packet contracts
 player-data runtime packet schemas
 ```
 
@@ -207,7 +207,7 @@ local-profile durable storage
 guest transient storage
 OpenAPI generation
 runtime OpenAPI middleware enforcement
-WebSocket packet schemas
+realtime packet schemas
 ```
 
 ### Client
@@ -330,7 +330,7 @@ Important non-ownership boundaries:
 
 ```text
 OpenAPI does not own Rails database schema.
-OpenAPI does not own WebSocket packet schema.
+OpenAPI does not own realtime packet schema.
 OpenAPI does not currently generate clients or controllers.
 OpenAPI is not currently runtime middleware.
 ```
@@ -350,3 +350,5 @@ Runtime OpenAPI middleware is still not active.
 If future work focuses on OpenAPI generation, source updates, generated outputs, or pipeline commands, split that material into a data doc instead of expanding this protocol doc into a data pipeline document.
 
 If future work adds runtime OpenAPI middleware, update the enforcement level and add the runtime implementation path to the code map.
+
+

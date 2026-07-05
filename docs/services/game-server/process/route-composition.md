@@ -6,7 +6,7 @@ Parent index: [Game Server Process](./!INDEX.md)
 
 This document describes the game-server process route composition boundary.
 
-It covers the HTTP mux routes registered by the game-server executable, the dependencies injected into those routes, and the current player-data HTTP piggy-back behavior.
+It covers the HTTP mux routes registered by the game-server executable, the dependencies injected into those routes, the current player-data HTTP piggy-back behavior, and the WebRTC transport config dependency used during startup composition.
 
 ## Overview
 
@@ -28,6 +28,8 @@ At startup, the process:
 configure logging
 create HTTP mux
 create room manager
+build WebRTC transport config from env
+set WebRTC transport config on networking
 build player-data runtime
 wrap player-data runtime as a match-result sink
 build match-result reporter
@@ -37,7 +39,7 @@ mount player-data HTTP routes
 start ListenAndServe(":8080", mux)
 ```
 
-The route table is intentionally thin. It decides which HTTP paths are reachable from the game-server process and which runtime dependencies each mounted handler receives. It does not own WebSocket packet routing, room rules, simulation rules, auth internals, player-data request semantics, or player-data persistence.
+The route table is intentionally thin. It decides which HTTP paths are reachable from the game-server process and which runtime dependencies each mounted handler receives. It does not own WebSocket packet routing, room rules, simulation rules, auth internals, player-data request semantics, player-data persistence, or WebRTC peer/DataChannel internals after dependency setup.
 
 The player-data HTTP routes currently piggy-back on the game-server process. They are mounted on the same mux and served from the same `:8080` listener as `/health` and `/ws`. The game server hosts those handlers, but the player-data service owns their request handling, validation, runtime routing, and backing-store selection.
 
@@ -56,6 +58,7 @@ Route composition owns:
 * registering the realtime WebSocket route
 * registering game-server-hosted player-data HTTP routes
 * constructing the dependencies required before handlers are mounted
+* loading WebRTC transport config from env and wiring it into networking
 * passing the room manager into the WebSocket handler
 * passing the auth verifier into WebSocket authentication and player-data profile reads
 * passing the match-result reporter into WebSocket session lifecycle handling
@@ -145,9 +148,9 @@ auth verifier
 match-result reporter
 ```
 
-The networking package owns the WebSocket upgrade, origin policy, session creation, read loop, write loop, lifecycle ticker, room detachment on disconnect, and handoff into inbound packet routing.
+The networking package owns the WebSocket upgrade, origin policy, session creation, read loop, write loop, lifecycle ticker, room detachment on disconnect, signaling setup, and handoff into inbound packet routing.
 
-Single-player and multiplayer currently share the same `/ws` route. Mode behavior is decided by packets, session state, identity, room admission, and room/game rules, not by separate WebSocket paths.
+Single-player and multiplayer currently share the same `/ws` route. It is the WebSocket route for session, control, signaling, and WebRTC signaling packets. Mode behavior is decided by packets, session state, identity, room admission, and room/game rules, not by separate WebSocket paths. Active realtime gameplay packets use the configured WebRTC transport after signaling succeeds.
 
 ### Player-data HTTP routes
 
@@ -176,6 +179,9 @@ mux := http.NewServeMux()
 rooms := networking.NewRoomManager()
 defer rooms.StopAll()
 
+webrtcConfig := buildWebRTCTransportConfigFromEnv()
+networking.SetWebRTCTransportConfig(webrtcConfig)
+
 playerDataRuntime := buildPlayerDataRuntime()
 playerDataSink := newPlayerDataSink(playerDataRuntime)
 reporter := matchreporting.NewRuntimeReporter(playerDataSink)
@@ -192,6 +198,19 @@ mount player-data HTTP routes with playerDataRuntime and authVerifier
 The route composer creates one room manager for the process and passes it into the WebSocket handler.
 
 The room manager is process-wide for accepted WebSocket sessions. It owns room lookup and room aggregate access through the networking and rooms packages, not through `main.go`.
+
+### WebRTC transport config dependency
+
+The route composer loads the WebRTC transport config from environment variables before startup completes and injects it into networking:
+
+```go
+buildWebRTCTransportConfigFromEnv()
+networking.SetWebRTCTransportConfig(...)
+```
+
+That dependency is used for server ICE advertisement and deployment-time transport selection. Route composition does not own WebRTC peer or DataChannel internals after the config is set.
+
+The dependency is environment-backed through the same startup seam documented in service startup.
 
 ### Player-data runtime dependency
 
@@ -313,6 +332,7 @@ Primary process files:
 
 * `services/game-server/cmd/game-server/main.go` - Creates the mux, constructs process dependencies, mounts routes, starts HTTP serving, and defines the health handler.
 * `services/game-server/cmd/game-server/auth_config.go` - Builds the optional game-server auth verifier from environment configuration.
+* `services/game-server/cmd/game-server/webrtc_config.go` - Builds WebRTC transport config from environment configuration.
 * `services/game-server/cmd/game-server/player_data_http.go` - Builds the player-data runtime, player-data sink, hosted player-data HTTP handlers, and auth-verifier adapter.
 * `services/game-server/cmd/game-server/player_data_local_store_dev.go` - Standard build local-store path and embedded SQLite local-store factory.
 * `services/game-server/cmd/game-server/player_data_local_store_noembeddedsqlite.go` - Restricted build local-store disablement.
@@ -323,6 +343,7 @@ Mounted WebSocket implementation:
 * `services/game-server/internal/networking/websocket_origin.go` - WebSocket origin allowlist.
 * `services/game-server/internal/networking/websocket_session.go` - Per-connection session construction.
 * `services/game-server/internal/networking/client_packet_router.go` - Inbound packet routing handoff after WebSocket reads.
+* `services/game-server/internal/networking/webrtc_transport.go` - WebRTC transport seam used after signaling succeeds.
 
 Player-data handlers hosted by the route table:
 

@@ -20,7 +20,7 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Packet Schemas](../../data/packet-schemas.md)
 - [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
-This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebSocket, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current WebRTC `sr.reliable` baseline, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ## Current Inputs
 
@@ -31,7 +31,7 @@ Planning inputs for the remaining protocol work:
 - server projection and outbound flow constraints
 - client inbound routing and state application constraints
 - compatibility and versioning requirements
-- transport evolution assumptions
+- current WebRTC baseline and future channel evolution assumptions
 - packet budget and prioritization requirements
 
 ## Planned Outputs
@@ -61,11 +61,11 @@ Planning outputs for the remaining protocol work:
 
 - Which packet-budget policy changes require protocol-version compatibility?
 - Which resync hardening behaviors should be treated as mandatory versus optional?
-- What transport evolution is worth planning beyond the current WebSocket path?
+- What physical lane/channel evolution is worth planning beyond the current WebRTC `sr.reliable` baseline?
 
 ## Phase P2 - Realtime Protocol Architecture
 
-Lane-native JSON WebSocket delivery is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
+Lane-native JSON gameplay delivery over WebRTC `sr.reliable` is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
 
 ## Implemented Status
 
@@ -101,7 +101,7 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, transport evolution beyond WebSocket, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, future physical lane/channel evolution beyond the current WebRTC `sr.reliable` baseline, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ### Remaining Priority And Packet Budget Work
 
@@ -122,7 +122,9 @@ Future planning targets remain:
 - interest filtering
 - stronger resync behavior
 - hot/cold lane separation
-- transport evolution beyond current WebSocket
+- current WebRTC `sr.reliable` baseline
+- `sr.world` lane planning not implemented yet
+- unreliable/unordered lane planning not implemented yet
 
 Live priority should stay conservative until required gameplay and presentation truth can be proven safe by metrics.
 
@@ -144,10 +146,11 @@ Protocol and wire behavior is documented in [Realtime WebSocket Protocol](../../
 
 Client inbound lane routing is documented in [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md).
 
-Future packetcodec and transport evolution must preserve these ownership seams.
+Future packetcodec and transport evolution must preserve these ownership seams. The current baseline is WebRTC `sr.reliable`; `sr.world` and unreliable/unordered channels are future planning only.
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.
+
 
 
 

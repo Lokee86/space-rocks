@@ -15,7 +15,7 @@ A gameplay session is the player-facing flow that starts when the player chooses
 The flow spans:
 
 * client menu and session boot
-* realtime WebSocket connection
+* WebSocket session/control connection and WebRTC gameplay transport readiness
 * optional authenticated account admission
 * room creation or room entry
 * server-owned room lifecycle
@@ -24,7 +24,7 @@ The flow spans:
 * authoritative match-over detection
 * match-result presentation and reporting
 
-The client does not directly enter gameplay by changing scenes. It records the requested session mode, opens or reuses a WebSocket connection, sends a boot request, receives server room state, then begins accepting gameplay packets only after the server room reaches `InGame`.
+The client does not directly enter gameplay by changing scenes. It records the requested session mode, opens or reuses the WebSocket session/control connection, establishes WebRTC gameplay transport readiness, sends the boot request after the applicable auth and WebRTC gates pass, receives server room state, then begins accepting active realtime gameplay transport packets only after the server room reaches `InGame`.
 
 The game server owns the live room and match lifecycle. It creates or joins rooms, starts games, activates connected room members into active game players, advances simulation, detects match completion, builds resolved match summaries, and broadcasts room snapshots.
 
@@ -35,7 +35,7 @@ Player-data and API-server systems participate only where identity and result pe
 ## Participating systems
 
 * [Client](../../services/client/!INDEX.md) - owns menu intent, session boot, transient room-session cache, gameplay presentation, input collection, match-end UI, and route execution after player intent.
-* [Game Server](../../services/game-server/!INDEX.md) - owns realtime WebSocket handling, room lifecycle, room membership, gameplay simulation, match-over authority, room snapshots, and match-result reporting.
+* [Game Server](../../services/game-server/!INDEX.md) - owns realtime WebSocket session/control/signaling handling, WebRTC gameplay transport integration, room lifecycle, room membership, gameplay simulation, match-over authority, room snapshots, and match-result reporting.
 * [Player Data](../../services/player-data/!INDEX.md) - owns identity-based stats and match-result store routing after the game server reports resolved match facts.
 * [API Server](../../services/api-server/!INDEX.md) - owns authenticated-account auth and Rails/Postgres persistence behind account-backed player-data flows.
 * [Protocol](../../protocol/!INDEX.md) - owns the realtime packet contract used by session boot, room state, gameplay state, auth, and match-result presentation payloads.
@@ -89,7 +89,7 @@ match results window
 local reset and navigation after player intent
 ```
 
-The API server owns account authentication and account persistence. It does not own live rooms, WebSocket gameplay, match lifecycle, collisions, score during a match, lives, death, respawn, or authoritative gameplay lane packets.
+The API server owns account authentication and account persistence. It does not own live rooms, WebRTC gameplay transport, match lifecycle, collisions, score during a match, lives, death, respawn, or authoritative gameplay lane packets.
 
 Player-data owns match-result/stat storage routing. It does not own live room state, gameplay packet routing, or match-over decisions.
 
@@ -109,23 +109,23 @@ join_room
 
 Single-player records a local profile id when one is selected. Multiplayer create and join paths use the multiplayer session mode and are later gated by WebSocket auth.
 
-The client selects a WebSocket target from session mode. Current local development URLs for single-player and multiplayer both point to the same `/ws` game-server route, but the route path does not define play mode. Mode is expressed through the boot request and server-side policy.
+The client selects a WebSocket target from session mode. Current local development URLs for single-player and multiplayer both point to the same `/ws` game-server route, but the route path does not define play mode. Mode is expressed through the boot request and server-side policy. WebSocket remains the control, signaling, auth, and lobby route; active realtime gameplay lane delivery uses the configured WebRTC transport after signaling succeeds.
 
 ### 2. Client opens the realtime connection
 
-The client connection service opens the WebSocket connection and routes decoded packets into classified client signals.
+The client connection service opens the WebSocket session/control connection, establishes WebRTC gameplay transport readiness, and routes decoded WebSocket and WebRTC packets into classified client signals.
 
 When the connection opens:
 
-* pending single-player boot requests are sent immediately
-* pending multiplayer boot requests wait for successful WebSocket auth
-* when token verification is unavailable, multiplayer boot requests may still be sent so the server can fail admission explicitly
+* pending single-player boot requests wait for WebRTC gameplay transport readiness
+* pending multiplayer boot requests wait for successful WebSocket auth where applicable and still require WebRTC gameplay transport readiness before boot dispatch
+* when token verification is unavailable, multiplayer boot requests may still be sent after WebRTC readiness so the server can fail admission explicitly
 
 The client sends viewport configuration after the boot request is sent, not merely when the socket opens.
 
 ### 3. Server admits or rejects the room request
 
-The game server receives generated realtime packets over `/ws`.
+The game server receives generated realtime control and signaling packets over `/ws`, and active realtime gameplay lane delivery uses the configured WebRTC transport after signaling succeeds.
 
 Single-player start:
 
@@ -513,3 +513,5 @@ WebSocket connection, room membership, and active gameplay participation are sep
 The current local development WebSocket targets for single-player and multiplayer may be the same URL. This does not make single-player and multiplayer the same session flow. The server-side room request, admission rules, room joinability, and player-data identity context distinguish them.
 
 Room match-over and local player elimination must stay separate in documentation and implementation. Local elimination is a player presentation state; room match-over is the authoritative session completion state.
+
+

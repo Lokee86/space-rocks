@@ -26,7 +26,7 @@ authoritative game state
 -> encoded-byte accounting
 -> networking write integration
 -> debug wire/summary logging after successful writes
--> WebSocket write
+-> WebRTC sr.reliable write
 ```
 
 Projection is lane-specific rather than one combined gameplay snapshot.
@@ -36,9 +36,10 @@ Projection is lane-specific rather than one combined gameplay snapshot.
 ```text
 services/game-server/internal/protocol/realtime/
 services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The WebSocket write loop owns tick-driven invocation, successful delivery, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The session write loop owns tick-driven invocation; active gameplay lane delivery uses WebRTC `sr.reliable` through the networking transport seam. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
@@ -48,19 +49,19 @@ The active server projection path owns:
 * Keeping world, overlay, session, and event ownership separate.
 * Producing receiver-specific overlay/session/event output where needed.
 * Preserving explicit event-batch drain semantics.
-* Leaving JSON encode/decode mechanics to packetcodec and WebSocket transport/write success handling to networking.
+* Leaving JSON encode/decode mechanics to packetcodec and WebRTC active gameplay transport/write success handling to networking.
 
 ## Does not own
 
 The lane projection path does not own:
 
-* WebSocket transport.
+* WebRTC active gameplay transport.
 * Packet schema source-of-truth files.
 * JSON encode/decode mechanics.
 * Room lifecycle.
 * Client rendering.
 * Match rules or simulation mutation.
-* WebSocket delivery scheduling, write integration, write success/failure handling, and post-write state changes in networking.
+* WebRTC delivery scheduling, write integration, write success/failure handling, and post-write state changes in networking.
 
 ## Protocols and APIs
 
@@ -148,7 +149,7 @@ packetcodec
 = JSON encode/decode mechanics
 
 networking
-= WebSocket write integration and write success/failure handling
+= WebRTC active gameplay write integration and write success/failure handling
 ```
 
 ## Event semantics
@@ -175,9 +176,10 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/quantize/` - numeric wire quantization policies.
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.
-* `services/game-server/internal/networking/websocket_write.go` - active write integration and post-write state changes.
+* `services/game-server/internal/networking/websocket_write.go` - session write-loop integration and active write triggering.
+* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over WebRTC `sr.reliable`.
 * `services/game-server/internal/networking/packetmetrics/` - packet observability helpers and related support types used by outbound networking seams.
-* `services/game-server/internal/networking/` - websocket session and outbound delivery boundaries.
+* `services/game-server/internal/networking/` - websocket session, WebRTC transport, and outbound delivery boundaries.
 * `shared/packets/gameplay.toml` - shared gameplay schema and realtime packet type values.
 * `shared/packets/outputs.toml` - generated output routing for packet constants and builders.
 
@@ -203,6 +205,3 @@ Relevant server tests include:
 * [Packet Schemas](../../../../data/packet-schemas.md)
 
 ## Notes
-
-
-

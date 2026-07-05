@@ -12,7 +12,7 @@ It focuses on the cross-system path that turns a local single-player menu reques
 
 Local single-player is a server-backed local session flow.
 
-It is not an offline client simulation. The Godot client still connects to the Go game server over the realtime WebSocket route, sends a generated `start_single_player_request`, receives room snapshots and gameplay lane packets from the server, and renders server-authoritative gameplay lane packets.
+It is not an offline client simulation. The Godot client still connects to the Go game server over `/ws` for session, control, and WebRTC signaling, establishes WebRTC `sr.reliable` for active realtime gameplay, sends a generated `start_single_player_request` over WebSocket after WebRTC readiness, receives room snapshots over WebSocket, receives gameplay lane packets over WebRTC, and renders server-authoritative gameplay lane packets.
 
 The current technical distinction is:
 
@@ -92,7 +92,7 @@ pending local_profile_id
 selected WebSocket URL
 ```
 
-Single-player boot sends immediately after connection. Multiplayer create/join waits for WebSocket auth success or a token-verification-unavailable result so server-side admission can fail explicitly.
+Single-player boot waits until the WebSocket is connected and WebRTC gameplay transport is ready. Multiplayer create/join waits for WebSocket auth success or a token-verification-unavailable result, and still must not dispatch before WebRTC gameplay transport is ready.
 
 The single-player path does not wait for auth.
 
@@ -241,13 +241,15 @@ This does not collapse the modes. The selected URL only chooses transport. The p
 
 ```text
 WebSocket connected
+-> client starts WebRTC signaling and transport setup
 -> optional authenticate_request if a token exists
--> pending single-player request sends immediately
+-> WebRTC gameplay transport ready
+-> pending single-player request sends
 -> client sends start_single_player_request
 -> client sends viewport config after boot request
 ```
 
-Single-player boot does not wait for `authenticate_result`.
+Single-player boot does not wait for `authenticate_result`, but it must not be sent before WebRTC gameplay transport readiness.
 
 The generated packet shape includes:
 
@@ -295,7 +297,8 @@ client input
 -> WebSocket packet
 -> game-server gameplay routing
 -> authoritative simulation step
--> gameplay lane packet
+-> active gameplay lane packet
+-> WebRTC sr.reliable
 -> client presentation
 ```
 
@@ -502,3 +505,4 @@ Those belong in service, protocol, data, planning, limits, or player-experience 
 `local` is not enough information. A locally running server can host local single-player, multiplayer simulation, or authenticated multiplayer behavior. The current flow is identified by session mode, packet type, room policy, and player-data identity context.
 
 Local single-player currently shares infrastructure with multiplayer in several places. That is intentional for the authoritative simulation path and does not make Local Profile, Guest, and Authenticated Account interchangeable.
+

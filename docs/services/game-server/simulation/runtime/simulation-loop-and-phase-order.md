@@ -494,7 +494,7 @@ Primary implementation files:
 * `services/game-server/internal/game/world_simulation_options.go` - world freeze flags and gate helpers.
 * `services/game-server/internal/game/match.go` - match-over decision evaluation used by the simulation step gate.
 * `services/game-server/internal/protocol/realtime/` - lane-native realtime projection that reads post-step runtime state and plans `event_batch` output.
-* `services/game-server/internal/networking/outbound/` - writes selected lane-native realtime packets to the websocket session and clears drained event IDs after successful active write.
+* `services/game-server/internal/networking/outbound/` - writes selected queued outbound packets to the websocket session and clears drained event IDs after successful active WebRTC lane write.
 * `services/game-server/internal/game/runtime/state.go` - runtime entity store and core runtime entity shapes.
 * `services/game-server/internal/game/motion/motion.go` - movement integration and wrapped position advancement for ships, asteroids, and bullets.
 
@@ -503,7 +503,8 @@ Related room and networking files:
 * `services/game-server/internal/rooms/room_lifecycle.go` - room lifecycle calls `Game.Start` and `Game.Stop`.
 * `services/game-server/internal/rooms/lifecycle_tick.go` - room game-over lifecycle observation.
 * `services/game-server/internal/protocol/realtime/` - lane-native realtime projection and packet planning.
-* `services/game-server/internal/networking/websocket_write.go` - outbound websocket write path for selected lane-native realtime packets planned by `services/game-server/internal/protocol/realtime/`.
+* `services/game-server/internal/networking/websocket_write.go` - runs the session write loop and active realtime scheduling for selected lane-native realtime packets planned by `services/game-server/internal/protocol/realtime/`; successful active gameplay lane delivery is over WebRTC `sr.reliable` through `services/game-server/internal/networking/webrtc_transport.go`.
+* `services/game-server/internal/networking/webrtc_transport.go` - sends encoded active realtime lane bytes over the configured WebRTC transport after signaling succeeds.
 * `services/game-server/internal/networking/websocket_gameplay_tick.go` - gameplay presentation tick path.
 
 Related devtools files:

@@ -1,4 +1,4 @@
-﻿# Pickup Effects
+# Pickup Effects
 
 Parent index: [Game Server Simulation Pickups](./!INDEX.md)
 
@@ -357,7 +357,7 @@ Primary implementation files:
 * `services/game-server/internal/game/player_counters.go` - Player score/life counter mutation helpers.
 * `services/game-server/internal/game/weapons/types.go` - Weapon IDs, slots, ammo policies, equipped weapon state, and default armory shapes.
 * `services/game-server/internal/game/runtime/ship.go` - Projection of live ship weapon and ammo state.
-* `services/game-server/internal/protocol/realtime/records.go` - Lane record and event batch projection records, while the active websocket write path drains selected event IDs only after successful event batch write.
+* `services/game-server/internal/protocol/realtime/records.go` - Lane record and event batch projection records, while active WebRTC delivery drains selected event IDs only after a successful `event_batch` write.
 * `services/game-server/internal/game/packets.go` - Generated packet-facing event and state structs.
 * `services/game-server/internal/game/entities/pickups/definitions.go` - Pickup definition lookup from generated constants.
 
@@ -424,4 +424,5 @@ The current effect system is intentionally narrow. It supports lives and runtime
 The torpedo pickup currently changes the active runtime ship, not durable player inventory or future loadout state. Future loadout or inventory work should not be documented here as current behavior until implemented.
 
 The current resolver uses code-defined pickup-type mappings. If pickup effect metadata later becomes fully data-driven, that belongs in the data pipeline documentation as well as this service boundary.
+
 

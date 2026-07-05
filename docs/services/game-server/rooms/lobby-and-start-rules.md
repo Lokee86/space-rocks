@@ -84,7 +84,7 @@ Lobby and start rules do not own:
 * Client-side Start button enablement.
 * Authenticated-account admission for multiplayer create/join.
 * Local profile storage.
-* Active game player routing on WebSocket sessions.
+* Active game-player routing on networking sessions.
 * Gameplay simulation rules.
 * Match-over policy.
 * Match-result reporting sinks.
@@ -221,7 +221,7 @@ The networking adapter stores the supplied `local_profile_id` on the room member
 
 ### Active player activation
 
-The room package starts the game and owns room state, but networking owns active WebSocket game-player routing.
+The room package starts the game and owns room state, but networking owns active game-player routing on connected sessions.
 
 After a successful start, networking calls `activateRoomPlayers`.
 
@@ -473,3 +473,4 @@ go test -buildvcs=false ./services/game-server/internal/rooms ./services/game-se
 Room/domain ownership lives in `services/game-server/internal/rooms`, while WebSocket transport and session routing live in `services/game-server/internal/networking`.
 
 The current service path has no implemented lobby countdown. Countdown behavior is planned player-experience work, not current room-service behavior.
+
