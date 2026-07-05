@@ -3,7 +3,7 @@ extends Node
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
-const WebRTCSmokePeer := preload("res://scripts/networking/webrtc/webrtc_smoke_peer.gd")
+const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
@@ -40,8 +40,8 @@ var network_client: NetworkClient
 var client_packet_sender: ClientPacketSender
 var server_packet_dispatcher: ServerPacketDispatcher
 var realtime_router: RealtimeRouter
-var webrtc_smoke_peer: WebRTCSmokePeer
-var webrtc_smoke_peer_factory: Callable
+var webrtc_transport: WebRTCTransport
+var webrtc_transport_factory: Callable
 var has_started_connection := false
 var auth_session_controller
 var websocket_auth_authenticated := false
@@ -72,8 +72,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if has_started_connection && network_client != null:
 		network_client.poll()
-	if webrtc_smoke_peer != null:
-		webrtc_smoke_peer.poll()
+	if webrtc_transport != null:
+		webrtc_transport.poll()
 
 
 func connect_to_server(url: String) -> Error:
@@ -85,7 +85,7 @@ func connect_to_server(url: String) -> Error:
 func reset_realtime_protocol_state() -> void:
 	realtime_router = RealtimeRouter.new()
 	_lane_route_log_emitted.clear()
-	_clear_webrtc_smoke_peer()
+	_clear_webrtc_transport()
 	ClientLogger.network_event(
 		ClientLogger.LEVEL_INFO,
 		"realtime_protocol_state_reset",
@@ -289,7 +289,7 @@ func _emit_gameplay_packet(packet: Dictionary) -> void:
 
 
 func _on_connected() -> void:
-	_start_webrtc_smoke_peer()
+	_start_webrtc_transport()
 	_send_authenticate_request_if_token_exists()
 	connected.emit()
 
@@ -299,7 +299,7 @@ func _on_closed() -> void:
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = null
 	websocket_auth_display_name = ""
-	_clear_webrtc_smoke_peer()
+	_clear_webrtc_transport()
 	closed.emit()
 
 
@@ -402,14 +402,14 @@ func _on_telemetry_pong_received(packet: Dictionary) -> void:
 
 
 func _on_webrtc_answer_received(packet: Dictionary) -> void:
-	if webrtc_smoke_peer != null:
-		webrtc_smoke_peer.handle_answer(str(packet.get("description_type", "")), str(packet.get("sdp", "")))
+	if webrtc_transport != null:
+		webrtc_transport.handle_answer(str(packet.get("description_type", "")), str(packet.get("sdp", "")))
 	webrtc_answer_received.emit(packet)
 
 
 func _on_webrtc_ice_candidate_received(packet: Dictionary) -> void:
-	if webrtc_smoke_peer != null:
-		webrtc_smoke_peer.handle_remote_ice(str(packet.get("media", "")), int(packet.get("index", 0)), str(packet.get("name", "")))
+	if webrtc_transport != null:
+		webrtc_transport.handle_remote_ice(str(packet.get("media", "")), int(packet.get("index", 0)), str(packet.get("name", "")))
 	webrtc_ice_candidate_received.emit(packet)
 
 
@@ -434,9 +434,9 @@ func _on_webrtc_smoke_received(packet: Dictionary) -> void:
 
 
 func _on_webrtc_failed_received(packet: Dictionary) -> void:
-	if webrtc_smoke_peer != null:
-		webrtc_smoke_peer.close()
-		webrtc_smoke_peer = null
+	if webrtc_transport != null:
+		webrtc_transport.close()
+		webrtc_transport = null
 	webrtc_failed_received.emit(packet)
 
 
@@ -444,18 +444,18 @@ func _on_unknown_packet_received(packet: Dictionary) -> void:
 	unknown_packet_received.emit(packet)
 
 
-func _start_webrtc_smoke_peer() -> void:
-	if webrtc_smoke_peer != null:
+func _start_webrtc_transport() -> void:
+	if webrtc_transport != null:
 		return
-	webrtc_smoke_peer = _create_webrtc_smoke_peer()
+	webrtc_transport = _create_webrtc_transport()
 	var smoke_id := _next_webrtc_smoke_id()
-	webrtc_smoke_peer.offer_created.connect(func(description_type: String, sdp: String) -> void:
+	webrtc_transport.offer_created.connect(func(description_type: String, sdp: String) -> void:
 		send_webrtc_offer(description_type, sdp)
 	)
-	webrtc_smoke_peer.ice_candidate_created.connect(func(media: String, index: int, name: String) -> void:
+	webrtc_transport.ice_candidate_created.connect(func(media: String, index: int, name: String) -> void:
 		send_webrtc_ice_candidate(media, index, name)
 	)
-	webrtc_smoke_peer.ready.connect(func(channel_label: String, channel_id: int) -> void:
+	webrtc_transport.ready.connect(func(channel_label: String, channel_id: int) -> void:
 		ClientLogger.network_event(
 			ClientLogger.LEVEL_INFO,
 			"webrtc_data_channel_ready",
@@ -466,32 +466,50 @@ func _start_webrtc_smoke_peer() -> void:
 				"smoke_id": smoke_id,
 			}
 		)
-		webrtc_smoke_peer.send_smoke(smoke_id, "client smoke peer ready")
+		webrtc_transport.send_smoke(smoke_id, "client smoke peer ready")
 	)
-	webrtc_smoke_peer.smoke_received.connect(func(packet: Dictionary) -> void:
+	webrtc_transport.packet_received.connect(func(packet: Dictionary) -> void:
+		_handle_webrtc_transport_packet(packet)
+	)
+	webrtc_transport.failed.connect(func(error_code: String, message: String) -> void:
+		send_webrtc_failed(error_code, message)
+	)
+	webrtc_transport.start()
+
+
+func _handle_webrtc_transport_packet(packet: Dictionary) -> void:
+	var packet_type := str(packet.get("type", ""))
+	if packet_type == "webrtc_smoke":
 		ClientLogger.network_event(
 			ClientLogger.LEVEL_INFO,
-			"webrtc_smoke_peer_smoke_received",
+			"webrtc_transport_smoke_received",
 			"WebRTC smoke packet received by client",
 			packet
 		)
+		return
+	ClientLogger.network_event(
+		ClientLogger.LEVEL_DEBUG,
+		"webrtc_transport_packet_dispatch",
+		"WebRTC transport packet dispatched",
+		{
+			"transport": "webrtc",
+			"packet_type": packet_type,
+		}
 	)
-	webrtc_smoke_peer.failed.connect(func(error_code: String, message: String) -> void:
-		send_webrtc_failed(error_code, message)
-	)
-	webrtc_smoke_peer.start()
+	if server_packet_dispatcher != null:
+		server_packet_dispatcher.dispatch(packet)
 
 
-func _create_webrtc_smoke_peer() -> WebRTCSmokePeer:
-	if webrtc_smoke_peer_factory != null and webrtc_smoke_peer_factory.is_valid():
-		return webrtc_smoke_peer_factory.call()
-	return WebRTCSmokePeer.new()
+func _create_webrtc_transport() -> WebRTCTransport:
+	if webrtc_transport_factory != null and webrtc_transport_factory.is_valid():
+		return webrtc_transport_factory.call()
+	return WebRTCTransport.new()
 
 
-func _clear_webrtc_smoke_peer() -> void:
-	if webrtc_smoke_peer != null:
-		webrtc_smoke_peer.close()
-		webrtc_smoke_peer = null
+func _clear_webrtc_transport() -> void:
+	if webrtc_transport != null:
+		webrtc_transport.close()
+		webrtc_transport = null
 
 
 func _next_webrtc_smoke_id() -> String:

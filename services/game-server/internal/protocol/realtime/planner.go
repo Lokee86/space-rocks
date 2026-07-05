@@ -30,6 +30,19 @@ type RealtimeSendPrepared struct {
 	SendPlan      SendPlan
 }
 
+type CandidateWriteDiagnostics struct {
+	PacketFamily string
+	Lane         Lane
+	Kind         RealtimeLaneCandidateKind
+	Sequence     int
+	BaselineID   string
+	SnapshotID   string
+	SnapshotKind SnapshotKind
+	ChunkIndex   int
+	ChunkCount   int
+	IsFinalChunk bool
+}
+
 func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeLanePlan {
 	candidates := make([]RealtimeLaneCandidate, 0, 4)
 
@@ -294,6 +307,25 @@ func CandidateProjection(candidate RealtimeLaneCandidate) (any, bool) {
 	return candidate.Projection, true
 }
 
+func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state RealtimeSessionState) CandidateWriteDiagnostics {
+	diagnostics := CandidateWriteDiagnostics{
+		PacketFamily: packetFamilyForCandidate(candidate),
+		Lane:         candidate.Lane,
+		Kind:         candidate.Kind,
+	}
+	metadata, ok := CandidateMetadata(candidate, state)
+	if !ok {
+		return diagnostics
+	}
+	diagnostics.Sequence = metadata.Sequence
+	diagnostics.BaselineID = metadata.BaselineID
+	diagnostics.SnapshotID = metadata.SnapshotID
+	diagnostics.SnapshotKind = metadata.SnapshotKind
+	diagnostics.ChunkIndex = metadata.ChunkIndex
+	diagnostics.ChunkCount = metadata.ChunkCount
+	diagnostics.IsFinalChunk = metadata.IsFinalChunk
+	return diagnostics
+}
 
 func quantizeOverlayFullPacket(packet OverlayFullPacket) (OverlayWireFullPacket, error) {
 	quantized := OverlayWireFullPacket{

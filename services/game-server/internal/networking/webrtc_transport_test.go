@@ -2,6 +2,7 @@ package networking
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/pion/webrtc/v4"
@@ -10,6 +11,7 @@ import (
 type fakeWebRTCDataChannel struct {
 	readyState webrtc.DataChannelState
 	sentTexts  []string
+	sendErr    error
 	onOpen     func()
 	onMessage  func(webrtc.DataChannelMessage)
 	closed     bool
@@ -18,7 +20,13 @@ type fakeWebRTCDataChannel struct {
 func (c *fakeWebRTCDataChannel) OnOpen(f func()) { c.onOpen = f }
 func (c *fakeWebRTCDataChannel) OnMessage(f func(webrtc.DataChannelMessage)) { c.onMessage = f }
 func (c *fakeWebRTCDataChannel) ReadyState() webrtc.DataChannelState { return c.readyState }
-func (c *fakeWebRTCDataChannel) SendText(s string) error { c.sentTexts = append(c.sentTexts, s); return nil }
+func (c *fakeWebRTCDataChannel) SendText(s string) error {
+	if c.sendErr != nil {
+		return c.sendErr
+	}
+	c.sentTexts = append(c.sentTexts, s)
+	return nil
+}
 func (c *fakeWebRTCDataChannel) Close() error { c.closed = true; return nil }
 
 type fakeWebRTCPeer struct {
@@ -50,6 +58,63 @@ func assertSentJSONField(t *testing.T, raw string, key string, want any) {
 	}
 	if packet[key] != want {
 		t.Fatalf("expected %s=%#v, got %#v", key, want, packet[key])
+	}
+}
+
+func TestWebRTCTransportPeerConnectionUsesDefaultConfigPath(t *testing.T) {
+	oldBuilder := newWebRTCPeerConnectionAPI
+	defer func() { newWebRTCPeerConnectionAPI = oldBuilder }()
+
+	var captured WebRTCTransportConfig
+	newWebRTCPeerConnectionAPI = func(config WebRTCTransportConfig) (*webrtc.API, error) {
+		captured = config
+		return webrtc.NewAPI(), nil
+	}
+
+	restore := SetWebRTCTransportConfigForTests(WebRTCTransportConfig{})
+	defer restore()
+
+	peer, err := newWebRTCPeerConnection()
+	if err != nil {
+		t.Fatalf("newWebRTCPeerConnection returned error: %v", err)
+	}
+	if peer == nil {
+		t.Fatal("expected peer to be created")
+	}
+	if !reflect.DeepEqual(captured, WebRTCTransportConfig{}) {
+		t.Fatalf("expected empty config, got %#v", captured)
+	}
+}
+
+func TestWebRTCTransportPeerConnectionAcceptsAdvertisedIPsAndUDPPortRange(t *testing.T) {
+	oldBuilder := newWebRTCPeerConnectionAPI
+	defer func() { newWebRTCPeerConnectionAPI = oldBuilder }()
+
+	var captured WebRTCTransportConfig
+	newWebRTCPeerConnectionAPI = func(config WebRTCTransportConfig) (*webrtc.API, error) {
+		captured = config
+		return webrtc.NewAPI(), nil
+	}
+
+	restore := SetWebRTCTransportConfigForTests(WebRTCTransportConfig{
+		AdvertisedIPs: []string{"198.51.100.10", "203.0.113.25"},
+		UDPPortMin:    40000,
+		UDPPortMax:    40010,
+	})
+	defer restore()
+
+	peer, err := newWebRTCPeerConnection()
+	if err != nil {
+		t.Fatalf("newWebRTCPeerConnection returned error: %v", err)
+	}
+	if peer == nil {
+		t.Fatal("expected peer to be created")
+	}
+	if !reflect.DeepEqual(captured.AdvertisedIPs, []string{"198.51.100.10", "203.0.113.25"}) {
+		t.Fatalf("expected advertised IPs to be forwarded, got %#v", captured.AdvertisedIPs)
+	}
+	if captured.UDPPortMin != 40000 || captured.UDPPortMax != 40010 {
+		t.Fatalf("expected UDP port range to be forwarded, got %#v", captured)
 	}
 }
 
@@ -109,6 +174,31 @@ func TestWebRTCTransportSendJSONRequiresOpenChannel(t *testing.T) {
 	assertSentJSONField(t, channel.sentTexts[0], "type", "custom")
 	assertSentJSONField(t, channel.sentTexts[0], "value", "hello")
 }
+func TestWebRTCTransportSendEncodedJSONRequiresOpenChannel(t *testing.T) {
+	peer := NewWebRTCTransport(WebRTCSignalHooks{})
+	if err := peer.SendEncodedJSON([]byte(`{"type":"custom"}`)); err == nil {
+		t.Fatal("expected error without channel")
+	}
+
+	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateClosed}
+	peer.channel = channel
+	if err := peer.SendEncodedJSON([]byte(`{"type":"custom"}`)); err == nil {
+		t.Fatal("expected error for closed channel")
+	}
+
+	channel.readyState = webrtc.DataChannelStateOpen
+	payload := []byte(`{"type":"custom","value":"hello"}`)
+	if err := peer.SendEncodedJSON(payload); err != nil {
+		t.Fatalf("SendEncodedJSON returned error: %v", err)
+	}
+	if len(channel.sentTexts) != 1 {
+		t.Fatalf("expected 1 sent text, got %d", len(channel.sentTexts))
+	}
+	if channel.sentTexts[0] != string(payload) {
+		t.Fatalf("expected exact payload %q, got %q", string(payload), channel.sentTexts[0])
+	}
+}
+
 
 func TestWebRTCTransportSendSmokeRequiresOpenChannel(t *testing.T) {
 	peer := NewWebRTCTransport(WebRTCSignalHooks{})

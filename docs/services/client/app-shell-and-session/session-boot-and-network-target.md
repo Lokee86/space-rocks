@@ -40,6 +40,8 @@ ws://localhost:8080/ws
 
 The route path does not define play mode. Play mode is expressed through the client request and server-side session, room, and admission policy. Single-player and multiplayer can later point at different infrastructure without changing the server route model.
 
+WebSocket target selection is separate from WebRTC connectivity. The WebSocket URL may point at a normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment therefore must allow the advertised WebRTC ICE address and UDP path to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry UDP WebRTC traffic.
+
 ## Code root
 
 * `client/scripts/boot/`
@@ -315,6 +317,8 @@ CONNECT_RESULT_STARTED_CONNECTING
 CONNECT_RESULT_ALREADY_CONNECTED
 CONNECT_RESULT_FAILED
 ```
+
+The client shell constants also own the current client ICE server configuration seam. That seam is currently empty by default and does not require local development configuration.
 
 The client boot flow does not persist boot state.
 

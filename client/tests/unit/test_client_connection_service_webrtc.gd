@@ -1,11 +1,11 @@
 extends GutTest
 
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
-const WebRTCSmokePeerScript := preload("res://scripts/networking/webrtc/webrtc_smoke_peer.gd")
+const WebRTCTransportScript := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 
 
-class FakeSmokePeer:
-	extends WebRTCSmokePeer
+class FakeTransportPeer:
+	extends WebRTCTransport
 
 	var started := 0
 	var polled := 0
@@ -54,24 +54,24 @@ class FakeNetworkClient:
 		pass
 
 
-func test_connection_service_starts_and_wires_webrtc_smoke_peer() -> void:
+func test_connection_service_starts_and_wires_webrtc_transport() -> void:
 	var service := ClientConnectionService.new()
 	var fake_network := FakeNetworkClient.new()
-	var fake_peer := FakeSmokePeer.new()
+	var fake_peer := FakeTransportPeer.new()
 	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = null
 	service.realtime_router = null
-	service.webrtc_smoke_peer_factory = Callable(self, "_make_fake_smoke_peer").bind(fake_peer)
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 
 	service._on_connected()
-	service.webrtc_smoke_peer.offer_created.emit("answer-type", "answer-sdp")
-	service.webrtc_smoke_peer.ice_candidate_created.emit("audio", 2, "candidate-name")
-	service.webrtc_smoke_peer.ready.emit("sr.reliable", 1)
-	service.webrtc_smoke_peer.smoke_received.emit({"type": "webrtc_smoke", "smoke_id": "server-smoke", "origin": "server"})
-	service.webrtc_smoke_peer.failed.emit("peer_error", "boom")
+	service.webrtc_transport.offer_created.emit("answer-type", "answer-sdp")
+	service.webrtc_transport.ice_candidate_created.emit("audio", 2, "candidate-name")
+	service.webrtc_transport.ready.emit("sr.reliable", 1)
+	service.webrtc_transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "server-smoke", "origin": "server"})
+	service.webrtc_transport.failed.emit("peer_error", "boom")
 	service._process(0.0)
 	service._on_closed()
 
@@ -84,6 +84,35 @@ func test_connection_service_starts_and_wires_webrtc_smoke_peer() -> void:
 	assert_true(fake_peer.closed >= 1)
 
 
-func _make_fake_smoke_peer(fake_peer: FakeSmokePeer) -> WebRTCSmokePeer:
+func test_webrtc_transport_non_smoke_packet_dispatches_to_gameplay() -> void:
+	var service := ClientConnectionService.new()
+	var fake_network := FakeNetworkClient.new()
+	var fake_peer := FakeTransportPeer.new()
+	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var gameplay_packets: Array = []
+	var smoke_packets: Array = []
+	service.network_client = fake_network
+	service.client_packet_sender = fake_sender
+	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.realtime_router = null
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
+	add_child_autofree(service)
+	service.gameplay_packet_received.connect(func(packet: Dictionary) -> void:
+		gameplay_packets.append(packet)
+	)
+	service.webrtc_smoke_received.connect(func(packet: Dictionary) -> void:
+		smoke_packets.append(packet)
+	)
+	service._on_connected()
+	service.webrtc_transport.packet_received.emit({"type": "resync_request", "lane": "world"})
+	service.webrtc_transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "smoke-1", "origin": "server"})
+
+	assert_eq(gameplay_packets.size(), 1)
+	assert_eq(gameplay_packets[0]["type"], "resync_request")
+	assert_eq(gameplay_packets[0]["lane"], "world")
+	assert_true(smoke_packets.is_empty())
+
+
+func _make_fake_transport_peer(fake_peer: FakeTransportPeer) -> WebRTCTransport:
 	return fake_peer
 

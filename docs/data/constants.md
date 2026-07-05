@@ -141,7 +141,7 @@ constants.client.shell.session
 constants.client.shell.game_menu
 ```
 
-These sections own client websocket target URLs/origin, network polling priority, room-state strings, shell-state strings, session-mode strings, boot request strings, connect result strings, and gameplay menu primary-action identifiers.
+These sections own client websocket target URLs/origin, network polling priority, client WebRTC ICE server configuration, room-state strings, shell-state strings, session-mode strings, boot request strings, connect result strings, and gameplay menu primary-action identifiers.
 
 ### Client lobby constants
 

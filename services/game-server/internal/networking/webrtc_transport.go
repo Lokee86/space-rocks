@@ -24,6 +24,37 @@ type WebRTCSignalHooks struct {
 	OnSmokeReceived     func(packet map[string]any)
 }
 
+type WebRTCTransportConfig struct {
+	AdvertisedIPs []string
+	UDPPortMin    uint16
+	UDPPortMax    uint16
+}
+
+var webRTCTransportConfig WebRTCTransportConfig
+
+var newWebRTCPeerConnectionAPI = func(config WebRTCTransportConfig) (*webrtc.API, error) {
+	settingEngine := webrtc.SettingEngine{}
+	if len(config.AdvertisedIPs) > 0 {
+		settingEngine.SetNAT1To1IPs(config.AdvertisedIPs, webrtc.ICECandidateTypeHost)
+	}
+	if config.UDPPortMin != 0 && config.UDPPortMax != 0 {
+		settingEngine.SetEphemeralUDPPortRange(uint16(config.UDPPortMin), uint16(config.UDPPortMax))
+	}
+	return webrtc.NewAPI(webrtc.WithSettingEngine(settingEngine)), nil
+}
+
+func SetWebRTCTransportConfig(config WebRTCTransportConfig) {
+	webRTCTransportConfig = config
+}
+
+func SetWebRTCTransportConfigForTests(config WebRTCTransportConfig) func() {
+	previous := webRTCTransportConfig
+	SetWebRTCTransportConfig(config)
+	return func() {
+		SetWebRTCTransportConfig(previous)
+	}
+}
+
 type webRTCPeer interface {
 	SetRemoteDescription(desc webrtc.SessionDescription) error
 	CreateAnswer(options *webrtc.AnswerOptions) (webrtc.SessionDescription, error)
@@ -78,7 +109,10 @@ func (adapter *pionPeerAdapter) Close() error {
 	return adapter.peer.Close()
 }
 var newWebRTCPeerConnection = func() (webRTCPeer, error) {
-	api := webrtc.NewAPI()
+	api, err := newWebRTCPeerConnectionAPI(webRTCTransportConfig)
+	if err != nil {
+		return nil, err
+	}
 	peer, err := api.NewPeerConnection(webrtc.Configuration{})
 	if err != nil {
 		return nil, err
@@ -137,6 +171,16 @@ func (p *WebRTCTransport) AddRemoteCandidate(media string, index int, name strin
 	}
 	idx := uint16(index)
 	return p.peer.AddICECandidate(webrtc.ICECandidateInit{SDPMid: &media, SDPMLineIndex: &idx, Candidate: name})
+}
+
+func (p *WebRTCTransport) SendEncodedJSON(encoded []byte) error {
+	if p.channel == nil {
+		return errors.New("webrtc data channel is not ready")
+	}
+	if p.channel.ReadyState() != webrtc.DataChannelStateOpen {
+		return errors.New("webrtc data channel is not open")
+	}
+	return p.channel.SendText(string(encoded))
 }
 
 func (p *WebRTCTransport) SendJSON(packet map[string]any) error {

@@ -55,6 +55,10 @@ func (session *webSocketSession) SetAuthenticatedAccountIdentity(userID int64, a
 	session.identity = NewAuthenticatedAccountIdentity(userID, accountID, displayName)
 }
 
+func (session *webSocketSession) hasReadyWebRTCGameplayTransport() bool {
+	return session.webrtcTransport != nil && session.webrtcTransport.Ready()
+}
+
 func (session *webSocketSession) resetDebugShapeCatalogSent() {
 	session.debugShapeCatalogSentRoomID = ""
 }

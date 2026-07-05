@@ -1,7 +1,6 @@
 package networking
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -74,29 +73,54 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		if len(encodedPacket) == 0 {
 			continue
 		}
-		if !outbound.WriteServerMessage(session.conn, encodedPacket, func(writeErr error) {
-			logging.Network.Error("lane protocol gameplay write failed", writeErr,
+		if session.webrtcTransport == nil {
+			logging.Network.Warn("lane protocol gameplay webrtc transport missing",
 				logging.FieldRoomID, session.currentRoomID,
 				logging.FieldPlayerID, session.currentGamePlayerID,
 				logging.FieldRemoteAddr, remoteAddr,
 				"lane", candidate.Lane,
+				"transport", "webrtc",
 			)
-		}) {
 			return false
 		}
-		wire := realtime.WireLanePacket(candidate)
+		if !session.webrtcTransport.Ready() {
+			logging.Network.Warn("lane protocol gameplay webrtc transport not ready",
+				logging.FieldRoomID, session.currentRoomID,
+				logging.FieldPlayerID, session.currentGamePlayerID,
+				logging.FieldRemoteAddr, remoteAddr,
+				"lane", candidate.Lane,
+				"transport", "webrtc",
+			)
+			return false
+		}
+		if err := session.webrtcTransport.SendEncodedJSON(encodedPacket); err != nil {
+			logging.Network.Error("lane protocol gameplay webrtc write failed", err,
+				logging.FieldRoomID, session.currentRoomID,
+				logging.FieldPlayerID, session.currentGamePlayerID,
+				logging.FieldRemoteAddr, remoteAddr,
+				"lane", candidate.Lane,
+				"transport", "webrtc",
+				"channel", "sr.reliable",
+			)
+			return false
+		}
+		diagnostics := realtime.CandidateWriteDiagnosticsFor(candidate, session.realtimeState)
 		logging.Network.Debug("lane protocol gameplay wire packet written",
 			logging.FieldRoomID, session.currentRoomID,
 			logging.FieldPlayerID, session.currentGamePlayerID,
 			logging.FieldRemoteAddr, remoteAddr,
-			"wire_type", fmt.Sprint(wire["type"]),
-			"candidate_lane", candidate.Lane,
-			"candidate_kind", candidate.Kind,
-			"wire_lane", fmt.Sprint(wire["lane"]),
-			"sequence", fmt.Sprint(wire["sequence"]),
-			"baseline_id", fmt.Sprint(wire["baseline_id"]),
-			"snapshot_id", fmt.Sprint(wire["snapshot_id"]),
-			"snapshot_kind", fmt.Sprint(wire["snapshot_kind"]),
+			"transport", "webrtc",
+			"channel", "sr.reliable",
+			"packet_family", diagnostics.PacketFamily,
+			"candidate_lane", diagnostics.Lane,
+			"candidate_kind", diagnostics.Kind,
+			"sequence", diagnostics.Sequence,
+			"baseline_id", diagnostics.BaselineID,
+			"snapshot_id", diagnostics.SnapshotID,
+			"snapshot_kind", diagnostics.SnapshotKind,
+			"chunk_index", diagnostics.ChunkIndex,
+			"chunk_count", diagnostics.ChunkCount,
+			"is_final_chunk", diagnostics.IsFinalChunk,
 			"encoded_bytes", len(encodedPacket),
 		)
 		if candidate.Kind == realtime.RealtimeLaneCandidateKindEventBatch {

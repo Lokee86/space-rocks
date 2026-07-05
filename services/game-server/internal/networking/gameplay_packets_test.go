@@ -10,6 +10,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/pion/webrtc/v4"
 )
 
 func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) {
@@ -63,9 +64,10 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 
 func TestHandleLobbyPacketStartSinglePlayerStoresLocalProfileID(t *testing.T) {
 	session := &webSocketSession{
-		sessionID: "session-1",
-		rooms:     rooms.NewRoomManager(),
-		outbound:  make(chan []byte, 4),
+		sessionID:       "session-1",
+		rooms:           rooms.NewRoomManager(),
+		outbound:        make(chan []byte, 4),
+		webrtcTransport: &WebRTCTransport{channel: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}, ready: true},
 	}
 
 	packet := game.ClientPacket{

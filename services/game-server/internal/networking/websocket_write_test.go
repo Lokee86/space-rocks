@@ -2,6 +2,7 @@ package networking
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
 	"github.com/gorilla/websocket"
+	"github.com/pion/webrtc/v4"
 )
 
 func TestMaybeWriteDebugShapeCatalogSendsOnlyOnceForSameRoom(t *testing.T) {
@@ -71,10 +73,10 @@ func TestMaybeWriteDebugShapeCatalogSendsAgainForNewRoomAfterReset(t *testing.T)
 	defer clientConn.Close()
 
 	session := &webSocketSession{
-		conn:                    serverConn,
-		room:                    rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New()),
-		rooms:                   rooms.NewRoomManager(),
-		currentRoomID:           "room-2",
+		conn:                       serverConn,
+		room:                       rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New()),
+		rooms:                      rooms.NewRoomManager(),
+		currentRoomID:              "room-2",
 		debugShapeCatalogSentRoomID: "room-1",
 	}
 	session.resetDebugShapeCatalogSent()
@@ -110,6 +112,8 @@ func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
 		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
 	}
 
+	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
+	transport := &WebRTCTransport{channel: channel, ready: true}
 	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance)
 	session := &webSocketSession{
 		conn:                serverConn,
@@ -117,13 +121,301 @@ func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
 		rooms:               rooms.NewRoomManager(),
 		currentRoomID:       room.ID,
 		currentGamePlayerID: playerID,
+		webrtcTransport:     transport,
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
 		t.Fatal("expected lane protocol write to succeed")
 	}
 
-	assertLanePacket(t, clientConn)
+	if len(channel.sentTexts) == 0 {
+		t.Fatal("expected gameplay packet to be written to webrtc")
+	}
+	assertLanePacketText(t, channel.sentTexts[0])
+	assertNoMessageWithin(t, clientConn)
+}
+
+func TestWriteGameplayLaneProtocolMessageUsesWebRTCForLanePackets(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return false
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	playerID := "player-1"
+	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	}
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	}
+
+	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
+	transport := &WebRTCTransport{channel: channel, ready: true}
+	session := &webSocketSession{
+		conn:                serverConn,
+		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		rooms:               rooms.NewRoomManager(),
+		currentRoomID:       "room-1",
+		currentGamePlayerID: playerID,
+		webrtcTransport:     transport,
+	}
+
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to succeed")
+	}
+
+	if len(channel.sentTexts) == 0 {
+		t.Fatal("expected webrtc transport to receive a gameplay packet")
+	}
+	assertLanePacketText(t, channel.sentTexts[0])
+	assertNoMessageWithin(t, clientConn)
+}
+
+func TestWriteGameplayLaneProtocolMessageReturnsFalseWithoutWebRTCAndSkipsWebSocket(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return false
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	playerID := "player-1"
+	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	}
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	}
+
+	session := &webSocketSession{
+		conn:                serverConn,
+		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		rooms:               rooms.NewRoomManager(),
+		currentRoomID:       "room-1",
+		currentGamePlayerID: playerID,
+	}
+
+	if writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to fail without webrtc transport")
+	}
+	assertNoMessageWithin(t, clientConn)
+}
+
+func TestWriteGameplayLaneProtocolMessageReturnsFalseWhenWebRTCNotReadyAndSkipsWebSocket(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return false
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	playerID := "player-1"
+	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	}
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	}
+
+	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateClosed}
+	transport := &WebRTCTransport{channel: channel}
+	session := &webSocketSession{
+		conn:                serverConn,
+		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		rooms:               rooms.NewRoomManager(),
+		currentRoomID:       "room-1",
+		currentGamePlayerID: playerID,
+		webrtcTransport:     transport,
+	}
+
+	if writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to fail when webrtc is not ready")
+	}
+	assertNoMessageWithin(t, clientConn)
+}
+func TestWriteGameplayLaneProtocolMessageDoesNotAdvanceMetadataWhenWebRTCSendFails(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return false
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	playerID := "player-1"
+	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	}
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	}
+	if !gameInstance.DevtoolsKillPlayer("debug", playerID) {
+		t.Fatal("expected DevtoolsKillPlayer to succeed")
+	}
+
+	state := realtime.NewRealtimeSessionState(playerID)
+	state.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 7, BaselineID: "world-before", SnapshotID: "world-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneWorld)
+	state.UpdateLane(realtime.LaneOverlay, realtime.Metadata{Lane: realtime.LaneOverlay, Sequence: 7, BaselineID: "overlay-before", SnapshotID: "overlay-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneOverlay)
+	state.UpdateLane(realtime.LaneSession, realtime.Metadata{Lane: realtime.LaneSession, Sequence: 7, BaselineID: "session-before", SnapshotID: "session-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneSession)
+
+	beforeWorld, _ := state.LaneState(realtime.LaneWorld)
+	beforeOverlay, _ := state.LaneState(realtime.LaneOverlay)
+	beforeSession, _ := state.LaneState(realtime.LaneSession)
+	beforePending := len(gameInstance.PendingPresentationEvents(playerID))
+
+	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen, sendErr: errors.New("webrtc send failed")}
+	transport := &WebRTCTransport{channel: channel, ready: true}
+	session := &webSocketSession{
+		conn:                serverConn,
+		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		rooms:               rooms.NewRoomManager(),
+		currentRoomID:       "room-1",
+		currentGamePlayerID: playerID,
+		realtimeState:       state,
+		webrtcTransport:     transport,
+	}
+
+	if writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to fail when webrtc send fails")
+	}
+	assertNoMessageWithin(t, clientConn)
+
+	afterWorld, _ := session.realtimeState.LaneState(realtime.LaneWorld)
+	afterOverlay, _ := session.realtimeState.LaneState(realtime.LaneOverlay)
+	afterSession, _ := session.realtimeState.LaneState(realtime.LaneSession)
+	if afterWorld != beforeWorld {
+		t.Fatalf("expected world metadata to remain unchanged, got %#v want %#v", afterWorld, beforeWorld)
+	}
+	if afterOverlay != beforeOverlay {
+		t.Fatalf("expected overlay metadata to remain unchanged, got %#v want %#v", afterOverlay, beforeOverlay)
+	}
+	if afterSession != beforeSession {
+		t.Fatalf("expected session metadata to remain unchanged, got %#v want %#v", afterSession, beforeSession)
+	}
+	if got := len(gameInstance.PendingPresentationEvents(playerID)); got != beforePending {
+		t.Fatalf("expected pending presentation events to remain undrained, got %d want %d", got, beforePending)
+	}
+}
+
+func TestWriteGameplayLaneProtocolMessageAdvancesMetadataAndDrainsEventBatchOnWebRTCSendSuccess(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		return false
+	}
+	t.Cleanup(func() {
+		canSendDebugShapeCatalog = originalCanSend
+	})
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	playerID := "player-1"
+	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	}
+	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	}
+	if !gameInstance.DevtoolsKillPlayer("debug", playerID) {
+		t.Fatal("expected DevtoolsKillPlayer to succeed")
+	}
+
+	state := realtime.NewRealtimeSessionState(playerID)
+	state.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 1, BaselineID: "world-before", SnapshotID: "world-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneWorld)
+	state.UpdateLane(realtime.LaneOverlay, realtime.Metadata{Lane: realtime.LaneOverlay, Sequence: 1, BaselineID: "overlay-before", SnapshotID: "overlay-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneOverlay)
+	state.UpdateLane(realtime.LaneSession, realtime.Metadata{Lane: realtime.LaneSession, Sequence: 1, BaselineID: "session-before", SnapshotID: "session-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneSession)
+
+	beforeWorld, _ := state.LaneState(realtime.LaneWorld)
+	beforeOverlay, _ := state.LaneState(realtime.LaneOverlay)
+	beforeSession, _ := state.LaneState(realtime.LaneSession)
+	beforePending := len(gameInstance.PendingPresentationEvents(playerID))
+	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
+	transport := &WebRTCTransport{channel: channel, ready: true}
+	session := &webSocketSession{
+		conn:                serverConn,
+		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		rooms:               rooms.NewRoomManager(),
+		currentRoomID:       "room-1",
+		currentGamePlayerID: playerID,
+		realtimeState:       state,
+		webrtcTransport:     transport,
+	}
+
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to succeed")
+	}
+
+	afterWorld, _ := session.realtimeState.LaneState(realtime.LaneWorld)
+	afterOverlay, _ := session.realtimeState.LaneState(realtime.LaneOverlay)
+	afterSession, _ := session.realtimeState.LaneState(realtime.LaneSession)
+	if afterWorld.Sequence <= beforeWorld.Sequence {
+		t.Fatalf("expected world sequence to advance, got %d want > %d", afterWorld.Sequence, beforeWorld.Sequence)
+	}
+	if afterOverlay.Sequence <= beforeOverlay.Sequence {
+		t.Fatalf("expected overlay sequence to advance, got %d want > %d", afterOverlay.Sequence, beforeOverlay.Sequence)
+	}
+	if afterSession.Sequence <= beforeSession.Sequence {
+		t.Fatalf("expected session sequence to advance, got %d want > %d", afterSession.Sequence, beforeSession.Sequence)
+	}
+	if len(channel.sentTexts) == 0 {
+		t.Fatal("expected webrtc transport to receive a gameplay packet")
+	}
+	assertLanePacketText(t, channel.sentTexts[0])
+	assertNoMessageWithin(t, clientConn)
+	if got := len(gameInstance.PendingPresentationEvents(playerID)); got != beforePending-1 {
+		t.Fatalf("expected one pending presentation event to be drained, got %d want %d", got, beforePending-1)
+	}
+	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneWorld, "world_full")
+	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneOverlay, "overlay_full")
+	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneSession, "session_full")
 }
 
 func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessfulWrite(t *testing.T) {
@@ -169,6 +461,8 @@ func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessful
 		t.Fatalf("expected no stored session projection before write, got %#v, %t", projection, ok)
 	}
 
+	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
+	transport := &WebRTCTransport{channel: channel, ready: true}
 	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance)
 	session := &webSocketSession{
 		conn:                serverConn,
@@ -177,18 +471,39 @@ func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessful
 		currentRoomID:       room.ID,
 		currentGamePlayerID: playerID,
 		realtimeState:       state,
+		webrtcTransport:     transport,
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
 		t.Fatal("expected lane protocol write to succeed")
 	}
 
-	assertLanePacket(t, clientConn)
+	if len(channel.sentTexts) == 0 {
+		t.Fatal("expected gameplay packet to be written to webrtc")
+	}
+	assertLanePacketText(t, channel.sentTexts[0])
+	assertNoMessageWithin(t, clientConn)
 	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneWorld, "world_full")
 	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneOverlay, "overlay_full")
 	assertStoredBaselineProjectionType(t, session.realtimeState, realtime.LaneSession, "session_full")
 }
 
+func assertLanePacketText(t *testing.T, raw string) {
+	t.Helper()
+	var payload map[string]any
+	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
+		t.Fatalf("expected valid json packet: %v", err)
+	}
+	packetType, _ := payload["type"].(string)
+	if packetType == "" {
+		packetType, _ = payload["t"].(string)
+	}
+	switch packetType {
+	case "world_full", "world_delta", "overlay_full", "overlay_delta", "session_full", "session_delta", "event_batch", "resync_request", "resync_required", "wf", "wd", "of", "od", "sf", "sd":
+	default:
+		t.Fatalf("expected lane packet type, got %v", packetType)
+	}
+}
 
 func assertStoredBaselineProjectionType(t *testing.T, state realtime.RealtimeSessionState, lane realtime.Lane, wantType string) {
 	t.Helper()

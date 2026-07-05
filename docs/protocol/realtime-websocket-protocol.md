@@ -6,7 +6,7 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document describes the current realtime WebSocket protocol between the Godot client and the Go game server.
 
-The protocol is JSON-over-WebSocket with lane-native gameplay packets.
+The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-WebRTC DataChannel for active realtime gameplay packets.
 
 It covers the transport route, JSON packet framing, connection lifecycle, packet-family routing, lane policy, gameplay packet families, session-state requirements, delivery semantics, source-of-truth files, generated outputs, service responsibilities, compatibility expectations, and implementation code paths.
 
@@ -22,9 +22,11 @@ GET /ws
 
 The Godot client selects a WebSocket URL from the requested session mode, opens the connection, optionally sends an auth packet, sends room or gameplay request packets, and receives authoritative server packets.
 
+WebSocket owns session, control, room, lobby, auth, telemetry, and WebRTC signaling packets. WebRTC sr.reliable owns active realtime gameplay packets. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address and UDP path to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry UDP WebRTC traffic.
+
 The route path does not define play mode. Local single-player and multiplayer currently use the same local WebSocket route during development. Single-player versus multiplayer behavior is expressed through packets, session identity, room state, admission policy, and player-data routing.
 
-The WebSocket connection itself is only transport readiness. It does not imply:
+The WebSocket connection itself is only transport readiness for WebSocket-owned packet families. It does not imply:
 
 ```text
 authenticated account identity
@@ -37,7 +39,9 @@ durable account identity
 
 The server owns authority behind accepted room, gameplay, auth-result, telemetry, and devtools consequences. The client owns connection initiation, packet emission, inbound packet classification, realtime lane routing, and presentation routing.
 
-The protocol is best-effort and session-scoped, but active gameplay output now uses lane-native packet families and lane policy. The current gameplay output lanes are:
+
+Active realtime gameplay packets are not WebSocket-owned anymore. The current server path builds the lane packet, encodes it to JSON, and sends it over the session WebRTC DataChannel `sr.reliable` when WebRTC is ready. WebSocket still owns auth, room/lobby lifecycle, room snapshots, and WebRTC signaling. There is no WebSocket fallback for active realtime gameplay packets.
+The protocol is best-effort and session-scoped, but active gameplay output now uses lane-native packet families and lane policy over WebRTC sr.reliable. The current gameplay output lanes are:
 
 ```text
 world
@@ -90,7 +94,7 @@ Owns client realtime lane metadata tracking, baseline and readiness tracking, la
 services/game-server/internal/networking/
 ```
 
-Owns the server WebSocket upgrade, session object, read loop, write loop, inbound packet-family routing, outbound queue, room-session adapter wiring, auth session state, telemetry pong handling, room request routing, lane gameplay packet routing, and disconnect cleanup.
+Owns the server WebSocket upgrade, session object, read loop, write loop, inbound packet-family routing, outbound queue, room-session adapter wiring, auth session state, telemetry pong handling, room request routing, lane gameplay packet routing, WebRTC signaling, and disconnect cleanup.
 
 ```text
 services/game-server/internal/protocol/packetcodec/
@@ -350,7 +354,7 @@ Known float-like fields use lane- and field-specific policies from `services/gam
 
 Unmapped float-like fields fall back to `float_generic`, but they should surface dev diagnostics and fail-loud behavior so new float fields do not silently bypass policy review.
 
-This is still JSON-over-WebSocket. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
+This is still JSON over WebSocket for auth, room, lobby, telemetry, and signaling packets, but active realtime gameplay packets now travel over WebRTC sr.reliable. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
 
 ### Field-delta update semantics
 
@@ -1405,7 +1409,9 @@ client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd
 
 ## Notes
 
-The current implementation sends lane-native gameplay output on the server tick path. That is current protocol behavior, not the intended final realtime architecture.
+The current implementation sends lane-native gameplay output on the server tick path over WebRTC sr.reliable. That is current protocol behavior, not the intended final realtime architecture.
+
+Deployment knobs currently include server-advertised WebRTC IPs, an optional server UDP port range, and client ICE server configuration. The client ICE-server seam exists for future deployment configuration, but this document does not prescribe TURN or other future ICE topology beyond noting that the seam exists.
 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 

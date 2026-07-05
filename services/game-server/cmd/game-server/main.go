@@ -21,6 +21,13 @@ func main() {
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
+	webRTCTransportConfig := buildWebRTCTransportConfigFromEnv()
+	networking.SetWebRTCTransportConfig(webRTCTransportConfig)
+	logging.Server.Info("web rtc transport config loaded",
+		"advertised_ip_count", len(webRTCTransportConfig.AdvertisedIPs),
+		"udp_port_range_configured", webRTCTransportConfig.UDPPortMin != 0 && webRTCTransportConfig.UDPPortMax != 0,
+	)
+
 	playerDataRuntime, err := buildPlayerDataRuntime()
 	if err != nil {
 		logging.Server.Error("player-data runtime initialization failed", err)

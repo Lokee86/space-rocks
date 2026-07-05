@@ -3,6 +3,7 @@ single_player_ws_url = "ws://localhost:8080/ws"
 multiplayer_ws_url = "ws://localhost:8080/ws"
 multiplayer_ws_origin = "https://space-rocks-client.local"
 network_poll_process_priority = -100
+webrtc_ice_servers = []
 
 [constants.client.shell.room_states]
 room_state_lobby = "Lobby"

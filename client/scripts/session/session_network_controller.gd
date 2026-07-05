@@ -8,6 +8,7 @@ var room_session_controller
 var gameplay_session_controller
 var logger: Callable
 var handlers := {}
+var _webrtc_gameplay_ready := false
 
 
 func configure(
@@ -36,6 +37,7 @@ func connect_connection_signals() -> void:
 	_connect_connection_signal("packet_parse_failed", Callable(self, "_on_packet_parse_failed"))
 	_connect_connection_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
 	_connect_connection_signal("websocket_auth_result_received", Callable(self, "_on_websocket_auth_result_received"))
+	_connect_connection_signal("webrtc_ready_received", Callable(self, "_on_webrtc_ready_received"))
 
 
 func connect_room_signals() -> void:
@@ -63,19 +65,9 @@ func _connect_connection_signal(signal_name: StringName, handler: Callable) -> v
 
 
 func _on_connection_connected() -> void:
+	_webrtc_gameplay_ready = false
 	_log("Connection connected")
-	if shell_boot_flow == null:
-		return
-
-	if shell_boot_flow.pending_request_is_single_player():
-		shell_boot_flow.send_pending_boot_request()
-		return
-
-	if shell_boot_flow.pending_request_is_multiplayer():
-		if connection_service.is_websocket_auth_authenticated():
-			shell_boot_flow.send_pending_boot_request()
-		else:
-			_log("Waiting for websocket auth before sending multiplayer boot request")
+	_try_send_pending_boot_request()
 
 
 func _on_connection_closed() -> void:
@@ -90,12 +82,35 @@ func _on_unknown_packet_received(_packet: Dictionary) -> void:
 	_log("Unknown packet received")
 
 
+func _on_webrtc_ready_received(_packet: Dictionary) -> void:
+	_webrtc_gameplay_ready = true
+	_log("WebRTC gameplay transport is ready")
+	_try_send_pending_boot_request()
+
+
+func _try_send_pending_boot_request() -> void:
+	if shell_boot_flow == null:
+		return
+	if !_webrtc_gameplay_ready:
+		return
+
+	if shell_boot_flow.pending_request_is_single_player():
+		shell_boot_flow.send_pending_boot_request()
+		return
+
+	if shell_boot_flow.pending_request_is_multiplayer():
+		if connection_service != null && connection_service.is_websocket_auth_authenticated():
+			shell_boot_flow.send_pending_boot_request()
+		else:
+			_log("Waiting for websocket auth before sending multiplayer boot request")
+
+
 func _on_websocket_auth_result_received(packet: Dictionary) -> void:
 	if shell_boot_flow == null:
 		return
 
 	if bool(packet.get("authenticated", false)):
-		shell_boot_flow.send_pending_boot_request()
+		_try_send_pending_boot_request()
 	else:
 		var error_code := str(packet.get("error_code", ""))
 		if error_code == "token_verification_unavailable":

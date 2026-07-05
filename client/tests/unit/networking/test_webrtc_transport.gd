@@ -1,6 +1,6 @@
 extends GutTest
 
-const WebRTCSmokePeerScript := preload("res://scripts/networking/webrtc/webrtc_smoke_peer.gd")
+const WebRTCTransportScript := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 
 
 class FakeChannel:
@@ -36,6 +36,7 @@ class FakePeer:
 	signal ice_candidate_created(media: String, index: int, name: String)
 
 	var initialize_result := OK
+	var initialize_args: Array = []
 	var channel := FakeChannel.new()
 	var create_data_channel_args: Array = []
 	var create_offer_called := 0
@@ -45,7 +46,8 @@ class FakePeer:
 	var poll_called := 0
 	var closed := false
 
-	func initialize() -> int:
+	func initialize(config: Dictionary = {}) -> int:
+		initialize_args = [config]
 		return initialize_result
 
 	func create_data_channel(label: String, options: Dictionary) -> FakeChannel:
@@ -78,7 +80,7 @@ class FakePeer:
 
 
 func test_start_configures_channel_and_emits_offer() -> void:
-	var peer := WebRTCSmokePeerScript.new()
+	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
 	var ready_values: Array = []
 	var offer_values: Array = []
@@ -99,9 +101,12 @@ func test_start_configures_channel_and_emits_offer() -> void:
 	fake_peer.channel.ready_state = WebRTCDataChannel.STATE_OPEN
 	peer.poll()
 
+	assert_eq(fake_peer.initialize_args.size(), 1)
+	assert_true(fake_peer.initialize_args[0].is_empty())
+
 	assert_eq(fake_peer.create_data_channel_args.size(), 2)
-	assert_eq(fake_peer.create_data_channel_args[0], WebRTCSmokePeerScript.CHANNEL_LABEL)
-	assert_eq(fake_peer.create_data_channel_args[1]["id"], WebRTCSmokePeerScript.CHANNEL_ID)
+	assert_eq(fake_peer.create_data_channel_args[0], WebRTCTransportScript.CHANNEL_LABEL)
+	assert_eq(fake_peer.create_data_channel_args[1]["id"], WebRTCTransportScript.CHANNEL_ID)
 	assert_eq(fake_peer.create_data_channel_args[1]["negotiated"], true)
 	assert_eq(fake_peer.create_data_channel_args[1]["ordered"], true)
 	assert_eq(fake_peer.create_offer_called, 1)
@@ -109,12 +114,28 @@ func test_start_configures_channel_and_emits_offer() -> void:
 	assert_eq(offer_values[0], "offer")
 	assert_eq(offer_values[1], "sdp-text")
 	assert_eq(ready_values.size(), 2)
-	assert_eq(ready_values[0], WebRTCSmokePeerScript.CHANNEL_LABEL)
-	assert_eq(ready_values[1], WebRTCSmokePeerScript.CHANNEL_ID)
+	assert_eq(ready_values[0], WebRTCTransportScript.CHANNEL_LABEL)
+	assert_eq(ready_values[1], WebRTCTransportScript.CHANNEL_ID)
+
+
+func test_start_passes_configured_ice_servers_to_initialize() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	peer.peer_factory = func():
+		return fake_peer
+	peer.set_ice_servers_for_tests([
+		{"urls": ["stun:stun.example.invalid:3478"]},
+	])
+
+	peer.start()
+
+	assert_eq(fake_peer.initialize_args.size(), 1)
+	assert_eq(fake_peer.initialize_args[0]["iceServers"].size(), 1)
+	assert_eq(fake_peer.initialize_args[0]["iceServers"][0]["urls"][0], "stun:stun.example.invalid:3478")
 
 
 func test_handle_answer_and_remote_ice_forward_to_peer() -> void:
-	var peer := WebRTCSmokePeerScript.new()
+	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
 	peer.set_peer_for_tests(fake_peer, fake_peer.channel)
 
@@ -128,8 +149,8 @@ func test_handle_answer_and_remote_ice_forward_to_peer() -> void:
 	assert_eq(fake_peer.add_ice_candidate_args[2], "candidate-name")
 
 
-func test_poll_emits_ready_and_smoke_received() -> void:
-	var peer := WebRTCSmokePeerScript.new()
+func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
+	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
 	peer.set_peer_for_tests(fake_peer, fake_peer.channel)
 	fake_peer.channel.ready_state = WebRTCDataChannel.STATE_OPEN
@@ -141,12 +162,16 @@ func test_poll_emits_ready_and_smoke_received() -> void:
 	}).to_utf8_buffer())
 
 	var ready_values: Array = []
+	var received_packets: Array = []
 	var smoke_packets: Array = []
 	var failed_packets: Array = []
 	peer.ready.connect(func(channel_label: String, channel_id: int) -> void:
 		ready_values.clear()
 		ready_values.append(channel_label)
 		ready_values.append(channel_id)
+	)
+	peer.packet_received.connect(func(packet: Dictionary) -> void:
+		received_packets.append(packet)
 	)
 	peer.smoke_received.connect(func(packet: Dictionary) -> void:
 		smoke_packets.append(packet)
@@ -161,16 +186,35 @@ func test_poll_emits_ready_and_smoke_received() -> void:
 
 	assert_eq(fake_peer.poll_called, 1)
 	assert_eq(ready_values.size(), 2)
-	assert_eq(ready_values[0], WebRTCSmokePeerScript.CHANNEL_LABEL)
-	assert_eq(ready_values[1], WebRTCSmokePeerScript.CHANNEL_ID)
+	assert_eq(ready_values[0], WebRTCTransportScript.CHANNEL_LABEL)
+	assert_eq(ready_values[1], WebRTCTransportScript.CHANNEL_ID)
+	assert_eq(received_packets.size(), 1)
+	assert_eq(received_packets[0]["type"], "webrtc_smoke")
+	assert_eq(received_packets[0]["smoke_id"], "smoke-1")
 	assert_eq(smoke_packets.size(), 1)
-	assert_eq(smoke_packets[0]["type"], "webrtc_smoke")
-	assert_eq(smoke_packets[0]["smoke_id"], "smoke-1")
 	assert_true(failed_packets.is_empty())
 
 
-func test_send_smoke_writes_text_packet_when_open() -> void:
-	var peer := WebRTCSmokePeerScript.new()
+func test_send_json_writes_text_packet_when_open() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	peer.set_peer_for_tests(fake_peer, fake_peer.channel)
+	fake_peer.channel.ready_state = WebRTCDataChannel.STATE_OPEN
+
+	peer.send_json({
+		"type": "custom_packet",
+		"value": "hello",
+	})
+
+	assert_eq(fake_peer.channel.sent_packets.size(), 1)
+	var text := fake_peer.channel.sent_packets[0].get_string_from_utf8()
+	var parsed = JSON.parse_string(text)
+	assert_eq(parsed["type"], "custom_packet")
+	assert_eq(parsed["value"], "hello")
+
+
+func test_send_smoke_writes_smoke_packet_when_open() -> void:
+	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
 	peer.set_peer_for_tests(fake_peer, fake_peer.channel)
 	fake_peer.channel.ready_state = WebRTCDataChannel.STATE_OPEN
@@ -182,12 +226,12 @@ func test_send_smoke_writes_text_packet_when_open() -> void:
 	var parsed = JSON.parse_string(text)
 	assert_eq(parsed["type"], "webrtc_smoke")
 	assert_eq(parsed["smoke_id"], "smoke-2")
-	assert_eq(parsed["origin"], WebRTCSmokePeerScript.SMOKE_ORIGIN_CLIENT)
+	assert_eq(parsed["origin"], WebRTCTransportScript.SMOKE_ORIGIN_CLIENT)
 	assert_eq(parsed["message"], "payload")
 
 
 func test_poll_emits_failed_for_invalid_json() -> void:
-	var peer := WebRTCSmokePeerScript.new()
+	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
 	peer.set_peer_for_tests(fake_peer, fake_peer.channel)
 	fake_peer.channel.ready_state = WebRTCDataChannel.STATE_OPEN
@@ -204,5 +248,23 @@ func test_poll_emits_failed_for_invalid_json() -> void:
 
 	assert_eq(failed_packets.size(), 2)
 	assert_eq(failed_packets[0], "invalid_json")
-	assert_true(str(failed_packets[1]).contains("WebRTC smoke packet"))
+	assert_true(str(failed_packets[1]).contains("Invalid packet JSON"))
+
+
+func test_poll_emits_packet_received_for_compact_realtime_packet() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	peer.set_peer_for_tests(fake_peer, fake_peer.channel)
+	fake_peer.channel.ready_state = WebRTCDataChannel.STATE_OPEN
+	fake_peer.channel.packets.append('{"t":"wd","q":1,"bq":0,"ms":123}'.to_utf8_buffer())
+
+	var received_packets: Array = []
+	peer.packet_received.connect(func(packet: Dictionary) -> void:
+		received_packets.append(packet)
+	)
+
+	peer.poll()
+
+	assert_eq(received_packets.size(), 1)
+	assert_eq(received_packets[0]["type"], "world_delta")
 

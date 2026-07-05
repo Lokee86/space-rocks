@@ -6,11 +6,12 @@ Parent index: [Networking Flow](./!INDEX.md)
 
 This document describes the current client inbound packet routing path.
 
-It covers how decoded server packet dictionaries move from the client WebSocket transport into packet classification, dispatcher signals, connection-service signals, and downstream session, room, gameplay, auth, devtools, and telemetry consumers.
+It covers how decoded server packet dictionaries move from the client WebSocket transport and WebRTC DataChannel transport into packet classification, dispatcher signals, connection-service signals, and downstream session, room, gameplay, auth, devtools, and telemetry consumers.
 
 ## Overview
 
-Inbound packet routing begins after the WebSocket transport has already decoded raw text into a packet dictionary.
+Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
+WebSocket remains the client route for session, control, room, lobby, auth, telemetry, and signaling packets. WebRTC sr.reliable is the route for active realtime gameplay packets. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address and UDP path can reach the game server directly.
 
 `NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission. After that signal fires, inbound routing is owned by `ClientConnectionService`, `ServerPacketDispatcher`, and `ServerPacketRouter`.
 
@@ -174,7 +175,9 @@ Room, auth, debug, player-pause, and telemetry packets are re-emitted through se
 Realtime lane packets take a slightly different path inside `ClientConnectionService`:
 
 ```text
-_route_gameplay_packet(packet)
+_handle_webrtc_transport_packet(packet)
+-> ServerPacketDispatcher.dispatch(packet)
+-> ClientConnectionService._route_gameplay_packet(packet)
 -> RealtimeRouter.route_lane_packet(packet)
 -> lane-specific service signal
 -> gameplay_packet_received(packet)
@@ -195,7 +198,7 @@ fields:
 
 The once-per-packet-type guard remains diagnostic-only. It does not affect routing or lane state.
 
-Current WebRTC handling in the client networking stack is smoke-test only. WebSocket still owns auth, lobby, room lifecycle, and WebRTC signaling. The current packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. sr.reliable is a negotiated DataChannel with id 1, and packet payloads are JSON text. Gameplay lanes still use WebSocket until the next cutover. No unreliable, hot, or asteroid channel exists yet.
+Current WebRTC handling in the client networking stack keeps WebSocket as the owner of auth, lobby, room lifecycle, and WebRTC signaling. The sr.reliable DataChannel is now a reusable JSON transport seam with id 1, and webrtc_smoke remains a diagnostic packet on that transport. The current packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay packets now arrive over WebRTC, decode through PacketCodec, dispatch through ServerPacketDispatcher, and then continue through RealtimeRouter. There is no WebSocket fallback for active realtime gameplay packets. No unreliable, hot, asteroid, or gameplay channel cutover exists yet. Current client ICE-server configuration is a separate seam from WebSocket signaling and does not change packet routing.
 
 ### Websocket auth result cache
 

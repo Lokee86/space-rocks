@@ -72,6 +72,7 @@ const SINGLE_PLAYER_WS_URL := "ws://localhost:8080/ws"
 const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
 const MULTIPLAYER_WS_ORIGIN := "https://space-rocks-client.local"
 const NETWORK_POLL_PROCESS_PRIORITY := -100
+const WEBRTC_ICE_SERVERS := []
 # data-sync:end constants.client.shell.network
 
 # data-sync:start constants.client.shell.room_states

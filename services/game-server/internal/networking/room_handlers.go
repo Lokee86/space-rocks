@@ -81,6 +81,15 @@ func (session *webSocketSession) handleStartGameRequest() {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
+	if !session.hasReadyWebRTCGameplayTransport() {
+		logging.Network.Warn("start game rejected: webrtc gameplay transport not ready",
+			logging.FieldRoomID, session.currentRoomID,
+			logging.FieldPlayerID, session.currentGamePlayerID,
+			"session_id", session.sessionID,
+		)
+		session.EnqueueRoomError(rooms.RoomErrorInvalidRoomState, "WebRTC gameplay transport is not ready.")
+		return
+	}
 
 	room, roomErr := session.rooms.StartRoomGame(session.currentRoomID, session.sessionID)
 	if roomErr != nil {
@@ -105,6 +114,15 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 
 	if session.currentRoomID != "" {
 		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
+		return
+	}
+	if !session.hasReadyWebRTCGameplayTransport() {
+		logging.Network.Warn("single-player start rejected: webrtc gameplay transport not ready",
+			logging.FieldRoomID, session.currentRoomID,
+			logging.FieldPlayerID, session.currentGamePlayerID,
+			"session_id", session.sessionID,
+		)
+		session.EnqueueRoomError(rooms.RoomErrorInvalidRoomState, "WebRTC gameplay transport is not ready.")
 		return
 	}
 
