@@ -18,14 +18,18 @@ func process(has_lane_baseline_sync: bool) -> void:
 		if !respawn_local_player_route.is_null():
 			respawn_local_player_route.call()
 
+	if Input.is_action_just_pressed("DevToggle10"):
+		if placement_request_route.is_null():
+			return
+		placement_request_route.call(&"continuous_spawn_bullet")
+
 	if Input.is_action_just_pressed("DevToggle6"):
 		if placement_request_route.is_null():
 			return
-		if Input.is_key_pressed(KEY_CTRL) and Input.is_key_pressed(KEY_ALT):
-			placement_request_route.call(&"continuous_spawn_bullet")
-		elif Input.is_key_pressed(KEY_ALT):
+		if Input.is_key_pressed(KEY_ALT):
 			placement_request_route.call(&"spawn_bullet")
 		elif Input.is_key_pressed(KEY_SHIFT):
 			placement_request_route.call(&"spawn_asteroid")
 		else:
 			placement_request_route.call(&"spawn_player")
+

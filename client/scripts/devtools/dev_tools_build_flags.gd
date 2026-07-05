@@ -13,6 +13,7 @@ const DEVTOGGLE_ACTIONS := [
 	"DevToggle7",
 	"DevToggle8",
 	"DevToggle9",
+	"DevToggle10",
 ]
 
 

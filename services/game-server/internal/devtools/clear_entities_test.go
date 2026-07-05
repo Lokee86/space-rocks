@@ -3,9 +3,10 @@ package devtools
 import (
 	"testing"
 
+	"github.com/Lokee86/space-rocks/server/internal/devtools/streamruntime"
 	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 )
 
@@ -26,6 +27,29 @@ func TestHandleDebugClearBulletsRemovesAllBullets(t *testing.T) {
 	snapshot := target.GameplayPresentationSnapshot(playerID)
 	if len(snapshot.Bullets) != 0 {
 		t.Fatalf("expected 0 bullets after clear, got %d", len(snapshot.Bullets))
+	}
+}
+
+func TestHandleDebugClearBulletsClearsContinuousBulletStreams(t *testing.T) {
+	streamruntime.DefaultRuntime.ClearContinuousBulletStreams()
+	t.Cleanup(func() {
+		streamruntime.DefaultRuntime.ClearContinuousBulletStreams()
+	})
+
+	target := game.New()
+	playerID := target.AddPlayer()
+
+	if !streamruntime.DefaultRuntime.BeginContinuousBulletStream(playerID, physics.Vector2{X: 10, Y: 20}, physics.Vector2{X: 0, Y: -1}) {
+		t.Fatalf("expected to begin continuous bullet stream")
+	}
+
+	ok := HandleCommand(target, playerID, DebugCommand{Type: PacketTypeDebugClearBullets})
+	if !ok {
+		t.Fatalf("expected HandleCommand to return true")
+	}
+
+	if got := len(streamruntime.DefaultRuntime.ActiveContinuousBulletStreams()); got != 0 {
+		t.Fatalf("expected 0 active continuous bullet streams after clear, got %d", got)
 	}
 }
 

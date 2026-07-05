@@ -658,6 +658,3 @@ static func _default_baseline_id(lane, snapshot_kind, sequence, baseline_sequenc
 	if snapshot_kind == "delta" and baseline_sequence != null:
 		return "%s-baseline-%s" % [lane, str(baseline_sequence)]
 	return ""
-
-
-
