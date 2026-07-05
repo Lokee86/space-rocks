@@ -455,14 +455,13 @@ func _start_webrtc_transport() -> void:
 	webrtc_transport.ice_candidate_created.connect(func(media: String, index: int, name: String) -> void:
 		send_webrtc_ice_candidate(media, index, name)
 	)
-	webrtc_transport.ready.connect(func(channel_label: String, channel_id: int) -> void:
+	webrtc_transport.ready.connect(func(channels: Array) -> void:
 		ClientLogger.network_event(
 			ClientLogger.LEVEL_INFO,
 			"webrtc_data_channel_ready",
-			"WebRTC smoke data channel ready",
+			"WebRTC smoke data channels ready",
 			{
-				"channel_label": channel_label,
-				"channel_id": channel_id,
+				"channels": channels,
 				"smoke_id": smoke_id,
 			}
 		)

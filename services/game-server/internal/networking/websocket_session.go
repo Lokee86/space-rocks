@@ -126,18 +126,25 @@ func (session *webSocketSession) enqueueWebRTCICECandidate(media string, index i
 }
 
 func (session *webSocketSession) enqueueWebRTCReady() {
+	channels := make([]map[string]any, 0, len(webRTCGameplayChannelSpecs()))
+	for _, spec := range webRTCGameplayChannelSpecs() {
+		channels = append(channels, map[string]any{
+			"lane":          spec.Lane,
+			"channel_label": spec.Label,
+			"channel_id":    spec.ID,
+		})
+	}
 	session.enqueuePacket(map[string]any{
-		"type":         "webrtc_ready",
-		"channel_label": webRTCChannelLabel,
-		"channel_id":    webRTCChannelID,
+		"type":     "webrtc_ready",
+		"channels": channels,
 	})
 }
 
 func (session *webSocketSession) enqueueWebRTCFailed(errorCode string, message string) {
 	session.enqueuePacket(map[string]any{
 		"type":       "webrtc_failed",
-		"error_code":  errorCode,
-		"message":     message,
+		"error_code": errorCode,
+		"message":    message,
 	})
 }
 

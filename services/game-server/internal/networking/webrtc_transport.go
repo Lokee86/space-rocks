@@ -1,15 +1,40 @@
-﻿package networking
+package networking
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/pion/webrtc/v4"
 )
 
-const webRTCChannelLabel = "sr.reliable"
-const webRTCChannelID = 1
+type webRTCGameplayChannelSpec struct {
+	Lane  string
+	Label string
+	ID    uint16
+}
+
+const webRTCGameplayChannelLaneWorld = "world"
+
+func webRTCGameplayChannelSpecs() []webRTCGameplayChannelSpec {
+	return []webRTCGameplayChannelSpec{
+		{Lane: "world", Label: "sr.world", ID: 1},
+		{Lane: "overlay", Label: "sr.overlay", ID: 2},
+		{Lane: "session", Label: "sr.session", ID: 3},
+		{Lane: "event", Label: "sr.event", ID: 4},
+	}
+}
+
+func webRTCGameplayChannelLabelForLane(lane string) (string, bool) {
+	for _, spec := range webRTCGameplayChannelSpecs() {
+		if spec.Lane == lane {
+			return spec.Label, true
+		}
+	}
+	return "", false
+}
+
 const webRTCSmokeOriginServer = "server"
 
 type WebRTCAnswerPayload struct {
@@ -108,6 +133,7 @@ func (adapter *pionPeerAdapter) CreateDataChannel(label string, init *webrtc.Dat
 func (adapter *pionPeerAdapter) Close() error {
 	return adapter.peer.Close()
 }
+
 var newWebRTCPeerConnection = func() (webRTCPeer, error) {
 	api, err := newWebRTCPeerConnectionAPI(webRTCTransportConfig)
 	if err != nil {
@@ -121,17 +147,25 @@ var newWebRTCPeerConnection = func() (webRTCPeer, error) {
 }
 
 type WebRTCTransport struct {
-	peer    webRTCPeer
-	channel webRTCDataChannel
-	hooks   WebRTCSignalHooks
-	ready   bool
+	peer          webRTCPeer
+	mu            sync.RWMutex
+	channels      map[string]webRTCDataChannel
+	readyChannels map[string]bool
+	hooks         WebRTCSignalHooks
+	ready         bool
 }
 
 func NewWebRTCTransport(hooks WebRTCSignalHooks) *WebRTCTransport {
-	return &WebRTCTransport{hooks: hooks}
+	return &WebRTCTransport{
+		hooks:         hooks,
+		channels:      make(map[string]webRTCDataChannel),
+		readyChannels: make(map[string]bool),
+	}
 }
 
 func (p *WebRTCTransport) Ready() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	return p.ready
 }
 
@@ -147,7 +181,7 @@ func (p *WebRTCTransport) HandleOffer(descriptionType string, sdp string) (*WebR
 		}
 		p.peer = peer
 		p.attachPeerHandlers()
-		if err := p.createNegotiatedChannel(); err != nil {
+		if err := p.createNegotiatedGameplayChannels(); err != nil {
 			return nil, err
 		}
 	}
@@ -174,27 +208,27 @@ func (p *WebRTCTransport) AddRemoteCandidate(media string, index int, name strin
 }
 
 func (p *WebRTCTransport) SendEncodedJSON(encoded []byte) error {
-	if p.channel == nil {
-		return errors.New("webrtc data channel is not ready")
-	}
-	if p.channel.ReadyState() != webrtc.DataChannelStateOpen {
-		return errors.New("webrtc data channel is not open")
-	}
-	return p.channel.SendText(string(encoded))
+	return p.SendEncodedLaneJSON(webRTCGameplayChannelLaneWorld, encoded)
 }
 
 func (p *WebRTCTransport) SendJSON(packet map[string]any) error {
-	if p.channel == nil {
-		return errors.New("webrtc data channel is not ready")
+	return p.SendLaneJSON(webRTCGameplayChannelLaneWorld, packet)
+}
+
+func (p *WebRTCTransport) SendEncodedLaneJSON(lane string, encoded []byte) error {
+	channel, err := p.gameplayChannelForLane(lane)
+	if err != nil {
+		return err
 	}
-	if p.channel.ReadyState() != webrtc.DataChannelStateOpen {
-		return errors.New("webrtc data channel is not open")
-	}
+	return channel.SendText(string(encoded))
+}
+
+func (p *WebRTCTransport) SendLaneJSON(lane string, packet map[string]any) error {
 	payload, err := json.Marshal(packet)
 	if err != nil {
 		return err
 	}
-	return p.channel.SendText(string(payload))
+	return p.SendEncodedLaneJSON(lane, payload)
 }
 
 func (p *WebRTCTransport) SendSmoke(smokeID string, message string) error {
@@ -207,11 +241,26 @@ func (p *WebRTCTransport) SendSmoke(smokeID string, message string) error {
 }
 
 func (p *WebRTCTransport) Close() error {
-	if p.channel != nil {
-		_ = p.channel.Close()
+	p.mu.Lock()
+	channels := make([]webRTCDataChannel, 0)
+	for lane, channel := range p.channels {
+		if channel != nil {
+			channels = append(channels, channel)
+		}
+		delete(p.channels, lane)
 	}
-	if p.peer != nil {
-		return p.peer.Close()
+	for lane := range p.readyChannels {
+		delete(p.readyChannels, lane)
+	}
+	p.ready = false
+	peer := p.peer
+	p.mu.Unlock()
+
+	for _, channel := range channels {
+		_ = channel.Close()
+	}
+	if peer != nil {
+		return peer.Close()
 	}
 	return nil
 }
@@ -234,29 +283,72 @@ func (p *WebRTCTransport) attachPeerHandlers() {
 	})
 }
 
-func (p *WebRTCTransport) createNegotiatedChannel() error {
+func (p *WebRTCTransport) createNegotiatedGameplayChannels() error {
 	ordered := true
 	negotiated := true
-	channelID := uint16(webRTCChannelID)
-	channel, err := p.peer.CreateDataChannel(webRTCChannelLabel, &webrtc.DataChannelInit{
-		Ordered:    &ordered,
-		Negotiated: &negotiated,
-		ID:         &channelID,
-	})
-	if err != nil {
-		return err
-	}
-	p.channel = channel
-	p.channel.OnOpen(func() {
-		p.ready = true
-		if p.hooks.OnReady != nil {
-			p.hooks.OnReady()
+	for _, spec := range webRTCGameplayChannelSpecs() {
+		channelID := spec.ID
+		channel, err := p.peer.CreateDataChannel(spec.Label, &webrtc.DataChannelInit{
+			Ordered:    &ordered,
+			Negotiated: &negotiated,
+			ID:         &channelID,
+		})
+		if err != nil {
+			return err
 		}
-	})
-	p.channel.OnMessage(func(msg webrtc.DataChannelMessage) {
-		_ = p.handleChannelMessage(msg.Data)
-	})
+		lane := spec.Lane
+		p.mu.Lock()
+		p.channels[lane] = channel
+		p.readyChannels[lane] = false
+		p.mu.Unlock()
+		channel.OnOpen(func() {
+			p.mu.Lock()
+			p.readyChannels[lane] = true
+			wasReady := p.ready
+			p.ready = p.allGameplayChannelsReadyLocked()
+			readyChanged := !wasReady && p.ready
+			onReady := p.hooks.OnReady
+			p.mu.Unlock()
+			if readyChanged && onReady != nil {
+				onReady()
+			}
+		})
+		channel.OnMessage(func(msg webrtc.DataChannelMessage) {
+			_ = p.handleChannelMessage(msg.Data)
+		})
+	}
 	return nil
+}
+
+func (p *WebRTCTransport) gameplayChannelForLane(lane string) (webRTCDataChannel, error) {
+	if lane == "" {
+		return nil, errors.New("webrtc gameplay lane is required")
+	}
+	if lane == "control" {
+		return nil, errors.New("webrtc control lane is websocket-owned")
+	}
+	if _, ok := webRTCGameplayChannelLabelForLane(lane); !ok {
+		return nil, errors.New("webrtc gameplay lane channel is not configured")
+	}
+	p.mu.RLock()
+	channel, ok := p.channels[lane]
+	p.mu.RUnlock()
+	if !ok || channel == nil {
+		return nil, errors.New("webrtc gameplay lane channel is not configured")
+	}
+	if channel.ReadyState() != webrtc.DataChannelStateOpen {
+		return nil, errors.New("webrtc gameplay lane channel is not open")
+	}
+	return channel, nil
+}
+
+func (p *WebRTCTransport) allGameplayChannelsReadyLocked() bool {
+	for _, spec := range webRTCGameplayChannelSpecs() {
+		if !p.readyChannels[spec.Lane] {
+			return false
+		}
+	}
+	return true
 }
 
 func (p *WebRTCTransport) handleChannelMessage(data []byte) error {
@@ -272,4 +364,3 @@ func (p *WebRTCTransport) handleChannelMessage(data []byte) error {
 	}
 	return nil
 }
-

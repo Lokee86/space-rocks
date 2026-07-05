@@ -1,15 +1,19 @@
 class_name WebRTCTransport
 extends RefCounted
 
-const CHANNEL_LABEL := "sr.reliable"
-const CHANNEL_ID := 1
+const GAMEPLAY_CHANNEL_SPECS := [
+	{"lane": "world", "label": "sr.world", "id": 1},
+	{"lane": "overlay", "label": "sr.overlay", "id": 2},
+	{"lane": "session", "label": "sr.session", "id": 3},
+	{"lane": "event", "label": "sr.event", "id": 4},
+]
 const SMOKE_ORIGIN_CLIENT := "client"
 const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
 const ClientConstants := preload("res://scripts/generated/constants/constants.gd")
 
 signal offer_created(description_type: String, sdp: String)
 signal ice_candidate_created(media: String, index: int, name: String)
-signal ready(channel_label: String, channel_id: int)
+signal ready(channels: Array)
 signal packet_received(packet: Dictionary)
 signal smoke_received(packet: Dictionary)
 signal failed(error_code: String, message: String)
@@ -17,13 +21,19 @@ signal failed(error_code: String, message: String)
 var peer_factory: Callable
 var ice_servers: Array = []
 var _peer: Variant
-var _channel: Variant
+var _channels: Dictionary = {}
+var _ready_channels: Dictionary = {}
 var _ready_emitted := false
 
 
-func set_peer_for_tests(peer: Variant, channel: Variant) -> void:
+func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
 	_peer = peer
-	_channel = channel
+	_channels = {}
+	if channels is Dictionary:
+		_channels = channels.duplicate(true)
+	elif channels != null:
+		_channels["world"] = channels
+	_ready_channels = {}
 	_ready_emitted = false
 
 
@@ -37,7 +47,7 @@ func set_ice_servers_for_tests(servers: Array) -> void:
 
 func start() -> void:
 	_peer = _create_peer()
-	var init_config := _build_initialize_config()
+	var init_config: Dictionary = _build_initialize_config()
 	var init_result: int = int(_peer.initialize(init_config))
 	if init_result != OK:
 		failed.emit("peer_init_failed", "WebRTC peer initialization failed")
@@ -45,15 +55,23 @@ func start() -> void:
 
 	_peer.session_description_created.connect(_on_session_description_created)
 	_peer.ice_candidate_created.connect(_on_ice_candidate_created)
-	_channel = _peer.create_data_channel(CHANNEL_LABEL, {
-		"id": CHANNEL_ID,
-		"negotiated": true,
-		"ordered": true,
-	})
-	if _channel == null:
-		failed.emit("channel_create_failed", "WebRTC data channel creation failed")
-		return
-	_channel.write_mode = WebRTCDataChannel.WRITE_MODE_TEXT
+	_channels = {}
+	_ready_channels = {}
+	for spec in GAMEPLAY_CHANNEL_SPECS:
+		var lane: String = str(spec.get("lane", ""))
+		var label: String = str(spec.get("label", ""))
+		var channel_id: int = int(spec.get("id", 0))
+		var channel = _peer.create_data_channel(label, {
+			"id": channel_id,
+			"negotiated": true,
+			"ordered": true,
+		})
+		if channel == null:
+			failed.emit("channel_create_failed", "WebRTC data channel creation failed")
+			return
+		channel.write_mode = WebRTCDataChannel.WRITE_MODE_TEXT
+		_channels[lane] = channel
+		_ready_channels[lane] = false
 	_peer.create_offer()
 
 
@@ -65,8 +83,8 @@ func _create_peer() -> Variant:
 
 
 func _build_initialize_config() -> Dictionary:
-	var config := {}
-	var effective_ice_servers := ice_servers
+	var config: Dictionary = {}
+	var effective_ice_servers: Array = ice_servers
 	if effective_ice_servers.is_empty():
 		effective_ice_servers = ClientConstants.WEBRTC_ICE_SERVERS
 	if !effective_ice_servers.is_empty():
@@ -89,21 +107,36 @@ func poll() -> void:
 	if _peer == null:
 		return
 	_peer.poll()
-	if _channel == null:
+	if _channels.is_empty():
 		return
-	if !_ready_emitted and _channel.get_ready_state() == WebRTCDataChannel.STATE_OPEN:
+	var all_ready: bool = true
+	for spec in GAMEPLAY_CHANNEL_SPECS:
+		var lane: String = str(spec.get("lane", ""))
+		var channel: Variant = _channels.get(lane)
+		if channel == null:
+			all_ready = false
+			continue
+		var channel_ready: bool = channel.get_ready_state() == WebRTCDataChannel.STATE_OPEN
+		_ready_channels[lane] = channel_ready
+		all_ready = all_ready and channel_ready
+	if !_ready_emitted and all_ready:
 		_ready_emitted = true
-		ready.emit(CHANNEL_LABEL, CHANNEL_ID)
-	while _channel.get_available_packet_count() > 0:
-		var raw_packet = _channel.get_packet()
-		if raw_packet is PackedByteArray:
-			_handle_channel_packet(raw_packet)
+		ready.emit(_gameplay_channel_ready_payload())
+	for spec in GAMEPLAY_CHANNEL_SPECS:
+		var lane: String = str(spec.get("lane", ""))
+		var channel: Variant = _channels.get(lane)
+		if channel == null:
+			continue
+		if channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
+			continue
+		while channel.get_available_packet_count() > 0:
+			var raw_packet: PackedByteArray = channel.get_packet()
+			if raw_packet is PackedByteArray:
+				_handle_channel_packet(raw_packet)
 
 
 func send_json(packet: Dictionary) -> void:
-	if _channel == null or _channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
-		return
-	_channel.put_packet(JSON.stringify(packet).to_utf8_buffer())
+	_send_json_to_lane("world", packet)
 
 
 func send_smoke(smoke_id: String, message: String) -> void:
@@ -116,12 +149,15 @@ func send_smoke(smoke_id: String, message: String) -> void:
 
 
 func close() -> void:
-	if _channel != null:
-		_channel.close()
+	for lane in _channels.keys():
+		var channel: Variant = _channels.get(lane)
+		if channel != null:
+			channel.close()
 	if _peer != null:
 		_peer.close()
 	_peer = null
-	_channel = null
+	_channels = {}
+	_ready_channels = {}
 	_ready_emitted = false
 
 
@@ -136,8 +172,8 @@ func _on_ice_candidate_created(media: String, index: int, name: String) -> void:
 
 
 func _handle_channel_packet(packet: PackedByteArray) -> void:
-	var text := packet.get_string_from_utf8()
-	var decode_result = PacketCodec.decode(text)
+	var text: String = packet.get_string_from_utf8()
+	var decode_result: Variant = PacketCodec.decode(text)
 	if !decode_result.ok:
 		failed.emit("invalid_json", decode_result.error)
 		return
@@ -145,3 +181,28 @@ func _handle_channel_packet(packet: PackedByteArray) -> void:
 	packet_received.emit(data)
 	if str(data.get("type", "")) == "webrtc_smoke":
 		smoke_received.emit(data)
+
+
+func _send_json_to_lane(lane: String, packet: Dictionary) -> void:
+	var channel: Variant = _channels.get(lane)
+	if channel == null or channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
+		return
+	channel.put_packet(JSON.stringify(packet).to_utf8_buffer())
+
+
+func _gameplay_channel_spec_for_lane(lane: String) -> Variant:
+	for spec in GAMEPLAY_CHANNEL_SPECS:
+		if str(spec.get("lane", "")) == lane:
+			return spec
+	return null
+
+
+func _gameplay_channel_ready_payload() -> Array:
+	var channels: Array = []
+	for spec in GAMEPLAY_CHANNEL_SPECS:
+		channels.append({
+			"lane": str(spec.get("lane", "")),
+			"channel_label": str(spec.get("label", "")),
+			"channel_id": int(spec.get("id", 0)),
+		})
+	return channels

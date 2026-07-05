@@ -33,8 +33,10 @@ func TestHandleStartSinglePlayerRequestCreatesRoomWhenWebRTCReady(t *testing.T) 
 		rooms:     rooms.NewRoomManagerWithCleanupDelay(0),
 		outbound:  make(chan []byte, 1),
 		webrtcTransport: &WebRTCTransport{
-			channel: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
-			ready:   true,
+			channels: map[string]webRTCDataChannel{
+				webRTCGameplayChannelLaneWorld: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
+			},
+			ready: true,
 		},
 	}
 
@@ -60,12 +62,12 @@ func TestHandleStartGameRequestRejectsWithoutReadyWebRTC(t *testing.T) {
 	}
 
 	session := &webSocketSession{
-		sessionID:       "session-1",
-		room:            room,
-		currentRoomID:   room.ID,
+		sessionID:           "session-1",
+		room:                room,
+		currentRoomID:       room.ID,
 		currentGamePlayerID: "player-1",
-		rooms:           manager,
-		outbound:        make(chan []byte, 1),
+		rooms:               manager,
+		outbound:            make(chan []byte, 1),
 	}
 	addSessionMember(room, session.sessionID, session)
 	if _, roomErr := manager.SetReady(room.ID, session.sessionID, true); roomErr != nil {
@@ -88,15 +90,17 @@ func TestHandleStartGameRequestStartsRoomWhenWebRTCReady(t *testing.T) {
 	}
 
 	session := &webSocketSession{
-		sessionID:       "session-1",
-		room:            room,
-		currentRoomID:   room.ID,
+		sessionID:           "session-1",
+		room:                room,
+		currentRoomID:       room.ID,
 		currentGamePlayerID: "player-1",
-		rooms:           manager,
-		outbound:        make(chan []byte, 1),
+		rooms:               manager,
+		outbound:            make(chan []byte, 1),
 		webrtcTransport: &WebRTCTransport{
-			channel: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
-			ready:   true,
+			channels: map[string]webRTCDataChannel{
+				webRTCGameplayChannelLaneWorld: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
+			},
+			ready: true,
 		},
 	}
 	addSessionMember(room, session.sessionID, session)
@@ -155,4 +159,3 @@ func assertNoQueuedRoomErrorPacket(t *testing.T, outbound chan []byte) {
 		}
 	}
 }
-

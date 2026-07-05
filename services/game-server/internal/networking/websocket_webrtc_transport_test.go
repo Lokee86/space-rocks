@@ -32,7 +32,11 @@ func TestWebSocketSessionIgnoresICEBeforeOffer(t *testing.T) {
 func TestWebSocketSessionHandleWebRTCPacketRepliesToSmokePacket(t *testing.T) {
 	session := &webSocketSession{sessionID: "session-test"}
 	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
-	session.webrtcTransport = &WebRTCTransport{channel: channel}
+	session.webrtcTransport = &WebRTCTransport{
+		channels: map[string]webRTCDataChannel{
+			webRTCGameplayChannelLaneWorld: channel,
+		},
+	}
 
 	session.handleWebRTCPacket(map[string]any{
 		"type":     "webrtc_smoke",

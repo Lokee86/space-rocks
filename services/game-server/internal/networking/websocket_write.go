@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	game "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/constants"
+	game "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
 	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
@@ -73,6 +73,16 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		if len(encodedPacket) == 0 {
 			continue
 		}
+		if candidate.Lane == realtime.LaneControl {
+			logging.Network.Warn("lane protocol gameplay webrtc control lane is websocket-owned",
+				logging.FieldRoomID, session.currentRoomID,
+				logging.FieldPlayerID, session.currentGamePlayerID,
+				logging.FieldRemoteAddr, remoteAddr,
+				"lane", candidate.Lane,
+				"transport", "webrtc",
+			)
+			return false
+		}
 		if session.webrtcTransport == nil {
 			logging.Network.Warn("lane protocol gameplay webrtc transport missing",
 				logging.FieldRoomID, session.currentRoomID,
@@ -93,14 +103,25 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			)
 			return false
 		}
-		if err := session.webrtcTransport.SendEncodedJSON(encodedPacket); err != nil {
+		channelLabel, ok := webRTCGameplayChannelLabelForLane(string(candidate.Lane))
+		if !ok {
+			logging.Network.Warn("lane protocol gameplay webrtc lane channel missing",
+				logging.FieldRoomID, session.currentRoomID,
+				logging.FieldPlayerID, session.currentGamePlayerID,
+				logging.FieldRemoteAddr, remoteAddr,
+				"lane", candidate.Lane,
+				"transport", "webrtc",
+			)
+			return false
+		}
+		if err := session.webrtcTransport.SendEncodedLaneJSON(string(candidate.Lane), encodedPacket); err != nil {
 			logging.Network.Error("lane protocol gameplay webrtc write failed", err,
 				logging.FieldRoomID, session.currentRoomID,
 				logging.FieldPlayerID, session.currentGamePlayerID,
 				logging.FieldRemoteAddr, remoteAddr,
 				"lane", candidate.Lane,
 				"transport", "webrtc",
-				"channel", "sr.reliable",
+				"channel", channelLabel,
 			)
 			return false
 		}
@@ -110,7 +131,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			logging.FieldPlayerID, session.currentGamePlayerID,
 			logging.FieldRemoteAddr, remoteAddr,
 			"transport", "webrtc",
-			"channel", "sr.reliable",
+			"channel", channelLabel,
 			"packet_family", diagnostics.PacketFamily,
 			"candidate_lane", diagnostics.Lane,
 			"candidate_kind", diagnostics.Kind,

@@ -69,7 +69,12 @@ func test_connection_service_starts_and_wires_webrtc_transport() -> void:
 	service._on_connected()
 	service.webrtc_transport.offer_created.emit("answer-type", "answer-sdp")
 	service.webrtc_transport.ice_candidate_created.emit("audio", 2, "candidate-name")
-	service.webrtc_transport.ready.emit("sr.reliable", 1)
+	service.webrtc_transport.ready.emit([
+		{"lane": "world", "channel_label": "sr.world", "channel_id": 1},
+		{"lane": "overlay", "channel_label": "sr.overlay", "channel_id": 2},
+		{"lane": "session", "channel_label": "sr.session", "channel_id": 3},
+		{"lane": "event", "channel_label": "sr.event", "channel_id": 4},
+	])
 	service.webrtc_transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "server-smoke", "origin": "server"})
 	service.webrtc_transport.failed.emit("peer_error", "boom")
 	service._process(0.0)
