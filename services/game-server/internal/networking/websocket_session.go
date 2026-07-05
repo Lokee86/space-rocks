@@ -27,7 +27,7 @@ type webSocketSession struct {
 	matchResultReporter         rooms.MatchResultReporter
 	realtimeState               realtime.RealtimeSessionState
 	debugShapeCatalogSentRoomID string
-	webrtcSmokePeer             *WebRTCSmokePeer
+	webrtcTransport             *WebRTCTransport
 }
 
 func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
@@ -59,19 +59,19 @@ func (session *webSocketSession) resetDebugShapeCatalogSent() {
 	session.debugShapeCatalogSentRoomID = ""
 }
 
-func (session *webSocketSession) ensureWebRTCSmokePeer() *WebRTCSmokePeer {
-	if session.webrtcSmokePeer != nil {
-		return session.webrtcSmokePeer
+func (session *webSocketSession) ensureWebRTCTransport() *WebRTCTransport {
+	if session.webrtcTransport != nil {
+		return session.webrtcTransport
 	}
 
-	peer := NewWebRTCSmokePeer(WebRTCSignalHooks{
+	peer := NewWebRTCTransport(WebRTCSignalHooks{
 		OnLocalICECandidate: func(media string, index int, name string) {
 			session.enqueueWebRTCICECandidate(media, index, name)
 		},
 		OnReady: func() {
 			session.enqueueWebRTCReady()
-			if session.webrtcSmokePeer != nil {
-				if err := session.webrtcSmokePeer.SendSmoke("server-ready", "server smoke peer ready"); err != nil {
+			if session.webrtcTransport != nil {
+				if err := session.webrtcTransport.SendSmoke("server-ready", "server smoke peer ready"); err != nil {
 					logging.Network.Warn("websocket webrtc smoke send failed",
 						logging.FieldError, err,
 						logging.FieldRoomID, session.currentRoomID,
@@ -81,38 +81,19 @@ func (session *webSocketSession) ensureWebRTCSmokePeer() *WebRTCSmokePeer {
 				}
 			}
 		},
-		OnSmokeReceived: func(packet map[string]any) {
-			smokeID := fmt.Sprint(packet["smoke_id"])
-			origin := fmt.Sprint(packet["origin"])
-			logging.Network.Info("websocket webrtc smoke packet received",
-				logging.FieldRoomID, session.currentRoomID,
-				logging.FieldPlayerID, session.currentGamePlayerID,
-				"session_id", session.sessionID,
-				"smoke_id", smokeID,
-				"origin", origin,
-			)
-			if session.webrtcSmokePeer == nil {
-				return
-			}
-			if err := session.webrtcSmokePeer.SendSmoke(smokeID, "server reply"); err != nil {
-				logging.Network.Warn("websocket webrtc smoke reply failed",
-					logging.FieldError, err,
-					logging.FieldRoomID, session.currentRoomID,
-					logging.FieldPlayerID, session.currentGamePlayerID,
-					"session_id", session.sessionID,
-				)
-			}
+		OnPacketReceived: func(packet map[string]any) {
+			session.handleWebRTCPacket(packet)
 		},
 	})
-	session.webrtcSmokePeer = peer
+	session.webrtcTransport = peer
 	return peer
 }
 
-func (session *webSocketSession) clearWebRTCSmokePeer() {
-	if session.webrtcSmokePeer == nil {
+func (session *webSocketSession) clearWebRTCTransport() {
+	if session.webrtcTransport == nil {
 		return
 	}
-	if err := session.webrtcSmokePeer.Close(); err != nil {
+	if err := session.webrtcTransport.Close(); err != nil {
 		logging.Network.Warn("websocket webrtc smoke peer close failed",
 			logging.FieldError, err,
 			logging.FieldRoomID, session.currentRoomID,
@@ -120,7 +101,7 @@ func (session *webSocketSession) clearWebRTCSmokePeer() {
 			"session_id", session.sessionID,
 		)
 	}
-	session.webrtcSmokePeer = nil
+	session.webrtcTransport = nil
 }
 
 func (session *webSocketSession) enqueueWebRTCAnswer(descriptionType string, sdp string) {
@@ -171,7 +152,7 @@ func (session *webSocketSession) enqueuePacket(packet map[string]any) {
 }
 
 func (session *webSocketSession) HandleWebRTCOffer(descriptionType string, sdp string) {
-	peer := session.ensureWebRTCSmokePeer()
+	peer := session.ensureWebRTCTransport()
 	answer, err := peer.HandleOffer(descriptionType, sdp)
 	if err != nil {
 		logging.Network.Warn("websocket webrtc offer handling failed",
@@ -180,14 +161,14 @@ func (session *webSocketSession) HandleWebRTCOffer(descriptionType string, sdp s
 			logging.FieldPlayerID, session.currentGamePlayerID,
 			"session_id", session.sessionID,
 		)
-		session.clearWebRTCSmokePeer()
+		session.clearWebRTCTransport()
 		return
 	}
 	session.enqueueWebRTCAnswer(answer.DescriptionType, answer.SDP)
 }
 
 func (session *webSocketSession) HandleWebRTCIceCandidate(media string, index int, name string) {
-	if session.webrtcSmokePeer == nil {
+	if session.webrtcTransport == nil {
 		logging.Network.Debug("websocket webrtc ice candidate ignored before offer",
 			logging.FieldRoomID, session.currentRoomID,
 			logging.FieldPlayerID, session.currentGamePlayerID,
@@ -195,7 +176,7 @@ func (session *webSocketSession) HandleWebRTCIceCandidate(media string, index in
 		)
 		return
 	}
-	if err := session.webrtcSmokePeer.AddRemoteCandidate(media, index, name); err != nil {
+	if err := session.webrtcTransport.AddRemoteCandidate(media, index, name); err != nil {
 		logging.Network.Warn("websocket webrtc ice candidate handling failed",
 			logging.FieldError, err,
 			logging.FieldRoomID, session.currentRoomID,
@@ -214,11 +195,43 @@ func (session *webSocketSession) HandleWebRTCSmoke(smokeID string, origin string
 	)
 }
 
+func (session *webSocketSession) handleWebRTCPacket(packet map[string]any) {
+	packetType := fmt.Sprint(packet["type"])
+	if packetType != "webrtc_smoke" {
+		logging.Network.Debug("websocket webrtc packet ignored",
+			"session_id", session.sessionID,
+			"type", packetType,
+		)
+		return
+	}
+
+	smokeID := fmt.Sprint(packet["smoke_id"])
+	origin := fmt.Sprint(packet["origin"])
+	logging.Network.Info("websocket webrtc smoke packet received",
+		logging.FieldRoomID, session.currentRoomID,
+		logging.FieldPlayerID, session.currentGamePlayerID,
+		"session_id", session.sessionID,
+		"smoke_id", smokeID,
+		"origin", origin,
+	)
+	if session.webrtcTransport == nil {
+		return
+	}
+	if err := session.webrtcTransport.SendSmoke(smokeID, "server reply"); err != nil {
+		logging.Network.Warn("websocket webrtc smoke reply failed",
+			logging.FieldError, err,
+			logging.FieldRoomID, session.currentRoomID,
+			logging.FieldPlayerID, session.currentGamePlayerID,
+			"session_id", session.sessionID,
+		)
+	}
+}
+
 func (session *webSocketSession) HandleWebRTCFailed(errorCode string, message string) {
 	logging.Network.Info("websocket webrtc failed received",
 		"session_id", session.sessionID,
 		"error_code", errorCode,
 		"message", message,
 	)
-	session.clearWebRTCSmokePeer()
+	session.clearWebRTCTransport()
 }

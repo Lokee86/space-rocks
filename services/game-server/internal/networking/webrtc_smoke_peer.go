@@ -20,6 +20,7 @@ type WebRTCAnswerPayload struct {
 type WebRTCSignalHooks struct {
 	OnLocalICECandidate func(media string, index int, name string)
 	OnReady             func()
+	OnPacketReceived    func(packet map[string]any)
 	OnSmokeReceived     func(packet map[string]any)
 }
 
@@ -85,22 +86,22 @@ var newWebRTCPeerConnection = func() (webRTCPeer, error) {
 	return &pionPeerAdapter{peer: peer}, nil
 }
 
-type WebRTCSmokePeer struct {
+type WebRTCTransport struct {
 	peer    webRTCPeer
 	channel webRTCDataChannel
 	hooks   WebRTCSignalHooks
 	ready   bool
 }
 
-func NewWebRTCSmokePeer(hooks WebRTCSignalHooks) *WebRTCSmokePeer {
-	return &WebRTCSmokePeer{hooks: hooks}
+func NewWebRTCTransport(hooks WebRTCSignalHooks) *WebRTCTransport {
+	return &WebRTCTransport{hooks: hooks}
 }
 
-func (p *WebRTCSmokePeer) Ready() bool {
+func (p *WebRTCTransport) Ready() bool {
 	return p.ready
 }
 
-func (p *WebRTCSmokePeer) HandleOffer(descriptionType string, sdp string) (*WebRTCAnswerPayload, error) {
+func (p *WebRTCTransport) HandleOffer(descriptionType string, sdp string) (*WebRTCAnswerPayload, error) {
 	if descriptionType == "" || sdp == "" {
 		return nil, errors.New("offer description_type and sdp are required")
 	}
@@ -130,7 +131,7 @@ func (p *WebRTCSmokePeer) HandleOffer(descriptionType string, sdp string) (*WebR
 	return &WebRTCAnswerPayload{DescriptionType: answer.Type.String(), SDP: answer.SDP}, nil
 }
 
-func (p *WebRTCSmokePeer) AddRemoteCandidate(media string, index int, name string) error {
+func (p *WebRTCTransport) AddRemoteCandidate(media string, index int, name string) error {
 	if p.peer == nil {
 		return errors.New("webrtc peer is not initialized")
 	}
@@ -138,26 +139,30 @@ func (p *WebRTCSmokePeer) AddRemoteCandidate(media string, index int, name strin
 	return p.peer.AddICECandidate(webrtc.ICECandidateInit{SDPMid: &media, SDPMLineIndex: &idx, Candidate: name})
 }
 
-func (p *WebRTCSmokePeer) SendSmoke(smokeID string, message string) error {
+func (p *WebRTCTransport) SendJSON(packet map[string]any) error {
 	if p.channel == nil {
 		return errors.New("webrtc data channel is not ready")
 	}
 	if p.channel.ReadyState() != webrtc.DataChannelStateOpen {
 		return errors.New("webrtc data channel is not open")
 	}
-	payload, err := json.Marshal(map[string]any{
-		"type":     "webrtc_smoke",
-		"smoke_id": smokeID,
-		"origin":   webRTCSmokeOriginServer,
-		"message":  message,
-	})
+	payload, err := json.Marshal(packet)
 	if err != nil {
 		return err
 	}
 	return p.channel.SendText(string(payload))
 }
 
-func (p *WebRTCSmokePeer) Close() error {
+func (p *WebRTCTransport) SendSmoke(smokeID string, message string) error {
+	return p.SendJSON(map[string]any{
+		"type":     "webrtc_smoke",
+		"smoke_id": smokeID,
+		"origin":   webRTCSmokeOriginServer,
+		"message":  message,
+	})
+}
+
+func (p *WebRTCTransport) Close() error {
 	if p.channel != nil {
 		_ = p.channel.Close()
 	}
@@ -167,7 +172,7 @@ func (p *WebRTCSmokePeer) Close() error {
 	return nil
 }
 
-func (p *WebRTCSmokePeer) attachPeerHandlers() {
+func (p *WebRTCTransport) attachPeerHandlers() {
 	p.peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
 		if candidate == nil || p.hooks.OnLocalICECandidate == nil {
 			return
@@ -185,7 +190,7 @@ func (p *WebRTCSmokePeer) attachPeerHandlers() {
 	})
 }
 
-func (p *WebRTCSmokePeer) createNegotiatedChannel() error {
+func (p *WebRTCTransport) createNegotiatedChannel() error {
 	ordered := true
 	negotiated := true
 	channelID := uint16(webRTCChannelID)
@@ -210,15 +215,15 @@ func (p *WebRTCSmokePeer) createNegotiatedChannel() error {
 	return nil
 }
 
-func (p *WebRTCSmokePeer) handleChannelMessage(data []byte) error {
+func (p *WebRTCTransport) handleChannelMessage(data []byte) error {
 	var packet map[string]any
 	if err := json.Unmarshal(data, &packet); err != nil {
 		return fmt.Errorf("invalid smoke packet json: %w", err)
 	}
-	if fmt.Sprint(packet["type"]) != "webrtc_smoke" {
-		return nil
+	if p.hooks.OnPacketReceived != nil {
+		p.hooks.OnPacketReceived(packet)
 	}
-	if p.hooks.OnSmokeReceived != nil {
+	if fmt.Sprint(packet["type"]) == "webrtc_smoke" && p.hooks.OnSmokeReceived != nil {
 		p.hooks.OnSmokeReceived(packet)
 	}
 	return nil
