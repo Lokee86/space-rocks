@@ -514,4 +514,3 @@ The current local development WebSocket targets for single-player and multiplaye
 
 Room match-over and local player elimination must stay separate in documentation and implementation. Local elimination is a player presentation state; room match-over is the authoritative session completion state.
 
-

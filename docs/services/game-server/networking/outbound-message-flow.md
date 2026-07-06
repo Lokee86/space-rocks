@@ -17,9 +17,9 @@ The outbound boundary has three current responsibilities:
 3. Debug shape catalog writes when devtools are enabled.
 
 Queued one-off responses use `session.outbound` and `outbound.WriteServerMessage()` over WebSocket.
-Active realtime lane packets are encoded by `services/game-server/internal/protocol/realtime/packetcodec` and sent over `session.webrtcTransport.SendEncodedJSON()` on `sr.reliable`.
+Active realtime lane packets are encoded by `services/game-server/internal/protocol/realtime/packetcodec` and sent over lane-specific WebRTC DataChannels through `session.webrtcTransport.SendEncodedLaneJSON()`.
 Queued one-off response producers generally encode packet structs through `packetcodec` before enqueueing bytes, while active realtime lane packets are built and encoded by `services/game-server/internal/protocol/realtime/` before the WebRTC transport writes the encoded bytes.
-The future `sr.world` / unreliable channel split remains documented but not implemented.
+Current physical gameplay channels include `sr.world`, `sr.asteroids`, `sr.bullets`, `sr.overlay`, `sr.session`, and `sr.event`. They are reliable and ordered for now, and unreliable/unordered delivery remains future work.
 
 The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, quantization, event wire shaping, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy. Projection and readable record building remain readable all the way through `WireLanePacket`.
 
@@ -43,7 +43,7 @@ The game-server outbound packet routing path owns:
 
 - WebSocket delivery for queued one-off responses.
 - The session outbound queue used by one-off responses.
-- WebRTC delivery for active realtime gameplay packets over `sr.reliable`.
+- WebRTC delivery for active realtime gameplay packets over reliable/ordered lane-specific gameplay DataChannels.
 - One-time debug shape catalog writes per room connection context when devtools are enabled.
 - Encoding queued one-off server packet structs through `packetcodec` where the queued producer owns that packet.
 - Writing already-encoded active realtime lane packets produced by the realtime protocol package over WebRTC.
@@ -81,7 +81,7 @@ The server owns authority behind the payloads. The client should treat outbound 
 
 The current outbound payloads include queued one-off responses plus lane-native realtime packets and debug packets.
 
-WebRTC signaling is still WebSocket-owned in the current implementation. The sr.reliable DataChannel is now a reusable JSON transport seam with id 1, and webrtc_smoke remains a diagnostic packet on that transport. The current WebRTC packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay lane packets are sent over WebRTC sr.reliable with no WebSocket fallback. No unreliable, hot, asteroid, or gameplay channel cutover exists yet. Deployment must keep the advertised WebRTC ICE address and UDP path reachable from clients directly; a proxied HTTP WebSocket route does not carry the UDP data channel.
+WebRTC signaling is still WebSocket-owned in the current implementation. WebRTC DataChannels are now reusable JSON transport seams for active gameplay lanes, and webrtc_smoke remains a diagnostic packet on the WebRTC transport. The current WebRTC packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay lane packets are sent over lane-specific WebRTC DataChannels with no WebSocket fallback. Current physical gameplay channels include `sr.world`, `sr.asteroids`, `sr.bullets`, `sr.overlay`, `sr.session`, and `sr.event`; they are reliable and ordered for now. Deployment must keep the advertised WebRTC ICE address and UDP path reachable from clients directly; a proxied HTTP WebSocket route does not carry the UDP data channel.
 
 ## Routing model
 
@@ -147,7 +147,7 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 7. Raw-float assertion runs on relevant lane wire maps.
 8. `CompactWirePacket` applies final compact key/value aliasing, shared ID compaction, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records.
 9. `packetcodec` encodes JSON.
-10. `session.webrtcTransport.SendEncodedJSON()` writes active realtime lane packets over `sr.reliable` when the transport is ready.
+10. `session.webrtcTransport.SendEncodedLaneJSON()` writes active realtime lane packets over the selected WebRTC lane channel when the transport is ready.
 11. Logs lane wire packet details after successful writes.
 12. Drains active event_batch events only after a successful WebRTC write.
 13. Persists lane metadata only after successful writes.
@@ -155,7 +155,7 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 15. Marks a lane baseline ready after a final full packet.
 16. Emits a non-empty per-tick debug summary after packet writes.
 
-The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. That package owns candidate selection, send-plan records, wire-map construction, sparse delta omission, compact alias preparation, tuple packing, encoded-byte accounting inputs, and helper metadata or types that support the write path. Realtime owns sparse delta omission, compact alias preparation, tuple packing, and sparse event wire shaping. Networking owns successful WebSocket delivery, event_batch drain-after-success behavior, post-write lane metadata persistence, and the current successful-write debug logs. `packetcodec` owns JSON encoding only. Active realtime world, overlay, session, and `event_batch` lane packets are compacted at the final outbound encode boundary: `WireLanePacket` builds the readable map, `CompactWirePacket` applies aliases, compact values, shared ID compaction, and tuple packing after raw-float assertion and before `packetcodec` encoding, and the alias contract lives in `docs/services/game-server/networking/realtime-compact-wire-mapping.md`. `event_batch` keeps one ordered batch of pending presentation events. Known event records are sparse and event-type-specific before compacting, and the compact wire path tuple-packs the known event records. Unsupported or future event records may remain map-shaped for compatibility until they are explicitly shaped for the compact path. The client expands compact event tuples back into readable dictionaries before event appliers consume them. It remains one ordered batch of pending presentation events, not one packet per event. Sparse delta omission reduces JSON shape overhead, but it does not implement record-level packet splitting, record-level prioritization, packet baselines, packet deltas, or packet budget enforcement. Active lane packets are not handed to networking for WebSocket delivery.
+The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. That package owns candidate selection, send-plan records, wire-map construction, sparse delta omission, compact alias preparation, hot asteroid/bullet movement splitting, tuple packing, encoded-byte accounting inputs, and helper metadata or types that support the write path. Realtime owns sparse delta omission, compact alias preparation, tuple packing, and sparse event wire shaping. Networking owns successful WebRTC gameplay lane delivery, successful queued WebSocket delivery, event_batch drain-after-success behavior, post-write lane metadata persistence, and the current successful-write debug logs. `packetcodec` owns JSON encoding only. Active realtime world, overlay, session, and `event_batch` lane packets are compacted at the final outbound encode boundary: `WireLanePacket` builds the readable map, `CompactWirePacket` applies aliases, compact values, shared ID compaction, and tuple packing after raw-float assertion and before `packetcodec` encoding, and the alias contract lives in `docs/services/game-server/networking/realtime-compact-wire-mapping.md`. `event_batch` keeps one ordered batch of pending presentation events. Known event records are sparse and event-type-specific before compacting, and the compact wire path tuple-packs the known event records. Unsupported or future event records may remain map-shaped for compatibility until they are explicitly shaped for the compact path. The client expands compact event tuples back into readable dictionaries before event appliers consume them. It remains one ordered batch of pending presentation events, not one packet per event. Sparse delta omission reduces JSON shape overhead, but it does not implement record-level packet splitting, record-level prioritization, packet baselines, packet deltas, or packet budget enforcement. Active lane packets are not handed to networking for WebSocket delivery.
 
 The networking layer owns successful WebRTC delivery for active realtime gameplay packets, successful WebSocket delivery for queued one-off packets, and the post-write session state changes that follow from those successful writes.
 Active lane metadata persistence, event drain, and baseline persistence happen only after a successful WebRTC write.
@@ -164,9 +164,11 @@ Chunk metadata exists in the wire shape and scheduler records, but this section 
 
 ### Debug status
 
-`debug_status` is built by `outbound.BuildDebugStatusResponse()` and covered by tests, but this doc does not describe an active write-loop call path for it.
+`debug_status` is built by `outbound.BuildDebugStatusResponse()` and covered by tests.
 
 The builder requires a non-nil room, a non-nil game instance, `devtools.Enabled()`, and room state `InGame` or `GameOver`.
+
+Current docs must not claim periodic `debug_status` delivery unless the active write loop calls the debug status builder. `debug_status` remains a WebSocket devtools readout packet when delivery is active, and it is not part of active gameplay lane output.
 
 The packet is built with `devtools.StatusFor()` and `devtools.StatusesForAllPlayers()`, then encoded through `packetcodec`.
 
@@ -215,7 +217,7 @@ Server outbound encoding uses:
 
 `packetcodec.Encode(packet)` currently wraps `json.Marshal(packet)`.
 
-The outbound route does not own the packet schema or wire-format strategy. The current implementation is JSON text over WebSocket for queued one-off packets. For queued one-off packets, networking-side producers often encode packet structs before enqueueing. For active realtime lane packets, the realtime protocol package builds the wire map, applies sparse omission and compact aliases, encodes JSON through `services/game-server/internal/protocol/realtime/packetcodec`, and sends encoded bytes to `session.webrtcTransport.SendEncodedJSON()` for WebRTC delivery.
+The outbound route does not own the packet schema or wire-format strategy. The current implementation is JSON text over WebSocket for queued one-off packets. For queued one-off packets, networking-side producers often encode packet structs before enqueueing. For active realtime lane packets, the realtime protocol package builds the wire map, applies sparse omission and compact aliases, encodes JSON through `services/game-server/internal/protocol/realtime/packetcodec`, and sends encoded bytes to `session.webrtcTransport.SendEncodedLaneJSON()` for WebRTC delivery.
 
 ## Packet families
 
@@ -249,6 +251,8 @@ Current lane families are:
 
 - `world_full`
 - `world_delta`
+- `asteroid_delta`
+- `bullet_delta`
 - `overlay_full`
 - `overlay_delta`
 - `session_full`
@@ -259,7 +263,9 @@ Current lane families are:
 
 Lane roles at service level are:
 
-- world = authoritative world lane records for visible simulation entities
+- world = authoritative world lane records for ships, pickups, and asteroid/bullet lifecycle creates/deletes
+- asteroids = regular asteroid movement updates from `asteroid_delta`
+- bullets = regular bullet movement updates from `bullet_delta`
 - overlay = receiver-specific overlay lane records
 - session = session lane records for player/session/lifecycle and total asteroids
 - event = event_batch presentation event delivery
@@ -355,7 +361,7 @@ Owned payload builder:
 
 `outbound.BuildDebugStatusResponse()`
 
-Debug status is devtools-only presentation. It is sent only when devtools are enabled and the session has an active game player in an `InGame` or `GameOver` room.
+Debug status is devtools-only presentation. Its builder is eligible only when devtools are enabled and the session has an active game player in an `InGame` or `GameOver` room. Current docs must not claim active periodic delivery unless the write-loop call path exists in code.
 
 ### Debug shape catalog
 
@@ -486,3 +492,7 @@ The documented focused test paths for outbound routing are:
 - [Data](../../../data/!INDEX.md)
 - [Realtime Protocol Architecture](../../../planning/protocol/realtime-protocol-architecture.md)
 - [Network Observability And Packet Budget](../../../planning/domains/technical/network-observability-and-packet-budget.md)
+
+
+
+

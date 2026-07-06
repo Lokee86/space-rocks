@@ -6,13 +6,13 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document describes the current realtime WebSocket protocol between the Godot client and the Go game server.
 
-The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-WebRTC DataChannel for active realtime gameplay packets.
+The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-reliable/ordered lane-specific WebRTC DataChannels for active realtime gameplay packets.
 
 It covers the transport route, JSON packet framing, connection lifecycle, packet-family routing, lane policy, gameplay packet families, session-state requirements, delivery semantics, source-of-truth files, generated outputs, service responsibilities, compatibility expectations, and implementation code paths.
 
 ## Overview
 
-The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and WebRTC sr.reliable for active realtime gameplay packets.
+The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and reliable/ordered WebRTC physical DataChannels for active realtime gameplay packets.
 
 The game server exposes one realtime route:
 
@@ -22,7 +22,7 @@ GET /ws
 
 The Godot client selects a WebSocket URL from the requested session mode, opens the connection, optionally sends an auth packet, sends room or gameplay request packets, and receives authoritative server packets. /ws is the signaling, session, and control route, not the active gameplay state transport.
 
-WebSocket owns auth, room, lobby, telemetry, signaling, and queued one-off packets. WebRTC sr.reliable owns active realtime gameplay packets. `sr.reliable` is currently reliable and ordered. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry WebRTC DataChannel traffic.
+WebSocket owns auth, room, lobby, telemetry, signaling, and queued one-off packets. WebRTC physical DataChannels own active realtime gameplay packets. Current physical gameplay DataChannels are world, asteroids, bullets, overlay, session, and event. `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`; there is no generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry WebRTC DataChannel traffic.
 
 The route path does not define play mode. Local single-player and multiplayer currently use the same local WebSocket route during development. Single-player versus multiplayer behavior is expressed through packets, session identity, room state, admission policy, and player-data routing.
 
@@ -40,24 +40,27 @@ durable account identity
 The server owns authority behind accepted room, gameplay, auth-result, telemetry, and devtools consequences. The client owns connection initiation, packet emission, inbound packet classification, realtime lane routing, presentation routing, and WebRTC lane application.
 
 
-Active realtime gameplay packets are not WebSocket-owned anymore. The current server path builds the lane packet, encodes it to JSON, and sends it over the session WebRTC DataChannel `sr.reliable` when WebRTC is ready. WebSocket still owns auth, room/lobby lifecycle, room snapshots, and WebRTC signaling. There is no WebSocket fallback for active realtime gameplay packets.
-The protocol is best-effort and session-scoped, but active gameplay output now uses lane-native packet families and lane policy over WebRTC sr.reliable. The current gameplay output lanes are:
+Active realtime gameplay packets are not WebSocket-owned anymore. The current server path builds the lane packet, encodes it to JSON, and sends it over the matching session WebRTC gameplay DataChannel when WebRTC is ready. WebSocket still owns auth, room/lobby lifecycle, room snapshots, and WebRTC signaling. There is no WebSocket fallback for active realtime gameplay packets.
+The protocol is best-effort and session-scoped, but active gameplay output now uses lane-native packet families and lane policy over WebRTC reliable/ordered DataChannels. The current gameplay output lanes are:
 
 ```text
 world
+asteroids
+bullets
 overlay
 session
 event
-control
 ```
 
-The control lane currently carries resync packet families such as resync_request and resync_required. There is no separate generated packet family named control.
+`control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`. There is no separate generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation.
 
 The active gameplay packet families are:
 
 ```text
 world_full
 world_delta
+asteroid_delta
+bullet_delta
 overlay_full
 overlay_delta
 session_full
@@ -106,7 +109,7 @@ Owns the server JSON encode/decode wrapper used by networking.
 services/game-server/internal/protocol/realtime/
 ```
 
-Owns lane projection, baseline and delta planning, candidate selection, send-plan records, numeric wire quantization, sparse delta omission, compact alias preparation, active lane encode-boundary preparation, and active/shadow/parity support.
+Owns lane projection, baseline and delta planning, candidate selection, hot asteroid/bullet movement splitting, send-plan records, numeric wire quantization, sparse delta omission, compact alias preparation, active lane encode-boundary preparation, and active/shadow/parity support.
 
 ```text
 shared/packets/
@@ -326,6 +329,8 @@ This currently applies to the server-owned outbound lane state families:
 
 ```text
 world_full / world_delta
+asteroid_delta
+bullet_delta
 overlay_full / overlay_delta
 session_full / session_delta
 ```
@@ -356,7 +361,7 @@ Known float-like fields use lane- and field-specific policies from `services/gam
 
 Unmapped float-like fields fall back to `float_generic`, but they should surface dev diagnostics and fail-loud behavior so new float fields do not silently bypass policy review.
 
-This is still JSON over WebSocket for auth, room, lobby, telemetry, and signaling packets, but active realtime gameplay packets now travel over WebRTC sr.reliable. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
+This is still JSON over WebSocket for auth, room, lobby, telemetry, and signaling packets, but active realtime gameplay packets now travel over reliable/ordered WebRTC gameplay DataChannels. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
 
 ### Field-delta update semantics
 
@@ -379,9 +384,11 @@ Current update identity keys are:
 
 ```text
 world ship_updates = id
-world bullet_updates = id
-world asteroid_updates = id
 world pickup_updates = id
+asteroid_delta asteroid_updates = id
+bullet_delta bullet_updates = id
+world bullet_updates and world asteroid_updates = id for lifecycle/bootstrap/resync-compatible world deltas only; regular active movement updates are split into dedicated hot movement lanes
+
 overlay receiver_updates = self_id
 session player_session_updates = id
 session player_lifecycle_updates = player_id
@@ -437,17 +444,15 @@ ship_creates
 ship_updates
 ship_deletes
 bullet_creates
-bullet_updates
 bullet_deletes
 asteroid_creates
-asteroid_updates
 asteroid_deletes
 pickup_creates
 pickup_updates
 pickup_deletes
 ```
 
-Absent world delta sections are treated as empty arrays by the client. For asteroid records only, the compact active wire form uses tuple arrays with numeric suffix IDs, and the client rehydrates those IDs before world lane application. Readable/logical world records remain id-keyed maps before compact aliasing.
+Absent world delta sections are treated as empty arrays by the client. `world_delta` still has serializer and compatibility support for `bullet_updates` and `asteroid_updates` so bootstrap, compatibility, and resync-safe world deltas can continue to deserialize them. Regular active bullet movement is emitted as `bullet_delta` on `sr.bullets`, and regular active asteroid movement is emitted as `asteroid_delta` on `sr.asteroids`. World remains lifecycle/resync-safe for asteroid and bullet creates/deletes. For asteroid records only, the compact active wire form uses tuple arrays with numeric suffix IDs, and the client rehydrates those IDs before world lane application. Readable/logical world records remain id-keyed maps before compact aliasing.
 
 Compact asteroid example:
 
@@ -457,13 +462,29 @@ Compact asteroid example:
 
 The client expands the tuple-packed asteroid record back into a readable dictionary before world lane application. The client expands ID `1` to `asteroid-1`.
 
-Compact bullet example:
+Compact bullet lifecycle example:
 
 ```json
-{"t":"wd","q":2,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bu":[[1,11,21,31]],"bx":[1]}
+{"t":"wd","q":2,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bx":[1]}
 ```
 
 The client expands the tuple-packed bullet records back into readable dictionaries before world lane application.
+
+Compact bullet movement example:
+
+```json
+{"t":"bd","q":3,"bu":[[1,11,21,31]]}
+```
+
+The client expands the tuple-packed bullet movement records back into readable dictionaries before bullet lane application.
+
+Compact asteroid movement example:
+
+```json
+{"t":"ad","q":4,"au":[[2,12,22]]}
+```
+
+The client expands the tuple-packed asteroid movement records back into readable dictionaries before asteroid lane application.
 
 Compact world ship/player example:
 
@@ -476,7 +497,7 @@ The client expands the tuple-packed ship records back into readable dictionaries
 Compact world_delta update example:
 
 ```json
-{"t":"wd","q":5,"su":[[1,11,21,31,false]],"bu":[[2,12,22,32]],"au":[[3,13,23]]}
+{"t":"wd","q":5,"su":[[1,11,21,31,false]],"pu":[[2,12,22,32]]}
 ```
 
 The client expands the tuple-packed `world_delta` update records back into readable dictionaries before world lane application.
@@ -485,9 +506,9 @@ Current `world_delta` update maps are partial maps keyed by id:
 
 ```text
 ship_updates
-bullet_updates
-asteroid_updates
 pickup_updates
+bullet_delta.bullet_updates
+asteroid_delta.asteroid_updates
 ```
 
 ### Overlay lane packets
@@ -948,11 +969,11 @@ Server-to-client:
 }
 ```
 
-The server replies only to the same WebSocket session. Telemetry does not require room membership, does not require active lane gameplay output, and does not mutate gameplay. WebSocket best-effort applies to auth, room, lobby, telemetry, signaling, and queued one-off packets; active realtime gameplay output uses WebRTC sr.reliable. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
+The server replies only to the same WebSocket session. Telemetry does not require room membership, does not require active lane gameplay output, and does not mutate gameplay. WebSocket best-effort applies to auth, room, lobby, telemetry, signaling, and queued one-off packets; active realtime gameplay output uses reliable/ordered WebRTC gameplay DataChannels. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
 
 ## Delivery and failure semantics
 
-Current delivery is best-effort for WebSocket-owned auth, room, lobby, telemetry, signaling, and queued one-off packets. Active realtime gameplay output uses WebRTC sr.reliable.
+Current delivery is best-effort for WebSocket-owned auth, room, lobby, telemetry, signaling, and queued one-off packets. Active realtime gameplay output uses reliable/ordered WebRTC gameplay DataChannels.
 
 There is no implemented support for:
 
@@ -967,7 +988,7 @@ durable outbound queues
 
 Current lane-native delivery does include sequence numbers, baseline tracking, and delta snapshots as part of the active gameplay protocol. Those mechanisms support in-session lane ordering and incremental updates, but they do not provide acknowledgement-based recovery, resend, reconnect recovery, session resume, or a durable outbound queue.
 
-Client outbound sends are not queued. If the WebSocket is not open, the packet is not sent. Active realtime gameplay output uses WebRTC sr.reliable. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
+Client outbound sends are not queued. If the WebSocket is not open, the packet is not sent. Active realtime gameplay output uses reliable/ordered WebRTC gameplay DataChannels. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
 
 Server queued outbound messages use a bounded in-memory channel. If a WebSocket write fails, the session write loop exits and normal connection teardown begins.
 
@@ -1416,13 +1437,18 @@ client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd
 
 ## Notes
 
-The current implementation sends lane-native gameplay output on the server tick path over WebRTC sr.reliable. That is current protocol behavior, not the intended final realtime architecture. The client ICE-server seam exists, but this document does not prescribe a future TURN/STUN topology.
+The current implementation sends lane-native gameplay output on the server tick path over reliable/ordered WebRTC gameplay DataChannels. That is current protocol behavior, not the intended final realtime architecture. The client ICE-server seam exists, but this document does not prescribe a future TURN/STUN topology.
 
 Deployment knobs currently include SPACE_ROCKS_WEBRTC_ADVERTISED_IPS, SPACE_ROCKS_WEBRTC_UDP_PORT_MIN, SPACE_ROCKS_WEBRTC_UDP_PORT_MAX, and WEBRTC_ICE_SERVERS. The client ICE-server seam exists for future deployment configuration, but this document does not prescribe TURN or other future ICE topology beyond noting that the seam exists.
 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
+
+
+
+
+
 
 
 

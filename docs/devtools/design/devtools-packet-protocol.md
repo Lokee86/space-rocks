@@ -360,7 +360,7 @@ Devtools commands do not route through normal `Game.HandlePacket` gameplay packe
 
 ### Debug status
 
-`debug_status` reports current debug-control state.
+`debug_status` reports current debug-control state. It is a WebSocket devtools readout packet when its write-loop delivery path is active.
 
 Current packet shape:
 
@@ -393,7 +393,7 @@ room state is InGame or GameOver
 session has a current game player id
 ```
 
-The session write loop triggers normal gameplay presentation output every server write tick; active gameplay lane bytes are delivered over WebRTC `sr.reliable`. Debug status is sent over the WebSocket path on a slower cadence, currently every eight write ticks.
+The session write loop triggers normal gameplay presentation output every server write tick; active gameplay lane bytes are delivered over lane-specific reliable/ordered WebRTC gameplay DataChannels. `debug_status` is a WebSocket devtools readout packet when its write-loop delivery path is active. Current docs must not claim periodic `debug_status` delivery unless the active write loop calls the debug status builder.
 
 The client uses `debug_status` for receiver/global status labels and `debug_statuses` for per-player target/status rows.
 
@@ -495,7 +495,7 @@ continuous bullet stream sends require direction data
 packet send requires an open WebSocket and successful encoding
 ```
 
-Server-side outbound debug outputs check `devtools.Enabled()` before sending debug status or debug shape catalog packets.
+Server-side outbound debug output builders check `devtools.Enabled()` before building debug status or debug shape catalog packets.
 
 The server source also defines `Enabled()` and `ShouldHandleCommand(...)` for default and `nodevtools` builds. The current inbound command routing classifies devtools command packet types directly in `services/game-server/internal/networking/inbound/devtools.go`; documentation for server build gates should be verified against that route when changing or relying on disabled-command behavior.
 
@@ -714,4 +714,12 @@ The devtools packet protocol deliberately reuses the normal WebSocket packet tra
 World telemetry overlay packet timing uses `telemetry_ping` and `telemetry_pong`, which belong to the gameplay packet schema. The overlay is devtools presentation, but the packet pair is not defined in `debug.toml`.
 
 `target_player_id` remains a devtools compatibility field for player-only debug commands. New gameplay targeting should continue to use canonical target kind/id fields instead of extending `target_player_id` further.
+
+
+
+
+
+
+
+
 

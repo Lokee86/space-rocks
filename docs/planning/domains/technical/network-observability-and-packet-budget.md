@@ -70,9 +70,9 @@ P1 answers whether the current architecture can safely support more entities and
 - Active debug output does not prove contributor counts by delta section.
 - Active debug output does not implement packet budget enforcement or record-level prioritization.
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
-- Ordinary world or overlay writes can be small, but event ticks can spike because `event_batch` is included with world, overlay, and session on the same active write.
+- `event_batch` may be selected alongside other active lane candidates in the same tick.
 - Compact sparse event records reduce that event-tick spike.
-- Asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work.
+Lane-native deltas, reliable/ordered physical WebRTC gameplay DataChannels, dedicated asteroid/bullet hot movement lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work.
 
 ### Future-State Note
 
@@ -103,8 +103,6 @@ P1 answers whether the current architecture can safely support more entities and
 
 - No packet compression.
 - No binary protocol migration.
-- No delta-state protocol.
-- No gameplay packet lane split.
 - No enemies.
 - No bullet hell mechanics.
 - No progression rewards or live grants.
@@ -250,6 +248,10 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 ## Notes
 
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
+
+
+
+
 
 
 

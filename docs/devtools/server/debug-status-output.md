@@ -14,7 +14,7 @@ Debug status output is a server-authored devtools telemetry packet.
 
 It reports the current state of server-owned debug controls so the client devtools window can display accurate toggle status and per-player feature state. It does not mutate gameplay, does not replace realtime lane packets, and does not act as a command response.
 
-The server emits debug status over the normal WebSocket connection after gameplay presentation state has been written. The status packet is built from the authoritative game instance and encoded through the shared packet codec.
+The server builds debug status from the authoritative game instance and encodes it through the shared packet codec. `debug_status` is a WebSocket devtools readout packet when delivery is active, but this document must not claim periodic write-loop delivery unless the active write loop calls the debug status builder.
 
 Current output shape:
 
@@ -103,28 +103,17 @@ The devtools package does not own the underlying gameplay state. It owns the deb
 
 ## Output lifecycle
 
-Debug status output is written by the WebSocket write loop.
+Current code has the debug status builder and eligibility check, but periodic write-loop delivery must not be documented as active unless the active write loop calls it.
 
-Current flow:
+Current builder path:
 
-```text
-writeServerMessages
--> gameplay write ticker
--> current realtime outbound gameplay write path
--> WriteServerMessage
--> writeDebugShapeCatalogMessage
--> debugStatusTick++
--> writeDebugStatusMessage every debugStatusWriteIntervalTicks
--> BuildDebugStatusResponse
+outbound.CanSendDebugStatus
+-> outbound.BuildDebugStatusResponse
+-> devtools.StatusFor
+-> devtools.StatusesForAllPlayers
 -> packetcodec.Encode
--> WriteServerMessage
-```
 
-`debugStatusWriteIntervalTicks` is currently `8`.
-
-The write loop sends gameplay presentation state every eligible server write tick. Debug status is slower and is attempted only after a successful gameplay state write path reaches the debug-status cadence check.
-
-`writeDebugStatusMessage` requires a current game player id and an eligible room before building the packet.
+`debug_status` should remain a WebSocket devtools readout packet when delivery is active. It must not be documented as an active WebRTC gameplay lane packet.
 
 ## Send eligibility
 
@@ -216,7 +205,7 @@ Client presentation treats `debug_status` as telemetry. It does not apply gamepl
 
 Debug status output has no direct request command.
 
-The client does not ask the server for an immediate status snapshot. The server emits status snapshots on its own outbound cadence when eligible.
+The client does not ask the server for an immediate status snapshot. When a write-loop delivery path is active, the server emits status snapshots on its own outbound cadence when eligible.
 
 Client controls can change later status output by sending normal devtools command packets, such as:
 
@@ -247,7 +236,7 @@ BuildDebugStatusResponse
 -> logging.Network.Error on encode failure
 ```
 
-Debug status output does not log every successful status packet. Routine successful writes stay quiet.
+Debug status encode failures are logged by the builder path. Routine successful writes should stay quiet when a write-loop delivery path is active.
 
 ## Build/runtime gates
 
@@ -419,8 +408,9 @@ toggle command effects that feed status output
 
 ## Notes
 
-Debug status output and debug shape catalog output are separate outbound surfaces. Status is repeated on a slower cadence. Shape catalog output is sent once per room.
+Debug status output and debug shape catalog output are separate outbound surfaces. Shape catalog output is sent once per room. Debug status should remain a WebSocket devtools readout when its delivery path is active.
 
 The legacy devtools notes correctly treated debug status as server-authored diagnostic state, not client authority. That rule still applies.
 
 The status packet should remain small. New debug inspection data should be added to a separate telemetry surface when it is not directly a control-status boolean.
+

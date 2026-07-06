@@ -10,7 +10,7 @@ It covers client-originated gameplay requests, server-originated lane gameplay o
 
 ## Overview
 
-Gameplay packets are the realtime packets used after a client is connected to the game server and, for gameplay mutation, attached to an active game player. Client-originated gameplay intent currently travels over the WebSocket session/control path, while server-originated active gameplay lane output travels over WebRTC `sr.reliable`.
+Gameplay packets are the realtime packets used after a client is connected to the game server and, for gameplay mutation, attached to an active game player. Client-originated gameplay intent currently travels over the WebSocket session/control path, while server-originated active gameplay lane output travels over reliable/ordered WebRTC gameplay DataChannels.
 
 The protocol is server-authoritative:
 
@@ -20,7 +20,7 @@ client sends input or request intent
 -> active room/game instance receives the packet
 -> game simulation mutates authoritative state
 -> owning server paths build one-off outputs such as player_pause_state
--> outbound networking delivers queued one-off packets over WebSocket and active gameplay lane packets over WebRTC `sr.reliable`
+-> outbound networking delivers queued one-off packets over WebSocket and active gameplay lane packets over reliable/ordered WebRTC gameplay DataChannels
 -> client receives and applies server-owned lane state
 ```
 
@@ -40,6 +40,8 @@ Active server-to-client gameplay packet families are:
 
 ```text
 world_full / world_delta
+asteroid_delta
+bullet_delta
 overlay_full / overlay_delta
 session_full / session_delta
 event_batch
@@ -67,7 +69,13 @@ Empty delta sections are omitted from emitted `world_delta`, `overlay_delta`, an
 Current update identity keys are:
 
 ```text
-world entity updates
+world ship and pickup updates
+= id
+
+asteroid_delta asteroid movement updates
+= id
+
+bullet_delta bullet movement updates
 = id
 
 overlay receiver updates
@@ -107,7 +115,7 @@ game-server inbound routing
 = classifies packet type and forwards to the active authoritative game instance
 
 game-server realtime projection
-= lane projection, numeric wire quantization, field-delta comparison, sparse delta serialization, and compact alias preparation before packetcodec JSON encoding
+= lane projection, numeric wire quantization, field-delta comparison, subtractive asteroid/bullet movement splitting, sparse delta serialization, and compact alias preparation before packetcodec JSON encoding
 
 client gameplay runtime
 = routes lane packets into lane states, baseline readiness, presentation adapters, and event application
@@ -157,7 +165,13 @@ Current packet-family ownership is:
 
 ```text
 world lane
-= active entity presentation state for ships, asteroids, bullets, pickups
+= ships, pickups, asteroid/bullet lifecycle creates/deletes
+
+asteroids lane
+= regular asteroid movement updates
+
+bullets lane
+= regular bullet movement updates
 
 overlay lane
 = local-player HUD-facing presentation state such as score, lives, cooldowns, and loadout facts
@@ -215,7 +229,7 @@ session current room and current game player context
 lane packet write timing
 encoded packet write observations, debug packet wire logs, and non-empty per-tick write summaries
 ```
-Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, and current byte-budget planning inputs; networking delivers encoded active gameplay lane packets over WebRTC `sr.reliable` and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
+Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, hot asteroid/bullet movement splitting, and current byte-budget planning inputs; networking delivers encoded active gameplay lane packets over reliable/ordered WebRTC gameplay DataChannels and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
 
 ### Game-server simulation
 
@@ -305,5 +319,4 @@ services/game-server/internal/game/
 ## Notes
 
 This doc stays at the gameplay packet family and ownership boundary. Detailed lane metadata, wire behavior, and transport sequencing remain canonical in `realtime-websocket-protocol.md`.
-
 

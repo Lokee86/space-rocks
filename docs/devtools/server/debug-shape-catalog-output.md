@@ -212,11 +212,6 @@ The shape catalog is sent by the websocket write loop after gameplay presentatio
 
 The relevant write-loop sequence is:
 
-```text
-write gameplay presentation lane output
--> write debug shape catalog when eligible and not yet sent for this room id
--> periodically write debug status
-```
 
 `writeDebugShapeCatalogMessage()` sends the packet at most once for the current room id tracked by the current websocket write loop.
 
@@ -491,3 +486,5 @@ The legacy devtools documentation correctly treated server hitbox display as dev
 The current packet sends shape definitions once per room id within a websocket write loop. If refresh, acknowledgement, or catalog versioning becomes necessary later, that belongs in protocol or devtools planning until implemented.
 
 Pickup shape ids in the server catalog are based on collision-shape catalog keys. Current collision-shape data uses pickup class keys such as `powerup` and `weapon`, while live pickup state also has a pickup type such as `1_up`. Client overlay drawing depends on resolver ids matching catalog ids.
+
+

@@ -640,4 +640,3 @@ Legacy source-of-truth documentation was used as migration source material only.
 Some source areas are not fully automated yet. In particular, asteroid variants are represented by a TOML source plus mirrored runtime catalogs, but they are not currently listed as a data-sync domain in `tools/data_sync/config.toml`.
 
 Player-data logical schema validation exists, but generation from `shared/player_data/*.toml` is not currently implemented. Current runtime structs, Rails persistence, and embedded SQLite storage must be kept aligned through tests and implementation review.
-

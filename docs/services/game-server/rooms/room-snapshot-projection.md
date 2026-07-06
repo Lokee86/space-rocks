@@ -427,4 +427,3 @@ Legacy documentation supplied two useful current facts for this boundary: room m
 A room returning to lobby does not itself clear the resolved match summary. Starting the next match through `BeginNextMatch` clears the previous resolved summary. Snapshot projection therefore includes a match result whenever the room currently has a resolved summary, not only while the room state is `game_over`.
 
 `BroadcastRoomSnapshot` builds one snapshot per receiving session because `local_player_id` is receiver-specific.
-

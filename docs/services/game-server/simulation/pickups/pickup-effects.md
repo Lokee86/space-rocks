@@ -425,4 +425,3 @@ The torpedo pickup currently changes the active runtime ship, not durable player
 
 The current resolver uses code-defined pickup-type mappings. If pickup effect metadata later becomes fully data-driven, that belongs in the data pipeline documentation as well as this service boundary.
 
-

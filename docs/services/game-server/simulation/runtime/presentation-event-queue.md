@@ -261,7 +261,7 @@ protocol/realtime event_batch projection helpers
 networking outbound event_batch write helpers
 ```
 
-`protocol/realtime` selects pending events for `event_batch`, and active networking delivers the selected `event_batch` packet over WebRTC `sr.reliable`. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics. No unreliable, hot, or `sr.world` channel split is implemented yet.
+`protocol/realtime` selects pending events for `event_batch`, and active networking delivers the selected `event_batch` packet over WebRTC. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics. Dedicated asteroid and bullet hot movement lanes are implemented for state movement traffic; `event_batch` remains its own event lane and is not part of that movement split. Unreliable/unordered delivery is not implemented yet.
 
 ## Data ownership
 
@@ -426,7 +426,7 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-Calls into the lane-native realtime projection path, encodes the selected `event_batch` packet through `packetcodec`, and returns the outbound websocket payload after successful write gating.
+Calls into the lane-native realtime projection path, encodes the selected `event_batch` packet through `packetcodec`, writes it over the WebRTC event gameplay channel through the active networking path, and drains selected event IDs only after successful active write.
 
 ### Client presentation consumer
 
@@ -522,6 +522,7 @@ Legacy documentation correctly identified the important naming rule: `pendingPre
 The event adapter currently returns a zero-value `EventState` for unsupported event types. Producers should not call `recordDomainEvent` for a new event type until `eventStateForDomainEvent`, packet schema, tests, and client presentation handling are updated as needed.
 
 This document lives under simulation runtime because it documents a runtime queue on the `Game` aggregate. The concrete queue implementation is in the root `internal/game` package, not in the Go `internal/game/runtime` package.
+
 
 
 

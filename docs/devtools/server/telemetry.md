@@ -16,7 +16,7 @@ The server currently participates in four telemetry-facing surfaces:
 
 ```text
 debug_status
-  periodic server devtools status snapshot
+  server devtools status readout when delivery is active
 
 debug_shape_catalog
   room-scoped diagnostic collision shape catalog snapshot
@@ -178,7 +178,7 @@ telemetry_ping
   server responds with telemetry_pong to the same session
 
 debug_status
-  server sends periodically from the websocket write loop when eligible
+  server devtools readout when the delivery path is active
 
 debug_shape_catalog
   server sends once per room session when eligible
@@ -189,7 +189,7 @@ state.server_sent_msec
 
 Debug commands can change facts later reported by telemetry, but telemetry is not the command path. For example, toggling invincibility changes server runtime state through the devtools command handler; a later `debug_status` packet reports the new `invincible` value.
 
-`debug_status` is emitted on a slower cadence than gameplay state. The write loop sends gameplay presentation state on the server write tick and sends debug status every `debugStatusWriteIntervalTicks`, currently `8`.
+`debug_status` is a WebSocket devtools readout packet when the server delivery path is active. Current docs must not claim periodic server delivery unless the active write loop calls the debug status builder.
 
 `debug_shape_catalog` is sent once per room ID for a session after gameplay presentation begins. The write loop tracks the last room ID used for shape catalog output and does not resend the catalog for the same room unless the tracked room changes.
 
@@ -546,4 +546,6 @@ Telemetry in this document means live debug and diagnostic readouts. It does not
 `packet_staleness_ms` and `packet_age_ms` are client-side calculations. The server supplies timestamps and lane packets; the client owns the derived timing readout.
 
 The server collision body telemetry seam observes real collision bodies. It should stay connected to the authoritative physics/collision implementation rather than duplicating shape facts in client-only debug logic.
+
+
 

@@ -361,7 +361,7 @@ and emitted as:
 debug_status
 ```
 
-The WebSocket write loop sends debug status periodically after gameplay presentation state is being written for an active game session. The current write cadence is every 8 server ticks.
+The current code has the debug status builder and eligibility checks, but this document must not claim periodic write-loop delivery unless the active write loop calls the debug status builder. `debug_status` remains a WebSocket devtools readout packet when delivery is active.
 
 Debug status output is gated by:
 
@@ -679,3 +679,4 @@ Legacy docs correctly described the intended boundary: devtools command handling
 The current implementation has both a generated devtools command type set and separate inbound devtools packet group switches. Keep those lists synchronized when adding command packets. Prefer a single build-gated command classifier for future routing cleanup.
 
 Do not treat outbound debug status or debug shape catalog packets as proof that a command succeeded. They are diagnostic outputs. Command confirmation should be inferred from authoritative game state, debug status state, entity sync, lifecycle/session read-models, or server logs during development.
+

@@ -600,4 +600,3 @@ The current implementation still keeps many world mutations under the root `game
 The active client ViewAnchor model is intentionally presentation-only. It can change what the player sees and how coordinates are converted, but it does not change world ownership.
 
 World authority should be treated as a permanent design constraint, not a temporary implementation detail.
-

@@ -430,7 +430,7 @@ room state is InGame or GameOver
 session has a current game player ID
 ```
 
-Debug status packets are written on a slower cadence than gameplay readback. Current code sends gameplay presentation state every server write tick, then sends debug status every `debugStatusWriteIntervalTicks`, currently `8`.
+Debug status packets are WebSocket devtools readouts when the server delivery path is active. Current docs must not claim periodic server delivery unless the active write loop calls the debug status builder.
 
 ## Build/runtime gates
 

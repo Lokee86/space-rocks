@@ -18,7 +18,8 @@ authoritative game state
 -> realtime projection / planning
 -> raw lane records
 -> numeric wire quantization into wire-shaped records
--> lane candidate selection and delta comparison
+-> lane candidate selection, delta comparison, and hot movement split
+-> regular asteroid/bullet movement updates move to dedicated hot-lane delta packets
 -> sparse readable wire-map serialization
 -> raw-float assertion for active world/overlay/session wire maps
 -> compact alias mapping
@@ -26,7 +27,7 @@ authoritative game state
 -> encoded-byte accounting
 -> networking write integration
 -> debug wire/summary logging after successful writes
--> WebRTC sr.reliable write
+-> reliable/ordered WebRTC gameplay lane write
 ```
 
 Projection is lane-specific rather than one combined gameplay snapshot.
@@ -39,7 +40,7 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The session write loop owns tick-driven invocation; active gameplay lane delivery uses WebRTC `sr.reliable` through the networking transport seam. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The session write loop owns tick-driven invocation; active gameplay lane delivery uses reliable/ordered WebRTC gameplay channels through the networking transport seam. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
@@ -82,7 +83,13 @@ Current gameplay presentation ownership is split as:
 
 ```text
 world lane
-= active entity presentation state such as ships, asteroids, bullets, pickups
+= active world presentation state for ships, pickups, and asteroid/bullet lifecycle creates/deletes
+
+asteroids lane
+= regular asteroid movement updates
+
+bullets lane
+= regular bullet movement updates
 
 overlay lane
 = local-player presentation facts such as lives, score, loadout, cooldown-facing HUD facts
@@ -104,7 +111,13 @@ Field-delta comparison is current behavior for these update groups:
 
 ```text
 world lane
-= ship, bullet, asteroid, and pickup updates
+= ship and pickup updates, plus lifecycle/bootstrap/resync-compatible asteroid and bullet sections
+
+asteroids lane
+= regular asteroid movement updates
+
+bullets lane
+= regular bullet movement updates
 
 overlay lane
 = receiver updates
@@ -170,6 +183,10 @@ Projection, shadow, and inspection paths must not treat event access as an impli
 Relevant active files include:
 
 * `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, compact alias preparation, encoded-byte accounting inputs, and shadow/parity helpers.
+* `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
+* `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
+* `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
+* `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling and hot movement cadence selection.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
 * `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
 * `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path and raw-float assertion/compact/packetcodec boundary.
@@ -177,7 +194,7 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.
 * `services/game-server/internal/networking/websocket_write.go` - session write-loop integration and active write triggering.
-* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over WebRTC `sr.reliable`.
+* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over reliable/ordered WebRTC gameplay channels.
 * `services/game-server/internal/networking/packetmetrics/` - packet observability helpers and related support types used by outbound networking seams.
 * `services/game-server/internal/networking/` - websocket session, WebRTC transport, and outbound delivery boundaries.
 * `shared/packets/gameplay.toml` - shared gameplay schema and realtime packet type values.
@@ -205,3 +222,6 @@ Relevant server tests include:
 * [Packet Schemas](../../../../data/packet-schemas.md)
 
 ## Notes
+
+
+

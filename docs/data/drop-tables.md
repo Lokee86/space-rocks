@@ -487,4 +487,3 @@ Only `basicasteroids` exists today.
 Drop-table generated output is currently Go-only.
 
 Drop-table events are presentation events after successful authoritative spawn. `pickup_dropped` does not mean the pickup was collected, consumed, expired, or applied to a player.
-

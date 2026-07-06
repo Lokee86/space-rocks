@@ -665,4 +665,3 @@ The most important migrated legacy rule is the quarantine boundary: `target_play
 Current world lane ship records expose target state only through active ship state. Session-owned target state can still exist when a player has no active ship, but it is not separately projected in `player_sessions`.
 
 `enemy` is a supported canonical target kind in the server targeting package and target candidate builder. Current enemy projection and full enemy gameplay behavior are not documented here.
-

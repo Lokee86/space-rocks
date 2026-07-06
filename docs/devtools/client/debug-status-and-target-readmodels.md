@@ -83,7 +83,7 @@ room state is InGame or GameOver
 session has a current game player id
 ```
 
-The write loop sends debug status on a slower cadence than gameplay state. Current code writes normal gameplay presentation lane output every server write tick, then sends debug status every `debugStatusWriteIntervalTicks`, currently `8`.
+The client consumes `debug_status` as a WebSocket devtools readout when the server delivery path is active. Current docs must not claim periodic server delivery unless the active write loop calls the debug status builder.
 
 The server packet contains:
 
@@ -645,3 +645,4 @@ The current target readmodel supports non-player target telemetry for asteroids,
 `Game Target` is a compact selector affordance, not a separate server entity. It resolves to the current canonical player target only when the local synced ship state reports `target_kind=player`.
 
 `All Players` is represented as `target_scope=all_players`. It should not be serialized or stored as a real player ID.
+

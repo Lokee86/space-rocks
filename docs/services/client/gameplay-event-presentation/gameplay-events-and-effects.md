@@ -572,4 +572,3 @@ Legacy docs correctly identified the event, effects, and audio path as the owner
 The current client event controller routes `pickup_effect_applied` but does not spawn a visual effect for it. Do not document that event as a visible client effect unless implementation changes.
 
 The event or effects path should stay presentation-only. New event types should be added by extending server event production, packet or schema documentation, and client presentation routing without moving gameplay authority into the client.
-

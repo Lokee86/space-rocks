@@ -547,4 +547,3 @@ Server devtools targeting should stay command-specific. Adding a new player-targ
 `single_player` exists as a named scope constant, but the current server implementation only special-cases `all_players`. Unknown scopes therefore behave like single-player command input.
 
 `Game Target` is a client-side selector concept. The server should not learn about a `__game_target__` sentinel; it should receive either concrete player command fields or no effective command target.
-

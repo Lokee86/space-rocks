@@ -449,8 +449,9 @@ player_frozen
 
 `StatusFor` reads from game-owned debug status seams. `StatusesForAllPlayers` builds per-player statuses from `MatchDecision().Players`.
 
-The websocket write loop sends debug status periodically while:
+The current code has the debug status builder and eligibility checks, but this document must not claim periodic write-loop delivery unless the active write loop calls the debug status builder. `debug_status` remains a WebSocket devtools readout packet when delivery is active.
 
+Debug status builder eligibility is:
 ```text
 the session has a current game player ID
 the room has a game instance
@@ -696,3 +697,6 @@ The command surface deliberately keeps interpretation in `internal/devtools` and
 `debug_respawn_player` currently receives position fields but applies a server-selected safe respawn position. Do not document the payload position as authoritative respawn placement unless the implementation changes.
 
 When adding a new command, update packet source data, generated outputs, inbound routing, command classification, handler dispatch, game export seams, client send paths, and focused tests together.
+
+
+

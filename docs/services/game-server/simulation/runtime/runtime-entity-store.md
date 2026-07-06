@@ -163,4 +163,3 @@ Package-level tests may also exercise entity-map mutation indirectly through sim
 The store is deliberately simple: one aggregate-owned container for the live entity maps used during a match.
 
 This document stays focused on ownership and map semantics. It does not duplicate player-session, pickup, combat, or lane-native realtime projection behavior documented elsewhere.
-

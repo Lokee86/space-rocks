@@ -483,4 +483,3 @@ Pickup health is currently part of the runtime and packet-facing pickup state, b
 The client derives end-of-life presentation from `age_seconds` and `lifespan_seconds`. The server remains authoritative for actual expiry.
 
 Projectile/pickup collision damage is not part of the current pickup lifecycle implementation.
-

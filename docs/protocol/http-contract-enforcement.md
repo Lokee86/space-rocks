@@ -351,4 +351,3 @@ If future work focuses on OpenAPI generation, source updates, generated outputs,
 
 If future work adds runtime OpenAPI middleware, update the enforcement level and add the runtime implementation path to the code map.
 
-

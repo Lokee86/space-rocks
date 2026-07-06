@@ -289,7 +289,7 @@ The detailed packet-family order belongs to inbound packet routing documentation
 
 ## Write loop
 
-`writeServerMessages()` owns the per-session write loop: queued outbound messages are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through WebRTC `sr.reliable` when ready.
+`writeServerMessages()` owns the per-session write loop: queued outbound messages are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through lane-specific reliable/ordered WebRTC gameplay DataChannels when ready.
 
 It selects over three inputs:
 
@@ -319,7 +319,7 @@ debug shape catalog, when eligible
 debug status, when eligible
 ```
 
-Queued outbound messages remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over WebRTC `sr.reliable` when the transport is ready. Gameplay presentation writes require:
+Queued outbound messages remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific reliable/ordered WebRTC gameplay DataChannels when the transport is ready. Gameplay presentation writes require:
 
 ```text
 session.currentGamePlayerID is not empty
@@ -696,4 +696,5 @@ The current session object is shared by the read loop, write loop, lifecycle tic
 The WebSocket lifecycle intentionally stays separate from room/game authority. Adding new room or gameplay behavior should usually extend the packet routing, room, or game seams rather than adding rules directly to WebSocket upgrade or read/write loop code.
 
 The `/ws` endpoint is shared by local single-player and multiplayer. New mode distinctions should remain explicit session/packet/admission behavior unless the protocol architecture changes.
+
 

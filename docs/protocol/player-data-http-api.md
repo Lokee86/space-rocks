@@ -1000,4 +1000,3 @@ Local Profile display names are presentation values. `local_profile_id` is the l
 Authenticated Account routing uses `account_id` resolved from token verification. Rails `user_id` remains an API-server internal database identifier.
 
 Guest stats are process-local and transient. Local Profile stats are durable only when local storage is configured. Authenticated Account stats route through the Rails adapter when Rails configuration is present.
-

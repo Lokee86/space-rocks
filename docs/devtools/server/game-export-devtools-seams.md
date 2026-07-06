@@ -334,7 +334,7 @@ websocket write tick
 -> websocket write
 ```
 
-Debug status is sent periodically while a room has a game instance and is in game or game over. The write loop currently sends it every eight gameplay ticks.
+`debug_status` is the server-owned devtools readout used by the client to display current debug flags. It is built by the server debug status builder and written from the WebSocket devtools readout path when that path is active.
 
 The debug shape catalog path is:
 
@@ -661,4 +661,8 @@ Legacy devtools docs correctly identified the core boundary: devtools are client
 The current implementation has both `devtools.ShouldHandleCommand` gate helpers and route-local inbound devtools packet classifiers. Keep those paths synchronized when changing command availability or build-gate behavior.
 
 This document intentionally focuses on the game export seams. Individual command behavior, client controls, packet schema ownership, and overlay presentation belong in their own devtools, protocol, data, or client docs.
+
+
+
+
 

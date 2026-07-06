@@ -824,4 +824,3 @@ Legacy documentation supplied one still-current lifecycle rule: do not infer pla
 Current player lifecycle state is partly duplicated across `rules.PlayerParticipationStatus` and `player.Status`. The former drives match decision and `session lane lifecycle records`; the latter drives the server-side player world read model. Both currently use the same status strings.
 
 `PlayerID` values currently use lowercase `player-<n>` from `Game.AddPlayer`. Some older documentation examples use capitalized `Player-<n>` as illustrative values. The active code path is lowercase.
-

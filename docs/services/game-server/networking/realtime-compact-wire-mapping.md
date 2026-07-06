@@ -79,6 +79,8 @@ This inference rule is runtime-lane specific. It does not imply compacted event/
 
 - `world_full` -> `wf`
 - `world_delta` -> `wd`
+- `asteroid_delta` -> `ad`
+- `bullet_delta` -> `bd`
 - `overlay_full` -> `of`
 - `overlay_delta` -> `od`
 - `session_full` -> `sf`
@@ -135,12 +137,20 @@ For active runtime world/overlay/session packets, `baseline_id` is only emitted 
 - `pickup_updates` -> `pu`
 - `pickup_deletes` -> `px`
 
+`world_delta.bu` and `world_delta.au` remain compact aliases for serializer compatibility, bootstrap, lifecycle, and resync-safe world deltas. In the active subtractive hot-lane path, regular bullet and asteroid movement updates are removed from `world_delta` and emitted as `bullet_delta.bu` and `asteroid_delta.au`.
+
+## Dedicated Hot Movement Delta Section Keys
+
+- `asteroid_delta.asteroid_updates` -> `au`
+- `bullet_delta.bullet_updates` -> `bu`
+
 ## Asteroid Tuple Mapping
 
-This contract applies only to world lane asteroid records.
+This contract applies to world lane asteroid records and dedicated asteroid movement deltas.
 `world_full.asteroids` uses tuple records.
 `world_delta.ac` uses tuple records for asteroid creates.
-`world_delta.au` uses tuple records for asteroid updates.
+`asteroid_delta.au` uses tuple records for regular asteroid movement updates.
+`world_delta.au` remains supported for compatibility and resync-safe world deltas, but regular active movement updates are split to `asteroid_delta`.
 `world_delta.ax` uses numeric suffix IDs for asteroid deletes.
 
 Tuple order for full/create asteroid records:
@@ -260,11 +270,7 @@ It is the presentation-event lane, not a state lane.
 It keeps batching: one ordered batch can contain multiple pending presentation events.
 It does not become one packet per event.
 
-Known event records are tuple-shaped for the compact wire path.
-Known event records no longer use broad reflected `EventState` output.
-Unknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.`r`n`r`nUnknown map-shaped event records remain compatibility fallback records and should not be forced into tuple arrays just because they have compact aliases.`r`nKnown event records are tuple arrays; unknown event records stay map shaped.
-
-`sd` is not used for `ship_death` because `sd` is already reserved for `session_delta`.
+Known event records are tuple-shaped for the compact wire path.\r\nKnown event records no longer use broad reflected `EventState` output.\r\nUnknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.\r\n\r\nUnknown map-shaped event records remain compatibility fallback records and should not be forced into tuple arrays just because they have compact aliases. Known event records are tuple arrays; unknown event records stay map shaped.\r\n\r\n`sd` is not used for `ship_death` because `sd` is already reserved for `session_delta`.
 
 ### Canonical Event Batch Alias Tables
 
@@ -327,17 +333,19 @@ Unknown or newly added event types may still fall back to legacy long-key reflec
 
 ## Bullet Tuple Mapping
 
-This contract applies to world lane bullet records.
+This contract applies to world lane bullet records and dedicated bullet movement deltas.
 `world_full.bullets` uses tuple records.
 `world_delta.bc` uses tuple records for bullet creates.
-`world_delta.bu` uses tuple records for bullet updates.
+`bullet_delta.bu` uses tuple records for regular bullet movement updates.
+`world_delta.bu` remains supported for compatibility and resync-safe world deltas, but regular active movement updates are split to `bullet_delta`.
 `world_delta.bx` uses compact numeric delete IDs.
 
 | Record family | Tuple shape |
 | --- | --- |
 | `world_full.bullets` | `[id, owner_id, x, y, rotation, weapon_id, projectile_type]` |
 | `world_delta.bullet_creates` | `[id, owner_id, x, y, rotation, weapon_id, projectile_type]` |
-| `world_delta.bullet_updates` | `[id, x, y, rotation]` |
+| `bullet_delta.bullet_updates` | `[id, x, y, rotation]` |
+| `world_delta.bullet_updates` | `[id, x, y, rotation]` for compatibility/resync-safe world deltas only |
 | `world_delta.bullet_deletes` | `[id]` |
 
 Sparse placeholder rules:
@@ -505,7 +513,7 @@ The current implementation does not use binary encoding for events.
 
 - Server readable lane maps are still built by `WireLanePacket`.
 - `CompactWirePacket` applies compact keys, compact values, shared ID compaction, and tuple packing only at the final outbound encode boundary.
-- Active outbound compacting currently applies to world, overlay, session, and `event_batch` realtime packet families.
+- Active outbound compacting currently applies to world, asteroid, bullet, overlay, session, and `event_batch` realtime packet families.
 - Generated control-lane resync packet families are not compacted in this pass unless implementation changes.
 - `PacketCodec.decode` performs the first compact expansion before packet envelope validation. `RealtimeRouter` may defensively normalize already-expanded packets, but it is not the first decode boundary.
 - Legacy long-key packets remain accepted during the transition.
@@ -532,23 +540,6 @@ The current implementation does not use binary encoding for events.
 - `client/tests/unit/protocol/realtime/test_compact_lane_packet.gd`
 - `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
 - PacketCodec compact decode coverage in `client/tests/unit/test_packet_codec.gd`
-
-## Observed Development Run
-
-Recent compact three-lane observed development samples include quantization, sparse delta omission, and compact aliases. The sample sizes are approximately:
-
-- sparse three-lane sample: `world_delta` ~412 bytes, `overlay_delta` ~135 bytes, `session_delta` ~132 bytes, total ~679 bytes/tick
-- sparse world-only sample: ~577-587 bytes/tick
-- sparse 8-player world-only sample: ~3.1-3.6 KB/tick
-
-These are observed development samples, not guaranteed budgets.
-
-
-
-
-
-
-
 
 
 

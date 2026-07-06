@@ -367,4 +367,3 @@ Telemetry overlay data is intentionally shallow. It is for immediate development
 `packet_staleness_ms` and `packet_age_ms` are different measurements. Staleness is local time since the last lane packet arrived. Age estimates how old the packet was by using the server send timestamp and the estimated server clock offset.
 
 The overlay and network player-label mode share the same network telemetry snapshot source, but they are separate presentation surfaces. The overlay owns the fixed world/client/network panel. Player dev labels own per-player label presentation.
-

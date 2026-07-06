@@ -11,7 +11,7 @@ It covers how decoded server packet dictionaries move from the client WebSocket 
 ## Overview
 
 Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
-WebSocket remains the client route for session, control, room, lobby, auth, telemetry, signaling, and queued non-gameplay packets. WebRTC sr.reliable is the route for active realtime gameplay packets and diagnostic smoke packets. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
+WebSocket remains the client route for session, control, room, lobby, auth, telemetry, signaling, and queued non-gameplay packets. Reliable/ordered WebRTC gameplay DataChannels are the route for active realtime gameplay packets and diagnostic smoke packets. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
 
 `NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `WebRTCTransport` owns DataChannel text receive, packet decode, and `packet_received` emission for WebRTC packets. After those signals fire, inbound routing is owned by `ClientConnectionService`, `ServerPacketDispatcher`, and `ServerPacketRouter`.
 
@@ -26,9 +26,10 @@ NetworkClient.packet_received(packet)
 -> ServerPacketRouter packet-type checks
 -> ClientConnectionService re-emits the typed WebSocket service signal or handles lane packets
 
-WebRTCTransport.packet_received(packet)
+WebRTCTransport receives DataChannel text
+-> PacketCodec.decode expands compact aliases and validates the packet envelope
+-> WebRTCTransport.packet_received(packet)
 -> ClientConnectionService._handle_webrtc_transport_packet(packet)
--> PacketCodec.decode(packet)
 -> ServerPacketDispatcher.dispatch(packet)
 -> ServerPacketDispatcher emits a typed dispatcher signal
 -> ClientConnectionService._route_gameplay_packet(packet) for lane packets
@@ -38,7 +39,7 @@ WebRTCTransport.packet_received(packet)
 -> GameplaySessionController.handle_gameplay_packet
 ```
 
-The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. No unreliable, hot, or `sr.world` channel cutover exists yet.
+The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Reliable/ordered lane-specific WebRTC gameplay DataChannels are implemented, dedicated asteroid and bullet hot movement packets are implemented, and unreliable/unordered delivery remains future work.
 
 ## Code root
 
@@ -127,6 +128,8 @@ room_state_changed
 room_error
 world_full
 world_delta
+asteroid_delta
+bullet_delta
 overlay_full
 overlay_delta
 session_full
@@ -155,6 +158,8 @@ room_state_changed(packet)
 room_error_received(packet)
 world_full_received(packet)
 world_delta_received(packet)
+asteroid_delta_received(packet)
+bullet_delta_received(packet)
 overlay_full_received(packet)
 overlay_delta_received(packet)
 session_full_received(packet)
@@ -207,7 +212,7 @@ fields:
 
 The once-per-packet-type guard remains diagnostic-only. It does not affect routing or lane state.
 
-Current WebRTC handling in the client networking stack keeps WebSocket as the owner of auth, lobby, room lifecycle, and WebRTC signaling. The sr.reliable DataChannel is now a reusable JSON transport seam with id 1, and webrtc_smoke remains a diagnostic packet on that transport. The current packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay packets now arrive over WebRTC, decode through PacketCodec, dispatch through ServerPacketDispatcher, and then continue through RealtimeRouter. There is no WebSocket fallback for active realtime gameplay packets. No unreliable, hot, asteroid, or gameplay channel cutover exists yet. Current client ICE-server configuration is a separate seam from WebSocket signaling and does not change packet routing.
+Current WebRTC handling in the client networking stack keeps WebSocket as the owner of auth, lobby, room lifecycle, and WebRTC signaling. WebRTC DataChannels are reusable JSON transport seams, and webrtc_smoke remains a diagnostic packet on that transport. The current packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay packets now arrive over lane-specific WebRTC DataChannels, decode through PacketCodec, dispatch through ServerPacketDispatcher, and then continue through RealtimeRouter. There is no WebSocket fallback for active realtime gameplay packets. Dedicated asteroid and bullet hot movement lanes are implemented for `asteroid_delta` and `bullet_delta`; unreliable/unordered delivery is not implemented yet. Current client ICE-server configuration is a separate seam from WebSocket signaling and does not change packet routing.
 
 ### Websocket auth result cache
 
@@ -423,7 +428,7 @@ room_error
 -> room_error_received
 -> RoomSessionController.handle_room_error
 
-world_full/world_delta/overlay_full/overlay_delta/session_full/session_delta/event_batch/resync_request/resync_required
+world_full/world_delta/asteroid_delta/bullet_delta/overlay_full/overlay_delta/session_full/session_delta/event_batch/resync_request/resync_required
 -> dispatcher lane signal
 -> ClientConnectionService._route_gameplay_packet
 -> lane-specific service signal
@@ -653,6 +658,9 @@ Lane routing and presentation fanout are separate boundaries. `RealtimeRouter` o
 Telemetry pong is routed through the same inbound dispatcher but consumed directly by telemetry context rather than through `SessionNetworkController`.
 
 Gameplay packet acceptance is intentionally not handled by the router. The router classifies packets; `GameplaySessionController` decides whether gameplay packets are currently accepted.
+
+
+
 
 
 

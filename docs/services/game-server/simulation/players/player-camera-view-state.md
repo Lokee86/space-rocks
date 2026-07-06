@@ -357,4 +357,3 @@ The name `CameraView` is server-side terminology. It should not be read as owner
 The current server camera view is anchored to active ship position during normal gameplay. Spectate and rendered camera ownership remain client-side presentation concerns.
 
 `runtime.CameraView.IsInside` and `runtime.CameraView.IsFarFrom` perform non-wrapped rectangle checks on the runtime type, but the game-level visibility helpers use `space.Delta` for toroidal-aware camera comparisons. Current gameplay visibility/despawn behavior should use the game-level helpers.
-

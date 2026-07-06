@@ -26,6 +26,7 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 - [http-contract-enforcement.md](http-contract-enforcement.md) - HTTP request/response contract ownership and enforcement across services.
 - [lobby-packets.md](lobby-packets.md) - Lobby packet documentation.
 - [player-data-http-api.md](player-data-http-api.md) - Player-data HTTP API documentation.
+- [realtime-webrtc-gameplay-transport.md](realtime-webrtc-gameplay-transport.md) - Realtime WebRTC gameplay transport documentation.
 - [realtime-websocket-protocol.md](realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files
