@@ -27,6 +27,8 @@ static func decode(text: String) -> PacketDecodeResult:
 		return PacketDecodeResult.failure("Packet JSON must decode to a Dictionary", text)
 
 	var packet: Dictionary = decoded
+	if packet.has("type") and typeof(packet["type"]) != TYPE_STRING:
+		return PacketDecodeResult.failure("Packet envelope field 'type' must be a String", text)
 	packet = CompactLanePacket.expand_packet(packet)
 	if !packet.has("type"):
 		return PacketDecodeResult.failure("Packet envelope is missing required 'type' field", text)
@@ -38,3 +40,4 @@ static func decode(text: String) -> PacketDecodeResult:
 		return PacketDecodeResult.failure("Packet envelope field 'payload' must be a Dictionary when present", text)
 
 	return PacketDecodeResult.success(packet)
+

@@ -7,12 +7,16 @@ const PICKUP_FIELDS := ["id", "type", "pickup_class", "x", "y", "health", "age_s
 
 var ships := {}
 var bullets := {}
+var pending_bullet_updates := {}
+var deleted_bullet_ids := {}
 var asteroids := {}
 var pickups := {}
 
 func clear_world() -> void:
 	ships.clear()
 	bullets.clear()
+	pending_bullet_updates.clear()
+	deleted_bullet_ids.clear()
 	asteroids.clear()
 	pickups.clear()
 
@@ -42,10 +46,38 @@ func merge_ship_update(record: Dictionary) -> void:
 	_merge_record_update(ships, record, SHIP_FIELDS)
 
 func upsert_bullet(record: Dictionary) -> void:
+	var id = record.get("id")
+	if id != null:
+		deleted_bullet_ids.erase(id)
 	_upsert_record(bullets, record, BULLET_FIELDS)
+	apply_pending_bullet_update(id)
 
 func merge_bullet_update(record: Dictionary) -> void:
 	_merge_record_update(bullets, record, BULLET_FIELDS)
+
+func apply_pending_bullet_update(id) -> void:
+	if not pending_bullet_updates.has(id):
+		return
+	if bullets.has(id):
+		merge_bullet_update(pending_bullet_updates[id])
+	pending_bullet_updates.erase(id)
+
+func merge_or_buffer_bullet_update(record: Dictionary) -> void:
+	var id = record.get("id")
+	if id == null or id == "":
+		return
+	if bullets.has(id):
+		merge_bullet_update(record)
+		return
+	if deleted_bullet_ids.has(id):
+		return
+	pending_bullet_updates[id] = record.duplicate(true)
+
+func clear_pending_bullet_updates() -> void:
+	pending_bullet_updates.clear()
+
+func clear_pending_bullet_update(id) -> void:
+	pending_bullet_updates.erase(id)
 
 func upsert_asteroid(record: Dictionary) -> void:
 	_upsert_record(asteroids, record, ASTEROID_FIELDS)
@@ -64,6 +96,8 @@ func delete_ship(id) -> void:
 
 func delete_bullet(id) -> void:
 	bullets.erase(id)
+	pending_bullet_updates.erase(id)
+	deleted_bullet_ids[id] = true
 
 func delete_asteroid(id) -> void:
 	asteroids.erase(id)
@@ -101,3 +135,6 @@ func _narrow_record(record: Dictionary, fields: Array) -> Dictionary:
 		if record.has(field):
 			narrowed[field] = record[field]
 	return narrowed
+
+
+

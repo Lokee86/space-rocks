@@ -1,257 +1,454 @@
-## Hot Lane Subtractive Ownership Skill
+# Client Bullet Hot-Lane Ordering and Presentation Fanout Skill
 
-Use this skill when changing Space Rocks realtime hot-lane ownership so regular asteroid and bullet movement updates are removed from `sr.world` and owned by their dedicated hot lanes.
-
-This skill is specifically for the current transition from mixed world/hot-lane overflow to subtractive hot-lane ownership. It is not a general WebRTC, packet-codec, or unreliable-channel skill.
+Use this skill when fixing Space Rocks client stress behavior where high-volume bullet updates cause bullets to disappear, pop in late, or trigger noticeable frame drops.
 
 ## Goal
 
-Make hot movement ownership subtractive:
+Fix remaining client-side stress behavior without changing WebRTC transport reliability.
+
+Targets:
+
+1. Bullets should not disappear or pop in late when creates and updates arrive through different lanes or different client frames.
+2. Presentation fanout should not run once per gameplay packet under bullet/asteroid packet bursts.
+3. Existing WebRTC ordered/reliable channels, bounded receive draining, and hot-lane packet routing should remain intact.
+
+## Scope
+
+This skill covers two narrow fixes:
+
+1. Buffer bullet hot-lane updates that arrive before their matching bullet create.
+2. Defer realtime presentation fanout so it runs at most once per client frame.
+
+Do not switch WebRTC hot lanes to unreliable or unordered in this skill.
+
+Do not add packet dropping or coalescing in this skill.
+
+Do not add full metrics in this skill unless explicitly requested. Metrics should be a follow-up slice after behavior is fixed.
+
+Do not broadly refactor world presentation, projectile rendering, or realtime routing.
+
+## Background
+
+Bullets are currently split across lanes:
 
 ```text
-sr.world keeps lifecycle and resync-safe world state.
-sr.asteroids owns asteroid movement/update records.
-sr.bullets owns bullet movement/update records.
+world_delta  = bullet creates and deletes
+bullet_delta = bullet position updates
 ```
 
-The intended result is that regular asteroid and bullet `Updates` no longer inflate `sr.world`. Dedicated hot lanes should carry those movement updates instead.
+This is correct protocol ownership, but it introduces a client-side ordering hazard.
 
-## Ownership rules
+When the client receives and drains packets from multiple WebRTC channels with per-frame budgets, a `bullet_delta` can be applied before the matching `bullet_create` from `world_delta`.
 
-Preserve this distinction exactly:
+Current state behavior ignores updates for unknown bullet IDs. That was safe when creates and updates were in one ordered lane. It is not safe once bullet updates are on a dedicated hot lane.
+
+Failure shape:
 
 ```text
-Move out of sr.world:
-- worldDelta.Asteroids.Updates
-- worldDelta.Bullets.Updates
+Frame N:
+- bullet_delta arrives first for bullet-123
+- client has not processed bullet-123 create yet
+- update is ignored
 
-Keep in sr.world:
-- worldDelta.Asteroids.Creates
-- worldDelta.Asteroids.Deletes
-- worldDelta.Bullets.Creates
-- worldDelta.Bullets.Deletes
-- worldDelta.Ships
-- worldDelta.Pickups
-- world metadata / baseline / resync-safe state
+Frame N+1:
+- world_delta create for bullet-123 arrives
+- bullet appears late or at stale/create position
+
+Frame N+2:
+- later bullet_delta arrives
+- bullet suddenly renders correctly
 ```
 
-Do not move creates or deletes to `sr.asteroids` or `sr.bullets` in this slice. The current dedicated hot packets only carry update arrays:
+This can look like bullets not rendering from some positions, then suddenly rendering fully.
 
-```go
-type AsteroidWireDeltaPacket struct {
-    Type            string
-    Sequence        int
-    ServerSentMsec  int
-    AsteroidUpdates []map[string]any
-}
+The remaining frame-rate problem is separate: presentation fanout currently appears to be packet-coupled. Under hot bullet traffic, many packets can cause many full presentation passes in a single frame.
 
-type BulletWireDeltaPacket struct {
-    Type           string
-    Sequence       int
-    ServerSentMsec int
-    BulletUpdates  []map[string]any
-}
-```
-
-## Primary files
-
-Expected implementation and test files:
+Desired shape:
 
 ```text
-services/game-server/internal/protocol/realtime/hot_lane_allocator.go
-services/game-server/internal/protocol/realtime/hot_lane_allocator_test.go
+packet received -> route into realtime state -> mark presentation dirty
+_process() -> fan out presentation once -> clear dirty flag
 ```
 
-Only inspect or change additional files if the allocator tests expose a real dependency.
+## Phase 1: Buffer pending bullet updates
 
-Likely related file if planner behavior must be checked:
+### Objective
+
+Make bullet hot-lane updates resilient when they arrive before their matching bullet create.
+
+### Files
+
+Expected files:
+
+* `client/scripts/protocol/realtime/world_lane_state.gd`
+* `client/scripts/protocol/realtime/world_lane_applier.gd`
+* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
+
+Optional only if needed:
+
+* `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
+
+### Required behavior
+
+If a bullet update arrives for an unknown bullet ID:
 
 ```text
-services/game-server/internal/protocol/realtime/planner.go
+- Do not create the bullet.
+- Store the latest pending update for that bullet ID.
 ```
 
-## Implementation rule
-
-The allocator should stop selecting a retained subset of asteroid/bullet updates for `sr.world`.
-
-Replace this behavior:
+If another pending update arrives for the same unknown bullet ID:
 
 ```text
-sr.world keeps N asteroid/bullet movement updates.
-sr.asteroids receives asteroid overflow.
-sr.bullets receives bullet overflow.
+- Replace the previous pending update.
+- Keep only the latest update.
 ```
 
-With this behavior:
+When the matching bullet create arrives:
 
 ```text
-sr.world keeps zero regular asteroid movement updates.
-sr.world keeps zero regular bullet movement updates.
-sr.asteroids receives asteroid movement updates.
-sr.bullets receives bullet movement updates.
+- Apply the bullet create.
+- Immediately apply the pending update on top of the create.
+- Clear the pending update for that bullet ID.
 ```
 
-A correct split should set:
-
-```go
-result.WorldDelta.Asteroids.Updates = nil
-result.WorldDelta.Bullets.Updates = nil
-```
-
-when those updates are emitted on dedicated hot-lane packets.
-
-Create asteroid and bullet hot-lane deltas from the original world update arrays:
-
-```go
-result.AsteroidDelta = &AsteroidWireDeltaPacket{
-    Type:            PacketFamilyAsteroidDelta,
-    Sequence:        worldDelta.Metadata.Sequence,
-    ServerSentMsec:  worldDelta.Metadata.ServerSentMsec,
-    AsteroidUpdates: worldDelta.Asteroids.Updates,
-}
-
-result.BulletDelta = &BulletWireDeltaPacket{
-    Type:           PacketFamilyBulletDelta,
-    Sequence:       worldDelta.Metadata.Sequence,
-    ServerSentMsec: worldDelta.Metadata.ServerSentMsec,
-    BulletUpdates:  worldDelta.Bullets.Updates,
-}
-```
-
-Only emit a dedicated delta when its update array is non-empty.
-
-## Budget and cadence rules
-
-Keep the existing lane budget constants. They should still control hot-lane pressure modes and cadence:
+When a bullet delete arrives:
 
 ```text
-DefaultAsteroidHotLaneEntityBudget
-DefaultBulletHotLaneEntityBudget
+- Delete the bullet.
+- Clear any pending update for that bullet ID.
 ```
 
-They should no longer mean “how many asteroid/bullet movement updates stay in `sr.world`.”
-
-Use existing mode logic where practical:
+When a full world state is applied or the world is cleared:
 
 ```text
-<= budget * 2: full-owned 30 Hz behavior
-<= budget * 3: full-owned 20 Hz behavior
->  budget * 3: needs chunking behavior
+- Clear all pending bullet updates.
 ```
 
-Preserve existing cadence gating in the planner unless a test proves it is incompatible with subtractive ownership.
+### Suggested implementation
 
-Skipped movement updates should not become reliable backlog in `sr.world`. The next allowed hot-lane send should carry fresh latest-state movement updates.
-
-## Route state rules
-
-Route state should reflect ownership:
+In `world_lane_state.gd`, add:
 
 ```text
-asteroid update IDs route to HotUpdateRouteAsteroids
-bullet update IDs route to HotUpdateRouteBullets
+var pending_bullet_updates := {}
 ```
 
-Do not preserve stale `HotUpdateRouteWorld` entries for active asteroid or bullet movement updates once subtractive ownership is active.
-
-Continue removing missing asteroid and bullet route entries so deleted entities do not leave stale route state behind.
-
-## Required tests
-
-Add or update focused tests in:
+Add concrete methods:
 
 ```text
-services/game-server/internal/protocol/realtime/hot_lane_allocator_test.go
+merge_or_buffer_bullet_update(record: Dictionary) -> void
+apply_pending_bullet_update(id) -> void
+clear_pending_bullet_update(id) -> void
+clear_pending_bullet_updates() -> void
 ```
+
+Suggested behavior:
+
+```text
+merge_or_buffer_bullet_update(record):
+- Get id from record.
+- If id is null, return.
+- If bullets has id, merge_bullet_update(record).
+- Else store a narrowed update in pending_bullet_updates[id].
+```
+
+```text
+apply_pending_bullet_update(id):
+- If pending_bullet_updates does not have id, return.
+- If bullets has id, merge_bullet_update(pending_bullet_updates[id]).
+- Erase pending_bullet_updates[id].
+```
+
+```text
+clear_pending_bullet_update(id):
+- Erase pending_bullet_updates[id].
+```
+
+```text
+clear_pending_bullet_updates():
+- Clear pending_bullet_updates.
+```
+
+Keep pending update records narrowed through existing bullet field rules. Do not store unrelated fields.
+
+In `world_lane_applier.gd`:
+
+* Bullet creates should call `upsert_bullet(decoded)` and then `apply_pending_bullet_update(decoded["id"])`.
+* Bullet updates from `bullet_delta` should call `merge_or_buffer_bullet_update(decoded)`.
+* Bullet updates inside `world_delta` can also use `merge_or_buffer_bullet_update(decoded)` for consistency.
+* Bullet deletes should call `delete_bullet(id)` and then `clear_pending_bullet_update(id)`.
+* Full-world apply and clear paths should clear pending bullet updates.
+
+Avoid adding a generic pending system for all entity kinds in this slice. Fix bullets first.
+
+### Tests
+
+Add tests in `test_world_lane_applier.gd`.
 
 Required coverage:
 
+1. Unknown bullet hot update is buffered but does not create a bullet.
+2. Bullet create later applies the pending update immediately.
+3. Multiple pending updates for the same bullet keep only the latest.
+4. Bullet delete clears pending update.
+5. Full world apply clears all pending bullet updates.
+
+Test data should be small and direct:
+
 ```text
-Low pressure:
-- 1 asteroid update and 1 bullet update
-- world asteroid Updates length is 0
-- world bullet Updates length is 0
-- asteroid delta is emitted with 1 update
-- bullet delta is emitted with 1 update
+bullet id: bullet-1
+create x/y: 10, 20
+pending update x/y: 30, 40
+newer pending update x/y: 50, 60
+```
+
+Assert that after create, `world_lane_state.bullets["bullet-1"]` has the pending update coordinates, not the stale create coordinates.
+
+## Phase 2: Defer presentation fanout to once per frame
+
+### Objective
+
+Stop running full realtime presentation fanout once per gameplay packet.
+
+### Files
+
+Expected file:
+
+* `client/scripts/session/gameplay_session_controller.gd`
+
+Expected test file depends on existing coverage. Use the smallest existing relevant test file. If no suitable test file exists, create one under:
+
+* `client/tests/unit/session/test_gameplay_session_controller_realtime_fanout.gd`
+
+### Current problem
+
+Gameplay packets are already routed by `ClientConnectionService` before `gameplay_packet_received` is emitted.
+
+`GameplaySessionController.handle_gameplay_packet(packet)` should not perform full presentation fanout immediately for every packet during bursts. Packet receive should mark presentation dirty. `_process()` should present at most once per frame.
+
+### Required behavior
+
+On gameplay packet:
+
+```text
+- If gameplay packets are not accepted, return.
+- If gameplay readiness is missing or not ready, return.
+- Preserve first-ready logging behavior.
+- Preserve event diagnostics behavior for event_batch packets.
+- Mark presentation dirty.
+- Do not fan out immediately.
+```
+
+On `_process(delta)`:
+
+```text
+- Run existing gameplay_composition.process(...) behavior.
+- If presentation is dirty and gameplay is ready, fan out presentation once.
+- Clear dirty flag after fanout.
+```
+
+If multiple gameplay packets arrive in the same frame:
+
+```text
+- Mark dirty once.
+- Fan out once during _process.
+```
+
+If a later frame receives another packet:
+
+```text
+- Mark dirty again.
+- Fan out once in that later frame.
+```
+
+### Suggested implementation
+
+In `gameplay_session_controller.gd`, add:
+
+```text
+var _presentation_dirty := false
+var _pending_event_fanout := false
+```
+
+Optional:
+
+```text
+var _last_dirty_packet_type := ""
+```
+
+Extract the current fanout block from `handle_gameplay_packet(packet)` into a concrete helper:
+
+```text
+func _fanout_realtime_presentation_once() -> void:
+```
+
+This helper should contain the current logic that:
+
+* logs `"Gameplay presentation fanout started"` once
+* gets `world_sync`
+* gets `gameplay_hud_flow`
+* gets `event_lifecycle_flow`
+* calls `gameplay_presentation_adapter.fanout_lane_states(...)`
+* builds/applies devtools lane state
+* restores alive presentation
+* marks presentation fanned out once
+
+Do not create an abstract wrapper. This helper is a direct movement of existing behavior.
+
+In `handle_gameplay_packet(packet)`:
+
+```text
+- Keep the acceptance/readiness guards.
+- Keep event_batch diagnostics.
+- Set _presentation_dirty = true.
+- Return without calling fanout.
+```
+
+In `_process(delta)`:
+
+```text
+- Keep existing gameplay_composition.process(delta, required_lane_baselines_synced).
+- After that, if _presentation_dirty is true and gameplay is ready:
+  - call _fanout_realtime_presentation_once()
+  - set _presentation_dirty = false
+```
+
+Reset should clear:
+
+```text
+_presentation_dirty = false
+_pending_event_fanout = false
+```
+
+### Event batch handling
+
+Preserve event fanout.
+
+If the existing fanout block needs `event_lifecycle_flow`, compute it inside `_fanout_realtime_presentation_once()` from `gameplay_composition`.
+
+If event diagnostics are currently packet-specific, keep them in `handle_gameplay_packet(packet)`.
+
+If multiple event batches arrive in one frame, it is acceptable for the one presentation fanout to use the latest accumulated event state from the router.
+
+## Phase 3: Tests for once-per-frame fanout
+
+### Objective
+
+Prove presentation fanout is no longer packet-coupled.
+
+### Test requirements
+
+Add or update focused tests.
+
+Required coverage:
+
+1. Multiple gameplay packets before `_process()` do not cause multiple presentation fanouts.
+2. `_process()` performs one fanout when dirty and gameplay ready.
+3. Dirty flag clears after fanout.
+4. A later packet marks dirty again and allows one more fanout on a later `_process()`.
+5. If gameplay is not ready, dirty state does not cause fanout.
+
+Use fakes rather than full scenes where possible.
+
+Recommended fake shape:
+
+```text
+FakePresentationAdapter:
+- can_fanout() returns configurable bool
+- fanout_lane_states(...) increments fanout_count
+- mark_fanned_out() records call
 ```
 
 ```text
-Stress pressure:
-- 80 asteroid updates and 80 bullet updates
-- world asteroid Updates length is 0
-- world bullet Updates length is 0
-- asteroid delta has 80 updates
-- bullet delta has 80 updates
-- asteroid and bullet route state points to dedicated hot lanes
+FakeGameplayComposition:
+- has gameplay_shell_flow/runtime_context/world_sync shape if needed
+- has gameplay_hud_flow if needed
+- process(...) increments process_count
+- apply_devtools_gameplay_state(...) records calls
+- restore_alive_presentation_from_realtime_router(...) records calls
 ```
+
+Keep the test focused on controller behavior, not actual rendering.
+
+## Phase 4: Stress validation
+
+After Phase 1 and Phase 2:
+
+Run targeted tests first:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{
+  echo "== packet sync check =="
+  data-sync -check -packets -go -gds
+
+  echo
+  echo "== realtime state and presentation tests =="
+  cd client
+  godot --headless -s addons/gut/gut_cmdln.gd \
+    -gtest=res://tests/unit/protocol/realtime/test_world_lane_applier.gd \
+    -gtest=res://tests/unit/protocol/realtime/test_lane_protocol_routing.gd \
+    -gtest=res://tests/unit/networking/test_webrtc_transport.gd \
+    -gtest=res://tests/unit/test_client_connection_service_webrtc.gd
+
+  echo
+  echo "== server smoke =="
+  cd /mnt/d/\!bin/space-rocks/services/game-server
+  go test ./internal/networking ./internal/protocol/realtime
+} 2>&1 | tee /dev/tty | clip.exe
+```
+
+Then run the stress scenario.
+
+Expected improvements:
 
 ```text
-Lifecycle safety:
-- asteroid Creates remain in sr.world
-- asteroid Deletes remain in sr.world
-- bullet Creates remain in sr.world
-- bullet Deletes remain in sr.world
-- asteroid/bullet movement Updates are removed from sr.world
+- Bullets no longer vanish before popping in.
+- Bullets that receive hot updates before creates appear at the latest known update position when created.
+- Frame drops reduce during high bullet volume.
+- No stale bullets stick around after delete or clear.
+- No growing pending bullet update map after deletes/full-world resets.
 ```
 
-If existing tests assert that low-pressure asteroid or bullet updates remain in `sr.world`, update those tests to match subtractive ownership. Do not keep old mixed-overflow expectations.
+## Phase 5: Metrics after behavior fixes
 
-## Expected log result
+Do not add metrics before the two behavior fixes unless explicitly requested.
 
-After implementation, stress logs should show:
+After this skill lands, useful metrics are:
 
 ```text
-sr.world packet size drops sharply.
-sr.asteroids packet size rises.
-sr.bullets packet size rises.
-summary encoded bytes may remain similar because it sums lanes.
-the largest actual single datachannel packet should no longer usually be sr.world.
+packets_drained_per_frame
+packets_left_queued_by_lane
+packets_routed_by_type
+presentation_fanout_count_per_frame
+world_bullet_count
+projectile_node_count
+pending_bullet_update_count
+fanout_time_msec
 ```
 
-Primary validation target:
+Success criteria for later metrics:
 
 ```text
-sr.world should no longer be large because of regular asteroid/bullet movement updates.
+presentation_fanout_count_per_frame <= 1
+drained_packets_per_frame <= MAX_PACKETS_PER_POLL
+pending_bullet_update_count does not grow without bound
+frame time stabilizes under high bullet stress
 ```
 
-If `sr.world` still has large packets after this change, diagnose what remains in `world_delta` instead of reworking asteroid/bullet hot-lane ownership again.
+## Anti-patterns
 
-## Out of scope
+Do not:
 
-Do not combine this change with:
-
-```text
-- unreliable/unordered datachannel changes
-- WebRTC channel configuration changes
-- packet codec rewrites
-- protobuf work
-- create/delete migration into hot-lane packets
-- client interpolation changes
-- broad scheduler rewrites
-- docs-wide cleanup
-```
-
-Unreliable hot lanes are the next likely step, but this skill is only for ownership correction while lanes remain otherwise unchanged.
-
-## Stop conditions
-
-Stop and report instead of expanding the change if any of these are true:
-
-```text
-- Client requires create/delete data from hot-lane packets before movement updates can apply.
-- Dedicated hot-lane packet types must be expanded beyond update arrays.
-- Planner behavior requires a broad redesign instead of a small cadence/mode adjustment.
-- The change touches unrelated protocol families or unrelated gameplay logic.
-```
-
-## Report requirements
-
-Report:
-
-```text
-- Changed files
-- Whether asteroid/bullet Updates are removed from sr.world
-- Whether Creates/Deletes remain in sr.world
-- Tests added or updated
-- Any planner behavior touched
-```
+* Create bullets from unknown `bullet_delta` updates.
+* Ignore unknown bullet hot updates without buffering.
+* Store all pending updates forever.
+* Forget to clear pending bullet updates on delete/full-world reset.
+* Fan out world presentation once per packet.
+* Add packet dropping in this slice.
+* Change WebRTC channel reliability or ordering in this slice.
+* Add broad generic entity buffering before bullet behavior is fixed.
+* Add wrappers or abstract presentation layers.
+* Move gameplay simulation ownership.
+* Change server protocol packet ownership.
+* Change bullet creates/deletes to the bullet hot lane.

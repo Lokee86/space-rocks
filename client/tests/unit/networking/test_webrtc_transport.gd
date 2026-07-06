@@ -274,7 +274,7 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 		"lane": "event",
 	}).to_utf8_buffer())
 	channels["asteroids"].packets.append(JSON.stringify({
-		"type": "asteroids_delta",
+		"type": "asteroid_delta",
 		"lane": "asteroids",
 	}).to_utf8_buffer())
 	channels["bullets"].packets.append(JSON.stringify({
@@ -318,13 +318,50 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	assert_eq(received_packets[2]["lane"], "session")
 	assert_eq(received_packets[3]["type"], "event_batch")
 	assert_eq(received_packets[3]["lane"], "event")
-	assert_eq(received_packets[4]["type"], "asteroids_delta")
+	assert_eq(received_packets[4]["type"], "asteroid_delta")
 	assert_eq(received_packets[4]["lane"], "asteroids")
 	assert_eq(received_packets[5]["type"], "bullet_delta")
 	assert_eq(received_packets[5]["lane"], "bullets")
 	assert_eq(smoke_packets.size(), 1)
 	assert_true(failed_packets.is_empty())
 
+
+
+func test_poll_bounded_receive_drain_per_lane() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels := {
+		"world": FakeChannel.new(),
+		"overlay": FakeChannel.new(),
+		"session": FakeChannel.new(),
+		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
+	}
+	peer.set_peer_for_tests(fake_peer, channels)
+	for channel in channels.values():
+		channel.ready_state = WebRTCDataChannel.STATE_OPEN
+	for i in range(WebRTCTransportScript.MAX_PACKETS_PER_LANE_PER_POLL + 3):
+		channels["world"].packets.append(JSON.stringify({
+			"type": "world_delta",
+			"sequence": i + 1,
+			"baseline_id": "b%d" % (i + 1),
+		}).to_utf8_buffer())
+
+	var received_packets: Array = []
+	peer.packet_received.connect(func(packet: Dictionary) -> void:
+		received_packets.append(packet)
+	)
+
+	peer.poll()
+
+	assert_eq(received_packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_LANE_PER_POLL)
+	assert_gt(channels["world"].packets.size(), 0)
+
+	peer.poll()
+
+	assert_gt(received_packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_LANE_PER_POLL)
+	assert_eq(fake_peer.poll_called, 2)
 
 func test_send_json_writes_text_packet_when_open() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -427,3 +464,6 @@ func test_poll_emits_packet_received_for_compact_realtime_packet() -> void:
 
 	assert_eq(received_packets.size(), 1)
 	assert_eq(received_packets[0]["type"], "world_delta")
+
+
+

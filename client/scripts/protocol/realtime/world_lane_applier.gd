@@ -12,6 +12,7 @@ func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: Baseli
 	var chunk_count: int = int(world_packet.get("chunk_count", 1))
 	var is_final_chunk: bool = bool(world_packet.get("is_final_chunk", true))
 
+	world_lane_state.clear_pending_bullet_updates()
 	world_lane_state.apply_full_lane(_decode_world_full_packet(world_packet))
 
 	if is_final_chunk:
@@ -100,7 +101,7 @@ func _apply_entity_update(world_lane_state: WorldLaneState, record: Dictionary, 
 		"ship":
 			world_lane_state.merge_ship_update(decoded)
 		"bullet":
-			world_lane_state.merge_bullet_update(decoded)
+			world_lane_state.merge_or_buffer_bullet_update(decoded)
 		"asteroid":
 			world_lane_state.merge_asteroid_update(decoded)
 		"pickup":
@@ -129,6 +130,7 @@ func _apply_entity_delete(world_lane_state: WorldLaneState, id, entity_kind: Str
 			world_lane_state.delete_ship(id)
 		"bullet":
 			world_lane_state.delete_bullet(id)
+			world_lane_state.clear_pending_bullet_update(id)
 		"asteroid":
 			world_lane_state.delete_asteroid(id)
 		"pickup":

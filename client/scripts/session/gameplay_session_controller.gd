@@ -20,6 +20,7 @@ var gameplay_realtime_router
 
 var accepts_gameplay_packets := false
 var _lane_presentation_fanned_out := false
+var _presentation_dirty := false
 var _gameplay_readiness
 var _logged_gameplay_ready := false
 var _logged_first_fanout := false
@@ -92,6 +93,29 @@ func _bind_realtime_protocol_dependencies() -> void:
 		gameplay_realtime_router = connection_service.get_realtime_router()
 
 
+func _fanout_realtime_presentation_once() -> void:
+	if !_logged_first_fanout:
+		_log("Gameplay presentation fanout started")
+		_logged_first_fanout = true
+	var event_lifecycle_flow = null
+	if gameplay_composition != null and gameplay_composition.has_method("get_event_lifecycle_flow"):
+		event_lifecycle_flow = gameplay_composition.get_event_lifecycle_flow()
+	var world_sync = null
+	if gameplay_composition != null and gameplay_composition.gameplay_shell_flow != null and gameplay_composition.gameplay_shell_flow.runtime_context != null:
+		world_sync = gameplay_composition.gameplay_shell_flow.runtime_context.world_sync
+	var gameplay_hud_flow = null
+	if gameplay_composition != null:
+		gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
+	gameplay_presentation_adapter.fanout_lane_states(gameplay_realtime_router, world_sync, gameplay_hud_flow, event_lifecycle_flow)
+	if gameplay_composition != null and devtools_lane_state_adapter != null:
+		var devtools_state: Dictionary = devtools_lane_state_adapter.build_state(gameplay_realtime_router)
+		gameplay_composition.apply_devtools_gameplay_state(devtools_state)
+	if gameplay_composition != null and gameplay_composition.has_method("restore_alive_presentation_from_realtime_router"):
+		gameplay_composition.restore_alive_presentation_from_realtime_router(gameplay_realtime_router)
+	if !_lane_presentation_fanned_out:
+		gameplay_presentation_adapter.mark_fanned_out()
+		_lane_presentation_fanned_out = true
+
 func handle_gameplay_packet(packet: Dictionary) -> void:
 	if !accepts_gameplay_packets:
 		return
@@ -126,24 +150,7 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 		)
 
 	if gameplay_realtime_router != null and gameplay_presentation_adapter.can_fanout():
-		if !_logged_first_fanout:
-			_log("Gameplay presentation fanout started")
-			_logged_first_fanout = true
-		var world_sync = null
-		if gameplay_composition != null and gameplay_composition.gameplay_shell_flow != null and gameplay_composition.gameplay_shell_flow.runtime_context != null:
-			world_sync = gameplay_composition.gameplay_shell_flow.runtime_context.world_sync
-		var gameplay_hud_flow = null
-		if gameplay_composition != null:
-			gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
-		gameplay_presentation_adapter.fanout_lane_states(gameplay_realtime_router, world_sync, gameplay_hud_flow, event_lifecycle_flow)
-		if gameplay_composition != null and devtools_lane_state_adapter != null:
-			var devtools_state: Dictionary = devtools_lane_state_adapter.build_state(gameplay_realtime_router)
-			gameplay_composition.apply_devtools_gameplay_state(devtools_state)
-		if gameplay_composition != null and gameplay_composition.has_method("restore_alive_presentation_from_realtime_router"):
-			gameplay_composition.restore_alive_presentation_from_realtime_router(gameplay_realtime_router)
-		if !_lane_presentation_fanned_out:
-			gameplay_presentation_adapter.mark_fanned_out()
-			_lane_presentation_fanned_out = true
+		_presentation_dirty = true
 
 
 func handle_player_pause_state(packet: Dictionary) -> void:
@@ -182,12 +189,19 @@ func begin_accepting_gameplay_packets() -> void:
 
 
 func _process(delta: float) -> void:
+	var required_lane_baselines_synced := false
+	if gameplay_state_flow != null:
+		required_lane_baselines_synced = gameplay_state_flow.is_gameplay_ready()
+	if gameplay_composition != null and gameplay_composition.has_method("set_required_lane_baselines_synced"):
+		gameplay_composition.set_required_lane_baselines_synced(required_lane_baselines_synced)
+
+	if _presentation_dirty:
+		if _gameplay_readiness != null and bool(_gameplay_readiness.is_gameplay_ready()) and gameplay_presentation_adapter != null:
+			if gameplay_realtime_router != null and gameplay_presentation_adapter.can_fanout():
+				_fanout_realtime_presentation_once()
+				_presentation_dirty = false
+
 	if gameplay_composition != null:
-		var required_lane_baselines_synced := false
-		if gameplay_state_flow != null:
-			required_lane_baselines_synced = gameplay_state_flow.is_gameplay_ready()
-		if gameplay_composition.has_method("set_required_lane_baselines_synced"):
-			gameplay_composition.set_required_lane_baselines_synced(required_lane_baselines_synced)
 		gameplay_composition.process(delta, required_lane_baselines_synced)
 
 
@@ -224,6 +238,7 @@ func reset() -> void:
 	_logged_first_fanout = false
 	_logged_event_lifecycle_flow_ready = false
 	_logged_debug_shape_catalog_received = false
+	_presentation_dirty = false
 	if gameplay_state_flow != null:
 		gameplay_state_flow.reset()
 	if gameplay_composition != null:

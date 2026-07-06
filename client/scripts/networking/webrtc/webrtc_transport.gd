@@ -9,6 +9,8 @@ const GAMEPLAY_CHANNEL_SPECS := [
 	{"lane": "asteroids", "label": "sr.asteroids", "id": 5},
 	{"lane": "bullets", "label": "sr.bullets", "id": 6},
 ]
+const MAX_PACKETS_PER_POLL := 48
+const MAX_PACKETS_PER_LANE_PER_POLL := 12
 const SMOKE_ORIGIN_CLIENT := "client"
 const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
 const ClientConstants := preload("res://scripts/generated/constants/constants.gd")
@@ -124,17 +126,17 @@ func poll() -> void:
 	if !_ready_emitted and all_ready:
 		_ready_emitted = true
 		ready.emit(_gameplay_channel_ready_payload())
+	var total_drained: int = 0
 	for spec in GAMEPLAY_CHANNEL_SPECS:
+		if total_drained >= MAX_PACKETS_PER_POLL:
+			break
 		var lane: String = str(spec.get("lane", ""))
 		var channel: Variant = _channels.get(lane)
 		if channel == null:
 			continue
 		if channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
 			continue
-		while channel.get_available_packet_count() > 0:
-			var raw_packet: PackedByteArray = channel.get_packet()
-			if raw_packet is PackedByteArray:
-				_handle_channel_packet(raw_packet)
+		total_drained += _drain_channel_packets(channel, MAX_PACKETS_PER_POLL - total_drained)
 
 
 func send_json(packet: Dictionary) -> void:
@@ -183,6 +185,17 @@ func _handle_channel_packet(packet: PackedByteArray) -> void:
 	packet_received.emit(data)
 	if str(data.get("type", "")) == "webrtc_smoke":
 		smoke_received.emit(data)
+
+
+func _drain_channel_packets(channel: Variant, remaining_budget: int) -> int:
+	var drained: int = 0
+	var lane_budget: int = int(min(MAX_PACKETS_PER_LANE_PER_POLL, remaining_budget))
+	while drained < lane_budget and channel.get_available_packet_count() > 0:
+		var raw_packet: PackedByteArray = channel.get_packet()
+		if raw_packet is PackedByteArray:
+			_handle_channel_packet(raw_packet)
+			drained += 1
+	return drained
 
 
 func _send_json_to_lane(lane: String, packet: Dictionary) -> void:

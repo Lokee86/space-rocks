@@ -632,6 +632,8 @@ static func _normalize_runtime_metadata(packet: Dictionary) -> void:
 
 
 static func _is_runtime_packet_type(packet_type) -> bool:
+	if typeof(packet_type) != TYPE_STRING:
+		return false
 	return packet_type in LaneMetadata.PACKET_FAMILY_WORLD \
 		or packet_type in LaneMetadata.PACKET_FAMILY_OVERLAY \
 		or packet_type in LaneMetadata.PACKET_FAMILY_SESSION \

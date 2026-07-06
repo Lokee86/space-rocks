@@ -1,4 +1,4 @@
-﻿extends GutTest
+extends GutTest
 
 const WorldLaneApplier := preload("res://scripts/protocol/realtime/world_lane_applier.gd")
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
@@ -1093,3 +1093,369 @@ func test_bullet_delta_ignores_missing_bullet_updates() -> void:
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 1)
 	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 2)
 
+
+func test_bullet_delta_buffers_unknown_bullet_update_without_creating_bullet() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
+	})
+
+	assert_false(world_lane_state.bullets.has("bullet-1"))
+	assert_true(world_lane_state.pending_bullet_updates.has("bullet-1"))
+	assert_eq(world_lane_state.pending_bullet_updates["bullet-1"]["x"], 3.0)
+	assert_eq(world_lane_state.pending_bullet_updates["bullet-1"]["y"], 4.0)
+	assert_eq(world_lane_state.pending_bullet_updates["bullet-1"]["rotation"], 0.05)
+
+func test_bullet_create_applies_pending_bullet_update() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
+	})
+
+	var applied := applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [{"id": "bullet-1", "x": 10, "y": 20, "rotation": 25, "velocity_x": 0.0, "velocity_y": 0.0, "owner_id": "ship-1", "lifespan_seconds": 1.0, "weapon_id": "pulse", "projectile_type": "laser"}],
+			"bullet_updates": [],
+			"bullet_deletes": [],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	assert_true(applied)
+	assert_true(world_lane_state.bullets.has("bullet-1"))
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 3.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 4.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0.05)
+	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
+
+func test_latest_pending_bullet_update_wins_before_create() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
+	})
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 60, "y": 70, "rotation": 80}],
+	})
+
+	var applied := applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [{"id": "bullet-1", "x": 10, "y": 20, "rotation": 25, "velocity_x": 0.0, "velocity_y": 0.0, "owner_id": "ship-1", "lifespan_seconds": 1.0, "weapon_id": "pulse", "projectile_type": "laser"}],
+			"bullet_updates": [],
+			"bullet_deletes": [],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	assert_true(applied)
+	assert_true(world_lane_state.bullets.has("bullet-1"))
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 6.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 7.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0.08)
+	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
+
+func test_bullet_delete_clears_pending_bullet_update() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
+	})
+
+	applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [],
+			"bullet_updates": [],
+			"bullet_deletes": ["bullet-1"],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
+
+
+func test_world_full_clears_pending_bullet_updates() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
+	})
+
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-2",
+			"sequence": 3,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	assert_true(world_lane_state.pending_bullet_updates.is_empty())
+
+
+func test_bullet_delta_after_delete_does_not_buffer_pending_update() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [{"id": "bullet-1", "x": 10, "y": 20, "rotation": 25, "velocity_x": 0.0, "velocity_y": 0.0, "owner_id": "ship-1", "lifespan_seconds": 1.0, "weapon_id": "pulse", "projectile_type": "laser"}],
+			"bullet_updates": [],
+			"bullet_deletes": [],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 3,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [],
+			"bullet_updates": [],
+			"bullet_deletes": ["bullet-1"],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
+	})
+
+	assert_false(world_lane_state.bullets.has("bullet-1"))
+	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
+
+
+func test_world_full_clears_deleted_bullet_tombstones() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 2,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [{"id": "bullet-1", "x": 10, "y": 20, "rotation": 25, "velocity_x": 0.0, "velocity_y": 0.0, "owner_id": "ship-1", "lifespan_seconds": 1.0, "weapon_id": "pulse", "projectile_type": "laser"}],
+			"bullet_updates": [],
+			"bullet_deletes": [],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	applier.apply_world_delta(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 3,
+			"ship_creates": [],
+			"ship_updates": [],
+			"ship_deletes": [],
+			"bullet_creates": [],
+			"bullet_updates": [],
+			"bullet_deletes": ["bullet-1"],
+			"asteroid_creates": [],
+			"asteroid_updates": [],
+			"asteroid_deletes": [],
+			"pickup_creates": [],
+			"pickup_updates": [],
+			"pickup_deletes": [],
+		}
+	)
+
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-2",
+			"sequence": 4,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
+	})
+
+	assert_false(world_lane_state.bullets.has("bullet-1"))
+	assert_true(world_lane_state.pending_bullet_updates.has("bullet-1"))

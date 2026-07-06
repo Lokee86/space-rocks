@@ -44,6 +44,46 @@ func test_lowercase_lane_fixtures_route_directly() -> void:
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_SESSION))
 
 
+func test_expanded_world_delta_routes_without_reexpansion() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({
+		"type": "world_full",
+		"baseline_id": "b1",
+		"sequence": 1,
+		"snapshot_id": "s1",
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+
+	router.route_lane_packet({
+		"type": "world_delta",
+		"baseline_id": "b1",
+		"sequence": 2,
+	})
+
+	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+
+
+func test_compact_world_full_routes_as_fallback() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({
+		"t": "wf",
+		"q": 1,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+
+
 func test_asteroid_delta_routes_into_world_lane_state() -> void:
 	var router := RealtimeRouter.new()
 	router.world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
@@ -80,3 +120,4 @@ func _decode_fixture(text: String) -> Dictionary:
 	var decoded = PacketCodec.decode(text)
 	assert_true(decoded.ok)
 	return decoded.packet
+

@@ -30,7 +30,12 @@ func _init() -> void:
 
 
 func route_lane_packet(packet: Dictionary) -> Dictionary:
-	var expanded_packet: Dictionary = CompactLanePacket.expand_packet(packet)
+	var expanded_packet: Dictionary = packet
+	if not expanded_packet.has("type"):
+		if expanded_packet.has("t"):
+			expanded_packet = CompactLanePacket.expand_packet(packet)
+		else:
+			return {}
 	var packet_type = expanded_packet.get("type")
 	match packet_type:
 		LaneMetadata.PACKET_FAMILY_WORLD[0]:
@@ -69,4 +74,5 @@ func _lane_from_packet(packet: Dictionary) -> String:
 	if lane != null:
 		return lane
 	return LaneMetadata.LANE_WORLD
+
 
