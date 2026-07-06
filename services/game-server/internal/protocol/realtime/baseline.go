@@ -29,6 +29,7 @@ type RealtimeSessionState struct {
 	Lanes               map[Lane]RealtimeLaneState
 	BaselineReady       map[Lane]bool
 	baselineProjections map[Lane]any
+	HotLaneCohorts      HotLaneCohortState
 }
 
 func NewRealtimeSessionState(receiverID string) RealtimeSessionState {
@@ -37,6 +38,7 @@ func NewRealtimeSessionState(receiverID string) RealtimeSessionState {
 		Lanes:               make(map[Lane]RealtimeLaneState),
 		BaselineReady:       make(map[Lane]bool),
 		baselineProjections: make(map[Lane]any),
+		HotLaneCohorts:      NewHotLaneCohortState(),
 	}
 }
 

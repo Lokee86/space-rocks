@@ -33,6 +33,13 @@ func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: Basel
 	_apply_entity_deltas(world_lane_state, _array_field(world_packet, "pickup_creates"), _array_field(world_packet, "pickup_updates"), _array_field(world_packet, "pickup_deletes"), "pickup")
 	return true
 
+
+func apply_asteroid_delta(world_lane_state: WorldLaneState, lane: String, asteroid_packet: Dictionary) -> void:
+	_apply_entity_deltas(world_lane_state, [], _array_field(asteroid_packet, "asteroid_updates"), [], "asteroid")
+
+func apply_bullet_delta(world_lane_state: WorldLaneState, lane: String, bullet_packet: Dictionary) -> void:
+	_apply_entity_deltas(world_lane_state, [], _array_field(bullet_packet, "bullet_updates"), [], "bullet")
+
 func _decode_world_full_packet(world_packet: Dictionary) -> Dictionary:
 	var decoded := world_packet.duplicate(true)
 	decoded["ships"] = _decode_entity_records(_array_field(world_packet, "ships"), "ship")

@@ -99,6 +99,8 @@ var compactWireValueMaps = map[string]map[string]string{
 		"session_full":            "sf",
 		"session_delta":           "sd",
 		"event_batch":             "eb",
+		"asteroid_delta":          "ad",
+		"bullet_delta":            "bd",
 		"bullet_blast":            "bb",
 		"ship_death":              "shd",
 		"radial_effect_started":   "rfx",
@@ -111,9 +113,11 @@ var compactWireValueMaps = map[string]map[string]string{
 		"damage_over_time_tick":   "dott",
 	},
 	"lane": {
-		"world":   "w",
-		"overlay": "o",
-		"session": "s",
+		"world":    "w",
+		"overlay":  "o",
+		"session":  "s",
+		"asteroids": "a",
+		"bullets":   "b",
 	},
 	"snapshot_kind": {
 		"full":  "f",

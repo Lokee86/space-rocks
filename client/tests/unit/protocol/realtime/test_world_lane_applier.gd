@@ -1,4 +1,4 @@
-extends GutTest
+﻿extends GutTest
 
 const WorldLaneApplier := preload("res://scripts/protocol/realtime/world_lane_applier.gd")
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
@@ -168,7 +168,7 @@ func test_world_delta_missing_entities_leave_lane_unchanged_by_ownership() -> vo
 			"asteroid_deletes": [],
 			"pickup_creates": [],
 			"pickup_updates": [],
-	assert_eq(world_lane_state.ships["ship-1"]["x"], 1.0)
+			"pickup_deletes": [],
 		}
 	)
 
@@ -568,7 +568,7 @@ func test_world_lane_state_merges_bullet_updates_without_dropping_omitted_fields
 
 	assert_eq(world_lane_state.bullets["bullet-1"]["owner_id"], "ship-1")
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 99)
-	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 0.6)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6)
 	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 7)
 	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "pulse")
 	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
@@ -995,4 +995,101 @@ static func _pickup_packet(id: String, x: int, y: int) -> Dictionary:
 
 
 
+
+
+func test_asteroid_delta_updates_existing_asteroid_only() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_asteroid({
+		"id": "asteroid-1",
+		"x": 1,
+		"y": 2,
+		"size": 3,
+		"health": 4,
+		"scale": 5,
+		"variant": 6,
+	})
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"asteroid_updates": [{"id": "asteroid-1", "x": 9, "y": 10}],
+	})
+
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 0.9)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 1.0)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["size"], 3)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["variant"], 6)
+
+
+func test_asteroid_delta_ignores_unknown_asteroid_updates() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1, "y": 2, "size": 3, "health": 4, "scale": 5, "variant": 6})
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"asteroid_updates": [{"id": "asteroid-unknown", "x": 9, "y": 10}],
+	})
+
+	assert_false(world_lane_state.asteroids.has("asteroid-unknown"))
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 1)
+
+
+func test_asteroid_delta_ignores_missing_asteroid_updates() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1, "y": 2, "size": 3, "health": 4, "scale": 5, "variant": 6})
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"asteroid_updates": [{"x": 9, "y": 10}],
+	})
+
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 1)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 2)
+
+func test_bullet_delta_updates_existing_bullet_only() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_bullet({
+		"id": "bullet-1",
+		"owner_id": "ship-1",
+		"x": 1,
+		"y": 2,
+		"rotation": 3,
+		"weapon_id": "pulse",
+		"projectile_type": "laser",
+	})
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 9, "y": 10, "rotation": 11}],
+	})
+
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 0.9)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 1.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0.011)
+	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "pulse")
+
+
+func test_bullet_delta_ignores_unknown_bullet_updates() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_bullet({"id": "bullet-1", "owner_id": "ship-1", "x": 1, "y": 2, "rotation": 3, "weapon_id": "pulse", "projectile_type": "laser"})
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-unknown", "x": 9, "y": 10, "rotation": 11}],
+	})
+
+	assert_false(world_lane_state.bullets.has("bullet-unknown"))
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 1)
+
+
+func test_bullet_delta_ignores_missing_bullet_updates() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.upsert_bullet({"id": "bullet-1", "owner_id": "ship-1", "x": 1, "y": 2, "rotation": 3, "weapon_id": "pulse", "projectile_type": "laser"})
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"x": 9, "y": 10, "rotation": 11}],
+	})
+
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 1)
+	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 2)
 

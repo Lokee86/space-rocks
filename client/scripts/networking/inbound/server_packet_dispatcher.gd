@@ -8,6 +8,8 @@ signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
 signal world_full_received(packet: Dictionary)
 signal world_delta_received(packet: Dictionary)
+signal asteroid_delta_received(packet: Dictionary)
+signal bullet_delta_received(packet: Dictionary)
 signal overlay_full_received(packet: Dictionary)
 signal overlay_delta_received(packet: Dictionary)
 signal session_full_received(packet: Dictionary)
@@ -40,6 +42,10 @@ func dispatch(packet: Dictionary) -> void:
 		world_full_received.emit(packet)
 	elif ServerPacketRouter.is_world_delta(packet):
 		world_delta_received.emit(packet)
+	elif ServerPacketRouter.is_asteroid_delta(packet):
+		asteroid_delta_received.emit(packet)
+	elif ServerPacketRouter.is_bullet_delta(packet):
+		bullet_delta_received.emit(packet)
 	elif ServerPacketRouter.is_overlay_full(packet):
 		overlay_full_received.emit(packet)
 	elif ServerPacketRouter.is_overlay_delta(packet):

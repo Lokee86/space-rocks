@@ -33,8 +33,15 @@ func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, 
 }
 
 func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) ActiveRealtimeResult {
-	prepared := prepareRealtimeSendPlan(snapshot, state)
-	selectedCandidates := IncludedRealtimeLaneCandidates(prepared.CandidatePlan.Candidates, prepared.SendPlan.Included)
+	preparedState := state
+	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &preparedState)
+
+	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
+	for i, candidate := range candidatePlan.Candidates {
+		records = append(records, scheduleRecordForCandidate(i, candidate))
+	}
+	sendPlan := SelectSendPlan(records)
+	selectedCandidates := IncludedRealtimeLaneCandidates(candidatePlan.Candidates, sendPlan.Included)
 	encodedPackets := make(map[Lane][]byte, len(selectedCandidates))
 	encodedBytes := make(map[Lane]int, len(selectedCandidates))
 	for _, candidate := range selectedCandidates {
@@ -47,11 +54,11 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 
 	result := ActiveRealtimeResult{
 		Snapshot:           snapshot,
-		SessionState:       state,
-		Candidates:         prepared.CandidatePlan.Candidates,
+		SessionState:       preparedState,
+		Candidates:         candidatePlan.Candidates,
 		SelectedCandidates: selectedCandidates,
-		PlannedRecords:     prepared.Records,
-		SendPlan:           prepared.SendPlan,
+		PlannedRecords:     records,
+		SendPlan:           sendPlan,
 		EncodedPackets:     encodedPackets,
 		EncodedBytes:       encodedBytes,
 		EventBatchEventIDs: activeEventBatchEventIDs(snapshot.PendingEvents),
@@ -99,7 +106,20 @@ func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.Packet
 	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.SelectedCandidates))
 	for _, candidate := range result.SelectedCandidates {
 		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane)
+		diagnostics := CandidateWriteDiagnosticsFor(candidate, result.SessionState, result.EncodedBytes[candidate.Lane])
 		record.Bytes = result.EncodedBytes[candidate.Lane]
+		record.Channel = diagnostics.Channel
+		record.EncodedBytes = diagnostics.EncodedBytes
+		record.WorldHotCount = diagnostics.WorldHotCount
+		record.AsteroidHotCount = diagnostics.AsteroidHotCount
+		record.BulletHotCount = diagnostics.BulletHotCount
+		record.AsteroidOffloadedCount = diagnostics.AsteroidOffloadedCount
+		record.BulletOffloadedCount = diagnostics.BulletOffloadedCount
+		record.AsteroidMode = string(diagnostics.AsteroidMode)
+		record.BulletMode = string(diagnostics.BulletMode)
+		record.Cadence = diagnostics.Cadence
+		record.PacketOverTarget = diagnostics.PacketOverTarget
+		record.PacketOverHardCap = diagnostics.PacketOverHardCap
 		records = append(records, record)
 	}
 	return records
@@ -165,13 +185,18 @@ func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
 	if packet == nil {
 		return nil, 0
 	}
-	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay || candidate.Lane == LaneEvent {
+	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay || candidate.Lane == LaneEvent || candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
 		quantize.AssertNoRawFloats(string(candidate.Lane), string(candidate.Lane), packet)
 		packet = CompactWirePacket(packet)
 	}
 	encoded, err := packetcodec.Encode(packet)
 	if err != nil {
 		return nil, 0
+	}
+	if candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
+		if !hotPacketSendAllowed(len(encoded)) {
+			return nil, 0
+		}
 	}
 	return encoded, len(encoded)
 }
@@ -187,3 +212,5 @@ func laneFamilySummary(records []ScheduleRecord) string {
 	}
 	return strings.Join(parts, ",")
 }
+
+

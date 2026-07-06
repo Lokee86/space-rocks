@@ -31,6 +31,14 @@ static func is_world_delta(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_WORLD_DELTA
 
 
+static func is_asteroid_delta(packet: Dictionary) -> bool:
+	return packet_type(packet) == "asteroid_delta"
+
+
+static func is_bullet_delta(packet: Dictionary) -> bool:
+	return packet_type(packet) == "bullet_delta"
+
+
 static func is_overlay_full(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_OVERLAY_FULL
 

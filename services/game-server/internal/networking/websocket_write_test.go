@@ -198,7 +198,7 @@ func TestWriteGameplayLaneProtocolMessageUsesWebRTCForLanePackets(t *testing.T) 
 	assertNoMessageWithin(t, clientConn)
 }
 
-func TestWriteGameplayLaneProtocolMessageReturnsFalseWithoutWebRTCAndSkipsWebSocket(t *testing.T) {
+func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWithoutWebRTC(t *testing.T) {
 	originalCanSend := canSendDebugShapeCatalog
 	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
 		return false
@@ -231,13 +231,13 @@ func TestWriteGameplayLaneProtocolMessageReturnsFalseWithoutWebRTCAndSkipsWebSoc
 		currentGamePlayerID: playerID,
 	}
 
-	if writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
-		t.Fatal("expected lane protocol write to fail without webrtc transport")
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to succeed while skipping websocket write without webrtc transport")
 	}
 	assertNoMessageWithin(t, clientConn)
 }
 
-func TestWriteGameplayLaneProtocolMessageReturnsFalseWhenWebRTCNotReadyAndSkipsWebSocket(t *testing.T) {
+func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWhenWebRTCNotReady(t *testing.T) {
 	originalCanSend := canSendDebugShapeCatalog
 	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
 		return false
@@ -273,8 +273,8 @@ func TestWriteGameplayLaneProtocolMessageReturnsFalseWhenWebRTCNotReadyAndSkipsW
 		webrtcTransport:     transport,
 	}
 
-	if writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
-		t.Fatal("expected lane protocol write to fail when webrtc is not ready")
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected lane protocol write to succeed while skipping websocket write when webrtc is not ready")
 	}
 	assertNoMessageWithin(t, clientConn)
 }
@@ -688,3 +688,5 @@ func assertNoMessageWithin(t *testing.T, conn *websocket.Conn) {
 		t.Fatal("expected no duplicate debug shape catalog packet")
 	}
 }
+
+

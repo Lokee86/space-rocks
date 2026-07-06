@@ -1,11 +1,13 @@
 package realtime
 
 const (
-	LaneWorld   = "world"
-	LaneOverlay = "overlay"
-	LaneSession = "session"
-	LaneEvent   = "event"
-	LaneControl = "control"
+	LaneWorld    = "world"
+	LaneOverlay  = "overlay"
+	LaneSession  = "session"
+	LaneEvent    = "event"
+	LaneControl  = "control"
+	LaneAsteroids = "asteroids"
+	LaneBullets   = "bullets"
 )
 
 const (
@@ -15,6 +17,8 @@ const (
 	PacketFamilyOverlayDelta   = "overlay_delta"
 	PacketFamilySessionFull    = "session_full"
 	PacketFamilySessionDelta   = "session_delta"
+	PacketFamilyAsteroidDelta  = "asteroid_delta"
+	PacketFamilyBulletDelta    = "bullet_delta"
 	PacketFamilyEventBatch     = "event_batch"
 	PacketFamilyResyncRequest  = "resync_request"
 	PacketFamilyResyncRequired = "resync_required"

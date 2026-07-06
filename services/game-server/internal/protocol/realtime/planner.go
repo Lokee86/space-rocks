@@ -31,21 +31,36 @@ type RealtimeSendPrepared struct {
 }
 
 type CandidateWriteDiagnostics struct {
-	PacketFamily string
-	Lane         Lane
-	Kind         RealtimeLaneCandidateKind
-	Sequence     int
-	BaselineID   string
-	SnapshotID   string
-	SnapshotKind SnapshotKind
-	ChunkIndex   int
-	ChunkCount   int
-	IsFinalChunk bool
+	PacketFamily          string
+	Lane                  Lane
+	Kind                  RealtimeLaneCandidateKind
+	Sequence              int
+	BaselineID            string
+	SnapshotID            string
+	SnapshotKind          SnapshotKind
+	ChunkIndex            int
+	ChunkCount            int
+	IsFinalChunk          bool
+	Channel               string
+	EncodedBytes          int
+	WorldHotCount         int
+	AsteroidHotCount      int
+	BulletHotCount        int
+	AsteroidOffloadedCount int
+	BulletOffloadedCount  int
+	AsteroidMode          HotLaneMode
+	BulletMode            HotLaneMode
+	Cadence               string
+	PacketOverTarget      bool
+	PacketOverHardCap     bool
 }
 
 func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeLanePlan {
-	candidates := make([]RealtimeLaneCandidate, 0, 4)
+	return assembleRealtimeLaneCandidates(snapshot, state, nil)
+}
 
+func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) RealtimeLanePlan {
+	candidates := make([]RealtimeLaneCandidate, 0, 4)
 
 	worldState, worldSynced := state.LaneState(LaneWorld)
 	worldReady := state.LaneBaselineReady(LaneWorld)
@@ -57,35 +72,36 @@ func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 	}
 	worldProjection, worldHasProjection := state.BaselineProjection(LaneWorld)
 	worldCanUseProjection := worldReady && worldSynced && worldState.IsFinalChunk && worldState.BaselineID != "" && worldHasProjection
-if !worldCanUseProjection {
-		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane:       LaneWorld,
-			Kind:       RealtimeLaneCandidateKindFull,
-			Full:       quantizedWorldFull,
-			Projection: quantizedWorldFull,
-		})
+	if !worldCanUseProjection {
+		candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: quantizedWorldFull, Projection: quantizedWorldFull})
 	} else {
 		previousWorldFull, ok := worldProjection.(WorldWireFullPacket)
 		if !ok {
-			candidates = append(candidates, RealtimeLaneCandidate{
-				Lane:       LaneWorld,
-				Kind:       RealtimeLaneCandidateKindFull,
-				Full:       quantizedWorldFull,
-				Projection: quantizedWorldFull,
-			})
+			candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: quantizedWorldFull, Projection: quantizedWorldFull})
 		} else if !WorldWirePayloadChanged(previousWorldFull, quantizedWorldFull) {
 			// No world candidate when the projection is unchanged.
 		} else {
 			worldDelta := BuildWorldWireDeltaPacket(previousWorldFull, quantizedWorldFull)
-			if WorldWireDeltaHasChanges(worldDelta) {
+			split := SplitWorldHotUpdates(worldDelta, state.HotLaneCohorts, DefaultHotLaneOffloadPolicy())
+			if sessionState != nil {
+				sessionState.HotLaneCohorts = split.CohortState
+			}
+			asteroidHotPresent := split.AsteroidDelta != nil && len(split.AsteroidDelta.AsteroidUpdates) > 0
+			bulletHotPresent := split.BulletDelta != nil && len(split.BulletDelta.BulletUpdates) > 0
+			worldDeltaHasChanges := WorldWireDeltaHasChanges(split.WorldDelta)
+			asteroidHotAllowed := asteroidHotPresent && (worldDeltaHasChanges || hotPacketCadenceAllows(split.CohortState.AsteroidMode, worldSequence))
+			bulletHotAllowed := bulletHotPresent && (worldDeltaHasChanges || hotPacketCadenceAllows(split.CohortState.BulletMode, worldSequence))
+			allPresentHotAllowed := (!asteroidHotPresent || asteroidHotAllowed) && (!bulletHotPresent || bulletHotAllowed)
+			if worldDeltaHasChanges || ((asteroidHotAllowed || bulletHotAllowed) && allPresentHotAllowed) {
 				chainedWorldProjection := quantizedWorldFull
-				chainedWorldProjection.Metadata = worldDelta.Metadata
-				candidates = append(candidates, RealtimeLaneCandidate{
-					Lane:       LaneWorld,
-					Kind:       RealtimeLaneCandidateKindDelta,
-					Delta:      worldDelta,
-					Projection: chainedWorldProjection,
-				})
+				chainedWorldProjection.Metadata = split.WorldDelta.Metadata
+				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: split.WorldDelta, Projection: chainedWorldProjection})
+			}
+			if asteroidHotAllowed {
+				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneAsteroids, Kind: RealtimeLaneCandidateKindDelta, Delta: *split.AsteroidDelta})
+			}
+			if bulletHotAllowed {
+				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneBullets, Kind: RealtimeLaneCandidateKindDelta, Delta: *split.BulletDelta})
 			}
 		}
 	}
@@ -101,21 +117,11 @@ if !worldCanUseProjection {
 	overlayProjection, overlayHasProjection := state.BaselineProjection(LaneOverlay)
 	overlayCanUseProjection := overlayReady && overlaySynced && overlayState.IsFinalChunk && overlayState.BaselineID != "" && overlayHasProjection
 	if !overlayCanUseProjection {
-		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane:       LaneOverlay,
-			Kind:       RealtimeLaneCandidateKindFull,
-			Full:       quantizedOverlayFull,
-			Projection: quantizedOverlayFull,
-		})
+		candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull, Full: quantizedOverlayFull, Projection: quantizedOverlayFull})
 	} else {
 		previousOverlayFull, ok := overlayProjection.(OverlayWireFullPacket)
 		if !ok {
-			candidates = append(candidates, RealtimeLaneCandidate{
-				Lane:       LaneOverlay,
-				Kind:       RealtimeLaneCandidateKindFull,
-				Full:       quantizedOverlayFull,
-				Projection: quantizedOverlayFull,
-			})
+			candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull, Full: quantizedOverlayFull, Projection: quantizedOverlayFull})
 		} else {
 			if !OverlayWirePayloadChanged(previousOverlayFull, quantizedOverlayFull) {
 				// No overlay candidate when the projection is unchanged.
@@ -124,43 +130,28 @@ if !worldCanUseProjection {
 				if OverlayWireDeltaHasChanges(overlayDelta) {
 					chainedOverlayProjection := quantizedOverlayFull
 					chainedOverlayProjection.Metadata = overlayDelta.Metadata
-					candidates = append(candidates, RealtimeLaneCandidate{
-						Lane:       LaneOverlay,
-						Kind:       RealtimeLaneCandidateKindDelta,
-						Delta:      overlayDelta,
-						Projection: chainedOverlayProjection,
-					})
+					candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindDelta, Delta: overlayDelta, Projection: chainedOverlayProjection})
 				}
 			}
 		}
 	}
 
-	sessionState, sessionSynced := state.LaneState(LaneSession)
+	sessionStateLane, sessionSynced := state.LaneState(LaneSession)
 	sessionReady := state.LaneBaselineReady(LaneSession)
-	sessionSequence := NextLaneSequence(sessionState, sessionSynced)
+	sessionSequence := NextLaneSequence(sessionStateLane, sessionSynced)
 	sessionFull := BuildSessionFullPacket(snapshot, sessionSequence)
 	quantizedSessionFull, err := quantizeSessionFullPacket(sessionFull)
 	if err != nil {
 		return RealtimeLanePlan{Candidates: candidates}
 	}
 	sessionProjection, sessionHasProjection := state.BaselineProjection(LaneSession)
-	sessionCanUseProjection := sessionReady && sessionSynced && sessionState.IsFinalChunk && sessionState.BaselineID != "" && sessionHasProjection
+	sessionCanUseProjection := sessionReady && sessionSynced && sessionStateLane.IsFinalChunk && sessionStateLane.BaselineID != "" && sessionHasProjection
 	if !sessionCanUseProjection {
-		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane:       LaneSession,
-			Kind:       RealtimeLaneCandidateKindFull,
-			Full:       quantizedSessionFull,
-			Projection: quantizedSessionFull,
-		})
+		candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindFull, Full: quantizedSessionFull, Projection: quantizedSessionFull})
 	} else {
 		previousSessionFull, ok := sessionProjection.(SessionWireFullPacket)
 		if !ok {
-			candidates = append(candidates, RealtimeLaneCandidate{
-				Lane:       LaneSession,
-				Kind:       RealtimeLaneCandidateKindFull,
-				Full:       quantizedSessionFull,
-				Projection: quantizedSessionFull,
-			})
+			candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindFull, Full: quantizedSessionFull, Projection: quantizedSessionFull})
 		} else {
 			if !SessionWirePayloadChanged(previousSessionFull, quantizedSessionFull) {
 				// No session candidate when the projection is unchanged.
@@ -169,12 +160,7 @@ if !worldCanUseProjection {
 				if SessionWireDeltaHasChanges(sessionDelta) {
 					chainedSessionProjection := quantizedSessionFull
 					chainedSessionProjection.Metadata = sessionDelta.Metadata
-					candidates = append(candidates, RealtimeLaneCandidate{
-						Lane:       LaneSession,
-						Kind:       RealtimeLaneCandidateKindDelta,
-						Delta:      sessionDelta,
-						Projection: chainedSessionProjection,
-					})
+					candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindDelta, Delta: sessionDelta, Projection: chainedSessionProjection})
 				}
 			}
 		}
@@ -182,18 +168,13 @@ if !worldCanUseProjection {
 
 	if len(snapshot.PendingEvents) > 0 {
 		eventState, _ := state.LaneState(LaneEvent)
-		candidates = append(candidates, RealtimeLaneCandidate{
-			Lane: LaneEvent,
-			Kind: RealtimeLaneCandidateKindEventBatch,
-			Full: BuildEventBatchPacket(snapshot.PendingEvents, eventState.Sequence, snapshot.ServerSentMsec),
-		})
+		candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneEvent, Kind: RealtimeLaneCandidateKindEventBatch, Full: BuildEventBatchPacket(snapshot.PendingEvents, eventState.Sequence, snapshot.ServerSentMsec)})
 	}
 
 	return RealtimeLanePlan{Candidates: candidates}
 }
-
 func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeSendPrepared {
-	candidatePlan := AssembleRealtimeLaneCandidates(snapshot, state)
+	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &state)
 
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
 	for i, candidate := range candidatePlan.Candidates {
@@ -230,6 +211,14 @@ func packetFamilyForCandidate(candidate RealtimeLaneCandidate) string {
 		case RealtimeLaneCandidateKindDelta:
 			return PacketFamilySessionDelta
 		}
+	case LaneAsteroids:
+		if candidate.Kind == RealtimeLaneCandidateKindDelta {
+			return PacketFamilyAsteroidDelta
+		}
+	case LaneBullets:
+		if candidate.Kind == RealtimeLaneCandidateKindDelta {
+			return PacketFamilyBulletDelta
+		}
 	case LaneEvent:
 		if candidate.Kind == RealtimeLaneCandidateKindEventBatch {
 			return PacketFamilyEventBatch
@@ -238,7 +227,6 @@ func packetFamilyForCandidate(candidate RealtimeLaneCandidate) string {
 
 	return ""
 }
-
 func deliveryClassForCandidate(candidate RealtimeLaneCandidate) DeliveryClass {
 	switch candidate.Kind {
 	case RealtimeLaneCandidateKindEventBatch:
@@ -307,11 +295,20 @@ func CandidateProjection(candidate RealtimeLaneCandidate) (any, bool) {
 	return candidate.Projection, true
 }
 
-func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state RealtimeSessionState) CandidateWriteDiagnostics {
+func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state RealtimeSessionState, encodedBytes int) CandidateWriteDiagnostics {
 	diagnostics := CandidateWriteDiagnostics{
 		PacketFamily: packetFamilyForCandidate(candidate),
 		Lane:         candidate.Lane,
 		Kind:         candidate.Kind,
+		Channel:      string(candidate.Lane),
+		EncodedBytes: encodedBytes,
+	}
+	if candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
+		diagnostics.Cadence = hotPacketCadenceForDiagnostics(candidate, state)
+		diagnostics.WorldHotCount, diagnostics.AsteroidHotCount, diagnostics.BulletHotCount, diagnostics.AsteroidOffloadedCount, diagnostics.BulletOffloadedCount = hotLaneCountsForDiagnostics(candidate)
+		diagnostics.AsteroidMode, diagnostics.BulletMode = hotLaneModesForDiagnostics(state)
+		diagnostics.PacketOverTarget = encodedBytes > WarningBytes && encodedBytes < HardCapBytes
+		diagnostics.PacketOverHardCap = encodedBytes >= HardCapBytes
 	}
 	metadata, ok := CandidateMetadata(candidate, state)
 	if !ok {
@@ -325,6 +322,54 @@ func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state Realtim
 	diagnostics.ChunkCount = metadata.ChunkCount
 	diagnostics.IsFinalChunk = metadata.IsFinalChunk
 	return diagnostics
+}
+
+func hotPacketCadenceForDiagnostics(candidate RealtimeLaneCandidate, state RealtimeSessionState) string {
+	laneState, ok := state.LaneState(LaneWorld)
+	if !ok {
+		return "inline"
+	}
+	if candidate.Lane == LaneAsteroids {
+		return hotPacketCadenceLabel(state.HotLaneCohorts.AsteroidMode, laneState.Sequence)
+	}
+	if candidate.Lane == LaneBullets {
+		return hotPacketCadenceLabel(state.HotLaneCohorts.BulletMode, laneState.Sequence)
+	}
+	return ""
+}
+
+func hotPacketCadenceLabel(mode HotLaneMode, sequence int) string {
+	switch mode {
+	case HotLaneModeFullOwned30Hz:
+		return "30hz"
+	case HotLaneModeFullOwned20Hz:
+		return "20hz"
+	case HotLaneModeNeedsChunking:
+		return "chunking"
+	case HotLaneModeOverflow:
+		return "overflow"
+	default:
+		return "inline"
+	}
+}
+
+func hotLaneModesForDiagnostics(state RealtimeSessionState) (HotLaneMode, HotLaneMode) {
+	return state.HotLaneCohorts.AsteroidMode, state.HotLaneCohorts.BulletMode
+}
+
+func hotLaneCountsForDiagnostics(candidate RealtimeLaneCandidate) (int, int, int, int, int) {
+	switch delta := candidate.Delta.(type) {
+	case AsteroidWireDeltaPacket:
+		return 0, len(delta.AsteroidUpdates), 0, len(delta.AsteroidUpdates), 0
+	case *AsteroidWireDeltaPacket:
+		return 0, len(delta.AsteroidUpdates), 0, len(delta.AsteroidUpdates), 0
+	case BulletWireDeltaPacket:
+		return 0, 0, len(delta.BulletUpdates), 0, len(delta.BulletUpdates)
+	case *BulletWireDeltaPacket:
+		return 0, 0, len(delta.BulletUpdates), 0, len(delta.BulletUpdates)
+	default:
+		return 0, 0, 0, 0, 0
+	}
 }
 
 func quantizeOverlayFullPacket(packet OverlayFullPacket) (OverlayWireFullPacket, error) {
@@ -395,6 +440,18 @@ func quantizeSessionFullPacket(packet SessionFullPacket) (SessionWireFullPacket,
 	}
 	return quantized, nil
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

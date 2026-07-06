@@ -91,7 +91,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 				"lane", candidate.Lane,
 				"transport", "webrtc",
 			)
-			return false
+			continue
 		}
 		if !session.webrtcTransport.Ready() {
 			logging.Network.Warn("lane protocol gameplay webrtc transport not ready",
@@ -101,7 +101,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 				"lane", candidate.Lane,
 				"transport", "webrtc",
 			)
-			return false
+			continue
 		}
 		channelLabel, ok := webRTCGameplayChannelLabelForLane(string(candidate.Lane))
 		if !ok {
@@ -125,7 +125,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			)
 			return false
 		}
-		diagnostics := realtime.CandidateWriteDiagnosticsFor(candidate, session.realtimeState)
+		diagnostics := realtime.CandidateWriteDiagnosticsFor(candidate, session.realtimeState, len(encodedPacket))
 		logging.Network.Debug("lane protocol gameplay wire packet written",
 			logging.FieldRoomID, session.currentRoomID,
 			logging.FieldPlayerID, session.currentGamePlayerID,
@@ -239,3 +239,4 @@ func maybeWriteDebugShapeCatalog(session *webSocketSession, remoteAddr string) b
 	session.debugShapeCatalogSentRoomID = session.currentRoomID
 	return true
 }
+

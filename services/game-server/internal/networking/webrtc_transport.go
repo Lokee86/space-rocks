@@ -23,6 +23,8 @@ func webRTCGameplayChannelSpecs() []webRTCGameplayChannelSpec {
 		{Lane: "overlay", Label: "sr.overlay", ID: 2},
 		{Lane: "session", Label: "sr.session", ID: 3},
 		{Lane: "event", Label: "sr.event", ID: 4},
+		{Lane: "asteroids", Label: "sr.asteroids", ID: 5},
+		{Lane: "bullets", Label: "sr.bullets", ID: 6},
 	}
 }
 

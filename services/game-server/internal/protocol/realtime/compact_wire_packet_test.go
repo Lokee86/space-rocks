@@ -966,6 +966,81 @@ func TestCompactWirePacketTuplePacksWorldDeltaAsteroidUpdatesPreserveZeroValues(
 	}
 }
 
+func TestCompactWirePacketAsteroidDeltaCompactsTupleUpdates(t *testing.T) {
+	input := map[string]any{
+		"type": "asteroid_delta",
+		"sequence": 33,
+		"server_sent_msec": 12345,
+		"asteroid_updates": []any{
+			map[string]any{
+				"id": "asteroid-123",
+				"x":  10,
+				"y":  20,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	assertStringValue(t, got, "t", "ad")
+	assertIntValue(t, got, "q", 33)
+	assertIntValue(t, got, "ms", 12345)
+	updates := got["au"].([]any)
+	if len(updates) != 1 {
+		t.Fatalf("expected one asteroid update, got %#v", updates)
+	}
+	tuple := updates[0].([]any)
+	want := []any{123, 10, 20}
+	if len(tuple) != len(want) {
+		t.Fatalf("asteroid tuple = %#v, want %#v", tuple, want)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("asteroid tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+	for _, key := range []string{"ac", "ax", "bc", "bx"} {
+		assertNotContainsKey(t, got, key)
+	}
+}
+
+func TestCompactWirePacketBulletDeltaCompactsTupleUpdates(t *testing.T) {
+	input := map[string]any{
+		"type": "bullet_delta",
+		"sequence": 34,
+		"server_sent_msec": 54321,
+		"bullet_updates": []any{
+			map[string]any{
+				"id":       "bullet-123",
+				"x":        11,
+				"y":        22,
+				"rotation": 33,
+			},
+		},
+	}
+
+	got := CompactWirePacket(input)
+	assertStringValue(t, got, "t", "bd")
+	assertIntValue(t, got, "q", 34)
+	assertIntValue(t, got, "ms", 54321)
+	updates := got["bu"].([]any)
+	if len(updates) != 1 {
+		t.Fatalf("expected one bullet update, got %#v", updates)
+	}
+	tuple := updates[0].([]any)
+	want := []any{123, 11, 22, 33}
+	if len(tuple) != len(want) {
+		t.Fatalf("bullet tuple = %#v, want %#v", tuple, want)
+	}
+	for i := range want {
+		if tuple[i] != want[i] {
+			t.Fatalf("bullet tuple[%d] = %#v, want %#v (full tuple %#v)", i, tuple[i], want[i], tuple)
+		}
+	}
+	for _, key := range []string{"ac", "ax", "bc", "bx"} {
+		assertNotContainsKey(t, got, key)
+	}
+}
+
 func TestCompactWirePacketLeavesMalformedAsteroidIDsUnchanged(t *testing.T) {
 	input := map[string]any{
 		"type": "world_delta",

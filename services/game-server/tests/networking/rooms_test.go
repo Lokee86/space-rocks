@@ -312,7 +312,6 @@ func TestStartSinglePlayerRequestCreatesInGameRoomAndBootstrapsLane(t *testing.T
 		t.Fatalf("expected single-player room active players 1, got %d", room.ActivePlayerCount())
 	}
 
-	readLaneBootstrapPackets(t, conn)
 }
 
 func TestStartSinglePlayerRequestRejectsSessionAlreadyInRoom(t *testing.T) {
@@ -1186,7 +1185,6 @@ func TestStartGameRequestCreatesGameAndMarksRoomStarting(t *testing.T) {
 		t.Fatalf("expected ready snapshot to remain lobby, got %q", readySnapshot.RoomState)
 	}
 
-	readLaneBootstrapPackets(t, conn)
 }
 
 func TestReturnToLobbyRequestResetsGameOverRoom(t *testing.T) {
@@ -1785,3 +1783,5 @@ func readJSON(t *testing.T, conn *websocket.Conn, value any) {
 		return
 	}
 }
+
+

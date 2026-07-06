@@ -6,6 +6,8 @@ func compactWirePackAsteroids(packet map[string]any) map[string]any {
 		return compactWirePackWorldFullAsteroids(packet)
 	case "wd":
 		return compactWirePackWorldDeltaAsteroids(packet)
+	case "ad":
+		return compactWirePackAsteroidDelta(packet)
 	default:
 		return packet
 	}
@@ -117,3 +119,7 @@ func compactWirePackAsteroidMovementUpdate(value any) any {
 
 
 
+
+func compactWirePackAsteroidDelta(packet map[string]any) map[string]any {
+	return compactWirePackWorldDeltaAsteroids(packet)
+}

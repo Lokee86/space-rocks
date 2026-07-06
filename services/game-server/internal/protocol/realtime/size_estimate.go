@@ -24,3 +24,26 @@ func EstimatePacketBytes(packetFamily string, recordCount int, payloadBytes int)
 
 	return overhead + (recordCount * 24) + payloadBytes
 }
+
+type EncodedPacketSizeClass string
+
+const (
+	EncodedPacketSizeNormal    EncodedPacketSizeClass = "normal"
+	EncodedPacketSizeOverTarget EncodedPacketSizeClass = "over_target"
+	EncodedPacketSizeOverHard   EncodedPacketSizeClass = "over_hard_cap"
+	EncodedPacketSizeOverMTU    EncodedPacketSizeClass = "over_mtu"
+)
+
+func ClassifyHotPacketEncodedSize(encodedBytes int) EncodedPacketSizeClass {
+	switch {
+	case encodedBytes >= 1500:
+		return EncodedPacketSizeOverMTU
+	case encodedBytes > HardCapBytes:
+		return EncodedPacketSizeOverHard
+	case encodedBytes > WarningBytes:
+		return EncodedPacketSizeOverTarget
+	default:
+		return EncodedPacketSizeNormal
+	}
+}
+

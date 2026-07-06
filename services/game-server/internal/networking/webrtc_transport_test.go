@@ -181,14 +181,16 @@ func TestWebRTCTransportHandleOfferBuildsAnswerAndChannels(t *testing.T) {
 	if fakePeer.localDesc.Type != webrtc.SDPTypeAnswer || fakePeer.localDesc.SDP != "answer-sdp" {
 		t.Fatalf("local description not set: %#v", fakePeer.localDesc)
 	}
-	if len(fakePeer.created) != 4 {
-		t.Fatalf("expected 4 data channels to be created, got %d", len(fakePeer.created))
+	if len(fakePeer.created) != 6 {
+		t.Fatalf("expected 6 data channels to be created, got %d", len(fakePeer.created))
 	}
 	expected := map[string]fakeWebRTCDataChannelCreateSpec{
-		"sr.world":   {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1},
-		"sr.overlay": {Label: "sr.overlay", Ordered: true, Negotiated: true, ID: 2},
-		"sr.session": {Label: "sr.session", Ordered: true, Negotiated: true, ID: 3},
-		"sr.event":   {Label: "sr.event", Ordered: true, Negotiated: true, ID: 4},
+		"sr.world":     {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1},
+		"sr.overlay":   {Label: "sr.overlay", Ordered: true, Negotiated: true, ID: 2},
+		"sr.session":   {Label: "sr.session", Ordered: true, Negotiated: true, ID: 3},
+		"sr.event":     {Label: "sr.event", Ordered: true, Negotiated: true, ID: 4},
+		"sr.asteroids": {Label: "sr.asteroids", Ordered: true, Negotiated: true, ID: 5},
+		"sr.bullets":   {Label: "sr.bullets", Ordered: true, Negotiated: true, ID: 6},
 	}
 	for _, created := range fakePeer.created {
 		want, ok := expected[created.Label]
@@ -337,6 +339,10 @@ func TestWebRTCTransportReadyTracksAllGameplayChannels(t *testing.T) {
 	fakePeer.channels["sr.session"].onOpen()
 	fakePeer.channels["sr.event"].readyState = webrtc.DataChannelStateOpen
 	fakePeer.channels["sr.event"].onOpen()
+	fakePeer.channels["sr.asteroids"].readyState = webrtc.DataChannelStateOpen
+	fakePeer.channels["sr.asteroids"].onOpen()
+	fakePeer.channels["sr.bullets"].readyState = webrtc.DataChannelStateOpen
+	fakePeer.channels["sr.bullets"].onOpen()
 	if !peer.Ready() {
 		t.Fatal("expected Ready to become true after all channels are open")
 	}
@@ -409,10 +415,12 @@ func TestWebRTCTransportClose(t *testing.T) {
 	peer := NewWebRTCTransport(WebRTCSignalHooks{})
 	peer.peer = fakePeer
 	peer.channels = map[string]webRTCDataChannel{
-		"sr.world":   &fakeWebRTCDataChannel{},
-		"sr.overlay": &fakeWebRTCDataChannel{},
-		"sr.session": &fakeWebRTCDataChannel{},
-		"sr.event":   &fakeWebRTCDataChannel{},
+		"sr.world":     &fakeWebRTCDataChannel{},
+		"sr.overlay":   &fakeWebRTCDataChannel{},
+		"sr.session":   &fakeWebRTCDataChannel{},
+		"sr.event":     &fakeWebRTCDataChannel{},
+		"sr.asteroids": &fakeWebRTCDataChannel{},
+		"sr.bullets":   &fakeWebRTCDataChannel{},
 	}
 	if err := peer.Close(); err != nil {
 		t.Fatalf("Close returned error: %v", err)

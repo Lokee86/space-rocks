@@ -731,3 +731,35 @@ func test_expand_packet_preserves_unknown_and_malformed_tuple_ids() -> void:
 
 
 
+
+func test_expand_packet_converts_compact_asteroid_delta_updates() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "ad",
+		"au": [[1, 10, 20]],
+	})
+
+	assert_eq(expanded["type"], "asteroid_delta")
+	assert_eq(expanded["asteroid_updates"][0]["id"], "asteroid-1")
+	assert_eq(expanded["asteroid_updates"][0]["x"], 10)
+	assert_eq(expanded["asteroid_updates"][0]["y"], 20)
+	assert_false(expanded.has("asteroid_creates"))
+	assert_false(expanded.has("asteroid_deletes"))
+	assert_false(expanded.has("bullet_creates"))
+	assert_false(expanded.has("bullet_deletes"))
+
+
+func test_expand_packet_converts_compact_bullet_delta_updates() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "bd",
+		"bu": [[1, 10, 20, 30]],
+	})
+
+	assert_eq(expanded["type"], "bullet_delta")
+	assert_eq(expanded["bullet_updates"][0]["id"], "bullet-1")
+	assert_eq(expanded["bullet_updates"][0]["x"], 10)
+	assert_eq(expanded["bullet_updates"][0]["y"], 20)
+	assert_eq(expanded["bullet_updates"][0]["rotation"], 30)
+	assert_false(expanded.has("asteroid_creates"))
+	assert_false(expanded.has("asteroid_deletes"))
+	assert_false(expanded.has("bullet_creates"))
+	assert_false(expanded.has("bullet_deletes"))

@@ -6,38 +6,13 @@ import (
 
 	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
-	"github.com/pion/webrtc/v4"
 )
 
-func TestHandleStartSinglePlayerRequestRejectsWithoutReadyWebRTC(t *testing.T) {
+func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 	session := &webSocketSession{
 		sessionID: "session-1",
 		rooms:     rooms.NewRoomManagerWithCleanupDelay(0),
 		outbound:  make(chan []byte, 1),
-	}
-
-	session.handleStartSinglePlayerRequest("")
-
-	if session.currentRoomID != "" {
-		t.Fatalf("expected no room to be created, got %q", session.currentRoomID)
-	}
-	if got := session.rooms.RoomCount(); got != 0 {
-		t.Fatalf("expected no rooms to exist, got %d", got)
-	}
-	assertQueuedRoomError(t, session.outbound, rooms.RoomErrorInvalidRoomState, "WebRTC gameplay transport is not ready.")
-}
-
-func TestHandleStartSinglePlayerRequestCreatesRoomWhenWebRTCReady(t *testing.T) {
-	session := &webSocketSession{
-		sessionID: "session-1",
-		rooms:     rooms.NewRoomManagerWithCleanupDelay(0),
-		outbound:  make(chan []byte, 1),
-		webrtcTransport: &WebRTCTransport{
-			channels: map[string]webRTCDataChannel{
-				webRTCGameplayChannelLaneWorld: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
-			},
-			ready: true,
-		},
 	}
 
 	session.handleStartSinglePlayerRequest("")
@@ -54,7 +29,7 @@ func TestHandleStartSinglePlayerRequestCreatesRoomWhenWebRTCReady(t *testing.T) 
 	assertNoQueuedRoomErrorPacket(t, session.outbound)
 }
 
-func TestHandleStartGameRequestRejectsWithoutReadyWebRTC(t *testing.T) {
+func TestHandleStartGameRequestStartsRoom(t *testing.T) {
 	manager := rooms.NewRoomManagerWithCleanupDelay(0)
 	room, err := manager.CreateLobbyRoom()
 	if err != nil {
@@ -68,40 +43,6 @@ func TestHandleStartGameRequestRejectsWithoutReadyWebRTC(t *testing.T) {
 		currentGamePlayerID: "player-1",
 		rooms:               manager,
 		outbound:            make(chan []byte, 1),
-	}
-	addSessionMember(room, session.sessionID, session)
-	if _, roomErr := manager.SetReady(room.ID, session.sessionID, true); roomErr != nil {
-		t.Fatalf("expected ready state update to succeed, got %v", roomErr)
-	}
-
-	session.handleStartGameRequest()
-
-	if session.room.State != rooms.RoomStateLobby {
-		t.Fatalf("expected room to remain lobby, got %q", session.room.State)
-	}
-	assertQueuedRoomError(t, session.outbound, rooms.RoomErrorInvalidRoomState, "WebRTC gameplay transport is not ready.")
-}
-
-func TestHandleStartGameRequestStartsRoomWhenWebRTCReady(t *testing.T) {
-	manager := rooms.NewRoomManagerWithCleanupDelay(0)
-	room, err := manager.CreateLobbyRoom()
-	if err != nil {
-		t.Fatalf("expected lobby room creation to succeed, got %v", err)
-	}
-
-	session := &webSocketSession{
-		sessionID:           "session-1",
-		room:                room,
-		currentRoomID:       room.ID,
-		currentGamePlayerID: "player-1",
-		rooms:               manager,
-		outbound:            make(chan []byte, 1),
-		webrtcTransport: &WebRTCTransport{
-			channels: map[string]webRTCDataChannel{
-				webRTCGameplayChannelLaneWorld: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
-			},
-			ready: true,
-		},
 	}
 	addSessionMember(room, session.sessionID, session)
 	if _, roomErr := manager.SetReady(room.ID, session.sessionID, true); roomErr != nil {

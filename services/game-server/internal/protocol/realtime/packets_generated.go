@@ -8,6 +8,8 @@ const (
 	PacketTypeOverlayDelta   = "overlay_delta"
 	PacketTypeSessionFull    = "session_full"
 	PacketTypeSessionDelta   = "session_delta"
+	PacketTypeAsteroidDelta  = "asteroid_delta"
+	PacketTypeBulletDelta    = "bullet_delta"
 	PacketTypeEventBatch     = "event_batch"
 	PacketTypeResyncRequest  = "resync_request"
 	PacketTypeResyncRequired = "resync_required"

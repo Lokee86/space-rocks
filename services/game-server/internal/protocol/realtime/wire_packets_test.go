@@ -485,6 +485,63 @@ func TestWireWorldDeltaPacketEncodesAsteroidUpdatesAsPartialFieldPatch(t *testin
 	assertNotContainsKey(t, update, "variant")
 }
 
+func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: AsteroidWireDeltaPacket{
+			Type:           PacketFamilyAsteroidDelta,
+			Sequence:       42,
+			ServerSentMsec: 123456,
+			AsteroidUpdates: []map[string]any{
+				{
+					"id":     "asteroid-1",
+					"x":      int64(10),
+					"y":      int64(20),
+					"size":   int64(3),
+					"health": int64(4),
+				},
+			},
+		},
+	}))
+
+	assertStringValue(t, wire, "type", PacketFamilyAsteroidDelta)
+	assertIntValue(t, wire, "sequence", 42)
+	assertIntValue(t, wire, "server_sent_msec", 123456)
+	assertContainsKey(t, wire, "asteroid_updates")
+	for _, key := range []string{"asteroid_creates", "asteroid_deletes", "bullet_creates", "bullet_deletes"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
+		Lane: LaneWorld,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: BulletWireDeltaPacket{
+			Type:           PacketFamilyBulletDelta,
+			Sequence:       43,
+			ServerSentMsec: 654321,
+			BulletUpdates: []map[string]any{
+				{
+					"id":       "bullet-1",
+					"x":        int64(30),
+					"y":        int64(40),
+					"rotation": int64(50),
+				},
+			},
+		},
+	}))
+
+	assertStringValue(t, wire, "type", PacketFamilyBulletDelta)
+	assertIntValue(t, wire, "sequence", 43)
+	assertIntValue(t, wire, "server_sent_msec", 654321)
+	assertContainsKey(t, wire, "bullet_updates")
+	for _, key := range []string{"bullet_creates", "bullet_deletes", "asteroid_creates", "asteroid_deletes"} {
+		assertNotContainsKey(t, wire, key)
+	}
+}
+
 func TestWireWorldDeltaPacketEncodesPickupUpdatesAsPartialFieldPatch(t *testing.T) {
 	encoded, err := packetcodec.Encode(wireWorldDeltaPacket(WorldDeltaPacket{
 		Type: PacketTypeWorldDelta,

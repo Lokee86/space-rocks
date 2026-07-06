@@ -96,6 +96,8 @@ const _VALUE_MAPS := {
 	"type": {
 		"wf": "world_full",
 		"wd": "world_delta",
+		"ad": "asteroid_delta",
+		"bd": "bullet_delta",
 		"of": "overlay_full",
 		"od": "overlay_delta",
 		"sf": "session_full",
@@ -632,7 +634,9 @@ static func _normalize_runtime_metadata(packet: Dictionary) -> void:
 static func _is_runtime_packet_type(packet_type) -> bool:
 	return packet_type in LaneMetadata.PACKET_FAMILY_WORLD \
 		or packet_type in LaneMetadata.PACKET_FAMILY_OVERLAY \
-		or packet_type in LaneMetadata.PACKET_FAMILY_SESSION
+		or packet_type in LaneMetadata.PACKET_FAMILY_SESSION \
+		or packet_type == "asteroid_delta" \
+		or packet_type == "bullet_delta"
 
 
 static func _snapshot_kind_from_type(packet_type) -> String:

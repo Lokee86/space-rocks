@@ -1,6 +1,7 @@
 package realtime
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -73,7 +74,7 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	}
 
 	state := NewRealtimeSessionState("player-1")
-	state.UpdateLane(LaneWorld, Metadata{Sequence: 2, BaselineID: "world-baseline", IsFinalChunk: true})
+	state.UpdateLane(LaneWorld, Metadata{Sequence: 1, BaselineID: "world-baseline", IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.UpdateLane(LaneSession, Metadata{Sequence: 3, BaselineID: "session-baseline", IsFinalChunk: true})
 	state.MarkBaselineReady(LaneSession)
@@ -158,7 +159,7 @@ func TestCandidateWriteDiagnosticsForReturnsMetadataForFullCandidate(t *testing.
 	full := mustWorldWireFull(t, snapshot, 4)
 	candidate := RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: full}
 
-	diagnostics := CandidateWriteDiagnosticsFor(candidate, state)
+	diagnostics := CandidateWriteDiagnosticsFor(candidate, state, 0)
 	if diagnostics.PacketFamily == "" || diagnostics.Lane == "" || diagnostics.Kind == "" {
 		t.Fatalf("expected non-empty family/lane/kind, got %#v", diagnostics)
 	}
@@ -190,7 +191,7 @@ func TestCandidateWriteDiagnosticsForReturnsMetadataForDeltaCandidateAndFallsBac
 	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true})
 	candidate := RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindDelta, Delta: SessionWireLaneDelta{Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}}}
 
-	diagnostics := CandidateWriteDiagnosticsFor(candidate, state)
+	diagnostics := CandidateWriteDiagnosticsFor(candidate, state, 0)
 	if diagnostics.PacketFamily == "" || diagnostics.Lane == "" || diagnostics.Kind == "" {
 		t.Fatalf("expected non-empty family/lane/kind, got %#v", diagnostics)
 	}
@@ -207,7 +208,7 @@ func TestCandidateWriteDiagnosticsForReturnsMetadataForDeltaCandidateAndFallsBac
 		t.Fatalf("expected final chunk diagnostics, got %#v", diagnostics)
 	}
 
-	fallback := CandidateWriteDiagnosticsFor(RealtimeLaneCandidate{Lane: LaneEvent, Kind: RealtimeLaneCandidateKindEventBatch}, NewRealtimeSessionState("player-1"))
+	fallback := CandidateWriteDiagnosticsFor(RealtimeLaneCandidate{Lane: LaneEvent, Kind: RealtimeLaneCandidateKindEventBatch}, NewRealtimeSessionState("player-1"), 0)
 	if fallback.PacketFamily != PacketFamilyEventBatch || fallback.Lane != LaneEvent || fallback.Kind != RealtimeLaneCandidateKindEventBatch {
 		t.Fatalf("unexpected fallback diagnostics: %#v", fallback)
 	}
@@ -777,3 +778,220 @@ func TestAssembleRealtimeLaneCandidatesEmitsSessionDeltaWhenStoredBaselineDiffer
 
 
 
+
+func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *testing.T) {
+	policy := DefaultHotLaneOffloadPolicy()
+	count := policy.AsteroidHotLaneEntityBudget*2 + 1
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	for i := 1; i <= count; i++ {
+		id := fmt.Sprintf("asteroid-%d", i)
+		snapshot.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i + 100), Y: float64(i + 110)}
+		previous.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i), Y: float64(i + 10)}
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatal("expected world candidate")
+	}
+	delta, ok := world.Delta.(WorldWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected world delta packet, got %T", world.Delta)
+	}
+	if len(delta.Asteroids.Updates) != 0 {
+		t.Fatalf("expected world asteroid updates removed, got %d", len(delta.Asteroids.Updates))
+	}
+	projection, ok := world.Projection.(WorldWireFullPacket)
+	if !ok {
+		t.Fatalf("expected world projection packet, got %T", world.Projection)
+	}
+	if len(projection.Asteroids) != count {
+		t.Fatalf("expected full projection to remain at %d asteroids, got %d", count, len(projection.Asteroids))
+	}
+	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); !ok {
+		t.Fatal("expected asteroid hot lane candidate")
+	}
+}
+
+
+
+
+func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleInWorldDeltaUnderPressure(t *testing.T) {
+	policy := DefaultHotLaneOffloadPolicy()
+	count := policy.AsteroidHotLaneEntityBudget*2 + 1
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	for i := 1; i <= count; i++ {
+		id := fmt.Sprintf("asteroid-%d", i)
+		previous.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i), Y: float64(i + 10)}
+		snapshot.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i + 100), Y: float64(i + 110)}
+	}
+	delete(snapshot.Asteroids, fmt.Sprintf("asteroid-%d", count))
+	delete(previous.Asteroids, "asteroid-1")
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatal("expected world candidate under asteroid pressure")
+	}
+	worldDelta, ok := world.Delta.(WorldWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected world delta packet, got %T", world.Delta)
+	}
+	if len(worldDelta.Asteroids.Creates) == 0 || len(worldDelta.Asteroids.Deletes) == 0 {
+		t.Fatalf("expected asteroid creates and deletes to remain in world delta, got %#v", worldDelta)
+	}
+	if len(worldDelta.Asteroids.Updates) != 0 {
+		t.Fatalf("expected asteroid movement updates removed from world delta, got %d", len(worldDelta.Asteroids.Updates))
+	}
+	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); !ok {
+		t.Fatal("expected asteroid hot delta candidate under pressure")
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesKeepsBulletLifecycleInWorldDeltaUnderPressure(t *testing.T) {
+	policy := DefaultHotLaneOffloadPolicy()
+	count := policy.BulletHotLaneEntityBudget*2 + 1
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
+	for i := 1; i <= count; i++ {
+		id := fmt.Sprintf("bullet-%d", i)
+		previous.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i), Y: float64(i + 20), Rotation: float64(i + 30)}
+		snapshot.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i + 100), Y: float64(i + 120), Rotation: float64(i + 130)}
+	}
+	delete(snapshot.Bullets, fmt.Sprintf("bullet-%d", count))
+	delete(previous.Bullets, "bullet-1")
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok {
+		t.Fatal("expected world candidate under bullet pressure")
+	}
+	worldDelta, ok := world.Delta.(WorldWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected world delta packet, got %T", world.Delta)
+	}
+	if len(worldDelta.Bullets.Creates) == 0 || len(worldDelta.Bullets.Deletes) == 0 {
+		t.Fatalf("expected bullet creates and deletes to remain in world delta, got %#v", worldDelta)
+	}
+	if len(worldDelta.Bullets.Updates) != 0 {
+		t.Fatalf("expected bullet movement updates removed from world delta, got %d", len(worldDelta.Bullets.Updates))
+	}
+	if _, ok := findCandidateByLane(plan.Candidates, LaneBullets); !ok {
+		t.Fatal("expected bullet hot delta candidate under pressure")
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsAsteroidDeltaCandidateWhenAsteroidsAreOffloaded(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	for i := 1; i <= 90; i++ {
+		previous.Asteroids[fmt.Sprintf("asteroid-%d", i)] = runtime.AsteroidState{ID: fmt.Sprintf("asteroid-%d", i), X: float64(i), Y: float64(i + 10)}
+		snapshot.Asteroids[fmt.Sprintf("asteroid-%d", i)] = runtime.AsteroidState{ID: fmt.Sprintf("asteroid-%d", i), X: float64(i + 100), Y: float64(i + 110)}
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); !ok {
+		t.Fatal("expected asteroid delta candidate")
+	}
+}
+
+
+func TestAssembleRealtimeLaneCandidatesSkipsHotPacketsOnCadenceAndUsesLatestSnapshot(t *testing.T) {
+	snapshot1 := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	snapshot2 := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	for i := 1; i <= 129; i++ {
+		snapshot1.Asteroids[fmt.Sprintf("asteroid-%d", i)] = runtime.AsteroidState{ID: fmt.Sprintf("asteroid-%d", i), X: float64(i), Y: float64(i + 10)}
+		snapshot2.Asteroids[fmt.Sprintf("asteroid-%d", i)] = runtime.AsteroidState{ID: fmt.Sprintf("asteroid-%d", i), X: float64(i + 100), Y: float64(i + 110)}
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot1, 1))
+
+	skipped := AssembleRealtimeLaneCandidates(snapshot2, state)
+	if _, ok := findCandidateByLane(skipped.Candidates, LaneAsteroids); ok {
+		t.Fatal("expected asteroid hot packet to skip non-eligible cadence tick")
+	}
+
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot1, 1))
+
+	eligible := AssembleRealtimeLaneCandidates(snapshot2, state)
+	candidate, ok := findCandidateByLane(eligible.Candidates, LaneAsteroids)
+	if !ok {
+		t.Fatal("expected asteroid hot packet on eligible cadence tick")
+	}
+	delta, ok := candidate.Delta.(AsteroidWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected asteroid delta packet, got %T", candidate.Delta)
+	}
+	if len(delta.AsteroidUpdates) == 0 {
+		t.Fatal("expected asteroid delta updates")
+	}
+	firstUpdate := delta.AsteroidUpdates[0]
+	rawX, ok := firstUpdate["x"]
+	if !ok {
+		t.Fatalf("expected asteroid delta update to include x, got %#v", firstUpdate)
+	}
+	if got, want := rawX, int64(1010); got != want {
+		t.Fatalf("expected latest quantized snapshot value %v, got %v", want, got)
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsBulletDeltaCandidateWhenBulletsAreOffloaded(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
+	for i := 1; i <= 90; i++ {
+		previous.Bullets[fmt.Sprintf("bullet-%d", i)] = runtime.BulletState{ID: fmt.Sprintf("bullet-%d", i), OwnerID: "player-1", X: float64(i), Y: float64(i + 20), Rotation: float64(i + 30)}
+		snapshot.Bullets[fmt.Sprintf("bullet-%d", i)] = runtime.BulletState{ID: fmt.Sprintf("bullet-%d", i), OwnerID: "player-1", X: float64(i + 100), Y: float64(i + 120), Rotation: float64(i + 130)}
+	}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneBullets); !ok {
+		t.Fatal("expected bullet delta candidate")
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesDoesNotEmitEmptyHotCandidate(t *testing.T) {
+	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1"}
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
+
+	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); ok {
+		t.Fatal("unexpected asteroid hot candidate with no offloaded updates")
+	}
+	if _, ok := findCandidateByLane(plan.Candidates, LaneBullets); ok {
+		t.Fatal("unexpected bullet hot candidate with no offloaded updates")
+	}
+}

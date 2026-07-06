@@ -1,6 +1,9 @@
 package realtime
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func findMatchingScheduleRecords(records []ScheduleRecord, entityID, recordKind string, deliveryClass DeliveryClass, priority ...Priority) []ScheduleRecord {
 	matches := make([]ScheduleRecord, 0, len(records))
@@ -47,6 +50,138 @@ func assertMatchingScheduleRecordsChunked(t *testing.T, matches []ScheduleRecord
 	}
 	if finalCount != 1 {
 		t.Fatalf("matches = %#v, want exactly one final chunk", matches)
+	}
+}
+
+
+func TestHotPacketCadenceAllowsFullOwned30HzEveryOtherTick(t *testing.T) {
+	if hotPacketCadenceAllows(HotLaneModeFullOwned30Hz, 1) {
+		t.Fatal("sequence 1 should skip 30hz hot packets")
+	}
+	if !hotPacketCadenceAllows(HotLaneModeFullOwned30Hz, 2) {
+		t.Fatal("sequence 2 should emit 30hz hot packets")
+	}
+	if hotPacketCadenceAllows(HotLaneModeFullOwned30Hz, 3) {
+		t.Fatal("sequence 3 should skip 30hz hot packets")
+	}
+}
+
+func TestHotPacketCadenceAllowsFullOwned20HzEveryThirdTick(t *testing.T) {
+	if hotPacketCadenceAllows(HotLaneModeFullOwned20Hz, 1) {
+		t.Fatal("sequence 1 should skip 20hz hot packets")
+	}
+	if hotPacketCadenceAllows(HotLaneModeFullOwned20Hz, 2) {
+		t.Fatal("sequence 2 should skip 20hz hot packets")
+	}
+	if !hotPacketCadenceAllows(HotLaneModeFullOwned20Hz, 3) {
+		t.Fatal("sequence 3 should emit 20hz hot packets")
+	}
+	if hotPacketCadenceAllows(HotLaneModeFullOwned20Hz, 4) {
+		t.Fatal("sequence 4 should skip 20hz hot packets")
+	}
+}
+
+
+func TestClassifyHotPacketEncodedSizeBands(t *testing.T) {
+	if got := ClassifyHotPacketEncodedSize(800); got != EncodedPacketSizeNormal {
+		t.Fatalf("size 800 = %q, want normal", got)
+	}
+	if got := ClassifyHotPacketEncodedSize(801); got != EncodedPacketSizeOverTarget {
+		t.Fatalf("size 801 = %q, want over target", got)
+	}
+	if got := ClassifyHotPacketEncodedSize(1200); got != EncodedPacketSizeOverTarget {
+		t.Fatalf("size 1200 = %q, want over target", got)
+	}
+	if got := ClassifyHotPacketEncodedSize(1201); got != EncodedPacketSizeOverHard {
+		t.Fatalf("size 1201 = %q, want over hard cap", got)
+	}
+	if got := ClassifyHotPacketEncodedSize(1499); got != EncodedPacketSizeOverHard {
+		t.Fatalf("size 1499 = %q, want over hard cap", got)
+	}
+	if got := ClassifyHotPacketEncodedSize(1500); got != EncodedPacketSizeOverMTU {
+		t.Fatalf("size 1500 = %q, want over mtu", got)
+	}
+}
+
+
+func TestEncodeLanePacketAllowsHotPacketUnderTarget(t *testing.T) {
+	encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(1))
+	if recordedBytes == 0 || len(encoded) == 0 {
+		t.Fatal("expected hot bullet packet under target to send")
+	}
+	if got := ClassifyHotPacketEncodedSize(len(encoded)); got != EncodedPacketSizeNormal {
+		t.Fatalf("encoded size class = %q, want normal", got)
+	}
+}
+
+func TestEncodeLanePacketAllowsHotPacketOverTargetButUnderHardCap(t *testing.T) {
+	count := mustFindSendableHotBulletCountForSizeClass(t, EncodedPacketSizeOverTarget)
+	encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+	if recordedBytes == 0 || len(encoded) == 0 {
+		t.Fatal("expected hot bullet packet over target but under hard cap to send")
+	}
+	if got := ClassifyHotPacketEncodedSize(len(encoded)); got != EncodedPacketSizeOverTarget {
+		t.Fatalf("encoded size class = %q, want over target", got)
+	}
+}
+
+func TestEncodeLanePacketBlocksHotPacketOverHardCapAndMTU(t *testing.T) {
+	count := mustFindBlockedHotBulletCount(t)
+	encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+	if recordedBytes != 0 || len(encoded) != 0 {
+		t.Fatal("expected hot bullet packet over hard cap to be blocked")
+	}
+}
+
+func mustFindSendableHotBulletCountForSizeClass(t *testing.T, want EncodedPacketSizeClass) int {
+	t.Helper()
+	for count := 1; count <= 1000; count++ {
+		encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+		if recordedBytes == 0 || len(encoded) == 0 {
+			continue
+		}
+		if ClassifyHotPacketEncodedSize(len(encoded)) == want {
+			return count
+		}
+	}
+	t.Fatalf("no sendable hot bullet count found for size class %q", want)
+	return 0
+}
+
+func mustFindBlockedHotBulletCount(t *testing.T) int {
+	t.Helper()
+	for count := 1; count <= 1000; count++ {
+		encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+		if recordedBytes == 0 && len(encoded) == 0 {
+			return count
+		}
+	}
+	t.Fatal("no blocked hot bullet count found")
+	return 0
+}
+
+func hotBulletCandidateWithUpdateCount(count int) RealtimeLaneCandidate {
+	updates := make([]map[string]any, 0, count)
+	for i := 1; i <= count; i++ {
+		updates = append(updates, map[string]any{
+			"id": fmt.Sprintf("bullet-%d", i),
+			"owner_id": "player-1",
+			"x": i,
+			"y": i + 1,
+			"rotation": i + 2,
+			"weapon_id": "laser",
+			"projectile_type": "laser",
+		})
+	}
+	return RealtimeLaneCandidate{
+		Lane: LaneBullets,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: BulletWireDeltaPacket{
+			Type: PacketFamilyBulletDelta,
+			Sequence: 2,
+			ServerSentMsec: 1234,
+			BulletUpdates: updates,
+		},
 	}
 }
 

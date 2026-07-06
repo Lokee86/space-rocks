@@ -1,6 +1,7 @@
 extends GutTest
 
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
 const WebRTCTransportScript := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 
 
@@ -74,6 +75,8 @@ func test_connection_service_starts_and_wires_webrtc_transport() -> void:
 		{"lane": "overlay", "channel_label": "sr.overlay", "channel_id": 2},
 		{"lane": "session", "channel_label": "sr.session", "channel_id": 3},
 		{"lane": "event", "channel_label": "sr.event", "channel_id": 4},
+		{"lane": "asteroids", "channel_label": "sr.asteroids", "channel_id": 5},
+		{"lane": "bullets", "channel_label": "sr.bullets", "channel_id": 6},
 	])
 	service.webrtc_transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "server-smoke", "origin": "server"})
 	service.webrtc_transport.failed.emit("peer_error", "boom")
@@ -118,6 +121,53 @@ func test_webrtc_transport_non_smoke_packet_dispatches_to_gameplay() -> void:
 	assert_true(smoke_packets.is_empty())
 
 
+func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
+	var service := ClientConnectionService.new()
+	var fake_network := FakeNetworkClient.new()
+	var fake_peer := FakeTransportPeer.new()
+	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.network_client = fake_network
+	service.client_packet_sender = fake_sender
+	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.realtime_router = RealtimeRouter.new()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
+	add_child_autofree(service)
+	service.realtime_router.world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+
+	service._on_packet_received({
+		"type": "asteroid_delta",
+		"asteroid_updates": [
+			{"id": "asteroid-1", "x": 42, "y": 84},
+		],
+	})
+
+	assert_eq(service.realtime_router.world_lane_state.asteroids["asteroid-1"]["x"], 4.2)
+	assert_eq(service.realtime_router.world_lane_state.asteroids["asteroid-1"]["y"], 8.4)
+
+
+func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
+	var service := ClientConnectionService.new()
+	var fake_network := FakeNetworkClient.new()
+	var fake_peer := FakeTransportPeer.new()
+	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.network_client = fake_network
+	service.client_packet_sender = fake_sender
+	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.realtime_router = RealtimeRouter.new()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
+	add_child_autofree(service)
+	service.realtime_router.world_lane_state.upsert_bullet({"id": "bullet-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+
+	service._on_packet_received({
+		"type": "bullet_delta",
+		"bullet_updates": [
+			{"id": "bullet-1", "x": 55, "y": 66},
+		],
+	})
+
+	assert_eq(service.realtime_router.world_lane_state.bullets["bullet-1"]["x"], 5.5)
+	assert_eq(service.realtime_router.world_lane_state.bullets["bullet-1"]["y"], 6.6)
+
+
 func _make_fake_transport_peer(fake_peer: FakeTransportPeer) -> WebRTCTransport:
 	return fake_peer
-

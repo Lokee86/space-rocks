@@ -106,7 +106,7 @@ func test_start_configures_channels_and_emits_offer() -> void:
 	assert_eq(fake_peer.initialize_args.size(), 1)
 	assert_true(fake_peer.initialize_args[0].is_empty())
 
-	assert_eq(fake_peer.create_data_channel_args.size(), 4)
+	assert_eq(fake_peer.create_data_channel_args.size(), 6)
 	assert_eq(fake_peer.create_data_channel_args[0]["label"], "sr.world")
 	assert_eq(fake_peer.create_data_channel_args[0]["options"]["id"], 1)
 	assert_eq(fake_peer.create_data_channel_args[0]["options"]["negotiated"], true)
@@ -117,17 +117,33 @@ func test_start_configures_channels_and_emits_offer() -> void:
 	assert_eq(fake_peer.create_data_channel_args[2]["options"]["id"], 3)
 	assert_eq(fake_peer.create_data_channel_args[3]["label"], "sr.event")
 	assert_eq(fake_peer.create_data_channel_args[3]["options"]["id"], 4)
+	assert_eq(fake_peer.create_data_channel_args[4]["label"], "sr.asteroids")
+	assert_eq(fake_peer.create_data_channel_args[4]["options"]["id"], 5)
+	assert_eq(fake_peer.create_data_channel_args[5]["label"], "sr.bullets")
+	assert_eq(fake_peer.create_data_channel_args[5]["options"]["id"], 6)
 	assert_eq(fake_peer.create_offer_called, 1)
 	assert_eq(offer_values.size(), 2)
 	assert_eq(offer_values[0], "offer")
 	assert_eq(offer_values[1], "sdp-text")
-	assert_eq(ready_values.size(), 4)
+	assert_eq(ready_values.size(), 6)
 	assert_eq(ready_values[0]["lane"], "world")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
 	assert_eq(ready_values[0]["channel_id"], 1)
+	assert_eq(ready_values[1]["lane"], "overlay")
+	assert_eq(ready_values[1]["channel_label"], "sr.overlay")
+	assert_eq(ready_values[1]["channel_id"], 2)
+	assert_eq(ready_values[2]["lane"], "session")
+	assert_eq(ready_values[2]["channel_label"], "sr.session")
+	assert_eq(ready_values[2]["channel_id"], 3)
 	assert_eq(ready_values[3]["lane"], "event")
 	assert_eq(ready_values[3]["channel_label"], "sr.event")
 	assert_eq(ready_values[3]["channel_id"], 4)
+	assert_eq(ready_values[4]["lane"], "asteroids")
+	assert_eq(ready_values[4]["channel_label"], "sr.asteroids")
+	assert_eq(ready_values[4]["channel_id"], 5)
+	assert_eq(ready_values[5]["lane"], "bullets")
+	assert_eq(ready_values[5]["channel_label"], "sr.bullets")
+	assert_eq(ready_values[5]["channel_id"], 6)
 
 
 func test_start_passes_configured_ice_servers_to_initialize() -> void:
@@ -154,6 +170,8 @@ func test_handle_answer_and_remote_ice_forward_to_peer() -> void:
 		"overlay": FakeChannel.new(),
 		"session": FakeChannel.new(),
 		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
 	})
 
 	peer.handle_answer("answer", "remote-sdp")
@@ -174,6 +192,8 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 		"overlay": FakeChannel.new(),
 		"session": FakeChannel.new(),
 		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
 	}
 	peer.set_peer_for_tests(fake_peer, channels)
 	channels["world"].ready_state = WebRTCDataChannel.STATE_OPEN
@@ -191,22 +211,30 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 
 	channels["session"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["event"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["asteroids"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["bullets"].ready_state = WebRTCDataChannel.STATE_OPEN
 	peer.poll()
 
 	assert_eq(fake_peer.poll_called, 2)
-	assert_eq(ready_values.size(), 4)
+	assert_eq(ready_values.size(), 6)
 	assert_eq(ready_values[0]["lane"], "world")
 	assert_eq(ready_values[1]["lane"], "overlay")
 	assert_eq(ready_values[2]["lane"], "session")
 	assert_eq(ready_values[3]["lane"], "event")
+	assert_eq(ready_values[4]["lane"], "asteroids")
+	assert_eq(ready_values[5]["lane"], "bullets")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
 	assert_eq(ready_values[1]["channel_label"], "sr.overlay")
 	assert_eq(ready_values[2]["channel_label"], "sr.session")
 	assert_eq(ready_values[3]["channel_label"], "sr.event")
+	assert_eq(ready_values[4]["channel_label"], "sr.asteroids")
+	assert_eq(ready_values[5]["channel_label"], "sr.bullets")
 	assert_eq(ready_values[0]["channel_id"], 1)
 	assert_eq(ready_values[1]["channel_id"], 2)
 	assert_eq(ready_values[2]["channel_id"], 3)
 	assert_eq(ready_values[3]["channel_id"], 4)
+	assert_eq(ready_values[4]["channel_id"], 5)
+	assert_eq(ready_values[5]["channel_id"], 6)
 
 
 func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
@@ -217,12 +245,16 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 		"overlay": FakeChannel.new(),
 		"session": FakeChannel.new(),
 		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
 	}
 	peer.set_peer_for_tests(fake_peer, channels)
 	channels["world"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["overlay"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["session"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["event"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["asteroids"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["bullets"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["world"].packets.append(JSON.stringify({
 		"type": "webrtc_smoke",
 		"smoke_id": "smoke-1",
@@ -240,6 +272,14 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	channels["event"].packets.append(JSON.stringify({
 		"type": "event_batch",
 		"lane": "event",
+	}).to_utf8_buffer())
+	channels["asteroids"].packets.append(JSON.stringify({
+		"type": "asteroids_delta",
+		"lane": "asteroids",
+	}).to_utf8_buffer())
+	channels["bullets"].packets.append(JSON.stringify({
+		"type": "bullet_delta",
+		"lane": "bullets",
 	}).to_utf8_buffer())
 
 	var ready_values: Array = []
@@ -265,11 +305,11 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	peer.poll()
 
 	assert_eq(fake_peer.poll_called, 1)
-	assert_eq(ready_values.size(), 4)
+	assert_eq(ready_values.size(), 6)
 	assert_eq(ready_values[0]["lane"], "world")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
 	assert_eq(ready_values[0]["channel_id"], 1)
-	assert_eq(received_packets.size(), 4)
+	assert_eq(received_packets.size(), 6)
 	assert_eq(received_packets[0]["type"], "webrtc_smoke")
 	assert_eq(received_packets[0]["smoke_id"], "smoke-1")
 	assert_eq(received_packets[1]["type"], "overlay_delta")
@@ -278,6 +318,10 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	assert_eq(received_packets[2]["lane"], "session")
 	assert_eq(received_packets[3]["type"], "event_batch")
 	assert_eq(received_packets[3]["lane"], "event")
+	assert_eq(received_packets[4]["type"], "asteroids_delta")
+	assert_eq(received_packets[4]["lane"], "asteroids")
+	assert_eq(received_packets[5]["type"], "bullet_delta")
+	assert_eq(received_packets[5]["lane"], "bullets")
 	assert_eq(smoke_packets.size(), 1)
 	assert_true(failed_packets.is_empty())
 
@@ -383,4 +427,3 @@ func test_poll_emits_packet_received_for_compact_realtime_packet() -> void:
 
 	assert_eq(received_packets.size(), 1)
 	assert_eq(received_packets[0]["type"], "world_delta")
-

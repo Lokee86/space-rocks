@@ -17,6 +17,8 @@ signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
 signal world_full_received(packet: Dictionary)
 signal world_delta_received(packet: Dictionary)
+signal asteroid_delta_received(packet: Dictionary)
+signal bullet_delta_received(packet: Dictionary)
 signal overlay_full_received(packet: Dictionary)
 signal overlay_delta_received(packet: Dictionary)
 signal session_full_received(packet: Dictionary)
@@ -229,6 +231,8 @@ func _connect_server_packet_dispatcher_signals() -> void:
 	_connect_dispatcher_signal("room_error_received", Callable(self, "_on_room_error_received"))
 	_connect_dispatcher_signal("world_full_received", Callable(self, "_on_world_full_received"))
 	_connect_dispatcher_signal("world_delta_received", Callable(self, "_on_world_delta_received"))
+	_connect_dispatcher_signal("asteroid_delta_received", Callable(self, "_on_asteroid_delta_received"))
+	_connect_dispatcher_signal("bullet_delta_received", Callable(self, "_on_bullet_delta_received"))
 	_connect_dispatcher_signal("overlay_full_received", Callable(self, "_on_overlay_full_received"))
 	_connect_dispatcher_signal("overlay_delta_received", Callable(self, "_on_overlay_delta_received"))
 	_connect_dispatcher_signal("session_full_received", Callable(self, "_on_session_full_received"))
@@ -340,6 +344,18 @@ func _on_world_full_received(packet: Dictionary) -> void:
 func _on_world_delta_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	world_delta_received.emit(packet)
+	_emit_gameplay_packet(packet)
+
+
+func _on_asteroid_delta_received(packet: Dictionary) -> void:
+	_route_gameplay_packet(packet)
+	asteroid_delta_received.emit(packet)
+	_emit_gameplay_packet(packet)
+
+
+func _on_bullet_delta_received(packet: Dictionary) -> void:
+	_route_gameplay_packet(packet)
+	bullet_delta_received.emit(packet)
 	_emit_gameplay_packet(packet)
 
 

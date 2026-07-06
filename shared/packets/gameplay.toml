@@ -1,620 +1,754 @@
 [[structs]]
+
 id = "ClientPacket"
 
 [[structs.fields]]
+
 name = "type"
 json = "type"
 type = "string"
 
 [[structs.fields]]
+
 name = "input"
 json = "input"
 type = "InputState"
 go_type = "runtime.InputState"
 
 [[structs.fields]]
+
 name = "config"
 json = "config"
 type = "ClientConfig"
 go_type = "runtime.ClientConfig"
 
 [[structs.fields]]
+
 name = "room_code"
 go_name = "RoomCode"
 json = "room_code"
 type = "string"
 
 [[structs.fields]]
+
 name = "local_profile_id"
 go_name = "LocalProfileID"
 json = "local_profile_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "ready"
 json = "ready"
 type = "bool"
 
 [[structs.fields]]
+
 name = "x"
 json = "x"
 type = "float"
 
 [[structs.fields]]
+
 name = "y"
 json = "y"
 type = "float"
 
 [[structs.fields]]
+
 name = "target_kind"
 go_name = "TargetKind"
 json = "target_kind"
 type = "string"
 
 [[structs.fields]]
+
 name = "target_id"
 go_name = "TargetID"
 json = "target_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "token"
 json = "token"
 type = "string"
 
 [[structs.fields]]
+
 name = "sequence"
 json = "sequence"
 type = "int"
 
 [[structs.fields]]
+
 name = "client_sent_msec"
 go_name = "ClientSentMsec"
 json = "client_sent_msec"
 type = "int"
 
 [[structs.fields]]
+
 name = "server_received_msec"
 go_name = "ServerReceivedMsec"
 json = "server_received_msec"
 type = "int"
 
 [[structs.fields]]
+
 name = "server_sent_msec"
 go_name = "ServerSentMsec"
 json = "server_sent_msec"
 type = "int"
 
 [[structs]]
+
 id = "ClientConfig"
 
 [[structs.fields]]
+
 name = "visible_world_width"
 go_name = "VisibleWorldWidth"
 json = "visible_world_width"
 type = "float"
 
 [[structs.fields]]
+
 name = "visible_world_height"
 go_name = "VisibleWorldHeight"
 json = "visible_world_height"
 type = "float"
 
 [[structs]]
+
 id = "InputState"
 
 [[structs.fields]]
+
 name = "forward"
 json = "forward"
 type = "bool"
 
 [[structs.fields]]
+
 name = "back"
 json = "back"
 type = "bool"
 
 [[structs.fields]]
+
 name = "right"
 json = "right"
 type = "bool"
 
 [[structs.fields]]
+
 name = "left"
 json = "left"
 type = "bool"
 
 [[structs.fields]]
+
 name = "primary_fire"
 json = "primary_fire"
 type = "bool"
 
 [[structs.fields]]
+
 name = "secondary_fire"
 json = "secondary_fire"
 type = "bool"
 
 [[structs]]
+
 id = "ShipState"
 
 [[structs.fields]]
+
 name = "id"
 json = "id"
 type = "string"
 
 [[structs.fields]]
+
 name = "ship_type"
 json = "ship_type"
 type = "string"
 
 [[structs.fields]]
+
 name = "x"
 json = "x"
 type = "float"
 
 [[structs.fields]]
+
 name = "y"
 json = "y"
 type = "float"
 
 [[structs.fields]]
+
 name = "rotation"
 json = "rotation"
 type = "float"
 
 [[structs.fields]]
+
 name = "health"
 json = "health"
 type = "int"
 
 [[structs.fields]]
+
 name = "shields"
 json = "shields"
 type = "int"
 
 [[structs.fields]]
+
 name = "thrusting"
 json = "thrusting"
 type = "bool"
 
 [[structs.fields]]
+
 name = "target_kind"
 go_name = "TargetKind"
 json = "target_kind"
 type = "string"
 
 [[structs.fields]]
+
 name = "target_id"
 go_name = "TargetID"
 json = "target_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "primary_weapon_id"
 go_name = "PrimaryWeaponID"
 json = "primary_weapon_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "primary_ammo_policy"
 go_name = "PrimaryAmmoPolicy"
 json = "primary_ammo_policy"
 type = "string"
 
 [[structs.fields]]
+
 name = "primary_cooldown_remaining"
 go_name = "PrimaryCooldownRemaining"
 json = "primary_cooldown_remaining"
 type = "float"
 
 [[structs.fields]]
+
 name = "primary_ammo_remaining"
 go_name = "PrimaryAmmoRemaining"
 json = "primary_ammo_remaining"
 type = "int"
 
 [[structs.fields]]
+
 name = "secondary_weapon_id"
 go_name = "SecondaryWeaponID"
 json = "secondary_weapon_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "secondary_ammo_policy"
 go_name = "SecondaryAmmoPolicy"
 json = "secondary_ammo_policy"
 type = "string"
 
 [[structs.fields]]
+
 name = "secondary_cooldown_remaining"
 go_name = "SecondaryCooldownRemaining"
 json = "secondary_cooldown_remaining"
 type = "float"
 
 [[structs.fields]]
+
 name = "secondary_ammo_remaining"
 go_name = "SecondaryAmmoRemaining"
 json = "secondary_ammo_remaining"
 type = "int"
 
 [[structs]]
+
 id = "PlayerSessionState"
 
 [[structs.fields]]
+
 name = "id"
 json = "id"
 type = "string"
 
 [[structs.fields]]
+
 name = "ship_type"
 json = "ship_type"
 type = "string"
 
 [[structs.fields]]
+
 name = "score"
 json = "score"
 type = "int"
 
 [[structs.fields]]
+
 name = "lives"
 json = "lives"
 type = "int"
 
 [[structs.fields]]
+
 name = "respawn_cooldown"
 go_name = "RespawnCooldown"
 json = "respawn_cooldown"
 type = "float"
 
 [[structs.fields]]
+
 name = "primary_weapon_id"
 go_name = "PrimaryWeaponID"
 json = "primary_weapon_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "primary_ammo_policy"
 go_name = "PrimaryAmmoPolicy"
 json = "primary_ammo_policy"
 type = "string"
 
 [[structs.fields]]
+
 name = "secondary_weapon_id"
 go_name = "SecondaryWeaponID"
 json = "secondary_weapon_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "secondary_ammo_policy"
 go_name = "SecondaryAmmoPolicy"
 json = "secondary_ammo_policy"
 type = "string"
 
 [[structs.fields]]
+
 name = "spawn_x"
 go_name = "SpawnX"
 json = "spawn_x"
 type = "float"
 
 [[structs.fields]]
+
 name = "spawn_y"
 go_name = "SpawnY"
 json = "spawn_y"
 type = "float"
 
 [[structs]]
+
 id = "AsteroidState"
 
 [[structs.fields]]
+
 name = "id"
 json = "id"
 type = "string"
 
 [[structs.fields]]
+
 name = "x"
 json = "x"
 type = "float"
 
 [[structs.fields]]
+
 name = "y"
 json = "y"
 type = "float"
 
 [[structs.fields]]
+
 name = "size"
 json = "size"
 type = "int"
 
 [[structs.fields]]
+
 name = "health"
 json = "health"
 type = "int"
 
 [[structs.fields]]
+
 name = "scale"
 json = "scale"
 type = "float"
 
 [[structs.fields]]
+
 name = "variant"
 json = "variant"
 type = "int"
 
 [[structs]]
+
 id = "BulletState"
 
 [[structs.fields]]
+
 name = "id"
 json = "id"
 type = "string"
 
 [[structs.fields]]
+
 name = "owner_id"
 go_name = "OwnerID"
 json = "owner_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "x"
 json = "x"
 type = "float"
 
 [[structs.fields]]
+
 name = "y"
 json = "y"
 type = "float"
 
 [[structs.fields]]
+
 name = "rotation"
 json = "rotation"
 type = "float"
 
 [[structs.fields]]
+
 name = "weapon_id"
 go_name = "WeaponID"
 json = "weapon_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "projectile_type"
 go_name = "ProjectileType"
 json = "projectile_type"
 type = "string"
 
 [[structs]]
+
 id = "PickupState"
 
 [[structs.fields]]
+
 name = "id"
 json = "id"
 type = "string"
 
 [[structs.fields]]
+
 name = "type"
 json = "type"
 type = "string"
 
 [[structs.fields]]
+
 name = "pickup_class"
 go_name = "PickupClass"
 json = "pickup_class"
 type = "string"
 
 [[structs.fields]]
+
 name = "x"
 json = "x"
 type = "float"
 
 [[structs.fields]]
+
 name = "y"
 json = "y"
 type = "float"
 
 [[structs.fields]]
+
 name = "health"
 json = "health"
 type = "int"
 
 [[structs.fields]]
+
 name = "age_seconds"
 go_name = "AgeSeconds"
 json = "age_seconds"
 type = "float"
 
 [[structs.fields]]
+
 name = "lifespan_seconds"
 go_name = "LifespanSeconds"
 json = "lifespan_seconds"
 type = "float"
 
 [[structs]]
+
 id = "EventState"
 
 [[structs.fields]]
+
 name = "type"
 json = "type"
 type = "string"
 
 [[structs.fields]]
+
 name = "player_id"
 go_name = "PlayerID"
 json = "player_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "lives"
 json = "lives"
 type = "int"
 
 [[structs.fields]]
+
 name = "respawn_delay"
 go_name = "RespawnDelay"
 json = "respawn_delay"
 type = "float"
 
 [[structs.fields]]
+
 name = "x"
 json = "x"
 type = "float"
 
 [[structs.fields]]
+
 name = "y"
 json = "y"
 type = "float"
 
 [[structs.fields]]
+
 name = "pickup_id"
 go_name = "PickupID"
 json = "pickup_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "pickup_type"
 go_name = "PickupType"
 json = "pickup_type"
 type = "string"
 
 [[structs.fields]]
+
 name = "source_type"
 go_name = "SourceType"
 json = "source_type"
 type = "string"
 
 [[structs.fields]]
+
 name = "source_id"
 go_name = "SourceID"
 json = "source_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "table_id"
 go_name = "TableID"
 json = "table_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "lives_after"
 go_name = "LivesAfter"
 json = "lives_after"
 type = "int"
 
 [[structs.fields]]
+
 name = "effect_type"
 json = "effect_type"
 type = "string"
 
 [[structs.fields]]
+
 name = "amount"
 json = "amount"
 type = "int"
 
 [[structs]]
+
 id = "PlayerPauseState"
 
 [[structs.fields]]
+
 name = "type"
 json = "type"
 type = "string"
 
 [[structs.fields]]
+
 name = "player_id"
 go_name = "PlayerID"
 json = "player_id"
 type = "string"
 
 [[structs.fields]]
+
 name = "paused"
 json = "paused"
 type = "bool"
 
 [[packet_types]]
+
 id = "input"
 value = "input"
 
 [[packet_types]]
+
 id = "client_config"
 value = "client_config"
 
 [[packet_types]]
+
 id = "bullet_blast"
 value = "bullet_blast"
 
 [[packet_types]]
+
 id = "ship_death"
 value = "ship_death"
 
 [[packet_types]]
+
 id = "respawn"
 value = "respawn"
 
 [[packet_types]]
+
 id = "pause_request"
 value = "pause_request"
 
 [[packet_types]]
+
 id = "player_pause_state"
 value = "player_pause_state"
 
 [[packet_types]]
+
 id = "telemetry_ping"
 value = "telemetry_ping"
 
 [[packet_types]]
+
 id = "telemetry_pong"
 value = "telemetry_pong"
 
 [[packet_types]]
+
 id = "set_target_player_request"
 value = "set_target_player_request"
 
 [[packet_types]]
+
 id = "select_target_at_position_request"
 value = "select_target_at_position_request"
 
 [[packet_types]]
+
 id = "clear_target_request"
 value = "clear_target_request"
 
 [[packet_types]]
+
 id = "world_full"
 value = "world_full"
 
 [[packet_types]]
+
 id = "world_delta"
 value = "world_delta"
 
 [[packet_types]]
+
 id = "overlay_full"
 value = "overlay_full"
 
 [[packet_types]]
+
 id = "overlay_delta"
 value = "overlay_delta"
 
 [[packet_types]]
+
 id = "session_full"
 value = "session_full"
 
 [[packet_types]]
+
 id = "session_delta"
 value = "session_delta"
 
 [[packet_types]]
+
+id = "asteroid_delta"
+value = "asteroid_delta"
+
+[[packet_types]]
+
+id = "bullet_delta"
+value = "bullet_delta"
+
+[[packet_types]]
+
 id = "event_batch"
 value = "event_batch"
 
 [[packet_types]]
+
 id = "resync_request"
 value = "resync_request"
 
 [[packet_types]]
+
 id = "resync_required"
 value = "resync_required"
 
 [[builders]]
+
 id = "input_packet"
 args = ["forward", "back", "right", "left", "primary_fire", "secondary_fire"]
 
 [builders.body]
+
 type = "input"
 
 [builders.body.input]
@@ -626,31 +760,39 @@ primary_fire = "$primary_fire"
 secondary_fire = "$secondary_fire"
 
 [[builders]]
+
 id = "respawn_packet"
 
 [builders.body]
+
 type = "respawn"
 
 [[builders]]
+
 id = "pause_request_packet"
 
 [builders.body]
+
 type = "pause_request"
 
 [[builders]]
+
 id = "set_target_player_request_packet"
 args = ["target_kind", "target_id"]
 
 [builders.body]
+
 type = "set_target_player_request"
 target_kind = "$target_kind"
 target_id = "$target_id"
 
 [[builders]]
+
 id = "select_target_at_position_request_packet"
 args = ["x", "y", "target_kind", "target_id"]
 
 [builders.body]
+
 type = "select_target_at_position_request"
 x = "$x"
 y = "$y"
@@ -658,18 +800,24 @@ target_kind = "$target_kind"
 target_id = "$target_id"
 
 [[builders]]
+
 id = "clear_target_request_packet"
 
 [builders.body]
+
 type = "clear_target_request"
 
 [[builders]]
+
 id = "client_config_packet"
 args = ["visible_world_width", "visible_world_height"]
 
 [builders.body]
+
 type = "client_config"
 
 [builders.body.config]
+
 visible_world_width = "$visible_world_width"
 visible_world_height = "$visible_world_height"
+

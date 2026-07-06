@@ -44,6 +44,38 @@ func test_lowercase_lane_fixtures_route_directly() -> void:
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_SESSION))
 
 
+func test_asteroid_delta_routes_into_world_lane_state() -> void:
+	var router := RealtimeRouter.new()
+	router.world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+
+	router.route_lane_packet({
+		"type": "asteroid_delta",
+		"asteroid_updates": [
+			{"id": "asteroid-1", "x": 42, "y": 84},
+			{"id": "asteroid-unknown", "x": 123, "y": 456},
+		],
+	})
+
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["x"], 4.2)
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["y"], 8.4)
+	assert_false(router.world_lane_state.asteroids.has("asteroid-unknown"))
+
+
+func test_bullet_delta_routes_into_world_lane_state() -> void:
+	var router := RealtimeRouter.new()
+	router.world_lane_state.upsert_bullet({"id": "bullet-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+
+	router.route_lane_packet({
+		"type": "bullet_delta",
+		"bullet_updates": [
+			{"id": "bullet-1", "x": 55, "y": 66},
+		],
+	})
+
+	assert_eq(router.world_lane_state.bullets["bullet-1"]["x"], 5.5)
+	assert_eq(router.world_lane_state.bullets["bullet-1"]["y"], 6.6)
+
+
 func _decode_fixture(text: String) -> Dictionary:
 	var decoded = PacketCodec.decode(text)
 	assert_true(decoded.ok)

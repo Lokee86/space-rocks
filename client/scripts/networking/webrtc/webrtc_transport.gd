@@ -6,6 +6,8 @@ const GAMEPLAY_CHANNEL_SPECS := [
 	{"lane": "overlay", "label": "sr.overlay", "id": 2},
 	{"lane": "session", "label": "sr.session", "id": 3},
 	{"lane": "event", "label": "sr.event", "id": 4},
+	{"lane": "asteroids", "label": "sr.asteroids", "id": 5},
+	{"lane": "bullets", "label": "sr.bullets", "id": 6},
 ]
 const SMOKE_ORIGIN_CLIENT := "client"
 const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")

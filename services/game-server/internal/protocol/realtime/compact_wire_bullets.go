@@ -6,6 +6,8 @@ func compactWirePackBullets(packet map[string]any) map[string]any {
 		return compactWirePackWorldFullBullets(packet)
 	case "wd":
 		return compactWirePackWorldDeltaBullets(packet)
+	case "bd":
+		return compactWirePackBulletDelta(packet)
 	default:
 		return packet
 	}
@@ -110,4 +112,8 @@ func compactWirePackBulletMovementUpdate(value any) any {
 	}
 
 	return tuple
+}
+
+func compactWirePackBulletDelta(packet map[string]any) map[string]any {
+	return compactWirePackWorldDeltaBullets(packet)
 }

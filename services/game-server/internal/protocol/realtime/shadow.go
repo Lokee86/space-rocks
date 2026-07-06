@@ -51,7 +51,20 @@ func ShadowLaneMetricRecords(result ShadowRealtimeResult) []packetmetrics.Packet
 	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.Candidates))
 	for _, candidate := range result.Candidates {
 		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane)
+		diagnostics := CandidateWriteDiagnosticsFor(candidate, result.SessionState, result.EncodedBytes[candidate.Lane])
 		record.Bytes = result.EncodedBytes[candidate.Lane]
+		record.Channel = diagnostics.Channel
+		record.EncodedBytes = diagnostics.EncodedBytes
+		record.WorldHotCount = diagnostics.WorldHotCount
+		record.AsteroidHotCount = diagnostics.AsteroidHotCount
+		record.BulletHotCount = diagnostics.BulletHotCount
+		record.AsteroidOffloadedCount = diagnostics.AsteroidOffloadedCount
+		record.BulletOffloadedCount = diagnostics.BulletOffloadedCount
+		record.AsteroidMode = string(diagnostics.AsteroidMode)
+		record.BulletMode = string(diagnostics.BulletMode)
+		record.Cadence = diagnostics.Cadence
+		record.PacketOverTarget = diagnostics.PacketOverTarget
+		record.PacketOverHardCap = diagnostics.PacketOverHardCap
 		records = append(records, record)
 	}
 	return records

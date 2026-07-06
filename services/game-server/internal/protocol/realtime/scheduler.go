@@ -34,6 +34,15 @@ func SelectSendPlan(records []ScheduleRecord) SendPlan {
 	return plan
 }
 
+func hotPacketSendAllowed(encodedBytes int) bool {
+	switch ClassifyHotPacketEncodedSize(encodedBytes) {
+	case EncodedPacketSizeNormal, EncodedPacketSizeOverTarget:
+		return true
+	default:
+		return false
+	}
+}
+
 func appendPlannedRecord(plan *SendPlan, record ScheduleRecord, budget int) int {
 	estimated := record.EstimatedBytes
 	if estimated <= 0 {
@@ -114,6 +123,20 @@ func scheduleRank(record ScheduleRecord) int {
 		return 7
 	}
 	return 8
+}
+
+func hotPacketCadenceAllows(mode HotLaneMode, sequence int) bool {
+	if sequence <= 0 {
+		sequence = 1
+	}
+	switch mode {
+	case HotLaneModeFullOwned30Hz:
+		return sequence%2 == 0
+	case HotLaneModeFullOwned20Hz:
+		return sequence%3 == 0
+	default:
+		return true
+	}
 }
 
 func laneBootstrapRank(record ScheduleRecord) int {

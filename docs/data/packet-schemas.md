@@ -100,6 +100,8 @@ overlay_full
 overlay_delta
 session_full
 session_delta
+asteroid_delta
+bullet_delta
 event_batch
 resync_request
 resync_required

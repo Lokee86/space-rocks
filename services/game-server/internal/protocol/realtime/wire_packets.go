@@ -8,6 +8,21 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime/quantize"
 )
 
+type AsteroidWireDeltaPacket struct {
+	Type            string           `json:"type"`
+	Sequence        int              `json:"sequence"`
+	ServerSentMsec  int              `json:"server_sent_msec"`
+	AsteroidUpdates []map[string]any `json:"asteroid_updates"`
+}
+
+type BulletWireDeltaPacket struct {
+	Type           string           `json:"type"`
+	Sequence       int              `json:"sequence"`
+	ServerSentMsec int              `json:"server_sent_msec"`
+	BulletUpdates  []map[string]any `json:"bullet_updates"`
+}
+
+
 func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
 	switch packet := candidate.Full.(type) {
 	case WorldFullPacket:
@@ -32,6 +47,10 @@ func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
 			return wireWorldDeltaPacket(packet)
 		case WorldWireDeltaPacket:
 			return wireWorldWireDeltaPacket(packet)
+		case AsteroidWireDeltaPacket:
+			return wireAsteroidWireDeltaPacket(packet)
+		case BulletWireDeltaPacket:
+			return wireBulletWireDeltaPacket(packet)
 		case OverlayLaneDelta:
 			return wireOverlayDeltaPacket(packet)
 		case OverlayWireLaneDelta:
@@ -257,6 +276,25 @@ func wireWorldWireDeltaPacket(packet WorldWireDeltaPacket) map[string]any {
 }
 
 
+func wireAsteroidWireDeltaPacket(packet AsteroidWireDeltaPacket) map[string]any {
+	wire := map[string]any{
+		"type":             packet.Type,
+		"sequence":         packet.Sequence,
+		"server_sent_msec": packet.ServerSentMsec,
+	}
+	putFilteredRecordArrayIfNonEmpty(wire, "asteroid_updates", packet.AsteroidUpdates, []string{"id", "x", "y"})
+	return wire
+}
+
+func wireBulletWireDeltaPacket(packet BulletWireDeltaPacket) map[string]any {
+	wire := map[string]any{
+		"type":             packet.Type,
+		"sequence":         packet.Sequence,
+		"server_sent_msec": packet.ServerSentMsec,
+	}
+	putFilteredRecordArrayIfNonEmpty(wire, "bullet_updates", packet.BulletUpdates, []string{"id", "x", "y", "rotation"})
+	return wire
+}
 func wireOverlayDeltaPacket(packet OverlayLaneDelta) map[string]any {
 	wire := wireMetadataPacket(PacketTypeOverlayDelta, packet.Metadata)
 	putRecordArrayIfNonEmpty(wire, "receiver_creates", packet.Receiver.Creates)
@@ -713,7 +751,6 @@ func toSnakeCase(value string) string {
 func isUpper(r rune) bool { return r >= 'A' && r <= 'Z' }
 func isLower(r rune) bool { return r >= 'a' && r <= 'z' }
 func isDigit(r rune) bool { return r >= '0' && r <= '9' }
-
 
 
 
