@@ -1,227 +1,355 @@
-## Hot-Lane Stall Fix Skill
+## Hot-lane size estimator cleanup skill
 
-Use this skill when fixing the Space Rocks realtime regression where `sr.asteroids` and `sr.bullets` stop updating unless player/world state changes.
+Use this skill to remove synchronous hot-path waste from realtime hot-lane packet construction.
 
-## Goal
+The implementation goal is:
 
-Restore smooth asteroid and bullet hot-lane updates when the player is completely still, not shooting, and the reliable `sr.world` lane has no gameplay movement changes.
-
-The fix must make asteroid and bullet movement updates emit based on hot-lane update presence, not on whether the `world` lane is dirty.
-
-## Core diagnosis
-
-The unreliable WebRTC transport policy is not the primary bug.
-
-Keep this policy:
-
-* `sr.world`: reliable/ordered
-* `sr.overlay`: reliable/ordered
-* `sr.session`: reliable/ordered
-* `sr.event`: reliable/ordered
-* `sr.asteroids`: unordered/unreliable, zero retransmits
-* `sr.bullets`: unordered/unreliable, zero retransmits
-
-The bug is in the server realtime planner. Hot asteroid and bullet deltas are gated by `worldDeltaHasChanges` and by cadence based on `worldSequence`. When the player is still and not shooting, `world` may not produce changes, so asteroid/bullet hot packets can stall even though asteroid/bullet positions changed.
+* Remove runtime raw-float reflection assertions from packet encoding.
+* Replace hot-lane greedy JSON trial chunking with conservative compact-JSON byte estimation.
+* Preserve current packet semantics.
+* Preserve bullet movement rotation support for future projectile types, while estimating the actual tuple shape present in each update.
 
 ## Files
 
-Primary file:
+Expected files:
 
-* `services/game-server/internal/protocol/realtime/planner.go`
+```text
+services/game-server/internal/protocol/realtime/active.go
+services/game-server/internal/protocol/realtime/hot_lane_chunker.go
+services/game-server/internal/protocol/realtime/hot_lane_chunker_test.go
+```
 
-Expected test file:
+Likely new file:
 
-* `services/game-server/internal/protocol/realtime/planner_test.go`
+```text
+services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go
+```
 
-Do not modify unless a test proves it is required:
+Possible removal if unused:
 
-* client rendering files
-* client packet application files
-* WebRTC transport setup
-* docs
+```text
+services/game-server/internal/protocol/realtime/quantize/assert.go
+services/game-server/internal/protocol/realtime/quantize/assert_test.go
+```
 
-## Required behavior
+Possible test touch:
 
-Asteroid and bullet movement updates must be sent on their hot lanes whenever hot updates are present.
+```text
+services/game-server/internal/protocol/realtime/active_test.go
+```
 
-Lifecycle ownership must remain unchanged:
+## Step 1: Remove runtime raw-float reflection
 
-* asteroid creates stay in `sr.world`
-* asteroid deletes stay in `sr.world`
-* asteroid movement updates go to `sr.asteroids`
-* bullet creates stay in `sr.world`
-* bullet deletes stay in `sr.world`
-* bullet movement updates go to `sr.bullets`
+In:
 
-Do not move lifecycle creates/deletes into hot lanes.
+```text
+services/game-server/internal/protocol/realtime/active.go
+```
 
-## Implementation steps
+Remove the `quantize.AssertNoRawFloats(...)` call from `encodeLanePacketUnchecked()`.
 
-1. Open `services/game-server/internal/protocol/realtime/planner.go`.
+Remove the `quantize` import from `active.go` if it becomes unused.
 
-2. Find the hot-lane eligibility logic near the world delta split.
+If these files become unused, delete them:
 
-   The broken shape is:
+```text
+services/game-server/internal/protocol/realtime/quantize/assert.go
+services/game-server/internal/protocol/realtime/quantize/assert_test.go
+```
 
-   ```
-   asteroidHotAllowed := asteroidHotPresent && (worldDeltaHasChanges || hotPacketCadenceAllows(split.CohortState.AsteroidMode, worldSequence))
-   bulletHotAllowed := bulletHotPresent && (worldDeltaHasChanges || hotPacketCadenceAllows(split.CohortState.BulletMode, worldSequence))
-   ```
+Do not remove or change actual quantization logic. The reflection assertion is only a diagnostic leak detector.
 
-3. Replace that eligibility with direct hot-update presence:
+## Step 2: Add compact hot-lane byte estimation
 
-   ```
-   asteroidHotAllowed := asteroidHotPresent
-   bulletHotAllowed := bulletHotPresent
-   ```
+Create:
 
-4. Preserve projection advancement.
+```text
+services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go
+```
 
-   If the planner currently appends a world delta candidate when hot-lane updates are emitted, keep that behavior for now so the stored world projection advances to the current full world state.
+Add helpers for estimating compact JSON bytes without calling `json.Marshal`.
 
-   The desired condition shape is:
+Required helper shape:
 
-   ```
-   if worldDeltaHasChanges || asteroidHotAllowed || bulletHotAllowed {
-       chainedWorldProjection := quantizedWorldFull
-       chainedWorldProjection.Metadata = split.WorldDelta.Metadata
-       candidates = append(candidates, RealtimeLaneCandidate{
-           Lane:       LaneWorld,
-           Kind:       RealtimeLaneCandidateKindDelta,
-           Delta:      split.WorldDelta,
-           Projection: chainedWorldProjection,
-       })
-   }
-   ```
+```go
+func estimateCompactJSONTupleBytes(items []any) int
+func estimateJSONValueBytes(value any) int
+func estimateJSONIntBytes(value int64) int
+func estimateJSONStringBytes(value string) int
+```
 
-5. Keep asteroid and bullet hot candidates appended independently:
+Use these rules:
 
-   ```
-   if asteroidHotAllowed {
-       candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneAsteroids, Kind: RealtimeLaneCandidateKindDelta, Delta: *split.AsteroidDelta})
-   }
-   if bulletHotAllowed {
-       candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneBullets, Kind: RealtimeLaneCandidateKindDelta, Delta: *split.BulletDelta})
-   }
-   ```
+* tuple brackets cost `2` bytes
+* tuple commas cost `len(items)-1` bytes
+* `nil` costs `4` bytes for `null`
+* string estimates must include quote bytes
+* integer estimates must count decimal digits and include a negative sign
+* zero costs `1` byte
+* unknown types must use a conservative fallback estimate
 
-6. Do not create fake world changes to force hot-lane sending.
+Prefer over-estimation to under-estimation.
 
-7. Do not introduce a new cadence system in this fix. Correctness comes first. A proper hot-lane cadence can be added later using an independent simulation/send tick or per-lane sequence.
+## Step 3: Estimate bullet update tuples from actual shape
 
-## Test changes
+Add:
 
-Update `services/game-server/internal/protocol/realtime/planner_test.go`.
+```go
+func estimateCompactBulletMovementUpdateBytes(update map[string]any) int
+```
 
-### Remove or rewrite the bad cadence test
+The estimator must mirror the logical shape produced by `compactWirePackBulletMovementUpdate()`.
 
-Delete or rewrite the test named:
+Supported bullet movement tuple shapes:
 
-* `TestAssembleRealtimeLaneCandidatesSkipsHotPacketsOnCadenceAndUsesLatestSnapshot`
+```text
+[id]
+[id,x]
+[id,null,y]
+[id,x,y]
+[id,x,y,rotation]
+```
 
-That test preserves the broken world-sequence coupling. Do not keep an expectation that hot lanes skip merely because the world sequence is not on an eligible cadence tick.
+Do not remove bullet rotation support from the generic wire path. Current straight bullets normally update `x/y`, but future projectiles may update rotation.
 
-### Add asteroid regression test
+The estimator must inspect the actual update map and estimate the tuple it would produce. Do not hardcode all bullet updates as `[id,x,y,rotation]`.
 
-Add a test named:
+## Step 4: Estimate asteroid update tuples from actual shape
 
-* `TestAssembleRealtimeLaneCandidatesEmitsAsteroidHotDeltaWhenOnlyAsteroidsMove`
+Add:
 
-Required setup:
+```go
+func estimateCompactAsteroidMovementUpdateBytes(update map[string]any) int
+```
 
-* Previous snapshot has:
+Supported asteroid movement tuple shapes:
 
-  * one stable player
-  * many asteroids at old positions
-* Current snapshot has:
+```text
+[id]
+[id,x]
+[id,null,y]
+[id,x,y]
+```
 
-  * same stable player with no movement/state changes
-  * same asteroid IDs at new positions
-* Realtime session state has:
+The estimator must inspect the actual update map and estimate the tuple it would produce.
 
-  * final synced `LaneWorld` baseline metadata
-  * `LaneWorld` marked baseline-ready
-  * stored world projection from the previous snapshot
+## Step 5: Estimate hot packet envelope bytes
 
-Required assertions:
+Add packet-level estimators:
 
-* `LaneAsteroids` candidate exists.
-* Candidate kind is `RealtimeLaneCandidateKindDelta`.
-* Candidate delta is `AsteroidWireDeltaPacket`.
-* `AsteroidUpdates` is non-empty.
-* If a `LaneWorld` candidate exists, its world delta must not contain asteroid movement updates in `worldDelta.Asteroids.Updates`.
+```go
+func estimateBulletDeltaPacketBytes(packet BulletWireDeltaPacket, updates []map[string]any) int
+func estimateAsteroidDeltaPacketBytes(packet AsteroidWireDeltaPacket, updates []map[string]any) int
+```
 
-### Add bullet regression test
+Estimate final compact packet shape, including packet metadata and update array overhead.
 
-Add a test named:
+Bullet compact shape is approximately:
 
-* `TestAssembleRealtimeLaneCandidatesEmitsBulletHotDeltaWhenOnlyBulletsMove`
+```json
+{"t":"bd","q":123,"ms":0,"bq":122,"ci":0,"cc":3,"bu":[...]}
+```
 
-Required setup:
+Asteroid compact shape is approximately:
 
-* Previous snapshot has:
+```json
+{"t":"ad","q":123,"ms":0,"bq":122,"ci":0,"cc":3,"au":[...]}
+```
 
-  * one stable player
-  * many bullets at old positions
-* Current snapshot has:
+Include:
 
-  * same stable player with no movement/state changes
-  * same bullet IDs at new positions
-* Realtime session state has:
+* object braces
+* field names
+* quotes
+* colons
+* commas
+* metadata integer byte counts
+* update array brackets
+* commas between update tuples
 
-  * final synced `LaneWorld` baseline metadata
-  * `LaneWorld` marked baseline-ready
-  * stored world projection from the previous snapshot
+The estimate may be conservative.
 
-Required assertions:
+## Step 6: Replace greedy JSON trial chunking
 
-* `LaneBullets` candidate exists.
-* Candidate kind is `RealtimeLaneCandidateKindDelta`.
-* Candidate delta is `BulletWireDeltaPacket`.
-* `BulletUpdates` is non-empty.
-* If a `LaneWorld` candidate exists, its world delta must not contain bullet movement updates in `worldDelta.Bullets.Updates`.
+In:
 
-## Existing behavior to preserve
+```text
+services/game-server/internal/protocol/realtime/hot_lane_chunker.go
+```
 
-Do not break these test expectations:
+Replace the greedy per-update trial-encode behavior in:
 
-* Hot asteroid and bullet schedule records use `DeliveryClassHotSupersedable`.
-* Hot asteroid and bullet schedule records use high priority.
-* Creates/deletes remain in the world delta under pressure.
-* Full world projection remains complete after hot-lane splitting.
-* Hot-lane packets are real candidates, not debug-only records.
+```go
+greedyBulletWireDeltaChunks()
+greedyAsteroidWireDeltaChunks()
+```
 
-## Non-goals
+The old behavior to remove is:
 
-Do not do these in this fix:
+```text
+append update
+encode trial packet
+append update
+encode trial packet
+append update
+encode trial packet
+...
+```
 
-* Do not revert unreliable/unordered WebRTC channels.
-* Do not change client rendering.
-* Do not change projectile scene resolution.
-* Do not change client packet routing.
-* Do not add a new hot-lane cadence abstraction.
-* Do not move lifecycle events out of `sr.world`.
-* Do not perform unrelated cleanup.
-* Do not edit docs unless explicitly requested separately.
+The new behavior should be:
 
-## Acceptance criteria
+```text
+start empty chunk
+for each update:
+    estimate bytes if this update is added
+    if adding update exceeds HardCapBytes and current chunk is not empty:
+        close current chunk
+        start new chunk
+    add update
+```
 
-The implementation is complete when:
+Each chunk must contain at least one update.
 
-* Asteroid hot-lane deltas emit when only asteroid positions changed.
-* Bullet hot-lane deltas emit when only bullet positions changed.
-* The tests prove hot-lane emission does not depend on player movement, shooting, or unrelated world-lane changes.
-* Existing lifecycle ownership remains unchanged.
-* Existing realtime planner tests pass after updating the stale cadence expectation.
-* Manual playtest shows smooth asteroid and bullet updates while the player is still and not firing.
+A single update that estimates above `HardCapBytes` should still become one chunk. The existing final encoded-size guard will decide whether it can be sent.
 
-## Report format
+## Step 7: Use estimator for whole-packet fast path
 
-When done, report:
+For small deltas, use the estimator to keep the packet as one chunk.
 
-* Changed files
-* Tests added or updated
-* Whether hot-lane emission is now independent of `worldDeltaHasChanges`
-* Whether lifecycle creates/deletes still remain in `sr.world`
-* Any tests run and their result
+Bullet example:
 
+```go
+if estimateBulletDeltaPacketBytes(packet, packet.BulletUpdates) <= HardCapBytes {
+    return []RealtimeLaneCandidate{
+        normalizedBulletWireDeltaCandidate(candidate, packet, packet.BulletUpdates, 0, 1),
+    }
+}
+```
+
+Asteroid equivalent:
+
+```go
+if estimateAsteroidDeltaPacketBytes(packet, packet.AsteroidUpdates) <= HardCapBytes {
+    return []RealtimeLaneCandidate{
+        normalizedAsteroidWireDeltaCandidate(candidate, packet, packet.AsteroidUpdates, 0, 1),
+    }
+}
+```
+
+Do not call JSON encode just to decide the fast path.
+
+## Step 8: Preserve final encode guard
+
+Do not remove the real packet encoding and send validation path.
+
+The estimator is only used to split chunks cheaply. The final encoded packet bytes remain the real authority before send.
+
+Keep existing behavior around:
+
+```go
+encodeLanePacket(...)
+hotPacketSendAllowed(...)
+```
+
+## Step 9: Update tests
+
+Update or add tests in:
+
+```text
+services/game-server/internal/protocol/realtime/hot_lane_chunker_test.go
+```
+
+Add estimator-vs-actual tests for bullet updates:
+
+```text
+[id,x,y]
+[id,x]
+[id,null,y]
+[id,x,y,rotation]
+zero values
+negative values
+```
+
+Add estimator-vs-actual tests for asteroid updates:
+
+```text
+[id,x,y]
+[id,x]
+[id,null,y]
+zero values
+negative values
+```
+
+Each estimator test should compare the estimated byte count against actual encoded bytes from the real compact encoding path.
+
+Required assertion:
+
+```text
+estimated >= actual
+```
+
+Keep existing chunking behavior coverage:
+
+* small deltas stay one final chunk
+* oversized deltas split
+* chunk indexes are correct
+* chunk counts are correct
+* final flags are correct
+* all updates are preserved
+* chunks normally stay under `HardCapBytes`
+
+## Constraints
+
+Preserve packet semantics.
+
+Preserve actual quantization behavior.
+
+Preserve bullet movement rotation support in generic wire/compact code.
+
+Do not add async queues.
+
+Do not change metadata advance behavior.
+
+Do not change baseline storage behavior.
+
+Do not change event drain behavior.
+
+Do not do unrelated cleanup.
+
+If a change requires touching another file, touch only the smallest necessary additional file and report why.
+
+If the task balloons, stop and report what expanded.
+
+## Verification
+
+After implementation, run:
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+{
+  cd services/game-server && go test ./internal/protocol/realtime
+  echo
+  cd /mnt/d/\!bin/space-rocks && data-sync -check -packets -go -gds
+} 2>&1 | tee /dev/tty | clip.exe
+```
+
+Then rerun the peak stress scenario and compare:
+
+```text
+main ramp writes/s
+peak hold writes/s
+encoded packet bytes
+hot chunk counts
+server CPU/log pressure
+```
+
+## Report
+
+Report:
+
+```text
+Changed files
+Behavior preserved or changed
+Estimator test coverage added
+Verification result
+```

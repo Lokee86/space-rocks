@@ -7,7 +7,6 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime/quantize"
 )
 
 type EncodedRealtimeLanePacket struct {
@@ -230,7 +229,6 @@ func encodeLanePacketUnchecked(candidate RealtimeLaneCandidate) ([]byte, int) {
 		return nil, 0
 	}
 	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay || candidate.Lane == LaneEvent || candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
-		quantize.AssertNoRawFloats(string(candidate.Lane), string(candidate.Lane), packet)
 		packet = CompactWirePacket(packet)
 	}
 	encoded, err := packetcodec.Encode(packet)

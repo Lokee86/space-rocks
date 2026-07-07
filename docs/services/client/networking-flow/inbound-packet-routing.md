@@ -39,7 +39,7 @@ WebRTCTransport receives DataChannel text
 -> GameplaySessionController.handle_gameplay_packet
 ```
 
-The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Hot asteroid and bullet packets are already routed on unordered/unreliable lanes, and the client keeps monotonic sequence rejection in lane state so late packets cannot roll positions backward. Hot asteroid_delta and bullet_delta packets with missing or non-numeric sequence values are ignored, and sequence gaps are valid.
+The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Hot asteroid and bullet packets are routed on unordered/unreliable lanes. The client rejects lower sequence values so late packets cannot roll positions backward. Same-sequence packets are valid for chunked `asteroid_delta` or `bullet_delta` output and may apply independently. Sequence gaps are valid because hot packets can be dropped.
 
 ## Code root
 
@@ -212,7 +212,7 @@ fields:
 
 The once-per-packet-type guard remains diagnostic-only. It does not affect routing or lane state.
 
-Current WebRTC handling in the client networking stack keeps WebSocket as the owner of auth, lobby, room lifecycle, and WebRTC signaling. WebRTC DataChannels are reusable JSON transport seams, and webrtc_smoke remains a diagnostic packet on that transport. The current packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay packets now arrive over lane-specific WebRTC DataChannels, decode through PacketCodec, dispatch through ServerPacketDispatcher, and then continue through RealtimeRouter. There is no WebSocket fallback for active realtime gameplay packets. Dedicated asteroid and bullet hot movement lanes are implemented for `asteroid_delta` and `bullet_delta`; they are unordered/unreliable, and stale hot-delta sequences are rejected before presentation updates apply. Current client ICE-server configuration is a separate seam from WebSocket signaling and does not change packet routing.
+Under hot-lane stress, multiple `asteroid_delta` or `bullet_delta` packets may arrive for the same lane sequence in one poll window. The routing path should treat those as separate packets and must not coalesce or drop them solely because they share a sequence.
 
 ### Websocket auth result cache
 

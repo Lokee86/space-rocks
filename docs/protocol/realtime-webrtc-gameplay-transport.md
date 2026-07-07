@@ -85,8 +85,7 @@ sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with ma
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
 lifecycle creates/deletes remain on sr.world.
-late asteroid_delta and bullet_delta packets are rejected by monotonic sequence on the client.
-sequence gaps are valid because hot packets can be dropped.
+Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
 ```
 
 
@@ -114,9 +113,10 @@ The server send boundary is:
 
 ```text
 BuildActiveRealtimeResultForGame
+-> realtime lane candidates, including expanded asteroid/bullet hot chunks when needed
 -> selected realtime lane candidates
--> encode selected candidate packet
--> SendEncodedLaneJSON(candidate.Lane, encodedPacket)
+-> encoded lane packet list
+-> SendEncodedLaneJSON(candidate.Lane, encodedPacket) for each encoded packet
 -> physical WebRTC gameplay DataChannel
 ```
 
@@ -134,7 +134,7 @@ WebRTCTransport receives DataChannel text
 -> lane state is fanned out to gameplay presentation
 ```
 
-Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering. Late asteroid_delta and bullet_delta packets are rejected on the client by monotonic sequence checks, and sequence gaps are valid because hot packets can be dropped.
+Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering. Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
 
 ## Hot Movement Split
 
@@ -178,8 +178,10 @@ compression
 schema negotiation
 runtime version negotiation
 record-level packet-budget enforcement
-payload fragmentation
+general-purpose fragmentation for all lane families
 ```
+
+Focused hot-lane chunking is implemented for `asteroid_delta` and `bullet_delta` before the WebRTC send boundary. It emits multiple JSON messages on `sr.asteroids` or `sr.bullets` when a hot movement update list would exceed the hard encoded packet cap.
 
 Unordered/unreliable hot-lane delivery is implemented for sr.asteroids and sr.bullets.
 

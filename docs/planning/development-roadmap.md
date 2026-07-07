@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-The packet-budget evidence checkpoint selected Phase P2 realtime protocol work as the current architectural next step. Lane-native runtime delivery already exists, client and server local JSONL logging already exist, active debug logs can validate encoded bytes, and no-op or scheduler-ish packet log spam has been removed from the active output path. Active `event_batch` presentation-event delivery now also exists: event records are sparse and event-type-specific, compact aliases are active, tuple-packed known events are active, event x/y and ship_death respawn_delay are quantized on the wire, and the lane drains after successful active write/enqueue according to current semantics. Remaining telemetry and logging work should happen only when it is useful during P2 validation or later diagnostics.
+Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 

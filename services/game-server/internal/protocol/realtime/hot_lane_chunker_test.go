@@ -5,13 +5,18 @@ import (
 	"testing"
 )
 
-func makeBulletUpdate(id string, x int, y int, rotation int) map[string]any {
+func makeBulletUpdate(id string, x int, y int) map[string]any {
 	return map[string]any{
-		"id":       id,
-		"x":        x,
-		"y":        y,
-		"rotation": rotation,
+		"id": id,
+		"x":  x,
+		"y":  y,
 	}
+}
+
+func makeBulletUpdateWithRotation(id string, x int, y int, rotation int) map[string]any {
+	update := makeBulletUpdate(id, x, y)
+	update["rotation"] = rotation
+	return update
 }
 
 func makeAsteroidUpdate(id string, x int, y int) map[string]any {
@@ -29,6 +34,14 @@ func encodedCandidateBytes(t *testing.T, candidate RealtimeLaneCandidate) int {
 		t.Fatalf("expected encoded candidate bytes for %#v, got %d and %d", candidate, len(encoded), recordedBytes)
 	}
 	return recordedBytes
+}
+
+func assertConservativeEncodedBytes(t *testing.T, label string, candidate RealtimeLaneCandidate, estimated int) {
+	t.Helper()
+	_, actual := encodeLanePacketUnchecked(candidate)
+	if estimated < actual {
+		t.Fatalf("%s estimated bytes = %d, actual bytes = %d", label, estimated, actual)
+	}
 }
 
 func TestExpandHotLaneCandidateChunksLeavesSmallAsteroidDeltaAsOneFinalChunk(t *testing.T) {
@@ -144,7 +157,7 @@ func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *te
 				SnapshotKind: SnapshotKind("delta"),
 			},
 			BulletUpdates: []map[string]any{
-				makeBulletUpdate("bullet-000001", 1, 2, 3),
+				makeBulletUpdate("bullet-000001", 1, 2),
 			},
 		},
 	}
@@ -172,7 +185,7 @@ func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *te
 func TestExpandHotLaneCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
 	updates := make([]map[string]any, 0, 240)
 	for i := 1; i <= 240; i++ {
-		updates = append(updates, makeBulletUpdate(fmt.Sprintf("bullet-%06d", i), i, i+1, i+2))
+		updates = append(updates, makeBulletUpdate(fmt.Sprintf("bullet-%06d", i), i, i+1))
 	}
 
 	candidate := RealtimeLaneCandidate{
@@ -230,5 +243,138 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
 
 	if totalUpdates != len(updates) {
 		t.Fatalf("total updates across chunks = %d, want %d", totalUpdates, len(updates))
+	}
+}
+
+func TestEstimateCompactBulletMovementUpdateBytesKeepsRotationConservative(t *testing.T) {
+	update := makeBulletUpdateWithRotation("bullet-rot", 7, 8, 9)
+	estimated := estimateCompactBulletMovementUpdateBytes(update)
+	if estimated <= 0 {
+		t.Fatalf("expected positive estimate, got %d", estimated)
+	}
+
+	packed := compactWirePackBulletMovementUpdate(map[string]any{
+		"i": "bullet-rot",
+		"x": 7,
+		"y": 8,
+		"r": 9,
+	})
+	tuple, ok := packed.([]any)
+	if !ok {
+		t.Fatalf("expected compact tuple, got %#v", packed)
+	}
+	if len(tuple) != 4 {
+		t.Fatalf("expected rotation tuple to remain four entries, got %#v", tuple)
+	}
+	if tuple[0] != "bullet-rot" || tuple[1] != 7 || tuple[2] != 8 || tuple[3] != 9 {
+		t.Fatalf("unexpected compact tuple %#v", tuple)
+	}
+	encoded := estimateCompactJSONTupleBytes(tuple)
+	if estimated < encoded {
+		t.Fatalf("estimated bytes = %d, want conservative estimate >= compact tuple bytes %d", estimated, encoded)
+	}
+}
+
+func TestEstimateBulletDeltaPacketBytesIsConservative(t *testing.T) {
+	tests := []struct {
+		name    string
+		updates []map[string]any
+	}{
+		{
+			name:    "id x y",
+			updates: []map[string]any{makeBulletUpdate("bullet-000001", 1, 2)},
+		},
+		{
+			name:    "id x",
+			updates: []map[string]any{{"id": "bullet-000002", "x": 3}},
+		},
+		{
+			name:    "id null y",
+			updates: []map[string]any{{"id": "bullet-000003", "y": 4}},
+		},
+		{
+			name:    "id x y rotation",
+			updates: []map[string]any{makeBulletUpdateWithRotation("bullet-000004", 5, 6, 7)},
+		},
+		{
+			name:    "zero values",
+			updates: []map[string]any{makeBulletUpdate("bullet-000005", 0, 0)},
+		},
+		{
+			name:    "negative values",
+			updates: []map[string]any{makeBulletUpdate("bullet-000006", -8, -9)},
+		},
+	}
+
+	for index, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			packet := BulletWireDeltaPacket{
+				Type: PacketFamilyBulletDelta,
+				Metadata: Metadata{
+					Lane:         LaneBullets,
+					Sequence:     30 + index,
+					SnapshotKind: SnapshotKind("delta"),
+				},
+				BulletUpdates: tc.updates,
+			}
+			candidate := RealtimeLaneCandidate{
+				Lane:  LaneBullets,
+				Kind:  RealtimeLaneCandidateKindDelta,
+				Delta: packet,
+			}
+			estimated := estimateBulletDeltaPacketBytes(packet, tc.updates)
+			assertConservativeEncodedBytes(t, tc.name, candidate, estimated)
+		})
+	}
+}
+
+func TestEstimateAsteroidDeltaPacketBytesIsConservative(t *testing.T) {
+	tests := []struct {
+		name    string
+		updates []map[string]any
+	}{
+		{
+			name:    "id x y",
+			updates: []map[string]any{makeAsteroidUpdate("asteroid-000001", 1, 2)},
+		},
+		{
+			name:    "id x",
+			updates: []map[string]any{{"id": "asteroid-000002", "x": 3}},
+		},
+		{
+			name:    "id null y",
+			updates: []map[string]any{{"id": "asteroid-000003", "y": 4}},
+		},
+		{
+			name:    "zero values",
+			updates: []map[string]any{makeAsteroidUpdate("asteroid-000004", 0, 0)},
+		},
+		{
+			name:    "negative values",
+			updates: []map[string]any{makeAsteroidUpdate("asteroid-000005", -8, -9)},
+		},
+	}
+
+	for index, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			packet := AsteroidWireDeltaPacket{
+				Type: PacketFamilyAsteroidDelta,
+				Metadata: Metadata{
+					Lane:         LaneAsteroids,
+					Sequence:     40 + index,
+					SnapshotKind: SnapshotKind("delta"),
+				},
+				AsteroidUpdates: tc.updates,
+			}
+			candidate := RealtimeLaneCandidate{
+				Lane:  LaneAsteroids,
+				Kind:  RealtimeLaneCandidateKindDelta,
+				Delta: packet,
+			}
+			estimated := estimateAsteroidDeltaPacketBytes(packet, tc.updates)
+			assertConservativeEncodedBytes(t, tc.name, candidate, estimated)
+		})
 	}
 }

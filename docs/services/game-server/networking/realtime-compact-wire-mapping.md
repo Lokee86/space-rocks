@@ -57,7 +57,7 @@ String fields that are only loosely associated with an entity or record keep the
 
 ## Runtime Metadata Inference
 
-For active realtime world, overlay, and session packet families, the preferred outbound wire shape now omits runtime metadata the client can infer.
+For active realtime world, asteroid, bullet, overlay, and session packet families, the preferred outbound wire shape now omits runtime metadata the client can infer.
 
 The client derives:
 
@@ -70,10 +70,10 @@ The client derives:
 - Delta-packet `baseline_id` from readable `baseline_sequence` or compact `bq` as `<lane>-baseline-<baseline_sequence>`.
 - `is_final_chunk` from `chunk_index` and `chunk_count`.
 
-For active realtime world, overlay, and session packet families, the server now emits `chunk_index` and `chunk_count` only when `chunk_count > 1`.
+For active realtime world, asteroid, bullet, overlay, and session packet families, the server now emits `chunk_index` and `chunk_count` only when `chunk_count > 1`.
 When those fields are absent, the client treats the packet as a single final chunk.
 
-This inference rule is runtime-lane specific. It does not imply compacted event/control packet behavior beyond what the current implementation actually emits.
+For `asteroid_delta` and `bullet_delta`, `chunk_index` and `chunk_count` are emitted when a hot movement update list is split into multiple candidate chunks. All chunks for one original hot-lane delta share the same lane-local sequence and differ by `chunk_index`.
 
 ## Compact Packet Type Values
 
@@ -103,7 +103,7 @@ These remain documented for backward-compatible decode support and for contexts 
 
 ## Metadata Keys
 
-Preferred active runtime output for world/overlay/session gameplay lanes:
+Preferred active runtime output for world/asteroid/bullet/overlay/session gameplay lanes:
 
 - `type` -> `t`
 - `sequence` -> `q`
@@ -118,7 +118,7 @@ Legacy or backward-compatible decode support still accepted by the client:
 - `baseline_id` -> `b`
 - `snapshot_id` -> `sid`
 - `snapshot_kind` -> `k`
-- `is_final_chunk` -> `fc`
+- `is_final_chunk` -> `fc` when emitted as conditional runtime metadata for chunked hot-lane packets, and remains accepted for backward-compatible decode support
 
 For active runtime world/overlay/session packets, `baseline_id` is only emitted when a delta packet cannot express its dependency as a numeric baseline sequence or when full-packet metadata cannot be represented by the current inferred format safely.
 

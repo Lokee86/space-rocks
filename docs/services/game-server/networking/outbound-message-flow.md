@@ -81,7 +81,7 @@ The server owns authority behind the payloads. The client should treat outbound 
 
 The current outbound payloads include queued one-off responses plus lane-native realtime packets and debug packets.
 
-WebRTC signaling is still WebSocket-owned in the current implementation. WebRTC DataChannels are now reusable JSON transport seams for active gameplay lanes, and webrtc_smoke remains a diagnostic packet on the WebRTC transport. The current WebRTC packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay lane packets are sent over lane-specific WebRTC DataChannels with no WebSocket fallback. Current physical gameplay channels include `sr.world`, `sr.asteroids`, `sr.bullets`, `sr.overlay`, `sr.session`, and `sr.event`; `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes, and late hot packets are rejected by client sequence guards. Deployment must keep the advertised WebRTC ICE address and UDP path reachable from clients directly; a proxied HTTP WebSocket route does not carry the UDP data channel.
+WebRTC signaling is still WebSocket-owned in the current implementation. WebRTC DataChannels are now reusable JSON transport seams for active gameplay lanes, and webrtc_smoke remains a diagnostic packet on the WebRTC transport. The current WebRTC packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay lane packets are sent over lane-specific WebRTC DataChannels with no WebSocket fallback. Current physical gameplay channels include `sr.world`, `sr.asteroids`, `sr.bullets`, `sr.overlay`, `sr.session`, and `sr.event`; `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes, and lower-sequence hot packets are rejected by client sequence guards, while same-sequence `asteroid_delta` and `bullet_delta` chunks remain valid. Deployment must keep the advertised WebRTC ICE address and UDP path reachable from clients directly; a proxied HTTP WebSocket route does not carry the UDP data channel.
 
 ## Routing model
 
@@ -141,13 +141,13 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 1. Writes debug shape catalog output first when eligible.
 2. Resets `session.realtimeState` when the receiver is empty or changes.
 3. Calls `realtime.BuildActiveRealtimeResultForGame()`.
-4. Selects included lane candidates from the send plan.
+4. Selects included lane candidates from the send plan, including expanded asteroid/bullet hot chunks when needed.
 5. `WireLanePacket` builds readable long-key maps.
 6. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.
 7. Raw-float assertion runs on relevant lane wire maps.
 8. `CompactWirePacket` applies final compact key/value aliasing, shared ID compaction, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records.
-9. `packetcodec` encodes JSON.
-10. `session.webrtcTransport.SendEncodedLaneJSON()` writes active realtime lane packets over the selected WebRTC lane channel when the transport is ready.
+9. `packetcodec` encodes each selected candidate into `EncodedLanePackets`.
+10. `session.webrtcTransport.SendEncodedLaneJSON()` writes each encoded packet over the selected WebRTC lane channel when the transport is ready.
 11. Logs lane wire packet details after successful writes.
 12. Drains active event_batch events only after a successful WebRTC write.
 13. Persists lane metadata only after successful writes.
@@ -160,7 +160,7 @@ The lane packet construction path lives in `services/game-server/internal/protoc
 The networking layer owns successful WebRTC delivery for active realtime gameplay packets, successful WebSocket delivery for queued one-off packets, and the post-write session state changes that follow from those successful writes.
 Active lane metadata persistence, event drain, and baseline persistence happen only after a successful WebRTC write.
 
-Chunk metadata exists in the wire shape and scheduler records, but this section does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
+Chunk metadata exists in the wire shape and scheduler records. The current active path uses it for focused `asteroid_delta` and `bullet_delta` hot-lane chunking. Oversized hot movement update lists are split into multiple real candidates before scheduling and encoding, then written as separate WebRTC messages on the same hot lane. This does not make networking the owner of general fragmentation or record/entity-level prioritization.
 
 ### Debug status
 
@@ -286,7 +286,7 @@ Active runtime world/overlay/session lane packets may also carry inferred-or-con
 - `snapshot_id` when not inferred from lane, packet kind, and sequence
 - `snapshot_kind` when not inferred from `type`
 - `chunk_index` and `chunk_count` when `chunk_count > 1`
-- `is_final_chunk` only for legacy/backward-compatible decode support, not preferred active runtime output
+- `is_final_chunk` is inferred by the client from `chunk_index`/`chunk_count` when absent and may be emitted on chunked hot-lane packets when needed by the runtime or debug path.
 
 `event_batch` now uses compact envelope keys and sparse nested event records. It remains one ordered batch of pending presentation events, not one packet per event. It does not use baselines, deltas, state snapshots, or chunking, and this section does not claim any future scheduler or transport behavior.
 The packet-shape details for those lane packets belong in the realtime protocol doc. This service doc only keeps the outbound delivery boundary and the current lane roles.
@@ -405,6 +405,8 @@ Per-packet wire logs are the current source for packet family, lane, sequence, b
 - `is_final_chunk`
 - `encoded_bytes`
 
+For chunked hot lanes, multiple `lane protocol gameplay wire packet written` entries may appear for `sr.asteroids` or `sr.bullets` in the same tick, sharing a hot-lane sequence with different `chunk_index`/`chunk_count` values.
+
 Per-tick summary logs are most useful when more than one gameplay packet is emitted in a tick. The active summary debug message is `lane protocol gameplay written`, with useful fields such as:
 
 - `lane_packet_families`
@@ -413,6 +415,8 @@ Per-tick summary logs are most useful when more than one gameplay packet is emit
 - `event_batch_drained_count`
 - `packet_count`
 - `encoded_bytes`
+
+`packet_count` counts encoded packets actually written, not unique logical lanes. Under hot-lane stress it may include multiple `asteroid_delta` or `bullet_delta` packets for the same lane in one tick.
 
 Single-packet ticks may still produce one wire log and one summary log at debug level. No-op ticks are intentionally not logged.
 
@@ -436,6 +440,7 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/networking/outbound/server_message_writer.go` - Writes encoded server messages to the WebSocket.
 - `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets.
 - `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go` - Builds encoded debug shape catalog packets.
+- `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - expands oversized `asteroid_delta` and `bullet_delta` hot movement candidates into bounded real candidate chunks before scheduling and encoding.
 
 ### Related source and generated files
 
@@ -462,6 +467,8 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/protocol/realtime/compact_wire_ships.go` owns world ship/player tuple packing.
 - `services/game-server/internal/protocol/realtime/compact_wire_players.go` owns session player and lifecycle tuple packing.
 - `services/game-server/internal/protocol/realtime/compact_wire_events.go` owns known event tuple packing.
+- `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, `EncodedLanePackets` list construction, raw-float assertion/compact/packetcodec boundary, and encoded-byte accounting.
+- `services/game-server/internal/protocol/realtime/scheduler.go` - include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
 - `services/game-server/internal/networking/packetmetrics/` - packet observability helper types retained around outbound/realtime seams; not active `realtime lane metric` emission.
 - `docs/planning/protocol/realtime-protocol-architecture.md` owns future realtime protocol delivery policy planning.
 

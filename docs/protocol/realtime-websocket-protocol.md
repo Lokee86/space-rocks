@@ -289,7 +289,7 @@ sequence
 server_sent_msec
 ```
 
-For active world, overlay, and session runtime packets, the client now infers additional metadata when the server omits redundant fields:
+For active world, asteroid, bullet, overlay, and session runtime packets where the fields are present, the client infers additional metadata when the server omits redundant fields:
 
 ```text
 lane
@@ -314,11 +314,11 @@ is_final_chunk
   inferred from chunk_index and chunk_count
 ```
 
-Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world/overlay/session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output. Control-lane resync packets keep their own current metadata behavior.
+Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world, asteroid, bullet, overlay, and session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output, and it remains excluded from baseline/delta/chunk metadata. Control-lane resync packets keep their own current metadata behavior.
 
-The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, overlay, session, and `event_batch` lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and tuple packing, and before `packetcodec` encodes JSON.
+The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, asteroid, bullet, overlay, session, and `event_batch` lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and tuple packing, and before `packetcodec` encodes JSON.
 
-Chunk metadata exists in the wire shape and scheduler records. This document does not claim full fragmentation or payload-splitting behavior beyond current final-chunk handling.
+Chunk metadata exists in the wire shape and scheduler records. For `asteroid_delta` and `bullet_delta`, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. Each chunk is encoded and written as its own WebRTC DataChannel message on `sr.asteroids` or `sr.bullets`. This is focused hot-lane chunking, not general fragmentation for all lane families.
 ### Numeric wire quantization
 
 State-lane records are quantized in the realtime projection and wire-record path before delta comparison and JSON encoding, so deltas compare projected wire-shaped values instead of raw simulation float precision. `event_batch` is not a state lane and does not participate in delta comparison.
@@ -692,8 +692,8 @@ The active path currently schedules whole lane candidates:
 
 ```text
 world_delta = one candidate
-asteroid_delta = one candidate when asteroid hot movement is present and cadence allows it
-bullet_delta = one candidate when bullet hot movement is present and cadence allows it
+asteroid_delta = one or more candidates when asteroid hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
+bullet_delta = one or more candidates when bullet hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
 overlay_delta = one candidate
 session_delta = one candidate
 event_batch = one candidate
@@ -701,7 +701,9 @@ event_batch = one candidate
 
 Hot asteroid_delta and bullet_delta packets require numeric sequence values. Missing or non-numeric hot sequences are ignored. Sequence gaps are valid because unordered/unreliable hot packets may be dropped.
 
-The active path does not currently split state-lane deltas into selected record or field sub-packets. Byte estimates are advisory and are not codec-accurate, but they are used by SelectSendPlan to include or defer candidate packets against the current target budget. Hot asteroid and bullet packets also run encoded-size classification after JSON encoding; packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
+Same-sequence `asteroid_delta` or `bullet_delta` packets are valid when they are chunks of the same hot-lane sequence. The client rejects lower sequence values as stale, but it must not reject same-sequence chunks solely because the sequence matches the latest accepted hot packet. Sequence gaps remain valid because unordered/unreliable hot packets may be dropped.
+
+The active path does not implement general record/entity-level prioritization or arbitrary field-level packet splitting. It does implement focused hot-lane chunking for `asteroid_delta` and `bullet_delta`: oversized hot movement update lists become multiple real candidates before `SelectSendPlan` and before encoding. Byte estimates are advisory and are not codec-accurate, but they are used by SelectSendPlan to include or defer candidate packets against the current target budget. Hot asteroid and bullet packets also run encoded-size classification after JSON encoding; packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ### Runtime observability note
 
 Current runtime debug observability is intentionally narrow:

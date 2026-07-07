@@ -1,393 +1,405 @@
-## Real bullet hot-lane chunking skill
+## Skill: Hot-Lane Chunking Documentation Update
 
-Use this skill when fixing Space Rocks realtime hot-lane overflow where `sr.bullets` or another hot lane stops sending updates after packet size pressure increases.
+Use this skill when updating Space Rocks documentation after the realtime protocol change that added real candidate-level chunking for asteroid and bullet hot lanes.
 
-The goal is to create **real bounded hot-lane packet chunks** before encoding and writing. Do not rely on scheduler-only chunk records unless they map to real encoded packets.
+## Purpose
 
-## Problem summary
+Restore documentation accuracy after the hot-lane chunking change.
 
-The current failure mode is:
-
-* Bullet movement updates are offloaded from `sr.world` to `sr.bullets`.
-* The bullet hot packet grows as bullet count rises.
-* Once the encoded `bullet_delta` exceeds the hard hot-packet cap, `encodeLanePacket()` drops it.
-* The server keeps sending `world_delta`, but `bullet_delta` collapses or stops.
-* Raising policy constants does not fix this because `size_estimate.go` has separate active constants such as `HardCapBytes = 1200`.
-* Scheduler chunking is not enough if it only creates `ScheduleRecord` chunks. Real packets must be split before encoding/writing.
-
-The fix must produce multiple actual `bullet_delta` messages on the same WebRTC lane, each under the hard cap.
-
-## Do not change
-
-Do not change these unless the task explicitly says otherwise:
-
-* Do not raise hot-lane packet size caps as the fix.
-* Do not move bullet creates/deletes out of `sr.world`.
-* Do not move asteroid creates/deletes out of `sr.world`.
-* Do not change WebRTC channel policy.
-* Do not change bullet rendering.
-* Do not change torpedo spawning.
-* Do not make client rendering changes to hide the server issue.
-* Do not treat scheduler-only chunking as real packet chunking.
-
-## Required behavior
-
-Hot-lane overflow must degrade like this:
-
-* One small bullet hot packet remains one packet.
-* One oversized bullet hot packet becomes multiple real `bullet_delta` packets.
-* Every chunk must encode under `HardCapBytes`.
-* All chunks from one source hot delta should share the same sequence.
-* Chunks must carry `chunk_index`, `chunk_count`, and `is_final_chunk`.
-* The writer must send every encoded chunk, even when multiple chunks use `LaneBullets`.
-* The client must not reject valid same-sequence hot chunks as stale.
-* Duplicate hot updates are acceptable because position updates overwrite by entity ID.
-
-## Files usually involved
-
-Server:
-
-* `services/game-server/internal/protocol/realtime/hot_lane_policy.go`
-* `services/game-server/internal/protocol/realtime/size_estimate.go`
-* `services/game-server/internal/protocol/realtime/wire_packets.go`
-* `services/game-server/internal/protocol/realtime/baseline.go`
-* `services/game-server/internal/protocol/realtime/hot_lane_allocator.go`
-* `services/game-server/internal/protocol/realtime/planner.go`
-* `services/game-server/internal/protocol/realtime/active.go`
-* `services/game-server/internal/protocol/realtime/scheduler.go`
-* `services/game-server/internal/networking/websocket_write.go`
-
-Client:
-
-* `client/scripts/protocol/realtime/world_lane_state.gd`
-
-Tests:
-
-* `services/game-server/internal/protocol/realtime/hot_lane_chunker_test.go`
-* `services/game-server/internal/protocol/realtime/active_test.go`
-* `services/game-server/internal/protocol/realtime/baseline_test.go`
-* `services/game-server/internal/protocol/realtime/scheduler_test.go`
-* Existing client tests near `world_lane_state.gd`, if present.
-
-## Implementation sequence
-
-### 1. Restore sane hot-lane constants
-
-In `hot_lane_policy.go`, keep the policy defaults sane:
-
-```go
-DefaultBulletHotLaneEntityBudget   = 48
-DefaultTargetEncodedPacketBytes    = 800
-DefaultHardEncodedPacketBytes      = 1200
-DefaultMTUSafePacketBytes          = 1500
-```
-
-Do not solve the bug by setting these to huge values.
-
-### 2. Add hot-packet chunk metadata
-
-In `wire_packets.go`, extend `AsteroidWireDeltaPacket` and `BulletWireDeltaPacket` with:
-
-```go
-ChunkIndex   int  `json:"chunk_index,omitempty"`
-ChunkCount   int  `json:"chunk_count,omitempty"`
-IsFinalChunk bool `json:"is_final_chunk,omitempty"`
-```
-
-Update `wireAsteroidWireDeltaPacket()` and `wireBulletWireDeltaPacket()` to include those fields when emitting hot packets.
-
-### 3. Fix hot-lane metadata extraction
-
-In `baseline.go`, update `CandidateMetadata()` so it understands:
-
-```go
-AsteroidWireDeltaPacket
-*AsteroidWireDeltaPacket
-BulletWireDeltaPacket
-*BulletWireDeltaPacket
-```
-
-Return metadata with the correct lane, sequence, snapshot kind, chunk index, chunk count, final chunk flag, and server sent time.
-
-This prevents diagnostics from reporting hot-lane sequence `0` and lets hot lane state advance correctly.
-
-### 4. Use hot-lane sequences
-
-In `planner.go`, hot-lane deltas should use their own lane sequence, not world-lane sequence.
-
-Before appending hot candidates, derive:
-
-```go
-asteroidState, asteroidSynced := state.LaneState(LaneAsteroids)
-asteroidSequence := NextLaneSequence(asteroidState, asteroidSynced)
-
-bulletState, bulletSynced := state.LaneState(LaneBullets)
-bulletSequence := NextLaneSequence(bulletState, bulletSynced)
-```
-
-Assign these to the split hot deltas:
-
-```go
-split.AsteroidDelta.Sequence = asteroidSequence
-split.BulletDelta.Sequence = bulletSequence
-```
-
-All chunks from a single source hot delta should share the same sequence and differ by chunk metadata.
-
-### 5. Add real hot-lane candidate chunking
-
-Create `hot_lane_chunker.go`.
-
-Add a function like:
-
-```go
-func ExpandHotLaneCandidateChunks(candidates []RealtimeLaneCandidate) []RealtimeLaneCandidate
-```
-
-Rules:
-
-* Non-hot candidates pass through unchanged.
-* `LaneBullets` delta candidates are split if their encoded packet exceeds `HardCapBytes`.
-* Small bullet packets return one candidate with `ChunkIndex = 0`, `ChunkCount = 1`, and `IsFinalChunk = true`.
-* Oversized bullet packets become multiple real `RealtimeLaneCandidate` values.
-* Every emitted bullet chunk must contain a non-empty subset of `BulletUpdates`.
-* Every emitted chunk must encode under `HardCapBytes` unless a single update is itself pathological.
-* Preserve update order.
-* Preserve packet type, sequence, and server sent time.
-* Set chunk indexes from `0` to `chunk_count - 1`.
-* Only the last chunk has `IsFinalChunk = true`.
-
-Preferred implementation:
-
-* Try encoding the full candidate.
-* If it fits, return it as one finalized chunk.
-* If it does not fit, split the update slice.
-* Use binary search or recursive halving to find the largest prefix that fits under `HardCapBytes`.
-* Repeat until all updates are emitted.
-
-Do not create scheduler-only chunks here. Create actual candidates.
-
-### 6. Expand candidates before scheduling
-
-In `active.go`, the flow should become:
-
-1. Assemble candidates.
-2. Expand hot-lane chunks into real candidates.
-3. Build schedule records from the expanded candidates.
-4. Select send plan.
-5. Select candidates from the expanded candidate list.
-6. Encode each selected candidate.
-7. Write every encoded packet.
-
-The scheduler must operate on the real chunk candidates.
-
-### 7. Refactor encoded packet storage
-
-The current shape cannot represent multiple packets for the same lane if it stores packets by lane:
-
-```go
-EncodedPackets map[Lane][]byte
-EncodedBytes   map[Lane]int
-```
-
-Replace or supplement it with an ordered list:
-
-```go
-type EncodedRealtimeLanePacket struct {
-	Candidate     RealtimeLaneCandidate
-	Encoded       []byte
-	EncodedBytes  int
-}
-```
-
-Then `ActiveRealtimeResult` should hold:
-
-```go
-EncodedPackets []EncodedRealtimeLanePacket
-```
-
-Optionally keep an aggregate `EncodedBytesByLane` map only for metrics or tests.
-
-### 8. Write every encoded packet
-
-In `websocket_write.go`, change the writer loop so it iterates encoded packets, not only selected candidates keyed by lane.
-
-Use the candidate stored on each encoded packet:
-
-```go
-for _, encoded := range result.EncodedPackets {
-	candidate := encoded.Candidate
-	encodedPacket := encoded.Encoded
-	// send candidate on candidate.Lane
-}
-```
-
-This allows multiple `sr.bullets` messages in one server tick.
-
-Logging must use the chunk candidate and the chunk’s encoded byte count.
-
-### 9. Remove fake scheduler chunking
-
-In `scheduler.go`, remove or neutralize the block that chunks only `ScheduleRecord` values when `EstimatedBytes > HardCapBytes`.
-
-Scheduler-only chunks are misleading if they do not correspond to real encoded packets.
-
-Chunking ownership should be:
+The current implementation truth is:
 
 ```text
-candidate chunker -> scheduler -> encoder -> writer
+- sr.asteroids and sr.bullets are unordered/unreliable WebRTC hot-update lanes.
+- asteroid_delta and bullet_delta can now split oversized hot movement update lists into multiple real candidate-level chunks.
+- Chunks use the existing Metadata envelope: sequence, chunk_index, chunk_count, and is_final_chunk.
+- All chunks from one original hot movement delta share the same lane-local sequence and differ by chunk metadata.
+- The active result/write path can emit multiple encoded packets on the same lane in one tick.
+- The WebRTC writer sends each EncodedLanePacket, not one packet per lane map entry.
+- The scheduler no longer owns fake chunking. It schedules real candidates that already exist.
+- Hot packets still run encoded-size classification before send.
+- Packets above the hard-cap/MTU class are still rejected.
+- The client rejects lower hot-lane sequence values as stale.
+- Same-sequence hot packets are valid when they are chunks from one asteroid_delta or bullet_delta sequence.
+- Lifecycle creates/deletes remain on sr.world.
+- event_batch remains ordered/reliable, batched, and non-chunked.
+- The project still does not have general record/entity-level prioritization or all-lane fragmentation.
 ```
 
-Not:
+## Required ownership framing
+
+Use this wording distinction consistently:
 
 ```text
-scheduler fake chunks -> deduplicated candidates -> one oversized encoded packet
+Implemented:
+focused hot-lane chunking for asteroid_delta and bullet_delta
+
+Not implemented:
+general-purpose payload fragmentation for all lane families
+general record/entity-level prioritization
+interest filtering
+binary/protobuf representation
+all-lane record or field sub-packet prioritization
 ```
 
-### 10. Relax client same-sequence stale rejection
+Do not describe the change as generic fragmentation unless clearly qualified as **focused asteroid/bullet hot-lane chunking**.
 
-In `world_lane_state.gd`, update bullet and asteroid hot-lane sequence acceptance.
+## Files to update
 
-Bad shape:
-
-```gdscript
-if parsed <= latest_bullet_delta_sequence:
-	return false
-latest_bullet_delta_sequence = parsed
-return true
-```
-
-Safer first pass:
-
-```gdscript
-if parsed < latest_bullet_delta_sequence:
-	return false
-latest_bullet_delta_sequence = parsed
-return true
-```
-
-Apply the same logic for asteroid hot deltas.
-
-Reason: valid chunks from the same source delta share a sequence. Same-sequence chunks must not be rejected. Duplicate hot updates are acceptable because they overwrite entity positions by ID.
-
-## Required tests
-
-### Server: metadata support
-
-Add or update tests proving `CandidateMetadata()` returns proper metadata for:
-
-* `AsteroidWireDeltaPacket`
-* `BulletWireDeltaPacket`
-
-Assert sequence, chunk index, chunk count, final chunk, and lane.
-
-### Server: small bullet packet remains one chunk
-
-Create a bullet hot candidate that encodes under `HardCapBytes`.
-
-Assert:
-
-* output candidate count is `1`.
-* lane is `LaneBullets`.
-* sequence is preserved.
-* `ChunkIndex == 0`.
-* `ChunkCount == 1`.
-* `IsFinalChunk == true`.
-
-### Server: oversized bullet packet splits
-
-Create a bullet hot candidate with enough updates to exceed `HardCapBytes`.
-
-Assert:
-
-* output candidate count is greater than `1`.
-* every chunk is `LaneBullets`.
-* every encoded chunk is `<= HardCapBytes`.
-* every chunk has non-empty `BulletUpdates`.
-* all original bullet updates appear exactly once across chunks.
-* all chunks share the same sequence.
-* chunk indexes are ordered and complete.
-* only the final chunk has `IsFinalChunk == true`.
-
-### Server: active result supports multiple packets on same lane
-
-Build a snapshot with enough bullet movement updates to require chunking.
-
-Assert:
-
-* `BuildActiveRealtimeResult()` returns multiple encoded packets for `LaneBullets`.
-* no bullet chunk exceeds `HardCapBytes`.
-* total encoded packet list includes the world packet plus multiple bullet packets when expected.
-* packets are not collapsed by lane.
-
-### Server: scheduler no longer fakes hot chunks
-
-Update scheduler tests so they no longer imply `ScheduleRecord` chunking creates real packet chunks.
-
-If a scheduler chunking test remains, it must only describe scheduler records, not actual packet emission.
-
-### Client: same-sequence chunks
-
-If there is a client test harness, add tests for bullet and asteroid hot sequence acceptance:
-
-* accept sequence `10`
-* accept another packet with sequence `10`
-* reject sequence `9`
-* accept sequence `11`
-
-## Expected log after fix
-
-Before the fix, logs look like this at high bullet count:
+Update these docs when stale references exist:
 
 ```text
-bullet_delta 60/s near 1180 bytes
-bullet_delta collapses to 35/s
-bullet_delta collapses to 7/s
-bullet_delta reaches 0/s
-world_delta continues 60/s
+docs/protocol/realtime-websocket-protocol.md
+docs/protocol/realtime-webrtc-gameplay-transport.md
+docs/services/game-server/networking/outbound-message-flow.md
+docs/services/game-server/simulation/runtime/lane-packet-projection.md
+docs/services/game-server/networking/realtime-compact-wire-mapping.md
+docs/services/client/networking-flow/inbound-packet-routing.md
+docs/protocol/gameplay-packets.md
+docs/domains/technical/realtime-client-server-flow.md
+docs/planning/protocol/realtime-protocol-architecture.md
+docs/planning/domains/technical/network-observability-and-packet-budget.md
+docs/planning/development-roadmap.md
 ```
 
-After the fix, logs should look like this:
+Do not create a new document for this change unless the existing docs cannot reasonably own the fact. They currently can.
+
+Do not delete documents. The stale material is embedded in otherwise valid docs.
+
+## Stale phrases to remove or correct
+
+Search for these phrases and update them if they describe current behavior:
 
 ```text
-bullet_delta sequence=123 chunk_index=0 chunk_count=3 encoded_bytes=1050
-bullet_delta sequence=123 chunk_index=1 chunk_count=3 encoded_bytes=1080
-bullet_delta sequence=123 chunk_index=2 chunk_count=3 encoded_bytes=920
+does not claim full fragmentation
+does not claim full fragmentation or payload-splitting
+payload fragmentation
+asteroid_delta = one candidate
+bullet_delta = one candidate
+cadence allows it
+does not currently split state-lane deltas
+late asteroid_delta and bullet_delta packets are rejected by monotonic sequence
 ```
 
-The bullet lane should continue writing bounded chunks instead of disappearing.
+Also inspect nearby uses of:
 
-## Verification
-
-Run targeted Go tests from the Go module root:
-
-```bash
-cd /mnt/d/\!bin/space-rocks/services/game-server
-{
-  go test ./internal/protocol/realtime
-} 2>&1 | tee /dev/tty | clip.exe
+```text
+hot-packet encoded-size guards
+monotonic sequence
+one candidate
+chunk metadata exists
 ```
 
-Run broader server tests:
+These phrases may remain only if the surrounding text clearly reflects the current focused hot-lane chunking behavior.
 
-```bash
-cd /mnt/d/\!bin/space-rocks/services/game-server
-{
-  go test ./...
-} 2>&1 | tee /dev/tty | clip.exe
+## Canonical replacement language
+
+Use these replacement statements where appropriate.
+
+### Chunk metadata and real chunking
+
+```text
+Chunk metadata exists in the wire shape and scheduler records. For asteroid_delta and bullet_delta, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. Each chunk is encoded and written as its own WebRTC DataChannel message on sr.asteroids or sr.bullets. This is focused hot-lane chunking, not general fragmentation for all lane families.
 ```
 
-Then repeat the bullet stream stress test.
+### Scheduling and candidate count
 
-## Completion criteria
+```text
+asteroid_delta = one or more candidates when asteroid hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
+bullet_delta = one or more candidates when bullet hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
+```
 
-This task is complete when:
+### Active path budget behavior
 
-* Bullet hot packets are split into real encoded chunks.
-* Multiple `sr.bullets` packets can be sent in one tick.
-* No bullet chunk exceeds `HardCapBytes`.
-* Hot packet diagnostics show nonzero sequence metadata.
-* Same-sequence chunks are accepted by the client.
-* Bullet streams no longer collapse to zero packet sends at the old size threshold.
-* Creates/deletes remain in `sr.world`.
-* Movement updates remain on `sr.bullets`.
+```text
+The active path does not implement general record/entity-level prioritization or arbitrary field-level packet splitting. It does implement focused hot-lane chunking for asteroid_delta and bullet_delta: oversized hot movement update lists become multiple real candidates before SelectSendPlan and before encoding.
+```
+
+### Encoded-size guards
+
+```text
+Hot asteroid and bullet movement packets are first split into bounded real lane candidates when needed, then encoded and classified by encoded size before send. Packets above the hard-cap/MTU class are still rejected, but normal oversized hot movement lists should be chunked before that gate.
+```
+
+### Client hot sequence behavior
+
+```text
+The client rejects lower hot-lane sequence values as stale. Same-sequence hot packets are valid when they are chunks from one asteroid_delta or bullet_delta sequence and may apply independently. Sequence gaps remain valid because unordered/unreliable hot packets may be dropped.
+```
+
+### Per-tick packet count
+
+```text
+packet_count counts encoded packets actually written, not unique logical lanes. Under hot-lane stress it may include multiple asteroid_delta or bullet_delta packets for the same lane in one tick.
+```
+
+## File-specific edit map
+
+## `docs/protocol/realtime-websocket-protocol.md`
+
+This is the canonical protocol doc. Update it first.
+
+Required edits:
+
+* Update lane metadata language so active asteroid and bullet packets are covered where Metadata envelope behavior applies.
+* State that `chunk_index` and `chunk_count` are emitted when `chunk_count > 1`.
+* State that same-sequence chunks are valid for `asteroid_delta` and `bullet_delta`.
+* Replace any “chunk metadata exists but no payload splitting” claim.
+* Replace `asteroid_delta = one candidate` and `bullet_delta = one candidate`.
+* Replace “active path does not currently split state-lane deltas” with the focused hot-lane chunking distinction.
+* Clarify that general record/entity-level prioritization remains future work.
+
+Required current behavior summary:
+
+```text
+For asteroid_delta and bullet_delta, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. The active writer can emit multiple encoded packets on sr.asteroids or sr.bullets in one tick. The client rejects lower sequence values but accepts same-sequence chunks.
+```
+
+## `docs/protocol/realtime-webrtc-gameplay-transport.md`
+
+This doc owns physical WebRTC lane behavior.
+
+Required edits:
+
+* Replace strict monotonic sequence wording with lower-sequence rejection plus same-sequence chunk acceptance.
+* Update the server send boundary to include expanded asteroid/bullet hot chunks and an encoded packet list.
+* Replace “payload fragmentation” in the non-support list with “general-purpose payload fragmentation for all lane families.”
+* Add that focused hot-lane chunking is implemented for `asteroid_delta` and `bullet_delta`.
+
+Suggested server send boundary:
+
+```text
+BuildActiveRealtimeResultForGame
+-> realtime lane candidates, including expanded asteroid/bullet hot chunks when needed
+-> selected realtime lane candidates
+-> encoded lane packet list
+-> SendEncodedLaneJSON(candidate.Lane, encodedPacket) for each encoded packet
+-> physical WebRTC gameplay DataChannel
+```
+
+## `docs/services/game-server/networking/outbound-message-flow.md`
+
+This doc owns the service write path.
+
+Required edits:
+
+* Update the active write steps so they mention expanded hot chunks and `EncodedLanePackets`.
+* Replace any statement that chunk metadata exists but payload splitting is not implemented.
+* Clarify that networking writes already-encoded packets and does not own general fragmentation.
+* Clarify that multiple wire logs can appear for the same hot lane in one tick.
+* Clarify that `packet_count` counts encoded packets written, not unique lanes.
+* Add `hot_lane_chunker.go` to the code map.
+* Update `active.go` ownership to mention the encoded packet list.
+* Update `scheduler.go` ownership to say scheduler schedules already-built candidates and does not own fake packet chunking.
+
+Suggested code-map additions:
+
+```text
+- services/game-server/internal/protocol/realtime/hot_lane_chunker.go - expands oversized asteroid_delta and bullet_delta hot movement candidates into bounded real candidate chunks before scheduling and encoding.
+- services/game-server/internal/protocol/realtime/active.go - active lane packet encoding path, EncodedLanePackets list construction, raw-float assertion/compact/packetcodec boundary, and encoded-byte accounting.
+- services/game-server/internal/protocol/realtime/scheduler.go - include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
+```
+
+## `docs/services/game-server/simulation/runtime/lane-packet-projection.md`
+
+This doc owns projection-side behavior.
+
+Required edits:
+
+* Update the flow to include hot movement chunk expansion after hot movement split and before serialization/encoding.
+* Add `hot_lane_chunker.go` to code map.
+* Update scheduler ownership to remove fake chunking implications.
+* Keep lifecycle ownership unchanged: asteroid/bullet creates/deletes remain on world lane.
+
+Suggested flow insert:
+
+```text
+-> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks
+```
+
+## `docs/services/game-server/networking/realtime-compact-wire-mapping.md`
+
+This doc owns compact alias and metadata wire mapping.
+
+Required edits:
+
+* Expand runtime metadata inference wording from world/overlay/session to world/asteroid/bullet/overlay/session where accurate.
+* Clarify that `asteroid_delta` and `bullet_delta` emit `chunk_index` and `chunk_count` when split into multiple chunks.
+* Clarify all chunks for one original hot movement delta share the same lane-local sequence.
+* Keep `event_batch` excluded from chunking.
+* If `is_final_chunk` is emitted as compact `fc` for current runtime chunks, move it out of “legacy only” language and describe it as conditional runtime metadata when emitted.
+
+Suggested text:
+
+```text
+For asteroid_delta and bullet_delta, chunk_index and chunk_count are emitted when a hot movement update list is split into multiple candidate chunks. All chunks for one original hot-lane delta share the same lane-local sequence and differ by chunk_index.
+```
+
+## `docs/services/client/networking-flow/inbound-packet-routing.md`
+
+This doc owns client inbound routing behavior.
+
+Required edits:
+
+* Replace strict monotonic hot rejection wording.
+* State that lower sequences are rejected, same-sequence hot chunks are valid.
+* State that multiple `asteroid_delta` or `bullet_delta` packets may arrive for the same lane sequence in one poll window.
+* Do not describe routing as coalescing chunks.
+* Do not move gameplay application ownership into this doc.
+
+Suggested text:
+
+```text
+Hot asteroid and bullet packets are routed on unordered/unreliable lanes. The client rejects lower sequence values so late packets cannot roll positions backward. Same-sequence packets are valid for chunked asteroid_delta or bullet_delta output and may apply independently. Sequence gaps are valid because hot packets can be dropped.
+```
+
+## `docs/protocol/gameplay-packets.md`
+
+This doc should stay high level.
+
+Required edits:
+
+* Add that `asteroid_delta` and `bullet_delta` may be emitted as multiple same-sequence chunks when a hot movement update list would exceed the encoded packet cap.
+* Clarify that chunks only move existing entities.
+* Keep lifecycle creates/deletes on `world_delta`.
+* Replace stale sequence wording with lower-sequence rejection plus same-sequence chunk acceptance.
+
+Suggested text:
+
+```text
+When a hot movement update list would exceed the encoded packet cap, asteroid_delta and bullet_delta may be emitted as multiple same-sequence chunks. These chunks still only move existing entities; lifecycle creates/deletes remain on world_delta.
+```
+
+## `docs/domains/technical/realtime-client-server-flow.md`
+
+This domain doc should mention the current fact without becoming a protocol spec.
+
+Required edits:
+
+* Add that oversized asteroid/bullet hot movement update lists are split into multiple real same-sequence hot-lane packets before encoding.
+* Update stale sequence wording.
+* Update future-work list to include current focused hot-lane chunking as shipped, while keeping deeper prioritization as future.
+
+Suggested text:
+
+```text
+Oversized asteroid_delta and bullet_delta movement update lists are split into multiple real same-sequence hot-lane packets before encoding. This keeps hot packets under the encoded hard cap while leaving lifecycle creates/deletes on sr.world.
+```
+
+## `docs/planning/protocol/realtime-protocol-architecture.md`
+
+This planning doc must not frame shipped hot-lane chunking as future work.
+
+Required edits:
+
+* Add implemented status bullets for focused asteroid/bullet hot-lane chunking.
+* Update “hot packets have encoded-size guards” to include focused chunking.
+* Update client sequence guard wording.
+* Keep record/entity-level prioritization, interest filtering, and deeper budget policy as future work.
+
+Suggested implemented bullets:
+
+```text
+- Oversized asteroid_delta and bullet_delta movement update lists are split into real same-sequence hot-lane candidate chunks before scheduling and encoding.
+- Active output can emit multiple encoded packets on sr.asteroids or sr.bullets in one tick.
+- Hot asteroid and bullet packets have focused candidate-level chunking and encoded-size guards before send.
+- Client hot-lane sequence guards reject lower sequence values while accepting same-sequence chunks for split asteroid_delta and bullet_delta packets.
+```
+
+## `docs/planning/domains/technical/network-observability-and-packet-budget.md`
+
+This planning doc should reflect the new evidence model.
+
+Required edits:
+
+* Add that focused hot-lane chunking is current for asteroid and bullet deltas.
+* State that packet evidence can show multiple packets per tick on `sr.asteroids` or `sr.bullets`.
+* State that `packet_count` counts encoded packets, not unique lanes.
+* State that bandwidth should be interpreted alongside write cadence.
+
+Suggested current-state additions:
+
+```text
+- Focused hot-lane chunking is current for asteroid_delta and bullet_delta. Packet evidence should expect multiple packets per tick on sr.asteroids or sr.bullets under stress.
+- packet_count is a count of encoded packets written, not unique lanes.
+- Encoded bandwidth evidence should be interpreted with write cadence: under peak stress, bandwidth may drop because write cadence drops even while entity pressure rises.
+```
+
+## `docs/planning/development-roadmap.md`
+
+Only update current-status sections if they mention realtime protocol compression, packet budget, or protocol implementation state.
+
+Suggested wording:
+
+```text
+Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work.
+```
+
+## Files that usually do not need edits
+
+Do not edit these unless an exact stale claim is found:
+
+```text
+docs/data/packet-schemas.md
+docs/services/game-server/networking/websocket-session-lifecycle.md
+docs/services/game-server/simulation/runtime/game-aggregate.md
+docs/systems-design/world/world-authority.md
+```
+
+Reason:
+
+```text
+- No packet TOML/schema SSoT change is implied.
+- Hot-lane chunking is protocol/realtime behavior, not game aggregate ownership.
+- World authority does not change.
+- WebSocket lifecycle does not change.
+```
+
+## Consistency rules
+
+Use these rules while editing:
+
+```text
+- Do not say asteroid_delta or bullet_delta are always one candidate.
+- Do not say hot lanes only have send-time encoded-size guards.
+- Do not say same-sequence hot packets are stale.
+- Do not say networking owns fragmentation.
+- Do not say event_batch chunks.
+- Do not imply lifecycle creates/deletes moved out of sr.world.
+- Do not imply general record/entity-level prioritization is implemented.
+- Do not imply binary/protobuf/compression is implemented.
+```
+
+## Final stale-search checklist
+
+After edits, search docs for these phrases:
+
+```text
+does not claim full fragmentation
+does not claim full fragmentation or payload-splitting
+payload fragmentation
+asteroid_delta = one candidate
+bullet_delta = one candidate
+cadence allows it
+does not currently split state-lane deltas
+late asteroid_delta and bullet_delta packets are rejected by monotonic sequence
+```
+
+Allowed remaining concepts:
+
+```text
+general record/entity-level prioritization remains future work
+general-purpose fragmentation remains not implemented
+event_batch remains non-chunked
+world/overlay/session are not generalized record-splitting lanes
+```
+
+## Completion report
+
+When finished, report:
+
+```text
+- Changed files
+- Stale claims removed
+- Current behavior now documented
+- Any remaining matches and why they are acceptable
+```
