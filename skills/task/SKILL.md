@@ -1,454 +1,371 @@
-# Client Bullet Hot-Lane Ordering and Presentation Fanout Skill
+## Implementation plan
 
-Use this skill when fixing Space Rocks client stress behavior where high-volume bullet updates cause bullets to disappear, pop in late, or trigger noticeable frame drops.
+This should be one focused slice:
 
-## Goal
-
-Fix remaining client-side stress behavior without changing WebRTC transport reliability.
-
-Targets:
-
-1. Bullets should not disappear or pop in late when creates and updates arrive through different lanes or different client frames.
-2. Presentation fanout should not run once per gameplay packet under bullet/asteroid packet bursts.
-3. Existing WebRTC ordered/reliable channels, bounded receive draining, and hot-lane packet routing should remain intact.
-
-## Scope
-
-This skill covers two narrow fixes:
-
-1. Buffer bullet hot-lane updates that arrive before their matching bullet create.
-2. Defer realtime presentation fanout so it runs at most once per client frame.
-
-Do not switch WebRTC hot lanes to unreliable or unordered in this skill.
-
-Do not add packet dropping or coalescing in this skill.
-
-Do not add full metrics in this skill unless explicitly requested. Metrics should be a follow-up slice after behavior is fixed.
-
-Do not broadly refactor world presentation, projectile rendering, or realtime routing.
-
-## Background
-
-Bullets are currently split across lanes:
-
-```text
-world_delta  = bullet creates and deletes
-bullet_delta = bullet position updates
+```text id="jp9tnp"
+Make sr.asteroids and sr.bullets unordered/unreliable hot-update lanes.
+Add stale hot-delta rejection so late packets cannot roll entity positions backward.
+Fix scheduler classification so hot-lane deltas are supersedable, not required.
+Do not move lifecycle creates/deletes out of sr.world.
 ```
 
-This is correct protocol ownership, but it introduces a client-side ordering hazard.
+## 1. Add explicit WebRTC channel policy
 
-When the client receives and drains packets from multiple WebRTC channels with per-frame budgets, a `bullet_delta` can be applied before the matching `bullet_create` from `world_delta`.
+### Server
 
-Current state behavior ignores updates for unknown bullet IDs. That was safe when creates and updates were in one ordered lane. It is not safe once bullet updates are on a dedicated hot lane.
+File:
 
-Failure shape:
-
-```text
-Frame N:
-- bullet_delta arrives first for bullet-123
-- client has not processed bullet-123 create yet
-- update is ignored
-
-Frame N+1:
-- world_delta create for bullet-123 arrives
-- bullet appears late or at stale/create position
-
-Frame N+2:
-- later bullet_delta arrives
-- bullet suddenly renders correctly
+```text id="n96rih"
+services/game-server/internal/networking/webrtc_transport.go
 ```
 
-This can look like bullets not rendering from some positions, then suddenly rendering fully.
+Change `webRTCGameplayChannelSpec` from:
 
-The remaining frame-rate problem is separate: presentation fanout currently appears to be packet-coupled. Under hot bullet traffic, many packets can cause many full presentation passes in a single frame.
-
-Desired shape:
-
-```text
-packet received -> route into realtime state -> mark presentation dirty
-_process() -> fan out presentation once -> clear dirty flag
+```go
+type webRTCGameplayChannelSpec struct {
+    Lane  string
+    Label string
+    ID    uint16
+}
 ```
 
-## Phase 1: Buffer pending bullet updates
+To include policy fields:
 
-### Objective
-
-Make bullet hot-lane updates resilient when they arrive before their matching bullet create.
-
-### Files
-
-Expected files:
-
-* `client/scripts/protocol/realtime/world_lane_state.gd`
-* `client/scripts/protocol/realtime/world_lane_applier.gd`
-* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
-
-Optional only if needed:
-
-* `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
-
-### Required behavior
-
-If a bullet update arrives for an unknown bullet ID:
-
-```text
-- Do not create the bullet.
-- Store the latest pending update for that bullet ID.
+```go
+type webRTCGameplayChannelSpec struct {
+    Lane           string
+    Label          string
+    ID             uint16
+    Ordered        bool
+    MaxRetransmits *uint16
+}
 ```
 
-If another pending update arrives for the same unknown bullet ID:
+Then set:
 
-```text
-- Replace the previous pending update.
-- Keep only the latest update.
+```go
+var noRetransmits uint16 = 0
+
+return []webRTCGameplayChannelSpec{
+    {Lane: "world", Label: "sr.world", ID: 1, Ordered: true},
+    {Lane: "overlay", Label: "sr.overlay", ID: 2, Ordered: true},
+    {Lane: "session", Label: "sr.session", ID: 3, Ordered: true},
+    {Lane: "event", Label: "sr.event", ID: 4, Ordered: true},
+    {Lane: "asteroids", Label: "sr.asteroids", ID: 5, Ordered: false, MaxRetransmits: &noRetransmits},
+    {Lane: "bullets", Label: "sr.bullets", ID: 6, Ordered: false, MaxRetransmits: &noRetransmits},
+}
 ```
 
-When the matching bullet create arrives:
+In `createNegotiatedGameplayChannels()`, stop using one shared `ordered := true`. Use the spec:
 
-```text
-- Apply the bullet create.
-- Immediately apply the pending update on top of the create.
-- Clear the pending update for that bullet ID.
+```go
+ordered := spec.Ordered
+channel, err := p.peer.CreateDataChannel(spec.Label, &webrtc.DataChannelInit{
+    Ordered:        &ordered,
+    Negotiated:     &negotiated,
+    ID:             &channelID,
+    MaxRetransmits: spec.MaxRetransmits,
+})
 ```
 
-When a bullet delete arrives:
+### Client
 
-```text
-- Delete the bullet.
-- Clear any pending update for that bullet ID.
+File:
+
+```text id="xebk2c"
+client/scripts/networking/webrtc/webrtc_transport.gd
 ```
 
-When a full world state is applied or the world is cleared:
+Expand `GAMEPLAY_CHANNEL_SPECS`:
 
-```text
-- Clear all pending bullet updates.
+```gdscript
+{"lane": "world", "label": "sr.world", "id": 1, "ordered": true},
+{"lane": "overlay", "label": "sr.overlay", "id": 2, "ordered": true},
+{"lane": "session", "label": "sr.session", "id": 3, "ordered": true},
+{"lane": "event", "label": "sr.event", "id": 4, "ordered": true},
+{"lane": "asteroids", "label": "sr.asteroids", "id": 5, "ordered": false, "max_retransmits": 0},
+{"lane": "bullets", "label": "sr.bullets", "id": 6, "ordered": false, "max_retransmits": 0},
 ```
 
-### Suggested implementation
+When creating channels, build options from the spec:
 
-In `world_lane_state.gd`, add:
-
-```text
-var pending_bullet_updates := {}
+```gdscript
+var options := {
+    "negotiated": true,
+    "id": int(spec.get("id")),
+    "ordered": bool(spec.get("ordered", true)),
+}
+if spec.has("max_retransmits"):
+    options["maxRetransmits"] = int(spec.get("max_retransmits"))
 ```
 
-Add concrete methods:
+Use Godot’s expected option key `maxRetransmits`, not snake_case.
 
-```text
-merge_or_buffer_bullet_update(record: Dictionary) -> void
-apply_pending_bullet_update(id) -> void
-clear_pending_bullet_update(id) -> void
-clear_pending_bullet_updates() -> void
+## 2. Add stale hot-delta rejection on the client
+
+Files:
+
+```text id="hbm4wj"
+client/scripts/protocol/realtime/world_lane_state.gd
+client/scripts/protocol/realtime/world_lane_applier.gd
 ```
 
-Suggested behavior:
+Add state:
 
-```text
-merge_or_buffer_bullet_update(record):
-- Get id from record.
-- If id is null, return.
-- If bullets has id, merge_bullet_update(record).
-- Else store a narrowed update in pending_bullet_updates[id].
+```gdscript
+var latest_asteroid_delta_sequence := -1
+var latest_bullet_delta_sequence := -1
 ```
 
-```text
-apply_pending_bullet_update(id):
-- If pending_bullet_updates does not have id, return.
-- If bullets has id, merge_bullet_update(pending_bullet_updates[id]).
-- Erase pending_bullet_updates[id].
+Reset both on `clear_world()` / full world sync.
+
+Add helpers:
+
+```gdscript
+func accept_asteroid_delta_sequence(sequence) -> bool:
+    var parsed := _parse_hot_delta_sequence(sequence)
+    if parsed == null:
+        return false
+    if parsed <= latest_asteroid_delta_sequence:
+        return false
+    latest_asteroid_delta_sequence = parsed
+    return true
+
+func accept_bullet_delta_sequence(sequence) -> bool:
+    var parsed := _parse_hot_delta_sequence(sequence)
+    if parsed == null:
+        return false
+    if parsed <= latest_bullet_delta_sequence:
+        return false
+    latest_bullet_delta_sequence = parsed
+    return true
+
+func _parse_hot_delta_sequence(sequence):
+    if sequence == null:
+        return null
+    if typeof(sequence) != TYPE_INT and typeof(sequence) != TYPE_FLOAT:
+        return null
+    return int(sequence)
 ```
 
-```text
-clear_pending_bullet_update(id):
-- Erase pending_bullet_updates[id].
+Then gate the hot appliers:
+
+```gdscript
+func apply_asteroid_delta(world_lane_state: WorldLaneState, lane: String, asteroid_packet: Dictionary) -> void:
+    if not world_lane_state.accept_asteroid_delta_sequence(asteroid_packet.get("sequence")):
+        return
+    _apply_entity_deltas(world_lane_state, [], _array_field(asteroid_packet, "asteroid_updates"), [], "asteroid")
+
+func apply_bullet_delta(world_lane_state: WorldLaneState, lane: String, bullet_packet: Dictionary) -> void:
+    if not world_lane_state.accept_bullet_delta_sequence(bullet_packet.get("sequence")):
+        return
+    _apply_entity_deltas(world_lane_state, [], _array_field(bullet_packet, "bullet_updates"), [], "bullet")
 ```
 
-```text
-clear_pending_bullet_updates():
-- Clear pending_bullet_updates.
+Rules:
+
+```text id="u86enm"
+Accept sequence 100 then 103.
+Reject sequence 101 after 103.
+Do not require contiguous sequence numbers.
+Drop missing/non-numeric sequence on hot lanes.
 ```
 
-Keep pending update records narrowed through existing bullet field rules. Do not store unrelated fields.
+That matters because unreliable lanes may drop packets, so gaps are normal.
 
-In `world_lane_applier.gd`:
+## 3. Fix scheduler classification for hot lanes
 
-* Bullet creates should call `upsert_bullet(decoded)` and then `apply_pending_bullet_update(decoded["id"])`.
-* Bullet updates from `bullet_delta` should call `merge_or_buffer_bullet_update(decoded)`.
-* Bullet updates inside `world_delta` can also use `merge_or_buffer_bullet_update(decoded)` for consistency.
-* Bullet deletes should call `delete_bullet(id)` and then `clear_pending_bullet_update(id)`.
-* Full-world apply and clear paths should clear pending bullet updates.
+File:
 
-Avoid adding a generic pending system for all entity kinds in this slice. Fix bullets first.
-
-### Tests
-
-Add tests in `test_world_lane_applier.gd`.
-
-Required coverage:
-
-1. Unknown bullet hot update is buffered but does not create a bullet.
-2. Bullet create later applies the pending update immediately.
-3. Multiple pending updates for the same bullet keep only the latest.
-4. Bullet delete clears pending update.
-5. Full world apply clears all pending bullet updates.
-
-Test data should be small and direct:
-
-```text
-bullet id: bullet-1
-create x/y: 10, 20
-pending update x/y: 30, 40
-newer pending update x/y: 50, 60
+```text id="6qwhal"
+services/game-server/internal/protocol/realtime/planner.go
 ```
 
-Assert that after create, `world_lane_state.bullets["bullet-1"]` has the pending update coordinates, not the stale create coordinates.
+Current risk: `LaneAsteroids` / `LaneBullets` are not included in the delta classification branches, so they can fall through as required/critical.
 
-## Phase 2: Defer presentation fanout to once per frame
+Change `deliveryClassForCandidate()`:
 
-### Objective
-
-Stop running full realtime presentation fanout once per gameplay packet.
-
-### Files
-
-Expected file:
-
-* `client/scripts/session/gameplay_session_controller.gd`
-
-Expected test file depends on existing coverage. Use the smallest existing relevant test file. If no suitable test file exists, create one under:
-
-* `client/tests/unit/session/test_gameplay_session_controller_realtime_fanout.gd`
-
-### Current problem
-
-Gameplay packets are already routed by `ClientConnectionService` before `gameplay_packet_received` is emitted.
-
-`GameplaySessionController.handle_gameplay_packet(packet)` should not perform full presentation fanout immediately for every packet during bursts. Packet receive should mark presentation dirty. `_process()` should present at most once per frame.
-
-### Required behavior
-
-On gameplay packet:
-
-```text
-- If gameplay packets are not accepted, return.
-- If gameplay readiness is missing or not ready, return.
-- Preserve first-ready logging behavior.
-- Preserve event diagnostics behavior for event_batch packets.
-- Mark presentation dirty.
-- Do not fan out immediately.
+```go
+case RealtimeLaneCandidateKindDelta:
+    switch candidate.Lane {
+    case LaneSession:
+        return DeliveryClassDeferrable
+    case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
+        return DeliveryClassHotSupersedable
+    }
 ```
 
-On `_process(delta)`:
+Change `priorityForCandidate()`:
 
-```text
-- Run existing gameplay_composition.process(...) behavior.
-- If presentation is dirty and gameplay is ready, fan out presentation once.
-- Clear dirty flag after fanout.
+```go
+case RealtimeLaneCandidateKindDelta:
+    switch candidate.Lane {
+    case LaneSession:
+        return PriorityMedium
+    case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
+        return PriorityHigh
+    }
 ```
 
-If multiple gameplay packets arrive in the same frame:
+Do not classify asteroid/bullet deltas as required. They are disposable hot movement updates.
 
-```text
-- Mark dirty once.
-- Fan out once during _process.
+## 4. Preserve current ownership boundaries
+
+Do not move these:
+
+```text id="n6xxtk"
+bullet_creates
+bullet_deletes
+asteroid_creates
+asteroid_deletes
 ```
 
-If a later frame receives another packet:
+They stay in:
 
-```text
-- Mark dirty again.
-- Fan out once in that later frame.
+```text id="xf24wm"
+sr.world / world_delta
 ```
 
-### Suggested implementation
+Only these are on hot lanes:
 
-In `gameplay_session_controller.gd`, add:
-
-```text
-var _presentation_dirty := false
-var _pending_event_fanout := false
+```text id="0291rd"
+asteroid_updates -> sr.asteroids
+bullet_updates -> sr.bullets
 ```
 
-Optional:
+Existing bullet buffering still matters because a bullet update may arrive before its world-lane create. Keep it.
 
-```text
-var _last_dirty_packet_type := ""
+## 5. Test updates
+
+### Server WebRTC transport tests
+
+File:
+
+```text id="b76klm"
+services/game-server/internal/networking/webrtc_transport_test.go
 ```
 
-Extract the current fanout block from `handle_gameplay_packet(packet)` into a concrete helper:
+Update fake channel creation capture to include:
 
-```text
-func _fanout_realtime_presentation_once() -> void:
+```go
+MaxRetransmits *uint16
 ```
 
-This helper should contain the current logic that:
+Assert:
 
-* logs `"Gameplay presentation fanout started"` once
-* gets `world_sync`
-* gets `gameplay_hud_flow`
-* gets `event_lifecycle_flow`
-* calls `gameplay_presentation_adapter.fanout_lane_states(...)`
-* builds/applies devtools lane state
-* restores alive presentation
-* marks presentation fanned out once
-
-Do not create an abstract wrapper. This helper is a direct movement of existing behavior.
-
-In `handle_gameplay_packet(packet)`:
-
-```text
-- Keep the acceptance/readiness guards.
-- Keep event_batch diagnostics.
-- Set _presentation_dirty = true.
-- Return without calling fanout.
+```text id="g5q4vx"
+sr.world     ordered=true,  maxRetransmits=nil
+sr.overlay   ordered=true,  maxRetransmits=nil
+sr.session   ordered=true,  maxRetransmits=nil
+sr.event     ordered=true,  maxRetransmits=nil
+sr.asteroids ordered=false, maxRetransmits=0
+sr.bullets   ordered=false, maxRetransmits=0
 ```
 
-In `_process(delta)`:
+### Client WebRTC transport tests
 
-```text
-- Keep existing gameplay_composition.process(delta, required_lane_baselines_synced).
-- After that, if _presentation_dirty is true and gameplay is ready:
-  - call _fanout_realtime_presentation_once()
-  - set _presentation_dirty = false
+File:
+
+```text id="qc29c1"
+client/tests/unit/networking/test_webrtc_transport.gd
 ```
 
-Reset should clear:
+Update fake peer/channel capture to assert:
 
-```text
-_presentation_dirty = false
-_pending_event_fanout = false
+```text id="jut36b"
+sr.world ordered true
+sr.overlay ordered true
+sr.session ordered true
+sr.event ordered true
+sr.asteroids ordered false and maxRetransmits 0
+sr.bullets ordered false and maxRetransmits 0
 ```
 
-### Event batch handling
+### Client hot stale packet tests
 
-Preserve event fanout.
+File:
 
-If the existing fanout block needs `event_lifecycle_flow`, compute it inside `_fanout_realtime_presentation_once()` from `gameplay_composition`.
-
-If event diagnostics are currently packet-specific, keep them in `handle_gameplay_packet(packet)`.
-
-If multiple event batches arrive in one frame, it is acceptable for the one presentation fanout to use the latest accumulated event state from the router.
-
-## Phase 3: Tests for once-per-frame fanout
-
-### Objective
-
-Prove presentation fanout is no longer packet-coupled.
-
-### Test requirements
-
-Add or update focused tests.
-
-Required coverage:
-
-1. Multiple gameplay packets before `_process()` do not cause multiple presentation fanouts.
-2. `_process()` performs one fanout when dirty and gameplay ready.
-3. Dirty flag clears after fanout.
-4. A later packet marks dirty again and allows one more fanout on a later `_process()`.
-5. If gameplay is not ready, dirty state does not cause fanout.
-
-Use fakes rather than full scenes where possible.
-
-Recommended fake shape:
-
-```text
-FakePresentationAdapter:
-- can_fanout() returns configurable bool
-- fanout_lane_states(...) increments fanout_count
-- mark_fanned_out() records call
+```text id="1ixacv"
+client/tests/unit/protocol/realtime/test_world_lane_applier.gd
 ```
 
-```text
-FakeGameplayComposition:
-- has gameplay_shell_flow/runtime_context/world_sync shape if needed
-- has gameplay_hud_flow if needed
-- process(...) increments process_count
-- apply_devtools_gameplay_state(...) records calls
-- restore_alive_presentation_from_realtime_router(...) records calls
+Add:
+
+```text id="fw6plb"
+asteroid_delta sequence 10 applies
+asteroid_delta sequence 9 is ignored
+asteroid_delta sequence 11 applies
+bullet_delta sequence 10 applies
+bullet_delta sequence 9 is ignored
+bullet_delta sequence 12 applies after gap
+missing sequence hot packet is ignored
+non-numeric sequence hot packet is ignored
 ```
 
-Keep the test focused on controller behavior, not actual rendering.
+### Server scheduler tests
 
-## Phase 4: Stress validation
+Likely file:
 
-After Phase 1 and Phase 2:
+```text id="omlm4n"
+services/game-server/internal/protocol/realtime/planner_test.go
+```
 
-Run targeted tests first:
+Add/adjust assertions:
 
-```bash
+```text id="ap4mqh"
+LaneAsteroids delta -> DeliveryClassHotSupersedable, PriorityHigh
+LaneBullets delta -> DeliveryClassHotSupersedable, PriorityHigh
+```
+
+## 6. Docs after code lands
+
+Update only docs that describe current WebRTC lane behavior. The doc language should become:
+
+```text id="5mcukc"
+sr.world, sr.overlay, sr.session, and sr.event are ordered/reliable negotiated gameplay channels.
+
+sr.asteroids and sr.bullets are unordered/unreliable negotiated gameplay channels with maxRetransmits=0. They carry supersedable movement/update packets only. Late hot packets are rejected by sequence. Missing packets are tolerated because later packets replace older movement state.
+
+Lifecycle create/delete records remain on sr.world.
+```
+
+Remove stale wording like:
+
+```text id="6yj2g5"
+all hot lanes start ordered/reliable
+later hot lanes may become unordered/unreliable
+```
+
+## 7. Verification
+
+```bash id="u8kc3j"
 cd /mnt/d/\!bin/space-rocks
 {
-  echo "== packet sync check =="
+  echo "== data sync =="
   data-sync -check -packets -go -gds
 
   echo
-  echo "== realtime state and presentation tests =="
-  cd client
-  godot --headless -s addons/gut/gut_cmdln.gd \
-    -gtest=res://tests/unit/protocol/realtime/test_world_lane_applier.gd \
-    -gtest=res://tests/unit/protocol/realtime/test_lane_protocol_routing.gd \
-    -gtest=res://tests/unit/networking/test_webrtc_transport.gd \
-    -gtest=res://tests/unit/test_client_connection_service_webrtc.gd
+  echo "== server targeted tests =="
+  go test ./services/game-server/internal/networking ./services/game-server/internal/protocol/realtime
 
   echo
-  echo "== server smoke =="
-  cd /mnt/d/\!bin/space-rocks/services/game-server
-  go test ./internal/networking ./internal/protocol/realtime
+  echo "== client targeted tests =="
+  cd client
+  godot --headless -s addons/gut/gut_cmdln.gd \
+    -gtest=res://tests/unit/networking/test_webrtc_transport.gd \
+    -gtest=res://tests/unit/protocol/realtime/test_world_lane_applier.gd \
+    -gtest=res://tests/unit/protocol/realtime/test_lane_protocol_routing.gd
 } 2>&1 | tee /dev/tty | clip.exe
 ```
 
-Then run the stress scenario.
+Main acceptance criteria:
 
-Expected improvements:
-
-```text
-- Bullets no longer vanish before popping in.
-- Bullets that receive hot updates before creates appear at the latest known update position when created.
-- Frame drops reduce during high bullet volume.
-- No stale bullets stick around after delete or clear.
-- No growing pending bullet update map after deletes/full-world resets.
+```text id="ace8ep"
+Hot WebRTC channels are unordered/unreliable on both server and client.
+Reliable lanes remain ordered/reliable.
+Late asteroid/bullet hot packets cannot roll state backward.
+Hot lane deltas are scheduler-supersedable, not required/critical.
+Creates/deletes still route through sr.world.
 ```
 
-## Phase 5: Metrics after behavior fixes
-
-Do not add metrics before the two behavior fixes unless explicitly requested.
-
-After this skill lands, useful metrics are:
-
-```text
-packets_drained_per_frame
-packets_left_queued_by_lane
-packets_routed_by_type
-presentation_fanout_count_per_frame
-world_bullet_count
-projectile_node_count
-pending_bullet_update_count
-fanout_time_msec
-```
-
-Success criteria for later metrics:
-
-```text
-presentation_fanout_count_per_frame <= 1
-drained_packets_per_frame <= MAX_PACKETS_PER_POLL
-pending_bullet_update_count does not grow without bound
-frame time stabilizes under high bullet stress
-```
-
-## Anti-patterns
-
-Do not:
-
-* Create bullets from unknown `bullet_delta` updates.
-* Ignore unknown bullet hot updates without buffering.
-* Store all pending updates forever.
-* Forget to clear pending bullet updates on delete/full-world reset.
-* Fan out world presentation once per packet.
-* Add packet dropping in this slice.
-* Change WebRTC channel reliability or ordering in this slice.
-* Add broad generic entity buffering before bullet behavior is fixed.
-* Add wrappers or abstract presentation layers.
-* Move gameplay simulation ownership.
-* Change server protocol packet ownership.
-* Change bullet creates/deletes to the bullet hot lane.
+My attempted local MCP check failed with a connector permission error, so this plan is based on the current repo files available through GitHub plus the recent diff context already inspected.

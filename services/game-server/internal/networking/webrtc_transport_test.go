@@ -66,20 +66,22 @@ func (p *fakeWebRTCPeer) CreateDataChannel(label string, init *webrtc.DataChanne
 		p.channels[label] = channel
 	}
 	p.created = append(p.created, fakeWebRTCDataChannelCreateSpec{
-		Label:      label,
-		Ordered:    init != nil && init.Ordered != nil && *init.Ordered,
-		Negotiated: init != nil && init.Negotiated != nil && *init.Negotiated,
-		ID:         initIDValue(init),
+		Label:          label,
+		Ordered:        init != nil && init.Ordered != nil && *init.Ordered,
+		Negotiated:     init != nil && init.Negotiated != nil && *init.Negotiated,
+		ID:             initIDValue(init),
+		MaxRetransmits: initMaxRetransmitsValue(init),
 	})
 	return channel, nil
 }
 func (p *fakeWebRTCPeer) Close() error { p.closed = true; return nil }
 
 type fakeWebRTCDataChannelCreateSpec struct {
-	Label      string
-	Ordered    bool
-	Negotiated bool
-	ID         uint16
+	Label          string
+	Ordered        bool
+	Negotiated     bool
+	ID             uint16
+	MaxRetransmits *uint16
 }
 
 func initIDValue(init *webrtc.DataChannelInit) uint16 {
@@ -87,6 +89,18 @@ func initIDValue(init *webrtc.DataChannelInit) uint16 {
 		return 0
 	}
 	return *init.ID
+}
+
+func initMaxRetransmitsValue(init *webrtc.DataChannelInit) *uint16 {
+	if init == nil || init.MaxRetransmits == nil {
+		return nil
+	}
+	value := *init.MaxRetransmits
+	return &value
+}
+
+func uint16Ptr(value uint16) *uint16 {
+	return &value
 }
 
 func assertSentJSONField(t *testing.T, raw string, key string, want any) {
@@ -185,20 +199,41 @@ func TestWebRTCTransportHandleOfferBuildsAnswerAndChannels(t *testing.T) {
 		t.Fatalf("expected 6 data channels to be created, got %d", len(fakePeer.created))
 	}
 	expected := map[string]fakeWebRTCDataChannelCreateSpec{
-		"sr.world":     {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1},
-		"sr.overlay":   {Label: "sr.overlay", Ordered: true, Negotiated: true, ID: 2},
-		"sr.session":   {Label: "sr.session", Ordered: true, Negotiated: true, ID: 3},
-		"sr.event":     {Label: "sr.event", Ordered: true, Negotiated: true, ID: 4},
-		"sr.asteroids": {Label: "sr.asteroids", Ordered: true, Negotiated: true, ID: 5},
-		"sr.bullets":   {Label: "sr.bullets", Ordered: true, Negotiated: true, ID: 6},
+		"sr.world":     {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1, MaxRetransmits: nil},
+		"sr.overlay":   {Label: "sr.overlay", Ordered: true, Negotiated: true, ID: 2, MaxRetransmits: nil},
+		"sr.session":   {Label: "sr.session", Ordered: true, Negotiated: true, ID: 3, MaxRetransmits: nil},
+		"sr.event":     {Label: "sr.event", Ordered: true, Negotiated: true, ID: 4, MaxRetransmits: nil},
+		"sr.asteroids": {Label: "sr.asteroids", Ordered: false, Negotiated: true, ID: 5, MaxRetransmits: uint16Ptr(0)},
+		"sr.bullets":   {Label: "sr.bullets", Ordered: false, Negotiated: true, ID: 6, MaxRetransmits: uint16Ptr(0)},
 	}
 	for _, created := range fakePeer.created {
 		want, ok := expected[created.Label]
 		if !ok {
 			t.Fatalf("unexpected data channel created: %#v", created)
 		}
-		if created != want {
-			t.Fatalf("unexpected data channel config for %s: got %#v want %#v", created.Label, created, want)
+		if created.Label != want.Label {
+			t.Fatalf("unexpected data channel label for %s: got %q want %q", created.Label, created.Label, want.Label)
+		}
+		if created.Ordered != want.Ordered {
+			t.Fatalf("unexpected data channel ordered flag for %s: got %t want %t", created.Label, created.Ordered, want.Ordered)
+		}
+		if created.Negotiated != want.Negotiated {
+			t.Fatalf("unexpected data channel negotiated flag for %s: got %t want %t", created.Label, created.Negotiated, want.Negotiated)
+		}
+		if created.ID != want.ID {
+			t.Fatalf("unexpected data channel id for %s: got %d want %d", created.Label, created.ID, want.ID)
+		}
+		if want.MaxRetransmits == nil {
+			if created.MaxRetransmits != nil {
+				t.Fatalf("unexpected max retransmits for %s: got %d want nil", created.Label, *created.MaxRetransmits)
+			}
+		} else {
+			if created.MaxRetransmits == nil {
+				t.Fatalf("unexpected max retransmits for %s: got nil want %d", created.Label, *want.MaxRetransmits)
+			}
+			if *created.MaxRetransmits != *want.MaxRetransmits {
+				t.Fatalf("unexpected max retransmits for %s: got %d want %d", created.Label, *created.MaxRetransmits, *want.MaxRetransmits)
+			}
 		}
 		delete(expected, created.Label)
 	}

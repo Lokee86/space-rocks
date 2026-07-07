@@ -43,7 +43,7 @@ The game-server outbound packet routing path owns:
 
 - WebSocket delivery for queued one-off responses.
 - The session outbound queue used by one-off responses.
-- WebRTC delivery for active realtime gameplay packets over reliable/ordered lane-specific gameplay DataChannels.
+- WebRTC delivery for active realtime gameplay packets over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
 - One-time debug shape catalog writes per room connection context when devtools are enabled.
 - Encoding queued one-off server packet structs through `packetcodec` where the queued producer owns that packet.
 - Writing already-encoded active realtime lane packets produced by the realtime protocol package over WebRTC.

@@ -199,6 +199,27 @@ func test_torpedo_reuses_torpedo_pool_node() -> void:
 	assert_false(projectile_sync.projectile_nodes.has("torpedo-1"))
 	assert_true(projectile_sync.projectile_nodes.has("torpedo-2"))
 
+func test_new_torpedo_uses_torpedo_scene_when_pool_empty() -> void:
+	var projectile_sync := _new_projectile_sync()
+
+	projectile_sync.apply_projectile(
+		"torpedo-1",
+		{
+			Packets.FIELD_X: 10.0,
+			Packets.FIELD_Y: 20.0,
+			Packets.FIELD_ROTATION: 0.5,
+			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+		},
+		Vector2.ZERO,
+		Vector2.ZERO
+	)
+
+	var node = projectile_sync.projectile_nodes["torpedo-1"]
+
+	assert_eq(projectile_sync.projectile_node_types["torpedo-1"], "torpedo")
+	assert_not_null(node)
+	assert_eq(node.name, "Torpedo")
+
 func _new_projectile_sync() -> ProjectileSync:
 	var projectile_sync := ProjectileSync.new()
 	var bullets_layer := Node2D.new()

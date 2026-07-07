@@ -61,7 +61,7 @@ Planning outputs for the remaining protocol work:
 
 - Which packet-budget policy changes require protocol-version compatibility?
 - Which resync hardening behaviors should be treated as mandatory versus optional?
-- What physical lane/channel evolution is worth planning beyond the current reliable/ordered WebRTC physical gameplay lane baseline?
+- What physical lane/channel evolution is worth planning beyond the current mixed lane policy?
 
 ## Phase P2 - Realtime Protocol Architecture
 
@@ -103,7 +103,7 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, stronger resync behavior, future physical lane/channel evolution beyond the current reliable/ordered WebRTC lane baseline, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, stronger resync behavior, future physical lane/channel evolution beyond the current mixed lane policy, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ### Remaining Priority And Packet Budget Work
 

@@ -995,3 +995,51 @@ func TestAssembleRealtimeLaneCandidatesDoesNotEmitEmptyHotCandidate(t *testing.T
 		t.Fatal("unexpected bullet hot candidate with no offloaded updates")
 	}
 }
+
+func TestScheduleRecordForHotAsteroidAndBulletDeltaCandidatesUsesHotSupersedableHighPriority(t *testing.T) {
+	tests := []struct {
+		name      string
+		candidate RealtimeLaneCandidate
+		wantLane  Lane
+		wantFamily string
+	}{
+		{
+			name: "asteroid",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneAsteroids,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Sequence: 1},
+			},
+			wantLane:  LaneAsteroids,
+			wantFamily: PacketFamilyAsteroidDelta,
+		},
+		{
+			name: "bullet",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneBullets,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Sequence: 1},
+			},
+			wantLane:  LaneBullets,
+			wantFamily: PacketFamilyBulletDelta,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			record := scheduleRecordForCandidate(0, tt.candidate)
+			if record.Lane != tt.wantLane {
+				t.Fatalf("record lane = %q, want %q", record.Lane, tt.wantLane)
+			}
+			if record.PacketFamily != tt.wantFamily {
+				t.Fatalf("record packet family = %q, want %q", record.PacketFamily, tt.wantFamily)
+			}
+			if record.DeliveryClass != DeliveryClassHotSupersedable {
+				t.Fatalf("record delivery class = %q, want hot supersedable", record.DeliveryClass)
+			}
+			if record.Priority != PriorityHigh {
+				t.Fatalf("record priority = %q, want high", record.Priority)
+			}
+		})
+	}
+}

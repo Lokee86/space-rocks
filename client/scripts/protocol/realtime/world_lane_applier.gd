@@ -36,9 +36,13 @@ func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: Basel
 
 
 func apply_asteroid_delta(world_lane_state: WorldLaneState, lane: String, asteroid_packet: Dictionary) -> void:
+	if not world_lane_state.accept_asteroid_delta_sequence(asteroid_packet.get("sequence")):
+		return
 	_apply_entity_deltas(world_lane_state, [], _array_field(asteroid_packet, "asteroid_updates"), [], "asteroid")
 
 func apply_bullet_delta(world_lane_state: WorldLaneState, lane: String, bullet_packet: Dictionary) -> void:
+	if not world_lane_state.accept_bullet_delta_sequence(bullet_packet.get("sequence")):
+		return
 	_apply_entity_deltas(world_lane_state, [], _array_field(bullet_packet, "bullet_updates"), [], "bullet")
 
 func _decode_world_full_packet(world_packet: Dictionary) -> Dictionary:

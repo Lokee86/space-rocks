@@ -17,6 +17,8 @@ var removed_asteroid_ids := {}
 var asteroid_full_sync_required := false
 var asteroids := {}
 var pickups := {}
+var latest_asteroid_delta_sequence := -1
+var latest_bullet_delta_sequence := -1
 
 func clear_world() -> void:
 	ships.clear()
@@ -26,8 +28,10 @@ func clear_world() -> void:
 	dirty_bullet_ids.clear()
 	removed_bullet_ids.clear()
 	bullet_full_sync_required = true
+	latest_bullet_delta_sequence = -1
 	clear_asteroid_change_sets()
 	asteroid_full_sync_required = true
+	latest_asteroid_delta_sequence = -1
 	asteroids.clear()
 	pickups.clear()
 
@@ -138,6 +142,31 @@ func clear_pending_bullet_updates() -> void:
 
 func clear_pending_bullet_update(id) -> void:
 	pending_bullet_updates.erase(id)
+
+func accept_asteroid_delta_sequence(sequence) -> bool:
+	var parsed = _parse_hot_delta_sequence(sequence)
+	if parsed == null:
+		return false
+	if parsed <= latest_asteroid_delta_sequence:
+		return false
+	latest_asteroid_delta_sequence = parsed
+	return true
+
+func accept_bullet_delta_sequence(sequence) -> bool:
+	var parsed = _parse_hot_delta_sequence(sequence)
+	if parsed == null:
+		return false
+	if parsed <= latest_bullet_delta_sequence:
+		return false
+	latest_bullet_delta_sequence = parsed
+	return true
+
+func _parse_hot_delta_sequence(sequence):
+	if sequence == null:
+		return null
+	if typeof(sequence) != TYPE_INT and typeof(sequence) != TYPE_FLOAT:
+		return null
+	return int(sequence)
 
 func upsert_asteroid(record: Dictionary) -> void:
 	var id = record.get("id")

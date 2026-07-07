@@ -90,6 +90,7 @@ func test_asteroid_delta_routes_into_world_lane_state() -> void:
 
 	router.route_lane_packet({
 		"type": "asteroid_delta",
+		"sequence": 1,
 		"asteroid_updates": [
 			{"id": "asteroid-1", "x": 42, "y": 84},
 			{"id": "asteroid-unknown", "x": 123, "y": 456},
@@ -107,6 +108,7 @@ func test_bullet_delta_routes_into_world_lane_state() -> void:
 
 	router.route_lane_packet({
 		"type": "bullet_delta",
+		"sequence": 1,
 		"bullet_updates": [
 			{"id": "bullet-1", "x": 55, "y": 66},
 		],

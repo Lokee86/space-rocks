@@ -229,7 +229,7 @@ session current room and current game player context
 lane packet write timing
 encoded packet write observations, debug packet wire logs, and non-empty per-tick write summaries
 ```
-Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, hot asteroid/bullet movement splitting, and current byte-budget planning inputs; networking delivers encoded active gameplay lane packets over reliable/ordered WebRTC gameplay DataChannels and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
+Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, hot asteroid/bullet movement splitting, and current byte-budget planning inputs; networking delivers encoded active gameplay lane packets over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`, and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
 
 ### Game-server simulation
 

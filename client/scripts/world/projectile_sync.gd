@@ -76,7 +76,10 @@ func _acquire_projectile_node(bullet_id: String, projectile_type: String):
 		return pooled_node
 
 	created_projectile_node_count += 1
-	var bullet_node = ProjectileSceneResolver.scene_for_state({}).instantiate()
+	var state_for_scene := {
+		Packets.FIELD_PROJECTILE_TYPE: projectile_type
+	}
+	var bullet_node = ProjectileSceneResolver.scene_for_state(state_for_scene).instantiate()
 	bullets_layer.add_child(bullet_node)
 	projectile_nodes[bullet_id] = bullet_node
 	projectile_node_types[bullet_id] = projectile_type

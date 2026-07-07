@@ -1011,6 +1011,7 @@ func test_asteroid_delta_updates_existing_asteroid_only() -> void:
 	})
 
 	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"asteroid_updates": [{"id": "asteroid-1", "x": 9, "y": 10}],
 	})
 
@@ -1020,12 +1021,88 @@ func test_asteroid_delta_updates_existing_asteroid_only() -> void:
 	assert_eq(world_lane_state.asteroids["asteroid-1"]["variant"], 6)
 
 
+func test_asteroid_delta_rejects_stale_sequence_and_accepts_gaps() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [_asteroid_packet("asteroid-1", 10, 10)],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 10,
+		"asteroid_updates": [{"id": "asteroid-1", "x": 20}],
+	})
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 2.0)
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 9,
+		"asteroid_updates": [{"id": "asteroid-1", "x": 5}],
+	})
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 2.0)
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 11,
+		"asteroid_updates": [{"id": "asteroid-1", "x": 30}],
+	})
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 3.0)
+
+
+func test_asteroid_delta_ignores_missing_and_string_sequences() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [_asteroid_packet("asteroid-1", 10, 10)],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 12,
+		"asteroid_updates": [{"id": "asteroid-1", "x": 20}],
+	})
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 2.0)
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"asteroid_updates": [{"id": "asteroid-1", "x": 50}],
+	})
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 2.0)
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": "not-a-number",
+		"asteroid_updates": [{"id": "asteroid-1", "x": 60}],
+	})
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 2.0)
+
+
 func test_asteroid_delta_ignores_unknown_asteroid_updates() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1, "y": 2, "size": 3, "health": 4, "scale": 5, "variant": 6})
 
 	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"asteroid_updates": [{"id": "asteroid-unknown", "x": 9, "y": 10}],
 	})
 
@@ -1039,6 +1116,7 @@ func test_asteroid_delta_ignores_missing_asteroid_updates() -> void:
 	world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1, "y": 2, "size": 3, "health": 4, "scale": 5, "variant": 6})
 
 	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"asteroid_updates": [{"x": 9, "y": 10}],
 	})
 
@@ -1059,6 +1137,7 @@ func test_bullet_delta_updates_existing_bullet_only() -> void:
 	})
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 9, "y": 10, "rotation": 11}],
 	})
 
@@ -1068,12 +1147,88 @@ func test_bullet_delta_updates_existing_bullet_only() -> void:
 	assert_eq(world_lane_state.bullets["bullet-1"]["weapon_id"], "pulse")
 
 
+func test_bullet_delta_rejects_stale_sequence_and_accepts_gaps() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [_bullet_packet("bullet-1", 10, 10)],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 10,
+		"bullet_updates": [{"id": "bullet-1", "x": 20}],
+	})
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 2.0)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 9,
+		"bullet_updates": [{"id": "bullet-1", "x": 5}],
+	})
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 2.0)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 12,
+		"bullet_updates": [{"id": "bullet-1", "x": 40}],
+	})
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 4.0)
+
+
+func test_bullet_delta_ignores_missing_and_string_sequences() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+	var baseline_tracker := BaselineTracker.new()
+	applier.apply_world_full(
+		world_lane_state,
+		baseline_tracker,
+		LaneMetadata.LANE_WORLD,
+		{
+			"baseline_id": "baseline-1",
+			"sequence": 1,
+			"ships": [],
+			"bullets": [_bullet_packet("bullet-1", 10, 10)],
+			"asteroids": [],
+			"pickups": [],
+			"is_final_chunk": true,
+		}
+	)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 12,
+		"bullet_updates": [{"id": "bullet-1", "x": 20}],
+	})
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 2.0)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"bullet_updates": [{"id": "bullet-1", "x": 50}],
+	})
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 2.0)
+
+	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": "not-a-number",
+		"bullet_updates": [{"id": "bullet-1", "x": 60}],
+	})
+	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 2.0)
+
+
 func test_bullet_delta_ignores_unknown_bullet_updates() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	world_lane_state.upsert_bullet({"id": "bullet-1", "owner_id": "ship-1", "x": 1, "y": 2, "rotation": 3, "weapon_id": "pulse", "projectile_type": "laser"})
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-unknown", "x": 9, "y": 10, "rotation": 11}],
 	})
 
@@ -1087,6 +1242,7 @@ func test_bullet_delta_ignores_missing_bullet_updates() -> void:
 	world_lane_state.upsert_bullet({"id": "bullet-1", "owner_id": "ship-1", "x": 1, "y": 2, "rotation": 3, "weapon_id": "pulse", "projectile_type": "laser"})
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"x": 9, "y": 10, "rotation": 11}],
 	})
 
@@ -1099,6 +1255,7 @@ func test_bullet_delta_buffers_unknown_bullet_update_without_creating_bullet() -
 	var world_lane_state := WorldLaneState.new()
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
 
@@ -1198,6 +1355,7 @@ func test_bullet_create_applies_pending_bullet_update() -> void:
 	)
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
 
@@ -1250,9 +1408,11 @@ func test_latest_pending_bullet_update_wins_before_create() -> void:
 	)
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 2,
 		"bullet_updates": [{"id": "bullet-1", "x": 60, "y": 70, "rotation": 80}],
 	})
 
@@ -1305,6 +1465,7 @@ func test_bullet_delete_clears_pending_bullet_update() -> void:
 	)
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
 
@@ -1353,6 +1514,7 @@ func test_world_full_clears_pending_bullet_updates() -> void:
 	)
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
 
@@ -1438,6 +1600,7 @@ func test_bullet_delta_after_delete_does_not_buffer_pending_update() -> void:
 	)
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
 
@@ -1524,6 +1687,7 @@ func test_world_full_clears_deleted_bullet_tombstones() -> void:
 	)
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_WORLD, {
+		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
 

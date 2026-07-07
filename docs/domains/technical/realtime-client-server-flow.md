@@ -254,7 +254,7 @@ The current active gameplay output uses lane-native packet families: `world_full
 
 World lane carries authoritative visible entity presentation state for ships, pickups, and asteroid/bullet lifecycle creates/deletes. Dedicated asteroid and bullet lanes carry regular movement updates. Overlay lane carries receiver-specific HUD-facing values. Session lane carries player/session/lifecycle/asteroid-count presentation state. For world, asteroid, bullet, overlay, and session state lanes, numeric wire quantization, field deltas, sparse delta omission, and compact JSON aliases are current active behavior. `event_batch` is transient presentation-event delivery, not a state delta lane. It uses compact output encoding and tuple-packed known event records, but remains batched. Known event `x`/`y` and `ship_death` `respawn_delay` are quantized during event wire shaping. `event_batch` does not use baselines, deltas, state snapshots, or chunking.
 
-The server stamps outbound gameplay lane packets with server send time before encoding them and delivering them over reliable/ordered WebRTC gameplay DataChannels.
+The server stamps outbound gameplay lane packets with server send time before encoding them and delivering them over the current lane policy: ordered/reliable for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable for `sr.asteroids` and `sr.bullets`.
 
 ### 8. Server sends one-off and ticker-driven packets
 
@@ -464,7 +464,7 @@ This domain document does not own:
 * Rails account storage
 * Local Profile storage
 * player-data persistence internals
-* record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, binary/bit-packed representation, protobuf/custom binary representation, or future transport evolution beyond the current WebSocket control/signaling path plus reliable/ordered WebRTC gameplay output path
+* record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, binary/bit-packed representation, protobuf/custom binary representation, or future transport evolution beyond the current WebSocket control/signaling path plus ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`
 
 Those details belong in service, protocol, data, devtools, systems-design, planning, or limits documentation.
 
@@ -494,7 +494,7 @@ Client input is sent to the server, the server advances simulation, and clients 
 
 WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
-Lane-native packets are current active realtime behavior. World, asteroid, bullet, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. Regular asteroid and bullet movement updates are split into dedicated hot movement lane packets instead of remaining in `sr.world`. `event_batch` remains compact sparse quantized presentation-event delivery. The server now emits compact tuple wire shape for selected hot records, and the client expands those tuples before appliers run. Remaining future work includes record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket control/signaling path plus reliable/ordered WebRTC gameplay output path.
+Lane-native packets are current active realtime behavior. World, asteroid, bullet, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. Regular asteroid and bullet movement updates are split into dedicated hot movement lane packets instead of remaining in `sr.world`. `event_batch` remains compact sparse quantized presentation-event delivery. The server now emits compact tuple wire shape for selected hot records, and the client preserves monotonic hot-sequence rejection so late packets cannot move asteroid or bullet positions backward. The client expands those tuples before appliers run. Remaining future work includes record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket control/signaling path plus ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.
 

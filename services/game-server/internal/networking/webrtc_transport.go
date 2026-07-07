@@ -10,21 +10,24 @@ import (
 )
 
 type webRTCGameplayChannelSpec struct {
-	Lane  string
-	Label string
-	ID    uint16
+	Lane           string
+	Label          string
+	ID             uint16
+	Ordered        bool
+	MaxRetransmits *uint16
 }
 
 const webRTCGameplayChannelLaneWorld = "world"
 
 func webRTCGameplayChannelSpecs() []webRTCGameplayChannelSpec {
+	zeroRetransmits := uint16(0)
 	return []webRTCGameplayChannelSpec{
-		{Lane: "world", Label: "sr.world", ID: 1},
-		{Lane: "overlay", Label: "sr.overlay", ID: 2},
-		{Lane: "session", Label: "sr.session", ID: 3},
-		{Lane: "event", Label: "sr.event", ID: 4},
-		{Lane: "asteroids", Label: "sr.asteroids", ID: 5},
-		{Lane: "bullets", Label: "sr.bullets", ID: 6},
+		{Lane: "world", Label: "sr.world", ID: 1, Ordered: true},
+		{Lane: "overlay", Label: "sr.overlay", ID: 2, Ordered: true},
+		{Lane: "session", Label: "sr.session", ID: 3, Ordered: true},
+		{Lane: "event", Label: "sr.event", ID: 4, Ordered: true},
+		{Lane: "asteroids", Label: "sr.asteroids", ID: 5, Ordered: false, MaxRetransmits: &zeroRetransmits},
+		{Lane: "bullets", Label: "sr.bullets", ID: 6, Ordered: false, MaxRetransmits: &zeroRetransmits},
 	}
 }
 
@@ -286,14 +289,15 @@ func (p *WebRTCTransport) attachPeerHandlers() {
 }
 
 func (p *WebRTCTransport) createNegotiatedGameplayChannels() error {
-	ordered := true
 	negotiated := true
 	for _, spec := range webRTCGameplayChannelSpecs() {
+		ordered := spec.Ordered
 		channelID := spec.ID
 		channel, err := p.peer.CreateDataChannel(spec.Label, &webrtc.DataChannelInit{
-			Ordered:    &ordered,
-			Negotiated: &negotiated,
-			ID:         &channelID,
+			Ordered:        &ordered,
+			Negotiated:     &negotiated,
+			ID:             &channelID,
+			MaxRetransmits: spec.MaxRetransmits,
 		})
 		if err != nil {
 			return err
