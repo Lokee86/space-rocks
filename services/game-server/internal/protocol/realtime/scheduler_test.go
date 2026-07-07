@@ -207,6 +207,67 @@ func TestSelectSendPlanIncludesRequiredOverflowWithoutChunking(t *testing.T) {
 	}
 }
 
+func TestSelectSendPlanIncludesRequiredLifecycleWithoutChunking(t *testing.T) {
+	records := []ScheduleRecord{
+		{Lane: LaneAsteroidsLifecycle, PacketFamily: PacketFamilyAsteroidDelta, RecordKind: "create", DeliveryClass: DeliveryClassRequired, Priority: PriorityCritical, EstimatedBytes: HardCapBytes + 250, EntityID: "asteroid-lifecycle"},
+		{Lane: LaneBulletsLifecycle, PacketFamily: PacketFamilyBulletDelta, RecordKind: "delete", DeliveryClass: DeliveryClassRequired, Priority: PriorityCritical, EstimatedBytes: HardCapBytes + 250, EntityID: "bullet-lifecycle"},
+	}
+
+	plan := SelectSendPlan(records)
+	if len(plan.Included) != 2 {
+		t.Fatalf("included records = %#v, want both required lifecycle records", plan.Included)
+	}
+	if len(plan.Deferred) != 0 {
+		t.Fatalf("deferred records = %#v, want required lifecycle records included without deferral", plan.Deferred)
+	}
+	for _, record := range plan.Included {
+		if record.DeliveryClass != DeliveryClassRequired || record.Priority != PriorityCritical {
+			t.Fatalf("included record = %#v, want required critical lifecycle traffic", record)
+		}
+	}
+}
+
+func TestSelectSendPlanIncludesChunkedRequiredLifecycleWithoutDeferral(t *testing.T) {
+	records := []ScheduleRecord{
+		{Lane: LaneAsteroidsLifecycle, PacketFamily: PacketFamilyAsteroidDelta, RecordKind: "create", DeliveryClass: DeliveryClassRequired, Priority: PriorityCritical, EstimatedBytes: HardCapBytes + 250, ChunkCount: 4, ChunkIndex: 2, IsFinalChunk: false, EntityID: "asteroid-lifecycle"},
+		{Lane: LaneBulletsLifecycle, PacketFamily: PacketFamilyBulletDelta, RecordKind: "delete", DeliveryClass: DeliveryClassRequired, Priority: PriorityCritical, EstimatedBytes: HardCapBytes + 250, ChunkCount: 5, ChunkIndex: 1, IsFinalChunk: false, EntityID: "bullet-lifecycle"},
+	}
+
+	plan := SelectSendPlan(records)
+	if len(plan.Included) != 2 {
+		t.Fatalf("included records = %#v, want both required lifecycle records", plan.Included)
+	}
+	if len(plan.Deferred) != 0 {
+		t.Fatalf("deferred records = %#v, want required lifecycle records included without deferral", plan.Deferred)
+	}
+	for _, record := range plan.Included {
+		if record.Lane != LaneAsteroidsLifecycle && record.Lane != LaneBulletsLifecycle {
+			t.Fatalf("included record = %#v, want lifecycle traffic", record)
+		}
+		if record.DeliveryClass != DeliveryClassRequired || record.Priority != PriorityCritical {
+			t.Fatalf("included record = %#v, want required critical lifecycle traffic", record)
+		}
+		if record.ChunkCount <= 1 {
+			t.Fatalf("included record = %#v, want chunked lifecycle traffic to stay out of hot-lane handling", record)
+		}
+	}
+}
+
+func TestIsRealHotLaneChunkRecordRejectsLifecycleLanes(t *testing.T) {
+	if isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneAsteroidsLifecycle, ChunkCount: 2}) {
+		t.Fatal("expected asteroid lifecycle record to bypass hot-lane chunking")
+	}
+	if isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneBulletsLifecycle, ChunkCount: 2}) {
+		t.Fatal("expected bullet lifecycle record to bypass hot-lane chunking")
+	}
+	if !isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneAsteroids, ChunkCount: 2}) {
+		t.Fatal("expected asteroid hot-lane record to use hot-lane chunking")
+	}
+	if !isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneBullets, ChunkCount: 2}) {
+		t.Fatal("expected bullet hot-lane record to use hot-lane chunking")
+	}
+}
+
 func TestSelectSendPlanDropsDebugUnderPressure(t *testing.T) {
 	records := []ScheduleRecord{
 		{Lane: LaneSession, PacketFamily: PacketFamilySessionDelta, RecordKind: "update", Priority: PriorityLow, EstimatedBytes: TargetBytes, EntityID: "pressure"},

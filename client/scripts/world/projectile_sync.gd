@@ -17,6 +17,7 @@ var reused_projectile_node_count := 0
 var released_projectile_node_count := 0
 var target_projectile_positions := {}
 var target_projectile_rotations := {}
+var deleted_projectile_ids := {}
 
 
 func configure(layer: Node2D) -> void:
@@ -48,6 +49,10 @@ func _pool_for_type(projectile_type: String) -> Array:
 	if not pooled_projectile_nodes_by_type.has(projectile_type):
 		pooled_projectile_nodes_by_type[projectile_type] = []
 	return pooled_projectile_nodes_by_type[projectile_type]
+
+
+func is_deleted(bullet_id: String) -> bool:
+	return deleted_projectile_ids.has(bullet_id)
 
 
 func get_projectile_node(bullet_id: String, state: Dictionary):
@@ -96,8 +101,17 @@ func apply_projectile(
 	bullet_id: String,
 	state: Dictionary,
 	local_visual_position: Vector2,
-	local_server_position: Vector2
+	local_server_position: Vector2,
+	create_if_missing: bool = true
 ) -> void:
+	if create_if_missing:
+		deleted_projectile_ids.erase(bullet_id)
+	elif deleted_projectile_ids.has(bullet_id):
+		return
+
+	if !create_if_missing and !projectile_nodes.has(bullet_id):
+		return
+
 	var bullet_node = get_projectile_node(bullet_id, state)
 	var server_position := ProjectileSyncState.server_position(state)
 	var visual_position := local_visual_position + WorldWrapScript.shortest_delta(
@@ -125,6 +139,7 @@ func apply(
 		apply_projectile(bullet_id, server_bullets[bullet_id], local_visual_position, local_server_position)
 
 func remove_projectile(bullet_id: String) -> void:
+	deleted_projectile_ids[bullet_id] = true
 	if !projectile_nodes.has(bullet_id):
 		return
 
@@ -166,6 +181,7 @@ func clear_all_projectiles() -> void:
 	initialized_projectiles.clear()
 	target_projectile_positions.clear()
 	target_projectile_rotations.clear()
+	deleted_projectile_ids.clear()
 
 
 func metrics_snapshot() -> Dictionary:

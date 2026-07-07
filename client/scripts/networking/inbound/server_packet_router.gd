@@ -39,6 +39,14 @@ static func is_bullet_delta(packet: Dictionary) -> bool:
 	return packet_type(packet) == "bullet_delta"
 
 
+static func is_asteroids_lifecycle(packet: Dictionary) -> bool:
+	return packet_type(packet) == "asteroids_lifecycle"
+
+
+static func is_bullets_lifecycle(packet: Dictionary) -> bool:
+	return packet_type(packet) == "bullets_lifecycle"
+
+
 static func is_overlay_full(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_OVERLAY_FULL
 

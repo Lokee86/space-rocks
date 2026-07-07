@@ -228,7 +228,7 @@ func encodeLanePacketUnchecked(candidate RealtimeLaneCandidate) ([]byte, int) {
 	if packet == nil {
 		return nil, 0
 	}
-	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay || candidate.Lane == LaneEvent || candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
+	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay || candidate.Lane == LaneEvent || candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets || candidate.Lane == LaneAsteroidsLifecycle || candidate.Lane == LaneBulletsLifecycle {
 		packet = CompactWirePacket(packet)
 	}
 	encoded, err := packetcodec.Encode(packet)

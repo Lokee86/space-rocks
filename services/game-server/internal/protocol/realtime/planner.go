@@ -86,9 +86,37 @@ func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 			if sessionState != nil {
 				sessionState.HotLaneCohorts = split.CohortState
 			}
+			if len(split.WorldDelta.Bullets.Creates) > 0 || len(split.WorldDelta.Bullets.Deletes) > 0 {
+				bulletLifecycleState, bulletLifecycleSynced := state.LaneState(LaneBulletsLifecycle)
+				bulletLifecycleSequence := NextLaneSequence(bulletLifecycleState, bulletLifecycleSynced)
+				metadata := split.WorldDelta.Metadata
+				metadata.Lane = LaneBulletsLifecycle
+				metadata.Sequence = bulletLifecycleSequence
+				metadata.SnapshotID = DeltaSnapshotID(LaneBulletsLifecycle, bulletLifecycleSequence)
+				metadata.SnapshotKind = SnapshotKind("delta")
+				metadata = metadata.WithChunk(0, 1)
+				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneBulletsLifecycle, Kind: RealtimeLaneCandidateKindDelta, Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: metadata, BulletCreates: split.WorldDelta.Bullets.Creates, BulletDeletes: split.WorldDelta.Bullets.Deletes}})
+				split.WorldDelta.Bullets.Creates = nil
+				split.WorldDelta.Bullets.Deletes = nil
+			}
+			if len(split.WorldDelta.Asteroids.Creates) > 0 || len(split.WorldDelta.Asteroids.Deletes) > 0 {
+				asteroidLifecycleState, asteroidLifecycleSynced := state.LaneState(LaneAsteroidsLifecycle)
+				asteroidLifecycleSequence := NextLaneSequence(asteroidLifecycleState, asteroidLifecycleSynced)
+				metadata := split.WorldDelta.Metadata
+				metadata.Lane = LaneAsteroidsLifecycle
+				metadata.Sequence = asteroidLifecycleSequence
+				metadata.SnapshotID = DeltaSnapshotID(LaneAsteroidsLifecycle, asteroidLifecycleSequence)
+				metadata.SnapshotKind = SnapshotKind("delta")
+				metadata = metadata.WithChunk(0, 1)
+				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneAsteroidsLifecycle, Kind: RealtimeLaneCandidateKindDelta, Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: metadata, AsteroidCreates: split.WorldDelta.Asteroids.Creates, AsteroidDeletes: split.WorldDelta.Asteroids.Deletes}})
+				split.WorldDelta.Asteroids.Creates = nil
+				split.WorldDelta.Asteroids.Deletes = nil
+			}
+
 			asteroidHotPresent := split.AsteroidDelta != nil && len(split.AsteroidDelta.AsteroidUpdates) > 0
 			bulletHotPresent := split.BulletDelta != nil && len(split.BulletDelta.BulletUpdates) > 0
 			worldDeltaHasChanges := WorldWireDeltaHasChanges(split.WorldDelta)
+
 			asteroidHotAllowed := asteroidHotPresent
 			bulletHotAllowed := bulletHotPresent
 			asteroidState, asteroidSynced := state.LaneState(LaneAsteroids)
@@ -239,9 +267,17 @@ func packetFamilyForCandidate(candidate RealtimeLaneCandidate) string {
 		if candidate.Kind == RealtimeLaneCandidateKindDelta {
 			return PacketFamilyAsteroidDelta
 		}
+	case LaneAsteroidsLifecycle:
+		if candidate.Kind == RealtimeLaneCandidateKindDelta {
+			return PacketFamilyAsteroidsLifecycle
+		}
 	case LaneBullets:
 		if candidate.Kind == RealtimeLaneCandidateKindDelta {
 			return PacketFamilyBulletDelta
+		}
+	case LaneBulletsLifecycle:
+		if candidate.Kind == RealtimeLaneCandidateKindDelta {
+			return PacketFamilyBulletsLifecycle
 		}
 	case LaneEvent:
 		if candidate.Kind == RealtimeLaneCandidateKindEventBatch {
@@ -261,6 +297,8 @@ func deliveryClassForCandidate(candidate RealtimeLaneCandidate) DeliveryClass {
 			return DeliveryClassDeferrable
 		case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
 			return DeliveryClassHotSupersedable
+		case LaneAsteroidsLifecycle, LaneBulletsLifecycle:
+			return DeliveryClassRequired
 		}
 	default:
 		return DeliveryClassRequired
@@ -279,6 +317,8 @@ func priorityForCandidate(candidate RealtimeLaneCandidate) Priority {
 			return PriorityMedium
 		case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
 			return PriorityHigh
+		case LaneAsteroidsLifecycle, LaneBulletsLifecycle:
+			return PriorityCritical
 		}
 	}
 

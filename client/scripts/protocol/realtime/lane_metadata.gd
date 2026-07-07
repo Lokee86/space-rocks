@@ -2,7 +2,9 @@ extends RefCounted
 
 const LANE_WORLD := "world"
 const LANE_ASTEROIDS := "asteroids"
+const LANE_ASTEROIDS_LIFECYCLE := "asteroids.lifecycle"
 const LANE_BULLETS := "bullets"
+const LANE_BULLETS_LIFECYCLE := "bullets.lifecycle"
 const LANE_OVERLAY := "overlay"
 const LANE_SESSION := "session"
 const LANE_EVENT := "event"
@@ -12,7 +14,9 @@ const LANE_TELEMETRY := "telemetry"
 
 const PACKET_FAMILY_WORLD := ["world_full", "world_delta"]
 const PACKET_FAMILY_ASTEROIDS := ["asteroid_delta"]
+const PACKET_FAMILY_ASTEROIDS_LIFECYCLE := ["asteroids_lifecycle"]
 const PACKET_FAMILY_BULLETS := ["bullet_delta"]
+const PACKET_FAMILY_BULLETS_LIFECYCLE := ["bullets_lifecycle"]
 const PACKET_FAMILY_OVERLAY := ["overlay_full", "overlay_delta"]
 const PACKET_FAMILY_SESSION := ["session_full", "session_delta"]
 const PACKET_FAMILY_EVENT := ["event_batch"]
@@ -23,6 +27,8 @@ const PACKET_TYPE_TO_LANE := {
 	"world_delta": LANE_WORLD,
 	"asteroid_delta": LANE_ASTEROIDS,
 	"bullet_delta": LANE_BULLETS,
+	"asteroids_lifecycle": LANE_ASTEROIDS_LIFECYCLE,
+	"bullets_lifecycle": LANE_BULLETS_LIFECYCLE,
 	"overlay_full": LANE_OVERLAY,
 	"overlay_delta": LANE_OVERLAY,
 	"session_full": LANE_SESSION,

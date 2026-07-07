@@ -27,6 +27,66 @@ func test_remove_projectile_returns_node_to_pool() -> void:
 	assert_eq(projectile_sync.pool_size_for_type("bullet"), 1)
 	assert_false(node.visible)
 
+
+func test_unknown_hot_projectile_update_does_not_create_node() -> void:
+	var projectile_sync := _new_projectile_sync()
+
+	projectile_sync.apply_projectile(
+		"bullet-unknown",
+		{
+			Packets.FIELD_X: 320.0,
+			Packets.FIELD_Y: 340.0,
+			Packets.FIELD_ROTATION: 0.75,
+			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+		},
+		Vector2.ZERO,
+		Vector2.ZERO,
+		false
+	)
+
+	assert_false(projectile_sync.projectile_nodes.has("bullet-unknown"))
+	assert_false(projectile_sync.projectile_node_types.has("bullet-unknown"))
+	assert_false(projectile_sync.initialized_projectiles.has("bullet-unknown"))
+	assert_eq(projectile_sync.created_projectile_node_count, 0)
+	assert_eq(projectile_sync.pool_size(), 0)
+
+
+func test_hot_projectile_update_after_lifecycle_delete_is_ignored() -> void:
+	var projectile_sync := _new_projectile_sync()
+	var projectile_id := "torpedo-1"
+
+	projectile_sync.apply_projectile(
+		projectile_id,
+		{
+			Packets.FIELD_X: 10.0,
+			Packets.FIELD_Y: 20.0,
+			Packets.FIELD_ROTATION: 0.5,
+			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+		},
+		Vector2.ZERO,
+		Vector2.ZERO
+	)
+	projectile_sync.remove_projectile(projectile_id)
+	projectile_sync.apply_projectile(
+		projectile_id,
+		{
+			Packets.FIELD_X: 320.0,
+			Packets.FIELD_Y: 340.0,
+			Packets.FIELD_ROTATION: 0.75,
+			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
+		},
+		Vector2.ZERO,
+		Vector2.ZERO,
+		false
+	)
+
+	assert_false(projectile_sync.projectile_nodes.has(projectile_id))
+	assert_false(projectile_sync.projectile_node_types.has(projectile_id))
+	assert_true(projectile_sync.is_deleted(projectile_id))
+	assert_eq(projectile_sync.pool_size_for_type("torpedo"), 1)
+	assert_eq(projectile_sync.pool_size_for_type("bullet"), 0)
+
+
 func test_apply_projectile_reuses_pooled_node() -> void:
 	var projectile_sync := _new_projectile_sync()
 

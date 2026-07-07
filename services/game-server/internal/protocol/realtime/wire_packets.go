@@ -9,15 +9,19 @@ import (
 )
 
 type AsteroidWireDeltaPacket struct {
-	Type            string           `json:"type"`
-	Metadata        Metadata
-	AsteroidUpdates []map[string]any `json:"asteroid_updates"`
+	Type             string           `json:"type"`
+	Metadata         Metadata
+	AsteroidCreates   []WorldAsteroidWireRecord
+	AsteroidUpdates   []map[string]any `json:"asteroid_updates"`
+	AsteroidDeletes   []string
 }
 
 type BulletWireDeltaPacket struct {
-	Type          string           `json:"type"`
+	Type          string             `json:"type"`
 	Metadata      Metadata
+	BulletCreates []WorldBulletWireRecord
 	BulletUpdates []map[string]any `json:"bullet_updates"`
+	BulletDeletes []string
 }
 
 
@@ -247,9 +251,7 @@ func wireWorldDeltaPacket(packet WorldDeltaPacket) map[string]any {
 	putRecordArrayIfNonEmpty(wire, "bullet_creates", packet.Bullets.Creates)
 	putFilteredRecordArrayIfNonEmpty(wire, "bullet_updates", packet.Bullets.Updates, []string{"id", "x", "y", "rotation"})
 	putStringArrayIfNonEmpty(wire, "bullet_deletes", packet.Bullets.Deletes)
-	putRecordArrayIfNonEmpty(wire, "asteroid_creates", packet.Asteroids.Creates)
 	putFilteredRecordArrayIfNonEmpty(wire, "asteroid_updates", packet.Asteroids.Updates, []string{"id", "x", "y"})
-	putStringArrayIfNonEmpty(wire, "asteroid_deletes", packet.Asteroids.Deletes)
 	putRecordArrayIfNonEmpty(wire, "pickup_creates", packet.Pickups.Creates)
 	putFilteredRecordArrayIfNonEmpty(wire, "pickup_updates", packet.Pickups.Updates, []string{"id", "x", "y", "age_seconds"})
 	putStringArrayIfNonEmpty(wire, "pickup_deletes", packet.Pickups.Deletes)
@@ -264,9 +266,7 @@ func wireWorldWireDeltaPacket(packet WorldWireDeltaPacket) map[string]any {
 	putRecordArrayIfNonEmpty(wire, "bullet_creates", packet.Bullets.Creates)
 	putFilteredRecordArrayIfNonEmpty(wire, "bullet_updates", packet.Bullets.Updates, []string{"id", "x", "y", "rotation"})
 	putStringArrayIfNonEmpty(wire, "bullet_deletes", packet.Bullets.Deletes)
-	putRecordArrayIfNonEmpty(wire, "asteroid_creates", packet.Asteroids.Creates)
 	putFilteredRecordArrayIfNonEmpty(wire, "asteroid_updates", packet.Asteroids.Updates, []string{"id", "x", "y"})
-	putStringArrayIfNonEmpty(wire, "asteroid_deletes", packet.Asteroids.Deletes)
 	putRecordArrayIfNonEmpty(wire, "pickup_creates", packet.Pickups.Creates)
 	putFilteredRecordArrayIfNonEmpty(wire, "pickup_updates", packet.Pickups.Updates, []string{"id", "x", "y", "age_seconds"})
 	putStringArrayIfNonEmpty(wire, "pickup_deletes", packet.Pickups.Deletes)
@@ -276,12 +276,22 @@ func wireWorldWireDeltaPacket(packet WorldWireDeltaPacket) map[string]any {
 
 func wireAsteroidWireDeltaPacket(packet AsteroidWireDeltaPacket) map[string]any {
 	wire := wireMetadataPacket(packet.Type, packet.Metadata)
+	if packet.Metadata.Lane == LaneAsteroidsLifecycle {
+		putRecordArrayIfNonEmpty(wire, "asteroid_creates", packet.AsteroidCreates)
+		putStringArrayIfNonEmpty(wire, "asteroid_deletes", packet.AsteroidDeletes)
+		return wire
+	}
 	putFilteredRecordArrayIfNonEmpty(wire, "asteroid_updates", packet.AsteroidUpdates, []string{"id", "x", "y"})
 	return wire
 }
 
 func wireBulletWireDeltaPacket(packet BulletWireDeltaPacket) map[string]any {
 	wire := wireMetadataPacket(packet.Type, packet.Metadata)
+	if packet.Metadata.Lane == LaneBulletsLifecycle {
+		putRecordArrayIfNonEmpty(wire, "bullet_creates", packet.BulletCreates)
+		putStringArrayIfNonEmpty(wire, "bullet_deletes", packet.BulletDeletes)
+		return wire
+	}
 	putFilteredRecordArrayIfNonEmpty(wire, "bullet_updates", packet.BulletUpdates, []string{"id", "x", "y", "rotation"})
 	return wire
 }

@@ -248,8 +248,8 @@ func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation(
 		WorldStateFixture.LOCAL_PLAYER_ID: WorldStateFixture.player_state(656.0, 320.0, 0.0),
 		WorldStateFixture.REMOTE_PLAYER_ID: WorldStateFixture.player_state(656.0, 320.0, 0.0),
 	}
-	state[Packets.FIELD_ASTEROIDS] = {}
-	state[Packets.FIELD_BULLETS] = {}
+	state["asteroids"] = {}
+	state["bullets"] = {}
 
 	_apply_state(state)
 	world_sync.interpolate(999.0)
@@ -332,12 +332,13 @@ func test_apply_state_removes_stale_bullet_node() -> void:
 	assert_false(_projectile_sync().get("initialized_projectiles").has(WorldStateFixture.BULLET_ID))
 	assert_false(_projectile_sync().get("target_projectile_positions").has(WorldStateFixture.BULLET_ID))
 	assert_false(_projectile_sync().get("target_projectile_rotations").has(WorldStateFixture.BULLET_ID))
-	assert_true(bullet_node.is_queued_for_deletion())
+	assert_false(bullet_node.visible)
+	assert_true(_projectile_sync().pool_size() >= 1)
 
 
 func test_apply_state_missing_asteroid_scale_warns_once_and_does_not_crash() -> void:
 	var state := WorldStateFixture.snapshot()
-	state[Packets.FIELD_ASTEROIDS] = {
+	state["asteroids"] = {
 		WorldStateFixture.ASTEROID_ID: _asteroid_state_without_scale(),
 	}
 
@@ -353,7 +354,7 @@ func test_apply_state_missing_asteroid_scale_warns_once_and_does_not_crash() -> 
 func test_apply_state_applies_asteroid_packet_scale() -> void:
 	var state := WorldStateFixture.snapshot()
 
-	assert_true(state[Packets.FIELD_ASTEROIDS][WorldStateFixture.ASTEROID_ID].has(Packets.FIELD_SCALE))
+	assert_true(state["asteroids"][WorldStateFixture.ASTEROID_ID].has(Packets.FIELD_SCALE))
 
 	_apply_state(state)
 
@@ -362,7 +363,7 @@ func test_apply_state_applies_asteroid_packet_scale() -> void:
 		Vector2.ONE * 1.25
 	)
 
-	state[Packets.FIELD_ASTEROIDS] = {
+	state["asteroids"] = {
 		WorldStateFixture.ASTEROID_ID: WorldStateFixture.asteroid_state(320.0, 340.0, 1, 1.75),
 	}
 	_apply_state(state)
@@ -397,12 +398,13 @@ class FakeProjectileSync:
 	var apply_all_calls := 0
 	var remove_missing_calls := 0
 
-	func apply_projectile(bullet_id: String, state: Dictionary, local_visual_position: Vector2, local_server_position: Vector2) -> void:
+	func apply_projectile(bullet_id: String, state: Dictionary, local_visual_position: Vector2, local_server_position: Vector2, create_if_missing: bool = true) -> void:
 		apply_projectile_calls.append({
 			"bullet_id": bullet_id,
 			"state": state,
 			"local_visual_position": local_visual_position,
 			"local_server_position": local_server_position,
+			"create_if_missing": create_if_missing,
 		})
 
 	func remove_projectile(bullet_id: String) -> void:
@@ -436,6 +438,7 @@ func test_apply_world_lane_state_uses_direct_bullet_change_sets() -> void:
 
 	assert_eq(fake_projectile_sync.apply_projectile_calls.size(), 1)
 	assert_eq(fake_projectile_sync.apply_projectile_calls[0]["bullet_id"], "bullet-1")
+	assert_true(fake_projectile_sync.apply_projectile_calls[0]["create_if_missing"])
 	assert_eq(fake_projectile_sync.apply_all_calls, 0)
 	assert_eq(fake_projectile_sync.remove_missing_calls, 0)
 	assert_true(world_lane_state.dirty_bullet_ids.is_empty())
@@ -475,12 +478,13 @@ class FakeAsteroidSync:
 	var apply_all_calls := 0
 	var remove_missing_calls := 0
 
-	func apply_asteroid(asteroid_id: String, state: Dictionary, local_visual_position: Vector2, local_server_position: Vector2) -> void:
+	func apply_asteroid(asteroid_id: String, state: Dictionary, local_visual_position: Vector2, local_server_position: Vector2, create_if_missing: bool = true) -> void:
 		apply_asteroid_calls.append({
 			"asteroid_id": asteroid_id,
 			"state": state,
 			"local_visual_position": local_visual_position,
 			"local_server_position": local_server_position,
+			"create_if_missing": create_if_missing,
 		})
 
 	func remove_asteroid(asteroid_id: String) -> void:
@@ -516,6 +520,7 @@ func test_apply_world_lane_state_uses_direct_asteroid_change_sets() -> void:
 
 	assert_eq(fake_asteroid_sync.apply_asteroid_calls.size(), 1)
 	assert_eq(fake_asteroid_sync.apply_asteroid_calls[0]["asteroid_id"], "asteroid-1")
+	assert_true(fake_asteroid_sync.apply_asteroid_calls[0]["create_if_missing"])
 	assert_eq(fake_asteroid_sync.apply_all_calls, 0)
 	assert_eq(fake_asteroid_sync.remove_missing_calls, 0)
 	assert_true(world_lane_state.dirty_asteroid_ids.is_empty())
@@ -587,11 +592,11 @@ func _projectile_sync():
 
 func _apply_state(state: Dictionary) -> void:
 	world_sync.apply_state(
-		state[Packets.FIELD_SELF_ID],
+		state["self_id"],
 		state[Packets.FIELD_PLAYERS],
-		state[Packets.FIELD_BULLETS],
-		state[Packets.FIELD_ASTEROIDS],
-		state.get(Packets.FIELD_PICKUPS, {})
+		state["bullets"],
+		state["asteroids"],
+		state.get("pickups", {})
 	)
 
 
@@ -601,10 +606,10 @@ func _updated_state() -> Dictionary:
 		WorldStateFixture.LOCAL_PLAYER_ID: WorldStateFixture.player_state(150.0, 170.0, 0.5, 15),
 		WorldStateFixture.REMOTE_PLAYER_ID: WorldStateFixture.player_state(260.0, 280.0, 1.75, 25),
 	}
-	state[Packets.FIELD_ASTEROIDS] = {
+	state["asteroids"] = {
 		WorldStateFixture.ASTEROID_ID: WorldStateFixture.asteroid_state(360.0, 380.0, 2, 1.5),
 	}
-	state[Packets.FIELD_BULLETS] = {
+	state["bullets"] = {
 		WorldStateFixture.BULLET_ID: WorldStateFixture.bullet_state(460.0, 480.0, 1.25),
 	}
 	return state
@@ -620,13 +625,13 @@ func _state_without_remote_player() -> Dictionary:
 
 func _state_without_asteroid() -> Dictionary:
 	var state := WorldStateFixture.snapshot()
-	state[Packets.FIELD_ASTEROIDS] = {}
+	state["asteroids"] = {}
 	return state
 
 
 func _state_without_bullet() -> Dictionary:
 	var state := WorldStateFixture.snapshot()
-	state[Packets.FIELD_BULLETS] = {}
+	state["bullets"] = {}
 	return state
 
 

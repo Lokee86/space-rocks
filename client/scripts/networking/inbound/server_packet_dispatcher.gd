@@ -10,6 +10,8 @@ signal world_full_received(packet: Dictionary)
 signal world_delta_received(packet: Dictionary)
 signal asteroid_delta_received(packet: Dictionary)
 signal bullet_delta_received(packet: Dictionary)
+signal asteroids_lifecycle_received(packet: Dictionary)
+signal bullets_lifecycle_received(packet: Dictionary)
 signal overlay_full_received(packet: Dictionary)
 signal overlay_delta_received(packet: Dictionary)
 signal session_full_received(packet: Dictionary)
@@ -46,6 +48,10 @@ func dispatch(packet: Dictionary) -> void:
 		asteroid_delta_received.emit(packet)
 	elif ServerPacketRouter.is_bullet_delta(packet):
 		bullet_delta_received.emit(packet)
+	elif ServerPacketRouter.is_asteroids_lifecycle(packet):
+		asteroids_lifecycle_received.emit(packet)
+	elif ServerPacketRouter.is_bullets_lifecycle(packet):
+		bullets_lifecycle_received.emit(packet)
 	elif ServerPacketRouter.is_overlay_full(packet):
 		overlay_full_received.emit(packet)
 	elif ServerPacketRouter.is_overlay_delta(packet):
@@ -80,3 +86,9 @@ func dispatch(packet: Dictionary) -> void:
 		telemetry_pong_received.emit(packet)
 	else:
 		unknown_packet_received.emit(packet)
+
+
+func _as_world_delta_packet(packet: Dictionary) -> Dictionary:
+	var world_delta_packet: Dictionary = packet.duplicate(true)
+	world_delta_packet["type"] = "world_delta"
+	return world_delta_packet

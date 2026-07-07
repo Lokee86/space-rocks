@@ -504,7 +504,7 @@ func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
 		},
 	}))
 
-	assertStringValue(t, wire, "type", PacketFamilyAsteroidDelta)
+	assertStringValue(t, wire, "type", PacketFamilyAsteroidsLifecycle)
 	assertIntValue(t, wire, "sequence", 42)
 	assertIntValue(t, wire, "server_sent_msec", 123456)
 	assertIntValue(t, wire, "chunk_index", 1)
@@ -513,6 +513,41 @@ func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
 	assertContainsKey(t, wire, "asteroid_updates")
 	for _, key := range []string{"asteroid_creates", "asteroid_deletes", "bullet_creates", "bullet_deletes"} {
 		assertNotContainsKey(t, wire, key)
+	}
+}
+
+func TestWireAsteroidLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
+		Lane: LaneAsteroidsLifecycle,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: AsteroidWireDeltaPacket{
+			Type:     PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 44, ServerSentMsec: 987654, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
+			AsteroidCreates: []WorldAsteroidWireRecord{{ID: "asteroid-1", X: 10, Y: 20, Size: 3, Health: 4, Scale: 5, Variant: 6}},
+			AsteroidDeletes: []string{"asteroid-9"},
+		},
+	}))
+
+	assertStringValue(t, wire, "type", PacketFamilyAsteroidDelta)
+	assertIntValue(t, wire, "sequence", 44)
+	assertIntValue(t, wire, "server_sent_msec", 987654)
+	assertContainsKey(t, wire, "asteroid_creates")
+	assertContainsKey(t, wire, "asteroid_deletes")
+	assertNotContainsKey(t, wire, "asteroid_updates")
+	creates := mustSliceValue(t, wire, "asteroid_creates")
+	if len(creates) != 1 {
+		t.Fatalf("expected one asteroid create, got %#v", creates)
+	}
+	create := mustMapValue(t, creates[0])
+	assertStringValue(t, create, "id", "asteroid-1")
+	assertFloatValue(t, create, "x", 10)
+	assertFloatValue(t, create, "y", 20)
+	assertFloatValue(t, create, "size", 3)
+	assertFloatValue(t, create, "health", 4)
+	assertFloatValue(t, create, "scale", 5)
+	assertFloatValue(t, create, "variant", 6)
+	deletes := mustSliceValue(t, wire, "asteroid_deletes")
+	if len(deletes) != 1 || deletes[0] != "asteroid-9" {
+		t.Fatalf("expected one asteroid delete, got %#v", deletes)
 	}
 }
 
@@ -534,7 +569,7 @@ func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
 		},
 	}))
 
-	assertStringValue(t, wire, "type", PacketFamilyBulletDelta)
+	assertStringValue(t, wire, "type", PacketFamilyBulletsLifecycle)
 	assertIntValue(t, wire, "sequence", 43)
 	assertIntValue(t, wire, "server_sent_msec", 654321)
 	assertIntValue(t, wire, "chunk_index", 2)
@@ -544,6 +579,26 @@ func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
 	for _, key := range []string{"bullet_creates", "bullet_deletes", "asteroid_creates", "asteroid_deletes"} {
 		assertNotContainsKey(t, wire, key)
 	}
+}
+
+func TestWireBulletLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
+		Lane: LaneBulletsLifecycle,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: BulletWireDeltaPacket{
+			Type:     PacketFamilyBulletsLifecycle,
+			Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 45, ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
+			BulletCreates: []WorldBulletWireRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 1, Y: 2, Rotation: 3, WeaponID: "pulse", ProjectileType: "laser"}},
+			BulletDeletes: []string{"bullet-9"},
+		},
+	}))
+
+	assertStringValue(t, wire, "type", PacketFamilyBulletsLifecycle)
+	assertContainsKey(t, wire, "bullet_creates")
+	assertContainsKey(t, wire, "bullet_deletes")
+	assertNotContainsKey(t, wire, "bullet_updates")
+	assertNotContainsKey(t, wire, "asteroid_creates")
+	assertNotContainsKey(t, wire, "asteroid_deletes")
 }
 
 func TestWireWorldDeltaPacketEncodesPickupUpdatesAsPartialFieldPatch(t *testing.T) {
@@ -741,8 +796,34 @@ func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
 	assertStringValue(t, wire, "baseline_id", "baseline-9")
 	assertContainsKey(t, wire, "ship_creates")
 	assertContainsKey(t, wire, "bullet_updates")
-	assertContainsKey(t, wire, "asteroid_deletes")
+	assertContainsKey(t, wire, "asteroid_updates")
+	assertNotContainsKey(t, wire, "bullet_creates")
+	assertNotContainsKey(t, wire, "bullet_deletes")
+	assertNotContainsKey(t, wire, "asteroid_creates")
+	assertNotContainsKey(t, wire, "asteroid_deletes")
 	assertContainsKey(t, wire, "pickup_creates")
+	assertNotNakedDeltaPayload(t, wire)
+}
+
+func TestActiveWirePacketEncodingUsesBulletLifecycleEnvelope(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneBulletsLifecycle,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: BulletWireDeltaPacket{
+			Type:     PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 11, BaselineID: "bullet-baseline-11", SnapshotID: "bullet-snapshot-11", SnapshotKind: SnapshotKind("delta")},
+			BulletCreates: []WorldBulletWireRecord{{ID: "bullet-a", OwnerID: "ship-a", X: 1, Y: 2, Rotation: 3, WeaponID: "pulse", ProjectileType: "laser"}},
+			BulletDeletes: []string{"bullet-b"},
+		},
+	}
+
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
+
+	assertStringValue(t, wire, "type", PacketFamilyBulletDelta)
+	assertIntValue(t, wire, "sequence", 11)
+	assertStringValue(t, wire, "baseline_id", "bullet-baseline-11")
+	assertContainsKey(t, wire, "bullet_creates")
+	assertContainsKey(t, wire, "bullet_deletes")
+	assertNotContainsKey(t, wire, "bullet_updates")
 	assertNotNakedDeltaPayload(t, wire)
 }
 

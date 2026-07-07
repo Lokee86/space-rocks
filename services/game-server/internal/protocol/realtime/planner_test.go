@@ -877,26 +877,37 @@ func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleInWorldDeltaUnderPr
 	if !ok {
 		t.Fatalf("expected world delta packet, got %T", world.Delta)
 	}
-	if len(worldDelta.Asteroids.Creates) == 0 || len(worldDelta.Asteroids.Deletes) == 0 {
-		t.Fatalf("expected asteroid creates and deletes to remain in world delta, got %#v", worldDelta)
+	if len(worldDelta.Asteroids.Creates) != 0 || len(worldDelta.Asteroids.Deletes) != 0 {
+		t.Fatalf("expected asteroid creates and deletes to move out of world delta, got %#v", worldDelta)
 	}
 	if len(worldDelta.Asteroids.Updates) != 0 {
 		t.Fatalf("expected asteroid movement updates removed from world delta, got %d", len(worldDelta.Asteroids.Updates))
+	}
+	lifecycle, ok := findCandidateByLane(plan.Candidates, LaneAsteroidsLifecycle)
+	if !ok {
+		t.Fatal("expected asteroid lifecycle candidate under pressure")
+	}
+	lifecycleDelta, ok := lifecycle.Delta.(AsteroidWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected asteroid lifecycle packet, got %T", lifecycle.Delta)
+	}
+	if len(lifecycleDelta.AsteroidCreates) == 0 || len(lifecycleDelta.AsteroidDeletes) == 0 {
+		t.Fatalf("expected asteroid lifecycle creates and deletes, got %#v", lifecycleDelta)
 	}
 	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); !ok {
 		t.Fatal("expected asteroid hot delta candidate under pressure")
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesKeepsBulletLifecycleInWorldDeltaUnderPressure(t *testing.T) {
+func TestAssembleRealtimeLaneCandidatesMovesBulletLifecycleOutOfWorldDeltaUnderPressure(t *testing.T) {
 	policy := DefaultHotLaneOffloadPolicy()
 	count := policy.BulletHotLaneEntityBudget*2 + 1
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
 	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
 	for i := 1; i <= count; i++ {
 		id := fmt.Sprintf("bullet-%d", i)
-		previous.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i), Y: float64(i + 20), Rotation: float64(i + 30)}
-		snapshot.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i + 100), Y: float64(i + 120), Rotation: float64(i + 130)}
+		previous.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i), Y: float64(i + 20), Rotation: float64(i + 30), WeaponID: "laser", ProjectileType: "bolt"}
+		snapshot.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i + 100), Y: float64(i + 120), Rotation: float64(i + 130), WeaponID: "laser", ProjectileType: "bolt"}
 	}
 	delete(snapshot.Bullets, fmt.Sprintf("bullet-%d", count))
 	delete(previous.Bullets, "bullet-1")
@@ -915,11 +926,22 @@ func TestAssembleRealtimeLaneCandidatesKeepsBulletLifecycleInWorldDeltaUnderPres
 	if !ok {
 		t.Fatalf("expected world delta packet, got %T", world.Delta)
 	}
-	if len(worldDelta.Bullets.Creates) == 0 || len(worldDelta.Bullets.Deletes) == 0 {
-		t.Fatalf("expected bullet creates and deletes to remain in world delta, got %#v", worldDelta)
+	if len(worldDelta.Bullets.Creates) != 0 || len(worldDelta.Bullets.Deletes) != 0 {
+		t.Fatalf("expected bullet creates and deletes to move out of world delta, got %#v", worldDelta)
 	}
 	if len(worldDelta.Bullets.Updates) != 0 {
 		t.Fatalf("expected bullet movement updates removed from world delta, got %d", len(worldDelta.Bullets.Updates))
+	}
+	lifecycle, ok := findCandidateByLane(plan.Candidates, LaneBulletsLifecycle)
+	if !ok {
+		t.Fatal("expected bullet lifecycle candidate under pressure")
+	}
+	lifecycleDelta, ok := lifecycle.Delta.(BulletWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected bullet lifecycle packet, got %T", lifecycle.Delta)
+	}
+	if len(lifecycleDelta.BulletCreates) == 0 || len(lifecycleDelta.BulletDeletes) == 0 {
+		t.Fatalf("expected bullet lifecycle creates and deletes, got %#v", lifecycleDelta)
 	}
 	if _, ok := findCandidateByLane(plan.Candidates, LaneBullets); !ok {
 		t.Fatal("expected bullet hot delta candidate under pressure")
@@ -1080,11 +1102,46 @@ func TestAssembleRealtimeLaneCandidatesDoesNotEmitEmptyHotCandidate(t *testing.T
 	}
 }
 
+func TestAssembleRealtimeLaneCandidatesEmitsAsteroidLifecycleCandidateWhenAsteroidsAreCreatedOrDeleted(t *testing.T) {
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1"}
+	current := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{"asteroid-a": {ID: "asteroid-a", X: 10, Y: 20, Size: 3, Health: 4, Scale: 5, Variant: 6}}}
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+
+	plan := AssembleRealtimeLaneCandidates(current, state)
+	candidate, ok := findCandidateByLane(plan.Candidates, LaneAsteroidsLifecycle)
+	if !ok {
+		t.Fatal("expected asteroid lifecycle candidate")
+	}
+	if candidate.Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected asteroid lifecycle delta candidate kind, got %q", candidate.Kind)
+	}
+	delta, ok := candidate.Delta.(AsteroidWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected asteroid lifecycle packet, got %T", candidate.Delta)
+	}
+	if len(delta.AsteroidCreates) != 1 || delta.AsteroidCreates[0].ID != "asteroid-a" {
+		t.Fatalf("expected asteroid create to move to lifecycle lane, got %#v", delta.AsteroidCreates)
+	}
+	if len(delta.AsteroidDeletes) != 0 {
+		t.Fatalf("expected no asteroid deletes, got %#v", delta.AsteroidDeletes)
+	}
+	if len(delta.AsteroidUpdates) != 0 {
+		t.Fatalf("expected lifecycle lane to omit asteroid hot updates, got %#v", delta.AsteroidUpdates)
+	}
+	if got, want := delta.Type, PacketFamilyAsteroidsLifecycle; got != want {
+		t.Fatalf("expected asteroid lifecycle packet type %q, got %q", want, got)
+	}
+}
+
 func TestScheduleRecordForHotAsteroidAndBulletDeltaCandidatesUsesHotSupersedableHighPriority(t *testing.T) {
 	tests := []struct {
-		name      string
-		candidate RealtimeLaneCandidate
-		wantLane  Lane
+		name       string
+		candidate  RealtimeLaneCandidate
+		wantLane   Lane
 		wantFamily string
 	}{
 		{
@@ -1092,9 +1149,15 @@ func TestScheduleRecordForHotAsteroidAndBulletDeltaCandidatesUsesHotSupersedable
 			candidate: RealtimeLaneCandidate{
 				Lane: LaneAsteroids,
 				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 1}},
+				Delta: AsteroidWireDeltaPacket{
+					Type: PacketFamilyAsteroidDelta,
+					Metadata: Metadata{
+						Lane:     LaneAsteroids,
+						Sequence: 1,
+					},
+				},
 			},
-			wantLane:  LaneAsteroids,
+			wantLane:   LaneAsteroids,
 			wantFamily: PacketFamilyAsteroidDelta,
 		},
 		{
@@ -1104,7 +1167,7 @@ func TestScheduleRecordForHotAsteroidAndBulletDeltaCandidatesUsesHotSupersedable
 				Kind: RealtimeLaneCandidateKindDelta,
 				Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 1}},
 			},
-			wantLane:  LaneBullets,
+			wantLane:   LaneBullets,
 			wantFamily: PacketFamilyBulletDelta,
 		},
 	}
@@ -1123,6 +1186,84 @@ func TestScheduleRecordForHotAsteroidAndBulletDeltaCandidatesUsesHotSupersedable
 			}
 			if record.Priority != PriorityHigh {
 				t.Fatalf("record priority = %q, want high", record.Priority)
+			}
+		})
+	}
+}
+
+func TestScheduleRecordForAsteroidLifecycleDeltaCandidateUsesRequiredDelivery(t *testing.T) {
+	record := scheduleRecordForCandidate(0, RealtimeLaneCandidate{
+		Lane: LaneAsteroidsLifecycle,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1}},
+	})
+
+	if record.Lane != LaneAsteroidsLifecycle {
+		t.Fatalf("record lane = %q, want %q", record.Lane, LaneAsteroidsLifecycle)
+	}
+	if record.PacketFamily != PacketFamilyAsteroidDelta {
+		t.Fatalf("record packet family = %q, want %q", record.PacketFamily, PacketFamilyAsteroidDelta)
+	}
+	if record.DeliveryClass != DeliveryClassRequired {
+		t.Fatalf("record delivery class = %q, want required", record.DeliveryClass)
+	}
+	if record.Priority != PriorityCritical {
+		t.Fatalf("record priority = %q, want critical", record.Priority)
+	}
+}
+
+func TestScheduleRecordForBulletLifecycleDeltaCandidateUsesRequiredDelivery(t *testing.T) {
+	record := scheduleRecordForCandidate(0, RealtimeLaneCandidate{
+		Lane: LaneBulletsLifecycle,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1}},
+	})
+
+	if record.Lane != LaneBulletsLifecycle {
+		t.Fatalf("record lane = %q, want %q", record.Lane, LaneBulletsLifecycle)
+	}
+	if record.PacketFamily != PacketFamilyBulletsLifecycle {
+		t.Fatalf("record packet family = %q, want %q", record.PacketFamily, PacketFamilyBulletsLifecycle)
+	}
+	if record.DeliveryClass != DeliveryClassRequired {
+		t.Fatalf("record delivery class = %q, want required", record.DeliveryClass)
+	}
+	if record.Priority != PriorityCritical {
+		t.Fatalf("record priority = %q, want critical", record.Priority)
+	}
+}
+
+func TestScheduleRecordForLifecycleDeltaCandidateStaysSingleChunk(t *testing.T) {
+	tests := []struct {
+		name      string
+		candidate RealtimeLaneCandidate
+	}{
+		{
+			name: "asteroid lifecycle",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneAsteroidsLifecycle,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1, ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}},
+			},
+		},
+		{
+			name: "bullet lifecycle",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneBulletsLifecycle,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1, ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			record := scheduleRecordForCandidate(0, tc.candidate)
+			if record.DeliveryClass != DeliveryClassRequired || record.Priority != PriorityCritical {
+				t.Fatalf("record = %#v, want required critical lifecycle traffic", record)
+			}
+			if record.ChunkCount != 1 || !record.IsFinalChunk {
+				t.Fatalf("record = %#v, want single final chunk", record)
 			}
 		})
 	}

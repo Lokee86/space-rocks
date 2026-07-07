@@ -135,6 +135,7 @@ func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
 
 	service._on_packet_received({
 		"type": "asteroid_delta",
+		"sequence": 1,
 		"asteroid_updates": [
 			{"id": "asteroid-1", "x": 42, "y": 84},
 		],
@@ -159,6 +160,7 @@ func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
 
 	service._on_packet_received({
 		"type": "bullet_delta",
+		"sequence": 1,
 		"bullet_updates": [
 			{"id": "bullet-1", "x": 55, "y": 66},
 		],

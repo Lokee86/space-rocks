@@ -25,6 +25,23 @@ func test_lane_packet_families_route_directly() -> void:
 	assert_true(router.event_batch_applier.has_applied_event("event-1"))
 
 
+func test_realtime_router_exposes_gameplay_readiness() -> void:
+	var router := RealtimeRouter.new()
+
+	assert_not_null(router.get_gameplay_readiness())
+	assert_eq(router.get_gameplay_readiness(), router.gameplay_readiness)
+
+
+func test_realtime_router_is_presentable_after_required_baselines() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({"type": "world_full", "baseline_id": "world-baseline", "sequence": 1, "snapshot_id": "world-snapshot", "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+	router.route_lane_packet({"type": "overlay_full", "baseline_id": "overlay-baseline", "sequence": 1, "snapshot_id": "overlay-snapshot", "is_final_chunk": true})
+	router.route_lane_packet({"type": "session_full", "baseline_id": "session-baseline", "sequence": 1, "snapshot_id": "session-snapshot", "is_final_chunk": true, "players": [], "player_lifecycle": [], "total_asteroids": 0})
+
+	assert_true(router.is_presentable())
+
+
 func test_lowercase_lane_fixtures_route_directly() -> void:
 	var router := RealtimeRouter.new()
 
@@ -116,6 +133,61 @@ func test_bullet_delta_routes_into_world_lane_state() -> void:
 
 	assert_eq(router.world_lane_state.bullets["bullet-1"]["x"], 5.5)
 	assert_eq(router.world_lane_state.bullets["bullet-1"]["y"], 6.6)
+
+
+func test_asteroids_lifecycle_routes_into_world_lane_state() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({
+		"type": "asteroids_lifecycle",
+		"lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE,
+		"asteroid_creates": [{"id": "asteroid-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}],
+		"asteroid_deletes": [],
+	})
+
+	assert_true(router.world_lane_state.asteroids.has("asteroid-1"))
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["variant"], 3)
+
+
+func test_bullets_lifecycle_routes_into_world_lane_state() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({
+		"type": "bullets_lifecycle",
+		"lane": LaneMetadata.LANE_BULLETS_LIFECYCLE,
+		"bullet_creates": [{"id": "bullet-1", "owner_id": "player-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 30, "lifespan_seconds": 1.0, "weapon_id": "torpedo", "projectile_type": "torpedo"}],
+		"bullet_deletes": [],
+	})
+
+	assert_true(router.world_lane_state.bullets.has("bullet-1"))
+	assert_eq(router.world_lane_state.bullets["bullet-1"]["projectile_type"], "torpedo")
+
+
+func test_compact_asteroids_lifecycle_routes_into_world_lane_state() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({"t": "al", "l": "al", "q": 1, "k": "d", "ac": [[1, 10, 20, 2, 90, 1500, 3]]})
+
+	assert_true(router.world_lane_state.asteroids.has("asteroid-1"))
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["variant"], 3)
+
+
+func test_compact_bullets_lifecycle_routes_into_world_lane_state() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({"t": "bl", "l": "bl", "q": 1, "k": "d", "bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]]})
+
+	assert_true(router.world_lane_state.bullets.has("bullet-1"))
+	assert_eq(router.world_lane_state.bullets["bullet-1"]["projectile_type"], "torpedo")
+
+
+func test_compact_bullets_lifecycle_delete_removes_bullet() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({"t": "bl", "l": "bl", "q": 1, "k": "d", "bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]]})
+	router.route_lane_packet({"t": "bl", "l": "bl", "q": 2, "k": "d", "bx": [1]})
+
+	assert_false(router.world_lane_state.bullets.has("bullet-1"))
 
 
 func _decode_fixture(text: String) -> Dictionary:

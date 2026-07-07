@@ -19,6 +19,8 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 	}
 
 	switch candidate.Lane {
+	case LaneBulletsLifecycle, LaneAsteroidsLifecycle:
+		return []RealtimeLaneCandidate{candidate}
 	case LaneBullets:
 		packet, ok := bulletWireDeltaPacketFromCandidate(candidate)
 		if !ok {

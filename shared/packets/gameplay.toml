@@ -724,8 +724,18 @@ value = "asteroid_delta"
 
 [[packet_types]]
 
+id = "asteroids_lifecycle"
+value = "asteroids_lifecycle"
+
+[[packet_types]]
+
 id = "bullet_delta"
 value = "bullet_delta"
+
+[[packet_types]]
+
+id = "bullets_lifecycle"
+value = "bullets_lifecycle"
 
 [[packet_types]]
 

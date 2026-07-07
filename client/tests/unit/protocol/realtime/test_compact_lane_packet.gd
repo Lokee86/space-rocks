@@ -450,6 +450,32 @@ func test_expand_packet_converts_compact_session_lifecycle_tuples() -> void:
 	assert_eq(expanded["player_lifecycle_updates"][0], {"player_id": "player-1", "status": "respawning"})
 
 
+func test_expand_packet_converts_compact_asteroids_lifecycle_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "al",
+		"l": "al",
+		"q": 3,
+		"ac": [[1, 10, 20, 2, 90, 1500, 3]],
+	})
+
+	assert_eq(expanded["type"], "asteroids_lifecycle")
+	assert_eq(expanded["lane"], "asteroids.lifecycle")
+	assert_eq(expanded["asteroid_creates"][0]["id"], "asteroid-1")
+
+
+func test_expand_packet_converts_compact_bullets_lifecycle_tuples() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "bl",
+		"l": "bl",
+		"q": 4,
+		"bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]],
+	})
+
+	assert_eq(expanded["type"], "bullets_lifecycle")
+	assert_eq(expanded["lane"], "bullets.lifecycle")
+	assert_eq(expanded["bullet_creates"][0]["projectile_type"], "torpedo")
+
+
 func test_expand_packet_converts_compact_session_lifecycle_deletes() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "sd",

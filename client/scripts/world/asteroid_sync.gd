@@ -15,6 +15,7 @@ var target_asteroid_positions := {}
 var asteroid_server_positions := {}
 var asteroid_visual_positions := {}
 var asteroid_variants := {}
+var deleted_asteroid_ids := {}
 
 
 func configure(layer: Node2D) -> void:
@@ -33,6 +34,7 @@ func reset() -> void:
 	asteroid_server_positions.clear()
 	asteroid_visual_positions.clear()
 	asteroid_variants.clear()
+	deleted_asteroid_ids.clear()
 
 
 func get_asteroid_node(asteroid_id: String):
@@ -62,8 +64,17 @@ func apply_asteroid(
 	asteroid_id: String,
 	state: Dictionary,
 	local_visual_position: Vector2,
-	local_server_position: Vector2
+	local_server_position: Vector2,
+	create_if_missing: bool = true
 ) -> void:
+	if create_if_missing:
+		deleted_asteroid_ids.erase(asteroid_id)
+	elif deleted_asteroid_ids.has(asteroid_id):
+		return
+
+	if !create_if_missing and !asteroid_nodes.has(asteroid_id):
+		return
+
 	var asteroid_node = get_asteroid_node(asteroid_id)
 	var raw_server_position := AsteroidSyncState.server_position(state)
 	var visual_position: Vector2
@@ -111,10 +122,12 @@ func apply(
 
 func remove_asteroid(asteroid_id: String) -> void:
 	if !asteroid_nodes.has(asteroid_id):
+		deleted_asteroid_ids[asteroid_id] = true
 		return
 
 	asteroid_nodes[asteroid_id].queue_free()
 	asteroid_nodes.erase(asteroid_id)
+	deleted_asteroid_ids[asteroid_id] = true
 	warned_missing_asteroid_scale.erase(asteroid_id)
 	warned_missing_asteroid_variant.erase(asteroid_id)
 	initialized_asteroids.erase(asteroid_id)
@@ -122,6 +135,10 @@ func remove_asteroid(asteroid_id: String) -> void:
 	asteroid_server_positions.erase(asteroid_id)
 	asteroid_visual_positions.erase(asteroid_id)
 	asteroid_variants.erase(asteroid_id)
+
+
+func is_deleted(asteroid_id: String) -> bool:
+	return deleted_asteroid_ids.has(asteroid_id)
 
 
 func remove_missing(server_asteroids: Dictionary) -> void:

@@ -182,6 +182,164 @@ func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *te
 	}
 }
 
+func TestExpandHotLaneCandidateChunksLeavesAsteroidLifecycleUntouched(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneAsteroidsLifecycle,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: AsteroidWireDeltaPacket{
+			Type: PacketFamilyAsteroidDelta,
+			Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
+			AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
+		},
+	}
+
+	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	if len(chunks) != 1 {
+		t.Fatalf("expected one chunk, got %d", len(chunks))
+	}
+	if chunks[0].Lane != LaneAsteroidsLifecycle {
+		t.Fatalf("lane = %q, want %q", chunks[0].Lane, LaneAsteroidsLifecycle)
+	}
+	if chunks[0].Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("kind = %q, want delta", chunks[0].Kind)
+	}
+	packet, ok := chunks[0].Delta.(AsteroidWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected AsteroidWireDeltaPacket, got %#v", chunks[0].Delta)
+	}
+	if packet.Metadata.Lane != LaneAsteroidsLifecycle || packet.Metadata.ChunkCount != 1 || packet.Metadata.ChunkIndex != 0 || !packet.Metadata.IsFinalChunk {
+		t.Fatalf("asteroid lifecycle packet metadata = %#v, want untouched single final chunk", packet.Metadata)
+	}
+}
+
+func TestExpandHotLaneCandidateChunksLeavesBulletLifecycleUntouched(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneBulletsLifecycle,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: BulletWireDeltaPacket{
+			Type: PacketFamilyBulletDelta,
+			Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
+			BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
+		},
+	}
+
+	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	if len(chunks) != 1 {
+		t.Fatalf("expected one chunk, got %d", len(chunks))
+	}
+	if chunks[0].Lane != LaneBulletsLifecycle {
+		t.Fatalf("lane = %q, want %q", chunks[0].Lane, LaneBulletsLifecycle)
+	}
+	if chunks[0].Kind != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("kind = %q, want delta", chunks[0].Kind)
+	}
+	packet, ok := chunks[0].Delta.(BulletWireDeltaPacket)
+	if !ok {
+		t.Fatalf("expected BulletWireDeltaPacket, got %#v", chunks[0].Delta)
+	}
+	if packet.Metadata.Lane != LaneBulletsLifecycle || packet.Metadata.ChunkCount != 1 || packet.Metadata.ChunkIndex != 0 || !packet.Metadata.IsFinalChunk {
+		t.Fatalf("bullet lifecycle packet metadata = %#v, want untouched single final chunk", packet.Metadata)
+	}
+}
+
+func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesAsFinalChunks(t *testing.T) {
+	tests := []struct {
+		name           string
+		candidate      RealtimeLaneCandidate
+		wantChunkIndex int
+		wantChunkCount int
+		wantFinalChunk bool
+	}{
+		{
+			name: "asteroid lifecycle",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneAsteroidsLifecycle,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: AsteroidWireDeltaPacket{
+					Type: PacketFamilyAsteroidDelta,
+					Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
+					AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
+				},
+			},
+			wantChunkIndex: 0,
+			wantChunkCount: 0,
+			wantFinalChunk: false,
+		},
+		{
+			name: "bullet lifecycle",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneBulletsLifecycle,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: BulletWireDeltaPacket{
+					Type: PacketFamilyBulletDelta,
+					Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
+					BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
+				},
+			},
+			wantChunkIndex: 0,
+			wantChunkCount: 0,
+			wantFinalChunk: false,
+		},
+		{
+			name: "asteroid hot lane",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneAsteroids,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: AsteroidWireDeltaPacket{
+					Type: PacketFamilyAsteroidDelta,
+					Metadata: Metadata{Lane: LaneAsteroids, Sequence: 25, SnapshotKind: SnapshotKind("delta")},
+					AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-hot-1", 1, 2)},
+				},
+			},
+			wantChunkIndex: 0,
+			wantChunkCount: 1,
+			wantFinalChunk: true,
+		},
+		{
+			name: "bullet hot lane",
+			candidate: RealtimeLaneCandidate{
+				Lane: LaneBullets,
+				Kind: RealtimeLaneCandidateKindDelta,
+				Delta: BulletWireDeltaPacket{
+					Type: PacketFamilyBulletDelta,
+					Metadata: Metadata{Lane: LaneBullets, Sequence: 26, SnapshotKind: SnapshotKind("delta")},
+					BulletUpdates: []map[string]any{makeBulletUpdate("bullet-hot-1", 1, 2)},
+				},
+			},
+			wantChunkIndex: 0,
+			wantChunkCount: 1,
+			wantFinalChunk: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{tc.candidate})
+			if len(chunks) != 1 {
+				t.Fatalf("expected one chunk, got %d", len(chunks))
+			}
+			if chunks[0].Lane != tc.candidate.Lane {
+				t.Fatalf("lane = %q, want %q", chunks[0].Lane, tc.candidate.Lane)
+			}
+			if chunks[0].Kind != tc.candidate.Kind {
+				t.Fatalf("kind = %q, want %q", chunks[0].Kind, tc.candidate.Kind)
+			}
+			switch packet := chunks[0].Delta.(type) {
+			case AsteroidWireDeltaPacket:
+				if packet.Metadata.ChunkIndex != tc.wantChunkIndex || packet.Metadata.ChunkCount != tc.wantChunkCount || packet.Metadata.IsFinalChunk != tc.wantFinalChunk {
+					t.Fatalf("asteroid packet metadata = %#v, want index=%d count=%d final=%t", packet.Metadata, tc.wantChunkIndex, tc.wantChunkCount, tc.wantFinalChunk)
+				}
+			case BulletWireDeltaPacket:
+				if packet.Metadata.ChunkIndex != tc.wantChunkIndex || packet.Metadata.ChunkCount != tc.wantChunkCount || packet.Metadata.IsFinalChunk != tc.wantFinalChunk {
+					t.Fatalf("bullet packet metadata = %#v, want index=%d count=%d final=%t", packet.Metadata, tc.wantChunkIndex, tc.wantChunkCount, tc.wantFinalChunk)
+				}
+			default:
+				t.Fatalf("unexpected delta type %#v", chunks[0].Delta)
+			}
+		})
+	}
+}
+
 func TestExpandHotLaneCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
 	updates := make([]map[string]any, 0, 240)
 	for i := 1; i <= 240; i++ {

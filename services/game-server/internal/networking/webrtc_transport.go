@@ -28,6 +28,8 @@ func webRTCGameplayChannelSpecs() []webRTCGameplayChannelSpec {
 		{Lane: "event", Label: "sr.event", ID: 4, Ordered: true},
 		{Lane: "asteroids", Label: "sr.asteroids", ID: 5, Ordered: false, MaxRetransmits: &zeroRetransmits},
 		{Lane: "bullets", Label: "sr.bullets", ID: 6, Ordered: false, MaxRetransmits: &zeroRetransmits},
+		{Lane: "asteroids.lifecycle", Label: "sr.asteroids.lifecycle", ID: 7, Ordered: true},
+		{Lane: "bullets.lifecycle", Label: "sr.bullets.lifecycle", ID: 8, Ordered: true},
 	}
 }
 

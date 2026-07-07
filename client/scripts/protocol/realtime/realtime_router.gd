@@ -46,6 +46,10 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			_world_applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_ASTEROIDS, expanded_packet)
 		"bullet_delta":
 			_world_applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_BULLETS, expanded_packet)
+		"asteroids_lifecycle":
+			_world_applier.apply_asteroids_lifecycle(world_lane_state, expanded_packet)
+		"bullets_lifecycle":
+			_world_applier.apply_bullets_lifecycle(world_lane_state, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[0]:
 			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[1]:
@@ -60,6 +64,14 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			_route_resync(expanded_packet)
 	return {}
 
+
+
+func get_gameplay_readiness():
+	return gameplay_readiness
+
+
+func is_presentable() -> bool:
+	return gameplay_readiness != null and gameplay_readiness.is_gameplay_ready()
 
 
 func _route_resync(packet: Dictionary) -> void:

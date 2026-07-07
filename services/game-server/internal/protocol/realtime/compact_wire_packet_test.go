@@ -41,6 +41,30 @@ func TestCompactWirePacketCompactsMetadataKeys(t *testing.T) {
 	}
 }
 
+func TestCompactWirePacketCompactsLifecycleLaneValues(t *testing.T) {
+	input := map[string]any{
+		"type": "asteroids_lifecycle",
+		"lane": "asteroids.lifecycle",
+	}
+
+	got := CompactWirePacket(input)
+
+	if got["t"] != "ad" {
+		t.Fatalf("type = %v, want ad", got["t"])
+	}
+	if got["l"] != "al" {
+		t.Fatalf("asteroid lifecycle lane = %v, want al", got["l"])
+	}
+
+	bullet := CompactWirePacket(map[string]any{
+		"type": "bullets_lifecycle",
+		"lane": "bullets.lifecycle",
+	})
+	if bullet["l"] != "bl" {
+		t.Fatalf("bullet lifecycle lane = %v, want bl", bullet["l"])
+	}
+}
+
 func TestCompactWirePacketCompactsNestedMapRecordsRecursively(t *testing.T) {
 	input := map[string]any{
 		"type": "world_delta",
