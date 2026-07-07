@@ -28,7 +28,6 @@ class FakeChannel:
 	func close() -> void:
 		closed = true
 
-
 class FakePeer:
 	extends RefCounted
 
@@ -79,7 +78,6 @@ class FakePeer:
 
 	func close() -> void:
 		closed = true
-
 
 func test_start_configures_channels_and_emits_offer() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -145,7 +143,6 @@ func test_start_configures_channels_and_emits_offer() -> void:
 	assert_eq(ready_values[5]["channel_label"], "sr.bullets")
 	assert_eq(ready_values[5]["channel_id"], 6)
 
-
 func test_start_passes_configured_ice_servers_to_initialize() -> void:
 	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
@@ -160,7 +157,6 @@ func test_start_passes_configured_ice_servers_to_initialize() -> void:
 	assert_eq(fake_peer.initialize_args.size(), 1)
 	assert_eq(fake_peer.initialize_args[0]["iceServers"].size(), 1)
 	assert_eq(fake_peer.initialize_args[0]["iceServers"][0]["urls"][0], "stun:stun.example.invalid:3478")
-
 
 func test_handle_answer_and_remote_ice_forward_to_peer() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -182,7 +178,6 @@ func test_handle_answer_and_remote_ice_forward_to_peer() -> void:
 	assert_eq(fake_peer.add_ice_candidate_args[0], "audio")
 	assert_eq(fake_peer.add_ice_candidate_args[1], 2)
 	assert_eq(fake_peer.add_ice_candidate_args[2], "candidate-name")
-
 
 func test_poll_emits_ready_only_after_all_channels_open() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -218,24 +213,23 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 	assert_eq(fake_peer.poll_called, 2)
 	assert_eq(ready_values.size(), 6)
 	assert_eq(ready_values[0]["lane"], "world")
-	assert_eq(ready_values[1]["lane"], "overlay")
-	assert_eq(ready_values[2]["lane"], "session")
-	assert_eq(ready_values[3]["lane"], "event")
-	assert_eq(ready_values[4]["lane"], "asteroids")
-	assert_eq(ready_values[5]["lane"], "bullets")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
-	assert_eq(ready_values[1]["channel_label"], "sr.overlay")
-	assert_eq(ready_values[2]["channel_label"], "sr.session")
-	assert_eq(ready_values[3]["channel_label"], "sr.event")
-	assert_eq(ready_values[4]["channel_label"], "sr.asteroids")
-	assert_eq(ready_values[5]["channel_label"], "sr.bullets")
 	assert_eq(ready_values[0]["channel_id"], 1)
+	assert_eq(ready_values[1]["lane"], "overlay")
+	assert_eq(ready_values[1]["channel_label"], "sr.overlay")
 	assert_eq(ready_values[1]["channel_id"], 2)
+	assert_eq(ready_values[2]["lane"], "session")
+	assert_eq(ready_values[2]["channel_label"], "sr.session")
 	assert_eq(ready_values[2]["channel_id"], 3)
+	assert_eq(ready_values[3]["lane"], "event")
+	assert_eq(ready_values[3]["channel_label"], "sr.event")
 	assert_eq(ready_values[3]["channel_id"], 4)
+	assert_eq(ready_values[4]["lane"], "asteroids")
+	assert_eq(ready_values[4]["channel_label"], "sr.asteroids")
 	assert_eq(ready_values[4]["channel_id"], 5)
+	assert_eq(ready_values[5]["lane"], "bullets")
+	assert_eq(ready_values[5]["channel_label"], "sr.bullets")
 	assert_eq(ready_values[5]["channel_id"], 6)
-
 
 func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -280,6 +274,9 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	channels["bullets"].packets.append(JSON.stringify({
 		"type": "bullet_delta",
 		"lane": "bullets",
+		"bullet_updates": [
+			{"id": "bullet-1", "x": 10, "y": 20},
+		],
 	}).to_utf8_buffer())
 
 	var ready_values: Array = []
@@ -306,6 +303,17 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 
 	assert_eq(fake_peer.poll_called, 1)
 	assert_eq(ready_values.size(), 6)
+	# Assert all expected lanes are present in ready metadata
+	var lanes := {}
+	for channel in ready_values:
+		lanes[str(channel["lane"])] = true
+	assert_true(lanes.has("world"))
+	assert_true(lanes.has("overlay"))
+	assert_true(lanes.has("session"))
+	assert_true(lanes.has("event"))
+	assert_true(lanes.has("asteroids"))
+	assert_true(lanes.has("bullets"))
+	# Positional checks for specific channels
 	assert_eq(ready_values[0]["lane"], "world")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
 	assert_eq(ready_values[0]["channel_id"], 1)
@@ -326,11 +334,10 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	assert_true(failed_packets.is_empty())
 
 
-
 func test_poll_bounded_receive_drain_per_lane() -> void:
 	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
-	var channels := {
+	var channels = {
 		"world": FakeChannel.new(),
 		"overlay": FakeChannel.new(),
 		"session": FakeChannel.new(),
@@ -357,11 +364,158 @@ func test_poll_bounded_receive_drain_per_lane() -> void:
 
 	assert_eq(received_packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_LANE_PER_POLL)
 	assert_gt(channels["world"].packets.size(), 0)
+	peer.poll()
+	assert_gt(received_packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_LANE_PER_POLL)
+	assert_eq(fake_peer.poll_called, 2)
+
+func test_poll_tracks_bullet_delta_receive_metrics() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels = {
+		"world": FakeChannel.new(),
+		"overlay": FakeChannel.new(),
+		"session": FakeChannel.new(),
+		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
+	}
+	peer.set_peer_for_tests(fake_peer, channels)
+	for channel in channels.values():
+		channel.ready_state = WebRTCDataChannel.STATE_OPEN
+
+	var server_sent_msec := Time.get_ticks_msec()
+	channels["bullets"].packets.append(JSON.stringify({
+		"type": "bullet_delta",
+		"lane": "bullets",
+		"server_sent_msec": server_sent_msec,
+	}).to_utf8_buffer())
 
 	peer.poll()
 
-	assert_gt(received_packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_LANE_PER_POLL)
-	assert_eq(fake_peer.poll_called, 2)
+	var metrics = peer.receive_metrics_snapshot()
+	assert_eq(metrics["bullet_delta_received_count"], 1)
+	assert_eq(metrics["bullet_delta_missing_server_time_count"], 0)
+	assert_gte(metrics["bullet_delta_last_age_msec"], 0)
+	assert_gte(metrics["bullet_delta_max_age_msec"], 0)
+
+func test_poll_tracks_bullet_delta_missing_server_time() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels = {
+		"world": FakeChannel.new(),
+		"overlay": FakeChannel.new(),
+		"session": FakeChannel.new(),
+		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
+	}
+	peer.set_peer_for_tests(fake_peer, channels)
+	for channel in channels.values():
+		channel.ready_state = WebRTCDataChannel.STATE_OPEN
+
+	channels["bullets"].packets.append(JSON.stringify({
+		"type": "bullet_delta",
+		"lane": "bullets",
+	}).to_utf8_buffer())
+
+	peer.poll()
+
+	var metrics = peer.receive_metrics_snapshot()
+	assert_eq(metrics["bullet_delta_missing_server_time_count"], 1)
+
+func test_coalesce_bullet_delta_packets_keeps_latest_update_per_id() -> void:
+	var peer := WebRTCTransportScript.new()
+	var packet1 := {
+		"type": "bullet_delta",
+		"sequence": 1,
+		"server_sent_msec": 1000,
+		"bullet_updates": [
+			{"id": "bullet-1", "x": 10, "y": 20},
+			{"id": "bullet-2", "x": 20, "y": 40},
+		],
+	}
+	var packet2 := {
+		"type": "bullet_delta",
+		"sequence": 2,
+		"server_sent_msec": 1010,
+		"bullet_updates": [
+			{"id": "bullet-1", "x": 30, "y": 60},
+		],
+	}
+	var result = peer.call("_coalesce_bullet_delta_packets", [packet1, packet2])
+
+	assert_eq(result["type"], "bullet_delta")
+	assert_eq(result["bullet_updates"].size(), 2)
+	var bullet_1_update = result["bullet_updates"].filter(func(u: Dictionary) -> bool:
+		return u.get("id", "") == "bullet-1"
+	)[0]
+	var bullet_2_update = result["bullet_updates"].filter(func(u: Dictionary) -> bool:
+		return u.get("id", "") == "bullet-2"
+	)[0]
+	assert_eq(bullet_1_update["x"], 30)
+	assert_eq(bullet_2_update["x"], 20)
+
+func test_coalesce_bullet_delta_packets_returns_empty_for_no_updates() -> void:
+	var peer := WebRTCTransportScript.new()
+
+	var result1 = peer.call("_coalesce_bullet_delta_packets", [])
+	assert_eq(result1, {})
+
+	var result2 = peer.call("_coalesce_bullet_delta_packets", [
+		{"type": "bullet_delta", "bullet_updates": []},
+	])
+	assert_eq(result2, {})
+
+func test_poll_coalesces_bullet_lane_delta_packets() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels = {
+		"world": FakeChannel.new(),
+		"overlay": FakeChannel.new(),
+		"session": FakeChannel.new(),
+		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
+	}
+	peer.set_peer_for_tests(fake_peer, channels)
+	for channel in channels.values():
+		channel.ready_state = WebRTCDataChannel.STATE_OPEN
+
+	channels["bullets"].packets.append(JSON.stringify({
+		"type": "bullet_delta",
+		"lane": "bullets",
+		"bullet_updates": [
+			{"id": "bullet-1", "x": 10, "y": 20},
+			{"id": "bullet-2", "x": 20, "y": 40},
+		],
+	}).to_utf8_buffer())
+	channels["bullets"].packets.append(JSON.stringify({
+		"type": "bullet_delta",
+		"lane": "bullets",
+		"bullet_updates": [
+			{"id": "bullet-1", "x": 30, "y": 60},
+		],
+	}).to_utf8_buffer())
+
+	var received_packets: Array = []
+	peer.packet_received.connect(func(packet: Dictionary) -> void:
+		received_packets.append(packet)
+	)
+
+	peer.poll()
+
+	var bullet_delta_packets = received_packets.filter(func(p: Dictionary) -> bool:
+		return p.get("type", "") == "bullet_delta"
+	)
+	assert_eq(bullet_delta_packets.size(), 1)
+	var bullet_delta = bullet_delta_packets[0]
+	assert_eq(bullet_delta["bullet_updates"].size(), 2)
+	var updates_by_id := {}
+	for update in bullet_delta["bullet_updates"]:
+		updates_by_id[str(update["id"])] = update
+	assert_eq(updates_by_id["bullet-1"]["x"], 30)
+	assert_eq(updates_by_id["bullet-2"]["x"], 20)
+
 
 func test_send_json_writes_text_packet_when_open() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -386,7 +540,6 @@ func test_send_json_writes_text_packet_when_open() -> void:
 	var parsed = JSON.parse_string(text)
 	assert_eq(parsed["type"], "custom_packet")
 	assert_eq(parsed["value"], "hello")
-
 
 func test_send_smoke_writes_smoke_packet_when_open() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -414,7 +567,6 @@ func test_send_smoke_writes_smoke_packet_when_open() -> void:
 	assert_eq(channels["session"].sent_packets.size(), 0)
 	assert_eq(channels["event"].sent_packets.size(), 0)
 
-
 func test_poll_emits_failed_for_invalid_json() -> void:
 	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
@@ -441,7 +593,6 @@ func test_poll_emits_failed_for_invalid_json() -> void:
 	assert_eq(failed_packets[0], "invalid_json")
 	assert_true(str(failed_packets[1]).contains("Invalid packet JSON"))
 
-
 func test_poll_emits_packet_received_for_compact_realtime_packet() -> void:
 	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
@@ -466,4 +617,29 @@ func test_poll_emits_packet_received_for_compact_realtime_packet() -> void:
 	assert_eq(received_packets[0]["type"], "world_delta")
 
 
+func test_poll_uses_higher_receive_cap_for_bullet_lane() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels = {
+		"world": FakeChannel.new(),
+		"overlay": FakeChannel.new(),
+		"session": FakeChannel.new(),
+		"event": FakeChannel.new(),
+		"asteroids": FakeChannel.new(),
+		"bullets": FakeChannel.new(),
+	}
+	peer.set_peer_for_tests(fake_peer, channels)
+	for channel in channels.values():
+		channel.ready_state = WebRTCDataChannel.STATE_OPEN
 
+	for i in range(30):
+		channels["bullets"].packets.append(JSON.stringify({
+			"type": "bullet_delta",
+			"bullet_updates": [{"id": "bullet-%d" % i, "x": i, "y": i * 2}],
+		}).to_utf8_buffer())
+
+	peer.poll()
+
+	var metrics = peer.receive_metrics_snapshot()
+	assert_gt(metrics["bullet_lane_last_drained_packets"], WebRTCTransportScript.MAX_PACKETS_PER_LANE_PER_POLL)
+	assert_lte(metrics["bullet_lane_last_drained_packets"], WebRTCTransportScript.BULLET_LANE_MAX_PACKETS_PER_POLL)

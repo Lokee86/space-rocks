@@ -11,6 +11,7 @@ const GAMEPLAY_CHANNEL_SPECS := [
 ]
 const MAX_PACKETS_PER_POLL := 48
 const MAX_PACKETS_PER_LANE_PER_POLL := 12
+const BULLET_LANE_MAX_PACKETS_PER_POLL := 128
 const SMOKE_ORIGIN_CLIENT := "client"
 const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
 const ClientConstants := preload("res://scripts/generated/constants/constants.gd")
@@ -24,6 +25,12 @@ signal failed(error_code: String, message: String)
 
 var peer_factory: Callable
 var ice_servers: Array = []
+var bullet_delta_received_count := 0
+var bullet_delta_max_age_msec := 0
+var bullet_delta_last_age_msec := 0
+var bullet_delta_missing_server_time_count := 0
+var bullet_lane_drain_cap_hit_count := 0
+var bullet_lane_last_drained_packets := 0
 var _peer: Variant
 var _channels: Dictionary = {}
 var _ready_channels: Dictionary = {}
@@ -136,7 +143,16 @@ func poll() -> void:
 			continue
 		if channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
 			continue
-		total_drained += _drain_channel_packets(channel, MAX_PACKETS_PER_POLL - total_drained)
+		var drained_for_lane: int
+		if lane == "bullets":
+			drained_for_lane = _drain_bullets_lane_packets(channel, MAX_PACKETS_PER_POLL - total_drained)
+		else:
+			drained_for_lane = _drain_channel_packets(channel, MAX_PACKETS_PER_POLL - total_drained)
+		total_drained += drained_for_lane
+		if lane == "bullets":
+			bullet_lane_last_drained_packets = drained_for_lane
+			if drained_for_lane >= MAX_PACKETS_PER_LANE_PER_POLL and channel.get_available_packet_count() > 0:
+				bullet_lane_drain_cap_hit_count += 1
 
 
 func send_json(packet: Dictionary) -> void:
@@ -182,6 +198,15 @@ func _handle_channel_packet(packet: PackedByteArray) -> void:
 		failed.emit("invalid_json", decode_result.error)
 		return
 	var data: Dictionary = decode_result.packet
+	if str(data.get("type", "")) == "bullet_delta":
+		bullet_delta_received_count += 1
+		var server_sent_msec = data.get("server_sent_msec", null)
+		if server_sent_msec != null:
+			var age_msec := Time.get_ticks_msec() - int(server_sent_msec)
+			bullet_delta_last_age_msec = age_msec
+			bullet_delta_max_age_msec = maxi(bullet_delta_max_age_msec, age_msec)
+		else:
+			bullet_delta_missing_server_time_count += 1
 	packet_received.emit(data)
 	if str(data.get("type", "")) == "webrtc_smoke":
 		smoke_received.emit(data)
@@ -198,11 +223,85 @@ func _drain_channel_packets(channel: Variant, remaining_budget: int) -> int:
 	return drained
 
 
+func _drain_bullets_lane_packets(channel: Variant, remaining_budget: int) -> int:
+	var drained: int = 0
+	var lane_budget: int = int(min(BULLET_LANE_MAX_PACKETS_PER_POLL, remaining_budget))
+	var collected_bullet_delta_packets: Array = []
+	while drained < lane_budget and channel.get_available_packet_count() > 0:
+		var raw_packet: PackedByteArray = channel.get_packet()
+		if raw_packet is PackedByteArray:
+			var text: String = raw_packet.get_string_from_utf8()
+			var decode_result: Variant = PacketCodec.decode(text)
+			if !decode_result.ok:
+				failed.emit("invalid_json", decode_result.error)
+				drained += 1
+				continue
+			var data: Dictionary = decode_result.packet
+			if str(data.get("type", "")) == "bullet_delta":
+				collected_bullet_delta_packets.append(data)
+				bullet_delta_received_count += 1
+				var server_sent_msec = data.get("server_sent_msec", null)
+				if server_sent_msec != null:
+					var age_msec := Time.get_ticks_msec() - int(server_sent_msec)
+					bullet_delta_last_age_msec = age_msec
+					bullet_delta_max_age_msec = maxi(bullet_delta_max_age_msec, age_msec)
+				else:
+					bullet_delta_missing_server_time_count += 1
+			else:
+				packet_received.emit(data)
+				if str(data.get("type", "")) == "webrtc_smoke":
+					smoke_received.emit(data)
+			drained += 1
+	var coalesced := _coalesce_bullet_delta_packets(collected_bullet_delta_packets)
+	if coalesced.size() > 0:
+		packet_received.emit(coalesced)
+	return drained
+
+
+func _coalesce_bullet_delta_packets(packets: Array) -> Dictionary:
+	var latest_updates := {}
+	var metadata := {}
+	for packet in packets:
+		if not (packet is Dictionary):
+			continue
+		if str(packet.get("type", "")) != "bullet_delta":
+			continue
+		metadata["type"] = packet.get("type", metadata.get("type", ""))
+		metadata["lane"] = packet.get("lane", metadata.get("lane", "bullets"))
+		metadata["sequence"] = packet.get("sequence", metadata.get("sequence", null))
+		metadata["server_sent_msec"] = packet.get("server_sent_msec", metadata.get("server_sent_msec", null))
+		metadata["baseline_id"] = packet.get("baseline_id", metadata.get("baseline_id", null))
+		metadata["snapshot_id"] = packet.get("snapshot_id", metadata.get("snapshot_id", null))
+		for update in packet.get("bullet_updates", []):
+			if not (update is Dictionary):
+				continue
+			var id := str(update.get("id", ""))
+			if id == "":
+				continue
+			latest_updates[id] = update.duplicate(true)
+	if latest_updates.is_empty():
+		return {}
+	metadata["type"] = "bullet_delta"
+	metadata["bullet_updates"] = latest_updates.values()
+	return metadata
+
+
 func _send_json_to_lane(lane: String, packet: Dictionary) -> void:
 	var channel: Variant = _channels.get(lane)
 	if channel == null or channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
 		return
 	channel.put_packet(JSON.stringify(packet).to_utf8_buffer())
+
+
+func receive_metrics_snapshot() -> Dictionary:
+	return {
+		"bullet_delta_received_count": bullet_delta_received_count,
+		"bullet_delta_last_age_msec": bullet_delta_last_age_msec,
+		"bullet_delta_max_age_msec": bullet_delta_max_age_msec,
+		"bullet_delta_missing_server_time_count": bullet_delta_missing_server_time_count,
+		"bullet_lane_last_drained_packets": bullet_lane_last_drained_packets,
+		"bullet_lane_drain_cap_hit_count": bullet_lane_drain_cap_hit_count,
+	}
 
 
 func _gameplay_channel_spec_for_lane(lane: String) -> Variant:

@@ -4,6 +4,7 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 const WorldStateFixture := preload("res://tests/fixtures/world_state_fixture.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldSyncScript := preload("res://scripts/world/world_sync.gd")
+const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const PlayerScene := preload("res://scenes/player.tscn")
 
 var game_owner: Node2D
@@ -370,6 +371,182 @@ func test_apply_state_applies_asteroid_packet_scale() -> void:
 		_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].scale,
 		Vector2.ONE * 1.75
 	)
+
+
+class FakePlayerRenderApi:
+	extends RefCounted
+
+	func remove_missing(_server_players: Dictionary, _self_id: String) -> void:
+		pass
+
+	func apply_state(_self_id: String, _server_players: Dictionary) -> void:
+		pass
+
+	func visual_position() -> Vector2:
+		return Vector2.ZERO
+
+	func server_position() -> Vector2:
+		return Vector2.ZERO
+
+
+class FakeProjectileSync:
+	extends RefCounted
+
+	var apply_projectile_calls: Array = []
+	var remove_projectile_calls: Array = []
+	var apply_all_calls := 0
+	var remove_missing_calls := 0
+
+	func apply_projectile(bullet_id: String, state: Dictionary, local_visual_position: Vector2, local_server_position: Vector2) -> void:
+		apply_projectile_calls.append({
+			"bullet_id": bullet_id,
+			"state": state,
+			"local_visual_position": local_visual_position,
+			"local_server_position": local_server_position,
+		})
+
+	func remove_projectile(bullet_id: String) -> void:
+		remove_projectile_calls.append(bullet_id)
+
+	func apply(_server_bullets: Dictionary, _local_visual_position: Vector2, _local_server_position: Vector2) -> void:
+		apply_all_calls += 1
+
+	func remove_missing(_server_bullets: Dictionary) -> void:
+		remove_missing_calls += 1
+
+
+func test_apply_world_lane_state_uses_direct_bullet_change_sets() -> void:
+	var world_sync := WorldSyncScript.new()
+	var fake_player_render_api := FakePlayerRenderApi.new()
+	var fake_projectile_sync := FakeProjectileSync.new()
+	var world_lane_state := WorldLaneState.new()
+
+	world_sync.player_render_api = fake_player_render_api
+	world_sync.projectile_sync = fake_projectile_sync
+	world_lane_state.bullets["bullet-1"] = {
+		"id": "bullet-1",
+		"x": 10.0,
+		"y": 20.0,
+		"rotation": 1.25,
+	}
+	world_lane_state.dirty_bullet_ids["bullet-1"] = true
+	world_lane_state.bullet_full_sync_required = false
+
+	world_sync.apply_world_lane_state(world_lane_state)
+
+	assert_eq(fake_projectile_sync.apply_projectile_calls.size(), 1)
+	assert_eq(fake_projectile_sync.apply_projectile_calls[0]["bullet_id"], "bullet-1")
+	assert_eq(fake_projectile_sync.apply_all_calls, 0)
+	assert_eq(fake_projectile_sync.remove_missing_calls, 0)
+	assert_true(world_lane_state.dirty_bullet_ids.is_empty())
+
+
+func test_apply_world_lane_state_removes_direct_bullet_ids() -> void:
+	var world_sync := WorldSyncScript.new()
+	var fake_player_render_api := FakePlayerRenderApi.new()
+	var fake_projectile_sync := FakeProjectileSync.new()
+	var world_lane_state := WorldLaneState.new()
+
+	world_sync.player_render_api = fake_player_render_api
+	world_sync.projectile_sync = fake_projectile_sync
+	world_lane_state.bullets["bullet-1"] = {
+		"id": "bullet-1",
+		"x": 10.0,
+		"y": 20.0,
+		"rotation": 1.25,
+	}
+	world_lane_state.removed_bullet_ids["bullet-1"] = true
+	world_lane_state.bullet_full_sync_required = false
+
+	world_sync.apply_world_lane_state(world_lane_state)
+
+	assert_eq(fake_projectile_sync.remove_projectile_calls, ["bullet-1"])
+	assert_eq(fake_projectile_sync.apply_all_calls, 0)
+	assert_eq(fake_projectile_sync.remove_missing_calls, 0)
+	assert_true(world_lane_state.removed_bullet_ids.is_empty())
+	assert_true(world_lane_state.dirty_bullet_ids.is_empty())
+
+
+class FakeAsteroidSync:
+	extends RefCounted
+
+	var apply_asteroid_calls: Array = []
+	var remove_asteroid_calls: Array = []
+	var apply_all_calls := 0
+	var remove_missing_calls := 0
+
+	func apply_asteroid(asteroid_id: String, state: Dictionary, local_visual_position: Vector2, local_server_position: Vector2) -> void:
+		apply_asteroid_calls.append({
+			"asteroid_id": asteroid_id,
+			"state": state,
+			"local_visual_position": local_visual_position,
+			"local_server_position": local_server_position,
+		})
+
+	func remove_asteroid(asteroid_id: String) -> void:
+		remove_asteroid_calls.append(asteroid_id)
+
+	func apply(_server_asteroids: Dictionary, _local_visual_position: Vector2, _local_server_position: Vector2) -> void:
+		apply_all_calls += 1
+
+	func remove_missing(_server_asteroids: Dictionary) -> void:
+		remove_missing_calls += 1
+
+
+func test_apply_world_lane_state_uses_direct_asteroid_change_sets() -> void:
+	var world_sync := WorldSyncScript.new()
+	var fake_player_render_api := FakePlayerRenderApi.new()
+	var fake_asteroid_sync := FakeAsteroidSync.new()
+	var world_lane_state := WorldLaneState.new()
+
+	world_sync.player_render_api = fake_player_render_api
+	world_sync.asteroid_sync = fake_asteroid_sync
+	world_lane_state.asteroids["asteroid-1"] = {
+		"id": "asteroid-1",
+		"x": 10.0,
+		"y": 20.0,
+		"rotation": 1.25,
+		"size": 2,
+		"health": 50,
+	}
+	world_lane_state.dirty_asteroid_ids["asteroid-1"] = true
+	world_lane_state.asteroid_full_sync_required = false
+
+	world_sync.apply_world_lane_state(world_lane_state)
+
+	assert_eq(fake_asteroid_sync.apply_asteroid_calls.size(), 1)
+	assert_eq(fake_asteroid_sync.apply_asteroid_calls[0]["asteroid_id"], "asteroid-1")
+	assert_eq(fake_asteroid_sync.apply_all_calls, 0)
+	assert_eq(fake_asteroid_sync.remove_missing_calls, 0)
+	assert_true(world_lane_state.dirty_asteroid_ids.is_empty())
+
+
+func test_apply_world_lane_state_removes_direct_asteroid_ids() -> void:
+	var world_sync := WorldSyncScript.new()
+	var fake_player_render_api := FakePlayerRenderApi.new()
+	var fake_asteroid_sync := FakeAsteroidSync.new()
+	var world_lane_state := WorldLaneState.new()
+
+	world_sync.player_render_api = fake_player_render_api
+	world_sync.asteroid_sync = fake_asteroid_sync
+	world_lane_state.asteroids["asteroid-1"] = {
+		"id": "asteroid-1",
+		"x": 10.0,
+		"y": 20.0,
+		"rotation": 1.25,
+		"size": 2,
+		"health": 50,
+	}
+	world_lane_state.removed_asteroid_ids["asteroid-1"] = true
+	world_lane_state.asteroid_full_sync_required = false
+
+	world_sync.apply_world_lane_state(world_lane_state)
+
+	assert_eq(fake_asteroid_sync.remove_asteroid_calls, ["asteroid-1"])
+	assert_eq(fake_asteroid_sync.apply_all_calls, 0)
+	assert_eq(fake_asteroid_sync.remove_missing_calls, 0)
+	assert_true(world_lane_state.removed_asteroid_ids.is_empty())
+	assert_true(world_lane_state.dirty_asteroid_ids.is_empty())
 
 
 func _apply_fixture_state() -> void:

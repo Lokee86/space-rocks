@@ -9,6 +9,12 @@ var ships := {}
 var bullets := {}
 var pending_bullet_updates := {}
 var deleted_bullet_ids := {}
+var dirty_bullet_ids := {}
+var removed_bullet_ids := {}
+var bullet_full_sync_required := false
+var dirty_asteroid_ids := {}
+var removed_asteroid_ids := {}
+var asteroid_full_sync_required := false
 var asteroids := {}
 var pickups := {}
 
@@ -17,6 +23,11 @@ func clear_world() -> void:
 	bullets.clear()
 	pending_bullet_updates.clear()
 	deleted_bullet_ids.clear()
+	dirty_bullet_ids.clear()
+	removed_bullet_ids.clear()
+	bullet_full_sync_required = true
+	clear_asteroid_change_sets()
+	asteroid_full_sync_required = true
 	asteroids.clear()
 	pickups.clear()
 
@@ -25,6 +36,7 @@ func apply_full_lane(world_state: Dictionary) -> void:
 	_replace_records(ships, world_state.get("ships", []), SHIP_FIELDS)
 	_replace_records(bullets, world_state.get("bullets", []), BULLET_FIELDS)
 	_replace_records(asteroids, world_state.get("asteroids", []), ASTEROID_FIELDS)
+	asteroid_full_sync_required = true
 	_replace_records(pickups, world_state.get("pickups", []), PICKUP_FIELDS)
 
 func replace_ships(records: Array) -> void:
@@ -32,12 +44,52 @@ func replace_ships(records: Array) -> void:
 
 func replace_bullets(records: Array) -> void:
 	_replace_records(bullets, records, BULLET_FIELDS)
+	dirty_bullet_ids.clear()
+	removed_bullet_ids.clear()
+	bullet_full_sync_required = true
 
 func replace_asteroids(records: Array) -> void:
 	_replace_records(asteroids, records, ASTEROID_FIELDS)
+	dirty_asteroid_ids.clear()
+	removed_asteroid_ids.clear()
+	asteroid_full_sync_required = true
 
 func replace_pickups(records: Array) -> void:
 	_replace_records(pickups, records, PICKUP_FIELDS)
+
+func mark_bullet_dirty(id) -> void:
+	if id == null or id == "":
+		return
+	removed_bullet_ids.erase(id)
+	dirty_bullet_ids[id] = true
+
+func mark_bullet_removed(id) -> void:
+	if id == null or id == "":
+		return
+	dirty_bullet_ids.erase(id)
+	removed_bullet_ids[id] = true
+
+func clear_bullet_change_sets() -> void:
+	dirty_bullet_ids.clear()
+	removed_bullet_ids.clear()
+	bullet_full_sync_required = false
+
+func mark_asteroid_dirty(id) -> void:
+	if id == null or id == "":
+		return
+	removed_asteroid_ids.erase(id)
+	dirty_asteroid_ids[id] = true
+
+func mark_asteroid_removed(id) -> void:
+	if id == null or id == "":
+		return
+	dirty_asteroid_ids.erase(id)
+	removed_asteroid_ids[id] = true
+
+func clear_asteroid_change_sets() -> void:
+	dirty_asteroid_ids.clear()
+	removed_asteroid_ids.clear()
+	asteroid_full_sync_required = false
 
 func upsert_ship(record: Dictionary) -> void:
 	_upsert_record(ships, record, SHIP_FIELDS)
@@ -51,15 +103,23 @@ func upsert_bullet(record: Dictionary) -> void:
 		deleted_bullet_ids.erase(id)
 	_upsert_record(bullets, record, BULLET_FIELDS)
 	apply_pending_bullet_update(id)
+	mark_bullet_dirty(id)
 
 func merge_bullet_update(record: Dictionary) -> void:
+	var id = record.get("id")
+	if id == null:
+		return
+	if not bullets.has(id):
+		return
 	_merge_record_update(bullets, record, BULLET_FIELDS)
+	mark_bullet_dirty(id)
 
 func apply_pending_bullet_update(id) -> void:
 	if not pending_bullet_updates.has(id):
 		return
 	if bullets.has(id):
 		merge_bullet_update(pending_bullet_updates[id])
+		mark_bullet_dirty(id)
 	pending_bullet_updates.erase(id)
 
 func merge_or_buffer_bullet_update(record: Dictionary) -> void:
@@ -80,10 +140,20 @@ func clear_pending_bullet_update(id) -> void:
 	pending_bullet_updates.erase(id)
 
 func upsert_asteroid(record: Dictionary) -> void:
+	var id = record.get("id")
+	if id == null:
+		return
 	_upsert_record(asteroids, record, ASTEROID_FIELDS)
+	mark_asteroid_dirty(id)
 
 func merge_asteroid_update(record: Dictionary) -> void:
+	var id = record.get("id")
+	if id == null:
+		return
+	if not asteroids.has(id):
+		return
 	_merge_record_update(asteroids, record, ASTEROID_FIELDS)
+	mark_asteroid_dirty(id)
 
 func upsert_pickup(record: Dictionary) -> void:
 	_upsert_record(pickups, record, PICKUP_FIELDS)
@@ -98,9 +168,11 @@ func delete_bullet(id) -> void:
 	bullets.erase(id)
 	pending_bullet_updates.erase(id)
 	deleted_bullet_ids[id] = true
+	mark_bullet_removed(id)
 
 func delete_asteroid(id) -> void:
 	asteroids.erase(id)
+	mark_asteroid_removed(id)
 
 func delete_pickup(id) -> void:
 	pickups.erase(id)

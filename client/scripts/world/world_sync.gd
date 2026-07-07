@@ -60,12 +60,32 @@ func apply_world_lane_state(world_lane_state_ref) -> void:
 	if player_render_api != null:
 		player_render_api.remove_missing(world_lane_state.ships, current_self_id)
 		player_render_api.apply_state(current_self_id, world_lane_state.ships)
+	var local_visual_position: Vector2 = player_render_api.visual_position()
+	var local_server_position: Vector2 = player_render_api.server_position()
 	if projectile_sync != null:
-		projectile_sync.remove_missing(world_lane_state.bullets)
-		projectile_sync.apply(world_lane_state.bullets, player_render_api.visual_position(), player_render_api.server_position())
+		if world_lane_state.bullet_full_sync_required:
+			projectile_sync.remove_missing(world_lane_state.bullets)
+			projectile_sync.apply(world_lane_state.bullets, local_visual_position, local_server_position)
+			world_lane_state.clear_bullet_change_sets()
+		else:
+			for bullet_id in world_lane_state.removed_bullet_ids.keys():
+				projectile_sync.remove_projectile(str(bullet_id))
+			for bullet_id in world_lane_state.dirty_bullet_ids.keys():
+				if world_lane_state.bullets.has(bullet_id):
+					projectile_sync.apply_projectile(str(bullet_id), world_lane_state.bullets[bullet_id], local_visual_position, local_server_position)
+			world_lane_state.clear_bullet_change_sets()
 	if asteroid_sync != null:
-		asteroid_sync.remove_missing(world_lane_state.asteroids)
-		asteroid_sync.apply(world_lane_state.asteroids, player_render_api.visual_position(), player_render_api.server_position())
+		if world_lane_state.asteroid_full_sync_required:
+			asteroid_sync.remove_missing(world_lane_state.asteroids)
+			asteroid_sync.apply(world_lane_state.asteroids, player_render_api.visual_position(), player_render_api.server_position())
+			world_lane_state.clear_asteroid_change_sets()
+		else:
+			for asteroid_id in world_lane_state.removed_asteroid_ids.keys():
+				asteroid_sync.remove_asteroid(str(asteroid_id))
+			for asteroid_id in world_lane_state.dirty_asteroid_ids.keys():
+				if world_lane_state.asteroids.has(asteroid_id):
+					asteroid_sync.apply_asteroid(str(asteroid_id), world_lane_state.asteroids[asteroid_id], player_render_api.visual_position(), player_render_api.server_position())
+			world_lane_state.clear_asteroid_change_sets()
 	if pickup_sync != null:
 		pickup_sync.remove_missing(world_lane_state.pickups)
 		pickup_sync.apply(world_lane_state.pickups, player_render_api.visual_position(), player_render_api.server_position())

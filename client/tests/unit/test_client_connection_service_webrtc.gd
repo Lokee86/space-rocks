@@ -116,8 +116,7 @@ func test_webrtc_transport_non_smoke_packet_dispatches_to_gameplay() -> void:
 	service.webrtc_transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "smoke-1", "origin": "server"})
 
 	assert_eq(gameplay_packets.size(), 1)
-	assert_eq(gameplay_packets[0]["type"], "resync_request")
-	assert_eq(gameplay_packets[0]["lane"], "world")
+	assert_eq(gameplay_packets[0], {"type": "resync_request", "lane": "world"})
 	assert_true(smoke_packets.is_empty())
 
 

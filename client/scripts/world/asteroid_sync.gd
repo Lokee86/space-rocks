@@ -58,47 +58,70 @@ func apply_asteroid_scale(asteroid_id: String, asteroid_node: Node2D, state: Dic
 	push_warning("Asteroid state missing scale for %s" % asteroid_id)
 
 
+func apply_asteroid(
+	asteroid_id: String,
+	state: Dictionary,
+	local_visual_position: Vector2,
+	local_server_position: Vector2
+) -> void:
+	var asteroid_node = get_asteroid_node(asteroid_id)
+	var raw_server_position := AsteroidSyncState.server_position(state)
+	var visual_position: Vector2
+
+	if asteroid_server_positions.has(asteroid_id):
+		visual_position = asteroid_visual_positions[asteroid_id] + WorldWrapScript.shortest_delta(
+			asteroid_server_positions[asteroid_id],
+			raw_server_position
+		)
+		target_asteroid_positions[asteroid_id] = visual_position
+		asteroid_server_positions[asteroid_id] = raw_server_position
+		asteroid_visual_positions[asteroid_id] = visual_position
+	else:
+		# First-seen asteroid positions may intentionally be outside wrapped world bounds for offscreen spawns.
+		visual_position = local_visual_position + WorldWrapScript.shortest_delta(
+			local_server_position,
+			raw_server_position
+		)
+		target_asteroid_positions[asteroid_id] = visual_position
+		asteroid_server_positions[asteroid_id] = raw_server_position
+		asteroid_visual_positions[asteroid_id] = visual_position
+
+	apply_asteroid_scale(asteroid_id, asteroid_node, state)
+	if state.has(Packets.FIELD_VARIANT):
+		asteroid_variants[asteroid_id] = int(state[Packets.FIELD_VARIANT])
+
+	if !initialized_asteroids.has(asteroid_id):
+		initialized_asteroids[asteroid_id] = true
+		asteroid_node.global_position = visual_position
+		if state.has(Packets.FIELD_VARIANT):
+			asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
+		elif !warned_missing_asteroid_variant.has(asteroid_id):
+			warned_missing_asteroid_variant[asteroid_id] = true
+			push_warning("Asteroid state missing variant for %s" % asteroid_id)
+
+
 func apply(
 	server_asteroids: Dictionary,
 	local_visual_position: Vector2,
 	local_server_position: Vector2
 ) -> void:
 	for asteroid_id in server_asteroids.keys():
-		var state: Dictionary = server_asteroids[asteroid_id]
-		var asteroid_node = get_asteroid_node(asteroid_id)
-		var raw_server_position := AsteroidSyncState.server_position(state)
-		var visual_position: Vector2
+		apply_asteroid(asteroid_id, server_asteroids[asteroid_id], local_visual_position, local_server_position)
 
-		if asteroid_server_positions.has(asteroid_id):
-			visual_position = asteroid_visual_positions[asteroid_id] + WorldWrapScript.shortest_delta(
-				asteroid_server_positions[asteroid_id],
-				raw_server_position
-			)
-			target_asteroid_positions[asteroid_id] = visual_position
-			asteroid_server_positions[asteroid_id] = raw_server_position
-			asteroid_visual_positions[asteroid_id] = visual_position
-		else:
-			# First-seen asteroid positions may intentionally be outside wrapped world bounds for offscreen spawns.
-			visual_position = local_visual_position + WorldWrapScript.shortest_delta(
-				local_server_position,
-				raw_server_position
-			)
-			target_asteroid_positions[asteroid_id] = visual_position
-			asteroid_server_positions[asteroid_id] = raw_server_position
-			asteroid_visual_positions[asteroid_id] = visual_position
 
-		apply_asteroid_scale(asteroid_id, asteroid_node, state)
-		if state.has(Packets.FIELD_VARIANT):
-			asteroid_variants[asteroid_id] = int(state[Packets.FIELD_VARIANT])
+func remove_asteroid(asteroid_id: String) -> void:
+	if !asteroid_nodes.has(asteroid_id):
+		return
 
-		if !initialized_asteroids.has(asteroid_id):
-			initialized_asteroids[asteroid_id] = true
-			asteroid_node.global_position = visual_position
-			if state.has(Packets.FIELD_VARIANT):
-				asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
-			elif !warned_missing_asteroid_variant.has(asteroid_id):
-				warned_missing_asteroid_variant[asteroid_id] = true
-				push_warning("Asteroid state missing variant for %s" % asteroid_id)
+	asteroid_nodes[asteroid_id].queue_free()
+	asteroid_nodes.erase(asteroid_id)
+	warned_missing_asteroid_scale.erase(asteroid_id)
+	warned_missing_asteroid_variant.erase(asteroid_id)
+	initialized_asteroids.erase(asteroid_id)
+	target_asteroid_positions.erase(asteroid_id)
+	asteroid_server_positions.erase(asteroid_id)
+	asteroid_visual_positions.erase(asteroid_id)
+	asteroid_variants.erase(asteroid_id)
 
 
 func remove_missing(server_asteroids: Dictionary) -> void:
@@ -106,15 +129,7 @@ func remove_missing(server_asteroids: Dictionary) -> void:
 		if server_asteroids.has(asteroid_id):
 			continue
 
-		asteroid_nodes[asteroid_id].queue_free()
-		asteroid_nodes.erase(asteroid_id)
-		warned_missing_asteroid_scale.erase(asteroid_id)
-		warned_missing_asteroid_variant.erase(asteroid_id)
-		initialized_asteroids.erase(asteroid_id)
-		target_asteroid_positions.erase(asteroid_id)
-		asteroid_server_positions.erase(asteroid_id)
-		asteroid_visual_positions.erase(asteroid_id)
-		asteroid_variants.erase(asteroid_id)
+		remove_asteroid(asteroid_id)
 
 
 func interpolate(weight: float) -> void:

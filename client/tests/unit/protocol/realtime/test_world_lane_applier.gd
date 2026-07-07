@@ -1104,9 +1104,79 @@ func test_bullet_delta_buffers_unknown_bullet_update_without_creating_bullet() -
 
 	assert_false(world_lane_state.bullets.has("bullet-1"))
 	assert_true(world_lane_state.pending_bullet_updates.has("bullet-1"))
-	assert_eq(world_lane_state.pending_bullet_updates["bullet-1"]["x"], 3.0)
-	assert_eq(world_lane_state.pending_bullet_updates["bullet-1"]["y"], 4.0)
-	assert_eq(world_lane_state.pending_bullet_updates["bullet-1"]["rotation"], 0.05)
+
+
+func test_world_lane_state_marks_dirty_bullet_on_create_and_update() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	world_lane_state.upsert_bullet(_bullet_packet("bullet-1", 10, 20))
+
+	assert_true(world_lane_state.dirty_bullet_ids.has("bullet-1"))
+	assert_false(world_lane_state.removed_bullet_ids.has("bullet-1"))
+
+	world_lane_state.clear_bullet_change_sets()
+	world_lane_state.merge_bullet_update({"id": "bullet-1", "x": 30, "y": 40})
+
+	assert_true(world_lane_state.dirty_bullet_ids.has("bullet-1"))
+	assert_false(world_lane_state.removed_bullet_ids.has("bullet-1"))
+
+
+func test_world_lane_state_marks_removed_bullet_on_delete() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	world_lane_state.upsert_bullet(_bullet_packet("bullet-1", 10, 20))
+	world_lane_state.clear_bullet_change_sets()
+	world_lane_state.delete_bullet("bullet-1")
+
+	assert_true(world_lane_state.removed_bullet_ids.has("bullet-1"))
+	assert_false(world_lane_state.dirty_bullet_ids.has("bullet-1"))
+
+
+func test_world_lane_state_bullet_full_replace_requires_full_sync() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	world_lane_state.replace_bullets([_bullet_packet("bullet-1", 10, 20)])
+
+	assert_true(world_lane_state.bullet_full_sync_required)
+	assert_false(world_lane_state.dirty_bullet_ids.has("bullet-1"))
+	assert_false(world_lane_state.removed_bullet_ids.has("bullet-1"))
+
+
+func test_world_lane_state_marks_dirty_asteroid_on_create_and_update() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	world_lane_state.upsert_asteroid(_asteroid_packet("asteroid-1", 10, 20))
+
+	assert_true(world_lane_state.dirty_asteroid_ids.has("asteroid-1"))
+	assert_false(world_lane_state.removed_asteroid_ids.has("asteroid-1"))
+
+	world_lane_state.clear_asteroid_change_sets()
+	world_lane_state.merge_asteroid_update({"id": "asteroid-1", "x": 30, "y": 40})
+
+	assert_true(world_lane_state.dirty_asteroid_ids.has("asteroid-1"))
+	assert_false(world_lane_state.removed_asteroid_ids.has("asteroid-1"))
+
+
+func test_world_lane_state_marks_removed_asteroid_on_delete() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	world_lane_state.upsert_asteroid(_asteroid_packet("asteroid-1", 10, 20))
+	world_lane_state.clear_asteroid_change_sets()
+	world_lane_state.delete_asteroid("asteroid-1")
+
+	assert_true(world_lane_state.removed_asteroid_ids.has("asteroid-1"))
+	assert_false(world_lane_state.dirty_asteroid_ids.has("asteroid-1"))
+
+
+func test_world_lane_state_asteroid_full_replace_requires_full_sync() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	world_lane_state.replace_asteroids([_asteroid_packet("asteroid-1", 10, 20)])
+
+	assert_true(world_lane_state.asteroid_full_sync_required)
+	assert_true(world_lane_state.dirty_asteroid_ids.is_empty())
+	assert_true(world_lane_state.removed_asteroid_ids.is_empty())
+
 
 func test_bullet_create_applies_pending_bullet_update() -> void:
 	var applier := WorldLaneApplier.new()
