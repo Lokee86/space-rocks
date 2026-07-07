@@ -10,16 +10,14 @@ import (
 
 type AsteroidWireDeltaPacket struct {
 	Type            string           `json:"type"`
-	Sequence        int              `json:"sequence"`
-	ServerSentMsec  int              `json:"server_sent_msec"`
+	Metadata        Metadata
 	AsteroidUpdates []map[string]any `json:"asteroid_updates"`
 }
 
 type BulletWireDeltaPacket struct {
-	Type           string           `json:"type"`
-	Sequence       int              `json:"sequence"`
-	ServerSentMsec int              `json:"server_sent_msec"`
-	BulletUpdates  []map[string]any `json:"bullet_updates"`
+	Type          string           `json:"type"`
+	Metadata      Metadata
+	BulletUpdates []map[string]any `json:"bullet_updates"`
 }
 
 
@@ -277,21 +275,13 @@ func wireWorldWireDeltaPacket(packet WorldWireDeltaPacket) map[string]any {
 
 
 func wireAsteroidWireDeltaPacket(packet AsteroidWireDeltaPacket) map[string]any {
-	wire := map[string]any{
-		"type":             packet.Type,
-		"sequence":         packet.Sequence,
-		"server_sent_msec": packet.ServerSentMsec,
-	}
+	wire := wireMetadataPacket(packet.Type, packet.Metadata)
 	putFilteredRecordArrayIfNonEmpty(wire, "asteroid_updates", packet.AsteroidUpdates, []string{"id", "x", "y"})
 	return wire
 }
 
 func wireBulletWireDeltaPacket(packet BulletWireDeltaPacket) map[string]any {
-	wire := map[string]any{
-		"type":             packet.Type,
-		"sequence":         packet.Sequence,
-		"server_sent_msec": packet.ServerSentMsec,
-	}
+	wire := wireMetadataPacket(packet.Type, packet.Metadata)
 	putFilteredRecordArrayIfNonEmpty(wire, "bullet_updates", packet.BulletUpdates, []string{"id", "x", "y", "rotation"})
 	return wire
 }
@@ -586,13 +576,17 @@ func wireMetadataPacket(packetType string, metadata Metadata) map[string]any {
 	if metadata.ChunkCount > 1 {
 		wire["chunk_index"] = metadata.ChunkIndex
 		wire["chunk_count"] = metadata.ChunkCount
+		if metadata.IsFinalChunk {
+			wire["is_final_chunk"] = true
+		}
 	}
 	return wire
 }
 
 func isRuntimePacketType(packetType string) bool {
 	switch packetType {
-	case PacketFamilyWorldFull, PacketTypeWorldDelta, PacketFamilyOverlayFull, PacketTypeOverlayDelta, PacketFamilySessionFull, PacketTypeSessionDelta:
+	case PacketFamilyWorldFull, PacketTypeWorldDelta, PacketFamilyOverlayFull, PacketTypeOverlayDelta,
+		PacketFamilySessionFull, PacketTypeSessionDelta, PacketFamilyAsteroidDelta, PacketFamilyBulletDelta:
 		return true
 	default:
 		return false

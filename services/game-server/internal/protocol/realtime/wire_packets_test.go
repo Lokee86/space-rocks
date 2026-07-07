@@ -490,9 +490,8 @@ func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
 		Lane: LaneWorld,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: AsteroidWireDeltaPacket{
-			Type:           PacketFamilyAsteroidDelta,
-			Sequence:       42,
-			ServerSentMsec: 123456,
+			Type:     PacketFamilyAsteroidDelta,
+			Metadata: Metadata{Lane: LaneAsteroids, Sequence: 42, ServerSentMsec: 123456, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: false},
 			AsteroidUpdates: []map[string]any{
 				{
 					"id":     "asteroid-1",
@@ -508,6 +507,9 @@ func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
 	assertStringValue(t, wire, "type", PacketFamilyAsteroidDelta)
 	assertIntValue(t, wire, "sequence", 42)
 	assertIntValue(t, wire, "server_sent_msec", 123456)
+	assertIntValue(t, wire, "chunk_index", 1)
+	assertIntValue(t, wire, "chunk_count", 3)
+	assertNotContainsKey(t, wire, "is_final_chunk")
 	assertContainsKey(t, wire, "asteroid_updates")
 	for _, key := range []string{"asteroid_creates", "asteroid_deletes", "bullet_creates", "bullet_deletes"} {
 		assertNotContainsKey(t, wire, key)
@@ -519,9 +521,8 @@ func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
 		Lane: LaneWorld,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: BulletWireDeltaPacket{
-			Type:           PacketFamilyBulletDelta,
-			Sequence:       43,
-			ServerSentMsec: 654321,
+			Type:     PacketFamilyBulletDelta,
+			Metadata: Metadata{Lane: LaneBullets, Sequence: 43, ServerSentMsec: 654321, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 2, ChunkCount: 4, IsFinalChunk: true},
 			BulletUpdates: []map[string]any{
 				{
 					"id":       "bullet-1",
@@ -536,6 +537,9 @@ func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
 	assertStringValue(t, wire, "type", PacketFamilyBulletDelta)
 	assertIntValue(t, wire, "sequence", 43)
 	assertIntValue(t, wire, "server_sent_msec", 654321)
+	assertIntValue(t, wire, "chunk_index", 2)
+	assertIntValue(t, wire, "chunk_count", 4)
+	assertContainsKey(t, wire, "is_final_chunk")
 	assertContainsKey(t, wire, "bullet_updates")
 	for _, key := range []string{"bullet_creates", "bullet_deletes", "asteroid_creates", "asteroid_deletes"} {
 		assertNotContainsKey(t, wire, key)

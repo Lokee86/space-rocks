@@ -46,10 +46,13 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 		result.AsteroidMode = hotLaneModeForFullOwnedCount(len(asteroidIDs), policy.AsteroidHotLaneEntityBudget)
 		result.CohortState.AsteroidMode = result.AsteroidMode
 		result.AsteroidOffloaded = len(asteroidIDs)
+		metadata := worldDelta.Metadata
+		metadata.Lane = LaneAsteroids
+		metadata.SnapshotKind = SnapshotKind("delta")
+		metadata = metadata.WithChunk(0, 1)
 		result.AsteroidDelta = &AsteroidWireDeltaPacket{
 			Type:            PacketFamilyAsteroidDelta,
-			Sequence:        worldDelta.Metadata.Sequence,
-			ServerSentMsec:  worldDelta.Metadata.ServerSentMsec,
+			Metadata:        metadata,
 			AsteroidUpdates: worldDelta.Asteroids.Updates,
 		}
 	}
@@ -59,11 +62,14 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 		result.BulletMode = hotLaneModeForFullOwnedCount(len(bulletIDs), policy.BulletHotLaneEntityBudget)
 		result.CohortState.BulletMode = result.BulletMode
 		result.BulletOffloaded = len(bulletIDs)
+		metadata := worldDelta.Metadata
+		metadata.Lane = LaneBullets
+		metadata.SnapshotKind = SnapshotKind("delta")
+		metadata = metadata.WithChunk(0, 1)
 		result.BulletDelta = &BulletWireDeltaPacket{
-			Type:           PacketFamilyBulletDelta,
-			Sequence:       worldDelta.Metadata.Sequence,
-			ServerSentMsec: worldDelta.Metadata.ServerSentMsec,
-			BulletUpdates:   worldDelta.Bullets.Updates,
+			Type:          PacketFamilyBulletDelta,
+			Metadata:      metadata,
+			BulletUpdates: worldDelta.Bullets.Updates,
 		}
 	}
 	result.CohortState.RemoveMissingAsteroids(asteroidActive)

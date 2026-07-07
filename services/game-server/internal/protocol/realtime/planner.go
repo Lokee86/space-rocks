@@ -89,10 +89,33 @@ func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 			asteroidHotPresent := split.AsteroidDelta != nil && len(split.AsteroidDelta.AsteroidUpdates) > 0
 			bulletHotPresent := split.BulletDelta != nil && len(split.BulletDelta.BulletUpdates) > 0
 			worldDeltaHasChanges := WorldWireDeltaHasChanges(split.WorldDelta)
-			asteroidHotAllowed := asteroidHotPresent && (worldDeltaHasChanges || hotPacketCadenceAllows(split.CohortState.AsteroidMode, worldSequence))
-			bulletHotAllowed := bulletHotPresent && (worldDeltaHasChanges || hotPacketCadenceAllows(split.CohortState.BulletMode, worldSequence))
-			allPresentHotAllowed := (!asteroidHotPresent || asteroidHotAllowed) && (!bulletHotPresent || bulletHotAllowed)
-			if worldDeltaHasChanges || ((asteroidHotAllowed || bulletHotAllowed) && allPresentHotAllowed) {
+			asteroidHotAllowed := asteroidHotPresent
+			bulletHotAllowed := bulletHotPresent
+			asteroidState, asteroidSynced := state.LaneState(LaneAsteroids)
+			asteroidSequence := NextLaneSequence(asteroidState, asteroidSynced)
+			bulletState, bulletSynced := state.LaneState(LaneBullets)
+			bulletSequence := NextLaneSequence(bulletState, bulletSynced)
+			if split.AsteroidDelta != nil {
+				metadata := split.AsteroidDelta.Metadata
+				metadata.Lane = LaneAsteroids
+				metadata.Sequence = asteroidSequence
+				metadata.SnapshotID = DeltaSnapshotID(LaneAsteroids, asteroidSequence)
+				metadata.SnapshotKind = SnapshotKind("delta")
+				metadata.ServerSentMsec = split.WorldDelta.Metadata.ServerSentMsec
+				metadata = metadata.WithChunk(0, 1)
+				split.AsteroidDelta.Metadata = metadata
+			}
+			if split.BulletDelta != nil {
+				metadata := split.BulletDelta.Metadata
+				metadata.Lane = LaneBullets
+				metadata.Sequence = bulletSequence
+				metadata.SnapshotID = DeltaSnapshotID(LaneBullets, bulletSequence)
+				metadata.SnapshotKind = SnapshotKind("delta")
+				metadata.ServerSentMsec = split.WorldDelta.Metadata.ServerSentMsec
+				metadata = metadata.WithChunk(0, 1)
+				split.BulletDelta.Metadata = metadata
+			}
+			if worldDeltaHasChanges || asteroidHotAllowed || bulletHotAllowed {
 				chainedWorldProjection := quantizedWorldFull
 				chainedWorldProjection.Metadata = split.WorldDelta.Metadata
 				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: split.WorldDelta, Projection: chainedWorldProjection})
@@ -175,6 +198,7 @@ func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 }
 func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeSendPrepared {
 	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &state)
+	candidatePlan.Candidates = ExpandHotLaneCandidateChunks(candidatePlan.Candidates)
 
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
 	for i, candidate := range candidatePlan.Candidates {
@@ -280,6 +304,28 @@ func scheduleRecordForCandidate(candidateIndex int, candidate RealtimeLaneCandid
 		record.PayloadRef = candidate.Full
 	case RealtimeLaneCandidateKindDelta:
 		record.PayloadRef = candidate.Delta
+		switch packet := candidate.Delta.(type) {
+		case BulletWireDeltaPacket:
+			record.ChunkIndex = packet.Metadata.ChunkIndex
+			record.ChunkCount = packet.Metadata.ChunkCount
+			record.IsFinalChunk = packet.Metadata.IsFinalChunk
+		case *BulletWireDeltaPacket:
+			if packet != nil {
+				record.ChunkIndex = packet.Metadata.ChunkIndex
+				record.ChunkCount = packet.Metadata.ChunkCount
+				record.IsFinalChunk = packet.Metadata.IsFinalChunk
+			}
+		case AsteroidWireDeltaPacket:
+			record.ChunkIndex = packet.Metadata.ChunkIndex
+			record.ChunkCount = packet.Metadata.ChunkCount
+			record.IsFinalChunk = packet.Metadata.IsFinalChunk
+		case *AsteroidWireDeltaPacket:
+			if packet != nil {
+				record.ChunkIndex = packet.Metadata.ChunkIndex
+				record.ChunkCount = packet.Metadata.ChunkCount
+				record.IsFinalChunk = packet.Metadata.IsFinalChunk
+			}
+		}
 	}
 
 	return record

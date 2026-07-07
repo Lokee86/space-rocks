@@ -221,6 +221,32 @@ func TestCandidateMetadataReturnsWorldDeltaMetadata(t *testing.T) {
 	}
 }
 
+func TestCandidateMetadataReturnsAsteroidHotDeltaMetadata(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	candidate := RealtimeLaneCandidate{Lane: LaneAsteroids, Kind: RealtimeLaneCandidateKindDelta, Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 7, ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: false}}}
+
+	metadata, ok := CandidateMetadata(candidate, state)
+	if !ok {
+		t.Fatal("expected asteroid hot delta metadata to be returned")
+	}
+	if metadata.Lane != LaneAsteroids || metadata.Sequence != 7 || metadata.ServerSentMsec != 123 || metadata.SnapshotKind != SnapshotKind("delta") || metadata.ChunkIndex != 1 || metadata.ChunkCount != 3 || metadata.IsFinalChunk {
+		t.Fatalf("unexpected asteroid hot delta metadata: %#v", metadata)
+	}
+}
+
+func TestCandidateMetadataReturnsBulletHotDeltaMetadata(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	candidate := RealtimeLaneCandidate{Lane: LaneBullets, Kind: RealtimeLaneCandidateKindDelta, Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 9, ServerSentMsec: 456, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 2, ChunkCount: 4, IsFinalChunk: true}}}
+
+	metadata, ok := CandidateMetadata(candidate, state)
+	if !ok {
+		t.Fatal("expected bullet hot delta metadata to be returned")
+	}
+	if metadata.Lane != LaneBullets || metadata.Sequence != 9 || metadata.ServerSentMsec != 456 || metadata.SnapshotKind != SnapshotKind("delta") || metadata.ChunkIndex != 2 || metadata.ChunkCount != 4 || !metadata.IsFinalChunk {
+		t.Fatalf("unexpected bullet hot delta metadata: %#v", metadata)
+	}
+}
+
 func TestCandidateMetadataReturnsOverlayDeltaMetadata(t *testing.T) {
 	state := NewRealtimeSessionState("player-1")
 	candidate := RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindDelta, Delta: OverlayLaneDelta{Metadata: Metadata{Lane: LaneOverlay, Sequence: 7, BaselineID: "overlay-baseline", SnapshotID: "overlay-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}}

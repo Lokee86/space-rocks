@@ -43,50 +43,31 @@ func hotPacketSendAllowed(encodedBytes int) bool {
 	}
 }
 
+func isRealHotLaneChunkRecord(record ScheduleRecord) bool {
+	if record.ChunkCount <= 1 {
+		return false
+	}
+	return record.Lane == LaneBullets || record.Lane == LaneAsteroids
+}
+
 func appendPlannedRecord(plan *SendPlan, record ScheduleRecord, budget int) int {
 	estimated := record.EstimatedBytes
 	if estimated <= 0 {
 		estimated = EstimatePacketBytes(record.PacketFamily, 1, 0)
 	}
 
-	if isRequiredRecord(record) || budget-estimated >= 0 {
-		if estimated > HardCapBytes && record.ChunkCount <= 1 {
-			for _, chunk := range chunkScheduleRecord(record) {
-				plan.Included = append(plan.Included, chunk)
-				budget -= chunk.EstimatedBytes
-			}
-			return budget
-		}
+	if isRequiredRecord(record) || isRealHotLaneChunkRecord(record) {
+		plan.Included = append(plan.Included, record)
+		return budget - estimated
+	}
 
+	if budget-estimated >= 0 {
 		plan.Included = append(plan.Included, record)
 		return budget - estimated
 	}
 
 	plan.Deferred = append(plan.Deferred, record)
 	return budget
-}
-
-func chunkScheduleRecord(record ScheduleRecord) []ScheduleRecord {
-	if record.ChunkCount > 1 {
-		return []ScheduleRecord{record}
-	}
-
-	chunkCount := 2
-	chunkBytes := record.EstimatedBytes / chunkCount
-	if chunkBytes <= 0 {
-		chunkBytes = record.EstimatedBytes
-	}
-
-	chunks := make([]ScheduleRecord, 0, chunkCount)
-	for i := 0; i < chunkCount; i++ {
-		chunk := record
-		chunk.ChunkIndex = i
-		chunk.ChunkCount = chunkCount
-		chunk.IsFinalChunk = i == chunkCount-1
-		chunk.EstimatedBytes = chunkBytes
-		chunks = append(chunks, chunk)
-	}
-	return chunks
 }
 
 func summarizeSendPlan(included []ScheduleRecord, deferred []ScheduleRecord) SendPlanSummary {

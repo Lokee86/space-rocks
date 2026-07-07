@@ -10,6 +10,12 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime/quantize"
 )
 
+type EncodedRealtimeLanePacket struct {
+	Candidate    RealtimeLaneCandidate
+	Encoded      []byte
+	EncodedBytes int
+}
+
 type ActiveRealtimeResult struct {
 	Snapshot           game.GameplayPresentationSnapshot
 	SessionState       RealtimeSessionState
@@ -19,6 +25,7 @@ type ActiveRealtimeResult struct {
 	SendPlan           SendPlan
 	MetricRecord       packetmetrics.PacketMetricRecord
 	MetricSummaries    []packetmetrics.PacketMetricRecord
+	EncodedLanePackets []EncodedRealtimeLanePacket
 	EncodedPackets     map[Lane][]byte
 	EncodedBytes       map[Lane]int
 	EventBatchEventIDs []string
@@ -35,6 +42,7 @@ func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, 
 func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) ActiveRealtimeResult {
 	preparedState := state
 	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &preparedState)
+	candidatePlan.Candidates = ExpandHotLaneCandidateChunks(candidatePlan.Candidates)
 
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
 	for i, candidate := range candidatePlan.Candidates {
@@ -44,11 +52,19 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 	selectedCandidates := IncludedRealtimeLaneCandidates(candidatePlan.Candidates, sendPlan.Included)
 	encodedPackets := make(map[Lane][]byte, len(selectedCandidates))
 	encodedBytes := make(map[Lane]int, len(selectedCandidates))
+	encodedLanePackets := make([]EncodedRealtimeLanePacket, 0, len(selectedCandidates))
 	for _, candidate := range selectedCandidates {
 		encodedPacket, recordedBytes := encodeLanePacket(candidate)
 		if recordedBytes > 0 {
-			encodedPackets[candidate.Lane] = encodedPacket
-			encodedBytes[candidate.Lane] = recordedBytes
+			encodedLanePackets = append(encodedLanePackets, EncodedRealtimeLanePacket{
+				Candidate:    candidate,
+				Encoded:      encodedPacket,
+				EncodedBytes: recordedBytes,
+			})
+			if _, exists := encodedPackets[candidate.Lane]; !exists {
+				encodedPackets[candidate.Lane] = encodedPacket
+			}
+			encodedBytes[candidate.Lane] += recordedBytes
 		}
 	}
 
@@ -59,6 +75,9 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 		SelectedCandidates: selectedCandidates,
 		PlannedRecords:     records,
 		SendPlan:           sendPlan,
+		MetricRecord:       packetmetrics.PacketMetricRecord{},
+		MetricSummaries:    nil,
+		EncodedLanePackets: encodedLanePackets,
 		EncodedPackets:     encodedPackets,
 		EncodedBytes:       encodedBytes,
 		EventBatchEventIDs: activeEventBatchEventIDs(snapshot.PendingEvents),
@@ -66,8 +85,8 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 	}
 	result.MetricRecord = result.SendPlan.Summary.ToPacketMetricRecord("active", LaneWorld)
 	totalEncodedBytes := 0
-	for _, recordedBytes := range encodedBytes {
-		totalEncodedBytes += recordedBytes
+	for _, recorded := range encodedLanePackets {
+		totalEncodedBytes += recorded.EncodedBytes
 	}
 	result.TotalEncodedBytes = totalEncodedBytes
 	if len(encodedBytes) > 0 {
@@ -102,12 +121,37 @@ func IncludedRealtimeLaneCandidates(candidates []RealtimeLaneCandidate, included
 	return selected
 }
 
-func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.PacketMetricRecord {
-	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.SelectedCandidates))
+func encodedMetricPackets(result ActiveRealtimeResult) []EncodedRealtimeLanePacket {
+	if len(result.EncodedLanePackets) > 0 {
+		return result.EncodedLanePackets
+	}
+
+	if len(result.SelectedCandidates) == 0 || len(result.EncodedBytes) == 0 {
+		return nil
+	}
+
+	packets := make([]EncodedRealtimeLanePacket, 0, len(result.SelectedCandidates))
 	for _, candidate := range result.SelectedCandidates {
-		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane)
-		diagnostics := CandidateWriteDiagnosticsFor(candidate, result.SessionState, result.EncodedBytes[candidate.Lane])
-		record.Bytes = result.EncodedBytes[candidate.Lane]
+		encodedBytes := result.EncodedBytes[candidate.Lane]
+		if encodedBytes <= 0 {
+			continue
+		}
+		packets = append(packets, EncodedRealtimeLanePacket{
+			Candidate:    candidate,
+			EncodedBytes: encodedBytes,
+		})
+	}
+	return packets
+}
+
+func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.PacketMetricRecord {
+	encodedPackets := encodedMetricPackets(result)
+	records := make([]packetmetrics.PacketMetricRecord, 0, len(encodedPackets))
+	for _, encoded := range encodedPackets {
+		candidate := encoded.Candidate
+		record := result.SendPlan.Summary.ToPacketMetricRecord(packetFamilyForCandidate(candidate), candidate.Lane)
+		diagnostics := CandidateWriteDiagnosticsFor(candidate, result.SessionState, encoded.EncodedBytes)
+		record.Bytes = encoded.EncodedBytes
 		record.Channel = diagnostics.Channel
 		record.EncodedBytes = diagnostics.EncodedBytes
 		record.WorldHotCount = diagnostics.WorldHotCount
@@ -180,7 +224,7 @@ func logActivePendingPresentationEvents(playerID string, snapshot game.GameplayP
 	)
 }
 
-func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
+func encodeLanePacketUnchecked(candidate RealtimeLaneCandidate) ([]byte, int) {
 	packet := WireLanePacket(candidate)
 	if packet == nil {
 		return nil, 0
@@ -193,12 +237,20 @@ func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
 	if err != nil {
 		return nil, 0
 	}
+	return encoded, len(encoded)
+}
+
+func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
+	encoded, recordedBytes := encodeLanePacketUnchecked(candidate)
+	if recordedBytes <= 0 {
+		return nil, 0
+	}
 	if candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
-		if !hotPacketSendAllowed(len(encoded)) {
+		if !hotPacketSendAllowed(recordedBytes) {
 			return nil, 0
 		}
 	}
-	return encoded, len(encoded)
+	return encoded, recordedBytes
 }
 
 func laneFamilySummary(records []ScheduleRecord) string {

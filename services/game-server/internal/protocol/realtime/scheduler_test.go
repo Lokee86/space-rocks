@@ -19,39 +19,6 @@ func findMatchingScheduleRecords(records []ScheduleRecord, entityID, recordKind 
 	return matches
 }
 
-func assertMatchingScheduleRecordsChunked(t *testing.T, matches []ScheduleRecord) {
-	t.Helper()
-	if len(matches) <= 1 {
-		t.Fatalf("matches = %#v, want chunked records", matches)
-	}
-
-	chunkCount := matches[0].ChunkCount
-	if chunkCount <= 1 {
-		t.Fatalf("matches = %#v, want chunked records", matches)
-	}
-
-	saw := make(map[int]bool, chunkCount)
-	var finalCount int
-	for _, record := range matches {
-		if record.ChunkCount != chunkCount {
-			t.Fatalf("matches = %#v, want consistent chunk count", matches)
-		}
-		if record.ChunkIndex < 0 || record.ChunkIndex >= chunkCount {
-			t.Fatalf("matches = %#v, want chunk indexes in range", matches)
-		}
-		saw[record.ChunkIndex] = true
-		if record.IsFinalChunk {
-			finalCount++
-		}
-	}
-
-	if len(saw) != chunkCount {
-		t.Fatalf("matches = %#v, want chunk indexes to cover %d chunks", matches, chunkCount)
-	}
-	if finalCount != 1 {
-		t.Fatalf("matches = %#v, want exactly one final chunk", matches)
-	}
-}
 
 
 func TestHotPacketCadenceAllowsFullOwned30HzEveryOtherTick(t *testing.T) {
@@ -177,9 +144,8 @@ func hotBulletCandidateWithUpdateCount(count int) RealtimeLaneCandidate {
 		Lane: LaneBullets,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: BulletWireDeltaPacket{
-			Type: PacketFamilyBulletDelta,
-			Sequence: 2,
-			ServerSentMsec: 1234,
+			Type:     PacketFamilyBulletDelta,
+			Metadata: Metadata{Lane: LaneBullets, Sequence: 2, ServerSentMsec: 1234},
 			BulletUpdates: updates,
 		},
 	}
@@ -216,32 +182,29 @@ func TestSelectSendPlanNeverDropsRequiredDelete(t *testing.T) {
 		}
 		return
 	}
-	assertMatchingScheduleRecordsChunked(t, matches)
+	t.Fatalf("included records = %#v, want required delete not chunked by scheduler", matches)
 }
 
-func TestSelectSendPlanDefersRequiredOverflowInsteadOfDiscarding(t *testing.T) {
+func TestSelectSendPlanIncludesRequiredOverflowWithoutChunking(t *testing.T) {
 	records := []ScheduleRecord{
 		{Lane: LaneWorld, PacketFamily: PacketFamilyWorldFull, RecordKind: "create", DeliveryClass: DeliveryClassRequired, Priority: PriorityCritical, EstimatedBytes: HardCapBytes + 500, EntityID: "oversized"},
 	}
 
 	plan := SelectSendPlan(records)
-	for _, record := range plan.Deferred {
-		if record.EntityID == "oversized" {
-			return
-		}
+	if len(plan.Included) != 1 {
+		t.Fatalf("included records = %#v, want exactly one required record", plan.Included)
+	}
+	if len(plan.Deferred) != 0 {
+		t.Fatalf("deferred records = %#v, want required overflow included without deferral", plan.Deferred)
 	}
 
-	matches := findMatchingScheduleRecords(plan.Included, "oversized", "create", DeliveryClassRequired, PriorityCritical)
-	if len(matches) == 0 {
-		t.Fatalf("included records = %#v deferred records = %#v, want oversized required record retained", plan.Included, plan.Deferred)
+	included := plan.Included[0]
+	if included.EntityID != "oversized" {
+		t.Fatalf("included record = %#v, want original oversized record", included)
 	}
-	if len(matches) == 1 {
-		if matches[0].ChunkCount <= 1 {
-			t.Fatalf("included record = %#v, want chunked/staged oversized required record retained", matches[0])
-		}
-		return
+	if included.ChunkCount > 1 {
+		t.Fatalf("included record = %#v, want no fake chunking", included)
 	}
-	assertMatchingScheduleRecordsChunked(t, matches)
 }
 
 func TestSelectSendPlanDropsDebugUnderPressure(t *testing.T) {

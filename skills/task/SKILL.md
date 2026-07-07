@@ -1,371 +1,393 @@
-## Implementation plan
+## Real bullet hot-lane chunking skill
 
-This should be one focused slice:
+Use this skill when fixing Space Rocks realtime hot-lane overflow where `sr.bullets` or another hot lane stops sending updates after packet size pressure increases.
 
-```text id="jp9tnp"
-Make sr.asteroids and sr.bullets unordered/unreliable hot-update lanes.
-Add stale hot-delta rejection so late packets cannot roll entity positions backward.
-Fix scheduler classification so hot-lane deltas are supersedable, not required.
-Do not move lifecycle creates/deletes out of sr.world.
-```
+The goal is to create **real bounded hot-lane packet chunks** before encoding and writing. Do not rely on scheduler-only chunk records unless they map to real encoded packets.
 
-## 1. Add explicit WebRTC channel policy
+## Problem summary
 
-### Server
+The current failure mode is:
 
-File:
+* Bullet movement updates are offloaded from `sr.world` to `sr.bullets`.
+* The bullet hot packet grows as bullet count rises.
+* Once the encoded `bullet_delta` exceeds the hard hot-packet cap, `encodeLanePacket()` drops it.
+* The server keeps sending `world_delta`, but `bullet_delta` collapses or stops.
+* Raising policy constants does not fix this because `size_estimate.go` has separate active constants such as `HardCapBytes = 1200`.
+* Scheduler chunking is not enough if it only creates `ScheduleRecord` chunks. Real packets must be split before encoding/writing.
 
-```text id="n96rih"
-services/game-server/internal/networking/webrtc_transport.go
-```
+The fix must produce multiple actual `bullet_delta` messages on the same WebRTC lane, each under the hard cap.
 
-Change `webRTCGameplayChannelSpec` from:
+## Do not change
+
+Do not change these unless the task explicitly says otherwise:
+
+* Do not raise hot-lane packet size caps as the fix.
+* Do not move bullet creates/deletes out of `sr.world`.
+* Do not move asteroid creates/deletes out of `sr.world`.
+* Do not change WebRTC channel policy.
+* Do not change bullet rendering.
+* Do not change torpedo spawning.
+* Do not make client rendering changes to hide the server issue.
+* Do not treat scheduler-only chunking as real packet chunking.
+
+## Required behavior
+
+Hot-lane overflow must degrade like this:
+
+* One small bullet hot packet remains one packet.
+* One oversized bullet hot packet becomes multiple real `bullet_delta` packets.
+* Every chunk must encode under `HardCapBytes`.
+* All chunks from one source hot delta should share the same sequence.
+* Chunks must carry `chunk_index`, `chunk_count`, and `is_final_chunk`.
+* The writer must send every encoded chunk, even when multiple chunks use `LaneBullets`.
+* The client must not reject valid same-sequence hot chunks as stale.
+* Duplicate hot updates are acceptable because position updates overwrite by entity ID.
+
+## Files usually involved
+
+Server:
+
+* `services/game-server/internal/protocol/realtime/hot_lane_policy.go`
+* `services/game-server/internal/protocol/realtime/size_estimate.go`
+* `services/game-server/internal/protocol/realtime/wire_packets.go`
+* `services/game-server/internal/protocol/realtime/baseline.go`
+* `services/game-server/internal/protocol/realtime/hot_lane_allocator.go`
+* `services/game-server/internal/protocol/realtime/planner.go`
+* `services/game-server/internal/protocol/realtime/active.go`
+* `services/game-server/internal/protocol/realtime/scheduler.go`
+* `services/game-server/internal/networking/websocket_write.go`
+
+Client:
+
+* `client/scripts/protocol/realtime/world_lane_state.gd`
+
+Tests:
+
+* `services/game-server/internal/protocol/realtime/hot_lane_chunker_test.go`
+* `services/game-server/internal/protocol/realtime/active_test.go`
+* `services/game-server/internal/protocol/realtime/baseline_test.go`
+* `services/game-server/internal/protocol/realtime/scheduler_test.go`
+* Existing client tests near `world_lane_state.gd`, if present.
+
+## Implementation sequence
+
+### 1. Restore sane hot-lane constants
+
+In `hot_lane_policy.go`, keep the policy defaults sane:
 
 ```go
-type webRTCGameplayChannelSpec struct {
-    Lane  string
-    Label string
-    ID    uint16
-}
+DefaultBulletHotLaneEntityBudget   = 48
+DefaultTargetEncodedPacketBytes    = 800
+DefaultHardEncodedPacketBytes      = 1200
+DefaultMTUSafePacketBytes          = 1500
 ```
 
-To include policy fields:
+Do not solve the bug by setting these to huge values.
+
+### 2. Add hot-packet chunk metadata
+
+In `wire_packets.go`, extend `AsteroidWireDeltaPacket` and `BulletWireDeltaPacket` with:
 
 ```go
-type webRTCGameplayChannelSpec struct {
-    Lane           string
-    Label          string
-    ID             uint16
-    Ordered        bool
-    MaxRetransmits *uint16
-}
+ChunkIndex   int  `json:"chunk_index,omitempty"`
+ChunkCount   int  `json:"chunk_count,omitempty"`
+IsFinalChunk bool `json:"is_final_chunk,omitempty"`
 ```
 
-Then set:
+Update `wireAsteroidWireDeltaPacket()` and `wireBulletWireDeltaPacket()` to include those fields when emitting hot packets.
+
+### 3. Fix hot-lane metadata extraction
+
+In `baseline.go`, update `CandidateMetadata()` so it understands:
 
 ```go
-var noRetransmits uint16 = 0
-
-return []webRTCGameplayChannelSpec{
-    {Lane: "world", Label: "sr.world", ID: 1, Ordered: true},
-    {Lane: "overlay", Label: "sr.overlay", ID: 2, Ordered: true},
-    {Lane: "session", Label: "sr.session", ID: 3, Ordered: true},
-    {Lane: "event", Label: "sr.event", ID: 4, Ordered: true},
-    {Lane: "asteroids", Label: "sr.asteroids", ID: 5, Ordered: false, MaxRetransmits: &noRetransmits},
-    {Lane: "bullets", Label: "sr.bullets", ID: 6, Ordered: false, MaxRetransmits: &noRetransmits},
-}
+AsteroidWireDeltaPacket
+*AsteroidWireDeltaPacket
+BulletWireDeltaPacket
+*BulletWireDeltaPacket
 ```
 
-In `createNegotiatedGameplayChannels()`, stop using one shared `ordered := true`. Use the spec:
+Return metadata with the correct lane, sequence, snapshot kind, chunk index, chunk count, final chunk flag, and server sent time.
+
+This prevents diagnostics from reporting hot-lane sequence `0` and lets hot lane state advance correctly.
+
+### 4. Use hot-lane sequences
+
+In `planner.go`, hot-lane deltas should use their own lane sequence, not world-lane sequence.
+
+Before appending hot candidates, derive:
 
 ```go
-ordered := spec.Ordered
-channel, err := p.peer.CreateDataChannel(spec.Label, &webrtc.DataChannelInit{
-    Ordered:        &ordered,
-    Negotiated:     &negotiated,
-    ID:             &channelID,
-    MaxRetransmits: spec.MaxRetransmits,
-})
+asteroidState, asteroidSynced := state.LaneState(LaneAsteroids)
+asteroidSequence := NextLaneSequence(asteroidState, asteroidSynced)
+
+bulletState, bulletSynced := state.LaneState(LaneBullets)
+bulletSequence := NextLaneSequence(bulletState, bulletSynced)
 ```
 
-### Client
+Assign these to the split hot deltas:
 
-File:
-
-```text id="xebk2c"
-client/scripts/networking/webrtc/webrtc_transport.gd
+```go
+split.AsteroidDelta.Sequence = asteroidSequence
+split.BulletDelta.Sequence = bulletSequence
 ```
 
-Expand `GAMEPLAY_CHANNEL_SPECS`:
+All chunks from a single source hot delta should share the same sequence and differ by chunk metadata.
 
-```gdscript
-{"lane": "world", "label": "sr.world", "id": 1, "ordered": true},
-{"lane": "overlay", "label": "sr.overlay", "id": 2, "ordered": true},
-{"lane": "session", "label": "sr.session", "id": 3, "ordered": true},
-{"lane": "event", "label": "sr.event", "id": 4, "ordered": true},
-{"lane": "asteroids", "label": "sr.asteroids", "id": 5, "ordered": false, "max_retransmits": 0},
-{"lane": "bullets", "label": "sr.bullets", "id": 6, "ordered": false, "max_retransmits": 0},
-```
+### 5. Add real hot-lane candidate chunking
 
-When creating channels, build options from the spec:
+Create `hot_lane_chunker.go`.
 
-```gdscript
-var options := {
-    "negotiated": true,
-    "id": int(spec.get("id")),
-    "ordered": bool(spec.get("ordered", true)),
-}
-if spec.has("max_retransmits"):
-    options["maxRetransmits"] = int(spec.get("max_retransmits"))
-```
+Add a function like:
 
-Use Godot’s expected option key `maxRetransmits`, not snake_case.
-
-## 2. Add stale hot-delta rejection on the client
-
-Files:
-
-```text id="hbm4wj"
-client/scripts/protocol/realtime/world_lane_state.gd
-client/scripts/protocol/realtime/world_lane_applier.gd
-```
-
-Add state:
-
-```gdscript
-var latest_asteroid_delta_sequence := -1
-var latest_bullet_delta_sequence := -1
-```
-
-Reset both on `clear_world()` / full world sync.
-
-Add helpers:
-
-```gdscript
-func accept_asteroid_delta_sequence(sequence) -> bool:
-    var parsed := _parse_hot_delta_sequence(sequence)
-    if parsed == null:
-        return false
-    if parsed <= latest_asteroid_delta_sequence:
-        return false
-    latest_asteroid_delta_sequence = parsed
-    return true
-
-func accept_bullet_delta_sequence(sequence) -> bool:
-    var parsed := _parse_hot_delta_sequence(sequence)
-    if parsed == null:
-        return false
-    if parsed <= latest_bullet_delta_sequence:
-        return false
-    latest_bullet_delta_sequence = parsed
-    return true
-
-func _parse_hot_delta_sequence(sequence):
-    if sequence == null:
-        return null
-    if typeof(sequence) != TYPE_INT and typeof(sequence) != TYPE_FLOAT:
-        return null
-    return int(sequence)
-```
-
-Then gate the hot appliers:
-
-```gdscript
-func apply_asteroid_delta(world_lane_state: WorldLaneState, lane: String, asteroid_packet: Dictionary) -> void:
-    if not world_lane_state.accept_asteroid_delta_sequence(asteroid_packet.get("sequence")):
-        return
-    _apply_entity_deltas(world_lane_state, [], _array_field(asteroid_packet, "asteroid_updates"), [], "asteroid")
-
-func apply_bullet_delta(world_lane_state: WorldLaneState, lane: String, bullet_packet: Dictionary) -> void:
-    if not world_lane_state.accept_bullet_delta_sequence(bullet_packet.get("sequence")):
-        return
-    _apply_entity_deltas(world_lane_state, [], _array_field(bullet_packet, "bullet_updates"), [], "bullet")
+```go
+func ExpandHotLaneCandidateChunks(candidates []RealtimeLaneCandidate) []RealtimeLaneCandidate
 ```
 
 Rules:
 
-```text id="u86enm"
-Accept sequence 100 then 103.
-Reject sequence 101 after 103.
-Do not require contiguous sequence numbers.
-Drop missing/non-numeric sequence on hot lanes.
-```
+* Non-hot candidates pass through unchanged.
+* `LaneBullets` delta candidates are split if their encoded packet exceeds `HardCapBytes`.
+* Small bullet packets return one candidate with `ChunkIndex = 0`, `ChunkCount = 1`, and `IsFinalChunk = true`.
+* Oversized bullet packets become multiple real `RealtimeLaneCandidate` values.
+* Every emitted bullet chunk must contain a non-empty subset of `BulletUpdates`.
+* Every emitted chunk must encode under `HardCapBytes` unless a single update is itself pathological.
+* Preserve update order.
+* Preserve packet type, sequence, and server sent time.
+* Set chunk indexes from `0` to `chunk_count - 1`.
+* Only the last chunk has `IsFinalChunk = true`.
 
-That matters because unreliable lanes may drop packets, so gaps are normal.
+Preferred implementation:
 
-## 3. Fix scheduler classification for hot lanes
+* Try encoding the full candidate.
+* If it fits, return it as one finalized chunk.
+* If it does not fit, split the update slice.
+* Use binary search or recursive halving to find the largest prefix that fits under `HardCapBytes`.
+* Repeat until all updates are emitted.
 
-File:
+Do not create scheduler-only chunks here. Create actual candidates.
 
-```text id="6qwhal"
-services/game-server/internal/protocol/realtime/planner.go
-```
+### 6. Expand candidates before scheduling
 
-Current risk: `LaneAsteroids` / `LaneBullets` are not included in the delta classification branches, so they can fall through as required/critical.
+In `active.go`, the flow should become:
 
-Change `deliveryClassForCandidate()`:
+1. Assemble candidates.
+2. Expand hot-lane chunks into real candidates.
+3. Build schedule records from the expanded candidates.
+4. Select send plan.
+5. Select candidates from the expanded candidate list.
+6. Encode each selected candidate.
+7. Write every encoded packet.
 
-```go
-case RealtimeLaneCandidateKindDelta:
-    switch candidate.Lane {
-    case LaneSession:
-        return DeliveryClassDeferrable
-    case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
-        return DeliveryClassHotSupersedable
-    }
-```
+The scheduler must operate on the real chunk candidates.
 
-Change `priorityForCandidate()`:
+### 7. Refactor encoded packet storage
 
-```go
-case RealtimeLaneCandidateKindDelta:
-    switch candidate.Lane {
-    case LaneSession:
-        return PriorityMedium
-    case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
-        return PriorityHigh
-    }
-```
-
-Do not classify asteroid/bullet deltas as required. They are disposable hot movement updates.
-
-## 4. Preserve current ownership boundaries
-
-Do not move these:
-
-```text id="n6xxtk"
-bullet_creates
-bullet_deletes
-asteroid_creates
-asteroid_deletes
-```
-
-They stay in:
-
-```text id="xf24wm"
-sr.world / world_delta
-```
-
-Only these are on hot lanes:
-
-```text id="0291rd"
-asteroid_updates -> sr.asteroids
-bullet_updates -> sr.bullets
-```
-
-Existing bullet buffering still matters because a bullet update may arrive before its world-lane create. Keep it.
-
-## 5. Test updates
-
-### Server WebRTC transport tests
-
-File:
-
-```text id="b76klm"
-services/game-server/internal/networking/webrtc_transport_test.go
-```
-
-Update fake channel creation capture to include:
+The current shape cannot represent multiple packets for the same lane if it stores packets by lane:
 
 ```go
-MaxRetransmits *uint16
+EncodedPackets map[Lane][]byte
+EncodedBytes   map[Lane]int
 ```
+
+Replace or supplement it with an ordered list:
+
+```go
+type EncodedRealtimeLanePacket struct {
+	Candidate     RealtimeLaneCandidate
+	Encoded       []byte
+	EncodedBytes  int
+}
+```
+
+Then `ActiveRealtimeResult` should hold:
+
+```go
+EncodedPackets []EncodedRealtimeLanePacket
+```
+
+Optionally keep an aggregate `EncodedBytesByLane` map only for metrics or tests.
+
+### 8. Write every encoded packet
+
+In `websocket_write.go`, change the writer loop so it iterates encoded packets, not only selected candidates keyed by lane.
+
+Use the candidate stored on each encoded packet:
+
+```go
+for _, encoded := range result.EncodedPackets {
+	candidate := encoded.Candidate
+	encodedPacket := encoded.Encoded
+	// send candidate on candidate.Lane
+}
+```
+
+This allows multiple `sr.bullets` messages in one server tick.
+
+Logging must use the chunk candidate and the chunk’s encoded byte count.
+
+### 9. Remove fake scheduler chunking
+
+In `scheduler.go`, remove or neutralize the block that chunks only `ScheduleRecord` values when `EstimatedBytes > HardCapBytes`.
+
+Scheduler-only chunks are misleading if they do not correspond to real encoded packets.
+
+Chunking ownership should be:
+
+```text
+candidate chunker -> scheduler -> encoder -> writer
+```
+
+Not:
+
+```text
+scheduler fake chunks -> deduplicated candidates -> one oversized encoded packet
+```
+
+### 10. Relax client same-sequence stale rejection
+
+In `world_lane_state.gd`, update bullet and asteroid hot-lane sequence acceptance.
+
+Bad shape:
+
+```gdscript
+if parsed <= latest_bullet_delta_sequence:
+	return false
+latest_bullet_delta_sequence = parsed
+return true
+```
+
+Safer first pass:
+
+```gdscript
+if parsed < latest_bullet_delta_sequence:
+	return false
+latest_bullet_delta_sequence = parsed
+return true
+```
+
+Apply the same logic for asteroid hot deltas.
+
+Reason: valid chunks from the same source delta share a sequence. Same-sequence chunks must not be rejected. Duplicate hot updates are acceptable because they overwrite entity positions by ID.
+
+## Required tests
+
+### Server: metadata support
+
+Add or update tests proving `CandidateMetadata()` returns proper metadata for:
+
+* `AsteroidWireDeltaPacket`
+* `BulletWireDeltaPacket`
+
+Assert sequence, chunk index, chunk count, final chunk, and lane.
+
+### Server: small bullet packet remains one chunk
+
+Create a bullet hot candidate that encodes under `HardCapBytes`.
 
 Assert:
 
-```text id="g5q4vx"
-sr.world     ordered=true,  maxRetransmits=nil
-sr.overlay   ordered=true,  maxRetransmits=nil
-sr.session   ordered=true,  maxRetransmits=nil
-sr.event     ordered=true,  maxRetransmits=nil
-sr.asteroids ordered=false, maxRetransmits=0
-sr.bullets   ordered=false, maxRetransmits=0
+* output candidate count is `1`.
+* lane is `LaneBullets`.
+* sequence is preserved.
+* `ChunkIndex == 0`.
+* `ChunkCount == 1`.
+* `IsFinalChunk == true`.
+
+### Server: oversized bullet packet splits
+
+Create a bullet hot candidate with enough updates to exceed `HardCapBytes`.
+
+Assert:
+
+* output candidate count is greater than `1`.
+* every chunk is `LaneBullets`.
+* every encoded chunk is `<= HardCapBytes`.
+* every chunk has non-empty `BulletUpdates`.
+* all original bullet updates appear exactly once across chunks.
+* all chunks share the same sequence.
+* chunk indexes are ordered and complete.
+* only the final chunk has `IsFinalChunk == true`.
+
+### Server: active result supports multiple packets on same lane
+
+Build a snapshot with enough bullet movement updates to require chunking.
+
+Assert:
+
+* `BuildActiveRealtimeResult()` returns multiple encoded packets for `LaneBullets`.
+* no bullet chunk exceeds `HardCapBytes`.
+* total encoded packet list includes the world packet plus multiple bullet packets when expected.
+* packets are not collapsed by lane.
+
+### Server: scheduler no longer fakes hot chunks
+
+Update scheduler tests so they no longer imply `ScheduleRecord` chunking creates real packet chunks.
+
+If a scheduler chunking test remains, it must only describe scheduler records, not actual packet emission.
+
+### Client: same-sequence chunks
+
+If there is a client test harness, add tests for bullet and asteroid hot sequence acceptance:
+
+* accept sequence `10`
+* accept another packet with sequence `10`
+* reject sequence `9`
+* accept sequence `11`
+
+## Expected log after fix
+
+Before the fix, logs look like this at high bullet count:
+
+```text
+bullet_delta 60/s near 1180 bytes
+bullet_delta collapses to 35/s
+bullet_delta collapses to 7/s
+bullet_delta reaches 0/s
+world_delta continues 60/s
 ```
 
-### Client WebRTC transport tests
+After the fix, logs should look like this:
 
-File:
-
-```text id="qc29c1"
-client/tests/unit/networking/test_webrtc_transport.gd
+```text
+bullet_delta sequence=123 chunk_index=0 chunk_count=3 encoded_bytes=1050
+bullet_delta sequence=123 chunk_index=1 chunk_count=3 encoded_bytes=1080
+bullet_delta sequence=123 chunk_index=2 chunk_count=3 encoded_bytes=920
 ```
 
-Update fake peer/channel capture to assert:
+The bullet lane should continue writing bounded chunks instead of disappearing.
 
-```text id="jut36b"
-sr.world ordered true
-sr.overlay ordered true
-sr.session ordered true
-sr.event ordered true
-sr.asteroids ordered false and maxRetransmits 0
-sr.bullets ordered false and maxRetransmits 0
-```
+## Verification
 
-### Client hot stale packet tests
+Run targeted Go tests from the Go module root:
 
-File:
-
-```text id="1ixacv"
-client/tests/unit/protocol/realtime/test_world_lane_applier.gd
-```
-
-Add:
-
-```text id="fw6plb"
-asteroid_delta sequence 10 applies
-asteroid_delta sequence 9 is ignored
-asteroid_delta sequence 11 applies
-bullet_delta sequence 10 applies
-bullet_delta sequence 9 is ignored
-bullet_delta sequence 12 applies after gap
-missing sequence hot packet is ignored
-non-numeric sequence hot packet is ignored
-```
-
-### Server scheduler tests
-
-Likely file:
-
-```text id="omlm4n"
-services/game-server/internal/protocol/realtime/planner_test.go
-```
-
-Add/adjust assertions:
-
-```text id="ap4mqh"
-LaneAsteroids delta -> DeliveryClassHotSupersedable, PriorityHigh
-LaneBullets delta -> DeliveryClassHotSupersedable, PriorityHigh
-```
-
-## 6. Docs after code lands
-
-Update only docs that describe current WebRTC lane behavior. The doc language should become:
-
-```text id="5mcukc"
-sr.world, sr.overlay, sr.session, and sr.event are ordered/reliable negotiated gameplay channels.
-
-sr.asteroids and sr.bullets are unordered/unreliable negotiated gameplay channels with maxRetransmits=0. They carry supersedable movement/update packets only. Late hot packets are rejected by sequence. Missing packets are tolerated because later packets replace older movement state.
-
-Lifecycle create/delete records remain on sr.world.
-```
-
-Remove stale wording like:
-
-```text id="6yj2g5"
-all hot lanes start ordered/reliable
-later hot lanes may become unordered/unreliable
-```
-
-## 7. Verification
-
-```bash id="u8kc3j"
-cd /mnt/d/\!bin/space-rocks
+```bash
+cd /mnt/d/\!bin/space-rocks/services/game-server
 {
-  echo "== data sync =="
-  data-sync -check -packets -go -gds
-
-  echo
-  echo "== server targeted tests =="
-  go test ./services/game-server/internal/networking ./services/game-server/internal/protocol/realtime
-
-  echo
-  echo "== client targeted tests =="
-  cd client
-  godot --headless -s addons/gut/gut_cmdln.gd \
-    -gtest=res://tests/unit/networking/test_webrtc_transport.gd \
-    -gtest=res://tests/unit/protocol/realtime/test_world_lane_applier.gd \
-    -gtest=res://tests/unit/protocol/realtime/test_lane_protocol_routing.gd
+  go test ./internal/protocol/realtime
 } 2>&1 | tee /dev/tty | clip.exe
 ```
 
-Main acceptance criteria:
+Run broader server tests:
 
-```text id="ace8ep"
-Hot WebRTC channels are unordered/unreliable on both server and client.
-Reliable lanes remain ordered/reliable.
-Late asteroid/bullet hot packets cannot roll state backward.
-Hot lane deltas are scheduler-supersedable, not required/critical.
-Creates/deletes still route through sr.world.
+```bash
+cd /mnt/d/\!bin/space-rocks/services/game-server
+{
+  go test ./...
+} 2>&1 | tee /dev/tty | clip.exe
 ```
 
-My attempted local MCP check failed with a connector permission error, so this plan is based on the current repo files available through GitHub plus the recent diff context already inspected.
+Then repeat the bullet stream stress test.
+
+## Completion criteria
+
+This task is complete when:
+
+* Bullet hot packets are split into real encoded chunks.
+* Multiple `sr.bullets` packets can be sent in one tick.
+* No bullet chunk exceeds `HardCapBytes`.
+* Hot packet diagnostics show nonzero sequence metadata.
+* Same-sequence chunks are accepted by the client.
+* Bullet streams no longer collapse to zero packet sends at the old size threshold.
+* Creates/deletes remain in `sr.world`.
+* Movement updates remain on `sr.bullets`.

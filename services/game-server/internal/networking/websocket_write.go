@@ -68,8 +68,9 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 	}
 
 	drainedEventCount := 0
-	for _, candidate := range result.SelectedCandidates {
-		encodedPacket := result.EncodedPackets[candidate.Lane]
+	for _, encoded := range result.EncodedLanePackets {
+		candidate := encoded.Candidate
+		encodedPacket := encoded.Encoded
 		if len(encodedPacket) == 0 {
 			continue
 		}

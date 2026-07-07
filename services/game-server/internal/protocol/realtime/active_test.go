@@ -1,6 +1,7 @@
 package realtime
 
 import (
+	"fmt"
 	"testing"
 
 	game "github.com/Lokee86/space-rocks/server/internal/game"
@@ -209,7 +210,101 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	}
 }
 
+func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T) {
+	previousBullets := make(map[string]runtime.BulletState, 240)
+	currentBullets := make(map[string]runtime.BulletState, 240)
+	for i := 1; i <= 240; i++ {
+		id := fmt.Sprintf("bullet-%06d", i)
+		previousBullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i), Y: float64(i + 1), Rotation: float64(i + 2), WeaponID: "laser", ProjectileType: "bolt"}
+		currentBullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i + 10), Y: float64(i + 11), Rotation: float64(i + 12), WeaponID: "laser", ProjectileType: "bolt"}
+	}
+
+	previousSnapshot := game.GameplayPresentationSnapshot{
+		SelfID:         "player-1",
+		Lives:          3,
+		ServerSentMsec: 1234,
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5},
+		},
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 9, Lives: 3, RespawnCooldown: 1.25, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite", SecondaryWeaponID: "mine", SecondaryAmmoPolicy: "limited"},
+		},
+		PlayerLifecycle: map[string]string{"player-1": "active"},
+		Bullets:         previousBullets,
+	}
+	currentSnapshot := previousSnapshot
+	currentSnapshot.ServerSentMsec = 1235
+	currentSnapshot.Bullets = currentBullets
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
+	state.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 1, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneOverlay)
+	state.StoreBaselineProjection(LaneOverlay, mustOverlayWireFull(t, previousSnapshot, "player-1", 1))
+	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 1, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneSession)
+	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, previousSnapshot, 1))
+
+	result := BuildActiveRealtimeResult(currentSnapshot, state)
+
+	bulletPackets := encodedPacketsForLane(result, LaneBullets)
+	if len(bulletPackets) <= 1 {
+		t.Fatalf("expected multiple bullet lane packets, got %d", len(bulletPackets))
+	}
+
+	selectedBulletCandidates := 0
+	for _, candidate := range result.SelectedCandidates {
+		if candidate.Lane == LaneBullets {
+			selectedBulletCandidates++
+		}
+	}
+	diagnostics := func(totalBulletUpdates int) string {
+		return fmt.Sprintf("candidates=%d selected=%d encoded=%d selected_bullet_candidates=%d bullet_packets=%d total_bullet_updates=%d", len(result.Candidates), len(result.SelectedCandidates), len(result.EncodedLanePackets), selectedBulletCandidates, len(bulletPackets), totalBulletUpdates)
+	}
+	if selectedBulletCandidates != len(bulletPackets) {
+		t.Fatalf("selected bullet candidates mismatch: %s", diagnostics(0))
+	}
+
+	totalBulletUpdates := 0
+	for index, encoded := range bulletPackets {
+		if encoded.Candidate.Lane != LaneBullets {
+			t.Fatalf("bullet encoded packet %d lane = %q, want bullets", index, encoded.Candidate.Lane)
+		}
+		if encoded.Candidate.Kind != RealtimeLaneCandidateKindDelta {
+			t.Fatalf("bullet encoded packet %d kind = %q, want delta", index, encoded.Candidate.Kind)
+		}
+		packet, ok := encoded.Candidate.Delta.(BulletWireDeltaPacket)
+		if !ok {
+			t.Fatalf("bullet encoded packet %d delta type = %T, want BulletWireDeltaPacket", index, encoded.Candidate.Delta)
+		}
+		totalBulletUpdates += len(packet.BulletUpdates)
+		if len(packet.BulletUpdates) != 1 && encoded.EncodedBytes > HardCapBytes {
+			t.Fatalf("bullet encoded packet %d bytes = %d, want <= %d unless single-update chunk", index, encoded.EncodedBytes, HardCapBytes)
+		}
+	}
+	if totalBulletUpdates != len(previousBullets) {
+		t.Fatalf("bullet updates across chunks = %d, want %d (%s)", totalBulletUpdates, len(previousBullets), diagnostics(totalBulletUpdates))
+	}
+
+	if result.TotalEncodedBytes <= 0 {
+		t.Fatal("expected total encoded bytes to be positive")
+	}
+
+	bulletMetricCount := 0
+	for _, record := range result.MetricSummaries {
+		if record.PacketFamily == PacketFamilyBulletDelta {
+			bulletMetricCount++
+		}
+	}
+	if bulletMetricCount <= 1 {
+		t.Fatalf("expected more than one bullet metric summary, got %d", bulletMetricCount)
+	}
+}
+
 func TestBuildActiveRealtimeResultSelectsFullPacketsWithoutStoredBaselines(t *testing.T) {
+
 	snapshot := tinyActiveBoundarySnapshot()
 	result := BuildActiveRealtimeResult(snapshot, NewRealtimeSessionState("player-1"))
 
@@ -293,6 +388,16 @@ func assertNoSelectedCandidate(t *testing.T, result ActiveRealtimeResult, lane L
 	if _, ok := result.EncodedPackets[lane]; ok {
 		t.Fatalf("expected no encoded packet for lane=%q, got %#v", lane, result.EncodedPackets[lane])
 	}
+}
+
+func encodedPacketsForLane(result ActiveRealtimeResult, lane Lane) []EncodedRealtimeLanePacket {
+	packets := make([]EncodedRealtimeLanePacket, 0, len(result.EncodedLanePackets))
+	for _, packet := range result.EncodedLanePackets {
+		if packet.Candidate.Lane == lane {
+			packets = append(packets, packet)
+		}
+	}
+	return packets
 }
 
 func assertEncodedPacketTypeAndLane(t *testing.T, result ActiveRealtimeResult, lane Lane, wantType string, wantLane string) {

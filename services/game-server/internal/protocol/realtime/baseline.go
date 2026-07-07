@@ -137,6 +137,14 @@ func CandidateMetadata(candidate RealtimeLaneCandidate, state RealtimeSessionSta
 		return packet.Metadata, true
 	case SessionWireLaneDelta:
 		return packet.Metadata, true
+	case AsteroidWireDeltaPacket:
+		return packet.Metadata, true
+	case *AsteroidWireDeltaPacket:
+		return packet.Metadata, true
+	case BulletWireDeltaPacket:
+		return packet.Metadata, true
+	case *BulletWireDeltaPacket:
+		return packet.Metadata, true
 	}
 
 	laneState, ok := state.LaneState(candidate.Lane)

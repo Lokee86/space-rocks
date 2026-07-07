@@ -147,7 +147,7 @@ func accept_asteroid_delta_sequence(sequence) -> bool:
 	var parsed = _parse_hot_delta_sequence(sequence)
 	if parsed == null:
 		return false
-	if parsed <= latest_asteroid_delta_sequence:
+	if parsed < latest_asteroid_delta_sequence:
 		return false
 	latest_asteroid_delta_sequence = parsed
 	return true
@@ -156,7 +156,7 @@ func accept_bullet_delta_sequence(sequence) -> bool:
 	var parsed = _parse_hot_delta_sequence(sequence)
 	if parsed == null:
 		return false
-	if parsed <= latest_bullet_delta_sequence:
+	if parsed < latest_bullet_delta_sequence:
 		return false
 	latest_bullet_delta_sequence = parsed
 	return true
