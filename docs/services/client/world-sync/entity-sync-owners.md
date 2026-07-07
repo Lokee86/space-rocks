@@ -78,6 +78,8 @@ They do not decide whether an entity should exist. They render the server state 
 
 It creates projectile nodes, chooses projectile scenes through `ProjectileSceneResolver`, applies target positions and rotations, plays projectile firing presentation, removes missing projectile nodes, and interpolates projectile nodes toward their latest server-derived target state.
 
+Fresh projectile nodes resolve their scene from the server `projectile_type`, so torpedo projectiles use the torpedo scene even when the torpedo pool is empty. Projectile sync renders server state only and does not own projectile authority.
+
 ### Asteroid presentation owner
 
 `AsteroidSync` owns client-side asteroid node presentation.

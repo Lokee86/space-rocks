@@ -212,7 +212,7 @@ room snapshot or room-state-change
 -> room-session cache updates current room state
 -> room state is InGame
 -> gameplay-session lifecycle begins accepting gameplay packets
--> gameplay lane packets apply to runtime and world presentation
+-> gameplay lane packets are accepted only after InGame, routed into realtime lane state, and then presented through frame-deferred realtime presentation fanout
 ```
 
 The client then presents gameplay through world sync, HUD, input, audio/effects, devtools presentation, gameplay menu, respawn, spectate, and match-end flows.

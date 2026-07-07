@@ -66,9 +66,9 @@ P1 answers whether the current architecture can safely support more entities and
 - Active server debug summaries expose non-empty per-tick `packet_count` and total `encoded_bytes` summaries.
 - No-op realtime summaries are intentionally suppressed when no packets were written.
 - `realtime lane metric` was removed from active runtime output.
-- Scheduler-ish, budget, deferred, superseded, and CRUD-count fields are intentionally not emitted as current packet evidence.
+- Scheduler, budget, deferred, superseded, and CRUD-count fields are intentionally not emitted as current packet evidence, even though protocol/realtime has candidate-level send-plan records.
 - Active debug output does not prove contributor counts by delta section.
-- Active debug output does not implement packet budget enforcement or record-level prioritization.
+- Active debug output does not itself implement packet-budget policy; current candidate-level include/defer selection and hot-packet encoded-size guards live in protocol/realtime. Record/entity-level prioritization remains future work.
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
 - `event_batch` may be selected alongside other active lane candidates in the same tick.
 - Compact sparse event records reduce that event-tick spike.

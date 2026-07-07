@@ -20,7 +20,7 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Packet Schemas](../../data/packet-schemas.md)
 - [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
-This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper prioritization, interest management, packet budget policy, resync hardening, transport evolution beyond the current reliable/ordered WebRTC physical lane baseline, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection and hot-packet encoded-size guards, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ## Current Inputs
 
@@ -65,7 +65,7 @@ Planning outputs for the remaining protocol work:
 
 ## Phase P2 - Realtime Protocol Architecture
 
-Lane-native JSON gameplay delivery over reliable/ordered WebRTC physical gameplay lanes is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
+Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, and `sr.event` lanes, plus unordered/unreliable `sr.asteroids` and `sr.bullets` hot-update lanes, is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
 
 ## Implemented Status
 
@@ -74,7 +74,9 @@ Lane-native JSON gameplay delivery over reliable/ordered WebRTC physical gamepla
 - Server and client `protocol/realtime` packages exist.
 - Outbound delivery and realtime policy are separate.
 - Lane baselines, deltas, sequence metadata, metrics, and shadow/parity support exist at the current implementation level.
-- Delta comparison decides what changed; priority and budget decisions still decide which changed data fits first.
+- Delta comparison decides what changed; candidate-level scheduling and estimated byte-budget selection decide which lane candidates fit first.
+- Hot asteroid and bullet packets have encoded-size guards before send.
+- Record/entity-level prioritization remains future work.
 - High-frequency gameplay state is no longer sent as one full combined packet every tick.
 - Field-delta update maps are implemented for world ship/pickup updates and dedicated asteroid/bullet movement updates.
 - Field-delta update maps are implemented for overlay receiver updates.
@@ -101,13 +103,13 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper prioritization, interest management, packet budget behavior, stronger resync behavior, future physical lane/channel evolution beyond the current reliable/ordered WebRTC lane baseline, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, stronger resync behavior, future physical lane/channel evolution beyond the current reliable/ordered WebRTC lane baseline, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ### Remaining Priority And Packet Budget Work
 
-Delta decides what changed. Priority decides which changed data fits the packet budget first.
+Delta decides what changed. The current candidate-level send plan decides which lane candidates fit the estimated packet budget first. Record/entity-level priority remains future work.
 
-Current implementation has lane-native packets, baselines, deltas, and candidate-level scheduling metadata. Delta decides what changed; priority decides which changed data fits the packet budget first.
+Current implementation has lane-native packets, baselines, deltas, candidate-level scheduling metadata, estimated byte-budget selection, and hot-packet encoded-size guards. Delta decides what changed; the current send plan decides which lane candidates are included or deferred; future work remains around record/entity-level prioritization and deeper budget policy.
 
 Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular asteroid and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, prioritization, unreliable/unordered delivery where safe, and binary representation later.
 
@@ -117,13 +119,13 @@ The current quantization contract is described in [Realtime WebSocket Protocol](
 
 Future planning targets remain:
 
-- packet budget selection
+- deeper packet-budget policy beyond current candidate-level send-plan selection
 - record/entity-level prioritization
 - interest filtering
 - stronger resync behavior
 - hot/cold lane separation beyond current asteroid/bullet movement extraction
-- current WebRTC reliable/ordered physical gameplay channels: `sr.world`, `sr.asteroids`, `sr.bullets`, `sr.overlay`, `sr.session`, and `sr.event`
-- unreliable/unordered lane delivery not implemented yet
+- Current WebRTC physical gameplay channels split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`)
+- client-side monotonic rejection already guards late hot packets
 
 Live priority should stay conservative until required gameplay and presentation truth can be proven safe by metrics.
 
@@ -145,7 +147,7 @@ Protocol and wire behavior is documented in [Realtime WebSocket Protocol](../../
 
 Client inbound lane routing is documented in [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md).
 
-Future packetcodec and transport evolution must preserve these ownership seams. The current baseline is reliable/ordered WebRTC physical gameplay lane baseline with physical channels for world, asteroid movement, bullet movement, overlay, session, and event traffic. Unreliable/unordered delivery remains future planning only.
+Future packetcodec and transport evolution must preserve these ownership seams. The current baseline includes ordered/reliable lanes for world, overlay, session, and event traffic, plus unordered/unreliable hot lanes for asteroid and bullet movement traffic.
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.

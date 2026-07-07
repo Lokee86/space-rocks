@@ -233,7 +233,7 @@ additional quantization policy refinements
 bit-packing rules
 protobuf
 binary/bitpacking work targets the new lane protocol, not old state
-Compact JSON aliases, sparse delta section omission, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are implemented. Binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior, and record/entity-level prioritization remain future work.
+Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. Binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior beyond current candidate-level selection, and record/entity-level prioritization remain future work.
 ```
 
 ### Implementation Sequence
@@ -241,13 +241,13 @@ Compact JSON aliases, sparse delta section omission, and tuple packing for aster
 ```text
 1. Schema/data-sync packet families and planning doc normalization.
 2. Server projections/full/delta/baselines for world, overlay, and session lanes; event presentation remains a compact sparse presentation-event lane, not a baseline or delta lane. Projection, scheduling, and encoding do not drain; shadow may peek/copy pending events but never drains.
-3. Priority scheduler and budget planner.
-4. Generic lane metrics.
+3. Candidate-level priority scheduler and estimated budget planner are current; future work deepens this into record/entity-level prioritization.
+4. Generic lane metrics remain future validation support unless active runtime logging explicitly emits them.
 5. Client protocol/realtime lane caches and compatibility read model.
 6. Shadow encode/measure/parity with no send and no event drain. Shadow never drains; active `event_batch` drains only after socket write/enqueue success.
 7. Runtime cutover behind a temporary dev-only switch.
 8. Replace compatibility read model with lane-native presentation adapters.
-10. Next phase: codec move plus binary/packed representation and deeper packet-budget work.
+10. Next phase: codec move plus binary/packed representation, deeper packet-budget work, and record/entity-level prioritization.
 ```
 
 ### Completion Criteria
@@ -269,7 +269,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, and tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records are implemented. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
 
 ### Scope
 

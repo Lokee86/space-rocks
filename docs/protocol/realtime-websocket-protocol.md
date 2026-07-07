@@ -6,13 +6,13 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document describes the current realtime WebSocket protocol between the Godot client and the Go game server.
 
-The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-reliable/ordered lane-specific WebRTC DataChannels for active realtime gameplay packets.
+The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-lane-specific WebRTC DataChannels for active realtime gameplay packets: `sr.world`, `sr.overlay`, `sr.session`, and `sr.event` are ordered/reliable, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes.
 
 It covers the transport route, JSON packet framing, connection lifecycle, packet-family routing, lane policy, gameplay packet families, session-state requirements, delivery semantics, source-of-truth files, generated outputs, service responsibilities, compatibility expectations, and implementation code paths.
 
 ## Overview
 
-The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and reliable/ordered WebRTC physical DataChannels for active realtime gameplay packets.
+The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and lane-specific WebRTC physical DataChannels for active realtime gameplay packets, with ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
 
 The game server exposes one realtime route:
 
@@ -41,7 +41,7 @@ The server owns authority behind accepted room, gameplay, auth-result, telemetry
 
 
 Active realtime gameplay packets are not WebSocket-owned anymore. The current server path builds the lane packet, encodes it to JSON, and sends it over the matching session WebRTC gameplay DataChannel when WebRTC is ready. WebSocket still owns auth, room/lobby lifecycle, room snapshots, and WebRTC signaling. There is no WebSocket fallback for active realtime gameplay packets.
-The protocol is best-effort and session-scoped, but active gameplay output now uses lane-native packet families and lane policy over WebRTC reliable/ordered DataChannels. The current gameplay output lanes are:
+The protocol is best-effort and session-scoped, but active gameplay output now uses lane-native packet families and lane policy over WebRTC DataChannels. The current gameplay output lanes are:
 
 ```text
 world
@@ -361,7 +361,7 @@ Known float-like fields use lane- and field-specific policies from `services/gam
 
 Unmapped float-like fields fall back to `float_generic`, but they should surface dev diagnostics and fail-loud behavior so new float fields do not silently bypass policy review.
 
-This is still JSON over WebSocket for auth, room, lobby, telemetry, and signaling packets, but active realtime gameplay packets now travel over reliable/ordered WebRTC gameplay DataChannels. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
+This is still JSON over WebSocket for auth, room, lobby, telemetry, and signaling packets, but active realtime gameplay packets now travel over lane-specific WebRTC DataChannels. WebRTCTransport uses generic bounded receive draining for all lanes with `MAX_PACKETS_PER_POLL = 48` and `MAX_PACKETS_PER_LANE_PER_POLL = 12`. WebRTCTransport does not coalesce bullet_delta packets; packets remain queued and receive pacing is not packet dropping. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
 
 ### Field-delta update semantics
 
@@ -424,7 +424,7 @@ This sparse omission applies to readable long-key maps before compact aliases ar
 Compact aliases apply after sparse omission at the final outbound encode boundary.
 
 This is not binary packing.
-Packet-budget enforcement and record-level prioritization are not implemented here.
+Candidate-level scheduling and estimated byte-budget selection are current protocol/realtime behavior. Record/entity-level prioritization and state-lane record or field sub-packet selection are not implemented here.
 
 ### World lane packets
 
@@ -677,11 +677,12 @@ This does not define a separate generated packet family named `control`.
 
 ### Scheduling and delivery classes
 
-The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity.
+The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity and selects included candidates against an estimated byte budget.
 
 ```text
 event_batch = critical/event-once
 world and overlay deltas = high priority / hot supersedable
+asteroid_delta and bullet_delta = dedicated hot movement candidates with encoded-size guards
 session deltas = medium priority / deferrable
 required bootstrap full packets = world, overlay, then session
 control-lane resync packets = required
@@ -691,14 +692,15 @@ The active path currently schedules whole lane candidates:
 
 ```text
 world_delta = one candidate
+asteroid_delta = one candidate when asteroid hot movement is present and cadence allows it
+bullet_delta = one candidate when bullet hot movement is present and cadence allows it
 overlay_delta = one candidate
 session_delta = one candidate
 event_batch = one candidate
 ```
 
-The active path does not currently split state-lane deltas into selected record or field sub-packets.
-Byte estimates are advisory and are not codec-accurate.
-Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
+The active path does not currently split state-lane deltas into selected record or field sub-packets. Byte estimates are advisory and are not codec-accurate, but they are used by SelectSendPlan to include or defer candidate packets against the current target budget. Hot asteroid and bullet packets also run encoded-size classification after JSON encoding; packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
+The active path does not currently split state-lane deltas into selected record or field sub-packets. Byte estimates are advisory and are not codec-accurate, but they are used by SelectSendPlan to include or defer candidate packets against the current target budget. Hot asteroid and bullet packets also run encoded-size classification after JSON encoding; packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ### Runtime observability note
 
 Current runtime debug observability is intentionally narrow:
@@ -713,7 +715,7 @@ non-empty per-tick debug summaries
 
 Current runtime does not emit `realtime lane metric` logs or scheduler, budget, deferred, superseded, or record-level counter fields as active protocol log output.
 
-Byte estimates in planning and scheduling remain advisory and are not codec-accurate. Packet budget enforcement and record-level prioritization remain future or unfinished work. The active path still does not split state-lane deltas into selected record or field sub-packets.
+Byte estimates in planning and scheduling remain advisory and are not codec-accurate, but current candidate-level send-plan selection uses them for include/defer decisions against the target budget. Record/entity-level prioritization remains future work, and the active path still does not split state-lane deltas into selected record or field sub-packets. Current runtime debug logs do not emit scheduler, budget, deferred, superseded, or record-level counter fields as active protocol log output.
 
 ## Server inbound routing order
 

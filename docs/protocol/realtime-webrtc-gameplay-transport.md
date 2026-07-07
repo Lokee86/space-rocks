@@ -65,7 +65,7 @@ Active realtime gameplay output is not WebSocket-owned. There is no WebSocket fa
 
 ## Physical Gameplay Channels
 
-Current active gameplay output uses negotiated reliable/ordered WebRTC DataChannels.
+Current active gameplay output uses negotiated WebRTC DataChannels with lane-specific reliability policy.
 
 ```text
 logical lane | physical channel | negotiated id | packet families
@@ -77,15 +77,18 @@ asteroids    | sr.asteroids     | 5             | asteroid_delta
 bullets      | sr.bullets       | 6             | bullet_delta
 ```
 
-All listed gameplay channels are currently:
+The current channel policy is:
 
 ```text
-negotiated = true
-ordered = true
-reliable = current behavior
+sr.world, sr.overlay, sr.session, and sr.event are negotiated ordered/reliable channels.
+sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
+sr.asteroids carries supersedable asteroid_updates only.
+sr.bullets carries supersedable bullet_updates only.
+lifecycle creates/deletes remain on sr.world.
+late asteroid_delta and bullet_delta packets are rejected by monotonic sequence on the client.
+sequence gaps are valid because hot packets can be dropped.
 ```
 
-Unreliable or unordered gameplay channels remain future work.
 
 ## Active Gameplay Readiness
 
@@ -131,7 +134,7 @@ WebRTCTransport receives DataChannel text
 -> lane state is fanned out to gameplay presentation
 ```
 
-Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering.
+Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering. Late asteroid_delta and bullet_delta packets are rejected on the client by monotonic sequence checks, and sequence gaps are valid because hot packets can be dropped.
 
 ## Hot Movement Split
 
@@ -176,7 +179,7 @@ schema negotiation
 runtime version negotiation
 record-level packet-budget enforcement
 payload fragmentation
-unreliable/unordered gameplay delivery
+hot-lane unreliable/unordered gameplay delivery
 ```
 
 Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing, and dedicated asteroid/bullet hot movement packets are implemented before the final WebRTC write boundary.

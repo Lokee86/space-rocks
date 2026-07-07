@@ -19,7 +19,7 @@ authoritative game state
 -> raw lane records
 -> numeric wire quantization into wire-shaped records
 -> lane candidate selection, delta comparison, and hot movement split
--> regular asteroid/bullet movement updates move to dedicated hot-lane delta packets
+-> regular asteroid movement updates move to dedicated hot-lane delta packets on sr.asteroids, and bullet movement updates move to dedicated hot-lane delta packets on sr.bullets
 -> sparse readable wire-map serialization
 -> raw-float assertion for active world/overlay/session wire maps
 -> compact alias mapping
@@ -139,8 +139,8 @@ authoritative gameplay state
 -> delta comparison on projected wire-shaped values
 -> sparse delta serializers emit only non-empty delta sections into readable wire maps
 -> raw-float assertion checks active world/overlay/session wire maps
--> packetcodec encodes JSON
 -> CompactWirePacket applies aliases, compact values, shared ID compaction, and tuple packing to remaining emitted keys
+-> packetcodec encodes JSON
 ```
 
 Sparse omission is a realtime wire-map serialization concern. Compact aliasing is a realtime encode-boundary mapping concern. `packetcodec` only encodes the already-shaped map to JSON. Networking only writes encoded bytes after realtime builds them. Full lane-native realtime packets remain complete snapshots. Delta create, update, and delete sections are omitted when empty. Clients treat missing delta sections as empty or no-op, and missing fields inside update records remain unchanged, not cleared. Sparse omission must not drop meaningful `false` or `0` values inside present records.
@@ -186,7 +186,7 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
 * `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
-* `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling and hot movement cadence selection.
+* `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling, estimated byte-budget selection, hot movement cadence selection, and candidate include/defer planning.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
 * `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
 * `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path and raw-float assertion/compact/packetcodec boundary.
