@@ -25,7 +25,7 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 - [data](data/!INDEX.md) - Data documentation.
 - [devtools](devtools/!INDEX.md) - Devtools documentation.
 - [domains](domains/!INDEX.md) - Domains documentation.
-- [Limits](limits/!INDEX.md) - Temporary blockers, gaps, and transitional limitations.
+- [Limits](limits/!INDEX.md) - Current constraints, known gaps, transitional limitations, and accepted stable system ceilings.
 - [Planning](planning/!INDEX.md) - Future, unresolved, or not-yet-current documentation.
 - [protocol](protocol/!INDEX.md) - Protocol documentation.
 - [services](services/!INDEX.md) - Services documentation.

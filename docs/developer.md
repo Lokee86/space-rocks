@@ -499,7 +499,7 @@ Use this section to find the owning documentation area. Do not duplicate detaile
 * [Data](data/!INDEX.md) - Source-of-truth files, generated outputs, schemas, persistence contracts, and data-sync pipeline documentation.
 * [Devtools](devtools/!INDEX.md) - Debug and development tooling, including API-server smoke tooling, client/server devtools, telemetry, controls, and debug-only boundaries.
 * [Domains](domains/!INDEX.md) - Cross-system player, platform, and technical flows. Domain docs explain how multiple services participate in larger project behavior.
-* [Limits](limits/!INDEX.md) - Temporary blockers, known bugs, dev-blocked issues, active gaps, and transitional limitations.
+* [Limits](limits/!INDEX.md) - Current constraints, known gaps, transitional limitations, and accepted stable system ceilings.
 * [Planning](planning/!INDEX.md) - Future, unresolved, proposed, or not-yet-current work. Planning docs should not be treated as current implementation authority.
 * [Protocol](protocol/!INDEX.md) - HTTP, WebSocket, packet, and message-flow contracts between systems.
 * [Services](services/!INDEX.md) - Runtime and implementation documentation for the client, game server, API server, player-data service, and web service.
@@ -545,7 +545,7 @@ Devtools docs own debug-only tooling and smoke-test workflows.
 
 Planning docs do not own implemented facts. When planned work becomes current, rewrite or move current facts into the owning current docs.
 
-Limits docs own temporary blockers, known bugs, and transitional issues. They do not own permanent design constraints.
+Limits docs own temporary blockers, known bugs, transitional issues, current constraints, and accepted stable practical ceilings. They do not own permanent design constraints.
 
 ## Development Cautions
 

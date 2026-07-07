@@ -20,9 +20,8 @@ authoritative game state
 -> numeric wire quantization into wire-shaped records
 -> lane candidate selection, delta comparison, and hot movement split
 -> regular asteroid movement updates move to dedicated hot-lane delta packets on sr.asteroids, and bullet movement updates move to dedicated hot-lane delta packets on sr.bullets
--> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks
+-> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
 -> sparse readable wire-map serialization
--> raw-float assertion for active world/overlay/session wire maps
 -> compact alias mapping
 -> packetcodec JSON encoding
 -> encoded-byte accounting
@@ -140,14 +139,13 @@ authoritative gameplay state
 -> numeric wire quantization into wire-shaped records
 -> delta comparison on projected wire-shaped values
 -> sparse delta serializers emit only non-empty delta sections into readable wire maps
--> raw-float assertion checks active world/overlay/session wire maps
 -> CompactWirePacket applies aliases, compact values, shared ID compaction, and tuple packing to remaining emitted keys
 -> packetcodec encodes JSON
 ```
 
 Sparse omission is a realtime wire-map serialization concern. Compact aliasing is a realtime encode-boundary mapping concern. `packetcodec` only encodes the already-shaped map to JSON. Networking only writes encoded bytes after realtime builds them. Full lane-native realtime packets remain complete snapshots. Delta create, update, and delete sections are omitted when empty. Clients treat missing delta sections as empty or no-op, and missing fields inside update records remain unchanged, not cleared. Sparse omission must not drop meaningful `false` or `0` values inside present records.
 
-Implementation ownership for this behavior lives in `services/game-server/internal/protocol/realtime/wire_packets.go`, `services/game-server/internal/protocol/realtime/quantize_world.go`, and `services/game-server/internal/protocol/realtime/quantize/`.
+Runtime active encoding no longer performs raw-float reflection scanning. Numeric wire quantization remains part of projection and explicit event wire shaping before compacting and JSON encoding.
 
 Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/` and `services/game-server/internal/protocol/realtime/quantize_world.go` as the quantization boundary for outbound lane projection. It should not truncate authoritative simulation state for packet-size savings.
 
@@ -187,12 +185,13 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, compact alias preparation, encoded-byte accounting inputs, and shadow/parity helpers.
 * `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
 * `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `asteroid_delta` and `bullet_delta` movement update lists.
+* `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - conservative compact-JSON byte estimation used by hot-lane chunk construction.
 * `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
 * `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling and estimated byte-budget include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
 * `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
-* `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path and raw-float assertion/compact/packetcodec boundary.
+* `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, compact/packetcodec boundary, hot-packet encoded-size validation, and encoded-byte accounting.
 * `services/game-server/internal/protocol/realtime/quantize/` - numeric wire quantization policies.
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.

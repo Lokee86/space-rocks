@@ -75,6 +75,7 @@ P1 answers whether the current architecture can safely support more entities and
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
 - `event_batch` may be selected alongside other active lane candidates in the same tick.
 - Compact sparse event records reduce that event-tick spike.
+Recent extreme debug bullet-stream stress showed server-side hot-lane delivery sustaining 60Hz writes with complete same-sequence bullet chunks under the encoded hard cap. Client-side projectile rendering anomalies around roughly 450-500 active projectiles are tracked as a stable limitation rather than as active evidence of server packet starvation.
 Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable asteroid/bullet hot movement lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable sr.world, sr.overlay, sr.session, and sr.event, plus unordered/unreliable sr.asteroids and sr.bullets.
 
 ### Future-State Note
@@ -248,6 +249,7 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 - [Devtools And Telemetry](../../devtools/devtools-and-telemetry.md)
 - [Logging And Diagnostics](observability-logging-and-diagnostics.md)
 - [Development Roadmap](../../development-roadmap.md)
+- [Stable Limitations](../../../limits/stable-limitations.md)
 
 ## Notes
 

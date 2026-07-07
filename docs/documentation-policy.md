@@ -331,37 +331,27 @@ When planned work becomes implemented, documentation updates should follow the s
 
 ## Limits Documentation Policy
 
-`docs/limits/` is for temporary or active problems.
+`docs/limits/` is for documented system limitations.
 
-Limits docs are not for intended architectural limitations.
+Limits docs may cover temporary or active problems.
 
-Limits docs may cover:
+Limits docs may also cover stable practical ceilings that are accepted for the current product target.
 
-```text
-temporary implementation gaps
-known bugs
-dev-blocked issues
-blocking issues
-incomplete transitional behavior
-current constraints that should be fixed later
-```
+Limits docs may cover temporary implementation gaps, known bugs, dev-blocked issues, blocking issues, incomplete transitional behavior, current constraints that should be fixed later, and accepted practical ceilings that are not active work.
 
-Permanent design constraints, intentional boundaries, and architecture rules belong in `docs/systems-design/`.
+Stable limitations are not active TODOs.
 
-Completed systems should not routinely have “Known limits” sections.
+Stable limitations document cases where the system has a practical boundary and the current behavior is acceptable for the intended game target.
 
-If a current doc needs to reference an active problem, it should use an `Active issues` section and link to the relevant sorted limits backlog heading.
+Permanent design constraints, intentional architecture boundaries, and design invariants belong in docs/systems-design/.
 
-Limits backlogs should be sorted inside `docs/limits/`.
+Completed systems should not routinely have local “Known limits” sections.
 
-Example categories:
+If a limitation belongs to the whole project, place it in the appropriate docs/limits/ document and link to it only when the local doc needs that context.
 
-```text
-gameplay-backlog.md
-platform-backlog.md
-technical-backlog.md
-dev-blockers.md
-```
+If a current doc needs to reference an active problem, it should use an Active issues section and link to the relevant limits doc.
+
+If a current doc needs to reference an accepted practical ceiling, it should link to docs/limits/stable-limitations.md.
 
 ## Agent Documentation Policy
 

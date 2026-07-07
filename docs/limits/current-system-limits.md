@@ -9,6 +9,8 @@ This file captures the active, known constraints in the current client and serve
 
 It serves as the current-limits ledger for incomplete wiring, hard caps, and intentionally unsupported behavior that still applies today.
 
+Accepted practical ceilings that are not active bugs or roadmap work belong in [Stable Limitations](stable-limitations.md).
+
 ## Issue list or backlog
 
 ### Architecture / Networking
@@ -82,6 +84,7 @@ Active current-limits document. The entries below describe present-day constrain
 ## Related docs
 
 - [Current Limits index](./!INDEX.md)
+- [Stable Limitations](stable-limitations.md)
 - [Player Build Limits](player-build-limits.md)
 - [Development Roadmap](../planning/development-roadmap.md)
 - [Domain Backlog](../planning/domain-backlog.md)

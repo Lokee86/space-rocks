@@ -21,6 +21,7 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
 This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection, focused asteroid/bullet hot-lane chunking, and hot-packet encoded-size guards, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Focused asteroid/bullet hot-lane chunking now uses conservative compact-JSON byte estimation for chunk construction, with final encoded-size guards still enforcing the actual send boundary.
 
 ## Current Inputs
 

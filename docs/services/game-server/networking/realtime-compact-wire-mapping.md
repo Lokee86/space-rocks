@@ -348,6 +348,8 @@ This contract applies to world lane bullet records and dedicated bullet movement
 | `world_delta.bullet_updates` | `[id, x, y, rotation]` for compatibility/resync-safe world deltas only |
 | `world_delta.bullet_deletes` | `[id]` |
 
+`bullet_delta.bullet_updates` documents the maximum supported sparse movement tuple shape. Current straight bullet movement normally emits `[id, x, y]` because rotation does not change after spawn. The optional trailing rotation slot remains supported for future projectile types, such as homing or turning projectiles, that may change rotation during flight.
+
 Sparse placeholder rules:
 
 - Missing trailing fields are omitted.

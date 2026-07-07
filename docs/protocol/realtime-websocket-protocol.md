@@ -183,7 +183,7 @@ services/game-server/internal/protocol/realtime/compact_wire_packet.go
 -> aliases remaining emitted keys at the encode boundary
 
 services/game-server/internal/protocol/realtime/active.go
--> applies raw-float assertion, compact aliasing, packetcodec JSON encoding, and encoded-byte accounting for active lane packets
+-> applies compact aliasing, packetcodec JSON encoding, hot-packet encoded-size validation, and encoded-byte accounting for active lane packets
 
 services/game-server/internal/protocol/realtime/quantize/
 -> owns numeric wire quantization policies
@@ -316,9 +316,9 @@ is_final_chunk
 
 Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world, asteroid, bullet, overlay, and session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output, and it remains excluded from baseline/delta/chunk metadata. Control-lane resync packets keep their own current metadata behavior.
 
-The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). For active world, asteroid, bullet, overlay, session, and `event_batch` lane packets, raw-float assertion runs before `CompactWirePacket` applies aliases and tuple packing, and before `packetcodec` encodes JSON.
+The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). Runtime active encoding no longer performs raw-float reflection scanning at this boundary; actual numeric wire quantization must already have happened during projection or explicit event wire shaping before compaction and `packetcodec` encoding.
 
-Chunk metadata exists in the wire shape and scheduler records. For `asteroid_delta` and `bullet_delta`, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. Each chunk is encoded and written as its own WebRTC DataChannel message on `sr.asteroids` or `sr.bullets`. This is focused hot-lane chunking, not general fragmentation for all lane families.
+Chunk metadata exists in the wire shape and scheduler records. For `asteroid_delta` and `bullet_delta`, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. Chunk construction uses conservative compact-JSON byte estimation to avoid repeated trial JSON encoding on the hot path. Each final chunk is still encoded normally, and the encoded-size guard remains the authoritative send boundary. Each sent chunk is written as its own WebRTC DataChannel message on `sr.asteroids` or `sr.bullets`. This is focused hot-lane chunking, not general fragmentation for all lane families.
 ### Numeric wire quantization
 
 State-lane records are quantized in the realtime projection and wire-record path before delta comparison and JSON encoding, so deltas compare projected wire-shaped values instead of raw simulation float precision. `event_batch` is not a state lane and does not participate in delta comparison.
@@ -473,10 +473,12 @@ The client expands the tuple-packed bullet records back into readable dictionari
 Compact bullet movement example:
 
 ```json
-{"t":"bd","q":3,"bu":[[1,11,21,31]]}
+{"t":"bd","q":3,"bu":[[1,11,21]]}
 ```
 
 The client expands the tuple-packed bullet movement records back into readable dictionaries before bullet lane application.
+
+Current straight bullet movement normally emits x/y updates only. The compact bullet movement tuple still supports an optional trailing rotation slot for future projectile types that may turn or home during flight.
 
 Compact asteroid movement example:
 
@@ -703,7 +705,7 @@ Hot asteroid_delta and bullet_delta packets require numeric sequence values. Mis
 
 Same-sequence `asteroid_delta` or `bullet_delta` packets are valid when they are chunks of the same hot-lane sequence. The client rejects lower sequence values as stale, but it must not reject same-sequence chunks solely because the sequence matches the latest accepted hot packet. Sequence gaps remain valid because unordered/unreliable hot packets may be dropped.
 
-The active path does not implement general record/entity-level prioritization or arbitrary field-level packet splitting. It does implement focused hot-lane chunking for `asteroid_delta` and `bullet_delta`: oversized hot movement update lists become multiple real candidates before `SelectSendPlan` and before encoding. Byte estimates are advisory and are not codec-accurate, but they are used by SelectSendPlan to include or defer candidate packets against the current target budget. Hot asteroid and bullet packets also run encoded-size classification after JSON encoding; packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
+The active path does not implement general record/entity-level prioritization or arbitrary field-level packet splitting. It does implement focused hot-lane chunking for `asteroid_delta` and `bullet_delta`: oversized hot movement update lists become multiple real candidates before `SelectSendPlan` and before final JSON encoding. Hot-lane chunk sizing uses conservative compact-JSON byte estimation, then the final encoded-size guard classifies the real encoded packet before send. Byte estimates used by scheduling and chunk sizing are advisory and intentionally conservative; they are not the final send authority. Packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ### Runtime observability note
 
 Current runtime debug observability is intentionally narrow:
@@ -1078,7 +1080,7 @@ services/game-server/internal/devtools/packets_generated.go
 
 The generated client file provides packet type constants, field constants, and selected outbound packet builder functions.
 
-The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`. Runtime realtime protocol files such as services/game-server/internal/protocol/realtime/quantized_records.go, services/game-server/internal/protocol/realtime/quantize_world.go, services/game-server/internal/protocol/realtime/quantize/, services/game-server/internal/protocol/realtime/wire_packets.go, services/game-server/internal/protocol/realtime/compact_wire_ids.go, services/game-server/internal/protocol/realtime/compact_wire_asteroids.go, services/game-server/internal/protocol/realtime/compact_wire_bullets.go, services/game-server/internal/protocol/realtime/compact_wire_ships.go, services/game-server/internal/protocol/realtime/compact_wire_players.go, services/game-server/internal/protocol/realtime/compact_wire_events.go, services/game-server/internal/protocol/realtime/compact_wire_packet.go, and services/game-server/internal/protocol/realtime/active.go are implementation files, not generated packet-schema outputs.
+The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`. Runtime realtime protocol files such as services/game-server/internal/protocol/realtime/quantized_records.go, services/game-server/internal/protocol/realtime/quantize_world.go, services/game-server/internal/protocol/realtime/quantize/, services/game-server/internal/protocol/realtime/wire_packets.go, services/game-server/internal/protocol/realtime/compact_wire_ids.go, services/game-server/internal/protocol/realtime/compact_wire_asteroids.go, services/game-server/internal/protocol/realtime/compact_wire_bullets.go, services/game-server/internal/protocol/realtime/compact_wire_ships.go, services/game-server/internal/protocol/realtime/compact_wire_players.go, services/game-server/internal/protocol/realtime/compact_wire_events.go, services/game-server/internal/protocol/realtime/compact_wire_packet.go, services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go, and services/game-server/internal/protocol/realtime/active.go are implementation files, not generated packet-schema outputs.
 
 `services/game-server/internal/protocol/realtime/compact_wire_packet.go` is a hand-authored runtime alias mapper documented by `docs/services/game-server/networking/realtime-compact-wire-mapping.md`; it is not generated from packet TOML.
 
@@ -1278,6 +1280,8 @@ services/game-server/internal/protocol/realtime/planner.go
 services/game-server/internal/protocol/realtime/scheduler.go
 services/game-server/internal/protocol/realtime/priority.go
 services/game-server/internal/protocol/realtime/size_estimate.go
+services/game-server/internal/protocol/realtime/hot_lane_chunker.go
+services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go
 services/game-server/internal/protocol/realtime/wire_packets.go
 services/game-server/internal/protocol/realtime/active.go
 services/game-server/internal/protocol/realtime/compact_wire_packet.go
