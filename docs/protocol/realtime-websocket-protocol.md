@@ -681,8 +681,8 @@ The current scheduler assigns delivery classes and priorities at whole-lane-cand
 
 ```text
 event_batch = critical/event-once
-world and overlay deltas = high priority / hot supersedable
-asteroid_delta and bullet_delta = dedicated hot movement candidates with encoded-size guards
+world_delta, overlay_delta, asteroid_delta, and bullet_delta = high priority / hot supersedable
+asteroid_delta and bullet_delta = dedicated hot movement candidates with encoded-size guards and unordered/unreliable WebRTC delivery
 session deltas = medium priority / deferrable
 required bootstrap full packets = world, overlay, then session
 control-lane resync packets = required
@@ -699,7 +699,8 @@ session_delta = one candidate
 event_batch = one candidate
 ```
 
-The active path does not currently split state-lane deltas into selected record or field sub-packets. Byte estimates are advisory and are not codec-accurate, but they are used by SelectSendPlan to include or defer candidate packets against the current target budget. Hot asteroid and bullet packets also run encoded-size classification after JSON encoding; packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
+Hot asteroid_delta and bullet_delta packets require numeric sequence values. Missing or non-numeric hot sequences are ignored. Sequence gaps are valid because unordered/unreliable hot packets may be dropped.
+
 The active path does not currently split state-lane deltas into selected record or field sub-packets. Byte estimates are advisory and are not codec-accurate, but they are used by SelectSendPlan to include or defer candidate packets against the current target budget. Hot asteroid and bullet packets also run encoded-size classification after JSON encoding; packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ### Runtime observability note
 
@@ -771,6 +772,8 @@ Server packet dispatch now recognizes lane packet types separately:
 ```text
 world_full_received
 world_delta_received
+asteroid_delta_received
+bullet_delta_received
 overlay_full_received
 overlay_delta_received
 session_full_received
@@ -795,7 +798,9 @@ stale or baseline-mismatched deltas are rejected or ignored by the router/applie
 Lane application responsibilities are split by lane:
 
 ```text
-world lane -> creates, updates, and deletes for ships, bullets, asteroids, pickups
+world lane -> creates, updates, and deletes for ships, pickups, and asteroid/bullet lifecycle creates/deletes
+asteroid_delta -> regular asteroid movement updates through hot sequence guards
+bullet_delta -> regular bullet movement updates through hot sequence guards
 overlay lane -> receiver and HUD state
 session lane -> player sessions, lifecycle, and total asteroid count
 event_batch -> deduped by batch and event identifiers, then drained into event presentation

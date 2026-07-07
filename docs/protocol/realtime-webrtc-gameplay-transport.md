@@ -6,7 +6,7 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document defines the current WebRTC transport boundary for active realtime gameplay packets.
 
-It is the canonical protocol doc for physical gameplay DataChannels, lane-to-channel mapping, active gameplay readiness, server send routing, client receive routing, and the current reliable/ordered delivery policy.
+It is the canonical protocol doc for physical gameplay DataChannels, lane-to-channel mapping, active gameplay readiness, server send routing, client receive routing, and the current mixed WebRTC gameplay channel policy.
 
 ## Ownership
 
@@ -17,7 +17,7 @@ physical WebRTC gameplay DataChannel names
 physical WebRTC gameplay DataChannel numeric IDs
 logical realtime lane to physical channel mapping
 current active gameplay transport split from WebSocket
-current reliable/ordered gameplay channel policy
+current gameplay channel reliability policy
 active gameplay transport readiness expectations
 server send path at the transport boundary
 client receive path at the transport boundary
@@ -36,7 +36,7 @@ devtools command consequences
 packet schema generation rules
 compact field alias details
 future binary/protobuf packet format design
-future unreliable/unordered delivery design
+future transport designs beyond the current unordered/unreliable asteroid and bullet hot lanes
 record-level prioritization policy
 ```
 
@@ -179,8 +179,9 @@ schema negotiation
 runtime version negotiation
 record-level packet-budget enforcement
 payload fragmentation
-hot-lane unreliable/unordered gameplay delivery
 ```
+
+Unordered/unreliable hot-lane delivery is implemented for sr.asteroids and sr.bullets.
 
 Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing, and dedicated asteroid/bullet hot movement packets are implemented before the final WebRTC write boundary.
 

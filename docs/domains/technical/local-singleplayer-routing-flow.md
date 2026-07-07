@@ -12,7 +12,7 @@ It focuses on the cross-system path that turns a local single-player menu reques
 
 Local single-player is a server-backed local session flow.
 
-It is not an offline client simulation. The Godot client still connects to the Go game server over `/ws` for session, control, and WebRTC signaling, establishes reliable/ordered lane-specific WebRTC gameplay DataChannels for active realtime gameplay, sends a generated `start_single_player_request` over WebSocket after WebRTC readiness, receives room snapshots over WebSocket, receives gameplay lane packets over WebRTC, and renders server-authoritative gameplay lane packets.
+It is not an offline client simulation. The Godot client still connects to the Go game server over `/ws` for session, control, and WebRTC signaling, establishes lane-specific WebRTC gameplay DataChannels using the current active gameplay channel policy, sends a generated `start_single_player_request` over WebSocket after WebRTC readiness, receives room snapshots over WebSocket, receives gameplay lane packets over WebRTC, and renders server-authoritative gameplay lane packets.
 
 The current technical distinction is:
 
@@ -298,7 +298,7 @@ client input
 -> game-server gameplay routing
 -> authoritative simulation step
 -> active gameplay lane packet
--> lane-specific reliable/ordered WebRTC gameplay DataChannel
+-> lane-specific WebRTC gameplay DataChannel
 -> client presentation
 ```
 
@@ -414,7 +414,9 @@ match_result
 The gameplay lane path publishes live gameplay presentation state such as:
 
 ```text
-world lane: ships, bullets, asteroids, pickups
+world lane: ships, pickups, and asteroid/bullet lifecycle creates/deletes
+asteroids lane: regular asteroid movement updates
+bullets lane: regular bullet movement updates
 overlay lane: self_id, lives, score, weapon/loadout facts, cooldown/ammo presentation fields
 session lane: players, player_lifecycle, total_asteroids
 event_batch: transient presentation events

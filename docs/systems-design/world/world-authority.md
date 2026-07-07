@@ -256,7 +256,13 @@ Current projected world state is organized by lane as follows:
 
 ```text
 world lane
-= active ship/avatar state, bullets, asteroids, pickups
+= active ship/avatar state, pickups, and asteroid/bullet lifecycle creates/deletes
+
+asteroids lane
+= regular asteroid movement updates
+
+bullets lane
+= regular bullet movement updates
 
 overlay lane
 = receiver-local overlay and HUD state

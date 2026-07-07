@@ -261,7 +261,7 @@ protocol/realtime event_batch projection helpers
 networking outbound event_batch write helpers
 ```
 
-`protocol/realtime` selects pending events for `event_batch`, and active networking delivers the selected `event_batch` packet over WebRTC. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics. Dedicated asteroid and bullet hot movement lanes are implemented for state movement traffic; `event_batch` remains its own event lane and is not part of that movement split. Unreliable/unordered delivery is not implemented yet.
+`protocol/realtime` selects pending events for `event_batch`, and active networking delivers the selected `event_batch` packet over WebRTC. The selected pending presentation events drain only after a successful active write, so the queue stays transient and preserves event-drain semantics. It does not own event production or queue semantics. Dedicated asteroid and bullet hot movement lanes are implemented for state movement traffic; `event_batch` remains its own ordered/reliable event lane and is not part of that movement split.
 
 ## Data ownership
 

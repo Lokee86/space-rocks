@@ -289,7 +289,7 @@ The detailed packet-family order belongs to inbound packet routing documentation
 
 ## Write loop
 
-`writeServerMessages()` owns the per-session write loop: queued outbound messages are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through lane-specific reliable/ordered WebRTC gameplay DataChannels when ready.
+`writeServerMessages()` owns the per-session write loop: queued outbound messages are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, and sr.event, and unordered/unreliable for sr.asteroids and sr.bullets when ready.
 
 It selects over three inputs:
 
@@ -319,7 +319,7 @@ debug shape catalog, when eligible
 debug status, when eligible
 ```
 
-Queued outbound messages remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific reliable/ordered WebRTC gameplay DataChannels when the transport is ready. Gameplay presentation writes require:
+Queued outbound messages remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, and sr.event, and unordered/unreliable for sr.asteroids and sr.bullets when the transport is ready. Gameplay presentation writes require:
 
 ```text
 session.currentGamePlayerID is not empty

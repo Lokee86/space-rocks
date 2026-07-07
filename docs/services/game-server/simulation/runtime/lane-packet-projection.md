@@ -27,7 +27,7 @@ authoritative game state
 -> encoded-byte accounting
 -> networking write integration
 -> debug wire/summary logging after successful writes
--> reliable/ordered WebRTC gameplay lane write
+-> WebRTC gameplay lane write using the current per-lane reliability policy
 ```
 
 Projection is lane-specific rather than one combined gameplay snapshot.
@@ -40,7 +40,7 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The session write loop owns tick-driven invocation; active gameplay lane delivery uses reliable/ordered WebRTC gameplay channels through the networking transport seam. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for asteroid and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
@@ -96,10 +96,11 @@ overlay lane
 
 session lane
 = durable match-local player session state and lifecycle-oriented read models
-
 event_batch
 = transient presentation events sent separately from baseline/delta lanes
 ```
+
+Asteroid and bullet lanes produce hot, high-priority, supersedable movement candidates. Asteroid and bullet creates/deletes remain on the world lane.
 
 `player_pause_state` remains a separate same-session packet and is handled independently from lane-native realtime projection.
 
@@ -194,7 +195,7 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.
 * `services/game-server/internal/networking/websocket_write.go` - session write-loop integration and active write triggering.
-* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over reliable/ordered WebRTC gameplay channels.
+* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over ordered/reliable world, overlay, session, and event channels plus unordered/unreliable asteroid and bullet hot-update channels.
 * `services/game-server/internal/networking/packetmetrics/` - packet observability helpers and related support types used by outbound networking seams.
 * `services/game-server/internal/networking/` - websocket session, WebRTC transport, and outbound delivery boundaries.
 * `shared/packets/gameplay.toml` - shared gameplay schema and realtime packet type values.

@@ -72,7 +72,7 @@ P1 answers whether the current architecture can safely support more entities and
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
 - `event_batch` may be selected alongside other active lane candidates in the same tick.
 - Compact sparse event records reduce that event-tick spike.
-Lane-native deltas, reliable/ordered physical WebRTC gameplay DataChannels, dedicated asteroid/bullet hot movement lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work.
+Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable asteroid/bullet hot movement lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable sr.world, sr.overlay, sr.session, and sr.event, plus unordered/unreliable sr.asteroids and sr.bullets.
 
 ### Future-State Note
 

@@ -271,6 +271,8 @@ Lane roles at service level are:
 - event = event_batch presentation event delivery
 - resync = resync_request/resync_required recovery signaling
 
+asteroid_delta and bullet_delta are high-priority hot-supersedable movement candidates; lifecycle creates/deletes remain on sr.world.
+
 Lane packet metadata always carries:
 
 - `sequence`
@@ -416,7 +418,7 @@ Single-packet ticks may still produce one wire log and one summary log at debug 
 
 `realtime lane metric` is not active runtime output. The current write path does not emit `packetmetrics.LogSentLaneMetrics(...)`, record or CRUD counters, or scheduler, prioritization, budget, deferred, or superseded fields as active log output.
 
-Deeper packet-budget and scheduling work remains planning material elsewhere. This document describes the current service write path only. It acknowledges the current protocol/realtime candidate-level send plan and hot-packet encoded-size guards, but does not claim record/entity-level prioritization, active cross-tick replay, or active supersession guarantees.
+Deeper packet-budget and scheduling work remains planning material elsewhere. This document describes the current service write path only. It acknowledges the current protocol/realtime candidate-level send plan, hot-supersedable world/overlay/asteroid/bullet deltas, and hot-packet encoded-size guards. Current runtime logs do not emit superseded-count fields, and this document does not claim record/entity-level prioritization or active cross-tick replay.
 
 ## Code map
 

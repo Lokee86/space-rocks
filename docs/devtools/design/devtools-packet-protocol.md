@@ -393,7 +393,7 @@ room state is InGame or GameOver
 session has a current game player id
 ```
 
-The session write loop triggers normal gameplay presentation output every server write tick; active gameplay lane bytes are delivered over lane-specific reliable/ordered WebRTC gameplay DataChannels. `debug_status` is a WebSocket devtools readout packet when its write-loop delivery path is active. Current docs must not claim periodic `debug_status` delivery unless the active write loop calls the debug status builder.
+The session write loop triggers normal gameplay presentation output every server write tick; active gameplay lane bytes are delivered over lane-specific WebRTC gameplay DataChannels using the current protocol channel policy. `debug_status` is a WebSocket devtools readout packet when its write-loop delivery path is active. Current docs must not claim periodic `debug_status` delivery unless the active write loop calls the debug status builder.
 
 The client uses `debug_status` for receiver/global status labels and `debug_statuses` for per-player target/status rows.
 

@@ -49,7 +49,7 @@ player_pause_state
 resync_request / resync_required
 ```
 
-Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. `asteroid_delta` and `bullet_delta` are hot movement packets on unordered/unreliable lanes: they move existing entities, they do not create new entities client-side, and lifecycle creates/deletes still belong to `world_delta`. The client applies monotonic hot-delta sequence rejection so late packets cannot roll asteroid or bullet state backward. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
+Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. `asteroid_delta` and `bullet_delta` are hot movement packets on unordered/unreliable lanes: they move existing entities, they do not create new entities client-side, and lifecycle creates/deletes still belong to `world_delta`. `asteroid_delta` and `bullet_delta` are high-priority, hot-supersedable movement candidates. They are not required lifecycle packets, and they may be dropped or replaced by newer movement state. The client applies monotonic hot-delta sequence rejection so late packets cannot roll asteroid or bullet state backward. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
 
 Current lane delta behavior:
 
@@ -121,7 +121,7 @@ client gameplay runtime
 = routes lane packets into lane states, baseline readiness, presentation adapters, and event application
 ```
 
-The client does not own authoritative confirmation. A client request is confirmed only when reflected by server output such as lane packets, `player_pause_state`, room snapshots, or presentation events. Hot `asteroid_delta` and `bullet_delta` packets are supersedable; stale sequences are ignored by the client so late packets cannot roll entity positions backward.
+The client does not own authoritative confirmation. A client request is confirmed only when reflected by server output such as lane packets, `player_pause_state`, room snapshots, or presentation events. Hot `asteroid_delta` and `bullet_delta` packets are supersedable; stale sequences are ignored by the client so late packets cannot roll entity positions backward. The client also ignores hot asteroid/bullet deltas with missing or non-numeric sequence values.
 
 ## Client-to-server gameplay packets
 

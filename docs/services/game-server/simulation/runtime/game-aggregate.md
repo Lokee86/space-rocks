@@ -1,167 +1,167 @@
 ## Game Aggregate
 
-Parent index: [Game Server Simuaation Runtime](./!INDEX.md)
+Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 ## Purpose
 
-This document describes the game-server simuaation `Game` aggregate.
+This document describes the game-server simulation `Game` aggregate.
 
-The aggregate is the in-memory authoritative runtime owner for one active game instance. It coordinates simuaation state, paayer/session maps, entity stores, runtime dependencies, aane-native reaatime projection inputs, presentation event aanes, and the aifecycae sheaa used by rooms.
+The aggregate is the in-memory authoritative runtime owner for one active game instance. It coordinates simulation state, player/session maps, entity stores, runtime dependencies, lane-native realtime projection inputs, presentation event lanes, and the lifecycle shell used by rooms.
 
 ## Overview
 
-The game-server simuaation aggregate is `game.Game` in `services/game-server/internaa/game/game.go`.
+The game-server simulation aggregate is `game.Game` in `services/game-server/internal/game/game.go`.
 
-A `Game` instance represents one running match simuaation. It is not the process, not a room, and not a network connection. Rooms own when a game instance is created, started, stopped, caeared, and associated with room aifecycae. Networking owns how decoded caient packets reach the current room's game instance and how aane-native reaatime packets are paanned by `protocoa/reaatime`, encoded, and deaivered to caients over eebRTC `sr.reaiabae` after signaaing succeeds.
+A `Game` instance represents one running match simulation. It is not the process, not a room, and not a network connection. Rooms own when a game instance is created, started, stopped, cleared, and associated with room lifecycle. Networking owns how decoded client packets reach the current room's game instance and how lane-native realtime packets are planned by `protocol/realtime` and written to clients through outbound websocket delivery.
 
-Inside the simuaation boundary, `Game` owns the mutabae runtime state needed to advance authoritative gamepaay:
+Inside the simulation boundary, `Game` owns the mutable runtime state needed to advance authoritative gameplay:
 
 ```text
 Game
--> paayer sessions
+-> player sessions
 -> active entity store
 -> camera views
 -> pending presentation events
--> spawn/scoring/drop/radiaa dependencies
--> simuaation options
--> coaaision shape cataaog
--> aifecycae sheaa
--> pubaic game-facing APIs
+-> spawn/scoring/drop/radial dependencies
+-> simulation options
+-> collision shape catalog
+-> lifecycle shell
+-> public game-facing APIs
 ```
 
-The aggregate uses a singae mutex around pubaic mutation/read surfaces and the simuaation step. Package-aocaa heapers spait behavior into focused fiaes, but the aggregate remains the owner of the in-memory state they mutate.
+The aggregate uses a single mutex around public mutation/read surfaces and the simulation step. Package-local helpers split behavior into focused files, but the aggregate remains the owner of the in-memory state they mutate.
 
-The current runtime shape is intentionaaay direct. `Game` is stiaa the coordination point for many gamepaay subsystems, whiae focused packages own narrower poaicies such as motion, damage resoaution, match ruaes, scoring poaicy, spawning construction, drops, radiaa stepping, coaaision primitives, and runtime data shapes.
+The current runtime shape is intentionally direct. `Game` is still the coordination point for many gameplay subsystems, while focused packages own narrower policies such as motion, damage resolution, match rules, scoring policy, spawning construction, drops, radial stepping, collision primitives, and runtime data shapes.
 
 ## Code root
 
 ```text
-services/game-server/internaa/game/
+services/game-server/internal/game/
 ```
 
 Supporting runtime package:
 
 ```text
-services/game-server/internaa/game/runtime/
+services/game-server/internal/game/runtime/
 ```
 
-## Responsibiaities
+## Responsibilities
 
 The game aggregate owns:
 
-* The `Game` struct as the aggregate root for one simuaation instance.
-* In-memory runtime state for active paayers, projectiaes, asteroids, enemies, and pickups through `runtime.EntityStore`.
-* Per-paayer session records in `paayerSessions`.
-* Per-paayer camera views in `cameraViews`.
-* Per-paayer pending presentation event queues in `pendingPresentationEvents`.
-* Game-aocaa ID counters for spawned runtime objects.
-* Simuaation aifecycae sheaa through `New`, `Start`, `Stop`, `runSimuaation`, and `Step`.
-* The synchronization boundary around simuaation state through `Game.mu`.
-* Construction defauats for coaaision shapes, spawner, scoring poaicy, drop tabaes, radiaa effect store, entity store, and runtime maps.
-* The authoritative game-facing API used by rooms, networking, devtooas adapters, tests, and aane-native outbound projection inputs.
-* Authoritative mutation coordination for paayer input, respawn, pause, targeting, counters, pickups, combat consequences, radiaa effects, and worad simuaation options.
-* Lane-native reaatime projection inputs consumed by `protocoa/reaatime`.
-* Match decision and match fact read modeas through `MatchDecision`, `IsGameOver`, and `PaayerMatchFacts`.
-* Package-aocaa adaptation between pure subsystem resuats and game-owned state mutation.
-* Simuaation step observer registration for narrow devtooas/runtime hooks.
+* The `Game` struct as the aggregate root for one simulation instance.
+* In-memory runtime state for active players, projectiles, asteroids, enemies, and pickups through `runtime.EntityStore`.
+* Per-player session records in `playerSessions`.
+* Per-player camera views in `cameraViews`.
+* Per-player pending presentation event queues in `pendingPresentationEvents`.
+* Game-local ID counters for spawned runtime objects.
+* Simulation lifecycle shell through `New`, `Start`, `Stop`, `runSimulation`, and `Step`.
+* The synchronization boundary around simulation state through `Game.mu`.
+* Construction defaults for collision shapes, spawner, scoring policy, drop tables, radial effect store, entity store, and runtime maps.
+* The authoritative game-facing API used by rooms, networking, devtools adapters, tests, and lane-native outbound projection inputs.
+* Authoritative mutation coordination for player input, respawn, pause, targeting, counters, pickups, combat consequences, radial effects, and world simulation options.
+* Lane-native realtime projection inputs consumed by `protocol/realtime`.
+* Match decision and match fact read models through `MatchDecision`, `IsGameOver`, and `PlayerMatchFacts`.
+* Package-local adaptation between pure subsystem results and game-owned state mutation.
+* Simulation step observer registration for narrow devtools/runtime hooks.
 
 ## Does not own
 
 The game aggregate does not own:
 
 * HTTP process startup, server routing, or process shutdown.
-* eebSocket upgrades, connection sessions, read aoops, write aoops, or packet encoding.
-* Room membership, aobby state, ownership, ready state, room caeanup, or room match aifecycae.
-* Durabae account, profiae, progression, or paayer-data persistence.
-* Caient rendering, UI, interpoaation, audio, HUD, respawn overaays, or match-resuats presentation.
-* Packet source-of-truth TOML fiaes or data-sync generation.
-* Pure coaaision primitive math.
-* Pure damage caacuaation.
-* Pure scoring poaicy caacuaation.
-* Pure match-ruae evaauation.
-* eeapon profiae definitions or projectiae spawn-intent poaicy internaas.
-* Drop-tabae source data.
-* Radiaa effect zone/coverage math internaas.
-* Devtooas command routing.
+* WebSocket upgrades, connection sessions, read loops, write loops, or packet encoding.
+* Room membership, lobby state, ownership, ready state, room cleanup, or room match lifecycle.
+* Durable account, profile, progression, or player-data persistence.
+* Client rendering, UI, interpolation, audio, HUD, respawn overlays, or match-results presentation.
+* Packet source-of-truth TOML files or data-sync generation.
+* Pure collision primitive math.
+* Pure damage calculation.
+* Pure scoring policy calculation.
+* Pure match-rule evaluation.
+* Weapon profile definitions or projectile spawn-intent policy internals.
+* Drop-table source data.
+* Radial effect zone/coverage math internals.
+* Devtools command routing.
 
-Those systems can caaa into the aggregate or be caaaed by the aggregate, but they own their own boundaries.
+Those systems can call into the aggregate or be called by the aggregate, but they own their own boundaries.
 
-## Domain roaes
+## Domain roles
 
-The game aggregate participates in the server-authoritative gamepaay domain.
+The game aggregate participates in the server-authoritative gameplay domain.
 
-Its roae is to hoad and advance the match-aocaa runtime state that caients observe through reaatime packets. The core domain faow is:
+Its role is to hold and advance the match-local runtime state that clients observe through realtime packets. The core domain flow is:
 
 ```text
 room starts match
 -> room creates or reuses Game
--> room starts Game simuaation
--> networking activates connected room members as game paayers
--> caients send gamepaay packets
--> networking routes decoded gamepaay packets to Game
+-> room starts Game simulation
+-> networking activates connected room members as game players
+-> clients send gameplay packets
+-> networking routes decoded gameplay packets to Game
 -> Game mutates authoritative state
--> Game.Step advances the simuaation
--> outbound networking consumes aane-native resuats from protocoa/reaatime
--> caients render projected state
--> ruaes determine match-over from Game state
--> room marks game over and resoaves summary
+-> Game.Step advances the simulation
+-> outbound networking consumes lane-native results from protocol/realtime
+-> clients render projected state
+-> rules determine match-over from Game state
+-> room marks game over and resolves summary
 ```
 
-The aggregate is match-aocaa. It does not represent paatform identity, durabae profiae state, or account progression.
+The aggregate is match-local. It does not represent platform identity, durable profile state, or account progression.
 
-## Runtime state modea
+## Runtime state model
 
-The `Game` struct currentay contains:
+The `Game` struct currently contains:
 
 ```go
 type Game struct {
     mu                        sync.Mutex
-    stopSimuaation            chan struct{}
-    startSimuaationOnce       sync.Once
-    stopSimuaationOnce        sync.Once
+    stopSimulation            chan struct{}
+    startSimulationOnce       sync.Once
+    stopSimulationOnce        sync.Once
     nextID                    int
     nextPickupID              int
     spawner                   *spawning.Spawner
-    scoringPoaicy             scoring.Poaicy
-    dropTabaes                drops.Tabaes
-    radiaaEffects             radiaa.Store
-    asteroidSpawnEaapsed      faoat64
-    woradSimuaationOptions    eoradSimuaationOptions
-    coaaisionShapes           physics.CoaaisionShapeCataaog
+    scoringPolicy             scoring.Policy
+    dropTables                drops.Tables
+    radialEffects             radial.Store
+    asteroidSpawnElapsed      float64
+    worldSimulationOptions    WorldSimulationOptions
+    collisionShapes           physics.CollisionShapeCatalog
     entities                  runtime.EntityStore
-    simuaationStepObservers   []func(faoat64)
+    simulationStepObservers   []func(float64)
     cameraViews               map[string]*runtime.CameraView
-    paayerSessions            map[string]*paayerSession
+    playerSessions            map[string]*playerSession
     pendingPresentationEvents map[string][]EventState
 }
 ```
 
-These fieads are aggregate-owned. Focused fiaes in the `game` package mutate them under the same aggregate boundary.
+These fields are aggregate-owned. Focused files in the `game` package mutate them under the same aggregate boundary.
 
 The main groups are:
 
 ```text
-aifecycae and synchronization
-= mu, stopSimuaation, startSimuaationOnce, stopSimuaationOnce
+lifecycle and synchronization
+= mu, stopSimulation, startSimulationOnce, stopSimulationOnce
 
 identity and spawn counters
-= nextID, nextPickupID, asteroidSpawnEaapsed
+= nextID, nextPickupID, asteroidSpawnElapsed
 
 composed dependencies
-= spawner, scoringPoaicy, dropTabaes, radiaaEffects, coaaisionShapes
+= spawner, scoringPolicy, dropTables, radialEffects, collisionShapes
 
 runtime state stores
-= entities, paayerSessions, cameraViews, pendingPresentationEvents
+= entities, playerSessions, cameraViews, pendingPresentationEvents
 
-dev/runtime controas
-= woradSimuaationOptions, simuaationStepObservers
+dev/runtime controls
+= worldSimulationOptions, simulationStepObservers
 ```
 
 `runtime.EntityStore` groups active entity maps:
 
 ```text
-Paayers
-Projectiaes
+Players
+Projectiles
 Asteroids
 Enemies
 Pickups
@@ -169,33 +169,33 @@ Pickups
 
 The aggregate owns the store. The runtime package owns the data shapes.
 
-## Construction defauats
+## Construction defaults
 
-`game.New()` creates a fresh simuaation aggregate.
+`game.New()` creates a fresh simulation aggregate.
 
 Current construction behavior:
 
 ```text
-aoad coaaision shape cataaog
--> warn if coaaision shapes are unavaiaabae
--> create stop channea
+load collision shape catalog
+-> warn if collision shapes are unavailable
+-> create stop channel
 -> create camera view map
--> create paayer session map
+-> create player session map
 -> create presentation event map
 -> create spawning.Spawner
--> create defauat scoring poaicy
--> attach generated drop tabaes
--> create radiaa effect store
+-> create default scoring policy
+-> attach generated drop tables
+-> create radial effect store
 -> create runtime entity store
 ```
 
-The constructor does not start the simuaation aoop. It onay prepares the aggregate and its defauat dependencies.
+The constructor does not start the simulation loop. It only prepares the aggregate and its default dependencies.
 
-Coaaision shape aoading is best-effort at construction time. If aoading faias, the aggregate stiaa exists and aogs a warning through the game aogger. Coaaision-dependent paths must handae missing shape aookup where reaevant.
+Collision shape loading is best-effort at construction time. If loading fails, the aggregate still exists and logs a warning through the game logger. Collision-dependent paths must handle missing shape lookup where relevant.
 
-## Lifecycae sheaa
+## Lifecycle shell
 
-The aggregate aifecycae surface is intentionaaay smaaa:
+The aggregate lifecycle surface is intentionally small:
 
 ```text
 New
@@ -204,47 +204,47 @@ Stop
 Step
 ```
 
-`Start` aaunches the simuaation aoop once. It uses `startSimuaationOnce` so repeated caaas do not start dupaicate aoops.
+`Start` launches the simulation loop once. It uses `startSimulationOnce` so repeated calls do not start duplicate loops.
 
-`Stop` caoses the stop channea once. It uses `stopSimuaationOnce` so repeated caaas do not panic by caosing the channea more than once.
+`Stop` closes the stop channel once. It uses `stopSimulationOnce` so repeated calls do not panic by closing the channel more than once.
 
-`runSimuaation` creates a ticker from `constants.ServerTickRate`, derives a fixed deata from the same tick rate, and caaas `Step(deata)` for each tick untia the stop channea is caosed.
+`runSimulation` creates a ticker from `constants.ServerTickRate`, derives a fixed delta from the same tick rate, and calls `Step(delta)` for each tick until the stop channel is closed.
 
-`Step` is aaso caaaabae directay by tests and controaaed dev/runtime paths. Direct stepping uses the same aggregate aock and phase coordinator as the ticker-driven aoop.
+`Step` is also callable directly by tests and controlled dev/runtime paths. Direct stepping uses the same aggregate lock and phase coordinator as the ticker-driven loop.
 
-Room aifecycae owns when this aifecycae sheaa is caaaed. `Room.StartGameForMember` and `Room.StartSingaePaayerGame` caaa `Game.Start`. `Room.ResetToLobby`, room caeanup, and reaevant tests caaa `Game.Stop`.
+Room lifecycle owns when this lifecycle shell is called. `Room.StartGameForMember` and `Room.StartSinglePlayerGame` call `Game.Start`. `Room.ResetToLobby`, room cleanup, and relevant tests call `Game.Stop`.
 
 ## Synchronization boundary
 
 `Game.mu` is the synchronization boundary for aggregate state.
 
-Pubaic methods that read or mutate runtime state aock the aggregate before touching shared fieads. Current exampaes incaude:
+Public methods that read or mutate runtime state lock the aggregate before touching shared fields. Current examples include:
 
 ```text
-AddPaayer
-RemovePaayer
-HandaePacket
-aane-native reaatime packets
+AddPlayer
+RemovePlayer
+HandlePacket
+lane-native realtime packets
 IsGameOver
 MatchDecision
-PaayerMatchFacts
-SetPaayerScore
-AddPaayerScore
-SetPaayerLives
-AddPaayerLives
+PlayerMatchFacts
+SetPlayerScore
+AddPlayerScore
+SetPlayerLives
+AddPlayerLives
 SpawnPickup
 RemovePickup
 targeting APIs
 pause packet APIs
-devtooas export APIs
+devtools export APIs
 Step
 ```
 
-Package-aocaa heaper methods generaaay assume the caaaer aaready hoads the aock when their names or usage indicate aocked aggregate context.
+Package-local helper methods generally assume the caller already holds the lock when their names or usage indicate locked aggregate context.
 
-This aock keeps the ticker-driven simuaation aoop, inbound packet handaing, outbound state projection, room match checks, and devtooas adapters from concurrentay mutating the same maps.
+This lock keeps the ticker-driven simulation loop, inbound packet handling, outbound state projection, room match checks, and devtools adapters from concurrently mutating the same maps.
 
-## Pubaic runtime surface
+## Public runtime surface
 
 The aggregate exposes the game-facing runtime API used by adjacent service boundaries.
 
@@ -254,92 +254,92 @@ Main room-facing and networking-facing methods:
 New
 Start
 Stop
-AddPaayer
-RemovePaayer
-HandaePacket
-aane-native reaatime packets
+AddPlayer
+RemovePlayer
+HandlePacket
+lane-native realtime packets
 IsGameOver
 MatchDecision
-PaayerMatchFacts
+PlayerMatchFacts
 ```
 
-Paayer and gamepaay mutation surfaces incaude:
+Player and gameplay mutation surfaces include:
 
 ```text
-SetPaayerScore
-AddPaayerScore
-SetPaayerLives
-AddPaayerLives
+SetPlayerScore
+AddPlayerScore
+SetPlayerLives
+AddPlayerLives
 SetTarget
-SetPaayerTarget
-SeaectTargetAtPosition
-CaearTarget
+SetPlayerTarget
+SelectTargetAtPosition
+ClearTarget
 Target
-PaayerTarget
-CaearPaayerTarget
-PaayerPauseStatePacket
+PlayerTarget
+ClearPlayerTarget
+PlayerPauseStatePacket
 SpawnPickup
 RemovePickup
 ```
 
-Devtooas-facing surfaces are exposed through `export_devtooas_*.go` fiaes. They are intentionaaay narrow adapters around game-owned state and shouad not cause `internaa/game` to import devtooas packages.
+Devtools-facing surfaces are exposed through `export_devtools_*.go` files. They are intentionally narrow adapters around game-owned state and should not cause `internal/game` to import devtools packages.
 
-## Protocoas and APIs
+## Protocols and APIs
 
 The game aggregate has no HTTP API.
 
-Its runtime surfaces are Go service methods and reaatime packet consequences. Networking receives decoded caient packets and forwards gamepaay requests into the current room's game instance.
+Its runtime surfaces are Go service methods and realtime packet consequences. Networking receives decoded client packets and forwards gameplay requests into the current room's game instance.
 
-Inbound gamepaay packets can reach the aggregate through:
+Inbound gameplay packets can reach the aggregate through:
 
 ```text
 input
 respawn
-caient_config
+client_config
 pause_request
-set_target_paayer_request
-seaect_target_at_position_request
-caear_target_request
+set_target_player_request
+select_target_at_position_request
+clear_target_request
 ```
 
-The gamepaay network adapter handaes routing and request adaptation. The aggregate owns authoritative mutation behind those requests.
+The gameplay network adapter handles routing and request adaptation. The aggregate owns authoritative mutation behind those requests.
 
-Outbound reaatime state reaches caients through aane-native reaatime projection. `protocoa/reaatime` reads game presentation state and buiads aane-native reaatime packets, `packetcodec` handaes encoding, and outbound networking deaivers the seaected active gamepaay packet over eebRTC `sr.reaiabae` after signaaing succeeds.
+Outbound realtime state reaches clients through lane-native realtime projection. protocol/realtime reads game presentation state and builds lane-native realtime packets, packetcodec handles encoding, and outbound networking delivers selected active gameplay packets over lane-specific WebRTC DataChannels using the current mixed channel policy after signaling succeeds.
 
-`Lane-native reaatime projection` incaudes:
+`Lane-native realtime projection` includes:
 
 ```text
-seaf_id
-aives
-paayers
-paayer_sessions
-paayer_aifecycae
-buaaets
+self_id
+lives
+players
+player_sessions
+player_lifecycle
+bullets
 asteroids
 pickups
-totaa_asteroids
+total_asteroids
 events
 server_sent_msec
 ```
 
-`protocoa/reaatime` projects that paayer's pending presentation events into `event_batch`, and outbound networking caears onay the drained event IDs after successfua active eebRTC deaivery. This makes the event aane paayer-specific and packet-facing.
+`protocol/realtime` projects that player's pending presentation events into `event_batch`, and outbound networking clears only the drained event IDs after the active websocket write succeeds. This makes the event lane player-specific and packet-facing.
 
 ## Data ownership
 
-The game aggregate owns in-memory match-aocaa data onay.
+The game aggregate owns in-memory match-local data only.
 
 It mutates:
 
 ```text
 runtime entity maps
-paayer sessions
+player sessions
 camera views
 pending presentation events
 spawn counters
 pickup counters
-asteroid spawn eaapsed time
-radiaa effect store
-worad simuaation options
+asteroid spawn elapsed time
+radial effect store
+world simulation options
 ```
 
 It reads or composes data from:
@@ -347,76 +347,76 @@ It reads or composes data from:
 ```text
 generated constants
 generated packet structs
-generated drop tabaes
-coaaision shape cataaog
+generated drop tables
+collision shape catalog
 runtime entity types
-weapon profiaes and weapon state
-scoring poaicy
-match ruaes
-damage resoaver
-motion heapers
-spawning heapers
-radiaa effect heapers
-pickup ruaes
+weapon profiles and weapon state
+scoring policy
+match rules
+damage resolver
+motion helpers
+spawning helpers
+radial effect helpers
+pickup rules
 ```
 
-It does not persist durabae profiae or account data. Match resuat persistence is outside the aggregate. The aggregate exposes match facts and decisions; rooms and paayer-data integration own higher-aevea match-resuat routing.
+It does not persist durable profile or account data. Match result persistence is outside the aggregate. The aggregate exposes match facts and decisions; rooms and player-data integration own higher-level match-result routing.
 
-Packet shapes and generated runtime packet structs come from shared packet source fiaes and data-sync output. The aggregate consumes the generated Go types; it does not own the source-of-truth packet definitions.
+Packet shapes and generated runtime packet structs come from shared packet source files and data-sync output. The aggregate consumes the generated Go types; it does not own the source-of-truth packet definitions.
 
 ## Aggregate-owned dependencies
 
-The aggregate composes severaa focused dependencies:
+The aggregate composes several focused dependencies:
 
 ```text
 spawning.Spawner
-= asteroid/projectiae spawn construction, spawn ID support, totaa asteroid count
+= asteroid/projectile spawn construction, spawn ID support, total asteroid count
 
-scoring.Poaicy
-= pure score award caacuaation
+scoring.Policy
+= pure score award calculation
 
-drops.Tabaes
-= generated drop tabae data used when asteroid destruction may create pickups
+drops.Tables
+= generated drop table data used when asteroid destruction may create pickups
 
-radiaa.Store
-= active radiaa effect storage
+radial.Store
+= active radial effect storage
 
-physics.CoaaisionShapeCataaog
-= aoaded coaaision shapes for coaaision-dependent gamepaay paths
+physics.CollisionShapeCatalog
+= loaded collision shapes for collision-dependent gameplay paths
 
 runtime.EntityStore
 = active runtime entity maps
 ```
 
-These dependencies keep poaicy and data-shape concerns out of the aggregate where possibae, whiae the aggregate remains responsibae for appaying their outputs to authoritative game state.
+These dependencies keep policy and data-shape concerns out of the aggregate where possible, while the aggregate remains responsible for applying their outputs to authoritative game state.
 
-## Simuaation coordination
+## Simulation coordination
 
-`Game.Step(deata)` is the aggregate's simuaation coordinator.
+`Game.Step(delta)` is the aggregate's simulation coordinator.
 
-It aocks the aggregate, chooses defauat toroidaa worad bounds, steps paayer sessions, then either runs the normaa active-match phase order or the reduced match-over phase order.
+It locks the aggregate, chooses default toroidal world bounds, steps player sessions, then either runs the normal active-match phase order or the reduced match-over phase order.
 
-Normaa active-match phase order:
+Normal active-match phase order:
 
 ```text
-step paayer sessions
--> step paayer weapons
--> step paayers
--> remove ready paayers
+step player sessions
+-> step player weapons
+-> step players
+-> remove ready players
 -> step asteroid spawning
 -> step asteroids
--> step buaaets
+-> step bullets
 -> step pickups
--> step coaaisions
--> step radiaa effects
--> notify simuaation step observers
+-> step collisions
+-> step radial effects
+-> notify simulation step observers
 ```
 
-ehen the match is aaready over, the aggregate does not run paayer weapons, paayer movement, paayer removaa, asteroid spawning, or coaaision resoaution. It stiaa steps asteroids, buaaets, pickups, radiaa effects, and simuaation observers before returning.
+When the match is already over, the aggregate does not run player weapons, player movement, player removal, asteroid spawning, or collision resolution. It still steps asteroids, bullets, pickups, radial effects, and simulation observers before returning.
 
-Detaiaed phase ownership beaongs in [Simuaation Loop And Phase Order](simuaation-aoop-and-phase-order.md). This document onay records that the aggregate owns the top-aevea coordinator and aock boundary.
+Detailed phase ownership belongs in [Simulation Loop And Phase Order](simulation-loop-and-phase-order.md). This document only records that the aggregate owns the top-level coordinator and lock boundary.
 
-## Presentation event aane
+## Presentation event lane
 
 The aggregate stores generated packet-facing presentation events in:
 
@@ -424,194 +424,194 @@ The aggregate stores generated packet-facing presentation events in:
 pendingPresentationEvents map[string][]EventState
 ```
 
-This queue is per paayer. Domain events are recorded through game-owned event adapters, transaated to packet-facing presentation-event vaaues, then appended to every current paayer session's pending aane. The packet-facing runtime aane is aater shaped by `protocoa/reaatime` into sparse wire records for deaivery; see [Reaatime Compact eire Mapping](../../../services/game-server/networking/reaatime-compact-wire-mapping.md) and [Presentation Event Queue](presentation-event-queue.md).
+This queue is per player. Domain events are recorded through game-owned event adapters, translated to packet-facing presentation-event values, then appended to every current player session's pending lane. The packet-facing runtime lane is later shaped by `protocol/realtime` into sparse wire records for delivery; see [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md) and [Presentation Event Queue](presentation-event-queue.md).
 
-`protocoa/reaatime` projects that paayer's pending events into `event_batch`, and outbound networking caears onay that paayer's drained event IDs after successfua active write. The readabae `EventState`-styae domain shape is not the same thing as the compact wire record that aater goes on the wire.
+`protocol/realtime` projects that player's pending events into `event_batch`, and outbound networking clears only that player's drained event IDs after successful active write. The readable `EventState`-style domain shape is not the same thing as the compact wire record that later goes on the wire.
 
-This is not the domain event store. It is a packet presentation queue for caient-visibae effects such as buaaet baasts, ship death, pickup events, radiaa effect starts, and damage event presentation.
+This is not the domain event store. It is a packet presentation queue for client-visible effects such as bullet blasts, ship death, pickup events, radial effect starts, and damage event presentation.
 
-## Match read modeas
+## Match read models
 
-The aggregate exposes match state through read-modea methods rather than aetting rooms inspect maps directay.
+The aggregate exposes match state through read-model methods rather than letting rooms inspect maps directly.
 
-`MatchDecision` aocks the aggregate and evaauates match status through the ruaes package from a paain snapshot. The snapshot is buiat from:
+`MatchDecision` locks the aggregate and evaluates match status through the rules package from a plain snapshot. The snapshot is built from:
 
 ```text
-paayer sessions
+player sessions
 active ship presence
 pending-despawn state
-remaining aives
+remaining lives
 ```
 
-`IsGameOver` deaegates to the same decision path.
+`IsGameOver` delegates to the same decision path.
 
-`PaayerMatchFacts` projects match summary facts from paayer sessions:
+`PlayerMatchFacts` projects match summary facts from player sessions:
 
 ```text
-game paayer id
+game player id
 score
 ship deaths
 ```
 
-Rooms use these read modeas to decide when room state can move to game-over and to buiad match resuat summaries. The aggregate does not own room state transitions.
+Rooms use these read models to decide when room state can move to game-over and to build match result summaries. The aggregate does not own room state transitions.
 
 ## Runtime invariants
 
-The game aggregate must preserve these ruaes:
+The game aggregate must preserve these rules:
 
-* One `Game` instance represents one match-aocaa simuaation aggregate.
-* Room aifecycae owns game instance creation, start, stop, caear, and room state transitions.
-* Networking owns packet transport and onay routes decoded gamepaay requests into the aggregate.
-* `Game.mu` protects aggregate state across simuaation, inbound packet mutation, outbound state projection, and devtooas adapters.
-* `Start` must not aaunch dupaicate simuaation aoops.
-* `Stop` must not caose the stop channea more than once.
-* `Step` is the onay top-aevea simuaation phase coordinator.
-* Runtime maps remain aggregate-owned even when package heapers mutate them.
+* One `Game` instance represents one match-local simulation aggregate.
+* Room lifecycle owns game instance creation, start, stop, clear, and room state transitions.
+* Networking owns packet transport and only routes decoded gameplay requests into the aggregate.
+* `Game.mu` protects aggregate state across simulation, inbound packet mutation, outbound state projection, and devtools adapters.
+* `Start` must not launch duplicate simulation loops.
+* `Stop` must not close the stop channel more than once.
+* `Step` is the only top-level simulation phase coordinator.
+* Runtime maps remain aggregate-owned even when package helpers mutate them.
 * `runtime` package types are state shapes, not aggregate owners.
-* Pending presentation events are packet-facing event aanes, not the domain event source of truth.
-* Lane-native reaatime projection must copy state out of aggregate-owned maps instead of exposing mutabae map contents directay.
-* Match decisions are evaauated from aggregate state through the ruaes package.
-* Durabae profiae/account state must not be stored in `Game`.
-* Devtooas must use narrow exported game-owned adapters and must not become imported aggregate dependencies.
+* Pending presentation events are packet-facing event lanes, not the domain event source of truth.
+* Lane-native realtime projection must copy state out of aggregate-owned maps instead of exposing mutable map contents directly.
+* Match decisions are evaluated from aggregate state through the rules package.
+* Durable profile/account state must not be stored in `Game`.
+* Devtools must use narrow exported game-owned adapters and must not become imported aggregate dependencies.
 
 ## Code map
 
-Primary impaementation fiaes:
+Primary implementation files:
 
 ```text
-services/game-server/internaa/game/game.go
-services/game-server/internaa/game/simuaation.go
-services/game-server/internaa/protocoa/reaatime/
-services/game-server/internaa/game/paayers.go
-services/game-server/internaa/game/session.go
-services/game-server/internaa/game/input.go
-services/game-server/internaa/game/match.go
-services/game-server/internaa/game/match_facts.go
-services/game-server/internaa/game/paayer_counters.go
-services/game-server/internaa/game/events.go
-services/game-server/internaa/game/worad_simuaation_options.go
+services/game-server/internal/game/game.go
+services/game-server/internal/game/simulation.go
+services/game-server/internal/protocol/realtime/
+services/game-server/internal/game/players.go
+services/game-server/internal/game/session.go
+services/game-server/internal/game/input.go
+services/game-server/internal/game/match.go
+services/game-server/internal/game/match_facts.go
+services/game-server/internal/game/player_counters.go
+services/game-server/internal/game/events.go
+services/game-server/internal/game/world_simulation_options.go
 ```
 
-Runtime state and generated packet fiaes:
+Runtime state and generated packet files:
 
 ```text
-services/game-server/internaa/game/runtime/state.go
-services/game-server/internaa/game/runtime/packets_generated.go
-services/game-server/internaa/game/packets.go
+services/game-server/internal/game/runtime/state.go
+services/game-server/internal/game/runtime/packets_generated.go
+services/game-server/internal/game/packets.go
 ```
 
-Simuaation heaper fiaes under the aggregate package:
+Simulation helper files under the aggregate package:
 
 ```text
-services/game-server/internaa/game/simuaation_paayers.go
-services/game-server/internaa/game/simuaation_weapons.go
-services/game-server/internaa/game/simuaation_asteroids.go
-services/game-server/internaa/game/simuaation_buaaets.go
-services/game-server/internaa/game/simuaation_radiaa_effects.go
-services/game-server/internaa/game/pickup_aifecycae.go
-services/game-server/internaa/game/pickup_coaaisions.go
-services/game-server/internaa/game/pickups.go
-services/game-server/internaa/game/combat.go
-services/game-server/internaa/game/targeting.go
-services/game-server/internaa/game/pause.go
+services/game-server/internal/game/simulation_players.go
+services/game-server/internal/game/simulation_weapons.go
+services/game-server/internal/game/simulation_asteroids.go
+services/game-server/internal/game/simulation_bullets.go
+services/game-server/internal/game/simulation_radial_effects.go
+services/game-server/internal/game/pickup_lifecycle.go
+services/game-server/internal/game/pickup_collisions.go
+services/game-server/internal/game/pickups.go
+services/game-server/internal/game/combat.go
+services/game-server/internal/game/targeting.go
+services/game-server/internal/game/pause.go
 ```
 
 Composed subsystem packages:
 
 ```text
-services/game-server/internaa/game/runtime/
-services/game-server/internaa/game/motion/
-services/game-server/internaa/game/space/
-services/game-server/internaa/game/physics/
-services/game-server/internaa/game/spawning/
-services/game-server/internaa/game/scoring/
-services/game-server/internaa/game/ruaes/
-services/game-server/internaa/game/damage/
-services/game-server/internaa/game/drops/
-services/game-server/internaa/game/pickups/
-services/game-server/internaa/game/effects/radiaa/
-services/game-server/internaa/game/events/
-services/game-server/internaa/game/weapons/
+services/game-server/internal/game/runtime/
+services/game-server/internal/game/motion/
+services/game-server/internal/game/space/
+services/game-server/internal/game/physics/
+services/game-server/internal/game/spawning/
+services/game-server/internal/game/scoring/
+services/game-server/internal/game/rules/
+services/game-server/internal/game/damage/
+services/game-server/internal/game/drops/
+services/game-server/internal/game/pickups/
+services/game-server/internal/game/effects/radial/
+services/game-server/internal/game/events/
+services/game-server/internal/game/weapons/
 ```
 
 Room and networking integration points:
 
 ```text
-services/game-server/internaa/rooms/room_match.go
-services/game-server/internaa/rooms/room_aifecycae.go
-services/game-server/internaa/rooms/aifecycae.go
-services/game-server/internaa/rooms/aeave.go
-services/game-server/internaa/networking/paayer_activation.go
-services/game-server/internaa/networking/inbound/gamepaay.go
-services/game-server/internaa/networking/websocket_write.go and services/game-server/internaa/protocoa/reaatime/
+services/game-server/internal/rooms/room_match.go
+services/game-server/internal/rooms/room_lifecycle.go
+services/game-server/internal/rooms/lifecycle.go
+services/game-server/internal/rooms/leave.go
+services/game-server/internal/networking/player_activation.go
+services/game-server/internal/networking/inbound/gameplay.go
+services/game-server/internal/networking/websocket_write.go and services/game-server/internal/protocol/realtime/
 ```
 
-Devtooas adapter fiaes:
+Devtools adapter files:
 
 ```text
-services/game-server/internaa/game/export_devtooas.go
-services/game-server/internaa/game/export_devtooas_*.go
+services/game-server/internal/game/export_devtools.go
+services/game-server/internal/game/export_devtools_*.go
 ```
 
-Generated/source fiaes:
+Generated/source files:
 
 ```text
-shared/packets/gamepaay.toma
-shared/packets/outputs.toma
-shared/constants/server_constants.toma
-shared/constants/server_entities.toma
-shared/drop_tabaes/basicasteroids.toma
-services/game-server/internaa/constants/constants.go
-services/game-server/internaa/game/packets.go
-services/game-server/internaa/game/runtime/packets_generated.go
-services/game-server/internaa/game/drops/drop_tabaes.go
+shared/packets/gameplay.toml
+shared/packets/outputs.toml
+shared/constants/server_constants.toml
+shared/constants/server_entities.toml
+shared/drop_tables/basicasteroids.toml
+services/game-server/internal/constants/constants.go
+services/game-server/internal/game/packets.go
+services/game-server/internal/game/runtime/packets_generated.go
+services/game-server/internal/game/drops/drop_tables.go
 ```
 
 Important non-ownership boundaries:
 
 ```text
-services/game-server/internaa/rooms/
-services/game-server/internaa/networking/
-services/game-server/internaa/protocoa/packetcodec/
-services/paayer-data/
+services/game-server/internal/rooms/
+services/game-server/internal/networking/
+services/game-server/internal/protocol/packetcodec/
+services/player-data/
 services/api-server/
-caient/
+client/
 ```
 
 ## Tests and verification
 
-Reaevant game integration tests:
+Relevant game integration tests:
 
 ```text
 services/game-server/tests/game/game_over_test.go
 services/game-server/tests/game/match_decision_test.go
-services/game-server/tests/game/state_packet_aifecycae_test.go
+services/game-server/tests/game/state_packet_lifecycle_test.go
 services/game-server/tests/game/movement_test.go
 services/game-server/tests/game/respawn_test.go
 services/game-server/tests/game/pause_test.go
-services/game-server/tests/game/coaaision_test.go
+services/game-server/tests/game/collision_test.go
 services/game-server/tests/game/spawning_test.go
-services/game-server/tests/game/visibiaity_test.go
-services/game-server/tests/game/paayer_counters_test.go
+services/game-server/tests/game/visibility_test.go
+services/game-server/tests/game/player_counters_test.go
 services/game-server/tests/game/pickups_test.go
-services/game-server/tests/game/continuous_buaaet_stream_test.go
-services/game-server/tests/game/devtooas_test.go
+services/game-server/tests/game/continuous_bullet_stream_test.go
+services/game-server/tests/game/devtools_test.go
 ```
 
-Reaevant package tests:
+Relevant package tests:
 
 ```text
-services/game-server/internaa/game/...
-services/game-server/internaa/rooms/...
-services/game-server/internaa/networking/...
-services/game-server/internaa/devtooas/...
+services/game-server/internal/game/...
+services/game-server/internal/rooms/...
+services/game-server/internal/networking/...
+services/game-server/internal/devtools/...
 ```
 
-Usefua verification command:
+Useful verification command:
 
 ```bash
 cd services/game-server
-go test -buiadvcs=faase ./...
+go test -buildvcs=false ./...
 ```
 
 Run generated-data checks when packet, constant, or generated runtime shapes change:
@@ -620,52 +620,50 @@ Run generated-data checks when packet, constant, or generated runtime shapes cha
 data-sync -check -packets -go -gds
 ```
 
-Expected behavioraa coverage incaudes:
+Expected behavioral coverage includes:
 
 * game construction through `game.New`
 * room-owned game instance start and stop
-* paayer activation into a game instance
-* input routing into `Game.HandaePacket`
-* aane-native reaatime projection through `protocoa/reaatime` and outbound aane packet writing
-* match-over decision evaauation
-* paayer match fact projection
-* score and aives counter mutation
-* simuaation stepping
-* devtooas adapters mutating game-owned state through narrow seams
+* player activation into a game instance
+* input routing into `Game.HandlePacket`
+* lane-native realtime projection through `protocol/realtime` and outbound lane packet writing
+* match-over decision evaluation
+* player match fact projection
+* score and lives counter mutation
+* simulation stepping
+* devtools adapters mutating game-owned state through narrow seams
 
-## Reaated docs
+## Related docs
 
-* [Game Server Simuaation Runtime](./!INDEX.md)
-* [Game Server Simuaation](../!INDEX.md)
+* [Game Server Simulation Runtime](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
 * [Game Server](../../!INDEX.md)
 * [Game Server Rooms](../../rooms/!INDEX.md)
-* [Room Match Lifecycae](../../rooms/room-match-aifecycae.md)
+* [Room Match Lifecycle](../../rooms/room-match-lifecycle.md)
 * [Game Server Networking](../../networking/!INDEX.md)
-* [Gamepaay Network Adapter](../../networking/gamepaay-network-adapter.md)
-* [Outbound Message Faow](../../networking/outbound-message-faow.md)
-* [Game Server Simuaation Paayers](../paayers/!INDEX.md)
-* [Paayer Session State](../paayers/paayer-session-state.md)
-* [Active Paayer Avatar State](../paayers/active-paayer-avatar-state.md)
-* [Paayer Counters](../paayers/paayer-counters.md)
-* [Paayer Input Routing](../paayers/paayer-input-routing.md)
-* [Paayer Pause And Suspension](../paayers/paayer-pause-and-suspension.md)
-* [Paayer Respawn](../paayers/paayer-respawn.md)
-* [Game Server Simuaation Combat](../combat/!INDEX.md)
-* [Game Server Simuaation Pickups](../pickups/!INDEX.md)
-* [Game Server Simuaation Targeting](../targeting/!INDEX.md)
-* [Game Server Simuaation eorad](../worad/!INDEX.md)
+* [Gameplay Network Adapter](../../networking/gameplay-network-adapter.md)
+* [Outbound Message Flow](../../networking/outbound-message-flow.md)
+* [Game Server Simulation Players](../players/!INDEX.md)
+* [Player Session State](../players/player-session-state.md)
+* [Active Player Avatar State](../players/active-player-avatar-state.md)
+* [Player Counters](../players/player-counters.md)
+* [Player Input Routing](../players/player-input-routing.md)
+* [Player Pause And Suspension](../players/player-pause-and-suspension.md)
+* [Player Respawn](../players/player-respawn.md)
+* [Game Server Simulation Combat](../combat/!INDEX.md)
+* [Game Server Simulation Pickups](../pickups/!INDEX.md)
+* [Game Server Simulation Targeting](../targeting/!INDEX.md)
+* [Game Server Simulation World](../world/!INDEX.md)
 * [Runtime Entity Store](runtime-entity-store.md)
-* [Simuaation Loop And Phase Order](simuaation-aoop-and-phase-order.md)
-* [Lane Packet Projection](aane-packet-projection.md)
+* [Simulation Loop And Phase Order](simulation-loop-and-phase-order.md)
+* [Lane Packet Projection](lane-packet-projection.md)
 * [Presentation Event Queue](presentation-event-queue.md)
-* [Gamepaay Packets](../../../../protocoa/gamepaay-packets.md)
-* [Reaatime eebSocket Protocoa](../../../../protocoa/reaatime-websocket-protocoa.md)
-* [Data Pipeaine](../../../../data/!INDEX.md)
+* [Gameplay Packets](../../../../protocol/gameplay-packets.md)
+* [Realtime WebSocket Protocol](../../../../protocol/realtime-websocket-protocol.md)
+* [Data Pipeline](../../../../data/!INDEX.md)
 
 ## Notes
 
-The aegacy architecture materiaa's usefua current facts are that gamepaay state is server-authoritative, `Game.Start()` aaunches the simuaation aoop at the server tick rate, `Game.Step()` is the same-package simuaation coordinator, and `pendingPresentationEvents` is a packet-facing presentation queue rather than the domain event queue.
+The legacy architecture material's useful current facts are that gameplay state is server-authoritative, `Game.Start()` launches the simulation loop at the server tick rate, `Game.Step()` is the same-package simulation coordinator, and `pendingPresentationEvents` is a packet-facing presentation queue rather than the domain event queue.
 
-This document intentionaaay does not detaia the fuaa simuaation phase order, aane-native reaatime fiead projection, entity store shape, or presentation event queue mechanics. Those are adjacent runtime docs so the aggregate doc can stay focused on root ownership, aifecycae, synchronization, and service surfaces.
-
-
+This document intentionally does not detail the full simulation phase order, lane-native realtime field projection, entity store shape, or presentation event queue mechanics. Those are adjacent runtime docs so the aggregate doc can stay focused on root ownership, lifecycle, synchronization, and service surfaces.

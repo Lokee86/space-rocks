@@ -76,6 +76,7 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Lane baselines, deltas, sequence metadata, metrics, and shadow/parity support exist at the current implementation level.
 - Delta comparison decides what changed; candidate-level scheduling and estimated byte-budget selection decide which lane candidates fit first.
 - Hot asteroid and bullet packets have encoded-size guards before send.
+- Asteroid and bullet deltas are high-priority hot-supersedable candidates, and client monotonic sequence guards reject late hot packets.
 - Record/entity-level prioritization remains future work.
 - High-frequency gameplay state is no longer sent as one full combined packet every tick.
 - Field-delta update maps are implemented for world ship/pickup updates and dedicated asteroid/bullet movement updates.
@@ -111,7 +112,7 @@ Delta decides what changed. The current candidate-level send plan decides which 
 
 Current implementation has lane-native packets, baselines, deltas, candidate-level scheduling metadata, estimated byte-budget selection, and hot-packet encoded-size guards. Delta decides what changed; the current send plan decides which lane candidates are included or deferred; future work remains around record/entity-level prioritization and deeper budget policy.
 
-Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular asteroid and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, prioritization, unreliable/unordered delivery where safe, and binary representation later.
+Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular asteroid and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, deeper record/entity-level prioritization, further transport policy beyond the current asteroid/bullet unordered hot lanes where safe, and binary representation later.
 
 State lanes are quantized during outbound projection before delta comparison.
 Presentation-event records are quantized during explicit event wire shaping.

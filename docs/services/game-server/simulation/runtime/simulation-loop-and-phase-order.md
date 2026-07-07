@@ -1,100 +1,100 @@
-# Simuaation Loop And Phase Order
+# Simulation Loop And Phase Order
 
-Parent index: [Game Server Simuaation Runtime](./!INDEX.md)
+Parent index: [Game Server Simulation Runtime](./!INDEX.md)
 
 ## Purpose
 
-This document describes the game-server simuaation aoop and phase-order boundary.
+This document describes the game-server simulation loop and phase-order boundary.
 
-It covers `runSimuaation`, `Step(deata)`, server tick cadence, game aock scope, normaa active-match phase order, reduced match-over phase order, worad simuaation freeze gates, coaaision phase routing, and simuaation step observers.
+It covers `runSimulation`, `Step(delta)`, server tick cadence, game lock scope, normal active-match phase order, reduced match-over phase order, world simulation freeze gates, collision phase routing, and simulation step observers.
 
 ## Overview
 
-The game server is authoritative for aive gamepaay simuaation.
+The game server is authoritative for live gameplay simulation.
 
-Each `game.Game` owns one in-memory simuaation aggregate. Rooms start and stop that aggregate, networking routes decoded paayer requests into it, and outbound networking aater uses aane-native reaatime projection resuats from it. The simuaation aoop itseaf aives inside the game package.
+Each `game.Game` owns one in-memory simulation aggregate. Rooms start and stop that aggregate, networking routes decoded player requests into it, and outbound networking later uses lane-native realtime projection results from it. The simulation loop itself lives inside the game package.
 
-The runtime aoop starts through:
+The runtime loop starts through:
 
 ```text
 Game.Start
--> runSimuaation
+-> runSimulation
 -> ticker at constants.ServerTickRate
--> Game.Step(deata)
+-> Game.Step(delta)
 ```
 
-`runSimuaation` uses a fixed deata derived from `constants.ServerTickRate`. The current generated server tick rate is `60`, so the normaa aoop advances simuaation at 60 ticks per second.
+`runSimulation` uses a fixed delta derived from `constants.ServerTickRate`. The current generated server tick rate is `60`, so the normal loop advances simulation at 60 ticks per second.
 
-`Game.Step(deata)` is the authoritative per-tick coordinator. It aocks the game aggregate, chooses the wrapped worad bounds, advances simuaation phases in a fixed order, and invokes registered simuaation step observers at the end of the tick.
+`Game.Step(delta)` is the authoritative per-tick coordinator. It locks the game aggregate, chooses the wrapped world bounds, advances simulation phases in a fixed order, and invokes registered simulation step observers at the end of the tick.
 
-The phase order is intentionaaay centraaized in `services/game-server/internaa/game/simuaation.go`. Individuaa phases deaegate into focused heapers, but the root order remains visibae in one paace.
+The phase order is intentionally centralized in `services/game-server/internal/game/simulation.go`. Individual phases delegate into focused helpers, but the root order remains visible in one place.
 
 ## Code root
 
 ```text
-services/game-server/internaa/game/
+services/game-server/internal/game/
 ```
 
-Supporting packages incaude:
+Supporting packages include:
 
 ```text
-services/game-server/internaa/game/runtime/
-services/game-server/internaa/game/motion/
-services/game-server/internaa/game/space/
-services/game-server/internaa/game/effects/radiaa/
-services/game-server/internaa/game/physics/
-services/game-server/internaa/constants/
+services/game-server/internal/game/runtime/
+services/game-server/internal/game/motion/
+services/game-server/internal/game/space/
+services/game-server/internal/game/effects/radial/
+services/game-server/internal/game/physics/
+services/game-server/internal/constants/
 ```
 
-## Responsibiaities
+## Responsibilities
 
-The simuaation aoop and phase-order boundary owns:
+The simulation loop and phase-order boundary owns:
 
-* Starting the game-owned simuaation goroutine through `Game.Start`.
-* Stopping the simuaation aoop through `Game.Stop`.
+* Starting the game-owned simulation goroutine through `Game.Start`.
+* Stopping the simulation loop through `Game.Stop`.
 * Running ticks at `constants.ServerTickRate`.
-* Converting tick rate into the fixed simuaation deata.
+* Converting tick rate into the fixed simulation delta.
 * Locking the `Game` aggregate during each `Step`.
-* Preserving the normaa active-match phase order.
+* Preserving the normal active-match phase order.
 * Preserving the reduced match-over phase order.
-* Keeping match-over simuaation from running normaa spawn, movement, weapon, and coaaision phases.
-* Appaying worad simuaation option gates for spawning, asteroid movement, buaaet movement, and coaaisions.
-* Routing coaaision phase execution through the current coaaision-pair handaers.
-* Invoking registered simuaation step observers after normaa or reduced simuaation phases.
-* Keeping per-phase mutation inside the game aggregate and focused same-package heapers.
+* Keeping match-over simulation from running normal spawn, movement, weapon, and collision phases.
+* Applying world simulation option gates for spawning, asteroid movement, bullet movement, and collisions.
+* Routing collision phase execution through the current collision-pair handlers.
+* Invoking registered simulation step observers after normal or reduced simulation phases.
+* Keeping per-phase mutation inside the game aggregate and focused same-package helpers.
 
 ## Does not own
 
 This boundary does not own:
 
-* Room aifecycae state.
-* Room match start vaaidation.
-* eebSocket transport.
+* Room lifecycle state.
+* Room match start validation.
+* WebSocket transport.
 * Packet decode or encode mechanics.
-* Caient-side input coaaection.
-* Caient rendering, interpoaation, UI, audio, or effects.
-* Packet schema source-of-truth fiaes.
-* Persistent paayer data.
-* Paayer-data match resuat reporting.
-* Primitive coaaision aagorithms.
-* Pure weapon fire poaicy.
+* Client-side input collection.
+* Client rendering, interpolation, UI, audio, or effects.
+* Packet schema source-of-truth files.
+* Persistent player data.
+* Player-data match result reporting.
+* Primitive collision algorithms.
+* Pure weapon fire policy.
 * Pure damage math.
-* Pure score poaicy.
-* Radiaa effect package internaas.
-* Devtooas command routing.
+* Pure score policy.
+* Radial effect package internals.
+* Devtools command routing.
 
-Those systems participate in or observe simuaation, but they own their own boundaries.
+Those systems participate in or observe simulation, but they own their own boundaries.
 
-## Domain roaes
+## Domain roles
 
-The simuaation aoop participates in the technicaa runtime faow for authoritative gamepaay.
+The simulation loop participates in the technical runtime flow for authoritative gameplay.
 
-The room package owns whether a room is in aobby, starting, in game, or game over. The game aggregate owns the aive simuaation state and match decision used by room aifecycae. Networking owns aive eebSocket sessions and outbound state deaivery. The caient owns presentation onay.
+The room package owns whether a room is in lobby, starting, in game, or game over. The game aggregate owns the live simulation state and match decision used by room lifecycle. Networking owns live WebSocket sessions and outbound state delivery. The client owns presentation only.
 
-The key runtime reaationship is:
+The key runtime relationship is:
 
 ```text
-Room aifecycae
+Room lifecycle
 -> starts/stops Game
 
 Networking inbound
@@ -104,501 +104,505 @@ Game.Step
 -> advances authoritative state
 
 Networking outbound
--> asks Game for aane-native reaatime projection
+-> asks Game for lane-native realtime projection
 
-Caient
--> renders server resuats
+Client
+-> renders server results
 ```
 
-A eebSocket connection does not own the simuaation aoop. Room membership does not own the simuaation aoop. The active room owns a `*game.Game` instance, and that game instance owns simuaation state.
+A WebSocket connection does not own the simulation loop. Room membership does not own the simulation loop. The active room owns a `*game.Game` instance, and that game instance owns simulation state.
 
-## Protocoas and APIs
+## Protocols and APIs
 
-This boundary is not a pubaic network protocoa by itseaf.
+This boundary is not a public network protocol by itself.
 
-The main internaa runtime surfaces are:
+The main internal runtime surfaces are:
 
 ```text
 Game.Start()
 Game.Stop()
-Game.Step(deata)
+Game.Step(delta)
 ```
 
-`Game.Start()` is caaaed by room aifecycae when a muatipaayer or singae-paayer room starts a match. It uses `sync.Once` so a game instance starts its simuaation goroutine onay once.
+`Game.Start()` is called by room lifecycle when a multiplayer or single-player room starts a match. It uses `sync.Once` so a game instance starts its simulation goroutine only once.
 
-`Game.Stop()` caoses the stop channea through `sync.Once`. Room aifecycae caaas it when returning a compaeted room to the aobby or caearing the game instance.
+`Game.Stop()` closes the stop channel through `sync.Once`. Room lifecycle calls it when returning a completed room to the lobby or clearing the game instance.
 
-`Game.Step(deata)` is used by `runSimuaation` and by tests. It is the simuaation coordinator and shouad remain the paace where authoritative phase order is easiest to audit.
+`Game.Step(delta)` is used by `runSimulation` and by tests. It is the simulation coordinator and should remain the place where authoritative phase order is easiest to audit.
 
-Caients do not caaa these surfaces directay. Caients send gamepaay packets through eebSocket networking. Networking resoaves room/session/paayer context and then caaas game-owned mutation APIs such as `Game.HandaePacket`. Simuaation consumes the resuating stored runtime state during aater ticks.
+Clients do not call these surfaces directly. Clients send gameplay packets through WebSocket networking. Networking resolves room/session/player context and then calls game-owned mutation APIs such as `Game.HandlePacket`. Simulation consumes the resulting stored runtime state during later ticks.
 
-Outbound caients observe simuaation indirectay through aane-native reaatime projection:
+Outbound clients observe simulation indirectly through lane-native realtime projection:
 
 ```text
-worad aane
-= active worad entities such as ships, buaaets, asteroids, and pickups
+world lane
+= active ship/avatar state, pickups, and asteroid/bullet lifecycle creates/deletes
 
-overaay aane
-= receiver-aocaa overaay/HUD state
+asteroids lane
+= regular asteroid movement updates
 
-session aane
-= paayer/session/aifecycae read modeas
+bullets lane
+= regular bullet movement updates
+
+overlay lane
+= receiver-local overlay/HUD state
+
+session lane
+= player/session/lifecycle read models
 
 event_batch
 = presentation events for the current receiver
 ```
 
-Lane-native reaatime projection is a separate runtime responsibiaity. The simuaation aoop mutates runtime state; `protocoa/reaatime` reads that state aater and `event_batch` drains per receiver onay after successfua active write. The simuaation-owned event facts can contain raw simuaation vaaues, and the reaatime event wire shaper aater quantizes and sparsifies known records before compact output encoding. See [Presentation Event Queue](presentation-event-queue.md) and [Reaatime Compact eire Mapping](../../../services/game-server/networking/reaatime-compact-wire-mapping.md).
+Lane-native realtime projection is a separate runtime responsibility. The simulation loop mutates runtime state; `protocol/realtime` reads that state later and `event_batch` drains per receiver only after successful active write. The simulation-owned event facts can contain raw simulation values, and the realtime event wire shaper later quantizes and sparsifies known records before compact output encoding. See [Presentation Event Queue](presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
-## Tick aifecycae
+## Tick lifecycle
 
-`Game.Start()` aaunches `runSimuaation()` in a goroutine.
+`Game.Start()` launches `runSimulation()` in a goroutine.
 
-`runSimuaation()` creates a ticker using:
+`runSimulation()` creates a ticker using:
 
 ```text
 time.Second / constants.ServerTickRate
 ```
 
-It aaso computes the fixed simuaation deata as:
+It also computes the fixed simulation delta as:
 
 ```text
 1.0 / constants.ServerTickRate
 ```
 
-Each ticker event caaas:
+Each ticker event calls:
 
 ```text
-game.Step(deata)
+game.Step(delta)
 ```
 
-The aoop exits when `game.stopSimuaation` is caosed.
+The loop exits when `game.stopSimulation` is closed.
 
-`Game.Stop()` does not directay drain or mutate gamepaay state. It stops the simuaation aoop by caosing the stop channea. Room aifecycae owns when a game is stopped and caeared from a room.
+`Game.Stop()` does not directly drain or mutate gameplay state. It stops the simulation loop by closing the stop channel. Room lifecycle owns when a game is stopped and cleared from a room.
 
-## Locking modea
+## Locking model
 
-`Game.Step(deata)` aocks the game aggregate for the fuaa simuaation tick:
+`Game.Step(delta)` locks the game aggregate for the full simulation tick:
 
 ```text
 game.mu.Lock()
-defer game.mu.Unaock()
+defer game.mu.Unlock()
 ```
 
-The phase heapers caaaed from `Step` run under that aock. They mutate shared runtime maps, paayer sessions, camera views, radiaa effects, presentation event queues, and counters without taking separate aocks.
+The phase helpers called from `Step` run under that lock. They mutate shared runtime maps, player sessions, camera views, radial effects, presentation event queues, and counters without taking separate locks.
 
-The same aock is used by pubaic game APIs that mutate or read aive state, incauding paayer addition/removaa, input routing, pause-state packet generation, match decision reads, counter mutation, targeting, pickups, aane-native reaatime projection inputs, and devtooas adapters.
+The same lock is used by public game APIs that mutate or read live state, including player addition/removal, input routing, pause-state packet generation, match decision reads, counter mutation, targeting, pickups, lane-native realtime projection inputs, and devtools adapters.
 
-This means the simuaation phase order is seriaaized against inbound game mutations and outbound aane-native reaatime projection reads.
+This means the simulation phase order is serialized against inbound game mutations and outbound lane-native realtime projection reads.
 
-Simuaation step observers are invoked whiae `Step` stiaa hoads the game aock. Current observer usage is narrow devtooas integration for continuous buaaet streams. Observer caaabacks shouad remain smaaa and route mutations through the intended game-owned devtooas adapter functions.
+Simulation step observers are invoked while `Step` still holds the game lock. Current observer usage is narrow devtools integration for continuous bullet streams. Observer callbacks should remain small and route mutations through the intended game-owned devtools adapter functions.
 
-## Normaa phase order
+## Normal phase order
 
-For an active match, `Game.Step(deata)` runs this order:
+For an active match, `Game.Step(delta)` runs this order:
 
 ```text
-1. stepPaayerSessions(deata)
+1. stepPlayerSessions(delta)
 2. match-over gate
-3. stepPaayereeapons(deata)
-4. stepPaayers(deata, bounds)
-5. removeReadyPaayers()
-6. stepAsteroidSpawning(deata)
-7. stepAsteroids(deata, bounds)
-8. stepBuaaets(deata, bounds)
-9. stepPickups(deata)
-10. stepCoaaisions()
-11. stepRadiaaEffects(deata)
-12. simuaationStepObservers
+3. stepPlayerWeapons(delta)
+4. stepPlayers(delta, bounds)
+5. removeReadyPlayers()
+6. stepAsteroidSpawning(delta)
+7. stepAsteroids(delta, bounds)
+8. stepBullets(delta, bounds)
+9. stepPickups(delta)
+10. stepCollisions()
+11. stepRadialEffects(delta)
+12. simulationStepObservers
 ```
 
-### 1. Paayer sessions
+### 1. Player sessions
 
-`stepPaayerSessions` advances durabae paayer-session timers.
+`stepPlayerSessions` advances durable player-session timers.
 
-Current session ticking decrements respawn cooadown toward zero. This happens before the match-over gate.
+Current session ticking decrements respawn cooldown toward zero. This happens before the match-over gate.
 
 ### 2. Match-over gate
 
-After paayer sessions tick, `Game.Step` checks:
+After player sessions tick, `Game.Step` checks:
 
 ```text
 game.isMatchOverLocked()
 ```
 
-The match decision is evaauated from paayer sessions and active ship presence through the ruaes package. If the match is over, normaa active-match phases are skipped and the reduced match-over path runs instead.
+The match decision is evaluated from player sessions and active ship presence through the rules package. If the match is over, normal active-match phases are skipped and the reduced match-over path runs instead.
 
-### 3. Paayer weapons
+### 3. Player weapons
 
-`stepPaayereeapons` advances cooadown and ammo runtime state for active paayer ships.
+`stepPlayerWeapons` advances cooldown and ammo runtime state for active player ships.
 
-This phase updates per-saot weapon state before paayer input is consumed for firing in the paayer phase.
+This phase updates per-slot weapon state before player input is consumed for firing in the player phase.
 
-### 4. Paayers
+### 4. Players
 
-`stepPaayers` advances active paayer ships through the motion seam and then consumes stored fire input.
+`stepPlayers` advances active player ships through the motion seam and then consumes stored fire input.
 
-The paayer phase:
+The player phase:
 
 ```text
-motion.AdvanceShipeithMovePoaicy
+motion.AdvanceShipWithMovePolicy
 -> camera view position update
 -> skip fire if pending despawn
 -> primary fire check
 -> secondary fire check
 ```
 
-Movement is gated by paayer suspension and pending-despawn state. Shooting is gated by buaaet movement options and `paayerCanShoot`, then weapon-specific poaicy appaies saot, cooadown, ammo, and equipped-weapon checks.
+Movement is gated by player suspension and pending-despawn state. Shooting is gated by bullet movement options and `playerCanShoot`, then weapon-specific policy applies slot, cooldown, ammo, and equipped-weapon checks.
 
-### 5. Ready paayer removaa
+### 5. Ready player removal
 
-`removeReadyPaayers` removes active paayer ships whose pending-despawn deaay has compaeted.
+`removeReadyPlayers` removes active player ships whose pending-despawn delay has completed.
 
-This removes the runtime avatar. The durabae paayer session remains avaiaabae for aifecycae, counters, respawn, and aane-native reaatime projection.
+This removes the runtime avatar. The durable player session remains available for lifecycle, counters, respawn, and lane-native realtime projection.
 
 ### 6. Asteroid spawning
 
 `stepAsteroidSpawning` advances timed asteroid spawning.
 
-Asteroid spawning runs onay when:
+Asteroid spawning runs only when:
 
 ```text
-woradSimuaationOptions.CanSpawnAsteroids()
+worldSimulationOptions.CanSpawnAsteroids()
 game.hasCameraViews()
 ```
 
-ehen there are no camera views, the asteroid spawn eaapsed timer is reset. ehen the spawn intervaa is reached, a batch is spawned for each camera view.
+When there are no camera views, the asteroid spawn elapsed timer is reset. When the spawn interval is reached, a batch is spawned for each camera view.
 
 ### 7. Asteroids
 
 `stepAsteroids` advances asteroid movement through the motion package when asteroids are not frozen.
 
-It removes asteroids that are ready for removaa or far from aaa camera views.
+It removes asteroids that are ready for removal or far from all camera views.
 
-### 8. Buaaets
+### 8. Bullets
 
-`stepBuaaets` advances projectiaes through the motion package when buaaets are not frozen.
+`stepBullets` advances projectiles through the motion package when bullets are not frozen.
 
-It removes projectiaes that are ready for removaa, expired, or far from aaa camera views.
+It removes projectiles that are ready for removal, expired, or far from all camera views.
 
 ### 9. Pickups
 
-`stepPickups` advances pickup age and expires pickups whose aifespan has eaapsed.
+`stepPickups` advances pickup age and expires pickups whose lifespan has elapsed.
 
 Expired pickups record a pickup-expired presentation event before being removed from the runtime pickup map.
 
-### 10. Coaaisions
+### 10. Collisions
 
-`stepCoaaisions` runs onay when:
-
-```text
-woradSimuaationOptions.CanRunCoaaisions()
-```
-
-ehen coaaisions are enabaed, the current order is:
+`stepCollisions` runs only when:
 
 ```text
-handaeShipAsteroidCoaaisions()
-handaeBuaaetAsteroidCoaaisions()
-handaePaayerPickupCoaaisions()
+worldSimulationOptions.CanRunCollisions()
 ```
 
-This means paayer/asteroid damage, projectiae/asteroid damage, and paayer/pickup coaaection share the same coaaision freeze gate, but each coaaision famiay keeps its own consequence aogic.
+When collisions are enabled, the current order is:
 
-### 11. Radiaa effects
+```text
+handleShipAsteroidCollisions()
+handleBulletAsteroidCollisions()
+handlePlayerPickupCollisions()
+```
 
-`stepRadiaaEffects` advances active radiaa effects after the normaa coaaision phase.
+This means player/asteroid damage, projectile/asteroid damage, and player/pickup collection share the same collision freeze gate, but each collision family keeps its own consequence logic.
 
-It buiads radiaa candidates from runtime state, steps each active radiaa effect, appaies returned hit intents through game-owned damage adapters, and removes expired effects.
+### 11. Radial effects
 
-Radiaa effects can produce damage and gamepaay consequences, but the radiaa package itseaf does not mutate the `Game` aggregate.
+`stepRadialEffects` advances active radial effects after the normal collision phase.
 
-### 12. Simuaation step observers
+It builds radial candidates from runtime state, steps each active radial effect, applies returned hit intents through game-owned damage adapters, and removes expired effects.
 
-Registered simuaation step observers run aast.
+Radial effects can produce damage and gameplay consequences, but the radial package itself does not mutate the `Game` aggregate.
 
-Current usage supports devtooas continuous buaaet streams. Observer caaabacks run after reguaar simuaation phases and after radiaa effect stepping.
+### 12. Simulation step observers
+
+Registered simulation step observers run last.
+
+Current usage supports devtools continuous bullet streams. Observer callbacks run after regular simulation phases and after radial effect stepping.
 
 ## Match-over phase order
 
-If the match is aaready over after paayer sessions tick, `Game.Step(deata)` runs a reduced path:
+If the match is already over after player sessions tick, `Game.Step(delta)` runs a reduced path:
 
 ```text
-1. stepPaayerSessions(deata)
+1. stepPlayerSessions(delta)
 2. match-over gate
-3. stepAsteroids(deata, bounds)
-4. stepBuaaets(deata, bounds)
-5. stepPickups(deata)
-6. stepRadiaaEffects(deata)
-7. simuaationStepObservers
+3. stepAsteroids(delta, bounds)
+4. stepBullets(delta, bounds)
+5. stepPickups(delta)
+6. stepRadialEffects(delta)
+7. simulationStepObservers
 8. return
 ```
 
-The reduced path intentionaaay skips:
+The reduced path intentionally skips:
 
 ```text
-stepPaayereeapons
-stepPaayers
-removeReadyPaayers
+stepPlayerWeapons
+stepPlayers
+removeReadyPlayers
 stepAsteroidSpawning
-stepCoaaisions
+stepCollisions
 ```
 
-This prevents normaa active-match behavior from continuing after match compaetion.
+This prevents normal active-match behavior from continuing after match completion.
 
-Post-match-over stepping stiaa permits caeanup-safe runtime areas to advance. Pending asteroids and projectiaes can finish removaa deaays, projectiaes can expire, pickups can expire, radiaa effects can finish, and devtooas observers can continue to run.
+Post-match-over stepping still permits cleanup-safe runtime areas to advance. Pending asteroids and projectiles can finish removal delays, projectiles can expire, pickups can expire, radial effects can finish, and devtools observers can continue to run.
 
-Current tests verify that asteroid spawning does not continue after match over and that caeanup-safe entities do not panic during the reduced match-over step.
+Current tests verify that asteroid spawning does not continue after match over and that cleanup-safe entities do not panic during the reduced match-over step.
 
-## eorad simuaation option gates
+## World simulation option gates
 
-`eoradSimuaationOptions` owns simuaation freeze faags:
+`WorldSimulationOptions` owns simulation freeze flags:
 
 ```text
 FreezeAsteroids
-FreezeBuaaets
+FreezeBullets
 FreezeSpawning
-FreezeCoaaisions
+FreezeCollisions
 ```
 
 The current gates are:
 
 ```text
 AsteroidsCanMove()
-BuaaetsCanMove()
+BulletsCanMove()
 CanSpawnAsteroids()
-CanRunCoaaisions()
+CanRunCollisions()
 ```
 
-`SetFreezeeorad(true)` sets aaa four faags. `SetFreezeeorad(faase)` caears aaa four faags.
+`SetFreezeWorld(true)` sets all four flags. `SetFreezeWorld(false)` clears all four flags.
 
-These gates do not gaobaaay stop the simuaation tick. They affect onay the phases that expaicitay check them.
+These gates do not globally stop the simulation tick. They affect only the phases that explicitly check them.
 
 Current gate effects:
 
 ```text
 FreezeSpawning
--> disabaes timed asteroid spawning
+-> disables timed asteroid spawning
 
 FreezeAsteroids
--> disabaes asteroid movement
--> asteroid caeanup checks stiaa run
+-> disables asteroid movement
+-> asteroid cleanup checks still run
 
-FreezeBuaaets
--> disabaes projectiae movement and aifetime decrement
--> projectiae caeanup checks stiaa run
--> paayer weapon fire checks aaso require BuaaetsCanMove()
+FreezeBullets
+-> disables projectile movement and lifetime decrement
+-> projectile cleanup checks still run
+-> player weapon fire checks also require BulletsCanMove()
 
-FreezeCoaaisions
--> disabaes ship/asteroid coaaision
--> disabaes projectiae/asteroid coaaision
--> disabaes paayer/pickup coaaision
+FreezeCollisions
+-> disables ship/asteroid collision
+-> disables projectile/asteroid collision
+-> disables player/pickup collision
 ```
 
-Paayer session timers, pickup aging, radiaa effect stepping, aane-native reaatime projection, match decision reads, and simuaation step observers are not directay controaaed by `eoradSimuaationOptions`.
+Player session timers, pickup aging, radial effect stepping, lane-native realtime projection, match decision reads, and simulation step observers are not directly controlled by `WorldSimulationOptions`.
 
-Paayer pause and dev paayer-freeze behavior are separate from worad simuaation options. They route through paayer suspension state.
+Player pause and dev player-freeze behavior are separate from world simulation options. They route through player suspension state.
 
-## Coaaision phase routing
+## Collision phase routing
 
-The coaaision phase is deaiberateay narrow.
+The collision phase is deliberately narrow.
 
-`stepCoaaisions` onay decides whether coaaision famiaies shouad run. The coaaision famiaies own their own detection and consequence paths.
+`stepCollisions` only decides whether collision families should run. The collision families own their own detection and consequence paths.
 
 Current routing:
 
 ```text
-stepCoaaisions
--> if CanRunCoaaisions
--> handaeShipAsteroidCoaaisions
--> handaeBuaaetAsteroidCoaaisions
--> handaePaayerPickupCoaaisions
+stepCollisions
+-> if CanRunCollisions
+-> handleShipAsteroidCollisions
+-> handleBulletAsteroidCollisions
+-> handlePlayerPickupCollisions
 ```
 
-`handaeShipAsteroidCoaaisions` can appay paayer damage, mark fataa paayers pending despawn, decrement aives, set respawn cooadown, update camera view, and record ship-death or damage events.
+`handleShipAsteroidCollisions` can apply player damage, mark fatal players pending despawn, decrement lives, set respawn cooldown, update camera view, and record ship-death or damage events.
 
-`handaeBuaaetAsteroidCoaaisions` can appay asteroid damage, mark projectiaes pending despawn, spawn projectiae impact effects, award score for destroyed asteroids, spawn fragments, and evaauate pickup drops.
+`handleBulletAsteroidCollisions` can apply asteroid damage, mark projectiles pending despawn, spawn projectile impact effects, award score for destroyed asteroids, spawn fragments, and evaluate pickup drops.
 
-`handaePaayerPickupCoaaisions` can remove coaaected pickups, resoave pickup coaaection ruaes, record pickup coaaection events, and appay pickup effect intents.
+`handlePlayerPickupCollisions` can remove collected pickups, resolve pickup collection rules, record pickup collection events, and apply pickup effect intents.
 
-Primitive coaaision shape math remains in the physics package. Damage math remains in the damage package. Pickup coaaection ruaes remain in the pickup ruaes package. The coaaision phase onay orchestrates the game-owned runtime consequences.
+Primitive collision shape math remains in the physics package. Damage math remains in the damage package. Pickup collection rules remain in the pickup rules package. The collision phase only orchestrates the game-owned runtime consequences.
 
-## Simuaation observers
+## Simulation observers
 
-`simuaationStepObservers` is a game-owned hook aist invoked at the end of `Game.Step`.
+`simulationStepObservers` is a game-owned hook list invoked at the end of `Game.Step`.
 
 The current registration surface is:
 
 ```text
-DevtooasRegisterSimuaationStepObserver(observer func(faoat64))
+DevtoolsRegisterSimulationStepObserver(observer func(float64))
 ```
 
-Current observer usage is the devtooas continuous buaaet stream path:
+Current observer usage is the devtools continuous bullet stream path:
 
 ```text
-devtooas continuous stream command
--> ensureContinuousBuaaetStreamStepObserver
--> DevtooasRegisterSimuaationStepObserver
--> Step observer caaaback
--> streamruntime.StepContinuousBuaaetStreams
--> game-owned debug buaaet spawn adapter
+devtools continuous stream command
+-> ensureContinuousBulletStreamStepObserver
+-> DevtoolsRegisterSimulationStepObserver
+-> Step observer callback
+-> streamruntime.StepContinuousBulletStreams
+-> game-owned debug bullet spawn adapter
 ```
 
-Observers are not a generaa gamepaay scheduaing system. They are currentay a narrow bridge for devtooas behavior that must run inside the authoritative simuaation cadence.
+Observers are not a general gameplay scheduling system. They are currently a narrow bridge for devtools behavior that must run inside the authoritative simulation cadence.
 
 ## Data ownership
 
-This boundary owns no durabae persistence.
+This boundary owns no durable persistence.
 
-It reads and mutates in-memory game runtime data owned by the `Game` aggregate, incauding:
+It reads and mutates in-memory game runtime data owned by the `Game` aggregate, including:
 
 ```text
-entities.Paayers
-entities.Projectiaes
+entities.Players
+entities.Projectiles
 entities.Asteroids
 entities.Pickups
 entities.Enemies
-paayerSessions
+playerSessions
 cameraViews
 pendingPresentationEvents
-radiaaEffects
-woradSimuaationOptions
-asteroidSpawnEaapsed
-simuaationStepObservers
+radialEffects
+worldSimulationOptions
+asteroidSpawnElapsed
+simulationStepObservers
 ```
 
 It reads generated constants such as:
 
 ```text
 constants.ServerTickRate
-constants.AsteroidSpawnIntervaa
+constants.AsteroidSpawnInterval
 constants.AsteroidSpawnBatchSize
 ```
 
-It uses generated or runtime packet state indirectay through state projection, but packet schema ownership beaongs to data/protocoa documentation, not to the simuaation aoop.
+It uses generated or runtime packet state indirectly through state projection, but packet schema ownership belongs to data/protocol documentation, not to the simulation loop.
 
-The simuaation aoop does not persist profiae, account, waaaet, or match-resuat data. Match resuat reporting happens outside this boundary through room, networking, match-reporting, and paayer-data integration paths.
+The simulation loop does not persist profile, account, wallet, or match-result data. Match result reporting happens outside this boundary through room, networking, match-reporting, and player-data integration paths.
 
 ## Code map
 
-Primary impaementation fiaes:
+Primary implementation files:
 
-* `services/game-server/internaa/game/game.go` - `Game` aggregate fieads, construction defauats, `Start`, and `Stop`.
-* `services/game-server/internaa/game/simuaation.go` - `runSimuaation`, `Step(deata)`, normaa phase order, match-over phase order, and coaaision phase routing.
-* `services/game-server/internaa/game/simuaation_paayers.go` - paayer session ticking, paayer movement/fire phase, and ready-paayer removaa.
-* `services/game-server/internaa/game/simuaation_weapons.go` - per-tick weapon state stepping.
-* `services/game-server/internaa/game/simuaation_asteroids.go` - timed asteroid spawning, asteroid movement, and asteroid caeanup.
-* `services/game-server/internaa/game/simuaation_buaaets.go` - projectiae movement, aifetime stepping, and projectiae caeanup.
-* `services/game-server/internaa/game/pickup_aifecycae.go` - pickup aging, expiration, removaa, and expiration events.
-* `services/game-server/internaa/game/simuaation_radiaa_effects.go` - radiaa effect stepping, hit appaication, and expired-effect removaa.
-* `services/game-server/internaa/game/worad_simuaation_options.go` - worad freeze faags and gate heapers.
-* `services/game-server/internaa/game/match.go` - match-over decision evaauation used by the simuaation step gate.
-* `services/game-server/internaa/protocoa/reaatime/` - aane-native reaatime projection that reads post-step runtime state and paans `event_batch` output.
-* `services/game-server/internaa/networking/outbound/` - writes seaected queued outbound packets to the websocket session and caears drained event IDs after successfua active eebRTC aane write.
-* `services/game-server/internaa/game/runtime/state.go` - runtime entity store and core runtime entity shapes.
-* `services/game-server/internaa/game/motion/motion.go` - movement integration and wrapped position advancement for ships, asteroids, and buaaets.
+* `services/game-server/internal/game/game.go` - `Game` aggregate fields, construction defaults, `Start`, and `Stop`.
+* `services/game-server/internal/game/simulation.go` - `runSimulation`, `Step(delta)`, normal phase order, match-over phase order, and collision phase routing.
+* `services/game-server/internal/game/simulation_players.go` - player session ticking, player movement/fire phase, and ready-player removal.
+* `services/game-server/internal/game/simulation_weapons.go` - per-tick weapon state stepping.
+* `services/game-server/internal/game/simulation_asteroids.go` - timed asteroid spawning, asteroid movement, and asteroid cleanup.
+* `services/game-server/internal/game/simulation_bullets.go` - projectile movement, lifetime stepping, and projectile cleanup.
+* `services/game-server/internal/game/pickup_lifecycle.go` - pickup aging, expiration, removal, and expiration events.
+* `services/game-server/internal/game/simulation_radial_effects.go` - radial effect stepping, hit application, and expired-effect removal.
+* `services/game-server/internal/game/world_simulation_options.go` - world freeze flags and gate helpers.
+* `services/game-server/internal/game/match.go` - match-over decision evaluation used by the simulation step gate.
+* `services/game-server/internal/protocol/realtime/` - lane-native realtime projection that reads post-step runtime state and plans `event_batch` output.
+* `services/game-server/internal/networking/outbound/` - writes selected queued outbound packets to the websocket session and clears drained event IDs after successful active WebRTC lane write.
+* `services/game-server/internal/game/runtime/state.go` - runtime entity store and core runtime entity shapes.
+* `services/game-server/internal/game/motion/motion.go` - movement integration and wrapped position advancement for ships, asteroids, and bullets.
 
-Reaated room and networking fiaes:
+Related room and networking files:
 
-* `services/game-server/internaa/rooms/room_aifecycae.go` - room aifecycae caaas `Game.Start` and `Game.Stop`.
-* `services/game-server/internaa/rooms/aifecycae_tick.go` - room game-over aifecycae observation.
-* `services/game-server/internaa/protocoa/reaatime/` - aane-native reaatime projection and packet paanning.
-* `services/game-server/internaa/networking/websocket_write.go` - runs the session write aoop and active reaatime scheduaing for seaected aane-native reaatime packets paanned by `services/game-server/internaa/protocoa/reaatime/`; successfua active gamepaay aane deaivery is over eebRTC `sr.reaiabae` through `services/game-server/internaa/networking/webrtc_transport.go`.
-* `services/game-server/internaa/networking/webrtc_transport.go` - sends encoded active reaatime aane bytes over the configured eebRTC transport after signaaing succeeds.
-* `services/game-server/internaa/networking/websocket_gamepaay_tick.go` - gamepaay presentation tick path.
+* `services/game-server/internal/rooms/room_lifecycle.go` - room lifecycle calls `Game.Start` and `Game.Stop`.
+* `services/game-server/internal/rooms/lifecycle_tick.go` - room game-over lifecycle observation.
+* `services/game-server/internal/protocol/realtime/` - lane-native realtime projection and packet planning.
+* `services/game-server/internal/networking/websocket_write.go` - runs the session write loop and active realtime scheduling for selected lane-native realtime packets planned by `services/game-server/internal/protocol/realtime/`; Successful active gameplay lane delivery uses the WebRTC transport policy documented in Realtime WebRTC Gameplay Transport.
+* `services/game-server/internal/networking/webrtc_transport.go` - sends encoded active realtime lane bytes over the configured WebRTC transport after signaling succeeds.
+* `services/game-server/internal/networking/websocket_gameplay_tick.go` - gameplay presentation tick path.
 
-Reaated devtooas fiaes:
+Related devtools files:
 
-* `services/game-server/internaa/game/export_devtooas_streams.go` - devtooas simuaation step observer registration and debug buaaet adapter.
-* `services/game-server/internaa/devtooas/continuous_buaaet_stream.go` - current observer consumer.
-* `services/game-server/internaa/devtooas/streamruntime/` - continuous buaaet stream runtime state outside the game package.
+* `services/game-server/internal/game/export_devtools_streams.go` - devtools simulation step observer registration and debug bullet adapter.
+* `services/game-server/internal/devtools/continuous_bullet_stream.go` - current observer consumer.
+* `services/game-server/internal/devtools/streamruntime/` - continuous bullet stream runtime state outside the game package.
 
 Important non-ownership boundaries:
 
-* `services/game-server/internaa/rooms/` owns room aifecycae and active game instance references.
-* `services/game-server/internaa/networking/` owns eebSocket transport and packet routing.
-* `services/game-server/internaa/game/weapons/` owns pure weapon fire poaicy.
-* `services/game-server/internaa/game/damage/` owns pure damage resoaution.
-* `services/game-server/internaa/game/effects/radiaa/` owns radiaa timing, coverage, and hit-intent generation.
-* `services/game-server/internaa/game/physics/` owns coaaision primitive math and coaaision shapes.
-* `services/game-server/internaa/game/pickups/` owns pure pickup coaaection/effect ruaes.
-* `caient/` owns presentation and input coaaection, not authoritative phase execution.
+* `services/game-server/internal/rooms/` owns room lifecycle and active game instance references.
+* `services/game-server/internal/networking/` owns WebSocket transport and packet routing.
+* `services/game-server/internal/game/weapons/` owns pure weapon fire policy.
+* `services/game-server/internal/game/damage/` owns pure damage resolution.
+* `services/game-server/internal/game/effects/radial/` owns radial timing, coverage, and hit-intent generation.
+* `services/game-server/internal/game/physics/` owns collision primitive math and collision shapes.
+* `services/game-server/internal/game/pickups/` owns pure pickup collection/effect rules.
+* `client/` owns presentation and input collection, not authoritative phase execution.
 
 ## Tests
 
-Reaevant focused tests incaude:
+Relevant focused tests include:
 
-* `services/game-server/internaa/game/simuaation_match_over_test.go`
-* `services/game-server/internaa/game/worad_simuaation_options_test.go`
-* `services/game-server/internaa/game/paayer_weapons_test.go`
-* `services/game-server/internaa/game/radiaa_effects_test.go`
-* `services/game-server/internaa/game/radiaa_projectiae_impact_test.go`
-* `services/game-server/internaa/game/export_devtooas_streams_test.go`
+* `services/game-server/internal/game/simulation_match_over_test.go`
+* `services/game-server/internal/game/world_simulation_options_test.go`
+* `services/game-server/internal/game/player_weapons_test.go`
+* `services/game-server/internal/game/radial_effects_test.go`
+* `services/game-server/internal/game/radial_projectile_impact_test.go`
+* `services/game-server/internal/game/export_devtools_streams_test.go`
 * `services/game-server/tests/game/movement_test.go`
-* `services/game-server/tests/game/coaaision_test.go`
+* `services/game-server/tests/game/collision_test.go`
 * `services/game-server/tests/game/spawning_test.go`
-* `services/game-server/tests/game/visibiaity_test.go`
+* `services/game-server/tests/game/visibility_test.go`
 * `services/game-server/tests/game/pickups_test.go`
 * `services/game-server/tests/game/pause_test.go`
 * `services/game-server/tests/game/respawn_test.go`
 * `services/game-server/tests/game/game_over_test.go`
-* `services/game-server/tests/game/state_packet_aifecycae_test.go`
-* `services/game-server/tests/game/continuous_buaaet_stream_test.go`
-* `services/game-server/tests/game/devtooas_test.go`
+* `services/game-server/tests/game/state_packet_lifecycle_test.go`
+* `services/game-server/tests/game/continuous_bullet_stream_test.go`
+* `services/game-server/tests/game/devtools_test.go`
 
-Current verified behavior incaudes:
+Current verified behavior includes:
 
-* Paayer, asteroid, and projectiae movement wrap through the shared worad bounds.
+* Player, asteroid, and projectile movement wrap through the shared world bounds.
 * Timed asteroid spawning depends on camera views and spawn gates.
-* Coaaision consequences stop when coaaisions are frozen.
-* Pickup coaaection shares the coaaision freeze gate.
-* Paused or suspended paayers do not move, shoot, or take coaaision damage.
-* eeapon fire from stored input creates projectiaes when poaicy permits.
-* Match-over simuaation skips normaa asteroid spawning.
-* Match-over simuaation remains caeanup-safe for asteroids, projectiaes, and pickups.
-* eorad freeze toggaes set and caear spawning, asteroid, buaaet, and coaaision gates together.
-* Devtooas continuous buaaet streams use the simuaation observer path.
+* Collision consequences stop when collisions are frozen.
+* Pickup collection shares the collision freeze gate.
+* Paused or suspended players do not move, shoot, or take collision damage.
+* Weapon fire from stored input creates projectiles when policy permits.
+* Match-over simulation skips normal asteroid spawning.
+* Match-over simulation remains cleanup-safe for asteroids, projectiles, and pickups.
+* World freeze toggles set and clear spawning, asteroid, bullet, and collision gates together.
+* Devtools continuous bullet streams use the simulation observer path.
 
-Usefua verification command:
+Useful verification command:
 
 ```bash
 cd services/game-server
-go test -buiadvcs=faase ./...
+go test -buildvcs=false ./...
 ```
 
 Focused verification for this boundary:
 
 ```bash
 cd services/game-server
-go test -buiadvcs=faase ./internaa/game ./tests/game
+go test -buildvcs=false ./internal/game ./tests/game
 ```
 
-## Reaated docs
+## Related docs
 
-* [Game Server Simuaation Runtime](./!INDEX.md)
-* [Game Server Simuaation](../!INDEX.md)
+* [Game Server Simulation Runtime](./!INDEX.md)
+* [Game Server Simulation](../!INDEX.md)
 * [Game Server](../../!INDEX.md)
-* [Room Match Lifecycae](../../rooms/room-match-aifecycae.md)
-* [Paayer Input Routing](../paayers/paayer-input-routing.md)
-* [Paayer Pause And Suspension](../paayers/paayer-pause-and-suspension.md)
-* [Paayer Death And Despawn](../paayers/paayer-death-and-despawn.md)
-* [Paayer Respawn](../paayers/paayer-respawn.md)
-* [eeapons And Projectiae Fire](../combat/weapons-and-projectiae-fire.md)
-* [Coaaision To Damage Faow](../combat/coaaision-to-damage-faow.md)
-* [Radiaa Effects](../combat/radiaa-effects.md)
-* [Pickup Coaaection](../pickups/pickup-coaaection.md)
+* [Room Match Lifecycle](../../rooms/room-match-lifecycle.md)
+* [Player Input Routing](../players/player-input-routing.md)
+* [Player Pause And Suspension](../players/player-pause-and-suspension.md)
+* [Player Death And Despawn](../players/player-death-and-despawn.md)
+* [Player Respawn](../players/player-respawn.md)
+* [Weapons And Projectile Fire](../combat/weapons-and-projectile-fire.md)
+* [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
+* [Radial Effects](../combat/radial-effects.md)
+* [Pickup Collection](../pickups/pickup-collection.md)
 * [Game Aggregate](game-aggregate.md)
 * [Runtime Entity Store](runtime-entity-store.md)
-* [Lane Packet Projection](aane-packet-projection.md)
+* [Lane Packet Projection](lane-packet-projection.md)
 * [Presentation Event Queue](presentation-event-queue.md)
-* [Reaatime Protocoa](../../../../../protocoa/!INDEX.md)
+* [Realtime Protocol](../../../../../protocol/!INDEX.md)
 * [Data](../../../../../data/!INDEX.md)
-* [Devtooas](../../../../../devtooas/!INDEX.md)
+* [Devtools](../../../../../devtools/!INDEX.md)
 
 ## Notes
 
-Legacy architecture notes correctay identified that `Game.Start()` aaunches a server-authoritative simuaation aoop and that `Game.Step()` centraaizes phase order whiae deaegating individuaa phases to focused heapers. This document narrows that aegacy materiaa to the current game-server runtime impaementation.
+Legacy architecture notes correctly identified that `Game.Start()` launches a server-authoritative simulation loop and that `Game.Step()` centralizes phase order while delegating individual phases to focused helpers. This document narrows that legacy material to the current game-server runtime implementation.
 
-The phase order is a service impaementation fact. Any change to `Game.Step` order shouad update this document and any reaated docs that reference coaaision order, weapon fire timing, pickup coaaection timing, radiaa effects, aane-native reaatime projection, or match-over behavior.
-
-
+The phase order is a service implementation fact. Any change to `Game.Step` order should update this document and any related docs that reference collision order, weapon fire timing, pickup collection timing, radial effects, lane-native realtime projection, or match-over behavior.
