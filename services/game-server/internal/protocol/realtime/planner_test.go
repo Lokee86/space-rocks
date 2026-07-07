@@ -186,6 +186,34 @@ func TestCandidateWriteDiagnosticsForReturnsMetadataForFullCandidate(t *testing.
 	}
 }
 
+func TestScheduleRecordForCandidateCopiesAsteroidChunkMetadata(t *testing.T) {
+	candidate := RealtimeLaneCandidate{
+		Lane: LaneAsteroids,
+		Kind: RealtimeLaneCandidateKindDelta,
+		Delta: AsteroidWireDeltaPacket{
+			Type: PacketFamilyAsteroidDelta,
+			Metadata: Metadata{
+				Lane:         LaneAsteroids,
+				Sequence:     7,
+				ChunkIndex:   1,
+				ChunkCount:   3,
+				IsFinalChunk: false,
+			},
+		},
+	}
+
+	record := scheduleRecordForCandidate(4, candidate)
+	if got, want := record.ChunkIndex, 1; got != want {
+		t.Fatalf("schedule record chunk index = %d, want %d", got, want)
+	}
+	if got, want := record.ChunkCount, 3; got != want {
+		t.Fatalf("schedule record chunk count = %d, want %d", got, want)
+	}
+	if record.IsFinalChunk {
+		t.Fatalf("schedule record final chunk = %v, want false", record.IsFinalChunk)
+	}
+}
+
 func TestCandidateWriteDiagnosticsForReturnsMetadataForDeltaCandidateAndFallsBackWithoutMetadata(t *testing.T) {
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true})

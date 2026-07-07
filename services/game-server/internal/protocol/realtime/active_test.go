@@ -210,6 +210,96 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	}
 }
 
+func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.T) {
+	previousAsteroids := make(map[string]runtime.AsteroidState, 300)
+	currentAsteroids := make(map[string]runtime.AsteroidState, 300)
+	for i := 1; i <= 300; i++ {
+		id := fmt.Sprintf("asteroid-%06d", i)
+		previousAsteroids[id] = runtime.AsteroidState{ID: id, X: float64(i), Y: float64(i + 1), Size: 2, Health: 3, Scale: 1.25, Variant: 4}
+		currentAsteroids[id] = runtime.AsteroidState{ID: id, X: float64(i + 20), Y: float64(i + 21), Size: 2, Health: 3, Scale: 1.25, Variant: 4}
+	}
+
+	previousSnapshot := game.GameplayPresentationSnapshot{
+		SelfID:         "player-1",
+		Lives:          3,
+		ServerSentMsec: 2234,
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5},
+		},
+		PlayerSessions: map[string]game.PlayerSessionState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", Score: 9, Lives: 3, RespawnCooldown: 1.25, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite", SecondaryWeaponID: "mine", SecondaryAmmoPolicy: "limited"},
+		},
+		PlayerLifecycle: map[string]string{"player-1": "active"},
+		Asteroids:       previousAsteroids,
+	}
+	currentSnapshot := previousSnapshot
+	currentSnapshot.ServerSentMsec = 2235
+	currentSnapshot.Asteroids = currentAsteroids
+
+	state := NewRealtimeSessionState("player-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
+	state.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 1, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneOverlay)
+	state.StoreBaselineProjection(LaneOverlay, mustOverlayWireFull(t, previousSnapshot, "player-1", 1))
+	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 1, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneSession)
+	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, previousSnapshot, 1))
+
+	result := BuildActiveRealtimeResult(currentSnapshot, state)
+
+	asteroidPackets := encodedPacketsForLane(result, LaneAsteroids)
+	if len(asteroidPackets) <= 1 {
+		t.Fatalf("expected multiple asteroid lane packets, got %d", len(asteroidPackets))
+	}
+
+	selectedAsteroidCandidates := 0
+	for _, candidate := range result.SelectedCandidates {
+		if candidate.Lane == LaneAsteroids {
+			selectedAsteroidCandidates++
+		}
+	}
+	if selectedAsteroidCandidates != len(asteroidPackets) {
+		t.Fatalf("selected asteroid candidates mismatch: candidates=%d selected=%d encoded=%d selected_asteroid_candidates=%d asteroid_packets=%d total_asteroid_updates=%d", len(result.Candidates), len(result.SelectedCandidates), len(result.EncodedLanePackets), selectedAsteroidCandidates, len(asteroidPackets), 0)
+	}
+
+	totalAsteroidUpdates := 0
+	for index, encoded := range asteroidPackets {
+		if encoded.Candidate.Lane != LaneAsteroids {
+			t.Fatalf("asteroid encoded packet %d lane = %q, want asteroids", index, encoded.Candidate.Lane)
+		}
+		if encoded.Candidate.Kind != RealtimeLaneCandidateKindDelta {
+			t.Fatalf("asteroid encoded packet %d kind = %q, want delta", index, encoded.Candidate.Kind)
+		}
+		packet, ok := encoded.Candidate.Delta.(AsteroidWireDeltaPacket)
+		if !ok {
+			t.Fatalf("asteroid encoded packet %d delta type = %T, want AsteroidWireDeltaPacket", index, encoded.Candidate.Delta)
+		}
+		totalAsteroidUpdates += len(packet.AsteroidUpdates)
+		if len(packet.AsteroidUpdates) != 1 && encoded.EncodedBytes > HardCapBytes {
+			t.Fatalf("asteroid encoded packet %d bytes = %d, want <= %d unless single-update chunk", index, encoded.EncodedBytes, HardCapBytes)
+		}
+	}
+	if totalAsteroidUpdates != len(previousAsteroids) {
+		t.Fatalf("asteroid updates across chunks = %d, want %d (candidates=%d selected=%d encoded=%d selected_asteroid_candidates=%d asteroid_packets=%d total_asteroid_updates=%d)", totalAsteroidUpdates, len(previousAsteroids), len(result.Candidates), len(result.SelectedCandidates), len(result.EncodedLanePackets), selectedAsteroidCandidates, len(asteroidPackets), totalAsteroidUpdates)
+	}
+
+	if result.TotalEncodedBytes <= 0 {
+		t.Fatal("expected total encoded bytes to be positive")
+	}
+
+	asteroidMetricCount := 0
+	for _, record := range result.MetricSummaries {
+		if record.PacketFamily == PacketFamilyAsteroidDelta {
+			asteroidMetricCount++
+		}
+	}
+	if asteroidMetricCount <= 1 {
+		t.Fatalf("expected more than one asteroid metric summary, got %d", asteroidMetricCount)
+	}
+}
+
 func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T) {
 	previousBullets := make(map[string]runtime.BulletState, 240)
 	currentBullets := make(map[string]runtime.BulletState, 240)
