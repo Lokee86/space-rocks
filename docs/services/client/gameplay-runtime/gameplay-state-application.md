@@ -98,6 +98,7 @@ For packet-family and transport detail, see:
 * [Gameplay packets](../../../protocol/gameplay-packets.md)
 * [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
 * [Packet Schemas](../../../data/packet-schemas.md)
+* [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 
 ## Data ownership
 
@@ -230,6 +231,7 @@ Relevant client tests include:
 * [Gameplay packets](../../../protocol/gameplay-packets.md)
 * [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
 * [Packet Schemas](../../../data/packet-schemas.md)
+* [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 
 ## Notes
 

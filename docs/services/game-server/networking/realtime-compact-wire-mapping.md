@@ -87,6 +87,7 @@ For `asteroid_delta` and `bullet_delta`, `chunk_index` and `chunk_count` are emi
 - `overlay_delta` -> `od`
 - `session_full` -> `sf`
 - `session_delta` -> `sd`
+- `event_batch` -> `eb`
 
 ## Compact Lane Values
 
@@ -292,7 +293,13 @@ It is the presentation-event lane, not a state lane.
 It keeps batching: one ordered batch can contain multiple pending presentation events.
 It does not become one packet per event.
 
-Known event records are tuple-shaped for the compact wire path.\r\nKnown event records no longer use broad reflected `EventState` output.\r\nUnknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.\r\n\r\nUnknown map-shaped event records remain compatibility fallback records and should not be forced into tuple arrays just because they have compact aliases. Known event records are tuple arrays; unknown event records stay map shaped.\r\n\r\n`sd` is not used for `ship_death` because `sd` is already reserved for `session_delta`.
+Known event records are tuple-shaped for the compact wire path.
+Known event records no longer use broad reflected `EventState` output.
+Unknown or newly added event types may still fall back to legacy long-key reflected output for compatibility until they are explicitly shaped for compact sparse output.
+
+Unknown map-shaped event records remain compatibility fallback records and should not be forced into tuple arrays just because they have compact aliases. Known event records are tuple arrays; unknown event records stay map shaped.
+
+`sd` is not used for `ship_death` because `sd` is already reserved for `session_delta`.
 
 ### Canonical Event Batch Alias Tables
 

@@ -152,13 +152,13 @@ server local JSONL logging
 client local JSONL logging
 encoded-byte validation from active debug logs
 devtools packet telemetry display when useful
-packet-pressure smoke scenario when useful for P2 validation
+packet-pressure smoke scenario when useful for active realtime protocol validation
 ```
 
 ### Completion Criteria
 
 ```text
-lane-native runtime evidence is usable for P2 validation
+lane-native runtime evidence is usable for active realtime protocol validation
 server and client local JSONL logging are available for local diagnostic capture
 active debug logs can validate encoded bytes
 no-op realtime summary spam and scheduler-ish log spam are removed from the active output path
@@ -171,13 +171,13 @@ no gameplay behavior has changed
 
 ```text
 If normal gameplay packets are too large for the target budget:
--> proceed directly to realtime protocol architecture.
+-> continue remaining realtime protocol evolution before entity-heavy gameplay expansion.
 
 If packet size is acceptable but timing, jitter, or build/write cost is unclear:
--> harden runtime observability before protocol changes.
+-> harden runtime observability before deeper protocol changes.
 
 If packet size stays under budget and timing is clean:
--> platform/account work may move ahead before deeper optimization.
+-> platform/account work may move ahead while remaining protocol work stays measurement-driven.
 ```
 ## Phase P2 - Realtime Protocol Architecture
 
@@ -208,12 +208,12 @@ create/update/delete records
 priority policy
 resync path
 shadow verification
-cutover
+current lane-native WebRTC runtime path
 ```
 
-### P2 Validation Support
+### Remaining Realtime Protocol Validation Support
 
-Deferred network telemetry and logging work can resume during P2 when it helps validate protocol changes:
+Deferred network telemetry and logging work can resume during remaining realtime protocol validation when it helps validate protocol changes:
 
 ```text
 client inbound packet byte tracking when useful
@@ -223,7 +223,7 @@ packet-pressure smoke checks for protocol changes
 logging refinements needed to validate packet-size reduction
 ```
 
-This support work belongs to P2 when it helps validate lanes, snapshots, deltas, baseline handling, packet-size improvements, or realtime protocol behavior.
+This support work belongs to remaining realtime protocol validation when it helps validate lanes, snapshots, deltas, baseline handling, packet-size improvements, or realtime protocol behavior.
 
 ### Deferred Next-Phase Codec And Packed Representation Work
 
@@ -243,11 +243,10 @@ Compact JSON aliases, sparse delta section omission, tuple packing for asteroids
 2. Server projections/full/delta/baselines for world, overlay, and session lanes; event presentation remains a compact sparse presentation-event lane, not a baseline or delta lane. Projection, scheduling, and encoding do not drain; shadow may peek/copy pending events but never drains.
 3. Candidate-level priority scheduler and estimated budget planner are current; future work deepens this into record/entity-level prioritization.
 4. Generic lane metrics remain future validation support unless active runtime logging explicitly emits them.
-5. Client protocol/realtime lane caches and compatibility read model.
-6. Shadow encode/measure/parity with no send and no event drain. Shadow never drains; active `event_batch` drains only after socket write/enqueue success.
-7. Runtime cutover behind a temporary dev-only switch.
-8. Replace compatibility read model with lane-native presentation adapters.
-10. Next phase: codec move plus binary/packed representation, deeper packet-budget work, and record/entity-level prioritization.
+5. Client protocol/realtime lane caches and lane-native presentation adapters are current.
+6. Shadow encode/measure/parity support remains validation support and must not drain presentation events. Active `event_batch` drains only after socket write/enqueue success.
+7. Lane-native WebRTC gameplay delivery is the current runtime path.
+8. Next phase: codec move plus binary/packed representation, deeper packet-budget work, interest filtering, stronger resync behavior, compatibility/versioning, and record/entity-level prioritization.
 ```
 
 ### Completion Criteria
@@ -259,10 +258,10 @@ per-session baselines exist
 shared-world and per-session overlay baselines exist
 sequence handling exists
 priority policy exists
-lane/priority metrics exist
+candidate-level send-plan records exist; active runtime evidence comes from per-packet wire logs and non-empty write summaries unless generic lane metrics are explicitly reintroduced
 remaining lane-native runtime state path supports the P2 delivery model
 high-frequency state no longer depends on one full combined packet every tick
-stable event identity exists before event_batch cutover
+event_batch identity, duplicate suppression, and drain-after-success behavior are defined for the current active path
 event_batch duplicate suppression and control-path/event-drain ordering are defined after active socket write/enqueue success
 ```
 ## Phase P3 - Technical Release Foundation

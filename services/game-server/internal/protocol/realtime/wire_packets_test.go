@@ -487,7 +487,7 @@ func TestWireWorldDeltaPacketEncodesAsteroidUpdatesAsPartialFieldPatch(t *testin
 
 func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneWorld,
+		Lane: LaneAsteroids,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: AsteroidWireDeltaPacket{
 			Type:     PacketFamilyAsteroidDelta,
@@ -504,7 +504,7 @@ func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
 		},
 	}))
 
-	assertStringValue(t, wire, "type", PacketFamilyAsteroidsLifecycle)
+	assertStringValue(t, wire, "type", PacketFamilyAsteroidDelta)
 	assertIntValue(t, wire, "sequence", 42)
 	assertIntValue(t, wire, "server_sent_msec", 123456)
 	assertIntValue(t, wire, "chunk_index", 1)
@@ -527,7 +527,7 @@ func TestWireAsteroidLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
 		},
 	}))
 
-	assertStringValue(t, wire, "type", PacketFamilyAsteroidDelta)
+	assertStringValue(t, wire, "type", PacketFamilyAsteroidsLifecycle)
 	assertIntValue(t, wire, "sequence", 44)
 	assertIntValue(t, wire, "server_sent_msec", 987654)
 	assertContainsKey(t, wire, "asteroid_creates")
@@ -553,7 +553,7 @@ func TestWireAsteroidLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
 
 func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneWorld,
+		Lane: LaneBullets,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: BulletWireDeltaPacket{
 			Type:     PacketFamilyBulletDelta,
@@ -569,7 +569,7 @@ func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
 		},
 	}))
 
-	assertStringValue(t, wire, "type", PacketFamilyBulletsLifecycle)
+	assertStringValue(t, wire, "type", PacketFamilyBulletDelta)
 	assertIntValue(t, wire, "sequence", 43)
 	assertIntValue(t, wire, "server_sent_msec", 654321)
 	assertIntValue(t, wire, "chunk_index", 2)
@@ -783,8 +783,8 @@ func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
 				SnapshotKind: SnapshotKind("delta"),
 			},
 			Ships: FieldRecordDelta[WorldShipRecord]{Creates: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}, Updates: []map[string]any{{"id": "ship-a", "x": 2}}, Deletes: []string{"ship-b"}},
-			Bullets: FieldRecordDelta[WorldBulletRecord]{Creates: []WorldBulletRecord{{ID: "bullet-a", X: 1, Y: 2, Rotation: 3, OwnerID: "ship-a", WeaponID: "pulse", ProjectileType: "laser"}}, Updates: []map[string]any{{"id": "bullet-a", "x": 4, "y": 5}}, Deletes: []string{"bullet-z"}},
-			Asteroids: FieldRecordDelta[WorldAsteroidRecord]{Creates: []WorldAsteroidRecord{{ID: "asteroid-a", X: 1, Y: 2, Size: 3, Health: 4, Scale: 5, Variant: 1}}, Updates: []map[string]any{{"id": "asteroid-a", "x": 6}}, Deletes: []string{"asteroid-a"}},
+			Bullets: FieldRecordDelta[WorldBulletRecord]{Updates: []map[string]any{{"id": "bullet-a", "x": 4, "y": 5}}},
+			Asteroids: FieldRecordDelta[WorldAsteroidRecord]{Updates: []map[string]any{{"id": "asteroid-a", "x": 6}}},
 			Pickups: FieldRecordDelta[WorldPickupRecord]{Creates: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 1, Y: 2, Health: 3, AgeSeconds: 4, LifespanSeconds: 5}}, Updates: []map[string]any{{"id": "pickup-a", "x": 7}}, Deletes: []string{"pickup-a"}},
 		},
 	}
@@ -818,7 +818,7 @@ func TestActiveWirePacketEncodingUsesBulletLifecycleEnvelope(t *testing.T) {
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
-	assertStringValue(t, wire, "type", PacketFamilyBulletDelta)
+	assertStringValue(t, wire, "type", PacketFamilyBulletsLifecycle)
 	assertIntValue(t, wire, "sequence", 11)
 	assertStringValue(t, wire, "baseline_id", "bullet-baseline-11")
 	assertContainsKey(t, wire, "bullet_creates")

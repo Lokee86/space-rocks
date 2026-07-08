@@ -218,7 +218,7 @@ Server outbound encoding uses:
 
 `packetcodec.Encode(packet)` currently wraps `json.Marshal(packet)`.
 
-The outbound routing path does not own the packet schema or wire-format strategy. The current implementation is JSON text over WebSocket for queued one-off packets. For queued one-off packets, networking-side producers often encode packet structs before enqueueing. For active realtime lane packets, the realtime protocol package builds the wire map, applies sparse omission and compact aliases, encodes JSON through `services/game-server/internal/protocol/packetcodec`, and sends encoded bytes to `session.webrtcTransport.SendEncodedLaneJSON()` for WebRTC delivery. Hot asteroid and bullet lanes remain supersedable, while lifecycle creates/deletes stay on `sr.world`.
+The outbound routing path does not own the packet schema or wire-format strategy. The current implementation is JSON text over WebSocket for queued one-off packets. For queued one-off packets, networking-side producers often encode packet structs before enqueueing. For active realtime lane packets, the realtime protocol package builds the wire map, applies sparse omission and compact aliases, encodes JSON through `services/game-server/internal/protocol/packetcodec`, and sends encoded bytes to `session.webrtcTransport.SendEncodedLaneJSON()` for WebRTC delivery. Hot asteroid and bullet lanes remain supersedable. Asteroid and bullet lifecycle creates/deletes are emitted on dedicated ordered/reliable lifecycle lanes: `sr.asteroids.lifecycle` and `sr.bullets.lifecycle`; `sr.world` no longer owns those active lifecycle creates/deletes.
 
 ## Packet families
 
@@ -483,7 +483,7 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, `EncodedLanePackets` list construction, compact/packetcodec boundary, hot-packet encoded-size validation, and encoded-byte accounting.
 - `services/game-server/internal/protocol/realtime/scheduler.go` - include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
 - `services/game-server/internal/networking/packetmetrics/` - packet observability helper types retained around outbound/realtime seams; not active `realtime lane metric` emission.
-- `docs/planning/protocol/realtime-protocol-architecture.md` owns future realtime protocol delivery policy planning.
+- [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 
 ## Tests and verification
 

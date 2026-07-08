@@ -187,7 +187,7 @@ func TestExpandHotLaneCandidateChunksLeavesAsteroidLifecycleUntouched(t *testing
 		Lane: LaneAsteroidsLifecycle,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: AsteroidWireDeltaPacket{
-			Type: PacketFamilyAsteroidDelta,
+			Type:     PacketFamilyAsteroidsLifecycle,
 			Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
 			AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
 		},
@@ -207,8 +207,8 @@ func TestExpandHotLaneCandidateChunksLeavesAsteroidLifecycleUntouched(t *testing
 	if !ok {
 		t.Fatalf("expected AsteroidWireDeltaPacket, got %#v", chunks[0].Delta)
 	}
-	if packet.Metadata.Lane != LaneAsteroidsLifecycle || packet.Metadata.ChunkCount != 1 || packet.Metadata.ChunkIndex != 0 || !packet.Metadata.IsFinalChunk {
-		t.Fatalf("asteroid lifecycle packet metadata = %#v, want untouched single final chunk", packet.Metadata)
+	if packet.Metadata.Lane != LaneAsteroidsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 0 || packet.Metadata.IsFinalChunk != false {
+		t.Fatalf("asteroid lifecycle packet metadata = %#v, want index=0 count=0 final=false", packet.Metadata)
 	}
 }
 
@@ -217,7 +217,7 @@ func TestExpandHotLaneCandidateChunksLeavesBulletLifecycleUntouched(t *testing.T
 		Lane: LaneBulletsLifecycle,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: BulletWireDeltaPacket{
-			Type: PacketFamilyBulletDelta,
+			Type:     PacketFamilyBulletsLifecycle,
 			Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
 			BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
 		},
@@ -237,8 +237,8 @@ func TestExpandHotLaneCandidateChunksLeavesBulletLifecycleUntouched(t *testing.T
 	if !ok {
 		t.Fatalf("expected BulletWireDeltaPacket, got %#v", chunks[0].Delta)
 	}
-	if packet.Metadata.Lane != LaneBulletsLifecycle || packet.Metadata.ChunkCount != 1 || packet.Metadata.ChunkIndex != 0 || !packet.Metadata.IsFinalChunk {
-		t.Fatalf("bullet lifecycle packet metadata = %#v, want untouched single final chunk", packet.Metadata)
+	if packet.Metadata.Lane != LaneBulletsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 0 || packet.Metadata.IsFinalChunk != false {
+		t.Fatalf("bullet lifecycle packet metadata = %#v, want index=0 count=0 final=false", packet.Metadata)
 	}
 }
 
@@ -256,7 +256,7 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 				Lane: LaneAsteroidsLifecycle,
 				Kind: RealtimeLaneCandidateKindDelta,
 				Delta: AsteroidWireDeltaPacket{
-					Type: PacketFamilyAsteroidDelta,
+					Type:     PacketFamilyAsteroidsLifecycle,
 					Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
 					AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
 				},
@@ -271,7 +271,7 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 				Lane: LaneBulletsLifecycle,
 				Kind: RealtimeLaneCandidateKindDelta,
 				Delta: BulletWireDeltaPacket{
-					Type: PacketFamilyBulletDelta,
+					Type:     PacketFamilyBulletsLifecycle,
 					Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
 					BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
 				},
@@ -286,7 +286,7 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 				Lane: LaneAsteroids,
 				Kind: RealtimeLaneCandidateKindDelta,
 				Delta: AsteroidWireDeltaPacket{
-					Type: PacketFamilyAsteroidDelta,
+					Type:     PacketFamilyAsteroidDelta,
 					Metadata: Metadata{Lane: LaneAsteroids, Sequence: 25, SnapshotKind: SnapshotKind("delta")},
 					AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-hot-1", 1, 2)},
 				},
@@ -301,7 +301,7 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 				Lane: LaneBullets,
 				Kind: RealtimeLaneCandidateKindDelta,
 				Delta: BulletWireDeltaPacket{
-					Type: PacketFamilyBulletDelta,
+					Type:     PacketFamilyBulletDelta,
 					Metadata: Metadata{Lane: LaneBullets, Sequence: 26, SnapshotKind: SnapshotKind("delta")},
 					BulletUpdates: []map[string]any{makeBulletUpdate("bullet-hot-1", 1, 2)},
 				},

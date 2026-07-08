@@ -658,6 +658,7 @@ Current direct coverage for `ServerPacketRouter` and `ServerPacketDispatcher` is
 * [Lobby Packets](../../../protocol/lobby-packets.md) - lobby packet documentation.
 * [Devtools Packets](../../../devtools/design/devtools-packet-protocol.md) - devtools packet documentation.
 * [Packet Schema Pipeline](../../../data/packet-schemas.md) - shared packet schema and generated output documentation.
+* [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 
 ## Notes
 

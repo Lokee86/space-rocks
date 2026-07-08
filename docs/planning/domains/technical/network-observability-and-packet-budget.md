@@ -7,7 +7,7 @@ This doc plans the network-visibility and packet-budget seam for future growth i
 
 ## Overview
 
-This doc keeps packet-size observability, local diagnostic capture, and packet-evidence planning aligned so network pressure can be measured before protocol changes are chosen.
+This doc keeps packet-size observability, local diagnostic capture, and packet-evidence planning aligned so network pressure can validate the active realtime protocol and guide remaining protocol evolution.
 
 ## Current status
 
@@ -47,7 +47,7 @@ These are the current project policy numbers for realtime gameplay traffic:
 
 ## Phase P1 - Network Observability And Packet Budget
 
-P1 answers whether the current architecture can safely support more entities and realtime state growth without flying blind. P1 is now a server-side packet evidence checkpoint. P1 records enough pressure and contributor data to select Phase P2 realtime protocol architecture. P1 is measurement and instrumentation, not optimization.
+P1 answers whether the current lane-native realtime architecture can safely support more entities and realtime state growth without flying blind. P1 is now a server-side packet evidence checkpoint for validating the active realtime protocol and guiding remaining protocol evolution. P1 is measurement and instrumentation, not optimization.
 
 ### Existing Baseline
 
@@ -75,7 +75,7 @@ P1 answers whether the current architecture can safely support more entities and
 - `event_batch` may be selected alongside other active lane candidates in the same tick.
 - Compact sparse event records reduce that event-tick spike.
 Recent extreme debug bullet-stream stress showed server-side hot-lane delivery sustaining 60Hz writes with complete same-sequence bullet chunks under the encoded hard cap. Client-side projectile rendering anomalies around roughly 450-500 active projectiles are tracked as a stable limitation rather than as active evidence of server packet starvation.
-Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable asteroid/bullet hot movement lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable sr.world, sr.overlay, sr.session, and sr.event, plus unordered/unreliable sr.asteroids and sr.bullets.
+Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable asteroid/bullet hot movement lanes, dedicated ordered/reliable asteroid/bullet lifecycle lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, plus unordered/unreliable `sr.asteroids` and `sr.bullets`.
 
 ### Future-State Note
 
@@ -98,7 +98,7 @@ Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicate
 - Define an initial gameplay packet budget.
 - Measure outbound gameplay packet byte size.
 - Identify contributor counts for large gameplay packets.
-- Surface packet byte pressure in devtools telemetry when useful during P2 validation.
+- Surface packet byte pressure in devtools telemetry when useful during remaining realtime protocol validation.
 - Keep observability separate from gameplay behavior.
 - Preserve JSON encoding until measurements identify the bottleneck.
 - Provide evidence for later packet strategy work.
@@ -121,7 +121,7 @@ Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicate
 - Gameplay snapshots have a tight budget on the realtime path.
 - Non-realtime, control, and debug payloads are separate from gameplay packet budgets.
 - Large gameplay packets are diagnostic signals, not a steady-state allowance.
-- The canonical budget lives here. Remaining telemetry and logging work should support P2 validation when it becomes useful, rather than acting as an endless Phase P1 blocker. Packet evidence can still be used to observe reduced JSON numeric size in float-heavy lanes, but this does not imply fixed savings for every packet mix.
+- The canonical budget lives here. Remaining telemetry and logging work should support active realtime protocol validation when it becomes useful, rather than acting as an endless Phase P1 blocker. Packet evidence can still be used to observe reduced JSON numeric size in float-heavy lanes, but this does not imply fixed savings for every packet mix.
 - Preferred frequent realtime packets should stay small and predictable.
 - Packets that grow noticeably should be justified, lowered in frequency, split, or deferred to later protocol work.
 
@@ -148,8 +148,8 @@ Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicate
 
 Raw packet payloads should not be logged by default.
 
-### Phase P2 Validation Display Requirements
-These display requirements are deferred until they are useful during Phase P2 validation; they are not Phase P1 completion blockers.
+### Realtime Protocol Validation Display Requirements
+These display requirements are deferred until they are useful during active realtime protocol validation; they are not Phase P1 completion blockers.
 
 - The World Telemetry Overlay should show latest gameplay packet bytes.
 - The World Telemetry Overlay should show max gameplay packet bytes.
@@ -163,31 +163,31 @@ These display requirements are deferred until they are useful during Phase P2 va
 1. Document packet budget policy.
 2. Keep current packet evidence and local JSONL diagnostic capture aligned with the active runtime output.
 3. Add only the cheap build, encode, and write context that is still useful and actually supported by current code.
-4. Keep remaining telemetry/logging framed as P2 validation support, not a Phase P1 blocker.
+4. Keep remaining telemetry/logging framed as active realtime protocol validation support, not a Phase P1 blocker.
 
 ### Phase P1 Completion Criteria
 
 - Packet budget policy is documented.
-- Server evidence is enough to select realtime protocol work.
-- Remaining telemetry and logging support is scoped to what helps P2 validation, not to proving every future packet policy in Phase P1.
+- Server evidence is enough to validate current protocol limits and guide remaining protocol work.
+- Remaining telemetry and logging support is scoped to what helps active realtime protocol validation, not to proving every future packet policy in Phase P1.
 - No packet format has changed.
 - No gameplay behavior has changed.
 - No feature work is mixed in.
 
 ### Phase P1 Decision Gate
 
-Phase P1 uses server-side packet evidence to decide whether Phase P2 should start immediately. Realtime protocol architecture is the selected Phase P2 route when current packet pressure is confirmed, because gameplay packets are already over budget before enemies or bullet hell mechanics exist.
+Phase P1 uses server-side packet evidence to decide how aggressively remaining realtime protocol evolution should continue. The lane-native realtime protocol, compact aliases, sparse deltas, tuple packing, WebRTC lane split, focused hot-lane chunking, and hot-packet encoded-size guards are current implementation facts. Remaining decisions are about deeper packet-budget policy, record/entity-level prioritization, interest filtering, stronger resync behavior, future binary representation, and future transport/versioning work.
 
-Outcome 1 - Start Phase P2 realtime protocol work immediately
+Outcome 1 - Continue remaining realtime protocol evolution aggressively
 
 - Choose this if normal gameplay packets are often large.
 - Choose this if packets spike upward under gameplay load.
 - Choose this if packet size grows predictably with bullets, asteroids, pickups, or players.
 - Choose this if write times or jitter correlate with packet size.
 - Choose this if entity-heavy features would clearly make packet pressure worse.
-- This is the likely outcome if Phase P1 confirms the current concern.
+- This is the aggressive remaining-protocol-evolution outcome if evidence shows active limits still block entity-heavy growth.
 
-Outcome 2 - Add only the observability needed before protocol work
+Outcome 2 - Add only the observability needed before deeper protocol changes
 
 - Choose this if packet size is measured but contributor evidence is still too coarse for the next decision.
 - Choose this if client overlay and server logs disagree.
@@ -195,26 +195,26 @@ Outcome 2 - Add only the observability needed before protocol work
 - Choose this if packet size is acceptable but tick, build, or write timing is not.
 - Choose this if instrumentation is too noisy or incomplete to justify a protocol change.
 
-Outcome 3 - Move to account identity planning before protocol work
+Outcome 3 - Allow account identity planning to move ahead before deeper protocol changes
 
 - Choose this only if normal gameplay packets stay modest and are not trending upward.
 - Choose this only if spikes are rare and explainable.
 - Choose this only if write timing and jitter show no packet-size pressure.
 - Choose this only if packet size is not blocking enemies, bullet hell, or progression soon.
 
-Likely protocol work families under Phase P2, without choosing one:
+Remaining validation and protocol evolution families:
 
-- Compact wire shape or generated short field names, if JSON key overhead dominates.
-- Delta snapshots, if repeated full entity state dominates.
-- Session lane split, if all data is being sent at the same frequency.
-- Event batching, event IDs, batch IDs, duplicate suppression, and drain-after-active-socket-write/enqueue-success behavior if presentation events accumulate or repeat too long. `event_batch` is already an active delivery path, so duplicate suppression and drain semantics should be described as current behavior where implemented, not only future work.
-- Debug lane separation, if debug or devtools data leaks into normal gameplay packets.
-- Shared room snapshot plus per-client overlay, if most state is duplicated per client but only small portions are player-specific.
+- Record/entity-level prioritization, if current whole-candidate selection cannot keep important objects visible under pressure.
+- Interest filtering, if clients should not receive every entity or event in the room.
+- Deeper packet-budget policy, if current candidate-level send-plan selection and hot-lane hard caps are not enough.
+- Stronger resync behavior, if baseline mismatch, packet loss, or reconnect behavior needs more explicit recovery.
+- Binary, bit-packed, protobuf, or custom binary representation, if JSON compact aliases and tuple packing are still not enough.
+- Future transport/versioning work, if the current mixed WebRTC policy needs compatibility or negotiation support.
 
-The next planning work after Phase P1 should be selected by evidence from the decision gate, not by feature visibility alone. After tuple packing is current, the next likely steps are to verify packet-size gains with stress logs, continue world lane reductions where needed, and keep binary/bitpacking as later work unless measurements justify it sooner.
-### P2 Validation Support
+Remaining protocol work after Phase P1 should be selected by evidence from the decision gate, not by feature visibility alone. The next likely steps are to verify packet-size behavior with stress logs, continue world lane reductions where needed, and keep binary/bitpacking as later work unless measurements justify it sooner.
+### Remaining Realtime Protocol Validation Support
 
-During P2, deferred network telemetry and logging work can resume when it helps validate protocol changes:
+During remaining realtime protocol validation, deferred network telemetry and logging work can resume when it helps validate protocol changes:
 
 ```text
 client inbound packet byte tracking when useful
@@ -224,22 +224,22 @@ packet-pressure smoke checks for protocol changes
 logging refinements needed to validate packet-size reduction
 ```
 
-This support work belongs to P2 when it helps validate lanes, snapshots, deltas, baseline handling, packet-size improvements, or realtime protocol behavior.
+This support work belongs to remaining realtime protocol validation when it helps validate lanes, snapshots, deltas, baseline handling, packet-size improvements, or realtime protocol behavior.
 
 ## Implementation sequence
 
 1. Document the canonical packet budget and keep measurement and diagnostics current.
 2. Keep active packet evidence and local JSONL diagnostic capture aligned with current runtime logging.
 3. Add only the build, encode, and write context that remains cheap, localized, and actually supported.
-4. Use server-side packet evidence to select realtime protocol work.
-5. Resume remaining telemetry/logging during P2 when it helps validate protocol changes.
+4. Use server-side packet evidence to guide remaining realtime protocol work.
+5. Resume remaining telemetry/logging during active realtime protocol validation when it helps validate protocol changes.
 
 ## Open decisions
 
 - Which packet sizes should remain warnings versus blockers?
 - Which contributor counts are worth tracking long term?
 - Which packet metrics should stay devtools-only versus also land in logs?
-- Whether Phase P1 evidence pushes the next step toward realtime protocol work, more observability hardening, or other planning.
+- Whether Phase P1 evidence pushes the next step toward deeper protocol work, more observability hardening, or other planning.
 
 ## Related docs
 

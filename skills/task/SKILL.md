@@ -1,818 +1,375 @@
-## Purpose
+## Realtime Planner Extraction Skill
 
-Use this skill to restore documentation consistency after implementing dedicated asteroid and bullet lifecycle lanes.
+Use this skill when refactoring the server realtime protocol planner to reduce `planner.go` responsibility without changing behavior.
 
-This documentation pass treats the current implementation as the full implementation of:
+## Goal
 
-```text
-sr.asteroids.lifecycle
-sr.bullets.lifecycle
-```
+Turn `services/game-server/internal/protocol/realtime/planner.go` from a mixed-responsibility protocol brain into a thin orchestration file.
 
-The goal is to eliminate stale documentation that still says asteroid and bullet lifecycle creates/deletes remain on `sr.world`.
+The planner should coordinate candidate assembly. It should not own candidate policy, diagnostics, lane-specific full/delta construction, lifecycle packet construction, or lane quantizer placement.
 
-## Source of truth
-
-Treat the implementation diff as the current source of truth.
-
-The implemented model is:
-
-```text
-sr.asteroids.lifecycle
-= reliable / ordered / required / critical
-= asteroids_lifecycle
-= asteroid_creates + asteroid_deletes
-
-sr.bullets.lifecycle
-= reliable / ordered / required / critical
-= bullets_lifecycle
-= bullet_creates + bullet_deletes
-
-sr.asteroids
-= unreliable / unordered / hot-supersedable
-= asteroid_delta
-= asteroid_updates only
-
-sr.bullets
-= unreliable / unordered / hot-supersedable
-= bullet_delta
-= bullet_updates only
-
-sr.world
-= reliable / ordered
-= ships, pickups, player/world presentation state, bootstrap/full snapshots, compatibility/resync-safe support where still implemented
-= no longer the active owner for asteroid/bullet lifecycle creates/deletes
-```
-
-Core rule:
-
-```text
-Lifecycle defines existence. Hot lanes update known entities only.
-```
+This is a structural cleanup. Preserve behavior.
 
 ## Scope
 
-Update existing documentation only unless an index or documentation policy explicitly requires a new file.
+Work only in:
 
-No new documentation file is expected.
+* `services/game-server/internal/protocol/realtime/`
 
-No document deletions are expected.
+Expected production file additions:
 
-This pass should update protocol, transport, outbound routing, inbound routing, lane projection, compact wire mapping, client world sync, entity docs, devtools docs, and related planning summaries where stale references remain.
+* `candidate_types.go`
+* `candidate_policy.go`
+* `candidate_projection.go`
+* `candidate_diagnostics.go`
+* `lane_candidate_world.go`
+* `lane_candidate_overlay.go`
+* `lane_candidate_session.go`
+* `lane_candidate_event.go`
+* `lane_candidate_lifecycle.go`
+* `quantize_overlay.go`
+* `quantize_session.go`
 
-## Required documentation statements
+Test files may be split only after production extraction is stable.
 
-Use this statement, or equivalent wording, wherever the lane model is summarized:
+## Package Boundary Rule
 
-```text
-Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
-```
+Do not create new subpackages for this pass.
 
-Use this statement, or equivalent wording, wherever cross-lane ordering is described:
+Keep all extracted planner pieces in package `realtime`.
 
-```text
-Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
-```
+Rationale:
 
-Use this statement where client hot-lane behavior is described:
+* Planner code depends on core realtime types, packet structs, metadata, deltas, quantizers, lane state, hot-lane policy, and packet-family constants.
+* Creating subpackages now would likely introduce import cycles or premature `core/common` packages.
+* Same-package file seams make ownership visible without changing dependency shape.
 
-```text
-Hot movement packets must never create entities. Unknown hot asteroid updates are ignored. Unknown hot bullet updates are buffered only where the client explicitly supports waiting for lifecycle create; hot updates after delete are ignored and must not resurrect removed entities.
-```
+The existing `quantize/` subpackage is fine. Do not move planner candidate code into it.
 
-## Remove stale claims
+## Required Behavior Preservation
 
-Remove or correct docs that say:
+Preserve all current behavior, including:
 
-```text
-lifecycle creates/deletes remain on sr.world
-world lane owns asteroid/bullet lifecycle creates/deletes
-hot lanes create entities
-asteroid_delta/bullet_delta are lifecycle delivery
-all entity lifecycle traffic is world-lane traffic
-```
+* full packet fallback when no usable baseline projection exists
+* delta omission when projection has not changed
+* chained projection storage for delta candidates
+* world hot-lane splitting
+* asteroid and bullet hot-lane candidate creation
+* asteroid and bullet lifecycle candidate creation
+* hot-lane cohort state mutation through `sessionState`
+* event batch creation without draining pending events
+* candidate delivery class, priority, and packet-family selection
+* schedule record construction
+* candidate diagnostics output
+* quantization behavior
 
-Remaining `world lane asteroid records` or `world lane bullet records` references must either be removed or clearly limited to full/bootstrap/compatibility context.
+Do not change scheduling behavior in this pass.
 
-## Primary stale files
+Do not change hot-lane chunking behavior in this pass.
 
-Update these first.
+Do not replace `RealtimeLaneCandidate.Full`, `RealtimeLaneCandidate.Delta`, or `RealtimeLaneCandidate.Projection` with typed interfaces in this pass.
 
-### docs/protocol/realtime-webrtc-gameplay-transport.md
+## Target Planner Shape
 
-Update the physical channel table to eight channels:
+After extraction, `planner.go` should mostly contain:
 
-```text
-logical lane             | physical channel         | negotiated id | packet families
-world                    | sr.world                 | 1             | world_full, world_delta
-overlay                  | sr.overlay               | 2             | overlay_full, overlay_delta
-session                  | sr.session               | 3             | session_full, session_delta
-event                    | sr.event                 | 4             | event_batch
-asteroids                | sr.asteroids             | 5             | asteroid_delta
-bullets                  | sr.bullets               | 6             | bullet_delta
-asteroids.lifecycle      | sr.asteroids.lifecycle   | 7             | asteroids_lifecycle
-bullets.lifecycle        | sr.bullets.lifecycle     | 8             | bullets_lifecycle
-```
+* `AssembleRealtimeLaneCandidates`
+* `assembleRealtimeLaneCandidates`
+* possibly `prepareRealtimeSendPlan`, unless moving it is a simple pure move
 
-Replace the channel policy with:
+The private assembly function should append results from lane-specific builders:
 
-```text
-sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle are negotiated ordered/reliable channels.
-sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
-sr.asteroids carries supersedable asteroid_updates only.
-sr.bullets carries supersedable bullet_updates only.
-sr.asteroids.lifecycle carries asteroid_creates and asteroid_deletes.
-sr.bullets.lifecycle carries bullet_creates and bullet_deletes.
-Lifecycle channels define entity existence. Hot lanes update known existing entities only.
-```
+* `buildWorldLaneCandidates`
+* `buildOverlayLaneCandidates`
+* `buildSessionLaneCandidates`
+* `buildEventLaneCandidates`
 
-Add the cross-lane race note:
+## Extraction Order
 
-```text
-Reliable lifecycle lanes and unreliable hot lanes do not provide global ordering across lanes. The client must tolerate hot updates arriving before lifecycle creates and after lifecycle deletes. Hot packets must not create missing entities or resurrect deleted entities.
-```
+### 1. Extract Candidate Types
 
-Update send and receive boundary descriptions so lifecycle packets flow through the same WebRTC/DataChannel path.
+Create `candidate_types.go`.
 
-### docs/protocol/realtime-websocket-protocol.md
+Move from `planner.go`:
 
-Update overview text so current active gameplay WebRTC channels include:
+* `RealtimeLaneCandidateKind`
+* `RealtimeLaneCandidateKindFull`
+* `RealtimeLaneCandidateKindDelta`
+* `RealtimeLaneCandidateKindEventBatch`
+* `RealtimeLaneCandidate`
+* `RealtimeLanePlan`
+* `RealtimeSendPrepared`
 
-```text
-sr.world
-sr.overlay
-sr.session
-sr.event
-sr.asteroids
-sr.bullets
-sr.asteroids.lifecycle
-sr.bullets.lifecycle
-```
+Do not change names or exported status.
 
-Update current gameplay lanes list to include:
+### 2. Extract Candidate Policy
 
-```text
-asteroids.lifecycle
-bullets.lifecycle
-```
-
-Update active packet families to include:
-
-```text
-asteroids_lifecycle
-bullets_lifecycle
-```
+Create `candidate_policy.go`.
 
-Update compact/envelope documentation to include:
+Move from `planner.go`:
 
-```text
-asteroids_lifecycle -> al
-bullets_lifecycle -> bl
-asteroids.lifecycle -> al
-bullets.lifecycle -> bl
-```
+* `packetFamilyForCandidate`
+* `deliveryClassForCandidate`
+* `priorityForCandidate`
+* `scheduleRecordForCandidate`
 
-Update field-delta semantics to include:
+Preserve exact logic.
 
-```text
-asteroids_lifecycle asteroid_creates/asteroid_deletes = id
-bullets_lifecycle bullet_creates/bullet_deletes = id
-asteroid_delta asteroid_updates = id
-bullet_delta bullet_updates = id
-```
+Do not change delivery classes.
 
-Update the world lane section:
+Do not change priorities.
 
-* Remove active `world_delta` ownership of asteroid/bullet creates/deletes.
-* Keep compatibility wording only if framed as legacy/bootstrap/resync-safe support.
-* Do not say active lifecycle remains on `sr.world`.
+Do not change `EstimatedBytes`.
 
-Add dedicated sections:
+Do not change `PayloadRef` behavior.
 
-```text
-### Asteroid lifecycle lane packets
-### Bullet lifecycle lane packets
-```
+### 3. Extract Candidate Projection
 
-Each section must define:
+Create `candidate_projection.go`.
 
-* Creates/deletes.
-* Reliable ordered delivery.
-* Required/critical scheduling.
-* Lifecycle defines entity existence.
-* Hot lanes update known entities only.
-* Cross-lane ordering is not global.
+Move from `planner.go`:
 
-Update scheduling:
+* `CandidateProjection`
 
-```text
-asteroids_lifecycle and bullets_lifecycle = required / critical
-asteroid_delta and bullet_delta = hot-supersedable / high priority
-```
+Preserve exact logic.
 
-State that lifecycle lanes are not hot-supersedable and are not split by hot-lane chunking.
+Leave `CandidateMetadata` in `baseline.go` for this pass unless a later bounded task specifically moves metadata helpers.
 
-Update client inbound routing:
+### 4. Extract Candidate Diagnostics
 
-```text
-asteroids_lifecycle_received
-bullets_lifecycle_received
-```
+Create `candidate_diagnostics.go`.
 
-Add that `RealtimeRouter` handles these through:
+Move from `planner.go`:
 
-```text
-WorldLaneApplier.apply_asteroids_lifecycle
-WorldLaneApplier.apply_bullets_lifecycle
-```
+* `CandidateWriteDiagnostics`
+* `CandidateWriteDiagnosticsFor`
+* `hotPacketCadenceForDiagnostics`
+* `hotPacketCadenceLabel`
+* `hotLaneModesForDiagnostics`
+* `hotLaneCountsForDiagnostics`
 
-Update client-recognized inbound packet types to include both lifecycle packet families.
+Preserve exact diagnostics fields and values.
 
-Update delivery/failure semantics so ordered/reliable active gameplay lanes include:
+### 5. Extract Overlay Candidate Builder
 
-```text
-sr.world
-sr.overlay
-sr.session
-sr.event
-sr.asteroids.lifecycle
-sr.bullets.lifecycle
-```
+Create `lane_candidate_overlay.go`.
 
-### docs/protocol/gameplay-packets.md
-
-Update active server-to-client gameplay packet families:
-
-```text
-world_full / world_delta
-asteroids_lifecycle
-bullets_lifecycle
-asteroid_delta
-bullet_delta
-overlay_full / overlay_delta
-session_full / session_delta
-event_batch
-player_pause_state
-resync_request / resync_required
-```
-
-Replace lane ownership with:
-
-```text
-world lane
-= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
-
-asteroids lifecycle lane
-= asteroid creates/deletes and initial asteroid presentation identity, including variant/size/scale
-
-bullets lifecycle lane
-= bullet/projectile creates/deletes and initial projectile identity, including owner, weapon_id, projectile_type, and torpedo identity
-
-asteroids hot lane
-= regular asteroid movement updates on unordered/unreliable sr.asteroids
-
-bullets hot lane
-= regular bullet/projectile movement updates on unordered/unreliable sr.bullets
-```
-
-Add the hot packet race rule:
-
-```text
-Hot movement packets must never create entities. Unknown hot asteroid updates are ignored. Unknown hot bullet updates are buffered only where the client explicitly supports waiting for lifecycle create; hot updates after delete are ignored and must not resurrect removed entities.
-```
-
-### docs/domains/technical/realtime-client-server-flow.md
-
-Update packet family summaries to include:
-
-```text
-world_full/world_delta
-asteroids_lifecycle
-bullets_lifecycle
-asteroid_delta
-bullet_delta
-overlay_full/overlay_delta
-session_full/session_delta
-event_batch
-```
-
-Replace stale world lifecycle wording with:
-
-```text
-Asteroid and bullet lifecycle creates/deletes are subtractively removed from active world_delta and emitted as reliable ordered lifecycle packets on sr.asteroids.lifecycle and sr.bullets.lifecycle. Dedicated unordered hot lanes carry movement updates only.
-```
-
-Update lane policy:
-
-```text
-ordered/reliable:
-sr.world
-sr.overlay
-sr.session
-sr.event
-sr.asteroids.lifecycle
-sr.bullets.lifecycle
-
-unordered/unreliable:
-sr.asteroids
-sr.bullets
-```
-
-Update client routing lists to include:
-
-```text
-asteroids_lifecycle
-bullets_lifecycle
-```
-
-### docs/services/client/networking-flow/inbound-packet-routing.md
-
-Update overview channel list to include lifecycle DataChannels.
-
-Add classified inbound packet types:
-
-```text
-asteroids_lifecycle
-bullets_lifecycle
-```
-
-Add dispatcher outputs:
-
-```text
-asteroids_lifecycle_received(packet)
-bullets_lifecycle_received(packet)
-```
-
-Update the connection-service gameplay packet path:
-
-```text
-ServerPacketDispatcher
--> ClientConnectionService._route_gameplay_packet
--> RealtimeRouter.route_lane_packet
--> WorldLaneApplier lifecycle method
--> gameplay_packet_received
-```
-
-Update current inbound routes so lifecycle packets are included with other lane packets.
-
-In gameplay handoff, state that by the time `GameplaySessionController` receives the packet, lifecycle packet state has already been applied to `WorldLaneState`.
-
-Add relevant tests:
-
-```text
-client/tests/unit/networking/test_server_packet_dispatcher.gd
-client/tests/unit/world/test_projectile_sync.gd
-client/tests/unit/world/test_asteroid_sync.gd
-client/tests/unit/world/test_world_sync.gd
-```
-
-### docs/services/game-server/networking/outbound-message-flow.md
-
-Update physical channel overview so current active gameplay channels include:
-
-```text
-sr.world
-sr.overlay
-sr.session
-sr.event
-sr.asteroids
-sr.bullets
-sr.asteroids.lifecycle
-sr.bullets.lifecycle
-```
-
-Update responsibilities to include reliable/ordered WebRTC delivery for lifecycle lanes.
-
-Update active realtime lane packets list:
-
-```text
-world_full
-world_delta
-asteroids_lifecycle
-bullets_lifecycle
-asteroid_delta
-bullet_delta
-overlay_full
-overlay_delta
-session_full
-session_delta
-event_batch
-resync_request
-resync_required
-```
-
-Update lane roles:
-
-```text
-world = ships, pickups, world/match presentation state, full/bootstrap snapshots
-asteroids.lifecycle = asteroid creates/deletes
-bullets.lifecycle = bullet/projectile creates/deletes
-asteroids = asteroid movement updates
-bullets = bullet movement updates
-```
-
-Replace any stale lifecycle wording with:
-
-```text
-Lifecycle creates/deletes use required/critical reliable lifecycle lanes.
-```
-
-Update ticker-driven active lane write descriptions to mention that planner can emit lifecycle candidates before hot movement candidates.
-
-Update observability so `lane protocol gameplay wire packet written` may show:
-
-```text
-sr.asteroids.lifecycle
-sr.bullets.lifecycle
-```
-
-But chunked hot-lane logs only apply to:
-
-```text
-sr.asteroids
-sr.bullets
-```
-
-Ensure the code map includes:
-
-```text
-services/game-server/internal/protocol/realtime/lanes.go
-services/game-server/internal/protocol/realtime/planner.go
-services/game-server/internal/protocol/realtime/wire_packets.go
-services/game-server/internal/protocol/realtime/compact_wire_packet.go
-services/game-server/internal/networking/webrtc_transport.go
-```
-
-### docs/services/game-server/simulation/runtime/lane-packet-projection.md
-
-Update active flow:
-
-```text
-authoritative game state
--> realtime projection / planning
--> raw lane records
--> numeric wire quantization into wire-shaped records
--> delta comparison
--> split asteroid/bullet movement to hot lanes
--> split asteroid/bullet creates/deletes to reliable lifecycle lanes
--> sparse readable wire-map serialization
--> compact alias mapping
--> packetcodec JSON encoding
--> WebRTC gameplay lane write using per-lane reliability policy
-```
-
-Update lane ownership:
-
-```text
-world lane
-= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
-
-asteroids.lifecycle lane
-= asteroid creates/deletes
-
-bullets.lifecycle lane
-= bullet/projectile creates/deletes
-
-asteroids lane
-= regular asteroid movement updates
-
-bullets lane
-= regular bullet/projectile movement updates
-```
-
-Remove or replace:
-
-```text
-Asteroid and bullet creates/deletes remain on the world lane.
-```
-
-### docs/services/game-server/networking/realtime-compact-wire-mapping.md
-
-Add compact packet type values:
-
-```text
-asteroids_lifecycle -> al
-bullets_lifecycle -> bl
-```
-
-Add compact lane values:
-
-```text
-asteroids.lifecycle -> al
-bullets.lifecycle -> bl
-```
-
-Add lifecycle delta section keys:
-
-```text
-asteroids_lifecycle.asteroid_creates -> ac
-asteroids_lifecycle.asteroid_deletes -> ax
-bullets_lifecycle.bullet_creates -> bc
-bullets_lifecycle.bullet_deletes -> bx
-```
-
-Update asteroid tuple mapping:
-
-```text
-world_full.asteroids uses full tuple records.
-asteroids_lifecycle.ac uses tuple records for asteroid creates.
-asteroid_delta.au uses tuple records for regular movement updates.
-asteroids_lifecycle.ax uses compact numeric IDs for deletes.
-world_delta.au remains compatibility/resync-safe support only.
-```
-
-Update bullet tuple mapping:
-
-```text
-world_full.bullets uses full tuple records.
-bullets_lifecycle.bc uses tuple records for bullet/projectile creates.
-bullet_delta.bu uses tuple records for regular movement updates.
-bullets_lifecycle.bx uses compact numeric IDs for deletes.
-world_delta.bu remains compatibility/resync-safe support only.
-```
-
-Keep existing optional bullet rotation support:
-
-```text
-Current straight bullet movement normally emits [id, x, y]. The optional trailing rotation slot remains supported for future projectile types, such as homing or turning projectiles, that may change rotation during flight.
-```
-
-## Secondary stale files
-
-Update these after the primary protocol/service docs.
-
-### docs/services/client/world-sync/world-sync-coordinator.md
-
-Do not rewrite it as a transport doc.
-
-Narrowly update wording from:
-
-```text
-RealtimeRouter applies world lane packets into world_lane_state
-```
-
-To:
-
-```text
-RealtimeRouter applies world, lifecycle, and hot movement packets into WorldLaneState.
-```
-
-Update active input path:
-
-```text
-RealtimeRouter.route_lane_packet(packet)
--> world/lifecycle/hot lane appliers update world_lane_state
--> WorldPresentationAdapter.apply_world_lane_state(...)
--> WorldSync.apply_world_lane_state(world_lane_state)
-```
-
-Mention that lifecycle-created dirty bullets/asteroids are allowed to create render nodes during world-sync fanout.
-
-### docs/services/client/world-sync/entity-sync-owners.md
-
-Replace:
-
-```text
-WorldSync receives world lane state
-```
-
-With:
-
-```text
-WorldSync receives accumulated WorldLaneState from world, lifecycle, and hot movement lane appliers.
-```
-
-Replace:
-
-```text
-removes rendered nodes when absent from latest world lane dictionary
-```
-
-With:
-
-```text
-removes rendered nodes when lifecycle/full-state no longer includes the entity.
-```
-
-For `ProjectileSync`, add:
-
-```text
-Unknown hot projectile updates must not create nodes. Hot updates after lifecycle delete are ignored. Lifecycle-created projectiles, including torpedoes, are allowed to create render nodes and preserve projectile_type.
-```
-
-For `AsteroidSync`, add:
-
-```text
-Unknown hot asteroid updates must not create nodes. Hot updates after lifecycle delete are ignored. Lifecycle-created asteroids are allowed to create render nodes and preserve variant/scale.
-```
-
-### docs/services/client/gameplay-runtime/gameplay-state-application.md
-
-Update packet routing to include lifecycle packet families.
+Move overlay candidate construction out of `assembleRealtimeLaneCandidates`.
 
 Add:
 
-```text
-WorldLaneState is populated by world_full/world_delta, asteroids_lifecycle, bullets_lifecycle, asteroid_delta, and bullet_delta. Lifecycle packets define existence; hot packets update existing entities only.
-```
+* `buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate`
 
-Update the `world_lane_applier.gd` code-map note so it mentions lifecycle methods.
+This function should own overlay:
 
-### docs/domains/technical/local-singleplayer-routing-flow.md
+* lane state lookup
+* baseline readiness check
+* next sequence calculation
+* full packet build
+* quantized full packet build
+* baseline projection lookup
+* full candidate fallback
+* delta candidate creation
+* unchanged projection omission
+* chained projection creation
 
-Replace stale world-lane lifecycle wording with:
+Return zero, one, or more candidates matching current behavior.
 
-```text
-world lane: ships, pickups, and world/full-state presentation
-asteroids.lifecycle lane: asteroid creates/deletes
-bullets.lifecycle lane: bullet/projectile creates/deletes
-asteroids/bullets hot lanes: movement updates only
-```
+### 6. Extract Session Candidate Builder
 
-### docs/services/game-server/simulation/runtime/simulation-loop-and-phase-order.md
+Create `lane_candidate_session.go`.
 
-Update the world-lane projection summary so:
-
-* Player/avatar and pickup state remain on world.
-* Asteroid/bullet lifecycle moves to lifecycle lanes.
-* Asteroid/bullet movement stays on hot lanes.
-
-### docs/systems-design/world/world-authority.md
-
-Replace broad world-lane lifecycle ownership with:
-
-```text
-World authority owns the authoritative entities. Realtime projection exposes them through family-specific packet lanes: world for player/pickup/world presentation, asteroid/bullet lifecycle lanes for existence, and asteroid/bullet hot lanes for movement updates.
-```
-
-### docs/services/game-server/simulation/world/asteroid-spawning-and-variants.md
-
-Replace “world lane asteroid records” where it refers to active asteroid lifecycle with:
-
-```text
-Asteroid creation/variant identity is exposed through asteroid lifecycle creates and full/baseline snapshots.
-Regular asteroid movement is exposed through sr.asteroids hot movement updates.
-```
-
-Keep server authority over variant selection.
-
-### docs/protocol/asteroid-variant-contract.md
-
-Update so variant readback is through:
-
-```text
-asteroids_lifecycle asteroid_creates
-world_full/bootstrap snapshots when needed
-```
-
-State:
-
-```text
-Hot asteroid_delta updates do not carry variant and do not create asteroids.
-```
-
-### docs/systems-design/entities/asteroids.md
-
-Replace stale projection language with:
-
-```text
-The server projects asteroid existence through asteroid lifecycle packets and full/baseline state, and projects regular movement through asteroid_delta hot updates.
-```
-
-Update despawn language:
-
-```text
-Once removed, the asteroid is deleted through the asteroid lifecycle lane; later hot movement updates for that id must not resurrect it.
-```
-
-### docs/systems-design/entities/variants.md
-
-Update asteroid variant references:
-
-```text
-For asteroids, the server-selected variant index is stored on the runtime asteroid and sent in asteroid lifecycle creates or full snapshot state. Hot movement updates do not own variant identity.
-```
-
-### docs/systems-design/entities/projectiles.md
-
-Replace “projected through world lane bullet records” with:
-
-```text
-Projectile existence and identity are projected through bullets_lifecycle creates/deletes and full/baseline state. Regular movement is projected through bullet_delta hot updates.
-```
+Move session candidate construction out of `assembleRealtimeLaneCandidates`.
 
 Add:
 
-```text
-Projectile type identity is lifecycle-owned. Torpedo creates must preserve projectile_type so the client spawns a torpedo node instead of a fallback bullet node.
-```
+* `buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate`
 
-Replace disappearance language:
+This function should own session:
 
-```text
-A projectile delete on bullets_lifecycle means the authoritative server no longer presents that projectile as live. Later hot updates must not recreate it.
-```
+* lane state lookup
+* baseline readiness check
+* next sequence calculation
+* full packet build
+* quantized full packet build
+* baseline projection lookup
+* full candidate fallback
+* delta candidate creation
+* unchanged projection omission
+* chained projection creation
 
-### docs/services/game-server/simulation/combat/weapons-and-projectile-fire.md
+Return zero, one, or more candidates matching current behavior.
 
-Update projectile readback:
+### 7. Extract Event Candidate Builder
 
-```text
-Weapon fire creates runtime projectiles server-side. Projectile lifecycle creates carry owner_id, weapon_id, projectile_type, initial transform, and other spawn-owned presentation identity over sr.bullets.lifecycle. Movement after spawn travels over sr.bullets.
-```
+Create `lane_candidate_event.go`.
 
-### Devtools docs
+Move event candidate construction out of `assembleRealtimeLaneCandidates`.
 
-Update stale world-lane bullet/asteroid references in:
+Add:
 
-```text
-docs/devtools/client/debug-status-and-target-readmodels.md
-docs/devtools/server/clear-entity-tools.md
-docs/devtools/server/continuous-bullet-streams.md
-docs/devtools/server/spawn-tools.md
-docs/devtools/server/telemetry.md
-```
+* `buildEventLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate`
 
-Use this principle:
+Current behavior must remain:
 
-```text
-Debug/devtools entity creation and clearing are reflected to clients through normal realtime entity-family lanes: asteroid/bullet lifecycle lanes for existence and hot lanes for movement.
-```
+* no candidate when `snapshot.PendingEvents` is empty
+* event state sequence comes from `LaneEvent`
+* candidate kind remains `RealtimeLaneCandidateKindEventBatch`
+* packet is built with `BuildEventBatchPacket`
+* pending events are not drained or mutated
 
-For continuous bullet streams, use:
+### 8. Extract Lifecycle Candidate Helpers
 
-```text
-Spawned bullets are not emitted as a stream-specific telemetry packet. Their lifecycle appears as normal bullets_lifecycle traffic, and their movement appears as normal bullet_delta traffic.
-```
+Create `lane_candidate_lifecycle.go`.
 
-## Planning doc updates
+Move asteroid and bullet lifecycle candidate construction out of inline world planning.
 
-Update these summaries if they still describe only six WebRTC lanes or say lifecycle remains on `sr.world`:
+Add helpers:
 
-```text
-docs/planning/protocol/realtime-protocol-architecture.md
-docs/planning/domains/technical/network-observability-and-packet-budget.md
-docs/planning/development-roadmap.md
-```
+* `buildBulletLifecycleCandidate(delta WorldWireDeltaPacket, state RealtimeSessionState) (RealtimeLaneCandidate, bool)`
+* `buildAsteroidLifecycleCandidate(delta WorldWireDeltaPacket, state RealtimeSessionState) (RealtimeLaneCandidate, bool)`
 
-Planning docs should not become the detailed implementation authority. They should summarize the current state and link to protocol/service docs.
+Each helper should own:
 
-Use this summary:
+* create/delete presence check
+* lifecycle lane state lookup
+* next lifecycle sequence calculation
+* metadata lane replacement
+* metadata sequence replacement
+* lifecycle snapshot ID
+* lifecycle snapshot kind
+* chunk metadata
+* lifecycle packet family
+* candidate construction
 
-```text
-Dedicated reliable/ordered lifecycle lanes now carry asteroid and bullet/projectile creates/deletes. Unreliable hot lanes carry movement only. Lifecycle lanes are required/critical traffic; hot lanes are high-priority supersedable traffic.
-```
+Return `false` when no lifecycle creates or deletes exist.
+
+### 9. Extract World Candidate Builder
+
+Create `lane_candidate_world.go`.
+
+Move world candidate construction out of `assembleRealtimeLaneCandidates`.
+
+Add:
+
+* `buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) []RealtimeLaneCandidate`
+
+This function should own world:
+
+* lane state lookup
+* baseline readiness check
+* next sequence calculation
+* full packet build
+* quantized full packet build
+* baseline projection lookup
+* full candidate fallback
+* world delta creation
+* hot-lane split
+* lifecycle candidate extraction
+* clearing lifecycle creates/deletes from world delta after lifecycle candidates are emitted
+* asteroid hot candidate metadata stamping
+* bullet hot candidate metadata stamping
+* world delta change detection
+* world projection chaining
+* asteroid hot candidate creation
+* bullet hot candidate creation
+
+Preserve current `sessionState` mutation:
+
+* if `sessionState != nil`, assign `sessionState.HotLaneCohorts = split.CohortState`
+
+Do not change hot-lane policy.
+
+Do not change hot-lane allowed/present conditions.
+
+### 10. Move Overlay and Session Quantizers
+
+Create `quantize_overlay.go`.
+
+Move:
+
+* `quantizeOverlayFullPacket`
+
+Create `quantize_session.go`.
+
+Move:
+
+* `quantizeSessionFullPacket`
+
+Preserve exact quantization field paths and error handling.
+
+Do not alter `quantize_world.go`.
+
+### 11. Shrink Planner Orchestration
+
+Update `assembleRealtimeLaneCandidates` so it only coordinates:
+
+* initialize candidate slice
+* append world candidates
+* append overlay candidates
+* append session candidates
+* append event candidates
+* return `RealtimeLanePlan`
+
+Preserve candidate order from current behavior:
+
+1. world-related candidates, including lifecycle/hot candidates emitted by world builder
+2. overlay
+3. session
+4. event
+
+Candidate order is part of observable planner behavior through tests and scheduling.
+
+## Test Handling
+
+Do not split tests until production code extraction compiles.
+
+After production extraction is stable, `planner_test.go` may be split into smaller same-package test files.
+
+Recommended split:
+
+* `planner_world_test.go`
+* `planner_overlay_test.go`
+* `planner_session_test.go`
+* `planner_event_test.go`
+* `planner_hot_lane_test.go`
+* `candidate_policy_test.go`
+* `candidate_diagnostics_test.go`
+
+Do not rewrite test intent.
+
+Do not remove coverage.
+
+Move tests only when it reduces file size and preserves the exact assertions.
+
+## Constraints
+
+* Preserve behavior.
+* No subpackages.
+* No unrelated cleanup.
+* No scheduler changes.
+* No compact wire changes.
+* No hot-lane chunking changes.
+* No lifecycle sequencing changes.
+* No candidate typing redesign.
+* No package-wide architecture rewrite.
+* If another file is required, touch only the smallest necessary additional file and report why.
+* If the task balloons, stop.
 
 ## Verification
 
-After edits, run stale-reference searches.
+The expected verification command is:
 
-```bash
-cd /mnt/d/\!bin/space-rocks
+* `go test ./services/game-server/internal/protocol/realtime/...`
 
-{
-  echo "== stale world-lifecycle phrases =="
-  grep -R "lifecycle creates/deletes remain on sr.world" docs || true
-  grep -R "asteroid/bullet lifecycle creates/deletes" docs || true
-  grep -R "world lane bullet records" docs || true
-  grep -R "world lane asteroid records" docs || true
+If the module path requires running from `services/game-server`, use:
 
-  echo
-  echo "== lifecycle lane coverage =="
-  grep -R "sr.asteroids.lifecycle" docs || true
-  grep -R "sr.bullets.lifecycle" docs || true
-  grep -R "asteroids_lifecycle" docs || true
-  grep -R "bullets_lifecycle" docs || true
-} 2>&1 | tee /dev/tty | clip.exe
-```
-
-Expected result:
-
-* No stale “remain on sr.world” claims.
-* No broad “world lane owns asteroid/bullet lifecycle” claims.
-* Remaining `world lane asteroid records` or `world lane bullet records` references are either gone or explicitly limited to full/bootstrap/compatibility context.
-* `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`, `asteroids_lifecycle`, and `bullets_lifecycle` appear in canonical protocol, transport, outbound, inbound, compact wire, gameplay packet, and lane projection docs.
-
-Then run normal documentation/index verification used by the project.
-
-## Report
+* `cd services/game-server && go test ./internal/protocol/realtime/...`
 
 Report:
 
-```text
-Changed files
-New files, if any
-Deleted files, if any
-Stale sr.world lifecycle references removed
-Lifecycle channel docs updated
-Inbound routing docs updated
-Outbound routing docs updated
-Compact wire docs updated
-World sync/entity sync docs updated
-Devtools/entity docs updated
-Planning summaries updated
-Verification result
-Remaining risks or assumptions
-```
-
-Specifically report whether any remaining `world lane asteroid records` or `world lane bullet records` references are intentional compatibility/full-snapshot wording.
+* changed files
+* whether behavior was intended to remain unchanged
+* test command result
+* any tests moved or not moved
+* any extraction that was intentionally deferred

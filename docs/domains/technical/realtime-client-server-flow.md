@@ -470,7 +470,7 @@ This domain document does not own:
 * Rails account storage
 * Local Profile storage
 * player-data persistence internals
-* record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection, focused asteroid/bullet hot-lane chunking, and encoded-size guards, binary/bit-packed representation, protobuf/custom binary representation, or future transport evolution beyond the current WebSocket control/signaling path plus ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`
+* record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection, binary/bit-packed representation, protobuf/custom binary representation, or future transport evolution beyond the current WebSocket control/signaling path plus ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`
 
 Those details belong in service, protocol, data, devtools, systems-design, planning, or limits documentation.
 
@@ -493,6 +493,7 @@ Those details belong in service, protocol, data, devtools, systems-design, plann
 * [Devtools](../../devtools/!INDEX.md)
 * [Realtime Protocol Architecture](../../planning/protocol/realtime-protocol-architecture.md)
 * [Network Observability And Packet Budget](../../planning/domains/technical/network-observability-and-packet-budget.md)
+* [Realtime WebRTC Gameplay Transport](../../protocol/realtime-webrtc-gameplay-transport.md)
 
 ## Notes
 
@@ -500,7 +501,7 @@ Client input is sent to the server, the server advances simulation, and clients 
 
 WebSocket connection, room membership, and active gameplay participation are separate states. The current implementation still depends on that separation.
 
-Lane-native packets are current active realtime behavior. World, asteroid, bullet, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. Regular asteroid and bullet movement updates are split into dedicated hot movement lane packets instead of remaining in `sr.world`. `event_batch` remains compact sparse quantized presentation-event delivery. The server now emits compact tuple wire shape for selected hot records, and the client rejects lower hot-lane sequences while accepting same-sequence chunks from split `asteroid_delta` and `bullet_delta` packets. The client expands those tuples before appliers run. Remaining future work includes record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection and hot-packet encoded-size guards, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket control/signaling path plus ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
+Lane-native packets are current active realtime behavior. World, asteroid, bullet, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. Regular asteroid and bullet movement updates are split into dedicated hot movement lane packets instead of remaining in `sr.world`. `event_batch` remains compact sparse quantized presentation-event delivery. The server now emits compact tuple wire shape for selected hot records, and the client rejects lower hot-lane sequences while accepting same-sequence chunks from split `asteroid_delta` and `bullet_delta` packets. The client expands those tuples before appliers run. Remaining future work includes record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection and current hot-packet encoded-size guards, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket control/signaling path plus ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.
 

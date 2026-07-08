@@ -20,7 +20,7 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Packet Schemas](../../data/packet-schemas.md)
 - [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
-This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection, focused asteroid/bullet hot-lane chunking, and hot-packet encoded-size guards, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md). Dedicated reliable ordered lifecycle lanes are implemented for asteroid and bullet/projectile creates/deletes: `sr.asteroids.lifecycle` and `sr.bullets.lifecycle`.
+This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, subtractive asteroid/bullet movement lanes, focused asteroid/bullet hot-lane chunking, hot-packet encoded-size guards, and dedicated reliable ordered lifecycle lanes are already implemented for active realtime gameplay and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md). Dedicated reliable ordered lifecycle lanes are implemented for asteroid and bullet/projectile creates/deletes: `sr.asteroids.lifecycle` and `sr.bullets.lifecycle`.
 
 Focused asteroid/bullet hot-lane chunking now uses conservative compact-JSON byte estimation for chunk construction, with final encoded-size guards still enforcing the actual send boundary.
 
@@ -108,13 +108,15 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget behavior beyond current candidate-level send-plan selection, focused asteroid/bullet hot-lane chunking, and hot-packet encoded-size guards, stronger resync behavior, future physical lane/channel evolution beyond the current mixed lane policy, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget behavior beyond current candidate-level send-plan selection, stronger resync behavior, future physical lane/channel evolution beyond the current mixed lane policy, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, subtractive asteroid/bullet movement lanes, focused asteroid/bullet hot-lane chunking, and hot-packet encoded-size guards are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ### Remaining Priority And Packet Budget Work
 
 Delta decides what changed. The current candidate-level send plan decides which lane candidates fit the estimated packet budget first. Focused hot-lane chunking is implemented for asteroid and bullet movement lists. General record/entity-level prioritization, interest filtering, and deeper budget policy remain future work.
 
 Current implementation has lane-native packets, baselines, deltas, candidate-level scheduling metadata, estimated byte-budget selection, focused asteroid/bullet hot-lane chunking, and hot-packet encoded-size guards. Delta decides what changed; the current send plan decides which lane candidates are included or deferred; future work remains around record/entity-level prioritization and deeper budget policy.
+Current WebRTC physical gameplay channels are split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`). Client-side hot-lane sequence guards reject lower sequence values while accepting same-sequence chunks for split `asteroid_delta` and `bullet_delta` packets.
+
 
 Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular asteroid and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, deeper record/entity-level prioritization, further transport policy beyond the current asteroid/bullet unordered hot lanes where safe, and binary representation later.
 
@@ -129,8 +131,6 @@ Future planning targets remain:
 - interest filtering
 - stronger resync behavior
 - hot/cold lane separation beyond current asteroid/bullet movement extraction
-- Current WebRTC physical gameplay channels split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`)
-- client-side hot-lane sequence guards reject lower sequence values while accepting same-sequence chunks for split `asteroid_delta` and `bullet_delta` packets
 
 Live priority should stay conservative until required gameplay and presentation truth can be proven safe by metrics.
 
@@ -152,7 +152,7 @@ Protocol and wire behavior is documented in [Realtime WebSocket Protocol](../../
 
 Client inbound lane routing is documented in [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md).
 
-Future packetcodec and transport evolution must preserve these ownership seams. The current baseline includes ordered/reliable lanes for world, overlay, session, and event traffic, plus unordered/unreliable hot lanes for asteroid and bullet movement traffic.
+Future packetcodec and transport evolution must preserve these ownership seams. The current baseline includes ordered/reliable lanes for world, overlay, session, event, asteroid lifecycle, and bullet lifecycle traffic, plus unordered/unreliable hot lanes for asteroid and bullet movement traffic.
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.

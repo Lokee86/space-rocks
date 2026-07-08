@@ -521,10 +521,10 @@ The client expands the tuple-packed asteroid record back into a readable diction
 Compact bullet lifecycle example:
 
 ```json
-{"t":"wd","q":2,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bx":[1]}
+{"t":"bl","q":2,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bx":[1]}
 ```
 
-The client expands the tuple-packed bullet records back into readable dictionaries before world lane application.
+The client expands the tuple-packed bullet lifecycle records back into readable dictionaries before bullet lifecycle application.
 
 Compact bullet movement example:
 
@@ -1068,7 +1068,7 @@ durable outbound queues
 
 Current lane-native delivery does include sequence numbers, baseline tracking, and delta snapshots as part of the active gameplay protocol. Those mechanisms support in-session lane ordering and incremental updates, but they do not provide acknowledgement-based recovery, resend, reconnect recovery, session resume, or a durable outbound queue.
 
-Client outbound sends are not queued. If the WebSocket is not open, the packet is not sent. Active realtime gameplay output uses ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
+Client outbound sends are not queued. If the WebSocket is not open, the packet is not sent. Active realtime gameplay output uses ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
 
 Server queued outbound messages use a bounded in-memory channel. If a WebSocket write fails, the session write loop exits and normal connection teardown begins.
 
@@ -1518,10 +1518,11 @@ client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd
 * [Realtime Protocol Architecture](../planning/protocol/realtime-protocol-architecture.md)
 * [Network Observability And Packet Budget](../planning/domains/technical/network-observability-and-packet-budget.md)
 * [Current System Limits](../limits/current-system-limits.md)
+* [Realtime WebRTC Gameplay Transport](realtime-webrtc-gameplay-transport.md)
 
 ## Notes
 
-The current implementation sends lane-native gameplay output on the server tick path over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, plus unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. That is current protocol behavior, not the intended final realtime architecture. The client ICE-server seam exists, but this document does not prescribe a future TURN/STUN topology.
+The current implementation sends lane-native gameplay output on the server tick path over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, plus unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. That is current protocol behavior, not the intended final realtime architecture. The client ICE-server seam exists, but this document does not prescribe a future TURN/STUN topology.
 
 Deployment knobs currently include SPACE_ROCKS_WEBRTC_ADVERTISED_IPS, SPACE_ROCKS_WEBRTC_UDP_PORT_MIN, SPACE_ROCKS_WEBRTC_UDP_PORT_MAX, and WEBRTC_ICE_SERVERS. The client ICE-server seam exists for future deployment configuration, but this document does not prescribe TURN or other future ICE topology beyond noting that the seam exists.
 

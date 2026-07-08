@@ -49,8 +49,8 @@ func TestCompactWirePacketCompactsLifecycleLaneValues(t *testing.T) {
 
 	got := CompactWirePacket(input)
 
-	if got["t"] != "ad" {
-		t.Fatalf("type = %v, want ad", got["t"])
+	if got["t"] != "al" {
+		t.Fatalf("type = %v, want al", got["t"])
 	}
 	if got["l"] != "al" {
 		t.Fatalf("asteroid lifecycle lane = %v, want al", got["l"])
@@ -60,6 +60,9 @@ func TestCompactWirePacketCompactsLifecycleLaneValues(t *testing.T) {
 		"type": "bullets_lifecycle",
 		"lane": "bullets.lifecycle",
 	})
+	if bullet["t"] != "bl" {
+		t.Fatalf("bullet type = %v, want bl", bullet["t"])
+	}
 	if bullet["l"] != "bl" {
 		t.Fatalf("bullet lifecycle lane = %v, want bl", bullet["l"])
 	}

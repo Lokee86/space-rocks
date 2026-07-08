@@ -330,6 +330,7 @@ services/game-server/internal/game/
 * [Realtime WebSocket Protocol](realtime-websocket-protocol.md)
 * [Lane Packet Projection](../services/game-server/simulation/runtime/lane-packet-projection.md)
 * [Packet Schemas](../data/packet-schemas.md)
+* [Realtime WebRTC Gameplay Transport](realtime-webrtc-gameplay-transport.md)
 
 ## Notes
 
