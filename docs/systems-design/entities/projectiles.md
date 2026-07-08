@@ -12,7 +12,7 @@ It documents projectile identity, runtime state, authority boundaries, movement,
 
 Projectiles are server-authoritative moving combat entities.
 
-A projectile is created by authoritative server behavior, stored in the live runtime entity store, advanced by simulation, projected to clients as world lane bullet records, and removed by server-owned lifetime, visibility, pending-despawn, or collision consequences.
+A projectile is created by authoritative server behavior, stored in the live runtime entity store, advanced by simulation, projected to clients as bullets_lifecycle creates/deletes and full/baseline state, with regular movement projected through bullet_delta hot updates, and removed by server-owned lifetime, visibility, pending-despawn, or collision consequences.
 
 The current runtime implementation type is still named `Bullet`, but conceptually a projectile is broader than a basic bullet. Weapon-backed projectiles carry weapon identity and projectile type metadata, so the same runtime entity family can represent:
 
@@ -53,7 +53,7 @@ authoritative fire or debug spawn
 -> projectile spawn intent or direct debug spawn
 -> runtime projectile entity
 -> motion and toroidal wrapping
--> world lane realtime projection
+-> bullets_lifecycle existence projection and bullet_delta movement projection
 -> client presentation
 -> collision or expiry
 -> damage and impact-effect handling
@@ -71,7 +71,7 @@ client input intent
 -> runtime projectile
 ```
 
-The weapon fire policy does not create a live entity. It returns an intent. The game aggregate adapts that intent into a runtime projectile, assigns an authoritative projectile id, stores it in `game.entities.Projectiles`, and later projects it through world lane bullet records.
+The weapon fire policy does not create a live entity. It returns an intent. The game aggregate adapts that intent into a runtime projectile, assigns an authoritative projectile id, stores it in `game.entities.Projectiles`, and later projects it through `sr.bullets.lifecycle` for spawn-owned identity and `sr.bullets` for movement after spawn.
 
 ## Projectile identity
 
@@ -108,7 +108,7 @@ weapon_id: torpedo
 projectile_type: torpedo
 ```
 
-Current debug or legacy bullet creation can leave weapon and projectile type metadata empty. The client presentation fallback treats an empty projectile type as `bullet`.
+Projectile type identity is lifecycle-owned. Torpedo creates must preserve projectile_type so the client spawns a torpedo node instead of a fallback bullet node.
 
 ## Runtime state
 
@@ -149,7 +149,7 @@ damage request adapters use damage spec or legacy damage fallback
 
 impact-effect adapters use impact effect metadata
 
-world lane projection uses id, owner id, position, rotation, weapon id, and projectile type
+bullets_lifecycle and full/bootstrap projection use id, owner id, position, rotation, weapon id, and projectile type; bullet_delta carries movement updates after spawn
 ```
 
 ## Creation authority
@@ -188,13 +188,7 @@ projectile position wraps into world bounds
 
 When a projectile is pending despawn, normal movement stops. The projectile instead counts down its despawn delay until it is ready for removal.
 
-Projectile removal is server-owned. Current removal reasons include:
-
-```text
-pending despawn delay completed
-lifetime expired
-projectile is far from all cameras
-```
+A projectile delete on bullets_lifecycle means the authoritative server no longer presents that projectile as live. Later hot updates must not recreate it.
 
 The client removes projectile scene nodes when a projectile is missing from the latest server state. Client-side absence is not an authority decision; it is a presentation response to server state.
 
@@ -304,7 +298,7 @@ Projectiles do not step radial effects. Radial effects do not own projectile lif
 
 ## State projection
 
-Projectile state is projected to clients through world lane full/delta packets.
+Projectile existence and identity are projected to clients through bullets_lifecycle creates/deletes and full/bootstrap state. Regular movement is projected through bullet_delta hot updates.
 
 Current projected projectile fields are:
 
@@ -318,7 +312,7 @@ weapon_id
 projectile_type
 ```
 
-Projectile world lane packets do not expose:
+Projectile lifecycle, full/bootstrap, and hot movement packets do not expose:
 
 ```text
 velocity
@@ -331,7 +325,7 @@ despawn delay
 
 Those are server-side runtime facts. The client receives only the read model needed for presentation and target-position support.
 
-A projectile disappearing from world lane bullet records means the authoritative server no longer presents that projectile as live. The client should remove its corresponding scene node.
+A projectile delete on `bullets_lifecycle` means the authoritative server no longer presents that projectile as live. Later hot updates must not recreate it. The client should remove its corresponding scene node.
 
 ## Client presentation
 
@@ -450,7 +444,7 @@ Scoring, asteroid destruction, and drops
 = downstream consequences of projectile-driven asteroid destruction
 
 Realtime protocol
-= projectile world lane projection to clients
+= projectile lifecycle/full-state projection and bullet_delta movement projection to clients
 
 Client world sync
 = projectile node creation, interpolation, scene selection, and removal

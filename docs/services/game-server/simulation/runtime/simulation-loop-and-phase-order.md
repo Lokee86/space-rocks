@@ -136,7 +136,13 @@ Outbound clients observe simulation indirectly through lane-native realtime proj
 
 ```text
 world lane
-= active ship/avatar state, pickups, and asteroid/bullet lifecycle creates/deletes
+= active ship/avatar state, pickups, and full/bootstrap world presentation
+
+asteroids.lifecycle lane
+= asteroid creates/deletes
+
+bullets.lifecycle lane
+= bullet/projectile creates/deletes
 
 asteroids lane
 = regular asteroid movement updates

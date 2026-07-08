@@ -12,7 +12,7 @@ It explains how the server keeps authoritative positions inside wrapped world bo
 
 The game server stores authoritative world positions as bounded toroidal coordinates.
 
-A position that moves beyond one edge of the world wraps to the opposite edge. The server does not create ghost entities or duplicate bodies at world seams. Instead, it keeps one authoritative position per entity and uses wrapped spatial helpers when systems need distance, direction, or local collision placement across an edge. Current live position publication is through world lane records.
+A position that moves beyond one edge of the world wraps to the opposite edge. The server does not create ghost entities or duplicate bodies at world seams. Instead, it keeps one authoritative position per entity and uses wrapped spatial helpers when systems need distance, direction, or local collision placement across an edge. Current live position publication is through family-specific realtime lane state.
 
 The current world size comes from shared constants:
 
@@ -34,7 +34,7 @@ Game.Step(delta)
 -> bounds := space.DefaultBounds()
 ```
 
-Those bounds are passed into the motion helpers for active players, asteroids, and projectiles. The resulting positions are later published through world lane full/delta packets.
+Those bounds are passed into the motion helpers for active players, asteroids, and projectiles. The resulting positions are later published through family-specific realtime lane state.
 
 The main implementation split is:
 
@@ -119,7 +119,7 @@ store one bounded authoritative position per entity
 advance authoritative motion during simulation
 wrap moved positions into server world bounds
 use shortest wrapped spatial math for cross-edge relationships
-publish bounded positions through world lane realtime projection
+publish bounded positions through family-specific realtime lane state
 ```
 
 The client role is separate:
@@ -486,7 +486,7 @@ motion.AdvanceBullet(bullet, delta, bounds)
 
 These surfaces are for server simulation code. They are consumed by the game package and supporting game-server packages.
 
-Clients observe the results indirectly through world lane realtime projection. The packet surface carries bounded authoritative positions through world lane records; it does not expose motion helper calls, internal bounds objects, or server-side shortest-delta calculations.
+Clients observe the results indirectly through family-specific realtime projection. The packet surface carries bounded authoritative positions through world, lifecycle, and hot movement lane state; it does not expose motion helper calls, internal bounds objects, or server-side shortest-delta calculations.
 
 ## Invariants
 

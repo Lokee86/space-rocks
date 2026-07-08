@@ -298,7 +298,7 @@ The devtools window currently displays:
 * Debug status labels for world and freeze-state controls.
 * Local player raw telemetry.
 * Target raw telemetry.
-* Telemetry source selectors for `world lane readback` and `session lane readback`. 
+* Telemetry source selectors for lane-applied state readback and session lane readback. 
 
 `DebugStatusPacketReader` normalizes inbound `debug_status` and `debug_statuses` fields. Non-dictionary values are treated as empty dictionaries before presentation refresh.
 

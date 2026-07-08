@@ -413,8 +413,10 @@ match_result
 
 The gameplay lane path publishes live gameplay presentation state such as:
 
-```text
-world lane: ships, pickups, and asteroid/bullet lifecycle creates/deletes
+world lane: ships, pickups, and world/full-state presentation
+asteroids.lifecycle lane: asteroid creates/deletes
+bullets.lifecycle lane: bullet/projectile creates/deletes
+asteroids/bullets hot lanes: movement updates only
 asteroids lane: regular asteroid movement updates
 bullets lane: regular bullet movement updates
 overlay lane: self_id, lives, score, weapon/loadout facts, cooldown/ammo presentation fields
@@ -507,4 +509,3 @@ Those belong in service, protocol, data, planning, limits, or player-experience 
 `local` is not enough information. A locally running server can host local single-player, multiplayer simulation, or authenticated multiplayer behavior. The current flow is identified by session mode, packet type, room policy, and player-data identity context.
 
 Local single-player currently shares infrastructure with multiplayer in several places. That is intentional for the authoritative simulation path and does not make Local Profile, Guest, and Authenticated Account interchangeable.
-

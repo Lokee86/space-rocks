@@ -244,22 +244,22 @@ fatal player damage
 
 Ship-asteroid collision does not currently despawn the asteroid merely because it killed a player.
 
-### World lane projection during pending despawn
+### Realtime projection during pending despawn
 
-`protocol/realtime` reads current entity maps and projects them into world lane records.
+`protocol/realtime` reads current entity maps and projects them into family-specific realtime state.
 
-That means entities marked pending despawn remain in world lane full/delta packets until their simulation step removes them from the relevant map.
+That means entities marked pending despawn remain in their family-specific realtime readback until their simulation step removes them from the relevant map.
 
 Current projected maps include:
 
 ```text
 game.entities.Players     -> world lane ship records
-game.entities.Projectiles -> world lane bullet records
-game.entities.Asteroids   -> world lane asteroid records
+game.entities.Projectiles -> bullets_lifecycle / bullet_delta
+game.entities.Asteroids   -> asteroids_lifecycle / asteroid_delta
 game.entities.Pickups     -> world lane pickup records
 ```
 
-After removal, the entity disappears from future world lane records.
+After removal, the entity disappears from future family-specific realtime readback.
 
 ### Match-over locked stepping
 
@@ -298,8 +298,8 @@ The relevant client-facing input is the generated `client_config` gameplay packe
 The externally observable result is indirect:
 
 ```text
-entity retained -> entity remains in world lane records
-entity removed -> entity disappears from world lane records
+entity retained -> entity remains in family-specific realtime readback
+entity removed -> entity disappears from family-specific realtime readback
 pending despawn -> entity remains briefly, then disappears after delay
 ```
 
@@ -360,8 +360,8 @@ Primary implementation files:
 * `services/game-server/internal/game/spawning.go` - Uses visibility spawn-position helpers before normalizing and applying asteroid spawn plans.
 * `services/game-server/internal/game/combat.go` - Marks hit bullets and killed players pending despawn and preserves player camera-view position on fatal damage.
 * `services/game-server/internal/game/asteroid_destruction.go` - Marks destroyed asteroids pending despawn and triggers fragments/pickup-drop consequences.
-* `services/game-server/internal/protocol/realtime/records.go` - Projects remaining entities into world lane records until removal.
-* `services/game-server/internal/protocol/realtime/` - Related world lane projection helpers.
+* `services/game-server/internal/protocol/realtime/records.go` - Projects remaining entities into family-specific realtime readback until removal.
+* `services/game-server/internal/protocol/realtime/` - Related realtime projection helpers.
 
 Source-of-truth and generated files:
 
@@ -385,7 +385,7 @@ Important non-ownership boundaries:
 * `services/game-server/internal/game/player_world_state.go` owns inactive-player world-state fallback from camera views.
 * `services/game-server/internal/game/collisions.go` owns collision fact detection, not entity retention.
 * `services/game-server/internal/game/damage/` owns pure damage resolution, not removal timing.
-* `client/scripts/world/` owns client-side entity node creation/removal and visual presentation after world lane packets are received.
+* `client/scripts/world/` owns client-side entity node creation/removal and visual presentation after accumulated realtime lane state is received.
 * `client/scripts/config/client_viewport_config_flow.gd` owns client viewport measurement and sending config packets, not server visibility policy.
 
 ## Tests and verification

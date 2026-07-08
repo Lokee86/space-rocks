@@ -19,15 +19,9 @@ debug_status packet
 -> debug_status
 -> debug_statuses
 
-lane-applied world/session/overlay readmodels
+lane-applied WorldLaneState and world/session/overlay readmodels
 -> self_id
--> world lane ship records
--> session lane player records
--> session lane lifecycle records
--> world lane asteroid records
--> world lane bullet records
--> world lane pickup records
--> optional world lane enemy records / enemies
+-> lane-applied WorldLaneState and world/session/overlay readmodels
 ```
 
 The debug status packet provides current debug-toggle state. The lane-applied devtools gameplay readmodel provides the entity/session maps needed to build target selectors and raw telemetry panels.
@@ -314,7 +308,7 @@ TargetTelemetry
 Each panel has a source selector. Current source options are:
 
 ```text
-world lane readback
+lane-applied state readback
 session lane readback
 ```
 
@@ -328,7 +322,7 @@ player_world_states
 For local telemetry:
 
 ```text
-world lane readback
+lane-applied state readback
 -> server_players[self_id]
 
 session lane readback
@@ -338,7 +332,7 @@ session lane readback
 For target telemetry:
 
 ```text
-world lane readback
+lane-applied state readback
 -> selected player, asteroid, bullet, pickup, or enemy state
 
 session lane readback
@@ -416,7 +410,7 @@ canonical target kind and id
 
 The status packet and the lane-applied devtools gameplay readmodel are separate inputs.
 
-`debug_status` explains current debug-control state. Lane-applied world/session/overlay readmodels are folded into a transient devtools gameplay readmodel for entity, lifecycle, and receiver-local state. The client combines them only for devtools presentation.
+`debug_status` explains current debug-control state. Lane-applied world, lifecycle, hot, session, and overlay readmodels are folded into a transient devtools gameplay readmodel for entity, lifecycle, and receiver-local state. The client combines them only for devtools presentation.
 
 ## Build/runtime gates
 
@@ -645,4 +639,3 @@ The current target readmodel supports non-player target telemetry for asteroids,
 `Game Target` is a compact selector affordance, not a separate server entity. It resolves to the current canonical player target only when the local synced ship state reports `target_kind=player`.
 
 `All Players` is represented as `target_scope=all_players`. It should not be serialized or stored as a real player ID.
-

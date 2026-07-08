@@ -20,7 +20,8 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Packet Schemas](../../data/packet-schemas.md)
 - [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
-This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection, focused asteroid/bullet hot-lane chunking, and hot-packet encoded-size guards, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection, focused asteroid/bullet hot-lane chunking, and hot-packet encoded-size guards, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, and subtractive asteroid/bullet movement lanes are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md). Dedicated reliable ordered lifecycle lanes are implemented for asteroid and bullet/projectile creates/deletes: `sr.asteroids.lifecycle` and `sr.bullets.lifecycle`.
+
 Focused asteroid/bullet hot-lane chunking now uses conservative compact-JSON byte estimation for chunk construction, with final encoded-size guards still enforcing the actual send boundary.
 
 ## Current Inputs
@@ -66,7 +67,7 @@ Planning outputs for the remaining protocol work:
 
 ## Phase P2 - Realtime Protocol Architecture
 
-Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, and `sr.event` lanes, plus unordered/unreliable `sr.asteroids` and `sr.bullets` hot-update lanes, is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
+Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` lanes, plus unordered/unreliable `sr.asteroids` and `sr.bullets` hot-update lanes, is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
 
 ## Implemented Status
 
@@ -88,8 +89,8 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Creates remain full records, updates carry identity plus changed fields only, and deletes remain identity lists.
 - Realtime numeric wire quantization is implemented for outbound lane projection.
 - Compact JSON aliasing is implemented for active realtime gameplay lanes.
-- Asteroid tuple packing is implemented for compact world lane asteroid full/create/update/delete records.
-- Bullet tuple packing is implemented for compact world lane bullet records.
+- Asteroid tuple packing is implemented for compact asteroid lifecycle/full-bootstrap records, with hot movement tuples limited to movement updates only.
+- Bullet tuple packing is implemented for compact bullet lifecycle/full-bootstrap records, with hot movement tuples limited to movement updates only.
 - World ship/player tuple packing is implemented for compact world lane ship and player records.
 - Session player and lifecycle tuple packing is implemented for compact session lane records.
 - Known event tuple packing is implemented for compact `event_batch` records.
@@ -128,7 +129,7 @@ Future planning targets remain:
 - interest filtering
 - stronger resync behavior
 - hot/cold lane separation beyond current asteroid/bullet movement extraction
-- Current WebRTC physical gameplay channels split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`)
+- Current WebRTC physical gameplay channels split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`)
 - client-side hot-lane sequence guards reject lower sequence values while accepting same-sequence chunks for split `asteroid_delta` and `bullet_delta` packets
 
 Live priority should stay conservative until required gameplay and presentation truth can be proven safe by metrics.
@@ -155,7 +156,6 @@ Future packetcodec and transport evolution must preserve these ownership seams. 
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.
-
 
 
 

@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work.
+Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -781,4 +781,3 @@ This roadmap is not a feature backlog.
 It should remain a sequencing and dependency document. Detailed scope belongs in the owner documents for each domain, service, protocol, data, or devtools area.
 
 When implementation changes make a planned system current, update the relevant current documentation instead of expanding this roadmap with implementation details.
-

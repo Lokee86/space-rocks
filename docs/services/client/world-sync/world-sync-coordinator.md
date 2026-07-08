@@ -12,20 +12,15 @@ It explains how the client applies world lane state to world presentation seams,
 
 `WorldSync` is the client-side coordinator for rendering server-authoritative world state.
 
-It does not parse raw packets and does not decide gameplay outcomes. Packet decode and classification route through `RealtimeRouter`, which applies world lane state/readiness before `WorldPresentationAdapter` forwards that lane-applied state into `WorldSync`. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
+It does not parse raw packets and does not decide gameplay outcomes. RealtimeRouter applies world, lifecycle, and hot movement packets into WorldLaneState. WorldPresentationAdapter forwards the accumulated WorldLaneState into WorldSync. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
 
 The current runtime path is:
 
 ```text
-packet decode / classification
--> RealtimeRouter applies world lane packets into world_lane_state
+RealtimeRouter.route_lane_packet(packet)
+-> world/lifecycle/hot lane appliers update world_lane_state
 -> WorldPresentationAdapter.apply_world_lane_state(...)
--> WorldSync.set_current_self_id(...)
 -> WorldSync.apply_world_lane_state(world_lane_state)
--> PlayerRenderApi
--> ProjectileSync
--> AsteroidSync
--> PickupSync
 ```
 
 `WorldSync` also owns the composition of the target-position read model used by gameplay targeting flows. It exposes `target_source()`, but targeting orchestration stays outside world sync.
@@ -138,13 +133,13 @@ Constants.PICKUP_Z_INDEX
 Constants.BULLET_Z_INDEX
 ```
 
-### Active world lane application input
+### Active WorldLaneState application input
 
-The active world lane input path is:
+The active WorldLaneState input path is:
 
 ```text
 RealtimeRouter.route_lane_packet(packet)
--> world lane applier updates world_lane_state
+-> world, lifecycle, and hot lane appliers update world_lane_state
 -> WorldPresentationAdapter.apply_world_lane_state(world_sync, world_lane_state, self_id)
 -> WorldSync.set_current_self_id(self_id)
 -> WorldSync.apply_world_lane_state(world_lane_state)
@@ -158,6 +153,8 @@ world_lane_state.bullets
 world_lane_state.asteroids
 world_lane_state.pickups
 ```
+
+`world_lane_state.bullets` and `world_lane_state.asteroids` may be populated by lifecycle lanes and updated by hot lanes.
 
 ### Apply order
 
@@ -175,7 +172,9 @@ The current `WorldSync.apply_world_lane_state` order is:
 9. Apply pickup state from world_lane_state.pickups using the active anchor basis.
 ```
 
-The non-player entity sync owners receive the active visual and server anchor basis from `PlayerRenderApi`:
+Incremental dirty bullets and asteroids can create render nodes when lifecycle has accepted the entity.
+
+Hot updates alone must not create missing projectiles or asteroids.
 
 ```gdscript
 player_render_api.visual_position()
@@ -299,7 +298,7 @@ Current coordinator state includes:
 
 `WorldSync` does not persist state.
 
-`WorldSync` does not own authoritative world data. The server owns authoritative simulation, realtime protocol owns world lane packet application, and `WorldSync` applies the resulting lane state to presentation and exposes read models for client presentation and targeting consumers.
+`WorldSync` does not own authoritative world data. The server owns authoritative simulation, realtime protocol owns world, lifecycle, and hot lane packet application, and `WorldSync` applies the resulting accumulated lane state to presentation and exposes read models for client presentation and targeting consumers.
 
 Entity-specific node maps, target positions, and interpolation state belong inside the relevant sync owners. Player anchor and player meaning state belong behind `PlayerRenderApi`.
 

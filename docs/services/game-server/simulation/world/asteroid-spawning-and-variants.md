@@ -24,7 +24,7 @@ simulation tick
 -> allocate asteroid id
 -> create runtime asteroid
 -> store asteroid in game.entities.Asteroids
--> project asteroid state through world lane asteroid records
+-> project asteroid state through asteroid lifecycle creates and full/baseline snapshots, with regular asteroid movement exposed through sr.asteroids hot movement updates
 ```
 
 Asteroid variants are assigned by the server when an asteroid is created. The server stores the assigned variant index on the runtime asteroid and exports that index in asteroid state. The client consumes the exported variant id for presentation, but does not choose authoritative asteroid variants.
@@ -109,7 +109,7 @@ For asteroid spawning, the server decides:
 * when fragments are created
 * when spawned asteroids are removed from runtime storage
 
-The client observes asteroid state through world lane full/delta packets. It may render asteroid variants differently, but it does not create authoritative asteroids, choose authoritative variants, or decide whether an asteroid exists.
+The client observes asteroid state through lifecycle creates and world_full/bootstrap snapshots. It may render asteroid variants differently, but it does not create authoritative asteroids, choose authoritative variants, or decide whether an asteroid exists.
 
 ## Timed spawn scheduling
 
@@ -449,10 +449,10 @@ variant
 float64(size) * constants.AsteroidSizeScale
 ```
 
-`protocol/realtime` projects all runtime asteroids into world lane asteroid records:
+`protocol/realtime` projects all runtime asteroids into asteroid lifecycle creates and world_full/bootstrap snapshots when needed:
 
 ```text
-world lane asteroid records
+`asteroids_lifecycle` state
 ```
 
 The client consumes the projected `variant` value for asteroid presentation.
@@ -495,14 +495,15 @@ Asteroid spawning has no inbound HTTP API.
 
 Normal clients do not send a spawn request for gameplay asteroids. Timed and fragment asteroid spawning are server-authored simulation effects.
 
-Clients observe asteroid spawning and variants through world lane output:
+Clients observe asteroid spawning and variants through asteroid lifecycle output and full/bootstrap state:
 
 ```text
-world lane asteroid records
+`asteroids_lifecycle` creates/deletes
+world_full/bootstrap asteroid state when needed
 session lane total_asteroids/readout
 ```
 
-World lane asteroid records carry each asteroid runtime state, including the server-selected `variant` index. `total_asteroids` is a session-lane or match-readout counter when needed, not a world entity record.
+Asteroid lifecycle creates and world_full/bootstrap asteroid state carry each asteroid runtime state needed for presentation, including the server-selected `variant` index. `total_asteroids` is a session-lane or match-readout counter when needed, not a world entity record.
 
 Debug asteroid spawning is available only through devtools command handling. The devtools command path is a debug surface, not a gameplay authority surface. Devtools builds a debug asteroid spawn plan, then applies it through game-owned spawn mutation.
 
@@ -564,7 +565,7 @@ Asteroid spawning and variants must preserve these rules:
 * Timed, fragment, and debug spawns must select variants through the asteroid catalog helpers.
 * Variant randomization must not use raw `rand.Intn` pools.
 * Runtime asteroid state stores the selected variant index.
-* World lane asteroid record projection must preserve the runtime asteroid variant.
+* Asteroid lifecycle creates and world_full/bootstrap asteroid state must preserve the runtime asteroid variant.
 * Fragment spawns must receive newly selected fragment variants.
 * Debug asteroid spawning must apply through game-owned mutation seams.
 * Collision-body construction must use server-loaded collision shapes, not client presentation shapes.

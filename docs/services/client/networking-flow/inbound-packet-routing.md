@@ -11,7 +11,7 @@ It covers how decoded server packet dictionaries move from the client WebSocket 
 ## Overview
 
 Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
-WebSocket remains the client route for session, control, room, lobby, auth, telemetry, signaling, and queued non-gameplay packets. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets and diagnostic smoke packets: `sr.world`, `sr.overlay`, `sr.session`, and `sr.event` are ordered/reliable, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
+WebSocket remains the client route for session, control, room, lobby, auth, telemetry, signaling, and queued non-gameplay packets. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets and diagnostic smoke packets: `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable lifecycle channels, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
 
 `NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `WebRTCTransport` owns DataChannel text receive, packet decode, and `packet_received` emission for WebRTC packets. After those signals fire, inbound routing is owned by `ClientConnectionService`, `ServerPacketDispatcher`, and `ServerPacketRouter`.
 
@@ -39,7 +39,7 @@ WebRTCTransport receives DataChannel text
 -> GameplaySessionController.handle_gameplay_packet
 ```
 
-The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Hot asteroid and bullet packets are routed on unordered/unreliable lanes. The client rejects lower sequence values so late packets cannot roll positions backward. Same-sequence packets are valid for chunked `asteroid_delta` or `bullet_delta` output and may apply independently. Sequence gaps are valid because hot packets can be dropped.
+The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Lifecycle defines existence. Hot lanes update known entities only. Hot asteroid and bullet packets are routed on unordered/unreliable lanes. The client rejects lower sequence values so late packets cannot roll positions backward. Same-sequence packets are valid for chunked `asteroid_delta` or `bullet_delta` output and may apply independently. Sequence gaps are valid because hot packets can be dropped.
 
 ## Code root
 
@@ -130,6 +130,8 @@ world_full
 world_delta
 asteroid_delta
 bullet_delta
+asteroids_lifecycle
+bullets_lifecycle
 overlay_full
 overlay_delta
 session_full
@@ -142,8 +144,6 @@ debug_status
 player_pause_state
 telemetry_pong
 ```
-
-The router does not emit signals, mutate lane state, or inspect packet payload contents beyond the packet type.
 
 ### Dispatcher signal fanout
 
@@ -160,6 +160,8 @@ world_full_received(packet)
 world_delta_received(packet)
 asteroid_delta_received(packet)
 bullet_delta_received(packet)
+asteroids_lifecycle_received(packet)
+bullets_lifecycle_received(packet)
 overlay_full_received(packet)
 overlay_delta_received(packet)
 session_full_received(packet)
@@ -315,7 +317,7 @@ gameplay_packet_received
 
 `GameplaySessionController` gates packet fanout with `accepts_gameplay_packets`, lane baseline readiness from gameplay readiness, and `gameplay_presentation_adapter.can_fanout()`.
 
-By the time `GameplaySessionController.handle_gameplay_packet` runs, the lane state has already been applied to `RealtimeRouter`.
+By the time `GameplaySessionController.handle_gameplay_packet` runs, the lane state has already been applied to `WorldLaneState` through `RealtimeRouter`.
 
 `GameplaySessionController` fans the current lane state out through the presentation adapter to world sync, HUD flow, event lifecycle flow for `event_batch`, and the devtools lane state adapter or devtools gameplay state.
 
@@ -376,6 +378,12 @@ unknown_packet_received(packet)
 `SessionNetworkController` currently logs the unknown-packet event through its configured logger.
 
 Unknown packets are not applied to gameplay, room, auth, or telemetry state.
+
+### Lifecycle routing note
+
+Lifecycle packets use the same routing path as other gameplay packets, but they are applied by `WorldLaneApplier` lifecycle methods before `gameplay_packet_received` fans them to gameplay consumers.
+
+Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
 
 ## Protocols and APIs
 
@@ -613,6 +621,10 @@ Relevant tests include:
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
 * `client/tests/unit/protocol/realtime/test_gameplay_readiness.gd`
 * `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
+* `client/tests/unit/networking/test_server_packet_dispatcher.gd`
+* `client/tests/unit/world/test_projectile_sync.gd`
+* `client/tests/unit/world/test_asteroid_sync.gd`
+* `client/tests/unit/world/test_world_sync.gd`
 * `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd`
 * `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
 * `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`
@@ -658,7 +670,6 @@ Lane routing and presentation fanout are separate boundaries. `RealtimeRouter` o
 Telemetry pong is routed through the same inbound dispatcher but consumed directly by telemetry context rather than through `SessionNetworkController`.
 
 Gameplay packet acceptance is intentionally not handled by the router. The router classifies packets; `GameplaySessionController` decides whether gameplay packets are currently accepted.
-
 
 
 

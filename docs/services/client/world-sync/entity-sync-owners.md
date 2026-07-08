@@ -12,7 +12,7 @@ It covers scene-node creation, missing-node cleanup, target visual positions, in
 
 Entity sync owners are focused rendering seams under client world sync.
 
-`WorldSync` receives world lane state from the realtime protocol seam, then delegates projectile, asteroid, and pickup dictionaries to dedicated sync owners. Each owner is responsible for making its entity family visible in the Godot scene while treating server state as authoritative.
+`WorldSync` receives accumulated WorldLaneState from world, lifecycle, and hot movement lane appliers, then delegates projectile, asteroid, and pickup dictionaries to dedicated sync owners. Each owner is responsible for making its entity family visible in the Godot scene while treating server state as authoritative.
 
 The entity sync owners currently covered by this document are:
 
@@ -25,7 +25,7 @@ PickupSync
 They share the same general pattern:
 
 ```text
-1. Remove local nodes that are missing from the latest world lane state.
+1. Remove local nodes that are missing from the accumulated server presentation state.
 2. Create local nodes for newly seen server entities.
 3. Update target visual positions from server coordinates.
 4. Apply presentation-specific state.
@@ -42,7 +42,7 @@ They do not decide whether an entity should exist. They render the server state 
 
 * Render server-authoritative projectile, asteroid, and pickup state as client scene nodes.
 * Create scene nodes for newly seen entities.
-* Remove local scene nodes that are absent from the latest world lane state.
+* Remove local scene nodes that are absent from the accumulated server presentation state.
 * Track target visual positions for interpolation.
 * Interpolate rendered nodes during world-sync runtime processing.
 * Preserve visual continuity when server coordinates wrap around world bounds.
@@ -65,7 +65,7 @@ They do not decide whether an entity should exist. They render the server state 
 * Pickup gameplay effects.
 * Score, lives, respawn, or match-result decisions.
 * Packet schema source-of-truth files.
-* Realtime world lane packet application.
+* Realtime world, lifecycle, and hot lane packet application.
 * Player and ViewAnchor synchronization.
 * Target selection orchestration.
 * HUD, menu, input, or devtools ownership.
@@ -100,14 +100,14 @@ Pickup sync renders pickup presence and presentation. Pickup gameplay effects re
 
 ### WorldSync delegation
 
-Entity sync owners are called by the active world lane path.
+Entity sync owners are called by the active WorldLaneState presentation path.
 
-The realtime protocol seam has already applied world packets before they reach world sync. Entity sync owners consume dictionaries from `world_lane_state` that represent the current server-visible state for each entity family.
+The realtime protocol seam has already applied world, lifecycle, and hot movement packets before they reach world sync. Entity sync owners consume dictionaries from `WorldLaneState` that represent the current server-visible state for each entity family.
 
 Current delegation shape:
 
 ```text
-RealtimeRouter applies world lane packets into world_lane_state
+RealtimeRouter applies world, lifecycle, and hot packets into world_lane_state
 -> WorldPresentationAdapter.apply_world_lane_state(...)
 -> WorldSync.apply_world_lane_state(world_lane_state)
 -> PlayerRenderApi.apply_state(current_self_id, world_lane_state.ships)
@@ -139,9 +139,9 @@ This keeps entity rendering stable when authoritative server positions wrap at w
 
 ### Missing-node cleanup
 
-Each entity sync owner removes rendered nodes when the corresponding server entity id is absent from the latest world lane dictionary.
+Each entity sync owner removes rendered nodes when the corresponding server entity id is absent from the accumulated server presentation state.
 
-This keeps local presentation aligned with server state and prevents stale projectiles, destroyed asteroids, or collected or expired pickups from remaining visible.
+Unknown hot projectile updates must not create nodes. Hot updates after lifecycle delete are ignored. Lifecycle-created projectiles, including torpedoes, are allowed to create render nodes and preserve projectile_type.
 
 ### Interpolation
 
@@ -194,7 +194,7 @@ Current responsibilities include:
 * playing projectile firing presentation when a new projectile appears
 * exposing projectile positions to target-position read models
 
-Projectile sync treats world lane bullet dictionaries as the source of truth.
+`ProjectileSync` treats WorldLaneState bullet dictionaries as the source of truth.
 Bullet pulse effects are scene-local presentation owned by `client/scripts/entities/bullet.gd`, not world-sync authority.
 
 Projectile packet-facing field access belongs to:
@@ -219,7 +219,8 @@ Current responsibilities include:
 * interpolating asteroid nodes
 * exposing asteroid positions to target-position read models
 
-Asteroid sync preserves visual continuity for existing asteroids by calculating movement from the asteroid's previous server position to its current server position using wrapped shortest-delta logic.
+`AsteroidSync` treats WorldLaneState asteroid dictionaries as the source of truth.
+Unknown hot asteroid updates must not create nodes. Hot updates after lifecycle delete are ignored. Lifecycle-created asteroids are allowed to create render nodes and preserve variant/scale.
 Asteroid variant-specific client presentation should live in the client-side asteroid variant presentation doc when that doc exists; this section only covers the sync-owner boundary.
 
 New asteroids are positioned from the current active anchor basis. First-seen asteroids may appear offscreen when the server intentionally spawns them outside the immediate view area.
@@ -325,6 +326,9 @@ Relevant client tests include:
 * `client/tests/unit/world/projectiles/test_projectile_scene_resolver.gd`
 * `client/tests/unit/world/test_pickup_presentation_catalog.gd`
 * `client/tests/unit/test_world_sync.gd`
+* `client/tests/unit/world/test_projectile_sync.gd`
+* `client/tests/unit/world/test_asteroid_sync.gd`
+* `client/tests/unit/world/test_world_sync.gd`
 * `client/tests/unit/test_world_wrap.gd`
 * `client/tests/unit/gameplay/test_gameplay_target_candidate_flow.gd`
 

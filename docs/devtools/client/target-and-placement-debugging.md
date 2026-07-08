@@ -65,9 +65,9 @@ target_kind = "player"
 target_id = <player id>
 ```
 
-The client may request a target from local click state, but the request is not authoritative. The server validates the selected target kind, target ID, click position, and current target body before storing target state. The client then reads the confirmed target back through normal world lane readback or session-lane state, depending on the target kind.
+The client may request a target from local click state, but the request is not authoritative. The server validates the selected target kind, target ID, click position, and current target body before storing target state. The client then reads the confirmed target back through authoritative lane-applied gameplay state. Player target fields are read from active ship/world state; non-player target bodies are read from their entity-family readback.
 
-Placement debugging also remains server-authoritative. The client sends a requested entity type, position, direction metadata, and optional player target context. The server decides whether the request applies and mutates the authoritative game state. The client observes the result through world lane readback and world sync.
+Placement debugging also remains server-authoritative. The client sends a requested entity type, position, direction metadata, and optional player target context. The server decides whether the request applies and mutates the authoritative game state. The client observes the result through family-specific realtime readback: world lane state for ships and pickups, asteroid lifecycle/hot lanes for asteroids, and bullet lifecycle/hot lanes for projectiles.
 
 `target_player_id` is a quarantined compatibility field for debug/player-only command paths. It is not the generic gameplay target model and should not be used for normal gameplay targeting, target readouts, or new target-capable gameplay systems.
 

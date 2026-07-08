@@ -10,7 +10,7 @@ It covers client-originated gameplay requests, server-originated lane gameplay o
 
 ## Overview
 
-Gameplay packets are the realtime packets used after a client is connected to the game server and, for gameplay mutation, attached to an active game player. Client-originated gameplay intent currently travels over the WebSocket session/control path, while server-originated active gameplay hot movement output travels over WebRTC gameplay DataChannels: `sr.world`, `sr.overlay`, `sr.session`, and `sr.event` remain ordered/reliable, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes.
+Gameplay packets are the realtime packets used after a client is connected to the game server and, for gameplay mutation, attached to an active game player. Client-originated gameplay intent currently travels over the WebSocket session/control path, while server-originated active gameplay output travels over WebRTC gameplay DataChannels: `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` remain ordered/reliable, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes.
 
 The protocol is server-authoritative:
 
@@ -42,6 +42,8 @@ Active server-to-client gameplay packet families are:
 world_full / world_delta
 asteroid_delta
 bullet_delta
+asteroids_lifecycle
+bullets_lifecycle
 overlay_full / overlay_delta
 session_full / session_delta
 event_batch
@@ -49,7 +51,7 @@ player_pause_state
 resync_request / resync_required
 ```
 
-Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. `asteroid_delta` and `bullet_delta` are hot movement packets on unordered/unreliable lanes: they move existing entities, they do not create new entities client-side, and lifecycle creates/deletes still belong to `world_delta`. `asteroid_delta` and `bullet_delta` are high-priority, hot-supersedable movement candidates. They are not required lifecycle packets, and they may be dropped or replaced by newer movement state. When a hot movement update list would exceed the encoded packet cap, `asteroid_delta` and `bullet_delta` may be emitted as multiple same-sequence chunks. These chunks still only move existing entities; lifecycle creates/deletes remain on `world_delta`. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
+Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. `asteroid_delta` and `bullet_delta` are hot movement packets on unordered/unreliable lanes: they move existing entities, they do not create new entities client-side, and lifecycle creates/deletes are handled by `asteroids_lifecycle` and `bullets_lifecycle`. `asteroid_delta` and `bullet_delta` are high-priority, hot-supersedable movement candidates. They are not required lifecycle packets, and they may be dropped or replaced by newer movement state. When a hot movement update list would exceed the encoded packet cap, `asteroid_delta` and `bullet_delta` may be emitted as multiple same-sequence chunks. These chunks still only move existing entities; lifecycle creates/deletes remain on the dedicated lifecycle lanes. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
 
 Current lane delta behavior:
 
@@ -88,7 +90,8 @@ session lifecycle updates
 = player_id
 ```
 
-`world_delta`, `overlay_delta`, and `session_delta` are field-delta aware for update arrays. `event_batch` is not a field-delta lane; it remains transient presentation-event delivery. Known event records are explicitly shaped from `EventState` into sparse wire records for known event types, and compact event aliases and tuple-packed event records are transport details that expand before gameplay presentation code consumes them. `asteroid_delta` and `bullet_delta` are supersedable hot updates on unordered/unreliable lanes, while `world_delta` keeps lifecycle creates/deletes. `player_pause_state` remains a separate same-session packet and is not part of lane delta delivery.
+
+`world_delta`, `overlay_delta`, and `session_delta` are field-delta aware for update arrays. `event_batch` is not a field-delta lane; it remains transient presentation-event delivery. Known event records are explicitly shaped from `EventState` into sparse wire records for known event types, and compact event aliases and tuple-packed event records are transport details that expand before gameplay presentation code consumes them. `asteroid_delta` and `bullet_delta` are supersedable hot updates on unordered/unreliable lanes, while `asteroids_lifecycle` and `bullets_lifecycle` own lifecycle creates/deletes. `player_pause_state` remains a separate same-session packet and is not part of lane delta delivery.
 
 Detailed lane metadata, baseline, sequencing, and field-delta semantics belong in [Realtime WebSocket Protocol](realtime-websocket-protocol.md).
 
@@ -159,19 +162,27 @@ WebRTCTransport receives DataChannel text for active gameplay lane packets
 
 `RealtimeRouter` applies inbound lane state before `GameplaySessionController` handles the packet for acceptance and presentation fanout. Presentation flow continues through the current lane adapters and `event_batch` application.
 
+Lifecycle packets route through `RealtimeRouter` before `gameplay_packet_received` so that existence and identity are established ahead of presentation handling.
+
 ## Lane ownership
 
 Current packet-family ownership is:
 
 ```text
 world lane
-= ships, pickups, asteroid/bullet lifecycle creates/deletes
+= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
 
 asteroids lane
 = regular asteroid movement updates on unordered/unreliable hot lane sr.asteroids
 
+asteroids lifecycle lane
+= asteroid creates/deletes and initial asteroid presentation identity, including variant/size/scale
+
 bullets lane
 = regular bullet movement updates on unordered/unreliable hot lane sr.bullets
+
+bullets lifecycle lane
+= bullet/projectile creates/deletes and initial projectile identity, including owner, weapon_id, projectile_type, and torpedo identity
 
 overlay lane
 = local-player HUD-facing presentation state such as score, lives, cooldowns, and loadout facts
@@ -184,6 +195,10 @@ event_batch
 ```
 
 `player_pause_state` remains a separate same-session packet and should be treated as a current packet family, not as part of lane event or world-state delivery.
+
+Lifecycle defines existence. Hot lanes update known entities only.
+
+Hot movement packets must never create entities. Unknown hot asteroid updates are ignored. Unknown hot bullet updates are buffered only where the client explicitly supports waiting for lifecycle create; hot updates after delete are ignored and must not resurrect removed entities.
 
 `event_batch` is transient presentation-event delivery, not a field-delta lane. It is not authoritative state, and it does not use baselines, deltas, or chunks.
 
@@ -229,7 +244,7 @@ session current room and current game player context
 lane packet write timing
 encoded packet write observations, debug packet wire logs, and non-empty per-tick write summaries
 ```
-Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, hot asteroid/bullet movement splitting, and current byte-budget planning inputs; networking delivers encoded active gameplay lane packets over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`, and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
+Realtime projection owns lane candidate construction, send-plan records, sparse delta omission, compact alias preparation, hot asteroid/bullet movement splitting, and current byte-budget planning inputs; networking delivers encoded active gameplay lane packets over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`, and emits the active debug wire logs plus non-empty per-tick write summaries after successful writes.
 
 ### Game-server simulation
 
@@ -259,7 +274,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-Relevant verification areas now include lane-native packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, tuple-packed record expansion, lane state application, presentation adapters, and event_batch behavior.
+Relevant verification areas now include lane-native packet routing/application, lifecycle packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, tuple-packed record expansion, lane state application, presentation adapters, lifecycle existence handling, and event_batch behavior.
 
 ## Code map
 
@@ -319,4 +334,3 @@ services/game-server/internal/game/
 ## Notes
 
 This doc stays at the gameplay packet family and ownership boundary. Detailed lane metadata, wire behavior, and transport sequencing remain canonical in `realtime-websocket-protocol.md`.
-

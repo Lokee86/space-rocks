@@ -24,7 +24,7 @@ shared/collisions/collision_shapes.json
 
 The packet contains reusable shape definitions keyed by debug shape id. It does not contain live entity state.
 
-Live entity position, rotation, scale, variant, and pickup state continue to come from world lane records and lane-native realtime projection. The client combines live world lane readback with the debug shape catalog for presentation-only overlay drawing.
+Live entity position, rotation, scale, variant, and pickup state continue to come from family-specific realtime lane state. The client combines accumulated realtime lane readback with the debug shape catalog for presentation-only overlay drawing.
 
 ## Debug-only scope
 
@@ -486,5 +486,4 @@ The legacy devtools documentation correctly treated server hitbox display as dev
 The current packet sends shape definitions once per room id within a websocket write loop. If refresh, acknowledgement, or catalog versioning becomes necessary later, that belongs in protocol or devtools planning until implemented.
 
 Pickup shape ids in the server catalog are based on collision-shape catalog keys. Current collision-shape data uses pickup class keys such as `powerup` and `weapon`, while live pickup state also has a pickup type such as `1_up`. Client overlay drawing depends on resolver ids matching catalog ids.
-
 

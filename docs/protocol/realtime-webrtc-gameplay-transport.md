@@ -75,16 +75,18 @@ session      | sr.session       | 3             | session_full, session_delta
 event        | sr.event         | 4             | event_batch
 asteroids    | sr.asteroids     | 5             | asteroid_delta
 bullets      | sr.bullets       | 6             | bullet_delta
+asteroids.lifecycle | sr.asteroids.lifecycle | 7 | asteroids_lifecycle
+bullets.lifecycle   | sr.bullets.lifecycle   | 8 | bullets_lifecycle
 ```
 
 The current channel policy is:
 
 ```text
-sr.world, sr.overlay, sr.session, and sr.event are negotiated ordered/reliable channels.
+sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle are negotiated ordered/reliable channels.
 sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
-lifecycle creates/deletes remain on sr.world.
+Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
 Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
 ```
 
@@ -107,7 +109,7 @@ the selected candidate lane mapped to an open gameplay DataChannel
 
 ## Server Send Boundary
 
-The server active gameplay path builds lane candidates, encodes each selected candidate, and writes each encoded packet to the matching WebRTC gameplay channel.
+The server active gameplay path builds lane candidates, encodes each selected candidate, and writes each encoded packet to the matching WebRTC active gameplay channel.
 
 The server send boundary is:
 
@@ -117,7 +119,7 @@ BuildActiveRealtimeResultForGame
 -> selected realtime lane candidates
 -> encoded lane packet list
 -> SendEncodedLaneJSON(candidate.Lane, encodedPacket) for each encoded packet
--> physical WebRTC gameplay DataChannel
+-> physical WebRTC active gameplay DataChannel
 ```
 
 Active metadata advancement, event draining, and baseline persistence must only happen after the active WebRTC write path succeeds.
@@ -135,6 +137,9 @@ WebRTCTransport receives DataChannel text
 ```
 
 Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering. Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
+Asteroid and bullet lifecycle packets flow through the same WebRTC active gameplay path as the other gameplay lanes.
+
+Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
 
 ## Hot Movement Split
 
@@ -150,7 +155,7 @@ Regular bullet movement updates are emitted as:
 bullet_delta on sr.bullets
 ```
 
-`world_delta` remains responsible for ships, pickups, and lifecycle/bootstrap/resync-safe asteroid and bullet creates/deletes. World serializer compatibility may still accept asteroid or bullet update sections, but regular active asteroid and bullet movement is split to the dedicated hot movement lanes.
+`world_delta` remains responsible for ships, pickups, and full/bootstrap/resync-safe presentation state. World serializer compatibility may still accept asteroid or bullet update sections, but regular active asteroid and bullet movement is split to the dedicated hot movement lanes.
 
 ## Control and Resync Boundary
 

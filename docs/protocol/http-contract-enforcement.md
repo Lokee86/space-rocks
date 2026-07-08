@@ -350,4 +350,3 @@ Runtime OpenAPI middleware is still not active.
 If future work focuses on OpenAPI generation, source updates, generated outputs, or pipeline commands, split that material into a data doc instead of expanding this protocol doc into a data pipeline document.
 
 If future work adds runtime OpenAPI middleware, update the enforcement level and add the runtime implementation path to the code map.
-

@@ -21,7 +21,7 @@ server-owned spawn decision
 -> runtime asteroid entity
 -> server-owned movement and wrap
 -> server-owned collision and damage consequences
--> world lane realtime projection
+-> asteroids_lifecycle existence projection and asteroid_delta movement projection
 -> client-owned presentation
 ```
 
@@ -103,7 +103,7 @@ spawn plan
 -> optional destruction consequences
 -> pending despawn
 -> removal from entity store
--> disappearance from world lane records
+-> deletion through asteroids_lifecycle and disappearance from asteroid realtime readback
 ```
 
 Timed asteroid spawning happens during active match simulation. The server accumulates spawn time, checks active camera views, selects offscreen spawn positions, builds asteroid spawn plans, then applies those plans into the runtime entity store.
@@ -245,12 +245,12 @@ Pending despawn means:
 * the asteroid no longer moves
 * its despawn delay counts down
 * collision checks skip it
-* it remains in world lane records until removal
+* it remains in asteroid realtime readback until removal
 * it is removed when the delay reaches zero
 
 This short delay lets clients receive final asteroid state and related presentation events.
 
-Once an asteroid is removed from `game.entities.Asteroids`, it disappears from future world lane records. The client removes the corresponding asteroid node when it is no longer present in server asteroid state.
+Once removed, the asteroid is deleted through the asteroid lifecycle lane; later hot movement updates for that id must not resurrect it.
 
 ## Drops and scoring
 
@@ -266,7 +266,7 @@ The asteroid entity supplies source facts such as id, size, and position. It doe
 
 Asteroid presentation is client-owned and state-driven.
 
-The server projects asteroid state through world lane asteroid records. Current asteroid state includes:
+The server projects asteroid existence through asteroid lifecycle packets and full/baseline state, and projects regular movement through `asteroid_delta` hot updates. Current asteroid state includes:
 
 ```text
 id
@@ -304,7 +304,7 @@ Asteroid entity behavior participates with these systems:
 * [Asteroid Variants Data](../../data/asteroid-variants-data.md) owns asteroid variant source data and catalog expectations.
 * [Drop Tables](../../data/drop-tables.md) owns asteroid drop-table source data and generated output.
 * [Collision Shape Data](../../data/collision-shape-data.md) owns collision shape source and generated data.
-* [Gameplay Packets](../../protocol/gameplay-packets.md) owns the packet surface that carries asteroid state through world lane records.
+* [Gameplay Packets](../../protocol/gameplay-packets.md) owns the packet surface that carries asteroid existence through asteroids_lifecycle and regular movement through asteroid_delta.
 * [Asteroid Variant Contract](../../protocol/asteroid-variant-contract.md) owns the protocol contract for asteroid variant indexes.
 * [Client Asteroid Variant Presentation](../../services/client/world-sync/asteroid-variant-presentation.md) owns client-side texture and scene presentation for asteroid variants.
 * [Client Entity Sync Owners](../../services/client/world-sync/entity-sync-owners.md) owns client world-sync entity node ownership.

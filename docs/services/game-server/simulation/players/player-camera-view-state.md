@@ -223,7 +223,7 @@ runtime.Ship.Config, if an active ship exists
 
 This means a pending-respawn player with a session and camera view can still refresh server camera config even when no active ship exists.
 
-`CameraView` is not projected directly in lane packets. Clients observe active ship state through world lane records, player session state through session lane records, lifecycle status through session lane lifecycle records, bullets through world lane bullet records, asteroids through world lane asteroid records, pickups through world lane pickup records, and presentation events through compact sparse `event_batch` delivery. The server camera view remains internal simulation state, and this doc describes logical behavior rather than literal compact wire keys.
+`CameraView` is not projected directly in lane packets. Clients observe active ship state through world lane records, player session state through session lane records, lifecycle status through session lane lifecycle records, bullets through `bullets_lifecycle` plus `bullet_delta`, asteroids through `asteroids_lifecycle` plus `asteroid_delta`, pickups through world lane pickup records, and presentation events through compact sparse `event_batch` delivery. The server camera view remains internal simulation state, and this doc describes logical behavior rather than literal compact wire keys.
 
 Devtools paths can also create or update camera views when forcing player spawn or respawn:
 

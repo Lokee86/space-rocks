@@ -36,22 +36,7 @@ runtime.Bullet
 = stored projectile entity used by movement, collision, state projection, and impact effects
 ```
 
-The normal player-fire path is:
-
-```text
-Client input packet
--> runtime.InputState.PrimaryFire / SecondaryFire
--> Game.Step
--> stepPlayerWeapons
--> stepPlayers
--> firePlayerPrimaryWeapon / firePlayerSecondaryWeapon
--> weapons.Fire
--> runtime.NewBulletFromWeaponSpawn
--> game.entities.Projectiles
--> world lane bullet record projection
--> collision and damage flow
-```
-
+Weapon fire creates runtime projectiles server-side. Projectile lifecycle creates carry owner_id, weapon_id, projectile_type, initial transform, and other spawn-owned presentation identity over sr.bullets.lifecycle. Movement after spawn travels over sr.bullets.
 `weapons.Fire` is the pure decision point. It does not mutate `Game`, runtime entity maps, packets, damage targets, scoring, pickups, radial effects, or client state. It returns an updated slot state and a projectile spawn intent. The `Game` package adapts that result into runtime projectile storage.
 
 ## Code root
@@ -84,7 +69,7 @@ The game-server weapon and projectile-fire boundary owns:
 * Weapon fire policy.
 * Projectile spawn intent construction.
 * Weapon-backed runtime projectile creation through the `Game` adapter.
-* Projection of weapon and projectile metadata into world lane bullet records.
+* Projection of weapon and projectile metadata into `bullets_lifecycle` creates and full/bootstrap projectile state.
 * Copying projectile damage and impact-effect metadata onto runtime projectile entities.
 * Current pickup-driven torpedo equip behavior through the pickup effect adapter.
 
@@ -331,20 +316,12 @@ secondary_fire
 
 The server does not accept client-created projectile IDs, damage values, cooldown values, ammo values, or impact-effect metadata.
 
-The world lane packet sends weapon and projectile readback through generated packet fields:
+Realtime projection sends weapon and projectile readback through generated packet fields:
 
 ```text
-ShipState.primary_weapon_id
-ShipState.primary_ammo_policy
-ShipState.primary_cooldown_remaining
-ShipState.primary_ammo_remaining
-ShipState.secondary_weapon_id
-ShipState.secondary_ammo_policy
-ShipState.secondary_cooldown_remaining
-ShipState.secondary_ammo_remaining
-
-BulletState.weapon_id
-BulletState.projectile_type
+ShipState fields remain world/full-state player readback.
+BulletState fields are projectile lifecycle/full-state readback.
+Ship weapon readback is player/world-state readback. Projectile identity readback is carried by bullets_lifecycle creates and full/bootstrap projectile state, while projectile movement after spawn travels over bullet_delta.
 ```
 
 This surface lets the client present current equipment, cooldown/ammo state, and projectile visuals without owning authoritative firing results.

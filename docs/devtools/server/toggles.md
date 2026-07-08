@@ -704,4 +704,3 @@ Legacy devtools notes grouped client hotkeys, client overlays, server toggles, t
 `debug_kill_player` shares implementation file space with toggle handlers in `toggles.go`, but it is a command, not a toggle. It belongs with player targeting, lifecycle, and command-surface documentation rather than being treated as part of the toggle set.
 
 World freeze should be described as granular simulation gating. It is useful for debugging asteroid movement, bullet motion, spawning, and collision passes, but it should not be mistaken for match pause or full simulation suspension.
-

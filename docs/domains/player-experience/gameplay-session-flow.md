@@ -513,4 +513,3 @@ WebSocket connection, room membership, and active gameplay participation are sep
 The current local development WebSocket targets for single-player and multiplayer may be the same URL. This does not make single-player and multiplayer the same session flow. The server-side room request, admission rules, room joinability, and player-data identity context distinguish them.
 
 Room match-over and local player elimination must stay separate in documentation and implementation. Local elimination is a player presentation state; room match-over is the authoritative session completion state.
-

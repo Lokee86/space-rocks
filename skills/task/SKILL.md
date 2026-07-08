@@ -1,248 +1,818 @@
 ## Purpose
 
-Use this skill when moving asteroid and bullet entity lifecycle traffic out of `sr.world` into dedicated reliable lifecycle lanes.
+Use this skill to restore documentation consistency after implementing dedicated asteroid and bullet lifecycle lanes.
 
-The goal is to keep `sr.world` focused on player, match, and world-level state while high-churn entity families get their own lifecycle ownership.
+This documentation pass treats the current implementation as the full implementation of:
 
-## Target lane model
+```text
+sr.asteroids.lifecycle
+sr.bullets.lifecycle
+```
 
-Use this lane ownership model:
+The goal is to eliminate stale documentation that still says asteroid and bullet lifecycle creates/deletes remain on `sr.world`.
 
-| Lane | Reliability | Ordered | Responsibility |
-|---|---:|---:|---|
-| `sr.world` | yes | yes | players, match state, world-level state |
-| `sr.asteroids.lifecycle` | yes | yes | asteroid create/delete/split lifecycle |
-| `sr.bullets.lifecycle` | yes | yes | bullet, torpedo, projectile create/delete lifecycle |
-| `sr.asteroids` | no | no | asteroid hot deltas only |
-| `sr.bullets` | no | no | bullet hot deltas only |
+## Source of truth
+
+Treat the implementation diff as the current source of truth.
+
+The implemented model is:
+
+```text
+sr.asteroids.lifecycle
+= reliable / ordered / required / critical
+= asteroids_lifecycle
+= asteroid_creates + asteroid_deletes
+
+sr.bullets.lifecycle
+= reliable / ordered / required / critical
+= bullets_lifecycle
+= bullet_creates + bullet_deletes
+
+sr.asteroids
+= unreliable / unordered / hot-supersedable
+= asteroid_delta
+= asteroid_updates only
+
+sr.bullets
+= unreliable / unordered / hot-supersedable
+= bullet_delta
+= bullet_updates only
+
+sr.world
+= reliable / ordered
+= ships, pickups, player/world presentation state, bootstrap/full snapshots, compatibility/resync-safe support where still implemented
+= no longer the active owner for asteroid/bullet lifecycle creates/deletes
+```
 
 Core rule:
 
-> Lifecycle lanes define existence. Hot lanes update known existing entities only.
+```text
+Lifecycle defines existence. Hot lanes update known entities only.
+```
 
-## Non-goals
+## Scope
 
-Do not move player lifecycle or player state out of `sr.world`.
+Update existing documentation only unless an index or documentation policy explicitly requires a new file.
 
-Do not make hot lanes create entities implicitly.
+No new documentation file is expected.
 
-Do not merge lifecycle data into hot delta packets.
+No document deletions are expected.
 
-Do not add enemy lifecycle implementation yet.
+This pass should update protocol, transport, outbound routing, inbound routing, lane projection, compact wire mapping, client world sync, entity docs, devtools docs, and related planning summaries where stale references remain.
 
-Do not change asteroid, bullet, torpedo, or projectile simulation behavior unless required to preserve existing behavior after rerouting.
+## Required documentation statements
 
-Do not remove unused tuple support for future projectile rotation or homing behavior just because current bullets do not change rotation.
+Use this statement, or equivalent wording, wherever the lane model is summarized:
 
-## Required lifecycle ownership
+```text
+Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
+```
 
-Move asteroid lifecycle facts out of `sr.world` and into `sr.asteroids.lifecycle`.
+Use this statement, or equivalent wording, wherever cross-lane ordering is described:
 
-Asteroid lifecycle includes:
+```text
+Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+```
 
-- asteroid create
-- asteroid delete/despawn
-- asteroid split lifecycle facts, if represented as delete-parent/create-children
-- asteroid variant, size, and initial state needed to spawn the correct client entity
+Use this statement where client hot-lane behavior is described:
 
-Move bullet/projectile lifecycle facts out of `sr.world` and into `sr.bullets.lifecycle`.
+```text
+Hot movement packets must never create entities. Unknown hot asteroid updates are ignored. Unknown hot bullet updates are buffered only where the client explicitly supports waiting for lifecycle create; hot updates after delete are ignored and must not resurrect removed entities.
+```
 
-Bullet/projectile lifecycle includes:
+## Remove stale claims
 
-- bullet create
-- bullet delete/despawn
-- torpedo create
-- torpedo delete/despawn
-- projectile kind/type identity
-- owner/source identity
-- initial transform
-- initial velocity, if the current spawn path depends on it
-- TTL or expiration metadata, if currently spawn-owned
+Remove or correct docs that say:
 
-Keep hot movement/update data in the existing unreliable lanes:
+```text
+lifecycle creates/deletes remain on sr.world
+world lane owns asteroid/bullet lifecycle creates/deletes
+hot lanes create entities
+asteroid_delta/bullet_delta are lifecycle delivery
+all entity lifecycle traffic is world-lane traffic
+```
 
-- `sr.asteroids`
-- `sr.bullets`
+Remaining `world lane asteroid records` or `world lane bullet records` references must either be removed or clearly limited to full/bootstrap/compatibility context.
 
-Hot lanes should only carry compact transient updates for entities that already exist on the client.
+## Primary stale files
 
-## Server requirements
+Update these first.
 
-Add explicit server lane constants/specs for:
+### docs/protocol/realtime-webrtc-gameplay-transport.md
 
-- `sr.asteroids.lifecycle`
-- `sr.bullets.lifecycle`
+Update the physical channel table to eight channels:
 
-Register both lifecycle lanes as reliable and ordered.
+```text
+logical lane             | physical channel         | negotiated id | packet families
+world                    | sr.world                 | 1             | world_full, world_delta
+overlay                  | sr.overlay               | 2             | overlay_full, overlay_delta
+session                  | sr.session               | 3             | session_full, session_delta
+event                    | sr.event                 | 4             | event_batch
+asteroids                | sr.asteroids             | 5             | asteroid_delta
+bullets                  | sr.bullets               | 6             | bullet_delta
+asteroids.lifecycle      | sr.asteroids.lifecycle   | 7             | asteroids_lifecycle
+bullets.lifecycle        | sr.bullets.lifecycle     | 8             | bullets_lifecycle
+```
 
-Keep these existing hot lanes unreliable and unordered:
+Replace the channel policy with:
 
-- `sr.asteroids`
-- `sr.bullets`
+```text
+sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle are negotiated ordered/reliable channels.
+sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
+sr.asteroids carries supersedable asteroid_updates only.
+sr.bullets carries supersedable bullet_updates only.
+sr.asteroids.lifecycle carries asteroid_creates and asteroid_deletes.
+sr.bullets.lifecycle carries bullet_creates and bullet_deletes.
+Lifecycle channels define entity existence. Hot lanes update known existing entities only.
+```
 
-Update server packet planning, projection, or classification so:
+Add the cross-lane race note:
 
-- asteroid creates route to asteroid lifecycle
-- asteroid deletes route to asteroid lifecycle
-- bullet creates route to bullet lifecycle
-- bullet deletes route to bullet lifecycle
-- torpedo creates route to bullet lifecycle
-- torpedo deletes route to bullet lifecycle
-- player state remains in world
-- match/world state remains in world
-- asteroid hot deltas remain in asteroid hot lane
-- bullet hot deltas remain in bullet hot lane
+```text
+Reliable lifecycle lanes and unreliable hot lanes do not provide global ordering across lanes. The client must tolerate hot updates arriving before lifecycle creates and after lifecycle deletes. Hot packets must not create missing entities or resurrect deleted entities.
+```
 
-Lifecycle packets must be treated as reliable required packets, not supersedable hot packets.
+Update send and receive boundary descriptions so lifecycle packets flow through the same WebRTC/DataChannel path.
 
-Do not allow lifecycle packets to be dropped by hot-lane budget rules.
+### docs/protocol/realtime-websocket-protocol.md
 
-## Client requirements
+Update overview text so current active gameplay WebRTC channels include:
 
-Add explicit client channel specs for:
+```text
+sr.world
+sr.overlay
+sr.session
+sr.event
+sr.asteroids
+sr.bullets
+sr.asteroids.lifecycle
+sr.bullets.lifecycle
+```
 
-- `sr.asteroids.lifecycle`
-- `sr.bullets.lifecycle`
+Update current gameplay lanes list to include:
 
-Route asteroid lifecycle packets into the same asteroid spawn/despawn behavior currently reached through world packets.
+```text
+asteroids.lifecycle
+bullets.lifecycle
+```
+
+Update active packet families to include:
 
-Route bullet lifecycle packets into the same bullet/projectile spawn/despawn behavior currently reached through world packets.
+```text
+asteroids_lifecycle
+bullets_lifecycle
+```
 
-Preserve projectile type identity. A torpedo lifecycle create must spawn a torpedo node, not a fallback bullet node.
+Update compact/envelope documentation to include:
 
-Hot lanes must not create entities.
+```text
+asteroids_lifecycle -> al
+bullets_lifecycle -> bl
+asteroids.lifecycle -> al
+bullets.lifecycle -> bl
+```
 
-Client hot update rules:
+Update field-delta semantics to include:
 
-- hot update for unknown asteroid ID: ignore
-- hot update for unknown bullet/projectile ID: ignore
-- hot update for deleted asteroid ID: ignore
-- hot update for deleted bullet/projectile ID: ignore
-- hot update must not resurrect a deleted entity
-- hot update must not create a fallback/default entity
+```text
+asteroids_lifecycle asteroid_creates/asteroid_deletes = id
+bullets_lifecycle bullet_creates/bullet_deletes = id
+asteroid_delta asteroid_updates = id
+bullet_delta bullet_updates = id
+```
 
-## Cross-lane race rule
+Update the world lane section:
 
-Reliable lifecycle lanes and unreliable hot lanes do not provide global ordering across lanes.
+* Remove active `world_delta` ownership of asteroid/bullet creates/deletes.
+* Keep compatibility wording only if framed as legacy/bootstrap/resync-safe support.
+* Do not say active lifecycle remains on `sr.world`.
 
-The client must tolerate:
+Add dedicated sections:
 
-- hot update arriving before lifecycle create
-- hot update arriving after lifecycle delete
-- lifecycle create arriving after earlier hot packets were ignored
-- lifecycle delete arriving while newer hot packets are still in flight
+```text
+### Asteroid lifecycle lane packets
+### Bullet lifecycle lane packets
+```
 
-Do not fix these races by making hot lanes reliable.
+Each section must define:
 
-The correct first-pass behavior is to ignore hot packets that cannot safely apply.
+* Creates/deletes.
+* Reliable ordered delivery.
+* Required/critical scheduling.
+* Lifecycle defines entity existence.
+* Hot lanes update known entities only.
+* Cross-lane ordering is not global.
 
-## Entity ID reuse rule
+Update scheduling:
 
-Check whether asteroid and bullet/projectile entity IDs can be reused within a match.
+```text
+asteroids_lifecycle and bullets_lifecycle = required / critical
+asteroid_delta and bullet_delta = hot-supersedable / high priority
+```
 
-If IDs are not reused within a match, document that as the current safety assumption.
+State that lifecycle lanes are not hot-supersedable and are not split by hot-lane chunking.
 
-If IDs can be reused quickly, add or preserve a generation/spawn-version guard so stale hot traffic for a previous entity cannot affect a new entity with the same ID.
+Update client inbound routing:
 
-Do not guess. If reuse behavior is unclear and cannot be verified locally, stop and report the uncertainty.
+```text
+asteroids_lifecycle_received
+bullets_lifecycle_received
+```
 
-## Suggested implementation order
+Add that `RealtimeRouter` handles these through:
 
-1. Add lifecycle lane constants/specs on server and client.
-2. Register lifecycle WebRTC channels as reliable/ordered.
-3. Update server routing/classification for asteroid lifecycle.
-4. Update client routing for asteroid lifecycle.
-5. Move asteroid lifecycle creates/deletes out of world.
-6. Update server routing/classification for bullet/projectile lifecycle.
-7. Update client routing for bullet/projectile lifecycle.
-8. Move bullet, torpedo, and projectile lifecycle creates/deletes out of world.
-9. Add or confirm client race guards.
-10. Add or update focused tests.
-11. Update protocol, networking, and packet-ownership docs.
+```text
+WorldLaneApplier.apply_asteroids_lifecycle
+WorldLaneApplier.apply_bullets_lifecycle
+```
 
-## Test requirements
+Update client-recognized inbound packet types to include both lifecycle packet families.
 
-Add or update server tests proving:
+Update delivery/failure semantics so ordered/reliable active gameplay lanes include:
 
-- asteroid creates route to `sr.asteroids.lifecycle`
-- asteroid deletes route to `sr.asteroids.lifecycle`
-- bullet creates route to `sr.bullets.lifecycle`
-- bullet deletes route to `sr.bullets.lifecycle`
-- torpedo creates route to `sr.bullets.lifecycle`
-- torpedo deletes route to `sr.bullets.lifecycle`
-- player/world state still routes to `sr.world`
-- asteroid hot deltas still route to `sr.asteroids`
-- bullet hot deltas still route to `sr.bullets`
-- lifecycle packets are reliable/required, not supersedable hot packets
+```text
+sr.world
+sr.overlay
+sr.session
+sr.event
+sr.asteroids.lifecycle
+sr.bullets.lifecycle
+```
 
-Add or update client tests proving:
+### docs/protocol/gameplay-packets.md
 
-- asteroid lifecycle lane spawns asteroids
-- asteroid lifecycle lane despawns asteroids
-- bullet lifecycle lane spawns bullets
-- bullet lifecycle lane despawns bullets
-- torpedo lifecycle create preserves torpedo identity
-- hot delta for unknown asteroid is ignored
-- hot delta for unknown bullet/projectile is ignored
-- hot delta for deleted asteroid is ignored
-- hot delta for deleted bullet/projectile is ignored
-- hot deltas do not create fallback bullet nodes
+Update active server-to-client gameplay packet families:
 
-## Documentation requirements
+```text
+world_full / world_delta
+asteroids_lifecycle
+bullets_lifecycle
+asteroid_delta
+bullet_delta
+overlay_full / overlay_delta
+session_full / session_delta
+event_batch
+player_pause_state
+resync_request / resync_required
+```
 
-Update docs that describe:
+Replace lane ownership with:
 
-- lane ownership
-- WebRTC channel specs
-- WebSocket parity, if documented
-- gameplay packet routing
-- server outbound message flow
-- client inbound packet routing
-- lane packet projection
-- packet budgeting
-- compact wire mapping, if lane IDs or ownership are listed
+```text
+world lane
+= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
 
-Required documentation statement:
+asteroids lifecycle lane
+= asteroid creates/deletes and initial asteroid presentation identity, including variant/size/scale
 
-> Entity lifecycle ownership is split by entity family. The world lane owns player and world/match state. Asteroid lifecycle packets use `sr.asteroids.lifecycle`. Bullet/projectile lifecycle packets use `sr.bullets.lifecycle`. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
+bullets lifecycle lane
+= bullet/projectile creates/deletes and initial projectile identity, including owner, weapon_id, projectile_type, and torpedo identity
 
-Required stable limitation statement:
+asteroids hot lane
+= regular asteroid movement updates on unordered/unreliable sr.asteroids
 
-> Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+bullets hot lane
+= regular bullet/projectile movement updates on unordered/unreliable sr.bullets
+```
 
-Remove or update stale references that say:
+Add the hot packet race rule:
 
-- `sr.world` owns asteroid lifecycle
-- `sr.world` owns bullet lifecycle
-- hot lanes create entities
-- bullet/asteroid hot updates are reliable lifecycle delivery
-- all entity lifecycle traffic is world-lane traffic
+```text
+Hot movement packets must never create entities. Unknown hot asteroid updates are ignored. Unknown hot bullet updates are buffered only where the client explicitly supports waiting for lifecycle create; hot updates after delete are ignored and must not resurrect removed entities.
+```
 
-## Verification expectations
+### docs/domains/technical/realtime-client-server-flow.md
 
-Before reporting completion, verify behavior at the implementation level and report what was checked.
+Update packet family summaries to include:
 
-Required verification points:
+```text
+world_full/world_delta
+asteroids_lifecycle
+bullets_lifecycle
+asteroid_delta
+bullet_delta
+overlay_full/overlay_delta
+session_full/session_delta
+event_batch
+```
 
-- server lifecycle lane routing works
-- client lifecycle lane routing works
-- hot lanes remain unreliable/unordered
-- lifecycle lanes are reliable/ordered
-- hot packets do not create entities
-- stale hot packets do not resurrect deleted entities
-- torpedoes spawn as torpedoes under bullet/projectile lifecycle routing
-- player and match/world state remain on `sr.world`
-- no stale docs still describe asteroid/bullet lifecycle as world-lane owned
+Replace stale world lifecycle wording with:
 
-## Report format
+```text
+Asteroid and bullet lifecycle creates/deletes are subtractively removed from active world_delta and emitted as reliable ordered lifecycle packets on sr.asteroids.lifecycle and sr.bullets.lifecycle. Dedicated unordered hot lanes carry movement updates only.
+```
+
+Update lane policy:
+
+```text
+ordered/reliable:
+sr.world
+sr.overlay
+sr.session
+sr.event
+sr.asteroids.lifecycle
+sr.bullets.lifecycle
+
+unordered/unreliable:
+sr.asteroids
+sr.bullets
+```
+
+Update client routing lists to include:
+
+```text
+asteroids_lifecycle
+bullets_lifecycle
+```
+
+### docs/services/client/networking-flow/inbound-packet-routing.md
+
+Update overview channel list to include lifecycle DataChannels.
+
+Add classified inbound packet types:
+
+```text
+asteroids_lifecycle
+bullets_lifecycle
+```
+
+Add dispatcher outputs:
+
+```text
+asteroids_lifecycle_received(packet)
+bullets_lifecycle_received(packet)
+```
+
+Update the connection-service gameplay packet path:
+
+```text
+ServerPacketDispatcher
+-> ClientConnectionService._route_gameplay_packet
+-> RealtimeRouter.route_lane_packet
+-> WorldLaneApplier lifecycle method
+-> gameplay_packet_received
+```
+
+Update current inbound routes so lifecycle packets are included with other lane packets.
+
+In gameplay handoff, state that by the time `GameplaySessionController` receives the packet, lifecycle packet state has already been applied to `WorldLaneState`.
+
+Add relevant tests:
+
+```text
+client/tests/unit/networking/test_server_packet_dispatcher.gd
+client/tests/unit/world/test_projectile_sync.gd
+client/tests/unit/world/test_asteroid_sync.gd
+client/tests/unit/world/test_world_sync.gd
+```
+
+### docs/services/game-server/networking/outbound-message-flow.md
+
+Update physical channel overview so current active gameplay channels include:
+
+```text
+sr.world
+sr.overlay
+sr.session
+sr.event
+sr.asteroids
+sr.bullets
+sr.asteroids.lifecycle
+sr.bullets.lifecycle
+```
+
+Update responsibilities to include reliable/ordered WebRTC delivery for lifecycle lanes.
+
+Update active realtime lane packets list:
+
+```text
+world_full
+world_delta
+asteroids_lifecycle
+bullets_lifecycle
+asteroid_delta
+bullet_delta
+overlay_full
+overlay_delta
+session_full
+session_delta
+event_batch
+resync_request
+resync_required
+```
+
+Update lane roles:
+
+```text
+world = ships, pickups, world/match presentation state, full/bootstrap snapshots
+asteroids.lifecycle = asteroid creates/deletes
+bullets.lifecycle = bullet/projectile creates/deletes
+asteroids = asteroid movement updates
+bullets = bullet movement updates
+```
+
+Replace any stale lifecycle wording with:
+
+```text
+Lifecycle creates/deletes use required/critical reliable lifecycle lanes.
+```
+
+Update ticker-driven active lane write descriptions to mention that planner can emit lifecycle candidates before hot movement candidates.
+
+Update observability so `lane protocol gameplay wire packet written` may show:
+
+```text
+sr.asteroids.lifecycle
+sr.bullets.lifecycle
+```
+
+But chunked hot-lane logs only apply to:
+
+```text
+sr.asteroids
+sr.bullets
+```
+
+Ensure the code map includes:
+
+```text
+services/game-server/internal/protocol/realtime/lanes.go
+services/game-server/internal/protocol/realtime/planner.go
+services/game-server/internal/protocol/realtime/wire_packets.go
+services/game-server/internal/protocol/realtime/compact_wire_packet.go
+services/game-server/internal/networking/webrtc_transport.go
+```
+
+### docs/services/game-server/simulation/runtime/lane-packet-projection.md
+
+Update active flow:
+
+```text
+authoritative game state
+-> realtime projection / planning
+-> raw lane records
+-> numeric wire quantization into wire-shaped records
+-> delta comparison
+-> split asteroid/bullet movement to hot lanes
+-> split asteroid/bullet creates/deletes to reliable lifecycle lanes
+-> sparse readable wire-map serialization
+-> compact alias mapping
+-> packetcodec JSON encoding
+-> WebRTC gameplay lane write using per-lane reliability policy
+```
+
+Update lane ownership:
+
+```text
+world lane
+= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
+
+asteroids.lifecycle lane
+= asteroid creates/deletes
+
+bullets.lifecycle lane
+= bullet/projectile creates/deletes
+
+asteroids lane
+= regular asteroid movement updates
+
+bullets lane
+= regular bullet/projectile movement updates
+```
+
+Remove or replace:
+
+```text
+Asteroid and bullet creates/deletes remain on the world lane.
+```
+
+### docs/services/game-server/networking/realtime-compact-wire-mapping.md
+
+Add compact packet type values:
+
+```text
+asteroids_lifecycle -> al
+bullets_lifecycle -> bl
+```
+
+Add compact lane values:
+
+```text
+asteroids.lifecycle -> al
+bullets.lifecycle -> bl
+```
+
+Add lifecycle delta section keys:
+
+```text
+asteroids_lifecycle.asteroid_creates -> ac
+asteroids_lifecycle.asteroid_deletes -> ax
+bullets_lifecycle.bullet_creates -> bc
+bullets_lifecycle.bullet_deletes -> bx
+```
+
+Update asteroid tuple mapping:
+
+```text
+world_full.asteroids uses full tuple records.
+asteroids_lifecycle.ac uses tuple records for asteroid creates.
+asteroid_delta.au uses tuple records for regular movement updates.
+asteroids_lifecycle.ax uses compact numeric IDs for deletes.
+world_delta.au remains compatibility/resync-safe support only.
+```
+
+Update bullet tuple mapping:
+
+```text
+world_full.bullets uses full tuple records.
+bullets_lifecycle.bc uses tuple records for bullet/projectile creates.
+bullet_delta.bu uses tuple records for regular movement updates.
+bullets_lifecycle.bx uses compact numeric IDs for deletes.
+world_delta.bu remains compatibility/resync-safe support only.
+```
+
+Keep existing optional bullet rotation support:
+
+```text
+Current straight bullet movement normally emits [id, x, y]. The optional trailing rotation slot remains supported for future projectile types, such as homing or turning projectiles, that may change rotation during flight.
+```
+
+## Secondary stale files
+
+Update these after the primary protocol/service docs.
+
+### docs/services/client/world-sync/world-sync-coordinator.md
+
+Do not rewrite it as a transport doc.
+
+Narrowly update wording from:
+
+```text
+RealtimeRouter applies world lane packets into world_lane_state
+```
+
+To:
+
+```text
+RealtimeRouter applies world, lifecycle, and hot movement packets into WorldLaneState.
+```
+
+Update active input path:
+
+```text
+RealtimeRouter.route_lane_packet(packet)
+-> world/lifecycle/hot lane appliers update world_lane_state
+-> WorldPresentationAdapter.apply_world_lane_state(...)
+-> WorldSync.apply_world_lane_state(world_lane_state)
+```
+
+Mention that lifecycle-created dirty bullets/asteroids are allowed to create render nodes during world-sync fanout.
+
+### docs/services/client/world-sync/entity-sync-owners.md
+
+Replace:
+
+```text
+WorldSync receives world lane state
+```
+
+With:
+
+```text
+WorldSync receives accumulated WorldLaneState from world, lifecycle, and hot movement lane appliers.
+```
+
+Replace:
+
+```text
+removes rendered nodes when absent from latest world lane dictionary
+```
+
+With:
+
+```text
+removes rendered nodes when lifecycle/full-state no longer includes the entity.
+```
+
+For `ProjectileSync`, add:
+
+```text
+Unknown hot projectile updates must not create nodes. Hot updates after lifecycle delete are ignored. Lifecycle-created projectiles, including torpedoes, are allowed to create render nodes and preserve projectile_type.
+```
+
+For `AsteroidSync`, add:
+
+```text
+Unknown hot asteroid updates must not create nodes. Hot updates after lifecycle delete are ignored. Lifecycle-created asteroids are allowed to create render nodes and preserve variant/scale.
+```
+
+### docs/services/client/gameplay-runtime/gameplay-state-application.md
+
+Update packet routing to include lifecycle packet families.
+
+Add:
+
+```text
+WorldLaneState is populated by world_full/world_delta, asteroids_lifecycle, bullets_lifecycle, asteroid_delta, and bullet_delta. Lifecycle packets define existence; hot packets update existing entities only.
+```
+
+Update the `world_lane_applier.gd` code-map note so it mentions lifecycle methods.
+
+### docs/domains/technical/local-singleplayer-routing-flow.md
+
+Replace stale world-lane lifecycle wording with:
+
+```text
+world lane: ships, pickups, and world/full-state presentation
+asteroids.lifecycle lane: asteroid creates/deletes
+bullets.lifecycle lane: bullet/projectile creates/deletes
+asteroids/bullets hot lanes: movement updates only
+```
+
+### docs/services/game-server/simulation/runtime/simulation-loop-and-phase-order.md
+
+Update the world-lane projection summary so:
+
+* Player/avatar and pickup state remain on world.
+* Asteroid/bullet lifecycle moves to lifecycle lanes.
+* Asteroid/bullet movement stays on hot lanes.
+
+### docs/systems-design/world/world-authority.md
+
+Replace broad world-lane lifecycle ownership with:
+
+```text
+World authority owns the authoritative entities. Realtime projection exposes them through family-specific packet lanes: world for player/pickup/world presentation, asteroid/bullet lifecycle lanes for existence, and asteroid/bullet hot lanes for movement updates.
+```
+
+### docs/services/game-server/simulation/world/asteroid-spawning-and-variants.md
+
+Replace “world lane asteroid records” where it refers to active asteroid lifecycle with:
+
+```text
+Asteroid creation/variant identity is exposed through asteroid lifecycle creates and full/baseline snapshots.
+Regular asteroid movement is exposed through sr.asteroids hot movement updates.
+```
+
+Keep server authority over variant selection.
+
+### docs/protocol/asteroid-variant-contract.md
+
+Update so variant readback is through:
+
+```text
+asteroids_lifecycle asteroid_creates
+world_full/bootstrap snapshots when needed
+```
+
+State:
+
+```text
+Hot asteroid_delta updates do not carry variant and do not create asteroids.
+```
+
+### docs/systems-design/entities/asteroids.md
+
+Replace stale projection language with:
+
+```text
+The server projects asteroid existence through asteroid lifecycle packets and full/baseline state, and projects regular movement through asteroid_delta hot updates.
+```
+
+Update despawn language:
+
+```text
+Once removed, the asteroid is deleted through the asteroid lifecycle lane; later hot movement updates for that id must not resurrect it.
+```
+
+### docs/systems-design/entities/variants.md
+
+Update asteroid variant references:
+
+```text
+For asteroids, the server-selected variant index is stored on the runtime asteroid and sent in asteroid lifecycle creates or full snapshot state. Hot movement updates do not own variant identity.
+```
+
+### docs/systems-design/entities/projectiles.md
+
+Replace “projected through world lane bullet records” with:
+
+```text
+Projectile existence and identity are projected through bullets_lifecycle creates/deletes and full/baseline state. Regular movement is projected through bullet_delta hot updates.
+```
+
+Add:
+
+```text
+Projectile type identity is lifecycle-owned. Torpedo creates must preserve projectile_type so the client spawns a torpedo node instead of a fallback bullet node.
+```
+
+Replace disappearance language:
+
+```text
+A projectile delete on bullets_lifecycle means the authoritative server no longer presents that projectile as live. Later hot updates must not recreate it.
+```
+
+### docs/services/game-server/simulation/combat/weapons-and-projectile-fire.md
+
+Update projectile readback:
+
+```text
+Weapon fire creates runtime projectiles server-side. Projectile lifecycle creates carry owner_id, weapon_id, projectile_type, initial transform, and other spawn-owned presentation identity over sr.bullets.lifecycle. Movement after spawn travels over sr.bullets.
+```
+
+### Devtools docs
+
+Update stale world-lane bullet/asteroid references in:
+
+```text
+docs/devtools/client/debug-status-and-target-readmodels.md
+docs/devtools/server/clear-entity-tools.md
+docs/devtools/server/continuous-bullet-streams.md
+docs/devtools/server/spawn-tools.md
+docs/devtools/server/telemetry.md
+```
+
+Use this principle:
+
+```text
+Debug/devtools entity creation and clearing are reflected to clients through normal realtime entity-family lanes: asteroid/bullet lifecycle lanes for existence and hot lanes for movement.
+```
+
+For continuous bullet streams, use:
+
+```text
+Spawned bullets are not emitted as a stream-specific telemetry packet. Their lifecycle appears as normal bullets_lifecycle traffic, and their movement appears as normal bullet_delta traffic.
+```
+
+## Planning doc updates
+
+Update these summaries if they still describe only six WebRTC lanes or say lifecycle remains on `sr.world`:
+
+```text
+docs/planning/protocol/realtime-protocol-architecture.md
+docs/planning/domains/technical/network-observability-and-packet-budget.md
+docs/planning/development-roadmap.md
+```
+
+Planning docs should not become the detailed implementation authority. They should summarize the current state and link to protocol/service docs.
+
+Use this summary:
+
+```text
+Dedicated reliable/ordered lifecycle lanes now carry asteroid and bullet/projectile creates/deletes. Unreliable hot lanes carry movement only. Lifecycle lanes are required/critical traffic; hot lanes are high-priority supersedable traffic.
+```
+
+## Verification
+
+After edits, run stale-reference searches.
+
+```bash
+cd /mnt/d/\!bin/space-rocks
+
+{
+  echo "== stale world-lifecycle phrases =="
+  grep -R "lifecycle creates/deletes remain on sr.world" docs || true
+  grep -R "asteroid/bullet lifecycle creates/deletes" docs || true
+  grep -R "world lane bullet records" docs || true
+  grep -R "world lane asteroid records" docs || true
+
+  echo
+  echo "== lifecycle lane coverage =="
+  grep -R "sr.asteroids.lifecycle" docs || true
+  grep -R "sr.bullets.lifecycle" docs || true
+  grep -R "asteroids_lifecycle" docs || true
+  grep -R "bullets_lifecycle" docs || true
+} 2>&1 | tee /dev/tty | clip.exe
+```
+
+Expected result:
+
+* No stale “remain on sr.world” claims.
+* No broad “world lane owns asteroid/bullet lifecycle” claims.
+* Remaining `world lane asteroid records` or `world lane bullet records` references are either gone or explicitly limited to full/bootstrap/compatibility context.
+* `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`, `asteroids_lifecycle`, and `bullets_lifecycle` appear in canonical protocol, transport, outbound, inbound, compact wire, gameplay packet, and lane projection docs.
+
+Then run normal documentation/index verification used by the project.
+
+## Report
 
 Report:
 
-- changed files
-- lifecycle lanes added
-- server routing changes
-- client routing changes
-- tests added or updated
-- docs updated
-- verification performed
-- any remaining risks or assumptions, especially around entity ID reuse
+```text
+Changed files
+New files, if any
+Deleted files, if any
+Stale sr.world lifecycle references removed
+Lifecycle channel docs updated
+Inbound routing docs updated
+Outbound routing docs updated
+Compact wire docs updated
+World sync/entity sync docs updated
+Devtools/entity docs updated
+Planning summaries updated
+Verification result
+Remaining risks or assumptions
+```
+
+Specifically report whether any remaining `world lane asteroid records` or `world lane bullet records` references are intentional compatibility/full-snapshot wording.

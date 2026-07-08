@@ -6,7 +6,7 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document describes the asteroid variant protocol contract between the game server and the client.
 
-It explains how the server assigns asteroid variant indexes, how those indexes cross the realtime world lane boundary, how the client consumes them for presentation, and which source data defines their meaning.
+It explains how the server assigns asteroid variant indexes, how those indexes cross the realtime asteroid lifecycle/full-state boundary, how the client consumes them for presentation, and which source data defines their meaning.
 
 ## Overview
 
@@ -16,9 +16,11 @@ Asteroid variants cross the protocol boundary as an integer field on asteroid st
 AsteroidState.variant
 ```
 
-The game server owns authoritative asteroid creation and variant assignment. When the server creates a timed, fragment, or debug asteroid, it selects a variant index from the server asteroid catalog and stores that index on the runtime asteroid. `protocol/realtime` projects that runtime asteroid into world lane asteroid records, including the selected index.
+The game server is authoritative for asteroid creation and variant assignment. When the server creates a timed, fragment, or debug asteroid, it selects a variant index from the server asteroid catalog and stores that index on the runtime asteroid. `protocol/realtime` projects that runtime asteroid into asteroid lifecycle creates and world_full/bootstrap snapshots when needed, including the selected index.
 
 The client consumes the `variant` field from server state. It does not choose authoritative variants. It uses the received index to select asteroid presentation data from the client asteroid catalog, including the texture path and scene-level collision-polygon presentation.
+
+Asteroid variant readback is through `asteroids_lifecycle` asteroid_creates and world_full/bootstrap snapshots when needed. Hot `asteroid_delta` updates do not carry variant and do not create asteroids.
 
 The packet schema owns the existence, field name, and wire type of `AsteroidState.variant`. The asteroid variant catalog owns what each integer value means.
 
@@ -40,7 +42,7 @@ Owns the realtime gameplay packet shape, including the `AsteroidState.variant` i
 services/game-server/
 ```
 
-Owns authoritative asteroid spawning, runtime asteroid state, variant selection, and outbound world lane projection.
+Owns authoritative asteroid spawning, runtime asteroid state, variant selection, and outbound family-specific packet projection.
 
 ```text
 client/
@@ -68,7 +70,7 @@ The realtime packet schema is authoritative for:
 AsteroidState.variant field name
 AsteroidState.variant JSON key
 AsteroidState.variant wire type
-world lane asteroid record shape
+asteroid lifecycle and full/bootstrap asteroid record shape
 ```
 
 The asteroid variant catalog is authoritative for:
@@ -92,9 +94,9 @@ server simulation decides to spawn an asteroid
 -> server spawner selects a weighted variant index
 -> server creates runtime.Asteroid with Variant set
 -> server projects runtime.Asteroid.State()
--> `protocol/realtime` includes asteroid state in world lane asteroid records
--> packetcodec encodes the world_full/world_delta packet as JSON
--> client receives the world lane packet
+`protocol/realtime` includes asteroid state in asteroid lifecycle creates and world_full/bootstrap snapshots when needed, including the selected index.
+-> packetcodec encodes the asteroids_lifecycle packet or world_full/bootstrap packet as JSON
+-> client receives the lifecycle or full/bootstrap packet
 -> AsteroidSync reads AsteroidState.variant
 -> asteroid scene receives the variant index
 -> client asteroid catalog resolves presentation data for that index
@@ -102,11 +104,11 @@ server simulation decides to spawn an asteroid
 
 There is no normal client-to-server asteroid variant request. Clients do not request asteroid variants during gameplay.
 
-Debug asteroid spawning is different only at the command entry point. Devtools may request a debug asteroid spawn, but the server still builds a game-owned spawn plan, selects the debug-spawn variant through the asteroid catalog, applies the spawn through game-owned mutation, and exports the resulting asteroid through normal world lane packets.
+Debug asteroid spawning is different only at the command entry point. Devtools may request a debug asteroid spawn, but the server still builds a game-owned spawn plan, selects the debug-spawn variant through the asteroid catalog, applies the spawn through game-owned mutation, and exports the resulting asteroid through normal asteroid lifecycle or full/bootstrap packets.
 
 ## Packet surface
 
-The asteroid variant protocol surface is part of the world lane packet surface.
+The asteroid variant protocol surface is part of asteroid lifecycle creates and full/bootstrap asteroid state.
 
 Schema owner:
 
@@ -128,7 +130,7 @@ json = "variant"
 type = "int"
 ```
 
-Runtime JSON shape inside world lane asteroid records is:
+Runtime JSON shape inside lifecycle or bootstrap asteroid records is:
 
 ```json
 {
@@ -254,10 +256,10 @@ It exports that value through:
 ```text
 runtime.Asteroid.State()
 runtime.AsteroidState.Variant
-world lane asteroid records
+world_full/bootstrap snapshot state
 ```
 
-The server world lane projection must include the selected variant index for asteroid state sent to clients.
+Server asteroid lifecycle projection and full/bootstrap asteroid state must include the selected variant index for asteroid state sent to clients.
 
 ## Client responsibilities
 
@@ -339,7 +341,7 @@ cd client
 godot --headless --path . -s addons/gut/gut_cmdln.gd -gtest=res://tests/unit/entities/test_asteroid_variants.gd
 ```
 
-Packet-shape verification when the `variant` field or world lane asteroid record shape changes:
+Packet-shape verification when the `variant` field or asteroid lifecycle/full-bootstrap record shape changes:
 
 ```bash
 data-sync -validate -packets

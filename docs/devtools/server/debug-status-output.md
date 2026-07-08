@@ -413,4 +413,3 @@ Debug status output and debug shape catalog output are separate outbound surface
 The legacy devtools notes correctly treated debug status as server-authored diagnostic state, not client authority. That rule still applies.
 
 The status packet should remain small. New debug inspection data should be added to a separate telemetry surface when it is not directly a control-status boolean.
-

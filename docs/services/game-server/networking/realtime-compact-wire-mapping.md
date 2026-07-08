@@ -81,6 +81,8 @@ For `asteroid_delta` and `bullet_delta`, `chunk_index` and `chunk_count` are emi
 - `world_delta` -> `wd`
 - `asteroid_delta` -> `ad`
 - `bullet_delta` -> `bd`
+- `asteroids_lifecycle` -> `al`
+- `bullets_lifecycle` -> `bl`
 - `overlay_full` -> `of`
 - `overlay_delta` -> `od`
 - `session_full` -> `sf`
@@ -93,6 +95,8 @@ These remain documented for backward-compatible decode support and for non-runti
 - `world` -> `w`
 - `overlay` -> `o`
 - `session` -> `s`
+- `asteroids.lifecycle` -> `al`
+- `bullets.lifecycle` -> `bl`
 
 ## Compact Snapshot Kind Values
 
@@ -136,8 +140,12 @@ For active runtime world/overlay/session packets, `baseline_id` is only emitted 
 - `pickup_creates` -> `pc`
 - `pickup_updates` -> `pu`
 - `pickup_deletes` -> `px`
+- `asteroids_lifecycle.asteroid_creates` -> `ac`
+- `asteroids_lifecycle.asteroid_deletes` -> `ax`
+- `bullets_lifecycle.bullet_creates` -> `bc`
+- `bullets_lifecycle.bullet_deletes` -> `bx`
 
-`world_delta.bu` and `world_delta.au` remain compact aliases for serializer compatibility, bootstrap, lifecycle, and resync-safe world deltas. In the active subtractive hot-lane path, regular bullet and asteroid movement updates are removed from `world_delta` and emitted as `bullet_delta.bu` and `asteroid_delta.au`.
+`world_delta.bu` and `world_delta.au` remain compact aliases for serializer compatibility, bootstrap, lifecycle, and resync-safe world deltas only. In the active subtractive hot-lane path, regular bullet and asteroid movement updates are removed from `world_delta` and emitted as `bullet_delta.bu` and `asteroid_delta.au`.
 
 ## Dedicated Hot Movement Delta Section Keys
 
@@ -146,12 +154,12 @@ For active runtime world/overlay/session packets, `baseline_id` is only emitted 
 
 ## Asteroid Tuple Mapping
 
-This contract applies to world lane asteroid records and dedicated asteroid movement deltas.
-`world_full.asteroids` uses tuple records.
-`world_delta.ac` uses tuple records for asteroid creates.
-`asteroid_delta.au` uses tuple records for regular asteroid movement updates.
-`world_delta.au` remains supported for compatibility and resync-safe world deltas, but regular active movement updates are split to `asteroid_delta`.
-`world_delta.ax` uses numeric suffix IDs for asteroid deletes.
+This contract applies to `asteroids_lifecycle` creates/deletes and dedicated asteroid movement deltas.
+`world_full.asteroids` uses full tuple records.
+`asteroids_lifecycle.ac` uses tuple records for asteroid creates.
+`asteroid_delta.au` uses tuple records for regular movement updates.
+`asteroids_lifecycle.ax` uses compact numeric IDs for deletes.
+`world_delta.au` remains supported for compatibility and resync-safe world deltas only, but regular active movement updates are split to `asteroid_delta`.
 
 Tuple order for full/create asteroid records:
 
@@ -188,6 +196,20 @@ JSON-decoded whole-number float `123.0` also becomes `"asteroid-123"`.
 String suffix `"123"` becomes `"asteroid-123"` for transition tolerance.
 Already-full `"asteroid-123"` remains unchanged.
 Non-integer float values and unsupported values remain unchanged.
+
+### Compact Lifecycle Examples
+
+```json
+{"t":"al","q":1,"ac":[[1,10,20,2,90,1500,3]]}
+```
+
+Readable packet type: `asteroids_lifecycle`
+
+```json
+{"t":"bl","q":2,"bc":[[1,"player-1",10,20,30,"torpedo","torpedo"]]}
+```
+
+Readable packet type: `bullets_lifecycle`
 
 ## Overlay Delta Section Keys
 
@@ -333,20 +355,20 @@ Known event records are tuple-shaped for the compact wire path.\r\nKnown event r
 
 ## Bullet Tuple Mapping
 
-This contract applies to world lane bullet records and dedicated bullet movement deltas.
+This contract applies to `bullets_lifecycle` creates/deletes and dedicated bullet movement deltas.
 `world_full.bullets` uses tuple records.
-`world_delta.bc` uses tuple records for bullet creates.
+`bullets_lifecycle.bc` uses tuple records for bullet/projectile creates.
 `bullet_delta.bu` uses tuple records for regular bullet movement updates.
-`world_delta.bu` remains supported for compatibility and resync-safe world deltas, but regular active movement updates are split to `bullet_delta`.
-`world_delta.bx` uses compact numeric delete IDs.
+`world_delta.bu` remains supported for compatibility and resync-safe world deltas only.
+`bullets_lifecycle.bx` uses compact numeric delete IDs.
 
 | Record family | Tuple shape |
 | --- | --- |
 | `world_full.bullets` | `[id, owner_id, x, y, rotation, weapon_id, projectile_type]` |
-| `world_delta.bullet_creates` | `[id, owner_id, x, y, rotation, weapon_id, projectile_type]` |
+| `bullets_lifecycle.bc` | `[id, owner_id, x, y, rotation, weapon_id, projectile_type]` |
 | `bullet_delta.bullet_updates` | `[id, x, y, rotation]` |
 | `world_delta.bullet_updates` | `[id, x, y, rotation]` for compatibility/resync-safe world deltas only |
-| `world_delta.bullet_deletes` | `[id]` |
+| `bullets_lifecycle.bx` | `[id]` |
 
 `bullet_delta.bullet_updates` documents the maximum supported sparse movement tuple shape. Current straight bullet movement normally emits `[id, x, y]` because rotation does not change after spawn. The optional trailing rotation slot remains supported for future projectile types, such as homing or turning projectiles, that may change rotation during flight.
 
@@ -542,6 +564,5 @@ The current implementation does not use binary encoding for events.
 - `client/tests/unit/protocol/realtime/test_compact_lane_packet.gd`
 - `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
 - PacketCodec compact decode coverage in `client/tests/unit/test_packet_codec.gd`
-
 
 

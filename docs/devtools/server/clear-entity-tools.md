@@ -21,7 +21,7 @@ debug_clear_asteroids
 
 Both commands are room/global commands. They do not target a player, do not use placement coordinates, and do not resolve through the canonical gameplay target. The requesting client sends a generated debug packet, networking routes it through the devtools command path, and the server mutates the authoritative `Game` entity store through narrow game-owned export seams.
 
-The client does not remove bullets or asteroids locally. Removed entities disappear from presentation because the next world lane readback no longer includes them.
+Debug/devtools entity creation and clearing are reflected to clients through normal realtime entity-family lanes: asteroid/bullet lifecycle lanes for existence and hot lanes for movement.
 
 ## Debug-only scope
 
@@ -73,9 +73,9 @@ asteroids -> game.entities.Asteroids
 
 The returned count is currently an internal helper result. The clear command handlers do not send an acknowledgement packet with the count.
 
-Clear-asteroids does not award score, split asteroids, spawn drops, or emit asteroid-destruction presentation events. Existing test coverage verifies that clearing asteroids removes asteroids while preserving the player session score.
+Asteroid clears produce asteroid lifecycle deletes on the authoritative server. The next client hot movement updates cannot recreate deleted asteroids.
 
-Clear-bullets removes live projectiles from the game entity store. Continuous bullet stream runtime state is owned separately under `services/game-server/internal/devtools/streamruntime/`; the inspected clear-entity handler does not call `ClearContinuousBulletStreams()`.
+Bullet clears produce bullet lifecycle deletes on the authoritative server. The next client hot movement updates cannot recreate deleted bullets.
 
 ## Client presentation
 
@@ -88,7 +88,7 @@ Packets.debug_clear_bullets_packet()
 Packets.debug_clear_asteroids_packet()
 ```
 
-The client logs that the request was sent, but it does not apply the mutation locally. Bullet and asteroid nodes are removed through normal world sync after the server projects lane-native world readback without those entities.
+Cleared bullets/projectiles disappear through bullets_lifecycle deletes or full-state correction, cleared asteroids disappear through asteroids_lifecycle deletes or full-state correction, and cleared pickups disappear through world/pickup state readback.
 
 This keeps clear tools aligned with the normal server-authoritative presentation model:
 
@@ -98,7 +98,7 @@ client button
 -> websocket send path
 -> server devtools command route
 -> game-owned entity store mutation
--> next authoritative world lane readback
+-> next authoritative family-specific realtime readback
 -> client world sync removes missing entities
 ```
 
@@ -154,8 +154,8 @@ Clear-entity tools do not currently emit a dedicated acknowledgement packet, rem
 Observable effects are indirect:
 
 ```text
-world lane bullet records   -> empty or reduced after bullet clear
-world lane asteroid records -> empty or reduced after asteroid clear
+bullets_lifecycle deletes   -> empty or reduced after bullet clear
+asteroids_lifecycle deletes -> empty or reduced after asteroid clear
 ```
 
 Client-side devtools controls log that the clear request was sent. Server-side clear handlers do not currently log the removed count.

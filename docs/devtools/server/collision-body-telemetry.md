@@ -145,11 +145,11 @@ Current overlay drawing uses:
 
 ```text
 debug_shape_catalog packet
-world lane full/delta packets
+world, lifecycle, and hot lane state
 WorldSync visual coordinate conversion
 ```
 
-The server sends reusable shape definitions through `debug_shape_catalog`. The client combines those shape definitions with live entity state from world lane packet readback.
+The server sends reusable shape definitions through `debug_shape_catalog`. The client combines those shape definitions with live entity state from accumulated realtime lane readback.
 
 This means current client presentation does not consume `Game.DevtoolsCollisionBodies()` directly. The live body telemetry adapter remains a server-side support seam and test-covered implementation path, while the packetized client overlay uses shape catalog plus gameplay state.
 
@@ -343,7 +343,7 @@ shared/packets/outputs.toml
 The current outbound server behavior is:
 
 ```text
-world lane packet readback
+accumulated realtime lane readback
 -> does not include debug_collision_bodies
 
 debug_shape_catalog packet

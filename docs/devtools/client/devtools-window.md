@@ -188,11 +188,11 @@ The devtools window owns raw state inspection. It currently exposes two raw tele
 Each panel can select a source:
 
 ```text
-world lane readback
+lane-applied state readback
 session lane readback
 ```
 
-The `world lane readback` source reads applied world entity dictionaries. For the local player, this reads from `server_players`. For targets, it can read from player, asteroid, bullet, pickup, or enemy dictionaries according to canonical `target_kind`.
+The `lane-applied state readback` source reads applied gameplay entity dictionaries from the accumulated devtools gameplay readmodel. For the local player, this reads from `server_players`. For targets, it can read from player, asteroid, bullet, pickup, or enemy dictionaries according to canonical `target_kind`; those dictionaries may originate from world, lifecycle, hot, session, or future entity-family lanes.
 
 The `session lane readback` source reads durable player/session dictionaries from `player_sessions`. It is only meaningful for player targets. Non-player targets render unavailable output for this source.
 

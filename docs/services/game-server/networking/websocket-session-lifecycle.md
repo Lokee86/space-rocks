@@ -697,4 +697,3 @@ The WebSocket lifecycle intentionally stays separate from room/game authority. A
 
 The `/ws` endpoint is shared by local single-player and multiplayer. New mode distinctions should remain explicit session/packet/admission behavior unless the protocol architecture changes.
 
-

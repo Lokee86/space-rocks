@@ -26,7 +26,7 @@ debug_spawn_pickup
 -> pickup
 ```
 
-The server owns whether a request is valid, which entity is created, which ID is assigned, which game store receives the entity, and how the spawned entity appears in later world lane records.
+The server owns whether a request is valid, which entity is created, which ID is assigned, which game store receives the entity, and how the spawned entity appears in later family-specific realtime lane state.
 
 The client owns only the request UI and placement input. It does not create authoritative entities locally.
 
@@ -76,7 +76,7 @@ client devtools packet
 -> devtools.HandleCommand
 -> spawn-specific devtools handler
 -> game-owned devtools export seam or game runtime method
--> world lane readback
+-> family-specific realtime readback
 ```
 
 Placement packets require a current room and a current active game player before command handling is invoked. If either is missing, the packet is consumed by devtools routing and no spawn is applied.
@@ -94,7 +94,7 @@ The server does not send a dedicated spawn confirmation packet. Spawn confirmati
 ```text
 command accepted by server
 -> authoritative entity store changes
--> later world lane readback includes the entity
+-> later family-specific realtime readback includes the entity
 -> client world sync renders the entity
 ```
 

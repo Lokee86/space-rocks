@@ -38,7 +38,7 @@ client visual coordinate
 = continuous presentation position relative to the active render anchor
 ```
 
-The server coordinate is the gameplay fact. It is used for simulation, spawning, collision, respawn safety, radial coverage, visibility, despawn, targeting validation, world lane readback, and authoritative outcomes.
+The server coordinate is the gameplay fact. It is used for simulation, spawning, collision, respawn safety, radial coverage, visibility, despawn, targeting validation, accumulated realtime lane readback, and authoritative outcomes.
 
 The client visual coordinate is a presentation fact. It is used for rendering, camera continuity, background continuity, local pointer conversion, target picking presentation, event effects, and interpolation.
 
@@ -114,7 +114,7 @@ The server is responsible for:
 * storing bounded authoritative positions
 * normalizing moved positions into world bounds
 * evaluating shortest wrapped distance, direction, and delta for gameplay systems
-* publishing bounded positions through world lane records
+* publishing bounded positions through family-specific realtime lane state
 * resolving gameplay outcomes using wrapped spatial relationships
 
 The client owns presentation continuity.
@@ -241,7 +241,7 @@ The main participating systems are:
 
 ```text
 Game server simulation
-= authoritative positions, movement, wrap normalization, spatial relationships, collision, respawn, visibility, and world lane records
+= authoritative positions, movement, wrap normalization, spatial relationships, collision, respawn, visibility, and family-specific realtime lane state
 
 Client world sync
 = continuous visual coordinates, ViewAnchor, entity sync, interpolation, and presentation coordinate conversion
@@ -250,7 +250,7 @@ Data/constants pipeline
 = shared world width and height source of truth
 
 Realtime protocol
-= bounded authoritative positions sent from server to client as world lane full/delta packets
+= bounded authoritative positions sent from server to client as family-specific realtime lane state
 ```
 
 The server and client have different roles by design. The server answers what is true. The client answers how that truth is presented smoothly.
@@ -259,7 +259,7 @@ The server and client have different roles by design. The server answers what is
 
 The following implementation references are non-exhaustive orientation points for where this systems-design rule is realized. They are not a code map or ownership map.
 
-The systems-design rule is implemented primarily by the server toroidal space and motion boundary and the client ViewAnchor/visual-coordinate boundary. Current live position readback uses world lane records rather than generic lane-native gameplay readback packets.
+The systems-design rule is implemented primarily by the server toroidal space and motion boundary and the client ViewAnchor/visual-coordinate boundary. Current live position readback uses family-specific realtime lane state: world lane state for ships and pickups, lifecycle lanes for asteroid/projectile existence, and hot lanes for asteroid/projectile movement.
 
 Server implementation reference:
 

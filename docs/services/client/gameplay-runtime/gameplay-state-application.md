@@ -18,6 +18,7 @@ The active path is:
 NetworkClient receives/decodes packet
 -> ClientConnectionService receives packet
 -> ServerPacketDispatcher / ServerPacketRouter classify packet
+-> lifecycle packet families are included in the active path
 -> RealtimeRouter.route_lane_packet(packet)
 -> RealtimeRouter applies lane state/readiness
 -> ClientConnectionService emits gameplay_packet_received(packet)
@@ -34,7 +35,11 @@ NetworkClient receives/decodes packet
 
 The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a retired aggregate `GameplayStateApplyFlow` path or combined normalized gameplay-state dictionary flow.
 
+WorldLaneState is populated by world_full/world_delta, asteroids_lifecycle, bullets_lifecycle, asteroid_delta, and bullet_delta. Lifecycle packets define existence; hot packets update existing entities only.
+
 Client inbound packets may carry compact aliases and quantized integer wire values. `PacketCodec.decode` and `CompactLanePacket` expand compact aliases and tuple arrays back to readable dictionaries before lane appliers or event presentation flows run, but `CompactLanePacket` does not decode quantized numeric values. `WorldLaneApplier` decodes quantized world values before storing or merging world lane state. `EventBatchApplier` decodes quantized event values before forwarding or storing applied events. `WorldLaneState` stores values exactly as supplied and does not own quantize decoding. Overlay and session values are decoded before presentation/devtools consumption through the realtime quantize helpers and presentation adapters. Event_batch arrives from compact wire output, but it is expanded before client event appliers and presentation flows consume it, so gameplay presentation systems should consume readable long-key event dictionaries rather than compact aliases. Devtools read models decode only the lane values they explicitly pass through `RealtimeQuantize`. Client-facing presentation should expect decoded values with quantized precision loss, not raw simulation precision. Tests should assert the current decode boundary explicitly instead of assuming raw simulation floats. Full packets still replace or initialize complete lane state. Client lane appliers treat missing sparse delta section fields as empty arrays or no-op, missing fields inside present update records as unchanged, and missing `total_asteroids` in `session_delta` as unchanged. A present `total_asteroids: 0` remains meaningful. Quantization does not change gameplay authority, which remains server-owned.
+
+`WorldLaneApplier` now applies `apply_asteroids_lifecycle`, `apply_bullets_lifecycle`, `apply_asteroid_delta`, and `apply_bullet_delta` so lifecycle packets define existence before hot movement updates are merged.
 
 ## Code root
 
@@ -55,6 +60,7 @@ The active client gameplay application path owns:
 * Tracking required lane baseline sync before gameplay is considered ready.
 * Gating presentation fanout behind both `accepts_gameplay_packets` and gameplay readiness.
 * Applying world lane state to world sync.
+* Applying lifecycle and hot movement packets into WorldLaneState.
 * Applying overlay lane state to HUD/local presentation.
 * Applying session lane state to HUD and session-owned presentation.
 * Applying event batches through the event batch applier.
@@ -184,6 +190,7 @@ Key lane-native files:
 
 * `client/scripts/protocol/realtime/world_lane_state.gd`
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - decodes quantized world records and applies full/delta world packets.
+* `client/scripts/protocol/realtime/world_lane_applier.gd` - applies `apply_asteroids_lifecycle`, `apply_bullets_lifecycle`, `apply_asteroid_delta`, and `apply_bullet_delta` into `WorldLaneState`.
 * `client/scripts/protocol/realtime/overlay_lane_state.gd`
 * `client/scripts/protocol/realtime/overlay_lane_applier.gd` - routes overlay full/delta packets into overlay lane state.
 * `client/scripts/protocol/realtime/session_lane_state.gd`
@@ -204,12 +211,15 @@ Relevant client tests include:
 
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
 * `client/tests/unit/protocol/realtime/test_gameplay_readiness.gd`
-* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - `test_world_delta_treats_missing_sparse_sections_as_empty_noop` covers missing sparse delta section fields as empty/no-op for world lane application.
+* `client/scripts/protocol/realtime/world_lane_applier.gd` - `test_world_delta_treats_missing_sparse_sections_as_empty_noop` covers missing sparse delta section fields as empty/no-op for world lane application.
+* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - lifecycle coverage for `apply_asteroids_lifecycle` and `apply_bullets_lifecycle`.
+* `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd` - lifecycle routing coverage.
 * `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd` - `test_overlay_delta_treats_missing_sparse_sections_as_empty_noop` and `test_session_delta_treats_missing_sparse_sections_and_total_asteroids_as_empty_noop` cover missing sparse delta section fields as empty/no-op for overlay and session lane application.
 * `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
 * `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`
 * `client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd`
 * `client/tests/unit/test_gameplay_session_controller.gd`
+* `client/tests/unit/world/test_world_sync.gd` - lifecycle-created render fanout coverage.
 
 ## Related docs
 

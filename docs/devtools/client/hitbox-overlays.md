@@ -87,7 +87,7 @@ shape_type
 points
 ```
 
-The shape catalog does not contain live players, asteroids, bullets, pickups, collision results, or debug collision bodies. Live entity placement comes from world lane records.
+The shape catalog does not contain live players, asteroids, bullets, pickups, collision results, or debug collision bodies. Live entity placement comes from accumulated realtime lane state.
 
 The client combines the shape catalog with applied world-lane state for display only.
 

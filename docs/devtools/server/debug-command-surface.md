@@ -699,4 +699,3 @@ The command surface deliberately keeps interpretation in `internal/devtools` and
 When adding a new command, update packet source data, generated outputs, inbound routing, command classification, handler dispatch, game export seams, client send paths, and focused tests together.
 
 
-

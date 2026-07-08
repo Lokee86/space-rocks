@@ -42,7 +42,7 @@ client devtools placement
 -> game.DevtoolsRegisterSimulationStepObserver
 -> streamruntime.StepContinuousBulletStreams
 -> game.DevtoolsSpawnDebugBullet
--> world lane bullet record readback
+-> bullets_lifecycle create readback plus bullet_delta movement readback
 ```
 
 A stream records:
@@ -164,7 +164,7 @@ That delegates to `spawnDebugBullet`, which:
 * allocates a bullet ID through the game spawner
 * inserts the bullet into `game.entities.Projectiles`
 
-Clients then see the projectile through world lane bullet record readback and world sync. There is no separate stream-specific outbound packet.
+Spawned bullets are not emitted as a stream-specific telemetry packet. Their lifecycle appears as normal bullets_lifecycle traffic, and their movement appears as normal bullet_delta traffic.
 
 ## Commands or controls
 
@@ -228,10 +228,11 @@ Do not document `debug_clear_bullets` as the authoritative stream stop path unle
 
 The server does not send stream-specific presentation state.
 
-The client may request continuous stream placement, but after the command is sent, stream effects are visible only through ordinary world lane readback:
+The client may request continuous stream placement, but after the command is sent, stream effects are visible only through ordinary projectile lifecycle and movement readback:
 
 ```text
-world lane bullet records
+bullets_lifecycle creates/deletes
+bullet_delta movement updates
 world sync bullet rendering
 normal projectile movement and expiration
 ```
@@ -268,7 +269,7 @@ direction_x
 direction_y
 ```
 
-Spawned bullets are not emitted as a stream-specific telemetry packet. They appear as normal bullets in world lane bullet records.
+Spawned bullets are not emitted as a stream-specific telemetry packet. They appear as normal bullets in `bullets_lifecycle` traffic and `bullet_delta` traffic.
 
 ## Build/runtime gates
 
@@ -325,7 +326,7 @@ WorldSimulationOptions.BulletsCanMove
 space.NormalizePosition
 runtime.Bullet
 game.entities.Projectiles
-world lane bullet record readback
+bullets_lifecycle and bullet_delta readback
 normal client world sync rendering
 ```
 

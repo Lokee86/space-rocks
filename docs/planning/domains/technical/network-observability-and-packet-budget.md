@@ -68,8 +68,7 @@ P1 answers whether the current architecture can safely support more entities and
 - `realtime lane metric` was removed from active runtime output.
 - Scheduler, budget, deferred, superseded, and CRUD-count fields are intentionally not emitted as current packet evidence, even though protocol/realtime has candidate-level send-plan records.
 - Active debug output does not prove contributor counts by delta section.
-- Active debug output does not itself implement packet-budget policy; current candidate-level include/defer selection and hot-packet encoded-size guards live in protocol/realtime. Record/entity-level prioritization remains future work.
-- Focused hot-lane chunking is current for `asteroid_delta` and `bullet_delta`. Packet evidence should expect multiple packets per tick on `sr.asteroids` or `sr.bullets` under stress.
+- Lifecycle packets are required/critical reliable traffic and are not hot-supersedable movement chunks. Packet-budget pressure handling for hot chunks applies to `sr.asteroids` and `sr.bullets` movement updates, not lifecycle existence traffic.
 - `packet_count` is a count of encoded packets written, not unique lanes.
 - Encoded bandwidth evidence should be interpreted with write cadence: under peak stress, bandwidth may drop because write cadence drops even while entity pressure rises.
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
@@ -254,7 +253,6 @@ This support work belongs to P2 when it helps validate lanes, snapshots, deltas,
 ## Notes
 
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
-
 
 
 

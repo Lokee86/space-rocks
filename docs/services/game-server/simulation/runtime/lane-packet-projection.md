@@ -20,6 +20,7 @@ authoritative game state
 -> numeric wire quantization into wire-shaped records
 -> lane candidate selection, delta comparison, and hot movement split
 -> regular asteroid movement updates move to dedicated hot-lane delta packets on sr.asteroids, and bullet movement updates move to dedicated hot-lane delta packets on sr.bullets
+-> asteroid/bullet creates/deletes split to reliable lifecycle lanes on sr.asteroids.lifecycle and sr.bullets.lifecycle
 -> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
 -> sparse readable wire-map serialization
 -> compact alias mapping
@@ -83,7 +84,13 @@ Current gameplay presentation ownership is split as:
 
 ```text
 world lane
-= active world presentation state for ships, pickups, and asteroid/bullet lifecycle creates/deletes
+= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
+
+asteroids.lifecycle lane
+= asteroid creates/deletes
+
+bullets.lifecycle lane
+= bullet/projectile creates/deletes
 
 asteroids lane
 = regular asteroid movement updates
@@ -100,7 +107,9 @@ event_batch
 = transient presentation events sent separately from baseline/delta lanes
 ```
 
-Asteroid and bullet lanes produce hot, high-priority, supersedable movement candidates. Asteroid and bullet creates/deletes remain on the world lane.
+Asteroid and bullet lanes produce hot, high-priority, supersedable movement candidates. Lifecycle defines existence. Hot lanes update known entities only.
+
+Lifecycle candidates are required/critical and must not be treated as hot-supersedable movement candidates.
 
 `player_pause_state` remains a separate same-session packet and is handled independently from lane-native realtime projection.
 
@@ -112,13 +121,19 @@ Field-delta comparison is current behavior for these update groups:
 
 ```text
 world lane
-= ship and pickup updates, plus lifecycle/bootstrap/resync-compatible asteroid and bullet sections
+= ship and pickup updates, plus legacy/bootstrap/resync-compatible asteroid and bullet sections
+
+asteroids_lifecycle
+= asteroid_creates and asteroid_deletes
+
+bullets_lifecycle
+= bullet_creates and bullet_deletes
 
 asteroids lane
-= regular asteroid movement updates
+= regular asteroid movement updates only
 
 bullets lane
-= regular bullet movement updates
+= regular bullet movement updates only
 
 overlay lane
 = receiver updates
@@ -189,6 +204,8 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
 * `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling and estimated byte-budget include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
+* `services/game-server/internal/protocol/realtime/lanes.go` - lane definitions and packet-family ownership.
+* `services/game-server/internal/protocol/realtime/planner.go` - lifecycle and hot candidate planning.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
 * `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
 * `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, compact/packetcodec boundary, hot-packet encoded-size validation, and encoded-byte accounting.
@@ -196,7 +213,7 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.
 * `services/game-server/internal/networking/websocket_write.go` - session write-loop integration and active write triggering.
-* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over ordered/reliable world, overlay, session, and event channels plus unordered/unreliable asteroid and bullet hot-update channels.
+* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over ordered/reliable world, overlay, session, event, asteroid lifecycle, and bullet lifecycle channels plus unordered/unreliable asteroid and bullet hot-update channels.
 * `services/game-server/internal/networking/packetmetrics/` - packet observability helpers and related support types used by outbound networking seams.
 * `services/game-server/internal/networking/` - websocket session, WebRTC transport, and outbound delivery boundaries.
 * `shared/packets/gameplay.toml` - shared gameplay schema and realtime packet type values.
@@ -206,7 +223,7 @@ Relevant active files include:
 
 Relevant server tests include:
 
-* `services/game-server/internal/protocol/realtime/*_test.go` - lane-native realtime projection coverage, including sparse delta serialization and wire-map omission behavior.
+* `services/game-server/internal/protocol/realtime/*_test.go` - lane-native realtime projection coverage, including sparse delta serialization, lifecycle candidate routing/planning, and wire-map omission behavior.
 * `services/game-server/internal/networking/websocket_write_test.go`
 * `services/game-server/internal/networking/room_snapshot_test.go`
 * `services/game-server/internal/networking/room_error_test.go`
@@ -224,6 +241,5 @@ Relevant server tests include:
 * [Packet Schemas](../../../../data/packet-schemas.md)
 
 ## Notes
-
 
 

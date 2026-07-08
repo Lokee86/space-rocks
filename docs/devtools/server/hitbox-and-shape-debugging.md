@@ -31,7 +31,7 @@ shared/collisions/collision_shapes.json
 -> websocket write loop
 ```
 
-The client combines that catalog with world lane readback to draw the server hitbox overlay. Live entity placement comes from world lane records, not from the shape catalog.
+The client combines that catalog with accumulated realtime lane readback to draw the server hitbox overlay. Live entity placement comes from accumulated realtime lane state, not from the shape catalog.
 
 The server also has a game-owned collision body telemetry adapter:
 
@@ -214,14 +214,14 @@ Current client flow:
 server sends debug_shape_catalog
 -> client routes debug_shape_catalog through inbound packet routing
 -> ServerHitboxOverlayFlow stores shape definitions
--> client receives world lane readback
+-> client receives accumulated realtime lane readback
 -> ServerHitboxOverlayFlow resolves shape ids for live entities
 -> ServerHitboxOverlayFlow transforms local shape points by entity state
 -> WorldSync converts server positions to visual positions
 -> DevtoolsServerHitboxOverlay draws closed outlines
 ```
 
-The server output only supplies reusable shape definitions. The client uses world lane readback for live entity values such as:
+The server output only supplies reusable shape definitions. The client uses accumulated realtime lane readback for live entity values such as:
 
 ```text
 position
@@ -300,7 +300,7 @@ damage events
 pickup collection events
 ```
 
-Current live entity positions come from world lane readback.
+Current live entity positions come from accumulated realtime lane readback.
 
 The game-owned collision body telemetry adapter returns per-entity outline data shaped as:
 
@@ -545,7 +545,7 @@ data-sync -check -packets -go -gds
 
 The UI label currently says “Show Server Collision Telemetry,” while the current client implementation names the visual layer as a server hitbox overlay.
 
-The current outbound overlay path reconstructs visible outlines from reusable shape definitions plus world lane readback. It does not receive live precomputed per-entity collision body outlines from the server.
+The current outbound overlay path reconstructs visible outlines from reusable shape definitions plus accumulated realtime lane readback. It does not receive live precomputed per-entity collision body outlines from the server.
 
 Pickup debug shape ids are based on collision-shape catalog keys, while pickup gameplay state can expose pickup type. A pickup overlay entry is drawn only when the client-resolved pickup shape id matches a catalog shape id. Missing overlay shape data does not affect pickup simulation, pickup rendering, or pickup collection behavior.
 

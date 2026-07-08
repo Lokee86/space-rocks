@@ -89,7 +89,7 @@ The server decides:
 * how fallback directions are selected
 * how runtime ids are allocated
 * how the new entity enters the authoritative entity store
-* what world lane records later project to clients
+* what family-specific realtime lanes later project to clients
 
 The spawn command path does not give the client direct write access to server entity maps. Client placement requests route through server command handlers and game-owned mutation helpers.
 
@@ -112,15 +112,15 @@ The server does not send a special spawn-confirmation packet. Confirmation is ob
 
 ```text
 world lane ship records
-world lane asteroid records
-world lane bullet records
+asteroids_lifecycle creates
+bullets_lifecycle creates
 world lane pickup records
 session lane player records
 debug_status packets
 event_batch where applicable
 ```
 
-Spawned entities appear on the client only after the server mutates runtime state and lane-native readback projects that state.
+`debug_spawn_entity` does not create gameplay truth locally. The server mutates authoritative state, and spawned bullets appear later as `bullets_lifecycle` creates while spawned asteroids appear later as `asteroids_lifecycle` creates.
 
 ## Command routing
 
@@ -404,7 +404,7 @@ A successful pickup spawn:
 * creates the pickup entity from the definition
 * initializes health, age, and lifespan
 * stores the pickup in `game.entities.Pickups`
-* makes it available for world lane readback and pickup lifecycle handling
+* makes it available for family-specific realtime readback and pickup lifecycle handling
 
 Debug pickup spawn does not record a `pickup_dropped` gameplay event. Drop-table integration owns that event for normal asteroid-drop spawns.
 

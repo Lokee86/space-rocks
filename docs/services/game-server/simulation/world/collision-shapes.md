@@ -327,8 +327,8 @@ Examples:
 
 ```text
 world lane ship records
-world lane asteroid records
-world lane bullet records
+asteroids_lifecycle state
+bullets_lifecycle state
 world lane pickup records
 event_batch
 devtools collision telemetry output

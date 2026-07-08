@@ -500,8 +500,7 @@ External clients observe its results indirectly through normal game-server outpu
 
 ```text
 world lane ship records
-world lane asteroid records
-world lane bullet records
+`game.entities.Asteroids` and `game.entities.Projectiles` project through lifecycle creates/deletes plus hot movement updates, not world lane records.
 session lane player records
 event_batch
 ```

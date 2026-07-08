@@ -210,12 +210,12 @@ The timestamp is generated in the outbound networking path immediately before pa
 The outgoing lane packets also contain world data that client telemetry can count:
 
 ```text
-world lane ship records
+entity-family realtime lanes ship records
 session lane player records
 session lane lifecycle records
-world lane bullet records
-world lane asteroid records
-world lane pickup records
+`world_lane_state` bullet/projectile records
+entity-family realtime lanes asteroid records
+entity-family realtime lanes pickup records
 session lane total_asteroids
 event_batch
 ```
@@ -546,6 +546,5 @@ Telemetry in this document means live debug and diagnostic readouts. It does not
 `packet_staleness_ms` and `packet_age_ms` are client-side calculations. The server supplies timestamps and lane packets; the client owns the derived timing readout.
 
 The server collision body telemetry seam observes real collision bodies. It should stay connected to the authoritative physics/collision implementation rather than duplicating shape facts in client-only debug logic.
-
 
 

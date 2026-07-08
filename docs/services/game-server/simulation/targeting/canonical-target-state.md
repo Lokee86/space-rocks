@@ -59,7 +59,7 @@ client target intent packet
 -> client authoritative readback
 ```
 
-Client clicks and local target candidates are requests. The server accepts or rejects them. Confirmed target state is the state projected back through authoritative world lane readback.
+Client clicks and local target candidates are requests. The server accepts or rejects them. Confirmed selected-target fields are stored on the requesting player’s active ship state and projected back through authoritative world lane ship readback. Non-player target bodies are observed through their entity-family realtime readback.
 
 ## Code root
 

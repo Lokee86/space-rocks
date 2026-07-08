@@ -31,7 +31,7 @@ asteroid
 bullet
 ```
 
-Targeting is server-authoritative. The client may build local visual candidates and send target intent, but the game server decides whether the target is accepted. Accepted target state is confirmed only when it appears in authoritative world lane readback.
+Targeting is server-authoritative. The client may build local visual candidates and send target intent, but the game server decides whether the target is accepted. Accepted selected-target fields are confirmed only when they appear in authoritative world lane ship readback for the requesting player. Non-player target bodies are observed through their entity-family realtime readback.
 
 A selected target is not automatically combat behavior. Targeting records intent or focus. It does not, by itself, damage the target, collect the pickup, fire a weapon, command an entity, validate a devtools command, or make an entity eligible for every targeting consumer.
 
@@ -307,7 +307,7 @@ The detailed game-server implementation map belongs in the game-server simulatio
 * New normal gameplay paths must not introduce `target_player_id`.
 * `target_player_id` remains a player-only devtools/debug compatibility surface.
 * Client candidate selection is not authority.
-* Server-selected target state must be confirmed through authoritative world lane readback.
+* Server-selected target fields must be confirmed through authoritative world lane ship readback for the requesting player; non-player target bodies must be observed through their entity-family realtime readback.
 * Point-based selection must validate both the requested target identity and server-side collision-body containment.
 * Invalid target selection must not overwrite the previous accepted target.
 * Empty target clearing is explicit.

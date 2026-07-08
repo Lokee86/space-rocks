@@ -6,13 +6,13 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document describes the current realtime WebSocket protocol between the Godot client and the Go game server.
 
-The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-lane-specific WebRTC DataChannels for active realtime gameplay packets: `sr.world`, `sr.overlay`, `sr.session`, and `sr.event` are ordered/reliable, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes.
+The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-lane-specific WebRTC DataChannels for active realtime gameplay packets: `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes.
 
 It covers the transport route, JSON packet framing, connection lifecycle, packet-family routing, lane policy, gameplay packet families, session-state requirements, delivery semantics, source-of-truth files, generated outputs, service responsibilities, compatibility expectations, and implementation code paths.
 
 ## Overview
 
-The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and lane-specific WebRTC physical DataChannels for active realtime gameplay packets, with ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
+The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and lane-specific WebRTC physical DataChannels for active realtime gameplay packets, with ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
 
 The game server exposes one realtime route:
 
@@ -22,7 +22,7 @@ GET /ws
 
 The Godot client selects a WebSocket URL from the requested session mode, opens the connection, optionally sends an auth packet, sends room or gameplay request packets, and receives authoritative server packets. /ws is the signaling, session, and control route, not the active gameplay state transport.
 
-WebSocket owns auth, room, lobby, telemetry, signaling, and queued one-off packets. WebRTC physical DataChannels own active realtime gameplay packets. Current physical gameplay DataChannels are world, asteroids, bullets, overlay, session, and event. `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`; there is no generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry WebRTC DataChannel traffic.
+WebSocket owns auth, room, lobby, telemetry, signaling, and queued one-off packets. WebRTC physical DataChannels own active realtime gameplay packets. Current physical gameplay DataChannels are `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`. `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`; there is no generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry WebRTC DataChannel traffic.
 
 The route path does not define play mode. Local single-player and multiplayer currently use the same local WebSocket route during development. Single-player versus multiplayer behavior is expressed through packets, session identity, room state, admission policy, and player-data routing.
 
@@ -50,6 +50,8 @@ bullets
 overlay
 session
 event
+asteroids.lifecycle
+bullets.lifecycle
 ```
 
 `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`. There is no separate generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation.
@@ -61,6 +63,8 @@ world_full
 world_delta
 asteroid_delta
 bullet_delta
+asteroids_lifecycle
+bullets_lifecycle
 overlay_full
 overlay_delta
 session_full
@@ -169,6 +173,8 @@ future packet-encoding or transport-format planning
 ```
 
 Packet schema owns packet type strings, generated constants, generated struct fields where applicable, and canonical field names. Runtime realtime protocol code owns active lane wire-map emission behavior such as sparse delta omission, numeric wire quantization, and compact alias application. Runtime services own packet consequences and meaning.
+
+Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use `sr.asteroids.lifecycle`. Bullet/projectile lifecycle packets use `sr.bullets.lifecycle`. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
 
 For example:
 
@@ -385,9 +391,11 @@ Current update identity keys are:
 ```text
 world ship_updates = id
 world pickup_updates = id
+asteroids_lifecycle asteroid_creates/asteroid_deletes = id
+bullets_lifecycle bullet_creates/bullet_deletes = id
 asteroid_delta asteroid_updates = id
 bullet_delta bullet_updates = id
-world bullet_updates and world asteroid_updates = id for lifecycle/bootstrap/resync-compatible world deltas only; regular active movement updates are split into dedicated hot movement lanes
+world bullet_updates and world asteroid_updates = id for legacy/bootstrap/resync-safe compatibility only; regular active movement updates are split into dedicated hot movement lanes
 
 overlay receiver_updates = self_id
 session player_session_updates = id
@@ -452,7 +460,55 @@ pickup_updates
 pickup_deletes
 ```
 
-Absent world delta sections are treated as empty arrays by the client. `world_delta` still has serializer and compatibility support for `bullet_updates` and `asteroid_updates` so bootstrap, compatibility, and resync-safe world deltas can continue to deserialize them. Regular active bullet movement is emitted as `bullet_delta` on `sr.bullets`, and regular active asteroid movement is emitted as `asteroid_delta` on `sr.asteroids`. World remains lifecycle/resync-safe for asteroid and bullet creates/deletes. For asteroid records only, the compact active wire form uses tuple arrays with numeric suffix IDs, and the client rehydrates those IDs before world lane application. Readable/logical world records remain id-keyed maps before compact aliasing.
+Absent world delta sections are treated as empty arrays by the client. `world_delta` still has serializer and compatibility support for `bullet_updates` and `asteroid_updates` so bootstrap, compatibility, and resync-safe world deltas can continue to deserialize them, but it does not own active bullet or asteroid lifecycle traffic. Regular active bullet movement is emitted as `bullet_delta` on `sr.bullets`, and regular active asteroid movement is emitted as `asteroid_delta` on `sr.asteroids`. For asteroid records only, the compact active wire form uses tuple arrays with numeric suffix IDs, and the client rehydrates those IDs before world lane application. Readable/logical world records remain id-keyed maps before compact aliasing.
+
+### Asteroid lifecycle lane packets
+
+`asteroids_lifecycle` carries:
+
+```text
+asteroid_creates
+asteroid_deletes
+```
+
+It uses `sr.asteroids.lifecycle`.
+
+It is reliable/ordered.
+
+It is required/critical.
+
+It defines asteroid existence.
+
+It carries create identity such as variant, size, health, scale, and initial position when present.
+
+It is not a hot movement lane.
+
+### Bullet lifecycle lane packets
+
+`bullets_lifecycle` carries:
+
+```text
+bullet_creates
+bullet_deletes
+```
+
+It uses `sr.bullets.lifecycle`.
+
+It is reliable/ordered.
+
+It is required/critical.
+
+It defines projectile existence.
+
+It carries create identity such as owner_id, weapon_id, projectile_type, rotation, and initial position when present.
+
+Torpedo creates must preserve projectile_type.
+
+It is not a hot movement lane.
+
+Lifecycle defines existence. Hot lanes update known entities only.
+
+Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
 
 Compact asteroid example:
 
@@ -685,10 +741,15 @@ The current scheduler assigns delivery classes and priorities at whole-lane-cand
 event_batch = critical/event-once
 world_delta, overlay_delta, asteroid_delta, and bullet_delta = high priority / hot supersedable
 asteroid_delta and bullet_delta = dedicated hot movement candidates with encoded-size guards and unordered/unreliable WebRTC delivery
+asteroids_lifecycle = required / critical
+bullets_lifecycle = required / critical
 session deltas = medium priority / deferrable
 required bootstrap full packets = world, overlay, then session
 control-lane resync packets = required
 ```
+
+Lifecycle lanes are not hot-supersedable.
+Lifecycle lanes are not split by hot-lane chunking.
 
 The active path currently schedules whole lane candidates:
 
@@ -696,6 +757,8 @@ The active path currently schedules whole lane candidates:
 world_delta = one candidate
 asteroid_delta = one or more candidates when asteroid hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
 bullet_delta = one or more candidates when bullet hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
+asteroids_lifecycle = one candidate when asteroid creates/deletes are present
+bullets_lifecycle = one candidate when bullet creates/deletes are present
 overlay_delta = one candidate
 session_delta = one candidate
 event_batch = one candidate
@@ -778,6 +841,8 @@ world_full_received
 world_delta_received
 asteroid_delta_received
 bullet_delta_received
+asteroids_lifecycle_received
+bullets_lifecycle_received
 overlay_full_received
 overlay_delta_received
 session_full_received
@@ -802,7 +867,9 @@ stale or baseline-mismatched deltas are rejected or ignored by the router/applie
 Lane application responsibilities are split by lane:
 
 ```text
-world lane -> creates, updates, and deletes for ships, pickups, and asteroid/bullet lifecycle creates/deletes
+world lane -> ships, pickups, world/full/bootstrap presentation state
+asteroids_lifecycle -> asteroid creates/deletes through WorldLaneApplier.apply_asteroids_lifecycle
+bullets_lifecycle -> bullet creates/deletes through WorldLaneApplier.apply_bullets_lifecycle
 asteroid_delta -> regular asteroid movement updates through hot sequence guards
 bullet_delta -> regular bullet movement updates through hot sequence guards
 overlay lane -> receiver and HUD state
@@ -821,6 +888,8 @@ room_state_changed
 room_error
 world_full
 world_delta
+asteroids_lifecycle
+bullets_lifecycle
 overlay_full
 overlay_delta
 session_full
@@ -980,11 +1049,11 @@ Server-to-client:
 }
 ```
 
-The server replies only to the same WebSocket session. Telemetry does not require room membership, does not require active lane gameplay output, and does not mutate gameplay. WebSocket best-effort applies to auth, room, lobby, telemetry, signaling, and queued one-off packets; active realtime gameplay output uses ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
+The server replies only to the same WebSocket session. Telemetry does not require room membership, does not require active lane gameplay output, and does not mutate gameplay. WebSocket best-effort applies to auth, room, lobby, telemetry, signaling, and queued one-off packets; active realtime gameplay output uses ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
 
 ## Delivery and failure semantics
 
-Current delivery is best-effort for WebSocket-owned auth, room, lobby, telemetry, signaling, and queued one-off packets. Active realtime gameplay output uses ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, and `sr.event`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
+Current delivery is best-effort for WebSocket-owned auth, room, lobby, telemetry, signaling, and queued one-off packets. Active realtime gameplay output uses ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
 
 There is no implemented support for:
 
@@ -1053,7 +1122,7 @@ shared/packets/webrtc.toml
 shared/packets/outputs.toml
 ```
 
-Those files define packet structs, packet type strings, JSON field names, output routing, and selected generated client builders.
+Those files define packet structs, packet type strings, JSON field names, output routing, and selected generated client builders. For gameplay output, `shared/packets/gameplay.toml` and `shared/packets/outputs.toml` now include the generated packet type values `asteroids_lifecycle` and `bullets_lifecycle` alongside the existing gameplay families.
 
 The transport route and runtime connection lifecycle are not sourced from the packet TOML files. They are implemented by the client and game-server networking services.
 
@@ -1248,12 +1317,13 @@ client/scripts/networking/network_client.gd
 client/scripts/networking/webrtc/webrtc_transport.gd
 client/scripts/networking/packets/packet_codec.gd
 client/scripts/protocol/realtime/compact_lane_packet.gd
+client/scripts/protocol/realtime/world_lane_applier.gd
 client/scripts/protocol/realtime/realtime_router.gd
 client/scripts/networking/packets/packet_encode_result.gd
 client/scripts/networking/packets/packet_decode_result.gd
 ```
 
-PacketCodec.decode owns compact alias expansion before envelope validation; compact_lane_packet.gd owns the alias expansion helper used by PacketCodec and the defensive realtime router normalization path. Client compatibility tests include `client/tests/unit/protocol/realtime/test_compact_lane_packet.gd`, `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`, `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd`, and `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`.
+PacketCodec.decode owns compact alias expansion before envelope validation; compact_lane_packet.gd owns the alias expansion helper used by PacketCodec and the defensive realtime router normalization path. Client compatibility tests include `client/tests/unit/protocol/realtime/test_compact_lane_packet.gd`, `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`, `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd`, and `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`. Related routing and applier paths include `client/scripts/networking/inbound/server_packet_router.gd`, `client/scripts/networking/inbound/server_packet_dispatcher.gd`, `client/scripts/protocol/realtime/world_lane_applier.gd`, and `client/scripts/protocol/realtime/realtime_router.gd`.
 
 ### Client boot/session participants
 
@@ -1283,6 +1353,7 @@ services/game-server/internal/protocol/realtime/size_estimate.go
 services/game-server/internal/protocol/realtime/hot_lane_chunker.go
 services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go
 services/game-server/internal/protocol/realtime/wire_packets.go
+services/game-server/internal/protocol/realtime/lanes.go
 services/game-server/internal/protocol/realtime/active.go
 services/game-server/internal/protocol/realtime/compact_wire_packet.go
 services/game-server/internal/protocol/realtime/shadow.go
@@ -1457,7 +1528,6 @@ Deployment knobs currently include SPACE_ROCKS_WEBRTC_ADVERTISED_IPS, SPACE_ROCK
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
-
 
 
 

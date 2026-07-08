@@ -197,4 +197,3 @@ The current OpenAPI contract is authoritative for HTTP shape, but only Rails tes
 
 Detailed endpoint behavior belongs in the service docs. This protocol doc stays focused on contract authority, enforcement expectations, and update rules.
 
-

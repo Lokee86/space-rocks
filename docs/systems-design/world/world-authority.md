@@ -10,7 +10,7 @@ It explains which systems own world truth, which systems may request changes, wh
 
 ## Overview
 
-World authority is server-owned.
+World authority owns the authoritative entities. Realtime projection exposes them through family-specific packet lanes: world for player/pickup/world presentation, asteroid/bullet lifecycle lanes for existence, and asteroid/bullet hot lanes for movement updates.
 
 The authoritative world is the active match-local simulation owned by the game server. It includes live entity state, match-local player session state, world-space positions, movement, spawning, collisions, damage consequences, pickup collection, target state, presentation-event production, and lane-native realtime projection inputs.
 
@@ -256,13 +256,21 @@ Current projected world state is organized by lane as follows:
 
 ```text
 world lane
-= active ship/avatar state, pickups, and asteroid/bullet lifecycle creates/deletes
+= active ship/avatar state, pickups, player/world presentation, and full/bootstrap state
+
+asteroids.lifecycle lane
+= asteroid creates/deletes and initial asteroid presentation identity
+
+bullets.lifecycle lane
+= bullet/projectile creates/deletes and initial projectile identity
 
 asteroids lane
 = regular asteroid movement updates
 
 bullets lane
-= regular bullet movement updates
+= regular bullet/projectile movement updates
+
+Lifecycle defines entity existence. Hot asteroid and bullet lanes update known entities only and must not create or resurrect entities.
 
 overlay lane
 = receiver-local overlay and HUD state
