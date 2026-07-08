@@ -11,14 +11,19 @@ Use this as the first stop when you need to decide which MCP server to connect t
 
 ## Rules
 
-- Info MCP is the planning and read-only server.
+- Info MCP is the planning/inspection server.
+- Info MCP includes Hermes session tools for agent orchestration.
+- Info MCP must never import repo write tools or EngineForge write tools.
+- Info MCP intentionally registers Hermes session tools.
+- Hermes session tools are not a general terminal bridge.
+- They do not expose arbitrary Hermes args.
 - Write MCP is the implementation server.
 - ChatGPT and other planning agents should use Info MCP.
 - Codex and implementation work should use Write MCP.
-- Info MCP must never import write tools.
 - Write MCP should stay local only.
 - Do not expose Write MCP through ngrok.
-- If you need to publish one server for remote access, only expose Info MCP.
+- Do not expose Info MCP through ngrok while Hermes tools are enabled by default.
+- Treat Info MCP as trusted-local only because Hermes session prompts can mutate files and consume usage.
 - The bridge command set comes from `/capabilities` and the installed plugin.
 - Do not assume guessed command names exist.
 - Do not use stale names like `scene.current` or `scene.tree`.
@@ -26,10 +31,44 @@ Use this as the first stop when you need to decide which MCP server to connect t
 
 ## Server Split
 
-| Server | Port | Entry file | Consumer | Role |
-|---|---:|---|---|---|
-| Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Read/search repo plus read-only Godot bridge diagnostics |
-| Write MCP | 8788 | server-write.js | Codex / implementation | Bounded repo writes, allowlisted commands, Godot bridge mutations |
+|| Server | Port | Entry file | Consumer | Role |
+||---|---:|---|---|---|
+|| Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Repo reads/search, read-only Godot diagnostics, optional Chrome/Plasmic tools, default Hermes session tools |
+|| Write MCP | 8788 | server-write.js | Codex / implementation | Bounded repo writes, allowlisted commands, Godot bridge mutations |
+
+## Hermes CLI Tools
+
+Info MCP exposes Hermes session tools for continuous context across prompt sequences:
+
+- `hermes_ping` - Confirms Hermes CLI is available (runs `hermes --version`)
+- `hermes_help` - Shows Hermes CLI help (runs `hermes --help`)
+- `hermes_session_status` - Shows the current Hermes session status (runs `hermes status`)
+- `hermes_sessions_list` - Lists all Hermes sessions (runs `hermes sessions list`)
+- `hermes_session_send` - Sends a prompt into a named Hermes session
+
+### hermes_session_send
+
+`hermes_session_send` sends prompts into a named Hermes session. Reusing the same `session_name` preserves continuous Hermes context across prompt sequences.
+
+**Internal command shape:**
+```
+hermes --continue <session_name> -z <prompt>
+```
+
+**Default session name:** `space-rocks-mcp`
+
+**Input parameters:**
+- `prompt` (required) - The prompt string to send to the Hermes session
+- `session_name` (optional, default: `space-rocks-mcp`) - The named session to continue
+- `cwd` (optional) - Repo-relative working directory
+- `timeout_ms` (optional, default: 600000) - Timeout in milliseconds (1000-600000 range)
+
+**Important notes:**
+- This is session continuation through Hermes, not one-shot workflow guidance.
+- It is not a general terminal bridge.
+- It does not expose arbitrary Hermes args.
+- It cannot execute bash, PowerShell, git, Python, npm, or arbitrary shell commands.
+- Hermes session prompts can mutate files and consume model/API usage.
 
 ## Bridge Usage
 
@@ -145,14 +184,15 @@ npm run start:write
 
 ## ChatGPT connection notes
 
-- Use the Info MCP server for planning, inspection, and read-only diagnostics.
+- ChatGPT uses Info MCP for planning, inspection, and agent orchestration.
 - Use the local HTTP MCP endpoint on port `8789`.
+- Info MCP is trusted-local because Hermes session prompts can mutate files and consume usage.
 - Keep ChatGPT and other planning agents off the write server.
 - If you are only reading repo state or checking the Godot bridge, Info MCP is the correct server.
 
 ## Ngrok rule
 
-- Info MCP only may be exposed through ngrok.
+- Do not expose Info MCP through ngrok while Hermes tools are enabled by default.
 - Never expose Write MCP through ngrok.
 - Write MCP is meant to stay local and bounded to implementation work.
 

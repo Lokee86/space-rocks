@@ -5,6 +5,7 @@ import { registerRepoReadonlyTools } from "./shared/repo_readonly_tools.js";
 import { registerEngineForgeReadonlyTools } from "./shared/engineforge_readonly_tools.js";
 import { registerChromeDevtoolsProxyTools } from "./shared/chrome_devtools_proxy_tools.js";
 import { registerPlasmicReadTools, registerPlasmicWriteTools } from "./shared/plasmic_tools.js";
+import { registerHermesTools } from "./shared/hermes_tools.js";
 
 const port = Number(process.env.PORT ?? 8789);
 const chromeDevtoolsEnabled = process.env.ENABLE_CHROME_DEVTOOLS === "1";
@@ -17,11 +18,14 @@ function createMcpServer() {
 
   registerRepoReadonlyTools(server);
   registerEngineForgeReadonlyTools(server);
+  registerHermesTools(server);
   if (chromeDevtoolsEnabled) {
     registerChromeDevtoolsProxyTools(server);
     registerPlasmicReadTools(server);
     registerPlasmicWriteTools(server);
   }
+
+  console.log("Hermes MCP tools enabled");
 
   return server;
 }

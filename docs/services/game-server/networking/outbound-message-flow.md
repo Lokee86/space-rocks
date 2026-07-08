@@ -468,7 +468,15 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/protocol/packetcodec/` owns JSON encode/decode mechanics.
 - `services/game-server/internal/protocol/realtime/` owns realtime lane packet construction, send-plan records, sparse delta omission, compact alias preparation, encoded-byte accounting inputs, and metrics behavior.
 - `services/game-server/internal/protocol/realtime/lanes.go`
-- `services/game-server/internal/protocol/realtime/planner.go`
+- `services/game-server/internal/protocol/realtime/planner.go` - orchestrates lane candidate builder calls before scheduling.
+- `services/game-server/internal/protocol/realtime/lane_candidate_world.go` - builds world lane candidates, integrates hot movement splitting, and chains world projections.
+- `services/game-server/internal/protocol/realtime/lane_candidate_lifecycle.go` - builds reliable asteroid and bullet lifecycle candidates.
+- `services/game-server/internal/protocol/realtime/lane_candidate_overlay.go` - builds overlay lane candidates.
+- `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - builds session lane candidates.
+- `services/game-server/internal/protocol/realtime/lane_candidate_event.go` - builds event_batch candidates without draining pending events.
+- `services/game-server/internal/protocol/realtime/candidate_types.go` - realtime candidate/send-preparation types.
+- `services/game-server/internal/protocol/realtime/candidate_policy.go` - packet-family, priority, delivery-class, schedule-record, and projection helpers.
+- `services/game-server/internal/protocol/realtime/candidate_diagnostics.go` - write diagnostics for selected candidates.
 - `services/game-server/internal/protocol/realtime/wire_packets.go`
 - `services/game-server/internal/protocol/realtime/packets_generated.go` owns the generated realtime packet constants output.
 - `services/game-server/internal/protocol/realtime/compact_wire_packet.go` owns the hand-authored compact alias runtime mapping at the encode boundary.
@@ -478,10 +486,13 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/protocol/realtime/compact_wire_ships.go`
 - `services/game-server/internal/protocol/realtime/compact_wire_players.go`
 - `services/game-server/internal/protocol/realtime/compact_wire_events.go`
-- `services/game-server/internal/protocol/realtime/compact_wire_packet.go`
 - `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - estimates compact hot-lane packet and tuple byte sizes for chunk construction without repeated trial JSON encoding.
 - `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, `EncodedLanePackets` list construction, compact/packetcodec boundary, hot-packet encoded-size validation, and encoded-byte accounting.
 - `services/game-server/internal/protocol/realtime/scheduler.go` - include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
+- `services/game-server/internal/protocol/realtime/quantize/` - numeric wire quantization policies.
+- `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
+- `services/game-server/internal/protocol/realtime/quantize_overlay.go` - overlay full-packet wire quantization.
+- `services/game-server/internal/protocol/realtime/quantize_session.go` - session full-packet wire quantization.
 - `services/game-server/internal/networking/packetmetrics/` - packet observability helper types retained around outbound/realtime seams; not active `realtime lane metric` emission.
 - [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 

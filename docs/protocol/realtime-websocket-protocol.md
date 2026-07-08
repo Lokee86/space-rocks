@@ -362,6 +362,8 @@ Known float-like fields use lane- and field-specific policies from `services/gam
 - `services/game-server/internal/protocol/realtime/quantize/`
 - `services/game-server/internal/protocol/realtime/quantized_records.go`
 - `services/game-server/internal/protocol/realtime/quantize_world.go`
+- `services/game-server/internal/protocol/realtime/quantize_overlay.go`
+- `services/game-server/internal/protocol/realtime/quantize_session.go`
 - `services/game-server/internal/protocol/realtime/planner.go`
 - `services/game-server/internal/protocol/realtime/wire_packets.go`
 
@@ -1149,7 +1151,7 @@ services/game-server/internal/devtools/packets_generated.go
 
 The generated client file provides packet type constants, field constants, and selected outbound packet builder functions.
 
-The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`. Runtime realtime protocol files such as services/game-server/internal/protocol/realtime/quantized_records.go, services/game-server/internal/protocol/realtime/quantize_world.go, services/game-server/internal/protocol/realtime/quantize/, services/game-server/internal/protocol/realtime/wire_packets.go, services/game-server/internal/protocol/realtime/compact_wire_ids.go, services/game-server/internal/protocol/realtime/compact_wire_asteroids.go, services/game-server/internal/protocol/realtime/compact_wire_bullets.go, services/game-server/internal/protocol/realtime/compact_wire_ships.go, services/game-server/internal/protocol/realtime/compact_wire_players.go, services/game-server/internal/protocol/realtime/compact_wire_events.go, services/game-server/internal/protocol/realtime/compact_wire_packet.go, services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go, and services/game-server/internal/protocol/realtime/active.go are implementation files, not generated packet-schema outputs.
+The generated server files provide packet constants and Go structs for realtime protocol, game, runtime state, and devtools packet families. The `server_realtime_packets` output from `shared/packets/outputs.toml` feeds `services/game-server/internal/protocol/realtime/packets_generated.go`. Runtime realtime protocol files such as services/game-server/internal/protocol/realtime/planner.go, services/game-server/internal/protocol/realtime/lane_candidate_world.go, services/game-server/internal/protocol/realtime/lane_candidate_lifecycle.go, services/game-server/internal/protocol/realtime/lane_candidate_overlay.go, services/game-server/internal/protocol/realtime/lane_candidate_session.go, services/game-server/internal/protocol/realtime/lane_candidate_event.go, services/game-server/internal/protocol/realtime/candidate_types.go, services/game-server/internal/protocol/realtime/candidate_policy.go, services/game-server/internal/protocol/realtime/candidate_diagnostics.go, services/game-server/internal/protocol/realtime/quantize_overlay.go, services/game-server/internal/protocol/realtime/quantize_session.go, services/game-server/internal/protocol/realtime/quantized_records.go, services/game-server/internal/protocol/realtime/quantize_world.go, services/game-server/internal/protocol/realtime/quantize/, services/game-server/internal/protocol/realtime/wire_packets.go, services/game-server/internal/protocol/realtime/compact_wire_ids.go, services/game-server/internal/protocol/realtime/compact_wire_asteroids.go, services/game-server/internal/protocol/realtime/compact_wire_bullets.go, services/game-server/internal/protocol/realtime/compact_wire_ships.go, services/game-server/internal/protocol/realtime/compact_wire_players.go, services/game-server/internal/protocol/realtime/compact_wire_events.go, services/game-server/internal/protocol/realtime/compact_wire_packet.go, services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go, and services/game-server/internal/protocol/realtime/active.go are implementation files, not generated packet-schema outputs.
 
 `services/game-server/internal/protocol/realtime/compact_wire_packet.go` is a hand-authored runtime alias mapper documented by `docs/services/game-server/networking/realtime-compact-wire-mapping.md`; it is not generated from packet TOML.
 
@@ -1347,6 +1349,16 @@ services/game-server/internal/protocol/realtime/event_projection.go
 services/game-server/internal/protocol/realtime/baseline.go
 services/game-server/internal/protocol/realtime/delta.go
 services/game-server/internal/protocol/realtime/planner.go
+services/game-server/internal/protocol/realtime/lane_candidate_world.go
+services/game-server/internal/protocol/realtime/lane_candidate_lifecycle.go
+services/game-server/internal/protocol/realtime/lane_candidate_overlay.go
+services/game-server/internal/protocol/realtime/lane_candidate_session.go
+services/game-server/internal/protocol/realtime/lane_candidate_event.go
+services/game-server/internal/protocol/realtime/candidate_types.go
+services/game-server/internal/protocol/realtime/candidate_policy.go
+services/game-server/internal/protocol/realtime/candidate_diagnostics.go
+services/game-server/internal/protocol/realtime/quantize_overlay.go
+services/game-server/internal/protocol/realtime/quantize_session.go
 services/game-server/internal/protocol/realtime/scheduler.go
 services/game-server/internal/protocol/realtime/priority.go
 services/game-server/internal/protocol/realtime/size_estimate.go

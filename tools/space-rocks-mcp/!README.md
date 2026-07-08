@@ -7,12 +7,14 @@ Use this package for agent access only. It is not a general app server.
 ## Folder purpose
 
 - `tools/space-rocks-mcp` holds the MCP HTTP servers, shared transport helpers, repo tool groups, and EngineForge bridge adapters.
-- The package provides one read-only server for planning and one write-capable server for implementation.
+- The package provides a planning/inspection server and one write-capable server for implementation.
 - The legacy `server.js` entrypoint is kept for compatibility and should not be expanded.
 
 ## Servers
 
-- `server-info-next.js` runs the read-only info MCP server on port `8789`.
+- `server-info-next.js` runs the planning/inspection MCP server on port `8789`.
+- It includes repo read/search, read-only EngineForge diagnostics, optional Chrome/Plasmic tools when enabled, and Hermes session tools.
+- It is no longer purely read-only because Hermes session prompts can cause code edits and consume model/API usage.
 - `server-write.js` runs the write-capable MCP server on port `8788`.
 - `server.js` is legacy/compatibility and should not be expanded.
 
@@ -30,6 +32,7 @@ The main shared modules are:
 - `shared/engineforge_bridge.js` for discovering and calling the local EngineForge bridge.
 - `shared/engineforge_readonly_tools.js` for safe Godot bridge diagnostics.
 - `shared/engineforge_write_tools.js` for Godot mutation tools.
+- `shared/hermes_tools.js` for Hermes CLI MCP tools.
 
 ## Chrome DevTools / Plasmic bridge
 
@@ -50,6 +53,32 @@ npm run start:info
 - Repo write tools: `ping`, `write_repo_file`, `replace_in_repo_file`, `list_allowed_commands`, `run_allowed_command`
 - EngineForge read tools: bridge info, bridge status, route probing, command probing, project info, scene tree, node properties, editor logs
 - EngineForge write tools: scene open/save/create, node create/delete/duplicate/reparent/property/transform, script create/edit/detach/delete/attach, resource create, material helpers, editor play/stop/pause, console clear, animation play/stop
+- Hermes tools: `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`. These tools provide session-oriented access to Hermes, preserving continuous context by sending prompts to a named Hermes session.
+
+## Hermes Session Tools
+
+The Hermes MCP tools provide bounded session-oriented access:
+
+- `hermes_ping` - Confirms the Hermes CLI is available (runs `hermes --version`)
+- `hermes_help` - Shows Hermes CLI help (runs `hermes --help`)
+- `hermes_session_status` - Shows the current Hermes session status (runs `hermes status`)
+- `hermes_sessions_list` - Lists all Hermes sessions (runs `hermes sessions list`)
+- `hermes_session_send` - Sends a prompt to a Hermes session and returns the result
+
+The `hermes_session_send` tool preserves continuous context by sending prompts to the same named Hermes session. The internal command shape is:
+
+```
+hermes --continue <session_name> -z <prompt>
+```
+
+The default session name is `space-rocks-mcp`.
+
+**Important**: Info MCP does not expose:
+- General shell
+- Arbitrary command strings
+- Arbitrary Hermes args
+- Repo write tools
+- EngineForge write tools
 
 ## Start commands
 
@@ -96,8 +125,12 @@ Note:
 
 ## Safety boundaries
 
-- Never expose the write MCP server through ngrok. If remote access is needed, expose only the read-only info server.
-- Keep the info server read-only. Do not add write tools to it.
+- Info MCP must not import repo write tools.
+- Info MCP must not import EngineForge write tools.
+- Info MCP must not expose a general shell.
+- Info MCP intentionally exposes Hermes session tools for continuous context, which can cause code edits and consume model/API usage.
+- Do not expose Info MCP through ngrok while Hermes tools are default-enabled.
+- Treat Info MCP as trusted-local only.
 - Keep the write server local and bounded to repo writes, allowlisted commands, and EngineForge mutations.
 - Do not edit `package.json` or the installed EngineForge plugin from this README workflow.
 - The MCP server does not contain EngineForge itself. It wraps the local Godot bridge by reading `client/.godot/engineforge/bridge.json`.

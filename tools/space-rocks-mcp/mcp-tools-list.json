@@ -1,1 +1,71 @@
-﻿{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
+﻿{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list",
+  "params": {
+    "tools": [
+      {
+        "name": "hermes_ping",
+        "description": "Confirms the Hermes CLI is available.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      {
+        "name": "hermes_help",
+        "description": "Shows Hermes CLI help.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      {
+        "name": "hermes_session_status",
+        "description": "Shows Hermes status.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      {
+        "name": "hermes_sessions_list",
+        "description": "Lists Hermes sessions.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      {
+        "name": "hermes_session_send",
+        "description": "Sends a prompt into a named Hermes session using session continuation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string"
+            },
+            "session_name": {
+              "type": "string",
+              "default": "space-rocks-mcp"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "timeout_ms": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 600000,
+              "default": 600000
+            }
+          },
+          "required": ["prompt"]
+        }
+      }
+    ]
+  }
+}

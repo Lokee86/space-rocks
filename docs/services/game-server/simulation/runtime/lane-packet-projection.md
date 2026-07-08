@@ -162,7 +162,7 @@ Sparse omission is a realtime wire-map serialization concern. Compact aliasing i
 
 Runtime active encoding no longer performs raw-float reflection scanning. Numeric wire quantization remains part of projection and explicit event wire shaping before compacting and JSON encoding.
 
-Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/` and `services/game-server/internal/protocol/realtime/quantize_world.go` as the quantization boundary for outbound lane projection. It should not truncate authoritative simulation state for packet-size savings.
+Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/`, `services/game-server/internal/protocol/realtime/quantize_world.go`, `services/game-server/internal/protocol/realtime/quantize_overlay.go`, and `services/game-server/internal/protocol/realtime/quantize_session.go` as the quantization boundary for outbound lane projection. It should not truncate authoritative simulation state for packet-size savings.
 
 The ownership boundary remains:
 
@@ -205,7 +205,16 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
 * `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling and estimated byte-budget include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
 * `services/game-server/internal/protocol/realtime/lanes.go` - lane definitions and packet-family ownership.
-* `services/game-server/internal/protocol/realtime/planner.go` - lifecycle and hot candidate planning.
+* `services/game-server/internal/protocol/realtime/planner.go` - orchestrates lane candidate builder calls for world, overlay, session, and event lanes.
+* `services/game-server/internal/protocol/realtime/lane_candidate_world.go` - world lane candidate construction, world baseline/delta comparison, hot movement split integration, and world projection chaining.
+* `services/game-server/internal/protocol/realtime/lane_candidate_lifecycle.go` - asteroid and bullet lifecycle candidate construction for dedicated reliable lifecycle lanes.
+* `services/game-server/internal/protocol/realtime/lane_candidate_overlay.go` - overlay lane full/delta candidate construction.
+* `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - session lane full/delta candidate construction.
+* `services/game-server/internal/protocol/realtime/lane_candidate_event.go` - event_batch candidate construction without draining pending events.
+* `services/game-server/internal/protocol/realtime/candidate_types.go` - realtime lane candidate and send-preparation types.
+* `services/game-server/internal/protocol/realtime/candidate_policy.go` - packet-family, delivery-class, priority, schedule-record, and candidate projection helpers.
+* `services/game-server/internal/protocol/realtime/candidate_diagnostics.go` - candidate write diagnostics used by active lane metric/debug records.
+* `services/game-server/internal/protocol/realtime/quantize_overlay.go` and `services/game-server/internal/protocol/realtime/quantize_session.go` - overlay and session full-packet wire quantization.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
 * `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
 * `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, compact/packetcodec boundary, hot-packet encoded-size validation, and encoded-byte accounting.

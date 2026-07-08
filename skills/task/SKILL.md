@@ -1,375 +1,203 @@
-## Realtime Planner Extraction Skill
+## Skill: Make realtime scheduling byte-accurate and authoritative
 
-Use this skill when refactoring the server realtime protocol planner to reduce `planner.go` responsibility without changing behavior.
+Use this skill when changing the realtime protocol so scheduling, not encoding, owns packet budget decisions.
 
 ## Goal
 
-Turn `services/game-server/internal/protocol/realtime/planner.go` from a mixed-responsibility protocol brain into a thin orchestration file.
+Make `scheduler.go` the only place that decides whether a realtime candidate is included, deferred, or dropped for packet-size reasons.
 
-The planner should coordinate candidate assembly. It should not own candidate policy, diagnostics, lane-specific full/delta construction, lifecycle packet construction, or lane quantizer placement.
+After this change:
 
-This is a structural cleanup. Preserve behavior.
+```text
+planner builds candidates
+-> candidates receive exact or defensible encoded byte costs
+-> scheduler decides include/defer/drop using those byte costs
+-> active.go encodes and sends included candidates only
+-> active.go only fails on true encode/send errors, not budget policy
+```
 
-## Scope
+## Problem to remove
 
-Work only in:
+Do not allow this flow to remain:
 
-* `services/game-server/internal/protocol/realtime/`
+```text
+planner builds candidates
+-> scheduler estimates candidate cost
+-> scheduler includes candidate
+-> active.go encodes candidate
+-> active.go rejects hot-lane packet after scheduling
+```
 
-Expected production file additions:
+`active.go` must not silently skip already-scheduled hot-lane packets because of encoded size.
 
-* `candidate_types.go`
-* `candidate_policy.go`
-* `candidate_projection.go`
-* `candidate_diagnostics.go`
-* `lane_candidate_world.go`
-* `lane_candidate_overlay.go`
-* `lane_candidate_session.go`
-* `lane_candidate_event.go`
-* `lane_candidate_lifecycle.go`
-* `quantize_overlay.go`
-* `quantize_session.go`
+## Required files
 
-Test files may be split only after production extraction is stable.
+Expected files:
 
-## Package Boundary Rule
+```text
+services/game-server/internal/protocol/realtime/candidate_size.go
+services/game-server/internal/protocol/realtime/planner.go
+services/game-server/internal/protocol/realtime/scheduler.go
+services/game-server/internal/protocol/realtime/active.go
+services/game-server/internal/protocol/realtime/scheduler_test.go
+services/game-server/internal/protocol/realtime/active_test.go
+```
 
-Do not create new subpackages for this pass.
+Touch only additional files that are strictly required by compile errors or existing test placement.
 
-Keep all extracted planner pieces in package `realtime`.
+## Step 1: Add candidate sizing
 
-Rationale:
+Create:
 
-* Planner code depends on core realtime types, packet structs, metadata, deltas, quantizers, lane state, hot-lane policy, and packet-family constants.
-* Creating subpackages now would likely introduce import cycles or premature `core/common` packages.
-* Same-package file seams make ownership visible without changing dependency shape.
+```text
+services/game-server/internal/protocol/realtime/candidate_size.go
+```
 
-The existing `quantize/` subpackage is fine. Do not move planner candidate code into it.
+Add helpers that measure the encoded byte size of a realtime candidate before scheduling.
 
-## Required Behavior Preservation
+The initial implementation may encode the candidate wire packet to JSON and measure `len(bytes)`. Correctness is more important than estimator optimization for this pass.
 
-Preserve all current behavior, including:
+Required responsibilities:
 
-* full packet fallback when no usable baseline projection exists
-* delta omission when projection has not changed
-* chained projection storage for delta candidates
-* world hot-lane splitting
-* asteroid and bullet hot-lane candidate creation
-* asteroid and bullet lifecycle candidate creation
-* hot-lane cohort state mutation through `sessionState`
-* event batch creation without draining pending events
-* candidate delivery class, priority, and packet-family selection
-* schedule record construction
-* candidate diagnostics output
-* quantization behavior
+```go
+func EstimateCandidateEncodedBytes(candidate RealtimeLaneCandidate) int
+func EstimateWirePacketEncodedBytes(packet map[string]any) int
+func CandidateExceedsHardPacketLimit(candidate RealtimeLaneCandidate) bool
+```
 
-Do not change scheduling behavior in this pass.
+Use existing candidate-to-wire-packet behavior rather than duplicating packet construction logic.
 
-Do not change hot-lane chunking behavior in this pass.
+If encoding fails, return a conservative oversized value or expose the error through the smallest existing path. Do not silently return zero.
 
-Do not replace `RealtimeLaneCandidate.Full`, `RealtimeLaneCandidate.Delta`, or `RealtimeLaneCandidate.Projection` with typed interfaces in this pass.
+## Step 2: Replace fake schedule estimates
 
-## Target Planner Shape
+Find `scheduleRecordForCandidate()` in `planner.go`.
 
-After extraction, `planner.go` should mostly contain:
+Replace broad packet-family estimates such as:
 
-* `AssembleRealtimeLaneCandidates`
-* `assembleRealtimeLaneCandidates`
-* possibly `prepareRealtimeSendPlan`, unless moving it is a simple pure move
+```go
+EstimatedBytes: EstimatePacketBytes(packetFamily, 1, 0)
+```
 
-The private assembly function should append results from lane-specific builders:
+with exact candidate sizing:
 
-* `buildWorldLaneCandidates`
-* `buildOverlayLaneCandidates`
-* `buildSessionLaneCandidates`
-* `buildEventLaneCandidates`
+```go
+EstimatedBytes: EstimateCandidateEncodedBytes(candidate)
+```
 
-## Extraction Order
+Keep existing lane, priority, delivery class, packet family, and metadata behavior unchanged.
 
-### 1. Extract Candidate Types
+Do not split `planner.go` in this task.
 
-Create `candidate_types.go`.
+## Step 3: Move hot-lane hard-limit policy into scheduler
 
-Move from `planner.go`:
+Update `scheduler.go` so `SelectSendPlan()` owns oversize decisions.
 
-* `RealtimeLaneCandidateKind`
-* `RealtimeLaneCandidateKindFull`
-* `RealtimeLaneCandidateKindDelta`
-* `RealtimeLaneCandidateKindEventBatch`
-* `RealtimeLaneCandidate`
-* `RealtimeLanePlan`
-* `RealtimeSendPrepared`
+The scheduler should be able to distinguish:
 
-Do not change names or exported status.
+```text
+included
+deferred_budget
+dropped_oversize
+```
 
-### 2. Extract Candidate Policy
+For hot-lane records, if `EstimatedBytes` exceeds the configured hard encoded packet limit, classify the record as dropped because it is oversized.
 
-Create `candidate_policy.go`.
+The scheduler must not require `active.go` to perform a second size-policy check after scheduling.
 
-Move from `planner.go`:
+Required handling:
 
-* `packetFamilyForCandidate`
-* `deliveryClassForCandidate`
-* `priorityForCandidate`
-* `scheduleRecordForCandidate`
+```text
+asteroids hot lane -> apply hard encoded packet byte limit
+bullets hot lane -> apply hard encoded packet byte limit
+other lanes -> preserve existing required/baseline behavior unless a current policy already says otherwise
+```
 
-Preserve exact logic.
+Do not silently drop required non-hot packets unless existing code already has a defined failure/resync policy for that case.
 
-Do not change delivery classes.
+## Step 4: Remove post-schedule hot packet rejection
 
-Do not change priorities.
+In `active.go`, remove any logic that encodes a scheduled candidate and then rejects it because the encoded byte length exceeds a hot-lane packet limit.
 
-Do not change `EstimatedBytes`.
+Allowed behavior in `active.go`:
 
-Do not change `PayloadRef` behavior.
+```text
+candidate was not scheduled -> do not send
+encode failed -> report encode failure
+send failed -> report send failure
+scheduled and encoded -> send
+```
 
-### 3. Extract Candidate Projection
+Disallowed behavior in `active.go`:
 
-Create `candidate_projection.go`.
+```text
+scheduled packet is too large -> skip it here
+```
 
-Move from `planner.go`:
+That decision belongs in `scheduler.go`.
 
-* `CandidateProjection`
+## Step 5: Make diagnostics truthful
 
-Preserve exact logic.
+Update diagnostics so scheduler results can distinguish:
 
-Leave `CandidateMetadata` in `baseline.go` for this pass unless a later bounded task specifically moves metadata helpers.
+```text
+included
+deferred_budget
+dropped_oversize
+send_failed
+encode_failed
+```
 
-### 4. Extract Candidate Diagnostics
+The important invariant is that logs and diagnostics must not report a packet as included if it was later skipped by `active.go` for budget reasons.
 
-Create `candidate_diagnostics.go`.
+If the current diagnostics structure cannot represent all five states cleanly, add the smallest field or enum needed.
 
-Move from `planner.go`:
+## Step 6: Add focused tests
 
-* `CandidateWriteDiagnostics`
-* `CandidateWriteDiagnosticsFor`
-* `hotPacketCadenceForDiagnostics`
-* `hotPacketCadenceLabel`
-* `hotLaneModesForDiagnostics`
-* `hotLaneCountsForDiagnostics`
+Add or update tests in the realtime protocol package.
 
-Preserve exact diagnostics fields and values.
+Required test coverage:
 
-### 5. Extract Overlay Candidate Builder
+```text
+small hot-lane candidate is included
+oversize hot-lane candidate is dropped by scheduler
+oversize hot-lane candidate is not dropped by active.go after scheduling
+required non-hot candidate is not silently dropped by active.go for size policy
+schedule record EstimatedBytes comes from encoded candidate size, not fake packet-family estimate
+```
 
-Create `lane_candidate_overlay.go`.
+Most important regression test:
 
-Move overlay candidate construction out of `assembleRealtimeLaneCandidates`.
+```text
+Given a hot-lane candidate with EstimatedBytes over the hard limit,
+SelectSendPlan records it as dropped_oversize,
+and active encode/send is not responsible for dropping it.
+```
 
-Add:
+Prefer direct unit tests around scheduler records and active send behavior. Avoid broad integration rewrites.
 
-* `buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate`
+## Step 7: Report verification
 
-This function should own overlay:
+After the edit pass, report:
 
-* lane state lookup
-* baseline readiness check
-* next sequence calculation
-* full packet build
-* quantized full packet build
-* baseline projection lookup
-* full candidate fallback
-* delta candidate creation
-* unchanged projection omission
-* chained projection creation
+```text
+Changed files
+What scheduler decision now owns
+What active.go no longer owns
+Existing project test command the user should run
+Any compile/test blocker encountered
+```
 
-Return zero, one, or more candidates matching current behavior.
+Use the existing server realtime test command from the game-server module root:
 
-### 6. Extract Session Candidate Builder
+```bash
+go test ./internal/protocol/realtime/...
+```
 
-Create `lane_candidate_session.go`.
+Also report the broader existing server package test command:
 
-Move session candidate construction out of `assembleRealtimeLaneCandidates`.
+```bash
+go test ./internal/...
+```
 
-Add:
-
-* `buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate`
-
-This function should own session:
-
-* lane state lookup
-* baseline readiness check
-* next sequence calculation
-* full packet build
-* quantized full packet build
-* baseline projection lookup
-* full candidate fallback
-* delta candidate creation
-* unchanged projection omission
-* chained projection creation
-
-Return zero, one, or more candidates matching current behavior.
-
-### 7. Extract Event Candidate Builder
-
-Create `lane_candidate_event.go`.
-
-Move event candidate construction out of `assembleRealtimeLaneCandidates`.
-
-Add:
-
-* `buildEventLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate`
-
-Current behavior must remain:
-
-* no candidate when `snapshot.PendingEvents` is empty
-* event state sequence comes from `LaneEvent`
-* candidate kind remains `RealtimeLaneCandidateKindEventBatch`
-* packet is built with `BuildEventBatchPacket`
-* pending events are not drained or mutated
-
-### 8. Extract Lifecycle Candidate Helpers
-
-Create `lane_candidate_lifecycle.go`.
-
-Move asteroid and bullet lifecycle candidate construction out of inline world planning.
-
-Add helpers:
-
-* `buildBulletLifecycleCandidate(delta WorldWireDeltaPacket, state RealtimeSessionState) (RealtimeLaneCandidate, bool)`
-* `buildAsteroidLifecycleCandidate(delta WorldWireDeltaPacket, state RealtimeSessionState) (RealtimeLaneCandidate, bool)`
-
-Each helper should own:
-
-* create/delete presence check
-* lifecycle lane state lookup
-* next lifecycle sequence calculation
-* metadata lane replacement
-* metadata sequence replacement
-* lifecycle snapshot ID
-* lifecycle snapshot kind
-* chunk metadata
-* lifecycle packet family
-* candidate construction
-
-Return `false` when no lifecycle creates or deletes exist.
-
-### 9. Extract World Candidate Builder
-
-Create `lane_candidate_world.go`.
-
-Move world candidate construction out of `assembleRealtimeLaneCandidates`.
-
-Add:
-
-* `buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) []RealtimeLaneCandidate`
-
-This function should own world:
-
-* lane state lookup
-* baseline readiness check
-* next sequence calculation
-* full packet build
-* quantized full packet build
-* baseline projection lookup
-* full candidate fallback
-* world delta creation
-* hot-lane split
-* lifecycle candidate extraction
-* clearing lifecycle creates/deletes from world delta after lifecycle candidates are emitted
-* asteroid hot candidate metadata stamping
-* bullet hot candidate metadata stamping
-* world delta change detection
-* world projection chaining
-* asteroid hot candidate creation
-* bullet hot candidate creation
-
-Preserve current `sessionState` mutation:
-
-* if `sessionState != nil`, assign `sessionState.HotLaneCohorts = split.CohortState`
-
-Do not change hot-lane policy.
-
-Do not change hot-lane allowed/present conditions.
-
-### 10. Move Overlay and Session Quantizers
-
-Create `quantize_overlay.go`.
-
-Move:
-
-* `quantizeOverlayFullPacket`
-
-Create `quantize_session.go`.
-
-Move:
-
-* `quantizeSessionFullPacket`
-
-Preserve exact quantization field paths and error handling.
-
-Do not alter `quantize_world.go`.
-
-### 11. Shrink Planner Orchestration
-
-Update `assembleRealtimeLaneCandidates` so it only coordinates:
-
-* initialize candidate slice
-* append world candidates
-* append overlay candidates
-* append session candidates
-* append event candidates
-* return `RealtimeLanePlan`
-
-Preserve candidate order from current behavior:
-
-1. world-related candidates, including lifecycle/hot candidates emitted by world builder
-2. overlay
-3. session
-4. event
-
-Candidate order is part of observable planner behavior through tests and scheduling.
-
-## Test Handling
-
-Do not split tests until production code extraction compiles.
-
-After production extraction is stable, `planner_test.go` may be split into smaller same-package test files.
-
-Recommended split:
-
-* `planner_world_test.go`
-* `planner_overlay_test.go`
-* `planner_session_test.go`
-* `planner_event_test.go`
-* `planner_hot_lane_test.go`
-* `candidate_policy_test.go`
-* `candidate_diagnostics_test.go`
-
-Do not rewrite test intent.
-
-Do not remove coverage.
-
-Move tests only when it reduces file size and preserves the exact assertions.
-
-## Constraints
-
-* Preserve behavior.
-* No subpackages.
-* No unrelated cleanup.
-* No scheduler changes.
-* No compact wire changes.
-* No hot-lane chunking changes.
-* No lifecycle sequencing changes.
-* No candidate typing redesign.
-* No package-wide architecture rewrite.
-* If another file is required, touch only the smallest necessary additional file and report why.
-* If the task balloons, stop.
-
-## Verification
-
-The expected verification command is:
-
-* `go test ./services/game-server/internal/protocol/realtime/...`
-
-If the module path requires running from `services/game-server`, use:
-
-* `cd services/game-server && go test ./internal/protocol/realtime/...`
-
-Report:
-
-* changed files
-* whether behavior was intended to remain unchanged
-* test command result
-* any tests moved or not moved
-* any extraction that was intentionally deferred
+Do not run custom ad hoc verifier scripts for this task.
