@@ -1,7 +1,6 @@
 package devtools
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
@@ -12,7 +11,7 @@ func debugPickupSpawnPosition(request DebugCommand) physics.Vector2 {
 	return space.NormalizePosition(physics.Vector2{X: request.X, Y: request.Y})
 }
 
-func handleDebugSpawnPickup(target *game.Game, playerID string, command DebugCommand) bool {
+func handleDebugSpawnPickup(target Target, playerID string, command DebugCommand) bool {
 	pickupType := pickups.PickupType(command.PickupType)
 	position := debugPickupSpawnPosition(command)
 	pickup, ok, err := target.SpawnPickup(pickupType, position)

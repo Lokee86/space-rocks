@@ -1,11 +1,10 @@
 package devtools
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
-func handleDebugRespawnPlayer(target *game.Game, playerID string, command DebugCommand) bool {
+func handleDebugRespawnPlayer(target Target, playerID string, command DebugCommand) bool {
 	if command.TargetScope == targetScopeAllPlayers {
 		for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
 			handleDebugRespawnPlayerTarget(target, playerID, RespawnPlayerRequest{
@@ -24,7 +23,7 @@ func handleDebugRespawnPlayer(target *game.Game, playerID string, command DebugC
 	})
 }
 
-func handleDebugRespawnPlayerTarget(target *game.Game, playerID string, request RespawnPlayerRequest) bool {
+func handleDebugRespawnPlayerTarget(target Target, playerID string, request RespawnPlayerRequest) bool {
 	logging.Game.Info("debug respawn player received",
 		logging.FieldPlayerID, playerID,
 		"target_player_id", request.TargetPlayerID,

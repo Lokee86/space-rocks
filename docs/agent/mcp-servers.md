@@ -14,9 +14,9 @@ Use this as the first stop when you need to decide which MCP server to connect t
 - Info MCP is the planning/inspection server.
 - Info MCP includes Hermes session tools for agent orchestration.
 - Info MCP must never import repo write tools or EngineForge write tools.
-- Info MCP intentionally registers Hermes session tools.
-- Hermes session tools are not a general terminal bridge.
-- They do not expose arbitrary Hermes args.
+- Info MCP intentionally registers Hermes CLI tools.
+- Hermes CLI tools are not a general terminal bridge.
+- Hermes tools can run Hermes CLI args, but not arbitrary shell commands.
 - Write MCP is the implementation server.
 - ChatGPT and other planning agents should use Info MCP.
 - Codex and implementation work should use Write MCP.
@@ -38,8 +38,9 @@ Use this as the first stop when you need to decide which MCP server to connect t
 
 ## Hermes CLI Tools
 
-Info MCP exposes Hermes session tools for continuous context across prompt sequences:
+Info MCP exposes Hermes CLI tools for continuous context across prompt sequences:
 
+- `hermes_run` - Runs the Hermes CLI with arbitrary args and optional stdin
 - `hermes_ping` - Confirms Hermes CLI is available (runs `hermes --version`)
 - `hermes_help` - Shows Hermes CLI help (runs `hermes --help`)
 - `hermes_session_status` - Shows the current Hermes session status (runs `hermes status`)
@@ -66,7 +67,7 @@ hermes --continue <session_name> -z <prompt>
 **Important notes:**
 - This is session continuation through Hermes, not one-shot workflow guidance.
 - It is not a general terminal bridge.
-- It does not expose arbitrary Hermes args.
+- It does not expose arbitrary shell commands.
 - It cannot execute bash, PowerShell, git, Python, npm, or arbitrary shell commands.
 - Hermes session prompts can mutate files and consume model/API usage.
 

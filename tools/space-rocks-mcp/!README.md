@@ -13,7 +13,7 @@ Use this package for agent access only. It is not a general app server.
 ## Servers
 
 - `server-info-next.js` runs the planning/inspection MCP server on port `8789`.
-- It includes repo read/search, read-only EngineForge diagnostics, optional Chrome/Plasmic tools when enabled, and Hermes session tools.
+- It includes repo read/search, read-only EngineForge diagnostics, optional Chrome/Plasmic tools when enabled, and Hermes CLI tools.
 - It is no longer purely read-only because Hermes session prompts can cause code edits and consume model/API usage.
 - `server-write.js` runs the write-capable MCP server on port `8788`.
 - `server.js` is legacy/compatibility and should not be expanded.
@@ -53,12 +53,13 @@ npm run start:info
 - Repo write tools: `ping`, `write_repo_file`, `replace_in_repo_file`, `list_allowed_commands`, `run_allowed_command`
 - EngineForge read tools: bridge info, bridge status, route probing, command probing, project info, scene tree, node properties, editor logs
 - EngineForge write tools: scene open/save/create, node create/delete/duplicate/reparent/property/transform, script create/edit/detach/delete/attach, resource create, material helpers, editor play/stop/pause, console clear, animation play/stop
-- Hermes tools: `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`. These tools provide session-oriented access to Hermes, preserving continuous context by sending prompts to a named Hermes session.
+- Hermes tools: `hermes_run`, `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`. These tools provide access to the Hermes CLI; the session tools preserve continuous context by sending prompts to a named Hermes session.
 
-## Hermes Session Tools
+## Hermes CLI Tools
 
-The Hermes MCP tools provide bounded session-oriented access:
+The Hermes MCP tools provide bounded CLI access:
 
+- `hermes_run` - Runs the Hermes CLI with arbitrary args and optional stdin
 - `hermes_ping` - Confirms the Hermes CLI is available (runs `hermes --version`)
 - `hermes_help` - Shows Hermes CLI help (runs `hermes --help`)
 - `hermes_session_status` - Shows the current Hermes session status (runs `hermes status`)
@@ -68,7 +69,7 @@ The Hermes MCP tools provide bounded session-oriented access:
 The `hermes_session_send` tool preserves continuous context by sending prompts to the same named Hermes session. The internal command shape is:
 
 ```
-hermes --continue <session_name> -z <prompt>
+hermes chat -Q --continue <session_name> --query <prompt>
 ```
 
 The default session name is `space-rocks-mcp`.
@@ -76,7 +77,7 @@ The default session name is `space-rocks-mcp`.
 **Important**: Info MCP does not expose:
 - General shell
 - Arbitrary command strings
-- Arbitrary Hermes args
+- Arbitrary shell commands through Hermes
 - Repo write tools
 - EngineForge write tools
 

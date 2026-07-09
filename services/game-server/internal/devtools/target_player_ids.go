@@ -1,13 +1,15 @@
 package devtools
 
-import "github.com/Lokee86/space-rocks/server/internal/game"
+type targetPlayerIDSource interface {
+	TargetPlayerIDs() []string
+}
 
-func resolveCommandTargetPlayerIDs(target *game.Game, requestingPlayerID string, command DebugCommand) []string {
+func resolveCommandTargetPlayerIDs(target targetPlayerIDSource, requestingPlayerID string, command DebugCommand) []string {
 	if command.TargetScope == targetScopeAllPlayers {
 		if target == nil {
 			return []string{}
 		}
-		return target.DevtoolsTargetPlayerIDs()
+		return target.TargetPlayerIDs()
 	}
 
 	targetPlayerID := command.TargetPlayerID

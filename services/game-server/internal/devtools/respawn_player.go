@@ -1,7 +1,6 @@
 package devtools
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
@@ -12,7 +11,7 @@ func resolveDebugRespawnTargetPlayerID(request RespawnPlayerRequest) (string, bo
 	return NormalizeDebugSpawnPlayerID(request.TargetPlayerID)
 }
 
-func applyDebugRespawnPlayer(target *game.Game, request RespawnPlayerRequest) (string, physics.Vector2, bool) {
+func applyDebugRespawnPlayer(target Target, request RespawnPlayerRequest) (string, physics.Vector2, bool) {
 	if target == nil {
 		return "", physics.Vector2{}, false
 	}
@@ -22,12 +21,12 @@ func applyDebugRespawnPlayer(target *game.Game, request RespawnPlayerRequest) (s
 		return "", physics.Vector2{}, false
 	}
 
-	spawnPosition, ok := target.DevtoolsSafeRespawnPosition(playerID)
+	spawnPosition, ok := target.SafeRespawnPosition(playerID)
 	if !ok {
 		return "", physics.Vector2{}, false
 	}
 
-	if !target.DevtoolsForceRespawnPlayer(playerID, spawnPosition, DummyPlayerCameraConfig()) {
+	if !target.ForceRespawnPlayer(playerID, spawnPosition, DummyPlayerCameraConfig()) {
 		return "", physics.Vector2{}, false
 	}
 

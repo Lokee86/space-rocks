@@ -1,7 +1,6 @@
 package devtools
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
@@ -11,15 +10,15 @@ func debugBulletSpawnPosition(request SpawnEntityRequest) physics.Vector2 {
 	return space.NormalizePosition(request.Position())
 }
 
-func debugBulletDirection(target *game.Game, request SpawnEntityRequest) physics.Vector2 {
-	return request.DirectionOr(target.DevtoolsRandomUnitVector())
+func debugBulletDirection(target Target, request SpawnEntityRequest) physics.Vector2 {
+	return request.DirectionOr(target.RandomUnitVector())
 }
 
-func applyDebugSpawnBullet(target *game.Game, ownerID string, request SpawnEntityRequest) (*runtime.Bullet, bool) {
+func applyDebugSpawnBullet(target Target, ownerID string, request SpawnEntityRequest) (*runtime.Bullet, bool) {
 	if target == nil || ownerID == "" {
 		return nil, false
 	}
 	position := debugBulletSpawnPosition(request)
 	direction := debugBulletDirection(target, request)
-	return target.DevtoolsSpawnBullet(ownerID, position, direction)
+	return target.SpawnBullet(ownerID, position, direction)
 }

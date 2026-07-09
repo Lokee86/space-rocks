@@ -1,8 +1,11 @@
 package devtools
 
-import "github.com/Lokee86/space-rocks/server/internal/game"
+type counterCommandTarget interface {
+	CounterTarget
+	TargetPlayerIDs() []string
+}
 
-func handleDebugSetScore(target *game.Game, playerID string, command DebugCommand) bool {
+func handleDebugSetScore(target counterCommandTarget, playerID string, command DebugCommand) bool {
 	if target == nil {
 		return false
 	}
@@ -16,7 +19,7 @@ func handleDebugSetScore(target *game.Game, playerID string, command DebugComman
 	return foundAny
 }
 
-func handleDebugAddScore(target *game.Game, playerID string, command DebugCommand) bool {
+func handleDebugAddScore(target counterCommandTarget, playerID string, command DebugCommand) bool {
 	if target == nil {
 		return false
 	}
@@ -30,17 +33,15 @@ func handleDebugAddScore(target *game.Game, playerID string, command DebugComman
 	return foundAny
 }
 
-func setDebugScoreForPlayer(target *game.Game, targetPlayerID string, score int) bool {
-	change := target.DevtoolsSetPlayerScore(targetPlayerID, score)
-	return change.Found
+func setDebugScoreForPlayer(target CounterTarget, targetPlayerID string, score int) bool {
+	return target.SetPlayerScore(targetPlayerID, score)
 }
 
-func addDebugScoreForPlayer(target *game.Game, targetPlayerID string, amount int) bool {
-	change := target.DevtoolsAddPlayerScore(targetPlayerID, amount)
-	return change.Found
+func addDebugScoreForPlayer(target CounterTarget, targetPlayerID string, amount int) bool {
+	return target.AddPlayerScore(targetPlayerID, amount)
 }
 
-func handleDebugSetLives(target *game.Game, playerID string, command DebugCommand) bool {
+func handleDebugSetLives(target counterCommandTarget, playerID string, command DebugCommand) bool {
 	if target == nil {
 		return false
 	}
@@ -54,7 +55,7 @@ func handleDebugSetLives(target *game.Game, playerID string, command DebugComman
 	return foundAny
 }
 
-func handleDebugAddLives(target *game.Game, playerID string, command DebugCommand) bool {
+func handleDebugAddLives(target counterCommandTarget, playerID string, command DebugCommand) bool {
 	if target == nil {
 		return false
 	}
@@ -68,12 +69,10 @@ func handleDebugAddLives(target *game.Game, playerID string, command DebugComman
 	return foundAny
 }
 
-func setDebugLivesForPlayer(target *game.Game, targetPlayerID string, lives int) bool {
-	change := target.DevtoolsSetPlayerLives(targetPlayerID, lives)
-	return change.Found
+func setDebugLivesForPlayer(target CounterTarget, targetPlayerID string, lives int) bool {
+	return target.SetPlayerLives(targetPlayerID, lives)
 }
 
-func addDebugLivesForPlayer(target *game.Game, targetPlayerID string, amount int) bool {
-	change := target.DevtoolsAddPlayerLives(targetPlayerID, amount)
-	return change.Found
+func addDebugLivesForPlayer(target CounterTarget, targetPlayerID string, amount int) bool {
+	return target.AddPlayerLives(targetPlayerID, amount)
 }

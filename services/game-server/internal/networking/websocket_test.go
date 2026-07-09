@@ -88,10 +88,11 @@ func newWebSocketSessionRoomExitTestSetup(t *testing.T) (*webSocketSession, *roo
 	}
 
 	gameInstance := game.New()
-	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
+	control := game.NewControl(gameInstance)
+	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
 		t.Fatal("expected devtools player session to be created")
 	}
-	gameInstance.DevtoolsSetPlayerLives(playerID, 0)
+	control.SetPlayerLives(playerID, 0)
 
 	if err := room.StartSinglePlayerGame(func() *game.Game {
 		return gameInstance

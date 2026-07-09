@@ -4,20 +4,21 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 )
 
 func TestDevtoolsSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
-	game := New()
+	gameInstance := New()
+	control := NewControl(gameInstance)
 	playerID := "player-1"
 	spawnPosition := physics.Vector2{X: 120, Y: 220}
 
-	if !game.DevtoolsEnsurePlayerSession(playerID, spawnPosition) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	if !control.EnsurePlayerSession(playerID, spawnPosition) {
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 
-	session := game.playerSessions[playerID]
+	session := gameInstance.playerSessions[playerID]
 	if session == nil {
 		t.Fatalf("expected session %q to exist", playerID)
 	}
@@ -26,11 +27,11 @@ func TestDevtoolsSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
 		VisibleWorldHeight: 360,
 	}
 
-	if !game.DevtoolsSpawnPlayerShip(playerID, spawnPosition, DummyPlayerCameraConfig()) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+	if !control.SpawnPlayerShip(playerID, spawnPosition, DummyPlayerCameraConfig()) {
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
-	cameraView := game.cameraViews[playerID]
+	cameraView := gameInstance.cameraViews[playerID]
 	if cameraView == nil {
 		t.Fatalf("expected camera view %q to exist", playerID)
 	}
@@ -46,27 +47,28 @@ func TestDevtoolsSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
 }
 
 func TestDevtoolsTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
-	game := New()
+	gameInstance := New()
+	control := NewControl(gameInstance)
 	sessionOnlyID := "player-2"
 	sharedID := "player-3"
 	shipOnlyID := "player-4"
 	spawnPosition := physics.Vector2{X: 120, Y: 220}
 
-	if !game.DevtoolsEnsurePlayerSession(sessionOnlyID, spawnPosition) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to create session-only target")
+	if !control.EnsurePlayerSession(sessionOnlyID, spawnPosition) {
+		t.Fatal("expected EnsurePlayerSession to create session-only target")
 	}
-	if !game.DevtoolsEnsurePlayerSession(sharedID, spawnPosition) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to create shared target session")
+	if !control.EnsurePlayerSession(sharedID, spawnPosition) {
+		t.Fatal("expected EnsurePlayerSession to create shared target session")
 	}
-	if !game.DevtoolsSpawnPlayerShip(sharedID, spawnPosition, DummyPlayerCameraConfig()) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to create shared target ship")
+	if !control.SpawnPlayerShip(sharedID, spawnPosition, DummyPlayerCameraConfig()) {
+		t.Fatal("expected SpawnPlayerShip to create shared target ship")
 	}
 
-	game.entities.Players[shipOnlyID] = &runtime.Ship{ID: shipOnlyID, X: 10, Y: 20}
+	gameInstance.entities.Players[shipOnlyID] = &runtime.Ship{ID: shipOnlyID, X: 10, Y: 20}
 
-	got := game.DevtoolsTargetPlayerIDs()
+	got := control.TargetPlayerIDs()
 	want := []string{sessionOnlyID, sharedID, shipOnlyID}
 	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("DevtoolsTargetPlayerIDs() = %v, want %v", got, want)
+		t.Fatalf("TargetPlayerIDs() = %v, want %v", got, want)
 	}
 }

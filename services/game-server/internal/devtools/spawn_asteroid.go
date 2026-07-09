@@ -3,18 +3,17 @@ package devtools
 import (
 	"math/rand"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/game/asteroids"
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/server/internal/game/space"
 	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
 )
 
-func buildDebugAsteroidSpawnPlan(target *game.Game, request SpawnEntityRequest) spawning.AsteroidSpawnPlan {
+func buildDebugAsteroidSpawnPlan(target Target, request SpawnEntityRequest) spawning.AsteroidSpawnPlan {
 	normalizedPosition := space.NormalizePosition(request.Position())
-	fallbackDirection := target.DevtoolsRandomUnitVector()
+	fallbackDirection := target.RandomUnitVector()
 	direction := request.DirectionOr(fallbackDirection)
-	speed := target.DevtoolsRandomAsteroidSpeed()
+	speed := target.RandomAsteroidSpeed()
 	return spawning.AsteroidSpawnPlan{
 		EntityType: spawning.SpawnEntityTypeAsteroid,
 		Reason:     spawning.SpawnReasonDebugAsteroid,
@@ -25,13 +24,13 @@ func buildDebugAsteroidSpawnPlan(target *game.Game, request SpawnEntityRequest) 
 	}
 }
 
-func applyDebugSpawnAsteroid(target *game.Game, request SpawnEntityRequest) (*runtime.Asteroid, spawning.AsteroidSpawnPlan, bool) {
+func applyDebugSpawnAsteroid(target Target, request SpawnEntityRequest) (*runtime.Asteroid, spawning.AsteroidSpawnPlan, bool) {
 	if target == nil {
 		return nil, spawning.AsteroidSpawnPlan{}, false
 	}
 
 	plan := buildDebugAsteroidSpawnPlan(target, request)
-	asteroid := target.DevtoolsApplyAsteroidSpawnPlan(plan)
+	asteroid := target.ApplyAsteroidSpawnPlan(plan)
 	if asteroid == nil {
 		return nil, spawning.AsteroidSpawnPlan{}, false
 	}

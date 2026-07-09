@@ -1,203 +1,351 @@
-## Skill: Make realtime scheduling byte-accurate and authoritative
+## Space Rocks Devtools Extraction Skill
 
-Use this skill when changing the realtime protocol so scheduling, not encoding, owns packet budget decisions.
+Use this skill when refactoring Space Rocks server devtools ownership out of `internal/game`.
+
+This skill applies to the cleanup item that removes `Devtools*` methods from the Go `Game` struct and moves devtools command/status/spawn/telemetry ownership behind DI in `services/game-server/internal/devtools`.
+
+Do not use this skill for the later devtools network-lane migration. That is a separate task.
 
 ## Goal
 
-Make `scheduler.go` the only place that decides whether a realtime candidate is included, deferred, or dropped for packet-size reasons.
+Move devtools ownership out of `internal/game` without changing gameplay behavior, packet schemas, packet transport, or realtime scheduling.
 
-After this change:
-
-```text
-planner builds candidates
--> candidates receive exact or defensible encoded byte costs
--> scheduler decides include/defer/drop using those byte costs
--> active.go encodes and sends included candidates only
--> active.go only fails on true encode/send errors, not budget policy
-```
-
-## Problem to remove
-
-Do not allow this flow to remain:
+The target end state is:
 
 ```text
-planner builds candidates
--> scheduler estimates candidate cost
--> scheduler includes candidate
--> active.go encodes candidate
--> active.go rejects hot-lane packet after scheduling
+internal/devtools
+  owns command handling, status shaping, target selection, debug spawn semantics,
+  debug counters, clear commands, collision telemetry formatting, and stream-runtime wiring
+
+internal/game
+  owns authoritative state and exposes a small adapter object for devtools
+
+internal/networking
+  decodes and routes existing packets as before, but calls a devtools.Controller
+  instead of calling devtools package functions with *game.Game
 ```
 
-`active.go` must not silently skip already-scheduled hot-lane packets because of encoded size.
+## Hard rules
 
-## Required files
+* Do not change devtools packet transport in this pass.
+* Do not add a WebRTC/UDP devtools lane in this pass.
+* Do not edit the realtime scheduler.
+* Do not change packet schemas.
+* Do not redesign locking.
+* Do not change gameplay behavior.
+* Do not leave public `func (game *Game) Devtools...` methods behind.
+* Production files in `services/game-server/internal/devtools` must not import `github.com/Lokee86/space-rocks/server/internal/game`.
+* Tests may import `internal/game` for integration coverage.
+* Keep files small and focused.
+* Preserve current behavior unless a test proves current behavior cannot be preserved.
 
-Expected files:
+## Required shape
 
-```text
-services/game-server/internal/protocol/realtime/candidate_size.go
-services/game-server/internal/protocol/realtime/planner.go
-services/game-server/internal/protocol/realtime/scheduler.go
-services/game-server/internal/protocol/realtime/active.go
-services/game-server/internal/protocol/realtime/scheduler_test.go
-services/game-server/internal/protocol/realtime/active_test.go
-```
+Create devtools-owned target interfaces in `services/game-server/internal/devtools/target.go`.
 
-Touch only additional files that are strictly required by compile errors or existing test placement.
-
-## Step 1: Add candidate sizing
-
-Create:
-
-```text
-services/game-server/internal/protocol/realtime/candidate_size.go
-```
-
-Add helpers that measure the encoded byte size of a realtime candidate before scheduling.
-
-The initial implementation may encode the candidate wire packet to JSON and measure `len(bytes)`. Correctness is more important than estimator optimization for this pass.
-
-Required responsibilities:
+Prefer small capability interfaces:
 
 ```go
-func EstimateCandidateEncodedBytes(candidate RealtimeLaneCandidate) int
-func EstimateWirePacketEncodedBytes(packet map[string]any) int
-func CandidateExceedsHardPacketLimit(candidate RealtimeLaneCandidate) bool
+type StatusTarget interface { ... }
+type ToggleTarget interface { ... }
+type PlayerTarget interface { ... }
+type SpawnTarget interface { ... }
+type RespawnTarget interface { ... }
+type CounterTarget interface { ... }
+type ClearTarget interface { ... }
+type CollisionTelemetryTarget interface { ... }
+type StreamTarget interface { ... }
 ```
 
-Use existing candidate-to-wire-packet behavior rather than duplicating packet construction logic.
-
-If encoding fails, return a conservative oversized value or expose the error through the smallest existing path. Do not silently return zero.
-
-## Step 2: Replace fake schedule estimates
-
-Find `scheduleRecordForCandidate()` in `planner.go`.
-
-Replace broad packet-family estimates such as:
+Compose them:
 
 ```go
-EstimatedBytes: EstimatePacketBytes(packetFamily, 1, 0)
+type Target interface {
+    StatusTarget
+    ToggleTarget
+    PlayerTarget
+    SpawnTarget
+    RespawnTarget
+    CounterTarget
+    ClearTarget
+    CollisionTelemetryTarget
+    StreamTarget
+}
 ```
 
-with exact candidate sizing:
+Use domain-neutral method names where practical:
 
 ```go
-EstimatedBytes: EstimateCandidateEncodedBytes(candidate)
+WorldFrozen() bool
+ToggleFreezeWorld() bool
+PlayerInvincible(playerID string) (bool, bool)
+SetPlayerInvincible(playerID string, enabled bool) bool
+KillPlayer(sourcePlayerID string, targetPlayerID string) bool
+ClearBullets() int
+ClearAsteroids() int
 ```
 
-Keep existing lane, priority, delivery class, packet family, and metadata behavior unchanged.
+Avoid keeping the smell under a new name:
 
-Do not split `planner.go` in this task.
+```go
+DevtoolsWorldFrozen()
+DevtoolsKillPlayer()
+DevtoolsSpawnPlayerShip()
+```
 
-## Step 3: Move hot-lane hard-limit policy into scheduler
+## Game adapter
 
-Update `scheduler.go` so `SelectSendPlan()` owns oversize decisions.
+Add a game-owned adapter in `services/game-server/internal/game`.
 
-The scheduler should be able to distinguish:
+Suggested files:
 
 ```text
-included
-deferred_budget
-dropped_oversize
+devtools_target.go
+devtools_target_spawn.go
+devtools_target_respawn.go
+devtools_target_toggles.go
+devtools_target_telemetry.go
 ```
 
-For hot-lane records, if `EstimatedBytes` exceeds the configured hard encoded packet limit, classify the record as dropped because it is oversized.
+Suggested shape:
 
-The scheduler must not require `active.go` to perform a second size-policy check after scheduling.
+```go
+type DevtoolsTarget struct {
+    game *Game
+}
 
-Required handling:
+func NewDevtoolsTarget(game *Game) *DevtoolsTarget {
+    return &DevtoolsTarget{game: game}
+}
+```
+
+The adapter may touch private `Game` fields because it lives in `internal/game`.
+
+The adapter should preserve existing lock behavior. Do not use this refactor to redesign locking.
+
+The adapter replaces the current `export_devtools_*` files.
+
+## Devtools controller
+
+Add `services/game-server/internal/devtools/controller.go`.
+
+Suggested shape:
+
+```go
+type Dependencies struct {
+    Target Target
+    Streams *streamruntime.Runtime
+    ObserverRegistry *ObserverRegistry
+}
+
+type Controller struct {
+    target Target
+    streams *streamruntime.Runtime
+    observerRegistry *ObserverRegistry
+}
+
+func NewController(deps Dependencies) *Controller
+func (controller *Controller) HandleCommand(playerID string, command DebugCommand) bool
+func (controller *Controller) StatusFor(playerID string) DebugStatus
+func (controller *Controller) StatusesForAllPlayers() map[string]DebugStatus
+```
+
+Convert package-level command handling from:
+
+```go
+func HandleCommand(target *game.Game, playerID string, command DebugCommand) bool
+```
+
+to:
+
+```go
+func (controller *Controller) HandleCommand(playerID string, command DebugCommand) bool
+```
+
+## Continuous bullet stream
+
+Do not leave continuous stream runtime keyed directly by `*game.Game` inside `internal/devtools`.
+
+Use an opaque observer key instead:
+
+```go
+type StreamTarget interface {
+    ObserverKey() any
+    BulletsCanMove() bool
+    SpawnDebugBullet(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool
+    RegisterSimulationStepObserver(observer func(float64))
+}
+```
+
+The game adapter may return the underlying `*Game` from `ObserverKey()` as `any`.
+
+Devtools must not import `internal/game` to key this registry.
+
+## Migration order
+
+1. Add devtools target interfaces.
+2. Add `game.DevtoolsTarget` adapter.
+3. Add `devtools.Controller`.
+4. Convert `handler.go` to controller methods.
+5. Convert continuous bullet stream observer registration to use an opaque target key.
+6. Convert status handling off `*game.Game`.
+7. Convert target-player resolution off `*game.Game`.
+8. Convert toggles off `*game.Game`.
+9. Convert counters off `*game.Game`.
+10. Convert clear-entity commands off `*game.Game`.
+11. Convert spawn/respawn commands off `*game.Game`.
+12. Convert collision telemetry formatting so devtools owns debug DTOs.
+13. Update networking call sites to construct/use `devtools.Controller`.
+14. Move or rewrite tests.
+15. Delete old `Game.Devtools*` methods and `export_devtools_*` files.
+16. Add guard coverage.
+
+## Files expected to change
+
+Likely remove or replace:
 
 ```text
-asteroids hot lane -> apply hard encoded packet byte limit
-bullets hot lane -> apply hard encoded packet byte limit
-other lanes -> preserve existing required/baseline behavior unless a current policy already says otherwise
+services/game-server/internal/game/export_devtools.go
+services/game-server/internal/game/export_devtools_status.go
+services/game-server/internal/game/export_devtools_toggles.go
+services/game-server/internal/game/export_devtools_spawn.go
+services/game-server/internal/game/export_devtools_respawn.go
+services/game-server/internal/game/export_devtools_player_spawn.go
+services/game-server/internal/game/export_devtools_player_counters.go
+services/game-server/internal/game/export_devtools_clear_entities.go
+services/game-server/internal/game/export_devtools_streams.go
+services/game-server/internal/game/export_devtools_collision_telemetry.go
 ```
 
-Do not silently drop required non-hot packets unless existing code already has a defined failure/resync policy for that case.
-
-## Step 4: Remove post-schedule hot packet rejection
-
-In `active.go`, remove any logic that encodes a scheduled candidate and then rejects it because the encoded byte length exceeds a hot-lane packet limit.
-
-Allowed behavior in `active.go`:
+Likely update:
 
 ```text
-candidate was not scheduled -> do not send
-encode failed -> report encode failure
-send failed -> report send failure
-scheduled and encoded -> send
+services/game-server/internal/devtools/handler.go
+services/game-server/internal/devtools/status.go
+services/game-server/internal/devtools/toggles.go
+services/game-server/internal/devtools/target_player_ids.go
+services/game-server/internal/devtools/spawn_player.go
+services/game-server/internal/devtools/spawn_bullet.go
+services/game-server/internal/devtools/spawn_asteroid.go
+services/game-server/internal/devtools/spawn_pickup.go
+services/game-server/internal/devtools/spawn_entity.go
+services/game-server/internal/devtools/respawn_player.go
+services/game-server/internal/devtools/respawn_handler.go
+services/game-server/internal/devtools/player_counters.go
+services/game-server/internal/devtools/clear_entities.go
+services/game-server/internal/devtools/continuous_bullet_stream.go
+services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/outbound/debug_status_presentation.go
+services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
 ```
 
-Disallowed behavior in `active.go`:
+Likely add:
 
 ```text
-scheduled packet is too large -> skip it here
+services/game-server/internal/devtools/target.go
+services/game-server/internal/devtools/controller.go
+services/game-server/internal/devtools/observer_registry.go
+services/game-server/internal/game/devtools_target.go
+services/game-server/internal/game/devtools_target_spawn.go
+services/game-server/internal/game/devtools_target_respawn.go
+services/game-server/internal/game/devtools_target_toggles.go
+services/game-server/internal/game/devtools_target_telemetry.go
 ```
 
-That decision belongs in `scheduler.go`.
+## DTO ownership
 
-## Step 5: Make diagnostics truthful
+Move debug DTO ownership to `internal/devtools` where possible.
 
-Update diagnostics so scheduler results can distinguish:
+Good devtools-owned names:
 
 ```text
-included
-deferred_budget
-dropped_oversize
-send_failed
-encode_failed
+StatusSnapshot
+CollisionPoint
+CollisionBody
 ```
 
-The important invariant is that logs and diagnostics must not report a packet as included if it was later skipped by `active.go` for budget reasons.
+Avoid making `internal/game` import `internal/devtools` only to construct debug presentation objects.
 
-If the current diagnostics structure cannot represent all five states cleanly, add the smallest field or enum needed.
+The game adapter can return raw authoritative or physics data. Devtools should shape that data into debug packets.
 
-## Step 6: Add focused tests
+## Networking rule
 
-Add or update tests in the realtime protocol package.
+Keep transport unchanged.
 
-Required test coverage:
+Existing WebSocket devtools packets should still be decoded and routed as before.
+
+Only change the execution target:
+
+```go
+controller := devtools.NewController(devtools.Dependencies{
+    Target: game.NewDevtoolsTarget(room.GameInstance()),
+})
+controller.HandleCommand(playerID, command)
+```
+
+Do not add `sr.devtools`.
+Do not move debug status/catalog to WebRTC.
+Do not touch channel negotiation.
+
+## Tests and guard checks
+
+Add or preserve coverage for:
 
 ```text
-small hot-lane candidate is included
-oversize hot-lane candidate is dropped by scheduler
-oversize hot-lane candidate is not dropped by active.go after scheduling
-required non-hot candidate is not silently dropped by active.go for size policy
-schedule record EstimatedBytes comes from encoded candidate size, not fake packet-family estimate
+- no production internal/devtools file imports internal/game
+- no func (game *Game) Devtools... remains
+- devtools commands still execute
+- debug status payload stays compatible
+- debug shape catalog payload stays compatible
+- collision telemetry JSON stays compatible
+- continuous bullet stream still registers one observer per game target
+- target-player commands still resolve the same player IDs
 ```
 
-Most important regression test:
+## Verification command
 
-```text
-Given a hot-lane candidate with EstimatedBytes over the hard limit,
-SelectSendPlan records it as dropped_oversize,
-and active encode/send is not responsible for dropping it.
-```
-
-Prefer direct unit tests around scheduler records and active send behavior. Avoid broad integration rewrites.
-
-## Step 7: Report verification
-
-After the edit pass, report:
-
-```text
-Changed files
-What scheduler decision now owns
-What active.go no longer owns
-Existing project test command the user should run
-Any compile/test blocker encountered
-```
-
-Use the existing server realtime test command from the game-server module root:
+Use this after the refactor:
 
 ```bash
-go test ./internal/protocol/realtime/...
+cd /mnt/d/\!bin/space-rocks
+{
+  cd services/game-server
+  go test ./internal/game/... ./internal/devtools/... ./internal/networking/...
+  echo
+  grep -R "func (game \*Game) Devtools" internal/game || true
+  echo
+  grep -R "\"github.com/Lokee86/space-rocks/server/internal/game\"" internal/devtools --include='*.go' || true
+} 2>&1 | tee /dev/tty | clip.exe
 ```
 
-Also report the broader existing server package test command:
+Expected grep result after completion:
 
-```bash
-go test ./internal/...
+```text
+- no Game.Devtools* methods
+- no production internal/devtools imports of root internal/game
 ```
 
-Do not run custom ad hoc verifier scripts for this task.
+Test files under `internal/devtools` may still import `internal/game` if they are integration-style tests.
+
+## Stop conditions
+
+Stop and report if:
+
+```text
+- the task requires changing devtools packet transport
+- the task requires changing realtime lane scheduling
+- the task requires changing packet schemas
+- preserving behavior requires a locking redesign
+- the change grows into unrelated cleanup
+- production internal/devtools still needs to import internal/game after interface extraction
+```
+
+Report:
+
+```text
+- changed files
+- deleted files
+- remaining Game.Devtools references, if any
+- remaining production devtools imports of internal/game, if any
+- tests run
+```

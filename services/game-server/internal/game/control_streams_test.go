@@ -7,22 +7,24 @@ import (
 )
 
 func TestDevtoolsBulletsCanMoveOnNewGameReturnsTrue(t *testing.T) {
-	game := New()
+	gameInstance := New()
+	control := NewControl(gameInstance)
 
-	if got := game.DevtoolsBulletsCanMove(); !got {
+	if got := control.BulletsCanMove(); !got {
 		t.Fatalf("expected bullets to be movable on a new game, got %v", got)
 	}
 }
 
 func TestDevtoolsSpawnBulletWithValidOwnerPlayerID(t *testing.T) {
-	game := New()
-	ownerID := game.AddPlayer()
+	gameInstance := New()
+	control := NewControl(gameInstance)
+	ownerID := gameInstance.AddPlayer()
 	origin := physics.Vector2{X: 120, Y: 220}
 	direction := physics.Vector2{X: 0, Y: -1}
 
-	bullet, ok := game.DevtoolsSpawnBullet(ownerID, origin, direction)
+	bullet, ok := control.SpawnBullet(ownerID, origin, direction)
 	if !ok {
-		t.Fatal("expected DevtoolsSpawnBullet to succeed")
+		t.Fatal("expected SpawnBullet to succeed")
 	}
 	if bullet == nil {
 		t.Fatal("expected spawned bullet to be non-nil")

@@ -8,9 +8,10 @@ import (
 
 func TestHandleDebugSetScoreSetsExactScore(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetScore,
 		Score: 42,
 	})
@@ -23,9 +24,10 @@ func TestHandleDebugSetScoreSetsExactScore(t *testing.T) {
 
 func TestHandleDebugSetScoreClampsNegativeToZero(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetScore,
 		Score: -10,
 	})
@@ -38,14 +40,15 @@ func TestHandleDebugSetScoreClampsNegativeToZero(t *testing.T) {
 
 func TestHandleDebugAddScoreIncreasesScore(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	HandleCommand(target, playerID, DebugCommand{
+	HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetScore,
 		Score: 10,
 	})
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:   PacketTypeDebugAddScore,
 		Amount: 5,
 	})
@@ -58,14 +61,15 @@ func TestHandleDebugAddScoreIncreasesScore(t *testing.T) {
 
 func TestHandleDebugAddScoreCanReduceScore(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	HandleCommand(target, playerID, DebugCommand{
+	HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetScore,
 		Score: 10,
 	})
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:   PacketTypeDebugAddScore,
 		Amount: -3,
 	})
@@ -78,14 +82,15 @@ func TestHandleDebugAddScoreCanReduceScore(t *testing.T) {
 
 func TestHandleDebugAddScoreClampsBelowZero(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	HandleCommand(target, playerID, DebugCommand{
+	HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetScore,
 		Score: 2,
 	})
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:   PacketTypeDebugAddScore,
 		Amount: -5,
 	})
@@ -98,10 +103,11 @@ func TestHandleDebugAddScoreClampsBelowZero(t *testing.T) {
 
 func TestHandleDebugSetScoreTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeDebugSetScore,
 		TargetScope: targetScopeAllPlayers,
 		Score:       44,
@@ -116,16 +122,17 @@ func TestHandleDebugSetScoreTargetsAllPlayers(t *testing.T) {
 
 func TestHandleDebugAddScoreTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	HandleCommand(target, callerID, DebugCommand{
+	HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeDebugSetScore,
 		TargetScope: targetScopeAllPlayers,
 		Score:       10,
 	})
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeDebugAddScore,
 		TargetScope: targetScopeAllPlayers,
 		Amount:      6,
@@ -140,9 +147,10 @@ func TestHandleDebugAddScoreTargetsAllPlayers(t *testing.T) {
 
 func TestHandleDebugSetLivesSetsExactLives(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetLives,
 		Lives: 5,
 	})
@@ -155,9 +163,10 @@ func TestHandleDebugSetLivesSetsExactLives(t *testing.T) {
 
 func TestHandleDebugSetLivesClampsNegativeToZero(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetLives,
 		Lives: -10,
 	})
@@ -170,14 +179,15 @@ func TestHandleDebugSetLivesClampsNegativeToZero(t *testing.T) {
 
 func TestHandleDebugAddLivesIncreasesLives(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	HandleCommand(target, playerID, DebugCommand{
+	HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetLives,
 		Lives: 3,
 	})
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:   PacketTypeDebugAddLives,
 		Amount: 2,
 	})
@@ -190,14 +200,15 @@ func TestHandleDebugAddLivesIncreasesLives(t *testing.T) {
 
 func TestHandleDebugAddLivesCanReduceLives(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	HandleCommand(target, playerID, DebugCommand{
+	HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetLives,
 		Lives: 3,
 	})
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:   PacketTypeDebugAddLives,
 		Amount: -1,
 	})
@@ -210,14 +221,15 @@ func TestHandleDebugAddLivesCanReduceLives(t *testing.T) {
 
 func TestHandleDebugAddLivesClampsBelowZero(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	HandleCommand(target, playerID, DebugCommand{
+	HandleCommand(control, playerID, DebugCommand{
 		Type:  PacketTypeDebugSetLives,
 		Lives: 1,
 	})
 
-	ok := HandleCommand(target, playerID, DebugCommand{
+	ok := HandleCommand(control, playerID, DebugCommand{
 		Type:   PacketTypeDebugAddLives,
 		Amount: -5,
 	})
@@ -230,10 +242,11 @@ func TestHandleDebugAddLivesClampsBelowZero(t *testing.T) {
 
 func TestHandleDebugSetLivesTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeDebugSetLives,
 		TargetScope: targetScopeAllPlayers,
 		Lives:       7,
@@ -248,16 +261,17 @@ func TestHandleDebugSetLivesTargetsAllPlayers(t *testing.T) {
 
 func TestHandleDebugAddLivesTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	HandleCommand(target, callerID, DebugCommand{
+	HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeDebugSetLives,
 		TargetScope: targetScopeAllPlayers,
 		Lives:       3,
 	})
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeDebugAddLives,
 		TargetScope: targetScopeAllPlayers,
 		Amount:      2,
@@ -272,10 +286,11 @@ func TestHandleDebugAddLivesTargetsAllPlayers(t *testing.T) {
 
 func TestHandleDebugSetScoreTargetsAnotherPlayer(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	targetPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:           PacketTypeDebugSetScore,
 		TargetPlayerID: targetPlayerID,
 		Score:          44,
@@ -289,16 +304,17 @@ func TestHandleDebugSetScoreTargetsAnotherPlayer(t *testing.T) {
 
 func TestHandleDebugAddScoreTargetsAnotherPlayer(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	targetPlayerID := target.AddPlayer()
 
-	HandleCommand(target, callerID, DebugCommand{
+	HandleCommand(control, callerID, DebugCommand{
 		Type:           PacketTypeDebugSetScore,
 		TargetPlayerID: targetPlayerID,
 		Score:          10,
 	})
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:           PacketTypeDebugAddScore,
 		TargetPlayerID: targetPlayerID,
 		Amount:         6,
@@ -312,10 +328,11 @@ func TestHandleDebugAddScoreTargetsAnotherPlayer(t *testing.T) {
 
 func TestHandleDebugSetLivesTargetsAnotherPlayer(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	targetPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:           PacketTypeDebugSetLives,
 		TargetPlayerID: targetPlayerID,
 		Lives:          7,
@@ -329,16 +346,17 @@ func TestHandleDebugSetLivesTargetsAnotherPlayer(t *testing.T) {
 
 func TestHandleDebugAddLivesTargetsAnotherPlayer(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	targetPlayerID := target.AddPlayer()
 
-	HandleCommand(target, callerID, DebugCommand{
+	HandleCommand(control, callerID, DebugCommand{
 		Type:           PacketTypeDebugSetLives,
 		TargetPlayerID: targetPlayerID,
 		Lives:          3,
 	})
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:           PacketTypeDebugAddLives,
 		TargetPlayerID: targetPlayerID,
 		Amount:         2,
@@ -352,10 +370,11 @@ func TestHandleDebugAddLivesTargetsAnotherPlayer(t *testing.T) {
 
 func TestHandleDebugSetScoreFallsBackToCallingPlayerWhenTargetEmpty(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:  PacketTypeDebugSetScore,
 		Score: 31,
 	})

@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
+	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
@@ -83,6 +84,8 @@ func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg
 		)
 		return true
 	}
-	devtools.HandleCommand(room.GameInstance(), session.CurrentGamePlayerID(), command)
+	control := game.NewControl(room.GameInstance())
+	controller := devtools.NewController(devtools.Dependencies{Target: control})
+	controller.HandleCommand(session.CurrentGamePlayerID(), command)
 	return true
 }

@@ -1,11 +1,10 @@
 package devtools
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 )
 
-func handleDebugSpawnEntity(target *game.Game, playerID string, command DebugCommand) bool {
+func handleDebugSpawnEntity(target Target, playerID string, command DebugCommand) bool {
 	request := SpawnEntityRequest{
 		EntityType:     command.EntityType,
 		X:              command.X,

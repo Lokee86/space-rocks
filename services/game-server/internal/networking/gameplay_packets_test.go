@@ -18,10 +18,11 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 
 	gameInstance := game.New()
 	spawnPosition := physics.Vector2{X: 320, Y: 240}
-	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, spawnPosition) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	control := game.NewControl(gameInstance)
+	if !control.EnsurePlayerSession(playerID, spawnPosition) {
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
-	if !gameInstance.DevtoolsSpawnPlayerShip(playerID, spawnPosition, runtime.ClientConfig{
+	if !control.SpawnPlayerShip(playerID, spawnPosition, runtime.ClientConfig{
 		VisibleWorldWidth:  1920,
 		VisibleWorldHeight: 1080,
 	}) {

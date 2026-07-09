@@ -9,7 +9,8 @@ import (
 )
 
 func TestDevtoolsForceRespawnPlayerCreatesCameraViewWithDummyConfig(t *testing.T) {
-	game := New()
+	gameInstance := New()
+	control := NewControl(gameInstance)
 	playerID := "player-1"
 	spawnPosition := physics.Vector2{X: 320, Y: 420}
 
@@ -28,15 +29,15 @@ func TestDevtoolsForceRespawnPlayerCreatesCameraViewWithDummyConfig(t *testing.T
 		VisibleWorldWidth:  640,
 		VisibleWorldHeight: 360,
 	}
-	game.playerSessions[playerID] = session
+	gameInstance.playerSessions[playerID] = session
 
-	delete(game.cameraViews, playerID)
+	delete(gameInstance.cameraViews, playerID)
 
-	if !game.DevtoolsForceRespawnPlayer(playerID, spawnPosition, DummyPlayerCameraConfig()) {
-		t.Fatal("expected DevtoolsForceRespawnPlayer to succeed")
+	if !control.ForceRespawnPlayer(playerID, spawnPosition, DummyPlayerCameraConfig()) {
+		t.Fatal("expected ForceRespawnPlayer to succeed")
 	}
 
-	cameraView := game.cameraViews[playerID]
+	cameraView := gameInstance.cameraViews[playerID]
 	if cameraView == nil {
 		t.Fatalf("expected camera view %q to exist", playerID)
 	}

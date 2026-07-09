@@ -13,7 +13,7 @@ function truncateOutput(output) {
   return output;
 }
 
-async function runHermes({ args = [], cwd, timeout_ms = DEFAULT_TIMEOUT_MS }) {
+async function runHermes({ args = [], stdin, cwd, timeout_ms = DEFAULT_TIMEOUT_MS }) {
   const resolvedCwd = cwd ? repoPath(cwd) : REPO_ROOT;
 
   return new Promise((resolve) => {
@@ -42,6 +42,10 @@ async function runHermes({ args = [], cwd, timeout_ms = DEFAULT_TIMEOUT_MS }) {
     child.stdin.on("error", () => {
       // Ignore stdin errors (e.g., if process exits early)
     });
+
+    if (stdin !== undefined) {
+      child.stdin.write(stdin);
+    }
 
     child.stdin.end();
 
@@ -86,6 +90,24 @@ const timeoutSchema = z.number().int().min(1000).max(600000).default(600000);
 const promptSchema = z.string().min(1, "prompt must be non-empty");
 
 export function registerHermesTools(server) {
+  server.registerTool(
+    "hermes_run",
+    {
+      title: "Hermes Run",
+      description: "Runs the Hermes CLI with arbitrary args and optional stdin.",
+      inputSchema: {
+        args: z.array(z.string()).default([]),
+        stdin: z.string().optional(),
+        cwd: cwdSchema,
+        timeout_ms: timeoutSchema,
+      },
+    },
+    async ({ args, stdin, cwd, timeout_ms }) => {
+      const result = await runHermes({ args, stdin, cwd, timeout_ms });
+      return textResponse(JSON.stringify(result, null, 2));
+    }
+  );
+
   server.registerTool(
     "hermes_ping",
     {
@@ -152,7 +174,7 @@ export function registerHermesTools(server) {
     },
     async ({ prompt, session_name, cwd, timeout_ms }) => {
       const result = await runHermes({
-        args: ["--continue", session_name, "-z", prompt],
+        args: ["chat", "-Q", "--continue", session_name, "--query", prompt],
         cwd,
         timeout_ms,
       });

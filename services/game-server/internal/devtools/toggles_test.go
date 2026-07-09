@@ -8,10 +8,11 @@ import (
 
 func TestHandleToggleDebugInvincibleTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugInvincible,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -25,11 +26,12 @@ func TestHandleToggleDebugInvincibleTargetsAllPlayers(t *testing.T) {
 
 func TestHandleToggleDebugInvincibleTargetsAllPlayersKeepsEveryoneEnabledUntilAllAreEnabled(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
-	target.DevtoolsSetPlayerInvincible(callerID, true)
+	control.SetPlayerInvincible(callerID, true)
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugInvincible,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -43,12 +45,13 @@ func TestHandleToggleDebugInvincibleTargetsAllPlayersKeepsEveryoneEnabledUntilAl
 
 func TestHandleToggleDebugInvincibleTargetsAllPlayersDisablesEveryoneWhenAllAreEnabled(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
-	target.DevtoolsSetPlayerInvincible(callerID, true)
-	target.DevtoolsSetPlayerInvincible(otherPlayerID, true)
+	control.SetPlayerInvincible(callerID, true)
+	control.SetPlayerInvincible(otherPlayerID, true)
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugInvincible,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -62,10 +65,11 @@ func TestHandleToggleDebugInvincibleTargetsAllPlayersDisablesEveryoneWhenAllAreE
 
 func TestHandleToggleDebugInfiniteLivesTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugInfiniteLives,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -79,11 +83,12 @@ func TestHandleToggleDebugInfiniteLivesTargetsAllPlayers(t *testing.T) {
 
 func TestHandleToggleDebugInfiniteLivesTargetsAllPlayersKeepsEveryoneEnabledUntilAllAreEnabled(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
-	target.DevtoolsSetInfiniteLives(callerID, true)
+	control.SetInfiniteLives(callerID, true)
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugInfiniteLives,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -97,12 +102,13 @@ func TestHandleToggleDebugInfiniteLivesTargetsAllPlayersKeepsEveryoneEnabledUnti
 
 func TestHandleToggleDebugInfiniteLivesTargetsAllPlayersDisablesEveryoneWhenAllAreEnabled(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
-	target.DevtoolsSetInfiniteLives(callerID, true)
-	target.DevtoolsSetInfiniteLives(otherPlayerID, true)
+	control.SetInfiniteLives(callerID, true)
+	control.SetInfiniteLives(otherPlayerID, true)
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugInfiniteLives,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -116,10 +122,11 @@ func TestHandleToggleDebugInfiniteLivesTargetsAllPlayersDisablesEveryoneWhenAllA
 
 func TestHandleToggleDebugFreezePlayerTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugFreezePlayer,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -133,11 +140,12 @@ func TestHandleToggleDebugFreezePlayerTargetsAllPlayers(t *testing.T) {
 
 func TestHandleToggleDebugFreezePlayerTargetsAllPlayersKeepsEveryoneEnabledUntilAllAreEnabled(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
-	target.DevtoolsSetPlayerFrozen(callerID, true)
+	control.SetPlayerFrozen(callerID, true)
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugFreezePlayer,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -151,12 +159,13 @@ func TestHandleToggleDebugFreezePlayerTargetsAllPlayersKeepsEveryoneEnabledUntil
 
 func TestHandleToggleDebugFreezePlayerTargetsAllPlayersDisablesEveryoneWhenAllAreEnabled(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
-	target.DevtoolsSetPlayerFrozen(callerID, true)
-	target.DevtoolsSetPlayerFrozen(otherPlayerID, true)
+	control.SetPlayerFrozen(callerID, true)
+	control.SetPlayerFrozen(otherPlayerID, true)
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeToggleDebugFreezePlayer,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -170,10 +179,11 @@ func TestHandleToggleDebugFreezePlayerTargetsAllPlayersDisablesEveryoneWhenAllAr
 
 func TestHandleDebugKillPlayerTargetsAllPlayers(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	callerID := target.AddPlayer()
 	otherPlayerID := target.AddPlayer()
 
-	ok := HandleCommand(target, callerID, DebugCommand{
+	ok := HandleCommand(control, callerID, DebugCommand{
 		Type:        PacketTypeDebugKillPlayer,
 		TargetScope: targetScopeAllPlayers,
 	})
@@ -188,7 +198,8 @@ func TestHandleDebugKillPlayerTargetsAllPlayers(t *testing.T) {
 func assertPlayerInvincible(t *testing.T, target *game.Game, playerID string, expected bool) {
 	t.Helper()
 
-	actual, found := target.DevtoolsPlayerInvincible(playerID)
+	control := game.NewControl(target)
+	actual, found := control.PlayerInvincible(playerID)
 	if !found {
 		t.Fatalf("expected player %q to be found", playerID)
 	}
@@ -200,7 +211,8 @@ func assertPlayerInvincible(t *testing.T, target *game.Game, playerID string, ex
 func assertPlayerInfiniteLives(t *testing.T, target *game.Game, playerID string, expected bool) {
 	t.Helper()
 
-	actual, found := target.DevtoolsInfiniteLives(playerID)
+	control := game.NewControl(target)
+	actual, found := control.InfiniteLives(playerID)
 	if !found {
 		t.Fatalf("expected player %q to be found", playerID)
 	}
@@ -212,7 +224,8 @@ func assertPlayerInfiniteLives(t *testing.T, target *game.Game, playerID string,
 func assertPlayerFrozen(t *testing.T, target *game.Game, playerID string, expected bool) {
 	t.Helper()
 
-	actual, found := target.DevtoolsPlayerFrozen(playerID)
+	control := game.NewControl(target)
+	actual, found := control.PlayerFrozen(playerID)
 	if !found {
 		t.Fatalf("expected player %q to be found", playerID)
 	}

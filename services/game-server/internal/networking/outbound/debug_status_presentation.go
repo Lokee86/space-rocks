@@ -2,6 +2,7 @@ package outbound
 
 import (
 	"github.com/Lokee86/space-rocks/server/internal/devtools"
+	"github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/logging"
 	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/server/internal/rooms"
@@ -16,10 +17,12 @@ func CanSendDebugStatus(room *rooms.Room) bool {
 
 func BuildDebugStatusResponse(room *rooms.Room, playerID string, roomID string, remoteAddr string) ([]byte, bool) {
 	gameInstance := room.GameInstance()
+	control := game.NewControl(gameInstance)
+	controller := devtools.NewController(devtools.Dependencies{Target: control})
 	responsePacket := devtools.DebugStatusPacket{
 		Type:          devtools.PacketTypeDebugStatus,
-		DebugStatus:   devtools.StatusFor(gameInstance, playerID),
-		DebugStatuses: devtools.StatusesForAllPlayers(gameInstance),
+		DebugStatus:   controller.StatusFor(playerID),
+		DebugStatuses: controller.StatusesForAllPlayers(),
 	}
 
 	response, err := packetcodec.Encode(responsePacket)

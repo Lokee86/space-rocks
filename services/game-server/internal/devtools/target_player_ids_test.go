@@ -9,10 +9,11 @@ import (
 
 func TestResolveCommandTargetPlayerIDsReturnsAllPlayersForAllPlayersScope(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	firstPlayerID := target.AddPlayer()
 	secondPlayerID := target.AddPlayer()
 
-	got := resolveCommandTargetPlayerIDs(target, firstPlayerID, DebugCommand{
+	got := resolveCommandTargetPlayerIDs(control, firstPlayerID, DebugCommand{
 		TargetScope: targetScopeAllPlayers,
 	})
 	want := []string{firstPlayerID, secondPlayerID}
@@ -23,10 +24,11 @@ func TestResolveCommandTargetPlayerIDsReturnsAllPlayersForAllPlayersScope(t *tes
 
 func TestResolveCommandTargetPlayerIDsUsesExplicitTargetPlayerIDForSinglePlayerScope(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	requestingPlayerID := target.AddPlayer()
 	targetPlayerID := target.AddPlayer()
 
-	got := resolveCommandTargetPlayerIDs(target, requestingPlayerID, DebugCommand{
+	got := resolveCommandTargetPlayerIDs(control, requestingPlayerID, DebugCommand{
 		TargetScope:    targetScopeSinglePlayer,
 		TargetPlayerID: targetPlayerID,
 	})
@@ -38,9 +40,10 @@ func TestResolveCommandTargetPlayerIDsUsesExplicitTargetPlayerIDForSinglePlayerS
 
 func TestResolveCommandTargetPlayerIDsFallsBackToRequestingPlayerForEmptyScope(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	requestingPlayerID := target.AddPlayer()
 
-	got := resolveCommandTargetPlayerIDs(target, requestingPlayerID, DebugCommand{})
+	got := resolveCommandTargetPlayerIDs(control, requestingPlayerID, DebugCommand{})
 	want := []string{requestingPlayerID}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("resolveCommandTargetPlayerIDs() = %v, want %v", got, want)
@@ -49,10 +52,11 @@ func TestResolveCommandTargetPlayerIDsFallsBackToRequestingPlayerForEmptyScope(t
 
 func TestResolveCommandTargetPlayerIDsTreatsUnknownScopeAsSinglePlayer(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	requestingPlayerID := target.AddPlayer()
 	targetPlayerID := target.AddPlayer()
 
-	got := resolveCommandTargetPlayerIDs(target, requestingPlayerID, DebugCommand{
+	got := resolveCommandTargetPlayerIDs(control, requestingPlayerID, DebugCommand{
 		TargetScope:    "mystery_scope",
 		TargetPlayerID: targetPlayerID,
 	})

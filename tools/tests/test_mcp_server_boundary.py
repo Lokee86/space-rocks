@@ -26,14 +26,15 @@ def test_readonly_tools_remain_readonly() -> None:
     assert "runAllowedCommand" not in text
 
 
-def test_hermes_tools_is_session_oriented_not_arbitrary_runner() -> None:
-    """Hermes MCP access is session-oriented, not arbitrary command execution.
+def test_hermes_tools_allow_hermes_cli_args_but_not_general_shells() -> None:
+    """Hermes MCP access may pass Hermes CLI args, but not arbitrary shell commands.
 
-    The Hermes module provides bounded session tools:
+    The Hermes module provides a bounded Hermes CLI surface:
+    - hermes_run for arbitrary Hermes CLI args and optional stdin
     - hermes_ping, hermes_help for diagnostics
     - hermes_session_send, hermes_session_status, hermes_sessions_list for session management
 
-    No generic hermes_run or arbitrary CLI runner exists.
+    The boundary still forbids shell execution wrappers and repo write imports.
     """
     text = read_text("tools/space-rocks-mcp/shared/hermes_tools.js")
 
@@ -61,19 +62,21 @@ def test_hermes_tools_is_session_oriented_not_arbitrary_runner() -> None:
     assert "server.addTool" not in text
     assert "server.registerTool" in text
 
-    # hermes_run is NOT present (removed, no generic runner)
-    assert "hermes_run" not in text
+    # hermes_run is present as a Hermes CLI runner, not a general shell
+    assert "hermes_run" in text
 
-    # Session-oriented tools are present
+    # Session-oriented tools remain present
     assert "hermes_session_send" in text
     assert "hermes_session_status" in text
     assert "hermes_sessions_list" in text
 
-    # Session send uses --continue and -z for bounded session interaction
+    # Session send uses chat + bounded session interaction flags
+    assert "chat" in text
+    assert "-Q" in text
     assert "--continue" in text
+    assert "--query" in text
     assert "sessions" in text
     assert "status" in text
-    assert '"-z"' in text
 
 
 def test_write_server_imports_write_helpers() -> None:

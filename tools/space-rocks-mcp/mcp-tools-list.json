@@ -1,9 +1,38 @@
-﻿{
+{
   "jsonrpc": "2.0",
   "id": 1,
   "method": "tools/list",
   "params": {
     "tools": [
+      {
+        "name": "hermes_run",
+        "description": "Runs the Hermes CLI with arbitrary args and optional stdin.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            },
+            "stdin": {
+              "type": "string"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "timeout_ms": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 600000,
+              "default": 600000
+            }
+          },
+          "required": []
+        }
+      },
       {
         "name": "hermes_ping",
         "description": "Confirms the Hermes CLI is available.",

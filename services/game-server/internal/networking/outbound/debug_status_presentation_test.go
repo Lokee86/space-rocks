@@ -16,8 +16,9 @@ func TestBuildDebugStatusResponseIncludesDebugStatusPayload(t *testing.T) {
 	)
 
 	gameInstance := game.New()
-	if !gameInstance.DevtoolsEnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+	control := game.NewControl(gameInstance)
+	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 
 	room := rooms.NewRoom(roomID, rooms.RoomStateInGame, gameInstance)

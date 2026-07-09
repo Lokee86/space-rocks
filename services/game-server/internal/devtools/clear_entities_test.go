@@ -12,14 +12,15 @@ import (
 
 func TestHandleDebugClearBulletsRemovesAllBullets(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
 	bulletA := runtime.NewBullet("debug-bullet-a", playerID, physics.Vector2{X: 10, Y: 20}, 0, physics.Vector2{}, 5)
 	bulletB := runtime.NewBullet("debug-bullet-b", playerID, physics.Vector2{X: 30, Y: 40}, 0, physics.Vector2{}, 5)
-	target.DevtoolsAddBullet(bulletA)
-	target.DevtoolsAddBullet(bulletB)
+	control.AddBullet(bulletA)
+	control.AddBullet(bulletB)
 
-	ok := HandleCommand(target, playerID, DebugCommand{Type: PacketTypeDebugClearBullets})
+	ok := HandleCommand(control, playerID, DebugCommand{Type: PacketTypeDebugClearBullets})
 	if !ok {
 		t.Fatalf("expected HandleCommand to return true")
 	}
@@ -37,13 +38,14 @@ func TestHandleDebugClearBulletsClearsContinuousBulletStreams(t *testing.T) {
 	})
 
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
 	if !streamruntime.DefaultRuntime.BeginContinuousBulletStream(playerID, physics.Vector2{X: 10, Y: 20}, physics.Vector2{X: 0, Y: -1}) {
 		t.Fatalf("expected to begin continuous bullet stream")
 	}
 
-	ok := HandleCommand(target, playerID, DebugCommand{Type: PacketTypeDebugClearBullets})
+	ok := HandleCommand(control, playerID, DebugCommand{Type: PacketTypeDebugClearBullets})
 	if !ok {
 		t.Fatalf("expected HandleCommand to return true")
 	}
@@ -55,9 +57,10 @@ func TestHandleDebugClearBulletsClearsContinuousBulletStreams(t *testing.T) {
 
 func TestHandleDebugClearBulletsIsSafeWhenEmpty(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	ok := HandleCommand(target, playerID, DebugCommand{Type: PacketTypeDebugClearBullets})
+	ok := HandleCommand(control, playerID, DebugCommand{Type: PacketTypeDebugClearBullets})
 	if !ok {
 		t.Fatalf("expected HandleCommand to return true")
 	}
@@ -70,10 +73,11 @@ func TestHandleDebugClearBulletsIsSafeWhenEmpty(t *testing.T) {
 
 func TestHandleDebugClearAsteroidsRemovesAllAsteroids(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 	target.SetPlayerScore(playerID, 25)
 
-	target.DevtoolsApplyAsteroidSpawnPlan(spawning.AsteroidSpawnPlan{
+	control.ApplyAsteroidSpawnPlan(spawning.AsteroidSpawnPlan{
 		EntityType: spawning.SpawnEntityTypeAsteroid,
 		Reason:     spawning.SpawnReasonDebugAsteroid,
 		Position:   physics.Vector2{X: 100, Y: 100},
@@ -81,7 +85,7 @@ func TestHandleDebugClearAsteroidsRemovesAllAsteroids(t *testing.T) {
 		Size:       3,
 		Variant:    0,
 	})
-	target.DevtoolsApplyAsteroidSpawnPlan(spawning.AsteroidSpawnPlan{
+	control.ApplyAsteroidSpawnPlan(spawning.AsteroidSpawnPlan{
 		EntityType: spawning.SpawnEntityTypeAsteroid,
 		Reason:     spawning.SpawnReasonDebugAsteroid,
 		Position:   physics.Vector2{X: 200, Y: 200},
@@ -90,7 +94,7 @@ func TestHandleDebugClearAsteroidsRemovesAllAsteroids(t *testing.T) {
 		Variant:    1,
 	})
 
-	ok := HandleCommand(target, playerID, DebugCommand{Type: PacketTypeDebugClearAsteroids})
+	ok := HandleCommand(control, playerID, DebugCommand{Type: PacketTypeDebugClearAsteroids})
 	if !ok {
 		t.Fatalf("expected HandleCommand to return true")
 	}
@@ -110,9 +114,10 @@ func TestHandleDebugClearAsteroidsRemovesAllAsteroids(t *testing.T) {
 
 func TestHandleDebugClearAsteroidsIsSafeWhenEmpty(t *testing.T) {
 	target := game.New()
+	control := game.NewControl(target)
 	playerID := target.AddPlayer()
 
-	ok := HandleCommand(target, playerID, DebugCommand{Type: PacketTypeDebugClearAsteroids})
+	ok := HandleCommand(control, playerID, DebugCommand{Type: PacketTypeDebugClearAsteroids})
 	if !ok {
 		t.Fatalf("expected HandleCommand to return true")
 	}
