@@ -92,11 +92,14 @@ func TestEncodeLanePacketAllowsHotPacketOverTargetButUnderHardCap(t *testing.T) 
 	}
 }
 
-func TestEncodeLanePacketBlocksHotPacketOverHardCapAndMTU(t *testing.T) {
-	count := mustFindBlockedHotBulletCount(t)
+func TestEncodeLanePacketDoesNotHardBlockHotPacketOverHardCap(t *testing.T) {
+	count := mustFindHotBulletCountForSizeClass(t, EncodedPacketSizeOverHard)
 	encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
-	if recordedBytes != 0 || len(encoded) != 0 {
-		t.Fatal("expected hot bullet packet over hard cap to be blocked")
+	if recordedBytes == 0 || len(encoded) == 0 {
+		t.Fatal("expected hot bullet packet over hard cap to still encode")
+	}
+	if got := ClassifyHotPacketEncodedSize(len(encoded)); got != EncodedPacketSizeOverHard {
+		t.Fatalf("encoded size class = %q, want over hard cap", got)
 	}
 }
 
@@ -115,15 +118,18 @@ func mustFindSendableHotBulletCountForSizeClass(t *testing.T, want EncodedPacket
 	return 0
 }
 
-func mustFindBlockedHotBulletCount(t *testing.T) int {
+func mustFindHotBulletCountForSizeClass(t *testing.T, want EncodedPacketSizeClass) int {
 	t.Helper()
 	for count := 1; count <= 1000; count++ {
 		encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
-		if recordedBytes == 0 && len(encoded) == 0 {
+		if recordedBytes == 0 || len(encoded) == 0 {
+			continue
+		}
+		if ClassifyHotPacketEncodedSize(len(encoded)) == want {
 			return count
 		}
 	}
-	t.Fatal("no blocked hot bullet count found")
+	t.Fatalf("no sendable hot bullet count found for size class %q", want)
 	return 0
 }
 

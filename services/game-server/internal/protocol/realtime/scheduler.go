@@ -34,15 +34,6 @@ func SelectSendPlan(records []ScheduleRecord) SendPlan {
 	return plan
 }
 
-func hotPacketSendAllowed(encodedBytes int) bool {
-	switch ClassifyHotPacketEncodedSize(encodedBytes) {
-	case EncodedPacketSizeNormal, EncodedPacketSizeOverTarget:
-		return true
-	default:
-		return false
-	}
-}
-
 func isRealHotLaneChunkRecord(record ScheduleRecord) bool {
 	if record.ChunkCount <= 1 {
 		return false

@@ -82,7 +82,7 @@ Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicate
 - Metrics must eventually prove included, deferred, and superseded counts by record or field group.
 - Metrics must compare estimated bytes with encoded bytes.
 - Metrics must distinguish target, warning, danger, and hard-cap outcomes.
-- Current hot-lane chunking keeps individual asteroid/bullet movement packets under the hard cap. Future metrics still need to prove included/deferred/superseded behavior and contributor counts at record or field-group granularity.
+- Current hot-lane chunking keeps individual asteroid/bullet movement packets under the hard cap. That hard-size guard belongs to the hot-lane chunker. Scheduler and active encoding should not reject already-chunked hot movement packets for size; encoded-byte evidence should surface diagnostics or chunker invariant failures. Future metrics still need to prove included/deferred/superseded behavior and contributor counts at record or field-group granularity.
 
 ### Ownership Rules
 
@@ -176,7 +176,7 @@ These display requirements are deferred until they are useful during active real
 
 ### Phase P1 Decision Gate
 
-Phase P1 uses server-side packet evidence to decide how aggressively remaining realtime protocol evolution should continue. The lane-native realtime protocol, compact aliases, sparse deltas, tuple packing, WebRTC lane split, focused hot-lane chunking, and hot-packet encoded-size guards are current implementation facts. Remaining decisions are about deeper packet-budget policy, record/entity-level prioritization, interest filtering, stronger resync behavior, future binary representation, and future transport/versioning work.
+Phase P1 uses server-side packet evidence to decide how aggressively remaining realtime protocol evolution should continue. The lane-native realtime protocol, compact aliases, sparse deltas, tuple packing, WebRTC lane split, focused hot-lane chunking, and chunker-owned hot-lane hard-size guarding are current implementation facts. Remaining decisions are about deeper packet-budget policy, record/entity-level prioritization, interest filtering, stronger resync behavior, future binary representation, and future transport/versioning work.
 
 Outcome 1 - Continue remaining realtime protocol evolution aggressively
 
@@ -206,7 +206,7 @@ Remaining validation and protocol evolution families:
 
 - Record/entity-level prioritization, if current whole-candidate selection cannot keep important objects visible under pressure.
 - Interest filtering, if clients should not receive every entity or event in the room.
-- Deeper packet-budget policy, if current candidate-level send-plan selection and hot-lane hard caps are not enough.
+- Deeper packet-budget policy, if current candidate-level send-plan selection and chunker-owned hot-lane hard-size guarding are not enough.
 - Stronger resync behavior, if baseline mismatch, packet loss, or reconnect behavior needs more explicit recovery.
 - Binary, bit-packed, protobuf, or custom binary representation, if JSON compact aliases and tuple packing are still not enough.
 - Future transport/versioning work, if the current mixed WebRTC policy needs compatibility or negotiation support.

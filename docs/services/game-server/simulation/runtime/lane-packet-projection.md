@@ -22,6 +22,7 @@ authoritative game state
 -> regular asteroid movement updates move to dedicated hot-lane delta packets on sr.asteroids, and bullet movement updates move to dedicated hot-lane delta packets on sr.bullets
 -> asteroid/bullet creates/deletes split to reliable lifecycle lanes on sr.asteroids.lifecycle and sr.bullets.lifecycle
 -> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
+-> the chunker is the only hard-size guard for asteroid/bullet hot movement packets; scheduler and active encoding consume already-shaped candidates
 -> sparse readable wire-map serialization
 -> compact alias mapping
 -> packetcodec JSON encoding
@@ -41,7 +42,7 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, compact alias preparation, and encoded-byte accounting inputs. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for asteroid and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, compact alias preparation, and encoded-byte accounting inputs. Hot-lane hard-size guarding for asteroid and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for asteroid and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
@@ -199,7 +200,7 @@ Relevant active files include:
 
 * `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, compact alias preparation, encoded-byte accounting inputs, and shadow/parity helpers.
 * `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
-* `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `asteroid_delta` and `bullet_delta` movement update lists.
+* `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `asteroid_delta` and `bullet_delta` movement update lists; this is the only hard-size guard for hot movement packets.
 * `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - conservative compact-JSON byte estimation used by hot-lane chunk construction.
 * `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
@@ -217,7 +218,7 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/quantize_overlay.go` and `services/game-server/internal/protocol/realtime/quantize_session.go` - overlay and session full-packet wire quantization.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
 * `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
-* `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, compact/packetcodec boundary, hot-packet encoded-size validation, and encoded-byte accounting.
+* `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, compact/packetcodec boundary, and encoded-byte accounting. It does not reject already-scheduled hot packets for size.
 * `services/game-server/internal/protocol/realtime/quantize/` - numeric wire quantization policies.
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.

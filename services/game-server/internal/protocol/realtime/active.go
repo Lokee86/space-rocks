@@ -243,11 +243,6 @@ func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
 	if recordedBytes <= 0 {
 		return nil, 0
 	}
-	if candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
-		if !hotPacketSendAllowed(recordedBytes) {
-			return nil, 0
-		}
-	}
 	return encoded, recordedBytes
 }
 

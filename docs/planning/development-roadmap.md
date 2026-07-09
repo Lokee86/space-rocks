@@ -58,7 +58,7 @@ Recommended order:
 2. Realtime protocol architecture.
 ```
 
-Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
+Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -233,7 +233,7 @@ additional quantization policy refinements
 bit-packing rules
 protobuf
 binary/bitpacking work targets the new lane protocol, not old state
-Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. Binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior beyond current candidate-level selection, and record/entity-level prioritization remain future work.
+Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. Binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior beyond current candidate-level selection, and record/entity-level prioritization remain future work.
 ```
 
 ### Implementation Sequence
@@ -268,7 +268,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and hot-packet encoded-size guards are implemented. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
 
 ### Scope
 
