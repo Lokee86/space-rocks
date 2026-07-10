@@ -9,6 +9,8 @@ Client gameplay runtime documentation lives here.
 - Client gameplay runtime composition.
 - Lane-native gameplay application.
 - Gameplay-session lifecycle and reset.
+- Realtime-to-presentation bridge ownership.
+- Frame-coalesced presentation fanout.
 - Per-frame runtime processing.
 
 ## Does Not Belong
@@ -24,6 +26,7 @@ Client gameplay runtime documentation lives here.
 
 - [gameplay-session-lifecycle.md](gameplay-session-lifecycle.md) - Client gameplay packet acceptance, reset, replay, and session-exit behavior.
 - [gameplay-state-application.md](gameplay-state-application.md) - Lane packet application, readiness, and presentation fanout.
+- [presentation-bridge.md](presentation-bridge.md) - Presentation bridge ownership, pending/coalescing, readiness-gated flush, and presentation orchestration.
 - [runtime-composition.md](runtime-composition.md) - Client gameplay runtime wiring and composition ownership.
 - [runtime-processing.md](runtime-processing.md) - Client per-frame gameplay processing order and runtime tick behavior.
 <!-- doc-ledger:files:end -->
@@ -41,4 +44,4 @@ Client gameplay runtime documentation lives here.
 
 ## Notes
 
-Runtime docs describe client presentation and orchestration after packets are classified, while protocol and data docs own packet schema authority. The runtime hands off into `RealtimePresentationState` for presentation consumers, and this index stays at that seam without duplicating downstream presentation ownership.
+Runtime docs describe the client gameplay runtime seam after packets are classified, while protocol and data docs own packet schema authority. Gameplay composition owns the realtime-to-presentation handoff, frame-coalesced fanout, and downstream presentation orchestration, and this index stays at that seam without duplicating ownership.

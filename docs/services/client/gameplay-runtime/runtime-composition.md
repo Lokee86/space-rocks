@@ -26,15 +26,13 @@ GameplaySessionController
 
 `GameplaySessionController` owns the session-facing lifecycle and calls into gameplay composition.
 
-`GameplayComposition` is the top-level gameplay composition object. It wires the gameplay shell, HUD flow, gameplay menu flow, match-end flow, match-results flow, spectate flow, devtools session flow, and gameplay presentation flow.
+`GameplayComposition` is the top-level client runtime composition seam. It wires the gameplay shell, HUD flow, gameplay menu flow, match-end flow, match-results flow, spectate flow, devtools session flow, and gameplay presentation flow, and it provides the concrete runtime presentation targets and focused entry points used by `PresentationBridge`.
+
+`GameplaySessionController` constructs `PresentationAdapter`, constructs `PresentationBridge`, constructs `GameplayComposition`, and configures `PresentationBridge` with `RealtimePacketPipeline`, `PresentationAdapter`, `GameplayComposition`, and logger.
+
+`PresentationBridge` is the dedicated orchestration seam. `GameplaySessionController` activates, resets, and flushes it with the gameplay session lifecycle.
 
 `GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, creates the flow composer, stores required lane baseline sync, and preserves a stable runtime pipeline identity for the composed gameplay frame path.
-
-`GameplayRuntimeContext` is the runtime holder for world sync, respawn, input and presentation collaborators that need to be shared across gameplay flows.
-
-`GameplayFlowComposer` creates and connects the focused flows used by lane-native presentation follow-up work and per-frame processing.
-
-The important boundary is that composition wires flows together, but does not collapse their behavior into one controller.
 
 ## Code root
 
@@ -49,12 +47,10 @@ The important boundary is that composition wires flows together, but does not co
 * Create and configure `GameplayFlowComposer`.
 * Wire world sync, HUD runtime flow, input context, devtools context, spectate context, event lifecycle flow, targeting context, alive-restore flow, server hitbox overlay flow, and gameplay process flow.
 * Provide a stable pipeline identity for the composed gameplay runtime.
-* Provide deferred fanout surfaces for alive-presentation restoration and presentation updates after `RealtimePresentationState` has been refreshed.
-* Route player pause packets through pause-state reader and tracker helpers.
-* Provide debug status and debug shape catalog packet entry points.
+* Provide the concrete runtime presentation targets and focused entry points used by `PresentationBridge`.
 * Preserve current per-frame gameplay presentation ordering.
 * Reset composed runtime state during gameplay-session teardown.
-* Keep runtime composition separate from entity sync, packet schema ownership, gameplay input behavior, HUD widget behavior, and match-end policy.
+* Keep runtime composition separate from entity sync, packet schema ownership, gameplay input behavior, HUD widget behavior, match-end policy, and gameplay packet relay.
 
 ## Does not own
 
@@ -79,7 +75,7 @@ The important boundary is that composition wires flows together, but does not co
 
 ### Gameplay composition
 
-`GameplayComposition` is the top-level client runtime composition seam. It owns the wiring between the session controller and the gameplay shell.
+`GameplayComposition` is the top-level client runtime composition seam. It owns the wiring between the session controller and the gameplay shell, and it provides the concrete runtime presentation targets and focused entry points used by `PresentationBridge`.
 
 It receives scene-level dependencies, creates the major gameplay flows, forwards lane-native presentation delegation into the shell, and exposes reset/process entry points back to the session layer.
 
@@ -134,7 +130,7 @@ The session controller owns the outer lifecycle. Composition owns gameplay runti
 
 ### Lane-native presentation entries
 
-Runtime composition participates after `RealtimePacketPipeline` has refreshed `RealtimePresentationState` and before deferred fanout from `GameplaySessionController` begins.
+Runtime composition participates after `RealtimePacketPipeline` emits `gameplay_packet_applied`. `GameplaySessionController` then drives `PresentationBridge` activation, frame flushing, and reset, but it does not relay gameplay packets.
 
 Current lane-native delegation surfaces are:
 
@@ -150,7 +146,21 @@ GameplayComposition.apply_devtools_gameplay_state(state)
 -> GameplayFlowComposer.apply_devtools_gameplay_state(state)
 ```
 
-`RealtimePresentationState` is the applied-state wrapper passed into composition for deferred fanout.
+`PresentationBridge` orchestrates calls to the composition-owned presentation targets.
+
+GameplayComposition and its focused flows own those targets.
+
+Composition-owned presentation targets currently include:
+
+```text
+HUD flow
+gameplay menu flow
+match-end flow
+match-results flow
+spectate flow
+devtools session flow
+gameplay presentation flow
+```
 
 The alive-restore path exists for lane-state-driven respawn/alive presentation only.
 
@@ -201,6 +211,8 @@ The flow composer delegates to runtime processing owners. Runtime processing det
 ### Reset entry
 
 Gameplay-session teardown routes reset through composition and the shell so that composed runtime state is cleared consistently.
+
+`GameplaySessionController` controls `PresentationBridge` activation, reset, and flush scheduling. It does not own gameplay packet fanout or relay.
 
 Composition reset should clear runtime presentation state without inventing server-side outcomes or durable player-data changes.
 
@@ -262,6 +274,7 @@ It does not own durable profile, account, or player progression data.
 * `client/scripts/gameplay/events/gameplay_event_controller.gd`
 * `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd`
 * `client/scripts/gameplay/presentation/gameplay_presentation_flow.gd`
+* `client/scripts/protocol/realtime/presentation_bridge.gd`
 * `client/scripts/gameplay/spectate/spectate_session_flow.gd`
 * `client/scripts/gameplay/match_end/match_end_flow.gd`
 * `client/scripts/gameplay/debug/server_hitbox_overlay_flow.gd`
@@ -297,6 +310,7 @@ Use the normal Godot headless GUT client test run for verification.
 * [Gameplay State Application](gameplay-state-application.md)
 * [Gameplay Session Lifecycle](gameplay-session-lifecycle.md)
 * [Runtime Processing](runtime-processing.md)
+* [Presentation Bridge](presentation-bridge.md)
 * [World Sync](../world-sync/!INDEX.md)
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md) - Client HUD and gameplay UI documentation.
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.

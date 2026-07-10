@@ -137,11 +137,12 @@ WebRTCTransport receives DataChannel text
 -> ServerPacketDispatcher
 -> RealtimePacketPipeline.apply_packet(packet)
 -> RealtimeRouter.route_lane_packet(packet)
--> RealtimePresentationState
--> ClientConnectionService.gameplay_packet_received(packet)
+-> RealtimePresentationState refreshed
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-RealtimeTransportSession owns transport lifecycle and signal handoff only. RealtimePacketPipeline owns gameplay packet application, stable pipeline identity, and the active router state that refreshes `RealtimePresentationState` after lane application. ClientConnectionService delegates gameplay packet handling to the session controller for deferred fanout and runtime ordering.
+RealtimeTransportSession owns transport lifecycle and signal handoff only. `ServerPacketDispatcher` delegates classified gameplay packets to `RealtimePacketPipeline`. `RealtimePacketPipeline` applies the packet, refreshes `RealtimePresentationState`, and emits `gameplay_packet_applied(packet)`. `PresentationBridge` consumes that semantic notification. `GameplaySessionController` owns bridge lifecycle and frame flushing, but does not relay gameplay packets.
 
 Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering. Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
 Asteroid and bullet lifecycle packets flow through the same WebRTC active gameplay path as the other gameplay lanes.

@@ -8,7 +8,7 @@ This folder owns client networking-flow documentation.
 
 ## Ownership
 
-This folder owns client WebSocket connection, packet routing, packet dispatch, and outbound packet sending docs.
+This folder owns client WebSocket connection, packet classification, packet dispatch, and outbound packet sending docs.
 
 ## Does Not Belong
 
@@ -35,8 +35,10 @@ This folder owns client WebSocket connection, packet routing, packet dispatch, a
 
 - [Client](../!INDEX.md)
 - [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+- [Presentation Bridge](../gameplay-runtime/presentation-bridge.md)
+- [Gameplay state application](../gameplay-runtime/gameplay-state-application.md)
 - [Input And Targeting](../input-and-targeting.md)
 
 ## Notes
 
-This index stays at the client networking-flow boundary and does not expand into packet schema ownership or server transport behavior. Presentation consumers downstream of this folder read `RealtimePresentationState` after routing, so this index only tracks the network seam that feeds that state.
+This index stays at the client networking-flow boundary and does not expand into packet schema ownership or server transport behavior. ServerPacketDispatcher and RealtimePacketPipeline own gameplay packet routing; SessionNetworkController owns room, session, and control routing; gameplay composition owns the presentation handoff after network state has been applied. This index only tracks the network seam that feeds those downstream owners.

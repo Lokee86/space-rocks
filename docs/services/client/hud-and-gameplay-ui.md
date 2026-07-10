@@ -39,7 +39,7 @@ client/scenes/ui/hud.tscn
 
 It contains the visible gameplay HUD controls for score, lives, local death or respawn text, game-over presentation, the embedded live gameplay menu path, and the loadout display container.
 
-Runtime HUD behavior is coordinated by `GameplayHudFlow`. PacketCodec decodes inbound packet envelopes, ServerPacketRouter and ServerPacketDispatcher classify them, and ClientConnectionService delegates realtime gameplay packets to RealtimePacketPipeline. The pipeline applies gameplay packets and updates lane state before presentation fanout. ClientConnectionService delegates gameplay packet presentation orchestration to `GameplaySessionController`, which reads `RealtimePacketPipeline.is_gameplay_ready()` and fans out `RealtimePacketPipeline.get_presentation_state()` through the presentation adapters. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams. `event_batch` reaches HUD-side presentation only after compact wire aliases are expanded into readable long-key event dictionaries, and HUD code should not depend on compact aliases.
+Runtime HUD behavior is coordinated by `GameplayHudFlow`. PacketCodec decodes inbound packet envelopes, ServerPacketRouter and ServerPacketDispatcher classify them, and ClientConnectionService delegates realtime gameplay packets to RealtimePacketPipeline. The pipeline applies gameplay packets and updates lane state before presentation orchestration. ClientConnectionService delegates gameplay presentation orchestration to `GameplaySessionController`, which owns packet acceptance state, bridge activation/reset/flush scheduling, input routing, HUD input-policy checks, frame sequencing, pause/debug control routing, and session exits. `PresentationBridge` is the orchestration seam for applied notification handling, pending and coalescing, readiness-gated flush, latest-state retrieval, lane presentation orchestration, devtools-state adaptation, and alive-presentation restoration orchestration. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams. `event_batch` reaches HUD-side presentation only after compact wire aliases are expanded into readable long-key event dictionaries, and HUD code should not depend on compact aliases.
 
 ## Code root
 
@@ -289,7 +289,7 @@ GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_
 -> GameplayAliveRestoreFlow.apply_lane_state(...)
 ```
 
-`GameplaySessionController` verifies pipeline readiness before this fanout. It only gates and orchestrates the handoff and does not own respawn recovery policy.
+`GameplaySessionController` verifies pipeline readiness before this fanout and orchestrates the handoff without owning respawn recovery policy.
 
 ### Room match-over input
 
@@ -384,7 +384,7 @@ The loadout display reads generated packet field names and generated client cons
 ### Gameplay composition and session routing
 
 * `client/scripts/shell/app_entry.gd` - Wires scene nodes into the gameplay session controller.
-* `client/scripts/session/gameplay_session_controller.gd` - Owns gameplay packet acceptance, gameplay input routing, HUD input-policy check, presentation-state fanout, and gameplay composition lifecycle.
+* `client/scripts/session/gameplay_session_controller.gd` - Owns gameplay packet acceptance state, gameplay input routing, HUD input-policy checks, `PresentationBridge` lifecycle, gameplay composition lifecycle, frame sequencing, pause/debug control routing, and session exits.
 * `client/scripts/gameplay/gameplay_composition.gd` - Constructs HUD, menu, match-end, match-results, shell, spectate, devtools, and presentation flows.
 * `client/scripts/shell/gameplay_shell_flow.gd` - Delegates gameplay state, processing, input, reset, and menu lifecycle through focused gameplay flows.
 * `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Wires runtime ticking, input, devtools, spectate, events, alive restoration, and match-end dependencies.
@@ -394,7 +394,7 @@ The loadout display reads generated packet field names and generated client cons
 
 * `client/scripts/shell/gameplay_hud_flow.gd` - Main HUD presentation flow for score, lives, local death, respawn countdown, game-over presentation, loadout display, reset, and match-over visibility lock.
 * `client/scripts/shell/gameplay_runtime_tick_flow.gd` - Ticks HUD countdown presentation each frame.
-* `client/scripts/protocol/realtime/presentation_bridge.gd` - Owns pending and coalesced gameplay presentation state, flush order, and fanout to presentation adapters.
+* `client/scripts/protocol/realtime/presentation_bridge.gd` - Owns semantic applied-packet subscription, pending and coalesced realtime presentation, readiness-gated frame flushing, lane fanout orchestration, devtools-state adaptation, and alive-presentation restoration orchestration.
 * `client/scripts/protocol/realtime/overlay_presentation_adapter.gd` - Feeds overlay lane state into `GameplayHudFlow.apply_overlay_lane_state(...)`.
 * `client/scripts/protocol/realtime/session_presentation_adapter.gd` - Feeds session lane state into `GameplayHudFlow.apply_session_lane_state(...)`.
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires `event_batch` output into event and death presentation flows.
@@ -480,8 +480,9 @@ These tests verify gameplay session lifecycle, gameplay menu behavior, and match
 * [World Sync](world-sync/!INDEX.md)
 * [Input and targeting](input-and-targeting.md) - Client input and targeting documentation.
 * [Match End Flow](match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
-* [Gameplay Menu Flow](gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
-* [Pickup Presentation](world-sync/pickup-presentation.md) - Client pickup presentation documentation.
+* [Gameplay Menu Flow](./gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
+* [Presentation Bridge](./gameplay-runtime/presentation-bridge.md) - Realtime gameplay presentation bridge ownership and lifecycle documentation.
+* [Pickup Presentation](./world-sync/pickup-presentation.md) - Client pickup presentation documentation.
 * [Realtime websocket protocol](../../protocol/realtime-websocket-protocol.md) - Realtime WebSocket protocol documentation.
 * [Gameplay packets](../../protocol/gameplay-packets.md) - Gameplay packet documentation.
 * [Client devtools](../../devtools/client/!INDEX.md)

@@ -14,9 +14,19 @@ Runtime processing is the client-side frame loop for active gameplay presentatio
 
 It is not the authoritative simulation tick. The server owns gameplay simulation, collision outcomes, scoring, lives, death, respawn validity, and match lifecycle. The client runtime processing path only advances local presentation and client-owned runtime helpers between applied lane packets.
 
-The frame path starts in `GameplaySessionController._process(delta)`. The controller reads the current gameplay readiness from `RealtimePacketPipeline.is_gameplay_ready()`, then propagates that required-lane-baselines-synced fact into `GameplayComposition`.
+The frame path starts in `GameplaySessionController._process(delta)`. The controller reads the current gameplay readiness from `RealtimePacketPipeline.is_gameplay_ready()`, propagates that readiness into `GameplayComposition`, flushes `PresentationBridge`, and then runs normal gameplay composition processing.
 
-Before `GameplayComposition.process(delta, required_lane_baselines_synced)` runs, the controller also performs deferred dirty presentation fanout for the frame so presentation state is ready for composition work in the same frame.
+The current per-frame order is:
+
+```text
+1. GameplaySessionController._process(delta)
+2. Read readiness from `RealtimePacketPipeline.is_gameplay_ready()`
+3. `GameplayComposition.set_required_lane_baselines_synced(readiness)`
+4. `PresentationBridge.flush_pending()`
+5. `GameplayComposition.process(delta, readiness)`
+```
+
+Gameplay composition consumes the latest applied lane state before normal gameplay processing so presentation work is coalesced for the frame and applied once. When multiple presentation updates are queued before the frame tick, the composed runtime keeps the latest state and applies that consolidated result rather than replaying each intermediate update.
 
 `GameplayComposition.process` currently ticks three client-side lanes:
 
@@ -107,7 +117,10 @@ Gameplay frame processing enters through Godot `_process` on the gameplay sessio
 
 ```text
 GameplaySessionController._process(delta)
--> GameplayComposition.process(delta, required_lane_baselines_synced)
+-> Read readiness from `RealtimePacketPipeline.is_gameplay_ready()`
+-> `GameplayComposition.set_required_lane_baselines_synced(readiness)`
+-> `PresentationBridge.flush_pending()`
+-> `GameplayComposition.process(delta, readiness)`
 ```
 
 The readiness flag is read from `RealtimePacketPipeline.is_gameplay_ready()` and then passed through `GameplaySessionController`.
@@ -248,6 +261,7 @@ Use the normal client GUT test run for verification after runtime-processing cha
 * [Gameplay state application](gameplay-state-application.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)
+* [Presentation bridge](presentation-bridge.md)
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md) - Client HUD and gameplay UI documentation.
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.
 
@@ -257,6 +271,6 @@ Use the normal client GUT test run for verification after runtime-processing cha
 
 `GameplayComposition.process` also ticks `DevToolsSessionFlow` and `GameplayPresentationFlow` outside the inner `GameplayProcessFlow` order. This document includes those calls because they are part of the current per-frame gameplay runtime path.
 
-Current runtime ordering is stable: session readiness is sampled first from `RealtimePacketPipeline.is_gameplay_ready()`, deferred dirty presentation fanout happens before composition, composition receives the readiness flag, gameplay application completes separately, and then frame-specific runtime helpers continue.
+Current runtime ordering is stable: session readiness is sampled first from `RealtimePacketPipeline.is_gameplay_ready()`, bridge pending work is flushed before composition, composition receives the readiness flag, gameplay application completes separately, and then frame-specific runtime helpers continue.
 
 Server hitbox overlay processing is debug presentation. Runtime processing ticks it, but it does not make hitbox overlay behavior normal gameplay rendering authority.

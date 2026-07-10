@@ -6,7 +6,7 @@ Parent index: [Gameplay Runtime](./!INDEX.md)
 
 This document describes the current client gameplay-session lifecycle implementation.
 
-It covers how the Godot client begins accepting gameplay packets, routes gameplay-session packet families, resets gameplay presentation state, and handles gameplay exits such as replay, return to lobby, return to pregame, and quit to main menu.
+It covers how the Godot client begins accepting gameplay packets, bridges gameplay presentation fanout, resets gameplay state, and handles gameplay exits such as replay, return to lobby, return to pregame, and quit to main menu.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The client gameplay-session lifecycle is owned by `GameplaySessionController` an
 
 `SessionNetworkController` receives classified packet signals from `ClientConnectionService`. Room packets update the room session first. When the current room state becomes `InGame`, `SessionNetworkController` tells `GameplaySessionController` to begin accepting gameplay packets.
 
-`GameplaySessionController` is the lifecycle bridge between the network/session layer and gameplay runtime composition. It owns the `accepts_gameplay_packets` gate, forwards gameplay lane packets and player pause state into runtime only while that gate is open, coordinates lane-native presentation handoff through `RealtimePacketPipeline.is_gameplay_ready()` and `RealtimePacketPipeline.get_presentation_state()`, forwards debug packets to gameplay composition, and runs gameplay composition processing each frame.
+`GameplaySessionController` is the lifecycle bridge between the network/session layer and gameplay runtime composition. It owns the `accepts_gameplay_packets` gate, forwards player pause state into runtime only while that gate is open, activates, resets, and schedules flushes for the presentation bridge, sequences frame processing, forwards control and debug packets into gameplay composition, routes input through HUD and devtools policy, and runs gameplay composition processing each frame.
 
 Gameplay exits are routed back through `GameplayComposition` signals. `GameplaySessionController` translates those signals into connection actions, reset behavior, session-context clearing, boot-flow clearing, main-menu visibility updates, and higher-level replay or pregame-return signals.
 
@@ -29,7 +29,7 @@ This lifecycle is client presentation/session orchestration only. The server rem
 * Configure gameplay composition from scene, network, session, HUD, world, and UI references.
 * Gate gameplay lane packets and player pause packets behind `accepts_gameplay_packets`.
 * Begin accepting gameplay packets after room state enters `InGame`.
-* Forward gameplay lane packets into gameplay runtime fanout only when both the gate and pipeline readiness allow it.
+* Activate and flush gameplay presentation bridging only when both the gate and pipeline readiness allow it.
 * Forward player pause packets into gameplay composition.
 * Forward devtools debug status packets into gameplay composition.
 * Forward debug shape catalog packets into gameplay composition.
@@ -39,7 +39,7 @@ This lifecycle is client presentation/session orchestration only. The server rem
 * Classify room states that should stop spectating.
 * Route devtools input before normal gameplay input.
 * Apply HUD/gameplay UI mouse gating before gameplay input handling.
-* Reset gameplay packet acceptance and gameplay composition.
+* Reset gameplay packet acceptance, presentation bridge state, and gameplay composition.
 * Hide the main menu when gameplay starts.
 * Handle quit-to-main-menu by beginning graceful network close, resetting gameplay, clearing session context, clearing boot flow, and showing the main menu.
 * Handle return-to-lobby by sending a return-to-lobby request and resetting local gameplay state.
@@ -61,7 +61,7 @@ This lifecycle is client presentation/session orchestration only. The server rem
 * Lane packet normalization details.
 * World entity rendering or interpolation.
 * Menu, HUD, input, match-end, or devtools internals beyond lifecycle routing.
-* Respawn, dead-HUD recovery, or alive-presentation restoration policy.
+* Respawn policy.
 
 ## Domain roles
 
@@ -81,9 +81,9 @@ It does not decide whether the server match is over, whether a room may return t
 
 ### Gameplay reset owner
 
-`GameplaySessionController.reset()` clears the local gameplay-session gate and resets gameplay composition state. It does not depend on a `GameplayStateFlow` readiness holder.
+`GameplaySessionController.reset()` clears the local gameplay-session gate, resets the presentation bridge, and resets gameplay composition state. It does not depend on a `GameplayStateFlow` readiness holder.
 
-`GameplayComposition.reset()` then clears devtools session state, shell/runtime state, presentation state, match-end state, match-results presentation, and spectate state.
+`GameplayComposition.reset()` then clears devtools session state, shell/runtime state, match-end state, match-results presentation, and spectate state.
 
 Reset also clears any deferred presentation fanout for the current gameplay session. After reset, gameplay packets remain ignored until `begin_accepting_gameplay_packets()` is called again and the realtime pipeline reports gameplay readiness.
 
@@ -125,36 +125,30 @@ ClientConnectionService.room_state_changed
 
 Both paths also refresh match-end state after room state is applied.
 
-### Gameplay lane packets
-
-Gameplay lane packets are fanned out only when the gameplay packet gate is open and gameplay readiness has been reached.
+### Gameplay presentation bridge
 
 ```text
-ClientConnectionService.gameplay_packet_received
--> SessionNetworkController._on_gameplay_packet_received
--> GameplaySessionController.handle_gameplay_packet
--> check accepts_gameplay_packets
--> check RealtimePacketPipeline.is_gameplay_ready()
--> read applied state from RealtimePacketPipeline.get_presentation_state()
--> mark presentation dirty for deferred fanout
--> GameplaySessionController._process
--> PresentationAdapter.fanout_lane_states(...)
--> DevtoolsLaneStateAdapter.build_state(...)
--> GameplayComposition.apply_devtools_gameplay_state(...)
--> GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
+ClientConnectionService
+-> ServerPacketDispatcher
+-> RealtimePacketPipeline.apply_packet(packet)
+-> RealtimeRouter applies the packet
+-> RealtimePresentationState is refreshed
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
+-> PresentationBridge marks presentation pending
 ```
 
 If `accepts_gameplay_packets` is false, the packet is ignored by `GameplaySessionController`.
 
-If gameplay readiness is not yet true, gameplay presentation fanout is skipped even though `ClientConnectionService` has already delegated the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has applied the available lane state.
+If gameplay readiness is not yet true, presentation orchestration is skipped even though `ClientConnectionService` has already delegated the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has applied the available lane state.
 
-`RealtimePacketPipeline.is_gameplay_ready()` determines whether the client has the required realtime lane baseline for gameplay presentation. `RealtimePacketPipeline.get_presentation_state()` returns the applied state that `GameplaySessionController` later fans out when presentation is allowed.
+`RealtimePacketPipeline.is_gameplay_ready()` determines whether the client has the required realtime lane baseline for gameplay presentation. `RealtimePacketPipeline.get_presentation_state()` returns the applied state that gameplay composition later consumes when presentation is allowed.
 
-Packet application and presentation fanout are separate boundaries. RealtimePacketPipeline owns application and readiness; GameplaySessionController owns deferred presentation fanout.
+Packet application and gameplay handoff are separate boundaries. `RealtimePacketPipeline` owns application and readiness; `PresentationBridge` owns presentation orchestration; gameplay composition owns the downstream presentation targets.
 
 ### Active and inactive input gating
 
-`GameplaySessionController` only forwards gameplay lane packets and player pause packets while `accepts_gameplay_packets` is true.
+* `GameplaySessionController` only forwards player pause packets while `accepts_gameplay_packets` is true.
 
 When the gate is inactive, the controller ignores gameplay lane packets and pause packets at the session boundary. Debug packets remain routed independently of this gate.
 
@@ -331,6 +325,7 @@ Relevant client tests include:
 * [Runtime composition](runtime-composition.md)
 * [Gameplay state application](gameplay-state-application.md)
 * [Runtime processing](runtime-processing.md)
+* [Presentation Bridge](presentation-bridge.md) - Applied notification handling, pending/coalescing, readiness-gated flush, and presentation orchestration.
 * [Menu flow](../menu-flow.md) - Client menu flow documentation.
 * [Match End Flow](../match-end-flow/!INDEX.md) - Client match-end orchestration and match-results presentation documentation.
 * [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md) - Client gameplay menu and match-over overlay menu documentation.
@@ -340,7 +335,7 @@ Relevant client tests include:
 
 `GameplaySessionState.can_process_gameplay_packets()` allows blank room state, `InGame`, and `GameOver`, but the current `GameplaySessionController` packet gate is opened explicitly by `begin_accepting_gameplay_packets()` when room state reaches `InGame`.
 
-`RealtimePacketPipeline` owns readiness and presentation-state access for active gameplay lane fanout. `GameplaySessionController` consumes `is_gameplay_ready()` and `get_presentation_state()`; it does not rely on a separate readiness-holder wrapper.
+`RealtimePacketPipeline` owns readiness and presentation-state access for active gameplay presentation orchestration. `PresentationBridge` consumes `is_gameplay_ready()` and `get_presentation_state()`; `GameplaySessionController` owns bridge activation, reset, and flush timing.
 
 Dead-HUD recovery, alive-presentation restoration, and respawn-facing presentation do not belong to `GameplaySessionController`; they route through gameplay composition and the focused runtime flows behind it.
 

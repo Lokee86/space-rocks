@@ -13,7 +13,7 @@ It covers how decoded server packet dictionaries move from the client WebSocket 
 Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
 WebSocket remains the client route for session, control, room, lobby, auth, telemetry, signaling, and queued non-gameplay packets. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets and diagnostic smoke packets: `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable lifecycle channels, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
 
-`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `WebRTCTransport` owns DataChannel text receive, packet decode, and `packet_received` emission for WebRTC packets. After those transport signals fire, `ServerPacketRouter` identifies packet types, `ServerPacketDispatcher` emits typed packet signals, `ClientConnectionService` coordinates the public networking handoff, and `RealtimePacketPipeline` owns realtime gameplay packet expansion, validation, application, readiness, reset, and the active `RealtimeRouter`.
+`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `WebRTCTransport` owns DataChannel text receive, packet decode, and `packet_received` emission for WebRTC packets. After those transport signals fire, `ServerPacketRouter` identifies packet types, `ServerPacketDispatcher` emits typed packet signals, `ClientConnectionService` coordinates the public networking handoff, and `RealtimePacketPipeline` owns realtime gameplay packet expansion, validation, application, readiness, reset, the active `RealtimeRouter`, and the post-application notification that feeds `PresentationBridge`.
 
 Compact `event_batch` packets are expanded by the client compact packet expansion layer before event appliers receive them, so downstream gameplay code sees readable long-key event dictionaries rather than compact aliases. Nested `ev` or `events` entries are expanded as part of that same transport step, and event dedupe still keys off `event_id` after expansion. Runtime wire packets keep compact aliases on the wire; domain logs may still show raw x/y before projection.
 
@@ -36,9 +36,7 @@ WebRTCTransport receives DataChannel text
 -> RealtimePacketPipeline.apply_packet(packet)
 -> RealtimeRouter.route_lane_packet(packet)
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
--> ClientConnectionService.gameplay_packet_received(packet)
--> SessionNetworkController._on_gameplay_packet_received
--> GameplaySessionController.handle_gameplay_packet
+-> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
 The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Lifecycle defines existence. Hot lanes update known entities only. Hot asteroid and bullet packets are routed on unordered/unreliable lanes. The client rejects lower sequence values so late packets cannot roll positions backward. Same-sequence packets are valid for chunked `asteroid_delta` or `bullet_delta` output and may apply independently. Sequence gaps are valid because hot packets can be dropped.
@@ -182,7 +180,7 @@ The dispatcher does not know which application subsystem will consume each signa
 
 ### Connection-service signal bridge
 
-`ClientConnectionService` owns the public networking facade, dispatcher wiring, transport coordination, compatibility methods, and compatibility signals. It does not own the active RealtimeRouter or realtime gameplay readiness.
+`ClientConnectionService` owns the public networking facade, dispatcher wiring, transport coordination, and control-routing compatibility methods. It does not own the active RealtimeRouter or realtime gameplay readiness.
 
 `RealtimePacketPipeline` owns the active RealtimeRouter, compact packet expansion, gameplay packet validation, lane-routing invocation, gameplay readiness, protocol-state reset, and post-application notification.
 
@@ -201,7 +199,7 @@ transport packet
 -> RealtimePacketPipeline.apply_packet(packet)
 -> RealtimePacketPipeline invokes RealtimeRouter
 -> gameplay_packet_applied(packet)
--> gameplay_packet_received(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
 
@@ -211,7 +209,7 @@ ClientConnectionService delegates realtime gameplay packets to RealtimePacketPip
 
 `ClientConnectionService` exposes the stable `RealtimePacketPipeline` through `get_realtime_packet_pipeline()`. Session consumers use `RealtimePacketPipeline.is_gameplay_ready()` and `RealtimePacketPipeline.get_presentation_state()`. `RealtimeRouter` and `GameplayReadiness` remain pipeline-internal implementation details. No session, presentation, or connection-service consumer may retain or inspect the router directly. `reset_realtime_protocol_state()` remains the connection-level reset entry point when that method still exists.
 
-The existing `gameplay_packet_received` signal remains a compatibility surface for later session and presentation stages.
+The connection service now routes gameplay packets only through the semantic pipeline/application handoff, while `RealtimePacketPipeline.gameplay_packet_applied(packet)` and `PresentationBridge.handle_gameplay_packet(packet)` carry presentation delivery.
 
 ClientConnectionService still emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
 
@@ -281,7 +279,6 @@ room_error_received
 Gameplay signals handle:
 
 ```text
-gameplay_packet_received
 debug_shape_catalog_received
 debug_status_received
 player_pause_state_received
@@ -289,9 +286,9 @@ player_pause_state_received
 
 `SessionNetworkController` is the bridge from networking events into room and gameplay session controllers. It does not classify packet types itself.
 
-For gameplay application, it listens to the unified `gameplay_packet_received` signal rather than connecting separately to each lane-specific packet signal.
+For gameplay application, the controller now follows the semantic presentation handoff instead of connecting separately to each lane-specific packet signal.
 
-Lane-specific service signals still exist for consumers, tests, and diagnostics, but normal gameplay session handoff uses `gameplay_packet_received`.
+Lane-specific service signals still exist for consumers, tests, and diagnostics, while normal gameplay session handoff continues after `PresentationBridge.handle_gameplay_packet(packet)`.
 
 ### Room packet handoff
 
@@ -319,21 +316,17 @@ Inbound packet routing does not own those consequences.
 
 ### Gameplay packet handoff
 
-Lane-native realtime gameplay packets route through the unified gameplay packet path after the realtime router has already applied lane state.
+Lane-native realtime gameplay packets route through the completed semantic application path after the realtime router has already applied lane state.
 
 Current handoff:
 
 ```text
-gameplay_packet_received
--> SessionNetworkController._on_gameplay_packet_received
--> GameplaySessionController.handle_gameplay_packet
+RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
+-> gameplay composition / runtime presentation flows
 ```
 
-`GameplaySessionController` gates packet fanout with `accepts_gameplay_packets`, `RealtimePacketPipeline.is_gameplay_ready()` for gameplay readiness checks, and the presentation adapter's current fanout gate as lifecycle gating only.
-
-By the time `GameplaySessionController.handle_gameplay_packet` runs, the lane state has already been applied to `WorldLaneState` through `RealtimeRouter`.
-
-`GameplaySessionController` fans the current lane state out through the presentation adapter to world sync, HUD flow, event lifecycle flow for `event_batch`, and the devtools lane state adapter or devtools gameplay state.
+`SessionNetworkController` remains the bridge from networking events into room and gameplay session controllers. It still preserves the control routing for connection, room, auth, debug, and player-pause packets.
 
 Gameplay packet application continues through gameplay runtime documentation after this point. Inbound routing only delivers the packet.
 
@@ -395,9 +388,13 @@ Unknown packets are not applied to gameplay, room, auth, or telemetry state.
 
 ### Lifecycle routing note
 
-Lifecycle packets use the same routing path as other gameplay packets, but they are applied by `WorldLaneApplier` lifecycle methods before `gameplay_packet_received` fans them to gameplay consumers.
+Lifecycle packets use the same routing path as other gameplay packets, but they are applied by `WorldLaneApplier` lifecycle methods before the presentation bridge fans them to gameplay consumers.
 
 Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+
+## Related Docs
+
+* [Presentation Bridge](../gameplay-runtime/presentation-bridge.md)
 
 ## Protocols and APIs
 
@@ -423,7 +420,7 @@ NetworkClient.packet_received(packet)
 -> RealtimePacketPipeline.apply_packet(packet)
 -> RealtimeRouter.route_lane_packet(packet)
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
--> ClientConnectionService.gameplay_packet_received(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
 -> owning session/controller handles the packet
 ```
 
@@ -456,8 +453,8 @@ world_full/world_delta/asteroid_delta/bullet_delta/overlay_full/overlay_delta/se
 -> dispatcher lane signal
 -> ClientConnectionService._route_gameplay_packet
 -> lane-specific service signal
--> gameplay_packet_received
--> GameplaySessionController.handle_gameplay_packet
+-> PresentationBridge.handle_gameplay_packet
+-> GameplayComposition / runtime presentation flows
 
 debug_shape_catalog
 -> debug_shape_catalog_received
