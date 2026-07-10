@@ -1,178 +1,288 @@
-## Space Rocks Devtools Boundary Skill
+## Realtime Transport Session Extraction Skill
 
-Use this skill when maintaining the current Space Rocks devtools Controller / Target / Control boundary.
+Use this skill when extracting WebRTC transport ownership from `client/scripts/networking/client_connection_service.gd` into a dedicated `RealtimeTransportSession`.
 
-This skill describes the implemented architecture as the current state. It is not a proposal to extract the boundary later.
+This skill covers Stage 1 only. Preserve all observable behavior and leave realtime packet application, router ownership, readiness, and presentation flow unchanged.
 
 ## Goal
 
-Keep devtools ownership split cleanly across the existing seams without changing gameplay behavior, packet schemas, packet transport, or realtime scheduling.
+Move all WebRTC-specific lifecycle, signaling, polling, failure handling, and diagnostics into one focused transport boundary without changing the existing downstream packet path.
 
-The current ownership split is:
+The intended ownership split after this stage is:
 
 ```text
-internal/devtools
-  owns Controller, command policy, capability interfaces, target resolution,
-  stream-runtime coordination, observer registration policy, status projection,
-  and debug DTOs
+ClientConnectionService
+  owns WebSocket connection lifecycle, outbound request coordination,
+  inbound non-realtime packet coordination, and temporary compatibility forwarding
 
-internal/game
-  owns authoritative state and exposes narrow capabilities through Control
+RealtimeTransportSession
+  owns WebRTC peer/channel lifecycle, signaling, polling, readiness,
+  failure handling, smoke-test diagnostics, and received packet delivery
+```
 
-internal/networking
-  constructs Control and Controller and routes existing packets
+The existing downstream path must remain:
+
+```text
+WebRTC packet
+  -> RealtimeTransportSession
+  -> ClientConnectionService existing realtime packet handling
+  -> RealtimeRouter
+  -> existing gameplay packet signal
+  -> existing presentation dirty flow
 ```
 
 ## Hard rules
 
-* Do not change devtools packet transport in this pass.
-* Do not add a WebRTC/UDP devtools lane in this pass.
-* Do not edit the realtime scheduler.
-* Do not change packet schemas.
-* Do not redesign locking.
-* Do not change gameplay behavior.
-* Production files in `services/game-server/internal/devtools` must not import `github.com/Lokee86/space-rocks/server/internal/game`.
-* Devtools integration tests may import `internal/game`.
-* Production files in `services/game-server/internal/game` must not import `internal/devtools`.
-* Production files in `services/game-server/internal/devtools` must not import the root game package.
+* Preserve behavior.
+* Do not redesign the realtime protocol.
+* Do not move `RealtimeRouter` ownership.
+* Do not change gameplay readiness ownership.
+* Do not remove `get_realtime_router()` or `get_gameplay_readiness()` in this stage.
+* Do not change `gameplay_packet_received` semantics.
+* Do not move `_presentation_dirty`.
+* Do not create `RealtimePacketPipeline`.
+* Do not create `PresentationBridge`.
+* Do not change packet formats or signaling formats.
+* Do not change packet scheduling or presentation timing.
+* Do not split WebSocket inbound and outbound ownership further in this stage.
+* Preserve existing logs, diagnostics, failure behavior, and smoke-test behavior.
 * Keep files small and focused.
-* Preserve current behavior unless a test proves current behavior cannot be preserved.
+* Avoid unrelated cleanup or broad renaming.
 
-## Current maintenance checklist
+## Stage plan
 
-Use this skill for implementation-oriented maintenance of the current devtools boundary.
+### 1. Inventory the current WebRTC surface
 
-When changing this boundary:
-
-- add or change the narrow capability interface
-- implement it on `game.Control`
-- route policy through `Controller`
-- preserve packet and gameplay behavior
-- update focused tests and canonical docs
-- run boundary verification
-
-## Current code map
-
-The main files involved in this boundary are:
+Identify every WebRTC-related item in `ClientConnectionService`:
 
 ```text
-internal/devtools/target.go
-internal/devtools/target_player_ids.go
-internal/devtools/controller.go
-internal/devtools/observer_registry.go
-internal/devtools/collision_telemetry.go
-internal/game/control.go
-internal/game/control_*.go
-internal/networking/inbound/*.go
-internal/networking/outbound/*.go
+- fields and constants
+- signals
+- public methods
+- private callbacks
+- polling logic
+- offer handling
+- ICE handling
+- signaling translation
+- reset and cleanup paths
+- readiness and failure state
+- smoke-test state
+- logs and diagnostics
+- tests and scene wiring
 ```
 
-Prefer small capability interfaces:
-
-```go
-type StatusTarget interface { ... }
-type ToggleTarget interface { ... }
-type PlayerTarget interface { ... }
-type SpawnTarget interface { ... }
-type RespawnTarget interface { ... }
-type CounterTarget interface { ... }
-type ClearTarget interface { ... }
-type CollisionTelemetryTarget interface { ... }
-type StreamTarget interface { ... }
-```
-
-Compose them into the current `Target` shape, keeping `PlayerTargetSource` separate from `StatusTarget` so command fanout and status membership can follow different sources.
-
-Use current method names, including `ApplyPlayerDefeat`, and avoid spelling removed `Devtools...` method names in new guidance or examples.
-
-`internal/game` owns the `Control` adapter and focused `control_*.go` files. `internal/devtools` owns `Controller`, target selection, observer policy, and DTO projection. `internal/networking` constructs `Control` and `Controller` and routes the existing packets.
-
-`All-player` command fanout uses `Control.TargetPlayerIDs()`.
-
-`Controller.StatusesForAllPlayers()` uses `MatchDecision().Players` for all-player status membership.
-
-`Controller` owns the stream runtime coordination.
-
-The controller-injected stream runtime owns the begin, step, and clear operations for that same controller.
-
-The game adapter may return the underlying `*Game` from `ObserverKey()` as `any`, but devtools must not import `internal/game` to key the registry.
-
-## Dependency rules
-
-- production and test files in `internal/game` must not import `internal/devtools`
-- devtools integration tests may import `internal/game`
-- production devtools files must not import the root game package
-
-## Network boundary
-
-Keep packet routing unchanged.
-
-Existing WebSocket devtools packets should still be decoded and routed as before.
-
-Only the execution target changes:
-
-```go
-control := game.NewControl(room.GameInstance())
-controller := devtools.NewController(devtools.Dependencies{
-    Target: control,
-})
-controller.HandleCommand(playerID, command)
-```
-
-Do not add `sr.devtools`.
-Do not move debug status/catalog to WebRTC.
-Do not touch channel negotiation.
-
-## DTO ownership
-
-Debug DTO ownership belongs to `internal/devtools`.
-
-Good devtools-owned names:
+Classify each item as:
 
 ```text
-StatusSnapshot
-CollisionPoint
-CollisionBody
+- move entirely into RealtimeTransportSession
+- remain temporarily as a forwarding facade
+- leave for a later stage
 ```
 
-The game adapter can return raw authoritative or physics data. Devtools should shape that data into debug packets.
+### 2. Create the transport boundary
 
-## Testing guidance
-
-Add or preserve coverage for:
+Create:
 
 ```text
-- session-backed status membership
-- separate command fanout membership
-- one-way package dependencies
-- controller-owned stream runtime
-- raw game telemetry plus devtools DTO projection
-- devtools commands still execute
-- debug status payload stays compatible
-- debug shape catalog payload stays compatible
-- collision telemetry JSON stays compatible
-- continuous bullet stream still registers one observer per game target
-- target-player commands still resolve the same player IDs
+client/scripts/networking/realtime_transport_session.gd
 ```
+
+`RealtimeTransportSession` owns:
+
+```text
+- WebRTC peer/session creation
+- WebRTC data-channel lifecycle
+- transport startup and teardown
+- WebRTC polling
+- offer handling
+- ICE candidate handling
+- signaling callbacks
+- channel readiness
+- transport failure state
+- smoke-test diagnostics
+- delivery of received realtime packets
+```
+
+It must not own:
+
+```text
+- realtime lane state
+- packet expansion
+- packet validation beyond current transport-level handling
+- packet application
+- gameplay readiness
+- resync state
+- presentation scheduling
+- WebSocket lifecycle
+- the general outbound request facade
+```
+
+### 3. Define narrow dependencies
+
+The transport session should receive only what it needs, such as:
+
+```text
+- a signaling-send callback or narrow sender dependency
+- a callback or signal for received realtime packets
+- existing logging or diagnostic dependencies where required
+```
+
+Prefer direct concrete dependencies over generic service locators, broad interfaces, or wrapper layers.
+
+A conceptual surface may include:
+
+```text
+start(...)
+stop()
+poll()
+handle_offer(...)
+handle_ice_candidate(...)
+handle_signaling_packet(...)
+is_ready()
+```
+
+Possible outward signals include:
+
+```text
+realtime_packet_received
+transport_ready
+transport_failed
+diagnostic_updated
+```
+
+Use existing project terminology and naming conventions where they already exist.
+
+### 4. Move implementation without redesign
+
+Move the current WebRTC implementation as directly as possible.
+
+Preserve:
+
+```text
+- control flow
+- state transitions
+- polling cadence
+- signaling order
+- packet decoding and forwarding
+- readiness behavior
+- teardown behavior
+- failure behavior
+- logs
+- diagnostics
+- smoke-test behavior
+```
+
+Do not combine this extraction with protocol or presentation cleanup.
+
+### 5. Keep ClientConnectionService as coordinator
+
+`ClientConnectionService` should instantiate or receive the transport session and:
+
+```text
+- call its poll method from the existing update point
+- pass inbound signaling messages to it
+- provide the existing signaling-send path
+- forward any public signals still required by callers
+- invoke transport teardown during disconnect and reset
+```
+
+Temporary forwarding methods are allowed only where needed to preserve the current external API. Do not introduce forwarding helpers merely for convenience.
+
+### 6. Preserve lifecycle behavior
+
+The transport lifetime must remain aligned with the connection lifecycle:
+
+```text
+connection established
+  -> transport becomes available when currently required
+
+disconnect or reset
+  -> transport stops
+  -> peer and channel state clear
+  -> callbacks cannot target stale state
+
+reconnect
+  -> a clean transport state is created
+```
+
+Use one clear owner. Do not make the transport session a global singleton unless the existing architecture already requires that lifetime.
+
+### 7. Preserve the packet path
+
+After extraction, received WebRTC packets must still enter the same existing `ClientConnectionService` realtime handling path.
+
+Do not route packets directly into new protocol or presentation abstractions during this stage.
+
+### 8. Update focused tests
+
+Add or preserve focused coverage for:
+
+```text
+- transport creation
+- offer handling
+- ICE handling
+- signaling-send requests
+- polling
+- received packet forwarding
+- ready signals
+- failure signals
+- smoke-test behavior
+- teardown
+- reconnect after teardown
+- no stale callbacks after reset
+```
+
+Existing connection-service behavior and tests should continue to pass through any temporary compatibility facade.
+
+## Completion criteria
+
+This stage is complete when:
+
+```text
+- ClientConnectionService contains no WebRTC peer internals
+- ClientConnectionService contains no WebRTC data-channel internals
+- ClientConnectionService contains no offer or ICE implementation details
+- ClientConnectionService contains no smoke-test state
+- WebRTC polling delegates to RealtimeTransportSession
+- teardown and reconnect behavior remain unchanged
+- received packets follow the existing downstream path
+- router ownership remains unchanged
+- gameplay readiness ownership remains unchanged
+- presentation timing remains unchanged
+```
+
+## Expected code map
+
+Primary files are expected to include:
+
+```text
+client/scripts/networking/client_connection_service.gd
+client/scripts/networking/realtime_transport_session.gd
+```
+
+Tests should follow the current client networking test organization. Do not create a new test hierarchy solely for this extraction.
 
 ## Stop conditions
 
 Stop and report if:
 
 ```text
-- the task requires changing devtools packet transport
-- the task requires changing realtime lane scheduling
-- the task requires changing packet schemas
-- preserving behavior requires a locking redesign
-- the change grows into unrelated cleanup
-- production internal/devtools still needs to import internal/game after interface extraction
+- preserving behavior requires changing packet formats
+- preserving behavior requires changing signaling formats
+- the extraction requires moving RealtimeRouter ownership
+- the extraction requires changing gameplay readiness
+- the extraction requires changing presentation scheduling
+- teardown semantics cannot be preserved without a larger lifecycle redesign
+- the task grows into unrelated networking cleanup
 ```
 
 Report:
 
 ```text
 - changed files
-- remaining legacy game-side debug method references, if any
-- remaining production devtools imports of internal/game, if any
+- WebRTC responsibilities moved
+- temporary forwarding surface left in ClientConnectionService
+- tests changed or added
 - tests run
+- remaining WebRTC implementation details in ClientConnectionService, if any
 ```

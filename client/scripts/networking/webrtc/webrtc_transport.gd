@@ -187,7 +187,10 @@ func _handle_channel_packet(packet: PackedByteArray) -> void:
 	if !decode_result.ok:
 		failed.emit("invalid_json", decode_result.error)
 		return
-	var data: Dictionary = decode_result.packet
+	_handle_decoded_packet(decode_result.packet)
+
+
+func _handle_decoded_packet(data: Dictionary) -> void:
 	if str(data.get("type", "")) == "bullet_delta":
 		bullet_delta_received_count += 1
 		var server_sent_msec = data.get("server_sent_msec", null)
@@ -197,9 +200,10 @@ func _handle_channel_packet(packet: PackedByteArray) -> void:
 			bullet_delta_max_age_msec = maxi(bullet_delta_max_age_msec, age_msec)
 		else:
 			bullet_delta_missing_server_time_count += 1
-	packet_received.emit(data)
 	if str(data.get("type", "")) == "webrtc_smoke":
 		smoke_received.emit(data)
+		return
+	packet_received.emit(data)
 
 
 func _drain_channel_packets(channel: Variant, remaining_budget: int) -> int:
