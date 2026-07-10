@@ -1,0 +1,89 @@
+---
+title: "Devlog 003: Xenobia Needs Rangers"
+date: 2026-07-10
+summary: |
+  **Current Orders:** Space Rocks! introduces the Ranger Corps, locks down the current realtime protocol foundation, and heads back into the hangar for cleanup before larger missions can begin.
+heroLine1: UNGODLY HOURS
+heroLine2: UNPREDICTABLE PAY
+heroLine3: UNRELENTING DUTY
+heroMediaKind: images
+heroImages:
+  - /media/devlog/0003-rangers-needed/ranger_recruitment.png
+heroYoutubeUrl: ""
+heroVideoSrc: ""
+heroMediaAlt: Ranger Corps recruitment advertisement
+articleLabel: Devlog Entry - 003
+articleTitle: Xenobia Needs Rangers
+intro: |
+  The Ranger Corps keeps the peace in Xenobia. But keeping the peace means keeping the fleet in the air — and that work is never done. This week's report covers the wire, the weight, and the walls between systems that keep a ship flying when everything goes sideways.
+  - [Recruits Needed](#recruits-needed)
+  - [Keeping the Corps Flying](#keeping-the-corps-flying)
+  - [Flight Systems Check](#flight-systems-check)
+  - [What's Next](#whats-next)
+articleMediaKind: images
+articleImages:
+  - /media/devlog/0003-rangers-needed/flight_systems_check.png
+  - /media/devlog/0003-rangers-needed/readiness_check.png
+articleYoutubeUrl: ""
+articleMediaAlt: Ranger Corps flight systems and readiness checks
+finishedTitle: Realtime Protocol
+finishedBody: Foundation completed and solidified.
+nowTitle: Codebase Cleanup
+nowBody: It's a dirty job, but someone's gotta do it.
+comingUpTitle: Alpha Testing
+comingUpBody: House must be in order before recruiting can begin.
+utilityTitle: Current Orders
+utilityText: |
+  Space Rocks! introduces the Ranger Corps, locks down the current realtime protocol foundation, and heads back into the hangar for cleanup before larger missions can begin.
+finePrint: Space Rocks! is an active development project. All media, features, names, and content are work in progress and subject to change before final release.
+---
+
+## Recruits Needed
+
+**Rough skies need sharp eyes.**
+
+When the ugly and the inconvenient call, the Ranger Corps answers. Whether it is routine patrols, escort missions, or responding to unexpected hostile contacts, the Corps is always there to handle the dirty work. Assignments are often high-stakes, with little to no time to prepare before heading into the storm.
+
+The Corps has always been Xenobia’s first line of defense against the dangers of the frontier: disciplined, mobile, and ready to deploy whenever and wherever the situation demands. If there are bullets in the air, the Corps will be there.
+
+From clearing asteroid fields to protecting vital shipments, or chasing down pirates and brigands, Rangers tackle every assignment with dedication. They are the unsung guardians, the elite force that silently protects, and the living embodiment of Xenobia’s resilience and determination, upholding the highest commitments to excellence, not recognition.
+
+They answer the call so Xenobia doesn’t have to.
+
+This is what the Space Rocks! campaign is built on: one Ranger, one ship, one life-threatening assignment at a time. So come join the chaos. Join our [Discord](https://discord.gg/kWvNWRjQxt) today and stay up to date with incoming transmissions and development news.
+
+## Keeping the Corps Flying
+
+Current work in the system is about making sure we can stay in the air when everything lights up at once. That means finishing the network reinforcement for cleaner packet updates, better client/server agreement, and more predictable performance curves for busy gameplay moments.
+
+Even though last week’s work was more of the same, there were some final touches needed to carry the concept across the finish line. Otherwise, we also refactored devtools out of places they did not belong to make the project cleaner and more maintainable, and tightened up the surrounding cleanup so the next layer of systems has fewer old wires to trip over.
+
+## Flight Systems Check
+
+The biggest recent milestone was completing the realtime protocol foundation.
+
+Last week, the focus was cutting the packet problem down to size. This week was about making sure the pieces around that work actually behaved under pressure. That meant finishing the current protocol pass, chasing down the ugly edge cases it exposed, and making the system less confused about who owns what.
+
+One of the main cleanup points was packet responsibility. The chunker is now the system responsible for keeping realtime packets under control. This particular task was an elusive beast that took up much more time than it probably should have. A misunderstanding of what I was trying to accomplish led to hours wasted chasing the wrong thing. In the end, the Rangers won out, and the system is now compliant and fully cooperative.
+
+We also spent time on the gameplay cases most likely to shake the system loose: bullets, asteroid splits, impacts, deaths, respawns, and busy moments where a lot of entities are changing at once. Those are the moments where multiplayer games either hold together or start devolving into an unplayable buggy mess.
+
+Devtools also got a cleanup pass. Debug commands and development-only helpers were moved out of the core game structure, giving that tooling a better home instead of letting it sprawl through the main gameplay code. More work is still needed here, but it is in much better shape now than it was before.
+
+There was also the usual final-mile cleanup: docs updated, assumptions checked, regressions chased, tests rerun, and a few more loose bolts tightened before the next layer goes on.
+
+Network interest is still its own future pass, so the realtime work is not done forever. But this does close the current foundation slice: cleaner packet ownership, cleaner devtools boundaries, and a game that is better prepared for the next round of actual content.
+
+## What’s Next
+
+More cleanup. More refactors. More unglamorous work in the hangar before the next big launch.
+
+With the realtime protocol foundation in better shape, the next step is making sure the rest of the project is ready to carry more game. Devtools still need more separation. A few older systems still need cleaner boundaries. Some docs need to keep catching up with the code. There are also smaller rough edges that are easier to fix now than after more enemies, missions, weapons, hazards, and campaign structure start piling on top.
+
+That does mean the next stretch may not be packed with flashy screenshots. That is fine. Space Rocks! is reaching the point where adding new things without cleaning up the old seams first would be a great way to make every future task slower, messier, and more fragile.
+
+So for now, the plan is simple: tighten the bolts, clean the panels, move the tools where they belong, and make sure the ship is ready for the next assignment.
+
+The Rangers aren't going anywhere.
+
+The hangar crew still has work to do.

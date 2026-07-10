@@ -376,7 +376,7 @@ function PlasmicHomepage__RenderFunc(props: {
             <PlasmicLink__
               aria-label={"Discord"}
               className={classNames("all", "a", "a__uNJep", sty.link___1Ia7F)}
-              href={"https://discord.gg/vTQAVtrVKE"}
+              href={"https://discord.gg/kWvNWRjQxt"}
               platform={"react"}
             >
               <PlasmicImg__
@@ -833,7 +833,7 @@ function PlasmicHomepage__RenderFunc(props: {
               <PlasmicLink__
                 aria-label={"Discord"}
                 className={classNames("all", "a", "a__uNJep", sty.link__traDh)}
-                href={"https://discord.gg/vTQAVtrVKE"}
+                href={"https://discord.gg/kWvNWRjQxt"}
                 platform={"react"}
               >
                 <PlasmicImg__
