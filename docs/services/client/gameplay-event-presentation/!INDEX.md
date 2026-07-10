@@ -43,4 +43,4 @@ This folder owns client gameplay event presentation, visual effects, local event
 
 ## Notes
 
-This index stays at the client gameplay-event-presentation boundary and does not expand into runtime, HUD, or world-sync ownership.
+This index stays at the client gameplay-event-presentation boundary and does not expand into runtime, HUD, or world-sync ownership. Event presentation is downstream of `RealtimePresentationState`, and the index only summarizes that seam without adding entries.

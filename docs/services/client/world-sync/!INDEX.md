@@ -45,4 +45,4 @@ Client world sync documentation lives here.
 
 ## Notes
 
-World sync starts after runtime normalization and stays focused on rendering authoritative state, not deciding gameplay outcomes.
+World sync starts after runtime normalization and stays focused on rendering authoritative state, not deciding gameplay outcomes. It consumes presentation data after the `RealtimePresentationState` handoff without taking ownership of the seam itself.

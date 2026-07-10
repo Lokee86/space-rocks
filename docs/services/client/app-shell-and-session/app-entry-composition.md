@@ -12,7 +12,7 @@ It explains how the Godot client root scene wires the app shell, session control
 
 `client/scenes/game.tscn` is the configured client runtime scene. Its root node uses `app_entry.gd`, which acts as the client composition root for app-shell and session ownership.
 
-`AppEntry` does not own the detailed behavior of the systems it wires. It creates and connects the major runtime controllers, provides shared dependencies, and routes high-level intents between menu, session, room, gameplay, auth, and shutdown seams.
+`AppEntry` does not own the detailed behavior of the systems it wires. It creates and connects the major runtime controllers, provides shared dependencies, and routes high-level intents between menu, session, room, gameplay, auth, and shutdown seams. It retrieves the stable `RealtimePacketPipeline` from `ClientConnectionService.get_realtime_packet_pipeline()` and injects it into `GameplaySessionController.configure(...)`.
 
 The app-entry boot sequence currently performs this composition:
 
@@ -59,8 +59,8 @@ RepeatedPlanetBackground
 
 * `client/scenes/game.tscn`
 * `client/scripts/shell/app_entry.gd`
-* `client/scripts/boot/`
-* `client/scripts/session/`
+* `client/scripts/networking/realtime/realtime_packet_pipeline.gd`
+* `client/scripts/networking/realtime/realtime_presentation_state.gd`
 * `client/scripts/main_menu/`
 * `client/scripts/ui/menu_flow/`
 
@@ -247,7 +247,7 @@ GameplaySessionController
 ClientConnectionService composes two separate realtime collaborators:
 
 - RealtimeTransportSession owns the active WebRTCTransport lifecycle, including construction, signal wiring, start, poll, close, and reconnect replacement.
-- RealtimePacketPipeline owns the active RealtimeRouter, gameplay packet expansion and validation, readiness, reset, lane-application ordering, and post-application notification.
+- RealtimePacketPipeline owns the active RealtimeRouter, gameplay packet expansion and validation, readiness, reset, lane-application ordering, post-application notification, and its `RealtimePresentationState`.
 
 ClientConnectionService coordinates those collaborators and exposes compatibility methods and signals to the rest of the client. It does not directly own WebRTC transport mechanics or RealtimeRouter state.
 

@@ -658,4 +658,3 @@ The GDScript packet output currently renders field constants from the loaded sch
 Packet data documentation should stay focused on schema source files, generated outputs, and pipeline behavior. Packet lifecycle, routing order, authority, and service-specific runtime consequences belong in protocol and service documentation.
 
 
-

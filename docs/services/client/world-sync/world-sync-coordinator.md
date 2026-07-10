@@ -12,13 +12,15 @@ It explains how the client applies world lane state to world presentation seams,
 
 `WorldSync` is the client-side coordinator for rendering server-authoritative world state.
 
-It does not parse raw packets and does not decide gameplay outcomes. RealtimeRouter applies world, lifecycle, and hot movement packets into WorldLaneState. WorldPresentationAdapter forwards the accumulated WorldLaneState into WorldSync. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
+It does not parse raw packets and does not decide gameplay outcomes. RealtimeRouter mutates world lane state, the RealtimePacketPipeline refreshes `RealtimePresentationState`, and WorldPresentationAdapter receives `world_lane_state` from that wrapper before forwarding it into WorldSync. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
 
 The current runtime path is:
 
 ```text
 RealtimeRouter.route_lane_packet(packet)
--> world/lifecycle/hot lane appliers update world_lane_state
+-> lane appliers mutate world_lane_state
+-> RealtimePacketPipeline.refresh_presentation_state(...)
+-> RealtimePresentationState.world_lane_state
 -> WorldPresentationAdapter.apply_world_lane_state(...)
 -> WorldSync.apply_world_lane_state(world_lane_state)
 ```

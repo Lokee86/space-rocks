@@ -196,4 +196,3 @@ The OpenAPI `/health` route describes the Rails API JSON health endpoint. The ga
 The current OpenAPI contract is authoritative for HTTP shape, but only Rails tests currently use OpenAPI assertion helpers directly. Go-hosted player-data routes rely on Go handler/runtime tests and manual alignment with the shared OpenAPI file.
 
 Detailed endpoint behavior belongs in the service docs. This protocol doc stays focused on contract authority, enforcement expectations, and update rules.
-

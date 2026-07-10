@@ -41,4 +41,4 @@ Client gameplay runtime documentation lives here.
 
 ## Notes
 
-Runtime docs describe client presentation and orchestration after packets are classified, while protocol and data docs own packet schema authority.
+Runtime docs describe client presentation and orchestration after packets are classified, while protocol and data docs own packet schema authority. The runtime hands off into `RealtimePresentationState` for presentation consumers, and this index stays at that seam without duplicating downstream presentation ownership.

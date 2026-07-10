@@ -14,7 +14,9 @@ Runtime processing is the client-side frame loop for active gameplay presentatio
 
 It is not the authoritative simulation tick. The server owns gameplay simulation, collision outcomes, scoring, lives, death, respawn validity, and match lifecycle. The client runtime processing path only advances local presentation and client-owned runtime helpers between applied lane packets.
 
-The frame path starts in `GameplaySessionController._process(delta)`. The controller asks the gameplay-readiness holder whether required lane baselines are synced, then calls `GameplayComposition.process(delta, required_lane_baselines_synced)`.
+The frame path starts in `GameplaySessionController._process(delta)`. The controller reads the current gameplay readiness from `RealtimePacketPipeline.is_gameplay_ready()`, then propagates that required-lane-baselines-synced fact into `GameplayComposition`.
+
+Before `GameplayComposition.process(delta, required_lane_baselines_synced)` runs, the controller also performs deferred dirty presentation fanout for the frame so presentation state is ready for composition work in the same frame.
 
 `GameplayComposition.process` currently ticks three client-side lanes:
 
@@ -37,7 +39,7 @@ The frame path starts in `GameplaySessionController._process(delta)`. The contro
 6. GameplaySpectateContext.process()
 ```
 
-`GameplayRuntimeContext.process(delta)` currently delegates world interpolation to `WorldSync.interpolate(delta)`. This is the bridge from gameplay runtime processing into world-sync rendering.
+`GameplayRuntimeContext.process(delta)` currently delegates world interpolation to `WorldSync.interpolate(delta)`.
 
 `GameplayRuntimeTickFlow.process(delta)` currently delegates HUD runtime updates to `GameplayHudFlow.update(delta)`.
 
@@ -108,7 +110,7 @@ GameplaySessionController._process(delta)
 -> GameplayComposition.process(delta, required_lane_baselines_synced)
 ```
 
-The readiness flag is read from the `GameplayReadiness` / `GameplayStateFlow` wrapper used by `GameplaySessionController`.
+The readiness flag is read from `RealtimePacketPipeline.is_gameplay_ready()` and then passed through `GameplaySessionController`.
 
 ### Composition processing path
 
@@ -176,7 +178,7 @@ Runtime processing owns only transient frame-processing coordination.
 It uses:
 
 * `delta` from Godot `_process`.
-* gameplay readiness from the `GameplayReadiness` / `GameplayStateFlow` wrapper.
+* gameplay readiness from `RealtimePacketPipeline.is_gameplay_ready()`.
 * references to composed runtime processors.
 * client-owned runtime flow instances.
 * client-owned presentation state inside downstream flows.
@@ -254,5 +256,7 @@ Use the normal client GUT test run for verification after runtime-processing cha
 `GameplayRuntimeTickFlow` currently lives under `client/scripts/shell/`, even though it participates in gameplay runtime processing.
 
 `GameplayComposition.process` also ticks `DevToolsSessionFlow` and `GameplayPresentationFlow` outside the inner `GameplayProcessFlow` order. This document includes those calls because they are part of the current per-frame gameplay runtime path.
+
+Current runtime ordering is stable: session readiness is sampled first from `RealtimePacketPipeline.is_gameplay_ready()`, deferred dirty presentation fanout happens before composition, composition receives the readiness flag, gameplay application completes separately, and then frame-specific runtime helpers continue.
 
 Server hitbox overlay processing is debug presentation. Runtime processing ticks it, but it does not make hitbox overlay behavior normal gameplay rendering authority.

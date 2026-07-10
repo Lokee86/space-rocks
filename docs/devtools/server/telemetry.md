@@ -548,4 +548,3 @@ Telemetry in this document means live debug and diagnostic readouts. It does not
 
 The server collision body telemetry seam observes real collision bodies. It should stay connected to the authoritative physics/collision implementation rather than duplicating shape facts in client-only debug logic.
 
-

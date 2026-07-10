@@ -996,4 +996,3 @@ Release-shaped builds should verify that:
 ## Notes
 
 Preserve the detailed logging inventory and shared-field catalog; this doc should stay focused on policy, aggregation, diagnostics, and redaction.
-

@@ -776,4 +776,3 @@ Realtime packet schemas are sourced from `shared/packets/*.toml`, generated clie
 `ClientPacketSender` is not the only path that builds outbound packet dictionaries. Target selection, viewport config, and auth use generated helpers closer to their owning flows, then converge at the same raw send path.
 
 
-

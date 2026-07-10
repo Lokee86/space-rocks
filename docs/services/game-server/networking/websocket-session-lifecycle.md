@@ -696,4 +696,3 @@ The current session object is shared by the read loop, write loop, lifecycle tic
 The WebSocket lifecycle intentionally stays separate from room/game authority. Adding new room or gameplay behavior should usually extend the packet routing, room, or game seams rather than adding rules directly to WebSocket upgrade or read/write loop code.
 
 The `/ws` endpoint is shared by local single-player and multiplayer. New mode distinctions should remain explicit session/packet/admission behavior unless the protocol architecture changes.
-

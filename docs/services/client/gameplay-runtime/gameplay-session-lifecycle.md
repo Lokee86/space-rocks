@@ -14,7 +14,7 @@ The client gameplay-session lifecycle is owned by `GameplaySessionController` an
 
 `SessionNetworkController` receives classified packet signals from `ClientConnectionService`. Room packets update the room session first. When the current room state becomes `InGame`, `SessionNetworkController` tells `GameplaySessionController` to begin accepting gameplay packets.
 
-`GameplaySessionController` is the lifecycle bridge between the network/session layer and gameplay runtime composition. It owns the `accepts_gameplay_packets` gate, forwards gameplay lane packets and player pause state into runtime only while that gate is open, fans out lane-native presentation only after gameplay readiness is true, forwards debug packets to gameplay composition, and runs gameplay composition processing each frame.
+`GameplaySessionController` is the lifecycle bridge between the network/session layer and gameplay runtime composition. It owns the `accepts_gameplay_packets` gate, forwards gameplay lane packets and player pause state into runtime only while that gate is open, coordinates lane-native presentation handoff through `RealtimePacketPipeline.is_gameplay_ready()` and `RealtimePacketPipeline.get_presentation_state()`, forwards debug packets to gameplay composition, and runs gameplay composition processing each frame.
 
 Gameplay exits are routed back through `GameplayComposition` signals. `GameplaySessionController` translates those signals into connection actions, reset behavior, session-context clearing, boot-flow clearing, main-menu visibility updates, and higher-level replay or pregame-return signals.
 
@@ -27,10 +27,9 @@ This lifecycle is client presentation/session orchestration only. The server rem
 ## Responsibilities
 
 * Configure gameplay composition from scene, network, session, HUD, world, and UI references.
-* Create and connect `GameplayStateFlow` as a gameplay-readiness holder.
 * Gate gameplay lane packets and player pause packets behind `accepts_gameplay_packets`.
 * Begin accepting gameplay packets after room state enters `InGame`.
-* Forward gameplay lane packets into gameplay runtime fanout only when both the gate and gameplay readiness allow it.
+* Forward gameplay lane packets into gameplay runtime fanout only when both the gate and pipeline readiness allow it.
 * Forward player pause packets into gameplay composition.
 * Forward devtools debug status packets into gameplay composition.
 * Forward debug shape catalog packets into gameplay composition.
@@ -40,7 +39,7 @@ This lifecycle is client presentation/session orchestration only. The server rem
 * Classify room states that should stop spectating.
 * Route devtools input before normal gameplay input.
 * Apply HUD/gameplay UI mouse gating before gameplay input handling.
-* Reset gameplay packet acceptance, gameplay state flow, and gameplay composition.
+* Reset gameplay packet acceptance and gameplay composition.
 * Hide the main menu when gameplay starts.
 * Handle quit-to-main-menu by beginning graceful network close, resetting gameplay, clearing session context, clearing boot flow, and showing the main menu.
 * Handle return-to-lobby by sending a return-to-lobby request and resetting local gameplay state.
@@ -82,9 +81,11 @@ It does not decide whether the server match is over, whether a room may return t
 
 ### Gameplay reset owner
 
-`GameplaySessionController.reset()` clears the local gameplay-session gate and delegates deeper cleanup to `GameplayStateFlow` and `GameplayComposition`.
+`GameplaySessionController.reset()` clears the local gameplay-session gate and resets gameplay composition state. It does not depend on a `GameplayStateFlow` readiness holder.
 
 `GameplayComposition.reset()` then clears devtools session state, shell/runtime state, presentation state, match-end state, match-results presentation, and spectate state.
+
+Reset also clears any deferred presentation fanout for the current gameplay session. After reset, gameplay packets remain ignored until `begin_accepting_gameplay_packets()` is called again and the realtime pipeline reports gameplay readiness.
 
 ### Main-menu visibility bridge
 
@@ -133,18 +134,29 @@ ClientConnectionService.gameplay_packet_received
 -> SessionNetworkController._on_gameplay_packet_received
 -> GameplaySessionController.handle_gameplay_packet
 -> check accepts_gameplay_packets
--> check gameplay readiness through ClientConnectionService.get_gameplay_readiness(), backed by RealtimePacketPipeline
+-> check RealtimePacketPipeline.is_gameplay_ready()
+-> read applied state from RealtimePacketPipeline.get_presentation_state()
+-> mark presentation dirty for deferred fanout
+-> GameplaySessionController._process
 -> PresentationAdapter.fanout_lane_states(...)
 -> DevtoolsLaneStateAdapter.build_state(...)
 -> GameplayComposition.apply_devtools_gameplay_state(...)
--> GameplayComposition.restore_alive_presentation_from_realtime_router(...)
+-> GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
 ```
 
 If `accepts_gameplay_packets` is false, the packet is ignored by `GameplaySessionController`.
 
 If gameplay readiness is not yet true, gameplay presentation fanout is skipped even though `ClientConnectionService` has already delegated the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has applied the available lane state.
 
+`RealtimePacketPipeline.is_gameplay_ready()` determines whether the client has the required realtime lane baseline for gameplay presentation. `RealtimePacketPipeline.get_presentation_state()` returns the applied state that `GameplaySessionController` later fans out when presentation is allowed.
+
 Packet application and presentation fanout are separate boundaries. RealtimePacketPipeline owns application and readiness; GameplaySessionController owns deferred presentation fanout.
+
+### Active and inactive input gating
+
+`GameplaySessionController` only forwards gameplay lane packets and player pause packets while `accepts_gameplay_packets` is true.
+
+When the gate is inactive, the controller ignores gameplay lane packets and pause packets at the session boundary. Debug packets remain routed independently of this gate.
 
 ### Player pause packets
 
@@ -249,7 +261,6 @@ Owned local state includes:
 * `accepts_gameplay_packets`
 * references to connection service, HUD, gameplay UI, main menu, session context, shell boot flow, and logger
 * gameplay composition reference
-* gameplay state flow reference used as a gameplay-readiness holder
 * lifecycle signals for replay and return-to-pregame requests
 
 The lifecycle does not persist data.
@@ -273,7 +284,6 @@ The lifecycle does not own durable player identity, account state, local profile
 
 ### Runtime lane state participants
 
-* `client/scripts/gameplay/state/gameplay_state_flow.gd`
 * `client/scripts/protocol/realtime/realtime_router.gd`
 * `client/scripts/protocol/realtime/presentation_adapter.gd`
 * `client/scripts/protocol/realtime/devtools_lane_state_adapter.gd`
@@ -330,7 +340,7 @@ Relevant client tests include:
 
 `GameplaySessionState.can_process_gameplay_packets()` allows blank room state, `InGame`, and `GameOver`, but the current `GameplaySessionController` packet gate is opened explicitly by `begin_accepting_gameplay_packets()` when room state reaches `InGame`.
 
-`GameplayStateFlow` is currently a thin readiness holder around `GameplayReadiness`. It does not own the active gameplay lane packet handling path.
+`RealtimePacketPipeline` owns readiness and presentation-state access for active gameplay lane fanout. `GameplaySessionController` consumes `is_gameplay_ready()` and `get_presentation_state()`; it does not rely on a separate readiness-holder wrapper.
 
 Dead-HUD recovery, alive-presentation restoration, and respawn-facing presentation do not belong to `GameplaySessionController`; they route through gameplay composition and the focused runtime flows behind it.
 

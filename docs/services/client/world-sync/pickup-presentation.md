@@ -116,7 +116,9 @@ Current application path:
 
 ```text
 RealtimeRouter.route_lane_packet(...)
--> world lane applier updates world_lane_state
+-> lane appliers mutate world_lane_state
+-> RealtimePacketPipeline.refresh_presentation_state(...)
+-> RealtimePresentationState.world_lane_state
 -> WorldPresentationAdapter.apply_world_lane_state(...)
 -> WorldSync.apply_world_lane_state(world_lane_state)
 -> PickupSync.remove_missing(world_lane_state.pickups)

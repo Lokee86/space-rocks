@@ -486,4 +486,3 @@ The legacy devtools documentation correctly treated server hitbox display as dev
 The current packet sends shape definitions once per room id within a websocket write loop. If refresh, acknowledgement, or catalog versioning becomes necessary later, that belongs in protocol or devtools planning until implemented.
 
 Pickup shape ids in the server catalog are based on collision-shape catalog keys. Current collision-shape data uses pickup class keys such as `powerup` and `weapon`, while live pickup state also has a pickup type such as `1_up`. Client overlay drawing depends on resolver ids matching catalog ids.
-

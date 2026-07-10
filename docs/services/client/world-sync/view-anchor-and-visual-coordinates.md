@@ -115,13 +115,15 @@ Player meaning is the presentation-layer interpretation of player state around t
 
 ### Coordinate ownership boundary
 
-`RealtimeRouter` applies world lane state/readiness, then `WorldPresentationAdapter` forwards that lane-applied world state into `WorldSync`.
+`RealtimeRouter` mutates world lane state, `RealtimePacketPipeline` refreshes `RealtimePresentationState`, and `WorldPresentationAdapter` receives `world_lane_state` from that wrapper before forwarding it into `WorldSync`.
 
 `WorldSync` then applies that world lane state to player rendering and entity sync. ViewAnchor and visual coordinates are handled inside world sync, not in packet readers or retired combined-state fanout.
 
 ```text
 RealtimeRouter
--> world lane applier
+-> lane appliers mutate world_lane_state
+-> RealtimePacketPipeline
+-> RealtimePresentationState.world_lane_state
 -> WorldPresentationAdapter.apply_world_lane_state(...)
 -> WorldSync.set_current_self_id(...)
 -> WorldSync.apply_world_lane_state(world_lane_state)

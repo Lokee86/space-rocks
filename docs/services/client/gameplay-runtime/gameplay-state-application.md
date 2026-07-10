@@ -6,7 +6,7 @@ Parent index: [Gameplay Runtime](./!INDEX.md)
 
 This document describes the active lane-native client gameplay presentation path.
 
-It covers realtime packet routing, lane state ownership, baseline readiness, presentation adapters, event batch application, and the boundary between gameplay runtime orchestration and world rendering.
+It covers realtime packet routing, lane state ownership, baseline readiness, the applied-state wrapper `RealtimePresentationState`, deferred presentation fanout, event batch application, and the boundary between gameplay runtime orchestration and world rendering.
 
 ## Overview
 
@@ -20,19 +20,20 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> ServerPacketDispatcher / ServerPacketRouter classify packet
 -> lifecycle packet families are included in the active path
 -> ClientConnectionService delegates gameplay packet to RealtimePacketPipeline
--> RealtimePacketPipeline expands and validates packet
+-> RealtimePacketPipeline.apply_packet(packet)
 -> RealtimeRouter.route_lane_packet(packet)
 -> RealtimeRouter mutates lane state
--> RealtimePacketPipeline updates readiness and emits gameplay_packet_applied(packet)
--> ClientConnectionService emits gameplay_packet_received(packet)
+-> RealtimePacketPipeline refreshes RealtimePresentationState
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> ClientConnectionService.gameplay_packet_received(packet)
 -> SessionNetworkController receives gameplay_packet_received
--> GameplaySessionController performs readiness-gated presentation fanout
--> PresentationAdapter fans out current lane state
+`GameplaySessionController` performs readiness-gated deferred fanout
+-> GameplaySessionController fans out `RealtimePresentationState` after pipeline application
 -> WorldPresentationAdapter -> WorldSync.apply_world_lane_state(...)
 -> OverlayPresentationAdapter -> GameplayHudFlow.apply_overlay_lane_state(...)
 -> SessionPresentationAdapter -> GameplayHudFlow.apply_session_lane_state(...)
 -> EventPresentationAdapter -> GameplayEventLifecycleFlow / GameplayEventFlow
--> GameplayComposition.restore_alive_presentation_from_realtime_router(...)
+-> GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
 -> DevtoolsLaneStateAdapter builds a separate devtools readmodel
 ```
 
@@ -52,7 +53,7 @@ client/scripts/session/gameplay_session_controller.gd
 client/scripts/session/session_network_controller.gd
 ```
 
-The realtime client package owns lane state, readiness tracking, and presentation adapters. Inbound networking application completes through RealtimePacketPipeline. RealtimeRouter performs lane-specific mutation beneath the pipeline before session and presentation handoff begins.
+The realtime client package owns lane state, readiness tracking, and presentation fanout. Inbound networking application completes through RealtimePacketPipeline, which refreshes `RealtimePresentationState` before session and presentation handoff begins.
 
 ## Responsibilities
 
@@ -84,7 +85,7 @@ The lane-native client path does not own:
 
 ## Domain roles
 
-Presentation consumes lane state after RealtimePacketPipeline has completed application through its owned RealtimeRouter.
+Presentation consumes `RealtimePresentationState` after `RealtimePacketPipeline` has completed application and refreshed the applied-state wrapper.
 
 The client owns transient lane presentation state only. It does not persist authoritative gameplay state.
 
@@ -113,7 +114,7 @@ Generated packet constants and builders come from the packet schema pipeline.
 
 ## Presentation adapters
 
-Presentation adapters are the packet-to-runtime boundary for gameplay presentation.
+`RealtimePresentationState` is the packet-to-runtime boundary for gameplay presentation.
 
 #### Sparse delta handling
 
@@ -121,7 +122,7 @@ World lane sparse compatibility lives in `client/scripts/protocol/realtime/world
 
 Sparse field omission is a server wire-map behavior, and the client compatibility rule is to tolerate missing fields without treating them as deletes or clears. Those appliers treat missing sparse delta section fields as empty arrays or no-op, preserve missing fields inside present update records as unchanged, and preserve meaningful zero values when they are actually emitted. In `session_delta`, missing `total_asteroids` means unchanged, while a present `total_asteroids: 0` remains meaningful.
 
-Current adapter roles are:
+Current applied-state fanout roles are:
 
 ```text
 WorldPresentationAdapter
@@ -156,8 +157,8 @@ RealtimeRouter
 SessionNetworkController
 = forwards gameplay_packet_received(packet) into GameplaySessionController
 
-GameplaySessionController
-= owns accepts_gameplay_packets, checks gameplay readiness, fans out lane state, builds the devtools readmodel, and triggers alive-presentation restoration
+`GameplaySessionController`
+= owns accepts_gameplay_packets, checks gameplay readiness, defers presentation fanout until after packet application, builds the devtools readmodel, and triggers alive-presentation restoration
 
 PresentationAdapter
 = fans out presentable lane state into world, overlay, session, and event presentation consumers
@@ -246,4 +247,6 @@ Relevant client tests include:
 
 This document is the canonical client lane-native gameplay application doc.
 
-Current gameplay application follows lane-adapter flow and `event_batch` delivery only.
+`RealtimePacketPipeline` owns lane application and refreshes `RealtimePresentationState` before any presentation fanout occurs.
+
+`GameplaySessionController` reads pipeline readiness and performs deferred presentation fanout after packet application has completed.

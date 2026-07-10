@@ -524,4 +524,3 @@ The event adapter currently returns a zero-value `EventState` for unsupported ev
 This document lives under simulation runtime because it documents a runtime queue on the `Game` aggregate. The concrete queue implementation is in the root `internal/game` package, not in the Go `internal/game/runtime` package.
 
 
-

@@ -572,4 +572,3 @@ The current implementation does not use binary encoding for events.
 - `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
 - PacketCodec compact decode coverage in `client/tests/unit/test_packet_codec.gd`
 
-

@@ -217,7 +217,7 @@ Godot input action
 -> realtime server
 ```
 
-The client sends gameplay input only when the session is active enough to accept gameplay input. Paused gameplay, disconnected network state, and blocking UI state should prevent gameplay input packets from being sent.
+The client sends gameplay input only when the session is active enough to accept gameplay input. `GameplaySessionController._input(event)` and `_unhandled_input(event)` return immediately when `accepts_gameplay_packets` is false, so inactive sessions do not route input through devtools checks, HUD input-policy checks, normal gameplay input routing, or `set_input_as_handled()`. Paused gameplay, disconnected network state, and blocking UI state should prevent gameplay input packets from being sent.
 
 The server remains authoritative after input is sent. The client updates presentation from incoming lane packets rather than treating local input as confirmed gameplay lane state.
 

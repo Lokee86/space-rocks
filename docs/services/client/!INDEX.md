@@ -52,4 +52,4 @@ This folder owns docs for the client runtime and its implementation responsibili
 
 ## Notes
 
-This index stays at the client service boundary and does not try to describe broader domain flows.
+This index stays at the client service boundary and does not try to describe broader domain flows. Presentation consumers within the client branch read `RealtimePresentationState` after runtime routing, and the service index only summarizes that seam at a high level.

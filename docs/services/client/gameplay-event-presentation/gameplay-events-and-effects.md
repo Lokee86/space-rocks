@@ -190,14 +190,14 @@ The event or effects path owns game-over sound delay and one-shot gating. Match-
 
 ### Alive restoration boundary
 
-Alive restoration is a separate post-fanout gameplay-composition delegation.
+Alive restoration is a separate post-fanout gameplay-composition delegation through the `RealtimePresentationState` seam.
 
 It is not part of `GameplayStateApplyFlow` and not part of the active `event_batch` presentation route.
 
 Current path:
 
 ```text
-GameplayComposition.restore_alive_presentation_from_realtime_router(...)
+GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
 -> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
 -> GameplayAliveRestoreFlow.apply_lane_state(...)
 ```
@@ -219,12 +219,13 @@ Gameplay event presentation happens after lane state fanout and uses the realtim
 Current active order is:
 
 ```text
-1. RealtimeRouter applies `event_batch` through event_batch_applier.
-2. EventPresentationAdapter drains applied events.
-3. GameplayEventLifecycleFlow.apply_server_events(...).
-4. GameplayEventFlow.apply_server_events(...).
-5. GameplayEventController routes supported event types.
-6. GameplayEffects or GameplayDeathFlow present local consequences.
+1. RealtimePacketPipeline verifies gameplay readiness before fanout.
+2. RealtimeRouter applies `event_batch` through `event_batch_applier`, while presentation consumers later read `RealtimePresentationState` rather than routing state directly.
+3. EventPresentationAdapter drains applied events.
+4. GameplayEventLifecycleFlow.apply_server_events(...).
+5. GameplayEventFlow.apply_server_events(...).
+6. GameplayEventController routes supported event types.
+7. GameplayEffects or GameplayDeathFlow present local consequences.
 ```
 
 Alive restoration is a separate post-fanout delegation and does not consume `event_batch` as a state-application step.
@@ -496,79 +497,3 @@ The underlying constants source belongs to shared data and the data-sync pipelin
 * `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Separate post-fanout alive restoration owner.
 
 ### Coordinate conversion collaborators
-
-* `client/scripts/world/world_sync.gd` - Exposes `visual_position_for_server_position(...)`.
-* `client/scripts/world/player_render/player_render_api.gd` - Routes coordinate conversion through the active player-render API.
-* `client/scripts/world/player_render/view_anchor_sync.gd` - Wraps ViewAnchor visual or server coordinate conversion.
-
-### Match-end and HUD collaborators
-
-* `client/scripts/gameplay/match_end/match_end_flow.gd` - Handles final local elimination and authoritative room match-over presentation orchestration.
-* `client/scripts/shell/gameplay_hud_flow.gd` - Owns HUD lives, dead, respawn, game-over, and match-over visibility behavior.
-* `client/scripts/shell/gameplay_menu_flow.gd` - Owns gameplay menu and match-over overlay menu presentation.
-
-### Effect scenes
-
-* `client/scenes/animations/bullet_blast.tscn`
-* `client/scenes/animations/ship_death.tscn`
-* `client/scenes/animations/torpedo_explosion.tscn`
-* `client/scenes/pickups/pickup_collect.tscn`
-
-### Generated and source-of-truth boundaries
-
-* `client/scripts/generated/networking/packets/packets.gd`
-* `client/scripts/generated/constants/constants.gd`
-* `shared/packets/gameplay.toml`
-* `services/game-server/internal/game/events/events.go`
-* `services/game-server/internal/game/packets.go`
-
-### Non-owning boundaries
-
-* `client/scripts/networking/` - Owns WebSocket transport, packet decode, packet classification, and signal dispatch.
-* `client/scripts/world/` - Owns persistent world entity sync, ViewAnchor, visual coordinates, interpolation, and pickup node presentation.
-* `client/scripts/ui/` - Owns mounted UI widgets and result-window controls.
-* `services/game-server/` - Owns simulation, event production, event packet adaptation, room state, and authoritative match lifecycle.
-* `shared/` - Owns packet and constants source-of-truth files.
-
-## Tests
-
-Relevant tests include:
-
-* `client/tests/unit/test_event_batch_applier.gd`
-* `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
-* `client/tests/unit/gameplay/test_gameplay_event_controller.gd`
-* `client/tests/unit/gameplay/events/test_gameplay_death_flow.gd`
-* `client/tests/unit/gameplay/effects/test_gameplay_effects.gd`
-* `client/tests/unit/gameplay/test_gameplay_flow_composer.gd`
-* `client/tests/unit/gameplay/match_end/test_match_end_flow.gd`
-* `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
-* `client/tests/unit/test_world_sync.gd`
-* `client/tests/unit/world/player_render/test_view_anchor_sync.gd`
-
-Use the normal client GUT verification flow when changing event or effects presentation behavior.
-
-## Related docs
-
-* [Gameplay Event Presentation](./!INDEX.md)
-* [Gameplay Audio Flow](gameplay-audio-flow.md)
-* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
-* [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
-* [Match End Flow](../match-end-flow/!INDEX.md)
-* [Match End Orchestration](../match-end-flow/match-end-orchestration.md)
-* [Pickup Presentation](../world-sync/pickup-presentation.md)
-* [View Anchor And Visual Coordinates](../world-sync/view-anchor-and-visual-coordinates.md)
-* [HUD And Gameplay UI](../hud-and-gameplay-ui.md)
-* [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
-* [Realtime websocket protocol](../../../protocol/realtime-websocket-protocol.md) - realtime websocket protocol documentation.
-* [Radial effects](../../../systems-design/combat/radial-effects.md) - radial effects design documentation.
-* [Pickup entities](../../../systems-design/entities/pickup-entities.md) - pickup entity design documentation.
-
-## Notes
-
-Legacy docs correctly identified the event, effects, and audio path as the owner of game-over sound playback, delay, and one-shot gating. Current implementation keeps that ownership in `GameplayEffects` and `GameplayAudioFlow`.
-
-`pickup_collected` collection effects belong to gameplay event or effects presentation even though pickup node rendering belongs to world sync. This separation lets a pickup collection particle and sound outlive the pickup node that may be removed by the next world-sync lane application.
-
-The current client event controller routes `pickup_effect_applied` but does not spawn a visual effect for it. Do not document that event as a visible client effect unless implementation changes.
-
-The event or effects path should stay presentation-only. New event types should be added by extending server event production, packet or schema documentation, and client presentation routing without moving gameplay authority into the client.

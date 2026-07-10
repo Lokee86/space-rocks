@@ -43,4 +43,4 @@ This folder owns client app entry, shell/session composition, boot flow, room se
 
 ## Notes
 
-This index stays at the client app-shell-and-session boundary and does not expand into lobby-specific or gameplay runtime ownership.
+This index stays at the client app-shell-and-session boundary and does not expand into lobby-specific or gameplay runtime ownership. Where session boot reaches gameplay, the relevant presentation seam is `RealtimePresentationState`, but this index does not add presentation entries.

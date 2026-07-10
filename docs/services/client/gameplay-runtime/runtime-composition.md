@@ -12,7 +12,7 @@ It documents how the Godot client builds the gameplay runtime from focused flows
 
 The client gameplay runtime is presentation orchestration. It does not simulate authoritative gameplay.
 
-Runtime composition starts after the client has entered a gameplay-capable session and the gameplay scene has been mounted. The composition layer wires existing scene references, runtime services, gameplay flows, and signal routes into a single runtime surface that can receive lane-native presentation handoffs, process per-frame presentation work, and reset cleanly when the gameplay session exits.
+Runtime composition starts after the client has entered a gameplay-capable session and the gameplay scene has been mounted. The composition layer wires existing scene references, runtime services, gameplay flows, and signal routes so the composed runtime can receive lane-native presentation handoffs, process per-frame presentation work, and reset cleanly when the gameplay session exits.
 
 The main composition chain is:
 
@@ -28,7 +28,7 @@ GameplaySessionController
 
 `GameplayComposition` is the top-level gameplay composition object. It wires the gameplay shell, HUD flow, gameplay menu flow, match-end flow, match-results flow, spectate flow, devtools session flow, and gameplay presentation flow.
 
-`GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, creates the flow composer, stores required lane baseline sync, and routes lane-native presentation helpers into focused runtime seams.
+`GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, creates the flow composer, stores required lane baseline sync, and preserves a stable runtime pipeline identity for the composed gameplay frame path.
 
 `GameplayRuntimeContext` is the runtime holder for world sync, respawn, input and presentation collaborators that need to be shared across gameplay flows.
 
@@ -48,12 +48,11 @@ The important boundary is that composition wires flows together, but does not co
 * Create and configure `GameplayRuntimeContext`.
 * Create and configure `GameplayFlowComposer`.
 * Wire world sync, HUD runtime flow, input context, devtools context, spectate context, event lifecycle flow, targeting context, alive-restore flow, server hitbox overlay flow, and gameplay process flow.
-* Provide a single runtime surface for alive-presentation restoration from lane-native state.
-* Provide a single runtime surface for devtools gameplay readmodels only.
-* Provide a single runtime surface for applying player pause state.
+* Provide a stable pipeline identity for the composed gameplay runtime.
+* Provide deferred fanout surfaces for alive-presentation restoration and presentation updates after `RealtimePresentationState` has been refreshed.
 * Route player pause packets through pause-state reader and tracker helpers.
-* Provide a single runtime surface for debug status and debug shape catalog packets.
-* Provide a single runtime surface for per-frame gameplay presentation processing.
+* Provide debug status and debug shape catalog packet entry points.
+* Preserve current per-frame gameplay presentation ordering.
 * Reset composed runtime state during gameplay-session teardown.
 * Keep runtime composition separate from entity sync, packet schema ownership, gameplay input behavior, HUD widget behavior, and match-end policy.
 
@@ -135,12 +134,12 @@ The session controller owns the outer lifecycle. Composition owns gameplay runti
 
 ### Lane-native presentation entries
 
-Runtime composition participates after `RealtimeRouter` and `PresentationAdapter` have already applied or fanned out lane state.
+Runtime composition participates after `RealtimePacketPipeline` has refreshed `RealtimePresentationState` and before deferred fanout from `GameplaySessionController` begins.
 
 Current lane-native delegation surfaces are:
 
 ```text
-GameplayComposition.restore_alive_presentation_from_realtime_router(router)
+GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
 -> GameplayShellFlow.restore_alive_presentation_from_lane_state(world_lane_state, session_lane_state, self_id)
 -> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
 ```
@@ -150,6 +149,8 @@ GameplayComposition.apply_devtools_gameplay_state(state)
 -> GameplayShellFlow.apply_devtools_gameplay_state(state)
 -> GameplayFlowComposer.apply_devtools_gameplay_state(state)
 ```
+
+`RealtimePresentationState` is the applied-state wrapper passed into composition for deferred fanout.
 
 The alive-restore path exists for lane-state-driven respawn/alive presentation only.
 

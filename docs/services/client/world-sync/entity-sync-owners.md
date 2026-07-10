@@ -107,7 +107,8 @@ The realtime protocol seam has already applied world, lifecycle, and hot movemen
 Current delegation shape:
 
 ```text
-RealtimeRouter applies world, lifecycle, and hot packets into world_lane_state
+RealtimeRouter mutates world_lane_state
+-> RealtimePacketPipeline refreshes RealtimePresentationState
 -> WorldPresentationAdapter.apply_world_lane_state(...)
 -> WorldSync.apply_world_lane_state(world_lane_state)
 -> PlayerRenderApi.apply_state(current_self_id, world_lane_state.ships)

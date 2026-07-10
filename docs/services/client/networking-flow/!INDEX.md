@@ -39,4 +39,4 @@ This folder owns client WebSocket connection, packet routing, packet dispatch, a
 
 ## Notes
 
-This index stays at the client networking-flow boundary and does not expand into packet schema ownership or server transport behavior.
+This index stays at the client networking-flow boundary and does not expand into packet schema ownership or server transport behavior. Presentation consumers downstream of this folder read `RealtimePresentationState` after routing, so this index only tracks the network seam that feeds that state.

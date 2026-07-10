@@ -113,7 +113,9 @@ The devtools window is lazily instantiated by `DevtoolsWindowController`. The co
 
 The devtools window presents debug controls and raw readouts. It does not own command authority. Button presses emit signals, the controller resolves target context, and the command or placement contexts decide whether a packet can be sent.
 
-Active devtools placement input is handled before normal gameplay input. `GameplaySessionController._input()` calls `gameplay_composition.handle_devtools_input(event)` first. If a devtools placement flow consumes the event, viewport input is marked handled and normal HUD/gameplay input does not receive that event.
+Active devtools placement input is handled while gameplay input routing is active. `GameplaySessionController._input()` gives devtools first refusal before normal HUD/gameplay input only after `accepts_gameplay_packets` has been confirmed true for the active session. If that gate is not open, devtools input does not preempt gameplay/UI handling.
+
+When gameplay tears down, the controller returns before devtools input can inspect or consume the returned-menu click path. This prevents teardown-time menu clicks from being swallowed by the devtools placement flow.
 
 ## Commands or controls
 
