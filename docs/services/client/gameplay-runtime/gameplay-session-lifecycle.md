@@ -128,9 +128,9 @@ Both paths also refresh match-end state after room state is applied.
 ### Gameplay presentation bridge
 
 ```text
-ClientConnectionService
--> ServerPacketDispatcher
--> RealtimePacketPipeline.apply_packet(packet)
+ServerPacketDispatcher
+-> ClientInboundCoordinator typed realtime binding
+-> RealtimePacketPipeline typed apply entry point
 -> RealtimeRouter applies the packet
 -> RealtimePresentationState is refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
@@ -142,9 +142,9 @@ ClientConnectionService
 
 If `accepts_gameplay_packets` is false, the packet is ignored by `GameplaySessionController`.
 
-If gameplay readiness is not yet true, presentation orchestration is skipped even though `ClientConnectionService` has already delegated the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has applied the available lane state. Pipeline packet application may still occur while gameplay presentation is inactive.
+If gameplay readiness is not yet true, presentation orchestration is skipped even though `ServerPacketDispatcher` has already delivered the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has applied the available realtime state. Packet application may still occur while gameplay presentation is inactive.
 
-`RealtimePacketPipeline.is_gameplay_ready()` determines whether the client has the required realtime lane baseline for gameplay presentation. `RealtimePacketPipeline.get_presentation_state()` returns the applied state that gameplay composition later consumes when presentation is allowed.
+`RealtimePacketPipeline.is_gameplay_ready()` determines whether the client has the required realtime baseline for gameplay presentation. `RealtimePacketPipeline.get_presentation_state()` returns the applied state that gameplay composition later consumes when presentation is allowed.
 
 Packet application and gameplay handoff are separate boundaries. `RealtimePacketPipeline` owns application and readiness; `PresentationBridge` owns presentation orchestration; gameplay composition owns the downstream presentation targets.
 

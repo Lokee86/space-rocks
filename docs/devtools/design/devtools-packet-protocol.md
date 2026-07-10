@@ -447,16 +447,30 @@ Devtools-related inbound routes currently include:
 
 ```text
 debug_status
--> ClientConnectionService.debug_status_received
+-> NetworkClient.packet_received(packet)
+-> ClientConnectionService._on_packet_received(packet)
+-> ServerPacketDispatcher.dispatch(packet)
+-> ServerPacketRouter classifies debug_status
+-> ClientInboundCoordinator.debug_status_received(packet)
+-> ClientConnectionService._on_debug_status_received(packet)
+-> ClientConnectionService.debug_status_received(packet)
+-> SessionNetworkController
 -> GameplaySessionController.handle_debug_status_packet
 -> GameplayComposition.apply_devtools_debug_status_packet
 -> GameplayDevtoolsContext.apply_debug_status_packet
 -> devtools readmodel refresh built from lane-applied state
 
 debug_shape_catalog
--> ClientConnectionService.debug_shape_catalog_received
+-> NetworkClient.packet_received(packet)
+-> ClientConnectionService._on_packet_received(packet)
+-> ServerPacketDispatcher.dispatch(packet)
+-> ServerPacketRouter classifies debug_shape_catalog
+-> ClientInboundCoordinator.debug_shape_catalog_received(packet)
+-> ClientConnectionService._on_debug_shape_catalog_received(packet)
+-> ClientConnectionService.debug_shape_catalog_received(packet)
+-> SessionNetworkController
 -> GameplaySessionController.handle_debug_shape_catalog_packet
--> GameplayComposition.apply_debug_shape_catalog_packet
+-> GameplayComposition.apply_devtools_debug_shape_catalog_packet
 -> server hitbox overlay catalog state
 
 telemetry_pong
@@ -721,8 +735,6 @@ The devtools packet protocol deliberately reuses the normal WebSocket packet tra
 World telemetry overlay packet timing uses `telemetry_ping` and `telemetry_pong`, which belong to the gameplay packet schema. The overlay is devtools presentation, but the packet pair is not defined in `debug.toml`.
 
 `target_player_id` remains a devtools compatibility field for player-only debug commands. New gameplay targeting should continue to use canonical target kind/id fields instead of extending `target_player_id` further.
-
-
 
 
 

@@ -260,7 +260,7 @@ This is still part of the outbound packet sending path. The difference is only w
 
 ### Auth packet special case
 
-WebSocket auth send is a special case.
+WebSocket authentication is special only because it is triggered automatically after the WebSocket connection opens.
 
 When the socket opens, `ClientConnectionService._on_connected()` calls:
 
@@ -271,12 +271,13 @@ _send_authenticate_request_if_token_exists()
 That reads the auth session token and calls:
 
 ```text
-NetworkClient.send_authenticate_request(token)
+ClientPacketSender.send_authenticate_request(token)
+-> Packets.authenticate_request_packet(token)
+-> ClientPacketSender.send_packet(packet)
+-> NetworkClient.send_raw_packet(packet)
 ```
 
-`NetworkClient.send_authenticate_request()` builds the generated auth packet and sends through `send_raw_packet()`.
-
-This bypasses `ClientPacketSender`, but it still uses the same raw send path.
+Authentication uses the same `ClientPacketSender` outbound path as every other protocol packet. All outbound protocol packets now flow through `ClientPacketSender`.
 
 ### Timing and gating
 
@@ -447,7 +448,7 @@ authenticate_request
 
 Auth send is triggered after the raw WebSocket connection opens when a token exists in the auth session controller.
 
-The auth request uses the same raw send path, but it is sent directly through `NetworkClient.send_authenticate_request()` rather than through `ClientPacketSender`.
+The auth request uses the common `ClientPacketSender` path. It remains special only because it is triggered automatically after the raw WebSocket connection opens when a token exists in the auth session controller.
 
 ## Data ownership
 
@@ -620,15 +621,16 @@ The outbound telemetry packet is an observation request. The corresponding serve
 Current WebSocket auth path:
 
 ```text
-NetworkClient.connected_to_server
+-> NetworkClient.connected_to_server
 -> ClientConnectionService._on_connected()
 -> ClientConnectionService._send_authenticate_request_if_token_exists()
--> NetworkClient.send_authenticate_request(token)
+-> ClientPacketSender.send_authenticate_request(token)
 -> Packets.authenticate_request_packet(token)
+-> ClientPacketSender.send_packet(packet)
 -> NetworkClient.send_raw_packet(packet)
 ```
 
-This path bypasses `ClientPacketSender` but still uses generated packets and the common raw send method.
+Authentication is special only because it is triggered automatically after the WebSocket connection opens. It otherwise follows the common outbound sender path. All outbound protocol packets now flow through `ClientPacketSender`.
 
 ## Connection and send constraints
 
@@ -773,6 +775,4 @@ No focused `ClientPacketSender` unit test was found during this pass.
 
 Realtime packet schemas are sourced from `shared/packets/*.toml`, generated client packet helpers live under `client/scripts/generated/networking/packets/`, and client input and devtools send intent while server systems own authority.
 
-`ClientPacketSender` is not the only path that builds outbound packet dictionaries. Target selection, viewport config, and auth use generated helpers closer to their owning flows, then converge at the same raw send path.
-
-
+`ClientPacketSender` is the common outbound protocol path. Target selection and viewport config use generated helpers closer to their owning flows, then converge through `ClientPacketSender` at the same raw send path.

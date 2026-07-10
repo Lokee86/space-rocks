@@ -76,7 +76,7 @@ RepeatedPlanetBackground
 * Attach auth session state to the connection service for websocket authentication.
 * Configure background presentation against the `ViewAnchor`.
 * Configure gameplay session composition with scene node anchors and session dependencies.
-* Configure network-session routing for connection, room, gameplay, debug, pause, and auth packets.
+* Configure network-session routing for connection, room, gameplay, debug, pause, and auth signals.
 * Configure room-session state and room-to-gameplay providers.
 * Configure main-menu session requests into session boot.
 * Configure menu-flow routing and pregame callbacks.
@@ -220,7 +220,7 @@ Room state caching and lobby presentation belong to `RoomSessionController` and 
 
 `AppEntry` creates `SessionNetworkController`, configures it with the connection service and shell boot flow, then connects connection, room, and gameplay signals.
 
-The network controller owns dispatching received connection-service signals to room and gameplay session owners. `AppEntry` only installs the wiring.
+The network controller owns dispatching received connection-service signals to room and gameplay session owners. `AppEntry` only installs the wiring. Decoded packets enter `ClientConnectionService`, which forwards them only into `ServerPacketDispatcher.dispatch(packet)`; post-classification consumer routing belongs to `ClientInboundCoordinator` and the focused downstream consumers.
 
 ### Shutdown composition
 
@@ -244,19 +244,53 @@ RoomSessionController
 GameplaySessionController
 ```
 
-ClientConnectionService composes two separate realtime collaborators:
+`ClientConnectionService` constructs and configures three focused realtime collaborators:
 
-- RealtimeTransportSession owns the active WebRTCTransport lifecycle, including construction, signal wiring, start, poll, close, and reconnect replacement.
-- RealtimePacketPipeline owns the active RealtimeRouter, gameplay packet expansion and validation, readiness, reset, lane-application ordering, post-application notification, and its `RealtimePresentationState`.
+* `ClientInboundCoordinator` owns all dispatcher-consumer bindings and inbound branch selection, including WebRTC answer, ICE, ready, smoke, failure, application-facing, and gameplay dispatcher signals; it translates server readiness into semantic `realtime_transport_ready`.
+* `RealtimeTransportSession` owns the active `WebRTCTransport` lifecycle, including construction, signal wiring, start, poll, close, and reconnect replacement.
+* `RealtimePacketPipeline` owns the active `RealtimeRouter`, gameplay packet expansion and validation, readiness, reset, lane application, presentation-state refresh, and post-application notification.
 
-ClientConnectionService coordinates those collaborators and exposes compatibility methods and signals to the rest of the client. It does not directly own WebRTC transport mechanics or RealtimeRouter state.
+`ClientInboundCoordinator.configure(...)` installs the dispatcher-consumer bindings for gameplay lanes, WebRTC control packets, and application-facing packet signals. `ClientConnectionService` then connects the coordinator's application-facing and readiness signals to its facade handlers. It owns the logical connection facade, collaborator composition, polling, `reset_realtime_session()` coordination, and outbound API; `reset_realtime_session()` resets the existing `RealtimePacketPipeline` state and clears the realtime transport session. It does not install direct realtime dispatcher bindings or own WebRTC peer mechanics, gameplay lane application, or raw WebRTC control handling.
 
-```text
-ClientConnectionService
--> RealtimeTransportSession
-   -> WebRTCTransport
--> RealtimePacketPipeline
-   -> RealtimeRouter
+### Composition ownership
+
+```
+  ClientConnectionService
+  ├─ NetworkClient
+  ├─ ClientPacketSender
+  ├─ ServerPacketDispatcher
+  ├─ ClientInboundCoordinator
+  │  └─ current RealtimeTransportSession target
+  ├─ RealtimeTransportSession
+  │  └─ WebRTCTransport
+  └─ RealtimePacketPipeline
+     └─ RealtimeRouter
+```
+
+### State and signal-binding ownership
+
+```
+  Owner                       Responsibility
+  ------------------------------------------------------------------------
+  ClientConnectionService     composition, lifecycle facade, outbound API,
+                              coordinator signal wiring, public facade relay,
+                              semantic ready relay
+  ClientInboundCoordinator    all post-classification dispatcher-consumer
+                              bindings and inbound branch selection
+  RealtimeTransportSession    WebRTC transport lifecycle and callbacks
+  RealtimePacketPipeline      realtime packet application, readiness, reset,
+                              and presentation state
+  ServerPacketDispatcher      typed packet classification and signal emission
+```
+
+`ClientConnectionService` forwards decoded packets only into `ServerPacketDispatcher.dispatch(packet)`. `ClientInboundCoordinator` owns the post-classification consumer routing, while the public `ClientConnectionService` signals provide the application-facing relay for room, auth, debug, player-pause, telemetry, unknown-packet, and semantic readiness events.
+
+The semantic readiness chain is:
+
+```
+  ClientInboundCoordinator.realtime_transport_ready
+  -> ClientConnectionService.realtime_transport_ready
+  -> SessionNetworkController
 ```
 
 ### Startup auth flow
@@ -392,6 +426,7 @@ That is a handoff from menu/profile presentation into session boot. Local profil
 * `client/scripts/networking/client_connection_service.gd`
 * `client/scripts/networking/network_client.gd`
 * `client/scripts/networking/inbound/server_packet_dispatcher.gd`
+* `client/scripts/networking/inbound/client_inbound_coordinator.gd`
 * `client/scripts/networking/inbound/server_packet_router.gd`
 * `client/scripts/networking/outbound/client_packet_sender.gd`
 
@@ -431,6 +466,8 @@ client/tests/unit/ui/menu_flow/test_menu_flow_controller.gd
 client/tests/unit/ui/menu_flow/test_multiplayer_entry_flow.gd
 client/tests/unit/test_pending_boot_request.gd
 client/tests/unit/test_shell_boot_flow.gd
+client/tests/unit/networking/inbound/test_client_inbound_coordinator.gd
+client/tests/unit/test_client_connection_service_webrtc.gd
 client/tests/unit/test_session_network_controller.gd
 client/tests/unit/boot/test_session_network_target.gd
 client/tests/unit/test_room_session_controller.gd

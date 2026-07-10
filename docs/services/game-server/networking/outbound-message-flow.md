@@ -163,6 +163,8 @@ Active lane metadata persistence, event drain, and baseline persistence happen o
 
 Chunk metadata exists in the wire shape and scheduler records. The current active path uses it for focused `asteroid_delta` and `bullet_delta` hot-lane chunking. Oversized hot movement update lists are split into multiple real candidates before scheduling and encoding, then written as separate WebRTC messages on the same hot lane. This does not make networking the owner of general fragmentation or record/entity-level prioritization.
 
+The 500 B scheduler target is not a total-per-tick send ceiling; aggregate encoded bytes may exceed it when multiple hot chunks or required packets are written.
+
 ### Debug status
 
 `debug_status` is built by `outbound.BuildDebugStatusResponse()` and covered by tests.

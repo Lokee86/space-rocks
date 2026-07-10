@@ -74,6 +74,7 @@ For active realtime world, asteroid, bullet, overlay, and session packet familie
 When those fields are absent, the client treats the packet as a single final chunk.
 
 For `asteroid_delta` and `bullet_delta`, `chunk_index` and `chunk_count` are emitted when a hot movement update list is split into multiple candidate chunks. All chunks for one original hot-lane delta share the same lane-local sequence and differ by `chunk_index`.
+The client tracks accepted chunk indices separately for each hot lane and sequence, accepts distinct chunks in any arrival order, rejects duplicate chunk indices, and discards older sequences after a newer sequence is accepted.
 
 ## Compact Packet Type Values
 

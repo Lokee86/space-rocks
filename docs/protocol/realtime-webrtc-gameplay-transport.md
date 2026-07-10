@@ -4,7 +4,7 @@ Parent index: [Protocol](./!INDEX.md)
 
 ## Purpose
 
-This document defines the current WebRTC transport boundary for active realtime gameplay packets.
+This document defines the current transport boundary between gameplay data delivery and signaling/control.
 
 It is the canonical protocol doc for physical gameplay DataChannels, lane-to-channel mapping, active gameplay readiness, server send routing, client receive routing, and the current mixed WebRTC gameplay channel policy.
 
@@ -42,9 +42,9 @@ record-level prioritization policy
 
 ## Transport Split
 
-The current realtime stack uses both WebSocket and WebRTC.
+The current realtime stack uses two separate paths:
 
-WebSocket owns:
+WebSocket owns signaling/control and queued non-gameplay server packets:
 
 ```text
 auth packets
@@ -55,7 +55,7 @@ WebRTC signaling packets
 queued one-off server packets
 ```
 
-WebRTC owns:
+WebRTC owns active gameplay data packets:
 
 ```text
 active realtime gameplay output packets
@@ -87,7 +87,7 @@ sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with ma
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
 Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
-Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
+Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid only for distinct `chunk_index` values of the same `chunk_count`; duplicate chunk indices are rejected. Sequence gaps remain valid because hot packets can be dropped.
 ```
 
 
@@ -95,7 +95,7 @@ Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by clien
 
 WebSocket connection readiness is not active gameplay transport readiness.
 
-Active gameplay output requires the WebRTC gameplay transport to exist and be ready. The current client boot flow waits for WebRTC gameplay transport readiness before dispatching gameplay boot requests.
+Active gameplay output requires the WebRTC gameplay transport to exist and be ready. The current client boot flow waits for WebRTC gameplay transport readiness before dispatching gameplay boot requests, while gameplay runtime flows remain responsible for presentation activation after packet application.
 
 A session is not eligible for active gameplay output unless the server has:
 
@@ -132,23 +132,75 @@ The client active gameplay receive path is:
 WebRTCTransport receives DataChannel text
 -> PacketCodec.decode(packet_text)
 -> WebRTCTransport.packet_received(packet)
--> RealtimeTransportSession packet callback
--> ClientConnectionService
--> ServerPacketDispatcher
--> RealtimePacketPipeline.apply_packet(packet)
--> RealtimePacketPipeline expands and validates the packet
+-> RealtimeTransportSession._on_packet_received(packet)
+-> RealtimeTransportSession dispatch callback(packet)
+-> ServerPacketDispatcher.dispatch(packet)
+-> typed dispatcher signal
+-> ClientInboundCoordinator
+-> matching typed RealtimePacketPipeline.apply_* method
 -> RealtimeRouter.route_lane_packet(packet)
 -> RealtimePresentationState refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-RealtimeTransportSession owns transport lifecycle and signal handoff only. `ServerPacketDispatcher` classifies gameplay packets to `RealtimePacketPipeline`. `RealtimePacketPipeline` applies the packet, refreshes `RealtimePresentationState`, and emits `gameplay_packet_applied(packet)`. `PresentationBridge` consumes that semantic notification, with later coalesced flush when ready.
+The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`.
 
-Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering. Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
-Asteroid and bullet lifecycle packets flow through the same WebRTC active gameplay path as the other gameplay lanes.
+`RealtimeTransportSession` owns the WebRTC transport lifecycle and transport-originated callbacks. `ClientConnectionService` configures the transport-session dispatch callback but does not inspect or relay each gameplay packet. `ServerPacketDispatcher` emits the typed gameplay signal to `ClientInboundCoordinator`, which invokes the matching typed `RealtimePacketPipeline` apply method. The pipeline expands and validates the packet, refreshes `RealtimePresentationState`, and emits `gameplay_packet_applied(packet)`. `PresentationBridge` consumes that semantic notification with later coalesced flush when ready.
 
-Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+## WebRTC signaling and control routing
+
+WebSocket packets carry the signaling and control route for the current transport session:
+
+```text
+WebSocket packet
+-> NetworkClient
+-> ClientConnectionService
+-> ServerPacketDispatcher
+-> ClientInboundCoordinator
+-> RealtimeTransportSession
+```
+
+The WebSocket signaling/control route does not pass through the gameplay pipeline. `ClientInboundCoordinator` forwards answer, remote ICE, ready, smoke, and failure handling to `RealtimeTransportSession` or its coordinator-owned diagnostic/readiness handlers.
+
+Inbound control ownership is:
+
+```text
+answer -> RealtimeTransportSession.handle_answer
+remote ICE -> RealtimeTransportSession.handle_remote_ice
+failure -> RealtimeTransportSession.handle_remote_failure
+smoke -> diagnostic consumption
+ready -> semantic realtime_transport_ready
+```
+
+Outbound signaling ownership is:
+
+```text
+local offer and local ICE originate from RealtimeTransportSession
+callbacks use the existing ClientConnectionService.send_webrtc_* outbound facade
+final packet sending remains ClientPacketSender and NetworkClient
+```
+
+Readiness is split between transport-local and server-confirmed states:
+
+```text
+WebRTCTransport.ready
+-> local DataChannel readiness
+-> smoke diagnostics start
+
+server webrtc_ready packet
+-> ServerPacketDispatcher
+-> ClientInboundCoordinator.handle_webrtc_ready
+-> ClientInboundCoordinator.realtime_transport_ready
+-> ClientConnectionService.realtime_transport_ready
+-> SessionNetworkController._on_realtime_transport_ready
+-> _webrtc_gameplay_ready = true
+-> _try_send_pending_boot_request()
+```
+
+`ClientConnectionService` owns logical connection composition, polling, reset coordination, outbound facade, and semantic ready relay. `ClientInboundCoordinator` owns inbound WebRTC control routing. `RealtimeTransportSession` owns WebRTC transport lifecycle and transport-originated callbacks. `WebRTCTransport` owns peer/DataChannel mechanics.
+
+On reconnect, disconnect clears the coordinator transport-session target, the replacement session is assigned on reconnect, and later control packets target only the replacement session.
 
 ## Client Transport Ownership
 
@@ -191,6 +243,8 @@ bullet_delta on sr.bullets
 `world_delta` remains responsible for ships, pickups, and full/bootstrap/resync-safe presentation state. World serializer compatibility may still accept asteroid or bullet update sections, but regular active asteroid and bullet movement is split to the dedicated hot movement lanes.
 
 ## Control and Resync Boundary
+
+The current signaling/control path remains WebSocket-owned.
 
 There is no physical `sr.control` WebRTC gameplay DataChannel in the current implementation.
 

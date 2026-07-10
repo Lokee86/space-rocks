@@ -4,15 +4,15 @@ Parent index: [App Shell And Session](./!INDEX.md)
 
 ## Purpose
 
-This document describes the current client session boot flow, websocket network-target selection, and WebRTC gameplay transport readiness gate.
+This document describes the current client session boot flow, websocket network-target selection, and semantic `realtime_transport_ready` readiness gate.
 
-It covers how the Godot client turns menu requests into a requested session mode, pending boot request, websocket target URL, connection attempt, WebRTC readiness gate, and eventual boot packet dispatch.
+It covers how the Godot client turns menu requests into a requested session mode, pending boot request, websocket target URL, connection attempt, inbound signaling ownership, readiness gate, and eventual boot packet dispatch.
 
 ## Overview
 
 Session boot is the client-side bridge between menu intent and server room or gameplay entry.
 
-The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, and sends the appropriate boot packet only after the readiness gate allows it. Session boot determines when gameplay presentation becomes active. After connection, `ClientConnectionService` coordinates WebRTC signalling and delegates transport lifecycle setup to `RealtimeTransportSession`.
+The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, and sends the appropriate boot packet only after the readiness gate allows it. Session boot controls boot dispatch timing; gameplay presentation activation remains owned by gameplay runtime flows. `ClientConnectionService` owns the connection-facing handshake plumbing, while `ClientInboundCoordinator` owns inbound WebRTC signaling packet handling and emits the semantic `realtime_transport_ready` signal when the transport is ready.
 
 Current boot request types are:
 
@@ -56,8 +56,8 @@ WebSocket target selection is separate from WebRTC connectivity. The WebSocket U
 * Preserve the selected Local Profile id for single-player boot requests.
 * Preserve the room code for join-room boot requests.
 * Select the websocket URL from generated client constants based on requested session mode.
-* Start a WebSocket connection through `ClientConnectionService`. After connection, `ClientConnectionService` coordinates WebRTC signalling and delegates transport lifecycle setup to `RealtimeTransportSession`.
-* Send a pending single-player boot request after WebRTC readiness when active gameplay will use WebRTC.
+* Start a WebSocket connection through `ClientConnectionService`. `ClientInboundCoordinator` handles inbound WebRTC signaling packets and forwards them to `RealtimeTransportSession`.
+* Send a pending single-player boot request after `realtime_transport_ready` when active gameplay will use WebRTC.
 * Hold pending multiplayer boot requests until websocket auth succeeds or token verification is unavailable.
 * Send client viewport config after a boot request is sent.
 * Clear pending boot request state during session reset paths.
@@ -134,9 +134,9 @@ It does not connect to the server and does not send packets. It only records, ex
 
 `ShellBootFlow` owns pending boot request dispatch.
 
-`RealtimeTransportSession` owns WebRTCTransport start, poll, close, and replacement. `ClientConnectionService` remains the boot-facing coordinator.
+`RealtimeTransportSession` owns WebRTCTransport start, poll, close, and replacement. `ClientConnectionService` remains the boot-facing coordinator, and `ClientInboundCoordinator` owns inbound WebRTC signaling routing.
 
-It stores a `PendingBootRequest`, starts the websocket connection through the connection service, and sends the pending request once the connection/auth gate allows it.
+It stores a `PendingBootRequest`, starts the websocket connection through the connection service, and sends the pending request once the connection/auth/readiness gate allows it.
 
 It sends one of:
 
@@ -168,14 +168,14 @@ unknown       -> ""
 
 The generated constants come from shared client shell constants. The server-advertised ICE address and UDP-path reachability belong to server WebRTC config, not `SessionNetworkTarget`.
 
-### Connection and auth gate
+### Connection, auth, and readiness gate
 
-`SessionNetworkController` participates in boot only after the websocket connection emits connection/auth signals.
+`SessionNetworkController` participates in boot only after the websocket connection emits connection/auth/readiness signals.
 
 Current behavior:
 
 ```text
-websocket connected + WebRTC ready + pending single-player request
+websocket connected + `realtime_transport_ready` + pending single-player request
 -> send pending request immediately
 
 connected + pending multiplayer request + websocket auth already authenticated
@@ -194,7 +194,7 @@ authenticate_result authenticated=false, other error
 -> keep pending multiplayer request unsent
 ```
 
-This means multiplayer boot is gated by websocket auth, while single-player boot waits for WebRTC readiness when active gameplay will use WebRTC. Boot request dispatch must not race ahead of WebRTC readiness.
+This means multiplayer boot is gated by websocket auth, while single-player boot waits for semantic `realtime_transport_ready` when active gameplay will use WebRTC. Boot request dispatch must not race ahead of that signal.
 
 ## Protocols and APIs
 
@@ -220,17 +220,20 @@ Pregame/Menu caller
 When the connection opens:
 
 ```text
-ClientConnectionService.connected
--> SessionNetworkController._on_connection_connected()
--> ClientConnectionService ensures RealtimeTransportSession
--> RealtimeTransportSession.start()
--> WebRTCTransport offer, ICE, and ready flow
--> RealtimeTransportSession ready signal and packet handoff
--> ShellBootFlow.send_pending_boot_request()
--> ClientConnectionService.send_start_single_player_request(local_profile_id)
--> ShellBootFlow.boot_request_sent
--> ClientConfigController.send_client_config()
+  server webrtc_ready packet
+  -> ServerPacketDispatcher.webrtc_ready_received
+  -> ClientInboundCoordinator.handle_webrtc_ready
+  -> ClientInboundCoordinator.realtime_transport_ready
+  -> ClientConnectionService._on_realtime_transport_ready
+  -> ClientConnectionService.realtime_transport_ready
+  -> SessionNetworkController._on_realtime_transport_ready
+  -> pending boot request gate
+  -> _webrtc_gameplay_ready = true
+  -> _try_send_pending_boot_request()
+  -> ShellBootFlow.send_pending_boot_request()
 ```
+
+Local `WebRTCTransport.ready` starts transport-local smoke diagnostics and does not directly release the boot gate. The server-confirmed `webrtc_ready` packet is what becomes semantic `realtime_transport_ready`.
 
 Create-room flow:
 
@@ -257,7 +260,7 @@ Pregame/Menu caller
 -> ShellBootFlow.connect_to_game_server("multiplayer join: <room_code>")
 ```
 
-Multiplayer requests are sent only after websocket auth succeeds or token verification is unavailable, and still wait for WebRTC readiness before dispatch when active gameplay will use WebRTC.
+Multiplayer requests are sent only after websocket auth succeeds or token verification is unavailable. If a multiplayer boot also requires active gameplay transport readiness, it still waits for `realtime_transport_ready` before dispatch.
 
 ### Connect result values
 
@@ -382,6 +385,9 @@ This document should not hide that pressure, but it should not prescribe a refac
 
 * `client/scripts/networking/client_connection_service.gd`
 * `client/scripts/networking/network_client.gd`
+* `client/scripts/networking/inbound/client_inbound_coordinator.gd`
+* `client/scripts/networking/inbound/server_packet_dispatcher.gd`
+* `client/scripts/networking/webrtc/realtime_transport_session.gd`
 * `client/scripts/networking/outbound/client_packet_sender.gd`
 * `client/scripts/generated/networking/packets/packets.gd`
 
@@ -409,6 +415,8 @@ Relevant tests include:
 * `client/tests/unit/test_pending_boot_request.gd`
 * `client/tests/unit/test_shell_boot_flow.gd`
 * `client/tests/unit/test_session_network_controller.gd`
+* `client/tests/unit/networking/inbound/test_client_inbound_coordinator.gd`
+* `client/tests/unit/test_client_connection_service_webrtc.gd`
 * `client/tests/unit/networking/test_webrtc_transport.gd`
 * `client/tests/unit/test_client_connection_service_webrtc.gd`
 * `client/tests/unit/ui/menu_flow/test_app_entry_menu_flow.gd`
@@ -419,7 +427,7 @@ Relevant tests include:
 
 `test_shell_boot_flow.gd` verifies pending request classification and dispatch behavior.
 
-`test_session_network_controller.gd` verifies single-player sends without websocket auth, multiplayer waits for auth, auth success sends multiplayer boot, token verification unavailable still sends for server-side admission, and invalid-token auth failure leaves the multiplayer request unsent.
+`test_session_network_controller.gd` verifies that SessionNetworkController waits for semantic `realtime_transport_ready`, single-player sends without websocket auth, multiplayer waits for auth, auth success sends multiplayer boot, token verification unavailable still sends for server-side admission, and invalid-token auth failure leaves the multiplayer request unsent.
 
 `test_app_entry_menu_flow.gd` verifies menu-to-boot routing for single-player, multiplayer create, and multiplayer join flows.
 

@@ -124,7 +124,7 @@ client gameplay runtime
 = routes lane packets into lane states, baseline readiness, presentation adapters, and event application
 ```
 
-The client does not own authoritative confirmation. A client request is confirmed only when reflected by server output such as lane packets, `player_pause_state`, room snapshots, or presentation events. Hot `asteroid_delta` and `bullet_delta` packets reject lower sequence values as stale. Same-sequence chunks from the same hot-lane sequence are valid and may apply independently. The client also ignores hot asteroid/bullet deltas with missing or non-numeric sequence values.
+The client does not own authoritative confirmation. A client request is confirmed only when reflected by server output such as lane packets, `player_pause_state`, room snapshots, or presentation events. For hot `asteroid_delta` and `bullet_delta` packets, the client accepts same-sequence chunks only for distinct, valid `chunk_index` values whose `chunk_count` matches the count established for that lane sequence. Duplicate indices, inconsistent counts, malformed chunk metadata, and lower sequences are rejected; distinct chunks may arrive in any order, sequence gaps remain valid, and asteroid and bullet tracking are independent. The client also ignores hot asteroid/bullet deltas with missing or non-numeric sequence values.
 
 ## Client-to-server gameplay packets
 
@@ -149,9 +149,10 @@ The active client inbound gameplay path is:
 ```text
 WebRTCTransport receives DataChannel text for active gameplay lane packets
 -> PacketCodec.decode
--> ClientConnectionService._handle_webrtc_transport_packet
+-> RealtimeTransportSession._on_packet_received(packet)
 -> ServerPacketDispatcher / ServerPacketRouter classify packet
--> RealtimePacketPipeline.apply_packet(packet)
+-> ClientInboundCoordinator
+-> RealtimePacketPipeline typed apply method for the packet family
 -> RealtimePacketPipeline expands and validates the packet
 -> RealtimeRouter.route_lane_packet(packet)
 -> RealtimePresentationState refreshed
@@ -159,7 +160,7 @@ WebRTCTransport receives DataChannel text for active gameplay lane packets
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> EventBatchApplier
 ```
-`RealtimeRouter` applies inbound lane state before `PresentationBridge` handles the semantic applied notification. Presentation flow continues through gameplay composition and `event_batch` application.
+Realtime lane packets are owned by the realtime inbound pipeline and are not re-emitted through the connection-service shell. `ClientInboundCoordinator` does not mutate gameplay state itself, but it owns dispatcher-consumer bindings for every realtime gameplay family. Those bindings invoke the typed `RealtimePacketPipeline` apply methods for world, asteroid, bullet, lifecycle, overlay, session, event, and resync packets. `RealtimePacketPipeline` and its owned `RealtimeRouter` own packet and lane-state application before `PresentationBridge` handles the semantic applied notification. Presentation flow continues through gameplay composition and `event_batch` application.
 
 Lifecycle packets are applied through RealtimePacketPipeline and its owned RealtimeRouter before presentation handoff, so entity existence and identity are established before session and presentation handling.
 
@@ -295,9 +296,12 @@ Client inbound lane-native gameplay application:
 
 ```text
 client/scripts/networking/webrtc/webrtc_transport.gd
-client/scripts/networking/client_connection_service.gd
+client/scripts/networking/inbound/client_inbound_coordinator.gd
 client/scripts/networking/inbound/server_packet_dispatcher.gd
 client/scripts/networking/inbound/server_packet_router.gd
+client/scripts/networking/realtime/realtime_packet_pipeline.gd
+client/scripts/networking/realtime/realtime_router.gd
+client/scripts/networking/realtime/realtime_presentation_state.gd
 client/scripts/session/session_network_controller.gd
 client/scripts/session/gameplay_session_controller.gd
 client/scripts/protocol/realtime/

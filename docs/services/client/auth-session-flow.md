@@ -261,7 +261,13 @@ Websocket auth flow:
 
 ```text
 ClientConnectionService._on_connected()
-NetworkClient.send_authenticate_request(token) if session token exists
+if session token exists:
+    ClientConnectionService initiates authentication after connection
+    ClientConnectionService._send_authenticate_request_if_token_exists()
+    -> ClientPacketSender.send_authenticate_request(token)
+    -> Packets.authenticate_request_packet(token)
+    -> ClientPacketSender.send_packet(packet)
+    -> NetworkClient.send_raw_packet(packet)
 emit connected
 SessionNetworkController handles pending boot request
 ```

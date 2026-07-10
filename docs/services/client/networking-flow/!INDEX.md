@@ -8,7 +8,7 @@ This folder owns client networking-flow documentation.
 
 ## Ownership
 
-This folder owns client WebSocket connection, packet classification, packet dispatch, and outbound packet sending docs.
+This folder owns client WebSocket connection, packet classification, packet dispatch, inbound coordinator seam, and outbound packet sending docs.
 
 ## Does Not Belong
 
@@ -41,4 +41,4 @@ This folder owns client WebSocket connection, packet classification, packet disp
 
 ## Notes
 
-This index stays at the client networking-flow boundary and does not expand into packet schema ownership or server transport behavior. ServerPacketDispatcher and RealtimePacketPipeline own gameplay packet routing; SessionNetworkController owns room, session, and control routing; gameplay composition owns the presentation handoff after network state has been applied. This index only tracks the network seam that feeds those downstream owners.
+This index stays at the client networking-flow boundary and does not expand into packet schema ownership or server transport behavior. `ServerPacketDispatcher` owns packet classification and typed signal emission. `ClientConnectionService` owns application-facing non-realtime dispatcher bindings and public facade signals. `ClientInboundCoordinator` owns only the five WebRTC control dispatcher bindings: answer, ICE, ready, smoke, and failure. `RealtimePacketPipeline` owns gameplay lane dispatcher bindings, realtime packet application, and protocol state. This index only tracks the network seam that feeds downstream session and gameplay owners.

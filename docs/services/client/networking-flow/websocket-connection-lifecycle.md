@@ -31,10 +31,13 @@ perform graceful close
 
 ```text
 start connection polling
+compose NetworkClient / ClientPacketSender / ServerPacketDispatcher / ClientInboundCoordinator / RealtimePacketPipeline / RealtimeTransportSession
+configure ClientInboundCoordinator and RealtimeTransportSession callbacks
 forward connected and closed signals
 forward packet parse failures
 dispatch decoded inbound packets
 expose connection-aware send methods
+reset realtime protocol state on connect and close
 send websocket authenticate request after connection when an auth token exists
 clear websocket auth identity on close
 ```
@@ -64,21 +67,38 @@ It creates and manages the `WebSocketPeer`, but it does not decide what packets 
 
 `ClientConnectionService` creates the `NetworkClient`, installs signal connections, and exposes a stable service surface to session, room, gameplay, telemetry, and devtools code.
 
+`ClientConnectionService` configures callbacks on `ClientInboundCoordinator` and `RealtimeTransportSession`. `ClientConnectionService` owns application-facing non-realtime dispatcher bindings and public facade signals. `ClientInboundCoordinator` owns only the five WebRTC control dispatcher bindings and the handlers exposed by `RealtimeTransportSession`. `RealtimePacketPipeline` owns gameplay lane dispatcher bindings. `NetworkClient` does not bind directly to the realtime transport, pipeline, or session collaborators; it only emits transport and decoded-packet signals to the facade.
+
 The current runtime shape is:
 
-```text
-ClientConnectionService
-  owns process polling
-  owns high-level networking signals
-  owns NetworkClient child node
-  owns ClientPacketSender child object
-  owns ServerPacketDispatcher child node
+```
+  ClientConnectionService
+    owns logical connection lifecycle and composition
+    owns process polling
+    owns NetworkClient
+    owns ClientPacketSender
+    owns ServerPacketDispatcher
+    configures ClientInboundCoordinator callbacks
+    configures RealtimeTransportSession callbacks
 
-NetworkClient
-  owns WebSocketPeer
-  owns connect / poll / close
-  owns raw wire send and receive
-  owns PacketCodec handoff
+  NetworkClient
+    owns WebSocketPeer
+    owns connect / poll / close
+    owns raw WebSocket wire send and receive
+    owns PacketCodec decode handoff
+    owns raw packet sending
+
+  ClientInboundCoordinator
+    owns the five WebRTC control dispatcher bindings
+
+  ClientConnectionService
+    owns application-facing non-realtime dispatcher bindings and public facade signals
+
+  RealtimePacketPipeline
+    owns gameplay lane dispatcher bindings, realtime gameplay packet application, and readiness
+
+  RealtimeTransportSession
+    owns realtime transport-session lifecycle and handlers
 ```
 
 ## Protocols and APIs
@@ -90,6 +110,7 @@ The connection starts through `ClientConnectionService.connect_to_server(url)`.
 That method:
 
 ```text
+calls reset_realtime_session()
 sets has_started_connection = true
 delegates to NetworkClient.connect_to_server(url)
 returns the WebSocket connect error code
@@ -185,6 +206,7 @@ connection_closed
 `ClientConnectionService` handles that signal by clearing cached websocket auth identity:
 
 ```text
+calls reset_realtime_session()
 websocket_auth_authenticated = false
 websocket_auth_user_id = null
 websocket_auth_display_name = ""
@@ -195,6 +217,25 @@ Then it emits:
 ```text
 closed
 ```
+
+### Realtime reset lifecycle
+
+`ClientConnectionService.reset_realtime_session()` resets the connection-scoped realtime collaborators before a new connection starts or a closed connection clears its remaining state.
+
+The reset sequence is:
+
+```text
+RealtimePacketPipeline.reset()
+close the current RealtimeTransportSession, when present
+clear the RealtimeTransportSession reference
+update ClientInboundCoordinator with a null transport-session reference
+```
+
+The `RealtimePacketPipeline` object itself is preserved. Only its active realtime protocol state is reset, so consumers holding the pipeline reference continue to use the same object across connection lifecycles.
+
+`ClientConnectionService` emits the structured `realtime_protocol_state_reset` network diagnostic after the reset. The diagnostic reports the lifecycle action; it does not make `ClientConnectionService` the owner of realtime pipeline or transport-session state.
+
+On close, `_on_closed()` completes this realtime reset before clearing connection-scoped websocket auth state and emitting `closed`. On connect, `connect_to_server()` performs the same reset before starting the new WebSocket connection.
 
 ### Graceful close
 
@@ -270,7 +311,23 @@ packet_received(packet)
 
 `ClientConnectionService` forwards parse failures through its own `packet_parse_failed` signal.
 
-Decoded packets are dispatched by `ClientConnectionService._on_packet_received(packet)`, but packet classification and packet-type routing belong to inbound packet routing, not to this lifecycle document.
+`ClientConnectionService._on_packet_received(packet)` forwards decoded WebSocket packets to `ServerPacketDispatcher.dispatch(packet)`. Packet-specific application-facing outputs follow this route:
+
+```text
+ServerPacketDispatcher typed signal
+    -> ClientConnectionService application-facing handler
+    -> ClientConnectionService public facade signal
+
+WebRTC control dispatcher signal
+    -> ClientInboundCoordinator
+    -> RealtimeTransportSession control handling
+
+Gameplay lane dispatcher signal
+    -> RealtimePacketPipeline typed apply method
+    -> gameplay packet application
+```
+
+Application-facing non-realtime packet-specific public facade signals arrive from `ClientConnectionService` bindings. WebRTC control outputs are consumed by `ClientInboundCoordinator`, and realtime gameplay lane outputs are consumed by `RealtimePacketPipeline`. Connection-level `NetworkClient` signals remain separate from these packet routes. Detailed classification belongs to inbound packet routing rather than this lifecycle document.
 
 ### Packet encode lifecycle
 
@@ -328,8 +385,9 @@ The send path is:
 ```text
 ClientConnectionService._on_connected()
 ClientConnectionService._send_authenticate_request_if_token_exists()
-NetworkClient.send_authenticate_request(token)
-NetworkClient.send_raw_packet(Packets.authenticate_request_packet(token))
+ClientPacketSender.send_authenticate_request(token)
+ClientPacketSender.send_packet(packet)
+NetworkClient.send_raw_packet(packet)
 ```
 
 The lifecycle layer does not validate the token, assign account identity, or enforce authorization. It only sends the authenticate request packet when an auth token is available.
@@ -347,15 +405,25 @@ packet_received(data: Dictionary)
 packet_parse_failed(text: String)
 ```
 
-`ClientConnectionService` exposes lifecycle-facing signals to the wider client:
+`ClientConnectionService` currently exposes this signal surface to the wider client:
 
 ```text
 connected
 closed
 packet_parse_failed(text: String)
+room_snapshot_received(packet: Dictionary)
+websocket_auth_result_received(packet: Dictionary)
+room_state_changed(packet: Dictionary)
+room_error_received(packet: Dictionary)
+debug_shape_catalog_received(packet: Dictionary)
+debug_status_received(packet: Dictionary)
+player_pause_state_received(packet: Dictionary)
+telemetry_pong_received(packet: Dictionary)
+realtime_transport_ready
+unknown_packet_received(packet: Dictionary)
 ```
 
-`ClientConnectionService` also exposes packet-specific signals, but those belong to inbound packet routing rather than the WebSocket lifecycle boundary.
+`ClientConnectionService` forwards `packet_parse_failed` from `NetworkClient`, emits `connected` after the transport opens and its realtime/auth handoffs run, emits `closed` after close handling resets cached websocket auth identity and realtime protocol state, and exposes application-facing non-realtime packet-specific public facade signals through its own dispatcher bindings. The semantic `realtime_transport_ready` facade signal is preserved by the coordinator's WebRTC-ready handling. Connection-level `NetworkClient` signals remain separate from packet-specific coordinator signals.
 
 ## Does not own
 
@@ -471,11 +539,7 @@ A successful WebSocket connection is only transport readiness. Authentication, r
 
 `NetworkClient` records packet decode and encode failures in runtime metrics and reports them through structured `ClientLogger.network_event(...)` calls, but this document does not own the logger implementation details.
 
-`ClientConnectionService` exposes `reset_realtime_protocol_state()` as the connection-level compatibility entry point. The method delegates the actual reset to `RealtimePacketPipeline`, which replaces its active `RealtimeRouter` and clears pipeline-owned readiness and realtime lane protocol state.
-
-`ClientConnectionService` emits the structured `realtime_protocol_state_reset` network diagnostic after that delegated reset. The diagnostic reports the lifecycle action; it does not make `ClientConnectionService` the owner of realtime router state.
-
-Connection teardown closes the active `RealtimeTransportSession` transport and resets `RealtimePacketPipeline` state through the `ClientConnectionService` facade.
+`ClientConnectionService.reset_realtime_session()` preserves the `RealtimePacketPipeline` object identity while resetting its state, closing and clearing the active `RealtimeTransportSession`, and updating `ClientInboundCoordinator` with a null transport-session reference.
 
 `SessionNetworkController` still uses text-helper logging for some connection and packet parse lifecycle messages through its configured logger callable.
 

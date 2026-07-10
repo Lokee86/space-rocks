@@ -27,7 +27,7 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 - [lobby-packets.md](lobby-packets.md) - Lobby packet documentation.
 - [player-data-http-api.md](player-data-http-api.md) - Player-data HTTP API documentation.
 - [realtime-webrtc-gameplay-transport.md](realtime-webrtc-gameplay-transport.md) - Realtime WebRTC gameplay transport documentation.
-- [realtime-websocket-protocol.md](realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
+- [realtime-websocket-protocol.md](realtime-websocket-protocol.md) - Client websocket and realtime gameplay routing split across dispatcher classification, non-realtime service signals, and direct realtime packet pipeline application.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->

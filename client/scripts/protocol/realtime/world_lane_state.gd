@@ -19,6 +19,10 @@ var asteroids := {}
 var pickups := {}
 var latest_asteroid_delta_sequence := -1
 var latest_bullet_delta_sequence := -1
+var asteroid_delta_chunk_count := 1
+var bullet_delta_chunk_count := 1
+var asteroid_delta_received_chunks := {}
+var bullet_delta_received_chunks := {}
 
 func clear_world() -> void:
 	ships.clear()
@@ -29,9 +33,13 @@ func clear_world() -> void:
 	removed_bullet_ids.clear()
 	bullet_full_sync_required = true
 	latest_bullet_delta_sequence = -1
+	bullet_delta_chunk_count = 1
+	bullet_delta_received_chunks.clear()
 	clear_asteroid_change_sets()
 	asteroid_full_sync_required = true
 	latest_asteroid_delta_sequence = -1
+	asteroid_delta_chunk_count = 1
+	asteroid_delta_received_chunks.clear()
 	asteroids.clear()
 	pickups.clear()
 
@@ -143,22 +151,36 @@ func clear_pending_bullet_updates() -> void:
 func clear_pending_bullet_update(id) -> void:
 	pending_bullet_updates.erase(id)
 
-func accept_asteroid_delta_sequence(sequence) -> bool:
-	var parsed = _parse_hot_delta_sequence(sequence)
-	if parsed == null:
-		return false
-	if parsed < latest_asteroid_delta_sequence:
-		return false
-	latest_asteroid_delta_sequence = parsed
-	return true
+func accept_asteroid_delta_sequence(sequence, chunk_index = 0, chunk_count = 1) -> bool:
+	return _accept_hot_delta(sequence, chunk_index, chunk_count, "asteroid")
 
-func accept_bullet_delta_sequence(sequence) -> bool:
-	var parsed = _parse_hot_delta_sequence(sequence)
-	if parsed == null:
+func accept_bullet_delta_sequence(sequence, chunk_index = 0, chunk_count = 1) -> bool:
+	return _accept_hot_delta(sequence, chunk_index, chunk_count, "bullet")
+
+func _accept_hot_delta(sequence, chunk_index, chunk_count, lane: String) -> bool:
+	var parsed_sequence = _parse_hot_delta_sequence(sequence)
+	var parsed_index = _parse_hot_delta_chunk_index(chunk_index)
+	var parsed_count = _parse_hot_delta_chunk_count(chunk_count)
+	if parsed_sequence == null or parsed_index == null or parsed_count == null or parsed_index >= parsed_count:
 		return false
-	if parsed < latest_bullet_delta_sequence:
+
+	var latest_sequence = latest_asteroid_delta_sequence if lane == "asteroid" else latest_bullet_delta_sequence
+	var tracked_count = asteroid_delta_chunk_count if lane == "asteroid" else bullet_delta_chunk_count
+	var received_chunks = asteroid_delta_received_chunks if lane == "asteroid" else bullet_delta_received_chunks
+	if parsed_sequence < latest_sequence:
 		return false
-	latest_bullet_delta_sequence = parsed
+	if parsed_sequence > latest_sequence:
+		received_chunks.clear()
+		tracked_count = parsed_count
+		if lane == "asteroid":
+			latest_asteroid_delta_sequence = parsed_sequence
+			asteroid_delta_chunk_count = tracked_count
+		else:
+			latest_bullet_delta_sequence = parsed_sequence
+			bullet_delta_chunk_count = tracked_count
+	elif parsed_count != tracked_count or received_chunks.has(parsed_index):
+		return false
+	received_chunks[parsed_index] = true
 	return true
 
 func _parse_hot_delta_sequence(sequence):
@@ -167,6 +189,22 @@ func _parse_hot_delta_sequence(sequence):
 	if typeof(sequence) != TYPE_INT and typeof(sequence) != TYPE_FLOAT:
 		return null
 	return int(sequence)
+
+func _parse_hot_delta_chunk_index(chunk_index):
+	if typeof(chunk_index) != TYPE_INT and typeof(chunk_index) != TYPE_FLOAT:
+		return null
+	var parsed = int(chunk_index)
+	if parsed != chunk_index or parsed < 0:
+		return null
+	return parsed
+
+func _parse_hot_delta_chunk_count(chunk_count):
+	if typeof(chunk_count) != TYPE_INT and typeof(chunk_count) != TYPE_FLOAT:
+		return null
+	var parsed = int(chunk_count)
+	if parsed != chunk_count or parsed < 1:
+		return null
+	return parsed
 
 func upsert_asteroid(record: Dictionary) -> void:
 	var id = record.get("id")

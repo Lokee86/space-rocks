@@ -1788,3 +1788,74 @@ func test_world_full_clears_deleted_bullet_tombstones() -> void:
 
 	assert_false(world_lane_state.bullets.has("bullet-1"))
 	assert_true(world_lane_state.pending_bullet_updates.has("bullet-1"))
+
+
+func test_hot_lane_accepts_distinct_chunks_and_rejects_duplicates() -> void:
+	var state := WorldLaneState.new()
+	assert_true(state.accept_asteroid_delta_sequence(4, 1, 2))
+	assert_true(state.accept_asteroid_delta_sequence(4, 0, 2))
+	assert_false(state.accept_asteroid_delta_sequence(4, 1, 2))
+
+func test_hot_lane_higher_sequence_resets_chunks_and_lower_stays_rejected() -> void:
+	var state := WorldLaneState.new()
+	assert_true(state.accept_bullet_delta_sequence(4, 0, 2))
+	assert_true(state.accept_bullet_delta_sequence(5, 1, 2))
+	assert_true(state.accept_bullet_delta_sequence(5, 0, 2))
+	assert_false(state.accept_bullet_delta_sequence(4, 1, 2))
+
+func test_hot_lane_tracking_is_independent_and_clear_world_resets_it() -> void:
+	var state := WorldLaneState.new()
+	assert_true(state.accept_asteroid_delta_sequence(2, 0, 2))
+	assert_true(state.accept_bullet_delta_sequence(2, 0, 2))
+	assert_false(state.accept_asteroid_delta_sequence(2, 0, 2))
+	assert_false(state.accept_bullet_delta_sequence(2, 0, 2))
+	state.clear_world()
+	assert_true(state.accept_asteroid_delta_sequence(2, 0, 2))
+	assert_true(state.accept_bullet_delta_sequence(2, 0, 2))
+
+func test_hot_lane_unchunked_defaults_remain_accepted() -> void:
+	var state := WorldLaneState.new()
+	assert_true(state.accept_asteroid_delta_sequence(1))
+	assert_true(state.accept_bullet_delta_sequence(1))
+
+
+func test_asteroid_hot_lane_applies_distinct_chunks_and_rejects_duplicate_replay() -> void:
+	var applier := WorldLaneApplier.new()
+	var state := WorldLaneState.new()
+	state.upsert_asteroid({"id": "asteroid-1", "x": 1, "y": 2})
+	state.upsert_asteroid({"id": "asteroid-2", "x": 3, "y": 4})
+
+	applier.apply_asteroid_delta(state, LaneMetadata.LANE_WORLD, {
+		"sequence": 7,
+		"chunk_index": 0,
+		"chunk_count": 2,
+		"asteroid_updates": [{"id": "asteroid-1", "x": 10, "y": 20}],
+	})
+	applier.apply_asteroid_delta(state, LaneMetadata.LANE_WORLD, {
+		"sequence": 7,
+		"chunk_index": 1,
+		"chunk_count": 2,
+		"asteroid_updates": [{"id": "asteroid-2", "x": 30, "y": 40}],
+	})
+	applier.apply_asteroid_delta(state, LaneMetadata.LANE_WORLD, {
+		"sequence": 7,
+		"chunk_index": 0,
+		"chunk_count": 2,
+		"asteroid_updates": [{"id": "asteroid-1", "x": 99, "y": 99}],
+	})
+
+	assert_eq(state.asteroids["asteroid-1"]["x"], 1.0)
+	assert_eq(state.asteroids["asteroid-1"]["y"], 2.0)
+	assert_eq(state.asteroids["asteroid-2"]["x"], 3.0)
+	assert_eq(state.asteroids["asteroid-2"]["y"], 4.0)
+
+
+func test_hot_lane_rejects_inconsistent_and_invalid_chunk_metadata() -> void:
+	var state := WorldLaneState.new()
+	assert_true(state.accept_asteroid_delta_sequence(7, 0, 2))
+	assert_false(state.accept_asteroid_delta_sequence(7, 1, 3))
+	assert_false(state.accept_asteroid_delta_sequence(7, 2, 2))
+	assert_false(state.accept_asteroid_delta_sequence(7, -1, 2))
+	assert_false(state.accept_asteroid_delta_sequence(7, 0, 0))
+	assert_false(state.accept_asteroid_delta_sequence(7, 0.5, 2))
+	assert_false(state.accept_asteroid_delta_sequence(7, 0, 2.5))

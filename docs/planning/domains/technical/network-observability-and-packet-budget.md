@@ -31,6 +31,8 @@ These are the current project policy numbers for realtime gameplay traffic:
 - Realtime gameplay datagrams must stay below roughly 1,100-1,200 B.
 - Non-realtime, control, and debug payloads are separate from gameplay packet budgets and must not redefine the realtime budget.
 
+The roughly 1,200 B limit is a per-datagram construction cap for `asteroid_delta` and `bullet_delta` hot-lane messages. The hot-lane chunker enforces it by conservatively estimating final compact JSON size and splitting multi-update lists before scheduling. The scheduler's 500 B `TargetBytes` value is an advisory candidate-selection target, not an aggregate per-tick transport cap. One tick may emit multiple same-sequence hot chunks, so the total encoded bytes across all messages in that tick are not currently capped by `TargetBytes`. A single movement update cannot be split further and may exceed the nominal hard cap; diagnostics expose that unsplittable-record case.
+
 ## Current Inputs
 
 - gameplay packet budget inputs

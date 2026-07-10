@@ -4,7 +4,9 @@ Parent index: [Gameplay Runtime](./!INDEX.md)
 
 `PresentationBridge` owns the boundary between applied realtime gameplay state and frame-coalesced client presentation.
 
-It is configured by `GameplaySessionController`, driven by semantic applied-packet notifications from `RealtimePacketPipeline`, and flushed once per gameplay frame before normal gameplay composition processing.
+It is configured by `GameplaySessionController`, driven by packet-ingress notifications from `RealtimePacketPipeline`, and flushed once per gameplay frame before normal gameplay composition processing.
+
+Packet ingress is the only input path for this bridge; it does not consume lane-specific presentation signals directly.
 
 ## Ownership
 
@@ -57,21 +59,21 @@ logger Callable
 
 ## Applied Packet Handoff
 
-The completed inbound gameplay path is:
+The packet-ingress path is:
 
 ```text
-ClientConnectionService
--> ServerPacketDispatcher
--> RealtimePacketPipeline.apply_packet(packet)
+ServerPacketDispatcher
+-> ClientInboundCoordinator typed realtime binding
+-> RealtimePacketPipeline typed apply entry point
 -> RealtimeRouter applies the packet
 -> RealtimePresentationState is refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-The bridge receives a semantic notification only after the gameplay packet has been applied.
+The bridge receives packet-ingress notification only after the gameplay packet has been applied.
 
-`SessionNetworkController` and `GameplaySessionController` do not relay generic gameplay packet notifications in this path.
+`SessionNetworkController` and `GameplaySessionController` do not relay generic gameplay packet notifications in this path, and `PresentationBridge` is not fed by lane-specific `ClientConnectionService` signals.
 
 ## Lifecycle
 

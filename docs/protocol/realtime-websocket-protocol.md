@@ -37,7 +37,7 @@ durable Local Profile identity
 durable account identity
 ```
 
-The server owns authority behind accepted room, gameplay, auth-result, telemetry, and devtools consequences. The client owns connection initiation, packet emission, inbound packet classification, realtime lane routing, presentation routing, and WebRTC lane application.
+The server owns authority behind accepted room, gameplay, auth-result, telemetry, and devtools consequences. The client owns connection initiation, packet emission, inbound packet classification, realtime packet application through RealtimePacketPipeline, presentation routing, and WebRTC transport consumption.
 
 
 Active realtime gameplay packets are not WebSocket-owned anymore. The current server path builds the lane packet, encodes it to JSON, and sends it over the matching session WebRTC gameplay DataChannel when WebRTC is ready. WebSocket still owns auth, room/lobby lifecycle, room snapshots, and WebRTC signaling. There is no WebSocket fallback for active realtime gameplay packets.
@@ -82,14 +82,14 @@ These packets carry current lane snapshots, baseline updates, event batches, and
 client/scripts/networking/
 ```
 
-Owns the client WebSocket peer, polling, raw send/receive, packet encode/decode handoff, inbound packet dispatch, outbound send wrappers, realtime lane routing, connection signals, and cached WebSocket auth result state.
+Owns the client WebSocket peer, polling, raw send/receive, packet encode/decode handoff, inbound packet dispatch, outbound send wrappers, collaborator composition, connection signals, and cached WebSocket auth result state. `ClientInboundCoordinator` owns dispatcher-consumer bindings for realtime packet families.
 
 ```text
 client/scripts/boot/
 client/scripts/session/
 ```
 
-Owns session mode selection, pending boot request timing, WebSocket URL selection, auth-gated multiplayer boot dispatch, and routing from connection-service signals into room and gameplay controllers.
+Owns session mode selection, pending boot request timing, WebSocket URL selection, auth-gated multiplayer boot dispatch, and routing from connection-service callbacks into room and gameplay controllers.
 
 ```text
 client/scripts/protocol/realtime/
@@ -265,7 +265,7 @@ Compact packets may arrive with `t` instead of `type`. Client decode expands com
 
 Server-side initial envelope decode unmarshals the `type` field before routing. Invalid JSON or an envelope decode failure logs a warning and skips the message. A valid JSON object with an unknown or empty `type` does not produce an explicit protocol response in the current server path.
 
-WebRTC inbound delivery uses WebRTCTransport for DataChannel text receive, PacketCodec.decode for compact alias expansion and envelope decoding, ClientConnectionService for connection-level coordination, ServerPacketDispatcher for typed dispatch, RealtimePacketPipeline for gameplay packet validation and application ownership, and RealtimeRouter for lane-specific mutation beneath the pipeline.
+WebRTC inbound delivery uses WebRTCTransport for DataChannel text receive, PacketCodec.decode for compact alias expansion and envelope decoding, ServerPacketDispatcher for typed dispatch, ClientInboundCoordinator for dispatcher-consumer bindings and branch selection, RealtimePacketPipeline for gameplay packet validation and application ownership, and RealtimeRouter for lane-specific mutation beneath the pipeline.
 
 ### Encoding
 
@@ -324,7 +324,7 @@ Legacy long-key fields and older compact aliases remain accepted during decode f
 
 The canonical server wire shape comes from `services/game-server/internal/protocol/realtime/wire_packets.go` plus the realtime record structs under `services/game-server/internal/protocol/realtime/`. Compact aliases are applied only after `WireLanePacket` builds the readable long-key map, and the alias mapping lives in [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md). Runtime active encoding no longer performs raw-float reflection scanning at this boundary; actual numeric wire quantization must already have happened during projection or explicit event wire shaping before compaction and `packetcodec` encoding.
 
-Chunk metadata exists in the wire shape and scheduler records. For `asteroid_delta` and `bullet_delta`, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. Chunk construction uses conservative compact-JSON byte estimation to avoid repeated trial JSON encoding on the hot path. Chunk construction is the hard-size guard for hot movement packets. The active encode path records the final encoded byte size for diagnostics and accounting, but it does not reject already-scheduled hot packets for size. Each sent chunk is written as its own WebRTC DataChannel message on `sr.asteroids` or `sr.bullets`. This is focused hot-lane chunking, not general fragmentation for all lane families.
+Chunk metadata exists in the wire shape and scheduler records. For `asteroid_delta` and `bullet_delta`, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. The current `HardCapBytes` construction threshold is 1,200 B. It is enforced before scheduling using conservative compact-JSON byte estimates, avoiding repeated trial JSON encoding on the hot path. Chunk construction is the hard-size guard for hot movement packets. A single movement update that cannot be split further may exceed the nominal threshold; it is still encoded and sent, with diagnostics recording the unsplittable case. The active encode path records the final encoded byte size for diagnostics and accounting, but it does not reject already-scheduled hot packets for size. Each sent chunk is written as its own WebRTC DataChannel message on `sr.asteroids` or `sr.bullets`. This is focused hot-lane chunking, not general fragmentation for all lane families.
 ### Numeric wire quantization
 
 State-lane records are quantized in the realtime projection and wire-record path before delta comparison and JSON encoding, so deltas compare projected wire-shaped values instead of raw simulation float precision. `event_batch` is not a state lane and does not participate in delta comparison.
@@ -739,6 +739,8 @@ This does not define a separate generated packet family named `control`.
 
 The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity and selects included candidates against an estimated byte budget.
 
+The size policies have three separate meanings: the hot-lane construction cap is a per-hot-message cap; the scheduler's 500 B `TargetBytes` is an advisory candidate-selection target; and there is no aggregate per-tick byte cap.
+
 ```text
 event_batch = critical/event-once
 world_delta, overlay_delta, asteroid_delta, and bullet_delta = high priority / hot supersedable
@@ -768,9 +770,9 @@ event_batch = one candidate
 
 Hot asteroid_delta and bullet_delta packets require numeric sequence values. Missing or non-numeric hot sequences are ignored. Sequence gaps are valid because unordered/unreliable hot packets may be dropped.
 
-Same-sequence `asteroid_delta` or `bullet_delta` packets are valid when they are chunks of the same hot-lane sequence. The client rejects lower sequence values as stale, but it must not reject same-sequence chunks solely because the sequence matches the latest accepted hot packet. Sequence gaps remain valid because unordered/unreliable hot packets may be dropped.
+For `asteroid_delta` and `bullet_delta`, the client accepts a same-sequence packet only when its `chunk_index` has not already been accepted for that lane and sequence and its `chunk_count` matches the count already established for that sequence. Duplicate chunk indices, inconsistent `chunk_count` values, malformed chunk metadata, and lower sequence values are rejected. Distinct chunk indices may arrive in any order, sequence gaps are valid because unordered/unreliable hot packets may be dropped, and asteroid and bullet chunk tracking are independent.
 
-The active path does not implement general record/entity-level prioritization or arbitrary field-level packet splitting. It does implement focused hot-lane chunking for `asteroid_delta` and `bullet_delta`: oversized hot movement update lists become multiple real candidates before `SelectSendPlan` and before final JSON encoding. Hot-lane chunk sizing uses conservative compact-JSON byte estimation. The chunker is the only hot-lane hard-size guard. Scheduler byte estimates remain advisory for candidate-level include/defer decisions, and active encoding records final encoded bytes for diagnostics rather than rejecting already-scheduled hot packets. Packets over the hard-cap or MTU class are not sent. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
+The active path does not implement general record/entity-level prioritization or arbitrary field-level packet splitting. It does implement focused hot-lane chunking for `asteroid_delta` and `bullet_delta`: oversized hot movement update lists become multiple real candidates before `SelectSendPlan` and before final JSON encoding. Hot-lane chunk sizing uses conservative compact-JSON byte estimation. The chunker is the only hot-lane hard-size guard. Scheduler byte estimates remain advisory for candidate-level include/defer decisions, and active encoding records final encoded bytes for diagnostics rather than rejecting already-scheduled hot packets. Scheduler and active encoding do not reject already-built hot candidates; chunk construction normally prevents multi-update chunks above `HardCapBytes`, while an unsplittable single-update chunk may exceed the threshold and still be encoded and sent, with diagnostics recording it. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ### Runtime observability note
 
 Current runtime debug observability is intentionally narrow:
@@ -830,13 +832,21 @@ Current flow:
 NetworkClient.packet_received(packet)
 -> ClientConnectionService._on_packet_received(packet)
 -> ServerPacketDispatcher.dispatch(packet)
--> ServerPacketRouter packet-type checks
--> typed dispatcher signal
--> ClientConnectionService typed signal
--> session, room, gameplay, telemetry, or devtools consumer
+-> ClientInboundCoordinator coordinator signal or typed realtime binding
 ```
 
-Server packet dispatch now recognizes lane packet types separately:
+Non-realtime ServerPacketDispatcher outputs:
+
+```text
+ServerPacketRouter packet-type checks
+typed dispatcher output
+ClientInboundCoordinator application-facing signal
+ClientConnectionService handler
+ClientConnectionService public signal
+session, room, telemetry, or devtools consumer
+```
+
+ServerPacketDispatcher realtime outputs:
 
 ```text
 world_full_received
@@ -854,7 +864,9 @@ resync_request_received
 resync_required_received
 ```
 
-ClientConnectionService delegates classified realtime gameplay packets to RealtimePacketPipeline. The pipeline owns the active RealtimeRouter, expands and validates the packet, refreshes RealtimePresentationState, emits gameplay_packet_applied(packet), and then PresentationBridge.handle_gameplay_packet(packet) consumes the handoff into presentation layers.
+ClientInboundCoordinator binds the typed realtime outputs from ServerPacketDispatcher to the matching RealtimePacketPipeline packet-family entry points. ClientConnectionService does not own direct realtime dispatcher bindings; it remains the public facade for coordinator signals.
+
+The pipeline owns the active RealtimeRouter, expands and validates the packet, refreshes RealtimePresentationState, emits gameplay_packet_applied(packet), and then PresentationBridge.handle_gameplay_packet(packet) consumes the handoff into presentation layers.
 
 WebSocket and WebRTC gameplay delivery use different transports but converge on the same RealtimePacketPipeline application boundary.
 
@@ -892,6 +904,8 @@ room_state_changed
 room_error
 world_full
 world_delta
+asteroid_delta
+bullet_delta
 asteroids_lifecycle
 bullets_lifecycle
 overlay_full
@@ -1092,7 +1106,7 @@ server unknown decoded packet
 -> no response, no state mutation
 
 client unknown decoded packet
--> unknown_packet_received signal
+-> unknown packet handling
 ```
 
 Close behavior:
@@ -1543,8 +1557,6 @@ Deployment knobs currently include SPACE_ROCKS_WEBRTC_ADVERTISED_IPS, SPACE_ROCK
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
-
-
 
 
 

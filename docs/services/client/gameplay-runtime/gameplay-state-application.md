@@ -12,13 +12,14 @@ It covers realtime packet routing, lane state ownership, baseline readiness, the
 
 Gameplay presentation begins after the client networking layer receives a realtime server packet and routes it by packet family.
 
-The completed active path is:
+The current ingress path is:
 
 ```text
 NetworkClient or WebRTCTransport receives and decodes packet
--> ClientConnectionService receives packet
+-> ClientConnectionService passes decoded packet into ServerPacketDispatcher
 -> ServerPacketDispatcher classifies packet
--> ClientConnectionService delegates gameplay packet to RealtimePacketPipeline.apply_packet(packet)
+-> ServerPacketDispatcher emits typed realtime signal
+-> ClientInboundCoordinator routes the typed signal to the matching RealtimePacketPipeline entry point
 -> RealtimePacketPipeline expands and validates the packet
 -> RealtimeRouter applies the packet to lane state
 -> RealtimePacketPipeline refreshes RealtimePresentationState
@@ -37,6 +38,8 @@ NetworkClient or WebRTCTransport receives and decodes packet
 ```
 
 The client applies lane packets through `RealtimePacketPipeline`. The pipeline owns the active `RealtimeRouter` and invokes it for lane-specific mutation rather than using the retired aggregate `GameplayStateApplyFlow` path or a combined normalized gameplay-state dictionary flow.
+
+`ClientConnectionService` passes decoded transport packets into `ServerPacketDispatcher`; `ClientInboundCoordinator` owns the post-classification realtime consumer binding. `ClientConnectionService` does not choose lane handlers, own lane diagnostics, or re-emit realtime lane signals.
 
 `PresentationBridge` activation enables scheduling for gameplay-packet presentation, while `RealtimePacketPipeline` gameplay readiness gates fanout into presentation targets.
 
@@ -144,7 +147,7 @@ The current handoff boundaries are:
 
 ```text
 ClientConnectionService
-= coordinates the public networking handoff and delegates realtime gameplay packets to RealtimePacketPipeline.apply_packet(packet)
+= coordinates the public networking handoff before ClientInboundCoordinator routes typed realtime dispatcher signals to the matching RealtimePacketPipeline apply method
 
 ServerPacketDispatcher
 = classifies inbound packets before gameplay packets reach the realtime pipeline
@@ -160,6 +163,9 @@ PresentationBridge
 
 GameplaySessionController
 = owns accepts_gameplay_packets, bridge activation/reset/flush scheduling, frame sequencing, control routing, input routing, reset, and session exits
+
+ClientConnectionService
+= owns network ingress coordination only; it does not own lane handlers, lane diagnostics, or gameplay packet application
 
 PresentationAdapter
 = fans out presentable lane state into world, overlay, session, and event presentation consumers
