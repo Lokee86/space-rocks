@@ -352,7 +352,7 @@ Server-side gates include:
 ```text
 devtools command routing requires a current room and current game player ID
 server devtools command handlers own command validity
-server game/export devtools seams own actual gameplay mutation
+the server Controller/Target/Control boundary owns command policy and authoritative gameplay mutation
 nodevtools server builds disable server devtools availability
 ```
 
@@ -532,7 +532,7 @@ Those server tests verify command classification, build gates, command effects, 
 
 ## Notes
 
-This document intentionally covers the client devtools routing and input side. Server command effects, server build gates, and game-owned export seams belong in server devtools documentation.
+This document intentionally covers the client devtools routing and input side. Server command effects, server build gates, and the server Control adapter belong in server devtools documentation.
 
 The client currently has both specific debug wrapper sends and generic `send_packet(packet)` sends for already-built devtools dictionaries. Both converge on `NetworkClient.send_raw_packet()` and the normal packet codec path.
 

@@ -46,14 +46,15 @@ Info MCP exposes Hermes CLI tools for continuous context across prompt sequences
 - `hermes_session_status` - Shows the current Hermes session status (runs `hermes status`)
 - `hermes_sessions_list` - Lists all Hermes sessions (runs `hermes sessions list`)
 - `hermes_session_send` - Sends a prompt into a named Hermes session
+- `hermes_session_send_batch` - Sends multiple prompts into a named Hermes session through the connector
 
 ### hermes_session_send
 
-`hermes_session_send` sends prompts into a named Hermes session. Reusing the same `session_name` preserves continuous Hermes context across prompt sequences.
+`hermes_session_send` sends a single prompt into a named Hermes session. Reusing the same `session_name` preserves continuous Hermes context across prompt sequences.
 
 **Internal command shape:**
 ```
-hermes --continue <session_name> -z <prompt>
+hermes chat -Q --continue <session_name> --query <prompt>
 ```
 
 **Default session name:** `space-rocks-mcp`
@@ -63,6 +64,34 @@ hermes --continue <session_name> -z <prompt>
 - `session_name` (optional, default: `space-rocks-mcp`) - The named session to continue
 - `cwd` (optional) - Repo-relative working directory
 
+**Important notes:**
+- This is session continuation through Hermes, not one-shot workflow guidance.
+- It is not a general terminal bridge.
+- It does not expose arbitrary shell commands.
+- It cannot execute bash, PowerShell, git, Python, npm, or arbitrary shell commands.
+- Hermes session prompts can mutate files and consume model/API usage.
+
+### hermes_session_send_batch
+
+`hermes_session_send_batch` queues multiple prompts to the same named Hermes session through the connector. `hermes_session_send` remains the single-prompt tool.
+
+**Internal command shape:**
+```
+hermes chat -Q --continue <session_name> --query <prompt>
+```
+
+**Default session name:** `space-rocks-mcp`
+
+**Input parameters:**
+- `prompts` (required) - Array of non-empty prompt strings; minimum one prompt
+- `session_name` (optional, default: `space-rocks-mcp`) - Same naming restrictions as `hermes_session_send`
+- `cwd` (optional) - Repo-relative working directory
+
+**Behavior:**
+- Starts all sends before awaiting results so prompts are queued without waiting for each prior response.
+- Preserves input order in the returned `results` array.
+- Each result includes `index`, `prompt_preview`, and the existing Hermes result object.
+- `prompt_preview` is short and truncated to avoid dumping large prompt bodies.
 
 **Important notes:**
 - This is session continuation through Hermes, not one-shot workflow guidance.
@@ -126,6 +155,33 @@ These are the practical write-side commands to reach for first.
 Both MCP servers depend on the local EngineForge/Godot bridge plugin that runs inside the Godot project.
 
 Run these from `tools/space-rocks-mcp/`.
+
+## OAuth-protected startup
+
+The current shared HTTP MCP entrypoints load the local `.env` file through `dotenv` before the shared HTTP/OAuth modules are evaluated.
+The OAuth seam fails closed at startup unless these HTTPS-safe environment values are present and valid:
+
+- `AUTH0_ISSUER`
+- `AUTH0_AUDIENCE`
+- `RESOURCE_SERVER_URL`
+
+`AUTH0_ISSUER` is normalized to include its trailing slash so it matches Auth0 JWT `iss` claims.
+`AUTH0_AUDIENCE` and `RESOURCE_SERVER_URL` are preserved exactly as configured.
+
+The Auth0 Client ID and Client Secret live on the ChatGPT connector side; they are not consumed by this server.
+If the ngrok endpoint changes, update the ChatGPT connector URL too. Keep the configured audience and resource values aligned with the OAuth setup.
+
+The protected MCP routes are `POST /mcp`, `GET /mcp`, and `DELETE /mcp`.
+They require a bearer token and validate it with Auth0 JWKS via `jose.jwtVerify`, restricted to RS256, the configured issuer, the configured audience, and standard expiry/not-before checks.
+The design intentionally does not add scopes.
+
+Public routes stay public:
+
+- `GET /` health response
+- `GET /.well-known/oauth-protected-resource` metadata response
+- `OPTIONS /mcp` CORS preflight
+
+Protected responses advertise `WWW-Authenticate: Bearer resource_metadata="..."` without a scope parameter.
 
 ### WSL / Linux
 

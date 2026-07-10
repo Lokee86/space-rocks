@@ -20,7 +20,7 @@ The current server-side collision telemetry path is:
 Control.CollisionBodiesByKind()
 -> authoritative physics.CollisionBody values
 -> devtools.CollisionBodies(...)
--> CollisionBody / CollisionPoint DTO values
+-> CollisionBody DTO values
 ```
 
 A telemetry body contains:
@@ -53,7 +53,7 @@ shared/collisions/collision_shapes.json
 -> client combines reusable shape definitions with normal gameplay state
 ```
 
-`Control.CollisionBodiesByKind()` produces live server-side body snapshots, but the current outbound protocol does not emit a standalone `debug_collision_bodies` packet. `devtools.CollisionBodies(...)` owns the JSON projection into debug-facing DTOs. Server outbound tests intentionally verify that `debug_shape_catalog` and normal gameplay presentation packets do not include `debug_collision_bodies`.
+`Control.CollisionBodiesByKind()` produces live server-side body snapshots, but the current outbound protocol does not emit a standalone `debug_collision_bodies` packet. `devtools.CollisionBodies(...)` owns the JSON projection into `CollisionBody` DTOs. Server outbound tests intentionally verify that `debug_shape_catalog` and normal gameplay presentation packets do not include `debug_collision_bodies`.
 
 ## Debug-only scope
 
@@ -300,7 +300,7 @@ services/game-server/internal/devtools/enabled_nodevtools.go
 services/game-server/internal/devtools/disabled.go
 ```
 
-`Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)` itself is a game-owned export adapter. It does not check the devtools build flag internally. Any caller that exposes the output outside the game package must apply the appropriate devtools gate.
+`Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)` itself is a game-owned Control adapter. It does not check the devtools build flag internally. Any caller that exposes the output outside the game package must apply the appropriate devtools gate.
 
 The currently packetized shape catalog output is gated by:
 
@@ -355,7 +355,7 @@ debug_status packet
 -> does not include collision bodies
 ```
 
-If a future packet exposes `DevtoolsCollisionBody` values, that packet should be documented under protocol and data docs as a debug-only packet surface.
+If a future packet exposes `CollisionBody` values, that packet should be documented under protocol and data docs as a debug-only packet surface.
 
 ## Invariants
 
@@ -471,6 +471,7 @@ Focused server tests:
 
 ```text
 services/game-server/internal/game/control_collision_telemetry_test.go
+services/game-server/internal/devtools/collision_body_telemetry_test.go
 ```
 
 Those tests verify that:
@@ -511,7 +512,7 @@ Focused verification for this boundary:
 
 ```bash
 cd services/game-server
-go test -buildvcs=false ./internal/game ./internal/game/physics ./internal/devtools ./internal/networking/outbound -run 'CollisionBody|CollisionOutline|ShapeCatalog|DebugShapeCatalog|GameplayPresentation|DebugStatus'
+go test -buildvcs=false ./internal/game ./internal/game/physics ./internal/devtools ./internal/networking/outbound -run 'CollisionBodiesByKind|CollisionBodyTelemetry|ShapeCatalog|DebugShapeCatalog|GameplayPresentation|DebugStatus'
 ```
 
 Run packet generation checks when changing `shared/packets/debug.toml` or `shared/packets/outputs.toml`.

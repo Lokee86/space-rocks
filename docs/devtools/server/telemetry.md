@@ -34,7 +34,7 @@ The high-level server flow is:
 
 ```text
 game/runtime state
--> game export seam or lane-native packet projection
+-> Control adapter or lane-native packet projection
 -> devtools/outbound networking packet builder
 -> packetcodec.Encode
 -> websocket writer
@@ -86,7 +86,7 @@ The server may expose facts that client devtools present as labels, overlays, or
 
 The server owns the facts emitted by server devtools telemetry.
 
-`debug_status` comes from server runtime state through the devtools export seam:
+`debug_status` comes from server runtime state through the Control adapter and Controller projection:
 
 ```text
 game.NewControl(room.GameInstance())
@@ -358,7 +358,7 @@ Current outbound tests assert that `debug_status`, `debug_shape_catalog`, and no
 
 Score and lives counter changes are command behavior, not telemetry behavior.
 
-When devtools commands set or add score/lives, the server mutates the authoritative player session through game export seams. The resulting facts are visible through normal gameplay state and related client readmodels.
+When devtools commands set or add score/lives, the server mutates the authoritative player session through Control counter methods. The resulting facts are visible through normal gameplay state and related client readmodels.
 
 There is no separate server telemetry packet dedicated only to score/lives counter output.
 
@@ -414,7 +414,7 @@ services/game-server/internal/devtools/enabled_nodevtools.go
 services/game-server/internal/devtools/disabled.go
 ```
 
-Game export seams used by telemetry:
+Game-owned authoritative methods used by telemetry:
 
 ```text
 services/game-server/internal/game/control_status.go
@@ -471,7 +471,7 @@ services/game-server/internal/networking/
   owns WebSocket decode, routing, timestamped responses, and writes
 
 services/game-server/internal/game/
-  owns authoritative simulation state and export seams
+  owns authoritative simulation state and game-owned authoritative methods
 
 services/player-data/
   does not own server devtools telemetry
@@ -518,7 +518,7 @@ collision body telemetry uses server collision bodies
 gameplay presentation state remains separate from devtools packets
 ```
 
-Run game-server tests after changing telemetry packet shapes, status projection, shape catalog generation, WebSocket write cadence, inbound telemetry routing, build gates, or game export seams used by devtools.
+Run game-server tests after changing telemetry packet shapes, Controller status projection, shape catalog generation, WebSocket write cadence, inbound telemetry routing, build gates, or game-owned authoritative methods used by devtools.
 
 Run packet generation checks after changing `shared/packets/debug.toml` or `shared/packets/gameplay.toml`.
 

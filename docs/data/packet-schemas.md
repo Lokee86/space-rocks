@@ -128,7 +128,7 @@ DebugStatusPacket
 
 It owns devtools packet types for toggles, status, shape catalog output, player mutation commands, entity spawning, pickup spawning, continuous bullet stream commands, respawn commands, score/lives commands, and entity clearing.
 
-Devtools packet schema is shared data, but devtools command behavior is not owned by the packet schema. Runtime behavior is owned by the server devtools implementation and the game-owned devtools export seams.
+Devtools packet schema is shared data, but devtools command behavior is not owned by the packet schema. Runtime behavior is owned by the server devtools implementation, while Controller owns command policy and Control exposes authoritative capabilities.
 
 ### `shared/packets/lobby.toml`
 

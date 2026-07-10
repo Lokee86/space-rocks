@@ -21,7 +21,7 @@ toggle_debug_freeze_world
 toggle_debug_freeze_player
 ```
 
-The server receives these commands as generated debug packets, decodes them into `devtools.DebugCommand`, routes them through `devtools.HandleCommand`, and applies the result through narrow game-owned Control capabilities.
+The server receives these commands as generated debug packets, decodes them into `devtools.DebugCommand`, routes them through `Controller.HandleCommand`, and applies the result through narrow game-owned Control capabilities.
 
 The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Confirmation comes back through lane-native gameplay readback, debug status packets, visible entity behavior, or both.
 
@@ -81,9 +81,12 @@ Current command flow:
 client debug packet
 -> game-server networking inbound devtools route
 -> packetcodec.Decode into devtools.DebugCommand
--> devtools.HandleCommand
+-> Controller.HandleCommand
 -> toggle-specific handler in internal/devtools/toggles.go
--> game-owned Control methods in internal/game/control_toggles.go
+-> Control methods in internal/game/control_toggles.go
+-> Control.TargetPlayerIDs() for all-player fanout
+-> Controller.StatusFor(...) for status projection
+-> Control.ApplyPlayerDefeat for debug defeat entry points
 -> normal game runtime state
 -> lane-native gameplay readback or debug status output
 ```
@@ -96,7 +99,7 @@ Toggle mutation happens behind the game aggregate:
 services/game-server/internal/game/control_toggles.go
 ```
 
-That file exposes narrow devtools-facing methods. The devtools package does not reach directly into unrelated game internals.
+Controller owns status projection and Control supplies the authoritative status getter capabilities.
 
 The server keeps authoritative ownership split as follows:
 
@@ -327,7 +330,7 @@ target_scope = all_players
 -> Control.TargetPlayerIDs()
 ```
 
-`DevtoolsTargetPlayerIDs()` returns the sorted union of player IDs from:
+`Control.TargetPlayerIDs()` returns the sorted union of player IDs from:
 
 ```text
 player sessions
@@ -413,8 +416,9 @@ debug_statuses
 Status projection flow:
 
 ```text
-game.DevtoolsStatusFor(playerID)
--> devtools.StatusFor(game, playerID)
+control := game.NewControl(room.GameInstance())
+controller := devtools.NewController(devtools.Dependencies{Target: control})
+controller.StatusFor(playerID)
 -> devtools.DebugStatusPacket
 -> packetcodec.Encode
 -> WebSocket write loop
@@ -470,7 +474,7 @@ current room must exist
 current game player ID must be non-empty
 debug packet must decode into DebugCommand
 HandleCommand must recognize the command type
-target/game export seams must accept the requested mutation
+Control adapter methods must accept the requested mutation
 ```
 
 Command handlers return `true` for recognized devtools command packets even when a specific target has no effect. That keeps command routing separated from gameplay outcome.
@@ -541,8 +545,10 @@ Primary server devtools toggle files:
 services/game-server/internal/devtools/toggles.go
 services/game-server/internal/devtools/handler.go
 services/game-server/internal/devtools/command_types.go
+services/game-server/internal/devtools/target.go
 services/game-server/internal/devtools/target_player_ids.go
 services/game-server/internal/devtools/target_scopes.go
+services/game-server/internal/devtools/player_ids.go
 services/game-server/internal/devtools/status.go
 services/game-server/internal/devtools/packets_generated.go
 ```
@@ -564,13 +570,15 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 ```
 
-Game-owned export seams:
+Control adapter boundary:
 
 ```text
 services/game-server/internal/game/control_toggles.go
 services/game-server/internal/game/control_status.go
-services/game-server/internal/game/control_player_spawn.go
 ```
+
+Counter-related Control methods live in `services/game-server/internal/game/control_counters.go`.
+
 
 Runtime option and capability files:
 

@@ -107,6 +107,7 @@ When creation succeeds, the server logs the normalized stream direction and regi
 
 The current stream runtime owner is `Controller.Dependencies.Streams`, which defaults to the controller-owned stream runtime in `services/game-server/internal/devtools/streamruntime`. The game package does not import the devtools package and does not own stream state. Game-owned behavior is exposed through Control capabilities:
 
+
 ```text
 Control.RegisterSimulationStepObserver
 Control.BulletsCanMove
@@ -115,7 +116,7 @@ Control.SpawnDebugBullet
 
 `ObserverRegistry.RegisterOnce` deduplicates simulation observer registration by `Control.ObserverKey()`. One simulation observer is registered per underlying game target.
 
-The stream observer runs at the end of `Game.Step(delta)`, after normal or reduced simulation phases. The observer still runs while `Game.Step` holds the game lock, so stream callbacks must stay small and route mutations through game-owned adapter functions. Begin, step, and clear operations use the same Controller stream runtime.
+The stream observer runs at the end of `Game.Step(delta)`, after normal or reduced simulation phases. The observer still runs while `Game.Step` holds the game lock, so stream callbacks must stay small and route mutations through game-owned adapter functions. Begin, step, and clear operations use the same Controller-selected runtime.
 
 ## Stream ticking and bullet spawning
 
@@ -196,7 +197,7 @@ Server inbound routing treats this as a remaining devtools packet type:
 ```text
 HandleRemainingDevtoolsPacket
 -> handleDevtoolsCommandPacket
--> devtools.HandleCommand
+-> Controller.HandleCommand
 ```
 
 The command does not route through `Game.HandlePacket`.
@@ -211,16 +212,12 @@ The stream runtime package exposes:
 ClearContinuousBulletStreams()
 ```
 
-but the current inspected command path does not call it.
-
-`debug_clear_bullets` currently routes to:
+`debug_clear_bullets` is the current stop-all command for continuous bullet streams and also clears live projectile entities.
 
 ```text
 handleDebugClearBullets
 -> Control.ClearBullets
 ```
-
-That clears existing projectile entities from the authoritative game entity store and clears the Controller's active continuous streams. Do not document `debug_clear_bullets` as the authoritative stream stop path unless the command handler is changed.
 
 ## Client presentation
 
@@ -297,7 +294,7 @@ Runtime command routing also requires:
 current room exists
 current game player ID is non-empty
 packet decodes into DebugCommand
-command type is handled by devtools.HandleCommand
+command type is handled by Controller.HandleCommand
 ```
 
 Stream-specific runtime gates require:
@@ -370,7 +367,7 @@ Game-owned devtools adapters:
 
 ```text
 services/game-server/internal/game/control_streams.go
-services/game-server/internal/game/export_devtools_spawn.go
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/game/spawning.go
 services/game-server/internal/game/simulation.go
 services/game-server/internal/game/world_simulation_options.go
@@ -496,6 +493,6 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 
 Legacy server devtools notes correctly identified that continuous bullet streams are server-paced and that the client does not own cadence. The current implementation confirms that stream ticking is driven by the game simulation observer path and that bullet spawning remains server-authoritative.
 
-Legacy notes also claimed that clear bullets clears active persistent streams. The current inspected implementation does not do that. Current docs should describe the live implementation: clear bullets removes existing projectile entities, while stream runtime clearing exists as a package method but is not currently wired to the clear-bullets command.
+`debug_clear_bullets` is the current stop-all command for continuous bullet streams and also clears live projectile entities.
 
 The current `DefaultRuntime` is package-level stream runtime state. Stream records carry owner player ID, origin, direction, and cooldown, but not a room ID or game ID. If concurrent multi-room stream behavior becomes important, stream ownership should be revisited before treating streams as room-scoped tooling.

@@ -128,13 +128,13 @@ func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
 	control := game.NewControl(gameInstance)
 	playerID := "player-1"
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
 		VisibleWorldWidth:  1280,
 		VisibleWorldHeight: 720,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
@@ -173,13 +173,13 @@ func TestWriteGameplayLaneProtocolMessageUsesWebRTCForLanePackets(t *testing.T) 
 	control := game.NewControl(gameInstance)
 	playerID := "player-1"
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
 		VisibleWorldWidth:  1280,
 		VisibleWorldHeight: 720,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
@@ -217,13 +217,13 @@ func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWithoutWebRTC(t *testing.
 	control := game.NewControl(gameInstance)
 	playerID := "player-1"
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
 		VisibleWorldWidth:  1280,
 		VisibleWorldHeight: 720,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
 	session := &webSocketSession{
@@ -257,13 +257,13 @@ func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWhenWebRTCNotReady(t *tes
 	control := game.NewControl(gameInstance)
 	playerID := "player-1"
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
 		VisibleWorldWidth:  1280,
 		VisibleWorldHeight: 720,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
 	transport, _ := newReadyGameplayWebRTCTransportForTests()
@@ -299,16 +299,16 @@ func TestWriteGameplayLaneProtocolMessageDoesNotDrainEventBatchWhenEventLaneSend
 	control := game.NewControl(gameInstance)
 	playerID := "player-1"
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
 		VisibleWorldWidth:  1280,
 		VisibleWorldHeight: 720,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 	if !control.ApplyPlayerDefeat("debug", playerID) {
-		t.Fatal("expected DevtoolsKillPlayer to succeed")
+		t.Fatal("expected KillPlayer to succeed")
 	}
 
 	state := realtime.NewRealtimeSessionState(playerID)
@@ -375,16 +375,16 @@ func TestWriteGameplayLaneProtocolMessageAdvancesMetadataAndDrainsEventBatchOnWe
 	control := game.NewControl(gameInstance)
 	playerID := "player-1"
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
 		VisibleWorldWidth:  1280,
 		VisibleWorldHeight: 720,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 	if !control.ApplyPlayerDefeat("debug", playerID) {
-		t.Fatal("expected DevtoolsKillPlayer to succeed")
+		t.Fatal("expected KillPlayer to succeed")
 	}
 
 	state := realtime.NewRealtimeSessionState(playerID)
@@ -453,13 +453,13 @@ func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessful
 	control := game.NewControl(gameInstance)
 	playerID := "player-1"
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
-		t.Fatal("expected DevtoolsEnsurePlayerSession to succeed")
+		t.Fatal("expected EnsurePlayerSession to succeed")
 	}
 	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
 		VisibleWorldWidth:  1280,
 		VisibleWorldHeight: 720,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
 	state := realtime.NewRealtimeSessionState(playerID)

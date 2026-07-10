@@ -77,6 +77,11 @@ const sessionNameSchema = z.string().regex(
 const cwdSchema = z.string().optional();
 
 const promptSchema = z.string().min(1, "prompt must be non-empty");
+const promptsSchema = z.array(promptSchema).min(1, "prompts must contain at least one prompt");
+
+function previewPrompt(prompt) {
+  return prompt.length > 80 ? `${prompt.slice(0, 80)}…` : prompt;
+}
 
 export function registerHermesTools(server) {
   server.registerTool(
@@ -165,6 +170,43 @@ export function registerHermesTools(server) {
         cwd,
       });
       return textResponse(JSON.stringify(result, null, 2));
+    }
+  );
+
+  server.registerTool(
+    "hermes_session_send_batch",
+    {
+      title: "Hermes Session Send Batch",
+      description: "Sends multiple prompts to a Hermes session and returns the results.",
+      inputSchema: {
+        prompts: promptsSchema,
+        session_name: sessionNameSchema.default("space-rocks-mcp"),
+        cwd: cwdSchema,
+      },
+    },
+    async ({ prompts, session_name, cwd }) => {
+      const requests = prompts.map((prompt) =>
+        runHermes({
+          args: ["chat", "-Q", "--continue", session_name, "--query", prompt],
+          cwd,
+        })
+      );
+      const results = await Promise.all(requests);
+      return textResponse(
+        JSON.stringify(
+          {
+            session_name,
+            count: results.length,
+            results: results.map((result, index) => ({
+              index,
+              prompt_preview: previewPrompt(prompts[index]),
+              result,
+            })),
+          },
+          null,
+          2
+        )
+      );
     }
   );
 }

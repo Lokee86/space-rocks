@@ -10,7 +10,7 @@ It covers how server debug commands interpret `target_player_id` and `target_sco
 
 ## Overview
 
-Server devtools commands are packet-driven debug requests. The client sends a debug packet, networking decodes it into a generated `DebugCommand`, and the server routes it through `devtools.HandleCommand`.
+Server devtools commands are packet-driven debug requests. The client sends a debug packet, networking decodes it into a generated `DebugCommand`, constructs the devtools controller, and routes it through `Controller.HandleCommand`.
 
 Player-targeted devtools commands use two debug fields:
 
@@ -36,13 +36,13 @@ The shared server resolver is:
 resolveCommandTargetPlayerIDs(target, requesting_player_id, command)
 ```
 
-`PlayerTargetSource` is the command-fanout capability used by the resolver.
+`PlayerTargetSource` is the command-fanout capability consumed by the resolver. It exposes `TargetPlayerIDs()`.
 
 Resolution behavior is:
 
 ```text
 target_scope == all_players
--> return game.Control.TargetPlayerIDs()
+-> return Control.TargetPlayerIDs()
 
 otherwise
 -> use target_player_id when present
@@ -200,7 +200,7 @@ For those commands:
 
 ```text
 target_scope=all_players
--> apply to every DevtoolsTargetPlayerIDs() result
+-> apply to every Control.TargetPlayerIDs() result
 
 target_player_id=<id>
 -> apply to that player ID
@@ -320,7 +320,17 @@ player_frozen
 
 `target_scope` is not itself a durable server state field and is not emitted as telemetry. It is command input used to choose effective targets for the current command.
 
-After mutations, clients observe the result through normal authoritative readback:\r\n\r\n```text\r\ndebug_status packets\r\nworld lane readback for target fields on active ships\r\nsession lane readback for player/session state\r\nplayer lifecycle\r\nplayer session score/lives state\r\nactive player ship state\r\nentity maps\r\n```
+After mutations, clients observe the result through normal authoritative readback:
+
+```text
+debug_status packets
+world lane readback for target fields on active ships
+session lane readback for player/session state
+player lifecycle
+player session score/lives state
+active player ship state
+entity maps
+```
 
 The server should not add a separate debug-only state model for player targeting when existing game state and debug status output already expose the result.
 
@@ -356,7 +366,7 @@ That helper combines command-type classification with `Enabled()`.
 
 Outbound debug status and debug shape catalog presentation check `devtools.Enabled()` before sending debug output.
 
-Inbound command routing is implemented through the networking inbound devtools handlers. Those handlers classify debug packet types before normal gameplay packet decode, require an active room and current game player ID, decode the packet into `DebugCommand`, and call `devtools.HandleCommand`.
+Inbound command routing is implemented through the networking inbound devtools handlers. Those handlers classify debug packet types before normal gameplay packet decode, require an active room and current game player ID, decode the packet into `DebugCommand`, and call `Controller.HandleCommand`.
 
 Runtime command gates include:
 
@@ -373,18 +383,17 @@ spawn-player with occupied requested player ID -> ignored
 player counter command with no found target -> returns false
 ```
 
-Devtools command handlers must keep routing through game-owned adapters. They should not mutate unrelated game internals directly when an existing gameplay seam owns the behavior.
+The server owns all gameplay mutation behind player-targeted devtools commands.
 
 ## Code map
 
 Primary server devtools targeting files:
 
 ```text
-services/game-server/internal/devtools/target_scopes.go
+services/game-server/internal/devtools/target.go
 services/game-server/internal/devtools/target_player_ids.go
-services/game-server/internal/devtools/handler.go
-services/game-server/internal/devtools/command_types.go
-services/game-server/internal/devtools/packets_generated.go
+services/game-server/internal/devtools/target_scopes.go
+services/game-server/internal/devtools/player_ids.go
 ```
 
 Player-targeted command handlers:
@@ -396,7 +405,6 @@ services/game-server/internal/devtools/respawn_handler.go
 services/game-server/internal/devtools/respawn_player.go
 services/game-server/internal/devtools/spawn_entity.go
 services/game-server/internal/devtools/spawn_player.go
-services/game-server/internal/devtools/player_ids.go
 ```
 
 Networking command routing:
@@ -419,7 +427,7 @@ services/game-server/internal/devtools/disabled.go
 Game-owned devtools adapters:
 
 ```text
-services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_status.go
 services/game-server/internal/game/control_counters.go
 services/game-server/internal/game/control_toggles.go
 ```
@@ -428,7 +436,7 @@ Related authoritative game state and targeting files:
 
 ```text
 services/game-server/internal/game/targeting.go
-services/game-server/internal/game/player_targeting.go
+services/game-server/internal/game/control_status.go
 services/game-server/internal/game/session.go
 services/game-server/internal/game/runtime/ship.go
 services/game-server/internal/game/state_packet.go
@@ -500,7 +508,7 @@ all-player kill targets all active players
 score and lives commands support all-player fanout
 score and lives commands support explicit other-player targeting
 score and lives commands fall back to the caller when target_player_id is empty
-DevtoolsTargetPlayerIDs includes session-only and active-ship player targets
+ControlTargetPlayerIDsIncludesSessionAndShipTargets covers session-only and active-ship player targets
 command type classification includes current debug command packet types
 default builds enable ShouldHandleCommand for devtools command packet types
 nodevtools builds disable ShouldHandleCommand
@@ -511,7 +519,7 @@ Useful focused verification:
 ```bash
 cd services/game-server
 go test -buildvcs=false ./internal/devtools
-go test -buildvcs=false ./internal/game -run 'DevtoolsTargetPlayerIDs|DevtoolsSpawnPlayerShip'
+go test -buildvcs=false ./internal/game -run 'TestControlTargetPlayerIDsIncludesSessionAndShipTargets|TestControlSpawnPlayerShip'
 ```
 
 Useful nodevtools verification:

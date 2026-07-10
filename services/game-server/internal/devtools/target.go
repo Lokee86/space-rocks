@@ -84,6 +84,7 @@ type CollisionTelemetryTarget interface {
 
 type Target interface {
 	StatusTarget
+	PlayerTargetSource
 	ToggleTarget
 	PlayerSpawnTarget
 	SpawnTarget

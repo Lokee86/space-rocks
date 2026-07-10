@@ -73,7 +73,7 @@ The game server owns all gameplay-affecting devtools consequences.
 
 `services/game-server/internal/devtools` owns command dispatch and command-specific debug behavior. It interprets `DebugCommand` fields, resolves player target scopes, validates command-specific payload needs, logs command outcomes, and calls the narrow game-owned APIs needed for real mutation.
 
-`devtools.HandleCommand(Target, ...)` remains a thin default-controller wrapper for direct callers; networking constructs a controller explicitly.
+`devtools.HandleCommand(devtools.Target, ...)` remains a thin default-controller wrapper for direct callers; networking constructs a controller explicitly.
 
 `devtools.Target` and its capability interfaces define the command dependency boundary between devtools and game control capabilities.
 
@@ -233,7 +233,7 @@ All groups delegate to the same internal command decode and dispatch path.
 
 ### Dispatch table
 
-`devtools.HandleCommand` dispatches by `DebugCommand.Type`.
+`Controller.HandleCommand` dispatches by `DebugCommand.Type`.
 
 Current dispatch ownership:
 
@@ -353,8 +353,8 @@ These logs are diagnostics, not protocol responses.
 Debug status output is an outbound diagnostic packet. It is built from:
 
 ```text
-devtools.StatusFor(gameInstance, playerID)
-devtools.StatusesForAllPlayers(gameInstance)
+controller.StatusFor(playerID)
+controller.StatusesForAllPlayers()
 ```
 
 and emitted as:
@@ -615,7 +615,7 @@ owns WebSocket sessions, read/write loops, inbound routing, and outbound message
 services/game-server/internal/game
 ```
 
-owns authoritative gameplay state and the export seams used by devtools. It should not import `internal/devtools`.
+owns authoritative gameplay state through Control.
 
 ```text
 client/scripts/devtools

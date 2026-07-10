@@ -26,7 +26,7 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 		VisibleWorldWidth:  1920,
 		VisibleWorldHeight: 1080,
 	}) {
-		t.Fatal("expected DevtoolsSpawnPlayerShip to succeed")
+		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
 	session := &webSocketSession{

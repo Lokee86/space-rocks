@@ -171,7 +171,11 @@ The builder requires a non-nil room, a non-nil game instance, `devtools.Enabled(
 
 Current docs must not claim periodic `debug_status` delivery unless the active write loop calls the debug status builder. `debug_status` remains a WebSocket devtools readout packet when delivery is active, and it is not part of active gameplay lane output.
 
-The packet is built with `devtools.StatusFor()` and `devtools.StatusesForAllPlayers()`, then encoded through `packetcodec`.
+The packet is built with `game.NewControl(room.GameInstance())`, `devtools.NewController(...)`, `controller.StatusFor(playerID)`, and `controller.StatusesForAllPlayers()`, then encoded through `packetcodec`.
+
+`controller.StatusesForAllPlayers()` uses `MatchDecision().Players` for all-player status membership.
+
+Command fanout membership is separate from debug-status membership.
 
 ### Ticker-driven debug shape catalog
 
@@ -445,7 +449,7 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/networking/player_pause_state.go` - Builds and enqueues player pause state packets.
 - `services/game-server/internal/networking/inbound/telemetry.go` - Builds and queues telemetry pong responses.
 - `services/game-server/internal/networking/outbound/server_message_writer.go` - Writes encoded server messages to the WebSocket.
-- `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets.
+- `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets via Control/Controller projection.
 - `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go` - Builds encoded debug shape catalog packets.
 - `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - expands oversized `asteroid_delta` and `bullet_delta` hot movement candidates into bounded real candidate chunks before scheduling and encoding.
 
@@ -502,6 +506,7 @@ The documented focused test paths for outbound routing are:
 
 - `services/game-server/internal/networking/websocket_write_test.go`
 - `services/game-server/internal/networking/outbound/debug_status_presentation_test.go`
+- `services/game-server/internal/devtools/controller_status_test.go`
 - `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation_test.go`
 - `services/game-server/internal/networking/room_snapshot_test.go`
 - `services/game-server/tests/networking/room_snapshot_test.go`

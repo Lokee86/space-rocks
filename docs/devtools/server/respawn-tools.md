@@ -35,7 +35,7 @@ client devtools respawn request
 -> lane-native readback reflects recreated ship
 ```
 
-Debug respawn uses the game-owned respawn placement and ship recreation seams, but it is not the same as normal gameplay respawn. Normal gameplay respawn requires the player session to have lives remaining, a zero respawn cooldown, and no active ship. Debug respawn is a force tool: it requires a valid target player session and blocks active players, but it resets respawn cooldown and recreates the ship through the devtools export seam.
+Debug respawn uses the game-owned respawn placement and ship recreation seams, but it is not the same as normal gameplay respawn. Normal gameplay respawn requires the player session to have lives remaining, a zero respawn cooldown, and no active ship. Debug respawn is a force tool: it requires a valid target player session and blocks active players, but it resets respawn cooldown and recreates the ship through the Control adapter.
 
 ## Debug-only scope
 
@@ -72,8 +72,8 @@ The debug command remains separate:
 
 ```text
 debug_respawn_player
--> devtools.HandleCommand(...)
--> ControlForceRespawnPlayer(...)
+-> Controller.HandleCommand
+-> Control.ForceRespawnPlayer(...)
 ```
 
 ## Server authority
@@ -319,7 +319,7 @@ inbound packet type must be a devtools command type
 current room must exist
 current game player ID must exist
 packet must decode into devtools.DebugCommand
-devtools.HandleCommand must recognize debug_respawn_player
+Controller.HandleCommand must recognize debug_respawn_player
 target game instance must exist
 target player ID must normalize successfully
 target player must not currently be active
@@ -347,12 +347,15 @@ services/game-server/internal/devtools/player_ids.go
 services/game-server/internal/devtools/packets_generated.go
 ```
 
-Game-owned export seams:
+Control adapter boundary:
 
 ```text
 services/game-server/internal/game/control_respawn.go
 services/game-server/internal/game/control_player_spawn.go
 ```
+
+Respawn-specific status helpers live in `services/game-server/internal/game/control_status.go`.
+
 
 Gameplay respawn implementation used for comparison and safe placement:
 
@@ -446,7 +449,7 @@ Useful verification commands from `services/game-server/`:
 ```bash
 go test -buildvcs=false ./internal/devtools/...
 go test -buildvcs=false ./internal/game/...
-go test -buildvcs=false ./tests/game -run 'Devtools|Respawn'
+go test -buildvcs=false ./tests/game -run 'Control|Respawn'
 go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 ```
 
@@ -473,4 +476,4 @@ The current debug respawn command uses safe server-selected respawn placement. I
 
 The server-side force-respawn camera path uses a dummy 1280 by 720 camera config when it must create a missing camera view. Normal gameplay respawn uses the existing player camera view and preserves valid client viewport configuration through `setPlayerCameraViewLocked`.
 
-Earlier legacy notes described respawn tools as using the existing per-player respawn guards. Current code uses a debug-specific force-respawn path instead: active players are ignored, invalid targets are ignored, and non-active sessions are recreated through the devtools export seam.
+Earlier legacy notes described respawn tools as using the existing per-player respawn guards. Current code uses a debug-specific force-respawn path instead: active players are ignored, invalid targets are ignored, and non-active sessions are recreated through the Control adapter.

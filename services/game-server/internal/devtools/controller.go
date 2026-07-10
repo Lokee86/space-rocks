@@ -99,8 +99,13 @@ func (controller *Controller) StatusFor(playerID string) DebugStatus {
 
 func (controller *Controller) StatusesForAllPlayers() map[string]DebugStatus {
 	statuses := make(map[string]DebugStatus)
-	for _, playerID := range controller.target.TargetPlayerIDs() {
-		statuses[playerID] = controller.StatusFor(playerID)
+	if controller == nil || controller.target == nil {
+		return statuses
+	}
+
+	decision := controller.target.MatchDecision()
+	for _, player := range decision.Players {
+		statuses[player.ID] = controller.StatusFor(player.ID)
 	}
 	return statuses
 }

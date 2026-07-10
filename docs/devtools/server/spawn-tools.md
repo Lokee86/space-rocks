@@ -149,7 +149,7 @@ debug_spawn_pickup
 
 The handler ignores placement devtools packets when the session has no current room or no current game player id. Decode failures are logged through network logging and stop command execution.
 
-`devtools.HandleCommand` dispatches spawn commands to:
+`Controller.HandleCommand` dispatches spawn commands to:
 
 ```text
 debug_spawn_entity -> handleDebugSpawnEntity

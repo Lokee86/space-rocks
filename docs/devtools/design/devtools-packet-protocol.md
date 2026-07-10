@@ -96,7 +96,7 @@ client networking
 shared packet schema pipeline
 game-server networking
 game-server devtools
-game-server game/export devtools seams
+game-server Controller/Target/Control boundary
 client devtools presentation
 ```
 
@@ -110,7 +110,7 @@ Game-server networking owns WebSocket envelope decode, routing order, and outbou
 
 Game-server devtools own command dispatch, debug status projection, shape catalog projection, and devtools-specific runtime state such as continuous bullet stream runtime.
 
-Game-owned export seams own controlled access to authoritative gameplay state. Devtools should call those seams instead of importing devtools behavior into normal game systems.
+Controller owns command policy, the Control adapter exposes authoritative capabilities, and gameplay state remains server-owned. Devtools should call the current Controller/Target/Control boundary instead of duplicating gameplay rules in normal game systems.
 
 Client devtools presentation owns the devtools window, debug readmodels, hitbox overlays, telemetry overlays, and dev labels.
 
@@ -355,9 +355,11 @@ remaining:
   debug_respawn_player
 ```
 
-Once a packet is classified as devtools, the server decodes it into `devtools.DebugCommand` and passes it to `devtools.HandleCommand(...)`.
+Once a packet is classified as devtools, the active routed path decodes it into `devtools.DebugCommand`, constructs `game.NewControl(room.GameInstance())`, constructs `devtools.NewController(...)`, and dispatches through `Controller.HandleCommand`.
 
-`devtools.HandleCommand(...)` dispatches by command type to the owning server devtools handler. Those handlers then use game-owned Control adapter for authoritative gameplay mutation.
+`devtools.HandleCommand(...)` remains only as a direct-call compatibility wrapper.
+
+`Controller.HandleCommand` dispatches by command type to the owning server devtools handler. Those handlers then use the game-owned Control adapter for authoritative gameplay mutation.
 
 Devtools commands do not route through normal `Game.HandlePacket` gameplay packet handling.
 
@@ -569,7 +571,7 @@ client/tests/unit/gameplay/debug/test_server_hitbox_overlay_flow.gd
 client/tests/unit/test_packet_codec.gd
 ```
 
-Run server tests after changing command classification, command dispatch, command effects, debug status projection, shape catalog output, build tags, or game export seams.
+Run server tests after changing command classification, command dispatch, command effects, debug status projection, shape catalog output, build tags, Controller dispatch, or Control adapter behavior.
 
 Run client tests after changing packet builders, devtools command routing, inbound packet routing, debug status readers, target readmodels, placement builders, overlays, or packet codec behavior.
 

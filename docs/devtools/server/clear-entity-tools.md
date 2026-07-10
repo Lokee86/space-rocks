@@ -136,7 +136,7 @@ networking.handleClientPacket
 -> inbound.RouteClientPacket
 -> inbound.HandleSimpleDevtoolsPacket
 -> inbound.handleDevtoolsCommandPacket
--> devtools.HandleCommand
+-> Controller.HandleCommand
 -> handleDebugClearBullets / handleDebugClearAsteroids
 -> Control.ClearBullets / Control.ClearAsteroids
 ```
@@ -145,7 +145,7 @@ If the websocket session has no current room or no current game player ID, the d
 
 If the command cannot decode into `devtools.DebugCommand`, networking logs a devtools command decode warning and consumes the packet.
 
-If `devtools.HandleCommand` receives a nil game target, the clear handler returns `false` and performs no mutation.
+If `Controller.HandleCommand` receives a nil game target, the clear handler returns `false` and performs no mutation.
 
 ## Telemetry
 
@@ -285,4 +285,4 @@ go test -buildvcs=false -tags nodevtools ./internal/devtools/...
 
 ## Notes
 
-Legacy documentation described clear bullets as also clearing active persistent debug bullet streams. The current inspected clear-entity handler removes live projectiles from the `Game` entity store and does not call the separate stream runtime clear method.
+`debug_clear_bullets` clears live projectile entities and clears continuous streams in the Controller-selected runtime.

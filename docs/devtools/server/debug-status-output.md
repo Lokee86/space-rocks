@@ -70,16 +70,16 @@ The status packet should stay focused on the status of devtools controls. Richer
 
 The server owns all debug status values.
 
-`services/game-server/internal/devtools/status.go` builds outward-facing `DebugStatus` values from the Control/Controller projection:
+`services/game-server/internal/devtools/status.go` builds outward-facing `DebugStatus` values from the current outbound Control/Controller projection:
 
 ```text
 game.NewControl(room.GameInstance())
 -> devtools.NewController(...)
--> Controller.StatusFor
+-> controller.StatusFor(playerID)
 -> devtools.DebugStatus
 ```
 
-`Controller.StatusFor` reads authoritative values through Control capability methods:
+`controller.StatusFor(playerID)` reads authoritative values through Control capability methods:
 
 ```text
 worldSimulationOptions
@@ -100,9 +100,9 @@ live player entity damage state
 
 The devtools package does not own the underlying gameplay state. It owns the debug-facing projection and packet shape. The game package owns the actual simulation, player session state, player entity state, and world simulation options.
 
-`StatusesForAllPlayers` builds the `debug_statuses` map by iterating session-backed match membership from `MatchDecision().Players` and projecting each player through `StatusFor`.
+`controller.StatusesForAllPlayers()` builds the `debug_statuses` map by iterating session-backed match membership from `MatchDecision().Players` and projecting each player through `controller.StatusFor(playerID)`.
 
-`Control.TargetPlayerIDs()` is for command fanout and may also contain ship-only IDs.
+`Control.TargetPlayerIDs()` is for command fanout and may also contain ship-only IDs. Command fanout membership is separate from debug-status membership.
 
 ## Output lifecycle
 
@@ -112,8 +112,10 @@ Current builder path:
 
 outbound.CanSendDebugStatus
 -> outbound.BuildDebugStatusResponse
--> devtools.StatusFor
--> devtools.StatusesForAllPlayers
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> controller.StatusFor(playerID)
+-> controller.StatusesForAllPlayers()
 -> packetcodec.Encode
 
 `debug_status` should remain a WebSocket devtools readout packet when delivery is active. It must not be documented as an active WebRTC gameplay lane packet.
@@ -305,6 +307,7 @@ Primary server status files:
 services/game-server/internal/devtools/status.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/devtools/controller_status_test.go
 ```
 
 Game-owned status source files:
@@ -347,6 +350,7 @@ Relevant tests:
 
 ```text
 services/game-server/internal/networking/outbound/debug_status_presentation_test.go
+services/game-server/internal/devtools/controller_status_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
 services/game-server/internal/devtools/toggles_test.go

@@ -10,7 +10,7 @@ It covers authoritative respawn request handling, respawn eligibility, cooldown 
 
 ## Overview
 
-See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+See also: [Game Control Adapter](../../../devtools/server/game-control-devtools-adapter.md)
 
 Player respawn is owned by the game server simulation. The client may request a respawn, but the server decides whether the player is eligible, where the new ship appears, and what session state is preserved.
 
@@ -30,9 +30,7 @@ Respawn does not create a new player session. It only restores an active ship fo
 
 ## Code root
 
-`services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/`
+`services/game-server/internal/game/control_respawn.go`
 
 ## Responsibilities
 
@@ -101,13 +99,24 @@ The inbound respawn surface is the realtime `respawn` client packet.
 client respawn input
 -> networking inbound gameplay adapter
 -> room.GameInstance().HandlePacket(playerID, packet)
--> Control.ForceRespawnPlayer
--> Control.SafeRespawnPosition
+-> normal gameplay respawn eligibility and mutation
 ```
 
-The packet carries no respawn authority beyond its packet type. The server uses the networking session's current game player ID as the player identity and ignores client-selected position, lives, cooldown, or ship state.
+## Debug force-respawn integration
 
-`Game.HandlePacket` handles `respawn` before active-ship lookup. This is intentional: a valid respawn request normally arrives while the player has no active ship. If the handler required an active ship before recognizing respawn, dead players could not request respawn.
+```text
+debug respawn packet
+-> inbound classifier
+-> packet decode into devtools.DebugCommand
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController
+-> Controller.HandleCommand
+-> target resolution
+-> Control.SafeRespawnPosition
+-> Control.ForceRespawnPlayer
+```
+
+This debug path is separate from normal gameplay respawn. It uses the Control adapter and devtools controller to force a respawn for eligible targets.
 
 Successful respawn is reflected through normal lane projection rather than a dedicated respawn event:
 
@@ -151,6 +160,8 @@ respawn packet
 -> store ship in game.entities.Players[playerID]
 -> setPlayerCameraViewLocked(playerID, player)
 ```
+
+`Game.HandlePacket` handles `respawn` before active-ship lookup because a valid respawn request normally arrives while the player has no active ship.
 
 `session.CanRespawn()` is true only when:
 
@@ -289,17 +300,13 @@ Respawn reads session-owned state:
 
 Respawn does not persist player state outside the game server. Player-data and API-server persistence are outside this boundary.
 
-The constants used by respawn are generated into `services/game-server/internal/constants/constants.go` from shared constants source files. Packet type and lane packet shapes are generated into `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/packets.go` from the shared realtime packet source.
+The constants used by respawn are generated into `services/game-server/internal/constants/constants.go` from shared constants source files. Packet type and lane packet shapes are generated into `services/game-server/internal/game/packets.go` from the shared realtime packet source.
 
 ## Code map
 
 Primary implementation files:
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/session.go`
+  `services/game-server/internal/game/session.go`
 
     Defines `playerSession`.
     Owns `RespawnCooldown`.
@@ -308,54 +315,36 @@ services/game-server/internal/game/session.go`
     Owns `respawnPlayer()`.
     Owns safe respawn planning and clearance checks.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/input.go`
+  `services/game-server/internal/game/input.go`
 
     Routes `PacketTypeRespawn` to `game.respawnPlayer(playerID)` before requiring an active ship.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/combat.go`
+  `services/game-server/internal/game/combat.go`
 
     Sets respawn cooldown after fatal player damage when lives remain.
     Records `ship_death` events with `RespawnDelay`.
     Preserves camera view at death position.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/simulation_players.go`
+  `services/game-server/internal/game/simulation_players.go`
 
     Advances player session cooldown timers.
     Removes ready-for-removal dead player ships from active player entities.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/players.go`
+  `services/game-server/internal/game/players.go`
 
     Creates initial player sessions and ships.
     Owns `setPlayerCameraViewLocked()` used by respawn.
     Removes player sessions and camera views when a player fully leaves.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/player_world_state.go`
+  `services/game-server/internal/game/player_world_state.go`
 
     Projects active, pending-respawn, and eliminated player state from sessions, ships, and camera views.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/player/state.go`
+  `services/game-server/internal/game/player/state.go`
 
     Defines player world-state status values and targetability/damageability/collidability flags.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/match.go`
-
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/rules/match.go`
+  `services/game-server/internal/game/rules/match.go`
 
     Classify players as active, pending respawn, or eliminated for match lifecycle decisions and lane packets.
 
@@ -373,15 +362,11 @@ Related generated and source files:
 
     Source packet definitions for `respawn`, `PlayerSessionState`, `EventState`, and `lane packet`.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/packets.go`
+  `services/game-server/internal/game/packets.go`
 
     Generated packet constants and packet/state structs.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/spawn_types.go`
+  `services/game-server/internal/game/spawn_types.go`
 
     Defines `PlayerSpawnPlan` and `SpawnReasonPlayerRespawn`.
 
@@ -389,9 +374,7 @@ services/game-server/internal/game/spawn_types.go`
 
     Adapts inbound `respawn` packets from the current room/session to the game instance.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/control_respawn.go`
+  `services/game-server/internal/game/control_respawn.go`
 
     Exposes safe respawn position and force-respawn helpers for devtools.
     Debug force respawn intentionally bypasses normal client request cooldown gates.
@@ -406,15 +389,11 @@ Related tests:
 
     Covers respawn fallback behavior for unknown session collision shape IDs.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/player/state_test.go`
+  `services/game-server/internal/game/player/state_test.go`
 
     Covers player world-state status and JSON field names for respawn cooldown.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/player_world_state_test.go`
+  `services/game-server/internal/game/player_world_state_test.go`
 
     Covers pending respawn state without an active ship.
 
@@ -424,15 +403,11 @@ services/game-server/internal/game/player_world_state_test.go`
 
     Cover pending-respawn participation in match decisions.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/targeting_test.go`
+  `services/game-server/internal/game/targeting_test.go`
 
     Covers stored targeting state surviving dead-state targeting changes and being mirrored onto the respawned ship.
 
-  `services/game-server/internal/game/control_respawn.go
-services/game-server/internal/game/control_player_spawn.go
-services/game-server/internal/game/export_devtools_respawn_test.go`
+  `services/game-server/internal/game/control_respawn_test.go`
 
     Covers devtools force-respawn camera-view creation.
 

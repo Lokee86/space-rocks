@@ -220,7 +220,7 @@ type DebugCommand struct {
 }
 ```
 
-`devtools.HandleCommand` switches on `command.Type` and delegates to focused handlers.
+`Controller.HandleCommand` switches on `command.Type` and delegates to focused handlers.
 
 Unknown command types return `false` from `HandleCommand`. The inbound networking path does not serialize that boolean to the client.
 
@@ -275,7 +275,7 @@ Effects:
 | `collisions`           | Toggles collision passes through `ToggleFreezeCollisions`.      |
 | unknown value          | Logs and consumes the command without mutation.                         |
 
-The actual simulation gates live in game-owned world simulation options. Devtools only requests toggle changes through exported game methods.
+The actual simulation gates live in game-owned world simulation options. Devtools requests toggle changes through narrow Control capabilities.
 
 ### Kill command
 
@@ -410,12 +410,12 @@ Score and lives clamping is owned by the shared player counter mutation seam, no
 
 ### Clear entity commands
 
-Clear commands mutate authoritative server entity storage directly through game-owned export methods.
+Clear commands mutate authoritative server entity storage directly through game-owned Control methods.
 
 | Packet type             | Server behavior                                                   |
 | ----------------------- | ----------------------------------------------------------------- |
-| `debug_clear_bullets`   | Removes all current projectiles from `game.entities.Projectiles`. |
-| `debug_clear_asteroids` | Removes all current asteroids from `game.entities.Asteroids`.     |
+| `debug_clear_bullets`   | Removes all current projectiles through Control clear methods. |
+| `debug_clear_asteroids` | Removes all current asteroids through Control clear methods.     |
 
 Clients observe the result through lane-native state/world sync readback. There is no separate clear acknowledgement packet.
 
@@ -576,7 +576,7 @@ services/game-server/internal/devtools/streamruntime/simulation.go
 services/game-server/internal/devtools/streamruntime/continuous_bullet_streams.go
 ```
 
-### Game-owned export seams
+### Game-owned Control adapter
 
 ```text
 services/game-server/internal/game/control.go
@@ -636,13 +636,14 @@ services/game-server/internal/devtools/streamruntime/runtime_test.go
 services/game-server/internal/devtools/streamruntime/continuous_bullet_streams_test.go
 ```
 
-Relevant game export seam tests include:
+Relevant Control and Controller tests include:
 
 ```text
 services/game-server/internal/game/control_player_spawn_test.go
 services/game-server/internal/game/control_respawn_test.go
 services/game-server/internal/game/control_streams_test.go
 services/game-server/internal/game/control_collision_telemetry_test.go
+services/game-server/internal/devtools/controller_status_test.go
 ```
 
 Relevant networking output tests include:
@@ -701,6 +702,6 @@ The command surface deliberately keeps interpretation in `internal/devtools` and
 
 `debug_respawn_player` currently receives position fields but applies a server-selected safe respawn position. Do not document the payload position as authoritative respawn placement unless the implementation changes.
 
-When adding a new command, update packet source data, generated outputs, inbound routing, command classification, handler dispatch, game export seams, client send paths, and focused tests together.
+When adding a new command, update packet source data, generated outputs, inbound routing, command classification, handler dispatch, Controller dispatch, capability interfaces, Control implementation, client send paths, and focused tests together.
 
 

@@ -73,7 +73,7 @@ Debug-only scope does not mean debug-only logic can bypass ownership. It means t
 
 ## Authority model
 
-### Server authority
+### Server authority and current Control/Controller seams
 
 Gameplay-affecting devtools commands are server-authoritative.
 
@@ -102,7 +102,13 @@ The game aggregate owns gameplay state and exposes only the narrow Control adapt
 services/game-server/internal/game/control*.go
 ```
 
-`internal/devtools` does not import the root `internal/game` package. `internal/game` does not import devtools.
+Current import direction is:
+
+```text
+internal/networking may import internal/game and internal/devtools
+internal/devtools does not import the root internal/game package
+internal/game does not import devtools
+```
 
 ### Client authority
 
@@ -147,7 +153,9 @@ raw websocket message
 -> inbound.RouteClientPacket
 -> inbound.HandleSimpleDevtoolsPacket / HandlePlacementDevtoolsPacket / HandleRemainingDevtoolsPacket
 -> packetcodec.Decode(raw message, devtools.DebugCommand)
--> devtools.HandleCommand(Target, ...)
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
 ```
 
 Devtools commands do not route through `Game.HandlePacket`.
@@ -225,7 +233,7 @@ debug respawn player
 -> normal player session and camera state
 ```
 
-The debug command layer can select the operation. The operation itself belongs to the gameplay system that owns the state.
+Command target fanout is separate from status membership: `Control.TargetPlayerIDs()` serves player-target fanout, while `Controller.StatusesForAllPlayers()` follows `MatchDecision().Players` for status membership.
 
 ## Client presentation seams
 
@@ -444,7 +452,7 @@ services/game-server/internal/devtools/command_types.go
 services/game-server/internal/devtools/handler.go
 ```
 
-### Server authority and game export seams
+### Server authority, Controller seams, and Control adapter
 
 ```text
 services/game-server/internal/devtools/
@@ -572,7 +580,7 @@ client/tests/unit/test_gameplay_input_context.gd
 client/tests/unit/test_packet_codec.gd
 ```
 
-Run server devtools tests after changing command classification, target scopes, command handlers, game export seams, debug status, debug shape output, or continuous stream runtime behavior.
+Run server devtools tests after changing command classification, target scopes, Controller dispatch, capability interfaces, Control adapter behavior, debug status, debug shape output, or continuous stream runtime behavior.
 
 Run client devtools tests after changing context wiring, window controls, target resolution, placement routing, overlays, telemetry, or packet builders.
 

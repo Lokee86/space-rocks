@@ -185,10 +185,11 @@ The `target_player_id` field is a devtools player-slot request in this command. 
 Player spawn uses:
 
 ```text
-DevtoolsEnsurePlayerSession
-DevtoolsSpawnPlayerShip
+Control.EnsurePlayerSession
+Control.SpawnPlayerShip
 DummyPlayerCameraConfig
 ```
+
 
 Creating the ship also ensures the spawned player has a camera view.
 
@@ -197,8 +198,9 @@ Camera behavior:
 ```text
 camera view absent
 -> create camera view
--> update position
+-> update position from the spawned ship
 -> apply supplied config only when both dimensions are positive
+-> preserve an existing valid config when supplied config is invalid
 ```
 
 ### Asteroid spawn
@@ -303,7 +305,7 @@ packet type must be classified as a placement devtools packet
 session must have a current room
 session must have a current active game player ID
 packet must decode as devtools.DebugCommand
-devtools.HandleCommand must recognize the command type
+Controller.HandleCommand must recognize the command type
 spawn-specific validation must pass
 ```
 
@@ -381,14 +383,15 @@ services/game-server/internal/networking/inbound/router.go
 services/game-server/internal/networking/inbound/devtools.go
 ```
 
-Game-owned devtools seams:
+Game-owned control boundary:
 
 ```text
-services/game-server/internal/game/control_spawn.go
 services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/game/spawning.go
 services/game-server/internal/game/pickups.go
 ```
+
 
 Related gameplay implementation:
 

@@ -8,7 +8,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/physics"
 )
 
-func TestDevtoolsForceRespawnPlayerCreatesCameraViewWithDummyConfig(t *testing.T) {
+func TestControlForceRespawnPlayerCreatesCameraViewWithDummyConfig(t *testing.T) {
 	gameInstance := New()
 	control := NewControl(gameInstance)
 	playerID := "player-1"

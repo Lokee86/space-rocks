@@ -18,6 +18,23 @@ Use this package for agent access only. It is not a general app server.
 - `server-write.js` runs the write-capable MCP server on port `8788`.
 - `server.js` is legacy/compatibility and should not be expanded.
 
+## OAuth-protected MCP startup
+
+Both current shared-server entrypoints load the local `.env` file through `dotenv` before the shared HTTP/OAuth modules are evaluated.
+The shared HTTP server fails closed at startup if `AUTH0_ISSUER`, `AUTH0_AUDIENCE`, or `RESOURCE_SERVER_URL` are missing or invalid.
+
+Required environment variables:
+
+- `AUTH0_ISSUER` - Auth0 issuer URL, including the tenant domain, using HTTPS
+- `AUTH0_AUDIENCE` - configured API audience value
+- `RESOURCE_SERVER_URL` - canonical resource server URL, using HTTPS
+
+The Auth0 Client ID and Client Secret are configured on the ChatGPT connector side and are not consumed by this server.
+
+If the ngrok endpoint changes, update the ChatGPT connector URL as well. The configured audience and resource values must stay consistent with the OAuth setup.
+
+Use `.env.example` as the local template; do not add secrets to tracked files.
+
 ## Shared modules
 
 The main shared modules are:
@@ -53,7 +70,7 @@ npm run start:info
 - Repo write tools: `ping`, `write_repo_file`, `replace_in_repo_file`, `list_allowed_commands`, `run_allowed_command`
 - EngineForge read tools: bridge info, bridge status, route probing, command probing, project info, scene tree, node properties, editor logs
 - EngineForge write tools: scene open/save/create, node create/delete/duplicate/reparent/property/transform, script create/edit/detach/delete/attach, resource create, material helpers, editor play/stop/pause, console clear, animation play/stop
-- Hermes tools: `hermes_run`, `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`. These tools provide access to the Hermes CLI; the session tools preserve continuous context by sending prompts to a named Hermes session.
+- Hermes tools: `hermes_run`, `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`, `hermes_session_send_batch`. These tools provide access to the Hermes CLI; the session tools preserve continuous context by sending prompts to a named Hermes session.
 
 ## Hermes CLI Tools
 
@@ -65,6 +82,7 @@ The Hermes MCP tools provide bounded CLI access:
 - `hermes_session_status` - Shows the current Hermes session status (runs `hermes status`)
 - `hermes_sessions_list` - Lists all Hermes sessions (runs `hermes sessions list`)
 - `hermes_session_send` - Sends a prompt to a Hermes session and returns the result
+- `hermes_session_send_batch` - Sends multiple prompts to a Hermes session and returns the results
 
 The `hermes_session_send` tool preserves continuous context by sending prompts to the same named Hermes session. The internal command shape is:
 
@@ -73,6 +91,14 @@ hermes chat -Q --continue <session_name> --query <prompt>
 ```
 
 The default session name is `space-rocks-mcp`.
+
+The `hermes_session_send_batch` tool queues multiple prompts to the same named session through the connector. It starts all sends before awaiting results, preserves input order in `results`, and returns each item with `index`, `prompt_preview`, and the existing Hermes result object.
+
+The input shape is:
+
+- `prompts` - required array of non-empty prompt strings, minimum one prompt
+- `session_name` - same default and naming restrictions as `hermes_session_send`
+- `cwd` - optional repo-relative working directory
 
 **Important**: Info MCP does not expose:
 - General shell

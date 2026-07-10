@@ -8,7 +8,7 @@ import (
 	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
 )
 
-func TestDevtoolsSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
+func TestControlSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
 	gameInstance := New()
 	control := NewControl(gameInstance)
 	playerID := "player-1"
@@ -46,7 +46,7 @@ func TestDevtoolsSpawnPlayerShipUsesDummyCameraConfig(t *testing.T) {
 	}
 }
 
-func TestDevtoolsSpawnPlayerShipKeepsExistingValidCameraConfigWhenSuppliedConfigIsInvalid(t *testing.T) {
+func TestControlSpawnPlayerShipKeepsExistingValidCameraConfigWhenSuppliedConfigIsInvalid(t *testing.T) {
 	gameInstance := New()
 	control := NewControl(gameInstance)
 	playerID := "player-1"
@@ -76,7 +76,7 @@ func TestDevtoolsSpawnPlayerShipKeepsExistingValidCameraConfigWhenSuppliedConfig
 	}
 }
 
-func TestDevtoolsTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
+func TestControlTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
 	gameInstance := New()
 	control := NewControl(gameInstance)
 	sessionOnlyID := "player-2"
@@ -100,42 +100,6 @@ func TestDevtoolsTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
 	want := []string{sessionOnlyID, sharedID, shipOnlyID}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("TargetPlayerIDs() = %v, want %v", got, want)
-	}
-}
-
-func TestDevtoolsStatusesForAllPlayersUsesSessionMembership(t *testing.T) {
-	gameInstance := New()
-	control := NewControl(gameInstance)
-
-	sessionOnlyID := "player-2"
-	sharedID := "player-3"
-	shipOnlyID := "player-4"
-	spawnPosition := physics.Vector2{X: 120, Y: 220}
-
-	if !control.EnsurePlayerSession(sessionOnlyID, spawnPosition) {
-		t.Fatal("expected session-only player session to be created")
-	}
-	if !control.EnsurePlayerSession(sharedID, spawnPosition) {
-		t.Fatal("expected shared player session to be created")
-	}
-	if !control.SpawnPlayerShip(sharedID, spawnPosition, DummyPlayerCameraConfig()) {
-		t.Fatal("expected shared player ship to be spawned")
-	}
-	gameInstance.entities.Players[shipOnlyID] = &runtime.Ship{ID: shipOnlyID, X: 10, Y: 20}
-
-	statuses := NewController(Dependencies{Target: control}).StatusesForAllPlayers()
-	if _, ok := statuses[sessionOnlyID]; !ok {
-		t.Fatalf("expected session-backed player %q in statuses", sessionOnlyID)
-	}
-	if _, ok := statuses[sharedID]; !ok {
-		t.Fatalf("expected shared player %q in statuses", sharedID)
-	}
-	if _, ok := statuses[shipOnlyID]; ok {
-		t.Fatalf("expected ship-only player %q to be absent from statuses", shipOnlyID)
-	}
-
-	if got := control.TargetPlayerIDs(); !reflect.DeepEqual(got, []string{sessionOnlyID, sharedID, shipOnlyID}) {
-		t.Fatalf("TargetPlayerIDs() = %v, want %v", got, []string{sessionOnlyID, sharedID, shipOnlyID})
 	}
 }
 

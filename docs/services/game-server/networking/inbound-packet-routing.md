@@ -167,14 +167,16 @@ Simple devtools packet types include toggles, player counter mutation commands, 
 All devtools groups delegate to the same command handling path:
 
 ```text
-handleDevtoolsCommandPacket
+`handleDevtoolsCommandPacket`
 -> packetcodec.Decode(raw message, devtools.DebugCommand)
--> devtools.HandleCommand(room.GameInstance(), currentGamePlayerID, command)
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand(currentGamePlayerID, command)
 ```
 
 Devtools packet routing requires both a current room and a current active game player. If either is missing, the devtools packet is consumed but no command is applied. This prevents devtools command packets from falling through into normal game packet routing.
 
-Inbound routing does not own the devtools command effects. Those are owned by `services/game-server/internal/devtools/` and narrow game-owned devtools export seams under `services/game-server/internal/game/`.
+Inbound routing does not own the devtools command effects. Those are owned by `services/game-server/internal/devtools/` and the game-owned Control adapter under `services/game-server/internal/game/`.
 
 ### Auth packet routing
 
@@ -331,17 +333,23 @@ debug_add_lives
 debug_clear_bullets
 debug_clear_asteroids
 -> devtools.DebugCommand
--> devtools.HandleCommand
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
 
 debug_spawn_entity
 debug_spawn_pickup
 -> devtools.DebugCommand
--> devtools.HandleCommand
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
 
 debug_begin_continuous_bullet_stream
 debug_respawn_player
 -> devtools.DebugCommand
--> devtools.HandleCommand
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
 
 authenticate_request
 -> session.handleAuthenticateRequest

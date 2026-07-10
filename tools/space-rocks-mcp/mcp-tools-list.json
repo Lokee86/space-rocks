@@ -82,6 +82,31 @@
           },
           "required": ["prompt"]
         }
+      },
+      {
+        "name": "hermes_session_send_batch",
+        "description": "Sends multiple prompts into a named Hermes session using session continuation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "prompts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            "session_name": {
+              "type": "string",
+              "default": "space-rocks-mcp"
+            },
+            "cwd": {
+              "type": "string"
+            }
+          },
+          "required": ["prompts"]
+        }
       }
     ]
   }

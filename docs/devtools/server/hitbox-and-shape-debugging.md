@@ -474,6 +474,7 @@ services/game-server/internal/devtools/shape_catalog_test.go
 services/game-server/internal/devtools/shape_ids_test.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation_test.go
 services/game-server/internal/game/control_collision_telemetry_test.go
+services/game-server/internal/devtools/collision_body_telemetry_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
 ```
@@ -504,7 +505,7 @@ Useful focused verification:
 
 ```bash
 cd services/game-server
-go test -buildvcs=false ./internal/devtools ./internal/networking/outbound ./internal/game -run 'Shape|DebugShape|DevtoolsCollision'
+go test -buildvcs=false ./internal/devtools ./internal/networking/outbound ./internal/game -run 'Shape|DebugShape|CollisionBodyTelemetry|DevtoolsCollision'
 ```
 
 Nodevtools gate verification:
@@ -533,12 +534,14 @@ data-sync -check -packets -go -gds
 * [Devtools](../!INDEX.md)
 * [Client Hitbox Overlays](../client/hitbox-overlays.md)
 * [Client Devtools](../client/!INDEX.md)
+* [Game Control Devtools Adapter](../server/game-control-devtools-adapter.md)
 * [Game Server Networking](../../services/game-server/networking/!INDEX.md)
 * [Outbound Packet Routing](../../services/game-server/networking/outbound-message-flow.md)
 * [Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
 * [Server Physics](../../services/game-server/simulation/world/physics.md)
 * [Collision Shape Data](../../data/collision-shape-data.md)
 * [Packet Schemas](../../data/packet-schemas.md)
+
 * [Protocol](../../protocol/!INDEX.md)
 * [Player Build Limits](../../limits/player-build-limits.md)
 

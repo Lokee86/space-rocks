@@ -87,9 +87,9 @@ networking read loop
 -> inbound.RouteClientPacket
 -> inbound devtools packet classifier
 -> packetcodec.Decode into devtools.DebugCommand
--> devtools.HandleCommand
+-> Controller.HandleCommand
 -> command-specific handler
--> game export seam or existing game API
+-> Control capability or existing game API
 ```
 
 Devtools command packets are routed before normal gameplay packet decoding. They do not reach `Game.HandlePacket`.
@@ -128,13 +128,13 @@ Unknown freeze targets are logged and ignored without changing freeze flags.
 
 `StatusFor` projects authoritative state into `devtools.DebugStatus` without changing packet shape.
 
-`StatusesForAllPlayers` uses `MatchDecision().Players` as the membership source so the all-player status readout stays session-backed.
+`Control.TargetPlayerIDs()` is command fanout only. `Controller.StatusesForAllPlayers()` uses `MatchDecision().Players` as the membership source so the all-player status readout stays session-backed.
 
 ## Toggle
 
 `control_toggles.go` owns the adapter methods for world freeze, granular freeze, invincibility, infinite lives, player freeze, and debug kill.
 
-The current method names are domain-neutral and omit `Devtools` prefixes:
+Control methods are domain-neutral and omit `Devtools` prefixes:
 
 ```text
 WorldFrozen
@@ -159,7 +159,7 @@ ApplyPlayerDefeat
 
 `control_spawn.go` owns debug bullet, asteroid, and pickup spawn adapter methods.
 
-The adapter methods use current names without `Devtools` prefixes:
+Control methods are domain-neutral and omit `Devtools` prefixes:
 
 ```text
 RandomUnitVector
@@ -177,7 +177,7 @@ SpawnPickup
 
 `control_player_spawn.go` owns debug player session and ship setup.
 
-The adapter methods use current names without `Devtools` prefixes:
+Control methods are domain-neutral and omit `Devtools` prefixes:
 
 ```text
 EnsurePlayerSession
@@ -197,7 +197,7 @@ TargetPlayerIDs
 
 `control_respawn.go` owns debug respawn support.
 
-The adapter methods use current names without `Devtools` prefixes:
+Control methods are domain-neutral and omit `Devtools` prefixes:
 
 ```text
 SafeRespawnPosition
@@ -210,7 +210,7 @@ Debug respawn keeps the existing player-session and ship creation flow and still
 
 `control_counters.go` owns debug score and lives adapter methods.
 
-The adapter methods use current names without `Devtools` prefixes:
+Control methods are domain-neutral and omit `Devtools` prefixes:
 
 ```text
 SetPlayerScore
@@ -225,7 +225,7 @@ These methods return only whether the underlying `PlayerCounterChange` found a p
 
 `control_clear.go` owns debug clear-bullets and clear-asteroids behavior.
 
-The adapter methods use current names without `Devtools` prefixes:
+Control methods are domain-neutral and omit `Devtools` prefixes:
 
 ```text
 ClearBullets
@@ -238,7 +238,7 @@ These methods operate on authoritative game state. Command policy still lives in
 
 `control_streams.go` owns debug continuous-bullet stream adapter methods.
 
-The adapter methods use current names without `Devtools` prefixes:
+Control methods are domain-neutral and omit `Devtools` prefixes:
 
 ```text
 BulletsCanMove
@@ -288,7 +288,7 @@ The current inbound router classifies devtools packets in:
 services/game-server/internal/networking/inbound/devtools.go
 ```
 
-It uses route-local packet-type classifiers for simple commands, placement commands, and remaining devtools commands before decoding normal gameplay packets. That route also requires a current room and a non-empty current game player ID before dispatching a command to `devtools.HandleCommand`.
+It uses route-local packet-type classifiers for simple commands, placement commands, and remaining devtools commands before decoding normal gameplay packets. That route also requires a current room and a non-empty current game player ID before dispatching a command to `Controller.HandleCommand`.
 
 When changing devtools gates, keep these surfaces aligned:
 
@@ -307,30 +307,30 @@ current game player ID must exist
 command type must be recognized by the inbound devtools route
 command payload must decode into devtools.DebugCommand
 handler-specific target and payload checks must pass
-game export seam or public game method must accept the operation
+Control capability or public game method must accept the operation
 ```
 
 ## Locking and mutation model
 
-Game export devtools seams operate on `game.Game` aggregate-owned state, so each seam must respect the aggregate’s synchronization model.
+Control.ClearBullets, Control.ClearAsteroids, and Control.CollisionBodiesByKind own the documented aggregate locks.
 
-Current export methods are mixed:
+Control methods are mixed:
 
 ```text
-DevtoolsClearBullets and DevtoolsClearAsteroids lock the game aggregate.
-DevtoolsCollisionBodies locks the game aggregate.
+Control.ClearBullets and Control.ClearAsteroids lock the game aggregate.
+Control.CollisionBodiesByKind locks the game aggregate.
 Game.SpawnPickup locks the game aggregate.
-Player counter exports delegate to public counter methods that lock the game aggregate.
+Control counter methods delegate to public counter methods that lock the game aggregate.
 Several toggle, spawn, respawn, and stream adapter methods delegate directly to game-owned fields or helpers without adding their own local lock.
 ```
 
-When adding or changing a seam, decide explicitly whether the called game method already owns locking or whether the export method must lock before touching aggregate state. Do not assume a method is safe only because it is in an `export_devtools*.go` file.
+When adding or changing a Control capability, decide explicitly whether the called game method already owns locking or whether the Control method must lock before touching aggregate state. Do not assume a method is safe only because it is in a focused control file.
 
 Simulation step observers run from inside `Game.Step`. Observer callbacks should stay narrow and should route gameplay effects through game-owned adapters.
 
 ## Relationship to real gameplay systems
 
-Game export devtools seams exist to expose real gameplay systems to debug tooling. They should not create replacement systems.
+Control capabilities exist to expose real gameplay systems to debug tooling. They should not create replacement systems.
 
 Current examples:
 
@@ -384,3 +384,22 @@ services/game-server/internal/devtools/spawn_bullet.go
 services/game-server/internal/devtools/spawn_pickup.go
 services/game-server/internal/devtools/spawn_player.go
 services/game-server/internal/devtools/respawn_player.go
+services/game-server/internal/devtools/player_counters.go
+services/game-server/internal/devtools/clear_entities.go
+services/game-server/internal/devtools/continuous_bullet_stream.go
+services/game-server/internal/devtools/collision_telemetry.go
+```
+
+## Tests and verification
+
+Focused tests live beside the adapter and devtools handlers they cover. This document does not define new behavior; it records the current boundary and the files that exercise it.
+
+## Related docs
+
+* `docs/devtools/server/debug-command-surface.md`
+* `docs/devtools/server/command-routing-and-build-gates.md`
+* `docs/devtools/design/devtools-packet-protocol.md`
+
+## Notes
+
+`game.Control` adapts authoritative game state. `internal/devtools` owns command policy, projection, and DTOs. `internal/game` owns gameplay consequences. `internal/networking` owns packet routing and `Controller` construction.

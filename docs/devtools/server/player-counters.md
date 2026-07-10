@@ -27,6 +27,12 @@ These commands do not create a separate debug counter store. They route through 
 services/game-server/internal/game/control_counters.go
 ```
 
+`Control.TargetPlayerIDs()` lives in:
+
+```text
+services/game-server/internal/game/control_status.go
+```
+
 Those adapters delegate to the normal game counter seam:
 
 ```text
@@ -35,7 +41,7 @@ services/game-server/internal/game/player_counters.go
 
 The authoritative values remain stored on `playerSession`, not on the live `runtime.Ship` avatar. Score and lives therefore survive ship removal, death, pending respawn, and eliminated states as long as the player session still exists.
 
-Counter values are clamped at zero by the gameplay counter seam. Devtools can set or add negative values, but the resulting score or lives value cannot become negative.
+Counter values are clamped at zero by the gameplay counter seam. Control counter methods can set or add negative values, but the resulting score or lives value cannot become negative.
 
 ## Debug-only scope
 
@@ -71,15 +77,16 @@ client debug packet
 -> inbound packet envelope decode
 -> inbound devtools packet classification
 -> packetcodec.Decode(..., devtools.DebugCommand)
--> devtools.HandleCommand(room.GameInstance(), currentGamePlayerID, command)
--> handleDebugSetScore / handleDebugAddScore / handleDebugSetLives / handleDebugAddLives
--> resolveCommandTargetPlayerIDs
--> Control.SetPlayerScore / Control.AddPlayerScore / Control.SetPlayerLives / Control.AddPlayerLives
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(devtools.Dependencies{Target: control})
+-> Controller.HandleCommand(currentGamePlayerID, command)
+-> counter handler
+-> target resolution
 -> Control.SetPlayerScore / Control.AddPlayerScore / Control.SetPlayerLives / Control.AddPlayerLives
 -> playerSession.Score or playerSession.Lives
 ```
 
-The devtools package owns command dispatch and target resolution. It does not own authoritative counter storage.
+The devtools package owns command policy and controller wiring. It does not own authoritative counter storage.
 
 The game package owns the mutation seam. Public counter methods lock `game.mu`, find the player session, clamp the resulting value, write the session counter, and return a `PlayerCounterChange`.
 
@@ -93,13 +100,13 @@ After
 Delta
 ```
 
-Devtools handlers use `Found` to decide whether a command affected at least one target. The public Control counter methods return the underlying PlayerCounterChange `Found` result. A command returns `false` when no target player session was found or when the target game instance is nil.
+Control counter methods return the underlying PlayerCounterChange `Found` result, and devtools handlers aggregate those boolean results to decide whether a command affected at least one target. A command returns `false` when no target player session was found or when the target game instance is nil.
 
 Missing player sessions are not created by score or lives commands. If a requested player ID does not exist in `game.playerSessions`, the game counter seam returns `Found: false` and does not mutate state.
 
 ## Target resolution
 
-Player counter commands use the shared devtools player-target resolver.
+PlayerTargetSource is the command-fanout capability that exposes `TargetPlayerIDs()` and feeds all-player counter resolution.
 
 Current target scopes are:
 
@@ -108,7 +115,7 @@ single_player
 all_players
 ```
 
-For `target_scope = "all_players"`, the server asks the game instance for `DevtoolsTargetPlayerIDs()`. That game-owned helper returns the sorted union of known player session IDs and active ship IDs, excluding empty IDs. The counter seam still only mutates IDs that resolve to existing player sessions.
+For `target_scope = "all_players"`, the server asks `Control.TargetPlayerIDs()`. That control-owned helper returns the sorted union of known player session IDs and active ship IDs, excluding empty IDs. The counter seam still only mutates IDs that resolve to existing player sessions.
 
 For any other scope, including an empty or unknown scope, the command is treated as single-player targeting:
 
@@ -238,7 +245,7 @@ devtools.ShouldHandleCommand(packet_type):
 IsCommandType(packet_type) && Enabled()
 ```
 
-Player counter handlers themselves are not the build gate. They assume the command has already been routed into `devtools.HandleCommand`.
+Player counter handlers themselves are not the build gate. They assume the command has already been routed into `Controller.HandleCommand`.
 
 Runtime command routing also requires:
 
@@ -268,7 +275,7 @@ services/game-server/internal/game/player_counters.go
 
 That seam is also used by normal gameplay flows such as score awards, fatal damage life loss, pickup life effects, match facts, and lane packet projection.
 
-Devtools only supplies an alternate command path into that seam. It does not own:
+Control only supplies an alternate command path into that seam. It does not own:
 
 * scoring policy
 * score awards from asteroid destruction
@@ -297,8 +304,8 @@ Game-owned counter adapters:
 
 ```text
 services/game-server/internal/game/control_counters.go
+services/game-server/internal/game/control_status.go
 services/game-server/internal/game/player_counters.go
-services/game-server/internal/game/control_player_spawn.go
 ```
 
 Inbound routing:

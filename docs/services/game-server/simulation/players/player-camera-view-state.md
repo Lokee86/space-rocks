@@ -10,7 +10,7 @@ It covers the server-side `CameraView` model used for viewport-sized spawning, v
 
 ## Overview
 
-See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+See also: [Game Control Adapter](../../../devtools/server/game-control-devtools-adapter.md)
 
 The game server keeps a camera-view record per simulation player in:
 
@@ -230,8 +230,8 @@ This means a pending-respawn player with a session and camera view can still ref
 Control paths can also create or update camera views when forcing player spawn or respawn:
 
 ```text
-DevtoolsSpawnPlayerShip()
-DevtoolsForceRespawnPlayer()
+Control.SpawnPlayerShip()
+Control.ForceRespawnPlayer()
 ```
 
 Those paths are devtools adapters around game-owned player/camera state. They do not make devtools the owner of camera-view behavior.
@@ -302,8 +302,8 @@ Related tests:
 * `services/game-server/tests/game/visibility_test.go` - Verifies cross-edge camera visibility and far bullet/asteroid cleanup.
 * `services/game-server/tests/game/helpers_test.go` - Provides camera-view test helper setup.
 * `services/game-server/internal/game/player_world_state_test.go` - Verifies inactive player world-state capability flags.
-* `services/game-server/internal/game/export_devtools_respawn_test.go` - Verifies devtools force-respawn creates camera view with dummy config.
-* `services/game-server/internal/game/export_devtools_player_spawn_test.go` - Verifies devtools spawn creates camera view with dummy config.
+* `services/game-server/internal/game/control_respawn_test.go` - Verifies Control force-respawn creates camera view with dummy config.
+* `services/game-server/internal/game/control_player_spawn_test.go` - Verifies Control spawn creates camera view with dummy config.
 * `services/game-server/internal/game/simulation_match_over_test.go` - Verifies match-over stepping does not spawn asteroids even with a camera view present.
 
 Important non-ownership boundaries:

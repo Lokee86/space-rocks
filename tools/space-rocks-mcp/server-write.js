@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { listenMcpHttpServer } from "./shared/http_mcp_server.js";
