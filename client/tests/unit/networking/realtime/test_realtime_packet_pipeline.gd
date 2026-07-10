@@ -1,6 +1,7 @@
 extends GutTest
 
 const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
+const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
 
 
 func test_valid_realtime_packet_mutates_router_state_before_signal_callback() -> void:
@@ -51,6 +52,31 @@ func test_invalid_or_unsupported_packets_do_not_emit_gameplay_packet_applied() -
 	pipeline.apply_packet({"foo": "bar"})
 
 	assert_eq(callback_state.count, 0)
+
+
+func test_event_batch_and_resync_packets_route_through_explicit_pipeline_handlers() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+	var callback_state := {"count": 0}
+	pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
+		callback_state.count += 1
+	)
+
+	pipeline.apply_packet({
+		"type": "event_batch",
+		"batch_id": "batch-1",
+		"events": [
+			{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
+		],
+	})
+	pipeline.apply_packet({"type": "resync_request", "lane": "world"})
+	pipeline.apply_packet({"type": "resync_required", "lane": "overlay"})
+
+	assert_eq(callback_state.count, 3)
+	assert_eq(pipeline.get_presentation_state().event_batch_applier.get_applied_events().size(), 1)
+	assert_true(pipeline.get_router().resync_state.needs_resync("world"))
+	assert_eq(pipeline.get_router().resync_state.get_reason("world"), ResyncState.REASON_MISSING_BASELINE)
+	assert_true(pipeline.get_router().resync_state.needs_resync("overlay"))
+	assert_eq(pipeline.get_router().resync_state.get_reason("overlay"), ResyncState.REASON_WRONG_BASELINE)
 
 
 func test_reset_preserves_presentation_state_identity_and_clears_stale_state() -> void:

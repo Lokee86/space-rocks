@@ -10,6 +10,7 @@ const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd"
 const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
 const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
+const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 
 
 class FakeEventSink:
@@ -168,6 +169,32 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 	assert_eq(event_flow.apply_server_events_call_count, 1)
 	assert_eq(event_flow.received_event_count, 1)
 	assert_eq(event_flow.received_event_types[0], "bullet_blast")
+
+
+func test_pipeline_event_batch_and_resync_packets_update_router_state() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+	var callback_state := {"count": 0}
+	pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
+		callback_state.count += 1
+	)
+
+	pipeline.apply_packet({
+		"type": "event_batch",
+		"batch_id": "batch-11",
+		"events": [
+			{"event_id": "presentation-event-1", "type": "bullet_blast", "payload": {"value": 1}},
+		],
+	})
+	pipeline.apply_packet({"type": "resync_request", "lane": "world"})
+	pipeline.apply_packet({"type": "resync_required", "lane": "overlay"})
+
+	assert_eq(callback_state.count, 3)
+	assert_eq(pipeline.get_presentation_state().event_batch_applier.get_applied_events().size(), 1)
+	assert_true(pipeline.get_router().resync_state.needs_resync(LaneMetadata.LANE_WORLD))
+	assert_eq(pipeline.get_router().resync_state.get_reason(LaneMetadata.LANE_WORLD), ResyncState.REASON_MISSING_BASELINE)
+	assert_true(pipeline.get_router().resync_state.needs_resync(LaneMetadata.LANE_OVERLAY))
+	assert_eq(pipeline.get_router().resync_state.get_reason(LaneMetadata.LANE_OVERLAY), ResyncState.REASON_WRONG_BASELINE)
+
 
 func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
 	var presentation_adapter := PresentationAdapter.new()

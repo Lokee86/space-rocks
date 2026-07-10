@@ -50,7 +50,6 @@ func test_inbound_valid_gameplay_packet_routes_through_pipeline_once() -> void:
 	assert_true(service.get_realtime_packet_pipeline() == service.realtime_packet_pipeline)
 	assert_false(service.get_realtime_packet_pipeline().is_gameplay_ready())
 
-	
 	service.realtime_packet_pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
 		callback_state.pipeline_packet_count += 1
 		assert_false(service.get_realtime_packet_pipeline().is_gameplay_ready())
@@ -62,7 +61,7 @@ func test_inbound_valid_gameplay_packet_routes_through_pipeline_once() -> void:
 	assert_true(service.realtime_transport_session != null)
 	assert_true(service.realtime_transport_session.transport != null)
 
-	service._on_packet_received({
+	service.server_packet_dispatcher.dispatch({
 		"type": "world_full",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
@@ -76,7 +75,7 @@ func test_inbound_valid_gameplay_packet_routes_through_pipeline_once() -> void:
 
 	assert_true(callback_state.state_seen)
 	assert_eq(callback_state.pipeline_packet_count, 1)
-	
+
 
 
 func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path() -> void:
@@ -129,10 +128,15 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	var overlay_lane_state: Variant = presentation_state.overlay_lane_state
 	var session_lane_state: Variant = presentation_state.session_lane_state
 	var event_batch_applier: Variant = presentation_state.event_batch_applier
+	var applied_packets: Array = []
+
+	pipeline.gameplay_packet_applied.connect(func(packet: Dictionary) -> void:
+		applied_packets.append(packet)
+	)
 
 	assert_false(pipeline.is_gameplay_ready())
 
-	service._on_packet_received({
+	service.server_packet_dispatcher.dispatch({
 		"type": "world_full",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
@@ -146,6 +150,18 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 
 	service.reset_realtime_protocol_state()
 
+	service.server_packet_dispatcher.dispatch({
+		"type": "world_full",
+		"baseline_id": "world-baseline-2",
+		"sequence": 2,
+		"snapshot_id": "world-snapshot-2",
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
 	assert_true(service.get_realtime_packet_pipeline() == pipeline)
 	assert_false(pipeline.is_gameplay_ready())
 	assert_true(service.get_realtime_packet_pipeline().get_presentation_state() == presentation_state)
@@ -157,3 +173,5 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	assert_true(presentation_state.overlay_lane_state != null)
 	assert_true(presentation_state.session_lane_state != null)
 	assert_true(presentation_state.event_batch_applier != null)
+	assert_eq(applied_packets.size(), 2)
+	assert_eq(applied_packets[1]["baseline_id"], "world-baseline-2")

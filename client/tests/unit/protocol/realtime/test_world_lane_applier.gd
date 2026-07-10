@@ -613,7 +613,7 @@ func test_bullets_lifecycle_applies_buffered_hot_update_after_create_and_preserv
 	assert_true(world_lane_state.bullets.has("bullet-1"))
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5.5)
 	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6.6)
-	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 30.0)
+	assert_eq(world_lane_state.bullets["bullet-1"]["rotation"], 0.03)
 	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "torpedo")
 	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
 

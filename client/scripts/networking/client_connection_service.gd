@@ -15,19 +15,6 @@ signal room_snapshot_received(packet: Dictionary)
 signal websocket_auth_result_received(packet: Dictionary)
 signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
-signal world_full_received(packet: Dictionary)
-signal world_delta_received(packet: Dictionary)
-signal asteroid_delta_received(packet: Dictionary)
-signal bullet_delta_received(packet: Dictionary)
-signal asteroids_lifecycle_received(packet: Dictionary)
-signal bullets_lifecycle_received(packet: Dictionary)
-signal overlay_full_received(packet: Dictionary)
-signal overlay_delta_received(packet: Dictionary)
-signal session_full_received(packet: Dictionary)
-signal session_delta_received(packet: Dictionary)
-signal event_batch_received(packet: Dictionary)
-signal resync_request_received(packet: Dictionary)
-signal resync_required_received(packet: Dictionary)
 signal debug_shape_catalog_received(packet: Dictionary)
 signal debug_status_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
@@ -51,7 +38,6 @@ var auth_session_controller
 var websocket_auth_authenticated := false
 var websocket_auth_user_id = null
 var websocket_auth_display_name := ""
-var _lane_route_log_emitted := {}
 
 
 func _ready() -> void:
@@ -88,7 +74,6 @@ func connect_to_server(url: String) -> Error:
 func reset_realtime_protocol_state() -> void:
 	if realtime_packet_pipeline != null:
 		realtime_packet_pipeline.reset()
-	_lane_route_log_emitted.clear()
 	_clear_webrtc_transport()
 	ClientLogger.network_event(
 		ClientLogger.LEVEL_INFO,
@@ -231,19 +216,19 @@ func _connect_server_packet_dispatcher_signals() -> void:
 	_connect_dispatcher_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
 	_connect_dispatcher_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_dispatcher_signal("room_error_received", Callable(self, "_on_room_error_received"))
-	_connect_dispatcher_signal("world_full_received", Callable(self, "_on_world_full_received"))
-	_connect_dispatcher_signal("world_delta_received", Callable(self, "_on_world_delta_received"))
-	_connect_dispatcher_signal("asteroid_delta_received", Callable(self, "_on_asteroid_delta_received"))
-	_connect_dispatcher_signal("bullet_delta_received", Callable(self, "_on_bullet_delta_received"))
-	_connect_dispatcher_signal("asteroids_lifecycle_received", Callable(self, "_on_asteroids_lifecycle_received"))
-	_connect_dispatcher_signal("bullets_lifecycle_received", Callable(self, "_on_bullets_lifecycle_received"))
-	_connect_dispatcher_signal("overlay_full_received", Callable(self, "_on_overlay_full_received"))
-	_connect_dispatcher_signal("overlay_delta_received", Callable(self, "_on_overlay_delta_received"))
-	_connect_dispatcher_signal("session_full_received", Callable(self, "_on_session_full_received"))
-	_connect_dispatcher_signal("session_delta_received", Callable(self, "_on_session_delta_received"))
-	_connect_dispatcher_signal("event_batch_received", Callable(self, "_on_event_batch_received"))
-	_connect_dispatcher_signal("resync_request_received", Callable(self, "_on_resync_request_received"))
-	_connect_dispatcher_signal("resync_required_received", Callable(self, "_on_resync_required_received"))
+	_connect_dispatcher_signal("world_full_received", Callable(realtime_packet_pipeline, "apply_world_full"))
+	_connect_dispatcher_signal("world_delta_received", Callable(realtime_packet_pipeline, "apply_world_delta"))
+	_connect_dispatcher_signal("asteroid_delta_received", Callable(realtime_packet_pipeline, "apply_asteroid_delta"))
+	_connect_dispatcher_signal("bullet_delta_received", Callable(realtime_packet_pipeline, "apply_bullet_delta"))
+	_connect_dispatcher_signal("asteroids_lifecycle_received", Callable(realtime_packet_pipeline, "apply_asteroids_lifecycle"))
+	_connect_dispatcher_signal("bullets_lifecycle_received", Callable(realtime_packet_pipeline, "apply_bullets_lifecycle"))
+	_connect_dispatcher_signal("overlay_full_received", Callable(realtime_packet_pipeline, "apply_overlay_full"))
+	_connect_dispatcher_signal("overlay_delta_received", Callable(realtime_packet_pipeline, "apply_overlay_delta"))
+	_connect_dispatcher_signal("session_full_received", Callable(realtime_packet_pipeline, "apply_session_full"))
+	_connect_dispatcher_signal("session_delta_received", Callable(realtime_packet_pipeline, "apply_session_delta"))
+	_connect_dispatcher_signal("event_batch_received", Callable(realtime_packet_pipeline, "apply_event_batch"))
+	_connect_dispatcher_signal("resync_request_received", Callable(realtime_packet_pipeline, "apply_resync_request"))
+	_connect_dispatcher_signal("resync_required_received", Callable(realtime_packet_pipeline, "apply_resync_required"))
 	_connect_dispatcher_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
 	_connect_dispatcher_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
 	_connect_dispatcher_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
@@ -264,26 +249,6 @@ func _connect_network_signal(signal_name: StringName, handler: Callable) -> void
 func _connect_dispatcher_signal(signal_name: StringName, handler: Callable) -> void:
 	if server_packet_dispatcher.has_signal(signal_name):
 		server_packet_dispatcher.connect(signal_name, handler)
-
-
-func _route_gameplay_packet(packet: Dictionary) -> void:
-	if realtime_packet_pipeline == null:
-		return
-
-	realtime_packet_pipeline.apply_packet(packet)
-	var packet_type := str(packet.get("type", packet.get("Type", "")))
-	if !_lane_route_log_emitted.has(packet_type):
-		_lane_route_log_emitted[packet_type] = true
-		var readiness := realtime_packet_pipeline.is_gameplay_ready()
-		ClientLogger.network_event(
-			ClientLogger.LEVEL_INFO,
-			"lane_packet_routed",
-			"Lane packet routed",
-			{
-				"packet_type": packet_type,
-				"readiness": readiness,
-			}
-		)
 
 
 func _on_connected() -> void:
@@ -331,71 +296,6 @@ func _on_room_error_received(packet: Dictionary) -> void:
 	room_error_received.emit(packet)
 
 
-func _on_world_full_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	world_full_received.emit(packet)
-
-
-func _on_world_delta_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	world_delta_received.emit(packet)
-
-
-func _on_asteroid_delta_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	asteroid_delta_received.emit(packet)
-
-
-func _on_bullet_delta_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	bullet_delta_received.emit(packet)
-
-
-func _on_asteroids_lifecycle_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	asteroids_lifecycle_received.emit(packet)
-
-
-func _on_bullets_lifecycle_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	bullets_lifecycle_received.emit(packet)
-
-
-func _on_overlay_full_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	overlay_full_received.emit(packet)
-
-
-func _on_overlay_delta_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	overlay_delta_received.emit(packet)
-
-
-func _on_session_full_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	session_full_received.emit(packet)
-
-
-func _on_session_delta_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	session_delta_received.emit(packet)
-
-
-func _on_event_batch_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	event_batch_received.emit(packet)
-
-
-func _on_resync_request_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	resync_request_received.emit(packet)
-
-
-func _on_resync_required_received(packet: Dictionary) -> void:
-	_route_gameplay_packet(packet)
-	resync_required_received.emit(packet)
-
-
 func _on_debug_shape_catalog_received(packet: Dictionary) -> void:
 	debug_shape_catalog_received.emit(packet)
 
@@ -418,7 +318,6 @@ func _on_webrtc_answer_received(packet: Dictionary) -> void:
 	if realtime_transport_session != null:
 		realtime_transport_session.handle_answer(description_type, sdp)
 	webrtc_answer_received.emit(packet)
-
 
 
 func _on_webrtc_ice_candidate_received(packet: Dictionary) -> void:
