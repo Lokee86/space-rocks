@@ -471,7 +471,11 @@ A successful WebSocket connection is only transport readiness. Authentication, r
 
 `NetworkClient` records packet decode and encode failures in runtime metrics and reports them through structured `ClientLogger.network_event(...)` calls, but this document does not own the logger implementation details.
 
-`ClientConnectionService` currently uses structured `network_event(...)` logs for realtime protocol reset and lane packet routing diagnostics. `reset_realtime_protocol_state()` emits `realtime_protocol_state_reset` at info level in the network category. That event is diagnostic only and does not own realtime state reset behavior.
+`ClientConnectionService` exposes `reset_realtime_protocol_state()` as the connection-level compatibility entry point. The method delegates the actual reset to `RealtimePacketPipeline`, which replaces its active `RealtimeRouter` and clears pipeline-owned readiness and realtime lane protocol state.
+
+`ClientConnectionService` emits the structured `realtime_protocol_state_reset` network diagnostic after that delegated reset. The diagnostic reports the lifecycle action; it does not make `ClientConnectionService` the owner of realtime router state.
+
+Connection teardown closes the active `RealtimeTransportSession` transport and resets `RealtimePacketPipeline` state through the `ClientConnectionService` facade.
 
 `SessionNetworkController` still uses text-helper logging for some connection and packet parse lifecycle messages through its configured logger callable.
 

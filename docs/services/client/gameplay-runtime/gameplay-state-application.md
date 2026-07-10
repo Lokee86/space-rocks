@@ -15,16 +15,19 @@ Gameplay presentation begins after the client networking layer receives a realti
 The active path is:
 
 ```text
-NetworkClient receives/decodes packet
+NetworkClient or WebRTCTransport receives and decodes packet
 -> ClientConnectionService receives packet
 -> ServerPacketDispatcher / ServerPacketRouter classify packet
 -> lifecycle packet families are included in the active path
+-> ClientConnectionService delegates gameplay packet to RealtimePacketPipeline
+-> RealtimePacketPipeline expands and validates packet
 -> RealtimeRouter.route_lane_packet(packet)
--> RealtimeRouter applies lane state/readiness
+-> RealtimeRouter mutates lane state
+-> RealtimePacketPipeline updates readiness and emits gameplay_packet_applied(packet)
 -> ClientConnectionService emits gameplay_packet_received(packet)
 -> SessionNetworkController receives gameplay_packet_received
--> GameplaySessionController gates on accepts_gameplay_packets and gameplay readiness
--> PresentationAdapter.fanout_lane_states(...)
+-> GameplaySessionController performs readiness-gated presentation fanout
+-> PresentationAdapter fans out current lane state
 -> WorldPresentationAdapter -> WorldSync.apply_world_lane_state(...)
 -> OverlayPresentationAdapter -> GameplayHudFlow.apply_overlay_lane_state(...)
 -> SessionPresentationAdapter -> GameplayHudFlow.apply_session_lane_state(...)
@@ -33,7 +36,7 @@ NetworkClient receives/decodes packet
 -> DevtoolsLaneStateAdapter builds a separate devtools readmodel
 ```
 
-The client applies lane packets through `RealtimeRouter` and current gameplay runtime adapters rather than a retired aggregate `GameplayStateApplyFlow` path or combined normalized gameplay-state dictionary flow.
+The client applies lane packets through `RealtimePacketPipeline`. The pipeline owns the active `RealtimeRouter` and invokes it for lane-specific mutation rather than using the retired aggregate `GameplayStateApplyFlow` path or a combined normalized gameplay-state dictionary flow.
 
 WorldLaneState is populated by world_full/world_delta, asteroids_lifecycle, bullets_lifecycle, asteroid_delta, and bullet_delta. Lifecycle packets define existence; hot packets update existing entities only.
 
@@ -49,7 +52,7 @@ client/scripts/session/gameplay_session_controller.gd
 client/scripts/session/session_network_controller.gd
 ```
 
-The realtime client package owns lane state, readiness tracking, and presentation adapters. SessionNetworkController and GameplaySessionController own the handoff after inbound networking has already classified the packet and RealtimeRouter has already applied lane state.
+The realtime client package owns lane state, readiness tracking, and presentation adapters. Inbound networking application completes through RealtimePacketPipeline. RealtimeRouter performs lane-specific mutation beneath the pipeline before session and presentation handoff begins.
 
 ## Responsibilities
 
@@ -81,7 +84,7 @@ The lane-native client path does not own:
 
 ## Domain roles
 
-The client lane application surface consumes server lane gameplay packets and turns them into presentation state after `RealtimeRouter` has already applied the inbound lane state.
+Presentation consumes lane state after RealtimePacketPipeline has completed application through its owned RealtimeRouter.
 
 The client owns transient lane presentation state only. It does not persist authoritative gameplay state.
 
@@ -142,7 +145,13 @@ The current handoff boundaries are:
 
 ```text
 ClientConnectionService
-= owns lane packet routing into RealtimeRouter and emits gameplay_packet_received(packet) after lane state/readiness has already been updated
+= coordinates the public networking handoff, delegates realtime gameplay packets to RealtimePacketPipeline, and emits gameplay_packet_received(packet) after pipeline application has completed
+
+RealtimePacketPipeline
+= owns compact packet expansion, gameplay packet validation, the active RealtimeRouter, gameplay readiness, protocol reset, lane-routing invocation, and gameplay_packet_applied(packet)
+
+RealtimeRouter
+= owns lane-specific state mutation, baseline and sequence handling, and lane-state storage beneath RealtimePacketPipeline
 
 SessionNetworkController
 = forwards gameplay_packet_received(packet) into GameplaySessionController

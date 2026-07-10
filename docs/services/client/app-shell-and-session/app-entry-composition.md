@@ -244,6 +244,21 @@ RoomSessionController
 GameplaySessionController
 ```
 
+ClientConnectionService composes two separate realtime collaborators:
+
+- RealtimeTransportSession owns the active WebRTCTransport lifecycle, including construction, signal wiring, start, poll, close, and reconnect replacement.
+- RealtimePacketPipeline owns the active RealtimeRouter, gameplay packet expansion and validation, readiness, reset, lane-application ordering, and post-application notification.
+
+ClientConnectionService coordinates those collaborators and exposes compatibility methods and signals to the rest of the client. It does not directly own WebRTC transport mechanics or RealtimeRouter state.
+
+```text
+ClientConnectionService
+-> RealtimeTransportSession
+   -> WebRTCTransport
+-> RealtimePacketPipeline
+   -> RealtimeRouter
+```
+
 ### Startup auth flow
 
 During startup, `AppEntry` calls:

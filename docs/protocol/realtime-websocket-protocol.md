@@ -265,7 +265,7 @@ Compact packets may arrive with `t` instead of `type`. Client decode expands com
 
 Server-side initial envelope decode unmarshals the `type` field before routing. Invalid JSON or an envelope decode failure logs a warning and skips the message. A valid JSON object with an unknown or empty `type` does not produce an explicit protocol response in the current server path.
 
-WebRTC inbound delivery uses `WebRTCTransport` receiving DataChannel text, `PacketCodec.decode` expanding compact aliases, `ClientConnectionService` dispatching non-smoke WebRTC packets through `ServerPacketDispatcher`, and `RealtimeRouter` applying lane packets.
+WebRTC inbound delivery uses WebRTCTransport for DataChannel text receive, PacketCodec.decode for compact alias expansion and envelope decoding, ClientConnectionService for connection-level coordination, ServerPacketDispatcher for typed dispatch, RealtimePacketPipeline for gameplay packet validation and application ownership, and RealtimeRouter for lane-specific mutation beneath the pipeline.
 
 ### Encoding
 
@@ -854,7 +854,9 @@ resync_request_received
 resync_required_received
 ```
 
-`ClientConnectionService` routes those lane packets into `RealtimeRouter`. The lane packets also emit the unified `gameplay_packet_received` signal so session gameplay flow can stay on one handoff path.
+ClientConnectionService delegates classified realtime gameplay packets to RealtimePacketPipeline. The pipeline owns the active RealtimeRouter, applies the packet, updates readiness, and emits gameplay_packet_applied before ClientConnectionService emits the unified gameplay_packet_received compatibility signal.
+
+WebSocket and WebRTC gameplay delivery use different transports but converge on the same RealtimePacketPipeline application boundary.
 
 `SessionNetworkController` forwards `gameplay_packet_received` into `GameplaySessionController`, where gameplay presentation fanout is readiness-gated.
 

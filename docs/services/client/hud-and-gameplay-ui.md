@@ -39,7 +39,7 @@ client/scenes/ui/hud.tscn
 
 It contains the visible gameplay HUD controls for score, lives, local death or respawn text, game-over presentation, the embedded live gameplay menu path, and the loadout display container.
 
-Runtime HUD behavior is coordinated by `GameplayHudFlow`. Packet decode and classification route through `RealtimeRouter`, which applies lane state or readiness before presentation adapters fan current lane-applied state into the HUD. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams. `event_batch` reaches HUD-side presentation only after compact wire aliases are expanded into readable long-key event dictionaries, and HUD code should not depend on compact aliases.
+Runtime HUD behavior is coordinated by `GameplayHudFlow`. PacketCodec decodes inbound packet envelopes, ServerPacketRouter and ServerPacketDispatcher classify them, and ClientConnectionService delegates realtime gameplay packets to RealtimePacketPipeline. The pipeline invokes its owned RealtimeRouter to apply lane state and readiness before presentation adapters fan current lane-applied state into the HUD. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams. `event_batch` reaches HUD-side presentation only after compact wire aliases are expanded into readable long-key event dictionaries, and HUD code should not depend on compact aliases.
 
 ## Code root
 

@@ -130,16 +130,47 @@ The client active gameplay receive path is:
 
 ```text
 WebRTCTransport receives DataChannel text
--> PacketCodec.decode expands compact aliases and validates the packet envelope
--> ClientConnectionService dispatches non-smoke WebRTC packets through ServerPacketDispatcher
--> RealtimeRouter applies lane packets
--> lane state is fanned out to gameplay presentation
+-> PacketCodec.decode(packet_text)
+-> WebRTCTransport.packet_received(packet)
+-> RealtimeTransportSession packet callback
+-> ClientConnectionService
+-> ServerPacketDispatcher
+-> RealtimePacketPipeline.apply_packet(packet)
+-> RealtimeRouter.route_lane_packet(packet)
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> ClientConnectionService.gameplay_packet_received(packet)
 ```
+
+RealtimeTransportSession owns transport lifecycle and signal handoff only. RealtimePacketPipeline owns gameplay packet application and active router state.
 
 Dedicated asteroid and bullet hot movement packets do not create independent rendered state. They merge into the same world presentation state used by gameplay rendering. Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid when they are chunks of one hot-lane update sequence. Sequence gaps are valid because hot packets can be dropped.
 Asteroid and bullet lifecycle packets flow through the same WebRTC active gameplay path as the other gameplay lanes.
 
 Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+
+## Client Transport Ownership
+
+ClientConnectionService remains the public connection coordinator, but it does not directly own WebRTC peer and DataChannel lifecycle mechanics.
+
+RealtimeTransportSession owns the active WebRTCTransport reference, transport construction through transport_factory, transport signal wiring, start, poll, close, clearing the active transport after close, and replacement after reconnect.
+
+WebRTCTransport owns the peer connection, DataChannel setup, bounded receive draining, packet decoding, packet emission, outbound DataChannel writes, and transport-level diagnostics.
+
+### Start, Poll, and Close Contract
+
+RealtimeTransportSession.start() returns without action when an active transport is already assigned. Otherwise it creates a transport through transport_factory, wires offer, ICE, failure, ready, and packet signals, then calls WebRTCTransport.start().
+
+RealtimeTransportSession.poll() delegates only while an active transport exists.
+
+RealtimeTransportSession.close() closes the active transport once and clears the stored transport reference. Polling after close is therefore a no-op until a later start creates a replacement transport.
+
+Tests or alternate composition paths that need normal startup must provide transport_factory rather than preassigning transport. A preassigned transport represents an already-active session and intentionally prevents start() from creating or starting another transport.
+
+### Reconnect and Replacement
+
+Connection teardown closes the previous session transport. A later connection uses transport_factory to create a fresh WebRTCTransport, rewires its signals, and starts it. Packets emitted by the replacement transport re-enter the same dispatcher and gameplay application path as packets from the original transport.
+
+Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset.
 
 ## Hot Movement Split
 

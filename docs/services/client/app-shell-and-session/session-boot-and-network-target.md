@@ -12,7 +12,7 @@ It covers how the Godot client turns menu requests into a requested session mode
 
 Session boot is the client-side bridge between menu intent and server room or gameplay entry.
 
-The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, starts WebRTC signaling and transport setup, and sends the appropriate boot packet only after the readiness gate allows it.
+The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, and sends the appropriate boot packet only after the readiness gate allows it. After connection, `ClientConnectionService` coordinates WebRTC signalling and delegates transport lifecycle setup to `RealtimeTransportSession`.
 
 Current boot request types are:
 
@@ -56,7 +56,7 @@ WebSocket target selection is separate from WebRTC connectivity. The WebSocket U
 * Preserve the selected Local Profile id for single-player boot requests.
 * Preserve the room code for join-room boot requests.
 * Select the websocket URL from generated client constants based on requested session mode.
-* Start a websocket connection through `ClientConnectionService` and let it begin WebRTC signaling and transport setup.
+* Start a WebSocket connection through `ClientConnectionService`. After connection, `ClientConnectionService` coordinates WebRTC signalling and delegates transport lifecycle setup to `RealtimeTransportSession`.
 * Send a pending single-player boot request after WebRTC readiness when active gameplay will use WebRTC.
 * Hold pending multiplayer boot requests until websocket auth succeeds or token verification is unavailable.
 * Send client viewport config after a boot request is sent.
@@ -134,6 +134,8 @@ It does not connect to the server and does not send packets. It only records, ex
 
 `ShellBootFlow` owns pending boot request dispatch.
 
+`RealtimeTransportSession` owns WebRTCTransport start, poll, close, and replacement. `ClientConnectionService` remains the boot-facing coordinator.
+
 It stores a `PendingBootRequest`, starts the websocket connection through the connection service, and sends the pending request once the connection/auth gate allows it.
 
 It sends one of:
@@ -210,7 +212,9 @@ Pregame/Menu caller
 -> ShellBootFlow.connect_to_game_server("single player")
 -> ClientConnectionService.connect_to_server(url)
 -> NetworkClient.connect_to_server(url)
--> ClientConnectionService._start_webrtc_transport()
+-> ClientConnectionService ensures RealtimeTransportSession
+-> RealtimeTransportSession.start()
+-> WebRTCTransport offer, ICE, and ready flow
 ```
 
 When the connection opens:
@@ -218,8 +222,10 @@ When the connection opens:
 ```text
 ClientConnectionService.connected
 -> SessionNetworkController._on_connection_connected()
--> ClientConnectionService._start_webrtc_transport()
--> WebRTC ready signal / packet path
+-> ClientConnectionService ensures RealtimeTransportSession
+-> RealtimeTransportSession.start()
+-> WebRTCTransport offer, ICE, and ready flow
+-> RealtimeTransportSession ready signal and packet handoff
 -> ShellBootFlow.send_pending_boot_request()
 -> ClientConnectionService.send_start_single_player_request(local_profile_id)
 -> ShellBootFlow.boot_request_sent

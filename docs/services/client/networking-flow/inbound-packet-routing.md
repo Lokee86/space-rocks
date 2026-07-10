@@ -13,7 +13,7 @@ It covers how decoded server packet dictionaries move from the client WebSocket 
 Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
 WebSocket remains the client route for session, control, room, lobby, auth, telemetry, signaling, and queued non-gameplay packets. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets and diagnostic smoke packets: `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable lifecycle channels, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
 
-`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `WebRTCTransport` owns DataChannel text receive, packet decode, and `packet_received` emission for WebRTC packets. After those signals fire, inbound routing is owned by `ClientConnectionService`, `ServerPacketDispatcher`, and `ServerPacketRouter`.
+`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `WebRTCTransport` owns DataChannel text receive, packet decode, and `packet_received` emission for WebRTC packets. After those transport signals fire, `ServerPacketRouter` identifies packet types, `ServerPacketDispatcher` emits typed packet signals, `ClientConnectionService` coordinates the public networking handoff, and `RealtimePacketPipeline` owns realtime gameplay packet expansion, validation, application, readiness, reset, and the active `RealtimeRouter`.
 
 Compact `event_batch` packets are expanded by the client compact packet expansion layer before event appliers receive them, so downstream gameplay code sees readable long-key event dictionaries rather than compact aliases. Nested `ev` or `events` entries are expanded as part of that same transport step, and event dedupe still keys off `event_id` after expansion. Runtime wire packets keep compact aliases on the wire; domain logs may still show raw x/y before projection.
 
@@ -32,9 +32,11 @@ WebRTCTransport receives DataChannel text
 -> ClientConnectionService._handle_webrtc_transport_packet(packet)
 -> ServerPacketDispatcher.dispatch(packet)
 -> ServerPacketDispatcher emits a typed dispatcher signal
--> ClientConnectionService._route_gameplay_packet(packet) for lane packets
--> RealtimeRouter.route_lane_packet(packet) for lane packets
--> gameplay_packet_received(packet) for lane packets
+-> ClientConnectionService._route_gameplay_packet(packet)
+-> RealtimePacketPipeline.apply_packet(packet)
+-> RealtimeRouter.route_lane_packet(packet)
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> ClientConnectionService.gameplay_packet_received(packet)
 -> SessionNetworkController._on_gameplay_packet_received
 -> GameplaySessionController.handle_gameplay_packet
 ```
@@ -180,11 +182,11 @@ The dispatcher does not know which application subsystem will consume each signa
 
 ### Connection-service signal bridge
 
-`ClientConnectionService` creates and owns the dispatcher instance.
+`ClientConnectionService` owns the public networking facade, dispatcher wiring, transport coordination, compatibility methods, and compatibility signals. It does not own the active RealtimeRouter or realtime gameplay readiness.
 
-It also owns the transport coordination surface and delegates decoded realtime gameplay packets into `RealtimePacketPipeline`.
+`RealtimePacketPipeline` owns the active RealtimeRouter, compact packet expansion, gameplay packet validation, lane-routing invocation, gameplay readiness, protocol-state reset, and post-application notification.
 
-`RealtimePacketPipeline` owns the active `RealtimeRouter`, gameplay readiness, reset, packet expansion, validation, and packet application.
+`RealtimeRouter` owns lane-specific state mutation, baseline tracking, sequence handling, and lane-state storage beneath `RealtimePacketPipeline`.
 
 `ClientConnectionService` connects dispatcher signals to local handlers, then re-emits service-level signals with the same packet dictionary.
 
@@ -197,14 +199,19 @@ transport packet
 -> ServerPacketDispatcher.dispatch(packet)
 -> ClientConnectionService._route_gameplay_packet(packet)
 -> RealtimePacketPipeline.apply_packet(packet)
--> RealtimeRouter.route_lane_packet(packet)
+-> RealtimePacketPipeline invokes RealtimeRouter
 -> gameplay_packet_applied(packet)
 -> gameplay_packet_received(packet)
 ```
 
+
 This keeps callers attached to one public networking facade instead of directly depending on `NetworkClient` or `ServerPacketDispatcher`.
 
-The existing `gameplay_packet_received` signal and the `get_realtime_router()`, `get_gameplay_readiness()`, and `reset_realtime_protocol_state()` accessors remain temporary compatibility surfaces for later session and presentation stages.
+ClientConnectionService delegates realtime gameplay packets to RealtimePacketPipeline, which invokes its owned RealtimeRouter.
+
+Callers and tests must use get_realtime_router(), get_gameplay_readiness(), and reset_realtime_protocol_state() rather than accessing a ClientConnectionService realtime_router field. These methods remain compatibility surfaces while ownership stays inside RealtimePacketPipeline.
+
+The existing `gameplay_packet_received` signal remains a compatibility surface for later session and presentation stages.
 
 ClientConnectionService still emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
 
@@ -412,9 +419,11 @@ NetworkClient.packet_received(packet)
 -> ServerPacketDispatcher.dispatch(packet)
 -> ServerPacketRouter checks packet type
 -> typed dispatcher signal emitted
--> ClientConnectionService._route_gameplay_packet(packet) for lane packets
--> lane-specific service signal emitted
--> gameplay_packet_received(packet)
+-> ClientConnectionService._route_gameplay_packet(packet)
+-> RealtimePacketPipeline.apply_packet(packet)
+-> RealtimeRouter.route_lane_packet(packet)
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> ClientConnectionService.gameplay_packet_received(packet)
 -> owning session/controller handles the packet
 ```
 
@@ -673,7 +682,7 @@ Current direct coverage for `ServerPacketRouter` and `ServerPacketDispatcher` is
 
 `ClientConnectionService` currently acts as the public networking facade for both inbound and outbound flow. That is current implementation, not a reason to merge inbound and outbound docs. Inbound routing and outbound sending have different call directions, packet ownership, and downstream consequences.
 
-Lane routing and presentation fanout are separate boundaries. `RealtimeRouter` owns realtime lane state application, while `GameplaySessionController` owns presentation fanout and gameplay readiness gating.
+Lane routing and presentation fanout are separate boundaries. RealtimePacketPipeline owns realtime gameplay packet application and active router ownership. RealtimeRouter owns lane-specific mutation beneath the pipeline. GameplaySessionController owns readiness-gated presentation fanout after application has completed.
 
 Telemetry pong is routed through the same inbound dispatcher but consumed directly by telemetry context rather than through `SessionNetworkController`.
 

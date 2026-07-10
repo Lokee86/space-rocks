@@ -133,7 +133,7 @@ ClientConnectionService.gameplay_packet_received
 -> SessionNetworkController._on_gameplay_packet_received
 -> GameplaySessionController.handle_gameplay_packet
 -> check accepts_gameplay_packets
--> check gameplay readiness from the RealtimeRouter / GameplayStateFlow wrapper
+-> check gameplay readiness through ClientConnectionService.get_gameplay_readiness(), backed by RealtimePacketPipeline
 -> PresentationAdapter.fanout_lane_states(...)
 -> DevtoolsLaneStateAdapter.build_state(...)
 -> GameplayComposition.apply_devtools_gameplay_state(...)
@@ -142,7 +142,9 @@ ClientConnectionService.gameplay_packet_received
 
 If `accepts_gameplay_packets` is false, the packet is ignored by `GameplaySessionController`.
 
-If gameplay readiness is not yet true, gameplay presentation fanout is skipped even though `ClientConnectionService` has already routed the lane packet into `RealtimeRouter`.
+If gameplay readiness is not yet true, gameplay presentation fanout is skipped even though `ClientConnectionService` has already delegated the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has applied the available lane state.
+
+Packet application and presentation fanout are separate boundaries. RealtimePacketPipeline owns application and readiness; GameplaySessionController owns deferred presentation fanout.
 
 ### Player pause packets
 
