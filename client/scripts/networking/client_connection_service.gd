@@ -277,14 +277,7 @@ func _route_gameplay_packet(packet: Dictionary) -> void:
 	var packet_type := str(packet.get("type", packet.get("Type", "")))
 	if !_lane_route_log_emitted.has(packet_type):
 		_lane_route_log_emitted[packet_type] = true
-		var readiness := false
-		var pipeline_router = realtime_packet_pipeline.get_router()
-		if pipeline_router.has_method("is_presentable"):
-			readiness = pipeline_router.is_presentable()
-		elif pipeline_router.has_method("get_gameplay_readiness"):
-			var gameplay_readiness = pipeline_router.get_gameplay_readiness()
-			if gameplay_readiness != null and gameplay_readiness.has_method("is_gameplay_ready"):
-				readiness = gameplay_readiness.is_gameplay_ready()
+		var readiness := realtime_packet_pipeline.is_gameplay_ready()
 		ClientLogger.network_event(
 			ClientLogger.LEVEL_INFO,
 			"lane_packet_routed",
@@ -504,17 +497,5 @@ func _send_authenticate_request_if_token_exists() -> void:
 	network_client.send_authenticate_request(token)
 
 
-func get_gameplay_readiness():
-	if realtime_packet_pipeline != null:
-		return realtime_packet_pipeline.get_readiness()
-	if server_packet_dispatcher == null:
-		return null
-	if server_packet_dispatcher.has_method("get_gameplay_readiness"):
-		return server_packet_dispatcher.get_gameplay_readiness()
-	return null
-
-
-func get_realtime_router():
-	if realtime_packet_pipeline != null:
-		return realtime_packet_pipeline.get_router()
-	return null
+func get_realtime_packet_pipeline() -> RealtimePacketPipeline:
+	return realtime_packet_pipeline

@@ -2,11 +2,7 @@ extends GutTest
 
 const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 const EventBatchApplier := preload("res://scripts/protocol/realtime/event_batch_applier.gd")
-const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
-const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
-const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const PresentationAdapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd")
-const GameplayReadiness := preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const OverlayLaneState := preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
 const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_state.gd")
@@ -48,13 +44,6 @@ class FakeEventFlow:
 		received_event_count += events.size()
 		for event in events:
 			received_event_types.append(str(event.get("type", "")))
-
-
-class FakeRouter:
-	var world_lane_state = null
-	var overlay_lane_state = null
-	var session_lane_state = null
-	var event_batch_applier = null
 
 
 func test_event_batch_applies_events_once() -> void:
@@ -147,22 +136,18 @@ func test_compact_event_batch_expands_before_application_and_dedupes() -> void:
 
 func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow() -> void:
 	var applier := EventBatchApplier.new()
-	var router := FakeRouter.new()
+	var presentation_state := {
+		"world_lane_state": WorldLaneState.new(),
+		"overlay_lane_state": OverlayLaneState.new(),
+		"session_lane_state": SessionLaneState.new(),
+		"event_batch_applier": applier,
+	}
 	var presentation_adapter := PresentationAdapter.new()
-	var readiness := GameplayReadiness.new()
-	readiness.mark_world_baseline_synced()
-	readiness.mark_overlay_baseline_synced()
-	readiness.mark_session_baseline_synced()
 	var world_sync := FakePresentationTarget.new()
 	var hud_flow := FakePresentationTarget.new()
 	var event_flow := FakeEventFlow.new()
 
-	router.world_lane_state = WorldLaneState.new()
-	router.overlay_lane_state = OverlayLaneState.new()
-	router.overlay_lane_state.self_id = "player-1"
-	router.session_lane_state = SessionLaneState.new()
-	router.event_batch_applier = applier
-	presentation_adapter.bind_gameplay_readiness(readiness)
+	presentation_state["overlay_lane_state"].self_id = "player-1"
 
 	applier.apply_event_batch(
 		{
@@ -174,35 +159,31 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 		null
 	)
 
-	presentation_adapter.fanout_lane_states(router, world_sync, hud_flow, event_flow)
-	presentation_adapter.fanout_lane_states(router, world_sync, hud_flow, event_flow)
+	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
+	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
 
 	assert_eq(event_flow.apply_server_events_call_count, 1)
 	assert_eq(event_flow.received_event_count, 1)
 	assert_eq(event_flow.received_event_types[0], "bullet_blast")
+
 func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
 	var presentation_adapter := PresentationAdapter.new()
-	var readiness := GameplayReadiness.new()
-	readiness.mark_world_baseline_synced()
-	readiness.mark_overlay_baseline_synced()
-	readiness.mark_session_baseline_synced()
-	presentation_adapter.bind_gameplay_readiness(readiness)
-
-	var router := FakeRouter.new()
-	router.world_lane_state = WorldLaneState.new()
-	router.overlay_lane_state = OverlayLaneState.new()
-	router.overlay_lane_state.self_id = "player-1"
-	router.overlay_lane_state.respawn_cooldown = null
-	router.overlay_lane_state.primary_cooldown_remaining = null
-	router.overlay_lane_state.secondary_cooldown_remaining = null
-	router.session_lane_state = SessionLaneState.new()
-	router.event_batch_applier = EventBatchApplier.new()
+	var presentation_state := {
+		"world_lane_state": WorldLaneState.new(),
+		"overlay_lane_state": OverlayLaneState.new(),
+		"session_lane_state": SessionLaneState.new(),
+		"event_batch_applier": EventBatchApplier.new(),
+	}
+	presentation_state["overlay_lane_state"].self_id = "player-1"
+	presentation_state["overlay_lane_state"].respawn_cooldown = null
+	presentation_state["overlay_lane_state"].primary_cooldown_remaining = null
+	presentation_state["overlay_lane_state"].secondary_cooldown_remaining = null
 
 	var world_sync := FakePresentationTarget.new()
 	var hud_flow := FakePresentationTarget.new()
 	var event_flow := FakeEventFlow.new()
 
-	presentation_adapter.fanout_lane_states(router, world_sync, hud_flow, event_flow)
+	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
 
 	assert_not_null(world_sync.last_world_lane_state)
 	assert_not_null(hud_flow.last_overlay_lane_state)
@@ -210,6 +191,24 @@ func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
 	assert_eq(hud_flow.last_overlay_lane_state.primary_cooldown_remaining, null)
 	assert_eq(hud_flow.last_overlay_lane_state.secondary_cooldown_remaining, null)
 	assert_eq(event_flow.apply_server_events_call_count, 0)
+
+	presentation_state["overlay_lane_state"].respawn_cooldown = null
+	presentation_state["overlay_lane_state"].primary_cooldown_remaining = null
+	presentation_state["overlay_lane_state"].secondary_cooldown_remaining = null
+
+	var world_sync := FakePresentationTarget.new()
+	var hud_flow := FakePresentationTarget.new()
+	var event_flow := FakeEventFlow.new()
+
+	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
+
+	assert_not_null(world_sync.last_world_lane_state)
+	assert_not_null(hud_flow.last_overlay_lane_state)
+	assert_eq(hud_flow.last_overlay_lane_state.respawn_cooldown, null)
+	assert_eq(hud_flow.last_overlay_lane_state.primary_cooldown_remaining, null)
+	assert_eq(hud_flow.last_overlay_lane_state.secondary_cooldown_remaining, null)
+	assert_eq(event_flow.apply_server_events_call_count, 0)
+
 
 
 func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:

@@ -89,11 +89,6 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_an
 	_connect_match_end_signal(&"quit_to_main_menu_requested", Callable(self, "_on_match_end_quit_to_main_menu_requested"))
 	_configure_gameplay_presentation_flow()
 
-func configure_gameplay_readiness(gameplay_readiness) -> void:
-	if gameplay_shell_flow == null or gameplay_shell_flow.gameplay_state_flow == null:
-		return
-	gameplay_shell_flow.gameplay_state_flow.gameplay_readiness = gameplay_readiness
-
 func set_required_lane_baselines_synced(value: bool) -> void:
 	if gameplay_shell_flow != null:
 		gameplay_shell_flow.set_required_lane_baselines_synced(value)
@@ -120,15 +115,15 @@ func apply_devtools_debug_status_packet(packet: Dictionary) -> void:
 	gameplay_shell_flow.apply_devtools_debug_status_packet(packet)
 
 
-func restore_alive_presentation_from_realtime_router(router) -> void:
-	if router == null or gameplay_shell_flow == null:
+func restore_alive_presentation_from_realtime_state(presentation_state) -> void:
+	if presentation_state == null or gameplay_shell_flow == null:
 		return
 
 	var self_id := ""
-	if router.overlay_lane_state != null and router.overlay_lane_state.self_id != null:
-		self_id = str(router.overlay_lane_state.self_id)
+	if presentation_state.overlay_lane_state != null and presentation_state.overlay_lane_state.self_id != null:
+		self_id = str(presentation_state.overlay_lane_state.self_id)
 
-	gameplay_shell_flow.restore_alive_presentation_from_lane_state(router.world_lane_state, router.session_lane_state, self_id)
+	gameplay_shell_flow.restore_alive_presentation_from_lane_state(presentation_state.world_lane_state, presentation_state.session_lane_state, self_id)
 
 
 func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:

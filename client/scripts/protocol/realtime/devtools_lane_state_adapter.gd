@@ -2,7 +2,7 @@ extends RefCounted
 
 const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quantize.gd")
 
-func build_state(router) -> Dictionary:
+func build_state(presentation_state) -> Dictionary:
 	var state := {
 		"world": {
 			"ships": {},
@@ -19,22 +19,22 @@ func build_state(router) -> Dictionary:
 		},
 	}
 
-	if router == null:
+	if presentation_state == null:
 		return state
 
-	var overlay_lane_state = _field_or_key(router, "overlay_lane_state")
+	var overlay_lane_state = _field_or_key(presentation_state, "overlay_lane_state")
 	var overlay_self_id = _field_or_key(overlay_lane_state, "self_id")
 	if overlay_self_id != null:
 		state["overlay"]["self_id"] = str(overlay_self_id)
 
-	var world_lane_state = _field_or_key(router, "world_lane_state")
+	var world_lane_state = _field_or_key(presentation_state, "world_lane_state")
 	if world_lane_state != null:
 		state["world"]["ships"] = _dictionary_field_or_key(world_lane_state, "ships")
 		state["world"]["asteroids"] = _dictionary_field_or_key(world_lane_state, "asteroids")
 		state["world"]["bullets"] = _dictionary_field_or_key(world_lane_state, "bullets")
 		state["world"]["pickups"] = _dictionary_field_or_key(world_lane_state, "pickups")
 
-	var session_lane_state = _field_or_key(router, "session_lane_state")
+	var session_lane_state = _field_or_key(presentation_state, "session_lane_state")
 	if session_lane_state != null:
 		if session_lane_state is Dictionary:
 			state["session"]["players"] = _dictionary_field_or_key(session_lane_state, "player_sessions")

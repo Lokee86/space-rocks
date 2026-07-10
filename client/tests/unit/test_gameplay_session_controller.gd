@@ -43,50 +43,26 @@ class ReplayProbe:
 		events.append("replay_requested")
 
 
-func test_replay_waits_for_graceful_close_before_emitting_replay_requested() -> void:
-	var controller := GameplaySessionController.new()
-	var connection_service := FakeConnectionService.new()
-	var session_context := FakeSessionContext.new()
-	var shell_boot_flow := FakeShellBootFlow.new()
-	var replay_probe := ReplayProbe.new()
-
-	add_child_autofree(connection_service)
-	add_child_autofree(controller)
-	controller.connection_service = connection_service
-	controller.session_context = session_context
-	controller.shell_boot_flow = shell_boot_flow
-	controller.logger = Callable()
-	connection_service.events = replay_probe.events
-	controller.replay_requested.connect(Callable(replay_probe, "mark_replay_requested"))
-
-	await controller._on_gameplay_replay_requested()
-
-	assert_eq(connection_service.close_calls, 1)
-	assert_eq(session_context.clear_calls, 1)
-	assert_eq(shell_boot_flow.clear_calls, 1)
-	assert_eq(
-		replay_probe.events,
-		["close_gracefully_started", "close_gracefully_finished", "replay_requested"]
-	)
-
-class FakeGameplayReadiness:
+class FakePresentationState:
 	extends RefCounted
 
-	func is_gameplay_ready() -> bool:
-		return true
+	var world_lane_state = null
+	var overlay_lane_state = null
+	var session_lane_state = null
+	var event_batch_applier = null
 
 
-class FakeGameplayStateFlow:
+class FakeRealtimePacketPipeline:
 	extends RefCounted
 
 	var ready := true
-	var set_ready_calls: Array = []
+	var presentation_state := FakePresentationState.new()
 
 	func is_gameplay_ready() -> bool:
 		return ready
 
-	func set_gameplay_readiness(_readiness) -> void:
-		pass
+	func get_presentation_state():
+		return presentation_state
 
 
 class FakeRuntimeContext:
@@ -123,9 +99,16 @@ class FakeGameplayComposition:
 	func apply_devtools_gameplay_state(state: Dictionary) -> void:
 		devtools_states.append(state)
 
-	func restore_alive_presentation_from_realtime_router(_router) -> void:
-		restore_calls += 1
+	func handle_devtools_input(_event: InputEvent) -> bool:
+		events.append("devtools_input")
+		return true
 
+	func handle_gameplay_input(_event: InputEvent) -> bool:
+		events.append("gameplay_input")
+		return true
+
+	func restore_alive_presentation_from_realtime_state(_presentation_state) -> void:
+		restore_calls += 1
 
 
 class FakeNotReadyGameplayReadiness:
@@ -142,13 +125,10 @@ class FakePresentationAdapter:
 	var events: Array = []
 	var marked_fanned_out := 0
 
-	func bind_gameplay_readiness(_readiness) -> void:
-		pass
-
 	func can_fanout() -> bool:
 		return true
 
-	func fanout_lane_states(_router, _world_sync, _gameplay_hud_flow, _event_lifecycle_flow) -> void:
+	func fanout_lane_states(_presentation_state, _world_sync, _gameplay_hud_flow, _event_lifecycle_flow) -> void:
 		fanout_count += 1
 		if events is Array:
 			events.append("fanout")
@@ -157,48 +137,98 @@ class FakePresentationAdapter:
 		marked_fanned_out += 1
 
 
-func test_multiple_gameplay_packets_before_process_cause_only_one_presentation_fanout() -> void:
+func _make_controller(pipeline_ready := true) -> Dictionary:
 	var controller := GameplaySessionController.new()
+	var connection_service := FakeConnectionService.new()
+	var pipeline := FakeRealtimePacketPipeline.new()
+	pipeline.ready = pipeline_ready
+	var session_context := FakeSessionContext.new()
+	var shell_boot_flow := FakeShellBootFlow.new()
+	add_child_autofree(connection_service)
+	add_child_autofree(controller)
+	controller.configure(
+		connection_service,
+		pipeline,
+		Node2D.new(),
+		Node.new(),
+		Node2D.new(),
+		Node2D.new(),
+		Node2D.new(),
+		Control.new(),
+		Control.new(),
+		Control.new(),
+		session_context,
+		shell_boot_flow,
+		Callable()
+	)
+	return {
+		"controller": controller,
+		"connection_service": connection_service,
+		"pipeline": pipeline,
+		"session_context": session_context,
+		"shell_boot_flow": shell_boot_flow,
+	}
+
+
+func test_replay_waits_for_graceful_close_before_emitting_replay_requested() -> void:
+	var controller := GameplaySessionController.new()
+	var connection_service := FakeConnectionService.new()
+	var session_context := FakeSessionContext.new()
+	var shell_boot_flow := FakeShellBootFlow.new()
+	var replay_probe := ReplayProbe.new()
+
+	add_child_autofree(connection_service)
+	add_child_autofree(controller)
+	controller.connection_service = connection_service
+	controller.session_context = session_context
+	controller.shell_boot_flow = shell_boot_flow
+	controller.logger = Callable()
+	connection_service.events = replay_probe.events
+	controller.replay_requested.connect(Callable(replay_probe, "mark_replay_requested"))
+
+	await controller._on_gameplay_replay_requested()
+
+	assert_eq(connection_service.close_calls, 1)
+	assert_eq(session_context.clear_calls, 1)
+	assert_eq(shell_boot_flow.clear_calls, 1)
+	assert_eq(replay_probe.events, ["close_gracefully_started", "close_gracefully_finished", "replay_requested"])
+
+
+func test_first_ready_gameplay_packet_schedules_and_performs_initial_presentation_fanout() -> void:
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
 	var presentation_adapter := FakePresentationAdapter.new()
 	var gameplay_composition := FakeGameplayComposition.new()
-	var gameplay_state_flow := FakeGameplayStateFlow.new()
-	var gameplay_readiness := FakeGameplayReadiness.new()
+	var events: Array = []
 
-	add_child_autofree(controller)
 	controller.accepts_gameplay_packets = true
 	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
-	controller.gameplay_state_flow = gameplay_state_flow
-	controller._gameplay_readiness = gameplay_readiness
-	controller.gameplay_realtime_router = {"router": true}
+	controller.gameplay_state_flow = null
+	controller.gameplay_presentation_adapter.events = events
+	gameplay_composition.events = events
 
-	controller.handle_gameplay_packet({"type": "world_delta"})
 	controller.handle_gameplay_packet({"type": "world_delta"})
 
 	assert_eq(presentation_adapter.fanout_count, 0)
-
 	controller._process(0.016)
-
 	assert_eq(presentation_adapter.fanout_count, 1)
+	assert_eq(events, ["fanout", "process"])
 
-	controller._process(0.016)
-
-	assert_eq(presentation_adapter.fanout_count, 1)
 
 func test_later_gameplay_packet_can_mark_presentation_dirty_again_after_fanout() -> void:
-	var controller := GameplaySessionController.new()
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
 	var presentation_adapter := FakePresentationAdapter.new()
 	var gameplay_composition := FakeGameplayComposition.new()
-	var gameplay_state_flow := FakeGameplayStateFlow.new()
-	var gameplay_readiness := FakeGameplayReadiness.new()
+	var events: Array = []
 
-	add_child_autofree(controller)
 	controller.accepts_gameplay_packets = true
 	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
-	controller.gameplay_state_flow = gameplay_state_flow
-	controller._gameplay_readiness = gameplay_readiness
-	controller.gameplay_realtime_router = {"router": true}
+	controller.gameplay_state_flow = null
+	controller.gameplay_presentation_adapter.events = events
+	gameplay_composition.events = events
 
 	controller.handle_gameplay_packet({"type": "world_delta"})
 	controller._process(0.016)
@@ -214,20 +244,20 @@ func test_later_gameplay_packet_can_mark_presentation_dirty_again_after_fanout()
 
 	assert_eq(presentation_adapter.fanout_count, 2)
 
+
 func test_deferred_presentation_does_not_fan_out_when_gameplay_is_not_ready() -> void:
-	var controller := GameplaySessionController.new()
+	var setup = _make_controller(false)
+	var controller: GameplaySessionController = setup["controller"]
 	var presentation_adapter := FakePresentationAdapter.new()
 	var gameplay_composition := FakeGameplayComposition.new()
-	var gameplay_state_flow := FakeGameplayStateFlow.new()
-	var gameplay_readiness := FakeNotReadyGameplayReadiness.new()
+	var events: Array = []
 
-	add_child_autofree(controller)
 	controller.accepts_gameplay_packets = true
 	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
-	controller.gameplay_state_flow = gameplay_state_flow
-	controller._gameplay_readiness = gameplay_readiness
-	controller.gameplay_realtime_router = {"router": true}
+	controller.gameplay_state_flow = null
+	controller.gameplay_presentation_adapter.events = events
+	gameplay_composition.events = events
 
 	controller.handle_gameplay_packet({"type": "world_delta"})
 	controller._process(0.016)
@@ -235,23 +265,17 @@ func test_deferred_presentation_does_not_fan_out_when_gameplay_is_not_ready() ->
 	assert_eq(presentation_adapter.fanout_count, 0)
 
 
-
-
 func test_dirty_presentation_fanout_runs_before_gameplay_process() -> void:
-	var controller := GameplaySessionController.new()
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
 	var presentation_adapter := FakePresentationAdapter.new()
 	var gameplay_composition := FakeGameplayComposition.new()
-	var gameplay_state_flow := FakeGameplayStateFlow.new()
-	var gameplay_readiness := FakeGameplayReadiness.new()
 	var events: Array = []
 
-	add_child_autofree(controller)
 	controller.accepts_gameplay_packets = true
 	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
-	controller.gameplay_state_flow = gameplay_state_flow
-	controller._gameplay_readiness = gameplay_readiness
-	controller.gameplay_realtime_router = {"router": true}
+	controller.gameplay_state_flow = null
 	presentation_adapter.events = events
 	gameplay_composition.events = events
 
@@ -261,4 +285,43 @@ func test_dirty_presentation_fanout_runs_before_gameplay_process() -> void:
 	assert_eq(events, ["fanout", "process"])
 
 
+func test_input_ignored_when_gameplay_packets_are_not_accepted() -> void:
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
+	var presentation_adapter := FakePresentationAdapter.new()
+	var gameplay_composition := FakeGameplayComposition.new()
+	var events: Array = []
+	var input_event := InputEventMouseButton.new()
+	var viewport := controller.get_viewport()
 
+	controller.accepts_gameplay_packets = false
+	controller.gameplay_presentation_adapter = presentation_adapter
+	controller.gameplay_composition = gameplay_composition
+	controller.gameplay_state_flow = null
+	presentation_adapter.events = events
+	gameplay_composition.events = events
+
+	controller._input(input_event)
+
+	assert_true(events.is_empty())
+	assert_eq(viewport.has_method("is_input_handled") ? viewport.is_input_handled() : false, false)
+
+
+func test_unhandled_input_ignored_when_gameplay_packets_are_not_accepted() -> void:
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
+	var presentation_adapter := FakePresentationAdapter.new()
+	var gameplay_composition := FakeGameplayComposition.new()
+	var events: Array = []
+	var input_event := InputEventMouseButton.new()
+
+	controller.accepts_gameplay_packets = false
+	controller.gameplay_presentation_adapter = presentation_adapter
+	controller.gameplay_composition = gameplay_composition
+	controller.gameplay_state_flow = null
+	presentation_adapter.events = events
+	gameplay_composition.events = events
+
+	controller._unhandled_input(input_event)
+
+	assert_true(events.is_empty())

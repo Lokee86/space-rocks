@@ -1,7 +1,6 @@
 extends GutTest
 
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
-const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
 const WebRTCTransportScript := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 
 
@@ -165,8 +164,8 @@ func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 
-	var router: RealtimeRouter = service.get_realtime_router()
-	router.world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+	var pipeline = service.get_realtime_packet_pipeline()
+	pipeline.get_presentation_state().world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
 
 	service._on_packet_received({
 		"type": "asteroid_delta",
@@ -176,8 +175,8 @@ func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
 		],
 	})
 
-	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["x"], 4.2)
-	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["y"], 8.4)
+	assert_eq(pipeline.get_presentation_state().world_lane_state.asteroids["asteroid-1"]["x"], 4.2)
+	assert_eq(pipeline.get_presentation_state().world_lane_state.asteroids["asteroid-1"]["y"], 8.4)
 
 
 func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
@@ -191,8 +190,8 @@ func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 
-	var router: RealtimeRouter = service.get_realtime_router()
-	router.world_lane_state.upsert_bullet({"id": "bullet-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+	var pipeline = service.get_realtime_packet_pipeline()
+	pipeline.get_presentation_state().world_lane_state.upsert_bullet({"id": "bullet-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
 
 	service._on_packet_received({
 		"type": "bullet_delta",
@@ -202,8 +201,8 @@ func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
 		],
 	})
 
-	assert_eq(router.world_lane_state.bullets["bullet-1"]["x"], 5.5)
-	assert_eq(router.world_lane_state.bullets["bullet-1"]["y"], 6.6)
+	assert_eq(pipeline.get_presentation_state().world_lane_state.bullets["bullet-1"]["x"], 5.5)
+	assert_eq(pipeline.get_presentation_state().world_lane_state.bullets["bullet-1"]["y"], 6.6)
 
 
 func test_webrtc_transport_reconnect_ownership_closes_previous_transport_and_starts_new_one() -> void:

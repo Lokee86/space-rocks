@@ -85,6 +85,7 @@ func _ready() -> void:
 	add_child(gameplay_session_controller)
 	gameplay_session_controller.configure(
 		session_boot_controller.get_connection_service(),
+		session_boot_controller.get_connection_service().get_realtime_packet_pipeline(),
 		self,
 		player,
 		view_anchor,

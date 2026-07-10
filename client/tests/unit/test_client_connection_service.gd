@@ -1,8 +1,6 @@
 extends GutTest
 
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
-const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
-const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
 const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 
 
@@ -49,12 +47,16 @@ func test_inbound_valid_gameplay_packet_routes_through_pipeline_once() -> void:
 	var callback_state := {"gameplay_packet_count": 0, "pipeline_packet_count": 0, "state_seen": false}
 	add_child_autofree(service)
 
-	service.gameplay_packet_received.connect(func(packet: Dictionary) -> void:
+	assert_true(service.get_realtime_packet_pipeline() == service.realtime_packet_pipeline)
+	assert_false(service.get_realtime_packet_pipeline().is_gameplay_ready())
+
+	service.gameplay_packet_received.connect(func(_packet: Dictionary) -> void:
 		callback_state.gameplay_packet_count += 1
 	)
-	service.realtime_packet_pipeline.gameplay_packet_applied.connect(func(packet: Dictionary) -> void:
+	service.realtime_packet_pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
 		callback_state.pipeline_packet_count += 1
-		assert_true(service.get_realtime_router().baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+		assert_false(service.get_realtime_packet_pipeline().is_gameplay_ready())
+		assert_true(service.get_realtime_packet_pipeline().get_presentation_state().world_lane_state != null)
 		callback_state.state_seen = true
 	)
 
@@ -77,7 +79,7 @@ func test_inbound_valid_gameplay_packet_routes_through_pipeline_once() -> void:
 	assert_true(callback_state.state_seen)
 	assert_eq(callback_state.pipeline_packet_count, 1)
 	assert_eq(callback_state.gameplay_packet_count, 1)
-	assert_true(service.get_realtime_router().baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+	assert_true(service.get_realtime_packet_pipeline().is_gameplay_ready())
 
 
 func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path() -> void:
@@ -119,14 +121,22 @@ func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path(
 
 	assert_eq(callback_state.pipeline_packet_count, 2)
 	assert_eq(callback_state.gameplay_packet_count, 2)
-	assert_true(service.get_realtime_router().baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+	assert_false(service.get_realtime_packet_pipeline().is_gameplay_ready())
 
 
-func test_reset_exposes_fresh_router_and_readiness() -> void:
+func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	var service := ClientConnectionService.new()
 	add_child_autofree(service)
 
-	var old_router: RealtimeRouter = service.get_realtime_router()
+	var pipeline := service.get_realtime_packet_pipeline()
+	var presentation_state := pipeline.get_presentation_state()
+	var world_lane_state := presentation_state.world_lane_state
+	var overlay_lane_state := presentation_state.overlay_lane_state
+	var session_lane_state := presentation_state.session_lane_state
+	var event_batch_applier := presentation_state.event_batch_applier
+	assert_true(pipeline == service.get_realtime_packet_pipeline())
+	assert_false(pipeline.is_gameplay_ready())
+
 	service._on_packet_received({
 		"type": "world_full",
 		"baseline_id": "world-baseline-1",
@@ -138,13 +148,18 @@ func test_reset_exposes_fresh_router_and_readiness() -> void:
 		"asteroids": [],
 		"pickups": [],
 	})
-	assert_true(old_router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
-	assert_eq(service.get_gameplay_readiness(), old_router.get_gameplay_readiness())
+	assert_true(pipeline.is_gameplay_ready())
 
 	service.reset_realtime_protocol_state()
 
-	var new_router: RealtimeRouter = service.get_realtime_router()
-	assert_ne(new_router, old_router)
-	assert_false(new_router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
-	assert_eq(service.get_gameplay_readiness(), new_router.get_gameplay_readiness())
-	assert_false(service.get_gameplay_readiness() == old_router.get_gameplay_readiness())
+	assert_true(service.get_realtime_packet_pipeline() == pipeline)
+	assert_false(pipeline.is_gameplay_ready())
+	assert_true(service.get_realtime_packet_pipeline().get_presentation_state() == presentation_state)
+	assert_true(presentation_state.world_lane_state != world_lane_state)
+	assert_true(presentation_state.overlay_lane_state != overlay_lane_state)
+	assert_true(presentation_state.session_lane_state != session_lane_state)
+	assert_true(presentation_state.event_batch_applier != event_batch_applier)
+	assert_true(presentation_state.world_lane_state != null)
+	assert_true(presentation_state.overlay_lane_state != null)
+	assert_true(presentation_state.session_lane_state != null)
+	assert_true(presentation_state.event_batch_applier != null)
