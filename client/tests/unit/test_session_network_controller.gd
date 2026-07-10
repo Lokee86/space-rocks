@@ -12,7 +12,7 @@ class FakeConnectionService:
 	signal packet_parse_failed(text: String)
 	signal unknown_packet_received(packet: Dictionary)
 	signal websocket_auth_result_received(packet: Dictionary)
-	signal webrtc_ready_received(packet: Dictionary)
+	signal realtime_transport_ready
 
 	var websocket_auth_authenticated := false
 	var sent_single_player := 0
@@ -45,7 +45,7 @@ class FakeConnectionService:
 		})
 
 	func emit_webrtc_ready() -> void:
-		webrtc_ready_received.emit({"type": "webrtc_ready"})
+		realtime_transport_ready.emit()
 
 
 class FakeShellBootFlow:

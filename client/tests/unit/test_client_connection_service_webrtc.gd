@@ -118,7 +118,7 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	var second_peer := FakeTransportPeer.new()
 	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
 	var dispatcher_packets: Array = []
-	var smoke_packets: Array = []
+
 	var transport_peers := [first_peer, second_peer]
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
@@ -130,10 +130,6 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 		dispatcher_packets.append(packet)
 	)
 	
-	service.webrtc_smoke_received.connect(func(packet: Dictionary) -> void:
-		smoke_packets.append(packet)
-	)
-
 	service._on_connected()
 	service._on_closed()
 	service._on_connected()
@@ -147,7 +143,58 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	assert_eq(dispatcher_packets[0], {"type": "resync_request", "lane": "world"})
 	assert_true(service.realtime_transport_session != null)
 	assert_true(service.get_realtime_packet_pipeline().get_presentation_state().world_lane_state != null)
-	assert_true(smoke_packets.is_empty())
+	assert_false(service.has_signal("webrtc_smoke_received"))
+	assert_false(service.has_signal("webrtc_answer_received"))
+	assert_false(service.has_signal("webrtc_ice_candidate_received"))
+	assert_false(service.has_signal("webrtc_ready_received"))
+	assert_false(service.has_signal("webrtc_failed_received"))
+
+
+func test_dispatcher_routes_webrtc_control_packets_through_coordinator() -> void:
+	var service := ClientConnectionService.new()
+	var fake_network := FakeNetworkClient.new()
+	var fake_peer := FakeTransportPeer.new()
+	service.network_client = fake_network
+	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
+	add_child_autofree(service)
+	watch_signals(service)
+	service._on_connected()
+
+	service.server_packet_dispatcher.dispatch({"type": "webrtc_answer", "description_type": "answer", "sdp": "remote-sdp"})
+	service.server_packet_dispatcher.dispatch({"type": "webrtc_ice_candidate", "media": "audio", "index": 4, "name": "candidate"})
+	service.server_packet_dispatcher.dispatch({"type": "webrtc_ready"})
+
+	assert_eq(fake_peer.answered, ["answer", "remote-sdp"])
+	assert_eq(fake_peer.remote_ice, ["audio", 4, "candidate"])
+	assert_signal_emit_count(service, "realtime_transport_ready", 1)
+
+	service.server_packet_dispatcher.dispatch({"type": "webrtc_failed"})
+	assert_eq(fake_peer.closed, 1)
+
+
+func test_coordinator_replaces_transport_session_across_disconnect_and_reconnect() -> void:
+	var service := ClientConnectionService.new()
+	var fake_network := FakeNetworkClient.new()
+	var first_peer := FakeTransportPeer.new()
+	var second_peer := FakeTransportPeer.new()
+	var transport_peers := [first_peer, second_peer]
+	service.network_client = fake_network
+	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer_from_queue").bind(transport_peers)
+	add_child_autofree(service)
+
+	service._on_connected()
+	service.server_packet_dispatcher.dispatch({"type": "webrtc_answer", "description_type": "answer", "sdp": "first"})
+	service._on_closed()
+	service.server_packet_dispatcher.dispatch({"type": "webrtc_answer", "description_type": "answer", "sdp": "ignored"})
+	service._on_connected()
+	service.server_packet_dispatcher.dispatch({"type": "webrtc_answer", "description_type": "answer", "sdp": "second"})
+
+	assert_eq(first_peer.answered, ["answer", "first"])
+	assert_eq(second_peer.answered, ["answer", "second"])
 
 
 func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
@@ -212,7 +259,7 @@ func test_webrtc_transport_reconnect_ownership_closes_previous_transport_and_sta
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(first_peer)
-
+	add_child_autofree(service)
 
 	service._on_connected()
 	service._on_closed()

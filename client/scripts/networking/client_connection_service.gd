@@ -2,6 +2,7 @@ extends Node
 
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
+const ClientInboundCoordinator := preload("res://scripts/networking/inbound/client_inbound_coordinator.gd")
 const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
@@ -19,16 +20,13 @@ signal debug_shape_catalog_received(packet: Dictionary)
 signal debug_status_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
 signal telemetry_pong_received(packet: Dictionary)
-signal webrtc_answer_received(packet: Dictionary)
-signal webrtc_ice_candidate_received(packet: Dictionary)
-signal webrtc_ready_received(packet: Dictionary)
-signal webrtc_smoke_received(packet: Dictionary)
-signal webrtc_failed_received(packet: Dictionary)
+signal realtime_transport_ready
 signal unknown_packet_received(packet: Dictionary)
 
 var network_client: NetworkClient
 var client_packet_sender: ClientPacketSender
 var server_packet_dispatcher: ServerPacketDispatcher
+var client_inbound_coordinator: ClientInboundCoordinator
 var realtime_packet_pipeline: RealtimePacketPipeline
 var realtime_transport_session: RealtimeTransportSession
 var webrtc_transport_factory: Callable
@@ -50,6 +48,12 @@ func _ready() -> void:
 		server_packet_dispatcher = ServerPacketDispatcher.new()
 	if realtime_packet_pipeline == null:
 		realtime_packet_pipeline = RealtimePacketPipeline.new()
+	if client_inbound_coordinator == null:
+		client_inbound_coordinator = ClientInboundCoordinator.new()
+	client_inbound_coordinator.configure(server_packet_dispatcher, realtime_transport_session)
+	var ready_handler := Callable(self, "_on_realtime_transport_ready")
+	if !client_inbound_coordinator.is_connected("realtime_transport_ready", ready_handler):
+		client_inbound_coordinator.connect("realtime_transport_ready", ready_handler)
 	if network_client != null and network_client.get_parent() == null:
 		add_child(network_client)
 	if server_packet_dispatcher != null and server_packet_dispatcher.get_parent() == null:
@@ -233,11 +237,7 @@ func _connect_server_packet_dispatcher_signals() -> void:
 	_connect_dispatcher_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
 	_connect_dispatcher_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
 	_connect_dispatcher_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
-	_connect_dispatcher_signal("webrtc_answer_received", Callable(self, "_on_webrtc_answer_received"))
-	_connect_dispatcher_signal("webrtc_ice_candidate_received", Callable(self, "_on_webrtc_ice_candidate_received"))
-	_connect_dispatcher_signal("webrtc_ready_received", Callable(self, "_on_webrtc_ready_received"))
-	_connect_dispatcher_signal("webrtc_smoke_received", Callable(self, "_on_webrtc_smoke_received"))
-	_connect_dispatcher_signal("webrtc_failed_received", Callable(self, "_on_webrtc_failed_received"))
+
 	_connect_dispatcher_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
 
 
@@ -312,44 +312,8 @@ func _on_telemetry_pong_received(packet: Dictionary) -> void:
 	telemetry_pong_received.emit(packet)
 
 
-func _on_webrtc_answer_received(packet: Dictionary) -> void:
-	var description_type := str(packet.get("description_type", ""))
-	var sdp := str(packet.get("sdp", ""))
-	if realtime_transport_session != null:
-		realtime_transport_session.handle_answer(description_type, sdp)
-	webrtc_answer_received.emit(packet)
-
-
-func _on_webrtc_ice_candidate_received(packet: Dictionary) -> void:
-	if realtime_transport_session != null:
-		realtime_transport_session.handle_remote_ice(str(packet.get("media", "")), int(packet.get("index", 0)), str(packet.get("name", "")))
-	webrtc_ice_candidate_received.emit(packet)
-
-
-func _on_webrtc_ready_received(packet: Dictionary) -> void:
-	ClientLogger.network_event(
-		ClientLogger.LEVEL_INFO,
-		"webrtc_ready_received",
-		"WebRTC ready packet received",
-		packet
-	)
-	webrtc_ready_received.emit(packet)
-
-
-func _on_webrtc_smoke_received(packet: Dictionary) -> void:
-	ClientLogger.network_event(
-		ClientLogger.LEVEL_INFO,
-		"webrtc_smoke_received",
-		"WebRTC smoke packet received",
-		packet
-	)
-	webrtc_smoke_received.emit(packet)
-
-
-func _on_webrtc_failed_received(packet: Dictionary) -> void:
-	if realtime_transport_session != null:
-		realtime_transport_session.handle_remote_failure()
-	webrtc_failed_received.emit(packet)
+func _on_realtime_transport_ready() -> void:
+	realtime_transport_ready.emit()
 
 
 func _on_unknown_packet_received(packet: Dictionary) -> void:
@@ -367,12 +331,16 @@ func _ensure_realtime_transport_session() -> void:
 	realtime_transport_session.send_offer = Callable(self, "send_webrtc_offer")
 	realtime_transport_session.send_ice_candidate = Callable(self, "send_webrtc_ice_candidate")
 	realtime_transport_session.send_failed = Callable(self, "send_webrtc_failed")
+	if client_inbound_coordinator != null:
+		client_inbound_coordinator.set_realtime_transport_session(realtime_transport_session)
 
 
 func _clear_webrtc_transport() -> void:
 	if realtime_transport_session != null:
 		realtime_transport_session.close()
 		realtime_transport_session = null
+	if client_inbound_coordinator != null:
+		client_inbound_coordinator.set_realtime_transport_session(null)
 
 
 func _send_authenticate_request_if_token_exists() -> void:

@@ -37,7 +37,7 @@ func connect_connection_signals() -> void:
 	_connect_connection_signal("packet_parse_failed", Callable(self, "_on_packet_parse_failed"))
 	_connect_connection_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
 	_connect_connection_signal("websocket_auth_result_received", Callable(self, "_on_websocket_auth_result_received"))
-	_connect_connection_signal("webrtc_ready_received", Callable(self, "_on_webrtc_ready_received"))
+	_connect_connection_signal("realtime_transport_ready", Callable(self, "_on_realtime_transport_ready"))
 
 
 func connect_room_signals() -> void:
@@ -81,7 +81,7 @@ func _on_unknown_packet_received(_packet: Dictionary) -> void:
 	_log("Unknown packet received")
 
 
-func _on_webrtc_ready_received(_packet: Dictionary) -> void:
+func _on_realtime_transport_ready() -> void:
 	_webrtc_gameplay_ready = true
 	_log("WebRTC gameplay transport is ready")
 	_try_send_pending_boot_request()

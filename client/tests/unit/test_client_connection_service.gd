@@ -42,6 +42,18 @@ func _make_fake_transport_peer(fake_peer: FakeTransportPeer) -> WebRTCTransport:
 	return fake_peer
 
 
+func test_connection_service_does_not_expose_raw_webrtc_inbound_signals() -> void:
+	var service := ClientConnectionService.new()
+	add_child_autofree(service)
+
+	assert_false(service.has_signal("webrtc_answer_received"))
+	assert_false(service.has_signal("webrtc_ice_candidate_received"))
+	assert_false(service.has_signal("webrtc_ready_received"))
+	assert_false(service.has_signal("webrtc_smoke_received"))
+	assert_false(service.has_signal("webrtc_failed_received"))
+	assert_true(service.has_signal("realtime_transport_ready"))
+
+
 func test_inbound_valid_gameplay_packet_routes_through_pipeline_once() -> void:
 	var service := ClientConnectionService.new()
 	var callback_state := {"pipeline_packet_count": 0, "state_seen": false}
