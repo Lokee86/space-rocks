@@ -182,26 +182,31 @@ The dispatcher does not know which application subsystem will consume each signa
 
 `ClientConnectionService` creates and owns the dispatcher instance.
 
-It also owns a `RealtimeRouter` instance.
+It also owns the transport coordination surface and delegates decoded realtime gameplay packets into `RealtimePacketPipeline`.
 
-It connects dispatcher signals to local handlers, then re-emits service-level signals with the same packet dictionary.
+`RealtimePacketPipeline` owns the active `RealtimeRouter`, gameplay readiness, reset, packet expansion, validation, and packet application.
+
+`ClientConnectionService` connects dispatcher signals to local handlers, then re-emits service-level signals with the same packet dictionary.
 
 Room, auth, debug, player-pause, and telemetry packets are re-emitted through service-level signals so callers can stay on the connection-service facade.
 
-Realtime lane packets take a slightly different path inside `ClientConnectionService`:
+Realtime gameplay packets take a shared path inside `ClientConnectionService`:
 
 ```text
-_handle_webrtc_transport_packet(packet)
+transport packet
 -> ServerPacketDispatcher.dispatch(packet)
 -> ClientConnectionService._route_gameplay_packet(packet)
+-> RealtimePacketPipeline.apply_packet(packet)
 -> RealtimeRouter.route_lane_packet(packet)
--> lane-specific service signal
+-> gameplay_packet_applied(packet)
 -> gameplay_packet_received(packet)
 ```
 
 This keeps callers attached to one public networking facade instead of directly depending on `NetworkClient` or `ServerPacketDispatcher`.
 
-`ClientConnectionService` currently emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
+The existing `gameplay_packet_received` signal and the `get_realtime_router()`, `get_gameplay_readiness()`, and `reset_realtime_protocol_state()` accessors remain temporary compatibility surfaces for later session and presentation stages.
+
+ClientConnectionService still emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
 
 ```text
 event: lane_packet_routed
@@ -215,6 +220,8 @@ fields:
 The once-per-packet-type guard remains diagnostic-only. It does not affect routing or lane state.
 
 Under hot-lane stress, multiple `asteroid_delta` or `bullet_delta` packets may arrive for the same lane sequence in one poll window. The routing path should treat those as separate packets and must not coalesce or drop them solely because they share a sequence.
+
+Presentation remains frame-coalesced and is intentionally unchanged in this stage.
 
 ### Websocket auth result cache
 

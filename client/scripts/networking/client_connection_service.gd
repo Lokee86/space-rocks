@@ -2,7 +2,7 @@ extends Node
 
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
-const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
+const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
@@ -43,7 +43,7 @@ signal gameplay_packet_received(packet: Dictionary)
 var network_client: NetworkClient
 var client_packet_sender: ClientPacketSender
 var server_packet_dispatcher: ServerPacketDispatcher
-var realtime_router: RealtimeRouter
+var realtime_packet_pipeline: RealtimePacketPipeline
 var realtime_transport_session: RealtimeTransportSession
 var webrtc_transport_factory: Callable
 
@@ -63,8 +63,10 @@ func _ready() -> void:
 		client_packet_sender = ClientPacketSender.new(network_client)
 	if server_packet_dispatcher == null:
 		server_packet_dispatcher = ServerPacketDispatcher.new()
-	if realtime_router == null:
-		realtime_router = RealtimeRouter.new()
+	if realtime_packet_pipeline == null:
+		realtime_packet_pipeline = RealtimePacketPipeline.new()
+		if not realtime_packet_pipeline.gameplay_packet_applied.is_connected(Callable(self, "_on_realtime_gameplay_packet_applied")):
+			realtime_packet_pipeline.gameplay_packet_applied.connect(Callable(self, "_on_realtime_gameplay_packet_applied"))
 	if network_client != null and network_client.get_parent() == null:
 		add_child(network_client)
 	if server_packet_dispatcher != null and server_packet_dispatcher.get_parent() == null:
@@ -87,7 +89,8 @@ func connect_to_server(url: String) -> Error:
 
 
 func reset_realtime_protocol_state() -> void:
-	realtime_router = RealtimeRouter.new()
+	if realtime_packet_pipeline != null:
+		realtime_packet_pipeline.reset()
 	_lane_route_log_emitted.clear()
 	_clear_webrtc_transport()
 	ClientLogger.network_event(
@@ -267,18 +270,19 @@ func _connect_dispatcher_signal(signal_name: StringName, handler: Callable) -> v
 
 
 func _route_gameplay_packet(packet: Dictionary) -> void:
-	if realtime_router == null:
+	if realtime_packet_pipeline == null:
 		return
 
-	realtime_router.route_lane_packet(packet)
+	realtime_packet_pipeline.apply_packet(packet)
 	var packet_type := str(packet.get("type", packet.get("Type", "")))
 	if !_lane_route_log_emitted.has(packet_type):
 		_lane_route_log_emitted[packet_type] = true
 		var readiness := false
-		if realtime_router.has_method("is_presentable"):
-			readiness = realtime_router.is_presentable()
-		elif realtime_router.has_method("get_gameplay_readiness"):
-			var gameplay_readiness = realtime_router.get_gameplay_readiness()
+		var pipeline_router = realtime_packet_pipeline.get_router()
+		if pipeline_router.has_method("is_presentable"):
+			readiness = pipeline_router.is_presentable()
+		elif pipeline_router.has_method("get_gameplay_readiness"):
+			var gameplay_readiness = pipeline_router.get_gameplay_readiness()
 			if gameplay_readiness != null and gameplay_readiness.has_method("is_gameplay_ready"):
 				readiness = gameplay_readiness.is_gameplay_ready()
 		ClientLogger.network_event(
@@ -292,9 +296,8 @@ func _route_gameplay_packet(packet: Dictionary) -> void:
 		)
 
 
-func _emit_gameplay_packet(packet: Dictionary) -> void:
+func _on_realtime_gameplay_packet_applied(packet: Dictionary) -> void:
 	gameplay_packet_received.emit(packet)
-
 
 func _on_connected() -> void:
 	_ensure_realtime_transport_session()
@@ -344,79 +347,66 @@ func _on_room_error_received(packet: Dictionary) -> void:
 func _on_world_full_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	world_full_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_world_delta_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	world_delta_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_asteroid_delta_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	asteroid_delta_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_bullet_delta_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	bullet_delta_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_asteroids_lifecycle_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	asteroids_lifecycle_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_bullets_lifecycle_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	bullets_lifecycle_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_overlay_full_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	overlay_full_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_overlay_delta_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	overlay_delta_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_session_full_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	session_full_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_session_delta_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	session_delta_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_event_batch_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	event_batch_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_resync_request_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	resync_request_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_resync_required_received(packet: Dictionary) -> void:
 	_route_gameplay_packet(packet)
 	resync_required_received.emit(packet)
-	_emit_gameplay_packet(packet)
 
 
 func _on_debug_shape_catalog_received(packet: Dictionary) -> void:
@@ -515,8 +505,8 @@ func _send_authenticate_request_if_token_exists() -> void:
 
 
 func get_gameplay_readiness():
-	if realtime_router != null:
-		return realtime_router.gameplay_readiness
+	if realtime_packet_pipeline != null:
+		return realtime_packet_pipeline.get_readiness()
 	if server_packet_dispatcher == null:
 		return null
 	if server_packet_dispatcher.has_method("get_gameplay_readiness"):
@@ -525,4 +515,6 @@ func get_gameplay_readiness():
 
 
 func get_realtime_router():
-	return realtime_router
+	if realtime_packet_pipeline != null:
+		return realtime_packet_pipeline.get_router()
+	return null

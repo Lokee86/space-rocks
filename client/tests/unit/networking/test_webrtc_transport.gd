@@ -235,8 +235,8 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 		ready_values.clear()
 		ready_values.append_array(payload)
 	)
-
 	peer.poll()
+
 	assert_eq(fake_peer.poll_called, 1)
 	assert_true(ready_values.is_empty())
 
@@ -244,6 +244,8 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 	channels["event"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["asteroids"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["bullets"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["asteroids_lifecycle"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["bullets_lifecycle"].ready_state = WebRTCDataChannel.STATE_OPEN
 	peer.poll()
 
 	assert_eq(fake_peer.poll_called, 2)

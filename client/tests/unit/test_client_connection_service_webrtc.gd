@@ -63,7 +63,6 @@ func test_connection_service_starts_and_wires_webrtc_transport() -> void:
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = null
-	service.realtime_router = null
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 
@@ -100,7 +99,6 @@ func test_connection_service_does_not_poll_closed_webrtc_transport_after_reset()
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = null
-	service.realtime_router = null
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 
@@ -127,9 +125,9 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
-	service.realtime_router = null
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer_from_queue").bind(transport_peers)
 	add_child_autofree(service)
+
 	service.server_packet_dispatcher.resync_request_received.connect(func(packet: Dictionary) -> void:
 		dispatcher_packets.append(packet)
 	)
@@ -164,10 +162,11 @@ func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
-	service.realtime_router = RealtimeRouter.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
-	service.realtime_router.world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+
+	var router: RealtimeRouter = service.get_realtime_router()
+	router.world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
 
 	service._on_packet_received({
 		"type": "asteroid_delta",
@@ -177,8 +176,8 @@ func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
 		],
 	})
 
-	assert_eq(service.realtime_router.world_lane_state.asteroids["asteroid-1"]["x"], 4.2)
-	assert_eq(service.realtime_router.world_lane_state.asteroids["asteroid-1"]["y"], 8.4)
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["x"], 4.2)
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["y"], 8.4)
 
 
 func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
@@ -189,10 +188,11 @@ func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
-	service.realtime_router = RealtimeRouter.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
-	service.realtime_router.world_lane_state.upsert_bullet({"id": "bullet-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
+
+	var router: RealtimeRouter = service.get_realtime_router()
+	router.world_lane_state.upsert_bullet({"id": "bullet-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
 
 	service._on_packet_received({
 		"type": "bullet_delta",
@@ -202,8 +202,8 @@ func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
 		],
 	})
 
-	assert_eq(service.realtime_router.world_lane_state.bullets["bullet-1"]["x"], 5.5)
-	assert_eq(service.realtime_router.world_lane_state.bullets["bullet-1"]["y"], 6.6)
+	assert_eq(router.world_lane_state.bullets["bullet-1"]["x"], 5.5)
+	assert_eq(router.world_lane_state.bullets["bullet-1"]["y"], 6.6)
 
 
 func test_webrtc_transport_reconnect_ownership_closes_previous_transport_and_starts_new_one() -> void:
@@ -214,10 +214,9 @@ func test_webrtc_transport_reconnect_ownership_closes_previous_transport_and_sta
 	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
-	service.server_packet_dispatcher = null
-	service.realtime_router = null
+	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(first_peer)
-	add_child_autofree(service)
+
 
 	service._on_connected()
 	service._on_closed()

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import { test } from "node:test";
 
+import { REPO_ROOT } from "./paths.js";
 import { HermesTerminalManager, registerHermesTools } from "./hermes_tools.js";
 
 function createMockServer() {
@@ -44,6 +46,7 @@ test("HermesTerminalManager starts, queues sends, reads, resizes, and closes ses
   const { sessionId, session } = manager.start({ cwd: ".", cols: 90, rows: 20 });
   assert.match(sessionId, /^ht_/);
   assert.match(created[0].command, /hermes(\.exe)?$/i);
+  assert.equal(created[0].options.cwd, REPO_ROOT);
   await session.settleStartup();
   assert.equal(session.read({ maxChars: 100 }), "");
   const first = await manager.send(sessionId, { input: "hello", appendEnter: true, idleMs: 5, timeoutMs: 200 });
@@ -66,6 +69,48 @@ test("HermesTerminalManager preserves the newest output on rollover and adjusts 
   assert.equal(session.output.length, 50000);
   assert.match(session.output.slice(-25), /^b+$/);
   assert.equal(session.readOffset >= session.bufferStartOffset, true);
+});
+
+test("Hermes tools accept the fixed Hermes root cwd", async () => {
+  const created = [];
+  const manager = new HermesTerminalManager({
+    spawnPty: (command, args, options) => {
+      const pty = makeFakePty();
+      Object.assign(pty, { command, args, options });
+      created.push(pty);
+      return pty;
+    },
+  });
+  const runHermesCalls = [];
+  const server = createMockServer();
+  registerHermesTools(server, {
+    manager,
+    runHermesImpl: async (options) => {
+      runHermesCalls.push(options);
+      return { ok: true, cwd: options.cwd ?? null };
+    },
+  });
+
+  const hermesRoot = path.resolve("C:/Users/archa/AppData/Local/hermes");
+  await server.tools.get("hermes_run").handler({ args: ["--version"], cwd: hermesRoot });
+  await server.tools.get("hermes_session_send").handler({ prompt: "ping", cwd: hermesRoot });
+  await server.tools.get("hermes_session_send_batch").handler({ prompts: ["one", "two"], cwd: hermesRoot });
+  assert.deepEqual(runHermesCalls.map((call) => call.cwd), [hermesRoot, hermesRoot, hermesRoot, hermesRoot]);
+
+  const toolDescription = server.tools.get("hermes_terminal_start").config.inputSchema.cwd.description;
+  assert.match(toolDescription, /C:\\Users\\archa\\AppData\\Local\\hermes/);
+
+  await server.tools.get("hermes_terminal_start").handler({});
+  assert.equal(created[0].options.cwd, REPO_ROOT);
+});
+
+test("Hermes tools reject unrelated external cwd values", async () => {
+  const manager = new HermesTerminalManager({ spawnPty: () => makeFakePty() });
+  const server = createMockServer();
+  registerHermesTools(server, { manager, runHermesImpl: async () => ({ ok: true }) });
+  const externalCwd = path.resolve("..", "hermes-external");
+  await assert.rejects(() => server.tools.get("hermes_run").handler({ args: ["--version"], cwd: externalCwd }), /cwd must be REPO_ROOT/);
+  await assert.rejects(() => server.tools.get("hermes_terminal_start").handler({ cwd: externalCwd }), /cwd must be REPO_ROOT/);
 });
 
 test("HermesTerminalManager send returns the retained delta even when rollover happens during send", async () => {

@@ -6,10 +6,6 @@ const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transpo
 class FakeTransport:
 	extends WebRTCTransport
 
-	signal offer_created(description_type: String, sdp: String)
-	signal ice_candidate_created(media: String, index: int, name: String)
-	signal failed(error_code: String, message: String)
-
 	var start_count := 0
 	var poll_count := 0
 	var close_count := 0
@@ -31,8 +27,8 @@ func test_start_poll_and_close_delegate_once_and_clear_transport() -> void:
 	var session := RealtimeTransportSession.new()
 	var transport := FakeTransport.new()
 
-	session.transport = transport
-	session.start()
+	session.transport_factory = func():
+		return transport
 	session.start()
 	session.poll()
 	session.close()
