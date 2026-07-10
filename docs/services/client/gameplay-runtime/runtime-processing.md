@@ -14,7 +14,7 @@ Runtime processing is the client-side frame loop for active gameplay presentatio
 
 It is not the authoritative simulation tick. The server owns gameplay simulation, collision outcomes, scoring, lives, death, respawn validity, and match lifecycle. The client runtime processing path only advances local presentation and client-owned runtime helpers between applied lane packets.
 
-The frame path starts in `GameplaySessionController._process(delta)`. The controller reads the current gameplay readiness from `RealtimePacketPipeline.is_gameplay_ready()`, propagates that readiness into `GameplayComposition`, flushes `PresentationBridge`, and then runs normal gameplay composition processing.
+The frame path starts in `GameplaySessionController._process(delta)`. The controller reads the current gameplay readiness from `RealtimePacketPipeline.is_gameplay_ready()`, propagates that readiness into `GameplayComposition`, calls `PresentationBridge.flush_pending()`, and then runs `GameplayComposition.process(delta, readiness)`.
 
 The current per-frame order is:
 
@@ -271,6 +271,6 @@ Use the normal client GUT test run for verification after runtime-processing cha
 
 `GameplayComposition.process` also ticks `DevToolsSessionFlow` and `GameplayPresentationFlow` outside the inner `GameplayProcessFlow` order. This document includes those calls because they are part of the current per-frame gameplay runtime path.
 
-Current runtime ordering is stable: session readiness is sampled first from `RealtimePacketPipeline.is_gameplay_ready()`, bridge pending work is flushed before composition, composition receives the readiness flag, gameplay application completes separately, and then frame-specific runtime helpers continue.
+Current runtime ordering is stable: session readiness is sampled first from `RealtimePacketPipeline.is_gameplay_ready()`, readiness is propagated into `GameplayComposition`, `PresentationBridge.flush_pending()` runs before composition processing, and then frame-specific runtime helpers continue.
 
 Server hitbox overlay processing is debug presentation. Runtime processing ticks it, but it does not make hitbox overlay behavior normal gameplay rendering authority.

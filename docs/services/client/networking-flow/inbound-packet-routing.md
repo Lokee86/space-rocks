@@ -190,26 +190,22 @@ The dispatcher does not know which application subsystem will consume each signa
 
 Room, auth, debug, player-pause, and telemetry packets are re-emitted through service-level signals so callers can stay on the connection-service facade.
 
-Realtime gameplay packets take a shared path inside `ClientConnectionService`:
+Realtime gameplay packets take the direct realtime path inside `ClientConnectionService`:
 
 ```text
-transport packet
+ClientConnectionService
 -> ServerPacketDispatcher.dispatch(packet)
--> ClientConnectionService._route_gameplay_packet(packet)
 -> RealtimePacketPipeline.apply_packet(packet)
--> RealtimePacketPipeline invokes RealtimeRouter
+-> RealtimeRouter
 -> gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-
-This keeps callers attached to one public networking facade instead of directly depending on `NetworkClient` or `ServerPacketDispatcher`.
-
-ClientConnectionService delegates realtime gameplay packets to RealtimePacketPipeline, which invokes its owned RealtimeRouter.
+`ClientConnectionService` delegates realtime gameplay packets to `RealtimePacketPipeline`, which invokes its owned `RealtimeRouter`.
 
 `ClientConnectionService` exposes the stable `RealtimePacketPipeline` through `get_realtime_packet_pipeline()`. Session consumers use `RealtimePacketPipeline.is_gameplay_ready()` and `RealtimePacketPipeline.get_presentation_state()`. `RealtimeRouter` and `GameplayReadiness` remain pipeline-internal implementation details. No session, presentation, or connection-service consumer may retain or inspect the router directly. `reset_realtime_protocol_state()` remains the connection-level reset entry point when that method still exists.
 
-The connection service now routes gameplay packets only through the semantic pipeline/application handoff, while `RealtimePacketPipeline.gameplay_packet_applied(packet)` and `PresentationBridge.handle_gameplay_packet(packet)` carry presentation delivery.
+The connection service routes gameplay packets through the semantic pipeline/application handoff, while `RealtimePacketPipeline.gameplay_packet_applied(packet)` and `PresentationBridge.handle_gameplay_packet(packet)` carry presentation delivery.
 
 ClientConnectionService still emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
 

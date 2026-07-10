@@ -12,7 +12,7 @@ It covers how the Godot client turns menu requests into a requested session mode
 
 Session boot is the client-side bridge between menu intent and server room or gameplay entry.
 
-The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, and sends the appropriate boot packet only after the readiness gate allows it. After connection, `ClientConnectionService` coordinates WebRTC signalling and delegates transport lifecycle setup to `RealtimeTransportSession`.
+The client does not enter single-player or multiplayer by directly changing scenes into gameplay. It records the requested mode, stores a pending boot request, selects the websocket target for that mode, starts or reuses the websocket connection, and sends the appropriate boot packet only after the readiness gate allows it. Session boot determines when gameplay presentation becomes active. After connection, `ClientConnectionService` coordinates WebRTC signalling and delegates transport lifecycle setup to `RealtimeTransportSession`.
 
 Current boot request types are:
 
@@ -73,7 +73,7 @@ WebSocket target selection is separate from WebRTC connectivity. The WebSocket U
 * Multiplayer admission authority.
 * Room membership authority.
 * Gameplay session lifecycle.
-* Gameplay packet acceptance.
+* Gameplay session activation.
 * Scene/menu presentation.
 * Local Profile persistence.
 * Account persistence.

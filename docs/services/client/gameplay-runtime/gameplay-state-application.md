@@ -38,6 +38,10 @@ NetworkClient or WebRTCTransport receives and decodes packet
 
 The client applies lane packets through `RealtimePacketPipeline`. The pipeline owns the active `RealtimeRouter` and invokes it for lane-specific mutation rather than using the retired aggregate `GameplayStateApplyFlow` path or a combined normalized gameplay-state dictionary flow.
 
+`PresentationBridge` activation enables scheduling for gameplay-packet presentation, while `RealtimePacketPipeline` gameplay readiness gates fanout into presentation targets.
+
+`RealtimePacketPipeline` applies realtime gameplay packets regardless of gameplay-session activation state.
+
 `WorldLaneApplier` now applies `apply_asteroids_lifecycle`, `apply_bullets_lifecycle`, `apply_asteroid_delta`, and `apply_bullet_delta` so lifecycle packets define existence before hot movement updates are merged.
 
 ## Code root
@@ -57,7 +61,9 @@ The active client gameplay application path owns:
 * Realtime packet-family routing after decode.
 * Maintaining lane state objects for world, overlay, and session data.
 * Tracking required lane baseline sync before gameplay is considered ready.
-* Gating gameplay handoff behind both `accepts_gameplay_packets` and gameplay readiness.
+* `PresentationBridge` activation enables scheduling for gameplay-packet presentation.
+* `RealtimePacketPipeline` gameplay readiness gates fanout into presentation targets.
+* Applying realtime gameplay packets regardless of gameplay-session activation state.
 * Applying lifecycle and hot movement packets into WorldLaneState.
 * Routing current lane state into gameplay composition for world, HUD, session, and event presentation.
 * Restoring alive/respawn-facing presentation from current lane state after handoff.
@@ -144,7 +150,7 @@ ServerPacketDispatcher
 = classifies inbound packets before gameplay packets reach the realtime pipeline
 
 RealtimePacketPipeline
-= owns compact packet expansion, gameplay packet validation, the active RealtimeRouter, gameplay readiness, protocol reset, lane-routing invocation, and gameplay_packet_applied(packet)
+= owns compact packet expansion, gameplay packet validation, the active RealtimeRouter, gameplay readiness, protocol reset, lane-routing invocation, gameplay_packet_applied(packet), and realtime gameplay packet application regardless of gameplay-session activation state
 
 RealtimeRouter
 = owns lane-specific state mutation, baseline and sequence handling, and lane-state storage beneath RealtimePacketPipeline
@@ -184,7 +190,8 @@ world lane state
 Primary runtime path:
 
 * `client/scripts/session/session_network_controller.gd` - inbound routing handoff from networking.
-* `client/scripts/session/gameplay_session_controller.gd` - gameplay packet acceptance and presentation application.
+* `client/scripts/session/gameplay_session_controller.gd` - PresentationBridge lifecycle, frame scheduling, input/control routing, and session exits.
+* `client/scripts/networking/realtime/` - home of `RealtimePacketPipeline`, gameplay packet application, and readiness gating.
 * `client/scripts/protocol/realtime/` - lane states, readiness, adapters, and appliers.
 * `client/scripts/world/world_sync.gd` - world entity sync/render boundary.
 * `client/scripts/shell/gameplay_hud_flow.gd` - HUD-facing presentation consumers.
@@ -194,6 +201,7 @@ Primary runtime path:
 
 Key lane-native files:
 
+* `client/scripts/networking/realtime/` - home of `RealtimePacketPipeline`.
 * `client/scripts/protocol/realtime/world_lane_state.gd`
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - decodes quantized world records and applies full/delta world packets.
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - applies `apply_asteroids_lifecycle`, `apply_bullets_lifecycle`, `apply_asteroid_delta`, and `apply_bullet_delta` into `WorldLaneState`.

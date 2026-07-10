@@ -30,6 +30,8 @@ GameplaySessionController
 
 `GameplaySessionController` constructs `PresentationAdapter`, constructs `PresentationBridge`, constructs `GameplayComposition`, and configures `PresentationBridge` with `RealtimePacketPipeline`, `PresentationAdapter`, `GameplayComposition`, and logger.
 
+`GameplaySessionController` connects `RealtimePacketPipeline.gameplay_packet_applied` directly to `GameplayComposition.handle_gameplay_packet`.
+
 `PresentationBridge` is the dedicated orchestration seam. `GameplaySessionController` activates, resets, and flushes it with the gameplay session lifecycle.
 
 `GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, creates the flow composer, stores required lane baseline sync, and preserves a stable runtime pipeline identity for the composed gameplay frame path.
@@ -130,7 +132,7 @@ The session controller owns the outer lifecycle. Composition owns gameplay runti
 
 ### Lane-native presentation entries
 
-Runtime composition participates after `RealtimePacketPipeline` emits `gameplay_packet_applied`. `GameplaySessionController` then drives `PresentationBridge` activation, frame flushing, and reset, but it does not relay gameplay packets.
+Runtime composition participates after `RealtimePacketPipeline` emits `gameplay_packet_applied`. `GameplaySessionController` drives `PresentationBridge` activation, frame flushing, and reset, and the gameplay packet signal is routed directly to `GameplayComposition.handle_gameplay_packet` instead of being relayed by the session controller.
 
 Current lane-native delegation surfaces are:
 

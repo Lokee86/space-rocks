@@ -854,11 +854,11 @@ resync_request_received
 resync_required_received
 ```
 
-ClientConnectionService delegates classified realtime gameplay packets to RealtimePacketPipeline. The pipeline owns the active RealtimeRouter, applies the packet, updates readiness, and emits gameplay_packet_applied before PresentationBridge.handle_gameplay_packet receives the handoff into presentation layers.
+ClientConnectionService delegates classified realtime gameplay packets to RealtimePacketPipeline. The pipeline owns the active RealtimeRouter, expands and validates the packet, refreshes RealtimePresentationState, emits gameplay_packet_applied(packet), and then PresentationBridge.handle_gameplay_packet(packet) consumes the handoff into presentation layers.
 
 WebSocket and WebRTC gameplay delivery use different transports but converge on the same RealtimePacketPipeline application boundary.
 
-`SessionNetworkController` continues to handle room, session, pause, debug, and other control routing, but it does not participate in the gameplay packet handoff.
+`SessionNetworkController` continues to handle room, session, pause, debug, and other control routing. It does not block the gameplay packet pipeline.
 
 Client baseline and readiness behavior is currently:
 

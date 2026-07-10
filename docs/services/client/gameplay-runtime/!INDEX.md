@@ -24,10 +24,10 @@ Client gameplay runtime documentation lives here.
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
-- [gameplay-session-lifecycle.md](gameplay-session-lifecycle.md) - Client gameplay packet acceptance, reset, replay, and session-exit behavior.
+- [gameplay-session-lifecycle.md](gameplay-session-lifecycle.md) - Client gameplay-session activation, presentation lifecycle, reset, replay, and session-exit behavior.
 - [gameplay-state-application.md](gameplay-state-application.md) - Lane packet application, readiness, and presentation fanout.
-- [presentation-bridge.md](presentation-bridge.md) - Presentation bridge ownership, pending/coalescing, readiness-gated flush, and presentation orchestration.
-- [runtime-composition.md](runtime-composition.md) - Client gameplay runtime wiring and composition ownership.
+- [presentation-bridge.md](presentation-bridge.md) - Direct applied-packet notification handling, frame-coalesced presentation, readiness-gated flush, and presentation orchestration.
+- [runtime-composition.md](runtime-composition.md) - Client gameplay runtime construction, bridge wiring, and composition ownership.
 - [runtime-processing.md](runtime-processing.md) - Client per-frame gameplay processing order and runtime tick behavior.
 <!-- doc-ledger:files:end -->
 ## Stub Files

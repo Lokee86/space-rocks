@@ -138,11 +138,13 @@ Single-player room snapshots therefore update session state without mounting mul
 
 `GameplaySessionController` passes the provider through gameplay composition to match-end flows. This keeps gameplay runtime from owning room packet handling directly.
 
-Room state also controls when gameplay packets become acceptable. `SessionNetworkController` checks `RoomSessionController.current_room_state()` after room snapshots and room-state-change packets. When the state is `InGame`, it calls:
+Room state also controls the transition into gameplay session and PresentationBridge activation. `SessionNetworkController` checks `RoomSessionController.current_room_state()` after room snapshots and room-state-change packets. When the state is `InGame`, it performs this sequence:
 
 ```text
 GameplaySessionController.begin_accepting_gameplay_packets()
 ```
+
+This sequence activates gameplay session acceptance and the PresentationBridge path. It does not control `RealtimePacketPipeline` packet application.
 
 ### Match-result provider
 
@@ -207,7 +209,7 @@ ClientConnectionService.room_snapshot_received
 5. If state is InGame, send client config when configured.
 ```
 
-After `RoomSessionController` handles the snapshot, `SessionNetworkController` opens gameplay packet acceptance when the room state is `InGame` and refreshes match-end state.
+After `RoomSessionController` handles the snapshot, `SessionNetworkController` activates gameplay session and PresentationBridge flow when the room state is `InGame` and refreshes match-end state.
 
 ### Room-state-change input
 
@@ -221,7 +223,7 @@ ClientConnectionService.room_state_changed
 
 `handle_room_state_changed()` reads the room state field, updates `latest_room_state` when non-empty, and logs the state change.
 
-Afterward, `SessionNetworkController` opens gameplay packet acceptance when the room state is `InGame` and refreshes match-end state.
+Afterward, `SessionNetworkController` activates gameplay session and PresentationBridge flow when the room state is `InGame` and refreshes match-end state.
 
 ### Room error input
 
@@ -307,7 +309,7 @@ Authoritative room and match-result data originate from the game server. The cli
 ### App-shell wiring
 
 * `client/scripts/shell/app_entry.gd` - Creates `RoomSessionController`, configures dependencies, wires client config sender, wires room-state/match-result/max-player providers into `GameplaySessionController`, and connects room packet signals through `SessionNetworkController`.
-* `client/scripts/session/session_network_controller.gd` - Receives room packet signals from the connection service, delegates to `RoomSessionController`, opens gameplay packet acceptance when room state reaches `InGame`, and refreshes match-end state.
+* `client/scripts/session/session_network_controller.gd` - Receives room packet signals from the connection service, delegates to `RoomSessionController`, activates gameplay session and PresentationBridge flow when room state reaches `InGame`, and refreshes match-end state.
 * `client/scripts/session/client_session_context.gd` - Tracks requested and active session mode and decides whether multiplayer lobby should be shown for a room state.
 
 ### Lobby collaborators
@@ -330,7 +332,7 @@ Authoritative room and match-result data originate from the game server. The cli
 
 ### Gameplay and match-end consumers
 
-* `client/scripts/session/gameplay_session_controller.gd` - Receives room-state, match-result, and max-player providers; opens gameplay packet acceptance; refreshes match-end state.
+* `client/scripts/session/gameplay_session_controller.gd` - Receives room-state, match-result, and max-player providers; activates gameplay session packet acceptance; refreshes match-end state.
 * `client/scripts/gameplay/gameplay_composition.gd` - Passes room-state and match-result providers into gameplay presentation flows.
 * `client/scripts/gameplay/match_end/match_end_flow.gd` - Reads room state and match result through providers to present authoritative room match-over and results.
 * `client/scripts/ui/match_results/match_results_flow.gd` - Presents match result rows after `MatchEndFlow` adapts cached result payload.

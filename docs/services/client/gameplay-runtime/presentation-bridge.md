@@ -84,7 +84,7 @@ GameplaySessionController.configure(...)
 -> configure PresentationBridge with pipeline, adapter, composition, and logger
 ```
 
-The configured bridge remains inactive until gameplay packet acceptance begins.
+The configured bridge remains inactive until the gameplay session is activated.
 
 ### Activation
 
@@ -94,7 +94,11 @@ GameplaySessionController.begin_accepting_gameplay_packets()
 -> PresentationBridge.activate()
 ```
 
+`begin_accepting_gameplay_packets()` activates the bridge.
+
 Once active, applied gameplay notifications may mark presentation pending.
+
+An inactive bridge does not mark presentation pending.
 
 ### Applied Packet Notification
 

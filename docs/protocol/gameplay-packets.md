@@ -151,10 +151,11 @@ WebRTCTransport receives DataChannel text for active gameplay lane packets
 -> PacketCodec.decode
 -> ClientConnectionService._handle_webrtc_transport_packet
 -> ServerPacketDispatcher / ServerPacketRouter classify packet
--> ClientConnectionService delegates lane packets to RealtimePacketPipeline.apply_packet(packet)
+-> RealtimePacketPipeline.apply_packet(packet)
 -> RealtimePacketPipeline expands and validates the packet
 -> RealtimeRouter.route_lane_packet(packet)
--> RealtimePacketPipeline emits gameplay_packet_applied(packet)
+-> RealtimePresentationState refreshed
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> EventBatchApplier
 ```
@@ -162,7 +163,7 @@ WebRTCTransport receives DataChannel text for active gameplay lane packets
 
 Lifecycle packets are applied through RealtimePacketPipeline and its owned RealtimeRouter before presentation handoff, so entity existence and identity are established before session and presentation handling.
 
-For accepted realtime gameplay packets, the ordering is application, readiness update, gameplay_packet_applied, PresentationBridge.handle_gameplay_packet(packet), then frame-coalesced presentation fanout.
+For accepted realtime gameplay packets, the ordering is transport receives, classification, pipeline application and validation, RealtimePresentationState refresh, gameplay_packet_applied, PresentationBridge.handle_gameplay_packet(packet), then later frame-coalesced presentation fanout when ready.
 
 ## Lane ownership
 
