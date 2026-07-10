@@ -3,7 +3,6 @@ import { z } from "zod";
 import { REPO_ROOT, repoPath } from "./paths.js";
 import { textResponse } from "./responses.js";
 
-const DEFAULT_TIMEOUT_MS = 600000;
 const MAX_OUTPUT_CHARS = 50000;
 
 function truncateOutput(output) {
@@ -13,7 +12,7 @@ function truncateOutput(output) {
   return output;
 }
 
-async function runHermes({ args = [], stdin, cwd, timeout_ms = DEFAULT_TIMEOUT_MS }) {
+async function runHermes({ args = [], stdin, cwd }) {
   const resolvedCwd = cwd ? repoPath(cwd) : REPO_ROOT;
 
   return new Promise((resolve) => {
@@ -25,11 +24,6 @@ async function runHermes({ args = [], stdin, cwd, timeout_ms = DEFAULT_TIMEOUT_M
     let stdout = "";
     let stderr = "";
     let timedOut = false;
-
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      child.kill();
-    }, timeout_ms);
 
     child.stdout.on("data", (data) => {
       stdout += data.toString();
@@ -50,8 +44,6 @@ async function runHermes({ args = [], stdin, cwd, timeout_ms = DEFAULT_TIMEOUT_M
     child.stdin.end();
 
     child.on("close", (code) => {
-      clearTimeout(timeout);
-
       resolve({
         command: "hermes",
         args,
@@ -64,7 +56,6 @@ async function runHermes({ args = [], stdin, cwd, timeout_ms = DEFAULT_TIMEOUT_M
     });
 
     child.on("error", (err) => {
-      clearTimeout(timeout);
       resolve({
         command: "hermes",
         args,
@@ -85,8 +76,6 @@ const sessionNameSchema = z.string().regex(
 
 const cwdSchema = z.string().optional();
 
-const timeoutSchema = z.number().int().min(1000).max(600000).default(600000);
-
 const promptSchema = z.string().min(1, "prompt must be non-empty");
 
 export function registerHermesTools(server) {
@@ -99,11 +88,10 @@ export function registerHermesTools(server) {
         args: z.array(z.string()).default([]),
         stdin: z.string().optional(),
         cwd: cwdSchema,
-        timeout_ms: timeoutSchema,
       },
     },
-    async ({ args, stdin, cwd, timeout_ms }) => {
-      const result = await runHermes({ args, stdin, cwd, timeout_ms });
+    async ({ args, stdin, cwd }) => {
+      const result = await runHermes({ args, stdin, cwd });
       return textResponse(JSON.stringify(result, null, 2));
     }
   );
@@ -169,14 +157,12 @@ export function registerHermesTools(server) {
         prompt: promptSchema,
         session_name: sessionNameSchema.default("space-rocks-mcp"),
         cwd: cwdSchema,
-        timeout_ms: timeoutSchema,
       },
     },
-    async ({ prompt, session_name, cwd, timeout_ms }) => {
+    async ({ prompt, session_name, cwd }) => {
       const result = await runHermes({
         args: ["chat", "-Q", "--continue", session_name, "--query", prompt],
         cwd,
-        timeout_ms,
       });
       return textResponse(JSON.stringify(result, null, 2));
     }

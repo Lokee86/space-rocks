@@ -89,8 +89,9 @@ The server owns the facts emitted by server devtools telemetry.
 `debug_status` comes from server runtime state through the devtools export seam:
 
 ```text
-devtools.StatusFor
--> game.DevtoolsStatusFor
+game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.StatusFor
 -> DebugStatus
 ```
 
@@ -164,7 +165,7 @@ The world telemetry overlay consumes `telemetry_pong` and gameplay state timing 
 
 The devtools window consumes `debug_status` and `debug_statuses` for current debug toggle status and per-player selector labels.
 
-The shape and hitbox debug surfaces consume server-owned shape or collision-body facts. Shape catalog output is a separate packet from gameplay state and debug status.
+The shape and hitbox debug surfaces consume server-owned shape or collision-body facts. Shape catalog output is a separate packet from gameplay state and debug status, and collision-body telemetry remains a separate adapter path rather than a standalone packet.
 
 ## Commands or controls
 
@@ -328,7 +329,7 @@ The packet is catalog data only. It does not include live players, asteroids, bu
 The game aggregate exposes a devtools collision body snapshot seam:
 
 ```text
-Game.DevtoolsCollisionBodies()
+Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)
 ```
 
 That method reads the authoritative entity store under the game lock and derives collision body outline points for:
@@ -416,12 +417,12 @@ services/game-server/internal/devtools/disabled.go
 Game export seams used by telemetry:
 
 ```text
-services/game-server/internal/game/export_devtools_status.go
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_collision_telemetry.go
 services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/game/world_simulation_options.go
 services/game-server/internal/game/player_counters.go
-services/game-server/internal/game/export_devtools_player_counters.go
+services/game-server/internal/game/control_counters.go
 ```
 
 Networking inbound telemetry path:
@@ -495,7 +496,7 @@ services/game-server/internal/devtools/player_counters_test.go
 services/game-server/internal/devtools/command_types_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
-services/game-server/internal/game/export_devtools_collision_telemetry_test.go
+services/game-server/internal/game/control_collision_telemetry_test.go
 ```
 
 Related networking integration tests include:

@@ -27,7 +27,7 @@ This folder owns docs for server-side development and debug tooling.
 - [debug-shape-catalog-output.md](debug-shape-catalog-output.md) - Server devtools debug shape catalog output documentation.
 - [debug-status-output.md](debug-status-output.md) - Server devtools debug status output documentation.
 - [entity-spawn-and-placement-tools.md](entity-spawn-and-placement-tools.md) - Server devtools entity spawn and placement tools documentation.
-- [game-export-devtools-seams.md](game-export-devtools-seams.md) - Server game export devtools seams documentation.
+- [game-control-devtools-adapter.md](game-control-devtools-adapter.md) - Server-owned Control adapter used by devtools target interfaces.
 - [hitbox-and-shape-debugging.md](hitbox-and-shape-debugging.md) - Server hitbox and shape debugging documentation.
 - [player-counters.md](player-counters.md) - Server devtools player counters documentation.
 - [player-targeting-and-scopes.md](player-targeting-and-scopes.md) - Server devtools player targeting and scope documentation.

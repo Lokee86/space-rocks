@@ -33,13 +33,14 @@ shared/collisions/collision_shapes.json
 
 The client combines that catalog with accumulated realtime lane readback to draw the server hitbox overlay. Live entity placement comes from accumulated realtime lane state, not from the shape catalog.
 
-The server also has a game-owned collision body telemetry adapter:
+The server also has a live collision body telemetry support path:
 
 ```text
-Game.DevtoolsCollisionBodies()
+Control.CollisionBodiesByKind()
+-> devtools.CollisionBodies(...)
 ```
 
-That adapter converts current runtime collision bodies into outline telemetry for players, asteroids, bullets, and pickups. It is a narrow game-owned export seam, not a replacement collision system. Current outbound packet tests require `debug_collision_bodies` to be absent from gameplay presentation, debug status, and debug shape catalog packets.
+That adapter converts current runtime collision bodies into outline telemetry for players, asteroids, bullets, and pickups. It is a narrow server-side support seam, not a replacement collision system. Current outbound packet tests require `debug_collision_bodies` to be absent from gameplay presentation, debug status, and debug shape catalog packets.
 
 ## Debug-only scope
 
@@ -415,7 +416,7 @@ services/game-server/internal/networking/outbound/server_message_writer.go
 Game-owned collision telemetry seam:
 
 ```text
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control_collision_telemetry.go
 ```
 
 Physics and collision-shape support:
@@ -472,7 +473,7 @@ Focused server tests:
 services/game-server/internal/devtools/shape_catalog_test.go
 services/game-server/internal/devtools/shape_ids_test.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation_test.go
-services/game-server/internal/game/export_devtools_collision_telemetry_test.go
+services/game-server/internal/game/control_collision_telemetry_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
 ```
@@ -492,7 +493,7 @@ Outbound tests verify that `debug_shape_catalog` responses:
 * do not include live entity collections
 * do not include `debug_collision_bodies`
 
-Collision telemetry tests verify that `Game.DevtoolsCollisionBodies()`:
+Collision telemetry tests verify that `Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)`:
 
 * uses runtime server collision body builders
 * returns lowercase JSON keys

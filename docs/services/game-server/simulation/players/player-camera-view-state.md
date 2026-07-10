@@ -10,6 +10,8 @@ It covers the server-side `CameraView` model used for viewport-sized spawning, v
 
 ## Overview
 
+See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+
 The game server keeps a camera-view record per simulation player in:
 
 ```text
@@ -225,7 +227,7 @@ This means a pending-respawn player with a session and camera view can still ref
 
 `CameraView` is not projected directly in lane packets. Clients observe active ship state through world lane records, player session state through session lane records, lifecycle status through session lane lifecycle records, bullets through `bullets_lifecycle` plus `bullet_delta`, asteroids through `asteroids_lifecycle` plus `asteroid_delta`, pickups through world lane pickup records, and presentation events through compact sparse `event_batch` delivery. The server camera view remains internal simulation state, and this doc describes logical behavior rather than literal compact wire keys.
 
-Devtools paths can also create or update camera views when forcing player spawn or respawn:
+Control paths can also create or update camera views when forcing player spawn or respawn:
 
 ```text
 DevtoolsSpawnPlayerShip()
@@ -285,8 +287,8 @@ Primary implementation files:
 * `services/game-server/internal/game/spawning.go` - Spawns asteroid batches against camera views.
 * `services/game-server/internal/game/visibility.go` - Uses camera views for offscreen spawning, onscreen rejection, and far-from-all-cameras cleanup.
 * `services/game-server/internal/game/simulation_bullets.go` - Removes bullets that are expired or far from all camera views.
-* `services/game-server/internal/game/export_devtools_respawn.go` - Devtools force-respawn adapter that creates/updates camera view state.
-* `services/game-server/internal/game/export_devtools_player_spawn.go` - Devtools player-spawn adapter that creates/updates camera view state.
+* `services/game-server/internal/game/control_respawn.go` - Devtools force-respawn adapter that creates/updates camera view state.
+* `services/game-server/internal/game/control_player_spawn.go` - Devtools player-spawn adapter that creates/updates camera view state.
 
 Source-of-truth and generated files:
 

@@ -9,7 +9,6 @@ import (
 )
 
 type StatusTarget interface {
-	TargetPlayerIDs() []string
 	WorldFrozen() bool
 	AsteroidsFrozen() bool
 	BulletsFrozen() bool

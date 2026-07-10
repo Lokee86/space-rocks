@@ -10,6 +10,8 @@ It covers debug command requests, server-emitted debug readouts, source-of-truth
 
 ## Overview
 
+See also: [Game Control Devtools Adapter](../server/game-control-devtools-adapter.md)
+
 The devtools packet protocol is a debug-only extension of the normal realtime WebSocket protocol. It is not a separate transport, not a developer console protocol, and not a parallel gameplay authority layer.
 
 Current high-level flow:
@@ -23,10 +25,13 @@ client devtools input or window control
 -> NetworkClient
 -> PacketCodec
 -> WebSocket text message
--> game-server envelope decode
--> devtools command classification
--> devtools command handler
--> game-owned devtools export seam
+-> game-server inbound packet classification
+-> packet decode into devtools.DebugCommand
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
+-> capability-specific handler
+-> game.Control
 -> normal authoritative game state mutation
 -> normal lane-native gameplay/debug output packets
 -> client inbound packet routing
@@ -352,7 +357,7 @@ remaining:
 
 Once a packet is classified as devtools, the server decodes it into `devtools.DebugCommand` and passes it to `devtools.HandleCommand(...)`.
 
-`devtools.HandleCommand(...)` dispatches by command type to the owning server devtools handler. Those handlers then use game-owned devtools export seams for authoritative gameplay mutation.
+`devtools.HandleCommand(...)` dispatches by command type to the owning server devtools handler. Those handlers then use game-owned Control adapter for authoritative gameplay mutation.
 
 Devtools commands do not route through normal `Game.HandlePacket` gameplay packet handling.
 
@@ -511,7 +516,7 @@ Required boundary rules:
 devtools command packets stay out of generated game packet structs
 normal gameplay packets stay out of devtools command ownership
 server devtools handlers own debug command dispatch
-game-owned export_devtools files expose narrow mutation adapters
+game-owned Control adapters expose narrow mutation capabilities
 internal/game must not import internal/devtools
 score and lives commands use the shared player counter seam
 damage-related debug behavior uses damage/capability seams
@@ -676,7 +681,7 @@ services/game-server/internal/devtools/disabled.go
 Game-owned devtools seams:
 
 ```text
-services/game-server/internal/game/export_devtools*.go
+services/game-server/internal/game/control*.go
 ```
 
 Important non-ownership boundaries:

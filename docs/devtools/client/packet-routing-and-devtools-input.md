@@ -61,6 +61,8 @@ They must not:
 
 ## Server authority
 
+See also: [Game Control Devtools Adapter](../server/game-control-devtools-adapter.md)
+
 Gameplay-affecting devtools commands are server-authoritative.
 
 The client sends debug command packets such as:
@@ -83,11 +85,11 @@ debug_clear_bullets
 debug_clear_asteroids
 ```
 
-The server networking inbound router classifies devtools command packets before normal gameplay packet decoding. Devtools command packets route through `services/game-server/internal/networking/inbound/devtools.go` into `services/game-server/internal/devtools.HandleCommand`.
+The server networking inbound router classifies devtools command packets before normal gameplay packet decoding. Devtools command packets route through inbound packet classification, packet decode, `game.NewControl(room.GameInstance())`, `devtools.NewController(...)`, and `Controller.HandleCommand`.
 
 Devtools commands do not route through normal client-side authority and should not be documented as gameplay packet ownership. The client only requests a command. The server decides whether the current session, room, player, target scope, and command payload are valid.
 
-Server-side mutation remains behind server-owned handlers and game-owned export seams. Client confirmation comes back through lane-applied read models, debug status packets, entity sync, or visible absence/presence of entities after the server applies the command.
+Server-side mutation remains behind server-owned handlers and current Control/Controller adapter seams. Client confirmation comes back through lane-applied read models, debug status packets, entity sync, or visible absence/presence of entities after the server applies the command.
 
 If the current websocket session has no room or no current game player ID, the server devtools command route consumes the packet without applying a command. This keeps client devtools input from becoming authority when no server gameplay context exists.
 
@@ -447,12 +449,12 @@ client/scripts/devtools/dev_tools_build_flags.gd
 services/game-server/internal/networking/client_packet_router.go
 services/game-server/internal/networking/inbound/router.go
 services/game-server/internal/networking/inbound/devtools.go
-services/game-server/internal/devtools/handler.go
-services/game-server/internal/devtools/command_types.go
+services/game-server/internal/devtools/controller.go
+services/game-server/internal/devtools/target.go
 services/game-server/internal/devtools/enabled_default.go
 services/game-server/internal/devtools/enabled_nodevtools.go
 services/game-server/internal/devtools/packets_generated.go
-services/game-server/internal/game/export_devtools*.go
+services/game-server/internal/game/control*.go
 ```
 
 ### Packet source and generated output boundaries

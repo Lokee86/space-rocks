@@ -1,0 +1,386 @@
+# Game Control Devtools Adapter
+
+Parent index: [Server](./!INDEX.md)
+
+## Purpose
+
+This document describes the server-owned `game.Control` adapter used by `internal/devtools`.
+
+## Overview
+
+`services/game-server/internal/devtools/` owns debug command dispatch, target capability interfaces, target selection, stream-runtime wiring, observer registration policy, status projection, and debug-facing DTOs.
+
+`services/game-server/internal/game/` owns authoritative gameplay state. `game.NewControl` wraps a `*game.Game` and exposes narrow domain-neutral capabilities through focused `control_*.go` files. `internal/game` does not import `internal/devtools`.
+
+The current execution boundary is:
+
+```text
+client devtools input
+-> existing debug packet
+-> networking inbound classification and decode
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> capability-specific devtools handler
+-> game.Control method
+-> authoritative game state
+-> normal gameplay readback or debug output
+```
+
+The dependency direction is intentional:
+
+```text
+internal/networking imports internal/devtools and internal/game
+internal/devtools defines capability interfaces but does not import root internal/game
+internal/game implements those capabilities without importing internal/devtools
+```
+
+`game.Control` is an adapter over authoritative state. It is not a second gameplay implementation and does not own debug command policy.
+
+## Client presentation
+
+Client devtools presentation is separate from server authority.
+
+The client can send debug command packets and render debug outputs, but it does not apply authoritative gameplay effects locally. Visible confirmation comes from lane-native readback, debug status packets, debug shape catalog packets, entity sync, or the absence/presence of entities after the authoritative server update.
+
+The server-facing outputs tied to these seams include:
+
+```text
+lane-native gameplay readback
+debug_status packets
+debug_shape_catalog packets
+server logs
+```
+
+`debug_status` reflects server-owned devtools state such as invincibility, infinite lives, world freeze, granular freeze flags, and player freeze.
+
+`debug_shape_catalog` provides shape definitions for client-side hitbox presentation. Shape catalog output is built from the physics collision shape catalog, not from client-authored gameplay state.
+
+Collision-body telemetry is exposed as a game-owned read seam. It should remain a diagnostic data surface; drawing, overlay lifecycle, and toggle UI belong to client devtools.
+
+## Commands and controls
+
+Current generated debug command packet types include:
+
+```text
+toggle_debug_invincible
+toggle_debug_infinite_lives
+toggle_debug_freeze_world
+toggle_debug_freeze_player
+debug_kill_player
+debug_spawn_entity
+debug_spawn_pickup
+debug_begin_continuous_bullet_stream
+debug_respawn_player
+debug_set_score
+debug_add_score
+debug_set_lives
+debug_add_lives
+debug_clear_bullets
+debug_clear_asteroids
+```
+
+The server command path is:
+
+```text
+networking read loop
+-> DecodeClientPacketEnvelope
+-> inbound.RouteClientPacket
+-> inbound devtools packet classifier
+-> packetcodec.Decode into devtools.DebugCommand
+-> devtools.HandleCommand
+-> command-specific handler
+-> game export seam or existing game API
+```
+
+Devtools command packets are routed before normal gameplay packet decoding. They do not reach `Game.HandlePacket`.
+
+Player-targeted commands use `target_player_id` or `target_scope`. The current all-player scope value is:
+
+```text
+all_players
+```
+
+All-player toggle behavior for invincibility, infinite lives, and player freeze uses set-style semantics:
+
+```text
+if any eligible target is inactive -> enable all eligible targets
+if every eligible target is active -> disable all eligible targets
+```
+
+Respawn all-player behavior still applies normal respawn eligibility guards per target. Active players are ignored.
+
+World freeze is room/global and does not use a player selector. Granular freeze commands use `freeze_target` values handled by the devtools toggle handler:
+
+```text
+all
+asteroids
+bullets
+spawning
+spawns
+collisions
+```
+
+Unknown freeze targets are logged and ignored without changing freeze flags.
+
+## Status
+
+`control_status.go` and `control_match.go` own the adapter-side read paths for debug status.
+
+`StatusFor` projects authoritative state into `devtools.DebugStatus` without changing packet shape.
+
+`StatusesForAllPlayers` uses `MatchDecision().Players` as the membership source so the all-player status readout stays session-backed.
+
+## Toggle
+
+`control_toggles.go` owns the adapter methods for world freeze, granular freeze, invincibility, infinite lives, player freeze, and debug kill.
+
+The current method names are domain-neutral and omit `Devtools` prefixes:
+
+```text
+WorldFrozen
+SetWorldFrozen
+ToggleFreezeWorld
+ToggleFreezeAsteroids
+ToggleFreezeBullets
+ToggleFreezeSpawning
+ToggleFreezeCollisions
+PlayerInvincible
+SetPlayerInvincible
+InfiniteLives
+SetInfiniteLives
+PlayerFrozen
+SetPlayerFrozen
+ApplyPlayerDefeat
+```
+
+`ApplyPlayerDefeat` is the adapter name for the unchanged debug damage and fatal-damage behavior.
+
+## Spawn
+
+`control_spawn.go` owns debug bullet, asteroid, and pickup spawn adapter methods.
+
+The adapter methods use current names without `Devtools` prefixes:
+
+```text
+RandomUnitVector
+NextBulletID
+AddBullet
+SpawnBullet
+RandomAsteroidSpeed
+ApplyAsteroidSpawnPlan
+SpawnPickup
+```
+
+`SpawnPickup` remains the current authoritative pickup path used by debug pickup spawning.
+
+## Player spawn
+
+`control_player_spawn.go` owns debug player session and ship setup.
+
+The adapter methods use current names without `Devtools` prefixes:
+
+```text
+EnsurePlayerSession
+SpawnPlayerShip
+PlayerIDOccupied
+ReservePlayerID
+TargetPlayerIDs
+```
+
+`TargetPlayerIDs` is the sorted union of session IDs and active ship IDs used by command fanout.
+
+`PlayerIDOccupied` validates requested IDs with the current player-ID normalization rules. `ReservePlayerID` rejects invalid or occupied IDs and advances `game.nextID` to the reserved number when needed so later normal allocation cannot reuse the reservation.
+
+`SpawnPlayerShip` preserves the current debug-spawn camera-view behavior and uses the supplied camera config only when it is valid.
+
+## Respawn
+
+`control_respawn.go` owns debug respawn support.
+
+The adapter methods use current names without `Devtools` prefixes:
+
+```text
+SafeRespawnPosition
+ForceRespawnPlayer
+```
+
+Debug respawn keeps the existing player-session and ship creation flow and still rejects active players before forcing a respawn.
+
+## Counter
+
+`control_counters.go` owns debug score and lives adapter methods.
+
+The adapter methods use current names without `Devtools` prefixes:
+
+```text
+SetPlayerScore
+AddPlayerScore
+SetPlayerLives
+AddPlayerLives
+```
+
+These methods return only whether the underlying `PlayerCounterChange` found a player; they do not change the counter semantics.
+
+## Clear
+
+`control_clear.go` owns debug clear-bullets and clear-asteroids behavior.
+
+The adapter methods use current names without `Devtools` prefixes:
+
+```text
+ClearBullets
+ClearAsteroids
+```
+
+These methods operate on authoritative game state. Command policy still lives in `internal/devtools`.
+
+## Stream
+
+`control_streams.go` owns debug continuous-bullet stream adapter methods.
+
+The adapter methods use current names without `Devtools` prefixes:
+
+```text
+BulletsCanMove
+SpawnDebugBullet
+RegisterSimulationStepObserver
+```
+
+The injected stream runtime owns the continuous stream lifecycle for the controller that receives it.
+
+## Collision telemetry
+
+`control_collision_telemetry.go` owns the authoritative collision-body snapshot.
+
+The adapter method uses the current name without a `Devtools` prefix:
+
+```text
+CollisionBodiesByKind
+```
+
+`CollisionBodiesByKind` returns raw physics bodies grouped by kind. `devtools.CollisionBodies` owns the JSON projection for debug output.
+
+## Build and runtime gates
+
+Server devtools include build-tag gate helpers:
+
+```text
+services/game-server/internal/devtools/enabled_default.go
+services/game-server/internal/devtools/enabled_nodevtools.go
+services/game-server/internal/devtools/disabled.go
+```
+
+Default builds return `true` from `devtools.Enabled()`. Builds with the `nodevtools` tag return `false`.
+
+Current outbound debug status and debug shape catalog sending checks `devtools.Enabled()` before sending debug output.
+
+The devtools package also exposes:
+
+```text
+ShouldHandleCommand(packetType string) bool
+```
+
+That helper combines command-type classification with `devtools.Enabled()` and has default and `nodevtools` tests.
+
+The current inbound router classifies devtools packets in:
+
+```text
+services/game-server/internal/networking/inbound/devtools.go
+```
+
+It uses route-local packet-type classifiers for simple commands, placement commands, and remaining devtools commands before decoding normal gameplay packets. That route also requires a current room and a non-empty current game player ID before dispatching a command to `devtools.HandleCommand`.
+
+When changing devtools gates, keep these surfaces aligned:
+
+```text
+devtools.Enabled
+devtools.ShouldHandleCommand
+networking inbound devtools classification
+networking outbound debug status/catalog sending
+```
+
+Runtime gates include:
+
+```text
+current room must exist
+current game player ID must exist
+command type must be recognized by the inbound devtools route
+command payload must decode into devtools.DebugCommand
+handler-specific target and payload checks must pass
+game export seam or public game method must accept the operation
+```
+
+## Locking and mutation model
+
+Game export devtools seams operate on `game.Game` aggregate-owned state, so each seam must respect the aggregate’s synchronization model.
+
+Current export methods are mixed:
+
+```text
+DevtoolsClearBullets and DevtoolsClearAsteroids lock the game aggregate.
+DevtoolsCollisionBodies locks the game aggregate.
+Game.SpawnPickup locks the game aggregate.
+Player counter exports delegate to public counter methods that lock the game aggregate.
+Several toggle, spawn, respawn, and stream adapter methods delegate directly to game-owned fields or helpers without adding their own local lock.
+```
+
+When adding or changing a seam, decide explicitly whether the called game method already owns locking or whether the export method must lock before touching aggregate state. Do not assume a method is safe only because it is in an `export_devtools*.go` file.
+
+Simulation step observers run from inside `Game.Step`. Observer callbacks should stay narrow and should route gameplay effects through game-owned adapters.
+
+## Relationship to real gameplay systems
+
+Game export devtools seams exist to expose real gameplay systems to debug tooling. They should not create replacement systems.
+
+Current examples:
+
+* Debug kill uses the damage resolver and fatal-player damage path.
+* Invincibility changes damage options consumed by collision/damage behavior.
+* Infinite lives changes session life options consumed by death/lives behavior.
+* Player freeze changes suspension state consumed by movement, input, shooting, and collision capability checks.
+* World freeze changes `WorldSimulationOptions` consumed by simulation phase gates.
+* Score and lives commands use shared player counter mutation.
+* Debug asteroid spawn applies a normal asteroid spawn plan through the game aggregate.
+* Debug bullet spawn uses the game-owned debug bullet spawn helper.
+* Debug pickup spawn uses the game-owned pickup spawn API.
+* Debug respawn creates a new ship from the player session and updates camera view state.
+* Collision telemetry reads server collision bodies from runtime entities and collision shapes.
+
+The rule is:
+
+```text
+devtools may choose when to request a debug action
+game-owned systems decide what that action actually does
+```
+
+## Code map
+
+Game Control adapter files:
+
+```text
+services/game-server/internal/game/control.go
+services/game-server/internal/game/control_match.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_spawn.go
+services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_respawn.go
+services/game-server/internal/game/control_counters.go
+services/game-server/internal/game/control_clear.go
+services/game-server/internal/game/control_streams.go
+services/game-server/internal/game/control_collision_telemetry.go
+```
+
+Server devtools command files:
+
+```text
+services/game-server/internal/devtools/handler.go
+services/game-server/internal/devtools/command_types.go
+services/game-server/internal/devtools/packets_generated.go
+services/game-server/internal/devtools/toggles.go
+services/game-server/internal/devtools/spawn_entity.go
+services/game-server/internal/devtools/spawn_asteroid.go
+services/game-server/internal/devtools/spawn_bullet.go
+services/game-server/internal/devtools/spawn_pickup.go
+services/game-server/internal/devtools/spawn_player.go
+services/game-server/internal/devtools/respawn_player.go

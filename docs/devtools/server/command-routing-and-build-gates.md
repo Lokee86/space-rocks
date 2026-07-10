@@ -21,9 +21,11 @@ client debug packet
 -> inbound packet router
 -> devtools packet group classifier
 -> devtools.DebugCommand decode
--> devtools.HandleCommand
--> command-specific devtools handler
--> game-owned export_devtools seam
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
+-> capability-specific handler
+-> game.Control
 -> authoritative game state mutation
 -> lane-native gameplay readback or debug output back to client
 ```
@@ -67,34 +69,34 @@ The game server owns all gameplay-affecting devtools consequences.
 
 `services/game-server/internal/networking` owns WebSocket read/write loops and packet-family routing. It decides whether a raw message belongs to devtools routing and supplies the current session context.
 
-`services/game-server/internal/networking/inbound` owns the devtools command handoff. It checks the packet envelope, groups recognized devtools packet types, decodes the raw message into `devtools.DebugCommand`, and calls:
-
-```text
-devtools.HandleCommand(room.GameInstance(), currentGamePlayerID, command)
-```
+`services/game-server/internal/networking/inbound` owns the devtools command handoff. It checks the packet envelope, groups recognized devtools packet types, decodes the raw message into `devtools.DebugCommand`, constructs `game.NewControl(room.GameInstance())`, wraps it in `devtools.NewController(...)`, and calls `Controller.HandleCommand`.
 
 `services/game-server/internal/devtools` owns command dispatch and command-specific debug behavior. It interprets `DebugCommand` fields, resolves player target scopes, validates command-specific payload needs, logs command outcomes, and calls the narrow game-owned APIs needed for real mutation.
 
-`services/game-server/internal/game/export_devtools*.go` owns the mutation boundary exposed to devtools. These files keep authoritative state changes inside the game package while preventing normal game code from importing devtools.
+`devtools.HandleCommand(Target, ...)` remains a thin default-controller wrapper for direct callers; networking constructs a controller explicitly.
 
-Examples of game-owned devtools seams include:
+`devtools.Target` and its capability interfaces define the command dependency boundary between devtools and game control capabilities.
+
+The current adapter boundary is documented in [game-control-devtools-adapter.md](game-control-devtools-adapter.md).
+
+Examples of game-owned Control seams include:
 
 ```text
-DevtoolsSetPlayerInvincible
-DevtoolsSetInfiniteLives
-DevtoolsSetPlayerFrozen
-DevtoolsToggleFreezeWorld
-DevtoolsToggleFreezeAsteroids
-DevtoolsToggleFreezeBullets
-DevtoolsToggleFreezeSpawning
-DevtoolsToggleFreezeCollisions
-DevtoolsKillPlayer
-DevtoolsSpawnBullet
-DevtoolsApplyAsteroidSpawnPlan
-DevtoolsForceRespawnPlayer
-DevtoolsClearBullets
-DevtoolsClearAsteroids
-DevtoolsRegisterSimulationStepObserver
+SetPlayerInvincible
+SetInfiniteLives
+SetPlayerFrozen
+ToggleFreezeWorld
+ToggleFreezeAsteroids
+ToggleFreezeBullets
+ToggleFreezeSpawning
+ToggleFreezeCollisions
+ApplyPlayerDefeat
+SpawnBullet
+ApplyAsteroidSpawnPlan
+ForceRespawnPlayer
+ClearBullets
+ClearAsteroids
+RegisterSimulationStepObserver
 ```
 
 The authority rule is: devtools may request and coordinate debug behavior, but gameplay state still changes through server-owned game seams.
@@ -295,7 +297,7 @@ single_player
 all_players
 ```
 
-`all_players` resolves to `target.DevtoolsTargetPlayerIDs()` and does not use a fake player ID.
+`all_players` resolves to `target.TargetPlayerIDs()` and does not use a fake player ID.
 
 When a command does not send `target_player_id`, single-player command resolution falls back to the requesting/current game player ID.
 
@@ -569,16 +571,27 @@ services/game-server/internal/networking/websocket_write.go
 ### Game-owned devtools seams
 
 ```text
-services/game-server/internal/game/export_devtools.go
-services/game-server/internal/game/export_devtools_status.go
-services/game-server/internal/game/export_devtools_toggles.go
-services/game-server/internal/game/export_devtools_spawn.go
-services/game-server/internal/game/export_devtools_respawn.go
-services/game-server/internal/game/export_devtools_player_spawn.go
-services/game-server/internal/game/export_devtools_player_counters.go
-services/game-server/internal/game/export_devtools_clear_entities.go
-services/game-server/internal/game/export_devtools_streams.go
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/outbound/debug_status_presentation.go
+services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
+services/game-server/internal/networking/websocket.go
+services/game-server/internal/devtools/controller.go
+services/game-server/internal/devtools/handler.go
+services/game-server/internal/devtools/target.go
+services/game-server/internal/devtools/target_player_ids.go
+services/game-server/internal/devtools/observer_registry.go
+services/game-server/internal/devtools/streamruntime/runtime.go
+services/game-server/internal/game/control.go
+services/game-server/internal/game/control_match.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_spawn.go
+services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_respawn.go
+services/game-server/internal/game/control_counters.go
+services/game-server/internal/game/control_clear.go
+services/game-server/internal/game/control_streams.go
+services/game-server/internal/game/control_collision_telemetry.go
 ```
 
 ### Source and generated packet boundaries
@@ -632,10 +645,10 @@ services/game-server/internal/devtools/shape_ids_test.go
 services/game-server/internal/devtools/shape_catalog_test.go
 services/game-server/internal/devtools/streamruntime/runtime_test.go
 services/game-server/internal/devtools/streamruntime/continuous_bullet_streams_test.go
-services/game-server/internal/game/export_devtools_player_spawn_test.go
-services/game-server/internal/game/export_devtools_respawn_test.go
-services/game-server/internal/game/export_devtools_streams_test.go
-services/game-server/internal/game/export_devtools_clear_entities.go
+services/game-server/internal/game/control_player_spawn_test.go
+services/game-server/internal/game/control_respawn_test.go
+services/game-server/internal/game/control_streams_test.go
+services/game-server/internal/game/control_collision_telemetry_test.go
 services/game-server/internal/networking/outbound/debug_status_presentation_test.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation_test.go
 ```
@@ -652,7 +665,7 @@ Current focused coverage verifies:
 * Clear bullets and clear asteroids behavior.
 * Shape ID and shape catalog output behavior.
 * Continuous bullet stream runtime behavior.
-* Game-owned player spawn and respawn export seams.
+* Current game Control adapter player spawn, respawn, stream, and collision coverage.
 * Outbound debug status and debug shape catalog gates.
 
 The inbound packet-family router itself has thinner direct route-order coverage than the command handlers and outbound gate helpers. Existing routing documentation should therefore distinguish handler/gate coverage from direct inbound router coverage.

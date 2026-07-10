@@ -14,15 +14,15 @@ The target end state is:
 
 ```text
 internal/devtools
-  owns command handling, status shaping, target selection, debug spawn semantics,
-  debug counters, clear commands, collision telemetry formatting, and stream-runtime wiring
+  owns Controller, target capability interfaces, command dispatch, debug DTO shaping,
+  target selection, stream runtime wiring, and observer registry wiring
 
 internal/game
-  owns authoritative state and exposes a small adapter object for devtools
+  owns authoritative state and exposes it through Control
 
 internal/networking
   decodes and routes existing packets as before, but calls a devtools.Controller
-  instead of calling devtools package functions with *game.Game
+  instead of calling devtools package functions with a game.Control target
 ```
 
 ## Hard rules
@@ -100,22 +100,19 @@ Add a game-owned adapter in `services/game-server/internal/game`.
 Suggested files:
 
 ```text
-devtools_target.go
-devtools_target_spawn.go
-devtools_target_respawn.go
-devtools_target_toggles.go
-devtools_target_telemetry.go
+control.go
+control_*.go
 ```
 
 Suggested shape:
 
 ```go
-type DevtoolsTarget struct {
+type Control struct {
     game *Game
 }
 
-func NewDevtoolsTarget(game *Game) *DevtoolsTarget {
-    return &DevtoolsTarget{game: game}
+func NewControl(game *Game) *Control {
+    return &Control{game: game}
 }
 ```
 
@@ -123,7 +120,7 @@ The adapter may touch private `Game` fields because it lives in `internal/game`.
 
 The adapter should preserve existing lock behavior. Do not use this refactor to redesign locking.
 
-The adapter replaces the current `export_devtools_*` files.
+All-player command fanout must use `Control.TargetPlayerIDs()`.
 
 ## Devtools controller
 
@@ -149,6 +146,16 @@ func (controller *Controller) HandleCommand(playerID string, command DebugComman
 func (controller *Controller) StatusFor(playerID string) DebugStatus
 func (controller *Controller) StatusesForAllPlayers() map[string]DebugStatus
 ```
+
+`Controller.StatusesForAllPlayers()` must preserve the pre-refactor session-backed membership from `MatchDecision().Players`.
+
+Player-ID reservation must:
+
+- accept only valid positive `player-N` IDs
+- reject occupied IDs
+- advance `game.nextID` so later normal player allocation cannot reuse the reservation
+
+The controller-injected stream runtime owns the begin, step, and clear operations for that same controller.
 
 Convert package-level command handling from:
 
@@ -181,10 +188,18 @@ The game adapter may return the underlying `*Game` from `ObserverKey()` as `any`
 
 Devtools must not import `internal/game` to key this registry.
 
+The refactor must preserve the old synchronization behavior:
+
+- clear-bullet and clear-asteroid operations lock the game aggregate
+- collision-body snapshot collection locks the game aggregate
+- simulation observer registration must not introduce a new nested lock around the existing observer append
+
+The refactor must preserve the old camera-config behavior for debug player spawning.
+
 ## Migration order
 
 1. Add devtools target interfaces.
-2. Add `game.DevtoolsTarget` adapter.
+2. Add `game.Control` adapter.
 3. Add `devtools.Controller`.
 4. Convert `handler.go` to controller methods.
 5. Convert continuous bullet stream observer registration to use an opaque target key.
@@ -245,11 +260,8 @@ Likely add:
 services/game-server/internal/devtools/target.go
 services/game-server/internal/devtools/controller.go
 services/game-server/internal/devtools/observer_registry.go
-services/game-server/internal/game/devtools_target.go
-services/game-server/internal/game/devtools_target_spawn.go
-services/game-server/internal/game/devtools_target_respawn.go
-services/game-server/internal/game/devtools_target_toggles.go
-services/game-server/internal/game/devtools_target_telemetry.go
+services/game-server/internal/game/control.go
+services/game-server/internal/game/control_*.go
 ```
 
 ## DTO ownership
@@ -277,8 +289,9 @@ Existing WebSocket devtools packets should still be decoded and routed as before
 Only change the execution target:
 
 ```go
+control := game.NewControl(room.GameInstance())
 controller := devtools.NewController(devtools.Dependencies{
-    Target: game.NewDevtoolsTarget(room.GameInstance()),
+    Target: control,
 })
 controller.HandleCommand(playerID, command)
 ```
@@ -293,7 +306,10 @@ Add or preserve coverage for:
 
 ```text
 - no production internal/devtools file imports internal/game
+- no legacy game export files remain
 - no func (game *Game) Devtools... remains
+- a Control anchor exists with focused control_*.go files
+- controller and target-interface files exist
 - devtools commands still execute
 - debug status payload stays compatible
 - debug shape catalog payload stays compatible

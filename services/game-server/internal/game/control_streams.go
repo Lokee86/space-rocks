@@ -16,7 +16,5 @@ func (target *Control) RegisterSimulationStepObserver(observer func(float64)) {
 		return
 	}
 
-	target.game.mu.Lock()
-	defer target.game.mu.Unlock()
 	target.game.simulationStepObservers = append(target.game.simulationStepObservers, observer)
 }

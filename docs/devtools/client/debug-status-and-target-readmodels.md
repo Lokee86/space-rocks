@@ -101,6 +101,7 @@ player_frozen
 ```
 
 `debug_status` drives receiver-local/global status labels in the devtools window. `debug_statuses` drives per-player selector labels.
+`debug_statuses` reflects session-backed match membership from `MatchDecision().Players` on the server. `Control.TargetPlayerIDs()` is a separate command-fanout list and may include ship-only IDs, so the client should not treat it as the status-membership source.
 
 The client does not request these status snapshots directly. They arrive as outbound server telemetry. Client controls can cause later status changes only by sending normal debug command packets or target request packets.
 
@@ -535,7 +536,7 @@ Server producer files:
 
 ```text
 services/game-server/internal/devtools/status.go
-services/game-server/internal/game/export_devtools_status.go
+services/game-server/internal/game/control_status.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/websocket_write.go
 ```

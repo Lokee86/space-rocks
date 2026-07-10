@@ -62,7 +62,7 @@ hermes --continue <session_name> -z <prompt>
 - `prompt` (required) - The prompt string to send to the Hermes session
 - `session_name` (optional, default: `space-rocks-mcp`) - The named session to continue
 - `cwd` (optional) - Repo-relative working directory
-- `timeout_ms` (optional, default: 600000) - Timeout in milliseconds (1000-600000 range)
+
 
 **Important notes:**
 - This is session continuation through Hermes, not one-shot workflow guidance.

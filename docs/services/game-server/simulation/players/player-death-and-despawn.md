@@ -10,6 +10,8 @@ It explains how fatal player damage becomes a pending-despawn ship, how lives an
 
 ## Overview
 
+See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+
 Player death and despawn are authoritative game-server simulation behavior.
 
 The current death flow is:
@@ -117,7 +119,7 @@ Current code routes fatal player damage into `applyFatalPlayerDamage` from these
 ```text
 ship/asteroid collision fatal result
 radial hit fatal result
-devtools kill fatal result
+devtools kill fatal result via `Control.ApplyPlayerDefeat` in `control_toggles.go`
 ```
 
 Ship/asteroid collision enters through `handleShipAsteroidCollisions`.
@@ -146,7 +148,7 @@ radial hit selects player target
 -> if result is fatal, call applyFatalPlayerDamage
 ```
 
-Devtools kill enters through `DevtoolsKillPlayer`.
+Devtools kill enters through `Control.ApplyPlayerDefeat`.
 
 That path builds a debug damage request against the target player, applies the result to health and shields, and calls `applyFatalPlayerDamage` when the result is fatal.
 
@@ -518,8 +520,8 @@ Radial and devtools entry points:
 services/game-server/internal/game/simulation_radial_effects.go
 services/game-server/internal/game/radial_damage_requests.go
 services/game-server/internal/game/radial_candidates.go
-services/game-server/internal/game/export_devtools_toggles.go
-services/game-server/internal/game/export_devtools_respawn.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_respawn.go
 ```
 
 Match/lifecycle support:

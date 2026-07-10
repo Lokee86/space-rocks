@@ -10,6 +10,8 @@ It explains how debug controls can inspect or request changes to gameplay state 
 
 ## Overview
 
+See also: [Game Control Devtools Adapter](../server/game-control-devtools-adapter.md)
+
 Devtools are a debug-only control and diagnostic layer around real gameplay systems.
 
 The client owns devtools input, presentation, overlays, readmodels, and packet construction. The server owns gameplay mutation, command validation, debug status projection, and the controlled adapters into the authoritative game aggregate.
@@ -21,15 +23,19 @@ client devtools input or window action
 -> client devtools context
 -> generated or hand-built debug packet
 -> normal client networking send path
--> game-server inbound devtools routing
--> services/game-server/internal/devtools command handler
--> services/game-server/internal/game/export_devtools*.go seam
+-> game-server inbound packet classification
+-> packet decode into devtools.DebugCommand
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
+-> capability-specific handler
+-> game.Control
 -> owning gameplay state, simulation option, spawn, damage, counter, respawn, or clear-entity path
 -> outbound gameplay/debug presentation packets
 -> client devtools readmodels and overlays
 ```
 
-The devtools seam is allowed to request and display debug-only behavior. It is not allowed to duplicate gameplay rules, mutate client gameplay state as authority, or reach into core gameplay internals without a named game-owned export seam.
+The devtools seam is allowed to request and display debug-only behavior. It is not allowed to duplicate gameplay rules, mutate client gameplay state as authority, or reach into core gameplay internals without a named game-owned Control adapter and capability interface.
 
 ## Debug-only scope
 
@@ -90,13 +96,13 @@ The server command package owns devtools command dispatch:
 services/game-server/internal/devtools/
 ```
 
-The game aggregate owns gameplay state and exposes only narrow devtools adapters:
+The game aggregate owns gameplay state and exposes only the narrow Control adapter:
 
 ```text
-services/game-server/internal/game/export_devtools*.go
+services/game-server/internal/game/control*.go
 ```
 
-This keeps `internal/devtools` from owning normal game state and keeps ordinary `internal/game` files from importing or depending on devtools command handling.
+`internal/devtools` does not import the root `internal/game` package. `internal/game` does not import devtools.
 
 ### Client authority
 
@@ -141,7 +147,7 @@ raw websocket message
 -> inbound.RouteClientPacket
 -> inbound.HandleSimpleDevtoolsPacket / HandlePlacementDevtoolsPacket / HandleRemainingDevtoolsPacket
 -> packetcodec.Decode(raw message, devtools.DebugCommand)
--> devtools.HandleCommand(room.GameInstance(), currentGamePlayerID, command)
+-> devtools.HandleCommand(Target, ...)
 ```
 
 Devtools commands do not route through `Game.HandlePacket`.
@@ -185,7 +191,7 @@ Examples:
 ```text
 debug kill player
 -> devtools command handler
--> Game.DevtoolsKillPlayer
+-> Control.ApplyPlayerDefeat
 -> damage.ResolveSingle
 -> applyFatalPlayerDamage
 ```
@@ -193,14 +199,14 @@ debug kill player
 ```text
 debug set score
 -> devtools command handler
--> Game.DevtoolsSetPlayerScore
+-> Control.SetPlayerScore
 -> normal player counter mutation seam
 ```
 
 ```text
 debug freeze player
 -> devtools command handler
--> Game.DevtoolsSetPlayerFrozen
+-> Control.SetPlayerFrozen
 -> player session suspension state
 -> normal ship capability checks
 ```
@@ -215,7 +221,7 @@ debug freeze world
 ```text
 debug respawn player
 -> devtools command handler
--> Game.DevtoolsSafeRespawnPosition / DevtoolsForceRespawnPlayer
+-> Control.SafeRespawnPosition / Control.ForceRespawnPlayer
 -> normal player session and camera state
 ```
 
@@ -443,16 +449,16 @@ services/game-server/internal/devtools/handler.go
 ```text
 services/game-server/internal/devtools/
 services/game-server/internal/devtools/streamruntime/
-services/game-server/internal/game/export_devtools.go
-services/game-server/internal/game/export_devtools_status.go
-services/game-server/internal/game/export_devtools_toggles.go
-services/game-server/internal/game/export_devtools_spawn.go
-services/game-server/internal/game/export_devtools_respawn.go
-services/game-server/internal/game/export_devtools_player_spawn.go
-services/game-server/internal/game/export_devtools_player_counters.go
-services/game-server/internal/game/export_devtools_clear_entities.go
-services/game-server/internal/game/export_devtools_streams.go
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_spawn.go
+services/game-server/internal/game/control_respawn.go
+services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_counters.go
+services/game-server/internal/game/control_clear.go
+services/game-server/internal/game/control_streams.go
+services/game-server/internal/game/control_collision_telemetry.go
 ```
 
 ### Server debug output and gates
@@ -541,10 +547,10 @@ services/game-server/internal/devtools/clear_entities_test.go
 services/game-server/internal/devtools/shape_catalog_test.go
 services/game-server/internal/devtools/streamruntime/continuous_bullet_streams_test.go
 services/game-server/internal/devtools/streamruntime/runtime_test.go
-services/game-server/internal/game/export_devtools_player_spawn_test.go
-services/game-server/internal/game/export_devtools_respawn_test.go
-services/game-server/internal/game/export_devtools_streams_test.go
-services/game-server/internal/game/export_devtools_collision_telemetry_test.go
+services/game-server/internal/game/control_player_spawn_test.go
+services/game-server/internal/game/control_respawn_test.go
+services/game-server/internal/game/control_streams_test.go
+services/game-server/internal/game/control_collision_telemetry_test.go
 ```
 
 Relevant client tests include:

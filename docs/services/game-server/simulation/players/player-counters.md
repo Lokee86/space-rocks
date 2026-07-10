@@ -10,6 +10,8 @@ It covers the current score and lives mutation seams, how those counters are sto
 
 ## Overview
 
+See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+
 Player counters are authoritative game-server simulation state.
 
 The current counter boundary covers:
@@ -24,7 +26,7 @@ Both counters are stored on `playerSession`, not on the live `runtime.Ship` avat
 The core mutation seam is:
 
 ```text
-services/game-server/internal/game/player_counters.go
+services/game-server/internal/game/control_counters.go
 ```
 
 The seam supports set and add operations for score and lives:
@@ -36,7 +38,7 @@ SetPlayerLives
 AddPlayerLives
 ```
 
-Each operation returns a `PlayerCounterChange` describing whether the player session was found, the previous value, the updated value, and the delta.
+Control counter methods delegate to the normal game counter methods and return the `Found` result. Each operation returns a `PlayerCounterChange` describing whether the player session was found, the previous value, the updated value, and the delta.
 
 Counter values are clamped at zero. Negative set values become zero, and negative add operations cannot reduce a counter below zero.
 
@@ -51,6 +53,7 @@ Supporting packages and generated outputs:
 ```text
 services/game-server/internal/game/scoring/
 services/game-server/internal/game/pickups/
+services/game-server/internal/game/control_counters.go
 services/game-server/internal/devtools/
 services/game-server/internal/constants/
 services/game-server/internal/rooms/
@@ -71,8 +74,9 @@ Player counters own:
 * Returning `PlayerCounterChange` results for callers that need mutation feedback.
 * Keeping score and lives on `playerSession`.
 * Projecting score and lives through session lane and overlay lane readback.
+* Control counter methods delegate to the normal game counter methods and return the `Found` result.
 * Supplying score and deaths to match-result summary facts.
-* Providing narrow game-owned devtools adapters for score/lives mutation commands.
+* Providing narrow game-owned devtools adapters for score/lives mutation commands through `control_counters.go`.
 
 ## Does not own
 
@@ -357,10 +361,10 @@ Devtools command routing lives outside the normal gameplay packet path.
 Devtools calls narrow game-owned adapters:
 
 ```go
-DevtoolsSetPlayerScore
-DevtoolsAddPlayerScore
-DevtoolsSetPlayerLives
-DevtoolsAddPlayerLives
+Control.SetPlayerScore
+Control.AddPlayerScore
+Control.SetPlayerLives
+Control.AddPlayerLives
 ```
 
 Those adapters delegate directly to the same public counter methods used by non-devtools setup and tests.
@@ -461,7 +465,7 @@ Player counters must preserve these rules:
 Primary implementation files:
 
 ```text
-services/game-server/internal/game/player_counters.go
+services/game-server/internal/game/control_counters.go
 services/game-server/internal/game/session.go
 services/game-server/internal/game/scoring.go
 services/game-server/internal/game/asteroid_destruction.go
@@ -484,7 +488,8 @@ services/game-server/internal/game/pickups/collection.go
 Devtools adapters and command handlers:
 
 ```text
-services/game-server/internal/game/export_devtools_player_counters.go
+services/game-server/internal/game/control_counters.go
+services/game-server/internal/game/control_counters.go
 services/game-server/internal/devtools/player_counters.go
 ```
 
@@ -523,6 +528,7 @@ services/game-server/internal/game/scoring/
 services/game-server/internal/game/damage/
 services/game-server/internal/game/pickups/
 services/game-server/internal/game/weapons/
+services/game-server/internal/game/control_counters.go
 services/game-server/internal/devtools/
 services/game-server/internal/rooms/
 services/game-server/internal/networking/

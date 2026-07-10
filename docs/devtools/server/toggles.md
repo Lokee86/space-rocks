@@ -21,7 +21,7 @@ toggle_debug_freeze_world
 toggle_debug_freeze_player
 ```
 
-The server receives these commands as generated debug packets, decodes them into `devtools.DebugCommand`, routes them through `devtools.HandleCommand`, and applies the result through narrow game-owned export seams.
+The server receives these commands as generated debug packets, decodes them into `devtools.DebugCommand`, routes them through `devtools.HandleCommand`, and applies the result through narrow game-owned Control capabilities.
 
 The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Confirmation comes back through lane-native gameplay readback, debug status packets, visible entity behavior, or both.
 
@@ -83,7 +83,7 @@ client debug packet
 -> packetcodec.Decode into devtools.DebugCommand
 -> devtools.HandleCommand
 -> toggle-specific handler in internal/devtools/toggles.go
--> game-owned export seam in internal/game/export_devtools_toggles.go
+-> game-owned Control methods in internal/game/control_toggles.go
 -> normal game runtime state
 -> lane-native gameplay readback or debug status output
 ```
@@ -93,7 +93,7 @@ If the current WebSocket session has no room or no current game player ID, the i
 Toggle mutation happens behind the game aggregate:
 
 ```text
-services/game-server/internal/game/export_devtools_toggles.go
+services/game-server/internal/game/control_toggles.go
 ```
 
 That file exposes narrow devtools-facing methods. The devtools package does not reach directly into unrelated game internals.
@@ -324,7 +324,7 @@ All-player resolution:
 
 ```text
 target_scope = all_players
--> Game.DevtoolsTargetPlayerIDs()
+-> Control.TargetPlayerIDs()
 ```
 
 `DevtoolsTargetPlayerIDs()` returns the sorted union of player IDs from:
@@ -567,9 +567,9 @@ services/game-server/internal/networking/outbound/debug_status_presentation.go
 Game-owned export seams:
 
 ```text
-services/game-server/internal/game/export_devtools_toggles.go
-services/game-server/internal/game/export_devtools_status.go
-services/game-server/internal/game/export_devtools_player_spawn.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_player_spawn.go
 ```
 
 Runtime option and capability files:
@@ -610,7 +610,7 @@ services/game-server/internal/devtools/command_types_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
 services/game-server/internal/game/world_simulation_options_test.go
-services/game-server/internal/game/export_devtools_player_spawn_test.go
+services/game-server/internal/game/control_player_spawn_test.go
 services/game-server/tests/game/devtools_test.go
 services/game-server/tests/networking/inbound_devtools_test.go
 ```

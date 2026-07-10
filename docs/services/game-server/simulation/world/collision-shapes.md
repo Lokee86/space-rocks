@@ -6,9 +6,11 @@ Parent index: [Game Server Simulation World](./!INDEX.md)
 
 This document describes the game-server collision-shape support boundary.
 
-It explains how the server loads shared collision-shape data, converts imported shapes into runtime collision bodies, and exposes those bodies to collision detection, targeting, respawn safety, radial effects, pickup collection, and devtools collision telemetry.
+It explains how the server loads shared collision-shape data, converts imported shapes into runtime collision bodies, and exposes those bodies to collision detection, targeting, respawn safety, radial effects, pickup collection, and devtools collision telemetry via the current adapter.
 
 ## Overview
+
+See also: [Collision Body Telemetry](../../../devtools/server/collision-body-telemetry.md)
 
 Collision shapes are a game-server simulation support system implemented primarily under:
 
@@ -77,7 +79,7 @@ Collision-shape support owns the game-server side of:
 * Falling back to the default ship shape for ship shape IDs that do not currently have keyed catalog support.
 * Returning errors for missing pickup shape catalogs or unknown pickup shape keys.
 * Providing primitive body point-containment checks for server-side target click validation.
-* Providing body outline points for devtools collision telemetry and radial candidate radius derivation.
+* Providing body outline points for devtools collision telemetry via the current adapter and radial candidate radius derivation.
 * Letting gameplay consumers skip collision behavior when a collision body cannot be built.
 
 ## Does not own
@@ -112,7 +114,7 @@ player -> pickup collection checks
 server-side target click validation
 safe player initial spawn and respawn placement
 asteroid radial candidate radius calculation
-devtools collision overlay telemetry
+devtools collision-body telemetry
 ```
 
 The client may render scene collision shapes, devtools overlays, and visual hit feedback, but server collision bodies remain the authority for gameplay outcomes.
@@ -331,7 +333,7 @@ asteroids_lifecycle state
 bullets_lifecycle state
 world lane pickup records
 event_batch
-devtools collision telemetry output
+devtools collision telemetry via the current adapter output
 ```
 
 Client requests can influence later collision outcomes through movement, shooting, targeting, respawn, pickup collection opportunities, or devtools actions, but no client packet directly calls collision-shape loading or primitive shape conversion.
@@ -408,7 +410,7 @@ services/game-server/internal/game/radial_candidates.go
 Devtools consumer:
 
 ```text
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control_collision_telemetry.go
 ```
 
 Shared/generated data:
@@ -432,7 +434,7 @@ services/game-server/tests/game/pickups_test.go
 services/game-server/tests/game/devtools_test.go
 services/game-server/tests/game/ship_collision_shape_test.go
 services/game-server/internal/game/entities/pickups/pickup_test.go
-services/game-server/internal/game/export_devtools_collision_telemetry_test.go
+services/game-server/internal/game/control_collision_telemetry_test.go
 ```
 
 Important non-ownership boundaries:
@@ -443,6 +445,7 @@ client/tools/export_collision_shapes.gd
 services/game-server/internal/game/damage/
 services/game-server/internal/game/pickups/
 services/game-server/internal/game/effects/radial/
+services/game-server/internal/game/control_collision_telemetry.go
 services/game-server/internal/devtools/
 services/game-server/internal/networking/
 client/
@@ -469,7 +472,7 @@ Game integration tests cover collision-shape consumption through:
 * wrapped-world collision behavior
 * safe spawn and respawn placement
 * pickup collection checks
-* devtools collision telemetry
+* devtools collision telemetry via the current adapter
 * ship collision shape fallback behavior
 
 Useful verification command:

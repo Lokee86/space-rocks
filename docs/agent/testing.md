@@ -62,7 +62,7 @@ Run the server devtools boundary static check:
 python3 -m pytest tools/tests/test_server_devtools_boundary.py
 ```
 
-This check protects the server devtools boundary: `internal/devtools` owns behavior, and `internal/game` exposes only `export_devtools*.go` bridge files.
+This check protects the server devtools boundary: `internal/devtools` owns controller, command, target-selection, stream-runtime, and debug DTO behavior; `internal/game` exposes authoritative capabilities through `Control` and focused `control_*.go` files; production devtools code does not import the root game package; and legacy `Game.Devtools*` methods and `export_devtools*.go` files remain absent.
 
 If the server test command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
 

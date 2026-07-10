@@ -17,11 +17,10 @@ The server builds collision bodies from the same runtime state and collision-sha
 The current server-side collision telemetry path is:
 
 ```text
-Game.collisionShapes
--> runtime entity CollisionBody(...) methods
--> Game.DevtoolsCollisionBodies()
--> physics.CollisionBodyOutlinePoints(...)
--> DevtoolsCollisionBody values
+Control.CollisionBodiesByKind()
+-> authoritative physics.CollisionBody values
+-> devtools.CollisionBodies(...)
+-> CollisionBody / CollisionPoint DTO values
 ```
 
 A telemetry body contains:
@@ -54,7 +53,7 @@ shared/collisions/collision_shapes.json
 -> client combines reusable shape definitions with normal gameplay state
 ```
 
-`Game.DevtoolsCollisionBodies()` produces live server-side body outline snapshots, but the current outbound protocol does not emit a standalone `debug_collision_bodies` packet. Server outbound tests intentionally verify that `debug_shape_catalog` and normal gameplay presentation packets do not include `debug_collision_bodies`.
+`Control.CollisionBodiesByKind()` produces live server-side body snapshots, but the current outbound protocol does not emit a standalone `debug_collision_bodies` packet. `devtools.CollisionBodies(...)` owns the JSON projection into debug-facing DTOs. Server outbound tests intentionally verify that `debug_shape_catalog` and normal gameplay presentation packets do not include `debug_collision_bodies`.
 
 ## Debug-only scope
 
@@ -113,7 +112,7 @@ and stored on each `Game` instance as:
 collisionShapes physics.CollisionShapeCatalog
 ```
 
-`Game.DevtoolsCollisionBodies()` locks the game aggregate, iterates current runtime entity maps, asks each entity to build a real collision body, and skips entities whose bodies cannot be built.
+`Control.CollisionBodiesByKind()` locks the game aggregate while reading entity maps, iterates current runtime entity maps, asks each entity to build a real collision body, and skips entities whose bodies cannot be built.
 
 The adapter does not mutate runtime state. It only converts available bodies into devtools telemetry values.
 
@@ -151,7 +150,7 @@ WorldSync visual coordinate conversion
 
 The server sends reusable shape definitions through `debug_shape_catalog`. The client combines those shape definitions with live entity state from accumulated realtime lane readback.
 
-This means current client presentation does not consume `Game.DevtoolsCollisionBodies()` directly. The live body telemetry adapter remains a server-side support seam and test-covered implementation path, while the packetized client overlay uses shape catalog plus gameplay state.
+This means current client presentation does not consume `Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)` directly. The live body telemetry adapter remains a server-side support seam and test-covered implementation path, while the packetized client overlay uses shape catalog plus gameplay state.
 
 The client must treat all collision telemetry and shape catalog data as presentation input only. It must not use overlay geometry to decide hits, target validity, pickup collection, damage, or respawn safety.
 
@@ -185,23 +184,23 @@ If live collision body telemetry becomes packetized later, it should use the sam
 
 ## Telemetry behavior
 
-`Game.DevtoolsCollisionBodies()` returns a snapshot of currently buildable collision bodies.
+`Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)` returns a snapshot of currently buildable collision bodies.
 
 The output type is:
 
 ```go
-type DevtoolsCollisionBody struct {
+type CollisionBody struct {
     Kind   string
     ID     string
     Shape  string
-    Points []DevtoolsCollisionPoint
+    Points []CollisionPoint
 }
 ```
 
 Each point uses:
 
 ```go
-type DevtoolsCollisionPoint struct {
+type CollisionPoint struct {
     X float64
     Y float64
 }
@@ -221,17 +220,17 @@ y
 The adapter builds bodies in this order:
 
 ```text
-players
-asteroids
-projectiles
-pickups
+player
+asteroid
+bullet
+pickup
 ```
 
 For each entity:
 
 1. The entity attempts to build a `physics.CollisionBody` from the game collision-shape catalog.
 2. If body construction fails, the entity is skipped.
-3. `physics.CollisionBodyOutlinePoints` projects the body into outline points.
+3. `devtools.CollisionBodies(...)` projects the body into outline points.
 4. The adapter records the entity kind, entity id, shape type, and outline points.
 
 Supported outline projection behavior comes from the physics package:
@@ -301,7 +300,7 @@ services/game-server/internal/devtools/enabled_nodevtools.go
 services/game-server/internal/devtools/disabled.go
 ```
 
-`Game.DevtoolsCollisionBodies()` itself is a game-owned export adapter. It does not check the devtools build flag internally. Any caller that exposes the output outside the game package must apply the appropriate devtools gate.
+`Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)` itself is a game-owned export adapter. It does not check the devtools build flag internally. Any caller that exposes the output outside the game package must apply the appropriate devtools gate.
 
 The currently packetized shape catalog output is gated by:
 
@@ -380,7 +379,7 @@ packetized debug output must use generated packet contracts
 Primary server telemetry adapter:
 
 ```text
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control_collision_telemetry.go
 ```
 
 Runtime collision body builders:
@@ -471,7 +470,7 @@ Gameplay collision consumers own gameplay consequences. Networking owns packet t
 Focused server tests:
 
 ```text
-services/game-server/internal/game/export_devtools_collision_telemetry_test.go
+services/game-server/internal/game/control_collision_telemetry_test.go
 ```
 
 Those tests verify that:
@@ -534,7 +533,7 @@ Run collision-shape data checks when changing Godot collision nodes, the collisi
 
 ## Notes
 
-The UI label uses “Server Collision Telemetry,” while several implementation paths use “hitbox” or “shape catalog” terminology. In current implementation, “server hitbox overlay” is the client presentation surface, `debug_shape_catalog` is the packetized reusable-shape surface, and `Game.DevtoolsCollisionBodies()` is the server-side live body snapshot adapter.
+The UI label uses “Server Collision Telemetry,” while several implementation paths use “hitbox” or “shape catalog” terminology. In current implementation, “server hitbox overlay” is the client presentation surface, `debug_shape_catalog` is the packetized reusable-shape surface, and `Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)` is the server-side live body snapshot adapter.
 
 The current packetized overlay path reconstructs outlines on the client from reusable shape definitions and normal gameplay state. That is separate from sending precomputed live collision-body outlines from the server.
 

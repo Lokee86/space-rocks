@@ -24,7 +24,7 @@ debug_add_lives
 These commands do not create a separate debug counter store. They route through `services/game-server/internal/devtools/player_counters.go`, resolve one or more player IDs, and then call narrow game-owned adapters in:
 
 ```text
-services/game-server/internal/game/export_devtools_player_counters.go
+services/game-server/internal/game/control_counters.go
 ```
 
 Those adapters delegate to the normal game counter seam:
@@ -74,8 +74,8 @@ client debug packet
 -> devtools.HandleCommand(room.GameInstance(), currentGamePlayerID, command)
 -> handleDebugSetScore / handleDebugAddScore / handleDebugSetLives / handleDebugAddLives
 -> resolveCommandTargetPlayerIDs
--> Game.DevtoolsSetPlayerScore / Game.DevtoolsAddPlayerScore / Game.DevtoolsSetPlayerLives / Game.DevtoolsAddPlayerLives
--> Game.SetPlayerScore / Game.AddPlayerScore / Game.SetPlayerLives / Game.AddPlayerLives
+-> Control.SetPlayerScore / Control.AddPlayerScore / Control.SetPlayerLives / Control.AddPlayerLives
+-> Control.SetPlayerScore / Control.AddPlayerScore / Control.SetPlayerLives / Control.AddPlayerLives
 -> playerSession.Score or playerSession.Lives
 ```
 
@@ -93,7 +93,7 @@ After
 Delta
 ```
 
-Devtools handlers use `Found` to decide whether a command affected at least one target. A command returns `false` when no target player session was found or when the target game instance is nil.
+Devtools handlers use `Found` to decide whether a command affected at least one target. The public Control counter methods return the underlying PlayerCounterChange `Found` result. A command returns `false` when no target player session was found or when the target game instance is nil.
 
 Missing player sessions are not created by score or lives commands. If a requested player ID does not exist in `game.playerSessions`, the game counter seam returns `Found: false` and does not mutate state.
 
@@ -296,9 +296,9 @@ services/game-server/internal/devtools/packets_generated.go
 Game-owned counter adapters:
 
 ```text
-services/game-server/internal/game/export_devtools_player_counters.go
+services/game-server/internal/game/control_counters.go
 services/game-server/internal/game/player_counters.go
-services/game-server/internal/game/export_devtools_player_spawn.go
+services/game-server/internal/game/control_player_spawn.go
 ```
 
 Inbound routing:

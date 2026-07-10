@@ -56,17 +56,24 @@ Devtools may inspect and mutate state, including durable state, but mutation mus
 
 Active planning.
 
-Current runtime devtools are implemented around the Godot client, Go game-server devtools package, generated debug packets, and game-owned `export_devtools` seams.
+The devtools ownership extraction is implemented as current state. The live runtime uses the Controller/Target/Control architecture; the remaining work in this document is planning for future tooling, gates, telemetry, and release hardening.
+
+Current runtime devtools are implemented around the Godot client, Go game-server `Controller`/`Target`/`Control` architecture, and generated debug packets.
+
+Implemented references:
+
+- [Game Control Devtools Adapter](../../devtools/server/game-control-devtools-adapter.md)
+- [Devtools Authority and Seams](../../devtools/design/devtools-authority-and-seams.md)
 
 Current gaps:
 
 ```text
-future systems lack readout and mutation coverage
+audit schema needs completion
 durable-state developer tooling is not complete
 admin and developer gates are not separated
 full telemetry needs a dedicated window instead of only an overlay
 scenario/load-test tooling is not established
-integrity/devtools taint propagation is not implemented
+taint/integrity propagation is not implemented
 normal-event simulation for rewards and commerce is not implemented
 ```
 

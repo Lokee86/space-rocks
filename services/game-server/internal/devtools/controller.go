@@ -67,7 +67,7 @@ func (controller *Controller) HandleCommand(playerID string, command DebugComman
 	case PacketTypeDebugAddLives:
 		return handleDebugAddLives(controller.target, playerID, command)
 	case PacketTypeDebugClearBullets:
-		return handleDebugClearBullets(controller.target, playerID, command)
+		return handleDebugClearBullets(controller, playerID, command)
 	case PacketTypeDebugClearAsteroids:
 		return handleDebugClearAsteroids(controller.target, playerID, command)
 	default:

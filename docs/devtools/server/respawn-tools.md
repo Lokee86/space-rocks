@@ -24,13 +24,14 @@ Current high-level flow:
 
 ```text
 client devtools respawn request
--> websocket inbound envelope decode
--> inbound devtools packet routing
--> devtools.HandleCommand(...)
--> handleDebugRespawnPlayer(...)
--> target player validation
--> Game.DevtoolsSafeRespawnPosition(...)
--> Game.DevtoolsForceRespawnPlayer(...)
+-> inbound classifier
+-> packet decode into devtools.DebugCommand
+-> game.NewControl
+-> devtools.NewController
+-> Controller.HandleCommand
+-> target resolution
+-> Control.SafeRespawnPosition
+-> Control.ForceRespawnPlayer
 -> lane-native readback reflects recreated ship
 ```
 
@@ -72,14 +73,14 @@ The debug command remains separate:
 ```text
 debug_respawn_player
 -> devtools.HandleCommand(...)
--> DevtoolsForceRespawnPlayer(...)
+-> ControlForceRespawnPlayer(...)
 ```
 
 ## Server authority
 
 The server owns all gameplay consequences of debug respawn.
 
-Inbound routing only classifies the packet and decodes it into `devtools.DebugCommand`. The command effect is owned by `services/game-server/internal/devtools/` and the narrow game-owned export seam in `services/game-server/internal/game/export_devtools_respawn.go`.
+Inbound routing only classifies the packet and decodes it into `devtools.DebugCommand`. The command effect is owned by `services/game-server/internal/devtools/` and the narrow game-owned Control seam in `services/game-server/internal/game/control_respawn.go` and `services/game-server/internal/game/control_player_spawn.go`.
 
 Debug respawn requires:
 
@@ -103,7 +104,7 @@ For all-player respawn, the command sends:
 target_scope = "all_players"
 ```
 
-The server expands that scope through `Game.DevtoolsTargetPlayerIDs()`, which includes player IDs known through sessions and active ship state. Each resolved player ID then runs through the same single-target respawn handler. Active players are ignored instead of being recreated.
+The server expands that scope through `Control.TargetPlayerIDs()`, which includes player IDs known through sessions and active ship state. Each resolved player ID then runs through the same single-target respawn handler. Active players are ignored instead of being recreated.
 
 Debug respawn normalizes player IDs through the debug player ID helper. Accepted target IDs use the canonical form:
 
@@ -118,7 +119,7 @@ Invalid or empty IDs are ignored.
 The command currently logs request `x` and `y` values if they are present in the shared debug command shape, but those values do not choose the respawn position. Server respawn placement comes from:
 
 ```text
-Game.DevtoolsSafeRespawnPosition(playerID)
+Control.SafeRespawnPosition(playerID)
 ```
 
 That method delegates to the game-owned safe respawn placement logic using the target session's stored spawn position and collision shape.
@@ -338,7 +339,7 @@ services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/devtools/handler.go
 services/game-server/internal/devtools/command_types.go
 services/game-server/internal/devtools/respawn_handler.go
-services/game-server/internal/devtools/respawn_player.go
+services/game-server/internal/devtools/controller.go
 services/game-server/internal/devtools/player_camera.go
 services/game-server/internal/devtools/target_scopes.go
 services/game-server/internal/devtools/target_player_ids.go
@@ -349,8 +350,8 @@ services/game-server/internal/devtools/packets_generated.go
 Game-owned export seams:
 
 ```text
-services/game-server/internal/game/export_devtools_respawn.go
-services/game-server/internal/game/export_devtools_player_spawn.go
+services/game-server/internal/game/control_respawn.go
+services/game-server/internal/game/control_player_spawn.go
 ```
 
 Gameplay respawn implementation used for comparison and safe placement:
@@ -385,7 +386,7 @@ Related tests:
 
 ```text
 services/game-server/tests/game/devtools_test.go
-services/game-server/internal/game/export_devtools_respawn_test.go
+services/game-server/internal/game/control_respawn_test.go
 services/game-server/internal/devtools/command_types_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
@@ -423,7 +424,7 @@ Relevant server tests include:
 
 ```text
 services/game-server/tests/game/devtools_test.go
-services/game-server/internal/game/export_devtools_respawn_test.go
+services/game-server/internal/game/control_respawn_test.go
 services/game-server/internal/devtools/command_types_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go

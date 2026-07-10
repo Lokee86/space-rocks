@@ -10,6 +10,8 @@ It explains how timed, fragment, and debug asteroid spawns are planned, how vari
 
 ## Overview
 
+See also: [Game Control Devtools Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
+
 Asteroid spawning is a game-server simulation responsibility.
 
 The current server flow is:
@@ -45,6 +47,7 @@ services/game-server/internal/game/spawning/
 services/game-server/internal/game/asteroids/
 services/game-server/internal/game/runtime/
 services/game-server/internal/game/physics/
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/devtools/
 shared/asteroids/
 shared/collisions/
@@ -187,7 +190,7 @@ spawn position
 target camera position
 ```
 
-The spawner builds an `AsteroidSpawnPlan` with:
+`internal/devtools` builds the debug `AsteroidSpawnPlan` with:
 
 ```text
 EntityType = asteroid
@@ -213,10 +216,10 @@ The spawn plan does not mutate game state. Mutation happens only when root game 
 Asteroid spawn application is owned by root game code:
 
 ```text
-applyAsteroidSpawn
+Control.ApplyAsteroidSpawnPlan
 ```
 
-The apply helper:
+The apply helper delegates to the authoritative game-owned asteroid spawn path:
 
 ```text
 allocates the next unique asteroid id
@@ -288,6 +291,7 @@ Debug asteroid spawning is routed through devtools, but game-owned mutation stil
 The debug spawn path builds an `AsteroidSpawnPlan` in:
 
 ```text
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/devtools/spawn_asteroid.go
 ```
 
@@ -311,7 +315,7 @@ asteroids.RandomDebugSpawnVariantIndex()
 Devtools applies the plan through:
 
 ```text
-Game.DevtoolsApplyAsteroidSpawnPlan
+Control.ApplyAsteroidSpawnPlan
 -> applyAsteroidSpawn
 ```
 
@@ -618,8 +622,9 @@ services/game-server/internal/game/collisions.go
 Debug spawn support:
 
 ```text
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/devtools/spawn_asteroid.go
-services/game-server/internal/game/export_devtools_spawn.go
+services/game-server/internal/game/control_spawn.go
 ```
 
 Source and generated data:
@@ -639,7 +644,9 @@ services/game-server/internal/game/asteroids/variants_test.go
 services/game-server/internal/game/simulation_match_over_test.go
 services/game-server/internal/game/world_simulation_options_test.go
 services/game-server/internal/game/physics/collision_shapes_test.go
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/devtools/clear_entities_test.go
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/devtools/shape_catalog_test.go
 ```
 
@@ -651,6 +658,7 @@ services/game-server/internal/game/damage/
 services/game-server/internal/game/scoring/
 services/game-server/internal/game/drops/
 services/game-server/internal/game/pickups/
+services/game-server/internal/game/control_spawn.go
 services/game-server/internal/devtools/
 client/
 shared/packets/

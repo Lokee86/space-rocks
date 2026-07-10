@@ -70,15 +70,16 @@ The status packet should stay focused on the status of devtools controls. Richer
 
 The server owns all debug status values.
 
-`services/game-server/internal/devtools/status.go` builds outward-facing `DebugStatus` values from the game-owned devtools status projection:
+`services/game-server/internal/devtools/status.go` builds outward-facing `DebugStatus` values from the Control/Controller projection:
 
 ```text
-devtools.StatusFor
--> game.DevtoolsStatusFor
+game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.StatusFor
 -> devtools.DebugStatus
 ```
 
-`game.DevtoolsStatusFor` reads authoritative state from the game instance:
+`Controller.StatusFor` reads authoritative values through Control capability methods:
 
 ```text
 worldSimulationOptions
@@ -99,7 +100,9 @@ live player entity damage state
 
 The devtools package does not own the underlying gameplay state. It owns the debug-facing projection and packet shape. The game package owns the actual simulation, player session state, player entity state, and world simulation options.
 
-`StatusesForAllPlayers` builds the `debug_statuses` map by iterating match players from `MatchDecision().Players` and projecting each player through `StatusFor`.
+`StatusesForAllPlayers` builds the `debug_statuses` map by iterating session-backed match membership from `MatchDecision().Players` and projecting each player through `StatusFor`.
+
+`Control.TargetPlayerIDs()` is for command fanout and may also contain ship-only IDs.
 
 ## Output lifecycle
 
@@ -307,7 +310,8 @@ services/game-server/internal/networking/websocket_write.go
 Game-owned status source files:
 
 ```text
-services/game-server/internal/game/export_devtools_status.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_match.go
 services/game-server/internal/game/world_simulation_options.go
 services/game-server/internal/game/runtime/damage_options.go
 services/game-server/internal/game/runtime/life_options.go

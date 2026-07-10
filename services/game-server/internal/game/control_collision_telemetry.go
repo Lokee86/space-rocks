@@ -3,6 +3,9 @@ package game
 import "github.com/Lokee86/space-rocks/server/internal/game/physics"
 
 func (target *Control) CollisionBodiesByKind() map[string][]physics.CollisionBody {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
+
 	bodiesByKind := make(map[string][]physics.CollisionBody, 4)
 
 	for _, player := range target.game.entities.Players {

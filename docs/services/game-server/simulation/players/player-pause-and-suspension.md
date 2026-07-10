@@ -10,6 +10,8 @@ It explains how normal player pause, dev player freeze, and the shared suspensio
 
 ## Overview
 
+See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+
 Player pause and suspension are game-server simulation responsibilities owned by `services/game-server/internal/game`.
 
 The core model is:
@@ -63,6 +65,8 @@ Primary supporting packages:
 services/game-server/internal/game/runtime/
 services/game-server/internal/game/motion/
 services/game-server/internal/networking/
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_status.go
 services/game-server/internal/devtools/
 services/game-server/internal/protocol/packetcodec/
 ```
@@ -87,7 +91,7 @@ Player pause and suspension owns the game-server side of:
 * Blocking asteroid collision damage while suspended.
 * Blocking score awards while suspended.
 * Keeping normal pause and dev freeze independent.
-* Providing devtools adapters for setting and reporting player freeze.
+* Providing devtools adapters for setting and reporting player freeze via `control_toggles.go` and `control_status.go`.
 
 ## Does not own
 
@@ -238,7 +242,7 @@ Dev player freeze is a separate suspension cause used by server devtools.
 The game-owned adapter is:
 
 ```go
-DevtoolsSetPlayerFrozen(playerID string, enabled bool) bool
+Control.SetPlayerFrozen(playerID string, enabled bool) bool
 ```
 
 It sets `session.Suspension.DevFrozen`.
@@ -257,7 +261,7 @@ asteroid collision damage blocked
 score awards blocked
 ```
 
-Devtools status reports `PlayerFrozen` from `session.Suspension.DevFrozen`, not from the aggregate `IsSuspended()` predicate.
+Devtools status reports `PlayerFrozen` from `session.Suspension.DevFrozen`, with status projection kept in `control_status.go`.
 
 ## Input gate
 
@@ -517,8 +521,10 @@ services/game-server/internal/constants/constants.go
 Devtools participant files:
 
 ```text
-services/game-server/internal/game/export_devtools_toggles.go
-services/game-server/internal/game/export_devtools_status.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_status.go
 services/game-server/internal/devtools/
 shared/packets/debug.toml
 ```

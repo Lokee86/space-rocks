@@ -35,13 +35,17 @@ The current high-level path is:
 ```text
 client devtools placement
 -> debug_begin_continuous_bullet_stream packet
--> networking inbound devtools routing
--> devtools.HandleCommand
--> handleDebugBeginContinuousBulletStream
--> streamruntime.DefaultRuntime.BeginContinuousBulletStream
--> game.DevtoolsRegisterSimulationStepObserver
--> streamruntime.StepContinuousBulletStreams
--> game.DevtoolsSpawnDebugBullet
+-> inbound classifier
+-> packet decode into devtools.DebugCommand
+-> game.NewControl
+-> devtools.NewController
+-> Controller.HandleCommand
+-> stream runtime begin
+-> ObserverRegistry.RegisterOnce
+-> Control.RegisterSimulationStepObserver
+-> stream runtime step
+-> Control.BulletsCanMove
+-> Control.SpawnDebugBullet
 -> bullets_lifecycle create readback plus bullet_delta movement readback
 ```
 
@@ -101,21 +105,17 @@ normalized direction is zero
 
 When creation succeeds, the server logs the normalized stream direction and registers a simulation step observer for the target game if one has not already been registered.
 
-The current stream runtime owner is:
+The current stream runtime owner is `Controller.Dependencies.Streams`, which defaults to the controller-owned stream runtime in `services/game-server/internal/devtools/streamruntime`. The game package does not import the devtools package and does not own stream state. Game-owned behavior is exposed through Control capabilities:
 
 ```text
-services/game-server/internal/devtools/streamruntime
+Control.RegisterSimulationStepObserver
+Control.BulletsCanMove
+Control.SpawnDebugBullet
 ```
 
-The game package does not import the devtools package and does not own stream state. Game-owned behavior is exposed through narrow devtools export seams:
+`ObserverRegistry.RegisterOnce` deduplicates simulation observer registration by `Control.ObserverKey()`. One simulation observer is registered per underlying game target.
 
-```text
-DevtoolsRegisterSimulationStepObserver
-DevtoolsBulletsCanMove
-DevtoolsSpawnDebugBullet
-```
-
-The stream observer runs at the end of `Game.Step(delta)`, after normal or reduced simulation phases. The observer still runs while `Game.Step` holds the game lock, so stream callbacks must stay small and route mutations through game-owned adapter functions.
+The stream observer runs at the end of `Game.Step(delta)`, after normal or reduced simulation phases. The observer still runs while `Game.Step` holds the game lock, so stream callbacks must stay small and route mutations through game-owned adapter functions. Begin, step, and clear operations use the same Controller stream runtime.
 
 ## Stream ticking and bullet spawning
 
@@ -130,7 +130,7 @@ bulletsCanMove == true
 The `bulletsCanMove` value comes from:
 
 ```text
-game.DevtoolsBulletsCanMove()
+Control.BulletsCanMove()
 ```
 
 That delegates to the world simulation bullet gate:
@@ -150,7 +150,7 @@ constants.BasicCannonCooldown
 Debug bullets are spawned through:
 
 ```text
-game.DevtoolsSpawnDebugBullet(ownerPlayerID, origin, direction)
+Control.SpawnDebugBullet(ownerPlayerID, origin, direction)
 ```
 
 That delegates to `spawnDebugBullet`, which:
@@ -217,12 +217,10 @@ but the current inspected command path does not call it.
 
 ```text
 handleDebugClearBullets
--> Game.DevtoolsClearBullets
+-> Control.ClearBullets
 ```
 
-That clears existing projectile entities from the authoritative game entity store. It does not currently clear active continuous stream records in `streamruntime`.
-
-Do not document `debug_clear_bullets` as the authoritative stream stop path unless the command handler is changed to call the stream runtime clear seam.
+That clears existing projectile entities from the authoritative game entity store and clears the Controller's active continuous streams. Do not document `debug_clear_bullets` as the authoritative stream stop path unless the command handler is changed.
 
 ## Client presentation
 
@@ -371,7 +369,7 @@ services/game-server/internal/devtools/packets_generated.go
 Game-owned devtools adapters:
 
 ```text
-services/game-server/internal/game/export_devtools_streams.go
+services/game-server/internal/game/control_streams.go
 services/game-server/internal/game/export_devtools_spawn.go
 services/game-server/internal/game/spawning.go
 services/game-server/internal/game/simulation.go
@@ -459,7 +457,7 @@ These verify command classification, build gates, and related clear-entity comma
 Related game adapter and integration tests:
 
 ```text
-services/game-server/internal/game/export_devtools_streams_test.go
+services/game-server/internal/game/control_streams_test.go
 services/game-server/tests/game/continuous_bullet_stream_test.go
 ```
 

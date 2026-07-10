@@ -10,6 +10,8 @@ It covers server-side vector helpers, collision primitive definitions, collision
 
 ## Overview
 
+See also: [Collision Body Telemetry](../../../devtools/server/collision-body-telemetry.md)
+
 The game-server physics boundary is a support package, not a full physics engine.
 
 It provides reusable math and collision primitives used by authoritative gameplay systems. It does not own entity movement, world wrapping, collision phase order, damage, scoring, pickup effects, or client presentation.
@@ -21,7 +23,7 @@ shared collision shape JSON
 -> physics.LoadCollisionShapeCatalog
 -> Game.collisionShapes
 -> runtime entity CollisionBody methods
--> game-owned collision, targeting, radial, respawn, pickup, and devtools paths
+-> game-owned collision, targeting, radial, respawn, pickup, and telemetry adapter paths
 -> physics primitive checks
 -> game-owned consequences
 ```
@@ -68,7 +70,9 @@ Primary consumers live under:
 services/game-server/internal/game/
 services/game-server/internal/game/runtime/
 services/game-server/internal/game/entities/pickups/
-services/game-server/internal/devtools/
+services/game-server/internal/game/control_collision_telemetry.go
+services/game-server/internal/game/control_collision_telemetry.go
+services/game-server/internal/devtools/collision_telemetry.go
 ```
 
 ## Responsibilities
@@ -124,7 +128,7 @@ It helps enforce server authority for:
 * server-side point validation for target selection
 * respawn clearance checks through game-owned radius approximation
 * radial candidate radius derivation for asteroid bodies
-* debug collision-body telemetry
+* debug collision-body telemetry via the current adapter through the telemetry adapter pair
 
 Clients may render local visuals and debug overlays, but authoritative collision and point-selection validation use server-side collision bodies.
 
@@ -169,7 +173,7 @@ func (catalog CollisionShapeCatalog) PickupShape(pickupType string) (CollisionSh
 func (shape ImportedCollisionShape) ToCollisionShape(scale float64) (CollisionShape, error)
 ```
 
-The surface is used inside the process only. Callers build or retrieve `CollisionBody` values, pass them to physics helpers, and then apply any gameplay result in the owning gameplay boundary.
+The surface is used inside the process only. Callers build or retrieve `CollisionBody` values, pass them to physics helpers, and then apply any gameplay result in the owning gameplay boundary. The game adapter exposes raw authoritative physics bodies; devtools owns the debug JSON projection.
 
 ## Runtime model
 
@@ -389,7 +393,8 @@ services/game-server/internal/game/session.go
 Devtools and telemetry consumers:
 
 ```text
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control_collision_telemetry.go
+services/game-server/internal/game/control_collision_telemetry.go
 services/game-server/internal/devtools/shape_catalog.go
 ```
 

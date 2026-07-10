@@ -12,7 +12,7 @@ It covers the debug command surface that spawns players, asteroids, bullets, and
 
 Spawn tools are development-only mutation commands routed through the game server devtools surface.
 
-The server receives devtools packets from the client, decodes them as `devtools.DebugCommand`, and applies the requested spawn through server-owned game seams. The client may request a position, direction, entity type, pickup type, or target player id, but the server owns the actual mutation and the resulting authoritative state.
+The server receives devtools packets from the client, decodes them as `devtools.DebugCommand`, constructs `game.NewControl(room.GameInstance())`, wraps it with `devtools.NewController(...)`, and applies the requested spawn through the Control adapter. The client may request a position, direction, entity type, pickup type, or target player id, but the server owns the actual mutation and the resulting authoritative state.
 
 The current spawn packet surface is:
 
@@ -130,13 +130,13 @@ The current high-level route is:
 
 ```text
 websocket message
--> client packet envelope decode
--> inbound.RouteClientPacket
--> inbound.HandlePlacementDevtoolsPacket
--> packetcodec.Decode into devtools.DebugCommand
--> devtools.HandleCommand
--> spawn command handler
--> game-owned mutation helper
+-> inbound classifier
+-> packet decode into devtools.DebugCommand
+-> game.NewControl
+-> devtools.NewController
+-> Controller.HandleCommand
+-> capability-specific handler
+-> game.Control
 -> lane-native realtime projection
 ```
 
@@ -239,11 +239,7 @@ The direction resolver:
 * normalizes accepted requested direction
 * otherwise returns a normalized fallback direction
 
-Fallback directions come from the game spawner through the devtools export seam:
-
-```text
-Game.DevtoolsRandomUnitVector
-```
+Fallback directions come from the game spawner through the Control adapter.
 
 ## Player spawn behavior
 
@@ -255,9 +251,9 @@ The current player spawn flow is:
 handleDebugSpawnEntity
 -> applyDebugSpawnPlayer
 -> resolveDebugSpawnPlayerID
--> DevtoolsEnsurePlayerSession
--> DevtoolsSpawnPlayerShip
--> ensureDevtoolsPlayerCameraView
+-> Control player-spawn capability
+-> ensure camera view when absent
+-> apply supplied config only when both dimensions are positive
 ```
 
 If `target_player_id` is supplied, the server normalizes it to the `player-N` format and reserves that id through the game-owned id reservation seam. Valid examples include:
@@ -280,13 +276,13 @@ If `target_player_id` is not supplied, the server allocates the first available 
 Player spawn creates a player session through:
 
 ```text
-Game.DevtoolsEnsurePlayerSession
+Control player/session helper
 ```
 
 It then creates the active ship through:
 
 ```text
-Game.DevtoolsSpawnPlayerShip
+Control player spawn helper
 ```
 
 The devtools player ship path resets respawn cooldown, creates a new ship from the session, stores it in `game.entities.Players`, and ensures a camera view exists. Debug-spawned players use the dummy camera config from the devtools player-camera helper.
@@ -303,8 +299,8 @@ The current asteroid flow is:
 handleDebugSpawnEntity
 -> applyDebugSpawnAsteroid
 -> buildDebugAsteroidSpawnPlan
--> Game.DevtoolsApplyAsteroidSpawnPlan
--> Game.applyAsteroidSpawn
+-> Control.ApplyAsteroidSpawnPlan
+-> game.applyAsteroidSpawn
 ```
 
 The debug asteroid spawn plan uses:
@@ -329,7 +325,7 @@ The devtools path must not reintroduce raw random variant pools. Debug asteroid 
 Asteroid id allocation and runtime entity insertion are owned by root game code:
 
 ```text
-Game.applyAsteroidSpawn
+game.applyAsteroidSpawn
 ```
 
 The spawned asteroid is stored in:
@@ -347,8 +343,8 @@ The current bullet flow is:
 ```text
 handleDebugSpawnEntity
 -> applyDebugSpawnBullet
--> Game.DevtoolsSpawnBullet
--> Game.spawnDebugBullet
+-> Control.SpawnBullet
+-> game.spawnDebugBullet
 ```
 
 The bullet owner is the `playerID` supplied by the active networking/game session, not a client-supplied owner field.
@@ -507,7 +503,7 @@ devtools command
 
 Current examples:
 
-* Debug asteroid spawn builds a debug asteroid spawn plan, then applies it through `Game.applyAsteroidSpawn`.
+* Debug asteroid spawn builds a debug asteroid spawn plan, then applies it through `game.applyAsteroidSpawn`.
 * Debug pickup spawn calls `Game.SpawnPickup`, which delegates to the normal pickup creation path.
 * Debug player spawn uses game-owned session, ship, and camera-view helpers.
 * Debug bullet spawn uses a game-owned debug bullet helper and stores the bullet in the authoritative projectile map.
@@ -552,9 +548,9 @@ services/game-server/internal/networking/inbound/client_packet_envelope.go
 Game-owned spawn seams:
 
 ```text
-services/game-server/internal/game/export_devtools_spawn.go
-services/game-server/internal/game/export_devtools_player_spawn.go
-services/game-server/internal/game/export_devtools_streams.go
+services/game-server/internal/game/control_spawn.go
+services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_streams.go
 services/game-server/internal/game/spawning.go
 services/game-server/internal/game/pickups.go
 ```
@@ -598,8 +594,8 @@ services/game-server/internal/devtools/command_types_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
 services/game-server/internal/devtools/target_player_ids_test.go
-services/game-server/internal/game/export_devtools_player_spawn_test.go
-services/game-server/internal/game/export_devtools_streams_test.go
+services/game-server/internal/game/control_player_spawn_test.go
+services/game-server/internal/game/control_streams_test.go
 services/game-server/tests/networking/inbound_devtools_test.go
 services/game-server/internal/game/entities/pickups/definitions_test.go
 services/game-server/internal/game/pickup_drops_test.go

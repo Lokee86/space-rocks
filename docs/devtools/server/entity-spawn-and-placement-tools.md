@@ -12,7 +12,7 @@ It covers the authoritative server behavior behind debug placement requests for 
 
 Entity spawn and placement tools let a developer request authoritative game-state mutations from the client devtools surface.
 
-The server accepts placement-related devtools packets, decodes them into `devtools.DebugCommand`, routes them through the server devtools command handler, and applies the requested spawn through game-owned seams.
+The server accepts placement-related devtools packets, decodes them into `devtools.DebugCommand`, constructs `game.NewControl(room.GameInstance())`, wraps it with `devtools.NewController(...)`, and applies the requested spawn through the current Control adapter.
 
 Current spawn surfaces:
 
@@ -70,12 +70,13 @@ The command path is:
 
 ```text
 client devtools packet
--> websocket inbound routing
--> inbound.HandlePlacementDevtoolsPacket
--> packetcodec.Decode(raw message, devtools.DebugCommand)
--> devtools.HandleCommand
--> spawn-specific devtools handler
--> game-owned devtools export seam or game runtime method
+-> inbound classifier
+-> packet decode into devtools.DebugCommand
+-> game.NewControl
+-> devtools.NewController
+-> Controller.HandleCommand
+-> capability-specific handler
+-> game.Control
 -> family-specific realtime readback
 ```
 
@@ -165,14 +166,15 @@ Player ID behavior:
 
 ```text
 target_player_id present
--> normalize requested ID as player-N
+-> normalize requested ID as positive player-N
 -> reject invalid IDs
 -> reject occupied IDs
 -> reserve the requested ID
+-> advance the allocator when reserved
 -> spawn that player slot
 
 target_player_id absent
--> allocate the first available player-N ID
+-> allocate the first available valid player slot
 -> respect playerids.MaxPlayers
 -> reserve the allocated ID
 -> spawn that player slot
@@ -189,6 +191,15 @@ DummyPlayerCameraConfig
 ```
 
 Creating the ship also ensures the spawned player has a camera view.
+
+Camera behavior:
+
+```text
+camera view absent
+-> create camera view
+-> update position
+-> apply supplied config only when both dimensions are positive
+```
 
 ### Asteroid spawn
 
@@ -373,8 +384,8 @@ services/game-server/internal/networking/inbound/devtools.go
 Game-owned devtools seams:
 
 ```text
-services/game-server/internal/game/export_devtools_spawn.go
-services/game-server/internal/game/export_devtools_player_spawn.go
+services/game-server/internal/game/control_spawn.go
+services/game-server/internal/game/control_player_spawn.go
 services/game-server/internal/game/spawning.go
 services/game-server/internal/game/pickups.go
 ```
@@ -433,8 +444,8 @@ services/game-server/tests/networking/inbound_devtools_test.go
 services/game-server/internal/devtools/command_types_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
-services/game-server/internal/game/export_devtools_player_spawn_test.go
-services/game-server/internal/game/export_devtools_streams_test.go
+services/game-server/internal/game/control_player_spawn_test.go
+services/game-server/internal/game/control_streams_test.go
 services/game-server/internal/game/asteroids/variants_test.go
 ```
 

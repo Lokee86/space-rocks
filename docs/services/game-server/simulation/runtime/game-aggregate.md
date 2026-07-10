@@ -63,7 +63,7 @@ The game aggregate owns:
 * Lane-native realtime projection inputs consumed by `protocol/realtime`.
 * Match decision and match fact read models through `MatchDecision`, `IsGameOver`, and `PlayerMatchFacts`.
 * Package-local adaptation between pure subsystem results and game-owned state mutation.
-* Simulation step observer registration for narrow devtools/runtime hooks.
+* Simulation step observer registration via the game-owned Control adapter for narrow devtools/runtime hooks.
 
 ## Does not own
 
@@ -84,7 +84,7 @@ The game aggregate does not own:
 * Radial effect zone/coverage math internals.
 * Devtools command routing.
 
-Those systems can call into the aggregate or be called by the aggregate, but they own their own boundaries.
+Those systems can call into the aggregate or be called by the aggregate, but they own their own boundaries. Devtools command ownership and debug DTO shaping remain outside the game package.
 
 ## Domain roles
 
@@ -236,7 +236,7 @@ SpawnPickup
 RemovePickup
 targeting APIs
 pause packet APIs
-devtools export APIs
+Control adapter APIs
 Step
 ```
 
@@ -245,6 +245,8 @@ Package-local helper methods generally assume the caller already holds the lock 
 This lock keeps the ticker-driven simulation loop, inbound packet handling, outbound state projection, room match checks, and devtools adapters from concurrently mutating the same maps.
 
 ## Public runtime surface
+
+See also: [Game Control Devtools Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
 
 The aggregate exposes the game-facing runtime API used by adjacent service boundaries.
 
@@ -282,7 +284,7 @@ SpawnPickup
 RemovePickup
 ```
 
-Devtools-facing surfaces are exposed through `export_devtools_*.go` files. They are intentionally narrow adapters around game-owned state and should not cause `internal/game` to import devtools packages.
+Devtools command and DTO ownership remains outside the game package. Game-owned behavior is exposed through the focused `control_*.go` files and the canonical adapter doc.
 
 ## Protocols and APIs
 
@@ -549,8 +551,10 @@ services/game-server/internal/networking/websocket_write.go and services/game-se
 Devtools adapter files:
 
 ```text
-services/game-server/internal/game/export_devtools.go
-services/game-server/internal/game/export_devtools_*.go
+services/game-server/internal/game/control.go
+services/game-server/internal/game/control_*.go
+services/game-server/internal/devtools/controller.go
+services/game-server/internal/devtools/target.go
 ```
 
 Generated/source files:

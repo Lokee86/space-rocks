@@ -21,8 +21,11 @@ client devtools hotkey or window action
 -> inbound packet envelope decode
 -> devtools packet-family routing
 -> devtools.DebugCommand decode
--> devtools.HandleCommand
--> game-owned export seam
+-> game.NewControl(room.GameInstance())
+-> devtools.NewController(...)
+-> Controller.HandleCommand
+-> capability-specific handler
+-> game.Control
 -> authoritative game state mutation
 -> lane-native gameplay readback or debug output packet
 ```
@@ -74,7 +77,9 @@ Server devtools must not:
 * Put devtools-only command constants into generated normal game packet ownership.
 * Make `internal/game` import `internal/devtools`.
 
-When a command affects gameplay, `services/game-server/internal/devtools` handles command interpretation and then calls a narrow game-owned `Devtools...` export method. The owning gameplay system still performs the actual mutation.
+When a command affects gameplay, `services/game-server/internal/devtools` handles command interpretation and then calls a narrow game-owned Control capability. The owning gameplay system still performs the actual mutation.
+
+The package-level `devtools.HandleCommand(Target, ...)` remains a thin default-controller wrapper for direct callers, while networking constructs a controller explicitly.
 
 ## Server authority
 
@@ -84,21 +89,21 @@ First, networking decides whether the packet is a devtools command before normal
 
 Second, the devtools package decodes the packet into `DebugCommand` and dispatches by command type through `HandleCommand`.
 
-Third, the game package applies the mutation through game-owned export seams such as:
+Third, the game package applies the mutation through game-owned Control capabilities such as:
 
 ```text
-DevtoolsSetPlayerInvincible
-DevtoolsSetInfiniteLives
-DevtoolsToggleFreezeWorld
-DevtoolsSetPlayerFrozen
-DevtoolsKillPlayer
-DevtoolsSpawnBullet
-DevtoolsApplyAsteroidSpawnPlan
-DevtoolsForceRespawnPlayer
-DevtoolsSetPlayerScore
-DevtoolsAddPlayerScore
-DevtoolsClearBullets
-DevtoolsClearAsteroids
+SetPlayerInvincible
+SetInfiniteLives
+ToggleFreezeWorld
+SetPlayerFrozen
+ApplyPlayerDefeat
+SpawnBullet
+ApplyAsteroidSpawnPlan
+ForceRespawnPlayer
+SetPlayerScore
+AddPlayerScore
+ClearBullets
+ClearAsteroids
 ```
 
 The client does not receive a command-specific acknowledgement packet. Confirmation is observed through lane-native readback, debug status output, entity sync, or visible absence/presence of entities after the server applies the change.
@@ -225,9 +230,9 @@ Unknown command types return `false` from `HandleCommand`. The inbound networkin
 
 | Packet type                   | Target fields                                        | Server behavior                                                                         |
 | ----------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `toggle_debug_invincible`     | optional `target_player_id`, optional `target_scope` | Toggles or sets `DamageOptions.Invincible` through `DevtoolsSetPlayerInvincible`.       |
-| `toggle_debug_infinite_lives` | optional `target_player_id`, optional `target_scope` | Toggles or sets session `LifeOptions.InfiniteLives` through `DevtoolsSetInfiniteLives`. |
-| `toggle_debug_freeze_player`  | optional `target_player_id`, optional `target_scope` | Toggles or sets session `Suspension.DevFrozen` through `DevtoolsSetPlayerFrozen`.       |
+| `toggle_debug_invincible`     | optional `target_player_id`, optional `target_scope` | Toggles or sets `DamageOptions.Invincible` through `SetPlayerInvincible`.       |
+| `toggle_debug_infinite_lives` | optional `target_player_id`, optional `target_scope` | Toggles or sets session `LifeOptions.InfiniteLives` through `SetInfiniteLives`. |
+| `toggle_debug_freeze_player`  | optional `target_player_id`, optional `target_scope` | Toggles or sets session `Suspension.DevFrozen` through `SetPlayerFrozen`.       |
 
 For single-player targeting, an empty `target_player_id` falls back to the requesting player ID.
 
@@ -263,11 +268,11 @@ Effects:
 
 | `freeze_target`        | Server behavior                                                         |
 | ---------------------- | ----------------------------------------------------------------------- |
-| `all`                  | Toggles whole-world freeze through `DevtoolsToggleFreezeWorld`.         |
-| `asteroids`            | Toggles asteroid movement through `DevtoolsToggleFreezeAsteroids`.      |
-| `bullets`              | Toggles bullet movement/lifetime through `DevtoolsToggleFreezeBullets`. |
-| `spawning` or `spawns` | Toggles asteroid spawning through `DevtoolsToggleFreezeSpawning`.       |
-| `collisions`           | Toggles collision passes through `DevtoolsToggleFreezeCollisions`.      |
+| `all`                  | Toggles whole-world freeze through `ToggleFreezeWorld`.         |
+| `asteroids`            | Toggles asteroid movement through `ToggleFreezeAsteroids`.      |
+| `bullets`              | Toggles bullet movement/lifetime through `ToggleFreezeBullets`. |
+| `spawning` or `spawns` | Toggles asteroid spawning through `ToggleFreezeSpawning`.       |
+| `collisions`           | Toggles collision passes through `ToggleFreezeCollisions`.      |
 | unknown value          | Logs and consumes the command without mutation.                         |
 
 The actual simulation gates live in game-owned world simulation options. Devtools only requests toggle changes through exported game methods.
@@ -285,7 +290,7 @@ target_scope
 
 For an all-player request, each resolved player is evaluated individually.
 
-The handler only applies kill to players whose match decision status is `active`. It calls `DevtoolsKillPlayer`, which builds a debug damage request and resolves it through the damage path before applying fatal player damage.
+The handler only applies kill to players whose match decision status is `active`. It calls `ApplyPlayerDefeat`, which builds a debug damage request and resolves it through the damage path before applying fatal player damage.
 
 The source player ID is the requesting/current game player ID. The target player ID is the player being killed.
 
@@ -382,8 +387,8 @@ For a single-player request, `target_player_id` is required. For `target_scope =
 Current server behavior logs the provided `x` and `y`, but applies the game-owned safe respawn position rather than trusting the payload position. The respawn path calls:
 
 ```text
-DevtoolsSafeRespawnPosition
-DevtoolsForceRespawnPlayer
+SafeRespawnPosition
+ForceRespawnPlayer
 ```
 
 Active players are ignored. Missing sessions or invalid target IDs are ignored.
@@ -394,10 +399,10 @@ Player counter commands mutate durable player/session counters through game-owne
 
 | Packet type       | Payload field | Server behavior                                 |
 | ----------------- | ------------- | ----------------------------------------------- |
-| `debug_set_score` | `score`       | Sets score through `DevtoolsSetPlayerScore`.    |
-| `debug_add_score` | `amount`      | Adds to score through `DevtoolsAddPlayerScore`. |
-| `debug_set_lives` | `lives`       | Sets lives through `DevtoolsSetPlayerLives`.    |
-| `debug_add_lives` | `amount`      | Adds to lives through `DevtoolsAddPlayerLives`. |
+| `debug_set_score` | `score`       | Sets score through `SetPlayerScore`.    |
+| `debug_add_score` | `amount`      | Adds to score through `AddPlayerScore`. |
+| `debug_set_lives` | `lives`       | Sets lives through `SetPlayerLives`.    |
+| `debug_add_lives` | `amount`      | Adds to lives through `AddPlayerLives`. |
 
 All four commands support `target_player_id` and `target_scope = "all_players"`.
 
@@ -574,16 +579,17 @@ services/game-server/internal/devtools/streamruntime/continuous_bullet_streams.g
 ### Game-owned export seams
 
 ```text
-services/game-server/internal/game/export_devtools.go
-services/game-server/internal/game/export_devtools_status.go
-services/game-server/internal/game/export_devtools_toggles.go
-services/game-server/internal/game/export_devtools_spawn.go
-services/game-server/internal/game/export_devtools_respawn.go
-services/game-server/internal/game/export_devtools_player_spawn.go
-services/game-server/internal/game/export_devtools_player_counters.go
-services/game-server/internal/game/export_devtools_clear_entities.go
-services/game-server/internal/game/export_devtools_streams.go
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control.go
+services/game-server/internal/game/control_match.go
+services/game-server/internal/game/control_status.go
+services/game-server/internal/game/control_toggles.go
+services/game-server/internal/game/control_spawn.go
+services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_respawn.go
+services/game-server/internal/game/control_counters.go
+services/game-server/internal/game/control_clear.go
+services/game-server/internal/game/control_streams.go
+services/game-server/internal/game/control_collision_telemetry.go
 ```
 
 ### Related gameplay seams
@@ -633,11 +639,10 @@ services/game-server/internal/devtools/streamruntime/continuous_bullet_streams_t
 Relevant game export seam tests include:
 
 ```text
-services/game-server/internal/game/export_devtools_player_spawn_test.go
-services/game-server/internal/game/export_devtools_respawn_test.go
-services/game-server/internal/game/export_devtools_streams_test.go
-services/game-server/internal/game/export_devtools_collision_telemetry_test.go
-services/game-server/internal/game/devtools_dummy_camera_test.go
+services/game-server/internal/game/control_player_spawn_test.go
+services/game-server/internal/game/control_respawn_test.go
+services/game-server/internal/game/control_streams_test.go
+services/game-server/internal/game/control_collision_telemetry_test.go
 ```
 
 Relevant networking output tests include:

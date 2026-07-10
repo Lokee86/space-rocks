@@ -22,12 +22,6 @@
             },
             "cwd": {
               "type": "string"
-            },
-            "timeout_ms": {
-              "type": "integer",
-              "minimum": 1000,
-              "maximum": 600000,
-              "default": 600000
             }
           },
           "required": []
@@ -84,12 +78,6 @@
             },
             "cwd": {
               "type": "string"
-            },
-            "timeout_ms": {
-              "type": "integer",
-              "minimum": 1000,
-              "maximum": 600000,
-              "default": 600000
             }
           },
           "required": ["prompt"]

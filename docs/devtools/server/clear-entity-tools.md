@@ -19,7 +19,7 @@ debug_clear_bullets
 debug_clear_asteroids
 ```
 
-Both commands are room/global commands. They do not target a player, do not use placement coordinates, and do not resolve through the canonical gameplay target. The requesting client sends a generated debug packet, networking routes it through the devtools command path, and the server mutates the authoritative `Game` entity store through narrow game-owned export seams.
+Both commands are room/global commands. They do not target a player, do not use placement coordinates, and do not resolve through the canonical gameplay target. The requesting client sends a generated debug packet, networking routes it through the devtools command path, and the server mutates the authoritative `Game` entity store through `Control.ClearBullets` and `Control.ClearAsteroids`.
 
 Debug/devtools entity creation and clearing are reflected to clients through normal realtime entity-family lanes: asteroid/bullet lifecycle lanes for existence and hot lanes for movement.
 
@@ -58,11 +58,11 @@ The authoritative mutation is owned by `internal/game`.
 `internal/devtools` receives and dispatches the command, but it does not directly own the entity maps. The actual mutations happen through:
 
 ```text
-Game.DevtoolsClearBullets()
-Game.DevtoolsClearAsteroids()
+Control.ClearBullets()
+Control.ClearAsteroids()
 ```
 
-Those methods lock the `Game`, count the current entities, delete every entry in the corresponding entity map, and return the removed count.
+Those methods lock the authoritative entity maps, count the current entities, delete every entry in the corresponding entity map, and return the removed count.
 
 Current map ownership:
 
@@ -106,8 +106,8 @@ client button
 
 | Command                 | Generated client builder         | Server handler              | Authoritative mutation          |
 | ----------------------- | -------------------------------- | --------------------------- | ------------------------------- |
-| `debug_clear_bullets`   | `debug_clear_bullets_packet()`   | `handleDebugClearBullets`   | `Game.DevtoolsClearBullets()`   |
-| `debug_clear_asteroids` | `debug_clear_asteroids_packet()` | `handleDebugClearAsteroids` | `Game.DevtoolsClearAsteroids()` |
+| `debug_clear_bullets`   | `debug_clear_bullets_packet()`   | `handleDebugClearBullets`   | `Control.ClearBullets()`   |
+| `debug_clear_asteroids` | `debug_clear_asteroids_packet()` | `handleDebugClearAsteroids` | `Control.ClearAsteroids()` |
 
 Packet bodies:
 
@@ -138,7 +138,7 @@ networking.handleClientPacket
 -> inbound.handleDevtoolsCommandPacket
 -> devtools.HandleCommand
 -> handleDebugClearBullets / handleDebugClearAsteroids
--> Game.DevtoolsClearBullets / Game.DevtoolsClearAsteroids
+-> Control.ClearBullets / Control.ClearAsteroids
 ```
 
 If the websocket session has no current room or no current game player ID, the devtools packet is consumed and no mutation is applied.
@@ -180,8 +180,9 @@ Clear-entity packet classification and dispatch are part of the general inbound 
 Primary implementation:
 
 ```text
+services/game-server/internal/devtools/controller.go
 services/game-server/internal/devtools/clear_entities.go
-services/game-server/internal/game/export_devtools_clear_entities.go
+services/game-server/internal/game/control_clear.go
 ```
 
 Command dispatch and packet classification:

@@ -33,14 +33,16 @@ Only `all_players` receives special server handling. Empty, `single_player`, and
 The shared server resolver is:
 
 ```text
-resolveCommandTargetPlayerIDs(game, requesting_player_id, command)
+resolveCommandTargetPlayerIDs(target, requesting_player_id, command)
 ```
+
+`PlayerTargetSource` is the command-fanout capability used by the resolver.
 
 Resolution behavior is:
 
 ```text
 target_scope == all_players
--> return game.DevtoolsTargetPlayerIDs()
+-> return game.Control.TargetPlayerIDs()
 
 otherwise
 -> use target_player_id when present
@@ -112,7 +114,7 @@ whether a respawn target is dead enough to respawn
 whether a requested debug-spawn player ID can be normalized and reserved
 ```
 
-All-player fanout is game-owned. `Game.DevtoolsTargetPlayerIDs()` returns a sorted unique list from both:
+All-player fanout is game-owned. `Control.TargetPlayerIDs()` is the command-fanout capability. It returns the sorted unique union of both, excluding empty IDs:
 
 ```text
 playerSessions
@@ -225,15 +227,15 @@ infinite_lives
 player_frozen
 ```
 
-`debug_kill_player` resolves target players through the same shared resolver, but it only applies the kill to players that are currently active according to match decision state.
+`debug_kill_player` resolves target players through the same shared resolver, but it only applies the kill to players that are currently active according to match decision state. The underlying debug damage resolution and fatal-damage path remain unchanged, now exposed as `Control.ApplyPlayerDefeat`.
 
 Score and lives commands resolve target players through the same shared resolver, then call the game-owned player counter seam:
 
 ```text
-DevtoolsSetPlayerScore
-DevtoolsAddPlayerScore
-DevtoolsSetPlayerLives
-DevtoolsAddPlayerLives
+Control.SetPlayerScore
+Control.AddPlayerScore
+Control.SetPlayerLives
+Control.AddPlayerLives
 ```
 
 Counter clamping belongs to the game counter implementation, not the devtools target resolver.
@@ -417,9 +419,9 @@ services/game-server/internal/devtools/disabled.go
 Game-owned devtools adapters:
 
 ```text
-services/game-server/internal/game/export_devtools_player_spawn.go
-services/game-server/internal/game/export_devtools_player_counters.go
-services/game-server/internal/game/export_devtools_toggles.go
+services/game-server/internal/game/control_player_spawn.go
+services/game-server/internal/game/control_counters.go
+services/game-server/internal/game/control_toggles.go
 ```
 
 Related authoritative game state and targeting files:
@@ -479,7 +481,7 @@ services/game-server/internal/devtools/player_counters_test.go
 services/game-server/internal/devtools/command_types_test.go
 services/game-server/internal/devtools/enabled_default_test.go
 services/game-server/internal/devtools/disabled_test.go
-services/game-server/internal/game/export_devtools_player_spawn_test.go
+services/game-server/internal/game/control_player_spawn_test.go
 ```
 
 Current coverage verifies:

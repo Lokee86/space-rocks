@@ -31,6 +31,8 @@ The phase order is intentionally centralized in `services/game-server/internal/g
 
 ## Code root
 
+See also: [Game Control Devtools Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
+
 ```text
 services/game-server/internal/game/
 ```
@@ -203,7 +205,15 @@ The same lock is used by public game APIs that mutate or read live state, includ
 
 This means the simulation phase order is serialized against inbound game mutations and outbound lane-native realtime projection reads.
 
-Simulation step observers are invoked while `Step` still holds the game lock. Current observer usage is narrow devtools integration for continuous bullet streams. Observer callbacks should remain small and route mutations through the intended game-owned devtools adapter functions.
+Simulation step observers are invoked while `Step` still holds the game lock. Current observer usage is narrow devtools integration for continuous bullet streams. Observer callbacks should remain small and route mutations through the intended game-owned Control adapter functions.
+
+Observer path:
+
+```text
+devtools.ObserverRegistry
+-> Control.RegisterSimulationStepObserver
+-> callbacks invoked during Game.Step
+```
 
 ## Normal phase order
 
@@ -442,7 +452,7 @@ Primitive collision shape math remains in the physics package. Damage math remai
 The current registration surface is:
 
 ```text
-DevtoolsRegisterSimulationStepObserver(observer func(float64))
+Control.RegisterSimulationStepObserver(observer func(float64))
 ```
 
 Current observer usage is the devtools continuous bullet stream path:
@@ -450,7 +460,7 @@ Current observer usage is the devtools continuous bullet stream path:
 ```text
 devtools continuous stream command
 -> ensureContinuousBulletStreamStepObserver
--> DevtoolsRegisterSimulationStepObserver
+-> Control.RegisterSimulationStepObserver
 -> Step observer callback
 -> streamruntime.StepContinuousBulletStreams
 -> game-owned debug bullet spawn adapter
@@ -521,7 +531,7 @@ Related room and networking files:
 
 Related devtools files:
 
-* `services/game-server/internal/game/export_devtools_streams.go` - devtools simulation step observer registration and debug bullet adapter.
+* `services/game-server/internal/game/control_streams.go` - devtools simulation step observer registration and debug bullet adapter.
 * `services/game-server/internal/devtools/continuous_bullet_stream.go` - current observer consumer.
 * `services/game-server/internal/devtools/streamruntime/` - continuous bullet stream runtime state outside the game package.
 
@@ -545,7 +555,7 @@ Relevant focused tests include:
 * `services/game-server/internal/game/player_weapons_test.go`
 * `services/game-server/internal/game/radial_effects_test.go`
 * `services/game-server/internal/game/radial_projectile_impact_test.go`
-* `services/game-server/internal/game/export_devtools_streams_test.go`
+* `services/game-server/internal/game/control_streams_test.go`
 * `services/game-server/tests/game/movement_test.go`
 * `services/game-server/tests/game/collision_test.go`
 * `services/game-server/tests/game/spawning_test.go`

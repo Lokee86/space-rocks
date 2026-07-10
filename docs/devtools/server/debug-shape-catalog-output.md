@@ -411,7 +411,7 @@ services/game-server/internal/game/collisions.go
 services/game-server/internal/game/pickup_collisions.go
 services/game-server/internal/game/targeting.go
 services/game-server/internal/game/session.go
-services/game-server/internal/game/export_devtools_collision_telemetry.go
+services/game-server/internal/game/control_collision_telemetry.go
 client/scripts/world/
 client/scripts/gameplay/
 ```
