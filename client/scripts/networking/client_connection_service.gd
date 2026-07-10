@@ -38,7 +38,6 @@ signal webrtc_ready_received(packet: Dictionary)
 signal webrtc_smoke_received(packet: Dictionary)
 signal webrtc_failed_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
-signal gameplay_packet_received(packet: Dictionary)
 
 var network_client: NetworkClient
 var client_packet_sender: ClientPacketSender
@@ -65,8 +64,6 @@ func _ready() -> void:
 		server_packet_dispatcher = ServerPacketDispatcher.new()
 	if realtime_packet_pipeline == null:
 		realtime_packet_pipeline = RealtimePacketPipeline.new()
-		if not realtime_packet_pipeline.gameplay_packet_applied.is_connected(Callable(self, "_on_realtime_gameplay_packet_applied")):
-			realtime_packet_pipeline.gameplay_packet_applied.connect(Callable(self, "_on_realtime_gameplay_packet_applied"))
 	if network_client != null and network_client.get_parent() == null:
 		add_child(network_client)
 	if server_packet_dispatcher != null and server_packet_dispatcher.get_parent() == null:
@@ -288,9 +285,6 @@ func _route_gameplay_packet(packet: Dictionary) -> void:
 			}
 		)
 
-
-func _on_realtime_gameplay_packet_applied(packet: Dictionary) -> void:
-	gameplay_packet_received.emit(packet)
 
 func _on_connected() -> void:
 	_ensure_realtime_transport_session()

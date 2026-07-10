@@ -73,12 +73,9 @@ func configure(
 	gameplay_state_flow.configure(gameplay_composition)
 	if presentation_bridge != null:
 		presentation_bridge.configure(realtime_packet_pipeline, gameplay_presentation_adapter, gameplay_composition, logger)
-
-func handle_gameplay_packet(packet: Dictionary) -> void:
-	if !accepts_gameplay_packets:
-		return
-	if presentation_bridge != null:
-		presentation_bridge.handle_gameplay_packet(packet)
+		var gameplay_packet_callable := Callable(presentation_bridge, "handle_gameplay_packet")
+		if realtime_packet_pipeline != null and not realtime_packet_pipeline.gameplay_packet_applied.is_connected(gameplay_packet_callable):
+			realtime_packet_pipeline.gameplay_packet_applied.connect(gameplay_packet_callable)
 
 func handle_player_pause_state(packet: Dictionary) -> void:
 	if !accepts_gameplay_packets:

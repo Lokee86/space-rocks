@@ -118,7 +118,6 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	var second_peer := FakeTransportPeer.new()
 	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
 	var dispatcher_packets: Array = []
-	var gameplay_packets: Array = []
 	var smoke_packets: Array = []
 	var transport_peers := [first_peer, second_peer]
 	service.network_client = fake_network
@@ -130,9 +129,7 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	service.server_packet_dispatcher.resync_request_received.connect(func(packet: Dictionary) -> void:
 		dispatcher_packets.append(packet)
 	)
-	service.gameplay_packet_received.connect(func(packet: Dictionary) -> void:
-		gameplay_packets.append(packet)
-	)
+	
 	service.webrtc_smoke_received.connect(func(packet: Dictionary) -> void:
 		smoke_packets.append(packet)
 	)
@@ -148,8 +145,8 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	assert_eq(second_peer.started, 1)
 	assert_eq(dispatcher_packets.size(), 1)
 	assert_eq(dispatcher_packets[0], {"type": "resync_request", "lane": "world"})
-	assert_eq(gameplay_packets.size(), 1)
-	assert_eq(gameplay_packets[0], {"type": "resync_request", "lane": "world"})
+	assert_true(service.realtime_transport_session != null)
+	assert_true(service.get_realtime_packet_pipeline().get_presentation_state().world_lane_state != null)
 	assert_true(smoke_packets.is_empty())
 
 

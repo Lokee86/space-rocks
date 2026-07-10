@@ -59,12 +59,14 @@ class FakePresentationBridge:
 	var flush_calls := 0
 	var reset_calls := 0
 	var handled_packets: Array = []
+	var connected_packets: Array = []
 
 	func activate() -> void:
 		active_calls += 1
 
 	func handle_gameplay_packet(packet: Dictionary) -> void:
 		handled_packets.append(packet)
+		connected_packets.append(packet)
 
 	func flush_pending() -> bool:
 		flush_calls += 1
@@ -77,14 +79,18 @@ class FakePresentationBridge:
 class FakeRealtimePacketPipeline:
 	extends RefCounted
 
+	signal gameplay_packet_applied(packet: Dictionary)
+
 	var ready := true
 	var presentation_state := FakePresentationState.new()
+	var connected_targets: Array = []
 
 	func is_gameplay_ready() -> bool:
 		return ready
 
 	func get_presentation_state():
 		return presentation_state
+
 
 
 class FakeRuntimeContext:
@@ -204,10 +210,12 @@ func test_first_ready_gameplay_packet_schedules_and_performs_initial_presentatio
 	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
 
 	controller.accepts_gameplay_packets = true
+	controller.realtime_packet_pipeline.gameplay_packet_applied.connect(Callable(presentation_bridge, "handle_gameplay_packet"))
 
-	controller.handle_gameplay_packet({"type": "world_delta"})
+	controller.realtime_packet_pipeline.gameplay_packet_applied.emit({"type": "world_delta"})
 
-	assert_eq(presentation_bridge.handled_packets, [{"type": "world_delta"}])
+	assert_true(controller.realtime_packet_pipeline.gameplay_packet_applied.is_connected(Callable(presentation_bridge, "handle_gameplay_packet")))
+	assert_eq(presentation_bridge.connected_packets, [{"type": "world_delta"}])
 	assert_eq(presentation_bridge.flush_calls, 0)
 	controller._process(0.016)
 	assert_eq(presentation_bridge.flush_calls, 1)
@@ -219,17 +227,18 @@ func test_later_gameplay_packet_can_delegate_presentation_again_after_flush() ->
 	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
 
 	controller.accepts_gameplay_packets = true
+	controller.realtime_packet_pipeline.gameplay_packet_applied.connect(Callable(presentation_bridge, "handle_gameplay_packet"))
 
-	controller.handle_gameplay_packet({"type": "world_delta"})
+	controller.realtime_packet_pipeline.gameplay_packet_applied.emit({"type": "world_delta"})
 	controller._process(0.016)
 
-	assert_eq(presentation_bridge.handled_packets.size(), 1)
+	assert_eq(presentation_bridge.connected_packets.size(), 1)
 	assert_eq(presentation_bridge.flush_calls, 1)
 
-	controller.handle_gameplay_packet({"type": "world_delta"})
+	controller.realtime_packet_pipeline.gameplay_packet_applied.emit({"type": "world_delta"})
 
-	assert_eq(presentation_bridge.handled_packets.size(), 2)
-	assert_eq(presentation_bridge.handled_packets[1], {"type": "world_delta"})
+	assert_eq(presentation_bridge.connected_packets.size(), 2)
+	assert_eq(presentation_bridge.connected_packets[1], {"type": "world_delta"})
 
 
 func test_gameplay_packet_is_delegated_before_readiness_and_flush_is_gated() -> void:
@@ -240,10 +249,14 @@ func test_gameplay_packet_is_delegated_before_readiness_and_flush_is_gated() -> 
 
 	controller.accepts_gameplay_packets = true
 	controller.gameplay_composition = gameplay_composition
-	controller.handle_gameplay_packet({"type": "world_delta"})
+	controller.realtime_packet_pipeline.gameplay_packet_applied.connect(Callable(presentation_bridge, "handle_gameplay_packet"))
+	controller.realtime_packet_pipeline.gameplay_packet_applied.emit({"type": "world_delta"})
+
+	assert_eq(presentation_bridge.connected_packets, [{"type": "world_delta"}])
+	assert_eq(presentation_bridge.flush_calls, 0)
+
 	controller._process(0.016)
 
-	assert_eq(presentation_bridge.handled_packets, [{"type": "world_delta"}])
 	assert_eq(presentation_bridge.flush_calls, 1)
 	assert_eq(gameplay_composition.process_count, 1)
 

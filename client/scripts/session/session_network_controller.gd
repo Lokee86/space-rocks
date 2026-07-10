@@ -47,7 +47,6 @@ func connect_room_signals() -> void:
 
 
 func connect_gameplay_signals() -> void:
-	_connect_connection_signal("gameplay_packet_received", Callable(self, "_on_gameplay_packet_received"))
 	_connect_connection_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
 	_connect_connection_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
 	_connect_connection_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
@@ -143,11 +142,6 @@ func _on_room_error_received(packet: Dictionary) -> void:
 		return
 	room_session_controller.handle_room_error(packet)
 
-
-func _on_gameplay_packet_received(packet: Dictionary) -> void:
-	if gameplay_session_controller == null:
-		return
-	gameplay_session_controller.handle_gameplay_packet(packet)
 
 
 func _on_debug_shape_catalog_received(packet: Dictionary) -> void:

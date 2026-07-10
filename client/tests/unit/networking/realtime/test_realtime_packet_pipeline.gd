@@ -8,9 +8,9 @@ func test_valid_realtime_packet_mutates_router_state_before_signal_callback() ->
 	var callback_state := {"state_seen": false, "count": 0}
 
 	assert_false(pipeline.is_gameplay_ready())
-	var presentation_state := pipeline.get_presentation_state()
+	var presentation_state: Variant = pipeline.get_presentation_state()
 	assert_true(presentation_state != null)
-	var presentation_state_identity := presentation_state
+	var presentation_state_identity: Variant = presentation_state
 
 	pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
 		callback_state.count += 1
@@ -56,10 +56,10 @@ func test_invalid_or_unsupported_packets_do_not_emit_gameplay_packet_applied() -
 func test_reset_preserves_presentation_state_identity_and_clears_stale_state() -> void:
 	var pipeline := RealtimePacketPipeline.new()
 	var presentation_state := pipeline.get_presentation_state()
-	var world_lane_state := presentation_state.world_lane_state
-	var overlay_lane_state := presentation_state.overlay_lane_state
-	var session_lane_state := presentation_state.session_lane_state
-	var event_batch_applier := presentation_state.event_batch_applier
+	var world_lane_state: Variant = presentation_state.world_lane_state
+	var overlay_lane_state: Variant = presentation_state.overlay_lane_state
+	var session_lane_state: Variant = presentation_state.session_lane_state
+	var event_batch_applier: Variant = presentation_state.event_batch_applier
 
 	pipeline.apply_packet({
 		"type": "world_full",
