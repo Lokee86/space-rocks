@@ -28,6 +28,106 @@
         }
       },
       {
+        "name": "hermes_terminal_start",
+        "description": "Starts a persistent interactive Hermes PTY session and returns session metadata plus initial readable output.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "cwd": {
+              "type": "string"
+            },
+            "cols": {
+              "type": "integer",
+              "default": 120
+            },
+            "rows": {
+              "type": "integer",
+              "default": 30
+            }
+          },
+          "required": []
+        }
+      },
+      {
+        "name": "hermes_terminal_send",
+        "description": "Sends input to a PTY session, optionally appending Enter, and returns incremental output after prompt activity settles.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            },
+            "input": {
+              "type": "string"
+            },
+            "append_enter": {
+              "type": "boolean",
+              "default": true
+            },
+            "idle_ms": {
+              "type": "integer",
+              "default": 400
+            },
+            "timeout_ms": {
+              "type": "integer",
+              "default": 30000
+            }
+          },
+          "required": ["session_id", "input"]
+        }
+      },
+      {
+        "name": "hermes_terminal_read",
+        "description": "Reads unread incremental output from a PTY session.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            },
+            "max_chars": {
+              "type": "integer",
+              "default": 50000
+            }
+          },
+          "required": ["session_id"]
+        }
+      },
+      {
+        "name": "hermes_terminal_resize",
+        "description": "Resizes a PTY session.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            },
+            "cols": {
+              "type": "integer",
+              "default": 120
+            },
+            "rows": {
+              "type": "integer",
+              "default": 30
+            }
+          },
+          "required": ["session_id"]
+        }
+      },
+      {
+        "name": "hermes_terminal_close",
+        "description": "Closes a PTY session and removes it from the manager.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            }
+          },
+          "required": ["session_id"]
+        }
+      },
+      {
         "name": "hermes_ping",
         "description": "Confirms the Hermes CLI is available.",
         "inputSchema": {

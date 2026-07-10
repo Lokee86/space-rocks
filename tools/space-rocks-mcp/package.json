@@ -19,6 +19,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "dotenv": "^16.6.1",
     "jose": "^6.2.3",
+    "node-pty": "^1.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
