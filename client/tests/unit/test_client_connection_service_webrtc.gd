@@ -104,7 +104,7 @@ func test_connection_service_does_not_poll_closed_webrtc_transport_after_reset()
 	service._on_connected()
 	var old_transport: WebRTCTransport = service.realtime_transport_session.transport
 	var initial_poll_count := fake_peer.polled
-	service.reset_realtime_protocol_state()
+	service.reset_realtime_session()
 	service._process(0.0)
 
 	assert_true(old_transport != null)

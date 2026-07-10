@@ -4,6 +4,7 @@ const LobbyClientPackets = preload("res://scripts/networking/outbound/lobby_clie
 const GameplayClientPackets = preload("res://scripts/networking/outbound/gameplay_client_packets.gd")
 const DevtoolsClientPackets = preload("res://scripts/networking/outbound/devtools_client_packets.gd")
 const TelemetryClientPackets = preload("res://scripts/networking/outbound/telemetry_client_packets.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var network_client: NetworkClient
@@ -25,6 +26,12 @@ func send_packet(packet: Dictionary) -> void:
 
 func send_input_packet(packet: Dictionary) -> void:
 	send_packet(packet)
+
+
+func send_authenticate_request(token: String) -> void:
+	if token.is_empty():
+		return
+	send_packet(Packets.authenticate_request_packet(token))
 
 
 func send_webrtc_offer(description_type: String, sdp: String) -> void:

@@ -50,7 +50,16 @@ func _ready() -> void:
 		realtime_packet_pipeline = RealtimePacketPipeline.new()
 	if client_inbound_coordinator == null:
 		client_inbound_coordinator = ClientInboundCoordinator.new()
-	client_inbound_coordinator.configure(server_packet_dispatcher, realtime_transport_session)
+	client_inbound_coordinator.configure(server_packet_dispatcher, realtime_packet_pipeline, realtime_transport_session)
+	_connect_coordinator_signal("authenticate_result_received", Callable(self, "_on_authenticate_result_received"))
+	_connect_coordinator_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
+	_connect_coordinator_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
+	_connect_coordinator_signal("room_error_received", Callable(self, "_on_room_error_received"))
+	_connect_coordinator_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
+	_connect_coordinator_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
+	_connect_coordinator_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
+	_connect_coordinator_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
+	_connect_coordinator_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
 	var ready_handler := Callable(self, "_on_realtime_transport_ready")
 	if !client_inbound_coordinator.is_connected("realtime_transport_ready", ready_handler):
 		client_inbound_coordinator.connect("realtime_transport_ready", ready_handler)
@@ -58,7 +67,6 @@ func _ready() -> void:
 		add_child(network_client)
 	if server_packet_dispatcher != null and server_packet_dispatcher.get_parent() == null:
 		add_child(server_packet_dispatcher)
-	_connect_server_packet_dispatcher_signals()
 	_connect_network_client_signals()
 
 
@@ -70,15 +78,15 @@ func _process(_delta: float) -> void:
 
 
 func connect_to_server(url: String) -> Error:
-	reset_realtime_protocol_state()
+	reset_realtime_session()
 	has_started_connection = true
 	return network_client.connect_to_server(url)
 
 
-func reset_realtime_protocol_state() -> void:
+func reset_realtime_session() -> void:
 	if realtime_packet_pipeline != null:
 		realtime_packet_pipeline.reset()
-	_clear_webrtc_transport()
+	_clear_realtime_transport_session()
 	ClientLogger.network_event(
 		ClientLogger.LEVEL_INFO,
 		"realtime_protocol_state_reset",
@@ -215,40 +223,14 @@ func _connect_network_client_signals() -> void:
 	_connect_network_signal("packet_received", Callable(self, "_on_packet_received"))
 
 
-func _connect_server_packet_dispatcher_signals() -> void:
-	_connect_dispatcher_signal("authenticate_result_received", Callable(self, "_on_authenticate_result_received"))
-	_connect_dispatcher_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
-	_connect_dispatcher_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
-	_connect_dispatcher_signal("room_error_received", Callable(self, "_on_room_error_received"))
-	_connect_dispatcher_signal("world_full_received", Callable(realtime_packet_pipeline, "apply_world_full"))
-	_connect_dispatcher_signal("world_delta_received", Callable(realtime_packet_pipeline, "apply_world_delta"))
-	_connect_dispatcher_signal("asteroid_delta_received", Callable(realtime_packet_pipeline, "apply_asteroid_delta"))
-	_connect_dispatcher_signal("bullet_delta_received", Callable(realtime_packet_pipeline, "apply_bullet_delta"))
-	_connect_dispatcher_signal("asteroids_lifecycle_received", Callable(realtime_packet_pipeline, "apply_asteroids_lifecycle"))
-	_connect_dispatcher_signal("bullets_lifecycle_received", Callable(realtime_packet_pipeline, "apply_bullets_lifecycle"))
-	_connect_dispatcher_signal("overlay_full_received", Callable(realtime_packet_pipeline, "apply_overlay_full"))
-	_connect_dispatcher_signal("overlay_delta_received", Callable(realtime_packet_pipeline, "apply_overlay_delta"))
-	_connect_dispatcher_signal("session_full_received", Callable(realtime_packet_pipeline, "apply_session_full"))
-	_connect_dispatcher_signal("session_delta_received", Callable(realtime_packet_pipeline, "apply_session_delta"))
-	_connect_dispatcher_signal("event_batch_received", Callable(realtime_packet_pipeline, "apply_event_batch"))
-	_connect_dispatcher_signal("resync_request_received", Callable(realtime_packet_pipeline, "apply_resync_request"))
-	_connect_dispatcher_signal("resync_required_received", Callable(realtime_packet_pipeline, "apply_resync_required"))
-	_connect_dispatcher_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
-	_connect_dispatcher_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
-	_connect_dispatcher_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
-	_connect_dispatcher_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
-
-	_connect_dispatcher_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
-
-
 func _connect_network_signal(signal_name: StringName, handler: Callable) -> void:
 	if network_client.has_signal(signal_name):
 		network_client.connect(signal_name, handler)
 
 
-func _connect_dispatcher_signal(signal_name: StringName, handler: Callable) -> void:
-	if server_packet_dispatcher.has_signal(signal_name):
-		server_packet_dispatcher.connect(signal_name, handler)
+func _connect_coordinator_signal(signal_name: StringName, handler: Callable) -> void:
+	if client_inbound_coordinator.has_signal(signal_name) and !client_inbound_coordinator.is_connected(signal_name, handler):
+		client_inbound_coordinator.connect(signal_name, handler)
 
 
 func _on_connected() -> void:
@@ -260,11 +242,10 @@ func _on_connected() -> void:
 
 
 func _on_closed() -> void:
-	reset_realtime_protocol_state()
+	reset_realtime_session()
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = null
 	websocket_auth_display_name = ""
-	_clear_webrtc_transport()
 	closed.emit()
 
 
@@ -335,7 +316,7 @@ func _ensure_realtime_transport_session() -> void:
 		client_inbound_coordinator.set_realtime_transport_session(realtime_transport_session)
 
 
-func _clear_webrtc_transport() -> void:
+func _clear_realtime_transport_session() -> void:
 	if realtime_transport_session != null:
 		realtime_transport_session.close()
 		realtime_transport_session = null
@@ -355,7 +336,7 @@ func _send_authenticate_request_if_token_exists() -> void:
 	if token.is_empty():
 		return
 
-	network_client.send_authenticate_request(token)
+	client_packet_sender.send_authenticate_request(token)
 
 
 func get_realtime_packet_pipeline() -> RealtimePacketPipeline:

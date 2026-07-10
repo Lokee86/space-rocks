@@ -160,7 +160,7 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 		"pickups": [],
 	})
 
-	service.reset_realtime_protocol_state()
+	service.reset_realtime_session()
 
 	service.server_packet_dispatcher.dispatch({
 		"type": "world_full",
