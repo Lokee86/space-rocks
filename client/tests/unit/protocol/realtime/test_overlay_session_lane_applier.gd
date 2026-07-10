@@ -7,7 +7,7 @@ const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_
 const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
-const PresentationAdapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd")
+const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const GameplayReadiness := preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
 
@@ -666,7 +666,7 @@ func test_session_delta_accepts_players_and_player_lifecycle_keys() -> void:
 func test_overlay_only_does_not_mark_gameplay_ready() -> void:
 	var overlay_lane_state := OverlayLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
-	var presentation_adapter := PresentationAdapter.new()
+	var pipeline := RealtimePacketPipeline.new()
 
 	OverlayLaneApplier.new().apply_overlay_full(
 		overlay_lane_state,
@@ -681,13 +681,13 @@ func test_overlay_only_does_not_mark_gameplay_ready() -> void:
 		}
 	)
 
-	assert_false(presentation_adapter.is_presentable())
+	assert_false(pipeline.is_gameplay_ready())
 
 
 func test_session_only_does_not_mark_gameplay_ready() -> void:
 	var session_lane_state := SessionLaneState.new()
 	var baseline_tracker := BaselineTracker.new()
-	var presentation_adapter := PresentationAdapter.new()
+	var pipeline := RealtimePacketPipeline.new()
 
 	SessionLaneApplier.new().apply_session_full(
 		session_lane_state,
@@ -706,5 +706,5 @@ func test_session_only_does_not_mark_gameplay_ready() -> void:
 		}
 	)
 
-	assert_false(presentation_adapter.is_presentable())
+	assert_false(pipeline.is_gameplay_ready())
 

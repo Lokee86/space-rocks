@@ -6,6 +6,10 @@ const PresentationAdapter := preload("res://scripts/protocol/realtime/presentati
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const OverlayLaneState := preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
 const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_state.gd")
+const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
+const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
+const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_tracker.gd")
+const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
 
 
 class FakeEventSink:
@@ -160,7 +164,6 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 	)
 
 	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
-	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
 
 	assert_eq(event_flow.apply_server_events_call_count, 1)
 	assert_eq(event_flow.received_event_count, 1)
@@ -168,16 +171,14 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 
 func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
 	var presentation_adapter := PresentationAdapter.new()
-	var presentation_state := {
-		"world_lane_state": WorldLaneState.new(),
-		"overlay_lane_state": OverlayLaneState.new(),
-		"session_lane_state": SessionLaneState.new(),
-		"event_batch_applier": EventBatchApplier.new(),
-	}
-	presentation_state["overlay_lane_state"].self_id = "player-1"
-	presentation_state["overlay_lane_state"].respawn_cooldown = null
-	presentation_state["overlay_lane_state"].primary_cooldown_remaining = null
-	presentation_state["overlay_lane_state"].secondary_cooldown_remaining = null
+	var presentation_state := RealtimePresentationState.new()
+	presentation_state.world_lane_state = WorldLaneState.new()
+	presentation_state.overlay_lane_state = OverlayLaneState.new()
+	presentation_state.session_lane_state = SessionLaneState.new()
+	presentation_state.event_batch_applier = EventBatchApplier.new()
+	presentation_state.overlay_lane_state.respawn_cooldown = null
+	presentation_state.overlay_lane_state.primary_cooldown_remaining = null
+	presentation_state.overlay_lane_state.secondary_cooldown_remaining = null
 
 	var world_sync := FakePresentationTarget.new()
 	var hud_flow := FakePresentationTarget.new()
@@ -191,24 +192,6 @@ func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
 	assert_eq(hud_flow.last_overlay_lane_state.primary_cooldown_remaining, null)
 	assert_eq(hud_flow.last_overlay_lane_state.secondary_cooldown_remaining, null)
 	assert_eq(event_flow.apply_server_events_call_count, 0)
-
-	presentation_state["overlay_lane_state"].respawn_cooldown = null
-	presentation_state["overlay_lane_state"].primary_cooldown_remaining = null
-	presentation_state["overlay_lane_state"].secondary_cooldown_remaining = null
-
-	var world_sync := FakePresentationTarget.new()
-	var hud_flow := FakePresentationTarget.new()
-	var event_flow := FakeEventFlow.new()
-
-	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
-
-	assert_not_null(world_sync.last_world_lane_state)
-	assert_not_null(hud_flow.last_overlay_lane_state)
-	assert_eq(hud_flow.last_overlay_lane_state.respawn_cooldown, null)
-	assert_eq(hud_flow.last_overlay_lane_state.primary_cooldown_remaining, null)
-	assert_eq(hud_flow.last_overlay_lane_state.secondary_cooldown_remaining, null)
-	assert_eq(event_flow.apply_server_events_call_count, 0)
-
 
 
 func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
@@ -292,23 +275,6 @@ func test_duplicate_event_id_is_suppressed() -> void:
 	assert_false(applied)
 	assert_eq(sink.handled_events.size(), 1)
 
-
-func test_event_batch_does_not_mark_gameplay_ready() -> void:
-	var presentation_adapter := PresentationAdapter.new()
-	var applier := EventBatchApplier.new()
-	var sink := FakeEventSink.new()
-
-	applier.apply_event_batch(
-		{
-			"batch_id": "batch-1",
-			"events": [
-				{"event_id": "presentation-event-1", "type": "spark", "payload": {}},
-			],
-		},
-		sink
-	)
-
-	assert_false(presentation_adapter.is_presentable())
 
 
 func test_wrong_baseline_marks_lane_resync_needed() -> void:

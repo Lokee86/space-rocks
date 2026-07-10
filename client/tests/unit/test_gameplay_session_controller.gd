@@ -52,6 +52,28 @@ class FakePresentationState:
 	var event_batch_applier = null
 
 
+class FakePresentationBridge:
+	extends RefCounted
+
+	var active_calls := 0
+	var flush_calls := 0
+	var reset_calls := 0
+	var handled_packets: Array = []
+
+	func activate() -> void:
+		active_calls += 1
+
+	func handle_gameplay_packet(packet: Dictionary) -> void:
+		handled_packets.append(packet)
+
+	func flush_pending() -> bool:
+		flush_calls += 1
+		return true
+
+	func reset() -> void:
+		reset_calls += 1
+
+
 class FakeRealtimePacketPipeline:
 	extends RefCounted
 
@@ -87,6 +109,7 @@ class FakeGameplayComposition:
 	var required_lane_baselines_synced_values: Array = []
 	var devtools_states: Array = []
 	var restore_calls := 0
+	var reset_calls := 0
 
 	func set_required_lane_baselines_synced(value: bool) -> void:
 		required_lane_baselines_synced_values.append(value)
@@ -110,6 +133,9 @@ class FakeGameplayComposition:
 	func restore_alive_presentation_from_realtime_state(_presentation_state) -> void:
 		restore_calls += 1
 
+	func reset() -> void:
+		reset_calls += 1
+
 
 class FakeNotReadyGameplayReadiness:
 	extends RefCounted
@@ -118,53 +144,31 @@ class FakeNotReadyGameplayReadiness:
 		return false
 
 
-class FakePresentationAdapter:
-	extends RefCounted
-
-	var fanout_count := 0
-	var events: Array = []
-	var marked_fanned_out := 0
-
-	func can_fanout() -> bool:
-		return true
-
-	func fanout_lane_states(_presentation_state, _world_sync, _gameplay_hud_flow, _event_lifecycle_flow) -> void:
-		fanout_count += 1
-		if events is Array:
-			events.append("fanout")
-
-	func mark_fanned_out() -> void:
-		marked_fanned_out += 1
-
 
 func _make_controller(pipeline_ready := true) -> Dictionary:
 	var controller := GameplaySessionController.new()
 	var connection_service := FakeConnectionService.new()
 	var pipeline := FakeRealtimePacketPipeline.new()
 	pipeline.ready = pipeline_ready
+	var presentation_bridge := FakePresentationBridge.new()
+	var composition := FakeGameplayComposition.new()
 	var session_context := FakeSessionContext.new()
 	var shell_boot_flow := FakeShellBootFlow.new()
 	add_child_autofree(connection_service)
 	add_child_autofree(controller)
-	controller.configure(
-		connection_service,
-		pipeline,
-		Node2D.new(),
-		Node.new(),
-		Node2D.new(),
-		Node2D.new(),
-		Node2D.new(),
-		Control.new(),
-		Control.new(),
-		Control.new(),
-		session_context,
-		shell_boot_flow,
-		Callable()
-	)
+	controller.connection_service = connection_service
+	controller.realtime_packet_pipeline = pipeline
+	controller.presentation_bridge = presentation_bridge
+	controller.gameplay_composition = composition
+	controller.session_context = session_context
+	controller.shell_boot_flow = shell_boot_flow
+	controller.logger = Callable()
 	return {
 		"controller": controller,
 		"connection_service": connection_service,
 		"pipeline": pipeline,
+		"presentation_bridge": presentation_bridge,
+		"gameplay_composition": composition,
 		"session_context": session_context,
 		"shell_boot_flow": shell_boot_flow,
 	}
@@ -197,129 +201,126 @@ func test_replay_waits_for_graceful_close_before_emitting_replay_requested() -> 
 func test_first_ready_gameplay_packet_schedules_and_performs_initial_presentation_fanout() -> void:
 	var setup = _make_controller(true)
 	var controller: GameplaySessionController = setup["controller"]
-	var presentation_adapter := FakePresentationAdapter.new()
-	var gameplay_composition := FakeGameplayComposition.new()
-	var events: Array = []
+	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
 
 	controller.accepts_gameplay_packets = true
-	controller.gameplay_presentation_adapter = presentation_adapter
-	controller.gameplay_composition = gameplay_composition
-	controller.gameplay_state_flow = null
-	controller.gameplay_presentation_adapter.events = events
-	gameplay_composition.events = events
 
 	controller.handle_gameplay_packet({"type": "world_delta"})
 
-	assert_eq(presentation_adapter.fanout_count, 0)
+	assert_eq(presentation_bridge.handled_packets, [{"type": "world_delta"}])
+	assert_eq(presentation_bridge.flush_calls, 0)
 	controller._process(0.016)
-	assert_eq(presentation_adapter.fanout_count, 1)
-	assert_eq(events, ["fanout", "process"])
+	assert_eq(presentation_bridge.flush_calls, 1)
 
 
-func test_later_gameplay_packet_can_mark_presentation_dirty_again_after_fanout() -> void:
+func test_later_gameplay_packet_can_delegate_presentation_again_after_flush() -> void:
 	var setup = _make_controller(true)
 	var controller: GameplaySessionController = setup["controller"]
-	var presentation_adapter := FakePresentationAdapter.new()
-	var gameplay_composition := FakeGameplayComposition.new()
-	var events: Array = []
+	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
 
 	controller.accepts_gameplay_packets = true
-	controller.gameplay_presentation_adapter = presentation_adapter
-	controller.gameplay_composition = gameplay_composition
-	controller.gameplay_state_flow = null
-	controller.gameplay_presentation_adapter.events = events
-	gameplay_composition.events = events
 
 	controller.handle_gameplay_packet({"type": "world_delta"})
 	controller._process(0.016)
 
-	assert_eq(presentation_adapter.fanout_count, 1)
-
-	controller._process(0.016)
-
-	assert_eq(presentation_adapter.fanout_count, 1)
+	assert_eq(presentation_bridge.handled_packets.size(), 1)
+	assert_eq(presentation_bridge.flush_calls, 1)
 
 	controller.handle_gameplay_packet({"type": "world_delta"})
-	controller._process(0.016)
 
-	assert_eq(presentation_adapter.fanout_count, 2)
+	assert_eq(presentation_bridge.handled_packets.size(), 2)
+	assert_eq(presentation_bridge.handled_packets[1], {"type": "world_delta"})
 
 
-func test_deferred_presentation_does_not_fan_out_when_gameplay_is_not_ready() -> void:
+func test_gameplay_packet_is_delegated_before_readiness_and_flush_is_gated() -> void:
 	var setup = _make_controller(false)
 	var controller: GameplaySessionController = setup["controller"]
-	var presentation_adapter := FakePresentationAdapter.new()
-	var gameplay_composition := FakeGameplayComposition.new()
-	var events: Array = []
+	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
+	var gameplay_composition: FakeGameplayComposition = setup["gameplay_composition"]
 
 	controller.accepts_gameplay_packets = true
-	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
-	controller.gameplay_state_flow = null
-	controller.gameplay_presentation_adapter.events = events
-	gameplay_composition.events = events
-
 	controller.handle_gameplay_packet({"type": "world_delta"})
 	controller._process(0.016)
 
-	assert_eq(presentation_adapter.fanout_count, 0)
+	assert_eq(presentation_bridge.handled_packets, [{"type": "world_delta"}])
+	assert_eq(presentation_bridge.flush_calls, 1)
+	assert_eq(gameplay_composition.process_count, 1)
 
 
-func test_dirty_presentation_fanout_runs_before_gameplay_process() -> void:
+func test_flush_runs_before_gameplay_process() -> void:
 	var setup = _make_controller(true)
 	var controller: GameplaySessionController = setup["controller"]
-	var presentation_adapter := FakePresentationAdapter.new()
+	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
 	var gameplay_composition := FakeGameplayComposition.new()
-	var events: Array = []
 
 	controller.accepts_gameplay_packets = true
-	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
 	controller.gameplay_state_flow = null
-	presentation_adapter.events = events
-	gameplay_composition.events = events
+	gameplay_composition.events = []
 
-	controller.handle_gameplay_packet({"type": "world_delta"})
 	controller._process(0.016)
 
-	assert_eq(events, ["fanout", "process"])
+	assert_eq(presentation_bridge.flush_calls, 1)
+	assert_eq(gameplay_composition.process_count, 1)
+
+
+func test_begin_accepting_gameplay_packets_activates_presentation_bridge() -> void:
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
+	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
+
+	controller.begin_accepting_gameplay_packets()
+
+	assert_true(controller.accepts_gameplay_packets)
+	assert_eq(presentation_bridge.active_calls, 1)
+
+
+func test_reset_delegates_to_presentation_bridge() -> void:
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
+	var presentation_bridge: FakePresentationBridge = setup["presentation_bridge"]
+	var gameplay_composition: FakeGameplayComposition = setup["gameplay_composition"]
+
+	controller.accepts_gameplay_packets = true
+	controller.reset()
+
+	assert_false(controller.accepts_gameplay_packets)
+	assert_eq(presentation_bridge.reset_calls, 1)
+	assert_eq(gameplay_composition.reset_calls, 1)
+
+
 
 
 func test_input_ignored_when_gameplay_packets_are_not_accepted() -> void:
 	var setup = _make_controller(true)
 	var controller: GameplaySessionController = setup["controller"]
-	var presentation_adapter := FakePresentationAdapter.new()
 	var gameplay_composition := FakeGameplayComposition.new()
 	var events: Array = []
 	var input_event := InputEventMouseButton.new()
 	var viewport := controller.get_viewport()
 
 	controller.accepts_gameplay_packets = false
-	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
 	controller.gameplay_state_flow = null
-	presentation_adapter.events = events
 	gameplay_composition.events = events
 
 	controller._input(input_event)
 
 	assert_true(events.is_empty())
-	assert_eq(viewport.has_method("is_input_handled") ? viewport.is_input_handled() : false, false)
+	assert_eq(viewport.is_input_handled() if viewport.has_method("is_input_handled") else false, false)
 
 
 func test_unhandled_input_ignored_when_gameplay_packets_are_not_accepted() -> void:
 	var setup = _make_controller(true)
 	var controller: GameplaySessionController = setup["controller"]
-	var presentation_adapter := FakePresentationAdapter.new()
 	var gameplay_composition := FakeGameplayComposition.new()
 	var events: Array = []
 	var input_event := InputEventMouseButton.new()
 
 	controller.accepts_gameplay_packets = false
-	controller.gameplay_presentation_adapter = presentation_adapter
 	controller.gameplay_composition = gameplay_composition
 	controller.gameplay_state_flow = null
-	presentation_adapter.events = events
 	gameplay_composition.events = events
 
 	controller._unhandled_input(input_event)

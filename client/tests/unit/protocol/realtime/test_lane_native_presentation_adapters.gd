@@ -10,6 +10,7 @@ const HudScene := preload("res://scenes/ui/hud.tscn")
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const OverlayLaneState := preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
 const SessionLaneState := preload("res://scripts/protocol/realtime/session_lane_state.gd")
+const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const EventBatchApplier := preload("res://scripts/protocol/realtime/event_batch_applier.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
@@ -201,8 +202,8 @@ func test_event_adapter_displays_once_and_suppresses_duplicates() -> void:
 
 func test_debug_adapter_does_not_mark_gameplay_ready() -> void:
 	var adapter := DebugPresentationAdapter.new()
-	var presentation_adapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd").new()
+	var pipeline := RealtimePacketPipeline.new()
 
 	adapter.apply_debug_packet({"type": "debug_telemetry", "payload": {"value": 1}})
 
-	assert_false(presentation_adapter.is_presentable())
+	assert_false(pipeline.is_gameplay_ready())

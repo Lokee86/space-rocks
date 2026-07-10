@@ -1,8 +1,7 @@
 extends Node
 
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
-const DevtoolsLaneStateAdapter := preload("res://scripts/protocol/realtime/devtools_lane_state_adapter.gd")
-const ClientLogger := preload("res://scripts/logging/logger.gd")
+const PresentationBridge := preload("res://scripts/protocol/realtime/presentation_bridge.gd")
 
 var connection_service
 var hud: Control
@@ -15,20 +14,14 @@ var logger: Callable
 var gameplay_composition
 var gameplay_state_flow
 var gameplay_presentation_adapter
-var devtools_lane_state_adapter
+var presentation_bridge
 var realtime_packet_pipeline
 
 var accepts_gameplay_packets := false
-var _lane_presentation_fanned_out := false
-var _presentation_dirty := false
-var _logged_gameplay_ready := false
-var _logged_first_fanout := false
-var _logged_event_lifecycle_flow_ready := false
 var _logged_debug_shape_catalog_received := false
 
 signal return_to_pregame_requested(session_mode: String)
 signal replay_requested
-
 
 func configure(
 	connection_service_ref,
@@ -56,7 +49,7 @@ func configure(
 	logger = logger_callable
 
 	gameplay_presentation_adapter = preload("res://scripts/protocol/realtime/presentation_adapter.gd").new()
-	devtools_lane_state_adapter = DevtoolsLaneStateAdapter.new()
+	presentation_bridge = PresentationBridge.new()
 	gameplay_composition = GameplayComposition.new()
 	gameplay_composition.configure(
 		connection_service,
@@ -78,70 +71,14 @@ func configure(
 	gameplay_composition.return_to_lobby_requested.connect(_on_gameplay_return_to_lobby_requested)
 	gameplay_state_flow = GameplayStateFlow.new()
 	gameplay_state_flow.configure(gameplay_composition)
-
-
-func _fanout_realtime_presentation_once() -> void:
-	if !_logged_first_fanout:
-		_log("Gameplay presentation fanout started")
-		_logged_first_fanout = true
-	var event_lifecycle_flow = null
-	if gameplay_composition != null and gameplay_composition.has_method("get_event_lifecycle_flow"):
-		event_lifecycle_flow = gameplay_composition.get_event_lifecycle_flow()
-	var world_sync = null
-	if gameplay_composition != null and gameplay_composition.gameplay_shell_flow != null and gameplay_composition.gameplay_shell_flow.runtime_context != null:
-		world_sync = gameplay_composition.gameplay_shell_flow.runtime_context.world_sync
-	var gameplay_hud_flow = null
-	if gameplay_composition != null:
-		gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
-	var presentation_state = null
-	if realtime_packet_pipeline != null:
-		presentation_state = realtime_packet_pipeline.get_presentation_state()
-	gameplay_presentation_adapter.fanout_lane_states(presentation_state, world_sync, gameplay_hud_flow, event_lifecycle_flow)
-	if gameplay_composition != null and devtools_lane_state_adapter != null:
-		var devtools_state: Dictionary = devtools_lane_state_adapter.build_state(presentation_state)
-		gameplay_composition.apply_devtools_gameplay_state(devtools_state)
-	if gameplay_composition != null and gameplay_composition.has_method("restore_alive_presentation_from_realtime_state"):
-		gameplay_composition.restore_alive_presentation_from_realtime_state(presentation_state)
-	if !_lane_presentation_fanned_out:
-		gameplay_presentation_adapter.mark_fanned_out()
-		_lane_presentation_fanned_out = true
+	if presentation_bridge != null:
+		presentation_bridge.configure(realtime_packet_pipeline, gameplay_presentation_adapter, gameplay_composition, logger)
 
 func handle_gameplay_packet(packet: Dictionary) -> void:
 	if !accepts_gameplay_packets:
 		return
-	if realtime_packet_pipeline == null or !realtime_packet_pipeline.is_gameplay_ready() or gameplay_presentation_adapter == null:
-		return
-
-	if !_logged_gameplay_ready:
-		_log("Gameplay lane baselines ready")
-		_logged_gameplay_ready = true
-
-	var event_lifecycle_flow = null
-	if packet.get("type") == "event_batch" and gameplay_composition != null and gameplay_composition.has_method("get_event_lifecycle_flow"):
-		event_lifecycle_flow = gameplay_composition.get_event_lifecycle_flow()
-		if !_logged_event_lifecycle_flow_ready and event_lifecycle_flow != null:
-			_log("Gameplay event fanout target ready: event_lifecycle_flow_null=%s" % str(event_lifecycle_flow == null))
-			_logged_event_lifecycle_flow_ready = true
-		var events = packet.get("events", [])
-		var event_types = []
-		for event in events:
-			event_types.append(str(event.get("type", "")))
-		ClientLogger.event(
-			ClientLogger.CATEGORY_GAME,
-			ClientLogger.LEVEL_DEBUG,
-			"gameplay_event_batch_diagnostics",
-			"Gameplay event batch diagnostics",
-			{
-				"batch_id": str(packet.get("batch_id", "")),
-				"events_size": events.size(),
-				"event_types": event_types,
-				"event_lifecycle_flow_null": event_lifecycle_flow == null,
-			}
-		)
-
-	if realtime_packet_pipeline != null and realtime_packet_pipeline.is_gameplay_ready() and gameplay_presentation_adapter.can_fanout():
-		_presentation_dirty = true
-
+	if presentation_bridge != null:
+		presentation_bridge.handle_gameplay_packet(packet)
 
 func handle_player_pause_state(packet: Dictionary) -> void:
 	if !accepts_gameplay_packets:
@@ -149,11 +86,9 @@ func handle_player_pause_state(packet: Dictionary) -> void:
 	if gameplay_composition != null:
 		gameplay_composition.apply_player_pause_state_packet(packet)
 
-
 func handle_debug_status_packet(packet: Dictionary) -> void:
 	if gameplay_composition != null:
 		gameplay_composition.apply_devtools_debug_status_packet(packet)
-
 
 func handle_debug_shape_catalog_packet(packet: Dictionary) -> void:
 	if !_logged_debug_shape_catalog_received:
@@ -166,16 +101,11 @@ func handle_debug_shape_catalog_packet(packet: Dictionary) -> void:
 	if gameplay_composition != null:
 		gameplay_composition.apply_debug_shape_catalog_packet(packet)
 
-
 func begin_accepting_gameplay_packets() -> void:
-	_log(
-		"accepting gameplay packets: realtime_packet_pipeline_null=%s presentation_state_null=%s" % [
-			str(realtime_packet_pipeline == null),
-			str(realtime_packet_pipeline == null or realtime_packet_pipeline.get_presentation_state() == null)
-		]
-	)
+	_log("accepting gameplay packets: realtime_packet_pipeline_null=%s presentation_state_null=%s" % [str(realtime_packet_pipeline == null), str(realtime_packet_pipeline == null or realtime_packet_pipeline.get_presentation_state() == null)])
 	accepts_gameplay_packets = true
-
+	if presentation_bridge != null:
+		presentation_bridge.activate()
 
 func _process(delta: float) -> void:
 	var required_lane_baselines_synced := false
@@ -183,16 +113,10 @@ func _process(delta: float) -> void:
 		required_lane_baselines_synced = realtime_packet_pipeline.is_gameplay_ready()
 	if gameplay_composition != null and gameplay_composition.has_method("set_required_lane_baselines_synced"):
 		gameplay_composition.set_required_lane_baselines_synced(required_lane_baselines_synced)
-
-	if _presentation_dirty:
-		if realtime_packet_pipeline != null and realtime_packet_pipeline.is_gameplay_ready() and gameplay_presentation_adapter != null:
-			if gameplay_presentation_adapter.can_fanout():
-				_fanout_realtime_presentation_once()
-				_presentation_dirty = false
-
+	if presentation_bridge != null:
+		presentation_bridge.flush_pending()
 	if gameplay_composition != null:
 		gameplay_composition.process(delta, required_lane_baselines_synced)
-
 
 func _input(event: InputEvent) -> void:
 	if !accepts_gameplay_packets:
@@ -200,7 +124,6 @@ func _input(event: InputEvent) -> void:
 	if gameplay_composition != null and gameplay_composition.handle_devtools_input(event):
 		get_viewport().set_input_as_handled()
 		return
-
 	var hud_input_policy = get_node_or_null("/root/HudInputPolicy")
 	if hud_input_policy != null:
 		if hud_input_policy.has_method("should_gameplay_ui_receive_mouse_event"):
@@ -208,12 +131,10 @@ func _input(event: InputEvent) -> void:
 				return
 		elif hud_input_policy.should_hud_receive_mouse_event(event, hud, get_viewport()):
 			return
-
 	if gameplay_composition == null:
 		return
 	if gameplay_composition.handle_gameplay_input(event):
 		get_viewport().set_input_as_handled()
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if !accepts_gameplay_packets:
@@ -223,47 +144,35 @@ func _unhandled_input(event: InputEvent) -> void:
 	if gameplay_composition.handle_gameplay_input(event):
 		get_viewport().set_input_as_handled()
 
-
 func reset() -> void:
 	accepts_gameplay_packets = false
-	_lane_presentation_fanned_out = false
-	_logged_gameplay_ready = false
-	_logged_first_fanout = false
-	_logged_event_lifecycle_flow_ready = false
-	_logged_debug_shape_catalog_received = false
-	_presentation_dirty = false
+	if presentation_bridge != null:
+		presentation_bridge.reset()
 	if gameplay_composition != null:
 		gameplay_composition.reset()
-
 
 func configure_room_state_provider(provider: Callable) -> void:
 	if gameplay_composition != null:
 		gameplay_composition.configure_room_state_provider(provider)
 
-
 func configure_match_result_provider(provider: Callable) -> void:
 	if gameplay_composition != null:
 		gameplay_composition.configure_match_result_provider(provider)
-
 
 func configure_room_max_players_provider(provider: Callable) -> void:
 	if gameplay_composition != null:
 		gameplay_composition.configure_room_max_players_provider(provider)
 
-
 func refresh_match_end_state() -> void:
 	if gameplay_composition != null:
 		gameplay_composition.refresh_match_end_state()
 
-
 func refresh_game_over_menu_state() -> void:
 	refresh_match_end_state()
-
 
 func _on_gameplay_started() -> void:
 	if main_menu != null:
 		main_menu.hide()
-
 
 func _on_gameplay_quit_to_main_menu_requested() -> void:
 	_log("Gameplay quit to main menu requested")
@@ -277,13 +186,11 @@ func _on_gameplay_quit_to_main_menu_requested() -> void:
 	if main_menu != null:
 		main_menu.show()
 
-
 func _on_gameplay_return_to_lobby_requested() -> void:
 	_log("Gameplay return to lobby requested")
 	if connection_service != null:
 		connection_service.send_return_to_lobby_request()
 	reset()
-
 
 func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
 	_log("Gameplay return to pregame requested: %s" % session_mode)
@@ -296,7 +203,6 @@ func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
 		shell_boot_flow.clear()
 	return_to_pregame_requested.emit(session_mode)
 
-
 func _on_gameplay_replay_requested() -> void:
 	_log("Gameplay replay requested")
 	if connection_service != null && connection_service.has_method("close_gracefully"):
@@ -307,7 +213,6 @@ func _on_gameplay_replay_requested() -> void:
 	if shell_boot_flow != null:
 		shell_boot_flow.clear()
 	replay_requested.emit()
-
 
 func _log(message: String) -> void:
 	if !logger.is_null():

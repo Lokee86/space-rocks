@@ -10,18 +10,9 @@ var world_adapter := WorldPresentationAdapter.new()
 var overlay_adapter := OverlayPresentationAdapter.new()
 var session_adapter := SessionPresentationAdapter.new()
 var event_adapter := EventPresentationAdapter.new()
-var _presented_once := false
-
-func is_presentable() -> bool:
-	return true
-
-func can_fanout() -> bool:
-	return true
 
 func fanout_lane_states(presentation_state, world_sync_ref = null, gameplay_hud_flow_ref = null, event_flow_ref = null) -> void:
 	if presentation_state == null:
-		return
-	if not is_presentable():
 		return
 
 	var self_id := ""
@@ -38,9 +29,3 @@ func fanout_lane_states(presentation_state, world_sync_ref = null, gameplay_hud_
 	elif gameplay_hud_flow_ref != null and gameplay_hud_flow_ref.has_method("apply_server_events"):
 		event_flow = gameplay_hud_flow_ref
 	event_adapter.apply_event_batch_output(event_flow, presentation_state.event_batch_applier, self_id)
-
-func has_fanned_out() -> bool:
-	return _presented_once
-
-func mark_fanned_out() -> void:
-	_presented_once = true
