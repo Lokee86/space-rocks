@@ -22,10 +22,11 @@ Do not reproduce aliases, tuple orders, event layouts, ID tags, quantization tab
 ## Server Encode Flow
 
 ```text
-RealtimeLaneCandidate -> WireLanePacket -> readable map -> CompactWirePacket -> compactWirePacketFromDescriptors -> JSON transport
+RealtimeLaneCandidate -> typed RealtimeLanePayload validation -> payload WirePacket serializer -> readable map -> CompactWirePacket -> compactWirePacketFromDescriptors -> packetcodec JSON transport
 ```
 
-- `wire_packets.go` and `wire_reflect.go` project readable data.
+- `payload.go`, `payload_validation.go`, and the lane-specific `payload_*.go` files own the typed payload contract, supported concrete-value registry/matrix, candidate construction, and per-payload serializer dispatch.
+- `wire_packets.go` and `wire_reflect.go` provide readable-map and generic record-shaping support; they do not own candidate-family dispatch.
 - `compact_wire_packet.go` is the public encode boundary and provides the generic recursive fallback.
 - `compact_wire_descriptor.go` applies generated packet bindings, records, aliases, IDs, selectors, event layouts, and value domains.
 - Quantization algorithms remain in the `quantize` package; path assignments come from generated descriptors.
@@ -73,9 +74,10 @@ Runtime owns:
 
 1. Add logical packets and structs in the packet TOML.
 2. Add physical declarations in `realtime_wire.toml`.
-3. Run validation and generation.
-4. Add server projection/planning and client application behavior.
-5. Add fixtures and tests.
+3. Add a concrete `RealtimeLanePayload` implementation, compile-time interface assertion, validation matrix/registry entry, serializer, and focused invariant tests.
+4. Run validation and generation.
+5. Add server projection/planning and client application behavior.
+6. Add fixtures and tests.
 
 Generic codec and generator source must not receive an entity-specific branch. The isolated extensibility proof is `tools/data_sync/tests/test_realtime_wire_enemy_extensibility.py`.
 
@@ -99,6 +101,9 @@ Top-level `data-sync -validate` also validates the realtime-wire domain.
 - `tools/data_sync/data_sync/realtime_wire_sync.py`
 - `tools/data_sync/data_sync/generators/realtime_wire_*.py`
 - `services/game-server/internal/protocol/realtimewire/generated.go`
+- `services/game-server/internal/protocol/realtime/payload.go`
+- `services/game-server/internal/protocol/realtime/payload_validation.go`
+- `services/game-server/internal/protocol/realtime/payload_*.go`
 - `services/game-server/internal/protocol/realtime/wire_packets.go`
 - `services/game-server/internal/protocol/realtime/wire_reflect.go`
 - `services/game-server/internal/protocol/realtime/compact_wire_packet.go`

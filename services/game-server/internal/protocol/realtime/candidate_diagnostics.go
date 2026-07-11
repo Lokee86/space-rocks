@@ -26,21 +26,22 @@ type CandidateWriteDiagnostics struct {
 }
 
 func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state RealtimeSessionState, encodedBytes int) CandidateWriteDiagnostics {
+	lane, kind := candidate.Lane(), candidate.Kind()
 	diagnostics := CandidateWriteDiagnostics{
-		PacketFamily: packetFamilyForCandidate(candidate),
-		Lane:         candidate.Lane,
-		Kind:         candidate.Kind,
-		Channel:      string(candidate.Lane),
+		PacketFamily: candidate.PacketFamily(),
+		Lane:         lane,
+		Kind:         kind,
+		Channel:      string(lane),
 		EncodedBytes: encodedBytes,
 	}
-	if candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets {
+	if lane == LaneAsteroids || lane == LaneBullets {
 		diagnostics.Cadence = hotPacketCadenceForDiagnostics(candidate, state)
 		diagnostics.WorldHotCount, diagnostics.AsteroidHotCount, diagnostics.BulletHotCount, diagnostics.AsteroidOffloadedCount, diagnostics.BulletOffloadedCount = hotLaneCountsForDiagnostics(candidate)
 		diagnostics.AsteroidMode, diagnostics.BulletMode = hotLaneModesForDiagnostics(state)
 		diagnostics.PacketOverTarget = encodedBytes > WarningBytes && encodedBytes < HardCapBytes
 		diagnostics.PacketOverHardCap = encodedBytes >= HardCapBytes
 	}
-	metadata, ok := CandidateMetadata(candidate, state)
+	metadata, ok := candidate.Metadata()
 	if !ok {
 		return diagnostics
 	}
@@ -55,14 +56,15 @@ func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state Realtim
 }
 
 func hotPacketCadenceForDiagnostics(candidate RealtimeLaneCandidate, state RealtimeSessionState) string {
+	lane := candidate.Lane()
 	laneState, ok := state.LaneState(LaneWorld)
 	if !ok {
 		return "inline"
 	}
-	if candidate.Lane == LaneAsteroids {
+	if lane == LaneAsteroids {
 		return hotPacketCadenceLabel(state.HotLaneCohorts.AsteroidMode, laneState.Sequence)
 	}
-	if candidate.Lane == LaneBullets {
+	if lane == LaneBullets {
 		return hotPacketCadenceLabel(state.HotLaneCohorts.BulletMode, laneState.Sequence)
 	}
 	return ""
@@ -88,14 +90,10 @@ func hotLaneModesForDiagnostics(state RealtimeSessionState) (HotLaneMode, HotLan
 }
 
 func hotLaneCountsForDiagnostics(candidate RealtimeLaneCandidate) (int, int, int, int, int) {
-	switch delta := candidate.Delta.(type) {
+	switch delta := candidate.Payload.(type) {
 	case AsteroidWireDeltaPacket:
 		return 0, len(delta.AsteroidUpdates), 0, len(delta.AsteroidUpdates), 0
-	case *AsteroidWireDeltaPacket:
-		return 0, len(delta.AsteroidUpdates), 0, len(delta.AsteroidUpdates), 0
 	case BulletWireDeltaPacket:
-		return 0, 0, len(delta.BulletUpdates), 0, len(delta.BulletUpdates)
-	case *BulletWireDeltaPacket:
 		return 0, 0, len(delta.BulletUpdates), 0, len(delta.BulletUpdates)
 	default:
 		return 0, 0, 0, 0, 0

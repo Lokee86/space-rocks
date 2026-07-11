@@ -16,9 +16,9 @@ func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceForUnsyncedFull(t *t
 	if !ok {
 		t.Fatalf("expected world candidate")
 	}
-	full, ok := candidate.Full.(WorldWireFullPacket)
+	full, ok := candidate.Payload.(WorldWireFullPacket)
 	if !ok {
-		t.Fatalf("world candidate full type = %T, want WorldWireFullPacket", candidate.Full)
+		t.Fatalf("world candidate full type = %T, want WorldWireFullPacket", candidate.Payload)
 	}
 	if got, want := full.Metadata.Sequence, 1; got != want {
 		t.Fatalf("world full sequence = %d, want %d", got, want)
@@ -39,11 +39,11 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldFullWhenNoBaseline(t *testing.T
 	if !ok {
 		t.Fatal("expected world candidate when no usable baseline exists")
 	}
-	if world.Kind != RealtimeLaneCandidateKindFull {
-		t.Fatalf("expected world full candidate, got kind=%q", world.Kind)
+	if world.Kind() != RealtimeLaneCandidateKindFull {
+		t.Fatalf("expected world full candidate, got kind=%q", world.Kind())
 	}
-	if _, ok := world.Full.(WorldWireFullPacket); !ok {
-		t.Fatalf("expected world full packet, got %T", world.Full)
+	if _, ok := world.Payload.(WorldWireFullPacket); !ok {
+		t.Fatalf("expected world full packet, got %T", world.Payload)
 	}
 }
 
@@ -80,11 +80,11 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(
 	if !ok {
 		t.Fatal("expected world delta candidate when stored baseline differs")
 	}
-	if world.Kind != RealtimeLaneCandidateKindDelta {
-		t.Fatalf("expected world delta candidate, got kind=%q", world.Kind)
+	if world.Kind() != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected world delta candidate, got kind=%q", world.Kind())
 	}
-	if _, ok := world.Delta.(WorldWireDeltaPacket); !ok {
-		t.Fatalf("expected world delta packet, got %T", world.Delta)
+	if _, ok := world.Payload.(WorldWireDeltaPacket); !ok {
+		t.Fatalf("expected world delta packet, got %T", world.Payload)
 	}
 	if _, ok := world.Projection.(WorldWireFullPacket); !ok {
 		t.Fatalf("expected current world full projection to be carried, got %T", world.Projection)
@@ -112,9 +112,9 @@ func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *t
 	if !ok {
 		t.Fatal("expected world candidate")
 	}
-	delta, ok := world.Delta.(WorldWireDeltaPacket)
+	delta, ok := world.Payload.(WorldWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected world delta packet, got %T", world.Delta)
+		t.Fatalf("expected world delta packet, got %T", world.Payload)
 	}
 	if len(delta.Asteroids.Updates) != 0 {
 		t.Fatalf("expected world asteroid updates removed, got %d", len(delta.Asteroids.Updates))
@@ -154,9 +154,9 @@ func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleInWorldDeltaUnderPr
 	if !ok {
 		t.Fatal("expected world candidate under asteroid pressure")
 	}
-	worldDelta, ok := world.Delta.(WorldWireDeltaPacket)
+	worldDelta, ok := world.Payload.(WorldWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected world delta packet, got %T", world.Delta)
+		t.Fatalf("expected world delta packet, got %T", world.Payload)
 	}
 	if len(worldDelta.Asteroids.Creates) != 0 || len(worldDelta.Asteroids.Deletes) != 0 {
 		t.Fatalf("expected asteroid creates and deletes to move out of world delta, got %#v", worldDelta)
@@ -168,9 +168,9 @@ func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleInWorldDeltaUnderPr
 	if !ok {
 		t.Fatal("expected asteroid lifecycle candidate under pressure")
 	}
-	lifecycleDelta, ok := lifecycle.Delta.(AsteroidWireDeltaPacket)
+	lifecycleDelta, ok := lifecycle.Payload.(AsteroidWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected asteroid lifecycle packet, got %T", lifecycle.Delta)
+		t.Fatalf("expected asteroid lifecycle packet, got %T", lifecycle.Payload)
 	}
 	if len(lifecycleDelta.AsteroidCreates) == 0 || len(lifecycleDelta.AsteroidDeletes) == 0 {
 		t.Fatalf("expected asteroid lifecycle creates and deletes, got %#v", lifecycleDelta)
@@ -203,9 +203,9 @@ func TestAssembleRealtimeLaneCandidatesMovesBulletLifecycleOutOfWorldDeltaUnderP
 	if !ok {
 		t.Fatal("expected world candidate under bullet pressure")
 	}
-	worldDelta, ok := world.Delta.(WorldWireDeltaPacket)
+	worldDelta, ok := world.Payload.(WorldWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected world delta packet, got %T", world.Delta)
+		t.Fatalf("expected world delta packet, got %T", world.Payload)
 	}
 	if len(worldDelta.Bullets.Creates) != 0 || len(worldDelta.Bullets.Deletes) != 0 {
 		t.Fatalf("expected bullet creates and deletes to move out of world delta, got %#v", worldDelta)
@@ -217,9 +217,9 @@ func TestAssembleRealtimeLaneCandidatesMovesBulletLifecycleOutOfWorldDeltaUnderP
 	if !ok {
 		t.Fatal("expected bullet lifecycle candidate under pressure")
 	}
-	lifecycleDelta, ok := lifecycle.Delta.(BulletWireDeltaPacket)
+	lifecycleDelta, ok := lifecycle.Payload.(BulletWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected bullet lifecycle packet, got %T", lifecycle.Delta)
+		t.Fatalf("expected bullet lifecycle packet, got %T", lifecycle.Payload)
 	}
 	if len(lifecycleDelta.BulletCreates) == 0 || len(lifecycleDelta.BulletDeletes) == 0 {
 		t.Fatalf("expected bullet lifecycle creates and deletes, got %#v", lifecycleDelta)
@@ -259,12 +259,12 @@ func TestAssembleRealtimeLaneCandidatesEmitsAsteroidLifecycleCandidateWhenAstero
 	if !ok {
 		t.Fatal("expected asteroid lifecycle candidate")
 	}
-	if candidate.Kind != RealtimeLaneCandidateKindDelta {
-		t.Fatalf("expected asteroid lifecycle delta candidate kind, got %q", candidate.Kind)
+	if candidate.Kind() != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected asteroid lifecycle delta candidate kind, got %q", candidate.Kind())
 	}
-	delta, ok := candidate.Delta.(AsteroidWireDeltaPacket)
+	delta, ok := candidate.Payload.(AsteroidWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected asteroid lifecycle packet, got %T", candidate.Delta)
+		t.Fatalf("expected asteroid lifecycle packet, got %T", candidate.Payload)
 	}
 	if len(delta.AsteroidCreates) != 1 || delta.AsteroidCreates[0].ID != "asteroid-a" {
 		t.Fatalf("expected asteroid create to move to lifecycle lane, got %#v", delta.AsteroidCreates)

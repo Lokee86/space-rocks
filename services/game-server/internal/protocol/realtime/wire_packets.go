@@ -1,6 +1,7 @@
 package realtime
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -24,48 +25,33 @@ type BulletWireDeltaPacket struct {
 	BulletDeletes []string
 }
 
-func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
-	switch packet := candidate.Full.(type) {
-	case WorldFullPacket:
-		return wireWorldFullPacket(packet)
-	case WorldWireFullPacket:
-		return wireWorldWireFullPacket(packet)
-	case OverlayFullPacket:
-		return wireOverlayFullPacket(packet)
-	case OverlayWireFullPacket:
-		return wireOverlayWireFullPacket(packet)
-	case SessionFullPacket:
-		return wireSessionFullPacket(packet)
-	case SessionWireFullPacket:
-		return wireSessionWireFullPacket(packet)
-	case EventBatchPacket:
-		return wireEventBatchPacket(packet)
+func WireLanePacket(candidate RealtimeLaneCandidate) (map[string]any, error) {
+	if err := ValidateRealtimeLanePayload(candidate.Payload); err != nil {
+		return nil, fmt.Errorf("wire lane packet lane=%q family=%q: %w", candidate.Lane(), candidate.PacketFamily(), err)
 	}
-
-	if candidate.Delta != nil {
-		switch packet := candidate.Delta.(type) {
-		case WorldDeltaPacket:
-			return wireWorldDeltaPacket(packet)
-		case WorldWireDeltaPacket:
-			return wireWorldWireDeltaPacket(packet)
-		case AsteroidWireDeltaPacket:
-			return wireAsteroidWireDeltaPacket(packet)
-		case BulletWireDeltaPacket:
-			return wireBulletWireDeltaPacket(packet)
-		case OverlayLaneDelta:
-			return wireOverlayDeltaPacket(packet)
-		case OverlayWireLaneDelta:
-			return wireOverlayWireDeltaPacket(packet)
-		case SessionLaneDelta:
-			return wireSessionDeltaPacket(packet)
-		case SessionWireLaneDelta:
-			return wireSessionWireDeltaPacket(packet)
-		default:
-			return wireLaneDelta(candidate.Delta)
-		}
+	wire := candidate.Payload.WirePacket()
+	if err := validateWireLaneMap(candidate, wire); err != nil {
+		return nil, err
 	}
+	return wire, nil
+}
 
-	return map[string]any{}
+func validateWireLaneMap(candidate RealtimeLaneCandidate, wire map[string]any) error {
+	if len(wire) == 0 {
+		return fmt.Errorf("wire lane packet lane=%q family=%q: serializer returned empty map", candidate.Lane(), candidate.PacketFamily())
+	}
+	rawType, ok := wire["type"]
+	if !ok {
+		return fmt.Errorf("wire lane packet lane=%q family=%q: missing type", candidate.Lane(), candidate.PacketFamily())
+	}
+	wireType, ok := rawType.(string)
+	if !ok || strings.TrimSpace(wireType) == "" {
+		return fmt.Errorf("wire lane packet lane=%q family=%q: invalid type %v", candidate.Lane(), candidate.PacketFamily(), rawType)
+	}
+	if wireType != candidate.PacketFamily() {
+		return fmt.Errorf("wire lane packet lane=%q family=%q: wire type %q does not match payload family", candidate.Lane(), candidate.PacketFamily(), wireType)
+	}
+	return nil
 }
 
 func wireWorldFullPacket(packet WorldFullPacket) map[string]any {
@@ -331,44 +317,6 @@ func wireSessionWireDeltaPacket(packet SessionWireLaneDelta) map[string]any {
 	putStringArrayIfNonEmpty(wire, "player_lifecycle_deletes", packet.PlayerLifecycle.Deletes)
 	putValueIfNotNil(wire, "total_asteroids", firstSessionTotalAsteroids(packet.TotalAsteroids))
 	return wire
-}
-
-func wireLaneDelta(delta any) map[string]any {
-	switch packet := delta.(type) {
-	case WorldLaneDelta:
-		return map[string]any{
-			"ship_creates":     wireRecords(packet.Ships.Creates),
-			"ship_updates":     wireRecords(packet.Ships.Updates),
-			"ship_deletes":     packet.Ships.Deletes,
-			"bullet_creates":   wireRecords(packet.Bullets.Creates),
-			"bullet_updates":   wireRecords(packet.Bullets.Updates),
-			"bullet_deletes":   packet.Bullets.Deletes,
-			"asteroid_creates": wireRecords(packet.Asteroids.Creates),
-			"asteroid_updates": wireRecords(packet.Asteroids.Updates),
-			"asteroid_deletes": packet.Asteroids.Deletes,
-			"pickup_creates":   wireRecords(packet.Pickups.Creates),
-			"pickup_updates":   wireRecords(packet.Pickups.Updates),
-			"pickup_deletes":   packet.Pickups.Deletes,
-		}
-	case OverlayLaneDelta:
-		return map[string]any{
-			"receiver_creates": wireRecords(packet.Receiver.Creates),
-			"receiver_updates": wireRecords(packet.Receiver.Updates),
-			"receiver_deletes": packet.Receiver.Deletes,
-		}
-	case SessionLaneDelta:
-		return map[string]any{
-			"players":                  wireRecordArray(packet.Players.Creates),
-			"player_session_updates":   wireRecordArray(packet.Players.Updates),
-			"player_session_deletes":   wireStringArray(packet.Players.Deletes),
-			"player_lifecycle":         wireRecordArray(packet.PlayerLifecycle.Creates),
-			"player_lifecycle_updates": wireRecordArray(packet.PlayerLifecycle.Updates),
-			"player_lifecycle_deletes": wireStringArray(packet.PlayerLifecycle.Deletes),
-			"total_asteroids":          firstSessionTotalAsteroids(packet.TotalAsteroids),
-		}
-	default:
-		return map[string]any{}
-	}
 }
 
 func wireEventRecords(records []EventRecord) []any {

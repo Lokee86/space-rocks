@@ -11,65 +11,61 @@ import (
 )
 
 func TestActiveWirePacketEncodingUsesLowercaseWorldShape(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: WorldFullPacket{
-			Type: PacketFamilyWorldFull,
-			Metadata: Metadata{
-				Lane:     LaneWorld,
-				Sequence: 7,
-			},
-			Ships: []WorldShipRecord{
-				{
-					ID:         "ship-1",
-					ShipType:   "v_wing",
-					X:          1,
-					Y:          2,
-					Rotation:   3,
-					Health:     4,
-					Shields:    5,
-					Thrusting:  true,
-					TargetKind: "player",
-					TargetID:   "player-1",
-				},
-			},
-			Bullets: []WorldBulletRecord{
-				{
-					ID:             "bullet-1",
-					OwnerID:        "ship-1",
-					X:              6,
-					Y:              7,
-					Rotation:       8,
-					WeaponID:       "basic",
-					ProjectileType: "laser",
-				},
-			},
-			Asteroids: []WorldAsteroidRecord{
-				{
-					ID:      "asteroid-1",
-					X:       9,
-					Y:       10,
-					Size:    2,
-					Health:  11,
-					Scale:   1.5,
-					Variant: 3,
-				},
-			},
-			Pickups: []WorldPickupRecord{
-				{
-					ID:              "pickup-1",
-					Type:            "shield",
-					PickupClass:     "armor",
-					X:               12,
-					Y:               13,
-					Health:          1,
-					AgeSeconds:      4.5,
-					LifespanSeconds: 9.5,
-				},
+	candidate := mustRealtimeLaneCandidate(WorldFullPacket{
+		Type: PacketFamilyWorldFull,
+		Metadata: Metadata{
+			Lane:     LaneWorld,
+			Sequence: 7,
+		},
+		Ships: []WorldShipRecord{
+			{
+				ID:         "ship-1",
+				ShipType:   "v_wing",
+				X:          1,
+				Y:          2,
+				Rotation:   3,
+				Health:     4,
+				Shields:    5,
+				Thrusting:  true,
+				TargetKind: "player",
+				TargetID:   "player-1",
 			},
 		},
-	}
+		Bullets: []WorldBulletRecord{
+			{
+				ID:             "bullet-1",
+				OwnerID:        "ship-1",
+				X:              6,
+				Y:              7,
+				Rotation:       8,
+				WeaponID:       "basic",
+				ProjectileType: "laser",
+			},
+		},
+		Asteroids: []WorldAsteroidRecord{
+			{
+				ID:      "asteroid-1",
+				X:       9,
+				Y:       10,
+				Size:    2,
+				Health:  11,
+				Scale:   1.5,
+				Variant: 3,
+			},
+		},
+		Pickups: []WorldPickupRecord{
+			{
+				ID:              "pickup-1",
+				Type:            "shield",
+				PickupClass:     "armor",
+				X:               12,
+				Y:               13,
+				Health:          1,
+				AgeSeconds:      4.5,
+				LifespanSeconds: 9.5,
+			},
+		},
+	}, nil)
 
 	encoded := mustEncodeWirePacket(t, candidate)
 	wire := mustDecodeWirePacket(t, encoded)
@@ -92,7 +88,6 @@ func TestActiveWirePacketEncodingUsesLowercaseWorldShape(t *testing.T) {
 	assertFloatValue(t, asteroid, "scale", 1.5)
 	assertIntValue(t, asteroid, "variant", 3)
 }
-
 
 func TestWorldQuantizationReachesEncodedWireJSON(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
@@ -141,7 +136,7 @@ func TestWorldQuantizationReachesEncodedWireJSON(t *testing.T) {
 		t.Fatalf("quantize world full packet: %v", err)
 	}
 
-	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: wire}))
+	encoded, err := packetcodec.Encode(mustWireLanePacket(t, mustRealtimeLaneCandidate(wire, nil)))
 	if err != nil {
 		t.Fatalf("encode failed: %v", err)
 	}
@@ -180,25 +175,21 @@ func TestWorldQuantizationReachesEncodedWireJSON(t *testing.T) {
 }
 
 func TestWireWorldWireDeltaPacketOmitsEmptySectionsAndKeepsShipUpdates(t *testing.T) {
-	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldWireDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{Lane: LaneWorld, Sequence: 9, SnapshotKind: SnapshotKind("delta")},
-			Ships: FieldRecordDelta[WorldShipWireRecord]{
-				Updates: []map[string]any{
-					{
-						"id":        "ship-1",
-						"x":         int64(10),
-						"y":         int64(20),
-						"rotation":  int64(30),
-						"thrusting": true,
-					},
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, mustRealtimeLaneCandidate(WorldWireDeltaPacket{
+		Type:     PacketTypeWorldDelta,
+		Metadata: Metadata{Lane: LaneWorld, Sequence: 9, SnapshotKind: SnapshotKind("delta")},
+		Ships: FieldRecordDelta[WorldShipWireRecord]{
+			Updates: []map[string]any{
+				{
+					"id":        "ship-1",
+					"x":         int64(10),
+					"y":         int64(20),
+					"rotation":  int64(30),
+					"thrusting": true,
 				},
 			},
 		},
-	}))
+	}, nil)))
 
 	updates := mustSliceValue(t, wire, "ship_updates")
 	if len(updates) != 1 {
@@ -220,17 +211,13 @@ func TestWireWorldWireDeltaPacketOmitsEmptySectionsAndKeepsShipUpdates(t *testin
 }
 
 func TestWireWorldWireDeltaPacketOmitsEmptySectionsAndKeepsBulletDeletes(t *testing.T) {
-	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldWireDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{Lane: LaneWorld, Sequence: 10, SnapshotKind: SnapshotKind("delta")},
-			Bullets: FieldRecordDelta[WorldBulletWireRecord]{
-				Deletes: []string{"bullet-1"},
-			},
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, mustRealtimeLaneCandidate(WorldWireDeltaPacket{
+		Type:     PacketTypeWorldDelta,
+		Metadata: Metadata{Lane: LaneWorld, Sequence: 10, SnapshotKind: SnapshotKind("delta")},
+		Bullets: FieldRecordDelta[WorldBulletWireRecord]{
+			Deletes: []string{"bullet-1"},
 		},
-	}))
+	}, nil)))
 
 	deletes := mustSliceValue(t, wire, "bullet_deletes")
 	if len(deletes) != 1 {
@@ -246,25 +233,21 @@ func TestWireWorldWireDeltaPacketOmitsEmptySectionsAndKeepsBulletDeletes(t *test
 }
 
 func TestWireWorldWireDeltaPacketPreservesFalseAndZeroFieldsInShipUpdates(t *testing.T) {
-	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldWireDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{Lane: LaneWorld, Sequence: 11, SnapshotKind: SnapshotKind("delta")},
-			Ships: FieldRecordDelta[WorldShipWireRecord]{
-				Updates: []map[string]any{
-					{
-						"id":        "ship-1",
-						"x":         int64(0),
-						"y":         int64(0),
-						"rotation":  int64(0),
-						"thrusting": false,
-					},
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, mustRealtimeLaneCandidate(WorldWireDeltaPacket{
+		Type:     PacketTypeWorldDelta,
+		Metadata: Metadata{Lane: LaneWorld, Sequence: 11, SnapshotKind: SnapshotKind("delta")},
+		Ships: FieldRecordDelta[WorldShipWireRecord]{
+			Updates: []map[string]any{
+				{
+					"id":        "ship-1",
+					"x":         int64(0),
+					"y":         int64(0),
+					"rotation":  int64(0),
+					"thrusting": false,
 				},
 			},
 		},
-	}))
+	}, nil)))
 
 	update := mustMapValue(t, mustSliceValue(t, wire, "ship_updates")[0])
 	assertJSONIntValue(t, update, "x", 0)
@@ -276,17 +259,13 @@ func TestWireWorldWireDeltaPacketPreservesFalseAndZeroFieldsInShipUpdates(t *tes
 }
 
 func TestWireWorldWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
-	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldWireDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{Lane: LaneWorld, Sequence: 20, SnapshotKind: SnapshotKind("delta")},
-			Ships: FieldRecordDelta[WorldShipWireRecord]{
-				Updates: []map[string]any{{"id": "ship-1", "x": int64(1), "y": int64(2), "rotation": int64(3), "thrusting": true}},
-			},
+	encoded, err := packetcodec.Encode(mustWireLanePacket(t, mustRealtimeLaneCandidate(WorldWireDeltaPacket{
+		Type:     PacketTypeWorldDelta,
+		Metadata: Metadata{Lane: LaneWorld, Sequence: 20, SnapshotKind: SnapshotKind("delta")},
+		Ships: FieldRecordDelta[WorldShipWireRecord]{
+			Updates: []map[string]any{{"id": "ship-1", "x": int64(1), "y": int64(2), "rotation": int64(3), "thrusting": true}},
 		},
-	}))
+	}, nil)))
 	if err != nil {
 		t.Fatalf("encode failed: %v", err)
 	}
@@ -305,13 +284,9 @@ func TestWireWorldWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
 }
 
 func TestWireOverlayWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
-	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: OverlayWireLaneDelta{
-			Metadata: Metadata{Lane: LaneOverlay, Sequence: 21, SnapshotKind: SnapshotKind("delta")},
-		},
-	}))
+	encoded, err := packetcodec.Encode(mustWireLanePacket(t, mustRealtimeLaneCandidate(OverlayWireLaneDelta{
+		Metadata: Metadata{Lane: LaneOverlay, Sequence: 21, SnapshotKind: SnapshotKind("delta")},
+	}, nil)))
 	if err != nil {
 		t.Fatalf("encode failed: %v", err)
 	}
@@ -325,13 +300,9 @@ func TestWireOverlayWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
 }
 
 func TestWireSessionWireDeltaPacketSparseJsonOmitsEmptySections(t *testing.T) {
-	encoded, err := packetcodec.Encode(WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneSession,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: SessionWireLaneDelta{
-			Metadata: Metadata{Lane: LaneSession, Sequence: 22, SnapshotKind: SnapshotKind("delta")},
-		},
-	}))
+	encoded, err := packetcodec.Encode(mustWireLanePacket(t, mustRealtimeLaneCandidate(SessionWireLaneDelta{
+		Metadata: Metadata{Lane: LaneSession, Sequence: 22, SnapshotKind: SnapshotKind("delta")},
+	}, nil)))
 	if err != nil {
 		t.Fatalf("encode failed: %v", err)
 	}
@@ -360,11 +331,11 @@ func TestWireWorldDeltaPacketEncodesShipUpdatesAsPartialFieldPatch(t *testing.T)
 		Ships: FieldRecordDelta[WorldShipRecord]{
 			Updates: []map[string]any{
 				{
-					"id":         "ship-1",
-					"x":          6,
-					"y":          7,
-					"rotation":   8,
-					"thrusting":  true,
+					"id":        "ship-1",
+					"x":         6,
+					"y":         7,
+					"rotation":  8,
+					"thrusting": true,
 				},
 			},
 		},
@@ -486,23 +457,19 @@ func TestWireWorldDeltaPacketEncodesAsteroidUpdatesAsPartialFieldPatch(t *testin
 }
 
 func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
-	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneAsteroids,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: AsteroidWireDeltaPacket{
-			Type:     PacketFamilyAsteroidDelta,
-			Metadata: Metadata{Lane: LaneAsteroids, Sequence: 42, ServerSentMsec: 123456, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: false},
-			AsteroidUpdates: []map[string]any{
-				{
-					"id":     "asteroid-1",
-					"x":      int64(10),
-					"y":      int64(20),
-					"size":   int64(3),
-					"health": int64(4),
-				},
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
+		Type:     PacketFamilyAsteroidDelta,
+		Metadata: Metadata{Lane: LaneAsteroids, Sequence: 42, ServerSentMsec: 123456, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: false},
+		AsteroidUpdates: []map[string]any{
+			{
+				"id":     "asteroid-1",
+				"x":      int64(10),
+				"y":      int64(20),
+				"size":   int64(3),
+				"health": int64(4),
 			},
 		},
-	}))
+	}, nil)))
 
 	assertStringValue(t, wire, "type", PacketFamilyAsteroidDelta)
 	assertIntValue(t, wire, "sequence", 42)
@@ -517,15 +484,11 @@ func TestWireAsteroidDeltaPacketIsUpdateOnly(t *testing.T) {
 }
 
 func TestWireAsteroidLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
-	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneAsteroidsLifecycle,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: AsteroidWireDeltaPacket{
-			Type:     PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 44, BaselineID: "world-baseline-44", SnapshotID: "world-snapshot-44", ServerSentMsec: 987654, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
-			AsteroidCreates: []WorldAsteroidWireRecord{{ID: "asteroid-1", X: 10, Y: 20, Size: 3, Health: 4, Scale: 5, Variant: 6}},
-			AsteroidDeletes: []string{"asteroid-9"},
-		},
-	}))
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
+		Type: PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 44, BaselineID: "world-baseline-44", SnapshotID: "world-snapshot-44", ServerSentMsec: 987654, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
+		AsteroidCreates: []WorldAsteroidWireRecord{{ID: "asteroid-1", X: 10, Y: 20, Size: 3, Health: 4, Scale: 5, Variant: 6}},
+		AsteroidDeletes: []string{"asteroid-9"},
+	}, nil)))
 
 	assertStringValue(t, wire, "type", PacketFamilyAsteroidsLifecycle)
 	assertStringValue(t, wire, "lane", string(LaneAsteroidsLifecycle))
@@ -556,22 +519,18 @@ func TestWireAsteroidLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
 }
 
 func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
-	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneBullets,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{
-			Type:     PacketFamilyBulletDelta,
-			Metadata: Metadata{Lane: LaneBullets, Sequence: 43, ServerSentMsec: 654321, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 2, ChunkCount: 4, IsFinalChunk: true},
-			BulletUpdates: []map[string]any{
-				{
-					"id":       "bullet-1",
-					"x":        int64(30),
-					"y":        int64(40),
-					"rotation": int64(50),
-				},
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+		Type:     PacketFamilyBulletDelta,
+		Metadata: Metadata{Lane: LaneBullets, Sequence: 43, ServerSentMsec: 654321, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 2, ChunkCount: 4, IsFinalChunk: true},
+		BulletUpdates: []map[string]any{
+			{
+				"id":       "bullet-1",
+				"x":        int64(30),
+				"y":        int64(40),
+				"rotation": int64(50),
 			},
 		},
-	}))
+	}, nil)))
 
 	assertStringValue(t, wire, "type", PacketFamilyBulletDelta)
 	assertIntValue(t, wire, "sequence", 43)
@@ -586,16 +545,12 @@ func TestWireBulletDeltaPacketIsUpdateOnly(t *testing.T) {
 }
 
 func TestWireBulletLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
-	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, RealtimeLaneCandidate{
-		Lane: LaneBulletsLifecycle,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{
-			Type:     PacketFamilyBulletsLifecycle,
-			Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 45, BaselineID: "world-baseline-45", SnapshotID: "world-snapshot-45", ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
-			BulletCreates: []WorldBulletWireRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 1, Y: 2, Rotation: 3, WeaponID: "pulse", ProjectileType: "laser"}},
-			BulletDeletes: []string{"bullet-9"},
-		},
-	}))
+	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+		Type:          PacketFamilyBulletsLifecycle,
+		Metadata:      Metadata{Lane: LaneBulletsLifecycle, Sequence: 45, BaselineID: "world-baseline-45", SnapshotID: "world-snapshot-45", ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
+		BulletCreates: []WorldBulletWireRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 1, Y: 2, Rotation: 3, WeaponID: "pulse", ProjectileType: "laser"}},
+		BulletDeletes: []string{"bullet-9"},
+	}, nil)))
 
 	assertStringValue(t, wire, "type", PacketFamilyBulletsLifecycle)
 	assertStringValue(t, wire, "lane", string(LaneBulletsLifecycle))
@@ -646,13 +601,9 @@ func TestWireWorldDeltaPacketEncodesPickupUpdatesAsPartialFieldPatch(t *testing.
 }
 
 func TestWireSessionDeltaPacketUsesSparseOmission(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneSession,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: SessionWireLaneDelta{
-			Metadata: Metadata{Lane: LaneSession, Sequence: 14, SnapshotKind: SnapshotKind("delta")},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(SessionWireLaneDelta{
+		Metadata: Metadata{Lane: LaneSession, Sequence: 14, SnapshotKind: SnapshotKind("delta")},
+	}, nil))
 
 	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
 	assertIntValue(t, wire, "sequence", 14)
@@ -662,13 +613,9 @@ func TestWireSessionDeltaPacketUsesSparseOmission(t *testing.T) {
 }
 
 func TestWireOverlayWireDeltaPacketOmitsEmptySections(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: OverlayWireLaneDelta{
-			Metadata: Metadata{Lane: LaneOverlay, Sequence: 12, SnapshotKind: SnapshotKind("delta")},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(OverlayWireLaneDelta{
+		Metadata: Metadata{Lane: LaneOverlay, Sequence: 12, SnapshotKind: SnapshotKind("delta")},
+	}, nil))
 
 	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
 	assertIntValue(t, wire, "sequence", 12)
@@ -678,16 +625,12 @@ func TestWireOverlayWireDeltaPacketOmitsEmptySections(t *testing.T) {
 }
 
 func TestWireOverlayWireDeltaPacketKeepsReceiverUpdatesAndOmitsEmptySections(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: OverlayWireLaneDelta{
-			Metadata: Metadata{Lane: LaneOverlay, Sequence: 13, SnapshotKind: SnapshotKind("delta")},
-			Receiver: FieldRecordDelta[OverlayReceiverWireRecord]{
-				Updates: []map[string]any{{"self_id": "player-1", "score": int64(0), "lives": int64(0), "primary_cooldown_remaining": int64(0)}},
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(OverlayWireLaneDelta{
+		Metadata: Metadata{Lane: LaneOverlay, Sequence: 13, SnapshotKind: SnapshotKind("delta")},
+		Receiver: FieldRecordDelta[OverlayReceiverWireRecord]{
+			Updates: []map[string]any{{"self_id": "player-1", "score": int64(0), "lives": int64(0), "primary_cooldown_remaining": int64(0)}},
 		},
-	})
+	}, nil))
 
 	updates := mustSliceValue(t, wire, "receiver_updates")
 	if len(updates) != 1 {
@@ -704,13 +647,9 @@ func TestWireOverlayWireDeltaPacketKeepsReceiverUpdatesAndOmitsEmptySections(t *
 }
 
 func TestWireSessionWireDeltaPacketOmitsEmptySections(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneSession,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: SessionWireLaneDelta{
-			Metadata: Metadata{Lane: LaneSession, Sequence: 14, SnapshotKind: SnapshotKind("delta")},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(SessionWireLaneDelta{
+		Metadata: Metadata{Lane: LaneSession, Sequence: 14, SnapshotKind: SnapshotKind("delta")},
+	}, nil))
 
 	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
 	assertIntValue(t, wire, "sequence", 14)
@@ -720,14 +659,10 @@ func TestWireSessionWireDeltaPacketOmitsEmptySections(t *testing.T) {
 }
 
 func TestWireSessionWireDeltaPacketKeepsZeroTotalAsteroids(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneSession,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: SessionWireLaneDelta{
-			Metadata: Metadata{Lane: LaneSession, Sequence: 15, SnapshotKind: SnapshotKind("delta")},
-			TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{Updates: []SessionTotalAsteroidsRecord{{ID: "session-1", Count: 0}}},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(SessionWireLaneDelta{
+		Metadata:       Metadata{Lane: LaneSession, Sequence: 15, SnapshotKind: SnapshotKind("delta")},
+		TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{Updates: []SessionTotalAsteroidsRecord{{ID: "session-1", Count: 0}}},
+	}, nil))
 
 	assertIntValue(t, wire, "total_asteroids", 0)
 }
@@ -735,7 +670,7 @@ func TestWireSessionWireDeltaPacketKeepsZeroTotalAsteroids(t *testing.T) {
 func TestWireSessionDeltaPacketEncodesPlayerSessionUpdates(t *testing.T) {
 	wire := wireSessionDeltaPacket(SessionLaneDelta{
 		Metadata: Metadata{Lane: LaneSession},
-		Players: FieldRecordDelta[SessionPlayerRecord]{Updates: []map[string]any{{"id": "player-1", "score": 10}}},
+		Players:  FieldRecordDelta[SessionPlayerRecord]{Updates: []map[string]any{{"id": "player-1", "score": 10}}},
 	})
 
 	updates := mustSliceValue(t, wire, "player_session_updates")
@@ -749,7 +684,7 @@ func TestWireSessionDeltaPacketEncodesPlayerSessionUpdates(t *testing.T) {
 
 func TestWireSessionDeltaPacketEncodesPlayerLifecycleUpdates(t *testing.T) {
 	wire := wireSessionDeltaPacket(SessionLaneDelta{
-		Metadata: Metadata{Lane: LaneSession},
+		Metadata:        Metadata{Lane: LaneSession},
 		PlayerLifecycle: FieldRecordDelta[SessionLifecycleRecord]{Updates: []map[string]any{{"player_id": "player-1", "status": "respawning"}}},
 	})
 
@@ -764,7 +699,7 @@ func TestWireSessionDeltaPacketEncodesPlayerLifecycleUpdates(t *testing.T) {
 
 func TestWireSessionDeltaPacketEncodesPlayerLifecycleDeletes(t *testing.T) {
 	wire := wireSessionDeltaPacket(SessionLaneDelta{
-		Metadata: Metadata{Lane: LaneSession},
+		Metadata:        Metadata{Lane: LaneSession},
 		PlayerLifecycle: FieldRecordDelta[SessionLifecycleRecord]{Creates: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "active"}}, Updates: []map[string]any{{"player_id": "player-1", "status": "respawning"}}, Deletes: []string{"player-1"}},
 	})
 
@@ -779,24 +714,20 @@ func TestWireSessionDeltaPacketEncodesPlayerLifecycleDeletes(t *testing.T) {
 }
 
 func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{
-				Lane:         LaneWorld,
-				Sequence:     9,
-				BaselineID:   "baseline-9",
-				SnapshotID:   "snapshot-9",
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			Ships: FieldRecordDelta[WorldShipRecord]{Creates: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}, Updates: []map[string]any{{"id": "ship-a", "x": 2}}, Deletes: []string{"ship-b"}},
-			Bullets: FieldRecordDelta[WorldBulletRecord]{Updates: []map[string]any{{"id": "bullet-a", "x": 4, "y": 5}}},
-			Asteroids: FieldRecordDelta[WorldAsteroidRecord]{Updates: []map[string]any{{"id": "asteroid-a", "x": 6}}},
-			Pickups: FieldRecordDelta[WorldPickupRecord]{Creates: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 1, Y: 2, Health: 3, AgeSeconds: 4, LifespanSeconds: 5}}, Updates: []map[string]any{{"id": "pickup-a", "x": 7}}, Deletes: []string{"pickup-a"}},
+	candidate := mustRealtimeLaneCandidate(WorldDeltaPacket{
+		Type: PacketTypeWorldDelta,
+		Metadata: Metadata{
+			Lane:         LaneWorld,
+			Sequence:     9,
+			BaselineID:   "baseline-9",
+			SnapshotID:   "snapshot-9",
+			SnapshotKind: SnapshotKind("delta"),
 		},
-	}
+		Ships:     FieldRecordDelta[WorldShipRecord]{Creates: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing"}}, Updates: []map[string]any{{"id": "ship-a", "x": 2}}, Deletes: []string{"ship-b"}},
+		Bullets:   FieldRecordDelta[WorldBulletRecord]{Updates: []map[string]any{{"id": "bullet-a", "x": 4, "y": 5}}},
+		Asteroids: FieldRecordDelta[WorldAsteroidRecord]{Updates: []map[string]any{{"id": "asteroid-a", "x": 6}}},
+		Pickups:   FieldRecordDelta[WorldPickupRecord]{Creates: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", PickupClass: "powerup", X: 1, Y: 2, Health: 3, AgeSeconds: 4, LifespanSeconds: 5}}, Updates: []map[string]any{{"id": "pickup-a", "x": 7}}, Deletes: []string{"pickup-a"}},
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
@@ -815,15 +746,11 @@ func TestActiveWirePacketEncodingUsesWorldDeltaEnvelope(t *testing.T) {
 }
 
 func TestActiveWirePacketEncodingUsesBulletLifecycleEnvelope(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneBulletsLifecycle,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{
-			Type:     PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 11, BaselineID: "bullet-baseline-11", SnapshotID: "bullet-snapshot-11", SnapshotKind: SnapshotKind("delta")},
-			BulletCreates: []WorldBulletWireRecord{{ID: "bullet-a", OwnerID: "ship-a", X: 1, Y: 2, Rotation: 3, WeaponID: "pulse", ProjectileType: "laser"}},
-			BulletDeletes: []string{"bullet-b"},
-		},
-	}
+	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+		Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 11, BaselineID: "bullet-baseline-11", SnapshotID: "bullet-snapshot-11", SnapshotKind: SnapshotKind("delta")},
+		BulletCreates: []WorldBulletWireRecord{{ID: "bullet-a", OwnerID: "ship-a", X: 1, Y: 2, Rotation: 3, WeaponID: "pulse", ProjectileType: "laser"}},
+		BulletDeletes: []string{"bullet-b"},
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
@@ -837,26 +764,22 @@ func TestActiveWirePacketEncodingUsesBulletLifecycleEnvelope(t *testing.T) {
 }
 
 func TestActiveWirePacketEncodingUsesOverlayDeltaEnvelope(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: OverlayLaneDelta{
-			Metadata: Metadata{
-				Lane:         LaneOverlay,
-				Sequence:     12,
-				BaselineID:   "overlay-baseline-12",
-				SnapshotID:   "overlay-snapshot-12",
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			Receiver: FieldRecordDelta[OverlayReceiverRecord]{Updates: []map[string]any{{"self_id": "player-1", "score": 10, "primary_cooldown_remaining": 1.25}}},
+	candidate := mustRealtimeLaneCandidate(OverlayLaneDelta{
+		Metadata: Metadata{
+			Lane:         LaneOverlay,
+			Sequence:     12,
+			BaselineID:   "overlay-baseline-12",
+			SnapshotID:   "overlay-snapshot-12",
+			SnapshotKind: SnapshotKind("delta"),
 		},
-	}
+		Receiver: FieldRecordDelta[OverlayReceiverRecord]{Updates: []map[string]any{{"self_id": "player-1", "score": 10, "primary_cooldown_remaining": 1.25}}},
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
 	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
 	assertIntValue(t, wire, "sequence", 12)
-    assertIntValue(t, wire, "baseline_sequence", 12)
+	assertIntValue(t, wire, "baseline_sequence", 12)
 	assertContainsKey(t, wire, "receiver_updates")
 	assertNotNakedOverlayDeltaPayload(t, wire)
 }
@@ -873,7 +796,7 @@ func TestWireOverlayDeltaPacketEncodesReceiverUpdatesAsPartialFieldPatch(t *test
 	wire := mustDecodeWirePacket(t, encoded)
 	assertStringValue(t, wire, "type", PacketTypeOverlayDelta)
 	assertIntValue(t, wire, "sequence", 12)
-    assertIntValue(t, wire, "baseline_sequence", 12)
+	assertIntValue(t, wire, "baseline_sequence", 12)
 
 	updates := mustSliceValue(t, wire, "receiver_updates")
 	if len(updates) != 1 {
@@ -893,28 +816,24 @@ func TestWireOverlayDeltaPacketEncodesReceiverUpdatesAsPartialFieldPatch(t *test
 }
 
 func TestWireOverlayWireFullPacketEncodesIntegerCooldownFields(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: OverlayWireFullPacket{
-			Type: PacketFamilyOverlayFull,
-			Metadata: Metadata{Lane: LaneOverlay, Sequence: 3},
-			Receiver: OverlayReceiverWireRecord{
-			SelfID:                    "player-1",
-			Lives:                     2,
-			Score:                     9,
-			RespawnCooldown:           1250,
-			PrimaryWeaponID:           "pulse",
-			PrimaryAmmoPolicy:         "limited",
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(OverlayWireFullPacket{
+		Type:     PacketFamilyOverlayFull,
+		Metadata: Metadata{Lane: LaneOverlay, Sequence: 3},
+		Receiver: OverlayReceiverWireRecord{
+			SelfID:                     "player-1",
+			Lives:                      2,
+			Score:                      9,
+			RespawnCooldown:            1250,
+			PrimaryWeaponID:            "pulse",
+			PrimaryAmmoPolicy:          "limited",
 			PrimaryCooldownRemaining:   500,
-			PrimaryAmmoRemaining:      12,
-			SecondaryWeaponID:         "mine",
-			SecondaryAmmoPolicy:       "infinite",
+			PrimaryAmmoRemaining:       12,
+			SecondaryWeaponID:          "mine",
+			SecondaryAmmoPolicy:        "infinite",
 			SecondaryCooldownRemaining: 750,
-			SecondaryAmmoRemaining:    3,
-			},
+			SecondaryAmmoRemaining:     3,
 		},
-	})
+	}, nil))
 
 	assertInt64Value(t, wire, "respawn_cooldown", 1250)
 	assertInt64Value(t, wire, "primary_cooldown_remaining", 500)
@@ -922,14 +841,10 @@ func TestWireOverlayWireFullPacketEncodesIntegerCooldownFields(t *testing.T) {
 }
 
 func TestWireOverlayWireDeltaPacketEncodesIntegerCooldownUpdates(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: OverlayWireLaneDelta{
-			Metadata: Metadata{Lane: LaneOverlay, Sequence: 12, BaselineID: "overlay-baseline-12", SnapshotID: "overlay-snapshot-12", SnapshotKind: SnapshotKind("delta")},
-			Receiver: FieldRecordDelta[OverlayReceiverWireRecord]{Updates: []map[string]any{{"self_id": "player-1", "primary_cooldown_remaining": int64(500)}}},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(OverlayWireLaneDelta{
+		Metadata: Metadata{Lane: LaneOverlay, Sequence: 12, BaselineID: "overlay-baseline-12", SnapshotID: "overlay-snapshot-12", SnapshotKind: SnapshotKind("delta")},
+		Receiver: FieldRecordDelta[OverlayReceiverWireRecord]{Updates: []map[string]any{{"self_id": "player-1", "primary_cooldown_remaining": int64(500)}}},
+	}, nil))
 
 	updates := mustSliceValue(t, wire, "receiver_updates")
 	if len(updates) != 1 {
@@ -940,28 +855,24 @@ func TestWireOverlayWireDeltaPacketEncodesIntegerCooldownUpdates(t *testing.T) {
 }
 
 func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneSession,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: SessionLaneDelta{
-			Metadata: Metadata{
-				Lane:         LaneSession,
-				Sequence:     14,
-				BaselineID:   "session-baseline-14",
-				SnapshotID:   "session-snapshot-14",
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			Players: FieldRecordDelta[SessionPlayerRecord]{Updates: []map[string]any{{"id": "player-1", "score": 10, "lives": 2}}},
-			PlayerLifecycle: FieldRecordDelta[SessionLifecycleRecord]{Updates: []map[string]any{{"player_id": "player-1", "status": "respawning"}}},
-			TotalAsteroids: RecordDelta[SessionTotalAsteroidsRecord]{Updates: []SessionTotalAsteroidsRecord{{ID: "session-14", Count: 8}}},
+	candidate := mustRealtimeLaneCandidate(SessionLaneDelta{
+		Metadata: Metadata{
+			Lane:         LaneSession,
+			Sequence:     14,
+			BaselineID:   "session-baseline-14",
+			SnapshotID:   "session-snapshot-14",
+			SnapshotKind: SnapshotKind("delta"),
 		},
-	}
+		Players:         FieldRecordDelta[SessionPlayerRecord]{Updates: []map[string]any{{"id": "player-1", "score": 10, "lives": 2}}},
+		PlayerLifecycle: FieldRecordDelta[SessionLifecycleRecord]{Updates: []map[string]any{{"player_id": "player-1", "status": "respawning"}}},
+		TotalAsteroids:  RecordDelta[SessionTotalAsteroidsRecord]{Updates: []SessionTotalAsteroidsRecord{{ID: "session-14", Count: 8}}},
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
 	assertStringValue(t, wire, "type", PacketTypeSessionDelta)
 	assertIntValue(t, wire, "sequence", 14)
-    assertIntValue(t, wire, "baseline_sequence", 14)
+	assertIntValue(t, wire, "baseline_sequence", 14)
 	assertNotContainsKey(t, wire, "players")
 	assertContainsKey(t, wire, "player_session_updates")
 	assertNotContainsKey(t, wire, "player_lifecycle")
@@ -971,31 +882,27 @@ func TestActiveWirePacketEncodingUsesSessionDeltaEnvelope(t *testing.T) {
 }
 
 func TestActiveWirePacketEncodingUsesLowercaseOverlayShape(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: OverlayFullPacket{
-			Type: PacketFamilyOverlayFull,
-			Metadata: Metadata{
-				Lane:     LaneOverlay,
-				Sequence: 3,
-			},
-			Receiver: OverlayReceiverRecord{
-				SelfID:                   "player-1",
-				Lives:                    2,
-				Score:                    9,
-				RespawnCooldown:          1.25,
-				PrimaryWeaponID:          "pulse",
-				PrimaryAmmoPolicy:        "limited",
-				PrimaryCooldownRemaining: 0.5,
-				PrimaryAmmoRemaining:     12,
-				SecondaryWeaponID:        "mine",
-				SecondaryAmmoPolicy:      "infinite",
-				SecondaryCooldownRemaining: 0.75,
-				SecondaryAmmoRemaining:   3,
-			},
+	candidate := mustRealtimeLaneCandidate(OverlayFullPacket{
+		Type: PacketFamilyOverlayFull,
+		Metadata: Metadata{
+			Lane:     LaneOverlay,
+			Sequence: 3,
 		},
-	}
+		Receiver: OverlayReceiverRecord{
+			SelfID:                     "player-1",
+			Lives:                      2,
+			Score:                      9,
+			RespawnCooldown:            1.25,
+			PrimaryWeaponID:            "pulse",
+			PrimaryAmmoPolicy:          "limited",
+			PrimaryCooldownRemaining:   0.5,
+			PrimaryAmmoRemaining:       12,
+			SecondaryWeaponID:          "mine",
+			SecondaryAmmoPolicy:        "infinite",
+			SecondaryCooldownRemaining: 0.75,
+			SecondaryAmmoRemaining:     3,
+		},
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
@@ -1007,39 +914,35 @@ func TestActiveWirePacketEncodingUsesLowercaseOverlayShape(t *testing.T) {
 }
 
 func TestActiveWirePacketEncodingUsesLowercaseSessionShape(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneSession,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: SessionFullPacket{
-			Type: PacketFamilySessionFull,
-			Metadata: Metadata{
-				Lane:     LaneSession,
-				Sequence: 5,
-			},
-			Players: []SessionPlayerRecord{
-				{
-					ID:                  "player-1",
-					ShipType:            "v_wing",
-					Score:               8,
-					Lives:               3,
-					RespawnCooldown:     0.25,
-					PrimaryWeaponID:     "pulse",
-					PrimaryAmmoPolicy:   "limited",
-					SecondaryWeaponID:   "mine",
-					SecondaryAmmoPolicy: "infinite",
-					SpawnX:              10,
-					SpawnY:              20,
-				},
-			},
-			PlayerLifecycle: []SessionLifecycleRecord{
-				{
-					PlayerID: "player-1",
-					Status:   "active",
-				},
-			},
-			TotalAsteroids: 42,
+	candidate := mustRealtimeLaneCandidate(SessionFullPacket{
+		Type: PacketFamilySessionFull,
+		Metadata: Metadata{
+			Lane:     LaneSession,
+			Sequence: 5,
 		},
-	}
+		Players: []SessionPlayerRecord{
+			{
+				ID:                  "player-1",
+				ShipType:            "v_wing",
+				Score:               8,
+				Lives:               3,
+				RespawnCooldown:     0.25,
+				PrimaryWeaponID:     "pulse",
+				PrimaryAmmoPolicy:   "limited",
+				SecondaryWeaponID:   "mine",
+				SecondaryAmmoPolicy: "infinite",
+				SpawnX:              10,
+				SpawnY:              20,
+			},
+		},
+		PlayerLifecycle: []SessionLifecycleRecord{
+			{
+				PlayerID: "player-1",
+				Status:   "active",
+			},
+		},
+		TotalAsteroids: 42,
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
@@ -1050,46 +953,42 @@ func TestActiveWirePacketEncodingUsesLowercaseSessionShape(t *testing.T) {
 }
 
 func TestActiveWirePacketEncodingUsesLowercaseEventShape(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Metadata: Metadata{
-				Lane:     LaneEvent,
-				Sequence: 11,
-			},
-			Batch: EventBatchRecord{
-				BatchID:  "event-batch-11",
-				Sequence: 11,
-				Events: []EventRecord{
-					{
-						EventID: "event-1",
-						Event: game.EventState{
-							Type:       "bullet_blast",
-							X:          1,
-							Y:          2,
-							SourceID:   "ship-1",
-							EffectType: "blast",
-						},
+	candidate := mustRealtimeLaneCandidate(EventBatchPacket{
+		Type: PacketFamilyEventBatch,
+		Metadata: Metadata{
+			Lane:     LaneEvent,
+			Sequence: 11,
+		},
+		Batch: EventBatchRecord{
+			BatchID:  "event-batch-11",
+			Sequence: 11,
+			Events: []EventRecord{
+				{
+					EventID: "event-1",
+					Event: game.EventState{
+						Type:       "bullet_blast",
+						X:          1,
+						Y:          2,
+						SourceID:   "ship-1",
+						EffectType: "blast",
 					},
-					{
-						EventID: "event-2",
-						Event: game.EventState{
-							Type:         "ship_death",
-							PlayerID:     "player-1",
-							Lives:        2,
-							RespawnDelay: 3.5,
-							X:            4,
-							Y:            5,
-							SourceID:     "ship-2",
-							EffectType:   "death",
-						},
+				},
+				{
+					EventID: "event-2",
+					Event: game.EventState{
+						Type:         "ship_death",
+						PlayerID:     "player-1",
+						Lives:        2,
+						RespawnDelay: 3.5,
+						X:            4,
+						Y:            5,
+						SourceID:     "ship-2",
+						EffectType:   "death",
 					},
 				},
 			},
 		},
-	}
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
@@ -1112,44 +1011,27 @@ func TestActiveWirePacketEncodingUsesLowercaseEventShape(t *testing.T) {
 	assertJSONIntValue(t, shipDeath, "y", 50)
 }
 
-func TestWireLanePacketDropsUnsupportedFullPayloads(t *testing.T) {
-	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: map[string]any{"type": "world_full"}}); len(wire) != 0 {
-		t.Fatalf("expected unsupported full map payload to be dropped, got %#v", wire)
-	}
-	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: struct{ Type string }{Type: "world_full"}}); len(wire) != 0 {
-		t.Fatalf("expected unsupported full struct payload to be dropped, got %#v", wire)
+func TestWireLanePacketRejectsUnsupportedPayloads(t *testing.T) {
+	if _, err := WireLanePacket(RealtimeLaneCandidate{Payload: invalidRealtimeLanePayload{}}); err == nil {
+		t.Fatal("expected unsupported payload to fail closed")
 	}
 }
-
-func TestWireLanePacketDropsUnsupportedDeltaPayloads(t *testing.T) {
-	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: map[string]any{"ship_creates": []any{}}}); len(wire) != 0 {
-		t.Fatalf("expected unsupported delta map payload to be dropped, got %#v", wire)
-	}
-	if wire := WireLanePacket(RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: struct{ ShipCreates []any }{ShipCreates: []any{}}}); len(wire) != 0 {
-		t.Fatalf("expected unsupported delta struct payload to be dropped, got %#v", wire)
-	}
-}
-
 
 func TestWireWorldFullPacketOmitsInferableRuntimeMetadata(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: WorldFullPacket{
-			Type: PacketFamilyWorldFull,
-			Metadata: Metadata{
-				Lane:           LaneWorld,
-				Sequence:       9,
-				BaselineID:     "world-baseline-9",
-				SnapshotID:     "world-baseline-9",
-				SnapshotKind:   SnapshotKind("full"),
-				ServerSentMsec: 123,
-				ChunkIndex:     0,
-				ChunkCount:     1,
-				IsFinalChunk:   true,
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(WorldFullPacket{
+		Type: PacketFamilyWorldFull,
+		Metadata: Metadata{
+			Lane:           LaneWorld,
+			Sequence:       9,
+			BaselineID:     "world-baseline-9",
+			SnapshotID:     "world-baseline-9",
+			SnapshotKind:   SnapshotKind("full"),
+			ServerSentMsec: 123,
+			ChunkIndex:     0,
+			ChunkCount:     1,
+			IsFinalChunk:   true,
 		},
-	})
+	}, nil))
 
 	assertStringValue(t, wire, "type", PacketFamilyWorldFull)
 	assertIntValue(t, wire, "sequence", 9)
@@ -1160,22 +1042,18 @@ func TestWireWorldFullPacketOmitsInferableRuntimeMetadata(t *testing.T) {
 }
 
 func TestWireWorldDeltaPacketEmitsChunkMetadataOnlyForChunkedPackets(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{
-				Lane:         LaneWorld,
-				Sequence:     10,
-				BaselineID:   "world-baseline-9",
-				SnapshotID:   "world-snapshot-10",
-				SnapshotKind: SnapshotKind("delta"),
-				ChunkIndex:   1,
-				ChunkCount:   3,
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(WorldDeltaPacket{
+		Type: PacketTypeWorldDelta,
+		Metadata: Metadata{
+			Lane:         LaneWorld,
+			Sequence:     10,
+			BaselineID:   "world-baseline-9",
+			SnapshotID:   "world-snapshot-10",
+			SnapshotKind: SnapshotKind("delta"),
+			ChunkIndex:   1,
+			ChunkCount:   3,
 		},
-	})
+	}, nil))
 
 	assertIntValue(t, wire, "baseline_sequence", 9)
 	assertIntValue(t, wire, "chunk_index", 1)
@@ -1183,15 +1061,11 @@ func TestWireWorldDeltaPacketEmitsChunkMetadataOnlyForChunkedPackets(t *testing.
 	assertNotContainsKey(t, wire, "is_final_chunk")
 }
 func TestWireEventBatchPacketOmitsEnvelopeMetadata(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Metadata: Metadata{Lane: LaneEvent, Sequence: 11, SnapshotKind: SnapshotKind("delta"), BaselineID: "event-baseline", SnapshotID: "event-snapshot", ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: true},
-			Batch: EventBatchRecord{BatchID: "event-batch-11"},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent, Sequence: 11, SnapshotKind: SnapshotKind("delta"), BaselineID: "event-baseline", SnapshotID: "event-snapshot", ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: true},
+		Batch:    EventBatchRecord{BatchID: "event-batch-11"},
+	}, nil))
 
 	assertStringValue(t, wire, "type", PacketFamilyEventBatch)
 	assertIntValue(t, wire, "sequence", 11)
@@ -1204,31 +1078,28 @@ func TestWireEventBatchPacketOmitsEnvelopeMetadata(t *testing.T) {
 	assertNotContainsKey(t, wire, "is_final_chunk")
 }
 func TestWireEventBatchPacketShapesBulletBlastWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-1",
-					Event: game.EventState{
-						Type:       "bullet_blast",
-						X:          12.34,
-						Y:          56.78,
-						PickupID:   "pickup-1",
-						PickupType: "shield",
-						TableID:    "table-1",
-						EffectType: "blast",
-						Amount:     9,
-						LivesAfter: 1,
-						SourceID:   "ship-1",
-						SourceType: "ship",
-					},
-				}},
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-1",
+				Event: game.EventState{
+					Type:       "bullet_blast",
+					X:          12.34,
+					Y:          56.78,
+					PickupID:   "pickup-1",
+					PickupType: "shield",
+					TableID:    "table-1",
+					EffectType: "blast",
+					Amount:     9,
+					LivesAfter: 1,
+					SourceID:   "ship-1",
+					SourceType: "ship",
+				},
+			}},
 		},
-	})
+	}, nil))
 
 	events := mustSliceValue(t, wire, "events")
 	record := mustMapValue(t, events[0])
@@ -1242,34 +1113,31 @@ func TestWireEventBatchPacketShapesBulletBlastWithRelevantFieldsOnly(t *testing.
 }
 
 func TestWireEventBatchPacketShapesShipDeathWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-2",
-					Event: game.EventState{
-						Type:         "ship_death",
-						PlayerID:     "player-1",
-						Lives:        2,
-						RespawnDelay: 3.5,
-						X:            1979.580796080448,
-						Y:            235.79718289389993,
-						PickupID:     "pickup-1",
-						PickupType:   "shield",
-						TableID:      "table-1",
-						EffectType:   "death",
-						Amount:       7,
-						LivesAfter:   1,
-						SourceID:     "ship-2",
-						SourceType:   "ship",
-					},
-				}},
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-2",
+				Event: game.EventState{
+					Type:         "ship_death",
+					PlayerID:     "player-1",
+					Lives:        2,
+					RespawnDelay: 3.5,
+					X:            1979.580796080448,
+					Y:            235.79718289389993,
+					PickupID:     "pickup-1",
+					PickupType:   "shield",
+					TableID:      "table-1",
+					EffectType:   "death",
+					Amount:       7,
+					LivesAfter:   1,
+					SourceID:     "ship-2",
+					SourceType:   "ship",
+				},
+			}},
 		},
-	})
+	}, nil))
 
 	events := mustSliceValue(t, wire, "events")
 	record := mustMapValue(t, events[0])
@@ -1285,26 +1153,23 @@ func TestWireEventBatchPacketShapesShipDeathWithRelevantFieldsOnly(t *testing.T)
 	}
 }
 func TestWireEventBatchPacketEncodesHighPrecisionShipDeathFloatsAsIntegers(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-precision-ship",
-					Event: game.EventState{
-						Type:         "ship_death",
-						PlayerID:     "player-1",
-						Lives:        2,
-						RespawnDelay: 3,
-						X:            1979.580796080448,
-						Y:            235.79718289389993,
-					},
-				}},
-			},
+	candidate := mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-precision-ship",
+				Event: game.EventState{
+					Type:         "ship_death",
+					PlayerID:     "player-1",
+					Lives:        2,
+					RespawnDelay: 3,
+					X:            1979.580796080448,
+					Y:            235.79718289389993,
+				},
+			}},
 		},
-	}
+	}, nil)
 
 	encoded := mustEncodeWirePacket(t, candidate)
 	encodedString := string(encoded)
@@ -1321,26 +1186,23 @@ func TestWireEventBatchPacketEncodesHighPrecisionShipDeathFloatsAsIntegers(t *te
 }
 
 func TestWireEventBatchPacketKeepsLegacyFallbackForUnknownEventTypes(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-3",
-					Event: game.EventState{
-						Type:       "unknown_event",
-						PlayerID:   "player-1",
-						PickupID:   "pickup-1",
-						PickupType: "shield",
-						X:          1.25,
-						Y:          2.5,
-					},
-				}},
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-3",
+				Event: game.EventState{
+					Type:       "unknown_event",
+					PlayerID:   "player-1",
+					PickupID:   "pickup-1",
+					PickupType: "shield",
+					X:          1.25,
+					Y:          2.5,
+				},
+			}},
 		},
-	})
+	}, nil))
 
 	events := mustSliceValue(t, wire, "events")
 	record := mustMapValue(t, events[0])
@@ -1353,34 +1215,31 @@ func TestWireEventBatchPacketKeepsLegacyFallbackForUnknownEventTypes(t *testing.
 	assertFloatValue(t, record, "y", 2.5)
 }
 func TestWireEventBatchPacketShapesDamageAppliedWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-damage-applied",
-					Event: game.EventState{
-						Type:         "damage_applied",
-						SourceType:   "projectile",
-						SourceID:     "bullet-1",
-						EffectType:   "explosive",
-						Amount:       17,
-						X:            12.34,
-						Y:            56.78,
-						PlayerID:     "player-1",
-						Lives:        2,
-						RespawnDelay: 3.5,
-						PickupID:     "pickup-1",
-						PickupType:   "shield",
-						TableID:      "table-1",
-						LivesAfter:   1,
-					},
-				}},
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-damage-applied",
+				Event: game.EventState{
+					Type:         "damage_applied",
+					SourceType:   "projectile",
+					SourceID:     "bullet-1",
+					EffectType:   "explosive",
+					Amount:       17,
+					X:            12.34,
+					Y:            56.78,
+					PlayerID:     "player-1",
+					Lives:        2,
+					RespawnDelay: 3.5,
+					PickupID:     "pickup-1",
+					PickupType:   "shield",
+					TableID:      "table-1",
+					LivesAfter:   1,
+				},
+			}},
 		},
-	})
+	}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-damage-applied")
@@ -1396,25 +1255,22 @@ func TestWireEventBatchPacketShapesDamageAppliedWithRelevantFieldsOnly(t *testin
 	}
 }
 func TestWireEventBatchPacketEncodesHighPrecisionDamageAppliedFloatsAsIntegers(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-precision-damage",
-					Event: game.EventState{
-						Type:       "damage_applied",
-						SourceType: "projectile",
-						SourceID:   "bullet-1",
-						X:          12.3456789012345,
-						Y:          98.7654321098765,
-					},
-				}},
-			},
+	candidate := mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-precision-damage",
+				Event: game.EventState{
+					Type:       "damage_applied",
+					SourceType: "projectile",
+					SourceID:   "bullet-1",
+					X:          12.3456789012345,
+					Y:          98.7654321098765,
+				},
+			}},
 		},
-	}
+	}, nil)
 
 	encoded := mustEncodeWirePacket(t, candidate)
 	encodedString := string(encoded)
@@ -1430,30 +1286,27 @@ func TestWireEventBatchPacketEncodesHighPrecisionDamageAppliedFloatsAsIntegers(t
 }
 
 func TestWireEventBatchPacketShapesDamageOverTimeStartedWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-dot-started",
-					Event: game.EventState{
-						Type:         "damage_over_time_started",
-						SourceType:   "asteroid",
-						SourceID:     "hazard-1",
-						EffectType:   "radioactive",
-						Amount:       2,
-						X:            9.99,
-						Y:            8.88,
-						PlayerID:     "player-1",
-						PickupID:     "pickup-1",
-						TableID:      "table-1",
-					},
-				}},
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-dot-started",
+				Event: game.EventState{
+					Type:       "damage_over_time_started",
+					SourceType: "asteroid",
+					SourceID:   "hazard-1",
+					EffectType: "radioactive",
+					Amount:     2,
+					X:          9.99,
+					Y:          8.88,
+					PlayerID:   "player-1",
+					PickupID:   "pickup-1",
+					TableID:    "table-1",
+				},
+			}},
 		},
-	})
+	}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-dot-started")
@@ -1468,31 +1321,28 @@ func TestWireEventBatchPacketShapesDamageOverTimeStartedWithRelevantFieldsOnly(t
 }
 
 func TestWireEventBatchPacketShapesDamageOverTimeTickWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{
-			Type: PacketFamilyEventBatch,
-			Batch: EventBatchRecord{
-				Events: []EventRecord{{
-					EventID: "event-dot-tick",
-					Event: game.EventState{
-						Type:         "damage_over_time_tick",
-						SourceType:   "asteroid",
-						SourceID:     "hazard-1",
-						EffectType:   "radioactive",
-						Amount:       3,
-						X:            45.67,
-						Y:            89.01,
-						PlayerID:     "player-1",
-						Lives:        2,
-						PickupID:     "pickup-1",
-						TableID:      "table-1",
-					},
-				}},
-			},
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{
+		Type:     PacketFamilyEventBatch,
+		Metadata: Metadata{Lane: LaneEvent},
+		Batch: EventBatchRecord{
+			Events: []EventRecord{{
+				EventID: "event-dot-tick",
+				Event: game.EventState{
+					Type:       "damage_over_time_tick",
+					SourceType: "asteroid",
+					SourceID:   "hazard-1",
+					EffectType: "radioactive",
+					Amount:     3,
+					X:          45.67,
+					Y:          89.01,
+					PlayerID:   "player-1",
+					Lives:      2,
+					PickupID:   "pickup-1",
+					TableID:    "table-1",
+				},
+			}},
 		},
-	})
+	}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-dot-tick")
@@ -1509,14 +1359,10 @@ func TestWireEventBatchPacketShapesDamageOverTimeTickWithRelevantFieldsOnly(t *t
 }
 
 func TestWireEventBatchPacketShapesRadialEffectStartedWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
-			EventID: "event-radial",
-			Event: game.EventState{Type: "radial_effect_started", SourceType: "pickup", SourceID: "pickup-1", EffectType: "pulse", Amount: 9, X: 10.25, Y: 20.5, PlayerID: "player-1", PickupID: "pickup-1", TableID: "table-1"},
-		}}}},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{Type: PacketFamilyEventBatch, Metadata: Metadata{Lane: LaneEvent}, Batch: EventBatchRecord{Events: []EventRecord{{
+		EventID: "event-radial",
+		Event:   game.EventState{Type: "radial_effect_started", SourceType: "pickup", SourceID: "pickup-1", EffectType: "pulse", Amount: 9, X: 10.25, Y: 20.5, PlayerID: "player-1", PickupID: "pickup-1", TableID: "table-1"},
+	}}}}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-radial")
@@ -1532,14 +1378,10 @@ func TestWireEventBatchPacketShapesRadialEffectStartedWithRelevantFieldsOnly(t *
 }
 
 func TestWireEventBatchPacketShapesPickupCollectedWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
-			EventID: "event-pickup-collected",
-			Event: game.EventState{Type: "pickup_collected", PlayerID: "player-1", PickupID: "pickup-1", PickupType: "shield", X: 12.5, Y: 34.5, SourceType: "ship", SourceID: "ship-1", TableID: "table-1", Lives: 2},
-		}}}},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{Type: PacketFamilyEventBatch, Metadata: Metadata{Lane: LaneEvent}, Batch: EventBatchRecord{Events: []EventRecord{{
+		EventID: "event-pickup-collected",
+		Event:   game.EventState{Type: "pickup_collected", PlayerID: "player-1", PickupID: "pickup-1", PickupType: "shield", X: 12.5, Y: 34.5, SourceType: "ship", SourceID: "ship-1", TableID: "table-1", Lives: 2},
+	}}}}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-pickup-collected")
@@ -1555,14 +1397,10 @@ func TestWireEventBatchPacketShapesPickupCollectedWithRelevantFieldsOnly(t *test
 }
 
 func TestWireEventBatchPacketShapesPickupEffectAppliedWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
-			EventID: "event-pickup-effect",
-			Event: game.EventState{Type: "pickup_effect_applied", PlayerID: "player-1", PickupID: "pickup-1", PickupType: "shield", EffectType: "repair", Amount: 4, LivesAfter: 3, X: 1.5, Y: 2.5, TableID: "table-1"},
-		}}}},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{Type: PacketFamilyEventBatch, Metadata: Metadata{Lane: LaneEvent}, Batch: EventBatchRecord{Events: []EventRecord{{
+		EventID: "event-pickup-effect",
+		Event:   game.EventState{Type: "pickup_effect_applied", PlayerID: "player-1", PickupID: "pickup-1", PickupType: "shield", EffectType: "repair", Amount: 4, LivesAfter: 3, X: 1.5, Y: 2.5, TableID: "table-1"},
+	}}}}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-pickup-effect")
@@ -1579,14 +1417,10 @@ func TestWireEventBatchPacketShapesPickupEffectAppliedWithRelevantFieldsOnly(t *
 }
 
 func TestWireEventBatchPacketShapesPickupExpiredWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
-			EventID: "event-pickup-expired",
-			Event: game.EventState{Type: "pickup_expired", PickupID: "pickup-1", PickupType: "shield", X: 22.2, Y: 33.3, PlayerID: "player-1", SourceID: "ship-1"},
-		}}}},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{Type: PacketFamilyEventBatch, Metadata: Metadata{Lane: LaneEvent}, Batch: EventBatchRecord{Events: []EventRecord{{
+		EventID: "event-pickup-expired",
+		Event:   game.EventState{Type: "pickup_expired", PickupID: "pickup-1", PickupType: "shield", X: 22.2, Y: 33.3, PlayerID: "player-1", SourceID: "ship-1"},
+	}}}}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-pickup-expired")
@@ -1601,14 +1435,10 @@ func TestWireEventBatchPacketShapesPickupExpiredWithRelevantFieldsOnly(t *testin
 }
 
 func TestWireEventBatchPacketShapesPickupDroppedWithRelevantFieldsOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneEvent,
-		Kind: RealtimeLaneCandidateKindEventBatch,
-		Full: EventBatchPacket{Type: PacketFamilyEventBatch, Batch: EventBatchRecord{Events: []EventRecord{{
-			EventID: "event-pickup-dropped",
-			Event: game.EventState{Type: "pickup_dropped", PickupID: "pickup-1", PickupType: "shield", SourceType: "ship", SourceID: "ship-1", TableID: "table-1", X: 44.4, Y: 55.5, PlayerID: "player-1", Lives: 2},
-		}}}},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(EventBatchPacket{Type: PacketFamilyEventBatch, Metadata: Metadata{Lane: LaneEvent}, Batch: EventBatchRecord{Events: []EventRecord{{
+		EventID: "event-pickup-dropped",
+		Event:   game.EventState{Type: "pickup_dropped", PickupID: "pickup-1", PickupType: "shield", SourceType: "ship", SourceID: "ship-1", TableID: "table-1", X: 44.4, Y: 55.5, PlayerID: "player-1", Lives: 2},
+	}}}}, nil))
 
 	record := mustMapValue(t, mustSliceValue(t, wire, "events")[0])
 	assertStringValue(t, record, "event_id", "event-pickup-dropped")
@@ -1628,7 +1458,7 @@ func TestWireEventBatchPacketShapesPickupDroppedWithRelevantFieldsOnly(t *testin
 func mustEncodeWirePacket(t *testing.T, candidate RealtimeLaneCandidate) []byte {
 	t.Helper()
 
-	encoded, err := packetcodec.Encode(WireLanePacket(candidate))
+	encoded, err := packetcodec.Encode(mustWireLanePacket(t, candidate))
 	if err != nil {
 		t.Fatalf("encode failed: %v", err)
 	}
@@ -1777,18 +1607,14 @@ func assertNotContainsKey(t *testing.T, wire map[string]any, key string) {
 	}
 }
 func TestWireLanePacketRoundTripsWorldFullFamily(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: WorldFullPacket{
-			Type: PacketFamilyWorldFull,
-			Metadata: Metadata{Lane: LaneWorld, Sequence: 21},
-			Ships: []WorldShipRecord{{ID: "ship-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}},
-			Bullets: []WorldBulletRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 6, Y: 7, Rotation: 8, WeaponID: "pulse", ProjectileType: "laser"}},
-			Asteroids: []WorldAsteroidRecord{{ID: "asteroid-1", X: 9, Y: 10, Size: 2, Health: 11, Scale: 1.5, Variant: 3}},
-			Pickups: []WorldPickupRecord{{ID: "pickup-1", Type: "shield", PickupClass: "armor", X: 12, Y: 13, Health: 1, AgeSeconds: 4.5, LifespanSeconds: 9.5}},
-		},
-	}
+	candidate := mustRealtimeLaneCandidate(WorldFullPacket{
+		Type:      PacketFamilyWorldFull,
+		Metadata:  Metadata{Lane: LaneWorld, Sequence: 21},
+		Ships:     []WorldShipRecord{{ID: "ship-1", ShipType: "v_wing", X: 1, Y: 2, Rotation: 3, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}},
+		Bullets:   []WorldBulletRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 6, Y: 7, Rotation: 8, WeaponID: "pulse", ProjectileType: "laser"}},
+		Asteroids: []WorldAsteroidRecord{{ID: "asteroid-1", X: 9, Y: 10, Size: 2, Health: 11, Scale: 1.5, Variant: 3}},
+		Pickups:   []WorldPickupRecord{{ID: "pickup-1", Type: "shield", PickupClass: "armor", X: 12, Y: 13, Health: 1, AgeSeconds: 4.5, LifespanSeconds: 9.5}},
+	}, nil)
 
 	wire := mustDecodeWirePacket(t, mustEncodeWirePacket(t, candidate))
 
@@ -1800,30 +1626,25 @@ func TestWireLanePacketRoundTripsWorldFullFamily(t *testing.T) {
 }
 
 func TestWireSessionWireFullPacketEncodesIntegerCooldownFields(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneSession,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: SessionWireFullPacket{
-			Type: PacketFamilySessionFull,
-			Metadata: Metadata{Lane: LaneSession, Sequence: 5},
-			Players: []SessionPlayerWireRecord{{
-				ID:                  "player-1",
-				ShipType:            "v_wing",
-				Score:               8,
-				Lives:               3,
-				RespawnCooldown:     250,
-				PrimaryWeaponID:     "pulse",
-				PrimaryAmmoPolicy:   "limited",
-				SecondaryWeaponID:   "mine",
-				SecondaryAmmoPolicy: "infinite",
-				SpawnX:              10,
-				SpawnY:              20,
-			}},
-			PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "active"}},
-			TotalAsteroids: 42,
-		},
-	})
-
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(SessionWireFullPacket{
+		Type:     PacketFamilySessionFull,
+		Metadata: Metadata{Lane: LaneSession, Sequence: 5},
+		Players: []SessionPlayerWireRecord{{
+			ID:                  "player-1",
+			ShipType:            "v_wing",
+			Score:               8,
+			Lives:               3,
+			RespawnCooldown:     250,
+			PrimaryWeaponID:     "pulse",
+			PrimaryAmmoPolicy:   "limited",
+			SecondaryWeaponID:   "mine",
+			SecondaryAmmoPolicy: "infinite",
+			SpawnX:              10,
+			SpawnY:              20,
+		}},
+		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-1", Status: "active"}},
+		TotalAsteroids:  42,
+	}, nil))
 
 	players := mustSliceValue(t, wire, "players")
 	if len(players) != 1 {
@@ -1835,11 +1656,7 @@ func TestWireSessionWireFullPacketEncodesIntegerCooldownFields(t *testing.T) {
 	assertInt64Value(t, player, "spawn_y", 20)
 }
 func TestWireLanePacketContainsLowercaseKeysOnly(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: WorldFullPacket{Type: PacketFamilyWorldFull},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(WorldFullPacket{Type: PacketFamilyWorldFull, Metadata: Metadata{Lane: LaneWorld}}, nil))
 
 	for key := range wire {
 		if strings.ToLower(key) != key {
@@ -1847,7 +1664,6 @@ func TestWireLanePacketContainsLowercaseKeysOnly(t *testing.T) {
 		}
 	}
 }
-
 
 func assertNotNakedDeltaPayload(t *testing.T, wire map[string]any) {
 	t.Helper()
@@ -1870,10 +1686,9 @@ func assertNotNakedSessionDeltaPayload(t *testing.T, wire map[string]any) {
 	}
 }
 
-
 func TestCandidateMetadataReturnsWorldWirePacketMetadata(t *testing.T) {
 	full := WorldWireFullPacket{Type: PacketFamilyWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 21, SnapshotKind: SnapshotKind("full")}}
-	fullMetadata, ok := CandidateMetadata(RealtimeLaneCandidate{Lane: LaneWorld, Full: full}, NewRealtimeSessionState("player-1"))
+	fullMetadata, ok := RealtimeLaneCandidate{Payload: full}.Metadata()
 	if !ok {
 		t.Fatal("expected world wire full metadata to be found")
 	}
@@ -1882,7 +1697,7 @@ func TestCandidateMetadataReturnsWorldWirePacketMetadata(t *testing.T) {
 	}
 
 	delta := WorldWireDeltaPacket{Type: PacketTypeWorldDelta, Metadata: Metadata{Lane: LaneWorld, Sequence: 22, SnapshotKind: SnapshotKind("delta")}}
-	deltaMetadata, ok := CandidateMetadata(RealtimeLaneCandidate{Lane: LaneWorld, Delta: delta}, NewRealtimeSessionState("player-1"))
+	deltaMetadata, ok := mustRealtimeLaneCandidate(delta, nil).Metadata()
 	if !ok {
 		t.Fatal("expected world wire delta metadata to be found")
 	}
@@ -1892,18 +1707,14 @@ func TestCandidateMetadataReturnsWorldWirePacketMetadata(t *testing.T) {
 }
 
 func TestWireWorldWireFullPacketEncodesIntegerWorldFields(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: WorldWireFullPacket{
-			Type: PacketFamilyWorldFull,
-			Metadata: Metadata{Lane: LaneWorld, Sequence: 7},
-			Ships: []WorldShipWireRecord{{ID: "ship-1", ShipType: "v_wing", X: 10, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}},
-			Bullets: []WorldBulletWireRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 6, Y: 7, Rotation: 8, WeaponID: "pulse", ProjectileType: "laser"}},
-			Asteroids: []WorldAsteroidWireRecord{{ID: "asteroid-1", X: 9, Y: 10, Size: 2, Health: 11, Scale: 15, Variant: 3}},
-			Pickups: []WorldPickupWireRecord{{ID: "pickup-1", Type: "shield", PickupClass: "armor", X: 12, Y: 13, Health: 1, AgeSeconds: 4, LifespanSeconds: 9}},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(WorldWireFullPacket{
+		Type:      PacketFamilyWorldFull,
+		Metadata:  Metadata{Lane: LaneWorld, Sequence: 7},
+		Ships:     []WorldShipWireRecord{{ID: "ship-1", ShipType: "v_wing", X: 10, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: true, TargetKind: "player", TargetID: "player-1"}},
+		Bullets:   []WorldBulletWireRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 6, Y: 7, Rotation: 8, WeaponID: "pulse", ProjectileType: "laser"}},
+		Asteroids: []WorldAsteroidWireRecord{{ID: "asteroid-1", X: 9, Y: 10, Size: 2, Health: 11, Scale: 15, Variant: 3}},
+		Pickups:   []WorldPickupWireRecord{{ID: "pickup-1", Type: "shield", PickupClass: "armor", X: 12, Y: 13, Health: 1, AgeSeconds: 4, LifespanSeconds: 9}},
+	}, nil))
 
 	ships := mustSliceValue(t, wire, "ships")
 	ship := mustMapValue(t, ships[0])
@@ -1917,15 +1728,11 @@ func TestWireWorldWireFullPacketEncodesIntegerWorldFields(t *testing.T) {
 }
 
 func TestWireWorldWireDeltaPacketEncodesIntegerWorldFieldUpdates(t *testing.T) {
-	wire := WireLanePacket(RealtimeLaneCandidate{
-		Lane: LaneWorld,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: WorldWireDeltaPacket{
-			Type: PacketTypeWorldDelta,
-			Metadata: Metadata{Lane: LaneWorld, Sequence: 9, SnapshotKind: SnapshotKind("delta")},
-			Ships: FieldRecordDelta[WorldShipWireRecord]{Updates: []map[string]any{{"id": "ship-1", "x": int64(10), "y": int64(20), "rotation": int64(30), "thrusting": true}}},
-		},
-	})
+	wire := mustWireLanePacket(t, mustRealtimeLaneCandidate(WorldWireDeltaPacket{
+		Type:     PacketTypeWorldDelta,
+		Metadata: Metadata{Lane: LaneWorld, Sequence: 9, SnapshotKind: SnapshotKind("delta")},
+		Ships:    FieldRecordDelta[WorldShipWireRecord]{Updates: []map[string]any{{"id": "ship-1", "x": int64(10), "y": int64(20), "rotation": int64(30), "thrusting": true}}},
+	}, nil))
 
 	updates := mustSliceValue(t, wire, "ship_updates")
 	update := mustMapValue(t, updates[0])
@@ -1934,14 +1741,3 @@ func TestWireWorldWireDeltaPacketEncodesIntegerWorldFieldUpdates(t *testing.T) {
 	assertInt64Value(t, update, "rotation", 30)
 	assertNotContainsKey(t, update, "ship_type")
 }
-
-
-
-
-
-
-
-
-
-
-

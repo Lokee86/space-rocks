@@ -18,11 +18,11 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 	worldProjection, worldHasProjection := state.BaselineProjection(LaneWorld)
 	worldCanUseProjection := worldReady && worldSynced && worldState.IsFinalChunk && worldState.BaselineID != "" && worldHasProjection
 	if !worldCanUseProjection {
-		candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: quantizedWorldFull, Projection: quantizedWorldFull})
+		candidates = append(candidates, mustRealtimeLaneCandidate(quantizedWorldFull, quantizedWorldFull))
 	} else {
 		previousWorldFull, ok := worldProjection.(WorldWireFullPacket)
 		if !ok {
-			candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: quantizedWorldFull, Projection: quantizedWorldFull})
+			candidates = append(candidates, mustRealtimeLaneCandidate(quantizedWorldFull, quantizedWorldFull))
 		} else if !WorldWirePayloadChanged(previousWorldFull, quantizedWorldFull) {
 			// No world candidate when the projection is unchanged.
 		} else {
@@ -79,13 +79,13 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			if worldDeltaHasChanges || asteroidHotAllowed || bulletHotAllowed {
 				chainedWorldProjection := quantizedWorldFull
 				chainedWorldProjection.Metadata = split.WorldDelta.Metadata
-				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: split.WorldDelta, Projection: chainedWorldProjection})
+				candidates = append(candidates, mustRealtimeLaneCandidate(split.WorldDelta, chainedWorldProjection))
 			}
 			if asteroidHotAllowed {
-				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneAsteroids, Kind: RealtimeLaneCandidateKindDelta, Delta: *split.AsteroidDelta})
+				candidates = append(candidates, mustRealtimeLaneCandidate(*split.AsteroidDelta, nil))
 			}
 			if bulletHotAllowed {
-				candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneBullets, Kind: RealtimeLaneCandidateKindDelta, Delta: *split.BulletDelta})
+				candidates = append(candidates, mustRealtimeLaneCandidate(*split.BulletDelta, nil))
 			}
 		}
 	}

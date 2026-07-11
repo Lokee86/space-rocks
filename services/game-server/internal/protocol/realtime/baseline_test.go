@@ -209,10 +209,8 @@ func TestRealtimeSessionStateIgnoresStaleSequencesAndTracksWrongBaselineResync(t
 }
 
 func TestCandidateMetadataReturnsWorldDeltaMetadata(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
-	candidate := RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta, Delta: WorldDeltaPacket{Type: PacketTypeWorldDelta, Metadata: Metadata{Lane: LaneWorld, Sequence: 12, BaselineID: "world-baseline", SnapshotID: "world-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}}
-
-	metadata, ok := CandidateMetadata(candidate, state)
+	candidate := mustRealtimeLaneCandidate(WorldDeltaPacket{Type: PacketTypeWorldDelta, Metadata: Metadata{Lane: LaneWorld, Sequence: 12, BaselineID: "world-baseline", SnapshotID: "world-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}, nil)
+	metadata, ok := candidate.Metadata()
 	if !ok {
 		t.Fatal("expected world delta metadata to be returned")
 	}
@@ -222,10 +220,8 @@ func TestCandidateMetadataReturnsWorldDeltaMetadata(t *testing.T) {
 }
 
 func TestCandidateMetadataReturnsAsteroidHotDeltaMetadata(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
-	candidate := RealtimeLaneCandidate{Lane: LaneAsteroids, Kind: RealtimeLaneCandidateKindDelta, Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 7, ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: false}}}
-
-	metadata, ok := CandidateMetadata(candidate, state)
+	candidate := mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 7, ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 1, ChunkCount: 3, IsFinalChunk: false}}, nil)
+	metadata, ok := candidate.Metadata()
 	if !ok {
 		t.Fatal("expected asteroid hot delta metadata to be returned")
 	}
@@ -235,10 +231,8 @@ func TestCandidateMetadataReturnsAsteroidHotDeltaMetadata(t *testing.T) {
 }
 
 func TestCandidateMetadataReturnsBulletHotDeltaMetadata(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
-	candidate := RealtimeLaneCandidate{Lane: LaneBullets, Kind: RealtimeLaneCandidateKindDelta, Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 9, ServerSentMsec: 456, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 2, ChunkCount: 4, IsFinalChunk: true}}}
-
-	metadata, ok := CandidateMetadata(candidate, state)
+	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 9, ServerSentMsec: 456, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 2, ChunkCount: 4, IsFinalChunk: true}}, nil)
+	metadata, ok := candidate.Metadata()
 	if !ok {
 		t.Fatal("expected bullet hot delta metadata to be returned")
 	}
@@ -248,10 +242,8 @@ func TestCandidateMetadataReturnsBulletHotDeltaMetadata(t *testing.T) {
 }
 
 func TestCandidateMetadataReturnsOverlayDeltaMetadata(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
-	candidate := RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindDelta, Delta: OverlayLaneDelta{Metadata: Metadata{Lane: LaneOverlay, Sequence: 7, BaselineID: "overlay-baseline", SnapshotID: "overlay-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}}
-
-	metadata, ok := CandidateMetadata(candidate, state)
+	candidate := mustRealtimeLaneCandidate(OverlayLaneDelta{Metadata: Metadata{Lane: LaneOverlay, Sequence: 7, BaselineID: "overlay-baseline", SnapshotID: "overlay-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}, nil)
+	metadata, ok := candidate.Metadata()
 	if !ok {
 		t.Fatal("expected overlay delta metadata to be returned")
 	}
@@ -261,10 +253,8 @@ func TestCandidateMetadataReturnsOverlayDeltaMetadata(t *testing.T) {
 }
 
 func TestCandidateMetadataReturnsSessionDeltaMetadata(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
-	candidate := RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindDelta, Delta: SessionLaneDelta{Metadata: Metadata{Lane: LaneSession, Sequence: 5, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}}
-
-	metadata, ok := CandidateMetadata(candidate, state)
+	candidate := mustRealtimeLaneCandidate(SessionLaneDelta{Metadata: Metadata{Lane: LaneSession, Sequence: 5, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), IsFinalChunk: true}}, nil)
+	metadata, ok := candidate.Metadata()
 	if !ok {
 		t.Fatal("expected session delta metadata to be returned")
 	}
@@ -273,19 +263,6 @@ func TestCandidateMetadataReturnsSessionDeltaMetadata(t *testing.T) {
 	}
 }
 
-func TestCandidateMetadataFallsBackToLaneStateForUnsupportedDeltaShape(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
-	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 22, BaselineID: "world-baseline", SnapshotID: "world-snapshot", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
-	candidate := RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindDelta}
-
-	metadata, ok := CandidateMetadata(candidate, state)
-	if !ok {
-		t.Fatal("expected fallback metadata to be returned")
-	}
-	if metadata.Sequence != 22 || metadata.BaselineID != "world-baseline" || metadata.SnapshotID != "world-snapshot" || metadata.SnapshotKind != SnapshotKind("full") {
-		t.Fatalf("unexpected fallback metadata: %#v", metadata)
-	}
-}
 
 func TestAdvanceMetadataForSuccessfulWriteAdvancesEventLaneSequence(t *testing.T) {
 	state := NewRealtimeSessionState("player-1")

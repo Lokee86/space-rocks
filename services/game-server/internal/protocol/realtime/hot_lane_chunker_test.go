@@ -29,7 +29,7 @@ func makeAsteroidUpdate(id string, x int, y int) map[string]any {
 
 func encodedCandidateBytes(t *testing.T, candidate RealtimeLaneCandidate) int {
 	t.Helper()
-	encoded, recordedBytes := encodeLanePacketUnchecked(candidate)
+	encoded, recordedBytes := mustEncodeLanePacketUnchecked(t, candidate)
 	if recordedBytes <= 0 || len(encoded) == 0 {
 		t.Fatalf("expected encoded candidate bytes for %#v, got %d and %d", candidate, len(encoded), recordedBytes)
 	}
@@ -38,37 +38,33 @@ func encodedCandidateBytes(t *testing.T, candidate RealtimeLaneCandidate) int {
 
 func assertConservativeEncodedBytes(t *testing.T, label string, candidate RealtimeLaneCandidate, estimated int) {
 	t.Helper()
-	_, actual := encodeLanePacketUnchecked(candidate)
+	_, actual := mustEncodeLanePacketUnchecked(t, candidate)
 	if estimated < actual {
 		t.Fatalf("%s estimated bytes = %d, actual bytes = %d", label, estimated, actual)
 	}
 }
 
 func TestExpandHotLaneCandidateChunksLeavesSmallAsteroidDeltaAsOneFinalChunk(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneAsteroids,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: AsteroidWireDeltaPacket{
-			Type: PacketFamilyAsteroidDelta,
-			Metadata: Metadata{
-				Lane:         LaneAsteroids,
-				Sequence:     21,
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			AsteroidUpdates: []map[string]any{
-				makeAsteroidUpdate("asteroid-000001", 1, 2),
-			},
+	candidate := mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
+		Type: PacketFamilyAsteroidDelta,
+		Metadata: Metadata{
+			Lane:         LaneAsteroids,
+			Sequence:     21,
+			SnapshotKind: SnapshotKind("delta"),
 		},
-	}
+		AsteroidUpdates: []map[string]any{
+			makeAsteroidUpdate("asteroid-000001", 1, 2),
+		},
+	}, nil)
 
 	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
 
-	packet, ok := chunks[0].Delta.(AsteroidWireDeltaPacket)
+	packet, ok := chunks[0].Payload.(AsteroidWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected AsteroidWireDeltaPacket, got %#v", chunks[0].Delta)
+		t.Fatalf("expected AsteroidWireDeltaPacket, got %#v", chunks[0].Payload)
 	}
 	if packet.Metadata.ChunkIndex != 0 {
 		t.Fatalf("chunk index = %d, want 0", packet.Metadata.ChunkIndex)
@@ -87,19 +83,15 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedAsteroidDelta(t *testing.T) 
 		updates = append(updates, makeAsteroidUpdate(fmt.Sprintf("asteroid-%06d", i), i, i+1))
 	}
 
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneAsteroids,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: AsteroidWireDeltaPacket{
-			Type: PacketFamilyAsteroidDelta,
-			Metadata: Metadata{
-				Lane:         LaneAsteroids,
-				Sequence:     22,
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			AsteroidUpdates: updates,
+	candidate := mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
+		Type: PacketFamilyAsteroidDelta,
+		Metadata: Metadata{
+			Lane:         LaneAsteroids,
+			Sequence:     22,
+			SnapshotKind: SnapshotKind("delta"),
 		},
-	}
+		AsteroidUpdates: updates,
+	}, nil)
 
 	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) <= 1 {
@@ -108,16 +100,16 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedAsteroidDelta(t *testing.T) 
 
 	totalUpdates := 0
 	for index, chunk := range chunks {
-		if chunk.Lane != LaneAsteroids {
-			t.Fatalf("chunk %d lane = %q, want asteroids", index, chunk.Lane)
+		if chunk.Lane() != LaneAsteroids {
+			t.Fatalf("chunk %d lane = %q, want asteroids", index, chunk.Lane())
 		}
-		if chunk.Kind != RealtimeLaneCandidateKindDelta {
-			t.Fatalf("chunk %d kind = %q, want delta", index, chunk.Kind)
+		if chunk.Kind() != RealtimeLaneCandidateKindDelta {
+			t.Fatalf("chunk %d kind = %q, want delta", index, chunk.Kind())
 		}
 
-		packet, ok := chunk.Delta.(AsteroidWireDeltaPacket)
+		packet, ok := chunk.Payload.(AsteroidWireDeltaPacket)
 		if !ok {
-			t.Fatalf("chunk %d delta type = %#v, want AsteroidWireDeltaPacket", index, chunk.Delta)
+			t.Fatalf("chunk %d delta type = %#v, want AsteroidWireDeltaPacket", index, chunk.Payload)
 		}
 		if packet.Metadata.Sequence != 22 {
 			t.Fatalf("chunk %d sequence = %d, want 22", index, packet.Metadata.Sequence)
@@ -146,30 +138,26 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedAsteroidDelta(t *testing.T) 
 }
 
 func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneBullets,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{
-			Type: PacketFamilyBulletDelta,
-			Metadata: Metadata{
-				Lane:         LaneBullets,
-				Sequence:     11,
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			BulletUpdates: []map[string]any{
-				makeBulletUpdate("bullet-000001", 1, 2),
-			},
+	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+		Type: PacketFamilyBulletDelta,
+		Metadata: Metadata{
+			Lane:         LaneBullets,
+			Sequence:     11,
+			SnapshotKind: SnapshotKind("delta"),
 		},
-	}
+		BulletUpdates: []map[string]any{
+			makeBulletUpdate("bullet-000001", 1, 2),
+		},
+	}, nil)
 
 	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
 
-	packet, ok := chunks[0].Delta.(BulletWireDeltaPacket)
+	packet, ok := chunks[0].Payload.(BulletWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected BulletWireDeltaPacket, got %#v", chunks[0].Delta)
+		t.Fatalf("expected BulletWireDeltaPacket, got %#v", chunks[0].Payload)
 	}
 	if packet.Metadata.ChunkIndex != 0 {
 		t.Fatalf("chunk index = %d, want 0", packet.Metadata.ChunkIndex)
@@ -183,29 +171,25 @@ func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *te
 }
 
 func TestExpandHotLaneCandidateChunksLeavesAsteroidLifecycleUntouched(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneAsteroidsLifecycle,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: AsteroidWireDeltaPacket{
-			Type:     PacketFamilyAsteroidsLifecycle,
-			Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
-			AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
-		},
-	}
+	candidate := mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
+		Type:            PacketFamilyAsteroidsLifecycle,
+		Metadata:        Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
+		AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
+	}, nil)
 
 	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
-	if chunks[0].Lane != LaneAsteroidsLifecycle {
-		t.Fatalf("lane = %q, want %q", chunks[0].Lane, LaneAsteroidsLifecycle)
+	if chunks[0].Lane() != LaneAsteroidsLifecycle {
+		t.Fatalf("lane = %q, want %q", chunks[0].Lane(), LaneAsteroidsLifecycle)
 	}
-	if chunks[0].Kind != RealtimeLaneCandidateKindDelta {
-		t.Fatalf("kind = %q, want delta", chunks[0].Kind)
+	if chunks[0].Kind() != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("kind = %q, want delta", chunks[0].Kind())
 	}
-	packet, ok := chunks[0].Delta.(AsteroidWireDeltaPacket)
+	packet, ok := chunks[0].Payload.(AsteroidWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected AsteroidWireDeltaPacket, got %#v", chunks[0].Delta)
+		t.Fatalf("expected AsteroidWireDeltaPacket, got %#v", chunks[0].Payload)
 	}
 	if packet.Metadata.Lane != LaneAsteroidsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 0 || packet.Metadata.IsFinalChunk != false {
 		t.Fatalf("asteroid lifecycle packet metadata = %#v, want index=0 count=0 final=false", packet.Metadata)
@@ -213,29 +197,25 @@ func TestExpandHotLaneCandidateChunksLeavesAsteroidLifecycleUntouched(t *testing
 }
 
 func TestExpandHotLaneCandidateChunksLeavesBulletLifecycleUntouched(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneBulletsLifecycle,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{
-			Type:     PacketFamilyBulletsLifecycle,
-			Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
-			BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
-		},
-	}
+	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+		Type:          PacketFamilyBulletsLifecycle,
+		Metadata:      Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
+		BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
+	}, nil)
 
 	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
-	if chunks[0].Lane != LaneBulletsLifecycle {
-		t.Fatalf("lane = %q, want %q", chunks[0].Lane, LaneBulletsLifecycle)
+	if chunks[0].Lane() != LaneBulletsLifecycle {
+		t.Fatalf("lane = %q, want %q", chunks[0].Lane(), LaneBulletsLifecycle)
 	}
-	if chunks[0].Kind != RealtimeLaneCandidateKindDelta {
-		t.Fatalf("kind = %q, want delta", chunks[0].Kind)
+	if chunks[0].Kind() != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("kind = %q, want delta", chunks[0].Kind())
 	}
-	packet, ok := chunks[0].Delta.(BulletWireDeltaPacket)
+	packet, ok := chunks[0].Payload.(BulletWireDeltaPacket)
 	if !ok {
-		t.Fatalf("expected BulletWireDeltaPacket, got %#v", chunks[0].Delta)
+		t.Fatalf("expected BulletWireDeltaPacket, got %#v", chunks[0].Payload)
 	}
 	if packet.Metadata.Lane != LaneBulletsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 0 || packet.Metadata.IsFinalChunk != false {
 		t.Fatalf("bullet lifecycle packet metadata = %#v, want index=0 count=0 final=false", packet.Metadata)
@@ -252,60 +232,44 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 	}{
 		{
 			name: "asteroid lifecycle",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneAsteroidsLifecycle,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: AsteroidWireDeltaPacket{
-					Type:     PacketFamilyAsteroidsLifecycle,
-					Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
-					AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
-				},
-			},
+			candidate: mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
+				Type:            PacketFamilyAsteroidsLifecycle,
+				Metadata:        Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
+				AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
+			}, nil),
 			wantChunkIndex: 0,
 			wantChunkCount: 0,
 			wantFinalChunk: false,
 		},
 		{
 			name: "bullet lifecycle",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneBulletsLifecycle,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: BulletWireDeltaPacket{
-					Type:     PacketFamilyBulletsLifecycle,
-					Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
-					BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
-				},
-			},
+			candidate: mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+				Type:          PacketFamilyBulletsLifecycle,
+				Metadata:      Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
+				BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
+			}, nil),
 			wantChunkIndex: 0,
 			wantChunkCount: 0,
 			wantFinalChunk: false,
 		},
 		{
 			name: "asteroid hot lane",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneAsteroids,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: AsteroidWireDeltaPacket{
-					Type:     PacketFamilyAsteroidDelta,
-					Metadata: Metadata{Lane: LaneAsteroids, Sequence: 25, SnapshotKind: SnapshotKind("delta")},
-					AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-hot-1", 1, 2)},
-				},
-			},
+			candidate: mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
+				Type:            PacketFamilyAsteroidDelta,
+				Metadata:        Metadata{Lane: LaneAsteroids, Sequence: 25, SnapshotKind: SnapshotKind("delta")},
+				AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-hot-1", 1, 2)},
+			}, nil),
 			wantChunkIndex: 0,
 			wantChunkCount: 1,
 			wantFinalChunk: true,
 		},
 		{
 			name: "bullet hot lane",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneBullets,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: BulletWireDeltaPacket{
-					Type:     PacketFamilyBulletDelta,
-					Metadata: Metadata{Lane: LaneBullets, Sequence: 26, SnapshotKind: SnapshotKind("delta")},
-					BulletUpdates: []map[string]any{makeBulletUpdate("bullet-hot-1", 1, 2)},
-				},
-			},
+			candidate: mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+				Type:          PacketFamilyBulletDelta,
+				Metadata:      Metadata{Lane: LaneBullets, Sequence: 26, SnapshotKind: SnapshotKind("delta")},
+				BulletUpdates: []map[string]any{makeBulletUpdate("bullet-hot-1", 1, 2)},
+			}, nil),
 			wantChunkIndex: 0,
 			wantChunkCount: 1,
 			wantFinalChunk: true,
@@ -318,23 +282,37 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 			if len(chunks) != 1 {
 				t.Fatalf("expected one chunk, got %d", len(chunks))
 			}
-			if chunks[0].Lane != tc.candidate.Lane {
-				t.Fatalf("lane = %q, want %q", chunks[0].Lane, tc.candidate.Lane)
+			if chunks[0].Lane() != tc.candidate.Lane() {
+				t.Fatalf("lane = %q, want %q", chunks[0].Lane(), tc.candidate.Lane())
 			}
-			if chunks[0].Kind != tc.candidate.Kind {
-				t.Fatalf("kind = %q, want %q", chunks[0].Kind, tc.candidate.Kind)
+			if chunks[0].Kind() != tc.candidate.Kind() {
+				t.Fatalf("kind = %q, want %q", chunks[0].Kind(), tc.candidate.Kind())
 			}
-			switch packet := chunks[0].Delta.(type) {
+			if err := ValidateRealtimeLanePayload(chunks[0].Payload); err != nil {
+				t.Fatalf("replacement payload validation failed: %v", err)
+			}
+			if chunks[0].PacketFamily() != tc.candidate.PacketFamily() {
+				t.Fatalf("family = %q, want %q", chunks[0].PacketFamily(), tc.candidate.PacketFamily())
+			}
+			switch packet := chunks[0].Payload.(type) {
 			case AsteroidWireDeltaPacket:
+				metadata, ok := chunks[0].Metadata()
+				if !ok || metadata != packet.Metadata {
+					t.Fatalf("asteroid metadata mismatch: candidate=%#v payload=%#v", metadata, packet.Metadata)
+				}
 				if packet.Metadata.ChunkIndex != tc.wantChunkIndex || packet.Metadata.ChunkCount != tc.wantChunkCount || packet.Metadata.IsFinalChunk != tc.wantFinalChunk {
 					t.Fatalf("asteroid packet metadata = %#v, want index=%d count=%d final=%t", packet.Metadata, tc.wantChunkIndex, tc.wantChunkCount, tc.wantFinalChunk)
 				}
 			case BulletWireDeltaPacket:
+				metadata, ok := chunks[0].Metadata()
+				if !ok || metadata != packet.Metadata {
+					t.Fatalf("bullet metadata mismatch: candidate=%#v payload=%#v", metadata, packet.Metadata)
+				}
 				if packet.Metadata.ChunkIndex != tc.wantChunkIndex || packet.Metadata.ChunkCount != tc.wantChunkCount || packet.Metadata.IsFinalChunk != tc.wantFinalChunk {
 					t.Fatalf("bullet packet metadata = %#v, want index=%d count=%d final=%t", packet.Metadata, tc.wantChunkIndex, tc.wantChunkCount, tc.wantFinalChunk)
 				}
 			default:
-				t.Fatalf("unexpected delta type %#v", chunks[0].Delta)
+				t.Fatalf("unexpected delta type %#v", chunks[0].Payload)
 			}
 		})
 	}
@@ -346,19 +324,15 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
 		updates = append(updates, makeBulletUpdate(fmt.Sprintf("bullet-%06d", i), i, i+1))
 	}
 
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneBullets,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{
-			Type: PacketFamilyBulletDelta,
-			Metadata: Metadata{
-				Lane:         LaneBullets,
-				Sequence:     12,
-				SnapshotKind: SnapshotKind("delta"),
-			},
-			BulletUpdates: updates,
+	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{
+		Type: PacketFamilyBulletDelta,
+		Metadata: Metadata{
+			Lane:         LaneBullets,
+			Sequence:     12,
+			SnapshotKind: SnapshotKind("delta"),
 		},
-	}
+		BulletUpdates: updates,
+	}, nil)
 
 	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) <= 1 {
@@ -367,16 +341,16 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
 
 	totalUpdates := 0
 	for index, chunk := range chunks {
-		if chunk.Lane != LaneBullets {
-			t.Fatalf("chunk %d lane = %q, want bullets", index, chunk.Lane)
+		if chunk.Lane() != LaneBullets {
+			t.Fatalf("chunk %d lane = %q, want bullets", index, chunk.Lane())
 		}
-		if chunk.Kind != RealtimeLaneCandidateKindDelta {
-			t.Fatalf("chunk %d kind = %q, want delta", index, chunk.Kind)
+		if chunk.Kind() != RealtimeLaneCandidateKindDelta {
+			t.Fatalf("chunk %d kind = %q, want delta", index, chunk.Kind())
 		}
 
-		packet, ok := chunk.Delta.(BulletWireDeltaPacket)
+		packet, ok := chunk.Payload.(BulletWireDeltaPacket)
 		if !ok {
-			t.Fatalf("chunk %d delta type = %#v, want BulletWireDeltaPacket", index, chunk.Delta)
+			t.Fatalf("chunk %d delta type = %#v, want BulletWireDeltaPacket", index, chunk.Payload)
 		}
 		if packet.Metadata.Sequence != 12 {
 			t.Fatalf("chunk %d sequence = %d, want 12", index, packet.Metadata.Sequence)
@@ -483,11 +457,7 @@ func TestEstimateBulletDeltaPacketBytesIsConservative(t *testing.T) {
 				},
 				BulletUpdates: tc.updates,
 			}
-			candidate := RealtimeLaneCandidate{
-				Lane:  LaneBullets,
-				Kind:  RealtimeLaneCandidateKindDelta,
-				Delta: packet,
-			}
+			candidate := mustRealtimeLaneCandidate(packet, nil)
 			estimated := estimateBulletDeltaPacketBytes(packet, tc.updates)
 			assertConservativeEncodedBytes(t, tc.name, candidate, estimated)
 		})
@@ -533,11 +503,7 @@ func TestEstimateAsteroidDeltaPacketBytesIsConservative(t *testing.T) {
 				},
 				AsteroidUpdates: tc.updates,
 			}
-			candidate := RealtimeLaneCandidate{
-				Lane:  LaneAsteroids,
-				Kind:  RealtimeLaneCandidateKindDelta,
-				Delta: packet,
-			}
+			candidate := mustRealtimeLaneCandidate(packet, nil)
 			estimated := estimateAsteroidDeltaPacketBytes(packet, tc.updates)
 			assertConservativeEncodedBytes(t, tc.name, candidate, estimated)
 		})

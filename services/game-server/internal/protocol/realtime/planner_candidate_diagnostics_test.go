@@ -11,7 +11,7 @@ func TestCandidateWriteDiagnosticsForReturnsMetadataForFullCandidate(t *testing.
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 4, BaselineID: "world-baseline", SnapshotID: "world-snapshot", SnapshotKind: SnapshotKind("full"), ChunkIndex: 1, ChunkCount: 2, IsFinalChunk: false})
 	full := mustWorldWireFull(t, snapshot, 4)
-	candidate := RealtimeLaneCandidate{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull, Full: full}
+	candidate := mustRealtimeLaneCandidate(full, nil)
 
 	diagnostics := CandidateWriteDiagnosticsFor(candidate, state, 0)
 	if diagnostics.PacketFamily == "" || diagnostics.Lane == "" || diagnostics.Kind == "" {
@@ -43,7 +43,7 @@ func TestCandidateWriteDiagnosticsForReturnsMetadataForFullCandidate(t *testing.
 func TestCandidateWriteDiagnosticsForReturnsMetadataForDeltaCandidateAndFallsBackWithoutMetadata(t *testing.T) {
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true})
-	candidate := RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindDelta, Delta: SessionWireLaneDelta{Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}}}
+	candidate := mustRealtimeLaneCandidate(SessionWireLaneDelta{Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-snapshot", SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}}, nil)
 
 	diagnostics := CandidateWriteDiagnosticsFor(candidate, state, 0)
 	if diagnostics.PacketFamily == "" || diagnostics.Lane == "" || diagnostics.Kind == "" {
@@ -62,7 +62,7 @@ func TestCandidateWriteDiagnosticsForReturnsMetadataForDeltaCandidateAndFallsBac
 		t.Fatalf("expected final chunk diagnostics, got %#v", diagnostics)
 	}
 
-	fallback := CandidateWriteDiagnosticsFor(RealtimeLaneCandidate{Lane: LaneEvent, Kind: RealtimeLaneCandidateKindEventBatch}, NewRealtimeSessionState("player-1"), 0)
+	fallback := CandidateWriteDiagnosticsFor(mustRealtimeLaneCandidate(EventBatchPacket{Type: PacketFamilyEventBatch, Metadata: Metadata{Lane: LaneEvent}}, nil), NewRealtimeSessionState("player-1"), 0)
 	if fallback.PacketFamily != PacketFamilyEventBatch || fallback.Lane != LaneEvent || fallback.Kind != RealtimeLaneCandidateKindEventBatch {
 		t.Fatalf("unexpected fallback diagnostics: %#v", fallback)
 	}

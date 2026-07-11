@@ -14,9 +14,9 @@ func TestAssembleRealtimeLaneCandidatesUsesNextSessionSequenceForUnsyncedFull(t 
 	if !ok {
 		t.Fatalf("expected session candidate")
 	}
-	full, ok := candidate.Full.(SessionWireFullPacket)
+	full, ok := candidate.Payload.(SessionWireFullPacket)
 	if !ok {
-		t.Fatalf("session candidate full type = %T, want SessionWireFullPacket", candidate.Full)
+		t.Fatalf("session candidate full type = %T, want SessionWireFullPacket", candidate.Payload)
 	}
 	if got, want := full.Metadata.Sequence, 1; got != want {
 		t.Fatalf("session full sequence = %d, want %d", got, want)
@@ -69,11 +69,11 @@ func TestAssembleRealtimeLaneCandidatesEmitsSessionDeltaWhenStoredBaselineDiffer
 	if !ok {
 		t.Fatal("expected session delta candidate when stored baseline differs")
 	}
-	if session.Kind != RealtimeLaneCandidateKindDelta {
-		t.Fatalf("expected session delta candidate, got kind=%q", session.Kind)
+	if session.Kind() != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected session delta candidate, got kind=%q", session.Kind())
 	}
-	if _, ok := session.Delta.(SessionWireLaneDelta); !ok {
-		t.Fatalf("expected session delta packet, got %T", session.Delta)
+	if _, ok := session.Payload.(SessionWireLaneDelta); !ok {
+		t.Fatalf("expected session delta packet, got %T", session.Payload)
 	}
 	if _, ok := session.Projection.(SessionWireFullPacket); !ok {
 		t.Fatalf("expected current session full projection to be carried, got %T", session.Projection)

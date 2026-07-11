@@ -23,8 +23,9 @@ authoritative game state
 -> asteroid/bullet creates/deletes split to reliable lifecycle lanes on sr.asteroids.lifecycle and sr.bullets.lifecycle
 -> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
 -> the chunker is the only hard-size guard for asteroid/bullet hot movement packets; scheduler and active encoding consume already-shaped candidates
--> sparse readable wire-map serialization
--> generated descriptor-driven compact encoding
+-> typed candidate payload
+-> payload wire serializer produces the sparse readable wire map
+-> compact descriptor encoder
 -> packetcodec JSON encoding
 -> encoded-byte accounting
 -> networking write integration
@@ -53,6 +54,10 @@ The active server projection path owns:
 * Producing receiver-specific overlay/session/event output where needed.
 * Preserving explicit event-batch drain semantics.
 * Leaving JSON encode/decode mechanics to packetcodec and WebRTC active gameplay transport/write success handling to networking.
+
+`RealtimeLanePayload` is the owning typed candidate contract in `payload.go`; `payload_validation.go` owns the supported matrix, registry, and invariant validation; and the lane-specific `payload_*.go` files own concrete packet implementations. `RealtimeLaneCandidate` owns only the payload and projection; its lane, kind, packet-family, and metadata methods derive from that payload. Wire encoding validates the supported concrete value payload, metadata/family matrix, non-empty wire map, and matching wire `type` before compact encoding. Invalid payloads fail closed rather than producing an empty map.
+
+Every new realtime packet family must add a supported concrete value payload implementation, compile-time interface assertion, family-matrix and payload-registry entry, wire serializer, and focused invariant coverage.
 
 ## Does not own
 
@@ -213,7 +218,10 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - session lane full/delta candidate construction.
 * `services/game-server/internal/protocol/realtime/lane_candidate_event.go` - event_batch candidate construction without draining pending events.
 * `services/game-server/internal/protocol/realtime/candidate_types.go` - realtime lane candidate and send-preparation types.
-* `services/game-server/internal/protocol/realtime/candidate_policy.go` - packet-family, delivery-class, priority, schedule-record, and candidate projection helpers.
+* `services/game-server/internal/protocol/realtime/payload.go` - typed candidate payload contract, compile-time coverage, and candidate constructors.
+* `services/game-server/internal/protocol/realtime/payload_validation.go` - supported payload matrix, concrete registry, and payload invariant validation.
+* `services/game-server/internal/protocol/realtime/payload_world.go`, `payload_overlay.go`, `payload_session.go`, and `payload_hot_event.go` - lane-specific typed payload implementations.
+* `services/game-server/internal/protocol/realtime/candidate_policy.go` - delivery-class, priority, schedule-record, and candidate projection helpers; packet-family identity remains payload-owned.
 * `services/game-server/internal/protocol/realtime/candidate_diagnostics.go` - candidate write diagnostics used by active lane metric/debug records.
 * `services/game-server/internal/protocol/realtime/quantize_overlay.go` and `services/game-server/internal/protocol/realtime/quantize_session.go` - overlay and session full-packet wire quantization.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.

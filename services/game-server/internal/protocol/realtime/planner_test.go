@@ -42,7 +42,7 @@ func mustSessionWireFull(t *testing.T, snapshot game.GameplayPresentationSnapsho
 
 func findCandidateByLane(candidates []RealtimeLaneCandidate, lane Lane) (RealtimeLaneCandidate, bool) {
 	for _, candidate := range candidates {
-		if candidate.Lane == lane {
+		if candidate.Lane() == lane {
 			return candidate, true
 		}
 	}
@@ -162,7 +162,7 @@ func TestRealtimeOwnershipParityAcrossLanes(t *testing.T) {
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
 	for _, candidate := range plan.Candidates {
-		if candidate.Lane == LaneControl {
+		if candidate.Lane() == LaneControl {
 			t.Fatalf("planner used session lane: %#v", candidate)
 		}
 	}
@@ -185,7 +185,7 @@ func TestRealtimePlannerUsesGameplayPresentationSnapshotInput(t *testing.T) {
 	}
 
 	for _, candidate := range plan.Candidates {
-		if candidate.Lane == LaneControl {
+		if candidate.Lane() == LaneControl {
 			t.Fatalf("planner should not depend on old combined packet control flow: %#v", candidate)
 		}
 	}

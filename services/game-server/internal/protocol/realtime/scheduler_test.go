@@ -72,7 +72,7 @@ func TestClassifyHotPacketEncodedSizeBands(t *testing.T) {
 
 
 func TestEncodeLanePacketAllowsHotPacketUnderTarget(t *testing.T) {
-	encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(1))
+	encoded, recordedBytes := mustEncodeLanePacket(t, hotBulletCandidateWithUpdateCount(1))
 	if recordedBytes == 0 || len(encoded) == 0 {
 		t.Fatal("expected hot bullet packet under target to send")
 	}
@@ -83,7 +83,7 @@ func TestEncodeLanePacketAllowsHotPacketUnderTarget(t *testing.T) {
 
 func TestEncodeLanePacketAllowsHotPacketOverTargetButUnderHardCap(t *testing.T) {
 	count := mustFindSendableHotBulletCountForSizeClass(t, EncodedPacketSizeOverTarget)
-	encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+	encoded, recordedBytes := mustEncodeLanePacket(t, hotBulletCandidateWithUpdateCount(count))
 	if recordedBytes == 0 || len(encoded) == 0 {
 		t.Fatal("expected hot bullet packet over target but under hard cap to send")
 	}
@@ -94,7 +94,7 @@ func TestEncodeLanePacketAllowsHotPacketOverTargetButUnderHardCap(t *testing.T) 
 
 func TestEncodeLanePacketDoesNotHardBlockHotPacketOverHardCap(t *testing.T) {
 	count := mustFindHotBulletCountForSizeClass(t, EncodedPacketSizeOverHard)
-	encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+	encoded, recordedBytes := mustEncodeLanePacket(t, hotBulletCandidateWithUpdateCount(count))
 	if recordedBytes == 0 || len(encoded) == 0 {
 		t.Fatal("expected hot bullet packet over hard cap to still encode")
 	}
@@ -106,7 +106,7 @@ func TestEncodeLanePacketDoesNotHardBlockHotPacketOverHardCap(t *testing.T) {
 func mustFindSendableHotBulletCountForSizeClass(t *testing.T, want EncodedPacketSizeClass) int {
 	t.Helper()
 	for count := 1; count <= 1000; count++ {
-		encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+		encoded, recordedBytes := mustEncodeLanePacket(t, hotBulletCandidateWithUpdateCount(count))
 		if recordedBytes == 0 || len(encoded) == 0 {
 			continue
 		}
@@ -121,7 +121,7 @@ func mustFindSendableHotBulletCountForSizeClass(t *testing.T, want EncodedPacket
 func mustFindHotBulletCountForSizeClass(t *testing.T, want EncodedPacketSizeClass) int {
 	t.Helper()
 	for count := 1; count <= 1000; count++ {
-		encoded, recordedBytes := encodeLanePacket(hotBulletCandidateWithUpdateCount(count))
+		encoded, recordedBytes := mustEncodeLanePacket(t, hotBulletCandidateWithUpdateCount(count))
 		if recordedBytes == 0 || len(encoded) == 0 {
 			continue
 		}
@@ -146,15 +146,11 @@ func hotBulletCandidateWithUpdateCount(count int) RealtimeLaneCandidate {
 			"projectile_type": "laser",
 		})
 	}
-	return RealtimeLaneCandidate{
-		Lane: LaneBullets,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{
+	return mustRealtimeLaneCandidate(BulletWireDeltaPacket{
 			Type:     PacketFamilyBulletDelta,
 			Metadata: Metadata{Lane: LaneBullets, Sequence: 2, ServerSentMsec: 1234},
 			BulletUpdates: updates,
-		},
-	}
+	}, nil)
 }
 
 func TestSelectSendPlanPrefersCriticalBeforeLow(t *testing.T) {

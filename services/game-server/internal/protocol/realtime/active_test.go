@@ -20,7 +20,7 @@ func TestActiveLaneMetricsRecordBytesAndCounts(t *testing.T) {
 	}
 
 	result := ActiveRealtimeResult{
-		SelectedCandidates: []RealtimeLaneCandidate{{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull}},
+		SelectedCandidates: []RealtimeLaneCandidate{testCandidate(LaneWorld, RealtimeLaneCandidateKindFull)},
 		SendPlan:           SendPlan{Summary: summary},
 		EncodedBytes:       map[Lane]int{LaneWorld: 128},
 		Mode:               "active",
@@ -36,12 +36,8 @@ func TestActiveLaneMetricsRecordBytesAndCounts(t *testing.T) {
 }
 
 func TestCandidateProjectionReturnsProjectionForFullCandidate(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane:       LaneWorld,
-		Kind:       RealtimeLaneCandidateKindFull,
-		Full:       "wire-full",
-		Projection: "baseline-projection",
-	}
+	candidate := testCandidate(LaneWorld, RealtimeLaneCandidateKindFull)
+	candidate.Projection = "baseline-projection"
 
 	projection, ok := CandidateProjection(candidate)
 	if !ok {
@@ -53,11 +49,7 @@ func TestCandidateProjectionReturnsProjectionForFullCandidate(t *testing.T) {
 }
 
 func TestCandidateProjectionReturnsFalseForNilProjection(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane: LaneOverlay,
-		Kind: RealtimeLaneCandidateKindFull,
-		Full: "wire-full",
-	}
+	candidate := testCandidate(LaneOverlay, RealtimeLaneCandidateKindFull)
 
 	projection, ok := CandidateProjection(candidate)
 	if ok || projection != nil {
@@ -66,12 +58,8 @@ func TestCandidateProjectionReturnsFalseForNilProjection(t *testing.T) {
 }
 
 func TestCandidateProjectionReturnsFalseForEventBatchCandidate(t *testing.T) {
-	candidate := RealtimeLaneCandidate{
-		Lane:       LaneEvent,
-		Kind:       RealtimeLaneCandidateKindEventBatch,
-		Full:       "event-batch",
-		Projection: "should-be-ignored",
-	}
+	candidate := testCandidate(LaneEvent, RealtimeLaneCandidateKindEventBatch)
+	candidate.Projection = "should-be-ignored"
 
 	projection, ok := CandidateProjection(candidate)
 	if ok || projection != nil {
@@ -159,7 +147,7 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	state.UpdateLane(LaneSession, Metadata{Lane: LaneSession, Sequence: 1, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneSession)
 
-	result := BuildActiveRealtimeResult(snapshot, state)
+	result := mustBuildActiveRealtimeResult(t, snapshot, state)
 	if len(result.Candidates) == 0 {
 		t.Fatal("expected active realtime result to emit candidates")
 	}
@@ -168,12 +156,12 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	}
 
 	for _, candidate := range result.SelectedCandidates {
-		encodedPacket, ok := result.EncodedPackets[candidate.Lane]
+		encodedPacket, ok := result.EncodedPackets[candidate.Lane()]
 		if !ok || len(encodedPacket) == 0 {
-			t.Fatalf("expected encoded packet for lane=%q kind=%q", candidate.Lane, candidate.Kind)
+			t.Fatalf("expected encoded packet for lane=%q kind=%q", candidate.Lane(), candidate.Kind())
 		}
 		wire := mustDecodeWirePacket(t, encodedPacket)
-		if candidate.Lane == LaneEvent {
+		if candidate.Lane() == LaneEvent {
 			assertStringValue(t, wire, "t", "eb")
 			assertStringValue(t, wire, "type", PacketFamilyEventBatch)
 			assertContainsKey(t, wire, "bid")
@@ -188,12 +176,12 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 			continue
 		}
 		if decodedPacketType(wire) == "" {
-			t.Fatalf("expected non-empty top-level type for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
+			t.Fatalf("expected non-empty top-level type for lane=%q kind=%q, got %#v", candidate.Lane(), candidate.Kind(), wire)
 		}
 		if decodedPacketLane(wire) == "" {
-			t.Fatalf("expected non-empty top-level lane for lane=%q kind=%q, got %#v", candidate.Lane, candidate.Kind, wire)
+			t.Fatalf("expected non-empty top-level lane for lane=%q kind=%q, got %#v", candidate.Lane(), candidate.Kind(), wire)
 		}
-		if candidate.Lane == LaneWorld {
+		if candidate.Lane() == LaneWorld {
 			asteroids, ok := wire["asteroids"].([]any)
 			if !ok || len(asteroids) == 0 {
 				t.Fatalf("expected compact world packet to include asteroids, got %#v", wire["asteroids"])
@@ -206,7 +194,7 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 				t.Fatalf("expected compact asteroid tuple id to be numeric suffix 1, not a string, got %#v", tuple[0])
 			}
 		}
-		assertNotNakedLanePayload(t, candidate.Lane, wire)
+		assertNotNakedLanePayload(t, candidate.Lane(), wire)
 	}
 }
 
@@ -247,7 +235,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.
 	state.MarkBaselineReady(LaneSession)
 	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, previousSnapshot, 1))
 
-	result := BuildActiveRealtimeResult(currentSnapshot, state)
+	result := mustBuildActiveRealtimeResult(t, currentSnapshot, state)
 
 	asteroidPackets := encodedPacketsForLane(result, LaneAsteroids)
 	if len(asteroidPackets) <= 1 {
@@ -256,7 +244,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.
 
 	selectedAsteroidCandidates := 0
 	for _, candidate := range result.SelectedCandidates {
-		if candidate.Lane == LaneAsteroids {
+		if candidate.Lane() == LaneAsteroids {
 			selectedAsteroidCandidates++
 		}
 	}
@@ -266,15 +254,15 @@ func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.
 
 	totalAsteroidUpdates := 0
 	for index, encoded := range asteroidPackets {
-		if encoded.Candidate.Lane != LaneAsteroids {
-			t.Fatalf("asteroid encoded packet %d lane = %q, want asteroids", index, encoded.Candidate.Lane)
+		if encoded.Candidate.Lane() != LaneAsteroids {
+			t.Fatalf("asteroid encoded packet %d lane = %q, want asteroids", index, encoded.Candidate.Lane())
 		}
-		if encoded.Candidate.Kind != RealtimeLaneCandidateKindDelta {
-			t.Fatalf("asteroid encoded packet %d kind = %q, want delta", index, encoded.Candidate.Kind)
+		if encoded.Candidate.Kind() != RealtimeLaneCandidateKindDelta {
+			t.Fatalf("asteroid encoded packet %d kind = %q, want delta", index, encoded.Candidate.Kind())
 		}
-		packet, ok := encoded.Candidate.Delta.(AsteroidWireDeltaPacket)
+		packet, ok := encoded.Candidate.Payload.(AsteroidWireDeltaPacket)
 		if !ok {
-			t.Fatalf("asteroid encoded packet %d delta type = %T, want AsteroidWireDeltaPacket", index, encoded.Candidate.Delta)
+			t.Fatalf("asteroid encoded packet %d payload type = %T, want AsteroidWireDeltaPacket", index, encoded.Candidate.Payload)
 		}
 		totalAsteroidUpdates += len(packet.AsteroidUpdates)
 		if len(packet.AsteroidUpdates) != 1 && encoded.EncodedBytes > HardCapBytes {
@@ -337,7 +325,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 	state.MarkBaselineReady(LaneSession)
 	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, previousSnapshot, 1))
 
-	result := BuildActiveRealtimeResult(currentSnapshot, state)
+	result := mustBuildActiveRealtimeResult(t, currentSnapshot, state)
 
 	bulletPackets := encodedPacketsForLane(result, LaneBullets)
 	if len(bulletPackets) <= 1 {
@@ -346,7 +334,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 
 	selectedBulletCandidates := 0
 	for _, candidate := range result.SelectedCandidates {
-		if candidate.Lane == LaneBullets {
+		if candidate.Lane() == LaneBullets {
 			selectedBulletCandidates++
 		}
 	}
@@ -359,15 +347,15 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 
 	totalBulletUpdates := 0
 	for index, encoded := range bulletPackets {
-		if encoded.Candidate.Lane != LaneBullets {
-			t.Fatalf("bullet encoded packet %d lane = %q, want bullets", index, encoded.Candidate.Lane)
+		if encoded.Candidate.Lane() != LaneBullets {
+			t.Fatalf("bullet encoded packet %d lane = %q, want bullets", index, encoded.Candidate.Lane())
 		}
-		if encoded.Candidate.Kind != RealtimeLaneCandidateKindDelta {
-			t.Fatalf("bullet encoded packet %d kind = %q, want delta", index, encoded.Candidate.Kind)
+		if encoded.Candidate.Kind() != RealtimeLaneCandidateKindDelta {
+			t.Fatalf("bullet encoded packet %d kind = %q, want delta", index, encoded.Candidate.Kind())
 		}
-		packet, ok := encoded.Candidate.Delta.(BulletWireDeltaPacket)
+		packet, ok := encoded.Candidate.Payload.(BulletWireDeltaPacket)
 		if !ok {
-			t.Fatalf("bullet encoded packet %d delta type = %T, want BulletWireDeltaPacket", index, encoded.Candidate.Delta)
+			t.Fatalf("bullet encoded packet %d payload type = %T, want BulletWireDeltaPacket", index, encoded.Candidate.Payload)
 		}
 		totalBulletUpdates += len(packet.BulletUpdates)
 		if len(packet.BulletUpdates) != 1 && encoded.EncodedBytes > HardCapBytes {
@@ -396,7 +384,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 func TestBuildActiveRealtimeResultSelectsFullPacketsWithoutStoredBaselines(t *testing.T) {
 
 	snapshot := tinyActiveBoundarySnapshot()
-	result := BuildActiveRealtimeResult(snapshot, NewRealtimeSessionState("player-1"))
+	result := mustBuildActiveRealtimeResult(t, snapshot, NewRealtimeSessionState("player-1"))
 
 	assertSelectedCandidate(t, result, LaneWorld, RealtimeLaneCandidateKindFull)
 	assertSelectedCandidate(t, result, LaneOverlay, RealtimeLaneCandidateKindFull)
@@ -420,7 +408,7 @@ func TestBuildActiveRealtimeResultEmitsNoWorldOverlayOrSessionPacketsWhenStoredB
 	state.MarkBaselineReady(LaneSession)
 	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, snapshot, 1))
 
-	result := BuildActiveRealtimeResult(snapshot, state)
+	result := mustBuildActiveRealtimeResult(t, snapshot, state)
 	assertNoSelectedCandidate(t, result, LaneWorld)
 	assertNoSelectedCandidate(t, result, LaneOverlay)
 	assertNoSelectedCandidate(t, result, LaneSession)
@@ -438,7 +426,7 @@ func TestBuildActiveRealtimeResultSelectsDeltaPacketsForChangedStoredBaselines(t
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 1, Rotation: 0, Health: 5, Shields: 0}}}, 1))
 
-	result := BuildActiveRealtimeResult(snapshot, state)
+	result := mustBuildActiveRealtimeResult(t, snapshot, state)
 	assertSelectedCandidate(t, result, LaneWorld, RealtimeLaneCandidateKindDelta)
 	assertEncodedPacketTypeAndLane(t, result, LaneWorld, PacketTypeWorldDelta, string(LaneWorld))
 }
@@ -461,7 +449,7 @@ func tinyActiveBoundarySnapshot() game.GameplayPresentationSnapshot {
 func assertSelectedCandidate(t *testing.T, result ActiveRealtimeResult, lane Lane, kind RealtimeLaneCandidateKind) {
 	t.Helper()
 	for _, candidate := range result.SelectedCandidates {
-		if candidate.Lane == lane && candidate.Kind == kind {
+		if candidate.Lane() == lane && candidate.Kind() == kind {
 			return
 		}
 	}
@@ -471,7 +459,7 @@ func assertSelectedCandidate(t *testing.T, result ActiveRealtimeResult, lane Lan
 func assertNoSelectedCandidate(t *testing.T, result ActiveRealtimeResult, lane Lane) {
 	t.Helper()
 	for _, candidate := range result.SelectedCandidates {
-		if candidate.Lane == lane {
+		if candidate.Lane() == lane {
 			t.Fatalf("expected no selected candidate for lane=%q, got %#v", lane, result.SelectedCandidates)
 		}
 	}
@@ -483,7 +471,7 @@ func assertNoSelectedCandidate(t *testing.T, result ActiveRealtimeResult, lane L
 func encodedPacketsForLane(result ActiveRealtimeResult, lane Lane) []EncodedRealtimeLanePacket {
 	packets := make([]EncodedRealtimeLanePacket, 0, len(result.EncodedLanePackets))
 	for _, packet := range result.EncodedLanePackets {
-		if packet.Candidate.Lane == lane {
+		if packet.Candidate.Lane() == lane {
 			packets = append(packets, packet)
 		}
 	}
@@ -507,9 +495,9 @@ func assertEncodedPacketTypeAndLane(t *testing.T, result ActiveRealtimeResult, l
 
 func TestIncludedRealtimeLaneCandidatesSkipsDeferredRecordsInOrder(t *testing.T) {
 	candidates := []RealtimeLaneCandidate{
-		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
-		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
-		{Lane: LaneSession, Kind: RealtimeLaneCandidateKindEventBatch},
+		testCandidate(LaneWorld, RealtimeLaneCandidateKindFull),
+		testCandidate(LaneOverlay, RealtimeLaneCandidateKindFull),
+		testCandidate(LaneSession, RealtimeLaneCandidateKindDelta),
 	}
 	included := []ScheduleRecord{
 		{CandidateIndex: 2},
@@ -527,7 +515,7 @@ func TestIncludedRealtimeLaneCandidatesSkipsDeferredRecordsInOrder(t *testing.T)
 	if len(selected) != 2 {
 		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
 	}
-	if selected[0].Lane != LaneSession || selected[1].Lane != LaneWorld {
+	if selected[0].Lane() != LaneSession || selected[1].Lane() != LaneWorld {
 		t.Fatalf("selected candidates = %#v, want session then world", selected)
 	}
 }
@@ -535,7 +523,7 @@ func TestIncludedRealtimeLaneCandidatesSkipsDeferredRecordsInOrder(t *testing.T)
 func TestBuildActiveRealtimeResultUsesSelectedCandidatesOnly(t *testing.T) {
 	result := ActiveRealtimeResult{
 		SelectedCandidates: []RealtimeLaneCandidate{
-			{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
+			testCandidate(LaneOverlay, RealtimeLaneCandidateKindFull),
 		},
 		SendPlan: SendPlan{
 			Summary: SendPlanSummary{IncludedCount: 1},
@@ -611,9 +599,9 @@ func hasOnlyKeys(wire map[string]any, keys []string) bool {
 
 func TestIncludedRealtimeLaneCandidatesReturnsOnlyIncludedCandidates(t *testing.T) {
 	candidates := []RealtimeLaneCandidate{
-		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
-		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
-		{Lane: LaneSession, Kind: RealtimeLaneCandidateKindEventBatch},
+		testCandidate(LaneWorld, RealtimeLaneCandidateKindFull),
+		testCandidate(LaneOverlay, RealtimeLaneCandidateKindFull),
+		testCandidate(LaneSession, RealtimeLaneCandidateKindDelta),
 	}
 	included := []ScheduleRecord{
 		{CandidateIndex: 0},
@@ -624,16 +612,16 @@ func TestIncludedRealtimeLaneCandidatesReturnsOnlyIncludedCandidates(t *testing.
 	if len(selected) != 2 {
 		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
 	}
-	if selected[0].Lane != LaneWorld || selected[1].Lane != LaneSession {
+	if selected[0].Lane() != LaneWorld || selected[1].Lane() != LaneSession {
 		t.Fatalf("selected candidates = %#v, want world then session", selected)
 	}
 }
 
 func TestIncludedRealtimeLaneCandidatesPreservesIncludedOrder(t *testing.T) {
 	candidates := []RealtimeLaneCandidate{
-		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
-		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
-		{Lane: LaneSession, Kind: RealtimeLaneCandidateKindEventBatch},
+		testCandidate(LaneWorld, RealtimeLaneCandidateKindFull),
+		testCandidate(LaneOverlay, RealtimeLaneCandidateKindFull),
+		testCandidate(LaneSession, RealtimeLaneCandidateKindDelta),
 	}
 	included := []ScheduleRecord{
 		{CandidateIndex: 2},
@@ -644,15 +632,15 @@ func TestIncludedRealtimeLaneCandidatesPreservesIncludedOrder(t *testing.T) {
 	if len(selected) != 2 {
 		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
 	}
-	if selected[0].Lane != LaneSession || selected[1].Lane != LaneWorld {
+	if selected[0].Lane() != LaneSession || selected[1].Lane() != LaneWorld {
 		t.Fatalf("selected candidates = %#v, want session then world", selected)
 	}
 }
 
 func TestIncludedRealtimeLaneCandidatesDeduplicatesRepeatedCandidateIndexes(t *testing.T) {
 	candidates := []RealtimeLaneCandidate{
-		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
-		{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull},
+		testCandidate(LaneWorld, RealtimeLaneCandidateKindFull),
+		testCandidate(LaneOverlay, RealtimeLaneCandidateKindFull),
 	}
 	included := []ScheduleRecord{
 		{CandidateIndex: 1},
@@ -664,14 +652,14 @@ func TestIncludedRealtimeLaneCandidatesDeduplicatesRepeatedCandidateIndexes(t *t
 	if len(selected) != 2 {
 		t.Fatalf("expected 2 selected candidates, got %d", len(selected))
 	}
-	if selected[0].Lane != LaneOverlay || selected[1].Lane != LaneWorld {
+	if selected[0].Lane() != LaneOverlay || selected[1].Lane() != LaneWorld {
 		t.Fatalf("selected candidates = %#v, want overlay then world", selected)
 	}
 }
 
 func TestIncludedRealtimeLaneCandidatesSkipsInvalidIndexes(t *testing.T) {
 	candidates := []RealtimeLaneCandidate{
-		{Lane: LaneWorld, Kind: RealtimeLaneCandidateKindFull},
+		testCandidate(LaneWorld, RealtimeLaneCandidateKindFull),
 	}
 	included := []ScheduleRecord{
 		{CandidateIndex: -1},
@@ -683,15 +671,12 @@ func TestIncludedRealtimeLaneCandidatesSkipsInvalidIndexes(t *testing.T) {
 	if len(selected) != 1 {
 		t.Fatalf("expected 1 selected candidate, got %d", len(selected))
 	}
-	if selected[0].Lane != LaneWorld {
+	if selected[0].Lane() != LaneWorld {
 		t.Fatalf("selected candidates = %#v, want world", selected)
 	}
 }
 func TestEncodeLanePacketCompactsActiveWorldDeltaWireJSON(t *testing.T) {
-    candidate := RealtimeLaneCandidate{
-        Lane: LaneWorld,
-        Kind: RealtimeLaneCandidateKindDelta,
-        Delta: WorldDeltaPacket{
+    candidate := mustRealtimeLaneCandidate(WorldDeltaPacket{
             Type: PacketTypeWorldDelta,
             Metadata: Metadata{
                 Lane:         LaneWorld,
@@ -709,10 +694,9 @@ func TestEncodeLanePacketCompactsActiveWorldDeltaWireJSON(t *testing.T) {
                     "thrusting": true,
                 }},
             },
-        },
-    }
+        }, nil)
 
-    encoded, recordedBytes := encodeLanePacket(candidate)
+    encoded, recordedBytes := mustEncodeLanePacket(t, candidate)
     if recordedBytes == 0 {
         t.Fatal("expected encoded bytes for active world delta packet")
     }
@@ -731,5 +715,3 @@ func TestEncodeLanePacketCompactsActiveWorldDeltaWireJSON(t *testing.T) {
     assertNotContainsKey(t, wire, "sid")
     assertNotContainsKey(t, wire, "ship_updates")
 }
-
-

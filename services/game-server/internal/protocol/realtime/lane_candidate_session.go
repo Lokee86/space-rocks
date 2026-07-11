@@ -18,11 +18,11 @@ func buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 	sessionProjection, sessionHasProjection := state.BaselineProjection(LaneSession)
 	sessionCanUseProjection := sessionReady && sessionSynced && sessionStateLane.IsFinalChunk && sessionStateLane.BaselineID != "" && sessionHasProjection
 	if !sessionCanUseProjection {
-		candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindFull, Full: quantizedSessionFull, Projection: quantizedSessionFull})
+		candidates = append(candidates, mustRealtimeLaneCandidate(quantizedSessionFull, quantizedSessionFull))
 	} else {
 		previousSessionFull, ok := sessionProjection.(SessionWireFullPacket)
 		if !ok {
-			candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindFull, Full: quantizedSessionFull, Projection: quantizedSessionFull})
+			candidates = append(candidates, mustRealtimeLaneCandidate(quantizedSessionFull, quantizedSessionFull))
 		} else {
 			if !SessionWirePayloadChanged(previousSessionFull, quantizedSessionFull) {
 				// No session candidate when the projection is unchanged.
@@ -31,7 +31,7 @@ func buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 				if SessionWireDeltaHasChanges(sessionDelta) {
 					chainedSessionProjection := quantizedSessionFull
 					chainedSessionProjection.Metadata = sessionDelta.Metadata
-					candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneSession, Kind: RealtimeLaneCandidateKindDelta, Delta: sessionDelta, Projection: chainedSessionProjection})
+					candidates = append(candidates, mustRealtimeLaneCandidate(sessionDelta, chainedSessionProjection))
 				}
 			}
 		}

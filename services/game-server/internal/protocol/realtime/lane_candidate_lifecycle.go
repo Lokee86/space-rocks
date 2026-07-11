@@ -14,11 +14,7 @@ func buildBulletLifecycleCandidate(worldDelta WorldWireDeltaPacket, state Realti
 	metadata.SnapshotKind = SnapshotKind("delta")
 	metadata = metadata.WithChunk(0, 1)
 
-	return RealtimeLaneCandidate{
-		Lane:   LaneBulletsLifecycle,
-		Kind:   RealtimeLaneCandidateKindDelta,
-		Delta:  BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: metadata, BulletCreates: worldDelta.Bullets.Creates, BulletDeletes: worldDelta.Bullets.Deletes},
-	}, true
+	return mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: metadata, BulletCreates: worldDelta.Bullets.Creates, BulletDeletes: worldDelta.Bullets.Deletes}, nil), true
 }
 
 func buildAsteroidLifecycleCandidate(worldDelta WorldWireDeltaPacket, state RealtimeSessionState) (RealtimeLaneCandidate, bool) {
@@ -35,9 +31,5 @@ func buildAsteroidLifecycleCandidate(worldDelta WorldWireDeltaPacket, state Real
 	metadata.SnapshotKind = SnapshotKind("delta")
 	metadata = metadata.WithChunk(0, 1)
 
-	return RealtimeLaneCandidate{
-		Lane:   LaneAsteroidsLifecycle,
-		Kind:   RealtimeLaneCandidateKindDelta,
-		Delta:  AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: metadata, AsteroidCreates: worldDelta.Asteroids.Creates, AsteroidDeletes: worldDelta.Asteroids.Deletes},
-	}, true
+	return mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: metadata, AsteroidCreates: worldDelta.Asteroids.Creates, AsteroidDeletes: worldDelta.Asteroids.Deletes}, nil), true
 }

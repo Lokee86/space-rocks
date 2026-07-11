@@ -14,11 +14,12 @@ func ExpandHotLaneCandidateChunks(candidates []RealtimeLaneCandidate) []Realtime
 }
 
 func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLaneCandidate {
-	if candidate.Kind != RealtimeLaneCandidateKindDelta {
+	lane, kind := candidate.Lane(), candidate.Kind()
+	if kind != RealtimeLaneCandidateKindDelta {
 		return []RealtimeLaneCandidate{candidate}
 	}
 
-	switch candidate.Lane {
+	switch lane {
 	case LaneBulletsLifecycle, LaneAsteroidsLifecycle:
 		return []RealtimeLaneCandidate{candidate}
 	case LaneBullets:
@@ -69,23 +70,14 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 }
 
 func bulletWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (BulletWireDeltaPacket, bool) {
-	switch packet := candidate.Delta.(type) {
-	case BulletWireDeltaPacket:
-		return packet, true
-	case *BulletWireDeltaPacket:
-		if packet == nil {
-			return BulletWireDeltaPacket{}, false
-		}
-		return *packet, true
-	default:
-		return BulletWireDeltaPacket{}, false
-	}
+	packet, ok := candidate.Payload.(BulletWireDeltaPacket)
+	return packet, ok
 }
 
 func normalizedBulletWireDeltaCandidate(candidate RealtimeLaneCandidate, packet BulletWireDeltaPacket, updates []map[string]any, chunkIndex int, chunkCount int) RealtimeLaneCandidate {
 	packet.BulletUpdates = updates
 	packet.Metadata = packet.Metadata.WithChunk(chunkIndex, chunkCount)
-	candidate.Delta = packet
+	candidate.Payload = packet
 	return candidate
 }
 
@@ -116,23 +108,14 @@ func greedyBulletWireDeltaChunks(packet BulletWireDeltaPacket) [][]map[string]an
 }
 
 func asteroidWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (AsteroidWireDeltaPacket, bool) {
-	switch packet := candidate.Delta.(type) {
-	case AsteroidWireDeltaPacket:
-		return packet, true
-	case *AsteroidWireDeltaPacket:
-		if packet == nil {
-			return AsteroidWireDeltaPacket{}, false
-		}
-		return *packet, true
-	default:
-		return AsteroidWireDeltaPacket{}, false
-	}
+	packet, ok := candidate.Payload.(AsteroidWireDeltaPacket)
+	return packet, ok
 }
 
 func normalizedAsteroidWireDeltaCandidate(candidate RealtimeLaneCandidate, packet AsteroidWireDeltaPacket, updates []map[string]any, chunkIndex int, chunkCount int) RealtimeLaneCandidate {
 	packet.AsteroidUpdates = updates
 	packet.Metadata = packet.Metadata.WithChunk(chunkIndex, chunkCount)
-	candidate.Delta = packet
+	candidate.Payload = packet
 	return candidate
 }
 

@@ -12,28 +12,14 @@ func TestScheduleRecordForHotAsteroidAndBulletDeltaCandidatesUsesHotSupersedable
 		wantFamily string
 	}{
 		{
-			name: "asteroid",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneAsteroids,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: AsteroidWireDeltaPacket{
-					Type: PacketFamilyAsteroidDelta,
-					Metadata: Metadata{
-						Lane:     LaneAsteroids,
-						Sequence: 1,
-					},
-				},
-			},
+			name:       "asteroid",
+			candidate:  mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 1}}, nil),
 			wantLane:   LaneAsteroids,
 			wantFamily: PacketFamilyAsteroidDelta,
 		},
 		{
-			name: "bullet",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneBullets,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 1}},
-			},
+			name:       "bullet",
+			candidate:  mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 1}}, nil),
 			wantLane:   LaneBullets,
 			wantFamily: PacketFamilyBulletDelta,
 		},
@@ -59,11 +45,7 @@ func TestScheduleRecordForHotAsteroidAndBulletDeltaCandidatesUsesHotSupersedable
 }
 
 func TestScheduleRecordForAsteroidLifecycleDeltaCandidateUsesRequiredDelivery(t *testing.T) {
-	record := scheduleRecordForCandidate(0, RealtimeLaneCandidate{
-		Lane: LaneAsteroidsLifecycle,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1}},
-	})
+	record := scheduleRecordForCandidate(0, mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1}}, nil))
 
 	if record.Lane != LaneAsteroidsLifecycle {
 		t.Fatalf("record lane = %q, want %q", record.Lane, LaneAsteroidsLifecycle)
@@ -80,11 +62,7 @@ func TestScheduleRecordForAsteroidLifecycleDeltaCandidateUsesRequiredDelivery(t 
 }
 
 func TestScheduleRecordForBulletLifecycleDeltaCandidateUsesRequiredDelivery(t *testing.T) {
-	record := scheduleRecordForCandidate(0, RealtimeLaneCandidate{
-		Lane: LaneBulletsLifecycle,
-		Kind: RealtimeLaneCandidateKindDelta,
-		Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1}},
-	})
+	record := scheduleRecordForCandidate(0, mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1}}, nil))
 
 	if record.Lane != LaneBulletsLifecycle {
 		t.Fatalf("record lane = %q, want %q", record.Lane, LaneBulletsLifecycle)
@@ -106,20 +84,12 @@ func TestScheduleRecordForLifecycleDeltaCandidateStaysSingleChunk(t *testing.T) 
 		candidate RealtimeLaneCandidate
 	}{
 		{
-			name: "asteroid lifecycle",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneAsteroidsLifecycle,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1, ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}},
-			},
+			name:      "asteroid lifecycle",
+			candidate: mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1, ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}}, nil),
 		},
 		{
-			name: "bullet lifecycle",
-			candidate: RealtimeLaneCandidate{
-				Lane: LaneBulletsLifecycle,
-				Kind: RealtimeLaneCandidateKindDelta,
-				Delta: BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1, ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}},
-			},
+			name:      "bullet lifecycle",
+			candidate: mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1, ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true}}, nil),
 		},
 	}
 

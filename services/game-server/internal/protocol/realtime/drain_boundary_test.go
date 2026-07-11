@@ -26,7 +26,7 @@ func TestRealtimeEventBatchProjectionSchedulingEncodingDoNotDrain(t *testing.T) 
 		t.Fatalf("scheduling mutated pending events: %d", len(snapshot.PendingEvents))
 	}
 
-	active := BuildActiveRealtimeResult(snapshot, state)
+	active := mustBuildActiveRealtimeResult(t, snapshot, state)
 	if len(snapshot.PendingEvents) != 1 {
 		t.Fatalf("encoding mutated pending events: %d", len(snapshot.PendingEvents))
 	}

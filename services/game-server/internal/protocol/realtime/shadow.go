@@ -1,6 +1,8 @@
 package realtime
 
 import (
+	"fmt"
+
 	game "github.com/Lokee86/space-rocks/server/internal/game"
 	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
 )
@@ -16,13 +18,16 @@ type ShadowRealtimeResult struct {
 	TotalEncodedBytes int
 }
 
-func BuildShadowRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) ShadowRealtimeResult {
+func BuildShadowRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (ShadowRealtimeResult, error) {
 	prepared := prepareRealtimeSendPlan(snapshot, state)
 	encodedBytes := make(map[Lane]int, len(prepared.CandidatePlan.Candidates))
 	for _, candidate := range prepared.CandidatePlan.Candidates {
-		_, recordedBytes := encodeLanePacket(candidate)
+		_, recordedBytes, err := encodeLanePacket(candidate)
+		if err != nil {
+			return ShadowRealtimeResult{}, fmt.Errorf("encode shadow candidate lane=%q family=%q: %w", candidate.Lane(), candidate.PacketFamily(), err)
+		}
 		if recordedBytes > 0 {
-			encodedBytes[candidate.Lane] = recordedBytes
+			encodedBytes[candidate.Lane()] = recordedBytes
 		}
 	}
 
@@ -44,15 +49,15 @@ func BuildShadowRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 		MetricRecord:      metricRecord,
 		EncodedBytes:      encodedBytes,
 		TotalEncodedBytes: totalEncodedBytes,
-	}
+	}, nil
 }
 
 func ShadowLaneMetricRecords(result ShadowRealtimeResult) []packetmetrics.PacketMetricRecord {
 	records := make([]packetmetrics.PacketMetricRecord, 0, len(result.Candidates))
 	for _, candidate := range result.Candidates {
-		record := result.SendPlan.Summary.ToPacketMetricRecord(string(candidate.Lane), candidate.Lane)
-		diagnostics := CandidateWriteDiagnosticsFor(candidate, result.SessionState, result.EncodedBytes[candidate.Lane])
-		record.Bytes = result.EncodedBytes[candidate.Lane]
+		record := result.SendPlan.Summary.ToPacketMetricRecord(candidate.PacketFamily(), candidate.Lane())
+		diagnostics := CandidateWriteDiagnosticsFor(candidate, result.SessionState, result.EncodedBytes[candidate.Lane()])
+		record.Bytes = result.EncodedBytes[candidate.Lane()]
 		record.Channel = diagnostics.Channel
 		record.EncodedBytes = diagnostics.EncodedBytes
 		record.WorldHotCount = diagnostics.WorldHotCount

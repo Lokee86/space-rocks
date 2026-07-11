@@ -11,6 +11,6 @@ func buildEventLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 
 	eventState, _ := state.LaneState(LaneEvent)
 	return []RealtimeLaneCandidate{
-		{Lane: LaneEvent, Kind: RealtimeLaneCandidateKindEventBatch, Full: BuildEventBatchPacket(snapshot.PendingEvents, eventState.Sequence, snapshot.ServerSentMsec)},
+		mustRealtimeLaneCandidate(BuildEventBatchPacket(snapshot.PendingEvents, eventState.Sequence, snapshot.ServerSentMsec), nil),
 	}
 }

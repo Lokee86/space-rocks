@@ -106,54 +106,6 @@ func NextLaneSequence(state RealtimeLaneState, synced bool) int {
 	return state.Sequence + 1
 }
 
-func CandidateMetadata(candidate RealtimeLaneCandidate, state RealtimeSessionState) (Metadata, bool) {
-	switch packet := candidate.Full.(type) {
-	case WorldFullPacket:
-		return packet.Metadata, true
-	case WorldWireFullPacket:
-		return packet.Metadata, true
-	case OverlayFullPacket:
-		return packet.Metadata, true
-	case OverlayWireFullPacket:
-		return packet.Metadata, true
-	case SessionFullPacket:
-		return packet.Metadata, true
-	case SessionWireFullPacket:
-		return packet.Metadata, true
-	case EventBatchPacket:
-		return packet.Metadata, true
-	}
-
-	switch packet := candidate.Delta.(type) {
-	case WorldDeltaPacket:
-		return packet.Metadata, true
-	case WorldWireDeltaPacket:
-		return packet.Metadata, true
-	case OverlayLaneDelta:
-		return packet.Metadata, true
-	case OverlayWireLaneDelta:
-		return packet.Metadata, true
-	case SessionLaneDelta:
-		return packet.Metadata, true
-	case SessionWireLaneDelta:
-		return packet.Metadata, true
-	case AsteroidWireDeltaPacket:
-		return packet.Metadata, true
-	case *AsteroidWireDeltaPacket:
-		return packet.Metadata, true
-	case BulletWireDeltaPacket:
-		return packet.Metadata, true
-	case *BulletWireDeltaPacket:
-		return packet.Metadata, true
-	}
-
-	laneState, ok := state.LaneState(candidate.Lane)
-	if !ok {
-		return Metadata{}, false
-	}
-	return laneState.Metadata(), true
-}
-
 func (state RealtimeSessionState) SharedWorldSnapshotID(snapshotID string, payloadsIdentical bool) string {
 	if payloadsIdentical {
 		return snapshotID

@@ -1,6 +1,7 @@
 package realtime
 
 import (
+	"fmt"
 	"strings"
 
 	game "github.com/Lokee86/space-rocks/server/internal/game"
@@ -35,10 +36,10 @@ type ActiveRealtimeResult struct {
 func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, state RealtimeSessionState) (ActiveRealtimeResult, error) {
 	snapshot := gameInstance.GameplayPresentationSnapshot(playerID)
 	logActivePendingPresentationEvents(playerID, snapshot)
-	return BuildActiveRealtimeResult(snapshot, state), nil
+	return BuildActiveRealtimeResult(snapshot, state)
 }
 
-func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) ActiveRealtimeResult {
+func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (ActiveRealtimeResult, error) {
 	preparedState := state
 	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &preparedState)
 	candidatePlan.Candidates = ExpandHotLaneCandidateChunks(candidatePlan.Candidates)
@@ -53,17 +54,20 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 	encodedBytes := make(map[Lane]int, len(selectedCandidates))
 	encodedLanePackets := make([]EncodedRealtimeLanePacket, 0, len(selectedCandidates))
 	for _, candidate := range selectedCandidates {
-		encodedPacket, recordedBytes := encodeLanePacket(candidate)
+		encodedPacket, recordedBytes, err := encodeLanePacket(candidate)
+		if err != nil {
+			return ActiveRealtimeResult{}, fmt.Errorf("encode active candidate lane=%q family=%q: %w", candidate.Lane(), candidate.PacketFamily(), err)
+		}
 		if recordedBytes > 0 {
 			encodedLanePackets = append(encodedLanePackets, EncodedRealtimeLanePacket{
 				Candidate:    candidate,
 				Encoded:      encodedPacket,
 				EncodedBytes: recordedBytes,
 			})
-			if _, exists := encodedPackets[candidate.Lane]; !exists {
-				encodedPackets[candidate.Lane] = encodedPacket
+			if _, exists := encodedPackets[candidate.Lane()]; !exists {
+				encodedPackets[candidate.Lane()] = encodedPacket
 			}
-			encodedBytes[candidate.Lane] += recordedBytes
+			encodedBytes[candidate.Lane()] += recordedBytes
 		}
 	}
 
@@ -92,7 +96,7 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 		result.MetricRecord.Bytes = encodedBytes[LaneWorld]
 	}
 	result.MetricSummaries = ActiveLaneMetricRecords(result)
-	return result
+	return result, nil
 }
 
 func IncludedRealtimeLaneCandidates(candidates []RealtimeLaneCandidate, included []ScheduleRecord) []RealtimeLaneCandidate {
@@ -131,7 +135,7 @@ func encodedMetricPackets(result ActiveRealtimeResult) []EncodedRealtimeLanePack
 
 	packets := make([]EncodedRealtimeLanePacket, 0, len(result.SelectedCandidates))
 	for _, candidate := range result.SelectedCandidates {
-		encodedBytes := result.EncodedBytes[candidate.Lane]
+		encodedBytes := result.EncodedBytes[candidate.Lane()]
 		if encodedBytes <= 0 {
 			continue
 		}
@@ -148,7 +152,7 @@ func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.Packet
 	records := make([]packetmetrics.PacketMetricRecord, 0, len(encodedPackets))
 	for _, encoded := range encodedPackets {
 		candidate := encoded.Candidate
-		record := result.SendPlan.Summary.ToPacketMetricRecord(packetFamilyForCandidate(candidate), candidate.Lane)
+		record := result.SendPlan.Summary.ToPacketMetricRecord(candidate.PacketFamily(), candidate.Lane())
 		diagnostics := CandidateWriteDiagnosticsFor(candidate, result.SessionState, encoded.EncodedBytes)
 		record.Bytes = encoded.EncodedBytes
 		record.Channel = diagnostics.Channel
@@ -223,27 +227,33 @@ func logActivePendingPresentationEvents(playerID string, snapshot game.GameplayP
 	)
 }
 
-func encodeLanePacketUnchecked(candidate RealtimeLaneCandidate) ([]byte, int) {
-	packet := WireLanePacket(candidate)
-	if packet == nil {
-		return nil, 0
+func encodeLanePacketUnchecked(candidate RealtimeLaneCandidate) ([]byte, int, error) {
+	packet, err := WireLanePacket(candidate)
+	if err != nil {
+		return nil, 0, err
 	}
-	if candidate.Lane == LaneWorld || candidate.Lane == LaneSession || candidate.Lane == LaneOverlay || candidate.Lane == LaneEvent || candidate.Lane == LaneAsteroids || candidate.Lane == LaneBullets || candidate.Lane == LaneAsteroidsLifecycle || candidate.Lane == LaneBulletsLifecycle {
+	if candidate.Lane() == LaneWorld || candidate.Lane() == LaneSession || candidate.Lane() == LaneOverlay || candidate.Lane() == LaneEvent || candidate.Lane() == LaneAsteroids || candidate.Lane() == LaneBullets || candidate.Lane() == LaneAsteroidsLifecycle || candidate.Lane() == LaneBulletsLifecycle {
 		packet = CompactWirePacket(packet)
+		if len(packet) == 0 {
+			return nil, 0, fmt.Errorf("compact lane packet is empty")
+		}
 	}
 	encoded, err := packetcodec.Encode(packet)
 	if err != nil {
-		return nil, 0
+		return nil, 0, fmt.Errorf("json encode lane packet: %w", err)
 	}
-	return encoded, len(encoded)
+	return encoded, len(encoded), nil
 }
 
-func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int) {
-	encoded, recordedBytes := encodeLanePacketUnchecked(candidate)
-	if recordedBytes <= 0 {
-		return nil, 0
+func encodeLanePacket(candidate RealtimeLaneCandidate) ([]byte, int, error) {
+	encoded, recordedBytes, err := encodeLanePacketUnchecked(candidate)
+	if err != nil {
+		return nil, 0, err
 	}
-	return encoded, recordedBytes
+	if recordedBytes <= 0 {
+		return nil, 0, fmt.Errorf("encoded lane packet is empty")
+	}
+	return encoded, recordedBytes, nil
 }
 
 func laneFamilySummary(records []ScheduleRecord) string {

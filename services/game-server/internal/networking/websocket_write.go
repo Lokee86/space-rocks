@@ -74,12 +74,12 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		if len(encodedPacket) == 0 {
 			continue
 		}
-		if candidate.Lane == realtime.LaneControl {
+		if candidate.Lane() == realtime.LaneControl {
 			logging.Network.Warn("lane protocol gameplay webrtc control lane is websocket-owned",
 				logging.FieldRoomID, session.currentRoomID,
 				logging.FieldPlayerID, session.currentGamePlayerID,
 				logging.FieldRemoteAddr, remoteAddr,
-				"lane", candidate.Lane,
+				"lane", candidate.Lane(),
 				"transport", "webrtc",
 			)
 			return false
@@ -89,7 +89,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 				logging.FieldRoomID, session.currentRoomID,
 				logging.FieldPlayerID, session.currentGamePlayerID,
 				logging.FieldRemoteAddr, remoteAddr,
-				"lane", candidate.Lane,
+				"lane", candidate.Lane(),
 				"transport", "webrtc",
 			)
 			continue
@@ -99,28 +99,28 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 				logging.FieldRoomID, session.currentRoomID,
 				logging.FieldPlayerID, session.currentGamePlayerID,
 				logging.FieldRemoteAddr, remoteAddr,
-				"lane", candidate.Lane,
+				"lane", candidate.Lane(),
 				"transport", "webrtc",
 			)
 			continue
 		}
-		channelLabel, ok := webRTCGameplayChannelLabelForLane(string(candidate.Lane))
+		channelLabel, ok := webRTCGameplayChannelLabelForLane(string(candidate.Lane()))
 		if !ok {
 			logging.Network.Warn("lane protocol gameplay webrtc lane channel missing",
 				logging.FieldRoomID, session.currentRoomID,
 				logging.FieldPlayerID, session.currentGamePlayerID,
 				logging.FieldRemoteAddr, remoteAddr,
-				"lane", candidate.Lane,
+				"lane", candidate.Lane(),
 				"transport", "webrtc",
 			)
 			return false
 		}
-		if err := session.webrtcTransport.SendEncodedLaneJSON(string(candidate.Lane), encodedPacket); err != nil {
+		if err := session.webrtcTransport.SendEncodedLaneJSON(string(candidate.Lane()), encodedPacket); err != nil {
 			logging.Network.Error("lane protocol gameplay webrtc write failed", err,
 				logging.FieldRoomID, session.currentRoomID,
 				logging.FieldPlayerID, session.currentGamePlayerID,
 				logging.FieldRemoteAddr, remoteAddr,
-				"lane", candidate.Lane,
+				"lane", candidate.Lane(),
 				"transport", "webrtc",
 				"channel", channelLabel,
 			)
@@ -145,20 +145,20 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			"is_final_chunk", diagnostics.IsFinalChunk,
 			"encoded_bytes", len(encodedPacket),
 		)
-		if candidate.Kind == realtime.RealtimeLaneCandidateKindEventBatch {
+		if candidate.Kind() == realtime.RealtimeLaneCandidateKindEventBatch {
 			if drained := drainActiveEventBatchAfterWrite(session.room.GameInstance(), session.currentGamePlayerID, result.EventBatchEventIDs); len(drained) > 0 {
 				drainedEventCount += len(drained)
 			}
 		}
 
-		if metadata, ok := realtime.CandidateMetadata(candidate, session.realtimeState); ok {
-			persistedMetadata := realtime.AdvanceMetadataForSuccessfulWrite(candidate.Lane, metadata)
-			session.realtimeState.UpdateLane(candidate.Lane, persistedMetadata)
+		if metadata, ok := candidate.Metadata(); ok {
+			persistedMetadata := realtime.AdvanceMetadataForSuccessfulWrite(candidate.Lane(), metadata)
+			session.realtimeState.UpdateLane(candidate.Lane(), persistedMetadata)
 			if projection, ok := realtime.CandidateProjection(candidate); ok {
-				session.realtimeState.StoreBaselineProjection(candidate.Lane, projection)
+				session.realtimeState.StoreBaselineProjection(candidate.Lane(), projection)
 			}
-			if metadata.IsFinalChunk && candidate.Kind == realtime.RealtimeLaneCandidateKindFull {
-				session.realtimeState.MarkBaselineReady(candidate.Lane)
+			if metadata.IsFinalChunk && candidate.Kind() == realtime.RealtimeLaneCandidateKindFull {
+				session.realtimeState.MarkBaselineReady(candidate.Lane())
 			}
 		}
 	}
@@ -184,7 +184,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 func countLaneCandidateKinds(candidates []realtime.RealtimeLaneCandidate, kind realtime.RealtimeLaneCandidateKind) int {
 	count := 0
 	for _, candidate := range candidates {
-		if candidate.Kind == kind {
+		if candidate.Kind() == kind {
 			count++
 		}
 	}

@@ -18,11 +18,11 @@ func buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 	overlayProjection, overlayHasProjection := state.BaselineProjection(LaneOverlay)
 	overlayCanUseProjection := overlayReady && overlaySynced && overlayState.IsFinalChunk && overlayState.BaselineID != "" && overlayHasProjection
 	if !overlayCanUseProjection {
-		candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull, Full: quantizedOverlayFull, Projection: quantizedOverlayFull})
+		candidates = append(candidates, mustRealtimeLaneCandidate(quantizedOverlayFull, quantizedOverlayFull))
 	} else {
 		previousOverlayFull, ok := overlayProjection.(OverlayWireFullPacket)
 		if !ok {
-			candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindFull, Full: quantizedOverlayFull, Projection: quantizedOverlayFull})
+			candidates = append(candidates, mustRealtimeLaneCandidate(quantizedOverlayFull, quantizedOverlayFull))
 		} else {
 			if !OverlayWirePayloadChanged(previousOverlayFull, quantizedOverlayFull) {
 				// No overlay candidate when the projection is unchanged.
@@ -31,7 +31,7 @@ func buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 				if OverlayWireDeltaHasChanges(overlayDelta) {
 					chainedOverlayProjection := quantizedOverlayFull
 					chainedOverlayProjection.Metadata = overlayDelta.Metadata
-					candidates = append(candidates, RealtimeLaneCandidate{Lane: LaneOverlay, Kind: RealtimeLaneCandidateKindDelta, Delta: overlayDelta, Projection: chainedOverlayProjection})
+					candidates = append(candidates, mustRealtimeLaneCandidate(overlayDelta, chainedOverlayProjection))
 				}
 			}
 		}

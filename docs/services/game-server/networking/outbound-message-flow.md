@@ -142,7 +142,7 @@ When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(s
 2. Resets `session.realtimeState` when the receiver is empty or changes.
 3. Calls `realtime.BuildActiveRealtimeResultForGame()`.
 4. Selects included lane candidates from the send plan, including lifecycle candidates before expanded asteroid/bullet hot chunks when needed.
-5. `WireLanePacket` builds readable long-key maps.
+5. The typed `RealtimeLanePayload` serializer builds the readable wire map after fail-closed payload, metadata, family, and wire-type validation.
 6. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.
 7. `CompactWirePacket` applies generated descriptor-driven aliases, value domains, ID codecs/selectors, record encodings, and event layouts.
 8. `packetcodec` encodes each selected candidate into `EncodedLanePackets`.
@@ -256,7 +256,7 @@ Queued producers generally encode through `packetcodec` before enqueue. The queu
 
 ### Active realtime lane packets
 
-Active gameplay output is written as lane packet families, not as one combined gameplay output payload.
+Active gameplay output is written as lane packet families, not as one combined gameplay output payload. The active encoding flow is `typed candidate payload -> payload wire serializer -> compact descriptor encoder -> JSON transport`.
 
 Current lane families are:
 
@@ -407,7 +407,7 @@ Debug shape catalog is devtools-only shape metadata. It is sent once per room ID
 
 ## Failure behavior
 
-Outbound encode failures are logged and the packet is dropped.
+Invalid realtime payload, wire-map, compact, or JSON encoding failures abort the active result build and reach the existing `lane protocol gameplay build failed` networking error boundary. They are not silently omitted and `{}` is never sent. This fail-closed behavior is distinct from queued WebSocket behavior: queued messages remain an in-memory queue and their WebSocket write failures close the write loop.
 
 Queued WebSocket write failures end the WebSocket write loop for that session. The connection teardown path closes the socket and leaves the disconnected room when needed.
 
@@ -498,8 +498,11 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - builds session lane candidates.
 - `services/game-server/internal/protocol/realtime/lane_candidate_event.go` - builds event_batch candidates without draining pending events.
 - `services/game-server/internal/protocol/realtime/candidate_types.go` - realtime candidate/send-preparation types.
-- `services/game-server/internal/protocol/realtime/candidate_policy.go` - packet-family, priority, delivery-class, schedule-record, and projection helpers.
+- `services/game-server/internal/protocol/realtime/candidate_policy.go` - delivery-class, priority, schedule-record, and projection helpers; packet-family identity is payload-owned.
 - `services/game-server/internal/protocol/realtime/candidate_diagnostics.go` - write diagnostics for selected candidates.
+- `services/game-server/internal/protocol/realtime/payload.go` - typed realtime lane payload contract and payload-owned packet-family identity.
+- `services/game-server/internal/protocol/realtime/payload_validation.go` - supported concrete-value validation matrix and registry.
+- `services/game-server/internal/protocol/realtime/payload_*.go` - lane-specific payload construction and serializer dispatch.
 - `services/game-server/internal/protocol/realtime/wire_packets.go` projects readable lane maps.
 - `services/game-server/internal/protocol/realtime/wire_reflect.go` owns generic readable-record reflection.
 - `shared/packets/realtime_wire.toml` owns the physical compact-wire contract.
