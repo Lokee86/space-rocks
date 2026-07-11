@@ -41,10 +41,12 @@ client/
 The match-end orchestration flow owns:
 
 * Distinguishing local elimination from authoritative room match-over.
-* Handling local player elimination presentation from self-death events.
+* Handling local player elimination presentation from immediate self-death events and authoritative eliminated lifecycle state.
 * Updating local lives on final local elimination.
 * Moving HUD and gameplay menu presentation into local game-over state.
 * Requesting game-over audio through the gameplay event flow.
+* Suppressing duplicate local-elimination side effects with `local_player_eliminated_handled`.
+* Ignoring local elimination after `room_match_over_handled` so room-wide match-over remains the higher-level outcome path.
 * Checking current room state through a configured provider.
 * Handling authoritative room match-over exactly once per match-end lifecycle.
 * Hiding and locking HUD presentation for authoritative room match-over.
@@ -54,7 +56,7 @@ The match-end orchestration flow owns:
 * Calling `MatchResultsFlow.show_results()` with the active session mode and result rows.
 * Forwarding result-window replay, lobby, pregame, and main-menu intent signals outward.
 * Clearing match-over presentation locks on reset without re-showing the HUD.
-* Reporting stale dead/game-over presentation so alive-restore flow can clear it when appropriate.
+* Clearing the local elimination guard on `reset()` and `handle_alive_restored()` so a later lifecycle can be handled.
 
 ## Does not own
 
@@ -108,22 +110,33 @@ Local elimination enters `MatchEndFlow` through:
 ```text
 GameplayEventLifecycleFlow
 -> GameplayDeathFlow
--> MatchEndFlow.handle_local_player_eliminated()
+-> MatchEndFlow.handle_local_player_eliminated(lives)
+
+GameplayLocalLifecycleFlow
+-> MatchEndFlow.handle_local_player_eliminated(lives)
 ```
 
-When the local self-death event reports zero lives, `GameplayDeathFlow` delegates to `MatchEndFlow`.
+`GameplayDeathFlow` supplies the immediate event response and passes integer `lives` when a `ship_death` event reaches zero lives. `GameplayLocalLifecycleFlow` supplies reconstructable eliminated state from authoritative lifecycle/session data and also passes authoritative integer `lives`.
 
 The local elimination path:
 
 ```text
 self-death event with lives == 0
--> apply final lives to HUD
+-> MatchEndFlow.handle_local_player_eliminated(lives)
+
+authoritative eliminated lifecycle with integer lives
+-> MatchEndFlow.handle_local_player_eliminated(lives)
+
+both paths
+-> apply authoritative lives to HUD
 -> set HUD game-over presentation
 -> set gameplay menu game-over presentation
--> request game-over sound
+-> request delayed game-over sound
 ```
 
 This path does not show match results because the room may not have reached authoritative match-over yet.
+
+`local_player_eliminated_handled` suppresses duplicate local-elimination side effects when the event and authoritative lifecycle paths describe the same outcome. Local elimination is also ignored after `room_match_over_handled`; room-wide match-over remains the separate higher-level outcome path. `reset()` and `handle_alive_restored()` clear the local elimination guard so a later lifecycle can be handled.
 
 ### Room match-over handler
 
@@ -261,8 +274,10 @@ If lives are greater than zero, `GameplayDeathFlow` handles local death/respawn 
 If lives are zero, `GameplayDeathFlow` calls:
 
 ```text
-MatchEndFlow.handle_local_player_eliminated(event)
+MatchEndFlow.handle_local_player_eliminated(lives)
 ```
+
+The protocol-neutral handler accepts only the integer lives value. It may also be reached by `GameplayLocalLifecycleFlow` when authoritative `player_lifecycle` reports `eliminated`.
 
 ### Match result input
 
@@ -326,9 +341,10 @@ Current local state:
 
 ```text
 room_match_over_handled
+local_player_eliminated_handled
 ```
 
-This flag prevents repeated room match-over handling during the same lifecycle.
+`room_match_over_handled` prevents repeated room match-over handling during the same lifecycle. `local_player_eliminated_handled` prevents duplicate local HUD, menu, and delayed-audio side effects across event and authoritative lifecycle entry paths. Both guards are reset for a later lifecycle; `handle_alive_restored()` specifically clears the local elimination guard.
 
 `MatchEndFlow` also holds references to collaborators and providers:
 
@@ -362,7 +378,7 @@ The flow does not persist data. It does not own match-result storage. It does no
 
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires gameplay event presentation and local death handling into `MatchEndFlow`.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Handles local self-death events and delegates final local elimination to `MatchEndFlow`.
-* `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Uses `MatchEndFlow.has_stale_dead_presentation()` and `handle_alive_restored()` to clear stale local death/game-over presentation after alive restoration.
+* `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd` - Reconstructs eliminated and active local presentation from authoritative world/session state and collaborates with `MatchEndFlow`.
 
 ### HUD, menu, and result collaborators
 
@@ -407,12 +423,12 @@ These tests verify:
 * Empty match-result providers still show the result window with empty rows.
 * Repeated room match-over refreshes do not repeatedly show result windows.
 
-### Local death and alive restoration tests
+### Local death and lifecycle tests
 
 * `client/tests/unit/gameplay/events/test_gameplay_death_flow.gd`
-* `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
+* `client/tests/unit/gameplay/lifecycle/`
 
-These tests verify local death delegation and stale dead/game-over presentation recovery.
+These tests verify immediate local death delegation, authoritative lifecycle reconstruction, duplicate elimination suppression, and valid active restoration.
 
 ### Composition and session tests
 
@@ -450,6 +466,6 @@ This file stays focused on `MatchEndFlow` and its immediate orchestration bounda
 
 Local elimination and authoritative room match-over must remain separate. Showing match results from local elimination would be incorrect because the local player can be out of lives before the authoritative room has ended.
 
-`MatchEndFlow.reset()` clears match-over state and the HUD visibility lock, but it must not directly show the HUD again. HUD presentation returns through normal gameplay state flow when a new active gameplay lifecycle begins.
+`MatchEndFlow.reset()` clears match-end state, the local elimination guard, and the HUD visibility lock, but it must not directly show the HUD again. `handle_alive_restored()` also clears the local elimination guard. HUD presentation returns through normal gameplay state flow when a new active gameplay lifecycle begins.
 
 The current client result rows include `won`, but the current result row renderer displays `PLAYER`, `DEATHS`, and `SCORE`. Result-window rendering details belong in `match-results-presentation.md`.

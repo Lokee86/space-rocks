@@ -14,9 +14,14 @@ Gameplay events are presentation-only server facts delivered through `event_batc
 
 The client does not decide that a bullet blast, ship death, pickup collection, radial effect, damage result, pickup expiry, score award, death, respawn, or match end happened. The client only reads event facts emitted by the server and converts the supported subset into local presentation.
 
-The active client path is:
+The active client paths are separate by responsibility:
 
 ```text
+authoritative world/session lanes
+-> PresentationAdapter
+-> GameplayLocalLifecycleFlow
+-> reconstructable active, pending_respawn, or eliminated local presentation
+
 event_batch
 -> client/scripts/protocol/realtime/event_batch_applier.gd
 -> EventPresentationAdapter
@@ -26,6 +31,8 @@ event_batch
 -> GameplayEffects / GameplayDeathFlow
 -> effect scene / audio / local death handoff
 ```
+
+The authoritative lane path is the durable source for dead HUD, respawn availability, authoritative lives, and eliminated state. The `event_batch` path is best-effort immediate-effects output; it is not a durable lifecycle state store.
 
 Server event coordinates are server-space positions. Before a visual effect is spawned, `GameplayEventController` converts those coordinates through the world-sync visual-coordinate seam:
 
@@ -67,8 +74,8 @@ The gameplay event or effects presentation flow owns:
 * Starting effect animations.
 * Starting event-local audio through the gameplay audio flow.
 * Cleaning up effect nodes after animation and or sound completion.
-* Delegating non-final local self-death to HUD dead or respawn presentation.
-* Delegating final local elimination to match-end orchestration.
+* Providing immediate non-final local self-death response to HUD dead or respawn presentation.
+* Delegating immediate final local elimination to match-end orchestration.
 * Resetting game-over sound one-shot state when the gameplay lifecycle resets.
 * Keeping presentation events separate from server simulation authority.
 
@@ -176,9 +183,9 @@ pickup_collected      -> res://scenes/pickups/pickup_collect.tscn
 
 `GameplayDeathFlow` owns the client presentation response to local self-death events.
 
-For lives above zero, it applies the remaining lives to the HUD and sets dead or respawn presentation using the event respawn delay.
+For lives above zero, it applies the event's lives to the HUD and provides an immediate dead or respawn response using the event respawn delay. This is a best-effort response, not the durable source for respawn availability or authoritative lives.
 
-For lives equal to zero, it delegates to `MatchEndFlow.handle_local_player_eliminated(event)` when match-end flow is configured.
+For lives equal to zero, it delegates to `MatchEndFlow.handle_local_player_eliminated(lives)` when match-end flow is configured. The handler receives the integer lives value, not the event dictionary.
 
 This keeps final local elimination presentation separate from authoritative room match-over presentation.
 
@@ -188,18 +195,32 @@ This keeps final local elimination presentation separate from authoritative room
 
 The event or effects path owns game-over sound delay and one-shot gating. Match-end orchestration does not play audio directly.
 
-### Alive restoration boundary
+### Durable local lifecycle boundary
 
-Alive restoration is a separate post-fanout gameplay-composition delegation through the `RealtimePresentationState` seam.
+`GameplayLocalLifecycleFlow` owns reconstructable local lifecycle presentation from authoritative lane state.
 
-It is not part of `GameplayStateApplyFlow` and not part of the active `event_batch` presentation route.
+It receives world lane state, decoded session lane state, and `self_id` from `PresentationAdapter`.
 
 Current path:
 
 ```text
-GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
--> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
--> GameplayAliveRestoreFlow.apply_lane_state(...)
+authoritative world/session lanes
+-> PresentationAdapter
+-> GameplayLocalLifecycleFlow.apply_lane_state(world_lane_state, decoded_session_lane_state, self_id)
+```
+
+`PlayerLifecycle.status_for(...)` canonically accepts a lifecycle value as a string, a `{state: ...}` record, or a `{status: ...}` record.
+
+The flow reconstructs `pending_respawn` by reading the local `player_sessions` record, applying authoritative lives, reading decoded `respawn_cooldown`, stopping transient local effects on entry, and calling `GameplayHudFlow.set_dead(cooldown)`. A cooldown of `0.0` is valid and makes respawn immediately available. Unchanged pending-respawn fanout does not restart the countdown; a changed authoritative cooldown refreshes it.
+
+For `eliminated`, the flow applies authoritative lives and delegates to `MatchEndFlow.handle_local_player_eliminated(lives)`. Active restoration requires authoritative `active` lifecycle plus the local ship in world state before clearing stale dead presentation and respawn confirmation.
+
+The immediate event path remains separate:
+
+```text
+event_batch
+-> GameplayEventLifecycleFlow / GameplayDeathFlow
+-> immediate animation, sound, or fast self-death response
 ```
 
 ## Protocols and APIs
@@ -221,14 +242,15 @@ Current active order is:
 ```text
 1. RealtimePacketPipeline verifies gameplay readiness before fanout.
 2. RealtimeRouter applies `event_batch` through `event_batch_applier`, while presentation consumers later read `RealtimePresentationState` rather than routing state directly.
-3. EventPresentationAdapter drains applied events.
-4. GameplayEventLifecycleFlow.apply_server_events(...).
-5. GameplayEventFlow.apply_server_events(...).
-6. GameplayEventController routes supported event types.
-7. GameplayEffects or GameplayDeathFlow present local consequences.
+3. PresentationAdapter applies world, overlay, and session presentation, then `GameplayLocalLifecycleFlow` reconstructs local lifecycle presentation.
+4. EventPresentationAdapter drains applied events.
+5. GameplayEventLifecycleFlow.apply_server_events(...).
+6. GameplayEventFlow.apply_server_events(...).
+7. GameplayEventController routes supported event types.
+8. GameplayEffects or GameplayDeathFlow present immediate local consequences.
 ```
 
-Alive restoration is a separate post-fanout delegation and does not consume `event_batch` as a state-application step.
+`GameplayLocalLifecycleFlow` runs from authoritative lane state before event output is drained. `event_batch` does not provide durable dead HUD, respawn availability, authoritative lives, or eliminated state.
 
 ### Event coordinate conversion
 
@@ -493,7 +515,7 @@ The underlying constants source belongs to shared data and the data-sync pipelin
 * `client/scripts/protocol/realtime/event_presentation_adapter.gd` - Drains applied event output and forwards it to `GameplayEventLifecycleFlow`.
 * `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Constructs and configures `GameplayEventLifecycleFlow`.
 * `client/scripts/shell/gameplay_shell_flow.gd` - Owns gameplay runtime shell delegation and reset.
-* `client/scripts/gameplay/gameplay_composition.gd` - Constructs gameplay shell, match-end flow, alive-restore delegation, and surrounding gameplay collaborators.
-* `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Separate post-fanout alive restoration owner.
+* `client/scripts/gameplay/gameplay_composition.gd` - Constructs gameplay shell, match-end flow, local lifecycle flow access, and surrounding gameplay collaborators.
+* `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd` - Reconstructs active, pending-respawn, and eliminated local presentation from authoritative world/session state.
 
 ### Coordinate conversion collaborators

@@ -47,7 +47,7 @@ GameplaySessionController
 * Connect gameplay shell lifecycle signals to the session-facing composition layer.
 * Create and configure `GameplayRuntimeContext`.
 * Create and configure `GameplayFlowComposer`.
-* Wire world sync, HUD runtime flow, input context, devtools context, spectate context, event lifecycle flow, targeting context, alive-restore flow, server hitbox overlay flow, and gameplay process flow.
+* Wire world sync, HUD runtime flow, input context, devtools context, spectate context, event lifecycle flow, targeting context, local lifecycle flow, server hitbox overlay flow, and gameplay process flow.
 * Provide a stable pipeline identity for the composed gameplay runtime.
 * Provide the concrete runtime presentation targets and focused entry points used by `PresentationBridge`.
 * Preserve current per-frame gameplay presentation ordering.
@@ -103,7 +103,7 @@ Current composed concerns include:
 
 ```text
 event lifecycle
-alive/respawn restoration
+local lifecycle reconciliation
 targeting context
 pointer position provider
 input context
@@ -113,6 +113,10 @@ runtime HUD tick
 spectate context
 gameplay process flow
 ```
+
+`GameplayFlowComposer` preloads, constructs, configures, owns, exposes, and resets `GameplayLocalLifecycleFlow`.
+
+It configures the local lifecycle flow with `GameplayRuntimeContext.world_sync`, `GameplayRuntimeContext.respawn_flow`, `GameplayHudFlow`, `MatchEndFlow`, and the local `Player`.
 
 ## Protocols and APIs
 
@@ -137,9 +141,10 @@ Runtime composition participates after `RealtimePacketPipeline` emits `gameplay_
 Current lane-native delegation surfaces are:
 
 ```text
-GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
--> GameplayShellFlow.restore_alive_presentation_from_lane_state(world_lane_state, session_lane_state, self_id)
--> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
+GameplayComposition.get_local_lifecycle_flow()
+-> GameplayShellFlow.get_local_lifecycle_flow()
+-> GameplayFlowComposer.get_local_lifecycle_flow()
+-> GameplayLocalLifecycleFlow
 ```
 
 ```text
@@ -150,7 +155,7 @@ GameplayComposition.apply_devtools_gameplay_state(state)
 
 `PresentationBridge` orchestrates calls to the composition-owned presentation targets.
 
-GameplayComposition and its focused flows own those targets.
+GameplayComposition and its focused flows own those targets. `GameplayComposition.get_local_lifecycle_flow()` delegates through `GameplayShellFlow` to `GameplayFlowComposer` so `PresentationBridge` can provide the local lifecycle flow to `PresentationAdapter` during each ready flush.
 
 Composition-owned presentation targets currently include:
 
@@ -162,9 +167,10 @@ match-results flow
 spectate flow
 devtools session flow
 gameplay presentation flow
+local lifecycle flow
 ```
 
-The alive-restore path exists for lane-state-driven respawn/alive presentation only.
+`GameplayLocalLifecycleFlow` owns local active, pending-respawn, and eliminated presentation reconciliation from authoritative world and session lane state. It is a presentation consumer, not an authority for gameplay outcomes.
 
 The devtools gameplay-state path exists for devtools and server-hitbox readmodels only. It is not the primary gameplay world/session/overlay application path.
 
@@ -237,7 +243,7 @@ It may hold references to:
 * input context
 * targeting context
 * event lifecycle flow
-* alive-restore flow
+* local lifecycle flow
 * server hitbox overlay flow
 * runtime HUD tick flow
 * gameplay process flow
@@ -274,7 +280,7 @@ It does not own durable profile, account, or player progression data.
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd`
 * `client/scripts/gameplay/events/gameplay_event_flow.gd`
 * `client/scripts/gameplay/events/gameplay_event_controller.gd`
-* `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd`
+* `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd`
 * `client/scripts/gameplay/presentation/gameplay_presentation_flow.gd`
 * `client/scripts/protocol/realtime/presentation_bridge.gd`
 * `client/scripts/gameplay/spectate/spectate_session_flow.gd`
@@ -298,7 +304,7 @@ Runtime-composition-relevant tests include:
 * `client/tests/unit/test_session_network_controller.gd`
 * `client/tests/unit/test_player_pause_state_packet_reader.gd`
 * `client/tests/unit/test_player_pause_state_tracker.gd`
-* `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
+* `client/tests/unit/gameplay/lifecycle/`
 * `client/tests/unit/gameplay/test_gameplay_event_lifecycle_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_controller.gd`
 * `client/tests/unit/gameplay/debug/test_server_hitbox_overlay_flow.gd`

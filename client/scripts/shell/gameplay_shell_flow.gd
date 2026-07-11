@@ -86,6 +86,11 @@ func get_event_lifecycle_flow():
 		return null
 	return flow_composer.get_event_lifecycle_flow()
 
+func get_local_lifecycle_flow():
+	if flow_composer == null:
+		return null
+	return flow_composer.get_local_lifecycle_flow()
+
 func apply_player_pause_state_packet(packet: Dictionary) -> void:
 	if gameplay_pause_state_flow == null:
 		return
@@ -114,12 +119,6 @@ func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	if flow_composer == null:
 		return
 	flow_composer.apply_devtools_gameplay_state(state)
-
-
-func restore_alive_presentation_from_lane_state(world_lane_state, session_lane_state, self_id: String) -> void:
-	if flow_composer == null:
-		return
-	flow_composer.restore_alive_presentation_from_lane_state(world_lane_state, session_lane_state, self_id)
 
 
 func configure_devtools_placement_request_route(route: Callable) -> void:

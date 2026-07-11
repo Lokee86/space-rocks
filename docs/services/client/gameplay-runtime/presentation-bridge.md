@@ -18,10 +18,10 @@ Packet ingress is the only input path for this bridge; it does not consume lane-
 - Retaining pending presentation while required gameplay lane baselines are not ready.
 - Reading the latest `RealtimePresentationState` at flush time.
 - Resolving world, HUD, and event presentation targets through `GameplayComposition`.
+- Obtaining the local lifecycle flow through `GameplayComposition` for each ready presentation flush.
 - Calling `PresentationAdapter` for lane-native presentation fanout.
 - Building the devtools gameplay read model through `DevtoolsLaneStateAdapter`.
 - Applying devtools gameplay state through `GameplayComposition`.
-- Triggering alive-presentation restoration through `GameplayComposition`.
 - Gameplay event-batch presentation diagnostics owned by this handoff.
 
 ## Does Not Own
@@ -141,9 +141,9 @@ pending and gameplay not ready
 pending and gameplay ready
 -> read latest RealtimePresentationState
 -> resolve presentation targets
--> PresentationAdapter.fanout_lane_states(...)
+-> obtain GameplayLocalLifecycleFlow through GameplayComposition
+-> PresentationAdapter.fanout_lane_states(..., local_lifecycle_flow)
 -> build and apply devtools gameplay state
--> restore alive presentation from realtime state
 -> clear pending
 ```
 
@@ -208,10 +208,12 @@ During a successful flush, the bridge resolves:
 * World presentation through `GameplayComposition.gameplay_shell_flow.runtime_context.world_sync`.
 * Overlay and session HUD presentation through `GameplayComposition.gameplay_hud_flow`.
 * Applied event presentation through `GameplayComposition.get_event_lifecycle_flow()`.
+* Local lifecycle presentation through `GameplayComposition.get_local_lifecycle_flow()`, delegated through the shell and flow composer.
 * Devtools gameplay presentation through `GameplayComposition.apply_devtools_gameplay_state(...)`.
-* Alive-state restoration through `GameplayComposition.restore_alive_presentation_from_realtime_state(...)`.
 
 The bridge owns the order of these calls, but the target systems own their implementation.
+
+`GameplayLocalLifecycleFlow` is passed as the fifth argument to `PresentationAdapter.fanout_lane_states(...)` during every ready flush. The bridge does not reconstruct local lifecycle state itself.
 
 ## Ordering Invariant
 

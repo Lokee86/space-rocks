@@ -110,7 +110,7 @@ Player death and despawn participate in the player lifecycle and combat domains 
 * match-over input facts
 * death presentation events
 
-The client observes death through world/session lane readback and `event_batch`. It does not decide that a player died, that a life was lost, that a respawn cooldown started, or that the player was eliminated.
+The client observes death through authoritative world/session lane readback and supplementary `event_batch` output. It does not decide that a player died, that a life was lost, that a respawn cooldown started, or that the player was eliminated.
 
 ## Death entry points
 
@@ -346,6 +346,21 @@ eliminated       = player has no active ship and no remaining lives
 
 A pending-despawn ship is not treated as active for match decision or player world-state purposes, even though it may still exist in `game.entities.Players` until removal.
 
+The client reconstructs local lifecycle presentation from the authoritative `player_lifecycle` projection together with `player_sessions` and world ship state:
+
+```text
+player_lifecycle = pending_respawn
+-> GameplayLocalLifecycleFlow reconstructs pending respawn from player_sessions lives/respawn_cooldown
+
+player_lifecycle = eliminated
+-> GameplayLocalLifecycleFlow reconstructs eliminated presentation from player_sessions lives
+
+player_lifecycle = active
+-> GameplayLocalLifecycleFlow requires the local ship in world state before restoring active presentation
+```
+
+This lane-backed lifecycle state is reconstructable and remains the client source for durable local presentation. `event_batch` is supplementary immediate presentation, such as `ship_death` animation or audio; it is not acknowledged durable lifecycle delivery.
+
 ## Event output
 
 Fatal player damage records an `events.EventShipDeath` domain event.
@@ -374,7 +389,7 @@ Y            = event.Y
 
 `recordDomainEvent` broadcasts the packet event into every player session's pending presentation event queue.
 
-The event is delivered through the next `event_batch` write for each player. Successful lane packet delivery clears that player's pending presentation events after the packet is written. The domain `EventState` shape is the source-facing projection; the runtime wire record is shaped later by `protocol/realtime` into sparse quantized output. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
+The event is delivered through the next `event_batch` write for each player. Successful lane packet delivery clears that player's pending presentation events after the packet is written. This delivery is best-effort supplementary presentation, not an acknowledgement that the client durably received lifecycle state; clients reconstruct lifecycle from `player_lifecycle`, `player_sessions`, and world state. The domain `EventState` shape is the source-facing projection; the runtime wire record is shaped later by `protocol/realtime` into sparse quantized output. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 A fatal damage path may also emit a `damage_applied` event before the `ship_death` event when damage actually changed health or shield.
 
@@ -472,6 +487,8 @@ Player death and despawn must preserve these rules:
 * Respawn cooldown is set only when lives remain after death.
 * The camera view is preserved at the death position.
 * `ship_death` events are server-authored presentation facts.
+* `player_lifecycle` plus `player_sessions` and world ship state are the reconstructable client source for pending_respawn, eliminated, and active restoration.
+* `event_batch` is supplementary immediate presentation and is not durable lifecycle delivery.
 * Clients must not infer lifecycle only from presence or absence in `world lane ship records`.
 * Match-over status is evaluated through `game/rules`, not by death/despawn code directly.
 

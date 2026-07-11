@@ -39,7 +39,7 @@ client/scenes/ui/hud.tscn
 
 It contains the visible gameplay HUD controls for score, lives, local death or respawn text, game-over presentation, the embedded live gameplay menu path, and the loadout display container.
 
-Runtime HUD behavior is coordinated by `GameplayHudFlow`. `ClientConnectionService` composes the networking collaborators and exposes the stable `RealtimePacketPipeline` seam. `ClientInboundCoordinator` owns the dispatcher-consumer bindings for realtime packet families; the pipeline owns realtime packet application and readiness, with downstream presentation flowing through `PresentationBridge`. `ClientConnectionService` delegates gameplay presentation orchestration to `GameplaySessionController`, which owns gameplay-session and input acceptance state, player-pause gating, `PresentationBridge` activation/reset/frame flush scheduling, gameplay composition lifecycle, frame sequencing, debug/control routing, and session exits. `PresentationBridge` is the orchestration seam for applied notification handling, pending and coalescing, latest-state retrieval, lane presentation orchestration, devtools-state adaptation, and alive-presentation restoration orchestration. Local death and match-over presentation reach the HUD through the gameplay event, respawn, menu, and match-end seams. `event_batch` reaches HUD-side presentation only after compact wire aliases are expanded into readable long-key event dictionaries, and HUD code should not depend on compact aliases.
+Runtime HUD behavior is coordinated by `GameplayHudFlow`. `ClientConnectionService` composes the networking collaborators and exposes the stable `RealtimePacketPipeline` seam. `ClientInboundCoordinator` owns the dispatcher-consumer bindings for realtime packet families; the pipeline owns realtime packet application and readiness, with downstream presentation flowing through `PresentationBridge`. `ClientConnectionService` delegates gameplay presentation orchestration to `GameplaySessionController`, which owns gameplay-session and input acceptance state, player-pause gating, `PresentationBridge` activation/reset/frame flush scheduling, gameplay composition lifecycle, frame sequencing, debug/control routing, and session exits. `PresentationBridge` is the orchestration seam for applied notification handling, pending and coalescing, latest-state retrieval, lane presentation orchestration, local lifecycle presentation, and devtools-state adaptation. Durable local death, respawn, and elimination presentation is reconstructed by `GameplayLocalLifecycleFlow` from authoritative world and session lanes; `event_batch` remains a separate best-effort immediate-effects path. `event_batch` reaches HUD-side event presentation only after compact wire aliases are expanded into readable long-key event dictionaries, and HUD code should not depend on compact aliases.
 
 ## Code root
 
@@ -56,7 +56,7 @@ The client HUD and gameplay UI implementation owns:
 * Showing normal gameplay HUD presentation after gameplay state starts.
 * Hiding the room id label during active gameplay HUD display.
 * Applying score from overlay or session lane presentation inputs.
-* Applying lives from overlay lane state and local death events.
+* Applying authoritative lives from overlay or session lane state.
 * Presenting local death state.
 * Presenting the respawn countdown.
 * Exposing whether the client can request respawn through HUD presentation state.
@@ -163,15 +163,21 @@ session_lane_state.player_lifecycle
 
 ### Local death and respawn presenter
 
-`GameplayDeathFlow` reacts to local self-death events from `event_batch` presentation. That presentation path consumes readable event dictionaries after compact expansion, not compact wire aliases.
+`GameplayDeathFlow` reacts to local self-death events from `event_batch` presentation. That path consumes readable event dictionaries after compact expansion, not compact wire aliases, and remains useful for immediate death animation, sound, and fast self-death response.
 
-If the local player still has lives, it updates HUD lives and moves the HUD into local dead or respawn presentation.
+The event path is best-effort and is not the durable source for dead HUD, respawn availability, authoritative lives, or eliminated state. Reconstructable local lifecycle presentation comes from `GameplayLocalLifecycleFlow` after `PresentationAdapter` applies authoritative world and decoded session lane state.
 
-If local lives reach zero, it delegates final local elimination to `MatchEndFlow` instead of directly showing match results.
+If the event path reports zero lives, `GameplayDeathFlow` delegates final local elimination to `MatchEndFlow.handle_local_player_eliminated(lives)`, passing the integer lives value rather than the event dictionary. The lifecycle path independently reconstructs eliminated presentation from authoritative session state.
 
 `GameplayRespawnFlow` uses `GameplayHudFlow.can_request_respawn()` before sending a respawn request. The respawn path currently emits three structured network diagnostics through [Client Logging](./client-logging.md): `respawn_request_send_started` and `respawn_awaiting_confirmation_marked` at info level, and `respawn_request_blocked` at info level when a local guard blocks the request. These diagnostics are one-shot or guarded by local flow state and do not change respawn permission, gameplay readiness, or server authority.
 
-`GameplayAliveRestoreFlow` owns stale death or respawn restoration. `GameplayAliveRestoreFlow.apply_lane_state(...)` clears stale death presentation only after `RealtimePresentationState` proves the local player is active again with a live ship.
+`GameplayLocalLifecycleFlow` is the local lifecycle presentation owner. It receives world lane state, decoded session lane state, and `self_id` from `PresentationAdapter` and owns reconstructable local active, pending-respawn, and eliminated presentation.
+
+`PlayerLifecycle.status_for(...)` is the canonical lifecycle decoder. It accepts a lifecycle value as a string, a `{state: ...}` record, or a `{status: ...}` record.
+
+For `pending_respawn`, the flow reads the local `player_sessions` record, applies authoritative lives, reads decoded `respawn_cooldown`, stops transient local effects on entry, and calls `GameplayHudFlow.set_dead(cooldown)`. A cooldown of `0.0` is valid and makes respawn immediately available. Unchanged pending-respawn fanout does not restart the countdown; a changed authoritative cooldown refreshes it.
+
+For `eliminated`, it applies authoritative lives and delegates to `MatchEndFlow.handle_local_player_eliminated(lives)`. Active restoration requires authoritative `active` lifecycle plus the local ship in world state before stale dead presentation and respawn confirmation are cleared.
 
 ### Match-over participant
 
@@ -263,7 +269,7 @@ session_lane_state.player_sessions[self_id] -> session-backed local player readb
 
 ### Local death event input
 
-Local death presentation is driven by `event_batch` output through `GameplayEventLifecycleFlow` and `GameplayDeathFlow`.
+Immediate local death presentation is driven by `event_batch` output through `GameplayEventLifecycleFlow` and `GameplayDeathFlow`; durable lifecycle presentation is driven by authoritative world and session lanes through `GameplayLocalLifecycleFlow`.
 
 The local self-death path uses:
 
@@ -274,22 +280,27 @@ respawn_delay
 
 When `lives > 0`, HUD presentation moves into dead or respawn state.
 
-When `lives == 0`, final local elimination is delegated to `MatchEndFlow`.
+When `lives == 0`, final local elimination is delegated to `MatchEndFlow.handle_local_player_eliminated(lives)` with the integer lives value.
 
-### Alive restoration input
+### Local lifecycle and immediate event inputs
 
-Alive restoration is a separate post-fanout delegation through the `RealtimePresentationState` seam.
+Durable local lifecycle reconstruction and immediate event effects are separate paths:
 
 Current path:
 
 ```text
-GameplayComposition.restore_alive_presentation_from_realtime_state(presentation_state)
--> GameplayShellFlow.restore_alive_presentation_from_lane_state(...)
--> GameplayFlowComposer.restore_alive_presentation_from_lane_state(...)
--> GameplayAliveRestoreFlow.apply_lane_state(...)
+authoritative session/world lanes
+-> PresentationAdapter
+-> GameplayLocalLifecycleFlow.apply_lane_state(world_lane_state, decoded_session_lane_state, self_id)
+-> reconstruct active, pending_respawn, or eliminated HUD presentation
+
+event_batch
+-> GameplayEventLifecycleFlow
+-> GameplayDeathFlow
+-> immediate dead presentation or integer-lives elimination handoff
 ```
 
-`GameplaySessionController` verifies pipeline readiness before this fanout and orchestrates the handoff without owning respawn recovery policy.
+`GameplaySessionController` verifies pipeline readiness before this fanout and orchestrates the handoff without owning lifecycle or respawn recovery policy. `GameplayHudFlow.apply_session_lane_state(...)` still applies session-owned score and lives data, but it no longer owns `set_dead(...)` from `respawn_cooldown`; `GameplayLocalLifecycleFlow` owns that durable pending-respawn reconstruction.
 
 ### Room match-over input
 
@@ -387,19 +398,19 @@ The loadout display reads generated packet field names and generated client cons
 * `client/scripts/session/gameplay_session_controller.gd` - Owns gameplay-session and input acceptance state, player-pause gating, `PresentationBridge` activation/reset/frame flush scheduling, gameplay composition lifecycle, frame sequencing, debug/control routing, and session exits.
 * `client/scripts/gameplay/gameplay_composition.gd` - Constructs HUD, menu, match-end, match-results, shell, spectate, devtools, and presentation flows.
 * `client/scripts/shell/gameplay_shell_flow.gd` - Delegates gameplay state, processing, input, reset, and menu lifecycle through focused gameplay flows.
-* `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Wires runtime ticking, input, devtools, spectate, events, alive restoration, and match-end dependencies.
+* `client/scripts/gameplay/runtime/gameplay_flow_composer.gd` - Wires runtime ticking, input, devtools, spectate, events, local lifecycle, and match-end dependencies.
 * `client/scripts/gameplay/runtime/gameplay_process_flow.gd` - Processes runtime interpolation, server hitbox overlay, HUD ticking, devtools, gameplay input, and spectate processing.
 
 ### HUD flow and presentation state
 
 * `client/scripts/shell/gameplay_hud_flow.gd` - Main HUD presentation flow for score, lives, local death, respawn countdown, game-over presentation, loadout display, reset, and match-over visibility lock.
 * `client/scripts/shell/gameplay_runtime_tick_flow.gd` - Ticks HUD countdown presentation each frame.
-* `client/scripts/protocol/realtime/presentation_bridge.gd` - Owns semantic applied-packet subscription, pending and coalesced realtime presentation, readiness-gated frame flushing, lane fanout orchestration, devtools-state adaptation, and alive-presentation restoration orchestration.
+* `client/scripts/protocol/realtime/presentation_bridge.gd` - Owns semantic applied-packet subscription, pending and coalesced realtime presentation, readiness-gated frame flushing, lane fanout orchestration, local lifecycle flow handoff, and devtools-state adaptation.
 * `client/scripts/protocol/realtime/overlay_presentation_adapter.gd` - Feeds overlay lane state into `GameplayHudFlow.apply_overlay_lane_state(...)`.
 * `client/scripts/protocol/realtime/session_presentation_adapter.gd` - Feeds session lane state into `GameplayHudFlow.apply_session_lane_state(...)`.
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires `event_batch` output into event and death presentation flows.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Handles local self-death presentation and delegates final elimination to match-end flow.
-* `client/scripts/gameplay/respawn/gameplay_alive_restore_flow.gd` - Restores alive HUD presentation after lane state proves the local player is active with a live ship.
+* `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd` - Reconstructs active, pending-respawn, and eliminated local HUD presentation from authoritative world/session state.
 * `client/scripts/gameplay/respawn/gameplay_respawn_flow.gd` - Gates respawn requests through `GameplayHudFlow.can_request_respawn()`.
 
 ### Match-end and gameplay menu collaborators
@@ -457,11 +468,11 @@ These tests verify gameplay UI root and descendant hover detection, non-pressed 
 
 * `client/tests/unit/gameplay/events/test_gameplay_death_flow.gd`
 * `client/tests/unit/gameplay/match_end/test_match_end_flow.gd`
-* `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
+* `client/tests/unit/gameplay/lifecycle/`
 * `client/tests/unit/gameplay/test_gameplay_flow_composer.gd`
 * `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`
 
-These tests verify lane-native fanout into HUD, local death handling, match-end HUD hiding, match results presentation handoff, alive HUD restoration, and gameplay flow composition.
+These tests verify lane-native fanout into HUD, local death handling, local lifecycle reconstruction, match-end HUD hiding, match results presentation handoff, and gameplay flow composition.
 
 ### Session and menu collaboration tests
 

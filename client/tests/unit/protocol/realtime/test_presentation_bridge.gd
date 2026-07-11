@@ -28,33 +28,34 @@ class FakeGameplayComposition:
 	}
 	var gameplay_hud_flow := "hud-flow"
 	var devtools_states: Array = []
-	var restore_calls: Array = []
 	var call_order: Array = []
 	var event_lifecycle_flow := "event-flow"
+	var local_lifecycle_flow := "local-flow"
 
 	func get_event_lifecycle_flow():
 		call_order.append("get_event_lifecycle_flow")
 		return event_lifecycle_flow
 
+	func get_local_lifecycle_flow():
+		call_order.append("get_local_lifecycle_flow")
+		return local_lifecycle_flow
+
 	func apply_devtools_gameplay_state(state: Dictionary) -> void:
 		call_order.append("apply_devtools_gameplay_state")
 		devtools_states.append(state)
-
-	func restore_alive_presentation_from_realtime_state(presentation_state) -> void:
-		call_order.append("restore_alive_presentation_from_realtime_state")
-		restore_calls.append(presentation_state)
 
 class FakePresentationAdapter:
 	extends RefCounted
 
 	var calls: Array = []
 
-	func fanout_lane_states(presentation_state, world_sync_ref = null, gameplay_hud_flow_ref = null, event_flow_ref = null) -> void:
+	func fanout_lane_states(presentation_state, world_sync_ref = null, gameplay_hud_flow_ref = null, event_flow_ref = null, local_lifecycle_flow_ref = null) -> void:
 		calls.append({
 			"presentation_state": presentation_state,
 			"world_sync": world_sync_ref,
 			"gameplay_hud_flow": gameplay_hud_flow_ref,
 			"event_flow": event_flow_ref,
+			"local_lifecycle_flow": local_lifecycle_flow_ref,
 		})
 
 func _make_bridge(active := true, ready := true) -> Dictionary:
@@ -104,7 +105,6 @@ func test_handle_gameplay_packet_coalesces_multiple_packets_into_single_flush() 
 	assert_false(bridge.has_pending_presentation())
 	assert_eq(presentation_adapter.calls.size(), 1)
 	assert_eq(composition.devtools_states.size(), 1)
-	assert_eq(composition.restore_calls.size(), 1)
 	assert_true(pipeline.gameplay_ready)
 
 func test_flush_pending_requires_readiness_and_keeps_pending_until_ready() -> void:
@@ -121,7 +121,7 @@ func test_flush_pending_requires_readiness_and_keeps_pending_until_ready() -> vo
 	assert_true(bridge.has_pending_presentation())
 	assert_eq(presentation_adapter.calls.size(), 0)
 	assert_eq(composition.devtools_states.size(), 0)
-	assert_eq(composition.restore_calls.size(), 0)
+
 
 	pipeline.gameplay_ready = true
 
@@ -129,9 +129,9 @@ func test_flush_pending_requires_readiness_and_keeps_pending_until_ready() -> vo
 	assert_false(bridge.has_pending_presentation())
 	assert_eq(presentation_adapter.calls.size(), 1)
 	assert_eq(composition.devtools_states.size(), 1)
-	assert_eq(composition.restore_calls.size(), 1)
 
-func test_flush_pending_fanout_order_runs_before_devtools_and_restore() -> void:
+
+func test_flush_pending_fanout_order_runs_before_devtools() -> void:
 	var fixture := _make_bridge()
 	var bridge = fixture.bridge
 	var composition = fixture.composition
@@ -143,13 +143,27 @@ func test_flush_pending_fanout_order_runs_before_devtools_and_restore() -> void:
 	assert_eq(presentation_adapter.calls.size(), 1)
 	assert_eq(composition.call_order, [
 		"get_event_lifecycle_flow",
+		"get_local_lifecycle_flow",
 		"apply_devtools_gameplay_state",
-		"restore_alive_presentation_from_realtime_state",
 	])
 	assert_eq(presentation_adapter.calls[0]["world_sync"], "world-sync")
 	assert_eq(presentation_adapter.calls[0]["gameplay_hud_flow"], "hud-flow")
 	assert_eq(presentation_adapter.calls[0]["event_flow"], "event-flow")
-	assert_eq(composition.restore_calls[0]["presentation"], true)
+	assert_eq(presentation_adapter.calls[0]["local_lifecycle_flow"], "local-flow")
+
+func test_non_event_packet_flush_passes_local_lifecycle_without_event_flow() -> void:
+	var fixture := _make_bridge()
+	var bridge = fixture.bridge
+	var composition = fixture.composition
+	var presentation_adapter = fixture.presentation_adapter
+
+	bridge.handle_gameplay_packet({"type": "world_state", "world": {"ships": {}}})
+
+	assert_true(bridge.flush_pending())
+	assert_eq(composition.call_order, ["get_local_lifecycle_flow", "apply_devtools_gameplay_state"])
+	assert_eq(presentation_adapter.calls.size(), 1)
+	assert_eq(presentation_adapter.calls[0]["local_lifecycle_flow"], "local-flow")
+	assert_null(presentation_adapter.calls[0]["event_flow"])
 
 func test_deactivate_clears_owned_pending_state() -> void:
 	var bridge := PresentationBridge.new()

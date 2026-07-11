@@ -51,6 +51,17 @@ class FakeEventFlow:
 			received_event_types.append(str(event.get("type", "")))
 
 
+class FakeLocalLifecycleFlow:
+	var world_lane_state = null
+	var session_lane_state = null
+	var self_id := ""
+
+	func apply_lane_state(received_world_lane_state, received_session_lane_state, received_self_id: String) -> void:
+		world_lane_state = received_world_lane_state
+		session_lane_state = received_session_lane_state
+		self_id = received_self_id
+
+
 func test_event_batch_applies_events_once() -> void:
 	var applier := EventBatchApplier.new()
 	var sink := FakeEventSink.new()
@@ -169,6 +180,36 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 	assert_eq(event_flow.apply_server_events_call_count, 1)
 	assert_eq(event_flow.received_event_count, 1)
 	assert_eq(event_flow.received_event_types[0], "bullet_blast")
+
+
+func test_presentation_adapter_forwards_decoded_session_state_to_local_lifecycle_flow() -> void:
+	var presentation_state := RealtimePresentationState.new()
+	presentation_state.world_lane_state = WorldLaneState.new()
+	presentation_state.overlay_lane_state = OverlayLaneState.new()
+	presentation_state.session_lane_state = SessionLaneState.new()
+	presentation_state.event_batch_applier = EventBatchApplier.new()
+	presentation_state.overlay_lane_state.self_id = "player-1"
+	presentation_state.session_lane_state.player_sessions = {
+		"player-1": {"respawn_cooldown": 3500},
+	}
+
+	var presentation_adapter := PresentationAdapter.new()
+	var world_sync := FakePresentationTarget.new()
+	var hud_flow := FakePresentationTarget.new()
+	var event_flow := FakeEventFlow.new()
+	var local_lifecycle_flow := FakeLocalLifecycleFlow.new()
+
+	presentation_adapter.fanout_lane_states(
+		presentation_state,
+		world_sync,
+		hud_flow,
+		event_flow,
+		local_lifecycle_flow
+	)
+
+	assert_eq(local_lifecycle_flow.world_lane_state, presentation_state.world_lane_state)
+	assert_eq(local_lifecycle_flow.session_lane_state.player_sessions["player-1"]["respawn_cooldown"], 3.5)
+	assert_eq(local_lifecycle_flow.self_id, "player-1")
 
 
 func test_pipeline_event_batch_and_resync_packets_update_router_state() -> void:

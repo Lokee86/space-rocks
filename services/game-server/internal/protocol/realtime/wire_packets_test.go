@@ -521,14 +521,18 @@ func TestWireAsteroidLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
 		Lane: LaneAsteroidsLifecycle,
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: AsteroidWireDeltaPacket{
-			Type:     PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 44, ServerSentMsec: 987654, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
+			Type:     PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 44, BaselineID: "world-baseline-44", SnapshotID: "world-snapshot-44", ServerSentMsec: 987654, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
 			AsteroidCreates: []WorldAsteroidWireRecord{{ID: "asteroid-1", X: 10, Y: 20, Size: 3, Health: 4, Scale: 5, Variant: 6}},
 			AsteroidDeletes: []string{"asteroid-9"},
 		},
 	}))
 
 	assertStringValue(t, wire, "type", PacketFamilyAsteroidsLifecycle)
+	assertStringValue(t, wire, "lane", string(LaneAsteroidsLifecycle))
 	assertIntValue(t, wire, "sequence", 44)
+	assertStringValue(t, wire, "baseline_id", "world-baseline-44")
+	assertStringValue(t, wire, "snapshot_id", "world-snapshot-44")
+	assertStringValue(t, wire, "snapshot_kind", "delta")
 	assertIntValue(t, wire, "server_sent_msec", 987654)
 	assertContainsKey(t, wire, "asteroid_creates")
 	assertContainsKey(t, wire, "asteroid_deletes")
@@ -587,13 +591,18 @@ func TestWireBulletLifecyclePacketEncodesCreatesAndDeletes(t *testing.T) {
 		Kind: RealtimeLaneCandidateKindDelta,
 		Delta: BulletWireDeltaPacket{
 			Type:     PacketFamilyBulletsLifecycle,
-			Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 45, ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
+			Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 45, BaselineID: "world-baseline-45", SnapshotID: "world-snapshot-45", ServerSentMsec: 123, SnapshotKind: SnapshotKind("delta"), ChunkIndex: 0, ChunkCount: 1, IsFinalChunk: true},
 			BulletCreates: []WorldBulletWireRecord{{ID: "bullet-1", OwnerID: "ship-1", X: 1, Y: 2, Rotation: 3, WeaponID: "pulse", ProjectileType: "laser"}},
 			BulletDeletes: []string{"bullet-9"},
 		},
 	}))
 
 	assertStringValue(t, wire, "type", PacketFamilyBulletsLifecycle)
+	assertStringValue(t, wire, "lane", string(LaneBulletsLifecycle))
+	assertIntValue(t, wire, "sequence", 45)
+	assertStringValue(t, wire, "baseline_id", "world-baseline-45")
+	assertStringValue(t, wire, "snapshot_id", "world-snapshot-45")
+	assertStringValue(t, wire, "snapshot_kind", "delta")
 	assertContainsKey(t, wire, "bullet_creates")
 	assertContainsKey(t, wire, "bullet_deletes")
 	assertNotContainsKey(t, wire, "bullet_updates")

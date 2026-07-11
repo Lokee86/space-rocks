@@ -91,16 +91,17 @@ func flush_pending() -> bool:
 		_logged_first_fanout = true
 	var event_lifecycle_flow = _pending_event_lifecycle_flow
 	_pending_event_lifecycle_flow = null
+	var local_lifecycle_flow = null
+	if gameplay_composition.has_method("get_local_lifecycle_flow"):
+		local_lifecycle_flow = gameplay_composition.get_local_lifecycle_flow()
 	var world_sync = null
 	if gameplay_composition.gameplay_shell_flow != null and gameplay_composition.gameplay_shell_flow.runtime_context != null:
 		world_sync = gameplay_composition.gameplay_shell_flow.runtime_context.world_sync
 	var gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
 	var presentation_state = realtime_packet_pipeline.get_presentation_state()
-	presentation_adapter.fanout_lane_states(presentation_state, world_sync, gameplay_hud_flow, event_lifecycle_flow)
+	presentation_adapter.fanout_lane_states(presentation_state, world_sync, gameplay_hud_flow, event_lifecycle_flow, local_lifecycle_flow)
 	var devtools_state: Dictionary = DevtoolsLaneStateAdapter.new().build_state(presentation_state)
 	gameplay_composition.apply_devtools_gameplay_state(devtools_state)
-	if gameplay_composition.has_method("restore_alive_presentation_from_realtime_state"):
-		gameplay_composition.restore_alive_presentation_from_realtime_state(presentation_state)
 	_presentation_pending = false
 	_lane_presentation_fanned_out = true
 	return true

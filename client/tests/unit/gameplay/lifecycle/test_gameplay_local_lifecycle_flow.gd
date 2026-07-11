@@ -1,6 +1,6 @@
 extends GutTest
 
-const GameplayAliveRestoreFlow = preload("res://scripts/gameplay/respawn/gameplay_alive_restore_flow.gd")
+const GameplayLocalLifecycleFlow = preload("res://scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd")
 const GameplayRespawnFlow = preload("res://scripts/gameplay/respawn/gameplay_respawn_flow.gd")
 
 
@@ -51,14 +51,27 @@ class FakeHudFlow:
 	var is_game_over := false
 	var set_alive_calls := 0
 	var clear_dead_presentation_calls := 0
+	var set_dead_calls := 0
+	var last_respawn_delay := -1.0
+	var last_lives := -1
 
 	func set_alive() -> void:
 		set_alive_calls += 1
+
+	func apply_lives(lives) -> void:
+		last_lives = lives
 
 	func clear_dead_presentation() -> void:
 		clear_dead_presentation_calls += 1
 		is_dead = false
 		can_respawn = false
+
+	func set_dead(respawn_delay: float) -> void:
+		set_dead_calls += 1
+		last_respawn_delay = respawn_delay
+		is_dead = true
+		can_respawn = respawn_delay <= 0.0
+
 
 	func has_dead_presentation() -> bool:
 		return is_dead or can_respawn
@@ -66,6 +79,8 @@ class FakeHudFlow:
 
 class FakeMatchEndFlow:
 	var handle_alive_restored_calls := 0
+	var local_player_eliminated_calls := 0
+	var last_eliminated_lives := -1
 
 	func has_stale_dead_presentation() -> bool:
 		return false
@@ -73,9 +88,16 @@ class FakeMatchEndFlow:
 	func handle_alive_restored() -> void:
 		handle_alive_restored_calls += 1
 
+	func handle_local_player_eliminated(lives: int) -> void:
+		local_player_eliminated_calls += 1
+		last_eliminated_lives = lives
+
 
 class FakePlayer:
-	pass
+	var stop_transient_effects_calls := 0
+
+	func stop_transient_effects() -> void:
+		stop_transient_effects_calls += 1
 
 
 class FakeWorldLaneState:
@@ -84,6 +106,7 @@ class FakeWorldLaneState:
 
 class FakeSessionLaneState:
 	var player_lifecycle := {}
+	var player_sessions := {}
 
 
 func _make_flow(
@@ -92,8 +115,8 @@ func _make_flow(
 	hud_flow,
 	match_end_flow,
 	player
-) -> GameplayAliveRestoreFlow:
-	var flow := GameplayAliveRestoreFlow.new()
+) -> GameplayLocalLifecycleFlow:
+	var flow := GameplayLocalLifecycleFlow.new()
 	flow.configure(world_sync, respawn_flow, hud_flow, match_end_flow, player)
 	return flow
 
@@ -321,7 +344,6 @@ func test_apply_lane_state_with_real_respawn_flow_supports_state_records() -> vo
 	assert_eq(world_sync.clear_view_target_player_calls, 1)
 	assert_eq(respawn_flow.is_awaiting_confirmation(), false)
 
-
 func test_apply_lane_state_with_real_respawn_flow_supports_status_records() -> void:
 	var world_sync := FakeWorldSync.new()
 	var hud_flow := FakeHudFlow.new()
@@ -331,13 +353,92 @@ func test_apply_lane_state_with_real_respawn_flow_supports_status_records() -> v
 	respawn_flow.configure(null, hud_flow)
 	respawn_flow.mark_awaiting_confirmation()
 	var flow := _make_flow(world_sync, respawn_flow, hud_flow, null, FakePlayer.new())
-
 	var world_lane_state := FakeWorldLaneState.new()
 	world_lane_state.ships = {"player-1": {"id": "player-1"}}
 	var session_lane_state := FakeSessionLaneState.new()
 	session_lane_state.player_lifecycle = {"player-1": {"status": "active"}}
 	flow.apply_lane_state(world_lane_state, session_lane_state, "player-1")
-
 	assert_eq(hud_flow.clear_dead_presentation_calls, 1)
 	assert_eq(world_sync.clear_view_target_player_calls, 1)
 	assert_eq(respawn_flow.is_awaiting_confirmation(), false)
+
+func _eliminated_state(lives := 0) -> Dictionary:
+	return {"self_id": "player-1", "session": {"players": {"player-1": {"lives": lives}}, "player_lifecycle": {"player-1": "eliminated"}}}
+
+func test_initial_eliminated_baseline_reconstructs_without_ship_death_event() -> void:
+	var hud_flow := FakeHudFlow.new(); var match_end_flow := FakeMatchEndFlow.new(); var player := FakePlayer.new()
+	var flow := _make_flow(null, null, hud_flow, match_end_flow, player); flow.apply_state(_eliminated_state(2))
+	assert_eq(player.stop_transient_effects_calls, 1); assert_eq(hud_flow.last_lives, 2); assert_eq(match_end_flow.local_player_eliminated_calls, 1)
+
+func test_authoritative_zero_lives_reach_match_end_flow() -> void:
+	var hud_flow := FakeHudFlow.new(); var match_end_flow := FakeMatchEndFlow.new()
+	var flow := _make_flow(null, null, hud_flow, match_end_flow, FakePlayer.new()); flow.apply_state(_eliminated_state(0))
+	assert_eq(hud_flow.last_lives, 0); assert_eq(match_end_flow.last_eliminated_lives, 0)
+
+func test_repeated_eliminated_fanout_does_not_repeat_lifecycle_flow_handoff() -> void:
+	var hud_flow := FakeHudFlow.new(); var match_end_flow := FakeMatchEndFlow.new(); var player := FakePlayer.new()
+	var flow := _make_flow(null, null, hud_flow, match_end_flow, player); flow.apply_state(_eliminated_state(0)); flow.apply_state(_eliminated_state(0))
+	assert_eq(player.stop_transient_effects_calls, 1); assert_eq(match_end_flow.local_player_eliminated_calls, 1)
+
+func test_active_then_eliminated_allows_new_transition_after_alive_restoration() -> void:
+	var respawn_flow := FakeRespawnFlow.new(); respawn_flow.should_restore_result = true; var hud_flow := FakeHudFlow.new(); var match_end_flow := FakeMatchEndFlow.new()
+	var flow := _make_flow(null, respawn_flow, hud_flow, match_end_flow, FakePlayer.new()); flow.apply_state(_eliminated_state(1)); flow.apply_state(_state()); flow.apply_state(_eliminated_state(0))
+	assert_eq(match_end_flow.handle_alive_restored_calls, 1); assert_eq(match_end_flow.local_player_eliminated_calls, 2)
+
+
+func _pending_state(cooldown: float, lives: int = 2) -> Array:
+	var world_lane_state := FakeWorldLaneState.new()
+	var session_lane_state := FakeSessionLaneState.new()
+	session_lane_state.player_lifecycle = {"player-1": {"status": "pending_respawn"}}
+	session_lane_state.player_sessions = {"player-1": {"lives": lives, "respawn_cooldown": cooldown}}
+	return [world_lane_state, session_lane_state]
+
+
+func test_pending_respawn_without_event_applies_lives_and_dead_presentation() -> void:
+	var player := FakePlayer.new()
+	var hud_flow := FakeHudFlow.new()
+	var flow := _make_flow(null, FakeRespawnFlow.new(), hud_flow, null, player)
+	var state := _pending_state(3.0)
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	assert_eq(hud_flow.last_lives, 2)
+	assert_eq(hud_flow.set_dead_calls, 1)
+	assert_eq(hud_flow.last_respawn_delay, 3.0)
+	assert_eq(player.stop_transient_effects_calls, 1)
+
+
+func test_pending_respawn_zero_cooldown_is_immediately_available() -> void:
+	var hud_flow := FakeHudFlow.new()
+	var flow := _make_flow(null, FakeRespawnFlow.new(), hud_flow, null, FakePlayer.new())
+	var state := _pending_state(0.0)
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	assert_true(hud_flow.can_respawn)
+
+
+func test_unchanged_pending_respawn_does_not_restart_countdown() -> void:
+	var hud_flow := FakeHudFlow.new()
+	var flow := _make_flow(null, FakeRespawnFlow.new(), hud_flow, null, FakePlayer.new())
+	var state := _pending_state(3.0)
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	assert_eq(hud_flow.set_dead_calls, 1)
+
+
+func test_changed_pending_respawn_cooldown_refreshes_countdown() -> void:
+	var hud_flow := FakeHudFlow.new()
+	var flow := _make_flow(null, FakeRespawnFlow.new(), hud_flow, null, FakePlayer.new())
+	var state := _pending_state(3.0)
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	state = _pending_state(1.0)
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	assert_eq(hud_flow.set_dead_calls, 2)
+	assert_eq(hud_flow.last_respawn_delay, 1.0)
+
+
+func test_reset_allows_pending_respawn_state_to_apply_again() -> void:
+	var hud_flow := FakeHudFlow.new()
+	var flow := _make_flow(null, FakeRespawnFlow.new(), hud_flow, null, FakePlayer.new())
+	var state := _pending_state(3.0)
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	flow.reset()
+	flow.apply_lane_state(state[0], state[1], "player-1")
+	assert_eq(hud_flow.set_dead_calls, 2)

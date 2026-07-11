@@ -183,7 +183,7 @@ func test_reset_calls_owned_flow_resets() -> void:
 	)
 	composer.input_context = FakeResettableFlow.new()
 	composer.event_lifecycle_flow = FakeResettableFlow.new()
-	composer.alive_restore_flow = FakeResettableFlow.new()
+	composer.local_lifecycle_flow = FakeResettableFlow.new()
 	composer.runtime_tick_flow = FakeResettableFlow.new()
 	composer.spectate_context = FakeResettableFlow.new()
 	composer.server_hitbox_overlay_flow = FakeResettableFlow.new()
@@ -192,7 +192,7 @@ func test_reset_calls_owned_flow_resets() -> void:
 
 	assert_eq(composer.input_context.reset_call_count, 1)
 	assert_eq(composer.event_lifecycle_flow.reset_call_count, 1)
-	assert_eq(composer.alive_restore_flow.reset_call_count, 1)
+	assert_eq(composer.local_lifecycle_flow.reset_call_count, 1)
 	assert_eq(composer.runtime_tick_flow.reset_call_count, 1)
 	assert_eq(composer.spectate_context.reset_call_count, 1)
 	assert_eq(composer.server_hitbox_overlay_flow.reset_call_count, 1)
@@ -214,7 +214,7 @@ func test_configure_creates_core_owned_flows() -> void:
 	)
 
 	assert_not_null(composer.event_lifecycle_flow)
-	assert_not_null(composer.alive_restore_flow)
+	assert_not_null(composer.local_lifecycle_flow)
 	assert_not_null(composer.targeting_context)
 	assert_not_null(composer.pointer_position_provider)
 	assert_not_null(composer.input_context)

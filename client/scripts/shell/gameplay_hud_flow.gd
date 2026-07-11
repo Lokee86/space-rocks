@@ -74,10 +74,6 @@ func apply_session_lane_state(session_lane_state, self_id := "") -> void:
 				apply_score(int(self_session.get(Packets.FIELD_SCORE, 0)))
 			if self_session.has(Packets.FIELD_LIVES):
 				apply_lives(int(self_session.get(Packets.FIELD_LIVES, 0)))
-			if self_session.has(Packets.FIELD_RESPAWN_COOLDOWN):
-				var respawn_cooldown := float(self_session.get(Packets.FIELD_RESPAWN_COOLDOWN, 0.0))
-				if respawn_cooldown > 0.0:
-					set_dead(respawn_cooldown)
 
 	if session_lane_state.total_asteroids != null:
 		var total_asteroids := int(session_lane_state.total_asteroids)

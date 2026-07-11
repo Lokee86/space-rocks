@@ -79,6 +79,66 @@ func test_event_batch_and_resync_packets_route_through_explicit_pipeline_handler
 	assert_eq(pipeline.get_router().resync_state.get_reason("overlay"), ResyncState.REASON_WRONG_BASELINE)
 
 
+func test_reset_clears_lifecycle_pending_state_before_matching_baseline_arrives() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+
+	pipeline.apply_packet({
+		"type": "asteroids_lifecycle",
+		"lane": "asteroids.lifecycle",
+		"sequence": 1,
+		"baseline_id": "world-baseline-2",
+		"asteroid_creates": [{"id": "asteroid-pre-reset", "x": 10, "y": 20}],
+		"asteroid_deletes": [],
+	})
+	pipeline.reset()
+	pipeline.apply_packet({
+		"type": "world_full",
+		"baseline_id": "world-baseline-2",
+		"sequence": 1,
+		"snapshot_id": "world-snapshot-2",
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_false(pipeline.get_router().world_lane_state.asteroids.has("asteroid-pre-reset"))
+
+
+func test_reset_clears_lifecycle_applied_sequence_state() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+	var world_full := {
+		"type": "world_full",
+		"baseline_id": "world-baseline-1",
+		"sequence": 1,
+		"snapshot_id": "world-snapshot-1",
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	}
+	var bullet_lifecycle := {
+		"type": "bullets_lifecycle",
+		"lane": "bullets.lifecycle",
+		"sequence": 5,
+		"baseline_id": "world-baseline-1",
+		"bullet_creates": [{"id": "bullet-reset", "owner_id": "player-1", "x": 10, "y": 20}],
+		"bullet_deletes": [],
+	}
+
+	pipeline.apply_packet(world_full)
+	pipeline.apply_packet(bullet_lifecycle)
+	assert_true(pipeline.get_router().world_lane_state.bullets.has("bullet-reset"))
+
+	pipeline.reset()
+	pipeline.apply_packet(world_full)
+	pipeline.apply_packet(bullet_lifecycle)
+
+	assert_true(pipeline.get_router().world_lane_state.bullets.has("bullet-reset"))
+
+
 func test_reset_preserves_presentation_state_identity_and_clears_stale_state() -> void:
 	var pipeline := RealtimePacketPipeline.new()
 	var presentation_state := pipeline.get_presentation_state()

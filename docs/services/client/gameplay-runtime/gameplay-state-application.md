@@ -6,7 +6,7 @@ Parent index: [Gameplay Runtime](./!INDEX.md)
 
 This document describes the completed lane-native client gameplay presentation path.
 
-It covers realtime packet routing, lane state ownership, baseline readiness, the applied-state wrapper `RealtimePresentationState`, gameplay composition handoff, event batch application, and the boundary between gameplay runtime orchestration and world rendering.
+It covers realtime packet routing, lane state ownership, baseline readiness, the applied-state wrapper `RealtimePresentationState`, gameplay composition handoff, local lifecycle reconciliation, event batch application, and the boundary between gameplay runtime orchestration and world rendering.
 
 ## Overview
 
@@ -30,10 +30,12 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> read RealtimePacketPipeline.is_gameplay_ready()
 -> propagate readiness into GameplayComposition
 -> PresentationBridge.flush_pending()
--> GameplayComposition.process(delta, readiness)
--> PresentationBridge orchestrates lane presentation state through the presentation adapter
+-> PresentationBridge obtains world, HUD, event, and local lifecycle presentation targets
+-> PresentationAdapter.fanout_lane_states(presentation_state, world_sync, gameplay_hud_flow, event_lifecycle_flow, local_lifecycle_flow)
+-> GameplayLocalLifecycleFlow reconciles local lifecycle presentation
+-> EventPresentationAdapter drains event output
 -> PresentationBridge orchestrates devtools gameplay state through gameplay composition
--> PresentationBridge orchestrates alive presentation through gameplay composition
+-> GameplayComposition.process(delta, readiness)
 -> DevtoolsLaneStateAdapter builds a separate devtools readmodel
 ```
 
@@ -69,7 +71,7 @@ The active client gameplay application path owns:
 * Applying realtime gameplay packets regardless of gameplay-session activation state.
 * Applying lifecycle and hot movement packets into WorldLaneState.
 * Routing current lane state into gameplay composition for world, HUD, session, and event presentation.
-* Restoring alive/respawn-facing presentation from current lane state after handoff.
+* Reconstructing active, pending-respawn, and eliminated local presentation from authoritative world/session state.
 * Keeping devtools gameplay read models separate from primary gameplay presentation.
 
 ## Does not own
@@ -137,9 +139,16 @@ SessionPresentationAdapter
 
 EventPresentationAdapter
 = applies event batches to event/effects presentation
+
+GameplayLocalLifecycleFlow
+= reconciles active, pending-respawn, and eliminated local presentation from world/session lane state
 ```
 
 The event path uses `EventBatchApplier` for `event_batch` delivery. Compact aliases such as `eb`, `ev`, `ei`, `bb`, `shd`, and `dmg` are wire details and should not leak into client presentation code.
+
+`PresentationAdapter` decodes session state once, passes the decoded state to `SessionPresentationAdapter`, then reuses that decoded session state when it calls `GameplayLocalLifecycleFlow.apply_lane_state(world_lane_state, decoded_session_state, self_id)`. Local lifecycle reconciliation runs after world, overlay, and session lane presentation and before `EventPresentationAdapter` drains event output.
+
+`GameplayLocalLifecycleFlow` reconstructs the local presentation state from authoritative lane data. It handles active, pending-respawn, and eliminated status without becoming an authority for lifecycle outcomes. Event presentation remains a separate best-effort immediate-effects path.
 
 ## Active handoff seams
 
@@ -159,7 +168,7 @@ RealtimeRouter
 = owns lane-specific state mutation, baseline and sequence handling, and lane-state storage beneath RealtimePacketPipeline
 
 PresentationBridge
-= owns gameplay_packet_applied notification handling, pending/coalescing state, readiness-gated flush, latest-state retrieval, and orchestration of lane presentation, devtools-state adaptation, and alive-presentation restoration through composition
+= owns gameplay_packet_applied notification handling, pending/coalescing state, readiness-gated flush, latest-state retrieval, and orchestration of lane presentation, local lifecycle presentation, and devtools-state adaptation through composition
 
 GameplaySessionController
 = owns accepts_gameplay_packets, bridge activation/reset/flush scheduling, frame sequencing, control routing, input routing, reset, and session exits
@@ -168,10 +177,10 @@ ClientConnectionService
 = owns network ingress coordination only; it does not own lane handlers, lane diagnostics, or gameplay packet application
 
 PresentationAdapter
-= fans out presentable lane state into world, overlay, session, and event presentation consumers
+= fans out presentable lane state into world, overlay, session, local lifecycle, and event presentation consumers; decodes session state once for session and local lifecycle consumers
 
 GameplayComposition
-= routes alive-presentation restoration into shell/runtime seams without owning lane application itself
+= exposes the local lifecycle flow through shell/runtime composition without owning lane application itself
 
 DevtoolsLaneStateAdapter
 = builds devtools readmodel dictionaries separately from primary gameplay presentation fanout
@@ -202,6 +211,7 @@ Primary runtime path:
 * `client/scripts/world/world_sync.gd` - world entity sync/render boundary.
 * `client/scripts/shell/gameplay_hud_flow.gd` - HUD-facing presentation consumers.
 * `client/scripts/gameplay/events/` - event consumers and presentation flows.
+* `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd` - local active, pending-respawn, and eliminated presentation reconciliation.
 * `client/scripts/gameplay/effects/` - effects consumers fed by gameplay presentation.
 * `client/scripts/devtools/` - devtools lane-state consumers if enabled.
 
@@ -259,6 +269,6 @@ This document is the canonical client lane-native gameplay application doc.
 
 `RealtimePacketPipeline` owns lane application and refreshes `RealtimePresentationState` before any presentation orchestration occurs.
 
-`PresentationBridge` owns deferred gameplay-packet presentation orchestration after pipeline application and before presentation targets are updated.
+`PresentationBridge` owns deferred gameplay-packet presentation orchestration after pipeline application and before presentation targets are updated. The ready flush passes the local lifecycle flow as the fifth `PresentationAdapter.fanout_lane_states(...)` argument.
 
 `GameplaySessionController` activates, resets, and flushes `PresentationBridge` with the gameplay session lifecycle.

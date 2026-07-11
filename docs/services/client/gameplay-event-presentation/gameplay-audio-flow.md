@@ -67,6 +67,18 @@ MatchEndFlow
 -> HUD GameOverSound
 ```
 
+Local game-over audio can be requested after either immediate event handling or authoritative lifecycle reconstruction:
+
+```text
+ship_death event with lives == 0
+-> GameplayDeathFlow
+-> MatchEndFlow.handle_local_player_eliminated(lives)
+
+authoritative eliminated lifecycle with integer lives
+-> GameplayLocalLifecycleFlow
+-> MatchEndFlow.handle_local_player_eliminated(lives)
+```
+
 Background music is a separate scene-level `AudioStreamPlayer` flow. It starts from the root `BackgroundMusic` node in `client/scenes/game.tscn` and is not driven by server gameplay events.
 
 ## Code root
@@ -87,8 +99,8 @@ Gameplay audio owns:
 * Playing local afterburner sound while the local player thrusts.
 * Restarting local afterburner audio while afterburner presentation remains active.
 * Looking up HUD `%GameOverSound` during gameplay event flow configuration.
-* Delaying game-over sound playback by the generated presentation constant.
-* Preventing repeated game-over sound playback during the same event or effects lifecycle.
+* Playing delayed game-over sound requested by `MatchEndFlow`.
+* Participating in repeated-game-over-sound suppression owned by the match-end/effects lifecycle seam.
 * Invalidating pending delayed game-over sound timers when game-over audio is reset or stopped.
 * Keeping audio playback local and non-authoritative.
 
@@ -157,6 +169,8 @@ ship_death
 -> ShipDeath AudioStreamPlayer2D
 ```
 
+`ship_death` audio is immediate best-effort event presentation. It is useful for death animation and sound timing, but it is not durable lifecycle truth and does not replace authoritative `player_lifecycle`, `player_sessions`, or world-state reconstruction.
+
 ```text
 radial_effect_started
 -> GameplayEffects.spawn_torpedo_explosion()
@@ -178,8 +192,16 @@ pickup_collected
 Current request paths are:
 
 ```text
-local player eliminated with zero lives
--> MatchEndFlow.handle_local_player_eliminated()
+ship_death event with lives == 0
+-> GameplayDeathFlow
+-> MatchEndFlow.handle_local_player_eliminated(lives)
+-> GameplayEventFlow.play_game_over_sound_after_delay()
+```
+
+```text
+authoritative eliminated lifecycle with integer lives
+-> GameplayLocalLifecycleFlow
+-> MatchEndFlow.handle_local_player_eliminated(lives)
 -> GameplayEventFlow.play_game_over_sound_after_delay()
 ```
 
@@ -189,7 +211,7 @@ room state GameOver
 -> GameplayEventFlow.play_game_over_sound_after_delay()
 ```
 
-`GameplayEffects` owns the delay and one-shot state.
+`MatchEndFlow` owns idempotent local-elimination orchestration and suppresses duplicate delayed-sound requests across event and authoritative lifecycle entry paths. `GameplayEventFlow` and `GameplayEffects` own the delay, timer invalidation, and playback mechanics after a request is accepted.
 
 The delay uses:
 
@@ -340,6 +362,8 @@ room match-over
 
 Both paths are consequences of server-owned gameplay or room facts. The client only chooses how to present the sound.
 
+The `ship_death` path is supplementary immediate presentation. The authoritative world/session lifecycle path is the reconstructable source for pending respawn, active restoration, and eliminated state; audio does not acknowledge durable lifecycle delivery.
+
 ### Outbound APIs
 
 Gameplay audio sends no packets and exposes no HTTP APIs.
@@ -423,9 +447,10 @@ Scene-local audio settings such as stream, volume, pitch, looping, and polyphony
 * `client/scripts/protocol/realtime/event_presentation_adapter.gd` - Forwards applied `event_batch` output into gameplay event presentation.
 * `client/scripts/gameplay/events/gameplay_event_flow.gd` - Constructs effects and event controller, exposes game-over audio request and reset methods.
 * `client/scripts/gameplay/events/gameplay_event_controller.gd` - Converts server events into effect spawn calls.
-* `client/scripts/gameplay/effects/gameplay_effects.gd` - Spawns effect scenes, starts their sounds, manages effect cleanup, and owns game-over sound delay or one-shot state.
+* `client/scripts/gameplay/effects/gameplay_effects.gd` - Spawns effect scenes, starts their sounds, manages effect cleanup, and executes accepted game-over sound delay or one-shot mechanics.
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires event flow into gameplay event presentation and reset.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Stops transient player effects before local death presentation and delegates final elimination to match-end flow.
+* `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd` - Reconstructs local lifecycle presentation and delegates authoritative elimination to match-end flow.
 * `client/scripts/gameplay/match_end/match_end_flow.gd` - Requests game-over audio for local elimination and authoritative room match-over.
 
 ### World-sync audio callers
@@ -519,4 +544,4 @@ Do not move gameplay authority into audio paths. Audio playback should follow se
 
 Projectile firing sound is intentionally detached from projectile node lifetime. Pickup collection sound is intentionally detached from pickup node lifetime by using the `pickup_collected` event effect path.
 
-Game-over audio is requested by match-end presentation but gated by gameplay effects or audio. Keep those responsibilities separate so repeated room snapshots or local elimination state do not directly replay audio.
+Game-over audio is requested by match-end presentation, with duplicate local-elimination requests suppressed by `MatchEndFlow` and delayed playback handled by the event/effects seam. Keep those responsibilities separate so repeated room snapshots, duplicate event delivery, or repeated local lifecycle state do not directly replay audio.

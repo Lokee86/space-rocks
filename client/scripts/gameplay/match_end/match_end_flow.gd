@@ -1,7 +1,6 @@
 extends RefCounted
 class_name MatchEndFlow
 
-const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 signal replay_requested
@@ -17,6 +16,7 @@ var session_context
 var match_result_provider: Callable
 var room_state_provider: Callable
 var room_match_over_handled := false
+var local_player_eliminated_handled := false
 
 
 func configure(hud_flow_ref, menu_flow_ref, session_context_ref = null) -> void:
@@ -56,8 +56,10 @@ func refresh_match_end_state() -> void:
 		handle_room_match_over()
 
 
-func handle_local_player_eliminated(event: Dictionary) -> void:
-	var lives := int(event.get(Packets.FIELD_LIVES, 0))
+func handle_local_player_eliminated(lives: int) -> void:
+	if local_player_eliminated_handled || room_match_over_handled:
+		return
+	local_player_eliminated_handled = true
 	if hud_flow != null && hud_flow.has_method("apply_lives"):
 		hud_flow.apply_lives(lives)
 	if hud_flow != null && hud_flow.has_method("set_game_over"):
@@ -94,6 +96,7 @@ func has_stale_dead_presentation() -> bool:
 
 
 func handle_alive_restored() -> void:
+	local_player_eliminated_handled = false
 	if hud_flow != null && hud_flow.has_method("set_alive"):
 		hud_flow.set_alive()
 	if menu_flow != null && menu_flow.has_method("set_alive"):
@@ -102,6 +105,7 @@ func handle_alive_restored() -> void:
 
 func reset() -> void:
 	room_match_over_handled = false
+	local_player_eliminated_handled = false
 	if hud_flow != null && hud_flow.has_method("clear_match_over_visibility_lock"):
 		hud_flow.clear_match_over_visibility_lock()
 	if menu_flow != null && menu_flow.has_method("set_match_over_overlay_enabled"):

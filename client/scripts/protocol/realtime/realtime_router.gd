@@ -12,6 +12,7 @@ const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracke
 const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 const ResyncState = preload("res://scripts/protocol/realtime/resync_state.gd")
 const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
+const LifecycleLaneGate = preload("res://scripts/protocol/realtime/lifecycle_lane_gate.gd")
 
 var world_lane_state := WorldLaneState.new()
 var overlay_lane_state := OverlayLaneState.new()
@@ -20,6 +21,7 @@ var event_batch_applier := EventBatchApplier.new()
 var baseline_tracker := BaselineTracker.new()
 var gameplay_readiness := GameplayReadiness.new()
 var resync_state := ResyncState.new()
+var lifecycle_lane_gate := LifecycleLaneGate.new()
 
 var _world_applier := WorldLaneApplier.new()
 var _overlay_applier := OverlayLaneApplier.new()
@@ -39,7 +41,7 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 	var packet_type = expanded_packet.get("type")
 	match packet_type:
 		LaneMetadata.PACKET_FAMILY_WORLD[0]:
-			_world_applier.apply_world_full(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
+			_route_world_full(expanded_packet)
 		LaneMetadata.PACKET_FAMILY_WORLD[1]:
 			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
 		"asteroid_delta":
@@ -47,9 +49,9 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 		"bullet_delta":
 			_world_applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_BULLETS, expanded_packet)
 		"asteroids_lifecycle":
-			_world_applier.apply_asteroids_lifecycle(world_lane_state, expanded_packet)
+			_route_asteroids_lifecycle(expanded_packet)
 		"bullets_lifecycle":
-			_world_applier.apply_bullets_lifecycle(world_lane_state, expanded_packet)
+			_route_bullets_lifecycle(expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[0]:
 			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
 		LaneMetadata.PACKET_FAMILY_OVERLAY[1]:
@@ -73,6 +75,47 @@ func get_gameplay_readiness():
 func is_presentable() -> bool:
 	return gameplay_readiness != null and gameplay_readiness.is_gameplay_ready()
 
+
+func _route_world_full(packet: Dictionary) -> void:
+	_world_applier.apply_world_full(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, packet)
+	var active_baseline_id := baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)
+	if not baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD) or active_baseline_id != packet.get("baseline_id"):
+		return
+	for entry in lifecycle_lane_gate.take_pending_for_baseline(active_baseline_id):
+		var lane = entry.get("lane")
+		var lifecycle_packet: Dictionary = entry.get("packet", {})
+		var sequence = entry.get("sequence")
+		if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE:
+			if _world_applier.apply_asteroids_lifecycle(world_lane_state, lifecycle_packet):
+				lifecycle_lane_gate.mark_applied(lane, sequence)
+		elif lane == LaneMetadata.LANE_BULLETS_LIFECYCLE:
+			if _world_applier.apply_bullets_lifecycle(world_lane_state, lifecycle_packet):
+				lifecycle_lane_gate.mark_applied(lane, sequence)
+	lifecycle_lane_gate.discard_obsolete_baselines(active_baseline_id)
+
+func _route_asteroids_lifecycle(packet: Dictionary) -> void:
+	var decision := lifecycle_lane_gate.submit(
+		LaneMetadata.LANE_ASTEROIDS_LIFECYCLE,
+		packet,
+		baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD),
+		baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)
+	)
+	if decision.status != LifecycleLaneGate.DECISION_APPLY:
+		return
+	if _world_applier.apply_asteroids_lifecycle(world_lane_state, packet):
+		lifecycle_lane_gate.mark_applied(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, decision.sequence)
+
+func _route_bullets_lifecycle(packet: Dictionary) -> void:
+	var decision := lifecycle_lane_gate.submit(
+		LaneMetadata.LANE_BULLETS_LIFECYCLE,
+		packet,
+		baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD),
+		baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)
+	)
+	if decision.status != LifecycleLaneGate.DECISION_APPLY:
+		return
+	if _world_applier.apply_bullets_lifecycle(world_lane_state, packet):
+		lifecycle_lane_gate.mark_applied(LaneMetadata.LANE_BULLETS_LIFECYCLE, decision.sequence)
 
 func _route_resync(packet: Dictionary) -> void:
 	var packet_type = packet.get("type")

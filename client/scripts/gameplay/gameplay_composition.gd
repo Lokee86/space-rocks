@@ -98,6 +98,11 @@ func get_event_lifecycle_flow():
 		return null
 	return gameplay_shell_flow.get_event_lifecycle_flow()
 
+func get_local_lifecycle_flow():
+	if gameplay_shell_flow == null:
+		return null
+	return gameplay_shell_flow.get_local_lifecycle_flow()
+
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	if gameplay_shell_flow == null:
 		return
@@ -113,17 +118,6 @@ func apply_devtools_debug_status_packet(packet: Dictionary) -> void:
 	if gameplay_shell_flow == null:
 		return
 	gameplay_shell_flow.apply_devtools_debug_status_packet(packet)
-
-
-func restore_alive_presentation_from_realtime_state(presentation_state) -> void:
-	if presentation_state == null or gameplay_shell_flow == null:
-		return
-
-	var self_id := ""
-	if presentation_state.overlay_lane_state != null and presentation_state.overlay_lane_state.self_id != null:
-		self_id = str(presentation_state.overlay_lane_state.self_id)
-
-	gameplay_shell_flow.restore_alive_presentation_from_lane_state(presentation_state.world_lane_state, presentation_state.session_lane_state, self_id)
 
 
 func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:

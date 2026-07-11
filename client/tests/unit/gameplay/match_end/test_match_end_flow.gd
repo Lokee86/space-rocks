@@ -2,7 +2,6 @@ extends GutTest
 
 const MatchEndFlow := preload("res://scripts/gameplay/match_end/match_end_flow.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
-const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
 class FakeSessionContext:
@@ -82,17 +81,54 @@ func test_handle_local_player_eliminated_applies_game_over_orchestration() -> vo
 	var event_flow := FakeEventFlow.new()
 	var match_results_flow := FakeMatchResultsFlow.new()
 
+	add_child_autofree(hud_flow.hud)
 	flow.configure(hud_flow, menu_flow)
 	flow.configure_event_flow(event_flow)
 	flow.configure_match_results_flow(match_results_flow)
 
-	flow.handle_local_player_eliminated({Packets.FIELD_LIVES: 0})
+	flow.handle_local_player_eliminated(0)
 
 	assert_eq(hud_flow.last_lives, 0)
 	assert_eq(hud_flow.game_over_calls, 1)
 	assert_eq(menu_flow.game_over_calls, 1)
 	assert_eq(event_flow.play_game_over_sound_after_delay_calls, 1)
 	assert_eq(match_results_flow.show_results_calls, 0)
+
+
+func test_handle_local_player_eliminated_is_idempotent() -> void:
+	var flow := MatchEndFlow.new()
+	var hud_flow := FakeHudFlow.new()
+	var menu_flow := FakeMenuFlow.new()
+	var event_flow := FakeEventFlow.new()
+
+	add_child_autofree(hud_flow.hud)
+	flow.configure(hud_flow, menu_flow)
+	flow.configure_event_flow(event_flow)
+
+	flow.handle_local_player_eliminated(0)
+	flow.handle_local_player_eliminated(0)
+
+	assert_eq(hud_flow.game_over_calls, 1)
+	assert_eq(menu_flow.game_over_calls, 1)
+	assert_eq(event_flow.play_game_over_sound_after_delay_calls, 1)
+
+
+func test_handle_local_player_eliminated_does_not_duplicate_room_match_over() -> void:
+	var flow := MatchEndFlow.new()
+	var hud_flow := FakeHudFlow.new()
+	var menu_flow := FakeMenuFlow.new()
+	var event_flow := FakeEventFlow.new()
+
+	add_child_autofree(hud_flow.hud)
+	flow.configure(hud_flow, menu_flow)
+	flow.configure_event_flow(event_flow)
+
+	flow.handle_room_match_over()
+	flow.handle_local_player_eliminated(0)
+
+	assert_eq(hud_flow.game_over_calls, 0)
+	assert_eq(menu_flow.game_over_calls, 1)
+	assert_eq(event_flow.play_game_over_sound_after_delay_calls, 1)
 
 
 func test_handle_room_match_over_hides_hud_and_passes_rows_to_results() -> void:

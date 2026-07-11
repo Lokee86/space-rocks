@@ -87,14 +87,11 @@ func test_session_adapter_updates_hud_from_session_lane() -> void:
 	assert_eq(hud_flow.applied_self_id, "player-1")
 
 
-func test_gameplay_hud_flow_session_lane_zero_cooldown_keeps_dead_presentation_and_makes_respawn_available_by_countdown() -> void:
+func test_gameplay_hud_flow_session_lane_preserves_lifecycle_presentation_ownership() -> void:
 	var hud := HudScene.instantiate()
 	add_child_autofree(hud)
 	var hud_flow := GameplayHudFlow.new()
 	hud_flow.configure(hud)
-	hud_flow.apply_score(120)
-	hud_flow.apply_lives(2)
-	hud_flow.set_dead(0.5)
 
 	var session_lane_state := SessionLaneState.new()
 	session_lane_state.player_sessions = {
@@ -106,22 +103,16 @@ func test_gameplay_hud_flow_session_lane_zero_cooldown_keeps_dead_presentation_a
 	}
 	session_lane_state.player_lifecycle = {
 		"player-1": {
-			"status": "active",
+			"status": "pending_respawn",
 		}
 	}
 
 	hud_flow.apply_session_lane_state(session_lane_state, "player-1")
-	assert_true(hud_flow.is_dead)
-	assert_false(hud_flow.can_respawn)
-	assert_eq(hud_flow.respawn_countdown_remaining, 0.5)
-	assert_true((hud.get_node("CenterContainer/VBoxContainer2") as CanvasItem).visible)
 	assert_eq(hud_flow.score(), 120)
-
-	hud_flow.update(0.5)
-
-	assert_true(hud_flow.is_dead)
-	assert_true(hud_flow.can_respawn)
-	assert_eq(hud_flow.respawn_countdown_remaining, 0.0)
+	assert_eq((hud.get_node("MarginContainer/HBoxContainer/LivesContainer/MarginContainer/LivesCount") as Label).text, "2 x ")
+	assert_false(hud_flow.is_dead)
+	assert_false(hud_flow.can_respawn)
+	assert_false((hud.get_node("CenterContainer/VBoxContainer2") as CanvasItem).visible)
 
 
 func test_gameplay_hud_flow_overlay_lane_shows_torpedo_loadout_with_cooldown() -> void:

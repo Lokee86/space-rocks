@@ -246,7 +246,7 @@ Current related test coverage includes:
 * `client/tests/unit/gameplay/test_gameplay_flow_composer.gd`
 * `client/tests/unit/gameplay/debug/test_server_hitbox_overlay_flow.gd`
 * `client/tests/unit/test_gameplay_input_context.gd`
-* `client/tests/unit/gameplay/test_gameplay_alive_restore_flow.gd`
+* `client/tests/unit/gameplay/lifecycle/test_gameplay_local_lifecycle_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_lifecycle_flow.gd`
 * `client/tests/unit/test_world_sync.gd`
 * `client/tests/unit/world/player_render/test_player_render_api.gd`

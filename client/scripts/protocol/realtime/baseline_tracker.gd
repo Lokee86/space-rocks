@@ -22,6 +22,10 @@ func get_lane_state(lane: String) -> Dictionary:
 func is_lane_synced(lane: String) -> bool:
 	return _ensure_lane_state(lane).sync_state == LaneSyncState.SYNCED
 
+func get_active_baseline_id(lane: String) -> String:
+	var baseline_id = _ensure_lane_state(lane).baseline_id
+	return baseline_id if baseline_id is String else ""
+
 func record_full_packet(lane: String, baseline_id, sequence, snapshot_id = null, chunk_index: int = 0, chunk_count: int = 1, is_final_chunk: bool = true) -> void:
 	var state := _ensure_lane_state(lane)
 	state.baseline_id = baseline_id

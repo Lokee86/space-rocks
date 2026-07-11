@@ -40,16 +40,22 @@ func apply_asteroid_delta(world_lane_state: WorldLaneState, lane: String, astero
 		return
 	_apply_entity_deltas(world_lane_state, [], _array_field(asteroid_packet, "asteroid_updates"), [], "asteroid")
 
-func apply_asteroids_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary) -> void:
+func apply_asteroids_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary) -> bool:
+	if not _valid_lifecycle_payload(packet, "asteroid_creates", "asteroid_deletes"):
+		return false
 	_apply_entity_deltas(world_lane_state, _array_field(packet, "asteroid_creates"), [], _array_field(packet, "asteroid_deletes"), "asteroid")
+	return true
 
 func apply_bullet_delta(world_lane_state: WorldLaneState, lane: String, bullet_packet: Dictionary) -> void:
 	if not world_lane_state.accept_bullet_delta_sequence(bullet_packet.get("sequence"), bullet_packet.get("chunk_index", 0), bullet_packet.get("chunk_count", 1)):
 		return
 	_apply_entity_deltas(world_lane_state, [], _array_field(bullet_packet, "bullet_updates"), [], "bullet")
 
-func apply_bullets_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary) -> void:
+func apply_bullets_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary) -> bool:
+	if not _valid_lifecycle_payload(packet, "bullet_creates", "bullet_deletes"):
+		return false
 	_apply_entity_deltas(world_lane_state, _array_field(packet, "bullet_creates"), [], _array_field(packet, "bullet_deletes"), "bullet")
+	return true
 
 func _decode_world_full_packet(world_packet: Dictionary) -> Dictionary:
 	var decoded := world_packet.duplicate(true)
@@ -84,6 +90,15 @@ func _array_field(packet: Dictionary, key: String) -> Array:
 	if value is Array:
 		return value
 	return []
+
+func _valid_lifecycle_payload(packet: Dictionary, creates_key: String, deletes_key: String) -> bool:
+	for key in [creates_key, deletes_key]:
+		if packet.has(key) and not packet[key] is Array:
+			return false
+	for record in _array_field(packet, creates_key):
+		if not record is Dictionary:
+			return false
+	return true
 
 func _apply_entity_deltas(world_lane_state: WorldLaneState, creates: Array, updates: Array, deletes: Array, entity_kind: String) -> void:
 	for record in creates:

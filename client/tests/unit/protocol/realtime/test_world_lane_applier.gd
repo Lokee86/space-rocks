@@ -552,12 +552,12 @@ func test_world_lane_applier_accepts_tuple_expanded_compact_records() -> void:
 	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "laser")
 
 
-func test_asteroids_lifecycle_applies_creates_and_deletes_without_baseline_gating() -> void:
+func test_asteroids_lifecycle_applies_valid_creates_and_deletes() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	world_lane_state.upsert_asteroid({"id": "asteroid-2", "x": 3, "y": 4, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 1, "health": 100, "scale": 1, "variant": 1})
 
-	applier.apply_asteroids_lifecycle(
+	var applied := applier.apply_asteroids_lifecycle(
 		world_lane_state,
 		{
 			"type": "asteroids_lifecycle",
@@ -567,17 +567,18 @@ func test_asteroids_lifecycle_applies_creates_and_deletes_without_baseline_gatin
 		}
 	)
 
+	assert_true(applied)
 	assert_true(world_lane_state.asteroids.has("asteroid-1"))
 	assert_false(world_lane_state.asteroids.has("asteroid-2"))
 	assert_eq(world_lane_state.asteroids["asteroid-1"]["variant"], 3)
 
 
-func test_bullets_lifecycle_applies_creates_and_deletes_without_baseline_gating() -> void:
+func test_bullets_lifecycle_applies_valid_creates_and_deletes() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 	world_lane_state.upsert_bullet({"id": "bullet-2", "owner_id": "player-1", "x": 3, "y": 4, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0, "lifespan_seconds": 1.0, "weapon_id": "bullet", "projectile_type": "bullet"})
 
-	applier.apply_bullets_lifecycle(
+	var applied := applier.apply_bullets_lifecycle(
 		world_lane_state,
 		{
 			"type": "bullets_lifecycle",
@@ -587,6 +588,7 @@ func test_bullets_lifecycle_applies_creates_and_deletes_without_baseline_gating(
 		}
 	)
 
+	assert_true(applied)
 	assert_true(world_lane_state.bullets.has("bullet-1"))
 	assert_false(world_lane_state.bullets.has("bullet-2"))
 	assert_eq(world_lane_state.bullets["bullet-1"]["projectile_type"], "torpedo")
@@ -600,7 +602,7 @@ func test_bullets_lifecycle_applies_buffered_hot_update_after_create_and_preserv
 	assert_false(world_lane_state.bullets.has("bullet-1"))
 	assert_true(world_lane_state.pending_bullet_updates.has("bullet-1"))
 
-	applier.apply_bullets_lifecycle(
+	var applied := applier.apply_bullets_lifecycle(
 		world_lane_state,
 		{
 			"type": "bullets_lifecycle",
@@ -610,6 +612,7 @@ func test_bullets_lifecycle_applies_buffered_hot_update_after_create_and_preserv
 		}
 	)
 
+	assert_true(applied)
 	assert_true(world_lane_state.bullets.has("bullet-1"))
 	assert_eq(world_lane_state.bullets["bullet-1"]["x"], 5.5)
 	assert_eq(world_lane_state.bullets["bullet-1"]["y"], 6.6)
@@ -623,7 +626,7 @@ func test_bullets_lifecycle_delete_removes_bullet_and_clears_pending_update() ->
 	var world_lane_state := WorldLaneState.new()
 
 	applier.apply_bullet_delta(world_lane_state, LaneMetadata.LANE_BULLETS, {"sequence": 1, "bullet_updates": [{"id": "bullet-1", "x": 55, "y": 66, "rotation": 30}]})
-	applier.apply_bullets_lifecycle(
+	var applied := applier.apply_bullets_lifecycle(
 		world_lane_state,
 		{
 			"type": "bullets_lifecycle",
@@ -633,6 +636,7 @@ func test_bullets_lifecycle_delete_removes_bullet_and_clears_pending_update() ->
 		}
 	)
 
+	assert_true(applied)
 	assert_false(world_lane_state.bullets.has("bullet-1"))
 	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
 
@@ -641,8 +645,8 @@ func test_asteroids_lifecycle_delete_removes_asteroid() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
 
-	applier.apply_asteroids_lifecycle(world_lane_state, {"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "asteroid_creates": [{"id": "asteroid-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}], "asteroid_deletes": []})
-	applier.apply_asteroids_lifecycle(world_lane_state, {"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "asteroid_creates": [], "asteroid_deletes": ["asteroid-1"]})
+	assert_true(applier.apply_asteroids_lifecycle(world_lane_state, {"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "asteroid_creates": [{"id": "asteroid-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}], "asteroid_deletes": []}))
+	assert_true(applier.apply_asteroids_lifecycle(world_lane_state, {"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "asteroid_creates": [], "asteroid_deletes": ["asteroid-1"]}))
 
 	assert_false(world_lane_state.asteroids.has("asteroid-1"))
 
@@ -1859,3 +1863,19 @@ func test_hot_lane_rejects_inconsistent_and_invalid_chunk_metadata() -> void:
 	assert_false(state.accept_asteroid_delta_sequence(7, 0, 0))
 	assert_false(state.accept_asteroid_delta_sequence(7, 0.5, 2))
 	assert_false(state.accept_asteroid_delta_sequence(7, 0, 2.5))
+
+
+func test_asteroids_lifecycle_rejects_invalid_payload_shape() -> void:
+	var applier := WorldLaneApplier.new()
+	var state := WorldLaneState.new()
+
+	assert_false(applier.apply_asteroids_lifecycle(state, {"asteroid_creates": "invalid"}))
+	assert_false(applier.apply_asteroids_lifecycle(state, {"asteroid_creates": ["invalid"]}))
+
+
+func test_bullets_lifecycle_rejects_invalid_payload_shape() -> void:
+	var applier := WorldLaneApplier.new()
+	var state := WorldLaneState.new()
+
+	assert_false(applier.apply_bullets_lifecycle(state, {"bullet_deletes": "invalid"}))
+	assert_false(applier.apply_bullets_lifecycle(state, {"bullet_creates": ["invalid"]}))

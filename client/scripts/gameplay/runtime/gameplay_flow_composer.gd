@@ -2,13 +2,13 @@ extends RefCounted
 class_name GameplayFlowComposer
 
 const GameplayEventLifecycleFlowScript = preload("res://scripts/gameplay/events/gameplay_event_lifecycle_flow.gd")
-const GameplayAliveRestoreFlowScript = preload("res://scripts/gameplay/respawn/gameplay_alive_restore_flow.gd")
+const GameplayLocalLifecycleFlowScript = preload("res://scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd")
 const GameplayTargetingContextScript = preload("res://scripts/gameplay/targeting/gameplay_targeting_context.gd")
 const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
 const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
 
 var event_lifecycle_flow
-var alive_restore_flow
+var local_lifecycle_flow
 var targeting_context
 var pointer_position_provider
 var input_context
@@ -46,9 +46,8 @@ func configure(
 		null,
 		match_end_flow
 	)
-
-	alive_restore_flow = GameplayAliveRestoreFlowScript.new()
-	alive_restore_flow.configure(
+	local_lifecycle_flow = GameplayLocalLifecycleFlowScript.new()
+	local_lifecycle_flow.configure(
 		runtime_context_ref.world_sync,
 		runtime_context_ref.respawn_flow,
 		hud_flow_ref,
@@ -124,6 +123,10 @@ func get_event_lifecycle_flow():
 	return event_lifecycle_flow
 
 
+func get_local_lifecycle_flow():
+	return local_lifecycle_flow
+
+
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	if devtools_context != null:
 		devtools_context.apply_gameplay_state(state)
@@ -141,12 +144,6 @@ func apply_debug_shape_catalog_packet(packet: Dictionary) -> void:
 	if server_hitbox_overlay_flow == null:
 		return
 	server_hitbox_overlay_flow.apply_debug_shape_catalog_packet(packet)
-
-
-func restore_alive_presentation_from_lane_state(world_lane_state, session_lane_state, self_id: String) -> void:
-	if alive_restore_flow == null:
-		return
-	alive_restore_flow.apply_lane_state(world_lane_state, session_lane_state, self_id)
 
 
 func handle_unhandled_input(event: InputEvent, required_lane_baselines_synced: bool) -> bool:
@@ -184,8 +181,8 @@ func reset() -> void:
 		input_context.reset()
 	if event_lifecycle_flow != null:
 		event_lifecycle_flow.reset()
-	if alive_restore_flow != null:
-		alive_restore_flow.reset()
+	if local_lifecycle_flow != null:
+		local_lifecycle_flow.reset()
 	if runtime_tick_flow != null:
 		runtime_tick_flow.reset()
 	if spectate_context != null:

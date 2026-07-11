@@ -4,6 +4,21 @@ const BaselineTracker := preload("res://scripts/protocol/realtime/baseline_track
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 
 
+func test_world_lane_is_unsynced_with_no_active_baseline_before_full_baseline() -> void:
+	var tracker := BaselineTracker.new()
+
+	assert_false(tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+	assert_eq(tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD), "")
+
+
+func test_world_lane_reports_synced_and_active_baseline_after_full_baseline() -> void:
+	var tracker := BaselineTracker.new()
+	tracker.record_full_packet(LaneMetadata.LANE_WORLD, "world-baseline-1", 1, "world-baseline-1", 0, 1, true)
+
+	assert_true(tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+	assert_eq(tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD), "world-baseline-1")
+
+
 func test_record_delta_preserves_last_full_baseline_and_tracks_snapshot_id() -> void:
 	var tracker := BaselineTracker.new()
 

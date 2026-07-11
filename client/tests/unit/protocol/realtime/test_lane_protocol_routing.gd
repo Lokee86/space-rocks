@@ -138,6 +138,8 @@ func test_bullet_delta_routes_into_world_lane_state() -> void:
 func test_asteroids_lifecycle_routes_into_world_lane_state() -> void:
 	var router := RealtimeRouter.new()
 
+	router.route_lane_packet({"type": "world_full", "lane": LaneMetadata.LANE_WORLD, "sequence": 1, "baseline_id": "world-baseline-1", "snapshot_id": "world-snapshot-1", "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+
 	router.route_lane_packet({
 		"type": "asteroids_lifecycle",
 		"lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE,
@@ -152,6 +154,8 @@ func test_asteroids_lifecycle_routes_into_world_lane_state() -> void:
 func test_bullets_lifecycle_routes_into_world_lane_state() -> void:
 	var router := RealtimeRouter.new()
 
+	router.route_lane_packet({"type": "world_full", "lane": LaneMetadata.LANE_WORLD, "sequence": 1, "baseline_id": "world-baseline-1", "snapshot_id": "world-snapshot-1", "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+
 	router.route_lane_packet({
 		"type": "bullets_lifecycle",
 		"lane": LaneMetadata.LANE_BULLETS_LIFECYCLE,
@@ -161,6 +165,145 @@ func test_bullets_lifecycle_routes_into_world_lane_state() -> void:
 
 	assert_true(router.world_lane_state.bullets.has("bullet-1"))
 	assert_eq(router.world_lane_state.bullets["bullet-1"]["projectile_type"], "torpedo")
+
+
+func test_asteroid_lifecycle_queues_before_matching_world_full_then_drains_once() -> void:
+	var router := RealtimeRouter.new()
+	var lifecycle_packet := {
+		"type": "asteroids_lifecycle",
+		"lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE,
+		"sequence": 1,
+		"baseline_id": "world-baseline-1",
+		"asteroid_creates": [{"id": "asteroid-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}],
+		"asteroid_deletes": [],
+	}
+
+	router.route_lane_packet(lifecycle_packet)
+	assert_false(router.world_lane_state.asteroids.has("asteroid-1"))
+
+	router.route_lane_packet({
+		"type": "world_full",
+		"lane": LaneMetadata.LANE_WORLD,
+		"sequence": 1,
+		"baseline_id": "world-baseline-1",
+		"snapshot_id": "world-snapshot-1",
+		"chunk_index": 0,
+		"chunk_count": 1,
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_true(router.world_lane_state.asteroids.has("asteroid-1"))
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["variant"], 3)
+
+	router.route_lane_packet(lifecycle_packet)
+	assert_eq(router.world_lane_state.asteroids.size(), 1)
+	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["variant"], 3)
+
+
+func test_bullet_lifecycle_future_baseline_drains_and_keeps_sequence_lanes_independent() -> void:
+	var router := RealtimeRouter.new()
+
+	router.route_lane_packet({
+		"type": "world_full",
+		"lane": LaneMetadata.LANE_WORLD,
+		"sequence": 1,
+		"baseline_id": "world-baseline-1",
+		"snapshot_id": "world-snapshot-1",
+		"chunk_index": 0,
+		"chunk_count": 1,
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	var future_bullet := {
+		"type": "bullets_lifecycle",
+		"lane": LaneMetadata.LANE_BULLETS_LIFECYCLE,
+		"sequence": 2,
+		"baseline_id": "world-baseline-2",
+		"bullet_creates": [{"id": "bullet-1", "owner_id": "player-1", "x": 10, "y": 20, "velocity_x": 1.0, "velocity_y": 2.0, "rotation": 30, "lifespan_seconds": 1.0, "weapon_id": "torpedo", "projectile_type": "torpedo"}],
+		"bullet_deletes": [],
+	}
+	router.route_lane_packet(future_bullet)
+	assert_false(router.world_lane_state.bullets.has("bullet-1"))
+
+	router.route_lane_packet({
+		"type": "world_full",
+		"lane": LaneMetadata.LANE_WORLD,
+		"sequence": 2,
+		"baseline_id": "world-baseline-2",
+		"snapshot_id": "world-snapshot-2",
+		"chunk_index": 0,
+		"chunk_count": 1,
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+	assert_true(router.world_lane_state.bullets.has("bullet-1"))
+
+	router.route_lane_packet({"type": "bullets_lifecycle", "lane": LaneMetadata.LANE_BULLETS_LIFECYCLE, "sequence": 1, "baseline_id": "world-baseline-2", "bullet_creates": [{"id": "bullet-lower", "owner_id": "player-1", "x": 1, "y": 1}], "bullet_deletes": []})
+	router.route_lane_packet({"type": "bullets_lifecycle", "lane": LaneMetadata.LANE_BULLETS_LIFECYCLE, "sequence": 2, "baseline_id": "world-baseline-2", "bullet_creates": [{"id": "bullet-duplicate", "owner_id": "player-1", "x": 2, "y": 2}], "bullet_deletes": []})
+	assert_false(router.world_lane_state.bullets.has("bullet-lower"))
+	assert_false(router.world_lane_state.bullets.has("bullet-duplicate"))
+	assert_eq(router.world_lane_state.bullets.size(), 1)
+
+	router.route_lane_packet({"type": "bullets_lifecycle", "lane": LaneMetadata.LANE_BULLETS_LIFECYCLE, "sequence": 4, "baseline_id": "world-baseline-2", "bullet_creates": [{"id": "bullet-2", "owner_id": "player-1", "x": 30, "y": 40, "velocity_x": 1.0, "velocity_y": 2.0, "rotation": 0, "lifespan_seconds": 1.0, "weapon_id": "bullet", "projectile_type": "bullet"}], "bullet_deletes": []})
+	assert_true(router.world_lane_state.bullets.has("bullet-2"))
+
+	router.route_lane_packet({"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "sequence": 1, "baseline_id": "world-baseline-2", "asteroid_creates": [{"id": "asteroid-1", "x": 50, "y": 60, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 1, "health": 100, "scale": 1000, "variant": 1}], "asteroid_deletes": []})
+	assert_true(router.world_lane_state.asteroids.has("asteroid-1"))
+
+
+func test_obsolete_lifecycle_baselines_cannot_mutate_current_world() -> void:
+	var router := RealtimeRouter.new()
+
+	for baseline_number in [3]:
+		router.route_lane_packet({
+			"type": "world_full",
+			"lane": LaneMetadata.LANE_WORLD,
+			"sequence": baseline_number,
+			"baseline_id": "world-baseline-" + str(baseline_number),
+			"snapshot_id": "world-snapshot-" + str(baseline_number),
+			"chunk_index": 0,
+			"chunk_count": 1,
+			"is_final_chunk": true,
+			"ships": [],
+			"bullets": [],
+			"asteroids": [],
+			"pickups": [],
+		})
+
+	router.route_lane_packet({"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "sequence": 1, "baseline_id": "world-baseline-2", "asteroid_creates": [{"id": "asteroid-obsolete", "x": 10, "y": 20}], "asteroid_deletes": []})
+	assert_false(router.world_lane_state.asteroids.has("asteroid-obsolete"))
+
+	router.route_lane_packet({"type": "bullets_lifecycle", "lane": LaneMetadata.LANE_BULLETS_LIFECYCLE, "sequence": 1, "baseline_id": "world-baseline-4", "bullet_creates": [{"id": "bullet-future", "owner_id": "player-1", "x": 10, "y": 20}], "bullet_deletes": []})
+	assert_false(router.world_lane_state.bullets.has("bullet-future"))
+
+	router.route_lane_packet({
+		"type": "world_full",
+		"lane": LaneMetadata.LANE_WORLD,
+		"sequence": 4,
+		"baseline_id": "world-baseline-4",
+		"snapshot_id": "world-snapshot-4",
+		"chunk_index": 0,
+		"chunk_count": 1,
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_true(router.world_lane_state.bullets.has("bullet-future"))
+	assert_false(router.world_lane_state.asteroids.has("asteroid-obsolete"))
 
 
 func test_compact_asteroids_lifecycle_routes_into_world_lane_state() -> void:

@@ -5,6 +5,50 @@ const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 
 
+func test_expand_compact_asteroids_lifecycle_preserves_required_metadata_and_payload() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "al",
+		"l": "al",
+		"q": 7,
+		"b": "world-baseline-7",
+		"sid": "world-snapshot-7",
+		"k": "d",
+		"ac": [[1, 10, 20, 2, 90, 1500, 3]],
+		"ax": [2],
+	})
+
+	assert_eq(expanded["type"], "asteroids_lifecycle")
+	assert_eq(expanded["lane"], LaneMetadata.LANE_ASTEROIDS_LIFECYCLE)
+	assert_eq(expanded["sequence"], 7)
+	assert_eq(expanded["baseline_id"], "world-baseline-7")
+	assert_eq(expanded["snapshot_id"], "world-snapshot-7")
+	assert_eq(expanded["snapshot_kind"], "delta")
+	assert_eq(expanded["asteroid_creates"][0]["id"], "asteroid-1")
+	assert_eq(expanded["asteroid_deletes"], ["asteroid-2"])
+
+
+func test_expand_compact_bullets_lifecycle_preserves_required_metadata_and_payload() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "bl",
+		"l": "bl",
+		"q": 8,
+		"b": "world-baseline-8",
+		"sid": "world-snapshot-8",
+		"k": "d",
+		"bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]],
+		"bx": [2],
+	})
+
+	assert_eq(expanded["type"], "bullets_lifecycle")
+	assert_eq(expanded["lane"], LaneMetadata.LANE_BULLETS_LIFECYCLE)
+	assert_eq(expanded["sequence"], 8)
+	assert_eq(expanded["baseline_id"], "world-baseline-8")
+	assert_eq(expanded["snapshot_id"], "world-snapshot-8")
+	assert_eq(expanded["snapshot_kind"], "delta")
+	assert_eq(expanded["bullet_creates"][0]["id"], "bullet-1")
+	assert_eq(expanded["bullet_deletes"], ["bullet-2"])
+
+
 func test_expand_packet_converts_compact_world_delta_keys_and_values() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "wd",
