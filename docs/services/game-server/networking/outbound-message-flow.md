@@ -10,11 +10,12 @@ This document describes per-session outbound delivery for the game server, cover
 
 Game-server outbound routing is the server-side send path for per-session outbound messages written to a connected client session.
 
-The outbound boundary has three current responsibilities:
+The outbound boundary has four current responsibilities:
 
 1. Queued one-off responses produced by request handlers.
 2. Active realtime lane packet writes triggered by the realtime WebRTC send path.
 3. Debug shape catalog writes when devtools are enabled.
+4. Direct WebSocket `resync_required` acknowledgment writes from the write-loop resync branch.
 
 Queued one-off responses use `session.outbound` and `outbound.WriteServerMessage()` over WebSocket.
 Active realtime lane packets are built by `services/game-server/internal/protocol/realtime/`, encoded through `services/game-server/internal/protocol/packetcodec`, and sent over lane-specific WebRTC DataChannels through `session.webrtcTransport.SendEncodedLaneJSON()`.
@@ -22,6 +23,8 @@ Queued one-off response producers generally encode packet structs through `packe
 Current physical gameplay channels include `sr.world`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`, `sr.overlay`, `sr.session`, and `sr.event`. `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable lanes, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes.
 
 The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, quantization, event wire shaping, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy. Projection and readable record building remain readable all the way through `WireLanePacket`.
+
+The WebSocket write loop also drains the typed resync request channel. Each request carries its captured room and receiver context; stale context is discarded without writing or mutating state. For a current request, the loop writes the exact `resync_required` acknowledgment directly over WebSocket first. Only a successful write invalidates that lane's baseline readiness and projection. The next normal planner pass then emits the lane's full recovery candidate over the existing reliable WebRTC lane at the next sequence and a new sequence-backed baseline ID. Recovery control packets are not active lane candidates, and `resync_write_test.go` covers ordering, failure preservation, and stale-request rejection.
 
 Realtime send-plan construction owns current candidate selection and byte-budget planning inputs; networking logs and writes the encoded results but does not decide record/entity-level prioritization.
 
@@ -73,13 +76,13 @@ The outbound packet routing path does not own:
 
 The outbound routing surface is the server-to-client packet path.
 
-The server-to-client WebSocket packet path is for queued one-off responses only. Active gameplay lane packets use the WebRTC transport path.
+The server-to-client WebSocket packet path carries queued one-off responses and direct `resync_required` acknowledgment writes. Active gameplay lane packets use the WebRTC transport path.
 
 The client consumes these messages after the Godot networking layer decodes WebSocket text and classifies packets by `type`.
 
 The server owns authority behind the payloads. The client should treat outbound server packets as authoritative readback or authoritative request results, not as local decisions.
 
-The current outbound payloads include queued one-off responses plus lane-native realtime packets and debug packets.
+The current outbound payloads include queued one-off responses, direct WebSocket resync control packets, lane-native realtime packets, and debug packets.
 
 WebRTC signaling is still WebSocket-owned in the current implementation. WebRTC DataChannels are now reusable JSON transport seams for active gameplay lanes, and webrtc_smoke remains a diagnostic packet on the WebRTC transport. The current WebRTC packet types are webrtc_offer, webrtc_answer, webrtc_ice_candidate, webrtc_ready, webrtc_smoke, and webrtc_failed. Active realtime gameplay lane packets are sent over lane-specific WebRTC DataChannels with no WebSocket fallback. Current physical gameplay channels include `sr.world`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`, `sr.overlay`, `sr.session`, and `sr.event`; `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes, and lower-sequence hot packets are rejected by client sequence guards, while same-sequence `asteroid_delta` and `bullet_delta` chunks remain valid. Deployment must keep the advertised WebRTC ICE address and UDP path reachable from clients directly; a proxied HTTP WebSocket route does not carry the UDP data channel.
 
@@ -89,7 +92,7 @@ WebRTC signaling is still WebSocket-owned in the current implementation. WebRTC 
 
 `handleConnection()` starts the connection runtime by creating a `webSocketSession`, starting `readClientInput()` in a goroutine, starting `tickSessionGameplayLifecycle()` in a goroutine, and running `writeServerMessages()` on the connection goroutine.
 
-`writeServerMessages()` owns outbound delivery for the session. It selects between read-loop close errors, queued outbound messages from `session.outbound`, and server tick events.
+`writeServerMessages()` owns outbound delivery for the session. It selects between four inputs: read-loop close/error, queued outbound bytes from `session.outbound`, typed queued resync requests, and server tick events.
 
 If the read loop reports a close or error, the write loop logs the read close and returns.
 
@@ -106,6 +109,17 @@ The channel is created with a buffer size of 16 in `newWebSocketSession()`.
 Queued responses are already encoded byte payloads. They are written by the `session.outbound` branch in `writeServerMessages()`, which passes the encoded bytes to `outbound.WriteServerMessage(session.conn, message, onWriteClose)`.
 
 The queue is not durable. It is a small in-memory handoff between handlers and the write loop, with no retry or acknowledgement guarantee.
+
+### Resync control write
+
+Typed resync requests use a buffered request channel rather than `session.outbound`. Each envelope captures the room ID and receiver ID at enqueue time. The write loop ignores the request when that context is stale, then writes the exact `resync_required` control packet directly over WebSocket for a current request. Baseline readiness and projection are invalidated only after the write succeeds. A failed write exits the loop and preserves readiness and projection; the next normal server tick creates the recovery full. This is not a general packet-delivery acknowledgment system: `resync_required` acknowledges acceptance of one baseline recovery request only.
+
+The control packets are WebSocket packets, not active realtime lane packets:
+
+```text
+client -> server: resync_request
+server -> client: resync_required
+```
 
 ### Queued response producers
 
@@ -271,8 +285,6 @@ Current lane families are:
 - `session_full`
 - `session_delta`
 - `event_batch`
-- `resync_request`
-- `resync_required`
 
 Lane roles at service level are:
 
@@ -284,7 +296,7 @@ Lane roles at service level are:
 - overlay = receiver-specific overlay lane records
 - session = session lane records for player/session/lifecycle and total asteroids
 - event = event_batch presentation event delivery
-- resync = resync_request/resync_required recovery signaling
+
 
 asteroid_delta and bullet_delta are high-priority hot-supersedable movement candidates; lifecycle creates/deletes use required/critical reliable lifecycle lanes.
 

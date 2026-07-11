@@ -16,6 +16,7 @@ const (
 	PacketTypeSetTargetPlayerRequest        = "set_target_player_request"
 	PacketTypeSelectTargetAtPositionRequest = "select_target_at_position_request"
 	PacketTypeClearTargetRequest            = "clear_target_request"
+	PacketTypeResyncRequest                 = "resync_request"
 	PacketTypeCreateRoomRequest             = "create_room_request"
 	PacketTypeJoinRoomRequest               = "join_room_request"
 	PacketTypeLeaveRoomRequest              = "leave_room_request"
@@ -49,6 +50,9 @@ type ClientPacket struct {
 	TargetID           string               `json:"target_id"`
 	Token              string               `json:"token"`
 	Sequence           int                  `json:"sequence"`
+	Lane               string               `json:"lane"`
+	BaselineID         string               `json:"baseline_id"`
+	Reason             string               `json:"reason"`
 	ClientSentMsec     int                  `json:"client_sent_msec"`
 	ServerReceivedMsec int                  `json:"server_received_msec"`
 	ServerSentMsec     int                  `json:"server_sent_msec"`

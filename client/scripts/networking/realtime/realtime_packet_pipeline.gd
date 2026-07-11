@@ -8,6 +8,7 @@ const RealtimePresentationState := preload("res://scripts/networking/realtime/re
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 signal gameplay_packet_applied(packet)
+signal resync_request_required(lane, baseline_id, sequence, reason)
 
 var _router: RealtimeRouter
 var _presentation_state: RealtimePresentationState
@@ -17,6 +18,7 @@ func _init() -> void:
 	_router = RealtimeRouter.new()
 	_presentation_state = RealtimePresentationState.new()
 	_presentation_state.update_from_router(_router)
+	_bind_router(_router)
 
 func get_router() -> RealtimeRouter:
 	return _router
@@ -48,8 +50,15 @@ func apply_packet(packet: Dictionary) -> void:
 
 func reset() -> void:
 	_router = RealtimeRouter.new()
+	_bind_router(_router)
 	_presentation_state.update_from_router(_router)
 	_lane_route_log_emitted.clear()
+
+func _bind_router(router: RealtimeRouter) -> void:
+	router.resync_request_required.connect(_on_resync_request_required)
+
+func _on_resync_request_required(lane, baseline_id, sequence, reason) -> void:
+	resync_request_required.emit(lane, baseline_id, sequence, reason)
 
 func get_presentation_state() -> RealtimePresentationState:
 	return _presentation_state

@@ -261,6 +261,8 @@ resync_required
 
 Do not document `control` as a current physical gameplay channel unless a real physical channel is implemented.
 
+Resync control packets remain WebSocket-only: `resync_request` is client-to-server and `resync_required` is the server acknowledgment. Neither is a `RealtimeLaneCandidate` or selected by the realtime scheduler. The server writes the acknowledgment over WebSocket, while the next normal required full candidate travels over the ordered/reliable WebRTC lane for world, overlay, or session. These transports have no shared delivery order, so the client applies `resync_required` only while recovery is pending and ignores a delayed acknowledgment after the full has completed. Transport reset clears protocol state for the current session; it is not reconnect recovery, resend, retry, or session resume, and there is no `sr.control` DataChannel.
+
 ## Current Packet Encoding
 
 The current active gameplay transport is JSON text over WebRTC DataChannels.

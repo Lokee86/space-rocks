@@ -191,7 +191,6 @@ func TestOverlayBaselineIsReceiverSpecific(t *testing.T) {
 	}
 }
 
-
 func TestRealtimeSessionStateIgnoresStaleSequencesAndTracksWrongBaselineResync(t *testing.T) {
 	state := NewRealtimeSessionState("player-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 10, SnapshotID: "snapshot-new", BaselineID: "baseline-new", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
@@ -263,7 +262,6 @@ func TestCandidateMetadataReturnsSessionDeltaMetadata(t *testing.T) {
 	}
 }
 
-
 func TestAdvanceMetadataForSuccessfulWriteAdvancesEventLaneSequence(t *testing.T) {
 	state := NewRealtimeSessionState("player-1")
 	metadata := Metadata{
@@ -290,7 +288,6 @@ func TestAdvanceMetadataForSuccessfulWriteAdvancesEventLaneSequence(t *testing.T
 	}
 }
 
-
 func TestFullBaselineID(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -309,6 +306,38 @@ func TestFullBaselineID(t *testing.T) {
 				t.Fatalf("FullBaselineID(%q, %d) = %q, want %q", tc.lane, tc.sequence, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestRequireFullBaselineOnlyInvalidatesRequestedLane(t *testing.T) {
+	state := NewRealtimeSessionState("player-1")
+	world := Metadata{Lane: LaneWorld, Sequence: 7, SnapshotID: "world-snapshot", BaselineID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true}
+	overlay := Metadata{Lane: LaneOverlay, Sequence: 9, SnapshotID: "overlay-snapshot", BaselineID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true}
+	state.UpdateLane(LaneWorld, world)
+	state.UpdateLane(LaneOverlay, overlay)
+	state.MarkBaselineReady(LaneWorld)
+	state.MarkBaselineReady(LaneOverlay)
+	state.StoreBaselineProjection(LaneWorld, "world-projection")
+	state.StoreBaselineProjection(LaneOverlay, "overlay-projection")
+	if !state.RequireFullBaseline(LaneWorld) {
+		t.Fatal("expected invalidation")
+	}
+	gotWorld, _ := state.LaneState(LaneWorld)
+	if gotWorld.Metadata() != world || state.LaneBaselineReady(LaneWorld) {
+		t.Fatalf("world changed: %#v", gotWorld)
+	}
+	if projection, ok := state.BaselineProjection(LaneWorld); ok || projection != nil {
+		t.Fatalf("world projection not cleared: %#v, %t", projection, ok)
+	}
+	gotOverlay, _ := state.LaneState(LaneOverlay)
+	if gotOverlay.Metadata() != overlay || !state.LaneBaselineReady(LaneOverlay) {
+		t.Fatalf("overlay changed: %#v", gotOverlay)
+	}
+	if projection, ok := state.BaselineProjection(LaneOverlay); !ok || projection != "overlay-projection" {
+		t.Fatalf("overlay projection changed: %#v, %t", projection, ok)
+	}
+	if state.RequireFullBaseline(LaneControl) {
+		t.Fatal("expected unsupported lane rejection")
 	}
 }
 

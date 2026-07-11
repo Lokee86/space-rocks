@@ -82,6 +82,25 @@ type = "int"
 
 [[structs.fields]]
 
+name = "lane"
+json = "lane"
+type = "string"
+
+[[structs.fields]]
+
+name = "baseline_id"
+go_name = "BaselineID"
+json = "baseline_id"
+type = "string"
+
+[[structs.fields]]
+
+name = "reason"
+json = "reason"
+type = "string"
+
+[[structs.fields]]
+
 name = "client_sent_msec"
 go_name = "ClientSentMsec"
 json = "client_sent_msec"
@@ -816,6 +835,19 @@ id = "clear_target_request_packet"
 [builders.body]
 
 type = "clear_target_request"
+
+[[builders]]
+
+id = "resync_request_packet"
+args = ["lane", "baseline_id", "sequence", "reason"]
+
+[builders.body]
+
+type = "resync_request"
+lane = "$lane"
+baseline_id = "$baseline_id"
+sequence = "$sequence"
+reason = "$reason"
 
 [[builders]]
 

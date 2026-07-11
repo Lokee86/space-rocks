@@ -70,11 +70,21 @@ overlay_delta
 session_full
 session_delta
 event_batch
-resync_request
-resync_required
 ```
 
-These packets carry current lane snapshots, baseline updates, event batches, and resync signals instead of one combined lane gameplay output payload. Sequence, baseline, delta snapshot, and lane policy are implemented protocol behavior, not future architecture.
+These packets carry current lane snapshots, baseline updates, and event batches instead of one combined lane gameplay output payload. `resync_request` and `resync_required` are WebSocket control packets, not active WebRTC lane outputs or `RealtimeLaneCandidate`s.
+
+## Canonical baseline recovery loop
+
+`BaselineTracker` owns mismatch detection for the world, overlay, and session baselines. A delta with no usable baseline is rejected with `missing_baseline`; a delta with a different baseline is rejected with `wrong_baseline`. Ordinary stale or duplicate sequence rejection is silent. Only the first transition into pending recovery emits a request; repeated rejected deltas are deduplicated.
+
+The client request contains `type`, `lane`, the last active `baseline_id` (or an empty string), the last accepted `sequence`, and `reason`. Its path is `BaselineTracker -> RealtimeRouter -> RealtimePacketPipeline -> ClientConnectionService -> ClientPacketSender -> generated resync_request_packet -> NetworkClient -> WebSocket`. If WebSocket is closed, the request is not queued or automatically retried.
+
+The server accepts only world, overlay, and session requests when the session has an active room, non-nil game instance, and active game player. The read path validates and queues a typed request without mutating `RealtimeSessionState`. Its queue envelope captures room ID and receiver/player ID; the write loop discards requests whose context is stale. It writes `resync_required` over WebSocket first, then invalidates only the requested lane's readiness and projection after a successful write. Lane metadata and sequence are preserved and other lanes are untouched.
+
+The next normal planner pass emits a full only for the invalidated lane at previous sequence plus one, with a new sequence-backed baseline ID. That full is a normal required world, overlay, or session candidate sent on the existing ordered/reliable WebRTC lane. Changed-baseline full chunks are accepted only while recovery is pending, with stable baseline ID, sequence, and chunk count, contiguous indices, and correct finality. Readiness remains false until the final chunk; the final accepted full clears tracker and `ResyncState` pending state and restores lane/gameplay readiness when all required lanes are synced.
+
+WebSocket acknowledgment and WebRTC recovery full have no shared delivery order. `resync_required` is acknowledgment-only: it updates reason state only while the lane remains pending and is ignored after recovery, preventing delayed acknowledgment regression. Inbound `resync_request` remains a compatibility client route; the current server sends `resync_required`, not `resync_request`. Recovery covers only world, overlay, and session baselines, not hot asteroid/bullet or lifecycle lanes, and does not add resend, retry, reconnect recovery, session resume, durable queues, or outbound client queueing.
 
 ## Participating systems
 
@@ -784,7 +794,7 @@ asteroids_lifecycle = required / critical
 bullets_lifecycle = required / critical
 session deltas = medium priority / deferrable
 required bootstrap full packets = world, overlay, then session
-control-lane resync packets = required
+recovery full candidates = required only for the invalidated world, overlay, or session lane
 ```
 
 Lifecycle lanes are not hot-supersedable.
@@ -1111,7 +1121,7 @@ Current delivery is best-effort for WebSocket-owned auth, room, lobby, telemetry
 There is no implemented support for:
 
 ```text
-packet acknowledgements
+general packet-delivery acknowledgements
 server resend
 client resend
 reconnect recovery
@@ -1119,7 +1129,7 @@ session resume
 durable outbound queues
 ```
 
-Current lane-native delivery does include sequence numbers, baseline tracking, and delta snapshots as part of the active gameplay protocol. Those mechanisms support in-session lane ordering and incremental updates, but they do not provide acknowledgement-based recovery, resend, reconnect recovery, session resume, or a durable outbound queue.
+Current lane-native delivery does include sequence numbers, baseline tracking, and delta snapshots as part of the active gameplay protocol. Those mechanisms support in-session lane ordering and incremental updates. `resync_required` acknowledges acceptance of one baseline recovery request; it does not acknowledge arbitrary packet delivery. In-session world/overlay/session baseline recovery is distinct from resend, reconnect recovery, session resume, or a durable outbound queue.
 
 Client outbound sends are not queued. If the WebSocket is not open, the packet is not sent. Active realtime gameplay output uses ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. There is no ack, resend, reconnect, session-resume, or durable outbound queue for that delivery path.
 

@@ -30,6 +30,10 @@ func writeServerMessages(
 		case err := <-readErr:
 			logWebSocketReadClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
 			return
+		case request := <-session.resyncRequests:
+			if !writeResyncRequiredAndApply(session, request, remoteAddr) {
+				return
+			}
 		case message := <-session.outbound:
 			if !outbound.WriteServerMessage(session.conn, message, func(err error) {
 				logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
@@ -240,4 +244,3 @@ func maybeWriteDebugShapeCatalog(session *webSocketSession, remoteAddr string) b
 	session.debugShapeCatalogSentRoomID = session.currentRoomID
 	return true
 }
-

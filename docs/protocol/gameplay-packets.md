@@ -32,7 +32,9 @@ Detailed lane metadata, sequencing, baselines, deltas, control-lane resync packe
 
 The current generated recovery packet families are resync_request and resync_required; control is the lane category, not a generated packet family.
 
-This doc summarizes gameplay packet ownership and the high-level packet families only.
+This doc summarizes gameplay packet ownership and the high-level packet families only. `resync_request` is a client-to-server WebSocket control packet; `resync_required` is a server-to-client WebSocket acknowledgment. They are not active server WebRTC lane outputs. Recovery fulls are ordinary required world, overlay, or session candidates on the existing reliable WebRTC lanes.
+
+The client request carries `type`, `lane`, `baseline_id`, `sequence`, and `reason` and follows `BaselineTracker -> RealtimeRouter -> RealtimePacketPipeline -> ClientConnectionService -> ClientPacketSender -> generated resync_request_packet -> NetworkClient -> WebSocket`. The server validates active room/game/player context, queues the typed request with room and receiver context, writes `resync_required`, and invalidates the requested baseline only after a successful write. The next planner pass emits the lane's full recovery candidate. Recovery is limited to world, overlay, and session baselines; it does not provide hot-lane or lifecycle resync, retries, resend, reconnect recovery, or durable queues.
 
 Lifecycle packet behavior at this boundary is: `asteroids_lifecycle` and `bullets_lifecycle` each maintain an independent strict lifecycle sequence; each packet must include explicit `lane`, `sequence`, `baseline_id`, `snapshot_id`, `snapshot_kind`, and `server_sent_msec` metadata; and `baseline_id` names the world baseline used to build the candidate. The client applies a lifecycle packet immediately only when the world is synced to that baseline, queues it otherwise, and rejects unsupported lanes, malformed packets, missing/empty baselines, invalid sequences, and duplicate or lower sequences. Sequence gaps are valid. Lifecycle packets are not chunked, so same-sequence lifecycle packets do not receive the distinct-chunk exception used by hot `asteroid_delta` and `bullet_delta` packets. Detailed gate bounds, drain ordering, and reset behavior remain canonical in the realtime protocol document.
 
@@ -50,7 +52,6 @@ overlay_full / overlay_delta
 session_full / session_delta
 event_batch
 player_pause_state
-resync_request / resync_required
 ```
 
 Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. `asteroid_delta` and `bullet_delta` are hot movement packets on unordered/unreliable lanes: they move existing entities, they do not create new entities client-side, and lifecycle creates/deletes are handled by `asteroids_lifecycle` and `bullets_lifecycle`. `asteroid_delta` and `bullet_delta` are high-priority, hot-supersedable movement candidates. They are not required lifecycle packets, and they may be dropped or replaced by newer movement state. When a hot movement update list would exceed the encoded packet cap, `asteroid_delta` and `bullet_delta` may be emitted as multiple same-sequence chunks. These chunks still only move existing entities; lifecycle creates/deletes remain on the dedicated lifecycle lanes. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.

@@ -396,6 +396,11 @@ func test_session_full_accepts_tuple_expanded_compact_records() -> void:
 		"pl": [[1, "v_wing", 100, 3, 250, "pulse", "limited", "mine", "limited", 10, 20]],
 		"plc": [[1, "active"]],
 	})
+	expanded["baseline_id"] = "session-baseline-1"
+	expanded["sequence"] = 1
+	expanded["chunk_index"] = 0
+	expanded["chunk_count"] = 1
+	expanded["is_final_chunk"] = true
 
 	applier.apply_session_full(
 		session_lane_state,

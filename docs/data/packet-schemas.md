@@ -89,6 +89,8 @@ PlayerPauseState
 
 It also owns shared realtime gameplay state shapes such as `ClientPacket`, `ClientConfig`, `InputState`, `ShipState`, `PlayerSessionState`, `AsteroidState`, `BulletState`, `PickupState`, `EventState`, and `PlayerPauseState`.
 
+`ClientPacket` includes `lane`, `baseline_id`, `sequence`, and `reason` for resync requests. `resync_request_packet` is the generated selected client builder used by the outbound recovery path; it is a WebSocket control packet, not an active WebRTC lane packet. `resync_required` is the corresponding server acknowledgment.
+
 `EventState` defines the possible event payload fields. The realtime event wire shaper emits only the relevant fields for known event types, so not every `EventState` field is emitted for every `event_batch` event.
 
 It also owns realtime lane packet type values:

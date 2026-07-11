@@ -80,11 +80,11 @@ The WebSocket session lifecycle owns:
 * assigning server-internal session IDs
 * initializing each session with Guest identity
 * retaining the room manager, auth verifier, and match result reporter for session handlers
-* owning the per-session outbound queue
+* owning the per-session outbound queue and buffered typed resync request channel
 * coordinating read, write, and room/game-over lifecycle goroutines
 * reading raw WebSocket text messages
 * handing inbound raw messages to packet routing after envelope decode
-* writing queued outbound WebSocket text messages and triggering ticker-driven active realtime lane writes
+* writing queued outbound WebSocket text messages, direct resync acknowledgments, and triggering ticker-driven active realtime lane writes
 * advancing room game-over lifecycle from the session lifecycle ticker
 * reporting resolved match results before session-driven room exit when needed
 * leaving/detaching the session from its current room on disconnect
@@ -194,6 +194,7 @@ currentGamePlayerID -> empty
 room                -> nil
 rooms               -> shared room manager
 outbound            -> buffered channel with capacity 16
+resyncRequests      -> buffered typed resync request channel
 identity            -> Guest session identity
 authVerifier        -> configured token verifier, possibly nil
 matchResultReporter -> configured reporter or noop reporter
@@ -270,7 +271,8 @@ CurrentRoomID
 CurrentRoom
 CurrentGamePlayerID
 SessionID
-OutboundMessages
+EnqueueOutboundMessage
+EnqueueResyncRequest
 LogLobbyPacketReceived
 HandleAuthenticateRequest
 HandleCreateRoomRequest
@@ -289,13 +291,14 @@ The detailed packet-family order belongs to inbound packet routing documentation
 
 ## Write loop
 
-`writeServerMessages()` owns the per-session write loop: queued outbound messages are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, and sr.event, and unordered/unreliable for sr.asteroids and sr.bullets when ready.
+`writeServerMessages()` owns the per-session write loop: queued outbound messages and direct resync acknowledgments are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle, and unordered/unreliable for sr.asteroids and sr.bullets when ready.
 
-It selects over three inputs:
+It selects over four inputs:
 
 ```text
 read close/error from readErr
 queued outbound messages from session.outbound
+typed queued resync requests from session.resyncRequests
 server tick events
 ```
 
@@ -319,7 +322,7 @@ debug shape catalog, when eligible
 debug status, when eligible
 ```
 
-Queued outbound messages remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, and sr.event, and unordered/unreliable for sr.asteroids and sr.bullets when the transport is ready. Gameplay presentation writes require:
+Queued outbound messages and resync acknowledgments remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle, and unordered/unreliable for sr.asteroids and sr.bullets when the transport is ready. Gameplay presentation writes require:
 
 ```text
 session.currentGamePlayerID is not empty
@@ -347,6 +350,10 @@ The queue is created with capacity:
 Session handlers enqueue already encoded payloads through `session.enqueue(payload)`. Current producers include room errors, room snapshots, auth results, player pause state, and telemetry pong responses.
 
 The queue is an in-memory handoff to the write loop. It is not durable storage and does not provide retry or acknowledgement semantics.
+
+### Ordered resync control branch
+
+The read path validates and queues baseline recovery requests but does not mutate write-loop-owned realtime state. The typed request envelope captures the room ID and receiver/player ID. The write-loop branch first verifies that the captured room and player still match the active session, writes `resync_required` directly over WebSocket, and invalidates the requested world, overlay, or session baseline only after that write succeeds. A failed write exits the loop while preserving baseline readiness and projection. The next normal tick creates the recovery full. This is in-session baseline recovery, not reconnect, session resume, or general retry behavior.
 
 ## Gameplay lifecycle ticker
 
@@ -577,6 +584,7 @@ webSocketSession.currentGamePlayerID
 webSocketSession.room
 webSocketSession.identity
 webSocketSession.outbound
+webSocketSession.resyncRequests
 room-session registry attachment
 ```
 
@@ -598,7 +606,7 @@ The session may carry identity and room references that downstream systems use f
 * `services/game-server/internal/networking/websocket_origin.go` - WebSocket origin allowlist.
 * `services/game-server/internal/networking/websocket_session.go` - Per-connection session state and session construction.
 * `services/game-server/internal/networking/websocket_read.go` - Raw WebSocket read loop and envelope-decode handoff.
-* `services/game-server/internal/networking/websocket_write.go` - Runs the session write loop, consumes the outbound queue, and triggers active lane writes; active lane bytes are sent through `services/game-server/internal/networking/webrtc_transport.go`.
+* `services/game-server/internal/networking/websocket_write.go` - Runs the four-input session write loop, consumes queued bytes and typed resync requests, and triggers active lane writes; active lane bytes are sent through `services/game-server/internal/networking/webrtc_transport.go`.
 * `services/game-server/internal/networking/websocket_gameplay_tick.go` - Per-session room game-over lifecycle ticker.
 * `services/game-server/internal/networking/websocket_close_logging.go` - Expected and unexpected read/write close logging.
 

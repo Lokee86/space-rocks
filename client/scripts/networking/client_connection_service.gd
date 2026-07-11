@@ -36,6 +36,7 @@ var auth_session_controller
 var websocket_auth_authenticated := false
 var websocket_auth_user_id = null
 var websocket_auth_display_name := ""
+var _resync_signal_bound := false
 
 
 func _ready() -> void:
@@ -51,6 +52,7 @@ func _ready() -> void:
 	if client_inbound_coordinator == null:
 		client_inbound_coordinator = ClientInboundCoordinator.new()
 	client_inbound_coordinator.configure(server_packet_dispatcher, realtime_packet_pipeline, realtime_transport_session)
+	_bind_resync_request_signal()
 	_connect_coordinator_signal("authenticate_result_received", Callable(self, "_on_authenticate_result_received"))
 	_connect_coordinator_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
 	_connect_coordinator_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
@@ -148,6 +150,16 @@ func send_start_game_request() -> void:
 func send_input_packet(packet: Dictionary) -> void:
 	if client_packet_sender != null:
 		client_packet_sender.send_input_packet(packet)
+
+func _bind_resync_request_signal() -> void:
+	if _resync_signal_bound or realtime_packet_pipeline == null:
+		return
+	realtime_packet_pipeline.resync_request_required.connect(_on_resync_request_required)
+	_resync_signal_bound = true
+
+func _on_resync_request_required(lane, baseline_id, sequence, reason) -> void:
+	if client_packet_sender != null:
+		client_packet_sender.send_resync_request(lane, baseline_id, sequence, reason)
 
 
 func send_packet(packet: Dictionary) -> void:

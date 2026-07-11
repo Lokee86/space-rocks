@@ -12,7 +12,7 @@ type telemetrySession interface {
 	CurrentRoomID() string
 	CurrentGamePlayerID() string
 	SessionID() string
-	OutboundMessages() chan<- []byte
+	EnqueueOutboundMessage([]byte)
 }
 
 func HandleTelemetryPacket(session telemetrySession, remoteAddr string, packet game.ClientPacket) bool {
@@ -30,7 +30,7 @@ func HandleTelemetryPacket(session telemetrySession, remoteAddr string, packet g
 	pong.ServerSentMsec = int(time.Now().UnixMilli())
 	response, err := packetcodec.Encode(pong)
 	if err != nil {
-			logging.Network.Warn("websocket telemetry pong encode failed",
+		logging.Network.Warn("websocket telemetry pong encode failed",
 			logging.FieldError, err,
 			logging.FieldRoomID, session.CurrentRoomID(),
 			logging.FieldPlayerID, session.CurrentGamePlayerID(),
@@ -39,6 +39,6 @@ func HandleTelemetryPacket(session telemetrySession, remoteAddr string, packet g
 		)
 		return true
 	}
-	session.OutboundMessages() <- response
+	session.EnqueueOutboundMessage(response)
 	return true
 }

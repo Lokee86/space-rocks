@@ -4,7 +4,7 @@ const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quant
 const WorldLaneState = preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 
-func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: BaselineTracker, lane: String, world_packet: Dictionary) -> void:
+func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: BaselineTracker, lane: String, world_packet: Dictionary) -> bool:
 	var baseline_id = world_packet.get("baseline_id")
 	var sequence = world_packet.get("sequence")
 	var snapshot_id = world_packet.get("snapshot_id")
@@ -12,13 +12,16 @@ func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: Baseli
 	var chunk_count: int = int(world_packet.get("chunk_count", 1))
 	var is_final_chunk: bool = bool(world_packet.get("is_final_chunk", true))
 
+	var accepted: bool
+	if is_final_chunk:
+		accepted = baseline_tracker.record_full_packet(lane, baseline_id, sequence, snapshot_id, chunk_index, chunk_count, true)
+	else:
+		accepted = baseline_tracker.record_full_chunk(lane, baseline_id, sequence, snapshot_id, chunk_index, chunk_count, false)
+	if not accepted:
+		return false
 	world_lane_state.clear_pending_bullet_updates()
 	world_lane_state.apply_full_lane(_decode_world_full_packet(world_packet))
-
-	if is_final_chunk:
-		baseline_tracker.record_full_packet(lane, baseline_id, sequence, snapshot_id, chunk_index, chunk_count, true)
-	else:
-		baseline_tracker.record_full_chunk(lane, baseline_id, sequence, snapshot_id, chunk_index, chunk_count, false)
+	return true
 
 func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: BaselineTracker, lane: String, world_packet: Dictionary) -> bool:
 	var baseline_id = world_packet.get("baseline_id")

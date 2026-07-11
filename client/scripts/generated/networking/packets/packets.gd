@@ -69,6 +69,7 @@ const FIELD_AMOUNT := "amount"
 const FIELD_ASTEROIDS_FROZEN := "asteroids_frozen"
 const FIELD_AUTHENTICATED := "authenticated"
 const FIELD_BACK := "back"
+const FIELD_BASELINE_ID := "baseline_id"
 const FIELD_BULLETS_FROZEN := "bullets_frozen"
 const FIELD_CHANNEL_ID := "channel_id"
 const FIELD_CHANNEL_LABEL := "channel_label"
@@ -105,6 +106,7 @@ const FIELD_INVINCIBLE := "invincible"
 const FIELD_IS_CONNECTED := "is_connected"
 const FIELD_IS_READY := "is_ready"
 const FIELD_KIND := "kind"
+const FIELD_LANE := "lane"
 const FIELD_LEFT := "left"
 const FIELD_LIFESPAN_SECONDS := "lifespan_seconds"
 const FIELD_LIVES := "lives"
@@ -138,6 +140,7 @@ const FIELD_PRIMARY_FIRE := "primary_fire"
 const FIELD_PRIMARY_WEAPON_ID := "primary_weapon_id"
 const FIELD_PROJECTILE_TYPE := "projectile_type"
 const FIELD_READY := "ready"
+const FIELD_REASON := "reason"
 const FIELD_RESPAWN_COOLDOWN := "respawn_cooldown"
 const FIELD_RESPAWN_DELAY := "respawn_delay"
 const FIELD_RESULT_ID := "result_id"
@@ -231,6 +234,15 @@ static func select_target_at_position_request_packet(x, y, target_kind, target_i
 static func clear_target_request_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "clear_target_request"
+	return packet
+
+static func resync_request_packet(lane, baseline_id, sequence, reason) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "resync_request"
+	packet[FIELD_LANE] = lane
+	packet[FIELD_BASELINE_ID] = baseline_id
+	packet[FIELD_SEQUENCE] = sequence
+	packet[FIELD_REASON] = reason
 	return packet
 
 static func webrtc_offer_packet(description_type, sdp) -> Dictionary:

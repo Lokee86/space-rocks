@@ -537,6 +537,11 @@ func test_world_lane_applier_accepts_tuple_expanded_compact_records() -> void:
 		"asteroids": [],
 		"pickups": [],
 	})
+	expanded["baseline_id"] = "baseline-1"
+	expanded["sequence"] = 1
+	expanded["chunk_index"] = 0
+	expanded["chunk_count"] = 1
+	expanded["is_final_chunk"] = true
 
 	applier.apply_world_full(
 		world_lane_state,
@@ -1616,6 +1621,7 @@ func test_world_full_clears_pending_bullet_updates() -> void:
 		"sequence": 1,
 		"bullet_updates": [{"id": "bullet-1", "x": 30, "y": 40, "rotation": 50}],
 	})
+	baseline_tracker.mark_lane_unsynced(LaneMetadata.LANE_WORLD)
 
 	applier.apply_world_full(
 		world_lane_state,
@@ -1769,6 +1775,7 @@ func test_world_full_clears_deleted_bullet_tombstones() -> void:
 			"pickup_deletes": [],
 		}
 	)
+	baseline_tracker.mark_lane_unsynced(LaneMetadata.LANE_WORLD)
 
 	applier.apply_world_full(
 		world_lane_state,

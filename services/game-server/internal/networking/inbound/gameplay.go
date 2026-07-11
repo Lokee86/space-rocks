@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	targeting "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
@@ -13,6 +14,7 @@ type gameplaySession interface {
 	CurrentRoom() *rooms.Room
 	CurrentGamePlayerID() string
 	EnqueuePlayerPauseState()
+	EnqueueResyncRequest(realtime.ResyncRequest) bool
 }
 
 var loggedInputPackets sync.Map
@@ -26,6 +28,15 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 		}
 		gameInstance := room.GameInstance()
 		switch packet.Type {
+		case game.PacketTypeResyncRequest:
+			if gameInstance == nil {
+				return false
+			}
+			request := realtime.ResyncRequest{Lane: realtime.Lane(packet.Lane), BaselineID: packet.BaselineID, Sequence: packet.Sequence, Reason: packet.Reason}
+			if !realtime.IsBaselineLane(request.Lane) {
+				return false
+			}
+			return session.EnqueueResyncRequest(request)
 		case game.PacketTypeSetTargetPlayerRequest:
 			gameInstance.SetPlayerTarget(session.CurrentGamePlayerID(), packet.TargetID)
 			return true

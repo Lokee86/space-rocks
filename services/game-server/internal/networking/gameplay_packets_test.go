@@ -9,6 +9,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	"github.com/pion/webrtc/v4"
 )
@@ -111,6 +112,15 @@ func (a gameplayPacketTestAdapter) CurrentGamePlayerID() string {
 
 func (a gameplayPacketTestAdapter) EnqueuePlayerPauseState() {
 	a.session.EnqueuePlayerPauseState()
+}
+
+func (a gameplayPacketTestAdapter) EnqueueResyncRequest(request realtime.ResyncRequest) bool {
+	select {
+	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: a.session.room.ID, ReceiverID: a.session.currentGamePlayerID}:
+		return true
+	default:
+		return false
+	}
 }
 
 func cameraViewConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID string) runtime.ClientConfig {

@@ -184,6 +184,12 @@ unknown_packet_received(packet)
 
 The dispatcher does not know which application subsystem will consume each signal. It only converts packet-type classification into a signal and does not apply lane state.
 
+### Resync control routing
+
+`resync_required` is an acknowledgment of a client recovery request. The realtime router changes `ResyncState` only while the lane is still pending; it does not mark a completed lane unsynced, emit another request, or regress a recovery completed over WebRTC. Reason values `missing_baseline`, `wrong_baseline`, and `stale_or_invalid_sequence` are preserved by their corresponding mappings. A final accepted full clears the pending tracker state and `ResyncState`.
+
+Inbound `resync_request` remains a compatibility route. It may mark the supplied lane unsynced and set its supplied/default reason, but it never creates an outbound request loop. The delayed-ack behavior is required because WebSocket acknowledgment and WebRTC recovery full delivery have no shared order.
+
 ### Connection-service signal bridge
 
 `ClientConnectionService` owns the public connection facade, collaborator composition, polling, reset coordination, outbound API, and stable application-facing signal relay, including application-facing non-realtime dispatcher bindings. `ClientInboundCoordinator` owns only the five WebRTC control dispatcher bindings: `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings plus realtime expansion, validation, application, readiness, reset, presentation-state refresh, and applied notification. Raw WebRTC control packets and realtime gameplay packets are not re-emitted through `ClientConnectionService`.

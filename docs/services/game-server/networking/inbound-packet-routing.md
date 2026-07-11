@@ -110,7 +110,7 @@ CurrentRoomID
 CurrentRoom
 CurrentGamePlayerID
 SessionID
-OutboundMessages
+EnqueueOutboundMessage
 LogLobbyPacketReceived
 HandleAuthenticateRequest
 HandleCreateRoomRequest
@@ -124,6 +124,10 @@ EnqueuePlayerPauseState
 ```
 
 This keeps the inbound package mostly pure and avoids passing the full networking session object into every packet-family handler.
+
+### Resync request validation and queueing
+
+For `resync_request`, inbound routing accepts only world, overlay, and session lanes when the session has an active room, non-nil game instance, and active game player. It queues one typed request through `EnqueueResyncRequest`; it does not mutate `RealtimeSessionState`. The queued envelope captures room ID and receiver/player ID so the write loop can discard stale requests after room or player context changes. `resync_request` is a client compatibility route; the current server response is `resync_required`.
 
 ### Routing order
 

@@ -41,6 +41,10 @@ The outbound send path is best-effort and non-queued. If the packet sender has n
 
 The server remains authoritative for packet acceptance, room state, gameplay simulation, devtools effects, and durable results.
 
+### Resync request sending
+
+`send_resync_request(lane, baseline_id, sequence, reason)` is the focused outbound facade. Its path is `BaselineTracker -> RealtimeRouter -> RealtimePacketPipeline -> ClientConnectionService -> ClientPacketSender -> generated resync_request_packet -> NetworkClient -> WebSocket`. The generated builder supplies `type`, `lane`, `baseline_id`, `sequence`, and `reason`. `BaselineTracker` owns pending-transition deduplication; the outbound path does not queue or retry a request when WebSocket is unavailable. The server's `resync_required` acknowledgment is not a client outbound packet and does not trigger another request.
+
 ## Code root
 
 ```text

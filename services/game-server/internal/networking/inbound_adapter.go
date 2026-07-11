@@ -1,9 +1,18 @@
 package networking
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+)
 
 type inboundSessionAdapter struct {
 	session *webSocketSession
+}
+
+type queuedResyncRequest struct {
+	Request    realtime.ResyncRequest
+	RoomID     string
+	ReceiverID string
 }
 
 func newInboundSessionAdapter(session *webSocketSession) inboundSessionAdapter {
@@ -26,8 +35,21 @@ func (a inboundSessionAdapter) SessionID() string {
 	return a.session.sessionID
 }
 
-func (a inboundSessionAdapter) OutboundMessages() chan<- []byte {
-	return a.session.outbound
+func (a inboundSessionAdapter) EnqueueOutboundMessage(message []byte) {
+	a.session.outbound <- message
+}
+
+func (a inboundSessionAdapter) EnqueueResyncRequest(request realtime.ResyncRequest) bool {
+	roomID := ""
+	if a.session.room != nil {
+		roomID = a.session.room.ID
+	}
+	select {
+	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: roomID, ReceiverID: a.session.currentGamePlayerID}:
+		return true
+	default:
+		return false
+	}
 }
 
 func (a inboundSessionAdapter) LogLobbyPacketReceived(message string, roomCode string) {

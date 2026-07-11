@@ -90,6 +90,18 @@ func (state *RealtimeSessionState) ClearBaselineProjection(lane Lane) {
 	delete(state.baselineProjections, lane)
 }
 
+func (state *RealtimeSessionState) RequireFullBaseline(lane Lane) bool {
+	if !IsBaselineLane(lane) {
+		return false
+	}
+	if state.BaselineReady == nil {
+		state.BaselineReady = make(map[Lane]bool)
+	}
+	state.BaselineReady[lane] = false
+	state.ClearBaselineProjection(lane)
+	return true
+}
+
 func (state RealtimeSessionState) LaneState(lane Lane) (RealtimeLaneState, bool) {
 	laneState, ok := state.Lanes[lane]
 	return laneState, ok
@@ -121,4 +133,3 @@ func AdvanceMetadataForSuccessfulWrite(lane Lane, metadata Metadata) Metadata {
 	metadata.SnapshotID = sequenceBackedBatchID(metadata.Sequence)
 	return metadata
 }
-

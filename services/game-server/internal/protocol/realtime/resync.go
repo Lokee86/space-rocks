@@ -3,10 +3,17 @@ package realtime
 type ResyncDecisionKind string
 
 const (
-	ResyncDecisionNone           ResyncDecisionKind = "none"
-	ResyncDecisionWrongBaseline  ResyncDecisionKind = "wrong_baseline"
+	ResyncDecisionNone            ResyncDecisionKind = "none"
+	ResyncDecisionWrongBaseline   ResyncDecisionKind = "wrong_baseline"
 	ResyncDecisionMissingBaseline ResyncDecisionKind = "missing_baseline"
 )
+
+type ResyncRequest struct {
+	Lane       Lane
+	BaselineID string
+	Sequence   int
+	Reason     string
+}
 
 type ResyncDecision struct {
 	Kind           ResyncDecisionKind

@@ -22,6 +22,7 @@ type webSocketSession struct {
 	room                        *rooms.Room
 	rooms                       *rooms.RoomManager
 	outbound                    chan []byte
+	resyncRequests              chan queuedResyncRequest
 	identity                    SessionIdentity
 	authVerifier                TokenVerifier
 	matchResultReporter         rooms.MatchResultReporter
@@ -41,6 +42,7 @@ func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, a
 		sessionID:           "session-" + strconv.FormatUint(sessionNumber, 10),
 		rooms:               roomManager,
 		outbound:            make(chan []byte, 16),
+		resyncRequests:      make(chan queuedResyncRequest, 4),
 		identity:            NewGuestSessionIdentity(),
 		authVerifier:        authVerifier,
 		matchResultReporter: reporter,
